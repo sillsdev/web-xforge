@@ -6,8 +6,10 @@ import { QuestionDoc } from './question-doc';
 import { SFProjectDoc } from './sf-project-doc';
 import { SFProjectUserConfigDoc } from './sf-project-user-config-doc';
 import { TextDoc } from './text-doc';
+import { FEATURE_TRANSLATION } from './translation-suggestions-data';
 
 export const SF_TYPE_REGISTRY = new TypeRegistry(
   [UserDoc, UserProfileDoc, SFProjectDoc, SFProjectUserConfigDoc, QuestionDoc, TextDoc],
-  [FileType.Audio]
+  [FileType.Audio],
+  [FEATURE_TRANSLATION]
 );

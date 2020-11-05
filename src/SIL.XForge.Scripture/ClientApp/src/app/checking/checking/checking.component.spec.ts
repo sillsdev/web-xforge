@@ -53,6 +53,7 @@ import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
+import { TranslationEngineService } from '../../core/translation-engine.service';
 import { SharedModule } from '../../shared/shared.module';
 import { TextChooserDialogComponent, TextSelection } from '../../text-chooser-dialog/text-chooser-dialog.component';
 import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
@@ -76,6 +77,7 @@ import { FontSizeComponent } from './font-size/font-size.component';
 const mockedAuthService = mock(AuthService);
 const mockedUserService = mock(UserService);
 const mockedProjectService = mock(SFProjectService);
+const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedNoticeService = mock(NoticeService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedMdcDialog = mock(MdcDialog);
@@ -150,8 +152,8 @@ describe('CheckingComponent', () => {
       { provide: AuthService, useMock: mockedAuthService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: UserService, useMock: mockedUserService },
-      { provide: ProjectService, useMock: mockedProjectService },
       { provide: SFProjectService, useMock: mockedProjectService },
+      { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: MdcDialog, useMock: mockedMdcDialog },
       { provide: TextChooserDialogComponent, useMock: mockedTextChooserDialogComponent },
@@ -547,7 +549,7 @@ describe('CheckingComponent', () => {
     it('saves the location of the last visited question', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       const projectUserConfigDoc = env.component.projectUserConfigDoc!.data!;
-      verify(mockedProjectService.trainSelectedSegment(anything())).once();
+      verify(mockedTranslationEngineService.trainSelectedSegment(anything())).once();
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q5Id');
       env.component.projectDoc!.submitJson0Op(op => {
         op.set<boolean>(p => p.translateConfig.translationSuggestionsEnabled, false);
@@ -557,19 +559,19 @@ describe('CheckingComponent', () => {
       expect(projectUserConfigDoc.selectedTask).toBe('checking');
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q4Id');
       expect(projectUserConfigDoc.selectedBookNum).toBe(43);
-      verify(mockedProjectService.trainSelectedSegment(anything())).once();
+      verify(mockedTranslationEngineService.trainSelectedSegment(anything())).once();
     }));
 
     it('saves the last visited question in all question context', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER, 'ALL');
       const projectUserConfigDoc = env.component.projectUserConfigDoc!.data!;
-      verify(mockedProjectService.trainSelectedSegment(anything())).once();
+      verify(mockedTranslationEngineService.trainSelectedSegment(anything())).once();
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q5Id');
       env.selectQuestion(4);
       expect(projectUserConfigDoc.selectedTask).toBe('checking');
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q4Id');
       expect(projectUserConfigDoc.selectedBookNum).toBeUndefined();
-      verify(mockedProjectService.trainSelectedSegment(anything())).twice();
+      verify(mockedTranslationEngineService.trainSelectedSegment(anything())).twice();
     }));
 
     it('can cancel answering a question', fakeAsync(() => {
