@@ -42,6 +42,7 @@ import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
+import { TranslationEngineService } from '../../core/translation-engine.service';
 import { SharedModule } from '../../shared/shared.module';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
 import { SuggestionsComponent } from './suggestions.component';
@@ -53,6 +54,7 @@ const mockedNoticeService = mock(NoticeService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
+const mockedTranslationEngineService = mock(TranslationEngineService);
 
 class MockConsole {
   log(val: any) {
@@ -85,7 +87,8 @@ describe('EditorComponent', () => {
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: CONSOLE, useValue: new MockConsole() },
       { provide: CookieService, useMock: mockedCookieService },
-      { provide: PwaService, useMock: mockedPwaService }
+      { provide: PwaService, useMock: mockedPwaService },
+      { provide: TranslationEngineService, useMock: mockedTranslationEngineService }
     ]
   }));
 
@@ -112,7 +115,7 @@ describe('EditorComponent', () => {
       expect(env.bookName).toEqual('Matthew');
       expect(env.component.chapter).toBe(2);
       expect(env.component.target!.segmentRef).toEqual('verse_2_1');
-      verify(mockedSFProjectService.trainSelectedSegment(anything())).never();
+      verify(mockedTranslationEngineService.trainSelectedSegment(anything())).never();
       const selection = env.targetEditor.getSelection();
       expect(selection!.index).toBe(30);
       expect(selection!.length).toBe(0);
@@ -395,17 +398,36 @@ describe('EditorComponent', () => {
 
     it('does not train a modified segment after selecting a different segment if offline', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
+      env.setProjectUserConfig({
+        selectedTask: 'translate',
+        selectedBookNum: 40,
+        selectedChapterNum: 1,
+        selectedSegment: 'verse_1_5',
+        projectRef: 'project01'
+      });
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_5');
       expect(env.component.showSuggestions).toBe(true);
       env.insertSuggestion();
-      expect(env.component.target!.segmentText).toBe('target: chapter 1, verse 5');
+      const text = 'target: chapter 1, verse 5';
+      expect(env.component.target!.segmentText).toBe(text);
       env.onlineStatus = false;
       when(mockedPwaService.isOnline).thenReturn(false);
       const range = env.component.target!.getSegmentRange('verse_1_1');
       env.targetEditor.setSelection(range!.index, 0, 'user');
       env.wait();
+      verify(
+        mockedTranslationEngineService.storeTrainingSegment(
+          deepEqual({
+            task: 'translate',
+            projectRef: 'project01',
+            bookNum: 40,
+            chapterNum: 1,
+            segment: 'verse_1_5',
+            checksum: anything()
+          })
+        )
+      ).once();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
       expect(env.lastApprovedPrefix).toEqual([]);
 
@@ -444,6 +466,7 @@ describe('EditorComponent', () => {
     it('train a modified segment after selecting a segment in a different text', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({
+        selectedTask: 'translate',
         selectedBookNum: 40,
         selectedChapterNum: 1,
         selectedSegment: 'verse_1_5',
@@ -458,7 +481,7 @@ describe('EditorComponent', () => {
       env.targetEditor.setSelection(range!.index, 0, 'user');
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      verify(mockedSFProjectService.trainSelectedSegment(anything())).once();
+      verify(mockedTranslationEngineService.trainSelectedSegment(anything())).once();
 
       env.dispose();
     }));
@@ -998,7 +1021,7 @@ class TestEnvironment {
 
     when(mockedActivatedRoute.params).thenReturn(this.params$);
     this.setCurrentUser('user01');
-    when(mockedSFProjectService.createTranslationEngine('project01')).thenReturn(
+    when(mockedTranslationEngineService.createTranslationEngine('project01')).thenReturn(
       instance(this.mockedRemoteTranslationEngine)
     );
     this.setupProject();
