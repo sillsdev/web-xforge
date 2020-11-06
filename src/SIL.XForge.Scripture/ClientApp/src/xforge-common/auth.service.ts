@@ -194,7 +194,8 @@ export class AuthService {
         return { loggedIn: false, newlyLoggedIn: false };
       }
       return { loggedIn: true, newlyLoggedIn: false };
-    } catch {
+    } catch (e) {
+      console.error(e);
       await this.showLoginErrorDialog();
       return { loggedIn: false, newlyLoggedIn: false };
     }
@@ -218,7 +219,8 @@ export class AuthService {
         }
       }
       return { loggedIn: true, newlyLoggedIn: false };
-    } catch {
+    } catch (e) {
+      console.error(e);
       await this.showLoginErrorDialog();
       return { loggedIn: false, newlyLoggedIn: false };
     }

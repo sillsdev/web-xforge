@@ -20,6 +20,10 @@ import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
 import { CheckingAccessInfo, CheckingUtils } from '../checking.utils';
+import {
+  ImportQuestionsDialogComponent,
+  ImportQuestionsDialogData
+} from '../import-questions-dialog/import-questions-dialog.component';
 import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
@@ -34,6 +38,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   itemVisibleArchived: { [bookIdOrDocId: string]: boolean } = {};
   texts: TextInfo[] = [];
   projectId?: string;
+  hasTransceleratorQuestions = false;
 
   private questionDocs = new Map<string, QuestionDoc[]>();
   private textsByBookId: TextsByBookId = {};
@@ -150,6 +155,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
         }
         this.questionsQuery = await this.projectService.queryQuestions(projectId);
         this.initTexts();
+        this.hasTransceleratorQuestions =
+          this.isProjectAdmin && (await this.projectService.hasTransceleratorQuestions(projectId));
       } finally {
         this.loadingFinished();
       }
@@ -330,6 +337,18 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     };
     await this.questionDialogService.questionDialog(data);
     this.initTextsWithLoadingIndicator();
+  }
+
+  importDialog() {
+    if (this.projectDoc == null) {
+      return;
+    }
+    const data: ImportQuestionsDialogData = {
+      projectId: this.projectDoc.id,
+      userId: this.userService.currentUserId,
+      textsByBookId: this.textsByBookId
+    };
+    this.dialog.open(ImportQuestionsDialogComponent, { autoFocus: false, data });
   }
 
   getBookName(text: TextInfo): string {

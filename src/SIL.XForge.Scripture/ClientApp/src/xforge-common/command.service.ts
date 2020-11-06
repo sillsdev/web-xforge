@@ -52,7 +52,7 @@ export class CommandError extends Error {
 export class CommandService {
   constructor(private readonly http: HttpClient) {}
 
-  async onlineInvoke<T>(url: string, method: string, params: any = {}): Promise<T | undefined> {
+  async onlineInvoke<T>(url: string, method: string, params: any = {}): Promise<T> {
     url = `${COMMAND_API_NAMESPACE}/${url}`;
     const request: JsonRpcRequest = {
       jsonrpc: '2.0',
@@ -67,7 +67,7 @@ export class CommandService {
       if (response.error != null) {
         throw response.error;
       }
-      return response.result;
+      return response.result as T;
     } catch (error) {
       const message = `Error invoking ${method}: ${error.message}`;
       throw new CommandError(error.code, message, error.data);
