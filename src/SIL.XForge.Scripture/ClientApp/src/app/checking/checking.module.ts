@@ -24,6 +24,9 @@ import { CheckingQuestionsComponent } from './checking/checking-questions/checki
 import { CheckingTextComponent } from './checking/checking-text/checking-text.component';
 import { CheckingComponent } from './checking/checking.component';
 import { FontSizeComponent } from './checking/font-size/font-size.component';
+import { ImportQuestionsConfirmationDialogComponent } from './import-questions-dialog/import-questions-confirmation-dialog/import-question-confirmation-dialog.component';
+import { ImportQuestionsDialogComponent } from './import-questions-dialog/import-questions-dialog.component';
+import { ImportQuestionsProgressDialogComponent } from './import-questions-dialog/import-questions-progress-dialog/import-questions-progress-dialog.component';
 import { QuestionAnsweredDialogComponent } from './question-answered-dialog/question-answered-dialog.component';
 import { QuestionDialogComponent } from './question-dialog/question-dialog.component';
 
@@ -35,6 +38,9 @@ import { QuestionDialogComponent } from './question-dialog/question-dialog.compo
     CheckingTextComponent,
     CheckingAnswersComponent,
     QuestionDialogComponent,
+    ImportQuestionsDialogComponent,
+    ImportQuestionsConfirmationDialogComponent,
+    ImportQuestionsProgressDialogComponent,
     FontSizeComponent,
     CheckingOwnerComponent,
     CheckingCommentsComponent,

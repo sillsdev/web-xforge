@@ -1,0 +1,48 @@
+@use '@material/textfield/mixins' as textfield;
+
+mdc-dialog-title .material-icons {
+  vertical-align: text-bottom;
+}
+
+.select-all-checkbox {
+  margin-right: 1em;
+}
+
+.filter-text {
+  padding: 0;
+
+  div {
+    display: flex;
+    align-items: center;
+    mdc-text-field {
+      flex: 1;
+      height: 2.5em;
+    }
+  }
+}
+
+mdc-text-field ::ng-deep {
+  @include textfield.outlined-density(-4);
+  label.mdc-floating-label {
+    display: inline-block !important;
+  }
+}
+
+.filter-references div {
+  display: flex;
+  margin-top: 0.4em;
+  ::ng-deep {
+    mdc-form-field:first-child .mdc-notched-outline__trailing {
+      border-radius: 0 !important;
+    }
+    mdc-form-field:last-child {
+      .mdc-notched-outline__leading {
+        border-radius: 0 !important;
+      }
+    }
+  }
+}
+
+.row-question {
+  white-space: initial;
+}

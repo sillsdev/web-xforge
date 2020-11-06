@@ -3,6 +3,9 @@
     <mdc-icon fxFlex="32px">library_books</mdc-icon>
     <h2 fxFlex>{{ t("texts_with_questions") }}</h2>
     <div fxFlexAlign="center" *ngIf="isProjectAdmin; else overallProgressChart">
+      <button mdc-button type="button" *ngIf="hasTransceleratorQuestions" (click)="importDialog()" id="import-btn">
+        {{ t("import_questions") }}
+      </button>
       <button
         *ngIf="!isLoading"
         mdc-button

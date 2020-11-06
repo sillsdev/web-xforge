@@ -15,5 +15,6 @@ namespace SIL.XForge.Scripture.Models
         public DateTime? DateArchived { get; set; }
         public DateTime DateModified { get; set; }
         public DateTime DateCreated { get; set; }
+        public string TransceleratorQuestionId { get; set; }
     }
 }
