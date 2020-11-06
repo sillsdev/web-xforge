@@ -19,4 +19,5 @@ export interface Question extends ProjectData {
   dateArchived?: string;
   dateModified: string;
   dateCreated: string;
+  transceleratorQuestionId?: string;
 }

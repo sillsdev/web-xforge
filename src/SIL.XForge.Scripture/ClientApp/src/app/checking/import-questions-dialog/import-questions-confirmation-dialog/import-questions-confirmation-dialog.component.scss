@@ -1,0 +1,11 @@
+th:first-child {
+  padding-left: 0;
+}
+
+tr td:not(:last-child) {
+  padding-right: 0.5em;
+}
+
+table {
+  white-space: initial;
+}

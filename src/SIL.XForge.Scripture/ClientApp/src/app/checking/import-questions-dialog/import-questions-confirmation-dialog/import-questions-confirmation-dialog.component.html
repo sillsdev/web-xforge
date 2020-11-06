@@ -1,0 +1,41 @@
+<ng-container *transloco="let t; read: 'import_questions_confirmation_dialog'">
+  <mdc-dialog>
+    <mdc-dialog-container>
+      <mdc-dialog-surface>
+        <mdc-dialog-title>{{ t("some_questions_edited") }}</mdc-dialog-title>
+        <mdc-dialog-content>
+          {{ t("edited_questions_explanation") }}
+          <mdc-data-table
+            (selectionChanged)="onSelectionChanged($event)"
+            (selectedAll)="selectAll(true)"
+            (unselectedAll)="selectAll(false)"
+          >
+            <table mdcDataTableTable>
+              <thead>
+                <tr mdcDataTableHeaderRow>
+                  <th mdcDataTableHeaderCell><mdc-checkbox></mdc-checkbox></th>
+                  <th>{{ t("scripture_forge") }}</th>
+                  <th>{{ t("transcelerator") }}</th>
+                  <th>{{ t("number_answers") }}</th>
+                </tr>
+              </thead>
+              <tbody mdcDataTableContent>
+                <tr mdcDataTableRow *ngFor="let listItem of questions" [selected]="listItem.checked">
+                  <td><mdc-checkbox [checked]="listItem.checked"></mdc-checkbox></td>
+                  <td>{{ listItem.before }}</td>
+                  <td>{{ listItem.after }}</td>
+                  <td>{{ listItem.answerCount }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </mdc-data-table>
+        </mdc-dialog-content>
+        <mdc-dialog-actions>
+          <button mdcDialogButton mdcDialogAction="close" unelevated type="submit" (click)="submit()">
+            {{ t("done") }}
+          </button>
+        </mdc-dialog-actions>
+      </mdc-dialog-surface>
+    </mdc-dialog-container>
+  </mdc-dialog>
+</ng-container>

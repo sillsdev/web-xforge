@@ -751,10 +751,11 @@ namespace SIL.XForge.Scripture.Services
                 Localizer = new StringLocalizer<SharedResource>(factory);
                 SecurityService = Substitute.For<ISecurityService>();
                 SecurityService.GenerateKey().Returns("1234abc");
+                var transceleratorService = Substitute.For<ITransceleratorService>();
 
                 Service = new SFProjectService(RealtimeService, siteOptions, audioService, EmailService, ProjectSecrets,
                     SecurityService, FileSystemService, EngineService, SyncService, ParatextService, userSecrets,
-                    translateMetrics, Localizer);
+                    translateMetrics, Localizer, transceleratorService);
             }
 
             public SFProjectService Service { get; }
