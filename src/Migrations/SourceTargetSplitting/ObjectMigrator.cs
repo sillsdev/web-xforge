@@ -7,7 +7,6 @@ namespace SourceTargetSplitting
     using Microsoft.Extensions.Options;
     using MongoDB.Bson;
     using MongoDB.Driver;
-    using Paratext;
     using SIL.XForge.Configuration;
     using SIL.XForge.DataAccess;
     using SIL.XForge.Realtime;
@@ -15,7 +14,6 @@ namespace SourceTargetSplitting
     using SIL.XForge.Scripture.Models;
     using SIL.XForge.Scripture.Services;
     using SIL.XForge.Services;
-    using Spart.Parsers.Primitives;
 
     /// <summary>
     /// The object migrator implementation.
@@ -166,9 +164,10 @@ namespace SourceTargetSplitting
 
             // Get the existing textdata object ids from MongoDB
             List<string> textIds = collection.AsQueryable().Select(t => t.Id).ToList();
+            List<string> sourceTextIds = textIds.Where(t => t.EndsWith(":source", StringComparison.Ordinal)).ToList();
 
             // Iterate over every text id in database
-            foreach (string textId in textIds.Where(t => t.EndsWith(":source", StringComparison.Ordinal)))
+            foreach (string textId in sourceTextIds)
             {
                 // Get the TextData from the database
                 TextData? text = await collection
