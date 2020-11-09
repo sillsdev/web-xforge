@@ -79,7 +79,29 @@ namespace SourceTargetSplitting
                 try
                 {
                     // Use the project service to create the resource project
-                    await this._projectService.CreateResourceProjectAsync(userId, sourceId).ConfigureAwait(false);
+                    string sourceProjectRef = await this._projectService.CreateResourceProjectAsync(userId, sourceId).ConfigureAwait(false);
+
+                    // Add each user in the target project to the source project so they can access it
+                    foreach (string uid in userIds)
+                    {
+                        if (sourceId.Length == SFInstallableDBLResource.ResourceIdentifierLength)
+                        {
+                            // Add the user to the resource
+                            await this._projectService.AddUserToResourceProjectAsync(uid, sourceProjectRef);
+                        }
+                        else
+                        {
+                            try
+                            {
+                                // Add the user to the project
+                                await this._projectService.AddUserAsync(uid, sourceProjectRef, null);
+                            }
+                            catch (ForbiddenException)
+                            {
+                                // The user does not have Paratext access
+                            }
+                        }
+                    }
 
                     // Successfully created
                     break;
@@ -220,6 +242,67 @@ namespace SourceTargetSplitting
                 else
                 {
                     Program.Log($"Error Migrating TextData {textId} - Could Not Load From MongoDB");
+                }
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task MigrateTargetPermissionsAsync(string sourceId, string targetId)
+        {
+            // Get the target project
+            var targetProject = this._realtimeService.QuerySnapshots<SFProject>().FirstOrDefault(p => p.ParatextId == targetId);
+            if (targetProject == null)
+            {
+                throw new DataNotFoundException("The target project does not exist");
+            }
+
+            // Get the source project
+            var sourceProject = this._realtimeService.QuerySnapshots<SFProject>().FirstOrDefault(p => p.ParatextId == sourceId);
+            if (sourceProject == null)
+            {
+                throw new DataNotFoundException("The source project does not exist");
+            }
+
+            // Get the highest ranked for this project, that probably has source access
+            string[] userIds = targetProject.UserRoles
+                .Select(ur => ur.Key)
+                .Where(u => !sourceProject.UserRoles.Keys.Contains(u))
+                .ToArray();
+
+            // Iterate through the users until we find someone with access
+            foreach (string userId in userIds)
+            {
+                try
+                {
+                    // Add each user in the target project to the source project so they can access it
+                    foreach (string uid in userIds)
+                    {
+                        if (sourceId.Length == SFInstallableDBLResource.ResourceIdentifierLength)
+                        {
+                            // Add the user to the resource
+                            await this._projectService.AddUserToResourceProjectAsync(uid, sourceProject.Id);
+                        }
+                        else
+                        {
+                            try
+                            {
+                                // Add the user to the project
+                                await this._projectService.AddUserAsync(uid, sourceProject.Id, null);
+                            }
+                            catch (ForbiddenException)
+                            {
+                                // The user does not have Paratext access
+                            }
+                        }
+                    }
+
+                    // Successfully created
+                    break;
+                }
+                catch (DataNotFoundException)
+                {
+                    // We don't have access
+                    continue;
                 }
             }
         }

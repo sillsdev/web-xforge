@@ -20,5 +20,6 @@ namespace SIL.XForge.Scripture.Services
         Task<string[]> InvitedUsersAsync(string curUserId, string projectId);
         Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestions(string curUserId, string projectId);
         Task<bool> HasTransceleratorQuestions(string curUserId, string projectId);
+        Task AddUserToResourceProjectAsync(string curUserId, string projectId);
     }
 }

@@ -268,9 +268,10 @@ namespace SourceTargetSplitting
                     else
                     {
                         // Remove the source directory
-                        Log("\tSource directory already exists as a project, deleting");
+                        Log("\tSource directory already exists as a project, deleting and migrating permissions");
                         if (doWrite)
                         {
+                            await objectMigrator!.MigrateTargetPermissionsAsync(sourceProjectId, projectId).ConfigureAwait(false);
                             Directory.Delete(sourcePath, true);
                         }
 

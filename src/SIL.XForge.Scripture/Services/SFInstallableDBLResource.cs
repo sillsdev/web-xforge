@@ -29,6 +29,11 @@ namespace SIL.XForge.Scripture.Services
     public class SFInstallableDBLResource : InstallableResource
     {
         /// <summary>
+        /// The resource identifier length.
+        /// </summary>
+        public const int ResourceIdentifierLength = 16;
+
+        /// <summary>
         /// The DBL folder name (in the zip file).
         /// </summary>
         private const string DBLFolderName = ".dbl";

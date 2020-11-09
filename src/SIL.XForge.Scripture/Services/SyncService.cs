@@ -37,6 +37,20 @@ namespace SIL.XForge.Scripture.Services
 
                 sourceProjectId = projectDoc.Data.TranslateConfig.Source?.ProjectRef;
                 await projectDoc.SubmitJson0OpAsync(op => op.Inc(pd => pd.Sync.QueuedCount));
+
+                // See if we can sync the source project
+                if (!string.IsNullOrWhiteSpace(sourceProjectId))
+                {
+                    IDocument<SFProject> sourceProjectDoc = await conn.FetchAsync<SFProject>(sourceProjectId);
+                    if (!sourceProjectDoc.IsLoaded || sourceProjectDoc.Data.SyncDisabled)
+                    {
+                        sourceProjectId = null;
+                    }
+                    else
+                    {
+                        await sourceProjectDoc.SubmitJson0OpAsync(op => op.Inc(pd => pd.Sync.QueuedCount));
+                    }
+                }
             }
 
             if (!string.IsNullOrWhiteSpace(sourceProjectId))
