@@ -26,5 +26,16 @@ namespace SourceTargetSplitting
         /// The task.
         /// </returns>
         Task MigrateObjectsAsync(bool doWrite);
+
+        /// <summary>
+        /// Migrates a target project's permissions to the source project.
+        /// </summary>
+        /// <param name="sourceId">The source project/resource identifier.</param>
+        /// <param name="targetId">The target project identifier.
+        /// This is the project that will reference this project/resource a source.</param>
+        /// <returns>
+        /// The task.
+        /// </returns>
+        Task MigrateTargetPermissionsAsync(string sourceId, string targetId);
     }
 }

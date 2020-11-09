@@ -45,7 +45,6 @@ namespace SIL.XForge.Scripture.Services
     /// </summary>
     public class ParatextService : DisposableBase, IParatextService
     {
-        private const int ResourceIdentifierLength = 16;
         private readonly IOptions<ParatextOptions> _paratextOptions;
         private readonly IRepository<UserSecret> _userSecretRepository;
         private readonly IRealtimeService _realtimeService;
@@ -265,7 +264,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task<string> GetResourcePermissionAsync(UserSecret userSecret, string paratextId, string userId)
         {
             // See if the source is a resource
-            if (paratextId.Length == ResourceIdentifierLength)
+            if (paratextId.Length == SFInstallableDBLResource.ResourceIdentifierLength)
             {
                 // The resource id is a 41 character project id truncated to 16 characters
                 UserSecret thisUserSecret;
@@ -298,8 +297,8 @@ namespace SIL.XForge.Scripture.Services
             }
             else
             {
-                // Default to read permissions for projects used as  sources
-                return TextInfoPermission.Read;
+                // Default to no permissions for projects used as sources
+                return TextInfoPermission.None;
             }
         }
 
@@ -322,7 +321,7 @@ namespace SIL.XForge.Scripture.Services
             foreach ((string uid, string role) in project.UserRoles)
             {
                 // See if the source is a resource
-                if (project.ParatextId.Length == ResourceIdentifierLength)
+                if (project.ParatextId.Length == SFInstallableDBLResource.ResourceIdentifierLength)
                 {
                     permissions.Add(uid, await this.GetResourcePermissionAsync(userSecret, project.ParatextId, uid));
                 }
@@ -346,7 +345,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(UserSecret userSecret,
             string projectId)
         {
-            if (projectId.Length == ResourceIdentifierLength)
+            if (projectId.Length == SFInstallableDBLResource.ResourceIdentifierLength)
             {
                 // Resources do not have roles
                 return new Dictionary<string, string>();
