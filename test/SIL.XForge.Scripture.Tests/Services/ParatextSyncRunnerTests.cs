@@ -736,11 +736,6 @@ namespace SIL.XForge.Scripture.Services
 
             public TestEnvironment()
             {
-                IOptions<SiteOptions> siteOptions = Microsoft.Extensions.Options.Options.Create(
-                    new SiteOptions()
-                    {
-                        SiteDir = "scriptureforge"
-                    });
                 var userSecrets = new MemoryRepository<UserSecret>(new[]
                 {
                     new UserSecret { Id = "user01" },
@@ -772,7 +767,7 @@ namespace SIL.XForge.Scripture.Services
                 Logger = Substitute.For<ILogger<ParatextSyncRunner>>();
 
                 Runner = new ParatextSyncRunner(userSecrets, _projectSecrets, SFProjectService, EngineService,
-                    ParatextService, RealtimeService, DeltaUsxMapper, _notesMapper, Logger, siteOptions);
+                    ParatextService, RealtimeService, DeltaUsxMapper, _notesMapper, Logger);
             }
 
             public ParatextSyncRunner Runner { get; }

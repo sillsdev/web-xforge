@@ -56,7 +56,6 @@ namespace SIL.XForge.Scripture.Services
         private readonly IDeltaUsxMapper _deltaUsxMapper;
         private readonly IParatextNotesMapper _notesMapper;
         private readonly ILogger<ParatextSyncRunner> _logger;
-        private readonly IOptions<SiteOptions> _siteOptions;
 
         private IConnection _conn;
         private UserSecret _userSecret;
@@ -66,7 +65,7 @@ namespace SIL.XForge.Scripture.Services
         public ParatextSyncRunner(IRepository<UserSecret> userSecrets, IRepository<SFProjectSecret> projectSecrets,
             ISFProjectService projectService, IEngineService engineService, IParatextService paratextService,
             IRealtimeService realtimeService, IDeltaUsxMapper deltaUsxMapper, IParatextNotesMapper notesMapper,
-            ILogger<ParatextSyncRunner> logger, IOptions<SiteOptions> siteOptions)
+            ILogger<ParatextSyncRunner> logger)
         {
             _userSecrets = userSecrets;
             _projectSecrets = projectSecrets;
@@ -77,7 +76,6 @@ namespace SIL.XForge.Scripture.Services
             _logger = logger;
             _deltaUsxMapper = deltaUsxMapper;
             _notesMapper = notesMapper;
-            _siteOptions = siteOptions;
         }
 
         private bool TranslationSuggestionsEnabled => _projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled;
@@ -148,32 +146,9 @@ namespace SIL.XForge.Scripture.Services
                 {
                     foreach (string uid in _projectDoc.Data.UserRoles.Keys)
                     {
-                        IDocument<User> userDoc = await _conn.FetchAsync<User>(uid);
-                        if (userDoc.IsLoaded)
-                        {
-                            string permission = await _paratextService.GetResourcePermissionAsync(_userSecret, sourceParatextId, uid);
-                            string siteId = _siteOptions.Value.Id;
-                            if (permission == TextInfoPermission.None)
-                            {
-                                // If the user has the resource
-                                if (!string.IsNullOrWhiteSpace(siteId) && userDoc.Data.Sites.ContainsKey(siteId)
-                                    && userDoc.Data.Sites[siteId].Resources.Contains(sourceProjectRef))
-                                {
-                                    // Remove the resource
-                                    await userDoc.SubmitJson0OpAsync(op =>
-                                    {
-                                        int index = userDoc.Data.Sites[siteId].Resources.IndexOf(sourceProjectRef);
-                                        op.Remove(u => u.Sites[siteId].Resources, index);
-                                    });
-                                }
-                            }
-                            else if (!string.IsNullOrWhiteSpace(siteId) && userDoc.Data.Sites.ContainsKey(siteId)
-                                && !userDoc.Data.Sites[siteId].Resources.Contains(sourceProjectRef))
-                            {
-                                // Add the resource
-                                await userDoc.SubmitJson0OpAsync(op => op.Add(u => u.Sites[siteId].Resources, sourceProjectRef));
-                            }
-                        }
+                        // This is done here, not on the resource sync, as a lot of users might have access to a resource
+                        // The updating of a source project's permissions is done when that project is synced.
+                        await _projectService.AddUserToResourceProjectAsync(uid, sourceProjectRef);
                     }
                 }
 
