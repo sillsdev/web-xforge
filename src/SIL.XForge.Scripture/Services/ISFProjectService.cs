@@ -17,5 +17,6 @@ namespace SIL.XForge.Scripture.Services
         Task UninviteUserAsync(string curUserId, string projectId, string email);
         Task CheckLinkSharingAsync(string curUserId, string projectId, string shareKey = null);
         Task<string[]> InvitedUsersAsync(string curUserId, string projectId);
+        Task AddUserToResourceProjectAsync(string curUserId, string projectId);
     }
 }
