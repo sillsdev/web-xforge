@@ -310,12 +310,13 @@ namespace SIL.XForge.Scripture.Services
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01);
+            DateTime date = DateTime.Now; // This must be consistent as it is a part of the comment id
 
             // Add new comment
             string threadId = "Answer_0123";
             string content = "Content for comment to update.";
             string verseRef = "RUT 1:1";
-            string updateNotesString = env.GetUpdateNotesString(threadId, env.User01, content, verseRef);
+            string updateNotesString = env.GetUpdateNotesString(threadId, env.User01, date, content, verseRef);
             env.Service.PutNotes(userSecret, ptProjectId, updateNotesString);
 
             CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
@@ -327,7 +328,7 @@ namespace SIL.XForge.Scripture.Services
 
             // Edit a comment
             content = "Edited: Content for comment to update.";
-            updateNotesString = env.GetUpdateNotesString(threadId, env.User01, content, verseRef);
+            updateNotesString = env.GetUpdateNotesString(threadId, env.User01, date, content, verseRef);
             env.Service.PutNotes(userSecret, ptProjectId, updateNotesString);
 
             Assert.That(thread.Comments.Count, Is.EqualTo(1));
@@ -335,7 +336,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(comment.Contents.InnerText, Is.EqualTo(content));
 
             // Delete a comment
-            updateNotesString = env.GetUpdateNotesString(threadId, env.User01, content, verseRef, true);
+            updateNotesString = env.GetUpdateNotesString(threadId, env.User01, date, content, verseRef, true);
             env.Service.PutNotes(userSecret, ptProjectId, updateNotesString);
 
             Assert.That(thread.Comments.Count, Is.EqualTo(1));
@@ -664,7 +665,7 @@ namespace SIL.XForge.Scripture.Services
                     }));
             }
 
-            public string GetUpdateNotesString(string threadId, string user, string content,
+            public string GetUpdateNotesString(string threadId, string user, DateTime date, string content,
                 string verseRef = "MAT 1:1", bool delete = false)
             {
                 XElement notesElem = new XElement("notes", new XAttribute("version", "1.1"));
@@ -675,7 +676,6 @@ namespace SIL.XForge.Scripture.Services
                         new XAttribute("selectedText", "")
                     ));
                 XElement commentElem = new XElement("comment", new XAttribute("user", user));
-                DateTime date = new DateTime();
                 commentElem.Add(new XAttribute("date", date.ToString("o")));
                 XElement contentElem = new XElement("content");
                 contentElem.Add(content);
