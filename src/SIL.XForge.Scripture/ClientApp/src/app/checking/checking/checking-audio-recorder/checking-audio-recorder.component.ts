@@ -75,6 +75,11 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
 
   startRecording() {
     const mediaConstraints: MediaStreamConstraints = { audio: true };
+    if (this.navigator.mediaDevices == null) {
+      this.status.emit({ status: 'denied' });
+      this.noticeService.show(translate('checking_audio_recorder.not_available'));
+      return;
+    }
     this.navigator.mediaDevices
       .getUserMedia(mediaConstraints)
       .then(this.successCallback.bind(this), this.errorCallback.bind(this));
