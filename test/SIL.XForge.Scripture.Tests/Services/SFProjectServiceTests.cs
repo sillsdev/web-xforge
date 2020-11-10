@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
+using SIL.Machine.FiniteState;
 using SIL.Machine.WebApi.Services;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
@@ -28,6 +29,7 @@ namespace SIL.XForge.Scripture.Services
         private const string Project01 = "project01";
         private const string Project02 = "project02";
         private const string Project03 = "project03";
+        private const string Resource01 = "resource_project";
         private const string User01 = "user01";
         private const string User02 = "user02";
         private const string User03 = "user03";
@@ -564,6 +566,89 @@ namespace SIL.XForge.Scripture.Services
                 Is.EqualTo(projectCount), "should not have changed");
         }
 
+        [Test]
+        public async Task CreateResourceProjectAsync_NotExisting_Created()
+        {
+            var env = new TestEnvironment();
+            int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
+            // SUT
+            string sfProjectId = await env.Service.CreateResourceProjectAsync(User01, "resource_project");
+            Assert.That(env.ContainsProject(sfProjectId), Is.True);
+            Assert.That(env.RealtimeService.GetRepository<SFProject>().Query().Count(),
+                Is.EqualTo(projectCount + 1), "should have increased");
+        }
+
+        [Test]
+        public void CreateResourceProjectAsync_AlreadyExists_Error()
+        {
+            var env = new TestEnvironment();
+            int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
+            SFProject existingSfProject = env.GetProject(Resource01);
+            // SUT
+            InvalidOperationException thrown = Assert.ThrowsAsync<InvalidOperationException>(
+                () => env.Service.CreateResourceProjectAsync(User01, existingSfProject.ParatextId));
+            Assert.That(thrown.Message, Does.Contain(SFProjectService.ErrorAlreadyConnectedKey));
+            Assert.That(env.RealtimeService.GetRepository<SFProject>().Query().Count(),
+                Is.EqualTo(projectCount), "should not have changed");
+        }
+
+        [Test]
+        public async Task AddUserToResourceProjectAsync_UserResourcePermission()
+        {
+            var env = new TestEnvironment();
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), User01)
+                .Returns(Task.FromResult(TextInfoPermission.Read));
+
+            User user = env.GetUser(User01);
+            Assert.That(user.Sites[SiteId].Resources.Contains(Resource01), Is.False, "setup");
+
+            await env.Service.AddUserToResourceProjectAsync(User01, Resource01);
+
+            user = env.GetUser(User01);
+            Assert.That(user.Sites[SiteId].Resources.Contains(Resource01), Is.True, "User can access resource");
+        }
+
+        [Test]
+        public async Task AddUserToResourceProjectAsync_UserResourceNoPermission()
+        {
+            var env = new TestEnvironment();
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), User01)
+                .Returns(Task.FromResult(TextInfoPermission.None));
+
+            User user = env.GetUser(User01);
+            Assert.That(user.Sites[SiteId].Resources.Contains(Resource01), Is.False, "setup");
+
+            await env.Service.AddUserToResourceProjectAsync(User01, Resource01);
+
+            user = env.GetUser(User01);
+            Assert.That(user.Sites[SiteId].Resources.Contains(Resource01), Is.False, "user cannot access resource");
+        }
+
+        [Test]
+        public async Task AddUserToResourceProjectAsync_UserNoResourcePermission_RemovesResource()
+        {
+            var env = new TestEnvironment();
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), User01)
+                .Returns(Task.FromResult(TextInfoPermission.Read));
+
+            User user = env.GetUser(User01);
+            Assert.That(user.Sites[SiteId].Resources.Contains(Resource01), Is.False, "setup");
+
+            await env.Service.AddUserToResourceProjectAsync(User01, Resource01);
+
+            user = env.GetUser(User01);
+            Assert.That(user.Sites[SiteId].Resources.Contains(Resource01), Is.True, "user can access resource");
+
+            // The user's access was removed in Paratext
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), User01)
+                .Returns(Task.FromResult(TextInfoPermission.None));
+
+            await env.Service.AddUserToResourceProjectAsync(User01, Resource01);
+
+            user = env.GetUser(User01);
+            Assert.That(user.Sites[SiteId].Resources.Contains(Resource01), Is.False, "user now cannot access resource");
+        }
+
         private class TestEnvironment
         {
             public TestEnvironment()
@@ -683,6 +768,13 @@ namespace SIL.XForge.Scripture.Services
                                 { User01, SFProjectRole.Administrator },
                                 { User02, SFProjectRole.Translator }
                             }
+                        },
+                        new SFProject
+                        {
+                            Id = Resource01,
+                            ParatextId = "resid_is_16_char",
+                            Name = "resource project",
+                            ShortName = "RES",
                         }
                     }));
                 RealtimeService.AddRepository("sf_project_user_configs", OTType.Json0,
@@ -742,6 +834,20 @@ namespace SIL.XForge.Scripture.Services
                     }
                 };
                 ParatextService.GetProjectsAsync(Arg.Any<UserSecret>()).Returns(Task.FromResult(ptProjects));
+                IReadOnlyList<ParatextResource> ptResources = new[]
+                {
+                    new ParatextResource
+                    {
+                        ParatextId = "resource_project",
+                        Name = "ResourceProject",
+                        LanguageTag = "qaa"
+                    },
+                    new ParatextResource
+                    {
+                        ParatextId = GetProject(Resource01).ParatextId
+                    }
+                };
+                ParatextService.GetResources(Arg.Any<UserSecret>()).Returns(ptResources);
                 var userSecrets = new MemoryRepository<UserSecret>(new[]
                 {
                     new UserSecret { Id = User01 },
