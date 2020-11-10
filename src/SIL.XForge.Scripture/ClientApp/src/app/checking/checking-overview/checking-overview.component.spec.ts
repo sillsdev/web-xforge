@@ -35,6 +35,7 @@ import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { CheckingModule } from '../checking.module';
+import { ImportQuestionsDialogComponent } from '../import-questions-dialog/import-questions-dialog.component';
 import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
 import { QuestionDialogComponent } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
@@ -229,6 +230,15 @@ describe('CheckingOverviewComponent', () => {
       env.clickElement(env.questionEditButtons[0]);
       verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).twice();
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
+      expect().nothing();
+    }));
+
+    it('should open a dialog to import questions', fakeAsync(() => {
+      when(mockedProjectService.hasTransceleratorQuestions('project01')).thenResolve(true);
+      const env = new TestEnvironment();
+      env.waitForQuestions();
+      env.clickElement(env.importButton);
+      verify(mockedMdcDialog.open(ImportQuestionsDialogComponent, anything())).once();
       expect().nothing();
     }));
   });
@@ -723,6 +733,10 @@ class TestEnvironment {
 
   get archivedQuestions(): DebugElement {
     return this.fixture.debugElement.query(By.css('#text-with-archived-questions'));
+  }
+
+  get importButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#import-btn'));
   }
 
   get noQuestionsLabel(): DebugElement {

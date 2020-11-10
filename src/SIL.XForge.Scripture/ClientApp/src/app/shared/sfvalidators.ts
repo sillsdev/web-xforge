@@ -12,7 +12,7 @@ import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/ver
 import { TextsByBookId } from '../core/models/texts-by-book-id';
 
 export class SFValidators {
-  static verseStr(textsByBookId: TextsByBookId): ValidatorFn {
+  static verseStr(textsByBookId?: TextsByBookId): ValidatorFn {
     return function validateVerseStr(control: AbstractControl): ValidationErrors | null {
       if (!control.value) {
         return null;
@@ -35,6 +35,10 @@ export class SFValidators {
         COMMA_DASH_DIGIT_REGEXP.test(verseRef.verse)
       ) {
         return { verseFormat: true };
+      }
+
+      if (textsByBookId == null) {
+        return null;
       }
 
       let isRangeValid = false;

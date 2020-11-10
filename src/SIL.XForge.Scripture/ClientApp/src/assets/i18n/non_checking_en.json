@@ -23,8 +23,9 @@
     "archive": "Archive",
     "archived_questions": "Archived Questions",
     "click_add_question": "Click {{ boldStart }}Add question{{ boldEnd }}, above.",
-    "no_questions": "There are no published questions. ",
+    "import_questions": "Import",
     "no_archived_questions": "There are no archived questions.",
+    "no_questions": "There are no published questions. ",
     "question_count_label": "{{ count }} questions",
     "republish": "Republish",
     "time_archived_stamp": "Archived on {{ timeStamp }}"
@@ -79,6 +80,29 @@
     "training": "Training",
     "training_completed_successfully": "Training completed successfully",
     "verse_too_long_for_suggestions": "This verse is too long to generate suggestions."
+  },
+  "import_questions_confirmation_dialog": {
+    "done": "Done",
+    "edited_questions_explanation": "Some of the questions you have selected have been edited. Are you sure you want to update the questions? Select the questions you want to update.",
+    "number_answers": "Number of Answers",
+    "scripture_forge": "Scripture Forge",
+    "some_questions_edited": "Some questions have been edited",
+    "transcelerator": "Transcelerator"
+  },
+  "import_questions_dialog": {
+    "cancel": "Cancel",
+    "filter_questions": "Filter questions",
+    "import_count_questions": "Import {{ count }} Selected Questions",
+    "import_from_transcelerator": "Import Questions from Transcelerator",
+    "importing_questions": "Importing {{ count }} questions...",
+    "loading": "Loading...",
+    "must_be_valid_reference": "Must be a valid reference",
+    "no_questions_available": "There are no questions for the books in this project.",
+    "reference_from": "Reference from",
+    "reference_to": "Reference to",
+    "select_all": "Select All",
+    "show_all": "Show All",
+    "update_transcelerator": "The version of Transcelerator used in this project is not supported. Please update to at least Transcelerator version 1.5.3."
   },
   "paginator": {
     "items_per_page": "Items per page",

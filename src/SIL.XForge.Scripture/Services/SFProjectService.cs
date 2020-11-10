@@ -34,12 +34,14 @@ namespace SIL.XForge.Scripture.Services
         private readonly IEmailService _emailService;
         private readonly ISecurityService _securityService;
         private readonly IStringLocalizer<SharedResource> _localizer;
+        private readonly ITransceleratorService _transceleratorService;
 
         public SFProjectService(IRealtimeService realtimeService, IOptions<SiteOptions> siteOptions,
             IAudioService audioService, IEmailService emailService, IRepository<SFProjectSecret> projectSecrets,
             ISecurityService securityService, IFileSystemService fileSystemService, IEngineService engineService,
             ISyncService syncService, IParatextService paratextService, IRepository<UserSecret> userSecrets,
-            IRepository<TranslateMetrics> translateMetrics, IStringLocalizer<SharedResource> localizer)
+            IRepository<TranslateMetrics> translateMetrics, IStringLocalizer<SharedResource> localizer,
+            ITransceleratorService transceleratorService)
             : base(realtimeService, siteOptions, audioService, projectSecrets, fileSystemService)
         {
             _engineService = engineService;
@@ -50,6 +52,7 @@ namespace SIL.XForge.Scripture.Services
             _emailService = emailService;
             _securityService = securityService;
             _localizer = localizer;
+            _transceleratorService = transceleratorService;
         }
 
         protected override string ProjectAdminRole => SFProjectRole.Administrator;
@@ -411,6 +414,32 @@ namespace SIL.XForge.Scripture.Services
                     return;
                 }
                 throw new ForbiddenException();
+            }
+        }
+
+        public async Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestions(string curUserId, string projectId)
+        {
+            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+            {
+                IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
+                if (!projectDoc.IsLoaded)
+                    throw new DataNotFoundException("The project does not exist.");
+                if (!IsProjectAdmin(projectDoc.Data, curUserId))
+                    throw new ForbiddenException();
+                return _transceleratorService.Questions(projectDoc.Data.ParatextId);
+            }
+        }
+
+        public async Task<bool> HasTransceleratorQuestions(string curUserId, string projectId)
+        {
+            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+            {
+                IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
+                if (!projectDoc.IsLoaded)
+                    throw new DataNotFoundException("The project does not exist.");
+                if (!IsProjectAdmin(projectDoc.Data, curUserId))
+                    throw new ForbiddenException();
+                return _transceleratorService.HasQuestions(projectDoc.Data.ParatextId);
             }
         }
 

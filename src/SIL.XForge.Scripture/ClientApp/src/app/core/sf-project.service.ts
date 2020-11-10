@@ -1,4 +1,3 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { LatinWordTokenizer, MAX_SEGMENT_LENGTH, RemoteTranslationEngine } from '@sillsdev/machine';
 import * as crc from 'crc-32';
@@ -18,6 +17,7 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { ProjectService } from 'xforge-common/project.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
+import { TransceleratorQuestion } from '../checking/import-questions-dialog/import-questions-dialog.component';
 import { MachineHttpClient } from './machine-http-client';
 import { QuestionDoc } from './models/question-doc';
 import { SFProjectCreateSettings } from './models/sf-project-create-settings';
@@ -37,11 +37,10 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   constructor(
     realtimeService: RealtimeService,
     commandService: CommandService,
-    http: HttpClient,
     private readonly machineHttp: MachineHttpClient,
     private readonly fileService: FileService
   ) {
-    super(realtimeService, commandService, SF_PROJECT_ROLES, http);
+    super(realtimeService, commandService, SF_PROJECT_ROLES);
   }
 
   async onlineCreate(settings: SFProjectCreateSettings): Promise<string> {
@@ -145,6 +144,14 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
 
   async onlineUninviteUser(projectId: string, emailToUninvite: string): Promise<string> {
     return (await this.onlineInvoke<string>('uninviteUser', { projectId, emailToUninvite }))!;
+  }
+
+  async transceleratorQuestions(projectId: string): Promise<TransceleratorQuestion[]> {
+    return (await this.onlineInvoke<TransceleratorQuestion[]>('transceleratorQuestions', { projectId }))!;
+  }
+
+  async hasTransceleratorQuestions(projectId: string): Promise<boolean> {
+    return (await this.onlineInvoke<boolean>('hasTransceleratorQuestions', { projectId }))!;
   }
 
   async trainSelectedSegment(projectUserConfig: SFProjectUserConfig): Promise<void> {
