@@ -22,12 +22,13 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using Paratext.Data;
 using Paratext.Data.Languages;
+using Paratext.Data.ProjectComments;
 using Paratext.Data.RegistryServerAccess;
 using Paratext.Data.Repository;
 using Paratext.Data.Users;
-using Paratext.Data.ProjectComments;
 using PtxUtils;
 using SIL.ObjectModel;
+using SIL.Scripture;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -35,7 +36,6 @@ using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
-using SIL.Scripture;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -290,7 +290,8 @@ namespace SIL.XForge.Scripture.Services
                         await RefreshAccessTokenAsync(thisUserSecret);
                     }
 
-                    canRead = SFInstallableDBLResource.CheckResourcePermission(paratextId, thisUserSecret, _restClientFactory);
+                    canRead = SFInstallableDBLResource.CheckResourcePermission(
+                        paratextId,thisUserSecret, _restClientFactory);
                 }
 
                 return canRead ? TextInfoPermission.Read : TextInfoPermission.None;
@@ -710,8 +711,14 @@ namespace SIL.XForge.Scripture.Services
         /// </returns>
         private IReadOnlyList<ParatextResource> GetResourcesInternal(UserSecret userSecret, bool includeInstallableResource)
         {
-            IEnumerable<SFInstallableDBLResource> resources = SFInstallableDBLResource.GetInstallableDBLResources(userSecret, this._paratextOptions.Value, this._restClientFactory, this._fileSystemService, this._jwtTokenHelper);
-            IReadOnlyDictionary<string, int> resourceRevisions = SFInstallableDBLResource.GetInstalledResourceRevisions();
+            IEnumerable<SFInstallableDBLResource> resources = SFInstallableDBLResource.GetInstallableDBLResources(
+                userSecret,
+                this._paratextOptions.Value,
+                this._restClientFactory,
+                this._fileSystemService,
+                this._jwtTokenHelper);
+            IReadOnlyDictionary<string, int> resourceRevisions =
+                SFInstallableDBLResource.GetInstalledResourceRevisions();
             return resources.OrderBy(r => r.FullName).Select(r => new ParatextResource
             {
                 AvailableRevision = r.DBLRevision,
