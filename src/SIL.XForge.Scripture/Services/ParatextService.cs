@@ -291,7 +291,7 @@ namespace SIL.XForge.Scripture.Services
                     }
 
                     canRead = SFInstallableDBLResource.CheckResourcePermission(
-                        paratextId,thisUserSecret, _restClientFactory);
+                        paratextId, thisUserSecret, _restClientFactory);
                 }
 
                 return canRead ? TextInfoPermission.Read : TextInfoPermission.None;
