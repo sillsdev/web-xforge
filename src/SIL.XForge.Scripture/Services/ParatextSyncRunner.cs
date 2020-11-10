@@ -6,10 +6,8 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using SIL.Machine.WebApi.Services;
 using SIL.ObjectModel;
-using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
@@ -146,7 +144,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     foreach (string uid in _projectDoc.Data.UserRoles.Keys)
                     {
-                        // This is done here, not on the resource sync, as a lot of users might have access to a resource
+                        // This is done here, not on the resource sync, as a lot of users may have access to a resource
                         // The updating of a source project's permissions is done when that project is synced.
                         await _projectService.AddUserToResourceProjectAsync(uid, sourceProjectRef);
                     }

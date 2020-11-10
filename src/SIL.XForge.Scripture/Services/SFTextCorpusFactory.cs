@@ -47,19 +47,12 @@ namespace SIL.XForge.Scripture.Services
             foreach (string projectId in projects)
             {
                 var project = await _realtimeService.GetSnapshotAsync<SFProject>(projectId);
-                string textCorpusProjectId;
-                switch (type)
+                string textCorpusProjectId = type switch
                 {
-                    case TextCorpusType.Source:
-                        textCorpusProjectId = project.TranslateConfig.Source?.ProjectRef ?? projectId;
-                        break;
-                    case TextCorpusType.Target:
-                        textCorpusProjectId = projectId;
-                        break;
-                    default:
-                        throw new InvalidEnumArgumentException(nameof(type), (int)type, typeof(TextType));
-                }
-
+                    TextCorpusType.Source => project.TranslateConfig.Source?.ProjectRef ?? projectId,
+                    TextCorpusType.Target => projectId,
+                    _ => throw new InvalidEnumArgumentException(nameof(type), (int)type, typeof(TextType)),
+                };
                 foreach (TextInfo text in project.Texts.Where(t => t.HasSource))
                 {
                     foreach (Chapter chapter in text.Chapters)
