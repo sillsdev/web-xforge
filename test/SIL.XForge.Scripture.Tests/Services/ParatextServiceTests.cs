@@ -292,6 +292,55 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task GetResourcePermissionAsync_UserNoResourcePermission()
+        {
+            // Set up environment
+            var env = new TestEnvironment();
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            env.MockRepository.Query().Returns(new List<UserSecret>() { user01Secret }.AsQueryable());
+
+            // This is to make Tokens.ValidateLifetime() return false
+            user01Secret.ParatextTokens.AccessToken = null;
+
+            // Set up mock REST client to return a successful HEAD request
+            ISFRESTClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
+            ISFRESTClient mockClient = Substitute.For<ISFRESTClient>();
+            mockClient.Head(Arg.Any<string>()).Throws<WebException>();
+            mockRestClientFactory
+                .Create(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<UserSecret>())
+                .Returns(mockClient);
+
+            var paratextId = "resid_is_16_char";
+            var permission = await env.Service.GetResourcePermissionAsync(user01Secret, paratextId, env.User01);
+            Assert.That(permission, Is.EqualTo(TextInfoPermission.None));
+        }
+
+        [Test]
+        public async Task GetResourcePermissionAsync_UserResourcePermission()
+        {
+            // Set up environment
+            var env = new TestEnvironment();
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            env.MockRepository.Query().Returns(new List<UserSecret>() { user01Secret }.AsQueryable());
+
+            // This is to make Tokens.ValidateLifetime() return false
+            user01Secret.ParatextTokens.AccessToken = null;
+
+            // Set up mock REST client to return a successful HEAD request
+            ISFRESTClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
+            ISFRESTClient mockClient = Substitute.For<ISFRESTClient>();
+            mockClient.Head(Arg.Any<string>()).Returns(string.Empty);
+            mockRestClientFactory
+                .Create(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<UserSecret>())
+                .Returns(mockClient);
+
+            var paratextId = "resid_is_16_char";
+
+            var permission = await env.Service.GetResourcePermissionAsync(user01Secret, paratextId, env.User01);
+            Assert.That(permission, Is.EqualTo(TextInfoPermission.Read));
+        }
+
+        [Test]
         public void GetBooks_ReturnCorrectNumberOfBooks()
         {
             var env = new TestEnvironment();
