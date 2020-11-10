@@ -58,7 +58,8 @@ namespace SourceTargetSplitting
         public async Task CreateProjectFromSourceAsync(string sourceId, string targetId)
         {
             // Get the administrator for the specified project
-            var targetProject = this._realtimeService.QuerySnapshots<SFProject>().FirstOrDefault(p => p.ParatextId == targetId);
+            var targetProject =
+                this._realtimeService.QuerySnapshots<SFProject>().FirstOrDefault(p => p.ParatextId == targetId);
             if (targetProject == null)
             {
                 throw new DataNotFoundException("The target project does not exist");
@@ -77,7 +78,8 @@ namespace SourceTargetSplitting
                 try
                 {
                     // Use the project service to create the resource project
-                    string sourceProjectRef = await this._projectService.CreateResourceProjectAsync(userId, sourceId).ConfigureAwait(false);
+                    string sourceProjectRef =
+                        await this._projectService.CreateResourceProjectAsync(userId, sourceId).ConfigureAwait(false);
 
                     // Add each user in the target project to the source project so they can access it
                     foreach (string uid in userIds)
@@ -153,7 +155,7 @@ namespace SourceTargetSplitting
                     }
                     else
                     {
-                        Program.Log($"Error Migrating {project.Id} -  Source {sourceParatextId} is missing from MongoDB!");
+                        Program.Log($"Error Migrating {project.Id} - Source {sourceParatextId} is missing from MongoDB!");
                     }
                 }
             }
@@ -249,14 +251,16 @@ namespace SourceTargetSplitting
         public async Task MigrateTargetPermissionsAsync(string sourceId, string targetId)
         {
             // Get the target project
-            var targetProject = this._realtimeService.QuerySnapshots<SFProject>().FirstOrDefault(p => p.ParatextId == targetId);
+            var targetProject =
+                this._realtimeService.QuerySnapshots<SFProject>().FirstOrDefault(p => p.ParatextId == targetId);
             if (targetProject == null)
             {
                 throw new DataNotFoundException("The target project does not exist");
             }
 
             // Get the source project
-            var sourceProject = this._realtimeService.QuerySnapshots<SFProject>().FirstOrDefault(p => p.ParatextId == sourceId);
+            var sourceProject =
+                this._realtimeService.QuerySnapshots<SFProject>().FirstOrDefault(p => p.ParatextId == sourceId);
             if (sourceProject == null)
             {
                 throw new DataNotFoundException("The source project does not exist");
@@ -313,11 +317,13 @@ namespace SourceTargetSplitting
         /// <param name="id">The identifier.</param>
         private async Task DeleteDocsAsync(string collectionName, string id)
         {
-            IMongoCollection<BsonDocument> snapshotCollection = this._database.GetCollection<BsonDocument>(collectionName);
+            IMongoCollection<BsonDocument> snapshotCollection =
+                this._database.GetCollection<BsonDocument>(collectionName);
             FilterDefinition<BsonDocument> idFilter = Builders<BsonDocument>.Filter.Regex("_id", $"^{id}");
             await snapshotCollection.DeleteManyAsync(idFilter).ConfigureAwait(false);
 
-            IMongoCollection<BsonDocument> opsCollection = this._database.GetCollection<BsonDocument>($"o_{collectionName}");
+            IMongoCollection<BsonDocument> opsCollection =
+                this._database.GetCollection<BsonDocument>($"o_{collectionName}");
             FilterDefinition<BsonDocument> dFilter = Builders<BsonDocument>.Filter.Regex("d", $"^{id}");
             await opsCollection.DeleteManyAsync(dFilter).ConfigureAwait(false);
         }

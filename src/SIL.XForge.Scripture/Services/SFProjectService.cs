@@ -72,7 +72,8 @@ namespace SIL.XForge.Scripture.Services
             TranslateSource source = null;
             if (settings.SourceParatextId != null && settings.SourceParatextId != settings.ParatextId)
             {
-                source = await this.GetTranslateSourceAsync(curUserId, userSecret, settings.SourceParatextId, ptProjects);
+                source =
+                    await this.GetTranslateSourceAsync(curUserId, userSecret, settings.SourceParatextId, ptProjects);
             }
 
             var project = new SFProject
@@ -463,8 +464,8 @@ namespace SIL.XForge.Scripture.Services
                         if (userDoc.IsLoaded)
                         {
                             // Update the resource permissions for the source resource
-                            string permission =
-                                await _paratextService.GetResourcePermissionAsync(userSecret, project.ParatextId, curUserId);
+                            string permission = await _paratextService.GetResourcePermissionAsync(
+                                userSecret, project.ParatextId, curUserId);
                             string siteId = SiteOptions.Value.Id;
                             if (permission == TextInfoPermission.None)
                             {
