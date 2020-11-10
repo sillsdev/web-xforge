@@ -1,12 +1,13 @@
-import { FeatureOfflineData } from 'xforge-common/models/feature-offline-data';
+import { OfflineData } from 'xforge-common/offline-store';
 
 export const FEATURE_TRANSLATION = 'feature_translation';
 
 /**
  * Data that can be stored in browser storage and used to train edited segments while offline
  */
-export interface TranslationSuggestionsData extends FeatureOfflineData {
+export interface EngineTrainingStorageData extends OfflineData {
+  projectRef: string;
   bookNum: number;
   chapterNum: number;
-  pendingTrainingSegments: string[];
+  segment: string;
 }

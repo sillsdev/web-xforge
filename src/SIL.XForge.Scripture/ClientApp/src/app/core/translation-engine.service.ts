@@ -4,35 +4,14 @@ import * as crc from 'crc-32';
 import { SFProjectUserConfig } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
-import { OfflineStore } from 'xforge-common/offline-store';
-import { OnlineFeatureService } from 'xforge-common/online-feature.service';
+import { Observable } from 'rxjs';
+import { filter, share } from 'rxjs/operators';
+import { OfflineData, OfflineStore } from 'xforge-common/offline-store';
 import { PwaService } from 'xforge-common/pwa.service';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { MachineHttpClient } from './machine-http-client';
-import { FEATURE_TRANSLATION, TranslationSuggestionsData } from './models/translation-suggestions-data';
+import { EngineTrainingStorageData, FEATURE_TRANSLATION } from './models/engine-training-storage-data';
 import { SFProjectService } from './sf-project.service';
-
-export interface SegmentTrainingData {
-  task: string | undefined;
-  projectRef: string;
-  bookNum?: number;
-  chapterNum?: number;
-  segment: string;
-  checksum: any;
-}
-
-/**
- * Format SFProjectUserConfig data to be used in training a selected segment
- */
-export function toSegmentTrainingData(config: SFProjectUserConfig): SegmentTrainingData {
-  return {
-    task: config.selectedTask,
-    projectRef: config.projectRef,
-    bookNum: config.selectedBookNum,
-    chapterNum: config.selectedChapterNum,
-    segment: config.selectedSegment,
-    checksum: config.selectedSegmentChecksum
-  };
-}
 
 /**
  * A service to access features for translation suggestions and training the translation engine
@@ -40,31 +19,27 @@ export function toSegmentTrainingData(config: SFProjectUserConfig): SegmentTrain
 @Injectable({
   providedIn: 'root'
 })
-export class TranslationEngineService extends OnlineFeatureService {
+export class TranslationEngineService extends SubscriptionDisposable {
+  private onlineStatus$: Observable<boolean>;
+
   constructor(
-    offlineStore: OfflineStore,
-    pwaService: PwaService,
+    private readonly offlineStore: OfflineStore,
+    private readonly pwaService: PwaService,
     private readonly projectService: SFProjectService,
     private readonly machineHttp: MachineHttpClient
   ) {
-    super(offlineStore, pwaService);
+    super();
+    this.onlineStatus$ = this.pwaService.onlineStatus.pipe(
+      filter(online => online),
+      share()
+    );
     this.onlineCallback(async () => {
-      const translationSuggestionsData = await this.getAll<TranslationSuggestionsData>(FEATURE_TRANSLATION);
-      for (const chapterData of translationSuggestionsData) {
-        const chapterTrainPromises: Promise<void>[] = [];
-        for (const segment of chapterData.pendingTrainingSegments) {
-          const trainingData: SegmentTrainingData = {
-            task: undefined,
-            projectRef: chapterData.projectRef,
-            bookNum: chapterData.bookNum,
-            chapterNum: chapterData.chapterNum,
-            segment: segment,
-            checksum: 0
-          };
-          chapterTrainPromises.push(this.trainSelectedSegment(trainingData));
-        }
-        await Promise.all(chapterTrainPromises);
-        await this.delete(FEATURE_TRANSLATION, chapterData.id);
+      const engineTrainingData: EngineTrainingStorageData[] = await this.getAll<EngineTrainingStorageData>(
+        FEATURE_TRANSLATION
+      );
+      for (const data of engineTrainingData) {
+        await this.trainSegment(data.projectRef, data.bookNum, data.chapterNum, data.segment, undefined);
+        await this.delete(FEATURE_TRANSLATION, data.id);
       }
     });
   }
@@ -76,33 +51,66 @@ export class TranslationEngineService extends OnlineFeatureService {
   /**
    * Train the translation engine with the text for a specified segment using the target and source text
    */
-  async trainSelectedSegment(data: SegmentTrainingData): Promise<void> {
+  async trainSelectedSegment(projectUserConfig: SFProjectUserConfig): Promise<void> {
     if (
-      data.task === 'checking' ||
-      data.bookNum == null ||
-      data.chapterNum == null ||
-      data.segment === '' ||
-      data.checksum == null
+      projectUserConfig.selectedTask === 'checking' ||
+      projectUserConfig.selectedBookNum == null ||
+      projectUserConfig.selectedChapterNum == null ||
+      projectUserConfig.selectedSegment === '' ||
+      projectUserConfig.selectedSegmentChecksum == null
     ) {
       return;
     }
-
-    const targetDoc = await this.projectService.getText(
-      getTextDocId(data.projectRef, data.bookNum, data.chapterNum, 'target')
+    return this.trainSegment(
+      projectUserConfig.projectRef,
+      projectUserConfig.selectedBookNum,
+      projectUserConfig.selectedChapterNum,
+      projectUserConfig.selectedSegment,
+      projectUserConfig.selectedSegmentChecksum
     );
-    const targetText = targetDoc.getSegmentText(data.segment);
+  }
+
+  /**
+   * Store a segment to be used to train the translation engine when returning online
+   */
+  async storeTrainingSegment(projectRef: string, bookNum: number, chapterNum: number, segment: string): Promise<void> {
+    let trainingData: EngineTrainingStorageData | undefined = await this.get<EngineTrainingStorageData>(
+      FEATURE_TRANSLATION,
+      this.translationSuggestionId(projectRef, bookNum, segment)
+    );
+    if (trainingData != null) {
+      return;
+    }
+
+    trainingData = {
+      id: this.translationSuggestionId(projectRef, bookNum, segment),
+      projectRef: projectRef,
+      bookNum: bookNum,
+      chapterNum: chapterNum,
+      segment: segment
+    };
+    return this.put(FEATURE_TRANSLATION, trainingData);
+  }
+
+  private async trainSegment(
+    projectRef: string,
+    bookNum: number,
+    chapterNum: number,
+    segment: string,
+    checksum: number | undefined
+  ) {
+    const targetDoc = await this.projectService.getText(getTextDocId(projectRef, bookNum, chapterNum, 'target'));
+    const targetText = targetDoc.getSegmentText(segment);
     if (targetText === '') {
       return;
     }
-    const checksum = crc.str(targetText);
-    if (checksum === data.checksum) {
+    const targetChecksum = crc.str(targetText);
+    if (checksum === targetChecksum) {
       return;
     }
 
-    const sourceDoc = await this.projectService.getText(
-      getTextDocId(data.projectRef, data.bookNum, data.chapterNum, 'source')
-    );
-    const sourceText = sourceDoc.getSegmentText(data.segment);
+    const sourceDoc = await this.projectService.getText(getTextDocId(projectRef, bookNum, chapterNum, 'source'));
+    const sourceText = sourceDoc.getSegmentText(segment);
     if (sourceText === '') {
       return;
     }
@@ -113,7 +121,7 @@ export class TranslationEngineService extends OnlineFeatureService {
       return;
     }
 
-    const translationEngine = this.createTranslationEngine(data.projectRef);
+    const translationEngine = this.createTranslationEngine(projectRef);
     const session = await translationEngine.translateInteractively(sourceWords);
     const tokenRanges = wordTokenizer.tokenizeAsRanges(targetText);
     const prefix = tokenRanges.map(r => targetText.substring(r.start, r.end));
@@ -121,45 +129,29 @@ export class TranslationEngineService extends OnlineFeatureService {
       tokenRanges.length === 0 || tokenRanges[tokenRanges.length - 1].end !== targetText.length;
     session.setPrefix(prefix, isLastWordComplete);
     await session.approve(true);
-    console.log(
-      'Segment ' + data.segment + ' of document ' + Canon.bookNumberToId(data.bookNum) + ' was trained successfully.'
-    );
+    console.log('Segment ' + segment + ' of document ' + Canon.bookNumberToId(bookNum) + ' was trained successfully.');
   }
 
-  /**
-   * Store a segment to be used to train the translation engine when returning online
-   */
-  async storeTrainingSegment(data: SegmentTrainingData): Promise<void> {
-    if (data.bookNum == null || data.chapterNum == null) {
-      return;
-    }
-    const offlineData: TranslationSuggestionsData | undefined = await this.toStorageData(data);
-    if (offlineData != null) {
-      this.put(FEATURE_TRANSLATION, offlineData);
-    }
+  private put<T extends OfflineData>(collection: string, data: T): Promise<void> {
+    return this.offlineStore.put(collection, data);
   }
 
-  private async toStorageData(data: SegmentTrainingData): Promise<TranslationSuggestionsData | undefined> {
-    if (data.bookNum == null || data.chapterNum == null) {
-      return;
-    }
-    const chapterData: TranslationSuggestionsData | undefined = await this.get<TranslationSuggestionsData>(
-      FEATURE_TRANSLATION,
-      this.translationSuggestionId(data)
-    );
-    const storedSegments: string[] = chapterData == null ? [] : chapterData.pendingTrainingSegments;
-    return {
-      id: this.translationSuggestionId(data),
-      projectRef: data.projectRef,
-      bookNum: data.bookNum,
-      chapterNum: data.chapterNum,
-      pendingTrainingSegments: storedSegments.includes(data.segment)
-        ? storedSegments
-        : [...storedSegments, data.segment]
-    };
+  private getAll<T extends OfflineData>(collection: string): Promise<T[]> {
+    return this.offlineStore.getAll<T>(collection);
+  }
+  private get<T extends OfflineData>(collection: string, id: string): Promise<T | undefined> {
+    return this.offlineStore.get(collection, id);
   }
 
-  private translationSuggestionId(data: SegmentTrainingData): string {
-    return `${data.projectRef}:${data.bookNum}:${data.chapterNum}`;
+  private delete(collection: string, id: string): Promise<void> {
+    return this.offlineStore.delete(collection, id);
+  }
+
+  private onlineCallback(callback: () => any): void {
+    this.subscribe(this.onlineStatus$, callback);
+  }
+
+  private translationSuggestionId(projectRef: string, bookNum: number, segment: string): string {
+    return `${projectRef}:${bookNum}:${segment}`;
   }
 }
