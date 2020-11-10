@@ -13,7 +13,7 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
-import { toSegmentTrainingData, TranslationEngineService } from '../../../core/translation-engine.service';
+import { TranslationEngineService } from '../../../core/translation-engine.service';
 import { CheckingUtils } from '../../checking.utils';
 
 @Component({
@@ -281,9 +281,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
       const activeQuestionDoc = this.activeQuestionDoc;
       if (activeQuestionDoc != null && activeQuestionDoc.data != null) {
         if (this.project?.translateConfig.translationSuggestionsEnabled) {
-          await this.translationEngineService.trainSelectedSegment(
-            toSegmentTrainingData(this.projectUserConfigDoc.data)
-          );
+          await this.translationEngineService.trainSelectedSegment(this.projectUserConfigDoc.data);
         }
         await this.projectUserConfigDoc.submitJson0Op(op => {
           op.set<string>(puc => puc.selectedTask!, 'checking');

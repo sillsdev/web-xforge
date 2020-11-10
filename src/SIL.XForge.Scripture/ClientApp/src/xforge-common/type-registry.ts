@@ -8,14 +8,14 @@ import { RealtimeDocConstructor } from './models/realtime-doc';
 export class TypeRegistry {
   private readonly _docTypes: Map<string, RealtimeDocConstructor>;
   private readonly _fileTypes: FileType[];
-  private readonly _onlineFeatureTypes: string[];
+  private readonly _customTypes: string[];
 
-  constructor(docTypes: RealtimeDocConstructor[], fileTypes: FileType[], onlineFeatureTypes: string[]) {
+  constructor(docTypes: RealtimeDocConstructor[], fileTypes: FileType[], customTypes: string[]) {
     this._docTypes = new Map<string, RealtimeDocConstructor>(
       docTypes.map(r => [r.COLLECTION, r] as [string, RealtimeDocConstructor])
     );
     this._fileTypes = fileTypes;
-    this._onlineFeatureTypes = onlineFeatureTypes;
+    this._customTypes = customTypes;
   }
 
   get docTypes(): Iterable<RealtimeDocConstructor> {
@@ -26,8 +26,8 @@ export class TypeRegistry {
     return this._fileTypes;
   }
 
-  get onlineFeatureTypes(): Iterable<string> {
-    return this._onlineFeatureTypes;
+  get customTypes(): Iterable<string> {
+    return this._customTypes;
   }
 
   getDocType(collection: string): RealtimeDocConstructor | undefined {

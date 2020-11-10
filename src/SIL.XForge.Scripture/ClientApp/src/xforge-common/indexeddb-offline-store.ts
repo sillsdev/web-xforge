@@ -202,7 +202,7 @@ export class IndexeddbOfflineStore extends OfflineStore {
             createObjectStore(db, fileType);
           }
         }
-        for (const featureType of this.typeRegistry.onlineFeatureTypes) {
+        for (const featureType of this.typeRegistry.customTypes) {
           if (!storeNames.contains(featureType)) {
             createObjectStore(db, featureType);
           }
