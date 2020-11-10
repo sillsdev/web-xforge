@@ -255,7 +255,8 @@ namespace SourceTargetSplitting
                             Directory.Move(sourcePath, newProjectTargetDirectoryPath);
                             try
                             {
-                                await objectMigrator!.CreateProjectFromSourceAsync(sourceProjectId, projectId).ConfigureAwait(false);
+                                await objectMigrator!.CreateProjectFromSourceAsync(sourceProjectId, projectId)
+                                    .ConfigureAwait(false);
                             }
                             catch (DataNotFoundException ex)
                             {
@@ -271,7 +272,8 @@ namespace SourceTargetSplitting
                         Log("\tSource directory already exists as a project, deleting and migrating permissions");
                         if (doWrite)
                         {
-                            await objectMigrator!.MigrateTargetPermissionsAsync(sourceProjectId, projectId).ConfigureAwait(false);
+                            await objectMigrator!.MigrateTargetPermissionsAsync(sourceProjectId, projectId)
+                                .ConfigureAwait(false);
                             Directory.Delete(sourcePath, true);
                         }
 

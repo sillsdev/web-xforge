@@ -249,12 +249,13 @@ namespace SIL.XForge.Scripture.Services
                 throw new ArgumentNullException(nameof(userSecret));
             }
 
-            ISFRESTClient client = restClientFactory.Create(string.Empty, ApplicationProduct.DefaultVersion, userSecret);
+            ISFRESTClient client =
+                restClientFactory.Create(string.Empty, ApplicationProduct.DefaultVersion, userSecret);
             baseUrl = string.IsNullOrWhiteSpace(baseUrl) ? InternetAccess.ParatextDBLServer : baseUrl;
             string response = client.Get(BuildDBLResourceEntriesUrl(baseUrl));
-            IEnumerable<SFInstallableDBLResource> resources = ConvertJsonResponseToInstallableDblResources(baseUrl, response, restClientFactory,
-                fileSystemService, jwtTokenHelper, DateTime.Now, userSecret, paratextOptions,
-                new ParatextProjectDeleter(), new ParatextMigrationOperations(),
+            IEnumerable<SFInstallableDBLResource> resources = ConvertJsonResponseToInstallableDblResources(baseUrl,
+                response, restClientFactory, fileSystemService, jwtTokenHelper, DateTime.Now, userSecret,
+                paratextOptions, new ParatextProjectDeleter(), new ParatextMigrationOperations(),
                 new ParatextZippedResourcePasswordProvider(paratextOptions));
             return resources;
         }
@@ -350,7 +351,7 @@ namespace SIL.XForge.Scripture.Services
             catch (UnauthorizedAccessException)
             {
                 // Treat this like we couldn't get the resource from the DBL - ignore the error and continue.
-                // This was either caused by the file already being there and in use, or the SF Project directory not existing
+                // This maybe caused by the file already being there and in use or the SF Project directory not existing
                 result = false;
             }
 
@@ -414,7 +415,8 @@ namespace SIL.XForge.Scripture.Services
                             else if (revision == 0 && !entry.IsDirectory
                                 && entry.FileName.StartsWith(revisionSearchPath, StringComparison.OrdinalIgnoreCase))
                             {
-                                string revisionFilename = entry.FileName.Split('/', StringSplitOptions.RemoveEmptyEntries).Last();
+                                string revisionFilename =
+                                    entry.FileName.Split('/', StringSplitOptions.RemoveEmptyEntries).Last();
                                 if (!int.TryParse(revisionFilename, out revision))
                                 {
                                     // An error occurred reading the revision
@@ -507,11 +509,11 @@ namespace SIL.XForge.Scripture.Services
         /// <returns>
         /// The Installable Resources.
         /// </returns>
-        private static IEnumerable<SFInstallableDBLResource> ConvertJsonResponseToInstallableDblResources(string baseUri,
-            string response, ISFRESTClientFactory restClientFactory, IFileSystemService fileSystemService,
-            IJwtTokenHelper jwtTokenHelper, DateTime createdTimestamp, UserSecret userSecret, ParatextOptions paratextOptions,
-            IProjectDeleter projectDeleter, IMigrationOperations migrationOperations,
-            IZippedResourcePasswordProvider passwordProvider)
+        private static IEnumerable<SFInstallableDBLResource> ConvertJsonResponseToInstallableDblResources(
+            string baseUri, string response, ISFRESTClientFactory restClientFactory,
+            IFileSystemService fileSystemService, IJwtTokenHelper jwtTokenHelper, DateTime createdTimestamp,
+            UserSecret userSecret, ParatextOptions paratextOptions, IProjectDeleter projectDeleter,
+            IMigrationOperations migrationOperations, IZippedResourcePasswordProvider passwordProvider)
         {
             if (!string.IsNullOrWhiteSpace(response))
             {
@@ -522,7 +524,8 @@ namespace SIL.XForge.Scripture.Services
                 }
                 catch (JsonReaderException)
                 {
-                    // ignore exception and just return empty result - probably caused by partial result from poor connection to DBL
+                    // Ignore the exception and just return empty result
+                    // This is probably caused by partial result from poor connection to DBL
                     yield break;
                 }
                 foreach (JToken jsonResource in jsonResources["resources"] as JArray ?? new JArray())
@@ -542,7 +545,8 @@ namespace SIL.XForge.Scripture.Services
                     var manifestChecksum = (string)jsonResource["p8z-manifest-checksum"];
                     var languageIdLDML = (string)jsonResource["languageLDMLId"];
                     var languageIdCode = (string)jsonResource["languageCode"];
-                    LanguageId languageId = migrationOperations.DetermineBestLangIdToUseForResource(languageIdLDML, languageIdCode);
+                    LanguageId languageId =
+                        migrationOperations.DetermineBestLangIdToUseForResource(languageIdLDML, languageIdCode);
                     if (string.IsNullOrEmpty(languageId.Id))
                     {
                         languageId = LanguageIdHelper.FromCommonLanguageName(languageName);
@@ -605,7 +609,8 @@ namespace SIL.XForge.Scripture.Services
         /// </returns>
         private bool GetFile(string filePath)
         {
-            ISFRESTClient client = this._restClientFactory.Create(string.Empty, ApplicationProduct.DefaultVersion, this._userSecret);
+            ISFRESTClient client =
+                this._restClientFactory.Create(string.Empty, ApplicationProduct.DefaultVersion, this._userSecret);
             string dblUrlToResource = CreateDBLUrlWithUsernameQuery(this);
             return client.GetFile(dblUrlToResource, filePath);
         }

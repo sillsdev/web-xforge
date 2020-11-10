@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
@@ -15,7 +14,9 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>
         /// A simple in memory cache that lasts the until the end of the request.
         /// </summary>
-        private ConcurrentDictionary<string, ScrText> scrTextCache = new ConcurrentDictionary<string, ScrText>();
+        private readonly ConcurrentDictionary<string, ScrText> scrTextCache
+            = new ConcurrentDictionary<string, ScrText>();
+
         public LazyScrTextCollection()
         {
             FileSystemService = new FileSystemService();
