@@ -416,18 +416,7 @@ describe('EditorComponent', () => {
       const range = env.component.target!.getSegmentRange('verse_1_1');
       env.targetEditor.setSelection(range!.index, 0, 'user');
       env.wait();
-      verify(
-        mockedTranslationEngineService.storeTrainingSegment(
-          deepEqual({
-            task: 'translate',
-            projectRef: 'project01',
-            bookNum: 40,
-            chapterNum: 1,
-            segment: 'verse_1_5',
-            checksum: anything()
-          })
-        )
-      ).once();
+      verify(mockedTranslationEngineService.storeTrainingSegment('project01', 40, 1, 'verse_1_5')).once();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
       expect(env.lastApprovedPrefix).toEqual([]);
 

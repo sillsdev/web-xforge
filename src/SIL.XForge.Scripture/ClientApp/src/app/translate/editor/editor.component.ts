@@ -32,11 +32,7 @@ import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config
 import { Delta } from '../../core/models/text-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
-import {
-  SegmentTrainingData,
-  toSegmentTrainingData,
-  TranslationEngineService
-} from '../../core/translation-engine.service';
+import { TranslationEngineService } from '../../core/translation-engine.service';
 import { Segment } from '../../shared/text/segment';
 import { TextComponent } from '../../shared/text/text.component';
 import {
@@ -345,13 +341,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             this.projectUserConfigDoc.data.selectedChapterNum !== this._chapter ||
             this.projectUserConfigDoc.data.selectedSegment !== this.target.segmentRef)
         ) {
-          if (prevSegment == null) {
-            await this.translationEngineService.trainSelectedSegment(
-              toSegmentTrainingData(this.projectUserConfigDoc.data)
-            );
+          if (prevSegment == null || this.translationSession == null) {
+            await this.translationEngineService.trainSelectedSegment(this.projectUserConfigDoc.data);
           } else {
-            const segmentTrainingData: SegmentTrainingData = toSegmentTrainingData(this.projectUserConfigDoc.data);
-            await this.trainSegment(prevSegment, segmentTrainingData);
+            await this.trainSegment(
+              prevSegment,
+              this.projectUserConfigDoc.data.projectRef,
+              this.projectUserConfigDoc.data.selectedBookNum,
+              this.projectUserConfigDoc.data.selectedChapterNum
+            );
           }
           await this.projectUserConfigDoc.submitJson0Op(op => {
             op.set<string>(puc => puc.selectedTask!, 'translate');
@@ -733,12 +731,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return { index: i, length: 0 };
   }
 
-  private async trainSegment(segment: Segment | undefined, data: SegmentTrainingData | undefined): Promise<void> {
-    if (data == null || segment == null || !this.canTrainSegment(segment)) {
+  private async trainSegment(
+    segment: Segment | undefined,
+    projectRef: string,
+    bookNum: number | undefined,
+    chapterNum: number | undefined
+  ): Promise<void> {
+    if (segment == null || !this.canTrainSegment(segment)) {
       return;
     }
-    if (!this.pwaService.isOnline) {
-      this.translationEngineService.storeTrainingSegment(data);
+    if (!this.pwaService.isOnline && bookNum != null && chapterNum != null) {
+      this.translationEngineService.storeTrainingSegment(projectRef, bookNum, chapterNum, segment.ref);
       return;
     }
 
