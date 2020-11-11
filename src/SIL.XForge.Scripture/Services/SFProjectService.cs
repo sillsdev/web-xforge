@@ -464,7 +464,11 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         /// <param name="curUserId">The current user identifier.</param>
         /// <param name="projectId">The resource project identifier.</param>
-        /// <returns></returns>
+        /// <exception cref="DataNotFoundException">The user does not exist
+        /// or
+        /// The user secret does not exist
+        /// or
+        /// The resource does not exist</exception>
         public async Task AddUserToResourceProjectAsync(string curUserId, string projectId)
         {
             SFProject project = await GetProjectAsync(projectId);
@@ -474,22 +478,19 @@ namespace SIL.XForge.Scripture.Services
                 Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
                 if (userSecretAttempt.TryResult(out UserSecret userSecret))
                 {
-                    SFProject sourceProject = RealtimeService.QuerySnapshots<SFProject>()
-                       .FirstOrDefault(p => p.ParatextId == project.ParatextId);
-                    if (sourceProject != null)
+                    IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
+                    if (userDoc.IsLoaded)
                     {
-                        IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
-                        if (userDoc.IsLoaded)
+                        // Update the resource permissions for the source resource
+                        string permission = await _paratextService.GetResourcePermissionAsync(
+                            userSecret, project.ParatextId, curUserId);
+                        string siteId = SiteOptions.Value.Id;
+                        if (userDoc.Data.Sites.TryGetValue(siteId, out Site site))
                         {
-                            // Update the resource permissions for the source resource
-                            string permission = await _paratextService.GetResourcePermissionAsync(
-                                userSecret, project.ParatextId, curUserId);
-                            string siteId = SiteOptions.Value.Id;
                             if (permission == TextInfoPermission.None)
                             {
                                 // If the user has the resource
-                                if (!string.IsNullOrWhiteSpace(siteId) && userDoc.Data.Sites.ContainsKey(siteId)
-                                    && userDoc.Data.Sites[siteId].Resources.Contains(projectId))
+                                if (site.Resources.Contains(projectId))
                                 {
                                     // Remove the resource
                                     await userDoc.SubmitJson0OpAsync(op =>
@@ -499,17 +500,21 @@ namespace SIL.XForge.Scripture.Services
                                     });
                                 }
                             }
-                            else if (!string.IsNullOrWhiteSpace(siteId) && userDoc.Data.Sites.ContainsKey(siteId)
-                                && !userDoc.Data.Sites[siteId].Resources.Contains(projectId))
+                            else if (!site.Resources.Contains(projectId))
                             {
                                 // Add the resource
                                 await userDoc.SubmitJson0OpAsync(op =>
                                     op.Add(u => u.Sites[siteId].Resources, projectId));
                             }
+
+                            // Success - permissions updated if required
+                            return;
                         }
                     }
                 }
             }
+
+            throw new DataNotFoundException("Could not add the resource permission to the user");
         }
 
         protected override async Task AddUserToProjectAsync(IConnection conn, IDocument<SFProject> projectDoc,

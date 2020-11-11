@@ -10,12 +10,12 @@ export abstract class ProjectService<T extends Project = Project> extends JsonDo
   protected abstract get projectAdminRole(): string;
   protected readonly immutableProps = [this.pathTemplate(p => p.name), this.pathTemplate(p => p.userRoles)];
 
-  protected async allowRead(_docId: string, doc: T, session: ConnectSession): Promise<boolean> {
+  protected async allowRead(docId: string, doc: T, session: ConnectSession): Promise<boolean> {
     if (session.isServer || session.role === SystemRole.SystemAdmin || Object.keys(doc).length === 0) {
       return true;
     }
 
-    if (await this.server?.canUserAccessResource(session, _docId)) {
+    if (await this.server?.canUserAccessResource(session, docId)) {
       return true;
     } else {
       return doc.userRoles != null && session.userId in doc.userRoles;

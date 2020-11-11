@@ -96,7 +96,13 @@ class TestEnvironment {
     this.service = new UserService();
     const ShareDBMingoType = ShareDBMingo.extendMemoryDB(ShareDB.MemoryDB);
     this.db = new ShareDBMingoType();
-    this.server = new RealtimeServer([this.service], 'projects', this.db, instance(this.mockedSchemaVersionRepository));
+    this.server = new RealtimeServer(
+      'TEST',
+      [this.service],
+      'projects',
+      this.db,
+      instance(this.mockedSchemaVersionRepository)
+    );
   }
 
   async createData(): Promise<void> {
