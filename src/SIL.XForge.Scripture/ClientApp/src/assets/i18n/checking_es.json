@@ -182,7 +182,7 @@
   },
   "checking_audio_player": {
     "audio_unavailable": "El audio no está disponible.",
-    "audio_cannot_be_played_offline": "Este audio no puede ser reproducido mientras esté desconectado porque no ha sido descargado. Conéctese a Internet para reproducirlo."
+    "audio_cannot_be_played": "Este audio no puede ser reproducido mientras esté desconectado porque no ha sido descargado. Conéctese a Internet para reproducirlo."
   },
   "checking_audio_recorder": {
     "mic_access_denied": "El acceso a su micrófono fue denegado. Por favor, habilite el micrófono desde su navegador.",

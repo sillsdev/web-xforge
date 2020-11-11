@@ -519,8 +519,9 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     if (audioUrl == null) {
       return;
     }
-    // default to the audioUrl to access the file on server if online or show the audio unavailable icon
-    // when offline and audio is not cached
+    // Always use the cached audio file if available otherwise set as undefined i.e. not available
+    // We record the original audioUrl so that checks can be made by the player to see if the file is available
+    // off the server when the cache is not available i.e. an 404 error is returned
     const source: string | undefined = audio != null ? URL.createObjectURL(audio) : undefined;
     this.fileSources.set(audioUrl, source);
   }
