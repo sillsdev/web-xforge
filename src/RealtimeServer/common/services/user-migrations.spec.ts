@@ -49,6 +49,7 @@ class TestEnvironment {
       { _id: USERS_COLLECTION, collection: USERS_COLLECTION, version }
     ]);
     this.server = new RealtimeServer(
+      'TEST',
       [new UserService()],
       USERS_COLLECTION,
       this.db,

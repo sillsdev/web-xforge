@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
@@ -11,12 +10,6 @@ namespace SIL.XForge.Scripture.Services
 {
     public class LazyScrTextCollection : IScrTextCollection
     {
-        /// <summary>
-        /// A simple in memory cache that lasts the until the end of the request.
-        /// </summary>
-        private readonly ConcurrentDictionary<string, ScrText> scrTextCache
-            = new ConcurrentDictionary<string, ScrText>();
-
         public LazyScrTextCollection()
         {
             FileSystemService = new FileSystemService();
@@ -40,8 +33,7 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         /// <param name="ptUsername"> The username of the user retrieving the ScrText. </param>
         /// <param name="projectId"> The ID of the target project. </param>
-        /// <param name="textType"> Target or Source. </param>
-        public ScrText FindById(string ptUsername, string projectId, Models.TextType textType)
+        public ScrText FindById(string ptUsername, string projectId)
         {
             if (projectId == null)
                 return null;
@@ -49,15 +41,7 @@ namespace SIL.XForge.Scripture.Services
             if (!FileSystemService.DirectoryExists(baseProjectPath))
                 return null;
 
-            // We cache the ScrText object as this method is called repeated during a sync
-            // This will only last in memory until the sync is finished
-            string cacheKey = $"{ptUsername}-{projectId}-{textType}";
-            if (this.scrTextCache.ContainsKey(cacheKey))
-            {
-                return this.scrTextCache[cacheKey];
-            }
-
-            string fullProjectPath = Path.Combine(baseProjectPath, TextTypeUtils.DirectoryName(textType));
+            string fullProjectPath = Path.Combine(baseProjectPath, "target");
             string settingsFile = Path.Combine(fullProjectPath, ProjectSettings.fileName);
             if (!FileSystemService.FileExists(settingsFile))
             {
@@ -79,9 +63,6 @@ namespace SIL.XForge.Scripture.Services
                     ProjectPath = fullProjectPath,
                     ShortName = name
                 });
-
-                // We don't mind if this fails - another thread would have updated this
-                this.scrTextCache.TryAdd(cacheKey, scrText);
 
                 // return the object
                 return scrText;
