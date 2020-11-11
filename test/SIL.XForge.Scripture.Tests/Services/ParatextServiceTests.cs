@@ -351,7 +351,7 @@ namespace SIL.XForge.Scripture.Services
             // Books 1 thru 3.
             env.ProjectScrText.Settings.BooksPresentSet = new BookSet(1, 3);
 
-            IReadOnlyList<int> result = env.Service.GetBookList(userSecret, ptProjectId, Models.TextType.Target);
+            IReadOnlyList<int> result = env.Service.GetBookList(userSecret, ptProjectId);
             Assert.That(result.Count(), Is.EqualTo(3));
             Assert.That(result, Is.EquivalentTo(new[] { 1, 2, 3 }));
         }
@@ -369,7 +369,7 @@ namespace SIL.XForge.Scripture.Services
             env.MakeUserSecret(env.User01, env.Username01);
 
             // SUT
-            string result = env.Service.GetBookText(null, ptProjectId, 8, Models.TextType.Target);
+            string result = env.Service.GetBookText(null, ptProjectId, 8);
             Assert.That(result, Is.EqualTo(ruthBookUsx));
         }
 
@@ -381,12 +381,11 @@ namespace SIL.XForge.Scripture.Services
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
             IInternetSharedRepositorySource mockSource =
                 env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
-            env.MockScrTextCollection.FindById(env.Username01, ptProjectId, Models.TextType.Target).Returns(i => null);
+            env.MockScrTextCollection.FindById(env.Username01, ptProjectId).Returns(i => null);
 
             // SUT
-            Assert.Throws<DataNotFoundException>(() => env.Service.GetBookText(user01Secret, ptProjectId, 8,
-                Models.TextType.Target));
-            env.MockScrTextCollection.Received(1).FindById(env.Username01, ptProjectId, Models.TextType.Target);
+            Assert.Throws<DataNotFoundException>(() => env.Service.GetBookText(user01Secret, ptProjectId, 8));
+            env.MockScrTextCollection.Received(1).FindById(env.Username01, ptProjectId);
         }
 
         [Test]
@@ -560,8 +559,8 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSuccessfulSendReceive();
             var associatedPtUser = new SFParatextUser(env.Username01);
             // FindById fails the first time, and then succeeds the second time after the pt project repo is cloned.
-            env.MockScrTextCollection.FindById(env.Username01, ptProjectId, Models.TextType.Target)
-                .Returns(null, env.GetScrText(associatedPtUser, ptProjectId, Models.TextType.Target));
+            env.MockScrTextCollection.FindById(env.Username01, ptProjectId)
+                .Returns(null, env.GetScrText(associatedPtUser, ptProjectId));
 
             string clonePath = Path.Combine(env.SyncDir, ptProjectId, "target");
             env.MockFileSystemService.DirectoryExists(clonePath).Returns(false);
@@ -586,8 +585,8 @@ namespace SIL.XForge.Scripture.Services
                 env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
             env.SetupSuccessfulSendReceive();
 
-            ScrText sourceScrText = env.GetScrText(associatedPtUser, sourceProjectId, Models.TextType.Target);
-            env.MockScrTextCollection.FindById(env.Username01, sourceProjectId, Models.TextType.Target)
+            ScrText sourceScrText = env.GetScrText(associatedPtUser, sourceProjectId);
+            env.MockScrTextCollection.FindById(env.Username01, sourceProjectId)
                 .Returns(sourceScrText);
 
             await env.Service.SendReceiveAsync(user01Secret, targetProjectId);
@@ -613,8 +612,8 @@ namespace SIL.XForge.Scripture.Services
             // Only set the the new source ScrText when it is "cloned" to the filesystem
             env.MockFileSystemService.When(fs => fs.CreateDirectory(sourcePath)).Do(_ =>
             {
-                ScrText newSourceScrText = env.GetScrText(associatedPtUser, newSourceProjectId, Models.TextType.Target);
-                env.MockScrTextCollection.FindById(env.Username01, newSourceProjectId, Models.TextType.Target)
+                ScrText newSourceScrText = env.GetScrText(associatedPtUser, newSourceProjectId);
+                env.MockScrTextCollection.FindById(env.Username01, newSourceProjectId)
                     .Returns(newSourceScrText);
             });
 
@@ -967,21 +966,16 @@ namespace SIL.XForge.Scripture.Services
             public string SetupProject(string baseId, ParatextUser associatedPtUser)
             {
                 string ptProjectId = "paratext_" + baseId;
-                ProjectScrText = GetScrText(associatedPtUser, baseId, Models.TextType.Target);
+                ProjectScrText = GetScrText(associatedPtUser, baseId);
                 ProjectCommentManager = CommentManager.Get(ProjectScrText);
-                MockScrTextCollection.FindById(Arg.Any<string>(), ptProjectId, Models.TextType.Target)
+                MockScrTextCollection.FindById(Arg.Any<string>(), ptProjectId)
                     .Returns(ProjectScrText);
                 return ptProjectId;
             }
 
-            public MockScrText GetScrText(ParatextUser associatedPtUser, string projectId, Models.TextType textType = Models.TextType.Target)
+            public MockScrText GetScrText(ParatextUser associatedPtUser, string projectId)
             {
-                string textTypeDir = textType switch
-                {
-                    Models.TextType.Target => "target",
-                    _ => throw new InvalidEnumArgumentException(nameof(textType), (int)textType, typeof(Models.TextType)),
-                };
-                string scrtextDir = Path.Combine(SyncDir, projectId, textTypeDir);
+                string scrtextDir = Path.Combine(SyncDir, projectId, "target");
                 ProjectName projectName = new ProjectName() { ProjectPath = scrtextDir, ShortName = "Proj" };
                 var scrText = new MockScrText(associatedPtUser, projectName);
                 scrText.CachedGuid = projectId;

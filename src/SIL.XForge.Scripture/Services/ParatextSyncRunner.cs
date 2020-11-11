@@ -140,7 +140,9 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 // Update user resource access
-                if (!string.IsNullOrWhiteSpace(sourceParatextId) && !string.IsNullOrWhiteSpace(sourceProjectRef))
+                if (!string.IsNullOrWhiteSpace(sourceParatextId)
+                    && !string.IsNullOrWhiteSpace(sourceProjectRef)
+                    && sourceParatextId.Length == SFInstallableDBLResource.ResourceIdentifierLength)
                 {
                     foreach (string uid in _projectDoc.Data.UserRoles.Keys)
                     {
@@ -168,8 +170,7 @@ namespace SIL.XForge.Scripture.Services
                         targetTextDocs = new SortedList<int, IDocument<TextData>>();
                     }
 
-                    List<Chapter> newChapters = await UpdateTextDocsAsync(text, TextType.Target, targetParatextId,
-                        targetTextDocs);
+                    List<Chapter> newChapters = await UpdateTextDocsAsync(text, targetParatextId, targetTextDocs);
 
                     // update question docs
                     if (questionDocsByBook.TryGetValue(text.BookNum,
@@ -281,10 +282,10 @@ namespace SIL.XForge.Scripture.Services
                 _paratextService.PutNotes(_userSecret, _projectDoc.Data.ParatextId, notesElem.ToString());
         }
 
-        private async Task<List<Chapter>> UpdateTextDocsAsync(TextInfo text, TextType textType, string paratextId,
+        private async Task<List<Chapter>> UpdateTextDocsAsync(TextInfo text, string paratextId,
             SortedList<int, IDocument<TextData>> textDocs, ISet<int> chaptersToInclude = null)
         {
-            string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum, textType);
+            string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
             var usxDoc = XDocument.Parse(bookText);
             var tasks = new List<Task>();
             Dictionary<int, ChapterDelta> deltas = _deltaUsxMapper.ToChapterDeltas(usxDoc)
@@ -302,7 +303,7 @@ namespace SIL.XForge.Scripture.Services
                 }
                 else if (chaptersToInclude == null || chaptersToInclude.Contains(kvp.Key))
                 {
-                    textDataDoc = GetTextDoc(text, kvp.Key, textType);
+                    textDataDoc = GetTextDoc(text, kvp.Key);
                     async Task createText(int chapterNum, Delta delta)
                     {
                         await textDataDoc.FetchAsync();
@@ -349,14 +350,13 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>
         /// Fetches all text docs from the database for a book.
         /// </summary>
-        internal async Task<SortedList<int, IDocument<TextData>>> FetchTextDocsAsync(TextInfo text,
-            TextType textType = TextType.Target)
+        internal async Task<SortedList<int, IDocument<TextData>>> FetchTextDocsAsync(TextInfo text)
         {
             var textDocs = new SortedList<int, IDocument<TextData>>();
             var tasks = new List<Task>();
             foreach (Chapter chapter in text.Chapters)
             {
-                IDocument<TextData> textDoc = GetTextDoc(text, chapter.Number, textType);
+                IDocument<TextData> textDoc = GetTextDoc(text, chapter.Number);
                 textDocs[chapter.Number] = textDoc;
                 tasks.Add(textDoc.FetchAsync());
             }
@@ -376,11 +376,11 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>
         /// Deletes all text docs from the database for a book.
         /// </summary>
-        private async Task DeleteAllTextDocsForBookAsync(TextInfo text, TextType textType = TextType.Target)
+        private async Task DeleteAllTextDocsForBookAsync(TextInfo text)
         {
             var tasks = new List<Task>();
             foreach (Chapter chapter in text.Chapters)
-                tasks.Add(DeleteTextDocAsync(text, chapter.Number, textType));
+                tasks.Add(DeleteTextDocAsync(text, chapter.Number));
             await Task.WhenAll(tasks);
         }
 
@@ -507,14 +507,14 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        private IDocument<TextData> GetTextDoc(TextInfo text, int chapter, TextType textType = TextType.Target)
+        private IDocument<TextData> GetTextDoc(TextInfo text, int chapter)
         {
-            return _conn.Get<TextData>(TextData.GetTextDocId(_projectDoc.Id, text.BookNum, chapter, textType));
+            return _conn.Get<TextData>(TextData.GetTextDocId(_projectDoc.Id, text.BookNum, chapter));
         }
 
-        private async Task DeleteTextDocAsync(TextInfo text, int chapter, TextType textType = TextType.Target)
+        private async Task DeleteTextDocAsync(TextInfo text, int chapter)
         {
-            IDocument<TextData> textDoc = GetTextDoc(text, chapter, textType);
+            IDocument<TextData> textDoc = GetTextDoc(text, chapter);
             await textDoc.FetchAsync();
             if (textDoc.IsLoaded)
                 await textDoc.DeleteAsync();

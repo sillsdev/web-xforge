@@ -55,8 +55,10 @@ namespace SIL.XForge.Scripture.Services
             if (!string.IsNullOrWhiteSpace(sourceProjectId))
             {
                 // We need to sync the source first so that we can link the source texts and train the engine
-                var parentId = _backgroundJobClient.Enqueue<ParatextSyncRunner>(r => r.RunAsync(sourceProjectId, curUserId, false));
-                _backgroundJobClient.ContinueJobWith<ParatextSyncRunner>(parentId, r => r.RunAsync(projectId, curUserId, trainEngine));
+                string parentId = _backgroundJobClient.Enqueue<ParatextSyncRunner>(
+                    r => r.RunAsync(sourceProjectId, curUserId, false));
+                _backgroundJobClient.ContinueJobWith<ParatextSyncRunner>(parentId,
+                    r => r.RunAsync(projectId, curUserId, trainEngine));
             }
             else
             {
