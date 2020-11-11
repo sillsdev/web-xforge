@@ -12,7 +12,11 @@ import { createFetchQuery, docFetch } from './utils/sharedb-utils';
 export const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
 export const XF_ROLE_CLAIM = 'http://xforge.org/role';
 
-export type RealtimeServerConstructor = new (db: ShareDB.DB, schemaVersions: SchemaVersionRepository) => RealtimeServer;
+export type RealtimeServerConstructor = new (
+  siteId: string,
+  db: ShareDB.DB,
+  schemaVersions: SchemaVersionRepository
+) => RealtimeServer;
 
 /**
  * This class extends the ShareDB connection class to preserve the migration version property in the request.
@@ -87,6 +91,7 @@ export class RealtimeServer extends ShareDB {
   private readonly docServices = new Map<string, DocService>();
 
   constructor(
+    private readonly siteId: string,
     docServices: DocService[],
     private readonly projectsCollection: string,
     db: ShareDB.DB,
@@ -180,12 +185,8 @@ export class RealtimeServer extends ShareDB {
     await docFetch(userDoc);
     if (userDoc.data != null) {
       const user: User = userDoc.data;
-      if (user.sites != null) {
-        for (const key in user.sites) {
-          if (user.sites[key].resources != null && user.sites[key].resources.includes(resourceId)) {
-            return true;
-          }
-        }
+      if (user?.sites[this.siteId]?.resources != null && user.sites[this.siteId].resources.includes(resourceId)) {
+        return true;
       }
     }
     return false;
