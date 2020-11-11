@@ -26,6 +26,17 @@ namespace SIL.XForge.Scripture.Services
     /// <summary>
     /// The Scripture Forge Installable DBL Resource Implementation.
     /// </summary>
+    /// <remarks>
+    /// This is a reimplementation of <see cref="Paratext.Data.Archiving.InstallableDBLResource"/>.
+    /// Much of the code was copied from that class and modified to work within the ScriptureForge environment.
+    /// Primary differences include:
+    ///  * Configuring the password provider based on the environment's <see cref="ParatextMigrationOperations"/>
+    ///  * A simplified Migration Provider and Password Provider implementation
+    ///  * Retrieving the Paratext Username from the JWT Token
+    ///  * A resource permission implementation that uses the DBL API
+    ///  * Use of the DBL API's JSON feed rather than the slower XML feed
+    ///  * Reimplementing the logic in the internal class InstallableDBLResource.DblParatextApi, using the JSON API
+    /// </remarks>
     public class SFInstallableDBLResource : InstallableResource
     {
         /// <summary>

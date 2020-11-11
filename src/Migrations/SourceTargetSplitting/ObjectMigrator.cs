@@ -16,10 +16,9 @@ namespace SourceTargetSplitting
     using SIL.XForge.Services;
 
     /// <summary>
-    /// The object migrator implementation.
+    /// The object migrator.
     /// </summary>
-    /// <seealso cref="SourceTargetSplitting.IObjectMigrator" />
-    public class ObjectMigrator : IObjectMigrator
+    public class ObjectMigrator
     {
         /// <summary>
         /// The Mongo database.
@@ -54,7 +53,15 @@ namespace SourceTargetSplitting
             this._realtimeService = realtimeService;
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Creates the project from a source project reference.
+        /// </summary>
+        /// <param name="sourceId">The source project/resource identifier.</param>
+        /// <param name="targetId">The target project identifier.
+        /// This is the project that will reference this project/resource a source.</param>
+        /// <returns>
+        /// The task.
+        /// </returns>
         public async Task CreateProjectFromSourceAsync(string sourceId, string targetId)
         {
             // Get the administrator for the specified project
@@ -114,7 +121,13 @@ namespace SourceTargetSplitting
             }
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Migrates the objects.
+        /// </summary>
+        /// <param name="doWrite">If set to <c>true</c>, do write changes to the database.</param>
+        /// <returns>
+        /// The task.
+        /// </returns>
         public async Task MigrateObjectsAsync(bool doWrite)
         {
             // Get the existing projects from MongoDB
@@ -247,7 +260,15 @@ namespace SourceTargetSplitting
             }
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Migrates a target project's permissions to the source project.
+        /// </summary>
+        /// <param name="sourceId">The source project/resource identifier.</param>
+        /// <param name="targetId">The target project identifier.
+        /// This is the project that will reference this project/resource a source.</param>
+        /// <returns>
+        /// The task.
+        /// </returns>
         public async Task MigrateTargetPermissionsAsync(string sourceId, string targetId)
         {
             // Get the target project

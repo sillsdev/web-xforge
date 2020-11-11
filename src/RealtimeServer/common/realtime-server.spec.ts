@@ -168,6 +168,7 @@ class TestEnvironment {
     when(this.mockedUserService.collection).thenReturn(USERS_COLLECTION);
     when(this.mockedProjectService.collection).thenReturn(PROJECTS_COLLECTION);
     this.server = new RealtimeServer(
+      'TEST',
       [instance(this.mockedUserService), instance(this.mockedProjectService)],
       PROJECTS_COLLECTION,
       this.db,

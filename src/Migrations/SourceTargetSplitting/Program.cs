@@ -26,7 +26,7 @@ namespace SourceTargetSplitting
         /// <summary>
         /// The object migrator.
         /// </summary>
-        private static IObjectMigrator? objectMigrator;
+        private static ObjectMigrator? objectMigrator;
 
         /// <summary>
         /// Defines the entry point of the application.
@@ -84,7 +84,7 @@ namespace SourceTargetSplitting
             BsonSerializer.RegisterSerializer(new JTokenSerializer());
 
             // Get the object migrator
-            objectMigrator = webHost.Services.GetService<IObjectMigrator>();
+            objectMigrator = webHost.Services.GetService<ObjectMigrator>();
 
             // Migrate the files, and get a list of source mappings so we can migrate the database objects
             await MigrateFilesAsync(syncDir, doWrite).ConfigureAwait(false);

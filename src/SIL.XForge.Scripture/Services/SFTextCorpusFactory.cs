@@ -11,6 +11,7 @@ using SIL.Machine.WebApi.Services;
 using SIL.XForge.Configuration;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
+using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -47,11 +48,15 @@ namespace SIL.XForge.Scripture.Services
             foreach (string projectId in projects)
             {
                 var project = await _realtimeService.GetSnapshotAsync<SFProject>(projectId);
+                if (string.IsNullOrWhiteSpace(project.TranslateConfig.Source?.ProjectRef))
+                {
+                    throw new DataNotFoundException("The source project reference is missing");
+                }
                 string textCorpusProjectId = type switch
                 {
-                    TextCorpusType.Source => project.TranslateConfig.Source?.ProjectRef ?? projectId,
+                    TextCorpusType.Source => project.TranslateConfig.Source.ProjectRef,
                     TextCorpusType.Target => projectId,
-                    _ => throw new InvalidEnumArgumentException(nameof(type), (int)type, typeof(TextType)),
+                    _ => throw new InvalidEnumArgumentException(nameof(type), (int)type, typeof(TextCorpusType)),
                 };
                 foreach (TextInfo text in project.Texts.Where(t => t.HasSource))
                 {

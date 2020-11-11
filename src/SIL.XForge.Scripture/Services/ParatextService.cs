@@ -187,7 +187,7 @@ namespace SIL.XForge.Scripture.Services
                     targetPtProject.ShortName, source.AsInternetSharedRepositorySource(), repositories);
                 string username = GetParatextUsername(userSecret);
                 // Specifically set the ScrText property of the SharedProject to indicate the project is available locally
-                targetSharedProj.ScrText = ScrTextCollection.FindById(username, ptTargetId, Models.TextType.Target);
+                targetSharedProj.ScrText = ScrTextCollection.FindById(username, ptTargetId);
                 targetSharedProj.Permissions = targetSharedProj.ScrText.Permissions;
                 List<SharedProject> sharedPtProjectsToSr = new List<SharedProject> { targetSharedProj };
 
@@ -306,7 +306,7 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>
         /// Gets the permissions for a project or resource.
         /// </summary>
-        /// <param name="_userSecret">The user secret.</param>
+        /// <param name="userSecret">The user secret.</param>
         /// <param name="project">The project - the UserRoles and Source ParatextId are used.</param>
         /// <returns>
         /// A dictionary of permissions where the key is the user ID and the value is the permission.
@@ -365,28 +365,25 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary> Determine if a specific project is in a right to left language. </summary>
-        public bool IsProjectLanguageRightToLeft(UserSecret userSecret, string ptProjectId,
-            Models.TextType textType = Models.TextType.Target)
+        public bool IsProjectLanguageRightToLeft(UserSecret userSecret, string ptProjectId)
         {
-            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), ptProjectId, textType);
+            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), ptProjectId);
             return scrText == null ? false : scrText.RightToLeft;
         }
 
         /// <summary> Get list of book numbers in PT project. </summary>
-        public IReadOnlyList<int> GetBookList(UserSecret userSecret, string ptProjectId,
-            Models.TextType textType = Models.TextType.Target)
+        public IReadOnlyList<int> GetBookList(UserSecret userSecret, string ptProjectId)
         {
-            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), ptProjectId, textType);
+            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), ptProjectId);
             if (scrText == null)
                 return Array.Empty<int>();
             return scrText.Settings.BooksPresentSet.SelectedBookNumbers.ToArray();
         }
 
         /// <summary> Get PT book text in USX, or throw if can't. </summary>
-        public string GetBookText(UserSecret userSecret, string ptProjectId, int bookNum,
-            Models.TextType textType = Models.TextType.Target)
+        public string GetBookText(UserSecret userSecret, string ptProjectId, int bookNum)
         {
-            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), ptProjectId, textType);
+            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), ptProjectId);
             if (scrText == null)
                 throw new DataNotFoundException("Can't get access to cloned project.");
             string usfm = scrText.GetText(bookNum);
@@ -396,8 +393,7 @@ namespace SIL.XForge.Scripture.Services
         /// <summary> Write up-to-date book text from mongo database to Paratext project folder. </summary>
         public void PutBookText(UserSecret userSecret, string projectId, int bookNum, string usx)
         {
-            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), projectId,
-                Models.TextType.Target);
+            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), projectId);
             var doc = new XmlDocument
             {
                 PreserveWhitespace = true
@@ -415,8 +411,7 @@ namespace SIL.XForge.Scripture.Services
         public string GetNotes(UserSecret userSecret, string projectId, int bookNum)
         {
             // TODO: should return some data structure instead of XML
-            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), projectId,
-                Models.TextType.Target);
+            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), projectId);
             if (scrText == null)
                 return null;
 
@@ -433,7 +428,7 @@ namespace SIL.XForge.Scripture.Services
             string username = GetParatextUsername(userSecret);
             List<string> users = new List<string>();
             int nbrAddedComments = 0, nbrDeletedComments = 0, nbrUpdatedComments = 0;
-            ScrText scrText = ScrTextCollection.FindById(username, projectId, Models.TextType.Target);
+            ScrText scrText = ScrTextCollection.FindById(username, projectId);
             if (scrText == null)
                 throw new DataNotFoundException("Can't get access to cloned project.");
             CommentManager manager = CommentManager.Get(scrText);
@@ -572,7 +567,7 @@ namespace SIL.XForge.Scripture.Services
         {
             string username = GetParatextUsername(userSecret);
             bool targetNeedsCloned =
-                ScrTextCollection.FindById(username, target.ParatextId, Models.TextType.Target) == null;
+                ScrTextCollection.FindById(username, target.ParatextId) == null;
             if (target is ParatextResource resource)
             {
                 // If the target is a resource, install it
@@ -592,12 +587,10 @@ namespace SIL.XForge.Scripture.Services
         /// <param name="resource">The resource.</param>
         /// <param name="targetParatextId">The target paratext identifier.</param>
         /// <param name="needsToBeCloned">If set to <c>true</c>, the resource needs to be cloned.</param>
-        /// <param name="textType">Type of the text.</param>
         /// <remarks>
         ///   <paramref name="targetParatextId" /> is required because the resource may be a source or target.
         /// </remarks>
-        private void InstallResource(ParatextResource resource, string targetParatextId, bool needsToBeCloned,
-            Models.TextType textType = Models.TextType.Target)
+        private void InstallResource(ParatextResource resource, string targetParatextId, bool needsToBeCloned)
         {
             if (resource.InstallableResource != null)
             {
@@ -613,7 +606,7 @@ namespace SIL.XForge.Scripture.Services
                 // Extract the resource to the source directory
                 if (needsToBeCloned)
                 {
-                    string path = Path.Combine(SyncDir, targetParatextId, TextTypeUtils.DirectoryName(textType));
+                    string path = Path.Combine(SyncDir, targetParatextId, "target");
                     _fileSystemService.CreateDirectory(path);
                     resource.InstallableResource.ExtractToDirectory(path);
                 }
@@ -624,10 +617,9 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        private void CloneProjectRepo(IInternetSharedRepositorySource source, string projectId, SharedRepository repo,
-            Models.TextType textType = Models.TextType.Target)
+        private void CloneProjectRepo(IInternetSharedRepositorySource source, string projectId, SharedRepository repo)
         {
-            string clonePath = Path.Combine(SyncDir, projectId, TextTypeUtils.DirectoryName(textType));
+            string clonePath = Path.Combine(SyncDir, projectId, "target");
             if (!_fileSystemService.DirectoryExists(clonePath))
             {
                 _fileSystemService.CreateDirectory(clonePath);

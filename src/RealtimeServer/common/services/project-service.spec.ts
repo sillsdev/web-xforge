@@ -111,6 +111,7 @@ class TestEnvironment {
     const ShareDBMingoType = ShareDBMingo.extendMemoryDB(ShareDB.MemoryDB);
     this.db = new ShareDBMingoType();
     this.server = new RealtimeServer(
+      'TEST',
       [this.service],
       PROJECTS_COLLECTION,
       this.db,

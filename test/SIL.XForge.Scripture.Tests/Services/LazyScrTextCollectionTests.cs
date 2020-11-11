@@ -31,7 +31,7 @@ namespace SIL.XForge.Scripture.Services
         public void FindById_DoesNotExist_ReturnsNull()
         {
             string username = "User";
-            Assert.IsNull(_lazyScrTextCollection.FindById(username, "projectDoesNotExist", Models.TextType.Target));
+            Assert.IsNull(_lazyScrTextCollection.FindById(username, "projectDoesNotExist"));
         }
 
         [Test]
@@ -45,7 +45,7 @@ namespace SIL.XForge.Scripture.Services
             _fileSystemService.FileReadText(Arg.Any<string>()).Returns(content);
             _fileSystemService.FileExists(Arg.Any<string>()).Returns(true);
 
-            ScrText scrText = _lazyScrTextCollection.FindById(username, projectId, Models.TextType.Target);
+            ScrText scrText = _lazyScrTextCollection.FindById(username, projectId);
             Assert.NotNull(scrText);
             Assert.AreEqual(projectTextName, scrText.Name);
             Assert.AreEqual(path, scrText.Directory);

@@ -106,7 +106,7 @@ namespace SourceTargetSplitting
             services.AddLocalization(options => options.ResourcesPath = "Resources");
             services.AddSFMachine(Configuration);
 
-            services.AddSingleton<IObjectMigrator, ObjectMigrator>();
+            services.AddSingleton<ObjectMigrator>();
 
             containerBuilder.Populate(services);
             ApplicationContainer = containerBuilder.Build();

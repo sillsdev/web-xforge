@@ -75,6 +75,7 @@ class TestEnvironment {
       { _id: SF_PROJECTS_COLLECTION, collection: SF_PROJECTS_COLLECTION, version }
     ]);
     this.server = new RealtimeServer(
+      'TEST',
       [new SFProjectService()],
       SF_PROJECTS_COLLECTION,
       this.db,

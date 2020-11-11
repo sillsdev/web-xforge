@@ -1,31 +1,7 @@
 using System.Collections.Generic;
-using System.ComponentModel;
 
 namespace SIL.XForge.Scripture.Models
 {
-    public enum TextType
-    {
-        Target,
-        Source
-    }
-
-    public class TextTypeUtils
-    {
-        public static string DirectoryName(TextType textType)
-        {
-            string textTypeDir;
-            switch (textType)
-            {
-                case TextType.Target:
-                    textTypeDir = "target";
-                    break;
-                default:
-                    throw new InvalidEnumArgumentException(nameof(textType), (int)textType, typeof(TextType));
-            }
-            return textTypeDir;
-        }
-    }
-
     public class TextInfo
     {
         public int BookNum { get; set; }

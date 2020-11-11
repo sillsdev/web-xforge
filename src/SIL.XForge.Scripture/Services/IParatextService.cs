@@ -14,14 +14,14 @@ namespace SIL.XForge.Scripture.Services
         string GetParatextUsername(UserSecret userSecret);
         Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId);
         Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(UserSecret userSecret, string projectId);
-        bool IsProjectLanguageRightToLeft(UserSecret userSecret, string ptProjectId, TextType textType = TextType.Target);
+        bool IsProjectLanguageRightToLeft(UserSecret userSecret, string ptProjectId);
 
         IReadOnlyList<ParatextResource> GetResources(UserSecret userSecret);
-        Task<string> GetResourcePermissionAsync(UserSecret _userSecret, string paratextId, string userId);
-        Task<Dictionary<string, string>> GetPermissionsAsync(UserSecret _userSecret, SFProject project);
+        Task<string> GetResourcePermissionAsync(UserSecret userSecret, string paratextId, string userId);
+        Task<Dictionary<string, string>> GetPermissionsAsync(UserSecret userSecret, SFProject project);
 
-        IReadOnlyList<int> GetBookList(UserSecret userSecret, string ptProjectId, TextType textType = TextType.Target);
-        string GetBookText(UserSecret userSecret, string ptProjectId, int bookNum, TextType textType = TextType.Target);
+        IReadOnlyList<int> GetBookList(UserSecret userSecret, string ptProjectId);
+        string GetBookText(UserSecret userSecret, string ptProjectId, int bookNum);
         void PutBookText(UserSecret userSecret, string ptProjectId, int bookNum, string usx);
         string GetNotes(UserSecret userSecret, string ptProjectId, int bookNum);
         void PutNotes(UserSecret userSecret, string ptProjectId, string notesText);
