@@ -11,9 +11,9 @@ const ARBITRARILY_LARGE_NUMBER = 1e10;
 export enum AudioStatus {
   Init = 'audio_initialized',
   Available = 'audio_available',
-  Unavailable = 'audio_cannot_be_played',
+  Unavailable = 'audio_cannot_be_accessed',
   LocalNotAvailable = 'audio_cannot_be_previewed',
-  Offline = 'audio_cannot_be_played_offline'
+  Offline = 'audio_cannot_be_played'
 }
 
 @Component({
@@ -28,12 +28,6 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
 
   seek: number = 0;
   audioStatus: AudioStatus = AudioStatus.Init;
-  statuses: { key: string; value: string }[] = Object.keys(AudioStatus).map(key => {
-    return {
-      key: key,
-      value: AudioStatus[key]
-    };
-  });
 
   private _currentTime: number = 0;
   private _duration: number = 0;
