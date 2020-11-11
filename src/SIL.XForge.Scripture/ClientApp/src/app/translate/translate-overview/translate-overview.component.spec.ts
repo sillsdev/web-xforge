@@ -99,6 +99,15 @@ describe('TranslateOverviewComponent', () => {
       expect(env.segmentsCount.nativeElement.textContent).toBe('100');
     }));
 
+    it('should start training engine if not initially enabled', fakeAsync(() => {
+      const env = new TestEnvironment(false);
+      env.wait();
+
+      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).never();
+      env.simulateTranslateSuggestionsEnabled();
+      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+    }));
+
     it('training progress status', fakeAsync(() => {
       const env = new TestEnvironment();
       env.wait();
@@ -158,7 +167,7 @@ class TestEnvironment {
   private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
   private trainingProgress$ = new Subject<ProgressStatus>();
 
-  constructor() {
+  constructor(translationSuggestionsEnabled: boolean = true) {
     const params = { ['projectId']: 'project01' } as Params;
     when(mockedActivatedRoute.params).thenReturn(of(params));
     when(mockedActivatedRoute.snapshot).thenReturn({} as any); // just needs to not be null/undefined
@@ -177,7 +186,7 @@ class TestEnvironment {
 
     this.fixture = TestBed.createComponent(TranslateOverviewComponent);
     this.component = this.fixture.componentInstance;
-    this.setupProjectData();
+    this.setupProjectData(translationSuggestionsEnabled);
   }
 
   get progressTextList(): HTMLElement {
@@ -341,6 +350,15 @@ class TestEnvironment {
     const textIndex = projectDoc.data!.texts.findIndex(t => t.bookNum === bookNum);
     const chapterIndex = projectDoc.data!.texts[textIndex].chapters.findIndex(c => c.number === chapter);
     projectDoc.submitJson0Op(ops => ops.remove(p => p.texts[textIndex].chapters, chapterIndex), false);
+    this.wait();
+  }
+
+  simulateTranslateSuggestionsEnabled(enabled: boolean = true) {
+    const projectDoc = <SFProjectDoc>this.realtimeService.get(SFProjectDoc.COLLECTION, 'project01');
+    projectDoc.submitJson0Op(
+      op => op.set<boolean>(p => p.translateConfig.translationSuggestionsEnabled, enabled),
+      false
+    );
     this.wait();
   }
 
