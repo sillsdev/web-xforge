@@ -1,6 +1,10 @@
 @import 'src/variables';
 @import 'bootstrap/scss/mixins/breakpoints';
 
+.primary-actions .mdc-button:not(:first-child) {
+  margin-left: $button-spacing;
+}
+
 #add-question-button {
   @include media-breakpoint-only(xs) {
     min-width: 48px;
