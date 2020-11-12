@@ -2,7 +2,7 @@
   <div fxLayout="row" fxLayoutAlign="start center" [ngClass]="{ 'reviewer-panels': !isProjectAdmin }">
     <mdc-icon fxFlex="32px">library_books</mdc-icon>
     <h2 fxFlex>{{ t("texts_with_questions") }}</h2>
-    <div fxFlexAlign="center" *ngIf="isProjectAdmin; else overallProgressChart">
+    <div fxFlexAlign="center" *ngIf="isProjectAdmin; else overallProgressChart" class="primary-actions">
       <button mdc-button type="button" *ngIf="hasTransceleratorQuestions" (click)="importDialog()" id="import-btn">
         {{ t("import_questions") }}
       </button>

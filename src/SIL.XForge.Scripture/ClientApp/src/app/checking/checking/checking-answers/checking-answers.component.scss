@@ -95,6 +95,9 @@
   .form-actions {
     display: flex;
     justify-content: flex-end;
+    .mdc-button:not(:first-child) {
+      margin-left: $button-spacing;
+    }
   }
   @include media-breakpoint-down(lg) {
     mdc-tab {
