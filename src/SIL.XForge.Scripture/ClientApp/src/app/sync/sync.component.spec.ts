@@ -94,9 +94,10 @@ describe('SyncComponent', () => {
     expect(env.syncButton).toBeNull();
     // Simulate sync starting
     env.emitSyncProgress(0);
-    expect(env.component.isProgressDeterminate).toBe(true);
+    expect(env.component.isProgressDeterminate).toBe(false);
     // Simulate sync in progress
     env.emitSyncProgress(0.5);
+    expect(env.component.isProgressDeterminate).toBe(true);
     env.emitSyncProgress(1);
     // Simulate sync completed
     env.emitSyncComplete(true);

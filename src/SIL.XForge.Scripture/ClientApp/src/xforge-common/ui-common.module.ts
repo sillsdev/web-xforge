@@ -1,3 +1,4 @@
+import { MDCDataTableModule } from '@angular-mdc/web';
 import { MdcButtonModule } from '@angular-mdc/web/button';
 import { MdcCardModule } from '@angular-mdc/web/card';
 import { MdcCheckboxModule } from '@angular-mdc/web/checkbox';
@@ -71,6 +72,7 @@ const modules = [
   MdcTextFieldModule,
   MdcTopAppBarModule,
   MdcTypographyModule,
+  MDCDataTableModule,
   ReactiveFormsModule
 ];
 

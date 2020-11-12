@@ -29,6 +29,7 @@ import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon'
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, of, Subject } from 'rxjs';
+import { first } from 'rxjs/operators';
 import { anyString, anything, deepEqual, instance, mock, reset, resetCalls, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
@@ -761,23 +762,9 @@ describe('CheckingComponent', () => {
 
     it('saves audio answer offline and plays from cache', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER, 'JHN', false);
-      when(
-        mockedFileService.uploadFile(
-          FileType.Audio,
-          'project01',
-          'questions',
-          anything(),
-          anything(),
-          anything(),
-          'audioFile.mp3',
-          anything()
-        )
-      ).thenResolve('blob://audio');
-      env.clickButton(env.addAnswerButton);
-      env.setTextFieldValue(env.yourAnswerField, 'An offline answer');
-      const audio: AudioAttachment = { status: 'processed', blob: getAudioBlob(), fileName: 'audioFile.mp3' };
-      env.component.answersPanel?.processAudio(audio);
-      env.clickButton(env.saveAnswerButton);
+      const resolveUpload$: Subject<void> = env.resolveFileUploadSubject('blob://audio');
+      env.answerQuestion('An offline answer', 'audioFile.mp3');
+      resolveUpload$.next();
       env.waitForSliderUpdate();
       verify(
         mockedFileService.uploadFile(
@@ -796,6 +783,21 @@ describe('CheckingComponent', () => {
       expect(newAnswer.audioUrl).toEqual('blob://audio');
       expect(env.component.answersPanel?.getFileSource(newAnswer.audioUrl)).toBeDefined();
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, 'questions', anything(), 'blob://audio'));
+    }));
+
+    it('saves the answer to the correct question when active question changed', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      const resolveUpload$: Subject<void> = env.resolveFileUploadSubject('uploadedFile.mp3');
+      env.selectQuestion(1);
+      env.answerQuestion('Answer with audio', 'audioFile.mp3');
+      expect(env.answers.length).toEqual(0);
+      const question = env.getQuestionDoc('q1Id');
+      expect(env.saveAnswerButton).not.toBeNull();
+      expect(env.saveAnswerButton.nativeElement.disabled).toBe(true);
+      env.selectQuestion(2);
+      resolveUpload$.next();
+      env.waitForSliderUpdate();
+      expect(question.data!.answers.length).toEqual(1);
     }));
 
     it('can delete an answer', fakeAsync(() => {
@@ -1780,9 +1782,13 @@ class TestEnvironment {
     );
   }
 
-  answerQuestion(answer: string): void {
+  answerQuestion(answer: string, audioFilename?: string): void {
     this.clickButton(this.addAnswerButton);
     this.setTextFieldValue(this.yourAnswerField, answer);
+    if (audioFilename != null) {
+      const audio: AudioAttachment = { status: 'processed', blob: getAudioBlob(), fileName: audioFilename };
+      this.component.answersPanel?.processAudio(audio);
+    }
     this.clickButton(this.saveAnswerButton);
     this.waitForSliderUpdate();
   }
@@ -1956,6 +1962,27 @@ class TestEnvironment {
     });
     flush();
     this.fixture.detectChanges();
+  }
+
+  resolveFileUploadSubject(fileUrl: string): Subject<void> {
+    const resolveUpload$ = new Subject<void>();
+    when(
+      mockedFileService.uploadFile(
+        FileType.Audio,
+        'project01',
+        QuestionDoc.COLLECTION,
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything()
+      )
+    ).thenReturn(
+      new Promise<string>(resolve => {
+        resolveUpload$.pipe(first()).subscribe(() => resolve(fileUrl));
+      })
+    );
+    return resolveUpload$;
   }
 
   /** Delete user's answer via the checking-answers.component. */

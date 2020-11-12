@@ -104,11 +104,11 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
         this.projectDataChangesSub.unsubscribe();
       }
       this.projectDataChangesSub = this.projectDoc.remoteChanges$.subscribe(async ops => {
+        if (this.translationEngine == null || !this.translationSuggestionsEnabled) {
+          this.setupTranslationEngine();
+        }
         if (ops.some(op => TEXT_PATH_TEMPLATE.matches(op.p))) {
           this.loadingStarted();
-          if (this.translationEngine == null || !this.translationSuggestionsEnabled) {
-            this.setupTranslationEngine();
-          }
           try {
             await Promise.all([this.calculateProgress(), this.updateEngineStats()]);
           } finally {

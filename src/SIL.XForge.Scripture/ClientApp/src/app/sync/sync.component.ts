@@ -49,7 +49,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
   }
 
   get isProgressDeterminate(): boolean {
-    return this.percentComplete != null;
+    return this.percentComplete != null && this.percentComplete > 0;
   }
   // Todo: This may not be return the correct data on reconnect
   get lastSyncNotice(): string {

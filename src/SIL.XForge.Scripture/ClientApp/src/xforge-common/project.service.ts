@@ -1,4 +1,3 @@
-import { HttpClient } from '@angular/common/http';
 import merge from 'lodash/merge';
 import { Project } from 'realtime-server/lib/common/models/project';
 import { obj } from 'realtime-server/lib/common/utils/obj-path';
@@ -23,8 +22,7 @@ export abstract class ProjectService<
   constructor(
     protected readonly realtimeService: RealtimeService,
     protected readonly commandService: CommandService,
-    roles: ProjectRoleInfo[],
-    private readonly http: HttpClient
+    roles: ProjectRoleInfo[]
   ) {
     super();
     this.roles = new Map<string, ProjectRoleInfo>();

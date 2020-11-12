@@ -1,0 +1,85 @@
+<ng-container *transloco="let t; read: 'import_questions_dialog'">
+  <mdc-dialog>
+    <mdc-dialog-container>
+      <mdc-dialog-surface>
+        <mdc-dialog-title> <i class="material-icons">help</i> {{ t("import_from_transcelerator") }} </mdc-dialog-title>
+        <mdc-dialog-content>
+          <form [formGroup]="filterForm" autocomplete="off">
+            <mdc-data-table>
+              <table mdcDataTableTable>
+                <thead>
+                  <tr mdcDataTableHeaderRow>
+                    <th>
+                      <mdc-form-field class="select-all-checkbox">
+                        <mdc-checkbox #selectAllCheckbox (change)="selectAllChanged($event)"></mdc-checkbox>
+                        <label>{{ t("select_all") }}</label>
+                      </mdc-form-field>
+                    </th>
+                    <th class="filter-references">
+                      <div>
+                        <mdc-form-field>
+                          <mdc-text-field formControlName="from" label="{{ t('reference_from') }}" outlined>
+                            <mdc-icon
+                              #fromRef
+                              mdcTextFieldIcon
+                              trailing
+                              clickable
+                              (click)="openScriptureChooser(fromControl)"
+                            >
+                              expand_more
+                            </mdc-icon>
+                          </mdc-text-field>
+                          <mdc-helper-text validation>{{ t("must_be_valid_reference") }}</mdc-helper-text>
+                        </mdc-form-field>
+                        <mdc-form-field>
+                          <mdc-text-field formControlName="to" label="{{ t('reference_to') }}" outlined>
+                            <mdc-icon mdcTextFieldIcon trailing clickable (click)="openScriptureChooser(toControl)">
+                              expand_more
+                            </mdc-icon>
+                          </mdc-text-field>
+                          <mdc-helper-text validation>{{ t("must_be_valid_reference") }}</mdc-helper-text>
+                        </mdc-form-field>
+                      </div>
+                    </th>
+                  </tr>
+                  <tr mdcDataTableHeaderRow>
+                    <th colspan="2" class="filter-text">
+                      <div>
+                        <mdc-text-field
+                          formControlName="filter"
+                          placeholder="{{ t('filter_questions') }}"
+                        ></mdc-text-field>
+                        <button mdc-button type="button" (click)="clearFilters()">{{ t("show_all") }}</button>
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody mdcDataTableContent>
+                  <tr mdcDataTableRow *ngFor="let listItem of filteredList" [selected]="listItem.checked">
+                    <td mdcDataTableCell>
+                      <mdc-form-field>
+                        <mdc-checkbox
+                          [checked]="listItem.checked"
+                          (change)="checkboxChanged($event, listItem)"
+                        ></mdc-checkbox>
+                        <label>{{ referenceForDisplay(listItem.question) }}</label>
+                      </mdc-form-field>
+                    </td>
+                    <td mdcDataTableCell class="row-question">{{ listItem.question.text }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </mdc-data-table>
+          </form>
+          <p *ngIf="statusMessageKey">{{ t(statusMessageKey) }}</p>
+        </mdc-dialog-content>
+        <mdc-dialog-actions>
+          <button mdcDialogButton mdcDialogAction="close" type="button">{{ t("cancel") }}</button>
+          <button mdcDialogButton unelevated type="submit" (click)="importQuestions()">
+            {{ t("import_count_questions", { count: selectedCount }) }}
+          </button>
+        </mdc-dialog-actions>
+      </mdc-dialog-surface>
+    </mdc-dialog-container>
+  </mdc-dialog>
+</ng-container>

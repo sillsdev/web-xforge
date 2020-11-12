@@ -17,6 +17,7 @@
     "password_reset_email_sent": "We've just sent you an email to reset your password.",
     "product_version": "Product version: v{{ version }}",
     "project_home": "Project home",
+    "redirecting_in_moments": "Redirecting in a few moments...",
     "report_issue_email": "email {{ email }}",
     "report_issue": "Report an issue",
     "scripture_checking_not_available": "Scripture checking is not available in this project."
@@ -186,6 +187,7 @@
     "audio_cannot_be_previewed": "The audio is in a format that cannot be previewed. Save any changes and connect to the internet to play."
   },
   "checking_audio_recorder": {
+    "not_available": "Your browser currently does not support audio recording. Please try using another supported browser.",
     "mic_access_denied": "Access to your microphone was denied. Please enable the microphone from your browser.",
     "record": "Record",
     "stop_recording": "Stop Recording",

@@ -298,5 +298,37 @@ namespace SIL.XForge.Scripture.Controllers
                 return NotFoundError(dnfe.Message);
             }
         }
+
+        public async Task<IRpcMethodResult> TransceleratorQuestions(string projectId)
+        {
+            try
+            {
+                return Ok(await _projectService.TransceleratorQuestions(UserId, projectId));
+            }
+            catch (ForbiddenException)
+            {
+                return ForbiddenError();
+            }
+            catch (DataNotFoundException dnfe)
+            {
+                return NotFoundError(dnfe.Message);
+            }
+        }
+
+        public async Task<IRpcMethodResult> HasTransceleratorQuestions(string projectId)
+        {
+            try
+            {
+                return Ok(await _projectService.HasTransceleratorQuestions(UserId, projectId));
+            }
+            catch (ForbiddenException)
+            {
+                return ForbiddenError();
+            }
+            catch (DataNotFoundException dnfe)
+            {
+                return NotFoundError(dnfe.Message);
+            }
+        }
     }
 }
