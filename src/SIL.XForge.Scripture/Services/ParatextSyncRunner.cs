@@ -144,9 +144,7 @@ namespace SIL.XForge.Scripture.Services
                     {
                         int textIndex = _projectDoc.Data.Texts.FindIndex(t => t.BookNum == bookNum);
                         TextInfo text = _projectDoc.Data.Texts[textIndex];
-                        List<TextInfo> updatedTexts = new List<TextInfo>(_projectDoc.Data.Texts);
-                        updatedTexts.RemoveAt(textIndex);
-                        await _projectDoc.SubmitJson0OpAsync(op => op.Set(pd => pd.Texts, updatedTexts));
+                        await _projectDoc.SubmitJson0OpAsync(op => op.Remove(pd => pd.Texts, textIndex));
 
                         await DeleteAllTextDocsForBookAsync(text, TextType.Target);
                         await DeleteAllQuestionsDocsForBookAsync(text);
