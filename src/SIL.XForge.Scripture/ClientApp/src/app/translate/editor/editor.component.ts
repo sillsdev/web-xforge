@@ -344,12 +344,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           if (prevSegment == null || this.translationSession == null) {
             await this.translationEngineService.trainSelectedSegment(this.projectUserConfigDoc.data);
           } else {
-            await this.trainSegment(
-              prevSegment,
-              this.projectUserConfigDoc.data.projectRef,
-              this.projectUserConfigDoc.data.selectedBookNum,
-              this.projectUserConfigDoc.data.selectedChapterNum
-            );
+            await this.trainSegment(prevSegment);
           }
           await this.projectUserConfigDoc.submitJson0Op(op => {
             op.set<string>(puc => puc.selectedTask!, 'translate');
@@ -731,17 +726,22 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return { index: i, length: 0 };
   }
 
-  private async trainSegment(
-    segment: Segment | undefined,
-    projectRef: string,
-    bookNum: number | undefined,
-    chapterNum: number | undefined
-  ): Promise<void> {
+  private async trainSegment(segment: Segment | undefined): Promise<void> {
     if (segment == null || !this.canTrainSegment(segment)) {
       return;
     }
-    if (!this.pwaService.isOnline && bookNum != null && chapterNum != null) {
-      this.translationEngineService.storeTrainingSegment(projectRef, bookNum, chapterNum, segment.ref);
+    if (
+      !this.pwaService.isOnline &&
+      this.projectUserConfigDoc?.data != null &&
+      this.projectUserConfigDoc.data.selectedBookNum != null &&
+      this.projectUserConfigDoc.data.selectedChapterNum != null
+    ) {
+      this.translationEngineService.storeTrainingSegment(
+        this.projectUserConfigDoc.data.projectRef,
+        this.projectUserConfigDoc.data.selectedBookNum,
+        this.projectUserConfigDoc.data.selectedChapterNum,
+        this.projectUserConfigDoc.data.selectedSegment
+      );
       return;
     }
 
