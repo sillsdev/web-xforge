@@ -82,6 +82,33 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task GetProjectsAsync_OmitsNotRegisteredProjects()
+        {
+            // Until we implement support to connect to projects that are not in the PT Registry (like can be so for
+            // back translation projects), don't include in the projects list those projects that are not in the
+            // PT Registry.
+            var env = new TestEnvironment();
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            bool extraSharedRepository = true;
+            env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator, extraSharedRepository);
+
+            // SUT
+            IEnumerable<ParatextProject> repos = await env.Service.GetProjectsAsync(user01Secret);
+
+            // Right number of repos returned.
+            Assert.That(repos.Count(), Is.EqualTo(3), "Not including 4th which does not have metadata");
+
+            // Repos returned are the ones we expect.
+            foreach (string projectName in new string[] { env.Project01, env.Project03, env.Project02 })
+            {
+                Assert.That(repos.Single(project => project.ParatextId == "paratext_" + projectName), Is.Not.Null);
+            }
+            // Not the ones we don't.
+            Assert.That(repos.Any<ParatextProject>(Project => Project.ParatextId == "paratext_" + env.Project04),
+                Is.False, "Should not have had project 4");
+        }
+
+        [Test]
         public async Task GetProjectsAsync_ProjectNotOnSF_RetrievesProjectFullName()
         {
             var env = new TestEnvironment();
@@ -486,6 +513,7 @@ namespace SIL.XForge.Scripture.Services
             public readonly string Project01 = "project01";
             public readonly string Project02 = "project02";
             public readonly string Project03 = "project03";
+            public readonly string Project04 = "project04";
             public readonly string User01 = "user01";
             public readonly string User02 = "user02";
             public readonly string User03 = "user03";
@@ -571,8 +599,12 @@ namespace SIL.XForge.Scripture.Services
                 return userSecret;
             }
 
+            /// <summary>
+            /// If extraSharedRepository, a SharedRepository will be made that does not have corresponding
+            /// ProjectMetadata.
+            /// </summary>
             public IInternetSharedRepositorySource SetSharedRepositorySource(UserSecret userSecret,
-                UserRoles userRoleOnAllThePtProjects)
+                UserRoles userRoleOnAllThePtProjects, bool extraSharedRepository = false)
             {
                 PermissionManager sourceUsers = Substitute.For<PermissionManager>();
                 sourceUsers.GetRole(Arg.Any<string>()).Returns(userRoleOnAllThePtProjects);
@@ -595,11 +627,23 @@ namespace SIL.XForge.Scripture.Services
                     ScrTextName = "P03",
                     SourceUsers = sourceUsers
                 };
+                SharedRepository repo4 = new SharedRepository
+                {
+                    SendReceiveId = "paratext_" + Project04,
+                    ScrTextName = "P04",
+                    SourceUsers = sourceUsers
+                };
 
                 ProjectMetadata projMeta1 = GetMetadata("paratext_" + Project01, "Full Name " + Project01);
                 ProjectMetadata projMeta2 = GetMetadata("paratext_" + Project02, "Full Name " + Project02);
                 ProjectMetadata projMeta3 = GetMetadata("paratext_" + Project03, "Full Name " + Project03);
-                mockSource.GetRepositories().Returns(new List<SharedRepository> { repo1, repo3, repo2 });
+
+                var sharedRepositories = new List<SharedRepository> { repo1, repo3, repo2 };
+                if (extraSharedRepository)
+                {
+                    sharedRepositories.Add(repo4);
+                }
+                mockSource.GetRepositories().Returns(sharedRepositories);
                 mockSource.GetProjectsMetaData().Returns(new[] { projMeta1, projMeta2, projMeta3 });
                 MockInternetSharedRepositorySourceProvider.GetSource(userSecret, Arg.Any<string>(),
                     Arg.Any<string>(), Arg.Any<string>()).Returns(mockSource);
