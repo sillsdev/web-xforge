@@ -10,7 +10,7 @@ import { OfflineData, OfflineStore } from 'xforge-common/offline-store';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { MachineHttpClient } from './machine-http-client';
-import { EngineTrainingStorageData, FEATURE_TRANSLATION } from './models/engine-training-storage-data';
+import { EDITED_SEGMENTS, EditedSegmentData } from './models/edited-segment-data';
 import { SFProjectService } from './sf-project.service';
 
 /**
@@ -34,12 +34,10 @@ export class TranslationEngineService extends SubscriptionDisposable {
       share()
     );
     this.onlineCallback(async () => {
-      const engineTrainingData: EngineTrainingStorageData[] = await this.getAll<EngineTrainingStorageData>(
-        FEATURE_TRANSLATION
-      );
+      const engineTrainingData: EditedSegmentData[] = await this.getAll<EditedSegmentData>(EDITED_SEGMENTS);
       for (const data of engineTrainingData) {
-        await this.trainSegment(data.projectRef, data.bookNum, data.chapterNum, data.segment, undefined);
-        await this.delete(FEATURE_TRANSLATION, data.id);
+        await this.trainSegment(data.projectRef, data.bookNum, data.chapterNum, data.segment);
+        await this.delete(EDITED_SEGMENTS, data.id);
       }
     });
   }
@@ -74,8 +72,8 @@ export class TranslationEngineService extends SubscriptionDisposable {
    * Store a segment to be used to train the translation engine when returning online
    */
   async storeTrainingSegment(projectRef: string, bookNum: number, chapterNum: number, segment: string): Promise<void> {
-    let trainingData: EngineTrainingStorageData | undefined = await this.get<EngineTrainingStorageData>(
-      FEATURE_TRANSLATION,
+    let trainingData: EditedSegmentData | undefined = await this.get<EditedSegmentData>(
+      EDITED_SEGMENTS,
       this.translationSuggestionId(projectRef, bookNum, segment)
     );
     if (trainingData != null) {
@@ -89,7 +87,7 @@ export class TranslationEngineService extends SubscriptionDisposable {
       chapterNum: chapterNum,
       segment: segment
     };
-    return this.put(FEATURE_TRANSLATION, trainingData);
+    return this.put(EDITED_SEGMENTS, trainingData);
   }
 
   private async trainSegment(
@@ -97,16 +95,18 @@ export class TranslationEngineService extends SubscriptionDisposable {
     bookNum: number,
     chapterNum: number,
     segment: string,
-    checksum: number | undefined
+    checksum?: number
   ) {
     const targetDoc = await this.projectService.getText(getTextDocId(projectRef, bookNum, chapterNum, 'target'));
     const targetText = targetDoc.getSegmentText(segment);
     if (targetText === '') {
       return;
     }
-    const targetChecksum = crc.str(targetText);
-    if (checksum === targetChecksum) {
-      return;
+    if (checksum != null) {
+      const targetChecksum = crc.str(targetText);
+      if (checksum === targetChecksum) {
+        return;
+      }
     }
 
     const sourceDoc = await this.projectService.getText(getTextDocId(projectRef, bookNum, chapterNum, 'source'));
