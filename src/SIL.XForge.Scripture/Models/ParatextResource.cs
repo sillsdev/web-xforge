@@ -48,7 +48,7 @@ namespace SIL.XForge.Scripture.Models
         /// <remarks>
         /// This is used solely for synchronization, and can be null if not appropriate.
         /// </remarks>
-        internal SFInstallableDBLResource InstallableResource { get; set; }
+        internal SFInstallableDblResource InstallableResource { get; set; }
 
         /// <inheritdoc/>
         public override string ToString()

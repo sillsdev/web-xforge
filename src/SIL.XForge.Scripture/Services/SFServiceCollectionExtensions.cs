@@ -22,7 +22,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<IParatextDataHelper, ParatextDataHelper>();
             services.AddSingleton<IInternetSharedRepositorySourceProvider, InternetSharedRepositorySourceProvider>();
             services.AddSingleton<ITransceleratorService, TransceleratorService>();
-            services.AddSingleton<ISFRESTClientFactory, SFDBLRESTClientFactory>();
+            services.AddSingleton<ISFRestClientFactory, SFDblRestClientFactory>();
             return services;
         }
     }

@@ -60,14 +60,14 @@ namespace SIL.XForge.Scripture.Services
         private string _registryServerUri = "https://registry.paratext.org";
         private string _sendReceiveServerUri = InternetAccess.uriProduction;
         private readonly IInternetSharedRepositorySourceProvider _internetSharedRepositorySourceProvider;
-        private readonly ISFRESTClientFactory _restClientFactory;
+        private readonly ISFRestClientFactory _restClientFactory;
 
         public ParatextService(IWebHostEnvironment env, IOptions<ParatextOptions> paratextOptions,
             IRepository<UserSecret> userSecretRepository, IRealtimeService realtimeService,
             IExceptionHandler exceptionHandler, IOptions<SiteOptions> siteOptions, IFileSystemService fileSystemService,
             ILogger<ParatextService> logger, IJwtTokenHelper jwtTokenHelper, IParatextDataHelper paratextDataHelper,
             IInternetSharedRepositorySourceProvider internetSharedRepositorySourceProvider,
-            ISFRESTClientFactory restClientFactory)
+            ISFRestClientFactory restClientFactory)
         {
             _paratextOptions = paratextOptions;
             _userSecretRepository = userSecretRepository;
@@ -264,7 +264,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task<string> GetResourcePermissionAsync(UserSecret userSecret, string paratextId, string userId)
         {
             // See if the source is a resource
-            if (paratextId.Length == SFInstallableDBLResource.ResourceIdentifierLength)
+            if (paratextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
             {
                 // The resource id is a 41 character project id truncated to 16 characters
                 UserSecret thisUserSecret;
@@ -290,7 +290,7 @@ namespace SIL.XForge.Scripture.Services
                         await RefreshAccessTokenAsync(thisUserSecret);
                     }
 
-                    canRead = SFInstallableDBLResource.CheckResourcePermission(
+                    canRead = SFInstallableDblResource.CheckResourcePermission(
                         paratextId, thisUserSecret, _restClientFactory);
                 }
 
@@ -322,7 +322,7 @@ namespace SIL.XForge.Scripture.Services
             foreach ((string uid, string role) in project.UserRoles)
             {
                 // See if the source is a resource
-                if (project.ParatextId.Length == SFInstallableDBLResource.ResourceIdentifierLength)
+                if (project.ParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
                 {
                     permissions.Add(uid, await this.GetResourcePermissionAsync(userSecret, project.ParatextId, uid));
                 }
@@ -346,7 +346,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(UserSecret userSecret,
             string projectId)
         {
-            if (projectId.Length == SFInstallableDBLResource.ResourceIdentifierLength)
+            if (projectId.Length == SFInstallableDblResource.ResourceIdentifierLength)
             {
                 // Resources do not have roles
                 return new Dictionary<string, string>();
@@ -703,14 +703,14 @@ namespace SIL.XForge.Scripture.Services
         /// </returns>
         private IReadOnlyList<ParatextResource> GetResourcesInternal(UserSecret userSecret, bool includeInstallableResource)
         {
-            IEnumerable<SFInstallableDBLResource> resources = SFInstallableDBLResource.GetInstallableDBLResources(
+            IEnumerable<SFInstallableDblResource> resources = SFInstallableDblResource.GetInstallableDblResources(
                 userSecret,
                 this._paratextOptions.Value,
                 this._restClientFactory,
                 this._fileSystemService,
                 this._jwtTokenHelper);
             IReadOnlyDictionary<string, int> resourceRevisions =
-                SFInstallableDBLResource.GetInstalledResourceRevisions();
+                SFInstallableDblResource.GetInstalledResourceRevisions();
             return resources.OrderBy(r => r.FullName).Select(r => new ParatextResource
             {
                 AvailableRevision = r.DBLRevision,
