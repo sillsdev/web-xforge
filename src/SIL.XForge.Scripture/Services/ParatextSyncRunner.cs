@@ -144,7 +144,7 @@ namespace SIL.XForge.Scripture.Services
                 // The updating of a source project's permissions is done when that project is synced.
                 if (!string.IsNullOrWhiteSpace(sourceParatextId)
                     && !string.IsNullOrWhiteSpace(sourceProjectRef)
-                    && sourceParatextId.Length == SFInstallableDBLResource.ResourceIdentifierLength)
+                    && sourceParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
                 {
                     // Get the resource project
                     IDocument<SFProject> sourceProject = await _conn.FetchAsync<SFProject>(sourceProjectRef);
@@ -184,7 +184,7 @@ namespace SIL.XForge.Scripture.Services
                 // Get the permissions if this is a resource
                 // Resources do not have per-book permissions
                 Dictionary<string, string> permissions;
-                if (_projectDoc.Data.ParatextId.Length == SFInstallableDBLResource.ResourceIdentifierLength)
+                if (_projectDoc.Data.ParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
                 {
                     permissions = await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data);
                 }
@@ -221,7 +221,7 @@ namespace SIL.XForge.Scripture.Services
                     }
 
                     // Get the permissions for the book if this is not a resource
-                    if (_projectDoc.Data.ParatextId.Length != SFInstallableDBLResource.ResourceIdentifierLength)
+                    if (_projectDoc.Data.ParatextId.Length != SFInstallableDblResource.ResourceIdentifierLength)
                     {
                         permissions = await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data);
                     }
@@ -487,7 +487,7 @@ namespace SIL.XForge.Scripture.Services
 
             bool updateRoles = true;
             IReadOnlyDictionary<string, string> ptUserRoles;
-            if (_projectDoc.Data.ParatextId.Length == SFInstallableDBLResource.ResourceIdentifierLength)
+            if (_projectDoc.Data.ParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
             {
                 // Do not update permissions on sync, if this is a resource porject
                 // Permission updates will be performed when a target project is synchronized

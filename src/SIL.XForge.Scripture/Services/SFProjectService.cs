@@ -504,7 +504,7 @@ namespace SIL.XForge.Scripture.Services
             Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(userId);
             if (userSecretAttempt.TryResult(out UserSecret userSecret))
             {
-                if (project.ParatextId?.Length == SFInstallableDBLResource.ResourceIdentifierLength)
+                if (project.ParatextId?.Length == SFInstallableDblResource.ResourceIdentifierLength)
                 {
                     // If the project is a resource, get the permission from the DBL
                     string permission = await _paratextService.GetResourcePermissionAsync(
@@ -538,7 +538,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>
-        /// Asynchronously creates a ScriuptureForge project from Paratext resource/project.
+        /// Asynchronously creates a Scripture Forge project from Paratext resource/project.
         /// </summary>
         /// <param name="curUserId">The current user identifier.</param>
         /// <param name="ptProject">The paratext project.</param>

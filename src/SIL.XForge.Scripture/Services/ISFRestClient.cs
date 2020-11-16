@@ -7,7 +7,7 @@ namespace SIL.XForge.Scripture.Services
     /// The Scripture Forge implementation of <see cref="IRESTClient" />.
     /// </summary>
     /// <seealso cref="Paratext.Data.IRESTClient" />
-    public interface ISFRESTClient : IRESTClient
+    public interface ISFRestClient : IRESTClient
     {
         /// <summary>
         /// Encode a HEAD cgi call with query vars.

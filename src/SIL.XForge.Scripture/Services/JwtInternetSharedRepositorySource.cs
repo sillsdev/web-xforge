@@ -13,9 +13,9 @@ namespace SIL.XForge.Scripture.Services
     /// <summary> An internet shared repository source that networks using JWT authenticated REST clients. </summary>
     class JwtInternetSharedRepositorySource : InternetSharedRepositorySource, IInternetSharedRepositorySource
     {
-        private readonly JwtRESTClient _registryClient;
+        private readonly JwtRestClient _registryClient;
 
-        public JwtInternetSharedRepositorySource(string accessToken, JwtRESTClient registryClient, ParatextUser authenticationPtUser, string srServerUri)
+        public JwtInternetSharedRepositorySource(string accessToken, JwtRestClient registryClient, ParatextUser authenticationPtUser, string srServerUri)
             : base(authenticationPtUser, srServerUri)
         {
             _registryClient = registryClient;
@@ -143,7 +143,7 @@ namespace SIL.XForge.Scripture.Services
         private void SetToken(string jwtToken)
         {
             client.JwtToken = jwtToken;
-            // RESTClient only uses the jwtToken if authentication is null;
+            // RestClient only uses the jwtToken if authentication is null;
             ReflectionHelperLite.SetField(client, "authentication", null);
             _registryClient.JwtToken = jwtToken;
         }

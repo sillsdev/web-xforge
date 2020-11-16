@@ -5,7 +5,7 @@ namespace SIL.XForge.Scripture.Services
     /// <summary>
     /// The Scripture Forge Rest Client Factory Interface.
     /// </summary>
-    public interface ISFRESTClientFactory
+    public interface ISFRestClientFactory
     {
         /// <summary>
         /// Creates the rest client.
@@ -14,6 +14,6 @@ namespace SIL.XForge.Scripture.Services
         /// <param name="applicationProductVersion">The application product version.</param>
         /// <param name="userSecret">The user secret.</param>
         /// <returns>The rest client.</returns>
-        ISFRESTClient Create(string baseUri, string applicationProductVersion, UserSecret userSecret);
+        ISFRestClient Create(string baseUri, string applicationProductVersion, UserSecret userSecret);
     }
 }
