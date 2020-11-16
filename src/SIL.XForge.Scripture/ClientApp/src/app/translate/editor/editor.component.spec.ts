@@ -676,10 +676,10 @@ describe('EditorComponent', () => {
         translateConfig: {
           translationSuggestionsEnabled: true,
           source: {
-            paratextId: 'resource04',
-            name: 'Resource 4',
+            paratextId: 'resource01',
+            name: 'Resource 1',
             shortName: 'SRC',
-            projectRef: 'resource04',
+            projectRef: 'resource01',
             writingSystem: {
               tag: 'qaa'
             }
@@ -853,10 +853,10 @@ describe('EditorComponent', () => {
         translateConfig: {
           translationSuggestionsEnabled: false,
           source: {
-            paratextId: 'resource04',
-            name: 'Resource 4',
+            paratextId: 'resource01',
+            name: 'Resource 1',
             shortName: 'SRC',
-            projectRef: 'resource04',
+            projectRef: 'resource01',
             writingSystem: {
               tag: 'qaa'
             }
@@ -1152,8 +1152,7 @@ class TestEnvironment {
         displayName: 'User 01',
         sites: {
           sf: {
-            projects: ['project01', 'project02', 'project03'],
-            resources: ['resource01', 'resource02', 'resource03']
+            projects: ['project01', 'project02', 'project03']
           }
         }
       }
@@ -1170,8 +1169,7 @@ class TestEnvironment {
         displayName: 'User 02',
         sites: {
           sf: {
-            projects: ['project01', 'project02', 'project03'],
-            resources: []
+            projects: ['project01', 'project02', 'project03']
           }
         }
       }
