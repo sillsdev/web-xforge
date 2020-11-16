@@ -374,7 +374,7 @@ class TestEnvironment {
         },
         checkingConfig: {
           checkingEnabled: settings.checkingEnabled,
-          shareEnabled: true,
+          shareEnabled: false,
           shareLevel: CheckingShareLevel.Specific,
           usersSeeEachOthersResponses: true
         },

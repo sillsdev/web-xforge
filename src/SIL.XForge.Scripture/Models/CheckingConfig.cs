@@ -4,7 +4,7 @@ namespace SIL.XForge.Scripture.Models
     {
         public bool CheckingEnabled { get; set; }
         public bool UsersSeeEachOthersResponses { get; set; } = true;
-        public bool ShareEnabled { get; set; } = true;
+        public bool ShareEnabled { get; set; } = false;
         public string ShareLevel { get; set; } = CheckingShareLevel.Specific;
     }
 }
