@@ -91,22 +91,14 @@ namespace SourceTargetSplitting
                     // Add each user in the target project to the source project so they can access it
                     foreach (string uid in userIds)
                     {
-                        if (sourceId.Length == SFInstallableDBLResource.ResourceIdentifierLength)
+                        try
                         {
-                            // Add the user to the resource
-                            await this._projectService.AddUserToResourceProjectAsync(uid, sourceProjectRef);
+                            // Add the user to the project
+                            await this._projectService.AddUserAsync(uid, sourceProjectRef, null);
                         }
-                        else
+                        catch (ForbiddenException)
                         {
-                            try
-                            {
-                                // Add the user to the project
-                                await this._projectService.AddUserAsync(uid, sourceProjectRef, null);
-                            }
-                            catch (ForbiddenException)
-                            {
-                                // The user does not have Paratext access
-                            }
+                            // The user does not have Paratext access
                         }
                     }
 
@@ -117,6 +109,11 @@ namespace SourceTargetSplitting
                 {
                     // We don't have access
                     continue;
+                }
+                catch (InvalidOperationException)
+                {
+                    // Project already exists
+                    break;
                 }
             }
         }
@@ -301,22 +298,14 @@ namespace SourceTargetSplitting
                     // Add each user in the target project to the source project so they can access it
                     foreach (string uid in userIds)
                     {
-                        if (sourceId.Length == SFInstallableDBLResource.ResourceIdentifierLength)
+                        try
                         {
-                            // Add the user to the resource
-                            await this._projectService.AddUserToResourceProjectAsync(uid, sourceProject.Id);
+                            // Add the user to the project
+                            await this._projectService.AddUserAsync(uid, sourceProject.Id, null);
                         }
-                        else
+                        catch (ForbiddenException)
                         {
-                            try
-                            {
-                                // Add the user to the project
-                                await this._projectService.AddUserAsync(uid, sourceProject.Id, null);
-                            }
-                            catch (ForbiddenException)
-                            {
-                                // The user does not have Paratext access
-                            }
+                            // The user does not have Paratext access
                         }
                     }
 

@@ -413,8 +413,7 @@ class TestEnvironment {
         displayName: 'User 01',
         sites: {
           sf: {
-            projects: ['project01', 'project02', 'project03'],
-            resources: ['resource01', 'resource02', 'resource03']
+            projects: ['project01', 'project02', 'project03']
           }
         }
       }

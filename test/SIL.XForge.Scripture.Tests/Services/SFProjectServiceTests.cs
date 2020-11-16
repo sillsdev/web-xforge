@@ -600,53 +600,28 @@ namespace SIL.XForge.Scripture.Services
                 .Returns(Task.FromResult(TextInfoPermission.Read));
 
             User user = env.GetUser(User01);
-            Assert.That(user.Sites[SiteId].Resources.Contains(Resource01), Is.False, "setup");
+            Assert.That(user.Sites[SiteId].Projects.Contains(Resource01), Is.False, "setup");
 
-            await env.Service.AddUserToResourceProjectAsync(User01, Resource01);
+            await env.Service.AddUserAsync(User01, Resource01, null);
 
             user = env.GetUser(User01);
-            Assert.That(user.Sites[SiteId].Resources.Contains(Resource01), Is.True, "User can access resource");
+            Assert.That(user.Sites[SiteId].Projects.Contains(Resource01), Is.True, "User can access resource");
         }
 
         [Test]
-        public async Task AddUserToResourceProjectAsync_UserResourceNoPermission()
+        public void AddUserToResourceProjectAsync_UserResourceNoPermission()
         {
             var env = new TestEnvironment();
             env.ParatextService.GetResourcePermissionAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), User01)
                 .Returns(Task.FromResult(TextInfoPermission.None));
 
             User user = env.GetUser(User01);
-            Assert.That(user.Sites[SiteId].Resources.Contains(Resource01), Is.False, "setup");
+            Assert.That(user.Sites[SiteId].Projects.Contains(Resource01), Is.False, "setup");
 
-            await env.Service.AddUserToResourceProjectAsync(User01, Resource01);
-
-            user = env.GetUser(User01);
-            Assert.That(user.Sites[SiteId].Resources.Contains(Resource01), Is.False, "user cannot access resource");
-        }
-
-        [Test]
-        public async Task AddUserToResourceProjectAsync_UserNoResourcePermission_RemovesResource()
-        {
-            var env = new TestEnvironment();
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), User01)
-                .Returns(Task.FromResult(TextInfoPermission.Read));
-
-            User user = env.GetUser(User01);
-            Assert.That(user.Sites[SiteId].Resources.Contains(Resource01), Is.False, "setup");
-
-            await env.Service.AddUserToResourceProjectAsync(User01, Resource01);
+            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.AddUserAsync(User01, Resource01, null));
 
             user = env.GetUser(User01);
-            Assert.That(user.Sites[SiteId].Resources.Contains(Resource01), Is.True, "user can access resource");
-
-            // The user's access was removed in Paratext
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), User01)
-                .Returns(Task.FromResult(TextInfoPermission.None));
-
-            await env.Service.AddUserToResourceProjectAsync(User01, Resource01);
-
-            user = env.GetUser(User01);
-            Assert.That(user.Sites[SiteId].Resources.Contains(Resource01), Is.False, "user now cannot access resource");
+            Assert.That(user.Sites[SiteId].Projects.Contains(Resource01), Is.False, "user cannot access resource");
         }
 
         private class TestEnvironment

@@ -459,64 +459,6 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        /// <summary>
-        /// Gives the user access to resource project if they have access to it in Paratext.
-        /// </summary>
-        /// <param name="curUserId">The current user identifier.</param>
-        /// <param name="projectId">The resource project identifier.</param>
-        /// <exception cref="DataNotFoundException">The user does not exist
-        /// or
-        /// The user secret does not exist
-        /// or
-        /// The resource does not exist</exception>
-        public async Task AddUserToResourceProjectAsync(string curUserId, string projectId)
-        {
-            SFProject project = await GetProjectAsync(projectId);
-            if (project != null && project.ParatextId.Length == SFInstallableDBLResource.ResourceIdentifierLength)
-            {
-                using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
-                Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
-                if (userSecretAttempt.TryResult(out UserSecret userSecret))
-                {
-                    IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
-                    if (userDoc.IsLoaded)
-                    {
-                        // Update the resource permissions for the source resource
-                        string permission = await _paratextService.GetResourcePermissionAsync(
-                            userSecret, project.ParatextId, curUserId);
-                        string siteId = SiteOptions.Value.Id;
-                        if (userDoc.Data.Sites.TryGetValue(siteId, out Site site))
-                        {
-                            if (permission == TextInfoPermission.None)
-                            {
-                                // If the user has the resource
-                                if (site.Resources.Contains(projectId))
-                                {
-                                    // Remove the resource
-                                    await userDoc.SubmitJson0OpAsync(op =>
-                                    {
-                                        int index = userDoc.Data.Sites[siteId].Resources.IndexOf(projectId);
-                                        op.Remove(u => u.Sites[siteId].Resources, index);
-                                    });
-                                }
-                            }
-                            else if (!site.Resources.Contains(projectId))
-                            {
-                                // Add the resource
-                                await userDoc.SubmitJson0OpAsync(op =>
-                                    op.Add(u => u.Sites[siteId].Resources, projectId));
-                            }
-
-                            // Success - permissions updated if required
-                            return;
-                        }
-                    }
-                }
-            }
-
-            throw new DataNotFoundException("Could not add the resource permission to the user");
-        }
-
         protected override async Task AddUserToProjectAsync(IConnection conn, IDocument<SFProject> projectDoc,
             IDocument<User> userDoc, string projectRole, bool removeShareKeys = true)
         {
@@ -524,33 +466,25 @@ namespace SIL.XForge.Scripture.Services
             await conn.CreateAsync<SFProjectUserConfig>(SFProjectUserConfig.GetDocId(projectDoc.Id, userDoc.Id),
                 new SFProjectUserConfig { ProjectRef = projectDoc.Id, OwnerRef = userDoc.Id });
 
-            // Add to the source project, if required (and it is not a resource
+            // Add to the source project, if required
             string sourceProjectId = projectDoc.Data.TranslateConfig.Source?.ProjectRef;
             string sourceParatextId = projectDoc.Data.TranslateConfig.Source?.ParatextId;
             if (!string.IsNullOrWhiteSpace(sourceProjectId) && !string.IsNullOrWhiteSpace(sourceParatextId))
             {
-                if (sourceParatextId.Length == SFInstallableDBLResource.ResourceIdentifierLength)
+                // Load the source project role from MongoDB
+                IDocument<SFProject> sourceProjectDoc = await GetProjectDocAsync(sourceProjectId, conn);
+                if (sourceProjectDoc.IsLoaded && !sourceProjectDoc.Data.UserRoles.ContainsKey(userDoc.Id))
                 {
-                    // If the source is a resource, add it to the user's resource list
-                    await this.AddUserToResourceProjectAsync(userDoc.Id, sourceProjectId);
-                }
-                else
-                {
-                    // Load the source project role from MongoDB
-                    IDocument<SFProject> sourceProjectDoc = await GetProjectDocAsync(sourceProjectId, conn);
-                    if (sourceProjectDoc.IsLoaded && !sourceProjectDoc.Data.UserRoles.ContainsKey(userDoc.Id))
+                    // Not found in Mongo, so load the project role from Paratext
+                    Attempt<string> attempt = await TryGetProjectRoleAsync(sourceProjectDoc.Data, userDoc.Id);
+                    if (attempt.TryResult(out string sourceProjectRole))
                     {
-                        // Not found in Mongo, so load the project role from Paratext
-                        Attempt<string> attempt = await TryGetProjectRoleAsync(sourceProjectDoc.Data, userDoc.Id);
-                        if (attempt.TryResult(out string sourceProjectRole))
-                        {
-                            // If they are in Paratext, add the user to the source project
-                            await this.AddUserToProjectAsync(conn, sourceProjectDoc, userDoc, sourceProjectRole,
-                                removeShareKeys);
-                            await conn.CreateAsync<SFProjectUserConfig>(
-                                SFProjectUserConfig.GetDocId(sourceProjectDoc.Id, userDoc.Id),
-                                new SFProjectUserConfig { ProjectRef = sourceProjectDoc.Id, OwnerRef = userDoc.Id });
-                        }
+                        // If they are in Paratext, add the user to the source project
+                        await this.AddUserToProjectAsync(conn, sourceProjectDoc, userDoc, sourceProjectRole,
+                            removeShareKeys);
+                        await conn.CreateAsync<SFProjectUserConfig>(
+                            SFProjectUserConfig.GetDocId(sourceProjectDoc.Id, userDoc.Id),
+                            new SFProjectUserConfig { ProjectRef = sourceProjectDoc.Id, OwnerRef = userDoc.Id });
                     }
                 }
             }
@@ -570,11 +504,26 @@ namespace SIL.XForge.Scripture.Services
             Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(userId);
             if (userSecretAttempt.TryResult(out UserSecret userSecret))
             {
-                Attempt<string> roleAttempt = await _paratextService.TryGetProjectRoleAsync(userSecret,
-                    project.ParatextId);
-                if (roleAttempt.TryResult(out string role))
+                if (project.ParatextId?.Length == SFInstallableDBLResource.ResourceIdentifierLength)
                 {
-                    return Attempt.Success(role);
+                    // If the project is a resource, get the permission from the DBL
+                    string permission = await _paratextService.GetResourcePermissionAsync(
+                               userSecret, project.ParatextId, userId);
+                    return permission switch
+                    {
+                        TextInfoPermission.None => Attempt.Failure((string)null),
+                        TextInfoPermission.Read => Attempt.Success(SFProjectRole.Observer),
+                        _ => throw new ArgumentException("Unknown resource permission", nameof(permission)),
+                    };
+                }
+                else
+                {
+                    Attempt<string> roleAttempt = await _paratextService.TryGetProjectRoleAsync(userSecret,
+                        project.ParatextId);
+                    if (roleAttempt.TryResult(out string role))
+                    {
+                        return Attempt.Success(role);
+                    }
                 }
             }
 
@@ -628,6 +577,8 @@ namespace SIL.XForge.Scripture.Services
                 }
                 IDocument<SFProject> projectDoc = await conn.CreateAsync(projectId, project);
                 await ProjectSecrets.InsertAsync(new SFProjectSecret { Id = projectDoc.Id });
+
+                // Resource projects do not have administrators, so users are added as needed
             }
 
             return projectId;
@@ -678,24 +629,17 @@ namespace SIL.XForge.Scripture.Services
             // Add each user in the target project to the source project so they can access it
             foreach (string userId in userIds)
             {
-                if (paratextId.Length == SFInstallableDBLResource.ResourceIdentifierLength)
+                try
                 {
-                    await this.AddUserToResourceProjectAsync(userId, sourceProjectRef);
+                    // Add the user to the project, if the user does not have a role in it
+                    if (sourceProject == null || !sourceProject.UserRoles.ContainsKey(userId))
+                    {
+                        await this.AddUserAsync(userId, sourceProjectRef, null);
+                    }
                 }
-                else
+                catch (ForbiddenException)
                 {
-                    try
-                    {
-                        // Add the user to the project, if the user does not have a role in it
-                        if (sourceProject == null || !sourceProject.UserRoles.ContainsKey(userId))
-                        {
-                            await this.AddUserAsync(userId, sourceProjectRef, null);
-                        }
-                    }
-                    catch (ForbiddenException)
-                    {
-                        // The user does not have Paratext access
-                    }
+                    // The user does not have Paratext access
                 }
             }
 
