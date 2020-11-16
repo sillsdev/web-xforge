@@ -21,16 +21,13 @@ export class TextService extends DocService<TextData> {
     if (session.isServer || Object.keys(doc).length === 0) {
       return true;
     }
-    if (await this.canUserAccessResource(session, docId)) {
-      return true;
-    } else {
-      const role = await this.getUserProjectRole(session, docId);
-      if (role == null) {
-        return false;
-      }
 
-      return this.hasRight(role, Operation.View);
+    const role = await this.getUserProjectRole(session, docId);
+    if (role == null) {
+      return false;
     }
+
+    return this.hasRight(role, Operation.View);
   }
 
   async allowUpdate(
@@ -54,15 +51,6 @@ export class TextService extends DocService<TextData> {
 
   private hasRight(role: string, operation: Operation): boolean {
     return SF_PROJECT_RIGHTS.hasRight(role, { projectDomain: SFProjectDomain.Texts, operation });
-  }
-
-  private canUserAccessResource(session: ConnectSession, docId: string): Promise<boolean | undefined> {
-    const parts = docId.split(':');
-    const projectId = parts[0];
-    if (this.server == null) {
-      throw new Error('The doc service has not been initialized.');
-    }
-    return this.server.canUserAccessResource(session, projectId);
   }
 
   private getUserProjectRole(session: ConnectSession, docId: string): Promise<string | undefined> {
