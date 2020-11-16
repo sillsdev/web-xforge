@@ -190,11 +190,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (!this.canEdit || this.text == null || this.currentUser === undefined || sourceId === undefined) {
       return false;
     } else {
-      let projects = this.currentUser.sites[environment.siteId].projects;
-      const resources = this.currentUser.sites[environment.siteId].resources;
-      if (resources != null) {
-        projects = projects?.concat(resources) ?? resources;
-      }
+      const projects = this.currentUser.sites[environment.siteId].projects;
       return this.text.hasSource && projects.includes(sourceId);
     }
   }

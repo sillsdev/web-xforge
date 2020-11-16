@@ -281,7 +281,7 @@ class TestEnvironment {
           avatarUrl: '',
           authId: 'auth01',
           role: SystemRole.User,
-          sites: { [environment.siteId]: { projects: ['project01'], resources: ['resource01'] } }
+          sites: { [environment.siteId]: { projects: ['project01'] } }
         }
       },
       {
@@ -294,7 +294,7 @@ class TestEnvironment {
           avatarUrl: '',
           authId: 'auth02',
           role: SystemRole.User,
-          sites: { [environment.siteId]: { projects: [], resources: [] } }
+          sites: { [environment.siteId]: { projects: [] } }
         }
       },
       {
@@ -307,7 +307,7 @@ class TestEnvironment {
           avatarUrl: '',
           authId: 'auth03',
           role: SystemRole.User,
-          sites: { [environment.siteId]: { projects: ['project01'], resources: [] } }
+          sites: { [environment.siteId]: { projects: ['project01'] } }
         }
       }
     ]);

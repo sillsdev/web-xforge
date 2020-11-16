@@ -14,6 +14,7 @@ using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
+using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -139,17 +140,57 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
 
-                // Update user resource access
+                // Update user resource access, if this project has a source resource
+                // The updating of a source project's permissions is done when that project is synced.
                 if (!string.IsNullOrWhiteSpace(sourceParatextId)
                     && !string.IsNullOrWhiteSpace(sourceProjectRef)
                     && sourceParatextId.Length == SFInstallableDBLResource.ResourceIdentifierLength)
                 {
-                    foreach (string uid in _projectDoc.Data.UserRoles.Keys)
+                    // Get the resource project
+                    IDocument<SFProject> sourceProject = await _conn.FetchAsync<SFProject>(sourceProjectRef);
+                    if (sourceProject.IsLoaded)
                     {
-                        // This is done here, not on the resource sync, as a lot of users may have access to a resource
-                        // The updating of a source project's permissions is done when that project is synced.
-                        await _projectService.AddUserToResourceProjectAsync(uid, sourceProjectRef);
+                        // Add new users who are in the target project, but not the source project
+                        List<string> usersToAdd =
+                            _projectDoc.Data.UserRoles.Keys.Except(sourceProject.Data.UserRoles.Keys).ToList();
+                        foreach (string uid in usersToAdd)
+                        {
+                            // As resource projects do not have administrators, we connect as the user we are to add
+                            try
+                            {
+                                await _projectService.AddUserAsync(uid, sourceProjectRef);
+                            }
+                            catch (ForbiddenException)
+                            {
+                                // The user does not have Paratext access
+                            }
+                        }
+
+                        // Remove users who are in the target project, and no longer have access
+                        List<string> usersToCheck = _projectDoc.Data.UserRoles.Keys.Except(usersToAdd).ToList();
+                        foreach (string uid in usersToCheck)
+                        {
+                            string permission =
+                                await _paratextService.GetResourcePermissionAsync(_userSecret, sourceParatextId, uid);
+                            if (permission == TextInfoPermission.None)
+                            {
+                                // As resource projects don't have administrators, connect as the user we are to remove
+                                await _projectService.RemoveUserAsync(uid, sourceProjectRef, uid);
+                            }
+                        }
                     }
+                }
+
+                // Get the permissions if this is a resource
+                // Resources do not have per-book permissions
+                Dictionary<string, string> permissions;
+                if (_projectDoc.Data.ParatextId.Length == SFInstallableDBLResource.ResourceIdentifierLength)
+                {
+                    permissions = await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data);
+                }
+                else
+                {
+                    permissions = null;
                 }
 
                 // update source and target real-time docs
@@ -179,9 +220,11 @@ namespace SIL.XForge.Scripture.Services
                         await UpdateQuestionDocsAsync(questionDocs, newChapters);
                     }
 
-                    // Get the permissions
-                    Dictionary<string, string> permissions =
-                        await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data);
+                    // Get the permissions for the book if this is not a resource
+                    if (_projectDoc.Data.ParatextId.Length != SFInstallableDBLResource.ResourceIdentifierLength)
+                    {
+                        permissions = await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data);
+                    }
 
                     // update project metadata
                     await _projectDoc.SubmitJson0OpAsync(op =>
@@ -444,16 +487,26 @@ namespace SIL.XForge.Scripture.Services
 
             bool updateRoles = true;
             IReadOnlyDictionary<string, string> ptUserRoles;
-            try
+            if (_projectDoc.Data.ParatextId.Length == SFInstallableDBLResource.ResourceIdentifierLength)
             {
-                ptUserRoles = await _paratextService.GetProjectRolesAsync(_userSecret,
-                    _projectDoc.Data.ParatextId);
-            }
-            catch (HttpRequestException)
-            {
-                // This throws a 404 if the user does not have access to the project
+                // Do not update permissions on sync, if this is a resource porject
+                // Permission updates will be performed when a target project is synchronized
                 ptUserRoles = new Dictionary<string, string>();
                 updateRoles = false;
+            }
+            else
+            {
+                try
+                {
+                    ptUserRoles = await _paratextService.GetProjectRolesAsync(_userSecret,
+                        _projectDoc.Data.ParatextId);
+                }
+                catch (HttpRequestException)
+                {
+                    // This throws a 404 if the user does not have access to the project
+                    ptUserRoles = new Dictionary<string, string>();
+                    updateRoles = false;
+                }
             }
 
             var userIdsToRemove = new List<string>();

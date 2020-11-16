@@ -29,8 +29,7 @@ export class UserService extends JsonDocService<User> {
     this.pathTemplate(u => u.name),
     this.pathTemplate(u => u.sites, false),
     this.pathTemplate(u => u.sites[ANY_KEY], false),
-    this.pathTemplate(u => u.sites[ANY_KEY].projects),
-    this.pathTemplate(u => u.sites[ANY_KEY].resources)
+    this.pathTemplate(u => u.sites[ANY_KEY].projects)
   ];
 
   constructor() {

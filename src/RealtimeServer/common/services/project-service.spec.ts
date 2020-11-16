@@ -28,14 +28,6 @@ describe('ProjectService', () => {
     await expect(submitOp(conn, PROJECTS_COLLECTION, 'project01', [])).resolves.not.toThrow();
   });
 
-  it('allows resource user to view project', async () => {
-    const env = new TestEnvironment();
-    await env.createData();
-
-    const conn = clientConnect(env.server, 'resource_access');
-    await expect(fetchDoc(conn, PROJECTS_COLLECTION, 'project01')).resolves.not.toThrow();
-  });
-
   it('allows project member to view project', async () => {
     const env = new TestEnvironment();
     await env.createData();
@@ -164,22 +156,6 @@ class TestEnvironment {
       displayName: 'User 04',
       avatarUrl: '',
       sites: {}
-    });
-
-    await createDoc<User>(conn, USERS_COLLECTION, 'resource_access', {
-      name: 'User 05',
-      email: 'user05@example.com',
-      role: SystemRole.User,
-      isDisplayNameConfirmed: true,
-      authId: 'auth05',
-      displayName: 'User 05',
-      avatarUrl: '',
-      sites: {
-        TEST: {
-          projects: [],
-          resources: ['project01']
-        }
-      }
     });
 
     await createDoc<Project>(conn, PROJECTS_COLLECTION, 'project01', {

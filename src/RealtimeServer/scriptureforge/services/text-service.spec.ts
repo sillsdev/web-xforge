@@ -35,14 +35,6 @@ describe('TextService', () => {
     ).resolves.not.toThrow();
   });
 
-  it('allows user with resource access to view text', async () => {
-    const env = new TestEnvironment();
-    await env.createData();
-
-    const conn = clientConnect(env.server, 'resource_access');
-    await expect(fetchDoc(conn, TEXTS_COLLECTION, getTextDocId('project01', 40, 1))).resolves.not.toThrow();
-  });
-
   it('does not allow non-member to view text', async () => {
     const env = new TestEnvironment();
     await env.createData();
@@ -114,22 +106,6 @@ class TestEnvironment {
       displayName: 'User 03',
       avatarUrl: '',
       sites: {}
-    });
-
-    await createDoc<User>(conn, USERS_COLLECTION, 'resource_access', {
-      name: 'User 04',
-      email: 'user04@example.com',
-      role: SystemRole.User,
-      isDisplayNameConfirmed: true,
-      authId: 'auth04',
-      displayName: 'User 04',
-      avatarUrl: '',
-      sites: {
-        TEST: {
-          projects: [],
-          resources: ['project01']
-        }
-      }
     });
 
     await createDoc<SFProject>(conn, SF_PROJECTS_COLLECTION, 'project01', {

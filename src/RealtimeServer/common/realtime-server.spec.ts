@@ -29,7 +29,7 @@ describe('RealtimeServer', () => {
 
     await env.server.migrateIfNecessary();
 
-    verify(mockedMigration.migrateDoc(anything())).twice();
+    verify(mockedMigration.migrateDoc(anything())).once();
     verify(env.mockedSchemaVersionRepository.set(USERS_COLLECTION, 1)).once();
     const ops = env.db.ops[USERS_COLLECTION]['user01'];
     expect(ops[1].m.migration).toEqual(1);
@@ -120,36 +120,6 @@ describe('RealtimeServer', () => {
     expect(session!.userId).toEqual('user01');
     expect(env.server.getUserProjectRole(session!, 'project01')).resolves.toEqual('user');
   });
-
-  it('gets correct resource access permission', async () => {
-    const env = new TestEnvironment();
-    await env.createData();
-    let session: ConnectSession;
-    env.server.use('submit', (context, callback) => {
-      session = context.agent.connectSession as ConnectSession;
-      callback();
-    });
-
-    const userConn = clientConnect(env.server, 'user02');
-    await submitOp(userConn, PROJECTS_COLLECTION, 'project01', []);
-    expect(session!.userId).toEqual('user02');
-    expect(env.server.canUserAccessResource(session!, 'resource01')).resolves.toEqual(true);
-  });
-
-  it('gets correct resource access denied permission', async () => {
-    const env = new TestEnvironment();
-    await env.createData();
-    let session: ConnectSession;
-    env.server.use('submit', (context, callback) => {
-      session = context.agent.connectSession as ConnectSession;
-      callback();
-    });
-
-    const userConn = clientConnect(env.server, 'user01');
-    await submitOp(userConn, PROJECTS_COLLECTION, 'project01', []);
-    expect(session!.userId).toEqual('user01');
-    expect(env.server.canUserAccessResource(session!, 'resource01')).resolves.toEqual(false);
-  });
 });
 
 class TestEnvironment {
@@ -189,22 +159,6 @@ class TestEnvironment {
       displayName: 'User 01',
       avatarUrl: '',
       sites: {}
-    });
-
-    await createDoc<User>(conn, USERS_COLLECTION, 'user02', {
-      name: 'User 02',
-      email: 'user02@example.com',
-      role: SystemRole.User,
-      isDisplayNameConfirmed: true,
-      authId: 'auth02',
-      displayName: 'User 02',
-      avatarUrl: '',
-      sites: {
-        TEST: {
-          projects: [],
-          resources: ['resource01']
-        }
-      }
     });
 
     await createDoc<Project>(conn, PROJECTS_COLLECTION, 'project01', {
