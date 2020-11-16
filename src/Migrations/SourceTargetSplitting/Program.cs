@@ -65,7 +65,7 @@ namespace SourceTargetSplitting
             }
 
             // Set up the web host, and start the real time server
-            Log("Starting ScriptureForge Server...");
+            Log("Starting Scripture Forge Server...");
             Directory.SetCurrentDirectory(sfAppDir);
             IWebHostBuilder builder = CreateWebHostBuilder(args);
             IWebHost webHost = builder.Build();
@@ -93,7 +93,7 @@ namespace SourceTargetSplitting
             await objectMigrator.MigrateObjectsAsync(doWrite).ConfigureAwait(false);
 
             // Stop the web host and real time server
-            Log("Stopping ScriptureForge Server...");
+            Log("Stopping Scripture Forge Server...");
             await webHost.StopAsync();
 
             Log(string.Empty);

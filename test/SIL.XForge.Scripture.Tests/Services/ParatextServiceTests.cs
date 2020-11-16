@@ -266,15 +266,15 @@ namespace SIL.XForge.Scripture.Services
             user02Secret.ParatextTokens.AccessToken = null;
 
             // Set up mock REST client to return a successful HEAD request
-            ISFRESTClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
-            ISFRESTClient successMockClient = Substitute.For<ISFRESTClient>();
+            ISFRestClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
+            ISFRestClient successMockClient = Substitute.For<ISFRestClient>();
             successMockClient.Head(Arg.Any<string>()).Returns(string.Empty);
             mockRestClientFactory
                 .Create(Arg.Any<string>(), Arg.Any<string>(), user01Secret)
                 .Returns(successMockClient);
 
             // Set up mock REST client to return an unsuccessful HEAD request
-            ISFRESTClient failureMockClient = Substitute.For<ISFRESTClient>();
+            ISFRestClient failureMockClient = Substitute.For<ISFRestClient>();
             failureMockClient.Head(Arg.Any<string>()).Throws<WebException>();
             mockRestClientFactory
                 .Create(Arg.Any<string>(), Arg.Any<string>(), user02Secret)
@@ -303,8 +303,8 @@ namespace SIL.XForge.Scripture.Services
             user01Secret.ParatextTokens.AccessToken = null;
 
             // Set up mock REST client to return a successful HEAD request
-            ISFRESTClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
-            ISFRESTClient mockClient = Substitute.For<ISFRESTClient>();
+            ISFRestClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
+            ISFRestClient mockClient = Substitute.For<ISFRestClient>();
             mockClient.Head(Arg.Any<string>()).Throws<WebException>();
             mockRestClientFactory
                 .Create(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<UserSecret>())
@@ -327,8 +327,8 @@ namespace SIL.XForge.Scripture.Services
             user01Secret.ParatextTokens.AccessToken = null;
 
             // Set up mock REST client to return a successful HEAD request
-            ISFRESTClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
-            ISFRESTClient mockClient = Substitute.For<ISFRESTClient>();
+            ISFRestClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
+            ISFRestClient mockClient = Substitute.For<ISFRestClient>();
             mockClient.Head(Arg.Any<string>()).Returns(string.Empty);
             mockRestClientFactory
                 .Create(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<UserSecret>())
@@ -692,7 +692,7 @@ namespace SIL.XForge.Scripture.Services
             public IJwtTokenHelper MockJwtTokenHelper;
             public IParatextDataHelper MockParatextDataHelper;
             public IInternetSharedRepositorySourceProvider MockInternetSharedRepositorySourceProvider;
-            public ISFRESTClientFactory MockRestClientFactory;
+            public ISFRestClientFactory MockRestClientFactory;
             public ParatextService Service;
 
             public TestEnvironment()
@@ -710,7 +710,7 @@ namespace SIL.XForge.Scripture.Services
                 MockJwtTokenHelper = Substitute.For<IJwtTokenHelper>();
                 MockParatextDataHelper = Substitute.For<IParatextDataHelper>();
                 MockInternetSharedRepositorySourceProvider = Substitute.For<IInternetSharedRepositorySourceProvider>();
-                MockRestClientFactory = Substitute.For<ISFRESTClientFactory>();
+                MockRestClientFactory = Substitute.For<ISFRestClientFactory>();
 
                 RealtimeService = new SFMemoryRealtimeService();
 
@@ -755,9 +755,9 @@ namespace SIL.XForge.Scripture.Services
                 return userSecret;
             }
 
-            public ISFRESTClientFactory SetRestClientFactory(UserSecret userSecret)
+            public ISFRestClientFactory SetRestClientFactory(UserSecret userSecret)
             {
-                ISFRESTClient mockClient = Substitute.For<ISFRESTClient>();
+                ISFRestClient mockClient = Substitute.For<ISFRestClient>();
                 string json = @"{
     ""resources"": [
         {
