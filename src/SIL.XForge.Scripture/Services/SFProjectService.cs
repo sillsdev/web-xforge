@@ -294,33 +294,22 @@ namespace SIL.XForge.Scripture.Services
                 return false;
             }
             SiteOptions siteOptions = SiteOptions.Value;
-            string url;
-            string additionalMessage = null;
-            if (project.CheckingConfig.ShareEnabled && project.CheckingConfig.ShareLevel == CheckingShareLevel.Anyone)
-            {
-                url = $"{siteOptions.Origin}projects/{projectId}?sharing=true";
-                additionalMessage = _localizer[SharedResource.Keys.InviteLinkSharingOn];
-            }
-            else if ((project.CheckingConfig.ShareEnabled
-                && project.CheckingConfig.ShareLevel == CheckingShareLevel.Specific)
-                    || IsProjectAdmin(project, curUserId))
-            {
-                // Invite a specific person
-                // Reuse prior code, if any
-                SFProjectSecret projectSecret = await ProjectSecrets.UpdateAsync(
-                    p => p.Id == projectId && !p.ShareKeys.Any(sk => sk.Email == email),
-                    update => update.Add(p => p.ShareKeys,
-                        new ShareKey { Email = email, Key = _securityService.GenerateKey() }));
-                if (projectSecret == null)
-                    projectSecret = await ProjectSecrets.GetAsync(projectId);
-                string key = projectSecret.ShareKeys.Single(sk => sk.Email == email).Key;
-                url = $"{siteOptions.Origin}projects/{projectId}?sharing=true&shareKey={key}";
-                additionalMessage = _localizer[SharedResource.Keys.InviteLinkSharingOff];
-            }
-            else
+
+            if (!project.CheckingConfig.ShareEnabled && !IsProjectAdmin(project, curUserId))
             {
                 throw new ForbiddenException();
             }
+
+            // Invite a specific person. Reuse prior code, if any.
+            SFProjectSecret projectSecret = await ProjectSecrets.UpdateAsync(
+                p => p.Id == projectId && !p.ShareKeys.Any(sk => sk.Email == email),
+                update => update.Add(p => p.ShareKeys,
+                    new ShareKey { Email = email, Key = _securityService.GenerateKey() }));
+            if (projectSecret == null)
+                projectSecret = await ProjectSecrets.GetAsync(projectId);
+            string key = projectSecret.ShareKeys.Single(sk => sk.Email == email).Key;
+            string url = $"{siteOptions.Origin}projects/{projectId}?sharing=true&shareKey={key}";
+            string emailSpecificLinkMessage = _localizer[SharedResource.Keys.InviteLinkSharingOff];
 
             User inviter = await RealtimeService.GetSnapshotAsync<User>(curUserId);
             string subject = _localizer[SharedResource.Keys.InviteSubject, project.Name, siteOptions.Name];
@@ -331,7 +320,7 @@ namespace SIL.XForge.Scripture.Services
             var facebook = $"<li>{_localizer[SharedResource.Keys.InviteFacebookOption, "<b>", "</b>", siteOptions.Name]}</li>";
             var withemail = $"<li>{_localizer[SharedResource.Keys.InviteEmailOption, siteOptions.Name]}</li></ul></p><p></p>";
             var signoff = $"<p>{_localizer[SharedResource.Keys.InviteSignature, "<p>", siteOptions.Name]}</p>";
-            var emailBody = $"{greeting}{additionalMessage}{instructions}{pt}{google}{facebook}{withemail}{signoff}";
+            var emailBody = $"{greeting}{emailSpecificLinkMessage}{instructions}{pt}{google}{facebook}{withemail}{signoff}";
             await _emailService.SendEmailAsync(email, subject, emailBody);
             return true;
         }

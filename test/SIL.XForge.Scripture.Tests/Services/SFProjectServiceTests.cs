@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -99,11 +98,14 @@ namespace SIL.XForge.Scripture.Services
         public async Task InviteAsync_LinkSharingEnabled_UserInvited()
         {
             var env = new TestEnvironment();
+            SFProject project = env.GetProject(Project02);
+            Assert.That(project.CheckingConfig.ShareEnabled, Is.True, "setup");
+            Assert.That(project.CheckingConfig.ShareLevel, Is.EqualTo(CheckingShareLevel.Anyone), "setup: link sharing should be enabled");
             const string email = "newuser@example.com";
+            // SUT
             await env.Service.InviteAsync(User01, Project02, email);
             await env.EmailService.Received(1).SendEmailAsync(email, Arg.Any<string>(),
-                Arg.Is<string>(body => body.Contains($"http://localhost/projects/{Project02}?sharing=true")
-                    && body.Contains("link can be shared with others")));
+                Arg.Is<string>(body => body.Contains($"http://localhost/projects/{Project02}?sharing=true&shareKey=1234abc")));
         }
 
         [Test]
