@@ -539,6 +539,8 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsProject(sfProjectId), Is.True);
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Query().Count(),
                 Is.EqualTo(projectCount + 1), "should have increased");
+            SFProject newProject = env.RealtimeService.GetRepository<SFProject>().Get(sfProjectId);
+            Assert.That(newProject.CheckingConfig.ShareEnabled, Is.False, "Should default to not shared (SF-1142)");
         }
 
         [Test]
