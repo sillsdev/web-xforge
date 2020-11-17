@@ -47,7 +47,6 @@ namespace SIL.XForge.Scripture.Services
                                 EndChapter = AttributeText(q, "endChapter"),
                                 EndVerse = AttributeText(q, "endVerse"),
                                 Text = NodeTextOfLanguage(q.SelectNodes("Q/StringAlt").Cast<XmlNode>(), lang),
-                                Answer = NodeTextOfLanguage(q.SelectNodes("Answers/A/StringAlt").Cast<XmlNode>(), lang),
                                 Id = AttributeText(q, "id")
                             }
                         );
