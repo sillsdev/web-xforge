@@ -39,6 +39,12 @@
     "production": true
   },
   {
+    "localName": "Français",
+    "englishName": "French",
+    "tags": ["fr", "fr-FR"],
+    "production": true
+  },
+  {
     "localName": "Bahasa Indonesia",
     "englishName": "Indonesian",
     "tags": ["id", "id-ID"],

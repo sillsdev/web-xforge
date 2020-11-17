@@ -1,0 +1,213 @@
+{
+  "app": {
+    "settings": "Paramètres",
+    "synchronize": "Synchronisation",
+    "system_administration": "Administration du système",
+    "translate": "Traduire",
+    "users": "Utilisateurs"
+  },
+  "chapter_nav": {
+    "previous_chapter": "Chapitre précédent",
+    "next_chapter": "Chapitre suivant"
+  },
+  "checking": {
+    "add_question": "Ajouter une question"
+  },
+  "checking_answers": {
+    "archive": "Archiver",
+    "only_community_checkers_can_like": "Seuls les vérificateurs de la communauté peuvent laisser un J'aime sur les réponses."
+  },
+  "checking_overview": {
+    "add_question": "Ajouter une question",
+    "answer_count_label": "{{ count }} réponses",
+    "archive": "Archiver",
+    "archived_questions": "Questions archivées",
+    "click_add_question": "Cliquez sur {{ boldStart }}Ajouter une question{{ boldEnd }}, ci-dessus.",
+    "import_questions": "Importer",
+    "no_archived_questions": "Il n'y a aucune question archivée.",
+    "no_questions": "Il n'y a aucune question publiée. ",
+    "question_count_label": "{{ count }} questions",
+    "republish": "Republier",
+    "time_archived_stamp": "Archivé le {{ timeStamp }}"
+  },
+  "collaborators": {
+    "awaiting_response_from": "En attente d'une réponse de{{ newLine }}{{ email }}",
+    "cancel_invite": "Annuler l'invitation",
+    "change_roles_and_permissions": "Les rôles et les autorisations des utilisateurs peuvent {{ boldStart }}uniquement{{ boldEnd }} être modifiés dans {{ boldStart }}Paratext{{ boldEnd }}. Ouvrez le projet dans {{ boldStart }}Paratext{{ boldEnd }}, dans la fenêtre du projet, cliquez sur {{ templateTagBoundary }}{{ templateTagBoundary }}, puis sur {{ boldStart }}Paramètres du projet{{ boldEnd }}, puis sur {{ boldStart }}Utilisateurs, rôles et autorisations{{ boldEnd }}. Après un {{ italicsStart }}Envoyer/Recevoir{{ italicsEnd }} dans {{ boldStart }}Paratext{{ boldEnd }} et, ensuite, un {{ italicsStart }}Synchroniser{{ italicsEnd }} dans {{ boldStart }}Scripture Forge{{ boldEnd }}, leur rôle sera effectif ici, une fois que cet utilisateur se connectera avec son compte {{ boldStart }}Paratext{{ boldEnd }}.",
+    "connect_network_to_manage_users": "La gestion des utilisateurs est désactivée en mode hors connexion. Veuillez vous connecter à Internet pour gérer les utilisateurs.",
+    "filter_users": "Filtrer les utilisateurs...",
+    "me": "moi",
+    "no_users_found": "Aucun utilisateur trouvé",
+    "problem_loading_invited_users": "Un problème est survenu lors du chargement de la liste des utilisateurs invités.",
+    "remove_from_project": "Supprimer du projet",
+    "share_with_others": "Partager avec d'autres"
+  },
+  "connect_project": {
+    "additional_settings": "Paramètres supplémentaires",
+    "already_connected": "(déjà connecté)",
+    "based_on": "Basé sur",
+    "choose_the_mother_project": "Choisissez le projet Paratext sur lequel votre projet est basé.",
+    "community_checking": "Vérification par la communauté",
+    "connect_network_to_connect_project": "Veuillez vous connecter à Internet pour activer la connexion à un projet",
+    "connect_paratext_project": "Connecter un projet Paratext",
+    "connect": "Connecter",
+    "connecting_to_project": "Connexion à {{ projectName }}...",
+    "engage_the_wider_community_to_check_scripture": "Impliquez la communauté au sens large pour vous assurer que la traduction soit claire, précise et naturelle. Sélectionnez des versets, posez des questions ciblées, autorisez l'échange autour des réponses.",
+    "log_in_with_paratext": "Connectez-vous avec Paratext",
+    "no_connectable_projects": "Il semble qu'il n'y ait pas de projet connectable pour vous.{{ newLine }}Veuillez vous rendre sur Paratext pour enregistrer un projet à connecter.",
+    "only_paratext_admins_can_start": "** Vous devez être l'administrateur Paratext d'un projet pour le commencer ici. Demandez à votre administrateur de connecter votre projet, ensuite vous pourrez également vous connecter à celui-ci ici.",
+    "paratext_project": "Projet Paratext",
+    "problem_already_connected": "Le projet est déjà connecté. Peut-être qu'un autre administrateur de projet a connecté le projet en même temps. Veuillez réessayer. Si le problème persiste, veuillez nous le signaler afin que nous puissions régler le problème.",
+    "translation_suggestions": "Suggestions de traduction",
+    "translations_will_be_suggested_as_you_edit": "Des traductions pour des mots et des phrases seront suggérées alors que vous modifiez les Écritures. Il est recommandé que votre projet soit configuré comme une {{ boldStart }}traduction-fille{{ boldEnd }} dans Paratext.",
+    "you_can_change_later": "Vous pourrez les modifier plus tard.",
+    "you_must_be_logged_in_to_paratext": "Vous devez vous connecter avec votre compte Paratext pour vous connecter à un projet."
+  },
+  "delete_project_dialog": {
+    "are_you_sure_you_want_to_delete": "Etes vous sûr de vouloir supprimer ce projet ?",
+    "cancel": "Annuler",
+    "delete_cannot_be_undone": "Cette action {{ boldStart }}ne peut pas{{ boldEnd }} être annulée. Cela supprimera définitivement le projet {{ boldStart }}{{ projectName }}{{ boldEnd }}, les données de traduction, les questions et réponses ainsi que les commentaires.",
+    "delete_this_project": "Supprimer ce projet",
+    "i_understand_the_consequences": "Je comprends les conséquences, supprimez ce projet",
+    "please_type_project_name": "Veuillez saisir le nom du projet pour confirmer.",
+    "project_name": "Nom du projet"
+  },
+  "editor": {
+    "cannot_edit_chapter_formatting_invalid": "Ce chapitre ne peut pas être modifié car le formatage n'est pas valide. Veuillez corriger le formatage dans Paratext.",
+    "completed_successfully": "Terminé avec succès",
+    "configure_translation_suggestions": "Configurer les suggestions de traduction",
+    "swap_source_and_target": "Intervertir la source et la cible",
+    "training": "Formation",
+    "training_completed_successfully": "Formation terminée avec succès",
+    "verse_too_long_for_suggestions": "Ce verset est trop long pour générer des suggestions."
+  },
+  "import_questions_confirmation_dialog": {
+    "done": "Termíné",
+    "edited_questions_explanation": "Certaines des questions que vous avez sélectionnées ont été modifiées. Êtes-vous sûr de vouloir mettre à jour les questions ? Sélectionnez les questions que vous souhaitez mettre à jour.",
+    "number_answers": "Nombre de réponses",
+    "scripture_forge": "Scripture Forge",
+    "some_questions_edited": "Certaines questions ont été modifiées",
+    "transcelerator": "Transcelerator"
+  },
+  "import_questions_dialog": {
+    "cancel": "Annuler",
+    "filter_questions": "Filtrer les questions",
+    "import_count_questions": "Importer {{ count }} questions sélectionnées",
+    "import_from_transcelerator": "Importer des questions depuis Transcelerator",
+    "importing_questions": "Importation de {{ count }} questions...",
+    "loading": "Chargement...",
+    "must_be_valid_reference": "Doit être une référence valide",
+    "no_questions_available": "Il n'y a pas de questions pour les livres dans ce projet.",
+    "reference_from": "Début de référence",
+    "reference_to": "Fin de référence",
+    "select_all": "Tout sélectionner",
+    "show_all": "Tout afficher",
+    "update_transcelerator": "La version de Transcelerator utilisée dans ce projet n'est pas prise en charge. Veuillez mettre à jour Transcelerator, vers au moins la version 1.5.3."
+  },
+  "paginator": {
+    "items_per_page": "Éléments par page",
+    "next_page": "Page suivante",
+    "previous_page": "Page précédente",
+    "range_label": "{{ startIndex }} - {{ endIndex }} sur {{ length }}"
+  },
+  "question_answered_dialog": {
+    "cancel": "Annuler",
+    "consider_creating_new_question": "Envisagez de créer une nouvelle question au lieu de modifier cette question.",
+    "edit_anyway": "Modifier quand même",
+    "question_has_answer": "La question a déjà une réponse"
+  },
+  "question_dialog": {
+    "add_question_denied": "Autorisation refusée : seul l'administrateur du projet peut ajouter et modifier des questions.",
+    "cancel": "Annuler",
+    "edit_question": "Modifier la question",
+    "end_reference": "Référence de fin",
+    "enter_a_reference_to_load_text": "Entrez une référence pour charger le texte",
+    "example_verse": "par ex : Jn 3:16",
+    "must_be_after_scripture_reference": "Doit se situer après {{ boldStart }}Référence biblique{{ boldEnd }}",
+    "must_be_inside_verse_range": "Doit se situer dans la plage de versets",
+    "must_be_same_book_and_chapter": "Doit être le même livre et le même chapitre",
+    "new_question": "Nouvelle Question",
+    "question": "Question",
+    "recording_stopped": "L'enregistrement de votre question a été arrêté automatiquement.",
+    "required_with_asterisk": "*Requis",
+    "save": "Enregistrer",
+    "scripture_reference": "Référence biblique"
+  },
+  "roles": {
+    "none": "Aucun",
+    "pt_administrator": "Administrateur",
+    "pt_consultant": "Conseiller/Réviseur/Archiviste/Compositeur",
+    "pt_observer": "Observateur",
+    "pt_translator": "Traducteur",
+    "sf_community_checker": "Vérificateur de la communauté",
+    "sf_reviewer": "Relecteur"
+  },
+  "settings": {
+    "anyone_with_a_link": "Toute personne ayant le lien",
+    "based_on": "Basé sur",
+    "connect_network_to_change_settings": "Les paramètres du projet ne peuvent pas être modifiés lorsque vous êtes hors connexion. Veuillez vous connecter à Internet pour effectuer des modifications.",
+    "choose_the_paratext_project": "Choisissez le projet Paratext sur lequel votre projet est basé.",
+    "danger_zone": "Attention danger",
+    "delete_this_project": "Supprimer ce projet",
+    "delete_project_cannot_be_undone": "Une fois que vous avez supprimé un projet, il est impossible de revenir en arrière. Soyez sûr de vous.",
+    "engage_the_wider_community": "Impliquez la communauté au sens large pour vous assurer que la traduction soit claire, précise et naturelle. Sélectionnez des versets, posez des questions ciblées, autorisez l'échange autour des réponses.",
+    "enable_translation_suggestions": "pour activer {{ boldStart }}Suggestions de traduction{{ boldEnd }} et voir plus d'options",
+    "community_checking": "Vérification par la communauté",
+    "log_in_with_paratext": "Connectez-vous à Paratext",
+    "see_others_answers_and_comments": "Voir les réponses et commentaires des autres",
+    "select_additional_tools_and_features": "Sélectionnez quels outils et fonctionnalités supplémentaires sont disponibles.",
+    "settings": "Paramètres",
+    "share": "Partager",
+    "specific_people": "Personnes spécifiques",
+    "tools": "Outils",
+    "translate": "Traduire",
+    "translate_tool_is_always_available": "L'outil de traduction est toujours disponible pour collaborer avec d'autres traducteurs travaillant sur le même texte.",
+    "translation_suggestions": "Suggestions de traduction",
+    "translations_will_be_suggested": "Des traductions pour des mots et des phrases seront suggérées alors que vous modifiez les Écritures. Il est recommandé que votre projet soit configuré comme une {{ boldStart }}traduction-fille{{ boldEnd }} dans Paratext.",
+    "users_can_interact_with_each_other": "Les utilisateurs peuvent voir leurs réponses et commentaires respectifs afin d'interagir entre eux.",
+    "users_can_share_the_project": "Les utilisateurs peuvent partager en invitant un ami à rejoindre le projet.{{ newLine }}{{ italicsStart }}Les administrateurs{{ italicsEnd }} peuvent toujours inviter d'autres personnes dans le projet dans {{ templateTagBoundary }}Utilisateurs{{ templateTagBoundary }}.",
+    "will_not_delete_paratext_project": "Cela {{ boldStart }}ne va pas{{ boldEnd }} supprimer votre projet Paratext, mais cela supprimera toutes les données non synchronisées stockées dans Scripture Forge. Il est recommandé de {{ templateTagBoundary }}Synchroniser{{ templateTagBoundary }} d'abord, avant de supprimer."
+  },
+  "suggestions_settings_dialog": {
+    "better": "Mieux",
+    "close": "Fermer",
+    "more": "Plus",
+    "number_of_suggestions": "Nombre de suggestions",
+    "settings_not_available_offline": "Ces paramètres ne sont pas disponibles lorsque vous êtes hors connexion.",
+    "suggestion_confidence": "Confiance dans les suggestions",
+    "translation_suggestions": "Suggestions de traduction",
+    "translation_suggestions_settings": "Paramètres des suggestions de traduction"
+  },
+  "sync": {
+    "connect_network_to_synchronize": "Veuillez vous connecter à Internet pour synchroniser ce projet",
+    "last_synced_time_stamp": "Dernière synchronisation le {{ timeStamp }}",
+    "log_in_to_paratext": "Connectez-vous à Paratext",
+    "never_been_synced": "Jamais synchronisé",
+    "something_went_wrong_synchronizing_this_project": "Une erreur s'est produite lors de la synchronisation de {{ projectName }} avec Paratext. Veuillez réessayer.",
+    "successfully_synchronized_with_paratext": "Synchronisation réussie de {{ projectName }} avec Paratext.",
+    "synchronize": "Synchroniser",
+    "synchronize_project": "Synchroniser {{ projectName }} avec Paratext",
+    "your_project_is_being_synchronized": "Votre projet est en cours de synchronisation...",
+    "sync_is_disabled": "La synchronisation pour ce projet a dû être désactivée, elle n'est donc pas disponible pour le moment. Veuillez contacter {{ email }} pour discuter de ce qui doit être fait pour que la synchronisation du projet puisse être à nouveau activée."
+  },
+  "text": {
+    "book_does_not_exist": "Ce livre n'existe pas.",
+    "book_is_empty": "Ce livre est vide. Ajoutez des chapitres dans Paratext.",
+    "loading": "Chargement...",
+    "not_available_offline": "Ce texte n'est pas disponible hors connexion. Connectez-vous à Internet pour voir le texte."
+  },
+  "translate_overview": {
+    "progress": "Avancement",
+    "quality": "Qualité",
+    "retrain": "Recycler",
+    "suggestion_engine": "Moteur de suggestions",
+    "trained_segments": "segments formés",
+    "training": "Formation...",
+    "translate_overview": "Vue d'ensemble de la traduction",
+    "translated_segments": "{{ translatedSegments }} segments sur {{ total }}"
+  },
+  "users": {
+    "collaborators": "Collaborateurs",
+    "users": "Utilisateurs"
+  }
+}
