@@ -46,7 +46,6 @@ namespace SIL.XForge.Scripture.Services
             Assert.AreEqual(questions[0].EndChapter, "2");
             Assert.AreEqual(questions[0].EndVerse, "3");
             Assert.AreEqual(questions[0].Text, "What are the main events recorded in this passage?");
-            Assert.AreEqual(questions[0].Answer, "");
             Assert.AreEqual(questions[0].Id, "Tell [me] the main events recorded in this passage.");
         }
 

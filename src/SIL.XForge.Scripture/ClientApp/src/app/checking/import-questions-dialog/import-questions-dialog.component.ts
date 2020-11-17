@@ -41,7 +41,6 @@ export interface TransceleratorQuestion {
   endChapter?: string;
   endVerse?: string;
   text: string;
-  answer: string;
   id: string;
 }
 

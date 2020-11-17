@@ -327,7 +327,6 @@ class TestEnvironment {
         endChapter: '42',
         endVerse: '2',
         text: 'This proposal pleased Pharaoh and all his servants',
-        answer: 'Answer to 41:39',
         id: '1'
       },
       {
@@ -336,7 +335,6 @@ class TestEnvironment {
         startVerse: '1',
         endVerse: '3',
         text: 'Transcelerator question 1:1',
-        answer: 'Answer to 1:1',
         id: '2'
       },
       {
@@ -344,7 +342,6 @@ class TestEnvironment {
         startChapter: '1',
         startVerse: '2',
         text: 'Transcelerator question 1:2',
-        answer: 'Answer to 1:2',
         id: '3'
       }
     ];
