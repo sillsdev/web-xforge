@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import Bugsnag from '@bugsnag/js';
 import { translate } from '@ngneat/transloco';
 import { Auth0DecodedHash, AuthorizeOptions, WebAuth } from 'auth0-js';
 import jwtDecode from 'jwt-decode';
@@ -356,6 +357,16 @@ export class AuthService {
     this.localSettings.set(EXPIRES_AT_SETTING, expiresAt);
     this.localSettings.set(USER_ID_SETTING, userId);
     this.localSettings.set(ROLE_SETTING, claims[XF_ROLE_CLAIM]);
+    Bugsnag.leaveBreadcrumb(
+      'Local Login',
+      {
+        userId: userId,
+        ...(userId !== prevUserId && { prevUserId: prevUserId }),
+        params: claims[XF_ROLE_CLAIM]
+      },
+      'log'
+    );
+    Bugsnag.setUser(this.currentUserId);
   }
 
   private clearState(): void {

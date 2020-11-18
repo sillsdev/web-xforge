@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import Bugsnag from '@bugsnag/js';
 import uuidv1 from 'uuid/v1';
 import { COMMAND_API_NAMESPACE } from './url-constants';
 
@@ -53,6 +54,15 @@ export class CommandService {
   constructor(private readonly http: HttpClient) {}
 
   async onlineInvoke<T>(url: string, method: string, params: any = {}): Promise<T | undefined> {
+    Bugsnag.leaveBreadcrumb(
+      'JSON-RPC',
+      {
+        request: url,
+        method: method,
+        params: params
+      },
+      'request'
+    );
     url = `${COMMAND_API_NAMESPACE}/${url}`;
     const request: JsonRpcRequest = {
       jsonrpc: '2.0',

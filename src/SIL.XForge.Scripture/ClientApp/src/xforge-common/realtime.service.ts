@@ -1,4 +1,5 @@
 import { Injectable, Optional } from '@angular/core';
+import { AppError } from 'xforge-common/exception-handling-service';
 import { FileService } from './file.service';
 import { RealtimeDoc } from './models/realtime-doc';
 import { RealtimeQuery } from './models/realtime-query';
@@ -45,6 +46,12 @@ export class RealtimeService {
         throw new Error('The collection is unknown.');
       }
       doc = new RealtimeDocType(this, this.remoteStore.createDocAdapter(collection, id));
+      if (doc.id == null) {
+        throw new AppError('Document could not be created.', {
+          collection: collection,
+          id: id != null ? id : 'undefined'
+        });
+      }
       this.docs.set(key, doc);
     }
     return doc as T;

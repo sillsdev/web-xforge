@@ -6,7 +6,9 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import Bugsnag from '@bugsnag/js';
 import { translate } from '@ngneat/transloco';
+import { cloneDeep } from 'lodash';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { AuthType, getAuthType, User } from 'realtime-server/lib/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -41,6 +43,7 @@ export interface QuestionQuery {
   bookNum: number;
   query: RealtimeQuery;
 }
+type UserForReport = User & { id: string };
 
 @Component({
   selector: 'app-root',
@@ -246,15 +249,20 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   async ngOnInit(): Promise<void> {
     this.loadingStarted();
     if (await this.isLoggedIn) {
-      const isNewlyLoggedIn = await this.authService.isNewlyLoggedIn;
-      if (isNewlyLoggedIn && !supportedBrowser()) {
-        this.dialog.open(SupportedBrowsersDialogComponent, { autoFocus: false });
+      this.currentUserDoc = await this.userService.getCurrentUser();
+      const userData = cloneDeep(this.currentUserDoc.data) as UserForReport;
+      if (userData != null) {
+        Bugsnag.addMetadata('user', userData);
       }
 
-      this.currentUserDoc = await this.userService.getCurrentUser();
       const languageTag = this.currentUserDoc.data!.interfaceLanguage;
       if (languageTag != null) {
         this.i18n.trySetLocale(languageTag, false);
+      }
+
+      const isNewlyLoggedIn = await this.authService.isNewlyLoggedIn;
+      if (isNewlyLoggedIn && !supportedBrowser()) {
+        this.dialog.open(SupportedBrowsersDialogComponent, { autoFocus: false });
       }
 
       const projectDocs$ = this.currentUserDoc.remoteChanges$.pipe(
@@ -514,6 +522,18 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     await Promise.all(promises);
     this.loadingFinished();
     return projectDocs;
+  }
+
+  /**
+   * Returns a promise that will resolve to a ReportStyleUser representing the current user, or, if the user isn't
+   * available within a reasonable time (within three seconds of the service being constructed), it will resolve with
+   * null.
+   */
+  private async getUserForReporting(): Promise<UserForReport | undefined> {
+    const currentUser = await this.userService.getCurrentUser();
+    if (currentUser != null) {
+      return cloneDeep(currentUser.data) as UserForReport;
+    }
   }
 
   private showProjectDeletedDialog(): void {
