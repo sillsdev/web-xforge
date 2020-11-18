@@ -45,7 +45,7 @@ describe('SaUsersComponent', () => {
       UICommonModule,
       DialogTestModule,
       TestTranslocoModule,
-      TestRealtimeModule.forRoot(new TypeRegistry([UserDoc, TestProjectDoc], [FileType.Audio]))
+      TestRealtimeModule.forRoot(new TypeRegistry([UserDoc, TestProjectDoc], [FileType.Audio], []))
     ],
     declarations: [SaUsersComponent],
     providers: [

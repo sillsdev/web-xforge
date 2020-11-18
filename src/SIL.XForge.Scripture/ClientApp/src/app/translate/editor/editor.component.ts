@@ -32,6 +32,7 @@ import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config
 import { Delta } from '../../core/models/text-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
+import { TranslationEngineService } from '../../core/translation-engine.service';
 import { Segment } from '../../shared/text/segment';
 import { TextComponent } from '../../shared/text/text.component';
 import {
@@ -94,6 +95,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly dialog: MdcDialog,
     private readonly mediaObserver: MediaObserver,
     private readonly pwaService: PwaService,
+    private readonly translationEngineService: TranslationEngineService,
     @Inject(CONSOLE) private readonly console: ConsoleInterface
   ) {
     super(noticeService);
@@ -332,16 +334,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.onStartTranslating();
       try {
         if (
-          this.projectUserConfigDoc != null &&
-          this.projectUserConfigDoc.data != null &&
+          this.projectUserConfigDoc?.data != null &&
           this.text != null &&
           this.target.segmentRef !== '' &&
           (this.projectUserConfigDoc.data.selectedBookNum !== this.text.bookNum ||
             this.projectUserConfigDoc.data.selectedChapterNum !== this._chapter ||
             this.projectUserConfigDoc.data.selectedSegment !== this.target.segmentRef)
         ) {
-          if (prevSegment == null) {
-            await this.projectService.trainSelectedSegment(this.projectUserConfigDoc.data);
+          if (prevSegment == null || this.translationSession == null) {
+            await this.translationEngineService.trainSelectedSegment(this.projectUserConfigDoc.data);
+          } else {
+            await this.trainSegment(prevSegment);
           }
           await this.projectUserConfigDoc.submitJson0Op(op => {
             op.set<string>(puc => puc.selectedTask!, 'translate');
@@ -351,7 +354,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             op.set(puc => puc.selectedSegmentChecksum!, this.target!.segmentChecksum);
           });
         }
-        await this.trainSegment(prevSegment);
         await this.translateSegment();
       } finally {
         this.onFinishTranslating();
@@ -501,7 +503,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
 
-    this.translationEngine = this.projectService.createTranslationEngine(this.projectDoc.id);
+    this.translationEngine = this.translationEngineService.createTranslationEngine(this.projectDoc.id);
     this.trainingSub = this.translationEngine
       .listenForTrainingStatus()
       .pipe(
@@ -725,10 +727,27 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private async trainSegment(segment: Segment | undefined): Promise<void> {
-    if (this.translationSession == null || segment == null || !this.canTrainSegment(segment)) {
+    if (segment == null || !this.canTrainSegment(segment)) {
+      return;
+    }
+    if (
+      !this.pwaService.isOnline &&
+      this.projectUserConfigDoc?.data != null &&
+      this.projectUserConfigDoc.data.selectedBookNum != null &&
+      this.projectUserConfigDoc.data.selectedChapterNum != null
+    ) {
+      this.translationEngineService.storeTrainingSegment(
+        this.projectUserConfigDoc.data.projectRef,
+        this.projectUserConfigDoc.data.selectedBookNum,
+        this.projectUserConfigDoc.data.selectedChapterNum,
+        this.projectUserConfigDoc.data.selectedSegment
+      );
       return;
     }
 
+    if (this.translationSession == null) {
+      return;
+    }
     await this.translationSession.approve(true);
     segment.acceptChanges();
     this.console.log(

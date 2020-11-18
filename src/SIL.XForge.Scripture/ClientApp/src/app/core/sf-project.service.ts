@@ -1,15 +1,8 @@
 import { Injectable } from '@angular/core';
-import { LatinWordTokenizer, MAX_SEGMENT_LENGTH, RemoteTranslationEngine } from '@sillsdev/machine';
-import * as crc from 'crc-32';
 import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SF_PROJECTS_COLLECTION, SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import {
-  getSFProjectUserConfigDocId,
-  SFProjectUserConfig
-} from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
-import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
-import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
+import { getSFProjectUserConfigDocId } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { CommandService } from 'xforge-common/command.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
@@ -49,10 +42,6 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
 
   getUserConfig(id: string, userId: string): Promise<SFProjectUserConfigDoc> {
     return this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, getSFProjectUserConfigDocId(id, userId));
-  }
-
-  createTranslationEngine(projectId: string): RemoteTranslationEngine {
-    return new RemoteTranslationEngine(projectId, this.machineHttp);
   }
 
   /**
@@ -152,69 +141,5 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
 
   async hasTransceleratorQuestions(projectId: string): Promise<boolean> {
     return (await this.onlineInvoke<boolean>('hasTransceleratorQuestions', { projectId }))!;
-  }
-
-  async trainSelectedSegment(projectUserConfig: SFProjectUserConfig): Promise<void> {
-    if (
-      projectUserConfig.selectedTask !== 'translate' ||
-      projectUserConfig.selectedBookNum == null ||
-      projectUserConfig.selectedChapterNum == null ||
-      projectUserConfig.selectedSegment === '' ||
-      projectUserConfig.selectedSegmentChecksum == null
-    ) {
-      return;
-    }
-
-    const targetDoc = await this.getText(
-      getTextDocId(
-        projectUserConfig.projectRef,
-        projectUserConfig.selectedBookNum,
-        projectUserConfig.selectedChapterNum,
-        'target'
-      )
-    );
-    const targetText = targetDoc.getSegmentText(projectUserConfig.selectedSegment);
-    if (targetText === '') {
-      return;
-    }
-    const checksum = crc.str(targetText);
-    if (checksum === projectUserConfig.selectedSegmentChecksum) {
-      return;
-    }
-
-    const sourceDoc = await this.getText(
-      getTextDocId(
-        projectUserConfig.projectRef,
-        projectUserConfig.selectedBookNum,
-        projectUserConfig.selectedChapterNum,
-        'source'
-      )
-    );
-    const sourceText = sourceDoc.getSegmentText(projectUserConfig.selectedSegment);
-    if (sourceText === '') {
-      return;
-    }
-
-    const wordTokenizer = new LatinWordTokenizer();
-    const sourceWords = wordTokenizer.tokenize(sourceText);
-    if (sourceWords.length > MAX_SEGMENT_LENGTH) {
-      return;
-    }
-
-    const translationEngine = this.createTranslationEngine(projectUserConfig.projectRef);
-    const session = await translationEngine.translateInteractively(sourceWords);
-    const tokenRanges = wordTokenizer.tokenizeAsRanges(targetText);
-    const prefix = tokenRanges.map(r => targetText.substring(r.start, r.end));
-    const isLastWordComplete =
-      tokenRanges.length === 0 || tokenRanges[tokenRanges.length - 1].end !== targetText.length;
-    session.setPrefix(prefix, isLastWordComplete);
-    await session.approve(true);
-    console.log(
-      'Segment ' +
-        projectUserConfig.selectedSegment +
-        ' of document ' +
-        Canon.bookNumberToId(projectUserConfig.selectedBookNum) +
-        ' was trained successfully.'
-    );
   }
 }
