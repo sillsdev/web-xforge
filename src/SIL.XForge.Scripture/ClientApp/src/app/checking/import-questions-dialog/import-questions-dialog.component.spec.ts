@@ -11,7 +11,7 @@ import { VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-re
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { Observable, of } from 'rxjs';
-import { anything, instance, mock, spy, verify, when } from 'ts-mockito';
+import { anything, capture, deepEqual, instance, mock, spy, verify, when } from 'ts-mockito';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -178,6 +178,23 @@ describe('ImportQuestionsDialogComponent', () => {
       'The version of Transcelerator used in this project is not supported. Please update to at least Transcelerator version 1.5.3.'
     );
   }));
+
+  it('should import questions that cover a verse range', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.selectQuestion(env.questionRows[0]);
+    env.click(env.submitButton);
+    verify(mockedProjectService.createQuestion('project01', anything(), undefined, undefined)).once();
+    const question = capture(mockedProjectService.createQuestion).last()[1];
+    expect(question.projectRef).toBe('project01');
+    expect(question.text).toBe('Transcelerator question 1:1');
+    expect(question.verseRef).toEqual({
+      bookNum: 40,
+      chapterNum: 1,
+      verseNum: 1,
+      verse: '1-3'
+    });
+    expect(question.transceleratorQuestionId).toBe('2');
+  }));
 });
 
 @Directive({
@@ -284,6 +301,10 @@ class TestEnvironment {
 
   get statusMessage(): string {
     return this.overlayContainerElement.querySelector('p')?.textContent || '';
+  }
+
+  get submitButton(): HTMLButtonElement {
+    return this.overlayContainerElement.querySelector('mdc-dialog-actions button[type="submit"]') as HTMLButtonElement;
   }
 
   clickSelectAll(): void {
