@@ -271,7 +271,9 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
       verseNum: verse.verseNum,
       verse:
         // TODO Right now ignoring end chapter and verse if it's in a different chapter, since we don't yet support that
-        q.startChapter === q.endChapter && q.startVerse !== q.endVerse ? q.startVerse + '-' + q.endVerse : undefined
+        (q.endChapter == null || q.startChapter === q.endChapter) && q.startVerse !== q.endVerse
+          ? q.startVerse + '-' + q.endVerse
+          : undefined
     };
   }
 
