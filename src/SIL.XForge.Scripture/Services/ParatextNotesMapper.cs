@@ -89,7 +89,9 @@ namespace SIL.XForge.Scripture.Services
                             new XAttribute("startPos", 0),
                             new XAttribute("selectedText", "")));
                     var answerPrefixContents = new List<object>();
-                    answerPrefixContents.Add(new XElement("span", new XAttribute("style", "bold"), question.Text));
+                    // Questions that have empty texts will show in Paratext notes that it is audio-only
+                    string qText = string.IsNullOrEmpty(question.Text) ? "- audio-only question -" : question.Text;
+                    answerPrefixContents.Add(new XElement("span", new XAttribute("style", "bold"), qText));
                     if (!string.IsNullOrEmpty(answer.ScriptureText))
                     {
                         string scriptureRef = answer.VerseRef.ToString();
@@ -165,15 +167,17 @@ namespace SIL.XForge.Scripture.Services
                 commentElem.Add(new XAttribute("extUser", comment.OwnerRef));
             commentElem.Add(new XAttribute("date", comment.DateCreated.ToString("o").Replace("Z", "+00:00")));
             var contentElem = new XElement("content");
+            // Responses that have empty texts will show in Paratext notes that it is audio-only
+            string responseText = string.IsNullOrEmpty(comment.Text) ? "- audio-only response -" : comment.Text;
             if (prefixContent == null || prefixContent.Count == 0)
             {
-                contentElem.Add(comment.Text);
+                contentElem.Add(responseText);
             }
             else
             {
                 foreach (object paraContent in prefixContent)
                     contentElem.Add(new XElement("p", paraContent));
-                contentElem.Add(new XElement("p", comment.Text));
+                contentElem.Add(new XElement("p", responseText));
             }
             commentElem.Add(contentElem);
 
