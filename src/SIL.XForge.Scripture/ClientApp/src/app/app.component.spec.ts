@@ -267,6 +267,15 @@ describe('AppComponent', () => {
     expect(env.someMenuItemContains('Users')).toBeTrue();
   }));
 
+  it('user data is set for Bugsnag', fakeAsync(() => {
+    // Ideally we'd spy on Bugsnag itself but if Bugsnag is initiated it breaks a lot of tests with outstanding timers
+    const env = new TestEnvironment();
+    env.init();
+
+    verify(mockedUserService.getCurrentUser()).once();
+    expect().nothing();
+  }));
+
   describe('Community Checking', () => {
     it('no books showing in the menu', fakeAsync(() => {
       const env = new TestEnvironment();
@@ -595,9 +604,9 @@ class TestEnvironment {
 
   wait(): void {
     this.fixture.detectChanges();
-    flush(50);
+    flush(70);
     this.fixture.detectChanges();
-    flush(50);
+    flush(70);
   }
 
   deleteProject(projectId: string, isLocal: boolean): void {
