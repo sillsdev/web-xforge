@@ -1,30 +1,33 @@
 import { MdcDialog } from '@angular-mdc/web/dialog';
-import { ErrorHandler, Injectable, Injector, NgZone } from '@angular/core';
+import { Injectable, Injector, NgZone } from '@angular/core';
+import Bugsnag from '@bugsnag/js';
+import { BugsnagErrorHandler } from '@bugsnag/plugin-angular';
 import { translate } from '@ngneat/transloco';
-import cloneDeep from 'lodash/cloneDeep';
-import { User } from 'realtime-server/lib/common/models/user';
 import { environment } from '../environments/environment';
 import { CONSOLE } from './browser-globals';
 import { ErrorReportingService } from './error-reporting.service';
 import { ErrorAlert, ErrorComponent } from './error/error.component';
 import { I18nService } from './i18n.service';
-import { UserDoc } from './models/user-doc';
 import { NoticeService } from './notice.service';
-import { UserService } from './user.service';
-import { objectId, promiseTimeout } from './utils';
+import { objectId } from './utils';
 
-type UserForReport = User & { id: string };
+export class AppError extends Error {
+  constructor(message: string, private readonly data?: any) {
+    super(message);
+    Bugsnag.leaveBreadcrumb(message, data, 'log');
+  }
+}
 
 @Injectable()
-export class ExceptionHandlingService implements ErrorHandler {
+export class ExceptionHandlingService extends BugsnagErrorHandler {
   // Use injected console when it's available, for the sake of tests, but fall back to window.console if injection fails
   private console = window.console;
   private alertQueue: ErrorAlert[] = [];
   private dialogOpen = false;
-  private currentUser?: UserDoc;
-  private constructionTime = Date.now();
 
-  constructor(private readonly injector: Injector) {}
+  constructor(private readonly injector: Injector) {
+    super();
+  }
 
   async handleError(error: any) {
     // Angular error handlers are instantiated before all other providers, so we cannot inject dependencies. Instead we
@@ -34,14 +37,12 @@ export class ExceptionHandlingService implements ErrorHandler {
     let noticeService: NoticeService;
     let dialog: MdcDialog;
     let errorReportingService: ErrorReportingService;
-    let userService: UserService;
     let i18nService: I18nService;
     try {
       ngZone = this.injector.get(NgZone);
       noticeService = this.injector.get(NoticeService);
       dialog = this.injector.get(MdcDialog);
       errorReportingService = this.injector.get(ErrorReportingService);
-      userService = this.injector.get(UserService);
       i18nService = this.injector.get(I18nService);
       this.console = this.injector.get(CONSOLE);
     } catch (err) {
@@ -109,7 +110,7 @@ export class ExceptionHandlingService implements ErrorHandler {
         this.handleAlert(ngZone, dialog, { message, stack: error.stack, eventId });
       } finally {
         const locale = i18nService ? i18nService.localeCode : 'unknown';
-        this.sendReport(errorReportingService, error, eventId, locale, await this.getUserForReporting(userService));
+        this.sendReport(errorReportingService, error, eventId, locale);
       }
     } finally {
       // Error logging occurs after error reporting so it won't show up as noise in Bugsnag's breadcrumbs
@@ -118,38 +119,8 @@ export class ExceptionHandlingService implements ErrorHandler {
     }
   }
 
-  /**
-   * Returns a promise that will resolve to a ReportStyleUser representing the current user, or, if the user isn't
-   * available within a reasonable time (within three seconds of the service being constructed), it will resolve with
-   * null.
-   */
-  private async getUserForReporting(userService: UserService): Promise<UserForReport | undefined> {
-    if (!this.currentUser) {
-      try {
-        this.currentUser = await promiseTimeout(
-          userService.getCurrentUser(),
-          Math.max(0, this.constructionTime + 3000 - Date.now())
-        );
-        if (!this.currentUser) {
-          return undefined;
-        }
-      } catch {
-        return undefined;
-      }
-    }
-    const user = cloneDeep(this.currentUser.data) as UserForReport;
-    user.id = this.currentUser.id;
-    return user;
-  }
-
-  private sendReport(
-    errorReportingService: ErrorReportingService,
-    error: any,
-    eventId: string,
-    locale: string,
-    user?: UserForReport
-  ) {
-    errorReportingService.notify(error, { user, eventId, locale }, err => {
+  private sendReport(errorReportingService: ErrorReportingService, error: any, eventId: string, locale: string) {
+    errorReportingService.notify(error, { eventId, locale }, err => {
       if (err) {
         this.console.error('Sending error report failed:');
         this.console.error(err);

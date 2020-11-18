@@ -5,7 +5,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { TranslocoService } from '@ngneat/transloco';
 import Quill from 'quill';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { getTextDocId, TextData } from 'realtime-server/lib/scriptureforge/models/text-data';
+import { TextData } from 'realtime-server/lib/scriptureforge/models/text-data';
 import * as RichText from 'rich-text';
 import { BehaviorSubject } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
@@ -52,7 +52,7 @@ describe('TextComponent', () => {
     env.fixture.detectChanges();
     env.component.onEditorCreated(mockedQuill);
     expect(env.component.placeholder).toEqual('initial placeholder text');
-    env.id = getTextDocId('project01', 40, 1);
+    env.id = new TextDocId('project01', 40, 1);
     expect(env.component.placeholder).toEqual('text.loading');
     env.onlineStatus = false;
     env.fixture.detectChanges();
@@ -83,7 +83,7 @@ class HostComponent {
 
   initialPlaceHolder = 'initial placeholder text';
   isTextRightToLeft: boolean = false;
-  id?: string;
+  id?: TextDocId;
 }
 
 class TestEnvironment {
@@ -127,7 +127,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  set id(value: string) {
+  set id(value: TextDocId) {
     this.hostComponent.id = value;
     tick();
     this.fixture.detectChanges();
