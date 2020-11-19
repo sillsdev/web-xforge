@@ -524,18 +524,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return projectDocs;
   }
 
-  /**
-   * Returns a promise that will resolve to a ReportStyleUser representing the current user, or, if the user isn't
-   * available within a reasonable time (within three seconds of the service being constructed), it will resolve with
-   * null.
-   */
-  private async getUserForReporting(): Promise<UserForReport | undefined> {
-    const currentUser = await this.userService.getCurrentUser();
-    if (currentUser != null) {
-      return cloneDeep(currentUser.data) as UserForReport;
-    }
-  }
-
   private showProjectDeletedDialog(): void {
     this.userService.setCurrentProjectId();
     this.projectDeletedDialogRef = this.dialog.open(ProjectDeletedDialogComponent);
