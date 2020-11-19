@@ -5,7 +5,7 @@ using Paratext.Data.Repository;
 namespace SIL.XForge.Scripture.Services
 {
     /// <summary>
-    /// Wraps access to static methods on SharingLogicWrapper with a class implementing a mockable interface.
+    /// Wraps access to static methods on SharingLogic with a class implementing a mockable interface.
     /// </summary>
     public class SharingLogicWrapper : ISharingLogicWrapper
     {
