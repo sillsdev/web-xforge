@@ -746,12 +746,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return { index: i, length: 0 };
   }
 
-  private async trainSegment(segment: Segment | undefined, sourceProjectRef: string): Promise<void> {
+  private async trainSegment(segment: Segment | undefined, sourceProjectRef: string | undefined): Promise<void> {
     if (segment == null || !this.canTrainSegment(segment)) {
       return;
     }
     if (
       !this.pwaService.isOnline &&
+      sourceProjectRef != null &&
       this.projectUserConfigDoc?.data != null &&
       this.projectUserConfigDoc.data.selectedBookNum != null &&
       this.projectUserConfigDoc.data.selectedChapterNum != null
