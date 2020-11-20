@@ -11,7 +11,7 @@ import { VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-re
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { Observable, of } from 'rxjs';
-import { anything, capture, deepEqual, instance, mock, spy, verify, when } from 'ts-mockito';
+import { anything, capture, instance, mock, spy, verify, when } from 'ts-mockito';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -148,7 +148,7 @@ describe('ImportQuestionsDialogComponent', () => {
 
   it('prompts for edited questions that have already been imported', fakeAsync(() => {
     const env = new TestEnvironment(true);
-    expect(env.questionRows.length).toBe(3);
+    expect(env.questionRows.length).toBe(4);
     expect(env.component.filteredList[0].checked).toBe(false);
     expect(env.component.filteredList[1].checked).toBe(false);
     expect(env.component.filteredList[2].checked).toBe(false);
@@ -166,7 +166,7 @@ describe('ImportQuestionsDialogComponent', () => {
     );
     env.clickSelectAll();
     verify(env.dialogSpy.open(anything(), anything())).once();
-    expect(env.questionRows.length).toBe(3);
+    expect(env.questionRows.length).toBe(4);
     expect(env.component.filteredList[0].checked).toBe(false);
     expect(env.component.filteredList[1].checked).toBe(true);
     expect(env.component.filteredList[2].checked).toBe(true);
@@ -207,6 +207,25 @@ describe('ImportQuestionsDialogComponent', () => {
       chapterNum: 1,
       verseNum: 2
     });
+  }));
+
+  it('should prompt the user for importing a question that has had the reference changed', fakeAsync(() => {
+    const env = new TestEnvironment(true);
+    when(env.mockedImportQuestionsConfirmationMdcDialogRef.afterClosed()).thenReturn(
+      of({
+        questions: [
+          {
+            before: 'GEN 43:2 Now the famine was severe in the land.',
+            after: 'GEN 43:1 Now the famine was severe in the land.',
+            checked: true
+          }
+        ]
+      } as ImportQuestionsConfirmationDialogData)
+    );
+    env.selectQuestion(env.questionRows[1]);
+    verify(env.dialogSpy.open(anything(), anything())).once();
+    env.click(env.submitButton);
+    expect(env.editedTransceleratorQuestionIds).toEqual(['4']);
   }));
 });
 
@@ -257,6 +276,7 @@ class TestEnvironment {
   overlayContainerElement: HTMLElement;
   mockedScriptureChooserMdcDialogRef = mock(MdcDialogRef);
   mockedImportQuestionsConfirmationMdcDialogRef = mock(MdcDialogRef);
+  editedTransceleratorQuestionIds: string[] = [];
 
   constructor(includeAllBooks = false, private errorOnFetchQuestions = false) {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
@@ -364,6 +384,13 @@ class TestEnvironment {
         id: '1'
       },
       {
+        book: 'GEN',
+        startChapter: '43',
+        startVerse: '1',
+        text: 'Now the famine was severe in the land.',
+        id: '4'
+      },
+      {
         book: 'MAT',
         startChapter: '1',
         startVerse: '1',
@@ -402,7 +429,25 @@ class TestEnvironment {
               chapterNum: 41,
               verseNum: 39
             } as VerseRefData
-          } as Question
+          } as Question,
+          submitJson0Op: (_: any) => {
+            this.editedTransceleratorQuestionIds.push('1');
+          }
+        } as QuestionDoc,
+        {
+          data: {
+            text: 'Now the famine was severe in the land.',
+            transceleratorQuestionId: '4',
+            answers: [] as Answer[],
+            verseRef: {
+              bookNum: 1,
+              chapterNum: 43,
+              verseNum: 2
+            } as VerseRefData
+          } as Question,
+          submitJson0Op: (_: any) => {
+            this.editedTransceleratorQuestionIds.push('4');
+          }
         } as QuestionDoc
       ] as Readonly<QuestionDoc[]>
     } as RealtimeQuery<QuestionDoc>);

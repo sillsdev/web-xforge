@@ -54,7 +54,7 @@ interface DialogListItem {
   question: TransceleratorQuestion;
   checked: boolean;
   matchesFilter: boolean;
-  alreadyImportedQuestion: QuestionDoc | null;
+  sfVersionOfQuestion: QuestionDoc | null;
 }
 
 @Component({
@@ -134,7 +134,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
     questionQuery.dispose();
 
     for (const question of transceleratorQuestions.filter(q => this.data.textsByBookId[q.book] != null)) {
-      const alreadyImportedQuestion =
+      const sfVersionOfQuestion =
         questionQuery.docs.find(
           doc =>
             doc.data != null &&
@@ -146,7 +146,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
         question,
         checked: false,
         matchesFilter: true,
-        alreadyImportedQuestion
+        sfVersionOfQuestion
       });
     }
     this.updateListOfFilteredQuestions();
@@ -225,15 +225,9 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
       listItems.map(listItem => {
         const currentDate = new Date().toJSON();
         const verseRefData = this.verseRefData(listItem.question);
-        if (listItem.alreadyImportedQuestion) {
-          const doc = listItem.alreadyImportedQuestion.data;
-          if (
-            doc != null &&
-            (doc.text !== listItem.question.text ||
-              toVerseRef(doc.verseRef).BBBCCCVVV !== toVerseRef(verseRefData).BBBCCCVVV ||
-              doc.verseRef.verse !== verseRefData.verse)
-          ) {
-            listItem.alreadyImportedQuestion.submitJson0Op(op =>
+        if (listItem.sfVersionOfQuestion != null) {
+          if (this.questionsDiffer(listItem)) {
+            listItem.sfVersionOfQuestion.submitJson0Op(op =>
               op
                 .set(q => q.text!, listItem.question.text)
                 .set(q => q.verseRef, verseRefData)
@@ -287,14 +281,14 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
   }
 
   private async confirmEditsIfNecessary(changes: DialogListItem[]): Promise<void> {
-    const changesToConfirm = changes.filter(
-      change =>
-        change.alreadyImportedQuestion != null && change.question.text !== change.alreadyImportedQuestion.data?.text
-    );
+    const changesToConfirm = changes.filter(change => this.questionsDiffer(change));
     const edits: EditedQuestion[] = changesToConfirm.map(change => ({
-      before: change.alreadyImportedQuestion?.data?.text || '',
-      after: change.question.text,
-      answerCount: change.alreadyImportedQuestion?.data?.answers.length || 0,
+      before:
+        toVerseRef(change.sfVersionOfQuestion!.data!.verseRef).toString() +
+        ' ' +
+        change.sfVersionOfQuestion!.data!.text,
+      after: this.referenceForDisplay(change.question) + ' ' + change.question.text,
+      answerCount: change.sfVersionOfQuestion?.data?.answers.length || 0,
       checked: true
     }));
 
@@ -316,5 +310,15 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
       (result, index) => (changesToConfirm[index].checked = result.checked)
     );
     this.updateSelectAllCheckbox();
+  }
+
+  private questionsDiffer(listItem: DialogListItem) {
+    const doc = listItem.sfVersionOfQuestion?.data;
+    const q = listItem.question;
+    return doc != null && (doc.text !== q.text || this.verseRefDataDiffers(doc.verseRef, this.verseRefData(q)));
+  }
+
+  private verseRefDataDiffers(a: VerseRefData, b: VerseRefData): boolean {
+    return !toVerseRef(a).equals(toVerseRef(b));
   }
 }
