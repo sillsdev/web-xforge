@@ -265,16 +265,17 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
 
   private verseRefData(q: TransceleratorQuestion): VerseRefData {
     const verse = new VerseRef(q.book, q.startChapter, q.startVerse);
-    return {
+    const verseRefData: VerseRefData = {
       bookNum: verse.bookNum,
       chapterNum: verse.chapterNum,
-      verseNum: verse.verseNum,
-      verse:
-        // TODO Right now ignoring end chapter and verse if it's in a different chapter, since we don't yet support that
-        (q.endChapter == null || q.startChapter === q.endChapter) && q.startVerse !== q.endVerse
-          ? q.startVerse + '-' + q.endVerse
-          : undefined
+      verseNum: verse.verseNum
     };
+    // TODO Right now ignoring end chapter and verse if it's in a different chapter, since we don't yet support that
+    const sameChapter = q.endChapter == null || q.endChapter === q.startChapter;
+    if (sameChapter && q.endVerse != null && q.endVerse !== q.startVerse) {
+      verseRefData.verse = q.startVerse + '-' + q.endVerse;
+    }
+    return verseRefData;
   }
 
   // TODO should consider verse ranges, rather than just starting verse

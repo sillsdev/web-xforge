@@ -195,6 +195,19 @@ describe('ImportQuestionsDialogComponent', () => {
     });
     expect(question.transceleratorQuestionId).toBe('2');
   }));
+
+  it('should properly import questions that are on a single verse', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.selectQuestion(env.questionRows[1]);
+    env.click(env.submitButton);
+    verify(mockedProjectService.createQuestion('project01', anything(), undefined, undefined)).once();
+    const question = capture(mockedProjectService.createQuestion).last()[1];
+    expect(question.verseRef).toEqual({
+      bookNum: 40,
+      chapterNum: 1,
+      verseNum: 2
+    });
+  }));
 });
 
 @Directive({
