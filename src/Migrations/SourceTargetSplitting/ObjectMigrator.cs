@@ -36,6 +36,11 @@ namespace SourceTargetSplitting
         private readonly IRealtimeService _realtimeService;
 
         /// <summary>
+        /// A collection of test projects, only used to ensure that there is a source project created when testing.
+        /// </summary>
+        private readonly List<SFProject> _testProjectCollection = new List<SFProject>();
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="ObjectMigrator" /> class.
         /// </summary>
         /// <param name="dataAccessOptions">The data access options.</param>
@@ -119,6 +124,25 @@ namespace SourceTargetSplitting
         }
 
         /// <summary>
+        /// Creates an internal test project.
+        /// </summary>
+        /// <param name="paratextId">The paratext identifier.</param>
+        /// <remarks>
+        /// This is only to be used on test runs!
+        /// </remarks>
+        internal void CreateInternalTestProject(string paratextId)
+        {
+            if (!_testProjectCollection.Any(p => p.ParatextId == paratextId) && !string.IsNullOrWhiteSpace(paratextId))
+            {
+                SFProject testProject = new SFProject {
+                    Id = ObjectId.GenerateNewId().ToString(),
+                    ParatextId = paratextId,
+                };
+                _testProjectCollection.Add(testProject);
+            }
+        }
+
+        /// <summary>
         /// Migrates the objects.
         /// </summary>
         /// <param name="doWrite">If set to <c>true</c>, do write changes to the database.</param>
@@ -129,6 +153,12 @@ namespace SourceTargetSplitting
         {
             // Get the existing projects from MongoDB
             List<SFProject> existingProjects = this._realtimeService.QuerySnapshots<SFProject>().ToList();
+
+            // If we are testing, add the test projects
+            if (!doWrite)
+            {
+                existingProjects.AddRange(this._testProjectCollection);
+            }
 
             // This is the mapping for update the TextData identifiers
             // The key is the target project id, the value is the new source project id

@@ -263,6 +263,11 @@ namespace SourceTargetSplitting
                                 Log(ex.Message);
                             }
                         }
+                        else
+                        {
+                            // Add it to the test collection so MigrateObjectsAsync will work as expected
+                            objectMigrator!.CreateInternalTestProject(sourceProjectId);
+                        }
 
                         projectIds.Add(sourceProjectId);
                     }
