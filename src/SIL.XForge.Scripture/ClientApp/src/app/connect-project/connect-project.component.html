@@ -55,12 +55,12 @@
         ></p>
       </ng-template>
       <mdc-card id="settings-card" *ngIf="showSettings" outlined formGroupName="settings">
-        <div fxLayout="column" fxLayoutAlign="start" class="card-title">
+        <div class="card-title">
           <div mdcHeadline6>{{ t("additional_settings") }}</div>
           <div mdcBody2>{{ t("you_can_change_later") }}</div>
         </div>
         <div class="card-content">
-          <div fxLayout="row" fxLayoutAlign="start center">
+          <div>
             <mdc-form-field>
               <mdc-checkbox
                 formControlName="translationSuggestions"
@@ -69,7 +69,7 @@
               <label>{{ t("translation_suggestions") }}</label>
             </mdc-form-field>
           </div>
-          <div fxLayout="row" fxLayoutAlign="start center">
+          <div>
             <div fxFlex="44px" class="indent"></div>
             <p
               fxFlex
@@ -100,13 +100,13 @@
         </div>
         <mdc-list-divider></mdc-list-divider>
         <div class="card-content">
-          <div fxLayout="row" fxLayoutAlign="start center">
+          <div>
             <mdc-form-field>
               <mdc-checkbox formControlName="checking" id="checking-checkbox"></mdc-checkbox>
               <label>{{ t("community_checking") }}</label>
             </mdc-form-field>
           </div>
-          <div fxLayout="row" fxLayoutAlign="start center">
+          <div>
             <div fxFlex="44px" class="indent"></div>
             <p fxFlex class="helper-text">{{ t("engage_the_wider_community_to_check_scripture") }}</p>
           </div>
