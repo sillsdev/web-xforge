@@ -4,16 +4,20 @@ namespace SourceTargetSplitting
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
+    using System.Xml.Linq;
     using Microsoft.Extensions.Options;
     using MongoDB.Bson;
     using MongoDB.Driver;
     using SIL.XForge.Configuration;
     using SIL.XForge.DataAccess;
+    using SIL.XForge.Models;
     using SIL.XForge.Realtime;
     using SIL.XForge.Realtime.Json0;
+    using SIL.XForge.Realtime.RichText;
     using SIL.XForge.Scripture.Models;
     using SIL.XForge.Scripture.Services;
     using SIL.XForge.Services;
+    using SIL.XForge.Utils;
 
     /// <summary>
     /// The object migrator.
@@ -26,6 +30,16 @@ namespace SourceTargetSplitting
         private readonly IMongoDatabase _database;
 
         /// <summary>
+        /// The delta USX mapper.
+        /// </summary>
+        private readonly IDeltaUsxMapper _deltaUsxMapper;
+
+        /// <summary>
+        /// The paratext service.
+        /// </summary>
+        private readonly IParatextService _paratextService;
+
+        /// <summary>
         /// The project service.
         /// </summary>
         private readonly ISFProjectService _projectService;
@@ -36,6 +50,11 @@ namespace SourceTargetSplitting
         private readonly IRealtimeService _realtimeService;
 
         /// <summary>
+        /// The user secrets repository.
+        /// </summary>
+        private readonly IRepository<UserSecret> _userSecrets;
+
+        /// <summary>
         /// A collection of test projects, only used to ensure that there is a source project created when testing.
         /// </summary>
         private readonly List<SFProject> _testProjectCollection = new List<SFProject>();
@@ -44,18 +63,27 @@ namespace SourceTargetSplitting
         /// Initializes a new instance of the <see cref="ObjectMigrator" /> class.
         /// </summary>
         /// <param name="dataAccessOptions">The data access options.</param>
+        /// <param name="deltaUsxMapper">The delta USX mapper.</param>
         /// <param name="mongoClient">The mongo client.</param>
+        /// <param name="paratextService">The paratext service.</param>
         /// <param name="projectService">The project service.</param>
         /// <param name="realtimeService">The realtime service.</param>
+        /// <param name="userSecrets">The user secrets repository.</param>
         public ObjectMigrator(
             IOptions<DataAccessOptions> dataAccessOptions,
+             IDeltaUsxMapper deltaUsxMapper,
             IMongoClient mongoClient,
+            IParatextService paratextService,
             ISFProjectService projectService,
-            IRealtimeService realtimeService)
+            IRealtimeService realtimeService,
+            IRepository<UserSecret> userSecrets)
         {
             this._database = mongoClient.GetDatabase(dataAccessOptions.Value.MongoDatabaseName);
+            this._deltaUsxMapper = deltaUsxMapper;
+            this._paratextService = paratextService;
             this._projectService = projectService;
             this._realtimeService = realtimeService;
+            this._userSecrets = userSecrets;
         }
 
         /// <summary>
@@ -85,12 +113,14 @@ namespace SourceTargetSplitting
                 .ToArray();
 
             // Iterate through the users until we find someone with access
+            string sourceProjectRef = string.Empty;
+            string curUserId = string.Empty;
             foreach (string userId in userIds)
             {
                 try
                 {
                     // Use the project service to create the resource project
-                    string sourceProjectRef =
+                    sourceProjectRef =
                         await this._projectService.CreateResourceProjectAsync(userId, sourceId).ConfigureAwait(false);
 
                     // Add each user in the target project to the source project so they can access it
@@ -108,6 +138,7 @@ namespace SourceTargetSplitting
                     }
 
                     // Successfully created
+                    curUserId = userId;
                     break;
                 }
                 catch (DataNotFoundException)
@@ -121,24 +152,48 @@ namespace SourceTargetSplitting
                     break;
                 }
             }
-        }
 
-        /// <summary>
-        /// Creates an internal test project.
-        /// </summary>
-        /// <param name="paratextId">The paratext identifier.</param>
-        /// <remarks>
-        /// This is only to be used on test runs!
-        /// </remarks>
-        internal void CreateInternalTestProject(string paratextId)
-        {
-            if (!_testProjectCollection.Any(p => p.ParatextId == paratextId) && !string.IsNullOrWhiteSpace(paratextId))
+            // Next, recreate the books, if we have a project reference
+            if (!string.IsNullOrWhiteSpace(sourceProjectRef))
             {
-                SFProject testProject = new SFProject {
-                    Id = ObjectId.GenerateNewId().ToString(),
-                    ParatextId = paratextId,
-                };
-                _testProjectCollection.Add(testProject);
+                // Get the user secret
+                Attempt<UserSecret> userSecretAttempt = await this._userSecrets.TryGetAsync(curUserId);
+                if (!userSecretAttempt.TryResult(out UserSecret userSecret))
+                {
+                    throw new DataNotFoundException("The user secret does not exist.");
+                }
+
+                // Connect to the realtime service
+                using IConnection connection = await this._realtimeService.ConnectAsync();
+
+                // Get the project
+                IDocument<SFProject>? projectDoc =
+                    await connection.FetchAsync<SFProject>(sourceProjectRef).ConfigureAwait(false);
+                if (!projectDoc.IsLoaded)
+                    return;
+
+                Dictionary<string, string>? permissions =
+                    await this._paratextService.GetPermissionsAsync(userSecret, projectDoc.Data).ConfigureAwait(false);
+
+                // Add all of the books
+                foreach (int bookNum in this._paratextService.GetBookList(userSecret, sourceId))
+                {
+                    TextInfo text = new TextInfo {
+                        BookNum = bookNum,
+                        HasSource = false,
+                        Permissions = permissions,
+                    };
+
+                    List<Chapter> newChapters =
+                        await this.UpdateTextDocsAsync(userSecret, text, sourceProjectRef, sourceId, connection);
+
+                    // Update project with new TextInfo
+                    await projectDoc.SubmitJson0OpAsync(op =>
+                    {
+                        text.Chapters = newChapters;
+                        op.Add(pd => pd.Texts, text);
+                    });
+                }
             }
         }
 
@@ -202,7 +257,7 @@ namespace SourceTargetSplitting
 
             // Get the Textdata collection
             string collectionName = this._realtimeService.GetCollectionName<TextData>();
-            IMongoCollection<TextData> collection = _database.GetCollection<TextData>(collectionName);
+            IMongoCollection<TextData> collection = this._database.GetCollection<TextData>(collectionName);
 
             // Get the existing textdata object ids from MongoDB
             List<string> textIds = collection.AsQueryable().Select(t => t.Id).ToList();
@@ -351,6 +406,26 @@ namespace SourceTargetSplitting
         }
 
         /// <summary>
+        /// Creates an internal test project.
+        /// </summary>
+        /// <param name="paratextId">The Paratext identifier.</param>
+        /// <remarks>
+        /// This is only to be used on test runs!
+        /// </remarks>
+        internal void CreateInternalTestProject(string paratextId)
+        {
+            if (!this._testProjectCollection.Any(p => p.ParatextId == paratextId) && !string.IsNullOrWhiteSpace(paratextId))
+            {
+                SFProject testProject = new SFProject
+                {
+                    Id = ObjectId.GenerateNewId().ToString(),
+                    ParatextId = paratextId,
+                };
+                this._testProjectCollection.Add(testProject);
+            }
+        }
+
+        /// <summary>
         /// Deletes the document and any versions in the specified collection, matching the specified identifer.
         /// </summary>
         /// <param name="collectionName">Name of the collection.</param>
@@ -366,6 +441,61 @@ namespace SourceTargetSplitting
                 this._database.GetCollection<BsonDocument>($"o_{collectionName}");
             FilterDefinition<BsonDocument> dFilter = Builders<BsonDocument>.Filter.Regex("d", $"^{id}");
             await opsCollection.DeleteManyAsync(dFilter).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Updates the text documents asynchronously.
+        /// </summary>
+        /// <param name="userSecret">The user secret.</param>
+        /// <param name="text">The text.</param>
+        /// <param name="projectId">The project identifier.</param>
+        /// <param name="paratextId">The Paratext identifier.</param>
+        /// <param name="connection">The connection.</param>
+        /// <returns>
+        /// The list of chapters for the <see cref="TextInfo" />.
+        /// </returns>
+        /// <remarks>
+        /// This is a heavy modification of <see cref="ParatextSyncRunner.UpdateTextDocsAsync" />, which was not suitable
+        /// not only because it is private, but because it updates and removes as well as just adds chapters.
+        /// </remarks>
+        private async Task<List<Chapter>> UpdateTextDocsAsync(
+            UserSecret userSecret,
+            TextInfo text,
+            string projectId,
+            string paratextId,
+            IConnection connection)
+        {
+            string bookText = this._paratextService.GetBookText(userSecret, paratextId, text.BookNum);
+            var usxDoc = XDocument.Parse(bookText);
+            var tasks = new List<Task>();
+            Dictionary<int, ChapterDelta> deltas =
+                this._deltaUsxMapper.ToChapterDeltas(usxDoc).ToDictionary(cd => cd.Number);
+            var chapters = new List<Chapter>();
+            foreach (KeyValuePair<int, ChapterDelta> kvp in deltas)
+            {
+                var textDataDoc = connection.Get<TextData>(TextData.GetTextDocId(projectId, text.BookNum, kvp.Key));
+                async Task createText(int chapterNum, Delta delta)
+                {
+                    await textDataDoc.FetchAsync();
+                    if (textDataDoc.IsLoaded)
+                    {
+                        await textDataDoc.DeleteAsync();
+                    }
+
+                    await textDataDoc.CreateAsync(new TextData(delta));
+                }
+
+                tasks.Add(createText(kvp.Key, kvp.Value.Delta));
+                chapters.Add(new Chapter
+                {
+                    Number = kvp.Key,
+                    LastVerse = kvp.Value.LastVerse,
+                    IsValid = kvp.Value.IsValid
+                });
+            }
+
+            await Task.WhenAll(tasks);
+            return chapters;
         }
     }
 }
