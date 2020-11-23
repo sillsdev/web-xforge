@@ -361,7 +361,7 @@ export class AuthService {
       'Local Login',
       {
         userId: userId,
-        ...(userId !== prevUserId && { prevUserId: prevUserId }),
+        ...(userId !== prevUserId && { prevUserId }),
         params: claims[XF_ROLE_CLAIM]
       },
       'log'

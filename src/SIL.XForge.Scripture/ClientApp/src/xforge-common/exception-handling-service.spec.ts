@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from './auth.service';
 import { CONSOLE } from './browser-globals';
-import { ErrorReportingService, EventOptions } from './error-reporting.service';
+import { ErrorReportingService } from './error-reporting.service';
 import { ErrorComponent } from './error/error.component';
 import { ExceptionHandlingService } from './exception-handling-service';
 import { UserDoc } from './models/user-doc';
@@ -90,7 +90,6 @@ describe('ExceptionHandlingService', () => {
 
     expect(env.oneAndOnlyReport.error.message).toBe('Original error');
     expect(env.oneAndOnlyReport.error.name).toBe('Original error name');
-    expect(env.oneAndOnlyReport.options.eventId).toMatch(/[\da-f]{24}/);
   });
 
   it('should handle arbitrary objects', async () => {
@@ -119,7 +118,7 @@ describe('ExceptionHandlingService', () => {
 });
 
 class TestEnvironment {
-  readonly errorReports: { error: any; options: EventOptions }[] = [];
+  readonly errorReports: { error: any }[] = [];
   readonly service: ExceptionHandlingService;
   rejectUser = false;
   timeoutUser = false;
@@ -147,17 +146,9 @@ class TestEnvironment {
       }
     } as MdcDialogRef<ErrorComponent, {}>);
 
-    when(mockedUserService.getCurrentUser()).thenCall(() => {
-      return new Promise((resolve, reject) => {
-        if (!this.timeoutUser) {
-          this.rejectUser ? reject() : resolve(this.userDoc);
-        }
-      });
-    });
-
-    when(
-      mockedErrorReportingService.notify(anything(), anything(), anything())
-    ).thenCall((error: NotifiableError, options: EventOptions) => this.errorReports.push({ error, options }));
+    when(mockedErrorReportingService.notify(anything(), anything())).thenCall((error: NotifiableError) =>
+      this.errorReports.push({ error })
+    );
   }
 
   get oneAndOnlyReport() {

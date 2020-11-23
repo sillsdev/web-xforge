@@ -1,13 +1,13 @@
 import { MdcDialog } from '@angular-mdc/web/dialog';
 import { Injectable, Injector, NgZone } from '@angular/core';
-import Bugsnag from '@bugsnag/js';
+import Bugsnag, { BrowserConfig } from '@bugsnag/js';
 import { BugsnagErrorHandler } from '@bugsnag/plugin-angular';
 import { translate } from '@ngneat/transloco';
+import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
 import { CONSOLE } from './browser-globals';
 import { ErrorReportingService } from './error-reporting.service';
 import { ErrorAlert, ErrorComponent } from './error/error.component';
-import { I18nService } from './i18n.service';
 import { NoticeService } from './notice.service';
 import { objectId } from './utils';
 
@@ -20,6 +20,21 @@ export class AppError extends Error {
 
 @Injectable()
 export class ExceptionHandlingService extends BugsnagErrorHandler {
+  static initBugsnag() {
+    const config: BrowserConfig = {
+      apiKey: environment.bugsnagApiKey,
+      appVersion: version,
+      appType: 'angular',
+      enabledReleaseStages: ['live', 'qa'],
+      releaseStage: environment.releaseStage,
+      autoDetectErrors: false
+    };
+    if (environment.releaseStage === 'dev') {
+      config.logger = null;
+    }
+    Bugsnag.start(config);
+  }
+
   // Use injected console when it's available, for the sake of tests, but fall back to window.console if injection fails
   private console = window.console;
   private alertQueue: ErrorAlert[] = [];
@@ -37,13 +52,11 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
     let noticeService: NoticeService;
     let dialog: MdcDialog;
     let errorReportingService: ErrorReportingService;
-    let i18nService: I18nService;
     try {
       ngZone = this.injector.get(NgZone);
       noticeService = this.injector.get(NoticeService);
       dialog = this.injector.get(MdcDialog);
       errorReportingService = this.injector.get(ErrorReportingService);
-      i18nService = this.injector.get(I18nService);
       this.console = this.injector.get(CONSOLE);
     } catch (err) {
       this.console.log(`Error occurred. Unable to report to Bugsnag, because dependency injection failed.`);
@@ -109,8 +122,8 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
       try {
         this.handleAlert(ngZone, dialog, { message, stack: error.stack, eventId });
       } finally {
-        const locale = i18nService ? i18nService.localeCode : 'unknown';
-        this.sendReport(errorReportingService, error, eventId, locale);
+        errorReportingService.addMeta({ eventId });
+        this.sendReport(errorReportingService, error);
       }
     } finally {
       // Error logging occurs after error reporting so it won't show up as noise in Bugsnag's breadcrumbs
@@ -119,8 +132,8 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
     }
   }
 
-  private sendReport(errorReportingService: ErrorReportingService, error: any, eventId: string, locale: string) {
-    errorReportingService.notify(error, { eventId, locale }, err => {
+  private sendReport(errorReportingService: ErrorReportingService, error: any) {
+    errorReportingService.notify(error, err => {
       if (err) {
         this.console.error('Sending error report failed:');
         this.console.error(err);
