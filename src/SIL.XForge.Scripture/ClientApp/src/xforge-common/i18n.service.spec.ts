@@ -1,12 +1,14 @@
 import { TranslocoService } from '@ngneat/transloco';
 import { CookieService } from 'ngx-cookie-service';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { AuthService } from './auth.service';
 import { I18nService } from './i18n.service';
 
 const mockedAuthService = mock(AuthService);
 const mockedTranslocoService = mock(TranslocoService);
 const mockedCookieService = mock(CookieService);
+const mockedErrorReportingService = mock(ErrorReportingService);
 
 describe('I18nService', () => {
   it('should be able to get a locale', () => {
@@ -18,7 +20,8 @@ describe('I18nService', () => {
     const service = new I18nService(
       instance(mockedAuthService),
       instance(mockedTranslocoService),
-      instance(mockedCookieService)
+      instance(mockedCookieService),
+      instance(mockedErrorReportingService)
     );
     expect(service).toBeTruthy();
     service.setLocale('zh-CN');
@@ -32,7 +35,8 @@ describe('I18nService', () => {
     const service = new I18nService(
       instance(mockedAuthService),
       instance(mockedTranslocoService),
-      instance(mockedCookieService)
+      instance(mockedCookieService),
+      instance(mockedErrorReportingService)
     );
     expect(
       service.translateAndInsertTags('namespace.key', {
@@ -65,7 +69,8 @@ describe('I18nService', () => {
     const service = new I18nService(
       instance(mockedAuthService),
       instance(mockedTranslocoService),
-      instance(mockedCookieService)
+      instance(mockedCookieService),
+      instance(mockedErrorReportingService)
     );
     expect(service.translateTextAroundTemplateTags('namespace.key')).toEqual({
       before: 'translated key with ',
@@ -79,7 +84,8 @@ describe('I18nService', () => {
     const service = new I18nService(
       instance(mockedAuthService),
       instance(mockedTranslocoService),
-      instance(mockedCookieService)
+      instance(mockedCookieService),
+      instance(mockedErrorReportingService)
     );
     expect(service.formatDate(date)).toEqual('Nov 25, 1991, 5:28 PM');
     service.setLocale('en-GB');
