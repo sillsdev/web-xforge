@@ -11,24 +11,16 @@
     <div *ngIf="!isAudioAvailable" class="audio-not-available">
       <mdc-icon>volume_off</mdc-icon>
       <span class="audio-unavailable-message">{{ t("audio_unavailable") }}</span>
-      <a
-        *ngIf="!localUrlError; else loadError"
-        #audioUnavailableTooltip="matTooltip"
-        (click)="audioUnavailableTooltip.show()"
-        matTooltip="{{ t('audio_cannot_be_played') }}"
-      >
-        <mdc-icon>help</mdc-icon>
-      </a>
-      <ng-template #loadError>
+      <div *ngIf="hasErrorState">
         <a
           id="error-load"
           #audioUnavailableTooltip="matTooltip"
           (click)="audioUnavailableTooltip.show()"
-          matTooltip="{{ t('audio_cannot_be_previewed') }}"
+          matTooltip="{{ t(audioStatus) }}"
         >
           <mdc-icon>help</mdc-icon>
         </a>
-      </ng-template>
+      </div>
     </div>
   </div>
 </ng-container>

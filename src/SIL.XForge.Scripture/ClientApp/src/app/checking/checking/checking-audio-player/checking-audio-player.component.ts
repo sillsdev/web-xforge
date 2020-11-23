@@ -8,6 +8,14 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 // See explanatory comment where this number is used
 const ARBITRARILY_LARGE_NUMBER = 1e10;
 
+export enum AudioStatus {
+  Init = 'audio_initialized',
+  Available = 'audio_available',
+  Unavailable = 'audio_cannot_be_accessed',
+  LocalNotAvailable = 'audio_cannot_be_previewed',
+  Offline = 'audio_cannot_be_played'
+}
+
 @Component({
   selector: 'app-checking-audio-player',
   templateUrl: './checking-audio-player.component.html',
@@ -19,7 +27,7 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
   @ViewChild(MdcSlider) slider?: MdcSlider;
 
   seek: number = 0;
-  localUrlError: boolean = false;
+  audioStatus: AudioStatus = AudioStatus.Init;
 
   private _currentTime: number = 0;
   private _duration: number = 0;
@@ -33,7 +41,7 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
     this.audio.addEventListener('loadedmetadata', () => {
       this.updateDuration();
       this.audioDataLoaded = true;
-      this.localUrlError = false;
+      this.audioStatus = AudioStatus.Available;
     });
 
     this.audio.addEventListener('timeupdate', () => {
@@ -49,13 +57,21 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
     });
 
     this.audio.addEventListener('error', () => {
-      this.localUrlError = isLocalBlobUrl(this.audio.src) ? true : false;
+      if (isLocalBlobUrl(this.audio.src)) {
+        this.audioStatus = AudioStatus.LocalNotAvailable;
+      } else {
+        this.audioStatus = this.pwaService.isOnline ? AudioStatus.Unavailable : AudioStatus.Offline;
+      }
     });
 
     this.subscribe(this.pwaService.onlineStatus, isOnline => {
       if (isOnline && !this.audioDataLoaded) {
         // force the audio element to try loading again, now that the user is online again
-        this.audio.load();
+        if (this.audio.src === '') {
+          this.audioStatus = AudioStatus.Unavailable;
+        } else {
+          this.audio.load();
+        }
       }
     });
   }
@@ -77,6 +93,10 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
     this.seek = 0;
   }
 
+  get hasErrorState(): boolean {
+    return !(this.audioStatus === AudioStatus.Init || this.audioStatus === AudioStatus.Available);
+  }
+
   get hasSource(): boolean {
     return !!this.audio.src;
   }
@@ -86,9 +106,10 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
   }
 
   @Input() set source(source: string) {
+    this.enabled = false;
+    this.audioDataLoaded = false;
     if (source && source !== '') {
       this.audio.src = formatFileSource(FileType.Audio, source);
-      this.enabled = false;
       this.seek = 0;
       // In Chromium the duration of blobs isn't known even after metadata is loaded
       // By making it skip to the end the duration becomes available. To do this we have to skip to some point that we
@@ -96,12 +117,11 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
       // audio playback to skip to the end of the audio when the user presses play in Chromium. Normal audio files will
       // know the duration once metadata has loaded.
       this.audio.currentTime = ARBITRARILY_LARGE_NUMBER;
+      this.audioStatus = AudioStatus.Init;
     } else {
       this.audio.removeAttribute('src');
-      this.enabled = false;
+      this.audioStatus = this.pwaService.isOnline ? AudioStatus.Unavailable : AudioStatus.Offline;
     }
-    this.audioDataLoaded = false;
-    this.localUrlError = false;
   }
 
   /**
@@ -109,7 +129,7 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
    * loaded already (and therefore cached in memory).
    */
   get isAudioAvailable(): boolean {
-    return (isLocalBlobUrl(this.audio.src) || this.pwaService.isOnline || this.audioDataLoaded) && !this.localUrlError;
+    return (isLocalBlobUrl(this.audio.src) || this.pwaService.isOnline || this.audioDataLoaded) && !this.hasErrorState;
   }
 
   private get checkIsPlaying(): boolean {

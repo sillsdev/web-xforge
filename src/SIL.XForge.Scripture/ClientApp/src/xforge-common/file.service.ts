@@ -220,15 +220,16 @@ export class FileService extends SubscriptionDisposable {
     source: string,
     dataCollection: string,
     dataId: string
-  ): Promise<FileOfflineData> {
+  ): Promise<FileOfflineData | undefined> {
     const url = formatFileSource(fileType, source);
-    const blob: Blob = await this.onlineRequestFile(url);
-    if (blob != null) {
-      const fileData = createStorageFileData(dataCollection, dataId, source, blob);
-      await this.offlineStore.put(fileType, fileData);
-      return fileData;
-    }
-    throw Error('Trouble downloading requested file. It may not exist.');
+    try {
+      const blob: Blob = await this.onlineRequestFile(url);
+      if (blob != null) {
+        const fileData = createStorageFileData(dataCollection, dataId, source, blob);
+        await this.offlineStore.put(fileType, fileData);
+        return fileData;
+      }
+    } catch {}
   }
 
   private async syncFiles(): Promise<void> {

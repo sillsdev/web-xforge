@@ -67,7 +67,7 @@
           </div>
           <div [fxShow]="answerTabs.activeTabIndex === 1" class="answer-tab answer-record-upload">
             <app-checking-audio-combined
-              [source]="getFileSource(activeAnswer?.audioUrl)"
+              [source]="activeAnswer?.audioUrl"
               (update)="processAudio($event)"
             ></app-checking-audio-combined>
           </div>
