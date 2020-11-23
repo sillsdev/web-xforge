@@ -3,8 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
+using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
@@ -101,7 +105,7 @@ namespace SIL.XForge.Scripture.Services
                             <selection verseRef=""MAT 1:2"" startPos=""0"" selectedText="""" />
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"">
                                 <content>
-                                    <p><span style=""bold"">- audio-only question -</span></p>
+                                    <p><span style=""bold"">- xForge audio-only question -</span></p>
                                     <p>Test answer 3.</p>
                                 </content>
                             </comment>
@@ -116,8 +120,8 @@ namespace SIL.XForge.Scripture.Services
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
                                 <content>
-                                    <p><span style=""bold"">- audio-only question -</span></p>
-                                    <p>- audio-only response -</p>
+                                    <p><span style=""bold"">- xForge audio-only question -</span></p>
+                                    <p>- xForge audio-only response -</p>
                                 </content>
                             </comment>
                             <comment user=""PT User 3"" date=""2019-01-01T09:00:00.0000000+00:00"">
@@ -128,7 +132,7 @@ namespace SIL.XForge.Scripture.Services
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
                             <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-02T08:00:00.0000000+00:00"">
                                 <content>
-                                    <p><span style=""bold"">- audio-only question -</span></p>
+                                    <p><span style=""bold"">- xForge audio-only question -</span></p>
                                     <p><span style=""italic"">This is some scripture. (MAT 1:2-3)</span></p>
                                     <p>Test answer 2.</p>
                                 </content>
@@ -141,7 +145,7 @@ namespace SIL.XForge.Scripture.Services
                             <selection verseRef=""MAT 1:2"" startPos=""0"" selectedText="""" />
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"" deleted=""true"">
                                 <content>
-                                    <p><span style=""bold"">- audio-only question -</span></p>
+                                    <p><span style=""bold"">- xForge audio-only question -</span></p>
                                     <p>Test answer 3.</p>
                                 </content>
                             </comment>
@@ -391,13 +395,25 @@ namespace SIL.XForge.Scripture.Services
                 ParatextService = Substitute.For<IParatextService>();
                 ParatextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user01")).Returns("PT User 1");
                 ParatextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user03")).Returns("PT User 3");
-                Mapper = new ParatextNotesMapper(UserSecrets, ParatextService);
+                var options = Microsoft.Extensions.Options.Options.Create(new LocalizationOptions
+                {
+                    ResourcesPath = "Resources"
+                });
+                var factory = new ResourceManagerStringLocalizerFactory(options, NullLoggerFactory.Instance);
+                Localizer = new StringLocalizer<SharedResource>(factory);
+                var siteOptions = Substitute.For<IOptions<SiteOptions>>();
+                siteOptions.Value.Returns(new SiteOptions
+                {
+                    Name = "xForge",
+                });
+                Mapper = new ParatextNotesMapper(UserSecrets, ParatextService, Localizer, siteOptions);
             }
 
             public ParatextNotesMapper Mapper { get; }
             public MemoryRepository<UserSecret> UserSecrets { get; }
             public SFMemoryRealtimeService RealtimeService { get; }
             public IParatextService ParatextService { get; }
+            public IStringLocalizer<SharedResource> Localizer { get; }
 
             public async Task InitMapperAsync(bool includeSyncUsers, bool twoPtUsersOnProject)
             {

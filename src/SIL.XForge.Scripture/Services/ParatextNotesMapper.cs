@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Options;
 using MongoDB.Bson;
+using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
@@ -24,6 +27,8 @@ namespace SIL.XForge.Scripture.Services
     {
         private readonly IRepository<UserSecret> _userSecrets;
         private readonly IParatextService _paratextService;
+        private readonly IStringLocalizer<SharedResource> _localizer;
+        private readonly IOptions<SiteOptions> _siteOptions;
         private readonly Dictionary<string, SyncUser> _idToSyncUser = new Dictionary<string, SyncUser>();
         private readonly Dictionary<string, SyncUser> _usernameToSyncUser = new Dictionary<string, SyncUser>();
         private readonly Dictionary<string, string> _userIdToUsername = new Dictionary<string, string>();
@@ -33,10 +38,13 @@ namespace SIL.XForge.Scripture.Services
         private SFProjectSecret _projectSecret;
         private HashSet<string> _ptProjectUsersWhoCanWriteNotes;
 
-        public ParatextNotesMapper(IRepository<UserSecret> userSecrets, IParatextService paratextService)
+        public ParatextNotesMapper(IRepository<UserSecret> userSecrets, IParatextService paratextService,
+            IStringLocalizer<SharedResource> localizer, IOptions<SiteOptions> siteOptions)
         {
             _userSecrets = userSecrets;
             _paratextService = paratextService;
+            _localizer = localizer;
+            _siteOptions = siteOptions;
         }
 
         public List<SyncUser> NewSyncUsers { get; } = new List<SyncUser>();
@@ -90,7 +98,8 @@ namespace SIL.XForge.Scripture.Services
                             new XAttribute("selectedText", "")));
                     var answerPrefixContents = new List<object>();
                     // Questions that have empty texts will show in Paratext notes that it is audio-only
-                    string qText = string.IsNullOrEmpty(question.Text) ? "- audio-only question -" : question.Text;
+                    string qText = string.IsNullOrEmpty(question.Text)
+                        ? _localizer[SharedResource.Keys.AudioOnlyQuestion, _siteOptions.Value.Name] : question.Text;
                     answerPrefixContents.Add(new XElement("span", new XAttribute("style", "bold"), qText));
                     if (!string.IsNullOrEmpty(answer.ScriptureText))
                     {
@@ -168,7 +177,8 @@ namespace SIL.XForge.Scripture.Services
             commentElem.Add(new XAttribute("date", comment.DateCreated.ToString("o").Replace("Z", "+00:00")));
             var contentElem = new XElement("content");
             // Responses that have empty texts will show in Paratext notes that it is audio-only
-            string responseText = string.IsNullOrEmpty(comment.Text) ? "- audio-only response -" : comment.Text;
+            string responseText = string.IsNullOrEmpty(comment.Text)
+                ? _localizer[SharedResource.Keys.AudioOnlyResponse, _siteOptions.Value.Name] : comment.Text;
             if (prefixContent == null || prefixContent.Count == 0)
             {
                 contentElem.Add(responseText);
