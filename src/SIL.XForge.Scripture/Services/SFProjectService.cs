@@ -72,13 +72,6 @@ namespace SIL.XForge.Scripture.Services
             if (ptProject == null)
                 throw new DataNotFoundException("The paratext project does not exist.");
 
-            TranslateSource source = null;
-            if (settings.SourceParatextId != null && settings.SourceParatextId != settings.ParatextId)
-            {
-                source =
-                    await this.GetTranslateSourceAsync(curUserId, userSecret, settings.SourceParatextId, ptProjects);
-            }
-
             var project = new SFProject
             {
                 ParatextId = settings.ParatextId,
@@ -87,8 +80,7 @@ namespace SIL.XForge.Scripture.Services
                 WritingSystem = new WritingSystem { Tag = ptProject.LanguageTag },
                 TranslateConfig = new TranslateConfig
                 {
-                    TranslationSuggestionsEnabled = settings.TranslationSuggestionsEnabled,
-                    Source = source
+                    TranslationSuggestionsEnabled = settings.TranslationSuggestionsEnabled
                 },
                 CheckingConfig = new CheckingConfig
                 {
@@ -110,16 +102,29 @@ namespace SIL.XForge.Scripture.Services
                 IDocument<SFProject> projectDoc = await conn.CreateAsync<SFProject>(projectId, project);
                 await ProjectSecrets.InsertAsync(new SFProjectSecret { Id = projectDoc.Id });
 
+                // Add the source after the project has been created
+                // This will make the source project appear after the target, if it needs to be created
+                if (settings.SourceParatextId != null && settings.SourceParatextId != settings.ParatextId)
+                {
+                    TranslateSource source = await this.GetTranslateSourceAsync(
+                        curUserId, userSecret, settings.SourceParatextId, ptProjects);
+
+                    await projectDoc.SubmitJson0OpAsync(op =>
+                    {
+                        UpdateSetting(op, p => p.TranslateConfig.Source, source);
+                    });
+                }
+
                 IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
                 await AddUserToProjectAsync(conn, projectDoc, userDoc, SFProjectRole.Administrator, false);
 
-                if (project.TranslateConfig.TranslationSuggestionsEnabled)
+                if (projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled)
                 {
                     var machineProject = new MachineProject
                     {
                         Id = projectDoc.Id,
-                        SourceLanguageTag = project.TranslateConfig.Source.WritingSystem.Tag,
-                        TargetLanguageTag = project.WritingSystem.Tag
+                        SourceLanguageTag = projectDoc.Data.TranslateConfig.Source.WritingSystem.Tag,
+                        TargetLanguageTag = projectDoc.Data.WritingSystem.Tag
                     };
                     await _engineService.AddProjectAsync(machineProject);
                 }
