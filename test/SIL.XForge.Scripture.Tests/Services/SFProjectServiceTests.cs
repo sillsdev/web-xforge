@@ -548,6 +548,34 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task CreateProjectAsync_Target_Created_Before_Source()
+        {
+            var env = new TestEnvironment();
+            int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
+            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
+               .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), User01)
+                .Returns(Task.FromResult(TextInfoPermission.Read));
+            // SUT
+            string sfProjectId = await env.Service.CreateProjectAsync(User01, new SFProjectCreateSettings()
+            {
+                ParatextId = "ptProject123",
+                SourceParatextId = "resource_project",
+                TranslationSuggestionsEnabled = true,
+            });
+            Assert.That(env.ContainsProject(sfProjectId), Is.True);
+            Assert.That(env.RealtimeService.GetRepository<SFProject>().Query().Count(),
+                Is.EqualTo(projectCount + 2), "should have increased");
+
+            // The source should have a later ID than the target
+            var projects = env.RealtimeService.GetRepository<SFProject>().Query()
+                .Where(p => p.ParatextId == "ptProject123" || p.ParatextId == "resource_project")
+                .OrderBy(p => p.Id);
+            Assert.That(projects.First().ParatextId, Is.EqualTo("ptProject123"), "target is first");
+            Assert.That(projects.Last().ParatextId, Is.EqualTo("resource_project"), "source is last");
+        }
+
+        [Test]
         public void CreateProjectAsync_AlreadyExists_Error()
         {
             var env = new TestEnvironment();
