@@ -20,6 +20,7 @@ import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FileService } from 'xforge-common/file.service';
 import { LocationService } from 'xforge-common/location.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -49,6 +50,7 @@ const mockedLocationService = mock(LocationService);
 const mockedNoticeService = mock(NoticeService);
 const mockedPwaService = mock(PwaService);
 const mockedFileService = mock(FileService);
+const mockErrorReportingService = mock(ErrorReportingService);
 
 @Component({
   template: `<div>Mock</div>`
@@ -88,7 +90,8 @@ describe('AppComponent', () => {
       { provide: LocationService, useMock: mockedLocationService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: PwaService, useMock: mockedPwaService },
-      { provide: FileService, useMock: mockedFileService }
+      { provide: FileService, useMock: mockedFileService },
+      { provide: ErrorReportingService, useMock: mockErrorReportingService }
     ]
   }));
 
@@ -268,11 +271,10 @@ describe('AppComponent', () => {
   }));
 
   it('user data is set for Bugsnag', fakeAsync(() => {
-    // Ideally we'd spy on Bugsnag itself but if Bugsnag is initiated it breaks a lot of tests with outstanding timers
     const env = new TestEnvironment();
     env.init();
 
-    verify(mockedUserService.getCurrentUser()).once();
+    verify(mockErrorReportingService.addMeta(anything(), 'user')).once();
     expect().nothing();
   }));
 

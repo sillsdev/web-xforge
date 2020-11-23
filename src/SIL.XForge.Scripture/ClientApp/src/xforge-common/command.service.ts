@@ -54,15 +54,6 @@ export class CommandService {
   constructor(private readonly http: HttpClient) {}
 
   async onlineInvoke<T>(url: string, method: string, params: any = {}): Promise<T | undefined> {
-    Bugsnag.leaveBreadcrumb(
-      'JSON-RPC',
-      {
-        request: url,
-        method: method,
-        params: params
-      },
-      'request'
-    );
     url = `${COMMAND_API_NAMESPACE}/${url}`;
     const request: JsonRpcRequest = {
       jsonrpc: '2.0',
@@ -70,6 +61,16 @@ export class CommandService {
       params,
       id: uuidv1()
     };
+    Bugsnag.leaveBreadcrumb(
+      'JSON-RPC',
+      {
+        request: url,
+        method: method,
+        id: request.id,
+        params: params
+      },
+      'request'
+    );
     try {
       const response = await this.http
         .post<JsonRpcResponse<T>>(url, request, { headers: { 'Content-Type': 'application/json' } })

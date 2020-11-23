@@ -49,7 +49,7 @@ export class RealtimeService {
       if (doc.id == null) {
         throw new AppError('Document could not be created.', {
           collection: collection,
-          id: id != null ? id : 'undefined'
+          id: id ?? 'undefined'
         });
       }
       this.docs.set(key, doc);
