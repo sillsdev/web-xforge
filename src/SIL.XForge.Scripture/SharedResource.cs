@@ -15,6 +15,8 @@ namespace SIL.XForge.Scripture
     {
         public static class Keys
         {
+            public const string AudioOnlyQuestion = "AudioOnlyQuestion";
+            public const string AudioOnlyResponse = "AudioOnlyResponse";
             public const string EmailBad = "EmailBad";
             public const string EmailMissing = "EmailMissing";
             public const string InviteEmailOption = "InviteEmailOption";
