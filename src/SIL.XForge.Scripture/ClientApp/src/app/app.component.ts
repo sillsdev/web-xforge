@@ -6,7 +6,6 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
-import Bugsnag from '@bugsnag/js';
 import { translate } from '@ngneat/transloco';
 import { cloneDeep } from 'lodash';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
@@ -18,6 +17,7 @@ import { combineLatest, from, merge, Observable, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, switchMap, tap } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
@@ -43,7 +43,6 @@ export interface QuestionQuery {
   bookNum: number;
   query: RealtimeQuery;
 }
-type UserForReport = User & { id: string };
 
 @Component({
   selector: 'app-root',
@@ -81,6 +80,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly adminAuthGuard: SFAdminAuthGuard,
     private readonly dialog: MdcDialog,
     private readonly fileService: FileService,
+    private readonly reportingService: ErrorReportingService,
     readonly noticeService: NoticeService,
     readonly i18n: I18nService,
     readonly media: MediaObserver,
@@ -250,18 +250,21 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.loadingStarted();
     if (await this.isLoggedIn) {
       this.currentUserDoc = await this.userService.getCurrentUser();
-      const userData = cloneDeep(this.currentUserDoc.data) as UserForReport;
+      const userData = cloneDeep(this.currentUserDoc.data);
       if (userData != null) {
-        Bugsnag.addMetadata('user', userData);
+        this.reportingService.addMeta(userData, 'user');
       }
 
       const languageTag = this.currentUserDoc.data!.interfaceLanguage;
       if (languageTag != null) {
         this.i18n.trySetLocale(languageTag, false);
+        this.reportingService.addMeta({ localId: this.i18n ? this.i18n.localeCode : 'unknown' });
       }
 
       const isNewlyLoggedIn = await this.authService.isNewlyLoggedIn;
-      if (isNewlyLoggedIn && !supportedBrowser()) {
+      const isBrowserSupported = supportedBrowser();
+      this.reportingService.addMeta({ isBrowserSupported });
+      if (isNewlyLoggedIn && !isBrowserSupported) {
         this.dialog.open(SupportedBrowsersDialogComponent, { autoFocus: false });
       }
 
