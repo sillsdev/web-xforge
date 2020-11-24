@@ -472,9 +472,12 @@ namespace SIL.XForge.Scripture.Services
                 new SFProjectUserConfig { ProjectRef = projectDoc.Id, OwnerRef = userDoc.Id });
 
             // Add to the source project, if required
+            bool translationSuggestionsEnabled = projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled;
             string sourceProjectId = projectDoc.Data.TranslateConfig.Source?.ProjectRef;
             string sourceParatextId = projectDoc.Data.TranslateConfig.Source?.ParatextId;
-            if (!string.IsNullOrWhiteSpace(sourceProjectId) && !string.IsNullOrWhiteSpace(sourceParatextId))
+            if (translationSuggestionsEnabled
+                && !string.IsNullOrWhiteSpace(sourceProjectId)
+                && !string.IsNullOrWhiteSpace(sourceParatextId))
             {
                 // Load the source project role from MongoDB
                 IDocument<SFProject> sourceProjectDoc = await GetProjectDocAsync(sourceProjectId, conn);
