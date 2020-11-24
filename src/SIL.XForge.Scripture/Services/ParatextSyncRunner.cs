@@ -142,7 +142,8 @@ namespace SIL.XForge.Scripture.Services
 
                 // Update user resource access, if this project has a source resource
                 // The updating of a source project's permissions is done when that project is synced.
-                if (!string.IsNullOrWhiteSpace(sourceParatextId)
+                if (TranslationSuggestionsEnabled
+                    && !string.IsNullOrWhiteSpace(sourceParatextId)
                     && !string.IsNullOrWhiteSpace(sourceProjectRef)
                     && sourceParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
                 {
