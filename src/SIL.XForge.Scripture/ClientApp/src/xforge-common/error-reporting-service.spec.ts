@@ -1,5 +1,5 @@
 import { Event } from '@bugsnag/js';
-import { ErrorReportingService, EventMetadata } from './error-reporting.service';
+import { ErrorReportingService } from './error-reporting.service';
 
 describe('ErrorReportingService', () => {
   it('should redact the access_token from the breadcrumb and request URLs', async () => {
@@ -40,7 +40,7 @@ describe('ErrorReportingService', () => {
     ];
     event.request = { url: 'http://localhost:5000/projects#access_token=12345' };
 
-    ErrorReportingService.beforeSend([], event);
+    ErrorReportingService.beforeSend({}, event);
     expect(event.breadcrumbs[0].metadata.from).toEqual('http://localhost:5000/somewhere&access_token=thing');
     expect(event.breadcrumbs[0].metadata.to).toEqual('http://localhost:5000/somewhere');
     expect(event.breadcrumbs[1].metadata.from).toEqual(

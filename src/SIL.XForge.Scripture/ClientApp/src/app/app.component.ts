@@ -257,7 +257,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
       const languageTag = this.currentUserDoc.data!.interfaceLanguage;
       if (languageTag != null) {
-        this.i18n.setLocale(languageTag, false);
+        this.i18n.trySetLocale(languageTag, false);
       }
 
       const isNewlyLoggedIn = await this.authService.isNewlyLoggedIn;
