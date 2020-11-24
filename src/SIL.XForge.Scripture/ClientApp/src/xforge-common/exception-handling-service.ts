@@ -44,7 +44,7 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
     super();
   }
 
-  async handleError(error: any) {
+  async handleError(error: any, silently: boolean = false) {
     // Angular error handlers are instantiated before all other providers, so we cannot inject dependencies. Instead we
     // use the "Injector" to get the dependencies in this method. At this point, providers should have been
     // instantiated.
@@ -120,7 +120,10 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
     try {
       const eventId = objectId();
       try {
-        this.handleAlert(ngZone, dialog, { message, stack: error.stack, eventId });
+        // Don't show a dialog if this is a silent error that we just want sent to Bugsnag
+        if (!silently) {
+          this.handleAlert(ngZone, dialog, { message, stack: error.stack, eventId });
+        }
       } finally {
         errorReportingService.addMeta({ eventId });
         this.sendReport(errorReportingService, error);

@@ -1,15 +1,16 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import Bugsnag, { Event, NotifiableError } from '@bugsnag/js';
+import { ExceptionHandlingService } from 'xforge-common/exception-handling-service';
 
 export interface EventMetadata {
-  tab: object;
+  [key: string]: object;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class ErrorReportingService {
-  static beforeSend(metaData: EventMetadata[], event: Event) {
+  static beforeSend(metaData: EventMetadata, event: Event) {
     if (typeof event.request.url === 'string') {
       event.request.url = ErrorReportingService.redactAccessToken(event.request.url as string);
     }
@@ -21,9 +22,9 @@ export class ErrorReportingService {
       return breadcrumb;
     });
 
-    for (const tab in metaData) {
-      if (metaData.hasOwnProperty(tab)) {
-        event.addMetadata(tab, metaData[tab]);
+    for (const tabName in metaData) {
+      if (metaData.hasOwnProperty(tabName)) {
+        event.addMetadata(tabName, metaData[tabName]);
       }
     }
   }
@@ -32,13 +33,24 @@ export class ErrorReportingService {
     return url.replace(/^(.*#access_token=).*$/, '$1redacted_for_error_report');
   }
 
-  private metadata: EventMetadata[] = [];
+  private metadata: EventMetadata = {};
 
-  addMeta(data: object, tab: string = 'custom') {
-    this.metadata[tab] = { ...this.metadata[tab], ...data };
+  constructor(private readonly injector: Injector) {}
+
+  addMeta(data: object, tabName: string = 'custom') {
+    this.metadata[tabName] = { ...this.metadata[tabName], ...data };
   }
 
   notify(error: NotifiableError, callback?: (err: any, report: any) => void): void {
     Bugsnag.notify(error, event => ErrorReportingService.beforeSend(this.metadata, event), callback);
+  }
+
+  silentError(message: string) {
+    try {
+      const errorHandler = this.injector.get(ExceptionHandlingService);
+      errorHandler.handleError({ name: 'Silent Error', message: message }, true);
+    } catch (e) {
+      console.error(e);
+    }
   }
 }

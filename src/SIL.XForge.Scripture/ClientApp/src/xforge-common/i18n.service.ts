@@ -92,7 +92,7 @@ export class I18nService {
   ) {
     const language = this.cookieService.get(ASP_CULTURE_COOKIE_NAME);
     if (language != null) {
-      this.setLocale(getAspCultureCookieLanguage(language), false);
+      this.trySetLocale(getAspCultureCookieLanguage(language), false);
     }
   }
 
@@ -108,10 +108,19 @@ export class I18nService {
     return I18nService.availableLocales;
   }
 
-  setLocale(tag: string, doAuthUpdate: boolean = true) {
+  setLocale(tag: string) {
     const locale = I18nService.getLocale(tag);
     if (locale == null) {
       throw new Error(`Cannot set locale to non-existent locale ${tag}`);
+    }
+    this.trySetLocale(tag);
+  }
+
+  trySetLocale(tag: string, doAuthUpdate: boolean = true) {
+    const locale = I18nService.getLocale(tag);
+    if (locale == null) {
+      this.reportingService.silentError(`Failed attempt to set locale to unsupported locale ${tag}`);
+      return;
     }
 
     this.currentLocale = locale;
