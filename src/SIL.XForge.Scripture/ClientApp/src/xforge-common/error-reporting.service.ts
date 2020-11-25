@@ -1,6 +1,5 @@
-import { Injectable, Injector } from '@angular/core';
+import { Injectable } from '@angular/core';
 import Bugsnag, { Event, NotifiableError } from '@bugsnag/js';
-import { ExceptionHandlingService } from 'xforge-common/exception-handling-service';
 
 export interface EventMetadata {
   [key: string]: object;
@@ -35,8 +34,6 @@ export class ErrorReportingService {
 
   private metadata: EventMetadata = {};
 
-  constructor(private readonly injector: Injector) {}
-
   addMeta(data: object, tabName: string = 'custom') {
     this.metadata[tabName] = { ...this.metadata[tabName], ...data };
   }
@@ -45,12 +42,11 @@ export class ErrorReportingService {
     Bugsnag.notify(error, event => ErrorReportingService.beforeSend(this.metadata, event), callback);
   }
 
-  silentError(message: string) {
-    try {
-      const errorHandler = this.injector.get(ExceptionHandlingService);
-      errorHandler.handleError({ name: 'Silent Error', message: message }, true);
-    } catch (e) {
-      console.error(e);
+  silentError(message: string, metadata?: object) {
+    if (metadata != null) {
+      this.addMeta(metadata);
     }
+    this.notify({ name: 'Silent Error', message: message });
+    console.error(message);
   }
 }

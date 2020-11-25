@@ -60,12 +60,7 @@ import { UsersModule } from './users/users.module';
     TranslocoModule,
     AppRoutingModule
   ],
-  providers: [
-    CookieService,
-    DatePipe,
-    { provide: ErrorHandler, useClass: ExceptionHandlingService },
-    ExceptionHandlingService
-  ],
+  providers: [CookieService, DatePipe, { provide: ErrorHandler, useClass: ExceptionHandlingService }],
   entryComponents: [
     EditNameDialogComponent,
     ErrorComponent,
