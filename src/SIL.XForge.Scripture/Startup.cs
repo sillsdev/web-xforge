@@ -207,7 +207,7 @@ namespace SIL.XForge.Scripture
                         break;
 
                     case SpaDevServerStartup.Listen:
-                        spa.UseProxyToSpaDevelopmentServer("http://localhost:4200");
+                        spa.UseProxyToSpaDevelopmentServer("http://localhost:4201");
                         break;
                 }
             });

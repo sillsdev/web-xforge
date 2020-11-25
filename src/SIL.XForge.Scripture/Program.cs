@@ -27,7 +27,7 @@ namespace SIL.XForge.Scripture
 
             return builder
                 .UseLibuv()
-                .UseUrls("http://localhost:5000")
+                .UseUrls("http://beta.localhost:5000")
                 .ConfigureAppConfiguration((context, config) =>
                     {
                         IWebHostEnvironment env = context.HostingEnvironment;
