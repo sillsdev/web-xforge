@@ -53,9 +53,13 @@ namespace UpdateHelp
             string targetWhxDir = Path.Combine(targetDir, "whxdata");
             string targetMenuJsonPath = Path.Combine(targetDir, $"menu_{target}.json");
             // see https://programmablesearchengine.google.com/ to create an engine for each language
+            // copy existing setup from another language, include
+            // Look and feel > Layout > Two column
+            // Search features > Advanced > Websearch Settings > Link Target > "rh_default_topic_frame_name"
             var searchEngineIDs = new Dictionary<string, string>()
             {
-                { "es", "9f727aa1dd179dd6d" }
+                { "es", "9f727aa1dd179dd6d" },
+                { "fr", "7da597faaebed6cc7" }
             };
 
             Console.WriteLine("Update Help files.\n");
