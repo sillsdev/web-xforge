@@ -7,6 +7,7 @@ import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
+import { cloneDeep } from 'lodash';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { AuthType, getAuthType, User } from 'realtime-server/lib/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -16,6 +17,7 @@ import { combineLatest, from, merge, Observable, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, switchMap, tap } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
@@ -78,6 +80,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly adminAuthGuard: SFAdminAuthGuard,
     private readonly dialog: MdcDialog,
     private readonly fileService: FileService,
+    private readonly reportingService: ErrorReportingService,
     readonly noticeService: NoticeService,
     readonly i18n: I18nService,
     readonly media: MediaObserver,
@@ -246,15 +249,22 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   async ngOnInit(): Promise<void> {
     this.loadingStarted();
     if (await this.isLoggedIn) {
-      const isNewlyLoggedIn = await this.authService.isNewlyLoggedIn;
-      if (isNewlyLoggedIn && !supportedBrowser()) {
-        this.dialog.open(SupportedBrowsersDialogComponent, { autoFocus: false });
+      this.currentUserDoc = await this.userService.getCurrentUser();
+      const userData = cloneDeep(this.currentUserDoc.data);
+      if (userData != null) {
+        this.reportingService.addMeta(userData, 'user');
       }
 
-      this.currentUserDoc = await this.userService.getCurrentUser();
       const languageTag = this.currentUserDoc.data!.interfaceLanguage;
       if (languageTag != null) {
         this.i18n.trySetLocale(languageTag, false);
+      }
+
+      const isNewlyLoggedIn = await this.authService.isNewlyLoggedIn;
+      const isBrowserSupported = supportedBrowser();
+      this.reportingService.addMeta({ isBrowserSupported });
+      if (isNewlyLoggedIn && !isBrowserSupported) {
+        this.dialog.open(SupportedBrowsersDialogComponent, { autoFocus: false });
       }
 
       const projectDocs$ = this.currentUserDoc.remoteChanges$.pipe(

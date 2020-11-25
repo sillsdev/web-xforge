@@ -17,15 +17,6 @@ export function objectId(): string {
   return ObjectID.generate();
 }
 
-export function promiseTimeout<T>(promise: Promise<T>, timeout: number) {
-  return Promise.race([
-    promise,
-    new Promise<never>((_resolve, reject) => {
-      setTimeout(reject, timeout);
-    })
-  ]);
-}
-
 export function supportedBrowser(): boolean {
   // See https://caniuse.com/#feat=indexeddb2 for browsers supporting IndexedDB 2.0
   const isSupportedBrowser = BROWSER.satisfies({

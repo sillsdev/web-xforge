@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import Bugsnag from '@bugsnag/js';
 import uuidv1 from 'uuid/v1';
 import { COMMAND_API_NAMESPACE } from './url-constants';
 
@@ -60,6 +61,16 @@ export class CommandService {
       params,
       id: uuidv1()
     };
+    Bugsnag.leaveBreadcrumb(
+      'JSON-RPC',
+      {
+        request: url,
+        method: method,
+        id: request.id,
+        params: params
+      },
+      'request'
+    );
     try {
       const response = await this.http
         .post<JsonRpcResponse<T>>(url, request, { headers: { 'Content-Type': 'application/json' } })

@@ -20,6 +20,7 @@ import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FileService } from 'xforge-common/file.service';
 import { LocationService } from 'xforge-common/location.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -49,6 +50,7 @@ const mockedLocationService = mock(LocationService);
 const mockedNoticeService = mock(NoticeService);
 const mockedPwaService = mock(PwaService);
 const mockedFileService = mock(FileService);
+const mockErrorReportingService = mock(ErrorReportingService);
 
 @Component({
   template: `<div>Mock</div>`
@@ -88,7 +90,8 @@ describe('AppComponent', () => {
       { provide: LocationService, useMock: mockedLocationService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: PwaService, useMock: mockedPwaService },
-      { provide: FileService, useMock: mockedFileService }
+      { provide: FileService, useMock: mockedFileService },
+      { provide: ErrorReportingService, useMock: mockErrorReportingService }
     ]
   }));
 
@@ -265,6 +268,14 @@ describe('AppComponent', () => {
     expect(env.someMenuItemContains('Synchronize')).toBeTrue();
     expect(env.someMenuItemContains('Settings')).toBeTrue();
     expect(env.someMenuItemContains('Users')).toBeTrue();
+  }));
+
+  it('user data is set for Bugsnag', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.init();
+
+    verify(mockErrorReportingService.addMeta(anything(), 'user')).once();
+    expect().nothing();
   }));
 
   describe('Community Checking', () => {
@@ -595,9 +606,9 @@ class TestEnvironment {
 
   wait(): void {
     this.fixture.detectChanges();
-    flush(50);
+    flush(70);
     this.fixture.detectChanges();
-    flush(50);
+    flush(70);
   }
 
   deleteProject(projectId: string, isLocal: boolean): void {

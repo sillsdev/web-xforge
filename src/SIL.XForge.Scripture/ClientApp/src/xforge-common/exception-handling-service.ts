@@ -1,32 +1,51 @@
 import { MdcDialog } from '@angular-mdc/web/dialog';
-import { ErrorHandler, Injectable, Injector, NgZone } from '@angular/core';
+import { Injectable, Injector, NgZone } from '@angular/core';
+import Bugsnag, { BrowserConfig } from '@bugsnag/js';
+import { BugsnagErrorHandler } from '@bugsnag/plugin-angular';
 import { translate } from '@ngneat/transloco';
-import cloneDeep from 'lodash/cloneDeep';
-import { User } from 'realtime-server/lib/common/models/user';
+import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
 import { CONSOLE } from './browser-globals';
 import { ErrorReportingService } from './error-reporting.service';
 import { ErrorAlert, ErrorComponent } from './error/error.component';
-import { I18nService } from './i18n.service';
-import { UserDoc } from './models/user-doc';
 import { NoticeService } from './notice.service';
-import { UserService } from './user.service';
-import { objectId, promiseTimeout } from './utils';
+import { objectId } from './utils';
 
-type UserForReport = User & { id: string };
+export class AppError extends Error {
+  constructor(message: string, private readonly data?: any) {
+    super(message);
+    Bugsnag.leaveBreadcrumb(message, data, 'log');
+    console.error(message, data);
+  }
+}
 
 @Injectable()
-export class ExceptionHandlingService implements ErrorHandler {
+export class ExceptionHandlingService extends BugsnagErrorHandler {
+  static initBugsnag() {
+    const config: BrowserConfig = {
+      apiKey: environment.bugsnagApiKey,
+      appVersion: version,
+      appType: 'angular',
+      enabledReleaseStages: ['live', 'qa'],
+      releaseStage: environment.releaseStage,
+      autoDetectErrors: false
+    };
+    if (environment.releaseStage === 'dev') {
+      config.logger = null;
+    }
+    Bugsnag.start(config);
+  }
+
   // Use injected console when it's available, for the sake of tests, but fall back to window.console if injection fails
   private console = window.console;
   private alertQueue: ErrorAlert[] = [];
   private dialogOpen = false;
-  private currentUser?: UserDoc;
-  private constructionTime = Date.now();
 
-  constructor(private readonly injector: Injector) {}
+  constructor(private readonly injector: Injector) {
+    super();
+  }
 
-  async handleError(error: any) {
+  async handleError(error: any, silently: boolean = false) {
     // Angular error handlers are instantiated before all other providers, so we cannot inject dependencies. Instead we
     // use the "Injector" to get the dependencies in this method. At this point, providers should have been
     // instantiated.
@@ -34,15 +53,11 @@ export class ExceptionHandlingService implements ErrorHandler {
     let noticeService: NoticeService;
     let dialog: MdcDialog;
     let errorReportingService: ErrorReportingService;
-    let userService: UserService;
-    let i18nService: I18nService;
     try {
       ngZone = this.injector.get(NgZone);
       noticeService = this.injector.get(NoticeService);
       dialog = this.injector.get(MdcDialog);
       errorReportingService = this.injector.get(ErrorReportingService);
-      userService = this.injector.get(UserService);
-      i18nService = this.injector.get(I18nService);
       this.console = this.injector.get(CONSOLE);
     } catch (err) {
       this.console.log(`Error occurred. Unable to report to Bugsnag, because dependency injection failed.`);
@@ -106,10 +121,13 @@ export class ExceptionHandlingService implements ErrorHandler {
     try {
       const eventId = objectId();
       try {
-        this.handleAlert(ngZone, dialog, { message, stack: error.stack, eventId });
+        // Don't show a dialog if this is a silent error that we just want sent to Bugsnag
+        if (!silently) {
+          this.handleAlert(ngZone, dialog, { message, stack: error.stack, eventId });
+        }
       } finally {
-        const locale = i18nService ? i18nService.localeCode : 'unknown';
-        this.sendReport(errorReportingService, error, eventId, locale, await this.getUserForReporting(userService));
+        errorReportingService.addMeta({ eventId });
+        this.sendReport(errorReportingService, error);
       }
     } finally {
       // Error logging occurs after error reporting so it won't show up as noise in Bugsnag's breadcrumbs
@@ -118,38 +136,8 @@ export class ExceptionHandlingService implements ErrorHandler {
     }
   }
 
-  /**
-   * Returns a promise that will resolve to a ReportStyleUser representing the current user, or, if the user isn't
-   * available within a reasonable time (within three seconds of the service being constructed), it will resolve with
-   * null.
-   */
-  private async getUserForReporting(userService: UserService): Promise<UserForReport | undefined> {
-    if (!this.currentUser) {
-      try {
-        this.currentUser = await promiseTimeout(
-          userService.getCurrentUser(),
-          Math.max(0, this.constructionTime + 3000 - Date.now())
-        );
-        if (!this.currentUser) {
-          return undefined;
-        }
-      } catch {
-        return undefined;
-      }
-    }
-    const user = cloneDeep(this.currentUser.data) as UserForReport;
-    user.id = this.currentUser.id;
-    return user;
-  }
-
-  private sendReport(
-    errorReportingService: ErrorReportingService,
-    error: any,
-    eventId: string,
-    locale: string,
-    user?: UserForReport
-  ) {
-    errorReportingService.notify(error, { user, eventId, locale }, err => {
+  private sendReport(errorReportingService: ErrorReportingService, error: any) {
+    errorReportingService.notify(error, err => {
       if (err) {
         this.console.error('Sending error report failed:');
         this.console.error(err);
