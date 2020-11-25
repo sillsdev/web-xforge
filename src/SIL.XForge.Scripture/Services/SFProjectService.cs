@@ -102,6 +102,9 @@ namespace SIL.XForge.Scripture.Services
                 IDocument<SFProject> projectDoc = await conn.CreateAsync<SFProject>(projectId, project);
                 await ProjectSecrets.InsertAsync(new SFProjectSecret { Id = projectDoc.Id });
 
+                IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
+                await AddUserToProjectAsync(conn, projectDoc, userDoc, SFProjectRole.Administrator, false);
+
                 // Add the source after the project has been created
                 // This will make the source project appear after the target, if it needs to be created
                 if (settings.SourceParatextId != null && settings.SourceParatextId != settings.ParatextId)
@@ -114,9 +117,6 @@ namespace SIL.XForge.Scripture.Services
                         UpdateSetting(op, p => p.TranslateConfig.Source, source);
                     });
                 }
-
-                IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
-                await AddUserToProjectAsync(conn, projectDoc, userDoc, SFProjectRole.Administrator, false);
 
                 if (projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled)
                 {

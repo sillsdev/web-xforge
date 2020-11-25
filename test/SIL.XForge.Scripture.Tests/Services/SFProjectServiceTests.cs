@@ -567,12 +567,17 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Query().Count(),
                 Is.EqualTo(projectCount + 2), "should have increased");
 
-            // The source should have a later ID than the target
+            // The source should have a later ID than the target in the project repository
             var projects = env.RealtimeService.GetRepository<SFProject>().Query()
                 .Where(p => p.ParatextId == "ptProject123" || p.ParatextId == "resource_project")
                 .OrderBy(p => p.Id);
-            Assert.That(projects.First().ParatextId, Is.EqualTo("ptProject123"), "target is first");
-            Assert.That(projects.Last().ParatextId, Is.EqualTo("resource_project"), "source is last");
+            Assert.That(projects.First().ParatextId, Is.EqualTo("ptProject123"), "target has the first id");
+            Assert.That(projects.Last().ParatextId, Is.EqualTo("resource_project"), "source has the last id");
+
+            // The source should appear after the target in the user's project array
+            User user = env.GetUser(User01);
+            Assert.That(user.Sites[SiteId].Projects.Skip(2).First(), Is.EqualTo(projects.First().Id), "target is first");
+            Assert.That(user.Sites[SiteId].Projects.Last(), Is.EqualTo(projects.Last().Id), "source is last");
         }
 
         [Test]
