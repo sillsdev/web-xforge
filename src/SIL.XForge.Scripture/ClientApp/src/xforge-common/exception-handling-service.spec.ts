@@ -1,6 +1,8 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
-import { TestBed } from '@angular/core/testing';
+import { Component, ElementRef, ViewChild } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NotifiableError } from '@bugsnag/js';
+import { Breadcrumb } from '@bugsnag/js';
 import { CookieService } from 'ngx-cookie-service';
 import { User } from 'realtime-server/lib/common/models/user';
 import { Observable } from 'rxjs';
@@ -115,10 +117,72 @@ describe('ExceptionHandlingService', () => {
     verify(mockedNoticeService.showError(anything())).once();
     expect().nothing();
   });
+
+  describe('Bugsnag', () => {
+    it('should extract text from button', async () => {
+      const env = new TestEnvironment();
+      const tests: BreadcrumbTests[] = [
+        {
+          selector: 'BUTTON.mdc-button.plain-text',
+          expectedText: 'Plain text',
+          expectedSelector: 'BUTTON.mdc-button.plain-text'
+        },
+        {
+          selector: 'BUTTON.mdc-button.include-icon',
+          expectedText: 'Inside span',
+          expectedSelector: 'BUTTON.mdc-button.include-icon span'
+        },
+        {
+          selector:
+            'BUTTON#activated_button.mdc-ripple-upgraded.mdc-ripple-upgraded--background-focused.mdc-ripple-upgraded--foreground-activation',
+          expectedText: 'Button with ID',
+          expectedSelector: 'BUTTON#activated_button span'
+        },
+        {
+          selector: 'DIV.mdc-button__ripple',
+          expectedText: 'Ripple text',
+          expectedSelector: 'DIV.mdc-button__ripple'
+        }
+      ];
+      for (const test of tests) {
+        const breadcrumb = env.addBreadcrumb(test.selector);
+        expect(breadcrumb.metadata.targetText).toBe(test.expectedText);
+        expect(breadcrumb.metadata.targetSelector).toBe(test.expectedSelector);
+      }
+    });
+  });
 });
+
+interface BreadcrumbTests {
+  selector: string;
+  expectedText: string;
+  expectedSelector: string;
+}
+
+@Component({
+  selector: 'app-host',
+  template: `
+    <button class="mdc-button plain-text">Plain text</button>
+    <button class="mdc-button include-icon"><i>icon_name</i><span>Inside span</span></button>
+    <button
+      id="activated_button"
+      class="mdc-button mdc-ripple-upgraded mdc-ripple-upgraded--background-focused mdc-ripple-upgraded--foreground-activation"
+    >
+      <span>Button with ID</span>
+    </button>
+    <button id="ripple_button">
+      <div class="mdc-button__ripple"></div>
+      <span>Ripple text</span>
+    </button>
+  `
+})
+class HostComponent {
+  @ViewChild('container', { static: true }) container!: ElementRef;
+}
 
 class TestEnvironment {
   readonly errorReports: { error: any }[] = [];
+  readonly fixture: ComponentFixture<HostComponent>;
   readonly service: ExceptionHandlingService;
   rejectUser = false;
   timeoutUser = false;
@@ -134,7 +198,12 @@ class TestEnvironment {
   } as UserDoc;
 
   constructor() {
-    this.service = TestBed.inject(ExceptionHandlingService);
+    TestBed.configureTestingModule({
+      declarations: [HostComponent]
+    });
+    this.service = TestBed.get(ExceptionHandlingService);
+    this.fixture = TestBed.createComponent(HostComponent);
+    this.fixture.detectChanges();
 
     when(mockedMdcDialog.open(anything(), anything())).thenReturn({
       afterClosed: () => {
@@ -154,5 +223,19 @@ class TestEnvironment {
   get oneAndOnlyReport() {
     expect(this.errorReports.length).toEqual(1);
     return this.errorReports[this.errorReports.length - 1];
+  }
+
+  addBreadcrumb(targetSelector: string): Breadcrumb {
+    const breadcrumb: Breadcrumb = {
+      message: 'UI click',
+      timestamp: new Date(),
+      type: 'log',
+      metadata: {
+        targetSelector,
+        targetText: '(...)'
+      }
+    };
+    ExceptionHandlingService.handleBreadcrumb(breadcrumb);
+    return breadcrumb;
   }
 }
