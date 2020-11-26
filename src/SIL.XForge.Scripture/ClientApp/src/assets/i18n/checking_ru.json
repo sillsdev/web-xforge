@@ -17,6 +17,7 @@
     "password_reset_email_sent": "Мы отправили вам сообщение для восстановления пароля.",
     "product_version": "Версия продукта: v{{ version }}",
     "project_home": "Домашняя страница проекта",
+    "redirecting_in_moments": "Redirecting in a few moments...",
     "report_issue_email": "электронная почта {{ email }}",
     "report_issue": "Сообщить о проблеме",
     "scripture_checking_not_available": "Проверка Писания в этом проекте недоступна."
@@ -182,9 +183,12 @@
   },
   "checking_audio_player": {
     "audio_unavailable": "Audio unavailable.",
-    "audio_cannot_be_played": "This audio cannot be played while you are offline because it has not been downloaded. Connect to the Internet to play."
+    "audio_cannot_be_accessed": "There was an error trying to access the audio file. If this persists, please upload a new file.",
+    "audio_cannot_be_played": "This audio cannot be played while you are offline because it has not been downloaded. Connect to the internet to play.",
+    "audio_cannot_be_previewed": "The audio is in a format that cannot be previewed. Save any changes and connect to the internet to play."
   },
   "checking_audio_recorder": {
+    "not_available": "Your browser currently does not support audio recording. Please try using another supported browser.",
     "mic_access_denied": "Доступ к микрофону был ограничен. Пожалуйста, включите микрофон из браузера.",
     "record": "Запись",
     "stop_recording": "Остановить запись",
@@ -236,8 +240,15 @@
     "try_again": "Попробуйте ещё раз"
   },
   "exception_handling_service": {
+    "firefox_private_browsing_or_no_space": "Something went wrong. Please check that you are not using Firefox in the unsupported private browsing mode and that your device has the recommended 500 MB of free space.",
     "network_request_failed": "Ошибка сетевого запроса. Некоторые функции могут быть недоступны.",
+    "out_of_space": "An error occurred because your device is out of storage space.",
     "unknown_error": "Неизвестная ошибка"
+  },
+  "file_service": {
+    "failed_to_save": "Failed to save your changes. Please check that you have the recommended 500 MB of free space on your device.",
+    "i_understand": "I understand",
+    "storage_space_is_limited": "The storage space on this device is limited. It is recommended to have a minimum of 500 MB of free space to ensure all feature are available. Please free up storage space."
   },
   "issue_email": {
     "body": "Спасибо, что сообщили о проблеме!\nЭто поможет нам, если вы заполните часть сведений ниже, но, пожалуйста, отправьте, даже если вы не можете дать исчерпывающую информацию.\nЕсли вы запрашиваете функцию, многие из полей могут быть неприменимы.\nПомните, что ваше сообщение об ошибке будет общедоступно. Никогда не сообщайте пароли и другие секреты.\n\nСообщение об ошибке\nЧёткое и краткое описание того, что это за ошибка.\n\nШаги для воспроизведения\nНапример:\n1. Перейти к ...\n2. Нажмите на ...\n3. Прокрутите вниз до ...\n4. См. ошибку\n\nРеальное поведение\nПожалуйста, опишите, что реально происходит в описываемой ситуации.\n\nОжидаемое поведение\nЧёткое и краткое описание того, что вы ожидали увидеть.\n\nСнимки экрана\nЕсли применимо, добавьте снимки экрана, чтобы помочь объяснить проблему.\n\nДополнительный контекст\nДобавьте сюда любые другие дополнительные сведения о проблеме.\n\nВозможное решение\nДобавьте сюда любые возможные способы решения проблемы.\n\nВаше окружение:\nВерсия программного обеспечения\n-----------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL: {{ url }}\nID ошибки: {{ errorId }}",

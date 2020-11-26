@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AboutCheckingTool" xml:space="preserve">
-    <value>Our Community Checking tool facilitates modular Scripture checking campaigns, to deliver broader feedback to the translation committee, faster.</value>
+    <value>Nuestra herramienta de comprobación de la comunidad facilita campañas de comprobación de las Escrituras, para proporcionar más rápido comentarios más amplios al comité de traducción.</value>
   </data>
   <data name="AboutEngaging" xml:space="preserve">
     <value>Scripture projects engage increasingly geographically diverse groups of heart language speakers.</value>
@@ -127,7 +127,7 @@
     <value>Flexible</value>
   </data>
   <data name="AboutFlexibleDescription" xml:space="preserve">
-    <value>2 Compile {0}unique questions{1} that fit your specific context.</value>
+    <value>2 Compilar {0}preguntas únicas{1}que se aplican a su contexto específico.</value>
   </data>
   <data name="AboutHeader" xml:space="preserve">
     <value>Acerca de Scripture Forge</value>
@@ -136,7 +136,7 @@
     <value>Funciona con el Paratext</value>
   </data>
   <data name="AboutParatextDescription" xml:space="preserve">
-    <value>1 {0}Paratext integration{1} and {0}ongoing synchronization{1} keeps your project up-to-date and allows user feedback via {0}Paratext Notes{1}.</value>
+    <value>1 {0}La integración con Paratext{1} y {0}la sincronización regular{1} mantiene su proyecto actualizado y permite los comentarios de los usuarios a través de {0}Notas de Paratext{1}.</value>
   </data>
   <data name="AboutTitle" xml:space="preserve">
     <value>Extienda su alcance con la verificación de las Escrituras</value>
@@ -145,13 +145,13 @@
     <value>Compromiso del usuario</value>
   </data>
   <data name="AboutUserEngagementDescription" xml:space="preserve">
-    <value>3 {0}Invited users{1} can answer questions, leave comments on existing answers and like responses.</value>
+    <value>3 {0}Los usuarios invitados{1} pueden responder a las preguntas, dejar comentarios sobre las respuestas existentes y gustar respuestas.</value>
   </data>
   <data name="Description" xml:space="preserve">
     <value>Un conjunto de herramientas gratuitas para hacer más con su proyecto de Paratext, dondequiera que esté. </value>
   </data>
   <data name="EngageChecking" xml:space="preserve">
-    <value>Engage in Community Checking</value>
+    <value>Participar en la comprobación por la comunidad</value>
   </data>
   <data name="EngageCollaborate" xml:space="preserve">
     <value>Colaborar en las Escrituras</value>
@@ -163,7 +163,7 @@
     <value>Interactuar con la comunidad lingüística. Colabore con sus compañeros.</value>
   </data>
   <data name="QuoteQuotation1" xml:space="preserve">
-    <value>It was so easy! ...all I had to do to get started was log in using my Paratext registration and boom! It was all there.</value>
+    <value>¡Fue tan fácil! ...todo lo que tenía que hacer para empezar era iniciar sesión usando mi registro de Paratext y ¡bum! Estaba todo ahí.</value>
   </data>
   <data name="QuoteQuotation2" xml:space="preserve">
     <value>Right away I chose a verse and wrote a checking question for it. Then I also recorded myself asking that checking question.</value>
@@ -175,9 +175,9 @@
     <value>Trevor Deck</value>
   </data>
   <data name="QuoteQuoterRole" xml:space="preserve">
-    <value>SIL Global Diaspora Specialist</value>
+    <value>Especialista de SIL en la Diáspora Global</value>
   </data>
   <data name="Statement" xml:space="preserve">
-    <value>Where translation and the community meet.</value>
+    <value>Donde se reúnen la traducción y la comunidad.</value>
   </data>
 </root>

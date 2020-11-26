@@ -23,8 +23,9 @@
     "archive": "ꤙꤢꤩ꤬ꤕꤜꤢꤪꤕꤜꤢꤪ ꤜꤤ꤬ꤒꤟꤢꤧ꤬ꤘꤛꤢꤊꤛꤢ꤭",
     "archived_questions": "ꤙꤢꤩ꤬ꤕꤜꤢꤪ ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭ ",
     "click_add_question": "ꤒꤣ꤬ꤙꤢꤧ꤬ {{ boldStart }}ꤚꤢ꤭ꤔꤟꤌꤣ꤭ ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭{{ boldEnd }}, ꤘꤣꤢ꤬ꤋꤢꤨ꤬ꤓꤛꤢ꤬.",
-    "no_questions": "ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭ ꤘꤣ ꤢꤧꤕꤚꤟꤢꤧ꤬ ꤜꤟꤢꤩꤞꤢꤧꤑꤢꤩ꤭ ꤥ꤬ ꤒꤥ꤬꤯",
+    "import_questions": "Import",
     "no_archived_questions": "ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤬ ꤘꤣ ꤢꤨ꤭ ꤙꤢꤩ꤬ꤕꤜꤢꤪ ꤔꤌꤣ꤬ ꤢ꤬ꤥ꤬ ꤒꤥ꤬꤯ ",
+    "no_questions": "ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭ ꤘꤣ ꤢꤧꤕꤚꤟꤢꤧ꤬ ꤜꤟꤢꤩꤞꤢꤧꤑꤢꤩ꤭ ꤥ꤬ ꤒꤥ꤬꤯",
     "question_count_label": "{{ count }} ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭",
     "republish": "ꤘꤛꤢꤩꤜꤟꤌꤣ꤭ꤒꤟꤢ꤭ ꤋꤛꤢꤩ꤭ꤞꤛꤢ",
     "time_archived_stamp": "ꤙꤢꤩ꤬ꤕꤜꤢꤪꤓꤛꤢ꤬ {{ timeStamp }}"
@@ -56,6 +57,7 @@
     "no_connectable_projects": "ꤢ꤬ꤞꤛꤢꤔꤢ ꤘꤣ ꤔꤟꤢꤧ꤬ꤑꤢꤩ꤭ꤔꤌꤣ꤬ ꤔꤟꤢꤧ꤬ ꤘꤢꤪꤗꤟꤢ꤭ꤔꤟꤤꤡꤟꤛꤢ ꤔꤢ project ꤒꤣ꤬ꤡꤣ꤬꤮ ꤒꤥ꤬꤯ ꤋꤛꤢꤞꤢꤧꤘꤥ꤭ ꤡꤛꤣꤔꤟꤌꤣ꤭ ꤘꤣ Paratext ꤊꤢꤨ꤭ ꤔꤌꤣ꤬ ꤚꤢꤪ register project ꤒꤣ꤬ꤊꤟꤌꤣ꤬ ꤘꤣ ꤔꤟꤢꤧ꤬ ꤜꤟꤢꤩ ꤘꤢꤪꤗꤟꤢ꤭ ꤢ꤬ꤑꤢꤩ꤭ ꤔꤤ꤯ ",
     "only_paratext_admins_can_start": "ꤔꤟꤢꤧ꤬ ꤜꤟꤢꤩ ꤡꤢꤓꤛꤢ꤬ ꤙꤤꤛꤢꤩ꤭ ꤢ꤬ꤑꤢꤩ꤭ꤗꤢ꤬, ꤔꤟꤢꤧ꤬ ꤙꤢꤧ꤬ ꤓꤝꤟꤥ꤭ ꤕꤚꤟꤢꤧ꤬ꤕꤣꤒꤢ꤬ꤚꤤ꤬ꤔꤟꤤ ꤜꤟꤢꤪ꤭ Paratext project ꤔꤌꤣ꤬ꤒꤣ꤬ꤕꤚꤟꤢꤧ꤬꤯ ꤔꤟꤢꤧ꤬ ꤜꤟꤢꤩ ꤘꤢꤪꤗꤟꤢ꤭ ꤔꤟꤤ ꤔꤢ ꤔꤟꤢꤧ꤬ project ꤢ꤬ꤑꤢꤩ꤭ꤔꤌꤣ꤬, ꤏꤢꤨ꤬ꤘꤛꤢ꤭ ꤡꤛꤣ ꤚꤟꤢꤩ ꤕꤚꤟꤢꤧ꤬ꤕꤣꤒꤢ꤬ꤚꤤ꤬ꤔꤟꤤ ꤜꤟꤢꤪ꤭ ꤒꤟꤢꤧ꤬ ꤘꤣ ꤔꤟꤢꤧ꤬ꤑꤢꤩ꤭ ꤔꤌꤣ꤬ꤒꤣ꤬ꤕꤚꤟꤢꤧ꤬ ꤔꤤ, ꤓꤌꤣ꤭ꤕꤢ꤭ ꤚꤢꤪ ꤔꤟꤢꤧ꤬ ꤘꤢꤪꤗꤟꤢ꤭ ꤔꤟꤤ ꤙꤤꤛꤢꤩ꤭ ꤚꤢꤪ ꤔꤟꤢꤧ꤬ ꤗꤟꤢꤩ꤬ꤒꤟꤢ꤭ꤕꤜꤛꤢꤩ꤬ꤟꤛꤢ꤭ ꤒꤟꤢꤧ꤬ꤗꤟꤢꤩ꤬ ꤗꤢ꤬ ꤢ꤬ꤔꤟꤤ ꤟꤢꤪ꤯ ",
     "paratext_project": "Paratext Project",
+    "problem_already_connected": "The project is already connected. Maybe another project administrator connected the project at the same time. Please try again. If it continues to be a problem, please report the issue so we can get it fixed.",
     "translation_suggestions": "ꤒꤟꤢꤧ꤬ꤘꤛꤢꤩꤞꤢꤧꤑꤢꤩ꤭ꤡꤝꤟꤥ ꤒꤟꤢꤧ꤬ꤚꤢ꤭ꤕꤟꤥ꤬ꤓꤢꤩ꤬",
     "translations_will_be_suggested_as_you_edit": "Translations for words and phrases will be suggested as you edit Scripture. It is recommended that your project is setup as a {{ boldStart }}Daughter Translation{{ boldEnd }} in Paratext.",
     "you_can_change_later": "ꤔꤟꤢꤧ꤬ ꤗꤟꤢꤩ꤬ꤒꤢ꤬ꤕꤜꤢꤩ꤬ꤋꤛꤢꤩ꤭ ꤛꤢꤩ꤭ ꤏꤛꤢꤩꤢ꤬ꤔꤥ꤬ ꤗꤢ꤬ ꤢ꤬ꤔꤟꤤ ꤕꤚꤢꤧ꤯",
@@ -78,6 +80,29 @@
     "training": "ꤒꤟꤢꤧ꤬ꤤ꤬ꤞꤛꤥ",
     "training_completed_successfully": "ꤒꤟꤢꤧ꤬ꤤ꤬ꤞꤛꤥ ꤢ꤬ꤓꤌꤣ꤭ꤢ꤬ꤕꤜꤥ꤭ ꤚꤛꤢ ꤊꤛꤢ꤭ ꤟꤢꤪ",
     "verse_too_long_for_suggestions": "ꤜꤟꤢꤩ ꤘꤛꤢꤩ ꤒꤟꤢꤧ꤬ꤘꤛꤢꤩꤞꤢꤧꤑꤢꤩ꤭ꤡꤝꤟꤥ ꤢ꤬ꤑꤢꤩ꤭ ꤜꤤ꤬ꤡꤢ꤭ꤏꤢꤧ꤭ꤗꤟꤢ꤭ ꤛꤢꤩ꤭ ꤗꤢ꤬ ꤢ꤬ꤓꤢꤨ꤭ꤏꤢꤦ꤬ꤜꤢꤦ꤭ ꤡꤢꤪ꤯ \n"
+  },
+  "import_questions_confirmation_dialog": {
+    "done": "ꤢ꤬ꤓꤌꤣ꤭ꤟꤢꤪ",
+    "edited_questions_explanation": "Some of the questions you have selected have been edited. Are you sure you want to update the questions? Select the questions you want to update.",
+    "number_answers": "Number of Answers",
+    "scripture_forge": "Scripture Forge",
+    "some_questions_edited": "Some questions have been edited",
+    "transcelerator": "Transcelerator"
+  },
+  "import_questions_dialog": {
+    "cancel": "ꤗꤟꤢꤩ꤬ꤕꤜꤤ꤭ꤊꤛꤢ꤭",
+    "filter_questions": "Filter questions",
+    "import_count_questions": "Import {{ count }} Selected Questions",
+    "import_from_transcelerator": "Import Questions from Transcelerator",
+    "importing_questions": "Importing {{ count }} questions...",
+    "loading": "Loading...",
+    "must_be_valid_reference": "Must be a valid reference",
+    "no_questions_available": "There are no questions for the books in this project.",
+    "reference_from": "Reference from",
+    "reference_to": "Reference to",
+    "select_all": "Select All",
+    "show_all": "Show All",
+    "update_transcelerator": "The version of Transcelerator used in this project is not supported. Please update to at least Transcelerator version 1.5.3."
   },
   "paginator": {
     "items_per_page": "Items per page",
@@ -162,12 +187,14 @@
     "successfully_synchronized_with_paratext": "Successfully synchronized {{ projectName }} with Paratext.",
     "synchronize": "ꤗꤟꤢꤩ꤬ꤕꤚꤝꤟꤥꤒꤟꤢꤧ꤬",
     "synchronize_project": "Synchronize {{ projectName }} with Paratext",
-    "your_project_is_being_synchronized": "Your project is being synchronized..."
+    "your_project_is_being_synchronized": "Your project is being synchronized...",
+    "sync_is_disabled": "Synchronization for this project needed to be disabled, so it is not available at this time. Please contact {{ email }} to discuss what needs to be done so project synchronization can be enabled again."
   },
   "text": {
     "book_does_not_exist": "ꤜꤤ꤬ꤛꤢꤩ꤭ꤒꤣ꤬ꤙꤢ꤬ ꤗꤢ꤬ ꤢ꤬ꤥ꤬ ꤔꤢꤪ ꤒꤥ꤬꤯ ",
     "book_is_empty": "ꤘꤣ ꤜꤤ꤬ꤛꤢꤩ꤭ꤒꤣ꤬ꤙꤢ꤬ ꤢ꤬ꤊꤢꤨ꤭ ꤔꤌꤣ꤬ ꤒꤟꤢꤧ꤬ ꤥ꤬ ꤒꤣ꤬ꤡꤣ꤬꤮ ꤒꤥ꤬꤯ ꤙꤢꤩ꤬ꤔꤟꤌꤣ꤭ ꤢ꤬ꤗꤟꤢ꤭ꤘꤢꤨ꤬ ꤘꤣ Paratext ꤊꤢꤨ꤭ ꤔꤌꤣ꤬꤯ ",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "not_available_offline": "This text is not available offline. Connect to the Internet to see the text."
   },
   "translate_overview": {
     "progress": "ꤗꤟꤢꤩ꤬ꤕꤜꤛꤢꤩ꤬ꤟꤛꤢ꤭",

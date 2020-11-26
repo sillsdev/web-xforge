@@ -140,9 +140,7 @@
   </data>
   <data name="InviteLinkSharingOff" xml:space="preserve">
     <value>Эта ссылка будет работать только на этот адрес электронной почты.</value>
-  </data>
-  <data name="InviteLinkSharingOn" xml:space="preserve">
-    <value>Этой ссылкой можно поделиться с другими, чтобы они тоже могли присоединиться к проекту.</value>
+    <comment>Previously this text was used when link sharing was turned off for a project, but now it is always used when sending an invitation whether link sharing is on or off.</comment>
   </data>
   <data name="InvitePTOption" xml:space="preserve">
     <value>Нажмите {0}Зарегистрироваться в Paratext{1} и следуйте инструкциям для доступа к {2} с помощью существующей учетной записи Paratext, или</value>

@@ -140,9 +140,7 @@
   </data>
   <data name="InviteLinkSharingOff" xml:space="preserve">
     <value>该链接仅适用于该电子邮件地址。</value>
-  </data>
-  <data name="InviteLinkSharingOn" xml:space="preserve">
-    <value>该链接可以与其他人共享，好让他们也可以加入该项目。</value>
+    <comment>Previously this text was used when link sharing was turned off for a project, but now it is always used when sending an invitation whether link sharing is on or off.</comment>
   </data>
   <data name="InvitePTOption" xml:space="preserve">
     <value>点击{0}使用Paratext注册{1}，然后按照说明使用现有的圣经辅助工具帐户访问{2}，或者</value>

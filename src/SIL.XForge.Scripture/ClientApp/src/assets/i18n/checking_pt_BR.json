@@ -17,6 +17,7 @@
     "password_reset_email_sent": "Acabamos de enviar um email para redefinir sua senha.",
     "product_version": "Versão do produto: v{{ version }}",
     "project_home": "Página inicial do projeto",
+    "redirecting_in_moments": "Redirecting in a few moments...",
     "report_issue_email": "e-mail {{ email }}",
     "report_issue": "Relatar um problema",
     "scripture_checking_not_available": "A verificação do Texto Bíblico não está disponível neste projeto."
@@ -182,9 +183,12 @@
   },
   "checking_audio_player": {
     "audio_unavailable": "Audio unavailable.",
-    "audio_cannot_be_played": "This audio cannot be played while you are offline because it has not been downloaded. Connect to the Internet to play."
+    "audio_cannot_be_accessed": "There was an error trying to access the audio file. If this persists, please upload a new file.",
+    "audio_cannot_be_played": "This audio cannot be played while you are offline because it has not been downloaded. Connect to the internet to play.",
+    "audio_cannot_be_previewed": "The audio is in a format that cannot be previewed. Save any changes and connect to the internet to play."
   },
   "checking_audio_recorder": {
+    "not_available": "Your browser currently does not support audio recording. Please try using another supported browser.",
     "mic_access_denied": "O acesso ao seu microfone foi negado. Ative o microfone a partir do seu navegador.",
     "record": "Registrar",
     "stop_recording": "Parar gravação",
@@ -236,8 +240,15 @@
     "try_again": "Tente Novamente"
   },
   "exception_handling_service": {
+    "firefox_private_browsing_or_no_space": "Something went wrong. Please check that you are not using Firefox in the unsupported private browsing mode and that your device has the recommended 500 MB of free space.",
     "network_request_failed": "Um pedido de rede falhou. Algumas funcionalidades podem não estar disponíveis.",
+    "out_of_space": "An error occurred because your device is out of storage space.",
     "unknown_error": "Erro desconhecido"
+  },
+  "file_service": {
+    "failed_to_save": "Failed to save your changes. Please check that you have the recommended 500 MB of free space on your device.",
+    "i_understand": "I understand",
+    "storage_space_is_limited": "The storage space on this device is limited. It is recommended to have a minimum of 500 MB of free space to ensure all feature are available. Please free up storage space."
   },
   "issue_email": {
     "body": "Obrigado por relatar o problema!\nVocê nos ajudaria se preenchesse algumas das informações abaixo, mas por favor envie mesmo que não consiga preencher muita informação.\nSe você está solicitando um recurso, muitos campos podem não ser aplicáveis.\nLembre-se de que seu relatório de  bug estará disponível publicamente. Nunca envie senhas ou outros segredos.\n\nRelatório de bug\nUma descrição clara e concisa de qual é o bug.\n\nPassos a reproduzir\nPor exemplo:\n1. Vá para ...\n2. Clique em ...\n3. Desça até ...\n4. Veja o erro\n\nComportamento real\nPor favor, descreva o comportamento real do problema que você está observando.\n\nComportamento esperado\nUma descrição clara e concisa do que você esperava que acontecesse.\n\nCapturas de tela\nSe for o caso, adicione capturas de tela para ajudar a explicar seu problema.\n\nContexto Adicional\nAdicione qualquer outro contexto sobre o problema aqui.\n\nPossível solução\nAdicione qualquer solução possível para o problema aqui.\n\nSeu ambiente:\nVersão do Software\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL: {{ url }}\nError id: {{ errorId }}",

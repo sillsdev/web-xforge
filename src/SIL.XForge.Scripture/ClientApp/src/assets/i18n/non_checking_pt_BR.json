@@ -23,8 +23,9 @@
     "archive": "Arquivo",
     "archived_questions": "Perguntas Arquivadas",
     "click_add_question": "Clique em {{ boldStart }}Adicionar pergunta{{ boldEnd }}, acima.",
-    "no_questions": "Não há perguntas publicadas. ",
+    "import_questions": "Import",
     "no_archived_questions": "Não há perguntas arquivadas.",
+    "no_questions": "Não há perguntas publicadas. ",
     "question_count_label": "{{ count }} perguntas",
     "republish": "Republicar",
     "time_archived_stamp": "Arquivado em {{ timeStamp }}"
@@ -56,6 +57,7 @@
     "no_connectable_projects": "Parece que não há nenhum projeto conectável para você.{{ newLine }}Por favor, vá ao Paratext para registrar um projeto para se conectar.",
     "only_paratext_admins_can_start": "** Você precisa ser o Administrador de um projeto do Paratext para iniciá-lo aqui. Peça ao seu administrador para se conectar ao seu projeto; depois disso, você também pode se conectar aqui.",
     "paratext_project": "Projeto do Paratext",
+    "problem_already_connected": "The project is already connected. Maybe another project administrator connected the project at the same time. Please try again. If it continues to be a problem, please report the issue so we can get it fixed.",
     "translation_suggestions": "Sugestões de Tradução",
     "translations_will_be_suggested_as_you_edit": "Traduções para palavras e frases serão sugeridas enquanto você edita o Texto Bíblico. É recomendável que seu projeto seja configurado como uma {{ boldStart }}Tradução Derivada{{ boldEnd }} no Paratext.",
     "you_can_change_later": "Você pode alterar isto depois.",
@@ -78,6 +80,29 @@
     "training": "Treinamento",
     "training_completed_successfully": "Treinamento concluído com sucesso",
     "verse_too_long_for_suggestions": "Este versículo é muito longo para gerar sugestões."
+  },
+  "import_questions_confirmation_dialog": {
+    "done": "Concluído",
+    "edited_questions_explanation": "Some of the questions you have selected have been edited. Are you sure you want to update the questions? Select the questions you want to update.",
+    "number_answers": "Number of Answers",
+    "scripture_forge": "Scripture Forge",
+    "some_questions_edited": "Some questions have been edited",
+    "transcelerator": "Transcelerator"
+  },
+  "import_questions_dialog": {
+    "cancel": "Cancelar",
+    "filter_questions": "Filter questions",
+    "import_count_questions": "Import {{ count }} Selected Questions",
+    "import_from_transcelerator": "Import Questions from Transcelerator",
+    "importing_questions": "Importing {{ count }} questions...",
+    "loading": "Carregando...",
+    "must_be_valid_reference": "Must be a valid reference",
+    "no_questions_available": "There are no questions for the books in this project.",
+    "reference_from": "Reference from",
+    "reference_to": "Reference to",
+    "select_all": "Select All",
+    "show_all": "Show All",
+    "update_transcelerator": "The version of Transcelerator used in this project is not supported. Please update to at least Transcelerator version 1.5.3."
   },
   "paginator": {
     "items_per_page": "Itens por página",
@@ -162,12 +187,14 @@
     "successfully_synchronized_with_paratext": "Sincronizado {{ projectName }} com o Paratext com sucesso.",
     "synchronize": "Sincronizar",
     "synchronize_project": "Sincronizar {{ projectName }} com o Paratext",
-    "your_project_is_being_synchronized": "Seu projeto está sendo sincronizado..."
+    "your_project_is_being_synchronized": "Seu projeto está sendo sincronizado...",
+    "sync_is_disabled": "Synchronization for this project needed to be disabled, so it is not available at this time. Please contact {{ email }} to discuss what needs to be done so project synchronization can be enabled again."
   },
   "text": {
     "book_does_not_exist": "Este livro não existe.",
     "book_is_empty": "Este livro está vazio. Adicione capítulos no Paratext.",
-    "loading": "Carregando..."
+    "loading": "Carregando...",
+    "not_available_offline": "This text is not available offline. Connect to the Internet to see the text."
   },
   "translate_overview": {
     "progress": "Progresso",

@@ -23,8 +23,9 @@
     "archive": "Arsip",
     "archived_questions": "Arsipkan Pertanyaan",
     "click_add_question": "Klik {{ boldStart }}Tambah pertanyaan{{ boldEnd }}, diatas.",
-    "no_questions": "Tidak ada pertanyaan yang dipublikasikan. ",
+    "import_questions": "Import",
     "no_archived_questions": "Tidak ada pertanyaan yang diarsipkan.",
+    "no_questions": "Tidak ada pertanyaan yang dipublikasikan. ",
     "question_count_label": "{{ count }} pertanyaan",
     "republish": "Dipublikasikan ulang",
     "time_archived_stamp": "Diarsipkan pada{{ timeStamp }}"
@@ -56,6 +57,7 @@
     "no_connectable_projects": "Sepertinya tidak ada proyek yang terhubung dengan Anda. {{ newLine }} Silakan buka Paratext untuk mendaftarkan proyek yang akan dihubungkan.",
     "only_paratext_admins_can_start": "** Anda harus menjadi Administrator Paratext dari sebuah proyek untuk memulainya di sini. Minta Administrator Anda untuk menghubungkan ke proyek Anda maka Anda juga dapat terhubung ke sini setelah itu.",
     "paratext_project": "Proyek Paratext",
+    "problem_already_connected": "The project is already connected. Maybe another project administrator connected the project at the same time. Please try again. If it continues to be a problem, please report the issue so we can get it fixed.",
     "translation_suggestions": "Saran Terjemahan",
     "translations_will_be_suggested_as_you_edit": "Terjemahan untuk kata dan frasa akan disarankan saat Anda menyunting Alkitab. Disarankan agar proyek Anda diatur sebagai {{ boldStart }}Daughter Translation{{ boldEnd }} di Paratext.",
     "you_can_change_later": "Anda dapat mengubahnya nanti.",
@@ -78,6 +80,29 @@
     "training": "Pelatihan",
     "training_completed_successfully": "Pelatihan berhasil diselesaikan",
     "verse_too_long_for_suggestions": "Ayat ini terlalu panjang untuk membuat saran terjemahan."
+  },
+  "import_questions_confirmation_dialog": {
+    "done": "Selesai",
+    "edited_questions_explanation": "Some of the questions you have selected have been edited. Are you sure you want to update the questions? Select the questions you want to update.",
+    "number_answers": "Number of Answers",
+    "scripture_forge": "Scripture Forge",
+    "some_questions_edited": "Some questions have been edited",
+    "transcelerator": "Transcelerator"
+  },
+  "import_questions_dialog": {
+    "cancel": "Batal",
+    "filter_questions": "Filter questions",
+    "import_count_questions": "Import {{ count }} Selected Questions",
+    "import_from_transcelerator": "Import Questions from Transcelerator",
+    "importing_questions": "Importing {{ count }} questions...",
+    "loading": "Memuat...",
+    "must_be_valid_reference": "Must be a valid reference",
+    "no_questions_available": "There are no questions for the books in this project.",
+    "reference_from": "Reference from",
+    "reference_to": "Reference to",
+    "select_all": "Select All",
+    "show_all": "Show All",
+    "update_transcelerator": "The version of Transcelerator used in this project is not supported. Please update to at least Transcelerator version 1.5.3."
   },
   "paginator": {
     "items_per_page": "Item per halaman",
@@ -162,12 +187,14 @@
     "successfully_synchronized_with_paratext": "Berhasil mensinkronkan {{ projectName }} dengan Paratext.",
     "synchronize": "Sinkronkan",
     "synchronize_project": "Mensinkronkan {{ projectName }} dengan Paratext",
-    "your_project_is_being_synchronized": "Proyek Anda sedang disinkronkan..."
+    "your_project_is_being_synchronized": "Proyek Anda sedang disinkronkan...",
+    "sync_is_disabled": "Synchronization for this project needed to be disabled, so it is not available at this time. Please contact {{ email }} to discuss what needs to be done so project synchronization can be enabled again."
   },
   "text": {
     "book_does_not_exist": "Kitab tidak ada.",
     "book_is_empty": "Kitab masih kosong. Tambahkan pasal di Paratext.",
-    "loading": "Memuat..."
+    "loading": "Memuat...",
+    "not_available_offline": "This text is not available offline. Connect to the Internet to see the text."
   },
   "translate_overview": {
     "progress": "Kemajuan",

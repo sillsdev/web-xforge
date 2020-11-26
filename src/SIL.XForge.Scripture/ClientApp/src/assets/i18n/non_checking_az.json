@@ -23,8 +23,9 @@
     "archive": "Arxiv",
     "archived_questions": "Arxivdə saxlanmış suallar",
     "click_add_question": "Yuxarıdakı {{ boldStart }}Sual əlavə etmək{{ boldEnd }} tıklayın.",
-    "no_questions": "Nəşr edilmiş suallar yoxdur. ",
+    "import_questions": "Import",
     "no_archived_questions": "Arxivləşdirilmiş suallar yoxdur.",
+    "no_questions": "Nəşr edilmiş suallar yoxdur. ",
     "question_count_label": "{{ count }} suallar",
     "republish": "Yenidən nəşr etmək",
     "time_archived_stamp": "{{ timeStamp }}-da arxivləşdirilib"
@@ -56,6 +57,7 @@
     "no_connectable_projects": "Görünür ki, sizin üçün qoşula bilən layihələr yoxdur. {{ newLine }} Zəhmət olmazsa, layihəyə qoşulmaq məqsədilə qeydiyyatdan keçmək üçün Paratekst proqramına daxil olun.",
     "only_paratext_admins_can_start": "Burada lahiyə başlamaq üçün, onun Paratekst Administratoru olmalısınız. Sizin Administratorunuzdan lahiyənizə qoşmağa xahiş ediniz, sonra siz də burada qoşula bilərsiniz.",
     "paratext_project": "Paratekst layihəsi",
+    "problem_already_connected": "The project is already connected. Maybe another project administrator connected the project at the same time. Please try again. If it continues to be a problem, please report the issue so we can get it fixed.",
     "translation_suggestions": "Tərcümə təklifləri",
     "translations_will_be_suggested_as_you_edit": "Siz Kəlamı redaktə etdikcə sözlər və ifadələr üçün tərcümələr təklif olunacaq. Məsləhət görülür ki, layihəniz Paratextdə {{ boldStart }} Filial Tərcümə kimi {{ boldEnd }}quraşdırılsın.",
     "you_can_change_later": "Bunları sonra dəyişdirə bilərsiniz.",
@@ -78,6 +80,29 @@
     "training": "Təlim",
     "training_completed_successfully": "Təlim uğurla başa çatdı",
     "verse_too_long_for_suggestions": "Bu ayə təkliflər irəli sürmək üçün çox uzundur."
+  },
+  "import_questions_confirmation_dialog": {
+    "done": "Yerinə yetirildi",
+    "edited_questions_explanation": "Some of the questions you have selected have been edited. Are you sure you want to update the questions? Select the questions you want to update.",
+    "number_answers": "Number of Answers",
+    "scripture_forge": "Scripture Forge",
+    "some_questions_edited": "Some questions have been edited",
+    "transcelerator": "Transcelerator"
+  },
+  "import_questions_dialog": {
+    "cancel": "Ləğv etmək",
+    "filter_questions": "Filter questions",
+    "import_count_questions": "Import {{ count }} Selected Questions",
+    "import_from_transcelerator": "Import Questions from Transcelerator",
+    "importing_questions": "Importing {{ count }} questions...",
+    "loading": "Yüklənir...",
+    "must_be_valid_reference": "Must be a valid reference",
+    "no_questions_available": "There are no questions for the books in this project.",
+    "reference_from": "Reference from",
+    "reference_to": "Reference to",
+    "select_all": "Select All",
+    "show_all": "Show All",
+    "update_transcelerator": "The version of Transcelerator used in this project is not supported. Please update to at least Transcelerator version 1.5.3."
   },
   "paginator": {
     "items_per_page": "Hər səhifə üçün bəndlər",
@@ -162,12 +187,14 @@
     "successfully_synchronized_with_paratext": "{{ projectName }} Paratext ilə uğurla sinxronlaşdırıldı. ",
     "synchronize": "Sinxronlaşdırmaq",
     "synchronize_project": "{{ projectName }} Paratext ilə sinxronlaşdırıldı",
-    "your_project_is_being_synchronized": "Sizin layihəniz sinxronlaşdırılır..."
+    "your_project_is_being_synchronized": "Sizin layihəniz sinxronlaşdırılır...",
+    "sync_is_disabled": "Synchronization for this project needed to be disabled, so it is not available at this time. Please contact {{ email }} to discuss what needs to be done so project synchronization can be enabled again."
   },
   "text": {
     "book_does_not_exist": "Bu kitab mövcud deyil.",
     "book_is_empty": "Bu kitab boşdur. Paratext proqramın köməyi ilə fəsillər əlavə edin.",
-    "loading": "Yüklənir..."
+    "loading": "Yüklənir...",
+    "not_available_offline": "This text is not available offline. Connect to the Internet to see the text."
   },
   "translate_overview": {
     "progress": "Tərəqqi",

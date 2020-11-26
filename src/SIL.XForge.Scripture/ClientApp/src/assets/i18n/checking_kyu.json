@@ -17,6 +17,7 @@
     "password_reset_email_sent": "ꤜꤟꤢꤩ ꤗꤟꤢꤩ꤬ꤕꤜꤤ꤭ꤊꤛꤢ꤭ ꤔꤟꤢꤧ꤬ password ꤢ꤬ꤑꤢꤩ꤭ ꤕꤟꤢꤧ꤬ ꤞꤢꤨ꤭ꤟꤛꤢ꤭ ꤓꤌꤣ꤭ꤟꤢꤪ ꤔꤟꤢꤧ꤬ email ꤟꤢꤪ꤯",
     "product_version": "ꤒꤟꤢ꤭ꤤ꤭ꤒꤟꤢꤧ꤬ version: v {{version}}",
     "project_home": "Project ꤟꤤ꤬",
+    "redirecting_in_moments": "Redirecting in a few moments...",
     "report_issue_email": "email {{email}}",
     "report_issue": "ꤘꤛꤢꤩꤜꤟꤌꤣ꤭ꤓꤛꤢ꤬ ꤒꤟꤢꤧ꤬ꤚꤤ꤬ꤒꤟꤢꤧ꤬ꤊꤛꤢ꤭",
     "scripture_checking_not_available": "ꤙꤤ project ꤛꤢꤩ꤭ ꤢ꤬ꤊꤢꤨ꤭ ꤗꤢ꤬ ꤒꤟꤢꤧ꤬ꤓꤢꤦꤡꤢꤩ꤭ ꤜꤤ꤬ꤡꤢ꤭ꤏꤢꤧ꤭ ꤔꤌꤣ꤬ ꤢ꤬ꤔꤟꤤ ꤒꤥ꤬꤯"
@@ -182,9 +183,12 @@
   },
   "checking_audio_player": {
     "audio_unavailable": "Audio unavailable.",
-    "audio_cannot_be_played": "This audio cannot be played while you are offline because it has not been downloaded. Connect to the Internet to play."
+    "audio_cannot_be_accessed": "There was an error trying to access the audio file. If this persists, please upload a new file.",
+    "audio_cannot_be_played": "This audio cannot be played while you are offline because it has not been downloaded. Connect to the internet to play.",
+    "audio_cannot_be_previewed": "The audio is in a format that cannot be previewed. Save any changes and connect to the internet to play."
   },
   "checking_audio_recorder": {
+    "not_available": "Your browser currently does not support audio recording. Please try using another supported browser.",
     "mic_access_denied": "ꤔꤟꤢꤧ꤬ ꤜꤟꤢꤩꤔꤟꤤꤘꤢ꤭ ꤔꤢ microphone ꤔꤌꤣ꤬ ꤢ꤬ꤙꤤ ꤕꤢ꤭꤯ ꤋꤛꤢꤞꤢꤧꤘꤥ꤭ ꤗꤟꤢꤩ꤬ ꤊꤟꤢꤦꤚꤟꤢꤩ enable the microphone ꤘꤣ ꤔꤟꤢꤧ꤬ browser ꤊꤢꤨ꤭ ꤔꤌꤣ꤬꤯ ",
     "record": "ꤕꤟꤢꤦꤍꤟꤥ",
     "stop_recording": "ꤥ꤬ꤊꤟꤌꤣ ꤊꤛꤢ꤭ ꤕꤟꤢꤦꤍꤟꤥ",
@@ -236,8 +240,15 @@
     "try_again": "ꤗꤟꤢꤩ꤬ꤋꤛꤢꤩ꤭ ꤒꤣ꤬ꤟꤢꤦ꤬ "
   },
   "exception_handling_service": {
+    "firefox_private_browsing_or_no_space": "Something went wrong. Please check that you are not using Firefox in the unsupported private browsing mode and that your device has the recommended 500 MB of free space.",
     "network_request_failed": "ꤜꤟꤢꤩꤕꤜꤥ꤭ꤓꤢꤦ꤭ ꤔꤌꤣ꤬ ꤢ꤬ ꤙꤢꤧꤓꤛꤢ꤬ꤒꤥ꤬꤯ ꤒꤟꤢꤧ꤬ ꤘꤣ ꤢ꤬ꤙꤢꤧ꤬ꤊꤛꤢ ꤔꤢ ꤜꤟꤢꤩꤕꤜꤥ꤭ꤓꤢꤦ꤭ ꤔꤌꤣ꤬ ꤢ꤬ꤔꤟꤤꤡꤟꤛꤢꤒꤥ꤬ ꤥ꤬ ꤒꤣ꤬ꤡꤣ꤬ꤡꤣ꤬ ꤊꤥ꤭ꤜꤢꤩ꤬꤯",
+    "out_of_space": "An error occurred because your device is out of storage space.",
     "unknown_error": "ꤢ꤬ꤞꤢꤦ ꤘꤣ ꤞꤢꤧꤑꤢꤩ꤭ ꤒꤥ꤬"
+  },
+  "file_service": {
+    "failed_to_save": "Failed to save your changes. Please check that you have the recommended 500 MB of free space on your device.",
+    "i_understand": "I understand",
+    "storage_space_is_limited": "The storage space on this device is limited. It is recommended to have a minimum of 500 MB of free space to ensure all feature are available. Please free up storage space."
   },
   "issue_email": {
     "body": "ꤟꤢꤩꤜꤟꤌꤣ꤭ꤓꤛꤢ꤬ ꤒꤟꤢꤧ꤬ꤚꤤ꤬ꤒꤟꤢꤧ꤬ꤊꤛꤢ꤭ ꤢ꤬ꤋꤢꤨ꤬ꤢ꤬ꤋꤛꤢꤩ꤭, ꤒꤟꤢꤧ꤬ꤙꤝꤤ!\nꤔꤟꤢꤧ꤬ ꤊꤤ꤬ ꤚꤢ꤭ꤔꤟꤌꤣ꤭ ꤒꤟꤢꤧ꤬ꤚꤤ꤬ꤒꤟꤢꤧ꤬ꤊꤛꤢ꤭ ꤘꤣ ꤢ꤬ꤜꤟꤢꤧ꤭ ꤛꤢꤩ꤭ ꤟꤢꤩꤗꤢ꤬ ꤢ꤬ꤓꤝꤟꤥ꤭ꤙꤝꤤꤒꤢ꤬ꤚꤛꤢꤩ꤭ ꤘꤣ ꤕꤟꤢꤧ꤬ꤑꤢꤩ꤭ ꤕꤢ꤭, ꤗꤢ꤬ꤔꤢꤚꤢꤪ ꤔꤟꤢꤧ꤬ ꤊꤤ꤬ ꤚꤢ꤭ꤔꤟꤌꤣ꤭ ꤜꤟꤢꤪ꤭ ꤙꤢꤧ ꤒꤥ꤬ ꤙꤢꤧ꤬ꤙꤢꤧ꤬ ꤞꤢꤨ꤭ꤔꤟꤌꤣ꤭ ꤊꤛꤢ꤭ ꤢꤧ꤬ ꤗꤢ꤬ ꤢ꤬ꤔꤟꤤ꤯ \nꤔꤟꤢꤧ꤬ ꤊꤤ꤬ ꤊꤝꤤ꤭ feature ꤒꤣ꤬ꤊꤟꤌꤣ꤬ ꤟꤢꤩꤗꤢ꤬ ꤒꤟꤢꤧ꤬ꤗꤟꤢꤩ꤬ ꤘꤣ ꤢ꤬ꤚꤟꤌꤣ꤬ ꤒꤢ꤬ꤟꤢꤩ꤬ ꤊꤟꤢꤦ ꤒꤟꤢ꤭ꤒꤥ꤭ꤒꤟꤢ꤭ꤙꤢꤧ꤬ ꤕꤢ꤭ ꤒꤥ꤬ ꤕꤢ꤭꤯ \nꤞꤢꤧꤑꤢꤩ꤭ ꤔꤢ ꤜꤟꤢꤪ꤭ ꤔꤟꤢꤧ꤬ ꤚꤢ꤭ꤜꤟꤌꤣ꤭ꤓꤛꤢ꤬ ꤒꤟꤢꤧ꤬ꤚꤤ꤬ꤒꤟꤢꤧ꤬ꤊꤛꤢ꤭ꤖꤟꤌꤣ꤬ ꤔꤌꤣ꤬ꤗꤢ꤬ ꤢꤨ꤭ ꤗꤛꤢꤓꤛꤢꤩ꤬ ꤜꤟꤢꤪ꤭ ꤕꤢ꤭꤯ ꤒꤢ꤬ꤊꤤ꤬꤮ ꤞꤢꤨ꤭ꤔꤟꤌꤣ꤭ ꤒꤢꤧ꤭ ꤔꤟꤢꤧ꤬ passwords ꤗꤟꤢꤒꤥ꤬ꤚꤢꤪ ꤒꤟꤢꤧ꤬ꤘꤢꤪꤢꤟꤌꤣ ꤘꤣ ꤢ꤬ꤚꤟꤌꤣ꤬ ꤒꤢ꤬ꤟꤢꤩ꤬ ꤗꤟꤢꤩ꤯ \n\nꤒꤟꤢꤧ꤬ꤚꤤ꤬ꤒꤟꤢꤧ꤬ꤊꤛꤢ꤭ꤖꤟꤌꤣ꤬\nꤒꤟꤢꤧ꤬ꤚꤤ꤬ꤒꤟꤢꤧ꤬ꤊꤛꤢ꤭ꤖꤟꤌꤣ꤬ ꤔꤌꤣ꤬ꤗꤢ꤬ ꤒꤟꤢꤧ꤬ ꤘꤣ ꤢ꤬ ꤜꤟꤌꤣ꤭ꤚꤛꤢ ꤔꤢ ꤒꤟꤢꤧ꤬ꤟꤢꤩꤜꤟꤌꤣ꤭ꤖꤟꤌꤣ꤬ ꤚꤢꤪ ꤢ꤬ꤕꤜꤥ꤭ꤚꤛꤢ꤯ \n\nꤜꤟꤢꤩꤗꤟꤢꤩ꤬ꤚꤛꤢꤓꤛꤢ꤬ꤋꤛꤢꤩ꤭ ꤒꤣ꤬ꤒꤟꤥ ꤔꤢ ꤒꤣ꤬ꤒꤟꤥ\nꤟꤢꤩꤊꤟꤢꤦꤚꤟꤢꤩ:\n꤁. ꤡꤛꤣꤘꤣ...\n꤂. ꤡꤛꤣꤡꤤ꤬ꤙꤢꤧ꤬ ꤙꤤ...\n꤃. ꤡꤝꤟꤤ꤬ꤒꤟꤢ꤭ ꤘꤣ...\n꤄. ꤗꤛꤢ ꤢ꤬ꤞꤢꤦ\n\nꤒꤟꤢꤧ꤬ꤗꤟꤢꤩ꤬ ꤘꤣ ꤢ꤬ꤒꤥ꤭\nꤋꤛꤢꤞꤢꤧꤘꤥ꤭ ꤘꤛꤢꤩꤜꤟꤌꤣ꤭ ꤒꤟꤢꤧ꤬ꤚꤤ꤬ꤒꤟꤢꤧ꤬ꤊꤛꤢ꤭ ꤢ꤬ꤒꤟꤢꤧ꤬ꤗꤟꤢꤩ꤬ ꤘꤣ ꤢ꤬ꤒꤥ꤭ ꤘꤣ ꤔꤟꤢꤧ꤬ ꤗꤛꤢꤕꤟꤢꤨ꤭ꤞꤢꤧꤑꤢꤩ꤭ꤔꤟꤤ ꤔꤌꤣ꤬ ꤔꤤ꤯ \n\nꤒꤟꤢꤧ꤬ꤗꤟꤢꤩ꤬ ꤢ꤬ꤒꤟꤢꤧ꤬ꤗꤛꤢꤏꤢꤦ꤭\nꤔꤟꤢꤧ꤬ ꤗꤛꤢꤏꤢꤦ꤭ ꤒꤟꤢꤧ꤬ ꤘꤣ ꤢ꤬ ꤊꤟꤢꤦ ꤓꤝꤟꤥ꤭ꤓꤛꤢ꤬ ꤘꤣ ꤢ꤬ꤜꤟꤌꤣ꤭ ꤚꤛꤢ ꤔꤢ ꤢ꤬ꤖꤟꤌꤣ꤬ꤚꤢꤪ ꤢ꤬ꤜꤥ꤭ꤚꤛꤢ ꤔꤌꤣ꤬ꤒꤢ꤬ꤟꤢꤩ꤬꤯\n\nscreenshots\nꤢ꤬ ꤊꤤ꤬ ꤒꤟꤢ꤭ꤒꤥ꤭ꤒꤟꤢꤧ꤬ꤙꤢꤧ꤬ ꤟꤢꤩꤚꤢꤪ ꤙꤢꤩ꤬ꤔꤟꤌꤣ꤭ ꤔꤟꤤ screenshots ꤘꤣ ꤔꤟꤢꤧ꤬ ꤜꤟꤢꤩ ꤟꤢꤩꤏꤥ꤬ꤜꤟꤌꤣ꤭ꤕꤜꤥ꤭ ꤔꤟꤢꤧ꤬ꤒꤟꤢꤧ꤬ꤚꤤ꤬ꤒꤟꤢꤧ꤬ꤊꤛꤢ꤭ ꤔꤌꤣ꤬ ꤔꤤ꤯ \n\nꤍꤟꤥ ꤘꤣ ꤙꤢꤩ꤬ꤔꤟꤌꤣ꤭ꤜꤣ ꤕꤟꤥ\nꤍꤟꤥ ꤘꤣ ꤢ꤬ꤓꤝꤟꤥ꤭ꤓꤛꤢ꤬ ꤒꤟꤢꤧ꤬ꤕꤟꤛꤢꤒꤟꤢꤧ꤬ꤏꤢꤧ꤭ ꤙꤤꤛꤢꤩ꤭ ꤒꤣ꤬ꤟꤢꤩ꤬꤯ \n\nꤒꤟꤢꤧ꤬ꤗꤟꤢꤩ꤬ꤚꤛꤢꤋꤛꤢꤩ꤭ ꤘꤣ ꤢ꤬ꤒꤟꤢ꤭ꤒꤥ꤭ꤒꤟꤢ꤭ꤙꤢꤧ꤬ ꤒꤢ꤬ꤟꤢꤩ꤬\nꤚꤢ꤭ꤔꤟꤌꤣ꤭ ꤒꤟꤢꤧ꤬ꤗꤟꤢꤩ꤬ꤚꤛꤢꤋꤛꤢꤩ꤭ ꤘꤣ ꤢ꤬ꤒꤟꤢ꤭ꤒꤥ꤭ꤒꤟꤢ꤭ꤙꤢꤧ꤬ ꤔꤌꤣ꤬ꤒꤢ꤬ꤟꤢꤩ꤬ ꤘꤣ ꤒꤟꤢꤧ꤬ꤕꤟꤛꤢꤒꤟꤢꤧ꤬ꤏꤢꤧ꤭ ꤙꤤꤛꤢꤩ꤭ ꤢ꤬ꤑꤢꤩ꤭꤯ \n\nꤔꤟꤢꤧ꤬ꤓꤢꤦ꤭ꤔꤟꤢꤧ꤬ꤘꤢꤪ \nSoftware           Version\n......................................\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL: {{ url }}\nError id: {{ errorId }}\n\n\n\n\n\n",
