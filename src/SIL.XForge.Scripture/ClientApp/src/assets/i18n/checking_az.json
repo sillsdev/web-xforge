@@ -17,6 +17,7 @@
     "password_reset_email_sent": "Şifrənizi yenidən qurmaq üçün sizə bir e-məktub göndərmişik.",
     "product_version": "Yekun variant: {{ version }}",
     "project_home": "Layihənin ana səhifəsi",
+    "redirecting_in_moments": "Redirecting in a few moments...",
     "report_issue_email": "e-poçt {{ email }}",
     "report_issue": "Problemi bildirin.",
     "scripture_checking_not_available": "Bu layihədə Kəlamın yoxlanması mövcud deyil. "
@@ -181,10 +182,13 @@
     "upload": "Yükləmək"
   },
   "checking_audio_player": {
-    "audio_unavailable": "Audio unavailable.",
-    "audio_cannot_be_played": "This audio cannot be played while you are offline because it has not been downloaded. Connect to the Internet to play."
+    "audio_unavailable": "Səs faylı mövcud deyil.",
+    "audio_cannot_be_accessed": "There was an error trying to access the audio file. If this persists, please upload a new file.",
+    "audio_cannot_be_played": "Bu səs faylı İnternetə qoşulmayan vaxtınızda səslənmir, çünki yüklənməyib. İfadə etmək üçün İnternetə qoşulun.",
+    "audio_cannot_be_previewed": "The audio is in a format that cannot be previewed. Save any changes and connect to the internet to play."
   },
   "checking_audio_recorder": {
+    "not_available": "Your browser currently does not support audio recording. Please try using another supported browser.",
     "mic_access_denied": "Mikrofonunuza giriş rədd edildi. Zəhmət olmasa, brauzerinizdən mikrofonu işə salın.",
     "record": "Səs yazmaq",
     "stop_recording": "Səs yazmanı dayandırmaq",
@@ -236,8 +240,15 @@
     "try_again": "Yenidən çalışın"
   },
   "exception_handling_service": {
+    "firefox_private_browsing_or_no_space": "Something went wrong. Please check that you are not using Firefox in the unsupported private browsing mode and that your device has the recommended 500 MB of free space.",
     "network_request_failed": "Şəbəkə sorğusu baş tutmadı. Bəzi funksionallıq mövcud olmaya bilər.",
+    "out_of_space": "Sizin cihazınızın boş saxlama yeri yoxa görə səhvi baş verdi. Zəhmət olmazsa, biraz yeri yeri boşaldın.",
     "unknown_error": "Naməlum səhv"
+  },
+  "file_service": {
+    "failed_to_save": "Failed to save your changes. Please check that you have the recommended 500 MB of free space on your device.",
+    "i_understand": "Başa düşürəm",
+    "storage_space_is_limited": "Bu cihazdakı saxlama sahəsi məhduddur. Bütün xüsusiyyətlərin mövcudluğunu təmin etmək üçün ən azı 500 MB boş yerə malik olmağa təklif olunur. Zəhmət olmasa saxlama yerini boşaltın."
   },
   "issue_email": {
     "body": "Problemi bildirdiyiniz üçün təşəkkür edirik!\nSiz bizə aşağıda ətraflı məlumat versəniz, bu bizə çox kömək edər, amma xahiş edirik ki, çox məlumat verə bilməsəniz də, problem barədə bizə bildirəsiniz. \nƏgər siz hansısa xüsusiyyəti sorğulayırsınızsa, sahələrin çoxu uyğun olmaya bilər. Amma bilin ki, sizin səhvlə bağlı hesabatınızı hamı görə biləcək. Heç vaxt şifrələri və ya başqa sirləri göndərməyin.\n\nSəhvlə bağlı hesabat\nSəhvin aydın və yığcam təsvirini verin.\n\nHəll etmək üçün addımlar\nMəsələn:\n1. Daxil olun...\n2. Klikləyin...\n3. Aşağı sürüşdürün...\n4. Səhvə baxın\n\nFaktiki davranış\n\nZəhmət olmazsa, müşahidə etdiyiniz səhvin faktiki davranışını təsvir edin.\n\nGözlənilən davranış\n\nNəyin baş verəcəyini gözlədiyinizi aydın və yığcam təsvir edin.\n\nEkran şəkilləri\n\nƏgər uyğundursa, problemi izah etmək üçün kömək edəcək ekran şəkilləri əlavə edin.\n\nƏlavə məzmun\n\nSəhvlə bağlı istənilən başqa məzmunu buraya əlavə edin.\n\nMümkün həll\nİstənilən mümkün həlli buraya əlavə edin.\n\nSizin əməliyyat sisteminiz:\nProgram təminatı      Versiya\n\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nVebsayt ünvanı: {{ url }}\nSəhv id: {{ errorId }}",

@@ -17,6 +17,7 @@
     "password_reset_email_sent": "Kami baru saja mengirimi Anda surel untuk mengatur ulang kata sandi Anda.",
     "product_version": "Versi produk: v{{ version }}",
     "project_home": "Beranda Proyek",
+    "redirecting_in_moments": "Redirecting in a few moments...",
     "report_issue_email": "surel {{ email }}",
     "report_issue": "Laporkan masalah",
     "scripture_checking_not_available": "Pemeriksaan Alkitab tidak tersedia pada proyek ini."
@@ -182,9 +183,12 @@
   },
   "checking_audio_player": {
     "audio_unavailable": "Audio unavailable.",
-    "audio_cannot_be_played": "This audio cannot be played while you are offline because it has not been downloaded. Connect to the Internet to play."
+    "audio_cannot_be_accessed": "There was an error trying to access the audio file. If this persists, please upload a new file.",
+    "audio_cannot_be_played": "This audio cannot be played while you are offline because it has not been downloaded. Connect to the internet to play.",
+    "audio_cannot_be_previewed": "The audio is in a format that cannot be previewed. Save any changes and connect to the internet to play."
   },
   "checking_audio_recorder": {
+    "not_available": "Your browser currently does not support audio recording. Please try using another supported browser.",
     "mic_access_denied": "Akses ke mikrofon Anda ditolak. Harap aktifkan mikrofon dari peramban Anda.",
     "record": "Rekam",
     "stop_recording": "Hentikan Perekaman",
@@ -236,8 +240,15 @@
     "try_again": "Coba Lagi"
   },
   "exception_handling_service": {
+    "firefox_private_browsing_or_no_space": "Something went wrong. Please check that you are not using Firefox in the unsupported private browsing mode and that your device has the recommended 500 MB of free space.",
     "network_request_failed": "Permintaan jaringan gagal. Beberapa fungsi mungkin tidak tersedia.",
+    "out_of_space": "An error occurred because your device is out of storage space.",
     "unknown_error": "Kesalahan yang tidak diketahui"
+  },
+  "file_service": {
+    "failed_to_save": "Failed to save your changes. Please check that you have the recommended 500 MB of free space on your device.",
+    "i_understand": "I understand",
+    "storage_space_is_limited": "The storage space on this device is limited. It is recommended to have a minimum of 500 MB of free space to ensure all feature are available. Please free up storage space."
   },
   "issue_email": {
     "body": "Terima kasih telah melaporkan masalah ini!\nIni akan membantu kami jika Anda mengisi beberapa informasi di bawah ini, tetapi harap kirim meskipun Anda tidak dapat mengisi banyak informasi.\nJika Anda meminta fitur, banyak bidang yang mungkin tidak berlaku.\nKetahuilah bahwa laporan bug Anda akan ditampilkan untuk umum. Jangan pernah mengirimkan kata sandi atau rahasia lainnya.\n\nLaporan bug\nDeskripsi yang jelas dan ringkas tentang bug itu.\n\nLangkah-langkah mereproduksi\nSebagai contoh:\n1. Pergi ke ...\n2. Klik pada ...\n3. Gulir ke bawah untuk ...\n4. Lihat kesalahan\n\nPerilaku yang sebenarnya\nTolong jelaskan perilaku aktual dari masalah yang Anda amati.\n\nPerilaku yang diharapkan\nDeskripsi yang jelas dan ringkas tentang apa yang Anda harapkan terjadi.\n\nTangkapan layar\nJika bisa, tambahkan tangkapan layar untuk membantu menjelaskan masalah Anda.\n\nKonteks tambahan\nTambahkan konteks lain tentang masalah di sini.\n\nSolusi yang mungkin\nTambahkan kemungkinan solusi untuk masalah di sini.\n\nPerangkat Anda:\nVersi perangkat lunak\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL: {{ url }}\nError id: {{ errorId }}",

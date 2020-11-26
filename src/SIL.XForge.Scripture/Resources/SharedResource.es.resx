@@ -140,9 +140,7 @@
   </data>
   <data name="InviteLinkSharingOff" xml:space="preserve">
     <value>Este enlace sólo funcionará para esta dirección de correo electrónico.</value>
-  </data>
-  <data name="InviteLinkSharingOn" xml:space="preserve">
-    <value>Este enlace se puede compartir con otros para que puedan unirse al proyecto.</value>
+    <comment>Previously this text was used when link sharing was turned off for a project, but now it is always used when sending an invitation whether link sharing is on or off.</comment>
   </data>
   <data name="InvitePTOption" xml:space="preserve">
     <value>Haga clic en {0}Regístrese con Paratext{1} y siga las instrucciones para acceder a {2} utilizando una cuenta de Paratext existente, o bien</value>
@@ -158,7 +156,7 @@
     <comment>Tool tip for the language selector</comment>
   </data>
   <data name="LearnMore" xml:space="preserve">
-    <value>Learn More</value>
+    <value>Aprender más</value>
     <comment>Link to the learn more page seen in the page footer and as button at the bottom of the home page</comment>
   </data>
   <data name="LogIn" xml:space="preserve">

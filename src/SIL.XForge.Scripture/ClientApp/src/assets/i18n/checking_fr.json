@@ -158,11 +158,11 @@
   },
   "checking_answers": {
     "add_answer": "Ajouter une réponse",
-    "answer_required_before_saving": "Vous devez saisir ou enregistrer en audio votre réponse avant de sauvegarder",
+    "answer_required_before_saving": "Vous devez saisir ou enregistrer votre réponse en audio avant de sauvegarder",
     "answer": "Réponse",
     "answers": "{{ count }} Réponses",
     "cancel": "Annuler",
-    "cannot_like_own_answer": "Vous ne pouvez pas promouvoir votre propre réponse.",
+    "cannot_like_own_answer": "Vous ne pouvez pas mettre un J'aime sur votre propre réponse.",
     "delete": "Supprimer",
     "edit": "Modifier",
     "no_scripture_selected": "Aucun texte sélectionné pour l'instant.",
@@ -178,12 +178,13 @@
   },
   "checking_audio_combined": {
     "remove_audio_file": "Supprimer le fichier audio",
-    "upload_audio_file": "Télétransmettre un fichier son",
+    "upload_audio_file": "Télétransmettre un fichier audio",
     "upload": "Télétransmettre"
   },
   "checking_audio_player": {
     "audio_unavailable": "Audio non disponible.",
-    "audio_cannot_be_played": "Cette piste audio ne peut pas être jouée lorsque vous êtes hors connexion car elle n'a pas été téléchargée. Connectez-vous à Internet pour la lancer.",
+    "audio_cannot_be_accessed": "Une erreur s'est produite lors de la tentative d'accès au fichier audio. Si ce problème persiste, veuillez télétransmettre un nouveau fichier.",
+    "audio_cannot_be_played": "Cette piste audio ne peut pas être lue lorsque vous êtes hors connexion car elle n'a pas été téléchargée. Connectez-vous à Internet pour la lire.",
     "audio_cannot_be_previewed": "L'audio est dans un format pour lequel on ne peut avoir d'aperçu. Enregistrez les modifications et connectez-vous à Internet pour le lire."
   },
   "checking_audio_recorder": {
@@ -250,7 +251,7 @@
     "storage_space_is_limited": "L'espace de stockage sur cet appareil est limité. Il est recommandé de disposer d'un minimum de 500 Mo d'espace libre pour garantir la disponibilité de toutes les fonctionnalités. Veuillez libérer de l'espace de stockage."
   },
   "issue_email": {
-    "body": "Merci d'avoir signalé le problème !\nCela nous aiderait si vous remplissiez certaines des informations ci-dessous, mais veuillez le soumettre même si vous ne pouvez pas en remplir beaucoup.\nSi vous demandez une fonctionnalité, plusieurs champs risques de ne pas être applicables.\nSachez que votre rapport de bogue sera disponible publiquement. Ne soumettez jamais de mots de passe ou d'autres informations confidentielles.\n\nRapport de bogue\nUne description claire et concise du bogue.\n\nÉtapes pour le reproduire\nPar exemple :\n1. Aller à ...\n2. Cliquez sur ...\n3. Faites défiler jusqu'à ...\n4. Voir erreur\n\nComportement réel\nVeuillez décrire le comportement réel du problème que vous observez.\n\nComportement attendu\nUne description claire et concise de ce qui aurait dû se produire selon vous.\n\nCaptures d'écran\nLe cas échéant, ajoutez des captures d'écran pour aider à expliquer le problème.\n\nAutres informations contextuelles\nAjoutez ici tout autres informations contextuelles liée au problème.\n\nSolution possible\nAjoutez ici toute solution possible au problème.\n\nVotre environnement :\nLogiciel                Version\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL : {{ url }}\nID d'erreur {{ errorId }}",
+    "body": "Merci d'avoir signalé le problème !\nCela nous aiderait si vous remplissiez certaines des informations ci-dessous, mais veuillez le soumettre même si vous ne pouvez pas en remplir beaucoup.\nSi vous demandez une fonctionnalité, plusieurs champs risques de ne pas être applicables.\nSachez que votre rapport de bogue sera disponible publiquement. Ne soumettez jamais de mots de passe ou d'autres informations confidentielles.\n\nRapport de bogue\nUne description claire et concise du bogue.\n\nÉtapes pour le reproduire\nPar exemple :\n1. Aller à ...\n2. Cliquez sur ...\n3. Faites défiler jusqu'à ...\n4. Voir erreur\n\nComportement réel\nVeuillez décrire le comportement réel du problème que vous observez.\n\nComportement attendu\nUne description claire et concise de ce qui aurait dû se produire selon vous.\n\nCaptures d'écran\nLe cas échéant, ajoutez des captures d'écran pour aider à expliquer le problème.\n\nAutre information contextuelle\nAjoutez ici toute autre information contextuelle liée au problème.\n\nSolution possible\nAjoutez ici toute solution possible au problème.\n\nVotre environnement :\nLogiciel                Version\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL : {{ url }}\nID d'erreur {{ errorId }}",
     "not_applicable": "non applicable",
     "subject": "problème {{ siteName }}",
     "unknown": "inconnu"
@@ -288,7 +289,7 @@
     "share_by_email_not_available_offline": "L'invitation d'utilisateurs par e-mail n'est pas disponible hors-connexion."
   },
   "share_dialog": {
-    "done": "Termíné",
+    "done": "Terminé",
     "share_with_others": "Partager avec d'autres"
   },
   "start": {

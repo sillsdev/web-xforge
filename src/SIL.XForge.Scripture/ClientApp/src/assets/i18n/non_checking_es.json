@@ -23,8 +23,9 @@
     "archive": "Archivar",
     "archived_questions": "Preguntas archivadas",
     "click_add_question": "Haga clic en {{ boldStart }}Agregar pregunta{{ boldEnd }}, arriba.",
-    "no_questions": "No hay preguntas publicadas. ",
+    "import_questions": "Importar",
     "no_archived_questions": "No hay preguntas archivadas.",
+    "no_questions": "No hay preguntas publicadas. ",
     "question_count_label": "{{ count }} preguntas",
     "republish": "Publicar de nuevo",
     "time_archived_stamp": "Archivado en {{ timeStamp }}"
@@ -47,7 +48,7 @@
     "based_on": "Basado en",
     "choose_the_mother_project": "Seleccione el proyecto de Paratext en el que se basa su proyecto.",
     "community_checking": "Comprobación por la comunidad",
-    "connect_network_to_connect_project": "Please connect to the internet to enable connecting to a project",
+    "connect_network_to_connect_project": "Por favor, conéctese a Internet para permitir la conexión a un proyecto",
     "connect_paratext_project": "Conectar proyecto de Paratext",
     "connect": "Conectar",
     "connecting_to_project": "Conectando a {{ projectName }}...",
@@ -56,6 +57,7 @@
     "no_connectable_projects": "Parece que no hay proyectos conectables para usted.{{ newLine }}Por favor, vaya a Paratext para registrar un proyecto al cual conectarse.",
     "only_paratext_admins_can_start": "** Usted debe ser el Administrador de un proyecto en Paratext para comenzarlo aquí. Pídele a su administrador que se conecte a su proyecto, luego también podrá conectarse aquí.",
     "paratext_project": "Proyecto de Paratext",
+    "problem_already_connected": "The project is already connected. Maybe another project administrator connected the project at the same time. Please try again. If it continues to be a problem, please report the issue so we can get it fixed.",
     "translation_suggestions": "Sugerencias de traducción",
     "translations_will_be_suggested_as_you_edit": "Se sugerirán traducciones de palabras y frases a medida que edite la Escritura. Se recomienda que su proyecto se configure como {{ boldStart }}Traducción hija{{ boldEnd }} en Paratext.",
     "you_can_change_later": "Puede cambiarlo más tarde.",
@@ -78,6 +80,29 @@
     "training": "Entrenamiento",
     "training_completed_successfully": "Entrenamiento completado con éxito",
     "verse_too_long_for_suggestions": "Este versículo es demasiado largo para generar sugerencias."
+  },
+  "import_questions_confirmation_dialog": {
+    "done": "Terminado",
+    "edited_questions_explanation": "Algunas de las preguntas que ha seleccionado han sido editadas. ¿Está seguro que desea actualizar las preguntas? Seleccione las preguntas que desea actualizar.",
+    "number_answers": "Número de respuestas",
+    "scripture_forge": "Scripture Forge",
+    "some_questions_edited": "Algunas preguntas han sido editadas",
+    "transcelerator": "Transcelerador"
+  },
+  "import_questions_dialog": {
+    "cancel": "Cancelar",
+    "filter_questions": "Filtrar las preguntas",
+    "import_count_questions": "Importar {{ count }} preguntas seleccionadas",
+    "import_from_transcelerator": "Importar preguntas del Transcelerador",
+    "importing_questions": "Importando {{ count }} preguntas...",
+    "loading": "Cargando...",
+    "must_be_valid_reference": "Debe ser una referencia válida",
+    "no_questions_available": "No hay preguntas para los libros de este proyecto.",
+    "reference_from": "Referencia de",
+    "reference_to": "Referencia a",
+    "select_all": "Seleccionar todos",
+    "show_all": "Mostrar todos",
+    "update_transcelerator": "La versión de Transcelerator utilizada en este proyecto no está soportada. Por favor, actualice al menos a la versión 1.5.3 de Transcelerator."
   },
   "paginator": {
     "items_per_page": "Elementos por página",
@@ -120,7 +145,7 @@
   "settings": {
     "anyone_with_a_link": "Cualquiera con un enlace",
     "based_on": "Basado en",
-    "connect_network_to_change_settings": "Project settings cannot be changed while offline. Please connect to the internet to make changes.",
+    "connect_network_to_change_settings": "La configuración del proyecto no puede cambiarse mientras esté desconectado. Por favor, conéctese a Internet para hacer cambios.",
     "choose_the_paratext_project": "Seleccione el proyecto de Paratext en el que se basa su proyecto.",
     "danger_zone": "Zona de Peligro",
     "delete_this_project": "Borrar este proyecto",
@@ -148,13 +173,13 @@
     "close": "Cerrar",
     "more": "Más",
     "number_of_suggestions": "Número de sugerencias",
-    "settings_not_available_offline": "These settings are not available while you are offline.",
+    "settings_not_available_offline": "Estos ajustes no están disponibles mientras esté desconectado.",
     "suggestion_confidence": "Confianza en la sugerencia",
     "translation_suggestions": "Sugerencias de traducción",
     "translation_suggestions_settings": "Configuración de las sugerencias de traducción"
   },
   "sync": {
-    "connect_network_to_synchronize": "Please connect to the internet to synchronize this project",
+    "connect_network_to_synchronize": "Por favor, conéctese a Internet para sincronizar este proyecto",
     "last_synced_time_stamp": "Última sincronización en {{ timeStamp }}",
     "log_in_to_paratext": "Iniciar sesión en Paratext",
     "never_been_synced": "Nunca ha sido sincronizado",
@@ -162,12 +187,14 @@
     "successfully_synchronized_with_paratext": "{{ projectName }} fue sincronizado con éxito con Paratext.",
     "synchronize": "Sincronizar",
     "synchronize_project": "Sincronizar {{ projectName }} con Paratext",
-    "your_project_is_being_synchronized": "Su proyecto está siendo sincronizado..."
+    "your_project_is_being_synchronized": "Su proyecto está siendo sincronizado...",
+    "sync_is_disabled": "Synchronization for this project needed to be disabled, so it is not available at this time. Please contact {{ email }} to discuss what needs to be done so project synchronization can be enabled again."
   },
   "text": {
     "book_does_not_exist": "Este libro no existe.",
     "book_is_empty": "Este libro está vacío. Añadir capítulos en Paratext.",
-    "loading": "Cargando..."
+    "loading": "Cargando...",
+    "not_available_offline": "This text is not available offline. Connect to the Internet to see the text."
   },
   "translate_overview": {
     "progress": "Progreso",

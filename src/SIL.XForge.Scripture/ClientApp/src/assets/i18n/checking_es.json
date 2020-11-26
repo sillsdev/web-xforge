@@ -1,6 +1,6 @@
 {
   "app": {
-    "action_not_available_offline": "This action isn't available while you are offline.",
+    "action_not_available_offline": "Esta acción no está disponible mientras esté desconectado.",
     "all_questions": "Todas las preguntas",
     "cannot_change_password": "No se puede cambiar la contraseña en este momento. Inténtalo de nuevo más tarde o informe de un problema en el menú Ayuda.",
     "change_password": "Cambiar la contraseña",
@@ -17,6 +17,7 @@
     "password_reset_email_sent": "Acabamos de enviarle un correo electrónico para restablecer su contraseña.",
     "product_version": "Versión del producto: v{{ version }}",
     "project_home": "Página de inicio del proyecto",
+    "redirecting_in_moments": "Redirigiendo en unos momentos...",
     "report_issue_email": "correo electrónico {{ email }}",
     "report_issue": "Informar de un problema",
     "scripture_checking_not_available": "La verificación de las Escrituras no está disponible en este proyecto."
@@ -143,7 +144,7 @@
       "1MQ": "1 Macabeos",
       "2MQ": "2 Macabeos",
       "3MQ": "3 Macabeos",
-      "REP": "Reproof (Proverbs 25-31)",
+      "REP": "Re-examinar (Proverbios 25-31)",
       "4BA": "4 Baruc",
       "LAO": "Laodicenses"
     }
@@ -182,9 +183,12 @@
   },
   "checking_audio_player": {
     "audio_unavailable": "El audio no está disponible.",
-    "audio_cannot_be_played": "Este audio no puede ser reproducido mientras esté desconectado porque no ha sido descargado. Conéctese a Internet para reproducirlo."
+    "audio_cannot_be_accessed": "There was an error trying to access the audio file. If this persists, please upload a new file.",
+    "audio_cannot_be_played": "Este audio no puede ser reproducido mientras esté desconectado porque no ha sido descargado. Conéctese a Internet para reproducirlo.",
+    "audio_cannot_be_previewed": "El audio está en un formato que no se puede previsualizar. Guarda cualquier cambio y conéctate a Internet para reproducirlo."
   },
   "checking_audio_recorder": {
+    "not_available": "Su navegador actualmente no soporta la grabación de audio. Por favor, intente usar otro navegador compatible.",
     "mic_access_denied": "El acceso a su micrófono fue denegado. Por favor, habilite el micrófono desde su navegador.",
     "record": "Grabar",
     "stop_recording": "Detener grabación",
@@ -223,7 +227,7 @@
   "error": {
     "chrome": "Chrome",
     "close": "Cerrar",
-    "error_id": "Error ID: {{ errorId }}",
+    "error_id": "Identificación de error: {{ errorId }}",
     "error_occurred": "Se ha producido un error",
     "firefox": "Firefox",
     "hide_details": "Ocultar detalles",
@@ -236,8 +240,15 @@
     "try_again": "Inténtelo de nuevo"
   },
   "exception_handling_service": {
+    "firefox_private_browsing_or_no_space": "Algo salió mal. Por favor, compruebe que no esté usando Firefox en el modo de navegación privada no soportado y que su dispositivo tenga los 500 MB de espacio libre recomendados.",
     "network_request_failed": "Una solicitud de red falló. Algunas funciones pueden no estar disponibles.",
+    "out_of_space": "Se produjo error porque su dispositivo no tiene espacio de almacenamiento.",
     "unknown_error": "Error desconocido"
+  },
+  "file_service": {
+    "failed_to_save": "No se guardaron los cambios. Por favor, compruebe que su dispositivo tenga los 500 MB de espacio libre recomendados.",
+    "i_understand": "Entiendo",
+    "storage_space_is_limited": "El espacio de almacenamiento en este dispositivo es limitado. Se recomienda tener un mínimo de 500 MB de espacio libre para asegurar que todas las funciones estén disponibles. Por favor, libere espacio de almacenamiento."
   },
   "issue_email": {
     "body": "¡Gracias por reportar el incidente!\nNos ayudaría si a continuación completara algunos detalles sobre el incidente, pero envíelo incluso si no puede completar muchos.\nSi está solicitando una característica, muchos de los campos pueden no ser aplicables.\nTenga en cuenta que su informe de errores estará disponible públicamente. Nunca envíe contraseñas u otra información secreta.\n\nInforme de errores\nUna descripción clara y concisa del error.\n\nPasos para reproducirlo\nPor ejemplo:\n1. Ir a...\n2. Haga clic en ...\n3. Desplácese hacia abajo hasta ...\n4. Ver el error\n\nEl comportamiento actual\nPor favor, describa el comportamiento exacto del problema que está observando.\n\nComportamiento esperado\nUna descripción clara y concisa de lo que esperaba que sucediera.\n\nCapturas de pantalla\nSi corresponde, agregue capturas de pantalla para ayudar a explicar su problema.\n\nInformación adicional\nAñada aquí cualquier otra información sobre el problema.\n\nPosible solución\nAñada aquí cualquier posible solución al problema.\n\nTu entorno:\nSoftware                 Versión\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL: {{ url }}\nError id: {{ errorId }}",
@@ -275,7 +286,7 @@
     "not_inviting_already_member": "No se invitó: El usuario ya es miembro de este proyecto",
     "resend": "Reenviar",
     "send": "Enviar",
-    "share_by_email_not_available_offline": "Inviting users by email is unavailable while offline."
+    "share_by_email_not_available_offline": "Invitar usuarios por correo electrónico no está disponible cuando no se está en línea."
   },
   "share_dialog": {
     "done": "Terminado",

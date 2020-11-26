@@ -15,7 +15,7 @@
   },
   "checking_answers": {
     "archive": "Archiver",
-    "only_community_checkers_can_like": "Seuls les vérificateurs de la communauté peuvent laisser un J'aime sur les réponses."
+    "only_community_checkers_can_like": "Seuls les vérificateurs de la communauté peuvent mettre un J'aime sur les réponses."
   },
   "checking_overview": {
     "add_question": "Ajouter une question",
@@ -64,7 +64,7 @@
     "you_must_be_logged_in_to_paratext": "Vous devez vous connecter avec votre compte Paratext pour vous connecter à un projet."
   },
   "delete_project_dialog": {
-    "are_you_sure_you_want_to_delete": "Etes vous sûr de vouloir supprimer ce projet ?",
+    "are_you_sure_you_want_to_delete": "Êtes-vous sûr de vouloir supprimer ce projet ?",
     "cancel": "Annuler",
     "delete_cannot_be_undone": "Cette action {{ boldStart }}ne peut pas{{ boldEnd }} être annulée. Cela supprimera définitivement le projet {{ boldStart }}{{ projectName }}{{ boldEnd }}, les données de traduction, les questions et réponses ainsi que les commentaires.",
     "delete_this_project": "Supprimer ce projet",
@@ -82,7 +82,7 @@
     "verse_too_long_for_suggestions": "Ce verset est trop long pour générer des suggestions."
   },
   "import_questions_confirmation_dialog": {
-    "done": "Termíné",
+    "done": "Terminé",
     "edited_questions_explanation": "Certaines des questions que vous avez sélectionnées ont été modifiées. Êtes-vous sûr de vouloir mettre à jour les questions ? Sélectionnez les questions que vous souhaitez mettre à jour.",
     "number_answers": "Nombre de réponses",
     "scripture_forge": "Scripture Forge",
@@ -140,7 +140,7 @@
     "pt_observer": "Observateur",
     "pt_translator": "Traducteur",
     "sf_community_checker": "Vérificateur de la communauté",
-    "sf_reviewer": "Relecteur"
+    "sf_reviewer": "Réviseur"
   },
   "settings": {
     "anyone_with_a_link": "Toute personne ayant le lien",
@@ -169,7 +169,7 @@
     "will_not_delete_paratext_project": "Cela {{ boldStart }}ne va pas{{ boldEnd }} supprimer votre projet Paratext, mais cela supprimera toutes les données non synchronisées stockées dans Scripture Forge. Il est recommandé de {{ templateTagBoundary }}Synchroniser{{ templateTagBoundary }} d'abord, avant de supprimer."
   },
   "suggestions_settings_dialog": {
-    "better": "Mieux",
+    "better": "Meilleures",
     "close": "Fermer",
     "more": "Plus",
     "number_of_suggestions": "Nombre de suggestions",
@@ -199,7 +199,7 @@
   "translate_overview": {
     "progress": "Avancement",
     "quality": "Qualité",
-    "retrain": "Recycler",
+    "retrain": "Reformer",
     "suggestion_engine": "Moteur de suggestions",
     "trained_segments": "segments formés",
     "training": "Formation...",
