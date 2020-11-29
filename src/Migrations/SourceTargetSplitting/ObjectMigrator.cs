@@ -8,6 +8,7 @@ namespace SourceTargetSplitting
     using Microsoft.Extensions.Options;
     using MongoDB.Bson;
     using MongoDB.Driver;
+    using Paratext.Data;
     using SIL.XForge.Configuration;
     using SIL.XForge.DataAccess;
     using SIL.XForge.Models;
@@ -60,6 +61,11 @@ namespace SourceTargetSplitting
         private readonly List<SFProject> _testProjectCollection = new List<SFProject>();
 
         /// <summary>
+        /// A collection of test text data ids, used to make the text data migration more accurate in test mode.
+        /// </summary>
+        private readonly List<string> _testTextDataIdCollection = new List<string>();
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="ObjectMigrator" /> class.
         /// </summary>
         /// <param name="dataAccessOptions">The data access options.</param>
@@ -85,6 +91,14 @@ namespace SourceTargetSplitting
             this._realtimeService = realtimeService;
             this._userSecrets = userSecrets;
         }
+
+        /// <summary>
+        /// The source scripture text collection.
+        /// </summary>
+        /// <remarks>
+        /// This is only used for testing.
+        /// </remarks>
+        internal SourceScrTextCollection SourceScrTextCollection { get; } = new SourceScrTextCollection();
 
         /// <summary>
         /// Creates the project from a source project reference.
@@ -121,7 +135,7 @@ namespace SourceTargetSplitting
                 {
                     // Use the project service to create the resource project
                     sourceProjectRef =
-                        await this._projectService.CreateResourceProjectAsync(userId, sourceId).ConfigureAwait(false);
+                        await this._projectService.CreateResourceProjectAsync(userId, sourceId);
 
                     // Add each user in the target project to the source project so they can access it
                     foreach (string uid in userIds)
@@ -168,12 +182,12 @@ namespace SourceTargetSplitting
 
                 // Get the project
                 IDocument<SFProject>? projectDoc =
-                    await connection.FetchAsync<SFProject>(sourceProjectRef).ConfigureAwait(false);
+                    await connection.FetchAsync<SFProject>(sourceProjectRef);
                 if (!projectDoc.IsLoaded)
                     return;
 
                 Dictionary<string, string>? permissions =
-                    await this._paratextService.GetPermissionsAsync(userSecret, projectDoc.Data).ConfigureAwait(false);
+                    await this._paratextService.GetPermissionsAsync(userSecret, projectDoc.Data);
 
                 // Add all of the books
                 foreach (int bookNum in this._paratextService.GetBookList(userSecret, sourceId))
@@ -261,6 +275,12 @@ namespace SourceTargetSplitting
 
             // Get the existing textdata object ids from MongoDB
             List<string> textIds = collection.AsQueryable().Select(t => t.Id).ToList();
+            if (!doWrite)
+            {
+                // Add the test text ids, if we are testing
+                textIds = textIds.Concat(this._testTextDataIdCollection).Distinct().ToList();
+            }
+
             List<string> sourceTextIds = textIds.Where(t => t.EndsWith(":source", StringComparison.Ordinal)).ToList();
 
             // Iterate over every text id in database
@@ -269,8 +289,16 @@ namespace SourceTargetSplitting
                 // Get the TextData from the database
                 TextData? text = await collection
                     .Find(Builders<TextData>.Filter.Eq("_id", textId))
-                    .SingleOrDefaultAsync()
-                    .ConfigureAwait(false);
+                    .SingleOrDefaultAsync();
+
+                // If we are testing, see if we have an id in the our test collection
+                if (!doWrite && text == null && this._testTextDataIdCollection.Contains(textId))
+                {
+                    // Build a hollow text data object for test purposes
+                    text = new TextData() { Id = textId };
+                }
+
+                // If we have the specified id in the database
                 if (text != null)
                 {
                     // Create with new _id for source text, deleting the old one
@@ -293,17 +321,17 @@ namespace SourceTargetSplitting
 
                                     // Delete from ShareDB
                                     IDocument<TextData> oldTextDoc = connection.Get<TextData>(oldId);
-                                    await oldTextDoc.FetchAsync().ConfigureAwait(false);
+                                    await oldTextDoc.FetchAsync();
                                     if (oldTextDoc.IsLoaded)
                                     {
-                                        await oldTextDoc.DeleteAsync().ConfigureAwait(false);
+                                        await oldTextDoc.DeleteAsync();
                                     }
 
                                     // Remove from MongoDB
-                                    await this.DeleteDocsAsync("texts", oldId).ConfigureAwait(false);
+                                    await this.DeleteDocsAsync("texts", oldId);
 
                                     // Add the new text document via the real time service
-                                    await connection.CreateAsync(text.Id, text).ConfigureAwait(false);
+                                    await connection.CreateAsync(text.Id, text);
                                 }
                             }
                             else
@@ -314,14 +342,14 @@ namespace SourceTargetSplitting
                                 {
                                     // Delete from ShareDB
                                     IDocument<TextData> oldTextDoc = connection.Get<TextData>(oldId);
-                                    await oldTextDoc.FetchAsync().ConfigureAwait(false);
+                                    await oldTextDoc.FetchAsync();
                                     if (oldTextDoc.IsLoaded)
                                     {
-                                        await oldTextDoc.DeleteAsync().ConfigureAwait(false);
+                                        await oldTextDoc.DeleteAsync();
                                     }
 
                                     // Remove from MongoDB
-                                    await this.DeleteDocsAsync("texts", oldId).ConfigureAwait(false);
+                                    await this.DeleteDocsAsync("texts", oldId);
                                 }
                             }
                         }
@@ -375,32 +403,17 @@ namespace SourceTargetSplitting
                 .Where(u => !sourceProject.UserRoles.Keys.Contains(u))
                 .ToArray();
 
-            // Iterate through the users until we find someone with access
+            // Add each user in the target project to the source project so they can access it
             foreach (string userId in userIds)
             {
                 try
                 {
-                    // Add each user in the target project to the source project so they can access it
-                    foreach (string uid in userIds)
-                    {
-                        try
-                        {
-                            // Add the user to the project
-                            await this._projectService.AddUserAsync(uid, sourceProject.Id, null);
-                        }
-                        catch (ForbiddenException)
-                        {
-                            // The user does not have Paratext access
-                        }
-                    }
-
-                    // Successfully created
-                    break;
+                    // Add the user to the project
+                    await this._projectService.AddUserAsync(userId, sourceProject.Id, null);
                 }
-                catch (DataNotFoundException)
+                catch (ForbiddenException)
                 {
-                    // We don't have access
-                    continue;
+                    // The user does not have Paratext access
                 }
             }
         }
@@ -408,20 +421,91 @@ namespace SourceTargetSplitting
         /// <summary>
         /// Creates an internal test project.
         /// </summary>
-        /// <param name="paratextId">The Paratext identifier.</param>
+        /// <param name="sourceId">The source project/resource identifier.</param>
+        /// <param name="targetId">The target project identifier.
+        /// This is the project that will reference this project/resource a source.</param>
+        /// <returns>THe task</returns>
+        /// <exception cref="DataNotFoundException">
+        /// The target project does not exist
+        /// or
+        /// The user does not exist.
+        /// </exception>
         /// <remarks>
         /// This is only to be used on test runs!
         /// </remarks>
-        internal void CreateInternalTestProject(string paratextId)
+        internal async Task CreateInternalTestProjectAsync(string sourceId, string targetId)
         {
-            if (!this._testProjectCollection.Any(p => p.ParatextId == paratextId) && !string.IsNullOrWhiteSpace(paratextId))
+            if (!this._testProjectCollection.Any(p => p.ParatextId == sourceId) && !string.IsNullOrWhiteSpace(sourceId))
             {
+                // Create the test project
                 SFProject testProject = new SFProject
                 {
                     Id = ObjectId.GenerateNewId().ToString(),
-                    ParatextId = paratextId,
+                    ParatextId = sourceId,
                 };
                 this._testProjectCollection.Add(testProject);
+
+                // Load the source project from the target project's source directory (it is not moved in test mode)
+                ScrText? scrText = SourceScrTextCollection.FindById("admin", targetId);
+                if (scrText != null)
+                {
+                    // Create the test text objects for all of the books
+                    foreach (int bookNum in scrText.Settings.BooksPresentSet.SelectedBookNumbers)
+                    {
+                        string usfm = scrText.GetText(bookNum);
+                        string bookText = UsfmToUsx.ConvertToXmlString(scrText, bookNum, usfm, false);
+                        var usxDoc = XDocument.Parse(bookText);
+                        Dictionary<int, ChapterDelta> deltas =
+                            this._deltaUsxMapper.ToChapterDeltas(usxDoc).ToDictionary(cd => cd.Number);
+                        var chapters = new List<Chapter>();
+                        foreach (KeyValuePair<int, ChapterDelta> kvp in deltas)
+                        {
+                            this._testTextDataIdCollection.Add(TextData.GetTextDocId(testProject.Id, bookNum, kvp.Key));
+                        }
+                    }
+                }
+                else
+                {
+                    Program.Log($"Test Mode Error Migrating TextData For {sourceId} - Could Not Load From Filesystem!");
+                }
+
+                // See that at least one user in the target project has permission to create the source project
+                var targetProject =
+                    this._realtimeService.QuerySnapshots<SFProject>().FirstOrDefault(p => p.ParatextId == targetId);
+                if (targetProject == null)
+                {
+                    throw new DataNotFoundException("The target project does not exist");
+                }
+
+                // Get the highest ranked users for this project, that probably have source access
+                string[] userIds = targetProject.UserRoles
+                    .Where(ur => ur.Value == SFProjectRole.Administrator || ur.Value == SFProjectRole.Translator)
+                    .OrderBy(ur => ur.Value)
+                    .Select(ur => ur.Key)
+                    .ToArray();
+
+                bool someoneCanAccessSourceProject = false;
+                foreach (string userId in userIds)
+                {
+                    Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(userId);
+                    if (!userSecretAttempt.TryResult(out UserSecret userSecret))
+                    {
+                        throw new DataNotFoundException("The user does not exist.");
+                    }
+
+                    // We check projects first, in case it is a project
+                    IReadOnlyList<ParatextProject> ptProjects = await _paratextService.GetProjectsAsync(userSecret);
+                    if (ptProjects.Any(p => p.ParatextId == sourceId))
+                    {
+                        someoneCanAccessSourceProject = true;
+                        break;
+                    }
+                }
+
+                if (!someoneCanAccessSourceProject)
+                {
+                    Program.Log($"Test Mode Error Creating {sourceId} - Nobody In The Target Project Has Access!");
+                }
             }
         }
 
@@ -435,12 +519,12 @@ namespace SourceTargetSplitting
             IMongoCollection<BsonDocument> snapshotCollection =
                 this._database.GetCollection<BsonDocument>(collectionName);
             FilterDefinition<BsonDocument> idFilter = Builders<BsonDocument>.Filter.Regex("_id", $"^{id}");
-            await snapshotCollection.DeleteManyAsync(idFilter).ConfigureAwait(false);
+            await snapshotCollection.DeleteManyAsync(idFilter);
 
             IMongoCollection<BsonDocument> opsCollection =
                 this._database.GetCollection<BsonDocument>($"o_{collectionName}");
             FilterDefinition<BsonDocument> dFilter = Builders<BsonDocument>.Filter.Regex("d", $"^{id}");
-            await opsCollection.DeleteManyAsync(dFilter).ConfigureAwait(false);
+            await opsCollection.DeleteManyAsync(dFilter);
         }
 
         /// <summary>
