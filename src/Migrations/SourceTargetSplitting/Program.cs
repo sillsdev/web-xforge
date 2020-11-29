@@ -86,11 +86,17 @@ namespace SourceTargetSplitting
             // Get the object migrator
             objectMigrator = webHost.Services.GetService<ObjectMigrator>();
 
+            // If we are testing, set up the source scriptire text collection
+            if (!doWrite)
+            {
+                objectMigrator.SourceScrTextCollection.Initialize(syncDir);
+            }
+
             // Migrate the files, and get a list of source mappings so we can migrate the database objects
-            await MigrateFilesAsync(syncDir, doWrite).ConfigureAwait(false);
+            await MigrateFilesAsync(syncDir, doWrite);
 
             // Migrate the database objects
-            await objectMigrator.MigrateObjectsAsync(doWrite).ConfigureAwait(false);
+            await objectMigrator.MigrateObjectsAsync(doWrite);
 
             // Stop the web host and real time server
             Log("Stopping Scripture Forge Server...");
@@ -255,8 +261,7 @@ namespace SourceTargetSplitting
                             Directory.Move(sourcePath, newProjectTargetDirectoryPath);
                             try
                             {
-                                await objectMigrator!.CreateProjectFromSourceAsync(sourceProjectId, projectId)
-                                    .ConfigureAwait(false);
+                                await objectMigrator!.CreateProjectFromSourceAsync(sourceProjectId, projectId);
                             }
                             catch (DataNotFoundException ex)
                             {
@@ -266,7 +271,7 @@ namespace SourceTargetSplitting
                         else
                         {
                             // Add it to the test collection so MigrateObjectsAsync will work as expected
-                            objectMigrator!.CreateInternalTestProject(sourceProjectId);
+                            await objectMigrator!.CreateInternalTestProjectAsync(sourceProjectId, projectId);
                         }
 
                         projectIds.Add(sourceProjectId);
@@ -277,8 +282,7 @@ namespace SourceTargetSplitting
                         Log("\tSource directory already exists as a project, deleting and migrating permissions");
                         if (doWrite)
                         {
-                            await objectMigrator!.MigrateTargetPermissionsAsync(sourceProjectId, projectId)
-                                .ConfigureAwait(false);
+                            await objectMigrator!.MigrateTargetPermissionsAsync(sourceProjectId, projectId);
                             Directory.Delete(sourcePath, true);
                         }
 
