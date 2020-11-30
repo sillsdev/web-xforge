@@ -1,6 +1,7 @@
 using Paratext.Data;
 using Paratext.Data.Archiving;
 using SIL.XForge.Scripture.Services;
+using SIL.XForge.Services;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -18,6 +19,8 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddTransient<IParatextNotesMapper, ParatextNotesMapper>();
             services.AddSingleton<IGuidService, GuidService>();
             services.AddSingleton<ISFProjectService, SFProjectService>();
+            // When UserService requests an IProjectService, satisfy it with the SFProjectService.
+            services.AddSingleton<IProjectService, SFProjectService>();
             services.AddSingleton<IJwtTokenHelper, JwtTokenHelper>();
             services.AddSingleton<IParatextDataHelper, ParatextDataHelper>();
             services.AddSingleton<IInternetSharedRepositorySourceProvider, InternetSharedRepositorySourceProvider>();

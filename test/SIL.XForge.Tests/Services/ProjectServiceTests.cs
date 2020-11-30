@@ -179,6 +179,39 @@ namespace SIL.XForge.Services
             Assert.That(env.GetProject(Project02).SyncDisabled, Is.EqualTo(false));
         }
 
+        [Test]
+        public void RemoveUserFromProjectAsync_BadArguments()
+        {
+            var env = new TestEnvironment();
+            IConnection connection = Substitute.For<IConnection>();
+            IDocument<TestProject> projectDoc = Substitute.For<IDocument<TestProject>>();
+            IDocument<User> userDoc = Substitute.For<IDocument<User>>();
+            Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.RemoveUserFromProjectAsync(null, projectDoc, userDoc));
+            Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.RemoveUserFromProjectAsync(connection, null, userDoc));
+            Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.RemoveUserFromProjectAsync(connection, projectDoc, null));
+        }
+
+        [Test]
+        public void RemoveUserAsync_BadArguments()
+        {
+            var env = new TestEnvironment();
+            Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.RemoveUserAsync(null, "projectId", "projectUserId"));
+            Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.RemoveUserAsync("curUserId", null, "projectUserId"));
+            Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.RemoveUserAsync("curUserId", "projectId", null));
+        }
+
+        [Test]
+        public async Task RemoveUserAsync_DisassociatesUserAndProject()
+        {
+            var env = new TestEnvironment();
+            Assert.That(env.GetProject(Project01).UserRoles, Does.ContainKey(User02), "setup");
+            Assert.That(env.GetUser(User02).Sites[SiteId].Projects, Does.Contain(Project01), "setup");
+            // SUT
+            await env.Service.RemoveUserAsync(User01, Project01, User02);
+            Assert.That(env.GetProject(Project01).UserRoles, Does.Not.ContainKey(User02));
+            Assert.That(env.GetUser(User02).Sites[SiteId].Projects, Does.Not.Contain(Project01));
+        }
+
         private class TestEnvironment
         {
             public TestEnvironment(bool isResetLinkExpired = false)
@@ -191,13 +224,35 @@ namespace SIL.XForge.Services
                         {
                             Id = User01,
                             Email = "user01@example.com",
-                            Sites = new Dictionary<string, Site> { { SiteId, new Site() } }
+                            Sites = new Dictionary<string, Site>
+                            {
+                                { SiteId, new Site()
+                                    {
+                                        Projects = new List<String>()
+                                        {
+                                            Project01,
+                                            Project02
+                                        }
+                                    }
+                                }
+                            }
                         },
                         new User
                         {
                             Id = User02,
                             Email = "user02@example.com",
-                            Sites = new Dictionary<string, Site> { { SiteId, new Site() } }
+                            Sites = new Dictionary<string, Site>
+                            {
+                                { SiteId, new Site()
+                                    {
+                                        Projects = new List<String>()
+                                        {
+                                            Project01,
+                                            Project02
+                                        }
+                                    }
+                                }
+                            }
                         },
                         new User
                         {
