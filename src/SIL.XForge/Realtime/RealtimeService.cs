@@ -43,7 +43,13 @@ namespace SIL.XForge.Realtime
             AddDocConfig(options.UserDoc);
             AddDocConfig(options.ProjectDoc);
             foreach (DocConfig projectDataDoc in options.ProjectDataDocs)
+            {
                 AddDocConfig(projectDataDoc);
+            }
+            foreach (DocConfig userDataDoc in options.UserDataDocs)
+            {
+                AddDocConfig(userDataDoc);
+            }
         }
 
         internal IRealtimeServer Server { get; }
@@ -107,6 +113,32 @@ namespace SIL.XForge.Realtime
             await opsCollection.DeleteManyAsync(dFilter);
         }
 
+        /// <summary>
+        /// Delete user-related docs from various collections.
+        /// </summary>
+        public async Task DeleteUserAsync(string userId)
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new ArgumentException("", nameof(userId));
+            }
+
+            RealtimeOptions options = _realtimeOptions.Value;
+            IEnumerable<DocConfig> collectionsToProcess = options.UserDataDocs.Append(options.UserDoc);
+            FilterDefinition<BsonDocument> idFilter = Builders<BsonDocument>.Filter.Regex("_id", $"{userId}$");
+            FilterDefinition<BsonDocument> dFilter = Builders<BsonDocument>.Filter.Regex("d", $"{userId}$");
+            foreach (var collection in collectionsToProcess)
+            {
+                IMongoCollection<BsonDocument> snapshotCollection = _database.GetCollection<BsonDocument>(
+                    collection.CollectionName);
+                await snapshotCollection.DeleteManyAsync(idFilter);
+
+                IMongoCollection<BsonDocument> opsCollection = _database.GetCollection<BsonDocument>(
+                $"o_{collection.CollectionName}");
+                await opsCollection.DeleteManyAsync(dFilter);
+            }
+        }
+
         public IQueryable<T> QuerySnapshots<T>() where T : IIdentifiable
         {
             string collectionName = GetCollectionName<T>();
@@ -155,7 +187,8 @@ namespace SIL.XForge.Realtime
                 ReleaseStage = this._configuration.GetValue<string>("Bugsnag:ReleaseStage"),
                 MigrationsDisabled = this._realtimeOptions.Value.MigrationsDisabled,
                 SiteId = this._siteOptions.Value.Id,
-                Version = System.Diagnostics.FileVersionInfo.GetVersionInfo(@System.Reflection.Assembly.GetEntryAssembly().Location).ProductVersion
+                Version = System.Diagnostics.FileVersionInfo.GetVersionInfo(
+                    @System.Reflection.Assembly.GetEntryAssembly().Location).ProductVersion
             };
         }
     }

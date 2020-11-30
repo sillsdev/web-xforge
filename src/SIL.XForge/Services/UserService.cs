@@ -23,14 +23,16 @@ namespace SIL.XForge.Services
         private readonly IOptions<SiteOptions> _siteOptions;
         private readonly IRepository<UserSecret> _userSecrets;
         private readonly IAuthService _authService;
+        private readonly IProjectService _projectService;
 
         public UserService(IRealtimeService realtimeService, IOptions<SiteOptions> siteOptions,
-            IRepository<UserSecret> userSecrets, IAuthService authService)
+            IRepository<UserSecret> userSecrets, IAuthService authService, IProjectService projectService)
         {
             _realtimeService = realtimeService;
             _siteOptions = siteOptions;
             _userSecrets = userSecrets;
             _authService = authService;
+            _projectService = projectService;
         }
 
         public async Task UpdateUserFromProfileAsync(string curUserId, string userProfileJson)
@@ -129,32 +131,28 @@ namespace SIL.XForge.Services
         }
 
         /// <summary>
-        /// Delete user with SF user id userId. curUserId and systemRole are the SF user id and SF system role of the
-        /// user who is requesting the action.
+        /// Delete user with SF user id userId, as requested by SF user curUserId who has systemRole.
         /// </summary>
         public async Task DeleteAsync(string curUserId, string systemRole, string userId)
         {
-            if (string.IsNullOrEmpty(curUserId))
+            if (curUserId == null || systemRole == null || userId == null)
             {
-                throw new ArgumentException("", nameof(curUserId));
+                throw new ArgumentNullException();
             }
-            if (string.IsNullOrEmpty(systemRole))
-            {
-                throw new ArgumentException("", nameof(systemRole));
-            }
-            if (string.IsNullOrEmpty(userId))
-            {
-                throw new ArgumentException("", nameof(userId));
-            }
-
             if (systemRole != SystemRole.SystemAdmin && userId != curUserId)
+            {
                 throw new ForbiddenException();
+            }
 
+            await _projectService.RemoveUserFromAllProjectsAsync(curUserId, userId);
+            await _userSecrets.DeleteAsync(userId);
             using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
             {
                 IDocument<User> userDoc = await conn.FetchAsync<User>(userId);
                 await userDoc.DeleteAsync();
             }
+            // Remove the actual docs.
+            await _realtimeService.DeleteUserAsync(userId);
         }
 
         /// <summary>
