@@ -123,7 +123,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     );
   }
 
-  get hasTransceleratorQuestions(): boolean {
+  get showImportButton(): boolean {
     return this._hasTransceleratorQuestions && this.pwaService.isOnline;
   }
 
