@@ -16,5 +16,6 @@ namespace SIL.XForge.Realtime
         IQueryable<T> QuerySnapshots<T>() where T : IIdentifiable;
 
         Task DeleteProjectAsync(string projectId);
+        Task DeleteUserAsync(string userId);
     }
 }

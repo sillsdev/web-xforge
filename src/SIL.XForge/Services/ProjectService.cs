@@ -21,6 +21,7 @@ namespace SIL.XForge.Services
         where TSecret : ProjectSecret
     {
         private readonly IAudioService _audioService;
+        private readonly SemaphoreSlim _userRemoveProjectMutex = new SemaphoreSlim(1, 1);
 
         public ProjectService(IRealtimeService realtimeService, IOptions<SiteOptions> siteOptions,
             IAudioService audioService, IRepository<TSecret> projectSecrets, IFileSystemService fileSystemService)
@@ -72,10 +73,55 @@ namespace SIL.XForge.Services
 
                 if (curUserId != projectUserId && !IsProjectAdmin(projectDoc.Data, curUserId))
                     throw new ForbiddenException();
+                await RemoveUserCoreAsync(conn, curUserId, projectId, projectUserId);
+            }
+        }
 
+
+        /// <summary>
+        /// Disassociate user projectUserId from project projectId, without checking permissions.
+        /// </summary>
+        private async Task RemoveUserCoreAsync(IConnection conn, string curUserId, string projectId, string projectUserId)
+        {
+            if (curUserId == null || projectId == null || projectUserId == null)
+            {
+                throw new ArgumentNullException();
+            }
+            IDocument<TModel> projectDoc = await GetProjectDocAsync(projectId, conn);
+            // Use a mutex, since disassociating a user and a project can be incomplete, or incorrect, if there are two
+            // simultaneous requests regarding two different projects and the same user. The problem can happen if
+            // `GetUserDocAsync()` is called twice for the same user before either disassociation finishes. This is
+            // because `RemoveUserFromProjectAsync` removes from userDoc.Data.Sites[siteId].Projects _by index_. The
+            // index of a project is in a userDoc for a still-in-progress call to `RemoveUserFromProjectAsync`, may no
+            // longer be correct.
+            await _userRemoveProjectMutex.WaitAsync();
+            try
+            {
                 IDocument<User> userDoc = await GetUserDocAsync(projectUserId, conn);
-
                 await RemoveUserFromProjectAsync(conn, projectDoc, userDoc);
+            }
+            finally
+            {
+                _userRemoveProjectMutex.Release();
+            }
+        }
+
+        /// <summary>
+        /// Disassociate user projectUserId from all projects on the site that this ProjectService is operating on.
+        /// As requested by curUserId. Permissions to do so are not checked.
+        /// </summary>
+        public async Task RemoveUserFromAllProjectsAsync(string curUserId, string projectUserId)
+        {
+            if (curUserId == null || projectUserId == null)
+            {
+                throw new ArgumentNullException();
+            }
+            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+            {
+                IDocument<User> userDoc = await GetUserDocAsync(projectUserId, conn);
+                IEnumerable<Task> removalTasks = userDoc.Data.Sites[SiteOptions.Value.Id].Projects.Select(
+                    (string projectId) => RemoveUserCoreAsync(conn, curUserId, projectId, projectUserId));
+                await Task.WhenAll(removalTasks);
             }
         }
 
