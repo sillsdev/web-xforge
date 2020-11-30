@@ -6,12 +6,13 @@ import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-proj
 import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
-import { merge, Subscription } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { combineLatest, merge, Subscription } from 'rxjs';
+import { filter, map, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -38,8 +39,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   itemVisibleArchived: { [bookIdOrDocId: string]: boolean } = {};
   texts: TextInfo[] = [];
   projectId?: string;
-  hasTransceleratorQuestions = false;
 
+  private _hasTransceleratorQuestions = false;
   private questionDocs = new Map<string, QuestionDoc[]>();
   private textsByBookId: TextsByBookId = {};
   private projectDoc?: SFProjectDoc;
@@ -55,6 +56,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
     private readonly questionDialogService: QuestionDialogService,
+    private readonly pwaService: PwaService,
     private readonly router: Router
   ) {
     super(noticeService);
@@ -121,6 +123,10 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     );
   }
 
+  get showImportButton(): boolean {
+    return this._hasTransceleratorQuestions && this.pwaService.isOnline;
+  }
+
   get isProjectAdmin(): boolean {
     return (
       this.projectDoc != null &&
@@ -144,19 +150,25 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   ngOnInit(): void {
-    this.subscribe(this.activatedRoute.params.pipe(map(params => params['projectId'])), async projectId => {
+    let projectDocPromise: Promise<SFProjectDoc>;
+    const projectId$ = this.activatedRoute.params.pipe(
+      tap(params => {
+        this.loadingStarted();
+        projectDocPromise = this.projectService.get(params['projectId']);
+      }),
+      map(params => params['projectId'] as string)
+    );
+    this.subscribe(projectId$, async projectId => {
       this.loadingStarted();
       this.projectId = projectId;
       try {
-        this.projectDoc = await this.projectService.get(projectId);
+        this.projectDoc = await projectDocPromise;
         this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
         if (this.questionsQuery != null) {
           this.questionsQuery.dispose();
         }
         this.questionsQuery = await this.projectService.queryQuestions(projectId);
         this.initTexts();
-        this.hasTransceleratorQuestions =
-          this.isProjectAdmin && (await this.projectService.hasTransceleratorQuestions(projectId));
       } finally {
         this.loadingFinished();
       }
@@ -182,6 +194,14 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
         }
       });
     });
+    this.subscribe(
+      combineLatest(projectId$, this.pwaService.onlineStatus).pipe(filter(([_, isOnline]) => isOnline)),
+      async ([projectId, _]) => {
+        await projectDocPromise;
+        this._hasTransceleratorQuestions =
+          this.isProjectAdmin && (await this.projectService.hasTransceleratorQuestions(projectId));
+      }
+    );
   }
 
   ngOnDestroy(): void {
