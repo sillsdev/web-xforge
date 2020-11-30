@@ -22,14 +22,16 @@ namespace SIL.XForge.Services
         private readonly IOptions<SiteOptions> _siteOptions;
         private readonly IRepository<UserSecret> _userSecrets;
         private readonly IAuthService _authService;
+        private readonly IRepository<BetaMigration> _betaMigration;
 
         public UserService(IRealtimeService realtimeService, IOptions<SiteOptions> siteOptions,
-            IRepository<UserSecret> userSecrets, IAuthService authService)
+            IRepository<UserSecret> userSecrets, IAuthService authService, IRepository<BetaMigration> betaMigration)
         {
             _realtimeService = realtimeService;
             _siteOptions = siteOptions;
             _userSecrets = userSecrets;
             _authService = authService;
+            _betaMigration = betaMigration;
         }
 
         public async Task UpdateUserFromProfileAsync(string curUserId, string userProfileJson)
@@ -137,6 +139,18 @@ namespace SIL.XForge.Services
                 IDocument<User> userDoc = await conn.FetchAsync<User>(userId);
                 await userDoc.DeleteAsync();
             }
+        }
+
+        public async Task<bool> CheckUserNeedsMigratingAsync(string userId)
+        {
+            var user = await _betaMigration.Query().FirstOrDefaultAsync((BetaMigration bm) => bm.Id == userId);
+            return user != null;
+
+        }
+
+        public async Task UserMigrationCompleteAsync(string userId)
+        {
+            await _betaMigration.DeleteAsync((BetaMigration bm) => bm.Id == userId);
         }
 
         /// <summary>

@@ -159,13 +159,17 @@ namespace SIL.XForge.Services
 
                 AuthService = Substitute.For<IAuthService>();
 
-                Service = new UserService(RealtimeService, options, UserSecrets, AuthService);
+                BetaMigration = new MemoryRepository<BetaMigration>();
+
+                Service = new UserService(RealtimeService, options, UserSecrets, AuthService, BetaMigration);
             }
 
             public UserService Service { get; }
             public MemoryRepository<UserSecret> UserSecrets { get; }
             public MemoryRealtimeService RealtimeService { get; }
             public IAuthService AuthService { get; }
+            public MemoryRepository<BetaMigration> BetaMigration { get; }
+
             public DateTime IssuedAt => DateTime.UtcNow;
 
             public User GetUser(string id)

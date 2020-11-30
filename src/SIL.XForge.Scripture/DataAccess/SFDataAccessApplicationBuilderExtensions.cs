@@ -1,3 +1,4 @@
+using SIL.XForge.Models;
 using SIL.XForge.Scripture.Models;
 
 namespace Microsoft.AspNetCore.Builder

@@ -195,8 +195,8 @@ export class AuthService {
         return { loggedIn: false, newlyLoggedIn: false };
       }
       return { loggedIn: true, newlyLoggedIn: false };
-    } catch {
-      await this.showLoginErrorDialog();
+    } catch (e) {
+      await this.showLoginErrorDialog(e);
       return { loggedIn: false, newlyLoggedIn: false };
     }
   }
@@ -219,8 +219,8 @@ export class AuthService {
         }
       }
       return { loggedIn: true, newlyLoggedIn: false };
-    } catch {
-      await this.showLoginErrorDialog();
+    } catch (e) {
+      await this.showLoginErrorDialog(e);
       return { loggedIn: false, newlyLoggedIn: false };
     }
   }
@@ -289,7 +289,7 @@ export class AuthService {
     });
   }
 
-  private async showLoginErrorDialog(): Promise<void> {
+  private async showLoginErrorDialog(error: any): Promise<void> {
     await this.noticeService.showMessageDialog(
       () => translate('error_messages.error_occurred_login'),
       () => translate('error_messages.try_again')
@@ -328,6 +328,7 @@ export class AuthService {
     return new Promise<auth0.Auth0DecodedHash | null>((resolve, reject) => {
       this.auth0.checkSession({ state: JSON.stringify({}) }, (err, authResult) => {
         if (err != null) {
+          reject(err);
           if (err.code === 'login_required') {
             resolve(null);
           } else if (retryUponTimeout && err.code === 'timeout') {

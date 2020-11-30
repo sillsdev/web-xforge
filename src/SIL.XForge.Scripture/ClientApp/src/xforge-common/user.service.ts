@@ -42,6 +42,10 @@ export class UserService {
     return this.localSettings.get(CURRENT_PROJECT_ID_SETTING);
   }
 
+  checkUserNeedsMigrating(): Promise<boolean | undefined> {
+    return this.onlineInvoke('checkUserNeedsMigrating', { userId: this.currentUserId });
+  }
+
   setCurrentProjectId(value?: string): void {
     this.localSettings.set(CURRENT_PROJECT_ID_SETTING, value);
   }
@@ -105,6 +109,10 @@ export class UserService {
         op.set<boolean>(u => u.isDisplayNameConfirmed, true);
       });
     }
+  }
+
+  userMigrationComplete() {
+    this.onlineInvoke('userMigrationComplete', { userId: this.currentUserId });
   }
 
   private onlineInvoke<T>(method: string, params?: any): Promise<T | undefined> {
