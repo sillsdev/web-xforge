@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -127,8 +128,25 @@ namespace SIL.XForge.Services
             }
         }
 
+        /// <summary>
+        /// Delete user with SF user id userId. curUserId and systemRole are the SF user id and SF system role of the
+        /// user who is requesting the action.
+        /// </summary>
         public async Task DeleteAsync(string curUserId, string systemRole, string userId)
         {
+            if (string.IsNullOrEmpty(curUserId))
+            {
+                throw new ArgumentException("", nameof(curUserId));
+            }
+            if (string.IsNullOrEmpty(systemRole))
+            {
+                throw new ArgumentException("", nameof(systemRole));
+            }
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new ArgumentException("", nameof(userId));
+            }
+
             if (systemRole != SystemRole.SystemAdmin && userId != curUserId)
                 throw new ForbiddenException();
 

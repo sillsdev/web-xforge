@@ -26,7 +26,7 @@ namespace SIL.XForge.Realtime
         private readonly Dictionary<Type, DocConfig> _docConfigs;
         private readonly IConfiguration _configuration;
 
-        public RealtimeService(RealtimeServer server, IOptions<SiteOptions> siteOptions,
+        public RealtimeService(IRealtimeServer server, IOptions<SiteOptions> siteOptions,
             IOptions<DataAccessOptions> dataAccessOptions, IOptions<RealtimeOptions> realtimeOptions,
             IOptions<AuthOptions> authOptions, IMongoClient mongoClient, IConfiguration configuration)
         {
@@ -46,7 +46,7 @@ namespace SIL.XForge.Realtime
                 AddDocConfig(projectDataDoc);
         }
 
-        internal RealtimeServer Server { get; }
+        internal IRealtimeServer Server { get; }
 
         public void StartServer()
         {
@@ -80,8 +80,16 @@ namespace SIL.XForge.Realtime
             return docConfig.CollectionName;
         }
 
+        /// <summary>
+        /// Delete project-related docs from various collections.
+        /// </summary>
         public async Task DeleteProjectAsync(string projectId)
         {
+            if (string.IsNullOrEmpty(projectId))
+            {
+                throw new ArgumentException("", nameof(projectId));
+            }
+
             RealtimeOptions options = _realtimeOptions.Value;
             var tasks = new List<Task>();
             foreach (DocConfig docConfig in options.ProjectDataDocs)
