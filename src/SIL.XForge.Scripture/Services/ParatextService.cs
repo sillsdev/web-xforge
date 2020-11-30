@@ -337,39 +337,62 @@ namespace SIL.XForge.Scripture.Services
                 {
                     permissions.Add(uid, await this.GetResourcePermissionAsync(userSecret, project.ParatextId, uid));
                 }
-                else if (book == 0 && chapter == 0)
-                {
-                    // Project level permissions
-                    if (role == SFProjectRole.Administrator || role == SFProjectRole.Translator)
-                    {
-                        permissions.Add(uid, TextInfoPermission.Write);
-                    }
-                    else
-                    {
-                        permissions.Add(uid, TextInfoPermission.Read);
-                    }
-                }
                 else
                 {
                     // Get the mapping for paratext users ids to names from the registry
                     string response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get,
                         $"projects/{project.ParatextId}/members");
-                    Dictionary<string, string> mapping = JArray.Parse(response).OfType<JObject>()
+                    Dictionary<string, string> paratextMapping = JArray.Parse(response).OfType<JObject>()
                         .Where(m => !string.IsNullOrEmpty((string)m["userId"])
                             && !string.IsNullOrEmpty((string)m["username"]))
                         .ToDictionary(m => (string)m["userId"], m => (string)m["username"]);
 
+                    // Get the mapping of paratext user ids to scripture forge user ids
+                    Dictionary<string, string> userMapping = this._realtimeService.QuerySnapshots<User>()
+                            .Where(u => paratextMapping.Keys.Contains(u.ParatextId))
+                            .ToDictionary(u => u.Id, u => paratextMapping[u.ParatextId]);
+
                     // Get the scripture text so we can retrieve the permissions from the XML
                     ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), project.ParatextId);
 
-                    // TODO: Check for correct book permissions
-                    if (role == SFProjectRole.Administrator || role == SFProjectRole.Translator)
+                    // See if the user is in the project members list
+                    userMapping.TryGetValue(uid, out string userName);
+                    if (string.IsNullOrWhiteSpace(userName))
                     {
-                        permissions.Add(uid, TextInfoPermission.Write);
+                        permissions.Add(uid, TextInfoPermission.None);
                     }
                     else
                     {
-                        permissions.Add(uid, TextInfoPermission.Read);
+                        string textInfoPermission = TextInfoPermission.Read;
+                        if (scrText.Permissions.CanEditAllBooks(userName))
+                        {
+                            textInfoPermission = TextInfoPermission.Write;
+                        }
+                        else if (book == 0)
+                        {
+                            // They cannot edit all books
+                            textInfoPermission = TextInfoPermission.Read;
+                        }
+                        else if (chapter == 0)
+                        {
+                            IEnumerable<int> editable = scrText.Permissions.GetEditableBooks(
+                                Paratext.Data.Users.PermissionSet.Merged, userName);
+                            if (editable?.Contains(book) ?? false)
+                            {
+                                textInfoPermission = TextInfoPermission.Write;
+                            }
+                        }
+                        else
+                        {
+                            IEnumerable<int> editable = scrText.Permissions.GetEditableChapters(book,
+                                scrText.Settings.Versification, userName, Paratext.Data.Users.PermissionSet.Merged);
+                            if (editable?.Contains(chapter) ?? false)
+                            {
+                                textInfoPermission = TextInfoPermission.Write;
+                            }
+                        }
+
+                        permissions.Add(uid, textInfoPermission);
                     }
                 }
             }
