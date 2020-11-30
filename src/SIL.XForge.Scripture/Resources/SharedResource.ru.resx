@@ -117,6 +117,14 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AudioOnlyQuestion" xml:space="preserve">
+    <value>- {0} audio-only question -</value>
+    <comment>Text to show in Paratext Notes when question is audio-only</comment>
+  </data>
+  <data name="AudioOnlyResponse" xml:space="preserve">
+    <value>- {0} audio-only response -</value>
+    <comment>Text to show in Paratext Notes when response is audio-only</comment>
+  </data>
   <data name="EmailBad" xml:space="preserve">
     <value>Введите действительный адрес электронной почты</value>
   </data>
