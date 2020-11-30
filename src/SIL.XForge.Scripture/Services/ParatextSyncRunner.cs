@@ -45,6 +45,8 @@ namespace SIL.XForge.Scripture.Services
     {
         private static readonly IEqualityComparer<List<Chapter>> ChapterListEqualityComparer =
             SequenceEqualityComparer.Create(new ChapterEqualityComparer());
+        private static readonly IEqualityComparer<Dictionary<string, string>> PermissionDictionaryEqualityComparer =
+            new DictionaryComparer<string, string>();
 
         private readonly IRepository<UserSecret> _userSecrets;
         private readonly IRepository<SFProjectSecret> _projectSecrets;
@@ -259,7 +261,8 @@ namespace SIL.XForge.Scripture.Services
                             // update text info
                             op.Set(pd => pd.Texts[textIndex].Chapters, newChapters, ChapterListEqualityComparer);
                             op.Set(pd => pd.Texts[textIndex].HasSource, hasSource);
-                            op.Set(pd => pd.Texts[textIndex].Permissions, permissions);
+                            op.Set(pd => pd.Texts[textIndex].Permissions, permissions,
+                                PermissionDictionaryEqualityComparer);
                         }
                     });
                 }
@@ -384,7 +387,8 @@ namespace SIL.XForge.Scripture.Services
                     {
                         Number = kvp.Key,
                         LastVerse = kvp.Value.LastVerse,
-                        IsValid = kvp.Value.IsValid
+                        IsValid = kvp.Value.IsValid,
+                        Permissions = { }
                     });
                 }
             }
@@ -610,7 +614,8 @@ namespace SIL.XForge.Scripture.Services
         {
             public bool Equals(Chapter x, Chapter y)
             {
-                return x.Number == y.Number && x.LastVerse == y.LastVerse && x.IsValid == y.IsValid;
+                return x.Number == y.Number && x.LastVerse == y.LastVerse && x.IsValid == y.IsValid
+                    && PermissionDictionaryEqualityComparer.Equals(x.Permissions, y.Permissions);
             }
 
             public int GetHashCode(Chapter obj)
@@ -620,6 +625,20 @@ namespace SIL.XForge.Scripture.Services
                 code = code * 31 + obj.LastVerse.GetHashCode();
                 code = code * 31 + obj.IsValid.GetHashCode();
                 return code;
+            }
+        }
+
+        private class DictionaryComparer<TKey, TValue> : IEqualityComparer<Dictionary<TKey, TValue>>
+        {
+            public bool Equals(Dictionary<TKey, TValue> x, Dictionary<TKey, TValue> y)
+            {
+                return (x ?? new Dictionary<TKey, TValue>()).OrderBy(p => p.Key)
+                    .SequenceEqual((y ?? new Dictionary<TKey, TValue>()).OrderBy(p => p.Key));
+            }
+
+            public int GetHashCode(Dictionary<TKey, TValue> obj)
+            {
+                throw new NotImplementedException();
             }
         }
     }

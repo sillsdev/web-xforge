@@ -733,15 +733,18 @@ namespace SIL.XForge.Scripture.Services
                                 new TextInfo
                                 {
                                     BookNum = 40,
-                                    Chapters = { new Chapter { Number = 1, LastVerse = 3, IsValid = true } }
+                                    Chapters =
+                                    {
+                                        new Chapter { Number = 1, LastVerse = 3, IsValid = true, Permissions = { } }
+                                    }
                                 },
                                 new TextInfo
                                 {
                                     BookNum = 41,
                                     Chapters =
                                     {
-                                        new Chapter { Number = 1, LastVerse = 3, IsValid = true },
-                                        new Chapter { Number = 2, LastVerse = 3, IsValid = true }
+                                        new Chapter { Number = 1, LastVerse = 3, IsValid = true, Permissions = { } },
+                                        new Chapter { Number = 2, LastVerse = 3, IsValid = true, Permissions = { } }
                                     }
                                 }
                             }
