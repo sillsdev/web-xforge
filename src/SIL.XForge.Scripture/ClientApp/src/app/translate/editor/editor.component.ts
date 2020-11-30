@@ -19,6 +19,7 @@ import { User } from 'realtime-server/lib/common/models/user';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { TextType } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
+import { TextInfoPermission } from 'realtime-server/lib/scriptureforge/models/text-info-permission';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { fromEvent, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, delayWhen, filter, repeat, retryWhen, tap } from 'rxjs/operators';
@@ -201,7 +202,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     const projectRole = this.projectDoc.data.userRoles[this.userService.currentUserId];
-    return SF_PROJECT_RIGHTS.hasRight(projectRole, { projectDomain: SFProjectDomain.Texts, operation: Operation.Edit });
+    if (SF_PROJECT_RIGHTS.hasRight(projectRole, { projectDomain: SFProjectDomain.Texts, operation: Operation.Edit })) {
+      // Check for chapter rights
+      const chapter = this.text?.chapters.find(c => c.number === this._chapter);
+      if (chapter != null) {
+        return chapter.permissions[this.userService.currentUserId] === TextInfoPermission.Write;
+      }
+    }
+
+    return false;
   }
 
   get canEdit(): boolean {

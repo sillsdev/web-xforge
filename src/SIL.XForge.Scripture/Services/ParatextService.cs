@@ -328,33 +328,37 @@ namespace SIL.XForge.Scripture.Services
         public async Task<Dictionary<string, string>> GetPermissionsAsync(UserSecret userSecret, SFProject project,
             int book = 0, int chapter = 0)
         {
-            // Calculate the project and resource permissions
             var permissions = new Dictionary<string, string>();
-            foreach ((string uid, string role) in project.UserRoles)
+
+            // See if the source is a resource
+            if (project.ParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
             {
-                // See if the source is a resource
-                if (project.ParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+                foreach ((string uid, string role) in project.UserRoles)
                 {
                     permissions.Add(uid, await this.GetResourcePermissionAsync(userSecret, project.ParatextId, uid));
                 }
-                else
+            }
+            else
+            {
+                // Get the mapping for paratext users ids to names from the registry
+                string response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get,
+                $"projects/{project.ParatextId}/members");
+                Dictionary<string, string> paratextMapping = JArray.Parse(response).OfType<JObject>()
+                    .Where(m => !string.IsNullOrEmpty((string)m["userId"])
+                        && !string.IsNullOrEmpty((string)m["username"]))
+                    .ToDictionary(m => (string)m["userId"], m => (string)m["username"]);
+
+                // Get the mapping of paratext user ids to scripture forge user ids
+                Dictionary<string, string> userMapping = this._realtimeService.QuerySnapshots<User>()
+                        .Where(u => paratextMapping.Keys.Contains(u.ParatextId))
+                        .ToDictionary(u => u.Id, u => paratextMapping[u.ParatextId]);
+
+                // Get the scripture text so we can retrieve the permissions from the XML
+                ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), project.ParatextId);
+
+                // Calculate the project and resource permissions
+                foreach ((string uid, string role) in project.UserRoles)
                 {
-                    // Get the mapping for paratext users ids to names from the registry
-                    string response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get,
-                        $"projects/{project.ParatextId}/members");
-                    Dictionary<string, string> paratextMapping = JArray.Parse(response).OfType<JObject>()
-                        .Where(m => !string.IsNullOrEmpty((string)m["userId"])
-                            && !string.IsNullOrEmpty((string)m["username"]))
-                        .ToDictionary(m => (string)m["userId"], m => (string)m["username"]);
-
-                    // Get the mapping of paratext user ids to scripture forge user ids
-                    Dictionary<string, string> userMapping = this._realtimeService.QuerySnapshots<User>()
-                            .Where(u => paratextMapping.Keys.Contains(u.ParatextId))
-                            .ToDictionary(u => u.Id, u => paratextMapping[u.ParatextId]);
-
-                    // Get the scripture text so we can retrieve the permissions from the XML
-                    ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), project.ParatextId);
-
                     // See if the user is in the project members list
                     userMapping.TryGetValue(uid, out string userName);
                     if (string.IsNullOrWhiteSpace(userName))
@@ -364,26 +368,35 @@ namespace SIL.XForge.Scripture.Services
                     else
                     {
                         string textInfoPermission = TextInfoPermission.Read;
-                        if (scrText.Permissions.CanEditAllBooks(userName))
+                        if (book == 0)
                         {
-                            textInfoPermission = TextInfoPermission.Write;
-                        }
-                        else if (book == 0)
-                        {
-                            // They cannot edit all books
-                            textInfoPermission = TextInfoPermission.Read;
+                            // Project level
+                            if (scrText.Permissions.CanEditAllBooks(userName))
+                            {
+                                textInfoPermission = TextInfoPermission.Write;
+                            }
                         }
                         else if (chapter == 0)
                         {
+                            // Book level
                             IEnumerable<int> editable = scrText.Permissions.GetEditableBooks(
                                 Paratext.Data.Users.PermissionSet.Merged, userName);
-                            if (editable?.Contains(book) ?? false)
+                            if (editable == null || !editable.Any())
+                            {
+                                // If there are no editable book permissions, check if they can edit all books
+                                if (scrText.Permissions.CanEditAllBooks(userName))
+                                {
+                                    textInfoPermission = TextInfoPermission.Write;
+                                }
+                            }
+                            else if (editable.Contains(book))
                             {
                                 textInfoPermission = TextInfoPermission.Write;
                             }
                         }
                         else
                         {
+                            // Chapter level
                             IEnumerable<int> editable = scrText.Permissions.GetEditableChapters(book,
                                 scrText.Settings.Versification, userName, Paratext.Data.Users.PermissionSet.Merged);
                             if (editable?.Contains(chapter) ?? false)
