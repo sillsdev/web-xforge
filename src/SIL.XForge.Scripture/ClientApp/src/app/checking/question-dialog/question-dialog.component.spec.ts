@@ -566,21 +566,21 @@ class TestEnvironment {
             bookNum: 40,
             hasSource: false,
             chapters: [
-              { number: 1, lastVerse: 25, isValid: true },
-              { number: 2, lastVerse: 23, isValid: true }
+              { number: 1, lastVerse: 25, isValid: true, permissions: {} },
+              { number: 2, lastVerse: 23, isValid: true, permissions: {} }
             ],
             permissions: {}
           },
           LUK: {
             bookNum: 42,
             hasSource: false,
-            chapters: [{ number: 1, lastVerse: 80, isValid: true }],
+            chapters: [{ number: 1, lastVerse: 80, isValid: true, permissions: {} }],
             permissions: {}
           },
           JHN: {
             bookNum: 43,
             hasSource: false,
-            chapters: [{ number: 1, lastVerse: 0, isValid: true }],
+            chapters: [{ number: 1, lastVerse: 0, isValid: true, permissions: {} }],
             permissions: {}
           }
         },

@@ -221,10 +221,27 @@ namespace SIL.XForge.Scripture.Services
                         await UpdateQuestionDocsAsync(questionDocs, newChapters);
                     }
 
-                    // Get the permissions for the book if this is not a resource
-                    if (_projectDoc.Data.ParatextId.Length != SFInstallableDblResource.ResourceIdentifierLength)
+                    // Get the permissions for the book and chapters if this is not a resource
+                    if (_projectDoc.Data.ParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
                     {
-                        permissions = await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data);
+                        // Add chapter permissions for the resource
+                        foreach (Chapter chapter in newChapters)
+                        {
+                            chapter.Permissions = permissions;
+                        }
+                    }
+                    else
+                    {
+                        // Get the project permissions for the book
+                        permissions =
+                            await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data, bookNum);
+                        foreach (Chapter chapter in newChapters)
+                        {
+                            // Get and set the project permissions for the chapter
+                            Dictionary<string, string> chapterPermissions = await _paratextService.GetPermissionsAsync(
+                                _userSecret, _projectDoc.Data, bookNum, chapter.Number);
+                            chapter.Permissions = chapterPermissions;
+                        }
                     }
 
                     // update project metadata

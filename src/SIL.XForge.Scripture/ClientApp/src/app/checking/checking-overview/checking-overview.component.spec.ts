@@ -292,7 +292,7 @@ describe('CheckingOverviewComponent', () => {
       const [unread, read, answered] = env.component.bookProgress({
         bookNum: 40,
         hasSource: false,
-        chapters: [{ number: 1, lastVerse: 3, isValid: true }],
+        chapters: [{ number: 1, lastVerse: 3, isValid: true, permissions: {} }],
         permissions: {}
       });
       expect(unread).toBe(3);
@@ -490,15 +490,15 @@ class TestEnvironment {
         bookNum: 40,
         hasSource: false,
         chapters: [
-          { number: 1, lastVerse: 25, isValid: true },
-          { number: 3, lastVerse: 17, isValid: true }
+          { number: 1, lastVerse: 25, isValid: true, permissions: {} },
+          { number: 3, lastVerse: 17, isValid: true, permissions: {} }
         ],
         permissions: {}
       },
       {
         bookNum: 42,
         hasSource: false,
-        chapters: [{ number: 1, lastVerse: 80, isValid: true }],
+        chapters: [{ number: 1, lastVerse: 80, isValid: true, permissions: {} }],
         permissions: {}
       }
     ],
