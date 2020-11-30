@@ -450,7 +450,8 @@ namespace SIL.XForge.Scripture.Services
         /// <summary> Write up-to-date book text from mongo database to Paratext project folder. </summary>
         public void PutBookText(UserSecret userSecret, string projectId, int bookNum, string usx)
         {
-            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), projectId);
+            string username = GetParatextUsername(userSecret);
+            ScrText scrText = ScrTextCollection.FindById(username, projectId);
             var doc = new XmlDocument
             {
                 PreserveWhitespace = true
@@ -459,9 +460,37 @@ namespace SIL.XForge.Scripture.Services
             UsxFragmenter.FindFragments(scrText.ScrStylesheet(bookNum), doc.CreateNavigator(),
                 XPathExpression.Compile("*[false()]"), out string usfm);
             usfm = UsfmToken.NormalizeUsfm(scrText.ScrStylesheet(bookNum), usfm, false, scrText.RightToLeft, scrText);
-            scrText.PutText(bookNum, 0, false, usfm, null);
-            _logger.LogInformation("{0} updated {1} in {2}.", userSecret.Id,
-                Canon.BookNumberToEnglishName(bookNum), scrText.Name);
+
+            // This is the same check ScrText.PutText() will use to block the Put action with a SafetyCheckException.
+            // This should be acceptable, as these local permissions will have been enforced for editing anyway.
+            if (scrText.Permissions.CanEdit(bookNum, 0, username))
+            {
+                scrText.PutText(bookNum, 0, false, usfm, null);
+                _logger.LogInformation("{0} updated {1} in {2}.", userSecret.Id,
+                    Canon.BookNumberToEnglishName(bookNum), scrText.Name);
+            }
+            else
+            {
+                // See if the user has permissions for individual chapters
+                IEnumerable<int> editableChapters =
+                    scrText.Permissions.GetEditableChapters(bookNum, scrText.Settings.Versification, username);
+                if (editableChapters != null && editableChapters.Any())
+                {
+                    // Split the usfm into chapters
+                    List<string> chapters = ScrText.SplitIntoChapters(scrText.Name, bookNum, usfm);
+
+                    // Put the individual chapters
+                    foreach (int chapterNum in editableChapters)
+                    {
+                        if ((chapterNum - 1) < chapters.Count)
+                        {
+                            scrText.PutText(bookNum, chapterNum, false, chapters[chapterNum - 1], null);
+                            _logger.LogInformation("{0} updated chapter {1} of {2} in {3}.", userSecret.Id,
+                                chapterNum, Canon.BookNumberToEnglishName(bookNum), scrText.Name);
+                        }
+                    }
+                }
+            }
         }
 
         /// <summary> Get notes from the Paratext project folder. </summary>
