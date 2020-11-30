@@ -279,8 +279,8 @@ class TestEnvironment {
           {
             bookNum: 40,
             chapters: [
-              { number: 1, lastVerse: 3, isValid: true },
-              { number: 2, lastVerse: 3, isValid: true }
+              { number: 1, lastVerse: 3, isValid: true, permissions: {} },
+              { number: 2, lastVerse: 3, isValid: true, permissions: {} }
             ],
             hasSource: true,
             permissions: {}
@@ -288,8 +288,8 @@ class TestEnvironment {
           {
             bookNum: 41,
             chapters: [
-              { number: 1, lastVerse: 3, isValid: true },
-              { number: 2, lastVerse: 3, isValid: true }
+              { number: 1, lastVerse: 3, isValid: true, permissions: {} },
+              { number: 2, lastVerse: 3, isValid: true, permissions: {} }
             ],
             hasSource: true,
             permissions: {}
@@ -297,8 +297,8 @@ class TestEnvironment {
           {
             bookNum: 42,
             chapters: [
-              { number: 1, lastVerse: 3, isValid: true },
-              { number: 2, lastVerse: 3, isValid: true }
+              { number: 1, lastVerse: 3, isValid: true, permissions: {} },
+              { number: 2, lastVerse: 3, isValid: true, permissions: {} }
             ],
             hasSource: true,
             permissions: {}
@@ -306,8 +306,8 @@ class TestEnvironment {
           {
             bookNum: 43,
             chapters: [
-              { number: 1, lastVerse: 3, isValid: true },
-              { number: 2, lastVerse: 3, isValid: true }
+              { number: 1, lastVerse: 3, isValid: true, permissions: {} },
+              { number: 2, lastVerse: 3, isValid: true, permissions: {} }
             ],
             hasSource: false,
             permissions: {}

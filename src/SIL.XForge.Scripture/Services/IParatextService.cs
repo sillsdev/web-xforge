@@ -18,7 +18,8 @@ namespace SIL.XForge.Scripture.Services
 
         IReadOnlyList<ParatextResource> GetResources(UserSecret userSecret);
         Task<string> GetResourcePermissionAsync(UserSecret userSecret, string paratextId, string userId);
-        Task<Dictionary<string, string>> GetPermissionsAsync(UserSecret userSecret, SFProject project);
+        Task<Dictionary<string, string>> GetPermissionsAsync(UserSecret userSecret, SFProject project,
+            int book = 0, int chapter = 0);
 
         IReadOnlyList<int> GetBookList(UserSecret userSecret, string ptProjectId);
         string GetBookText(UserSecret userSecret, string ptProjectId, int bookNum);
