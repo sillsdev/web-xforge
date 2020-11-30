@@ -11,6 +11,7 @@ import { filter, mergeMap } from 'rxjs/operators';
 import { PwaService } from 'xforge-common/pwa.service';
 import { environment } from '../environments/environment';
 import { CommandService } from './command.service';
+import { ErrorReportingService } from './error-reporting.service';
 import { LocalSettingsService } from './local-settings.service';
 import { LocationService } from './location.service';
 import { NoticeService } from './notice.service';
@@ -72,7 +73,8 @@ export class AuthService {
     private readonly router: Router,
     private readonly localSettings: LocalSettingsService,
     private readonly pwaService: PwaService,
-    private readonly noticeService: NoticeService
+    private readonly noticeService: NoticeService,
+    private readonly reportingService: ErrorReportingService
   ) {
     // Listen for changes to the auth state. If the user logs out in another tab/window, redirect to the home page.
     // When localStorage is cleared event.key is null. The logic below may be more specific than necessary, but we can't
@@ -195,8 +197,8 @@ export class AuthService {
         return { loggedIn: false, newlyLoggedIn: false };
       }
       return { loggedIn: true, newlyLoggedIn: false };
-    } catch {
-      await this.showLoginErrorDialog();
+    } catch (error) {
+      await this.handleLoginError('tryLogIn', error);
       return { loggedIn: false, newlyLoggedIn: false };
     }
   }
@@ -219,8 +221,8 @@ export class AuthService {
         }
       }
       return { loggedIn: true, newlyLoggedIn: false };
-    } catch {
-      await this.showLoginErrorDialog();
+    } catch (error) {
+      await this.handleLoginError('tryOnlineLogIn', error);
       return { loggedIn: false, newlyLoggedIn: false };
     }
   }
@@ -289,7 +291,9 @@ export class AuthService {
     });
   }
 
-  private async showLoginErrorDialog(): Promise<void> {
+  private async handleLoginError(method: string, error: object): Promise<void> {
+    console.error(error);
+    this.reportingService.silentError(`Error occurred in ${method}`, error);
     await this.noticeService.showMessageDialog(
       () => translate('error_messages.error_occurred_login'),
       () => translate('error_messages.try_again')
