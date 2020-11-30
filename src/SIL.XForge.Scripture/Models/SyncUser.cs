@@ -5,6 +5,9 @@ namespace SIL.XForge.Scripture.Models
     /// </summary>
     public class SyncUser
     {
+        /// <summary>
+        /// Unique id of a SyncUser. Not intended to match a user id.
+        /// </summary>
         public string Id { get; set; }
         public string ParatextUsername { get; set; }
     }

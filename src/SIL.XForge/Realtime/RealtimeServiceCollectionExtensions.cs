@@ -26,7 +26,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<IJsonService, RealtimeJsonService>();
 
             services.Configure(configureOptions);
-            services.AddSingleton<RealtimeServer>();
+            services.AddSingleton<IRealtimeServer, RealtimeServer>();
             services.AddSingleton<IRealtimeService, RealtimeService>();
             return services;
         }

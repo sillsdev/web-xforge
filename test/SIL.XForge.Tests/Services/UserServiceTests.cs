@@ -90,9 +90,9 @@ namespace SIL.XForge.Services
         public async Task LinkParatextAccountAsync()
         {
             var env = new TestEnvironment();
-            env.AuthService.LinkAccounts("auth02", "auth03").Returns(Task.CompletedTask);
+            env.MockAuthService.LinkAccounts("auth02", "auth03").Returns(Task.CompletedTask);
             JObject userProfile = env.CreateUserProfile("user02", "auth02", env.IssuedAt);
-            env.AuthService.GetUserAsync("auth02").Returns(Task.FromResult(userProfile.ToString()));
+            env.MockAuthService.GetUserAsync("auth02").Returns(Task.FromResult(userProfile.ToString()));
 
             await env.Service.LinkParatextAccountAsync("user02", "auth02", "auth03");
             User user2 = env.GetUser("user02");
@@ -105,17 +105,87 @@ namespace SIL.XForge.Services
         public async Task UpdateInterfaceLanguageAsync()
         {
             var env = new TestEnvironment();
-            env.AuthService.UpdateInterfaceLanguage("auth02", "mri").Returns(Task.CompletedTask);
+            env.MockAuthService.UpdateInterfaceLanguage("auth02", "mri").Returns(Task.CompletedTask);
             JObject userProfile = env.CreateUserProfile("user02", "auth02", env.IssuedAt);
-            env.AuthService.GetUserAsync("auth02").Returns(Task.FromResult(userProfile.ToString()));
+            env.MockAuthService.GetUserAsync("auth02").Returns(Task.FromResult(userProfile.ToString()));
 
             await env.Service.UpdateInterfaceLanguageAsync("user02", "auth02", "mri");
             User user2 = env.GetUser("user02");
             Assert.That(user2.InterfaceLanguage, Is.EqualTo("mri"));
         }
 
+        [Test]
+        public void DeleteAsync_BadArguments()
+        {
+            var env = new TestEnvironment();
+            Assert.ThrowsAsync<ArgumentException>(() => env.Service.DeleteAsync(null, "systemRole", "userId"));
+            Assert.ThrowsAsync<ArgumentException>(() => env.Service.DeleteAsync("curUserId", null, "userId"));
+            Assert.ThrowsAsync<ArgumentException>(() => env.Service.DeleteAsync("curUserId", "systemRole", null));
+        }
+
+        [Test]
+        public void DeleteAsync_UserCannotDeleteAnotherUser()
+        {
+            var env = new TestEnvironment();
+            string curUserId = "user01";
+            // Role is not a system admin
+            string curUserSystemRole = SystemRole.User;
+            string userIdToDelete = "user02";
+            Assert.That(env.ContainsUser(userIdToDelete), Is.True);
+            // SUT
+            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete));
+            Assert.That(env.ContainsUser(userIdToDelete), Is.True);
+        }
+
+        [Test]
+        public async Task DeleteAsync_UserCanDeleteSelf()
+        {
+            var env = new TestEnvironment();
+            string curUserId = "user01";
+            // Role is not a system admin
+            string curUserSystemRole = SystemRole.User;
+            string userIdToDelete = "user01";
+            Assert.That(env.ContainsUser(userIdToDelete), Is.True);
+            // SUT
+            await env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete);
+            Assert.That(env.ContainsUser(userIdToDelete), Is.False);
+        }
+
+        [Test]
+        public async Task DeleteAsync_SysAdminCanDeleteUser()
+        {
+            var env = new TestEnvironment();
+            string curUserId = "user01";
+            string curUserSystemRole = SystemRole.SystemAdmin;
+            string userIdToDelete = "user02";
+            Assert.That(env.ContainsUser(userIdToDelete), Is.True);
+            // SUT
+            await env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete);
+            Assert.That(env.ContainsUser(userIdToDelete), Is.False);
+        }
+
+        [Test]
+        public async Task DeleteAsync_SysAdminCanDeleteSelf()
+        {
+            var env = new TestEnvironment();
+            string curUserId = "user01";
+            string curUserSystemRole = SystemRole.SystemAdmin;
+            string userIdToDelete = "user01";
+            Assert.That(env.ContainsUser(userIdToDelete), Is.True);
+            // SUT
+            await env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete);
+            Assert.That(env.ContainsUser(userIdToDelete), Is.False);
+        }
+
         private class TestEnvironment
         {
+            public UserService Service { get; }
+            public MemoryRepository<UserSecret> UserSecrets { get; }
+            public MemoryRealtimeService RealtimeService { get; }
+            public IAuthService MockAuthService = Substitute.For<IAuthService>();
+            public DateTime IssuedAt => DateTime.UtcNow;
+            public IProjectService MockProjectService = Substitute.For<IProjectService>();
+
             public TestEnvironment()
             {
                 UserSecrets = new MemoryRepository<UserSecret>(new[]
@@ -157,16 +227,8 @@ namespace SIL.XForge.Services
                     Origin = new Uri("http://localhost")
                 });
 
-                AuthService = Substitute.For<IAuthService>();
-
-                Service = new UserService(RealtimeService, options, UserSecrets, AuthService);
+                Service = new UserService(RealtimeService, options, UserSecrets, MockAuthService);
             }
-
-            public UserService Service { get; }
-            public MemoryRepository<UserSecret> UserSecrets { get; }
-            public MemoryRealtimeService RealtimeService { get; }
-            public IAuthService AuthService { get; }
-            public DateTime IssuedAt => DateTime.UtcNow;
 
             public User GetUser(string id)
             {

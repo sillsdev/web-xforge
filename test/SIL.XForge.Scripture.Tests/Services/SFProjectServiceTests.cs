@@ -518,6 +518,8 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             string ptProjectDir = Path.Combine("xforge", "sync", "paratext_" + Project01);
             env.FileSystemService.DirectoryExists(ptProjectDir).Returns(true);
+            Assert.That(env.ProjectSecrets.Contains(Project01), Is.True, "setup");
+            // SUT
             await env.Service.DeleteProjectAsync(User01, Project01);
 
             Assert.That(env.ContainsProject(Project01), Is.False);
