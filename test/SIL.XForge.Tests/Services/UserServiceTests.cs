@@ -133,8 +133,9 @@ namespace SIL.XForge.Services
             string userIdToDelete = "user02";
             Assert.That(env.ContainsUser(userIdToDelete), Is.True);
             // SUT
-            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete));
-            Assert.That(env.ContainsUser(userIdToDelete), Is.True);
+            Assert.ThrowsAsync<ForbiddenException>(() =>
+                env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete));
+            Assert.That(env.RealtimeService.callCountDeleteUserAsync, Is.EqualTo(0));
         }
 
         [Test]
@@ -148,7 +149,7 @@ namespace SIL.XForge.Services
             Assert.That(env.ContainsUser(userIdToDelete), Is.True);
             // SUT
             await env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete);
-            Assert.That(env.ContainsUser(userIdToDelete), Is.False);
+            Assert.That(env.RealtimeService.callCountDeleteUserAsync, Is.EqualTo(1));
         }
 
         [Test]
@@ -161,7 +162,7 @@ namespace SIL.XForge.Services
             Assert.That(env.ContainsUser(userIdToDelete), Is.True);
             // SUT
             await env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete);
-            Assert.That(env.ContainsUser(userIdToDelete), Is.False);
+            Assert.That(env.RealtimeService.callCountDeleteUserAsync, Is.EqualTo(1));
         }
 
         [Test]
@@ -174,7 +175,19 @@ namespace SIL.XForge.Services
             Assert.That(env.ContainsUser(userIdToDelete), Is.True);
             // SUT
             await env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete);
-            Assert.That(env.ContainsUser(userIdToDelete), Is.False);
+            Assert.That(env.RealtimeService.callCountDeleteUserAsync, Is.EqualTo(1));
+        }
+
+        [Test]
+        public async Task DeleteAsync_DisassociatesFromProjects()
+        {
+            var env = new TestEnvironment();
+            string curUserId = "user01";
+            string curUserSystemRole = SystemRole.User;
+            string userIdToDelete = "user01";
+            // SUT
+            await env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete);
+            env.MockProjectService.Received(1).RemoveUserFromAllProjectsAsync(curUserId, userIdToDelete);
         }
 
         private class TestEnvironment
@@ -227,7 +240,7 @@ namespace SIL.XForge.Services
                     Origin = new Uri("http://localhost")
                 });
 
-                Service = new UserService(RealtimeService, options, UserSecrets, MockAuthService);
+                Service = new UserService(RealtimeService, options, UserSecrets, MockAuthService, MockProjectService);
             }
 
             public User GetUser(string id)

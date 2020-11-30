@@ -43,7 +43,13 @@ namespace SIL.XForge.Realtime
             AddDocConfig(options.UserDoc);
             AddDocConfig(options.ProjectDoc);
             foreach (DocConfig projectDataDoc in options.ProjectDataDocs)
+            {
                 AddDocConfig(projectDataDoc);
+            }
+            foreach (DocConfig userDataDoc in options.UserDataDocs)
+            {
+                AddDocConfig(userDataDoc);
+            }
         }
 
         internal IRealtimeServer Server { get; }
@@ -107,6 +113,62 @@ namespace SIL.XForge.Realtime
             await opsCollection.DeleteManyAsync(dFilter);
         }
 
+        /// <summary>
+        /// Delete user-related docs from various collections.
+        /// </summary>
+        public async Task DeleteUserAsync(string userId)
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new ArgumentException("", nameof(userId));
+            }
+
+            RealtimeOptions options = _realtimeOptions.Value;
+
+            // Determine DB collections from which to look for records to delete, including whether or not there is a
+            // corresponding OT ("o_...") collection, and how to match a document to a user id.
+            var collectionsToProcess = options.UserDataDocs.Select((DocConfig doc) =>
+                new
+                {
+                    Name = doc.CollectionName,
+                    TokenLocationInId = options.UserDataDocsIdLocation.TryGetValue(doc.CollectionName,
+                        out Location idLocation) ? idLocation : Location.Whole,
+                    HasOt = doc.OTTypeName != null
+                }
+            );
+
+            foreach (var collection in collectionsToProcess)
+            {
+                FilterDefinition<BsonDocument> idFilter = null;
+                FilterDefinition<BsonDocument> dFilter = null;
+                if (collection.TokenLocationInId == Location.Whole)
+                {
+                    idFilter = Builders<BsonDocument>.Filter.Eq("_id", userId);
+                    dFilter = Builders<BsonDocument>.Filter.Eq("d", userId);
+                }
+                else if (collection.TokenLocationInId == Location.End)
+                {
+                    idFilter = Builders<BsonDocument>.Filter.Regex("_id", $"{userId}$");
+                    dFilter = Builders<BsonDocument>.Filter.Regex("d", $"{userId}$");
+
+                }
+                else if (collection.TokenLocationInId == Location.Beginning)
+                {
+                    throw new NotImplementedException();
+                }
+
+                IMongoCollection<BsonDocument> snapshotCollection = _database.GetCollection<BsonDocument>(
+                    collection.Name);
+                await snapshotCollection.DeleteManyAsync(idFilter);
+                if (collection.HasOt)
+                {
+                    IMongoCollection<BsonDocument> opsCollection = _database.GetCollection<BsonDocument>(
+                    $"o_{collection.Name}");
+                    await opsCollection.DeleteManyAsync(dFilter);
+                }
+            }
+        }
+
         public IQueryable<T> QuerySnapshots<T>() where T : IIdentifiable
         {
             string collectionName = GetCollectionName<T>();
@@ -153,7 +215,8 @@ namespace SIL.XForge.Realtime
                 Scope = _authOptions.Value.Scope,
                 BugsnagApiKey = this._configuration.GetValue<string>("Bugsnag:ApiKey"),
                 ReleaseStage = this._configuration.GetValue<string>("Bugsnag:ReleaseStage"),
-                Version = System.Diagnostics.FileVersionInfo.GetVersionInfo(@System.Reflection.Assembly.GetEntryAssembly().Location).ProductVersion
+                Version = System.Diagnostics.FileVersionInfo.GetVersionInfo(
+                    @System.Reflection.Assembly.GetEntryAssembly().Location).ProductVersion
             };
         }
     }

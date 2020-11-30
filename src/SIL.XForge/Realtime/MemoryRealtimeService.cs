@@ -35,6 +35,11 @@ namespace SIL.XForge.Realtime
         private readonly Dictionary<Type, object> _repos;
         private readonly Dictionary<Type, DocConfig> _docConfigs;
 
+        /// <summary>
+        /// Count of calls to DeleteUserAsync(), for tests.
+        /// </summary>
+        internal int callCountDeleteUserAsync = 0;
+
         public MemoryRealtimeService()
         {
             _repos = new Dictionary<Type, object>();
@@ -56,6 +61,12 @@ namespace SIL.XForge.Realtime
 
         public virtual Task DeleteProjectAsync(string projectId)
         {
+            return Task.CompletedTask;
+        }
+
+        public Task DeleteUserAsync(string userId)
+        {
+            callCountDeleteUserAsync++;
             return Task.CompletedTask;
         }
 
