@@ -2,6 +2,7 @@ export interface Chapter {
   number: number;
   lastVerse: number;
   isValid: boolean;
+  permissions: { [userRef: string]: string };
 }
 
 /** Documents in the texts collection in the database represent the metadata

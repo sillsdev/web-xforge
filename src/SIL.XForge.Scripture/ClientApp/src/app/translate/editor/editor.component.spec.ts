@@ -1043,36 +1043,36 @@ class TestEnvironment {
       {
         bookNum: 40,
         chapters: [
-          { number: 1, lastVerse: 3, isValid: true },
-          { number: 2, lastVerse: 3, isValid: true }
+          { number: 1, lastVerse: 3, isValid: true, permissions: {} },
+          { number: 2, lastVerse: 3, isValid: true, permissions: {} }
         ],
         hasSource: true,
         permissions: {}
       },
       {
         bookNum: 41,
-        chapters: [{ number: 1, lastVerse: 3, isValid: false }],
+        chapters: [{ number: 1, lastVerse: 3, isValid: false, permissions: {} }],
         hasSource: true,
         permissions: {}
       },
       {
         bookNum: 42,
         chapters: [
-          { number: 1, lastVerse: 3, isValid: true },
-          { number: 2, lastVerse: 3, isValid: true }
+          { number: 1, lastVerse: 3, isValid: true, permissions: {} },
+          { number: 2, lastVerse: 3, isValid: true, permissions: {} }
         ],
         hasSource: false,
         permissions: {}
       },
       {
         bookNum: 43,
-        chapters: [{ number: 1, lastVerse: 0, isValid: true }],
+        chapters: [{ number: 1, lastVerse: 0, isValid: true, permissions: {} }],
         hasSource: false,
         permissions: {}
       },
       {
         bookNum: 44,
-        chapters: [{ number: 1, lastVerse: 3, isValid: true }],
+        chapters: [{ number: 1, lastVerse: 3, isValid: true, permissions: {} }],
         hasSource: true,
         permissions: {}
       }

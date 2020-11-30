@@ -46,8 +46,8 @@ export function getSFProject(id: string): SFProject {
       {
         bookNum: 40,
         chapters: [
-          { number: 1, lastVerse: 3, isValid: true },
-          { number: 2, lastVerse: 3, isValid: true }
+          { number: 1, lastVerse: 3, isValid: true, permissions: {} },
+          { number: 2, lastVerse: 3, isValid: true, permissions: {} }
         ],
         hasSource: true,
         permissions: {}

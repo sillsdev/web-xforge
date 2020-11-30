@@ -316,6 +316,8 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         /// <param name="userSecret">The user secret.</param>
         /// <param name="project">The project - the UserRoles and Source ParatextId are used.</param>
+        /// <param name="book">The book number. Set to zero to check for all books.</param>
+        /// <param name="chapter">The chapter number. Set to zero to check for all books.</param>
         /// <returns>
         /// A dictionary of permissions where the key is the user ID and the value is the permission.
         /// </returns>
@@ -323,7 +325,8 @@ namespace SIL.XForge.Scripture.Services
         /// See <see cref="TextInfoPermission" /> for permission values.
         /// A dictionary is returned, as permissions can be updated.
         /// </remarks>
-        public async Task<Dictionary<string, string>> GetPermissionsAsync(UserSecret userSecret, SFProject project)
+        public async Task<Dictionary<string, string>> GetPermissionsAsync(UserSecret userSecret, SFProject project,
+            int book = 0, int chapter = 0)
         {
             // Calculate the project and resource permissions
             var permissions = new Dictionary<string, string>();
@@ -334,8 +337,31 @@ namespace SIL.XForge.Scripture.Services
                 {
                     permissions.Add(uid, await this.GetResourcePermissionAsync(userSecret, project.ParatextId, uid));
                 }
+                else if (book == 0 && chapter == 0)
+                {
+                    // Project level permissions
+                    if (role == SFProjectRole.Administrator || role == SFProjectRole.Translator)
+                    {
+                        permissions.Add(uid, TextInfoPermission.Write);
+                    }
+                    else
+                    {
+                        permissions.Add(uid, TextInfoPermission.Read);
+                    }
+                }
                 else
                 {
+                    // Get the mapping for paratext users ids to names from the registry
+                    string response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get,
+                        $"projects/{project.ParatextId}/members");
+                    Dictionary<string, string> mapping = JArray.Parse(response).OfType<JObject>()
+                        .Where(m => !string.IsNullOrEmpty((string)m["userId"])
+                            && !string.IsNullOrEmpty((string)m["username"]))
+                        .ToDictionary(m => (string)m["userId"], m => (string)m["username"]);
+
+                    // Get the scripture text so we can retrieve the permissions from the XML
+                    ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), project.ParatextId);
+
                     // TODO: Check for correct book permissions
                     if (role == SFProjectRole.Administrator || role == SFProjectRole.Translator)
                     {
