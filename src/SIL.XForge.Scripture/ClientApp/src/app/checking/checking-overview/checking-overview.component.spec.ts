@@ -19,10 +19,11 @@ import {
   SFProjectUserConfig
 } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -49,6 +50,7 @@ const mockedUserService = mock(UserService);
 const mockedAuthService = mock(AuthService);
 const mockedQuestionDialogService = mock(QuestionDialogService);
 const mockedCookieService = mock(CookieService);
+const mockedPwaService = mock(PwaService);
 
 class MockComponent {}
 
@@ -68,7 +70,8 @@ describe('CheckingOverviewComponent', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: AuthService, useMock: mockedAuthService },
       { provide: QuestionDialogService, useMock: mockedQuestionDialogService },
-      { provide: CookieService, useMock: mockedCookieService }
+      { provide: CookieService, useMock: mockedCookieService },
+      { provide: PwaService, useMock: mockedPwaService }
     ]
   }));
 
@@ -232,7 +235,9 @@ describe('CheckingOverviewComponent', () => {
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
       expect().nothing();
     }));
+  });
 
+  describe('Import Questions', () => {
     it('should open a dialog to import questions', fakeAsync(() => {
       when(mockedProjectService.hasTransceleratorQuestions('project01')).thenResolve(true);
       const env = new TestEnvironment();
@@ -240,6 +245,17 @@ describe('CheckingOverviewComponent', () => {
       env.clickElement(env.importButton);
       verify(mockedMdcDialog.open(ImportQuestionsDialogComponent, anything())).once();
       expect().nothing();
+    }));
+
+    it('should hide import button if offline', fakeAsync(() => {
+      when(mockedProjectService.hasTransceleratorQuestions(anything())).thenReject(new Error('No Connection'));
+      const env = new TestEnvironment();
+      env.onlineStatus = false;
+      env.waitForQuestions();
+      expect(env.importButton).toBeNull();
+      when(mockedProjectService.hasTransceleratorQuestions('project01')).thenResolve(true);
+      env.onlineStatus = true;
+      expect(env.importButton).not.toBeNull();
     }));
   });
 
@@ -487,6 +503,7 @@ class TestEnvironment {
   };
 
   private readonly anotherUserId = 'anotherUserId';
+  private isOnline: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
 
   constructor(withQuestionData: boolean = true) {
     if (withQuestionData) {
@@ -722,6 +739,9 @@ class TestEnvironment {
     );
     this.setCurrentUser(this.adminUser);
 
+    when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
+    when(mockedPwaService.isOnline).thenReturn(this.isOnline.getValue());
+
     this.fixture = TestBed.createComponent(CheckingOverviewComponent);
     this.component = this.fixture.componentInstance;
     this.location = TestBed.get(Location);
@@ -785,6 +805,12 @@ class TestEnvironment {
 
   get likePanel(): DebugElement {
     return this.fixture.debugElement.query(By.css('.reviewer-panels .card .card-content-like'));
+  }
+
+  set onlineStatus(isOnline: boolean) {
+    this.isOnline.next(isOnline);
+    tick();
+    this.fixture.detectChanges();
   }
 
   getArchivedQuestionsCountByRow(row: number): DebugElement {
