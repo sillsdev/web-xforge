@@ -1,6 +1,8 @@
+using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using SIL.XForge.Configuration;
+using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 
@@ -25,6 +27,10 @@ namespace Microsoft.Extensions.DependencyInjection
                         new DocConfig("sf_project_user_configs", typeof(SFProjectUserConfig)),
                         new DocConfig("texts", typeof(TextData), OTType.RichText),
                         new DocConfig("questions", typeof(Question))
+                    });
+                    o.UserDataDocs.AddRange(new[]
+                    {
+                        new DocConfig("sf_project_user_configs", typeof(SFProjectUserConfig))
                     });
                 }, launchWithDebugging);
             return services;

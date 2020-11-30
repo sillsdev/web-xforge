@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using SIL.XForge.Configuration;
@@ -72,10 +71,46 @@ namespace SIL.XForge.Services
 
                 if (curUserId != projectUserId && !IsProjectAdmin(projectDoc.Data, curUserId))
                     throw new ForbiddenException();
+                await RemoveUserCoreAsync(conn, curUserId, projectId, projectUserId);
+            }
+        }
 
+
+        /// <summary>
+        /// Disassociate user projectUserId from project projectId, without checking permissions.
+        /// </summary>
+        private async Task RemoveUserCoreAsync(IConnection conn, string curUserId, string projectId, string projectUserId)
+        {
+            if (curUserId == null || projectId == null || projectUserId == null)
+            {
+                throw new ArgumentNullException();
+            }
+            IDocument<TModel> projectDoc = await GetProjectDocAsync(projectId, conn);
+            IDocument<User> userDoc = await GetUserDocAsync(projectUserId, conn);
+            await RemoveUserFromProjectAsync(conn, projectDoc, userDoc);
+        }
+
+        /// <summary>
+        /// Disassociate user projectUserId from all projects on the site that this ProjectService is operating on.
+        /// As requested by curUserId. Permissions to do so are not checked.
+        /// </summary>
+        public async Task RemoveUserFromAllProjectsAsync(string curUserId, string projectUserId)
+        {
+            if (curUserId == null || projectUserId == null)
+            {
+                throw new ArgumentNullException();
+            }
+            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+            {
                 IDocument<User> userDoc = await GetUserDocAsync(projectUserId, conn);
-
-                await RemoveUserFromProjectAsync(conn, projectDoc, userDoc);
+                IEnumerable<Task> removalTasks = userDoc.Data.Sites[SiteOptions.Value.Id].Projects.Select(
+                    (string projectId) => RemoveUserCoreAsync(conn, curUserId, projectId, projectUserId));
+                // The removals can be processed in parallel in production, but for unit tests, MemoryRealtimeService
+                // does not fully implement concurrent editing of docs, so run them in a sequence.
+                foreach (Task task in removalTasks)
+                {
+                    await task;
+                }
             }
         }
 

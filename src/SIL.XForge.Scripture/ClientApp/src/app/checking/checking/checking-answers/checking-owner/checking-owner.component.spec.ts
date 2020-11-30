@@ -5,7 +5,7 @@ import { TranslocoService } from '@ngneat/transloco';
 import { AvatarService } from 'ngx-avatar';
 import { CookieService } from 'ngx-cookie-service';
 import { UserProfile } from 'realtime-server/lib/common/models/user';
-import { instance, mock, when } from 'ts-mockito';
+import { anything, instance, mock, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
@@ -29,6 +29,15 @@ describe('CheckingOwnerComponent', () => {
     tick();
     env.fixture.detectChanges();
     expect(env.userName).toBe('User 01');
+  }));
+
+  it('displays Unknown owner name', fakeAsync(() => {
+    // A user may be removed from the database, and so an ownerRef may refer to a user we can't find.
+    const template = '<app-checking-owner ownerRef="no-longer-known-user-id"></app-checking-owner>';
+    const env = new TestEnvironment(template);
+    tick();
+    env.fixture.detectChanges();
+    expect(env.userName).toBe('checking.unknown_author');
   }));
 
   it('displays avatar', () => {
@@ -77,7 +86,7 @@ class TestEnvironment {
   readonly mockedAuthService = mock(AuthService);
   readonly mockedAvatarService = mock(AvatarService);
   readonly mockedCookieService = mock(CookieService);
-  readonly mockedTransloco = mock(TranslocoService);
+  readonly mockedTranslocoService = mock(TranslocoService);
   readonly mockedUserService = mock(UserService);
 
   private readonly realtimeService: TestRealtimeService;
@@ -90,7 +99,7 @@ class TestEnvironment {
         { provide: AuthService, useFactory: () => instance(this.mockedAuthService) },
         { provide: AvatarService, useFactory: () => instance(this.mockedAvatarService) },
         { provide: CookieService, useFactory: () => instance(this.mockedCookieService) },
-        { provide: TranslocoService, useFactory: () => instance(this.mockedTransloco) },
+        { provide: TranslocoService, useFactory: () => instance(this.mockedTranslocoService) },
         { provide: UserService, useFactory: () => instance(this.mockedUserService) }
       ]
     });
@@ -106,6 +115,9 @@ class TestEnvironment {
     });
     when(this.mockedUserService.getProfile('user01')).thenCall(() =>
       this.realtimeService.subscribe(UserProfileDoc.COLLECTION, 'user01')
+    );
+    when(this.mockedTranslocoService.translate<string>(anything())).thenCall(
+      (translationStringKey: string) => translationStringKey
     );
     this.fixture = TestBed.createComponent(HostComponent);
     this.fixture.detectChanges();

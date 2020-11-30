@@ -41,6 +41,11 @@ namespace SIL.XForge.Realtime
             _docConfigs = new Dictionary<Type, DocConfig>();
         }
 
+        /// <summary>
+        /// Count of calls to DeleteUserAsync(), for tests.
+        /// </summary>
+        internal int CallCountDeleteUserAsync { get; set; } = 0;
+
         public void StartServer()
         {
         }
@@ -56,6 +61,12 @@ namespace SIL.XForge.Realtime
 
         public virtual Task DeleteProjectAsync(string projectId)
         {
+            return Task.CompletedTask;
+        }
+
+        public Task DeleteUserAsync(string userId)
+        {
+            CallCountDeleteUserAsync++;
             return Task.CompletedTask;
         }
 
