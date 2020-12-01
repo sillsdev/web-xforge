@@ -1,6 +1,6 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
-import { Component, ElementRef, ViewChild } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Component } from '@angular/core';
+import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { NotifiableError } from '@bugsnag/js';
 import { Breadcrumb } from '@bugsnag/js';
 import { CookieService } from 'ngx-cookie-service';
@@ -43,6 +43,7 @@ class MockConsole {
 
 describe('ExceptionHandlingService', () => {
   configureTestingModule(() => ({
+    declarations: [HostComponent],
     providers: [
       ExceptionHandlingService,
       { provide: AuthService, useMock: mockedAuthService },
@@ -56,7 +57,7 @@ describe('ExceptionHandlingService', () => {
     imports: [TestTranslocoModule]
   }));
 
-  it('should not crash on anything', async () => {
+  it('should not crash on anything', fakeAsync(() => {
     const env = new TestEnvironment();
     const values = [
       undefined,
@@ -75,13 +76,13 @@ describe('ExceptionHandlingService', () => {
       () => {},
       BigInt(3)
     ];
-    await Promise.all(values.map(value => env.service.handleError(value)));
+    Promise.all(values.map(value => env.handleError(value)));
     expect(env.errorReports.length).toBe(values.length);
-  });
+  }));
 
-  it('should unwrap a rejection from a promise', async () => {
+  it('should unwrap a rejection from a promise', fakeAsync(() => {
     const env = new TestEnvironment();
-    await env.service.handleError({
+    env.handleError({
       message: 'This is the outer message',
       stack: 'Stack trace trace to promise implementation',
       rejection: {
@@ -92,34 +93,35 @@ describe('ExceptionHandlingService', () => {
 
     expect(env.oneAndOnlyReport.error.message).toBe('Original error');
     expect(env.oneAndOnlyReport.error.name).toBe('Original error name');
-  });
+  }));
 
-  it('should handle arbitrary objects', async () => {
+  it('should handle arbitrary objects', fakeAsync(() => {
     const env = new TestEnvironment();
-    await env.service.handleError({
+    env.handleError({
       a: 1
     });
     expect(env.oneAndOnlyReport.error.message).toBe('Unknown error: {"a":1}');
-  });
+  }));
 
-  it('should handle circular objects', async () => {
+  it('should handle circular objects', fakeAsync(() => {
     const env = new TestEnvironment();
     const z = { z: {} };
     z.z = z;
     expect(() => JSON.stringify(z)).toThrow();
-    await env.service.handleError(z);
+    env.handleError(z);
     expect(env.oneAndOnlyReport.error.message).toBe('Unknown error (with circular references): [object Object]');
-  });
+  }));
 
-  it('should handle storage quota exceeded errors', async () => {
+  it('should handle storage quota exceeded errors', fakeAsync(() => {
     const env = new TestEnvironment();
-    await env.service.handleError(new DOMException('error', 'QuotaExceededError'));
+    env.handleError(new DOMException('error', 'QuotaExceededError'));
+
     verify(mockedNoticeService.showError(anything())).once();
     expect().nothing();
-  });
+  }));
 
   describe('Bugsnag', () => {
-    it('should extract text from button', async () => {
+    it('should extract text from button', fakeAsync(() => {
       const env = new TestEnvironment();
       const tests: BreadcrumbTests[] = [
         {
@@ -149,7 +151,7 @@ describe('ExceptionHandlingService', () => {
         expect(breadcrumb.metadata.targetText).toBe(test.expectedText);
         expect(breadcrumb.metadata.targetSelector).toBe(test.expectedSelector);
       }
-    });
+    }));
   });
 });
 
@@ -176,9 +178,7 @@ interface BreadcrumbTests {
     </button>
   `
 })
-class HostComponent {
-  @ViewChild('container', { static: true }) container!: ElementRef;
-}
+class HostComponent {}
 
 class TestEnvironment {
   readonly errorReports: { error: any }[] = [];
@@ -198,9 +198,6 @@ class TestEnvironment {
   } as UserDoc;
 
   constructor() {
-    TestBed.configureTestingModule({
-      declarations: [HostComponent]
-    });
     this.service = TestBed.get(ExceptionHandlingService);
     this.fixture = TestBed.createComponent(HostComponent);
     this.fixture.detectChanges();
@@ -237,5 +234,10 @@ class TestEnvironment {
     };
     ExceptionHandlingService.handleBreadcrumb(breadcrumb);
     return breadcrumb;
+  }
+
+  async handleError(error: any) {
+    await this.service.handleError(error);
+    flush();
   }
 }
