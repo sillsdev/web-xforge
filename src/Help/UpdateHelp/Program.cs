@@ -21,19 +21,19 @@ namespace UpdateHelp
         ///     Remove unused buttons and inputs
         /// </summary>
         /// <example>
-        /// Assumes the user has ~/src/sf-helps/src/en/ folder and AWS console app setup locally
+        /// Assumes the user has ~/src/web-sf-helps/src/en/ folder and AWS console app setup locally
         /// Pull the latest help from AWS S3:
         /// <code>
-        ///     cd ~/src/sf-helps/src/en/
+        ///     cd ~/src/web-sf-helps/src/en/
         ///     aws s3 sync s3://help.scriptureforge.org/en . --exact-timestamps
         /// </code>
         /// Copy /en/ to <c>targetDir</c> folder
-        /// Copy Google search engine site verification HTML file to <c>targetDir</c> folder
+        /// Copy Google search console site verification HTML file to <c>targetDir</c> folder
         /// Copy translated target HTMl files and menu_[target].json from Crowdin to the <c>targetDir</c> folder
         /// Run this program, <c>dotnet run es write</c> (change 'es' for a different language)
         /// Push to help AWS S3:
         /// <code>
-        ///     cd ~/src/sf-helps/src/es/
+        ///     cd ~/src/web-sf-helps/src/es/
         ///     aws s3 sync . s3://help.scriptureforge.org/es
         /// </code>
         /// </example>
@@ -43,7 +43,7 @@ namespace UpdateHelp
             bool doWrite = ((args.Length >= 2 ? args[1] : "") == "write");
 
             string userDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            string helpDir = Path.Combine(userDir, "src", "sf-helps", "src");
+            string helpDir = Path.Combine(userDir, "src", "web-sf-helps", "src");
             string source = "en";
             string sourceDir = Path.Combine(helpDir, source);
             string sourceWhxDir = Path.Combine(sourceDir, "whxdata");
@@ -52,10 +52,18 @@ namespace UpdateHelp
             string targetDir = Path.Combine(helpDir, target);
             string targetWhxDir = Path.Combine(targetDir, "whxdata");
             string targetMenuJsonPath = Path.Combine(targetDir, $"menu_{target}.json");
-            // see https://programmablesearchengine.google.com/ to create an engine for each language
+
+            // See https://programmablesearchengine.google.com/ to create an engine for each language.
+            // For the new language, copy existing setup from another language, including these 2 settings:
+            // - Look and feel > Layout > Two column
+            // - Search features > Advanced > Websearch Settings > Link Target > "rh_default_topic_frame_name"
+            // Copy the search engine ID for the new language into the dictionary below.
+            // Create a property for the language in https://search.google.com/search-console,
+            // download verification HTML file to targetDir folder and verify site.
             var searchEngineIDs = new Dictionary<string, string>()
             {
-                { "es", "9f727aa1dd179dd6d" }
+                { "es", "9f727aa1dd179dd6d" },
+                { "fr", "7da597faaebed6cc7" }
             };
 
             Console.WriteLine("Update Help files.\n");
