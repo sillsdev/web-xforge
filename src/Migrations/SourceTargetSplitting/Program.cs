@@ -98,7 +98,8 @@ namespace SourceTargetSplitting
             // Get the object migrator
             objectMigrator = webHost.Services.GetService<ObjectMigrator>();
 
-            // If we are testing, set up the source scriptire text collection
+            // Set up the scripture text collections
+            objectMigrator.TargetScrTextCollection.Initialize(syncDir);
             if (!doWrite)
             {
                 objectMigrator.SourceScrTextCollection.Initialize(syncDir);
@@ -109,6 +110,9 @@ namespace SourceTargetSplitting
 
             // Migrate the database objects
             await objectMigrator.MigrateObjectsAsync(doWrite);
+
+            // Migrate the chapter and book permissions
+            await objectMigrator.MigrateChapterAndBookPermissions(doWrite);
 
             // Stop the web host and real time server
             Log("Stopping Scripture Forge Server...");
