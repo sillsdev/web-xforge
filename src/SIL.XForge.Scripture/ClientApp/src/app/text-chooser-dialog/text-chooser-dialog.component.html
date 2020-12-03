@@ -22,8 +22,8 @@
           <span class="error-message" *ngIf="showError">{{ t("select_text_error_message") }}</span>
         </mdc-dialog-content>
         <mdc-dialog-actions>
-          <button mdcDialogAction="close" type="button" mdc-button>{{ t("cancel") }}</button>
-          <button type="submit" mdc-button unelevated default (click)="submit()">{{ t("save") }}</button>
+          <button mdcDialogButton mdcDialogAction="close" type="button">{{ t("cancel") }}</button>
+          <button mdcDialogButton type="submit" unelevated default (click)="submit()">{{ t("save") }}</button>
         </mdc-dialog-actions>
       </mdc-dialog-surface>
     </mdc-dialog-container>
