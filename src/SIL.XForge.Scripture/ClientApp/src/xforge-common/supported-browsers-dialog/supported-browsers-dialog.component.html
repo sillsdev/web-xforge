@@ -3,7 +3,24 @@
     <mdc-dialog-container>
       <mdc-dialog-surface>
         <mdc-dialog-title>{{ t("browser_unsupported") }}</mdc-dialog-title>
-        <mdc-dialog-content> <p [innerHTML]="t('upgrade_chrome_firefox', browserLinks)"></p> </mdc-dialog-content>
+        <mdc-dialog-content>
+          <p
+            *ngIf="upgradeChromeFirefox"
+            [innerHTML]="t('some_features_may_not_work') + ' ' + t('upgrade_chrome_firefox', browserLinks)"
+          ></p>
+          <p
+            *ngIf="upgradeSafari"
+            [innerHTML]="t('some_features_may_not_work') + ' ' + t('upgrade_safari', browserLinks)"
+          ></p>
+          <p
+            *ngIf="audioRecordingNotSupported"
+            [innerHTML]="t('audio_recording_not_supported') + ' ' + t('upgrade_chrome_firefox', browserLinks)"
+          ></p>
+          <p
+            *ngIf="iosRecordingNotSupported"
+            [innerHTML]="t('safari_for_audio_on_ios') + ' ' + t('upgrade_safari', browserLinks)"
+          ></p>
+        </mdc-dialog-content>
         <mdc-dialog-actions>
           <button mdcDialogButton type="button" mdcDialogAction="close">{{ t("dismiss") }}</button>
         </mdc-dialog-actions>

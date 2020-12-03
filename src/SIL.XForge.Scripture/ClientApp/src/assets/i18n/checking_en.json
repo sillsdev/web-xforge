@@ -231,6 +231,7 @@
     "error_occurred": "An error has occurred",
     "firefox": "Firefox",
     "hide_details": "Hide details",
+    "safari": "Safari",
     "show_details": "Show details",
     "to_report_issue_email": "To report an issue, email {{ issueEmailLink }}.",
     "unsupported_browser": "You are using an unsupported browser, which may be the reason for this error. We recommend upgrading to the latest {{ chromeLink }} or {{ firefoxLink }}."
@@ -297,9 +298,13 @@
     "not_connected_to_any_projects": "Looks like you aren't connected to any projects yet."
   },
   "supported_browsers_dialog": {
+    "audio_recording_not_supported": "Audio recording is not supported in this browser.",
     "dismiss": "Dismiss",
     "browser_unsupported": "This browser is unsupported",
-    "upgrade_chrome_firefox": "Some of the features of this website may not work correctly with your browser. We recommend upgrading to the latest {{ chromeLink }} or {{ firefoxLink }}."
+    "safari_for_audio_on_ios": "Audio recording on iPhone and iPad only works in Safari.",
+    "some_features_may_not_work": "Some of the features of this website may not work correctly with your browser.",
+    "upgrade_chrome_firefox": " We recommend upgrading to the latest {{ chromeLink }} or {{ firefoxLink }}.",
+    "upgrade_safari": "We recommend upgrading to the latest {{ safariLink }}."
   },
   "text_chooser_dialog": {
     "cancel": "Cancel",
