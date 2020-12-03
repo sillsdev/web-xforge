@@ -70,6 +70,30 @@
               "buildOptimizer": true,
               "serviceWorker": true
             },
+            "productionBeta": {
+              "budgets": [
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kb"
+                }
+              ],
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prodBeta.ts"
+                }
+              ],
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": true,
+              "extractCss": true,
+              "namedChunks": false,
+              "aot": true,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "buildOptimizer": true,
+              "serviceWorker": true
+            },
             "staging": {
               "budgets": [
                 {
@@ -81,6 +105,30 @@
                 {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.staging.ts"
+                }
+              ],
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": true,
+              "extractCss": true,
+              "namedChunks": false,
+              "aot": true,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "buildOptimizer": true,
+              "serviceWorker": true
+            },
+            "stagingBeta": {
+              "budgets": [
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kb"
+                }
+              ],
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.stagingBeta.ts"
                 }
               ],
               "optimization": true,
@@ -111,6 +159,14 @@
               "vendorChunk": false,
               "buildOptimizer": false,
               "serviceWorker": true
+            },
+            "developmentBeta": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.developmentBeta.ts"
+                }
+              ]
             }
           }
         },
@@ -122,6 +178,10 @@
           "configurations": {
             "production": {
               "browserTarget": "SIL.XForge.Scripture:build:production"
+            },
+            "developmentBeta": {
+              "browserTarget": "SIL.XForge.Scripture:build:developmentBeta",
+              "port": 9200
             }
           }
         },
