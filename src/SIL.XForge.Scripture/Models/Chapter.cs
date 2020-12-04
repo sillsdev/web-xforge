@@ -1,5 +1,8 @@
+using MongoDB.Bson.Serialization.Attributes;
+
 namespace SIL.XForge.Scripture.Models
 {
+    [BsonIgnoreExtraElements]
     public class Chapter
     {
         public int Number { get; set; }

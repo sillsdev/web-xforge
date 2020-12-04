@@ -1,7 +1,9 @@
+using MongoDB.Bson.Serialization.Attributes;
 using SIL.XForge.Models;
 
 namespace SIL.XForge.Scripture.Models
 {
+    [BsonIgnoreExtraElements]
     public class TranslateSource
     {
         public string ParatextId { get; set; }
