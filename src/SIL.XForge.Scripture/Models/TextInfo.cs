@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace SIL.XForge.Scripture.Models
 {
@@ -29,6 +30,7 @@ namespace SIL.XForge.Scripture.Models
         }
     }
 
+    [BsonIgnoreExtraElements]
     public class TextInfo
     {
         public int BookNum { get; set; }
