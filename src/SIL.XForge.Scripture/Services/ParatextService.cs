@@ -275,7 +275,7 @@ namespace SIL.XForge.Scripture.Services
                 else
                 {
                     // Get the user secret
-                    Attempt<UserSecret> userSecretAttempt = await _userSecretRepository.TryGetAsync(userId);
+                    Attempt<UserSecret> userSecretAttempt = await this._userSecretRepository.TryGetAsync(userId);
                     if (!userSecretAttempt.TryResult(out thisUserSecret))
                     {
                         thisUserSecret = null;
@@ -287,11 +287,16 @@ namespace SIL.XForge.Scripture.Services
                 {
                     if (!(thisUserSecret.ParatextTokens?.ValidateLifetime() ?? false))
                     {
-                        await RefreshAccessTokenAsync(thisUserSecret);
+                        await this.RefreshAccessTokenAsync(thisUserSecret);
                     }
 
                     canRead = SFInstallableDblResource.CheckResourcePermission(
-                        paratextId, thisUserSecret, _restClientFactory);
+                        paratextId,
+                        thisUserSecret,
+                        this._paratextOptions.Value,
+                        this._restClientFactory,
+                        this._fileSystemService,
+                        this._jwtTokenHelper);
                 }
 
                 return canRead ? TextInfoPermission.Read : TextInfoPermission.None;

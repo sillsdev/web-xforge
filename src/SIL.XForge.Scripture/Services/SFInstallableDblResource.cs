@@ -189,7 +189,10 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         /// <param name="id">The identifier.</param>
         /// <param name="userSecret">The user secret.</param>
+        /// <param name="paratextOptions">The paratext options.</param>
         /// <param name="restClientFactory">The rest client factory.</param>
+        /// <param name="fileSystemService">The file system service.</param>
+        /// <param name="jwtTokenHelper">The JWT token helper.</param>
         /// <param name="baseUrl">The base URL.</param>
         /// <returns>
         ///   <c>true</c> if the user has permission to access the resource; otherwise, <c>false</c>.
@@ -200,7 +203,8 @@ namespace SIL.XForge.Scripture.Services
         /// or
         /// restClientFactory</exception>
         public static bool CheckResourcePermission(string id, UserSecret userSecret,
-            ISFRestClientFactory restClientFactory, string baseUrl = null)
+            ParatextOptions paratextOptions, ISFRestClientFactory restClientFactory,
+            IFileSystemService fileSystemService, IJwtTokenHelper jwtTokenHelper, string baseUrl = null)
         {
             // Parameter check
             if (string.IsNullOrWhiteSpace(id))
@@ -223,12 +227,34 @@ namespace SIL.XForge.Scripture.Services
                 _ = client.Head(BuildDblResourceEntriesUrl(baseUrl, id));
                 return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // A 403 error means no access.
                 // Normally we would catch the specific WebException,
                 // but something in ParatextData is interfering with it.
-                return false;
+                if (ex.InnerException?.Message.StartsWith("403: ", StringComparison.OrdinalIgnoreCase) ?? false)
+                {
+                    // A 403 error means no access.
+                    return false;
+                }
+                else if (ex.InnerException?.Message.StartsWith("405: ", StringComparison.OrdinalIgnoreCase) ?? false)
+                {
+                    // A 405 means that HEAD request does not work on the server, so we will use the resource list
+                    // This is slower (although faster than a GET request on the resource), but more reliable
+                    IEnumerable<SFInstallableDblResource> resources =
+                        GetInstallableDblResources(
+                        userSecret,
+                        paratextOptions,
+                        restClientFactory,
+                        fileSystemService,
+                        jwtTokenHelper,
+                        baseUrl);
+                    return resources.Any(r => r.DBLEntryUid == id);
+                }
+                else
+                {
+                    // An unknown error
+                    throw;
+                }
             }
         }
 
