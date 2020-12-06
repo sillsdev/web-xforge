@@ -85,7 +85,7 @@ namespace SourceTargetSplitting
 
             services.AddExceptionReporting(Configuration);
             services.AddConfiguration(Configuration);
-            services.AddSFRealtimeServer(LoggerFactory, Configuration, IsDevelopment);
+            services.AddSFRealtimeServer(LoggerFactory, Configuration, IsDevelopment, Program.MigrationsDisabled);
             services.AddSFServices();
             services.AddSFDataAccess(Configuration);
             services.Configure<RequestLocalizationOptions>(

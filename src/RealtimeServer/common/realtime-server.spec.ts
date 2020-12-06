@@ -51,6 +51,22 @@ describe('RealtimeServer', () => {
     expect(ops[1].m.migration).toEqual(2);
   });
 
+  it('does not migrate docs when migrations are disabled', async () => {
+    const env = new TestEnvironment(true);
+    await env.createData();
+    when(env.mockedProjectService.schemaVersion).thenReturn(2);
+    const mockedMigration = mock<Migration>();
+    when(env.mockedProjectService.getMigration(2)).thenReturn(instance(mockedMigration));
+    when(mockedMigration.migrateDoc(anything())).thenCall((doc: Doc) => submitMigrationOp(2, doc, []));
+
+    await env.server.migrateIfNecessary();
+
+    verify(mockedMigration.migrateDoc(anything())).never();
+    verify(env.mockedSchemaVersionRepository.set(PROJECTS_COLLECTION, 2)).never();
+    const ops = env.db.ops[PROJECTS_COLLECTION]['project01'];
+    expect(ops[1]).toBeUndefined();
+  });
+
   it('migrates op', async () => {
     const env = new TestEnvironment();
     await env.createData();
@@ -129,7 +145,7 @@ class TestEnvironment {
   readonly mockedSchemaVersionRepository = mock(SchemaVersionRepository);
   readonly server: RealtimeServer;
 
-  constructor() {
+  constructor(migrationsDisabled: boolean = false) {
     const ShareDBMingoType = MetadataDB(ShareDBMingo.extendMemoryDB(ShareDB.MemoryDB));
     this.db = new ShareDBMingoType();
     when(this.mockedSchemaVersionRepository.getAll()).thenResolve([
@@ -139,6 +155,7 @@ class TestEnvironment {
     when(this.mockedProjectService.collection).thenReturn(PROJECTS_COLLECTION);
     this.server = new RealtimeServer(
       'TEST',
+      migrationsDisabled,
       [instance(this.mockedUserService), instance(this.mockedProjectService)],
       PROJECTS_COLLECTION,
       this.db,

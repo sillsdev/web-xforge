@@ -29,6 +29,17 @@ namespace SourceTargetSplitting
         private static ObjectMigrator? objectMigrator;
 
         /// <summary>
+        /// Gets a value indicating whether to disable migrations.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if migrations are disabled; otherwise, <c>false</c>.
+        /// </value>
+        /// <remarks>
+        /// This exists for the <see cref="Startup" /> class to retrieve this value.
+        /// </remarks>
+        public static bool MigrationsDisabled { get; private set; }
+
+        /// <summary>
         /// Defines the entry point of the application.
         /// </summary>
         /// <param name="args">The arguments.</param>
@@ -37,6 +48,7 @@ namespace SourceTargetSplitting
             const string siteDir = "/var/lib/scriptureforge";
             string syncDir = Path.Combine(siteDir, "sync");
             bool doWrite = (args.Length >= 1 ? args[0] : string.Empty) == "run";
+            MigrationsDisabled = !doWrite;
             string sfAppDir = args.Length >= 2 ? args[1] : string.Empty;
             if (string.IsNullOrWhiteSpace(sfAppDir))
             {

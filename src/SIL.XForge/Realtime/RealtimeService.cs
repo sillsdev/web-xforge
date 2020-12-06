@@ -145,6 +145,7 @@ namespace SIL.XForge.Realtime
                 Scope = _authOptions.Value.Scope,
                 BugsnagApiKey = this._configuration.GetValue<string>("Bugsnag:ApiKey"),
                 ReleaseStage = this._configuration.GetValue<string>("Bugsnag:ReleaseStage"),
+                MigrationsDisabled = this._realtimeOptions.Value.MigrationsDisabled,
                 SiteId = this._siteOptions.Value.Id,
                 Version = System.Diagnostics.FileVersionInfo.GetVersionInfo(@System.Reflection.Assembly.GetEntryAssembly().Location).ProductVersion
             };

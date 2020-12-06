@@ -98,6 +98,7 @@ class TestEnvironment {
     this.db = new ShareDBMingoType();
     this.server = new RealtimeServer(
       'TEST',
+      false,
       [this.service],
       'projects',
       this.db,
