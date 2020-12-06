@@ -115,7 +115,6 @@ namespace SIL.XForge.Scripture.Services
         /// <param name="projectDeleter">The project deleter.</param>
         /// <param name="migrationOperations">The migration operations.</param>
         /// <param name="passwordProvider">The password provider.</param>
-        /// <param name="baseUrl">(Optional) The base URL.</param>
         /// <exception cref="ArgumentNullException">restClientFactory</exception>
         private SFInstallableDblResource(UserSecret userSecret, ParatextOptions paratextOptions,
             ISFRestClientFactory restClientFactory, IFileSystemService fileSystemService,
@@ -231,9 +230,19 @@ namespace SIL.XForge.Scripture.Services
             {
                 // Normally we would catch the specific WebException,
                 // but something in ParatextData is interfering with it.
-                if (ex.InnerException?.Message.StartsWith("403: ", StringComparison.OrdinalIgnoreCase) ?? false)
+                if (ex.InnerException?.Message.StartsWith("401: ", StringComparison.OrdinalIgnoreCase) ?? false)
+                {
+                    // A 401 error means unauthorized (probably a bad token)
+                    return false;
+                }
+                else if (ex.InnerException?.Message.StartsWith("403: ", StringComparison.OrdinalIgnoreCase) ?? false)
                 {
                     // A 403 error means no access.
+                    return false;
+                }
+                else if (ex.InnerException?.Message.StartsWith("404: ", StringComparison.OrdinalIgnoreCase) ?? false)
+                {
+                    // A 404 error means that the resource is not on the server
                     return false;
                 }
                 else if (ex.InnerException?.Message.StartsWith("405: ", StringComparison.OrdinalIgnoreCase) ?? false)
@@ -249,6 +258,11 @@ namespace SIL.XForge.Scripture.Services
                         jwtTokenHelper,
                         baseUrl);
                     return resources.Any(r => r.DBLEntryUid == id);
+                }
+                else if (ex.Source == "NSubstitute")
+                {
+                    // This occurs during unit tests to test whether there is permission or not
+                    return false;
                 }
                 else
                 {

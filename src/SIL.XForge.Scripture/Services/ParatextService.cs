@@ -57,6 +57,7 @@ namespace SIL.XForge.Scripture.Services
         private readonly IJwtTokenHelper _jwtTokenHelper;
         private readonly IParatextDataHelper _paratextDataHelper;
         private string _applicationProductVersion = "SF";
+        private string _dblServerUri = "https://paratext.thedigitalbiblelibrary.org/";
         private string _registryServerUri = "https://registry.paratext.org";
         private string _sendReceiveServerUri = InternetAccess.uriProduction;
         private readonly IInternetSharedRepositorySourceProvider _internetSharedRepositorySourceProvider;
@@ -87,6 +88,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 _httpClientHandler.ServerCertificateCustomValidationCallback
                     = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+                _dblServerUri = "https://paratext-qa.thedigitalbiblelibrary.org/";
                 _registryServerUri = "https://registry-dev.paratext.org";
                 _registryClient.BaseAddress = new Uri(_registryServerUri);
                 _sendReceiveServerUri = InternetAccess.uriDevelopment;
@@ -296,7 +298,8 @@ namespace SIL.XForge.Scripture.Services
                         this._paratextOptions.Value,
                         this._restClientFactory,
                         this._fileSystemService,
-                        this._jwtTokenHelper);
+                        this._jwtTokenHelper,
+                        this._dblServerUri);
                 }
 
                 return canRead ? TextInfoPermission.Read : TextInfoPermission.None;
@@ -713,7 +716,8 @@ namespace SIL.XForge.Scripture.Services
                 this._paratextOptions.Value,
                 this._restClientFactory,
                 this._fileSystemService,
-                this._jwtTokenHelper);
+                this._jwtTokenHelper,
+                this._dblServerUri);
             IReadOnlyDictionary<string, int> resourceRevisions =
                 SFInstallableDblResource.GetInstalledResourceRevisions();
             return resources.OrderBy(r => r.FullName).Select(r => new ParatextResource
