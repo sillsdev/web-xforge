@@ -39,10 +39,11 @@
     "production": true
   },
   {
-    "localName": "Français",
+    "localName": "français",
     "englishName": "French",
     "tags": ["fr", "fr-FR"],
-    "production": true
+    "production": true,
+    "helps": "fr"
   },
   {
     "localName": "Bahasa Indonesia",

@@ -334,12 +334,8 @@ class TestEnvironment {
     return this.component.selectAllCheckbox;
   }
 
-  get filterInput(): HTMLInputElement {
-    return this.table.querySelector('.filter-text div mdc-text-field input') as HTMLInputElement;
-  }
-
   get showAllButton(): HTMLButtonElement {
-    return this.table.querySelector('.filter-text div button') as HTMLButtonElement;
+    return this.overlayContainerElement.querySelector('.filter-text div button') as HTMLButtonElement;
   }
 
   get statusMessage(): string {
@@ -355,7 +351,9 @@ class TestEnvironment {
   }
 
   openFromScriptureChooser(): void {
-    this.click(this.table.querySelector('mdc-text-field[formControlName="from"] mdc-icon') as HTMLInputElement);
+    this.click(
+      this.overlayContainerElement.querySelector('mdc-text-field[formControlName="from"] mdc-icon') as HTMLInputElement
+    );
   }
 
   setControlValue(control: FormControl, value: string) {

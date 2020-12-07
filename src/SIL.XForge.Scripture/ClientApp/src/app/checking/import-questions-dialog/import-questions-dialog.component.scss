@@ -1,7 +1,14 @@
 @use '@material/textfield/mixins' as textfield;
 
+@import 'src/variables';
+@import 'bootstrap/scss/mixins/breakpoints';
+
 mdc-dialog-title .material-icons {
   vertical-align: text-bottom;
+}
+
+mdc-data-table {
+  width: 100%;
 }
 
 .select-all-checkbox {
@@ -28,16 +35,18 @@ mdc-text-field ::ng-deep {
   }
 }
 
-.filter-references div {
-  display: flex;
+.filter-references {
   margin-top: 0.4em;
-  ::ng-deep {
-    mdc-form-field:first-child .mdc-notched-outline__trailing {
-      border-radius: 0 !important;
-    }
-    mdc-form-field:last-child {
-      .mdc-notched-outline__leading {
+  @include media-breakpoint-up(sm) {
+    display: flex;
+    ::ng-deep {
+      mdc-form-field:first-child .mdc-notched-outline__trailing {
         border-radius: 0 !important;
+      }
+      mdc-form-field:last-child {
+        .mdc-notched-outline__leading {
+          border-radius: 0 !important;
+        }
       }
     }
   }
