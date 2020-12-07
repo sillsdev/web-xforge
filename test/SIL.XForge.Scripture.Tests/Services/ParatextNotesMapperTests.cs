@@ -3,8 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
+using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
@@ -73,6 +77,75 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"" deleted=""true"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
+                                    <p>Test answer 3.</p>
+                                </content>
+                            </comment>
+                        </thread>
+                    </notes>";
+                Assert.That(XNode.DeepEquals(notesElem, XElement.Parse(expectedNotesText)), Is.True);
+
+                Assert.That(env.Mapper.NewSyncUsers.Select(su => su.ParatextUsername),
+                    Is.EquivalentTo(new[] { "PT User 1", "PT User 3" }));
+            }
+        }
+
+        [Test]
+        public async Task GetNotesChangelistAsync_AddAudioNotes()
+        {
+            var env = new TestEnvironment();
+            env.SetParatextProjectRoles(true);
+            await env.InitMapperAsync(false, true);
+            env.AddData(null, null, null, null, true);
+
+            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            {
+                const string oldNotesText = @"
+                    <notes version=""1.1"">
+                        <thread id=""ANSWER_answer03"">
+                            <selection verseRef=""MAT 1:2"" startPos=""0"" selectedText="""" />
+                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"">
+                                <content>
+                                    <p><span style=""bold"">- xForge audio-only question -</span></p>
+                                    <p>Test answer 3.</p>
+                                </content>
+                            </comment>
+                        </thread>
+                    </notes>";
+                XElement notesElem = await env.Mapper.GetNotesChangelistAsync(XElement.Parse(oldNotesText),
+                    await env.GetQuestionDocsAsync(conn));
+
+                const string expectedNotesText = @"
+                    <notes version=""1.1"">
+                        <thread id=""ANSWER_answer01"">
+                            <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
+                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
+                                <content>
+                                    <p><span style=""bold"">- xForge audio-only question -</span></p>
+                                    <p>- xForge audio-only response -</p>
+                                </content>
+                            </comment>
+                            <comment user=""PT User 3"" date=""2019-01-01T09:00:00.0000000+00:00"">
+                                <content>Test comment 1.</content>
+                            </comment>
+                        </thread>
+                        <thread id=""ANSWER_answer02"">
+                            <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
+                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-02T08:00:00.0000000+00:00"">
+                                <content>
+                                    <p><span style=""bold"">- xForge audio-only question -</span></p>
+                                    <p><span style=""italic"">This is some scripture. (MAT 1:2-3)</span></p>
+                                    <p>Test answer 2.</p>
+                                </content>
+                            </comment>
+                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
+                                <content>Test comment 2.</content>
+                            </comment>
+                        </thread>
+                        <thread id=""ANSWER_answer03"">
+                            <selection verseRef=""MAT 1:2"" startPos=""0"" selectedText="""" />
+                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"" deleted=""true"">
+                                <content>
+                                    <p><span style=""bold"">- xForge audio-only question -</span></p>
                                     <p>Test answer 3.</p>
                                 </content>
                             </comment>
@@ -322,13 +395,25 @@ namespace SIL.XForge.Scripture.Services
                 ParatextService = Substitute.For<IParatextService>();
                 ParatextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user01")).Returns("PT User 1");
                 ParatextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user03")).Returns("PT User 3");
-                Mapper = new ParatextNotesMapper(UserSecrets, ParatextService);
+                var options = Microsoft.Extensions.Options.Options.Create(new LocalizationOptions
+                {
+                    ResourcesPath = "Resources"
+                });
+                var factory = new ResourceManagerStringLocalizerFactory(options, NullLoggerFactory.Instance);
+                Localizer = new StringLocalizer<SharedResource>(factory);
+                var siteOptions = Substitute.For<IOptions<SiteOptions>>();
+                siteOptions.Value.Returns(new SiteOptions
+                {
+                    Name = "xForge",
+                });
+                Mapper = new ParatextNotesMapper(UserSecrets, ParatextService, Localizer, siteOptions);
             }
 
             public ParatextNotesMapper Mapper { get; }
             public MemoryRepository<UserSecret> UserSecrets { get; }
             public SFMemoryRealtimeService RealtimeService { get; }
             public IParatextService ParatextService { get; }
+            public IStringLocalizer<SharedResource> Localizer { get; }
 
             public async Task InitMapperAsync(bool includeSyncUsers, bool twoPtUsersOnProject)
             {
@@ -337,7 +422,7 @@ namespace SIL.XForge.Scripture.Services
             }
 
             public void AddData(string answerSyncUserId1, string answerSyncUserId2, string commentSyncUserId1,
-                string commentSyncUserId2)
+                string commentSyncUserId2, bool useAudioResponses = false)
             {
                 RealtimeService.AddRepository("questions", OTType.Json0, new MemoryRepository<Question>(new[]
                 {
@@ -346,7 +431,7 @@ namespace SIL.XForge.Scripture.Services
                         Id = "project01:question01",
                         DataId = "question01",
                         VerseRef = new VerseRefData(40, 1, 1),
-                        Text = "Test question?",
+                        Text = useAudioResponses ? "" : "Test question?",
                         Answers =
                         {
                             new Answer
@@ -355,7 +440,7 @@ namespace SIL.XForge.Scripture.Services
                                 OwnerRef = "user02",
                                 SyncUserRef = answerSyncUserId1,
                                 DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc),
-                                Text = "Test answer 1.",
+                                Text = useAudioResponses ? "" : "Test answer 1.",
                                 Comments =
                                 {
                                     new Comment
