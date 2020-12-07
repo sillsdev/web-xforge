@@ -138,6 +138,7 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject();
         env.setupParatextProjects(undefined);
+        when(mockedParatextService.getResources()).thenReturn(of(undefined));
         env.wait();
         expect(env.loginButton).not.toBeNull();
         expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(true);
@@ -205,6 +206,7 @@ describe('SettingsComponent', () => {
       it('should display Based On project even if user is not a member', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject();
+        when(mockedParatextService.getResources()).thenReturn(of([]));
         env.setupParatextProjects([
           {
             paratextId: 'paratextId02',
@@ -222,6 +224,18 @@ describe('SettingsComponent', () => {
         expect(env.getMenuItems(env.basedOnSelect).length).toEqual(2);
         expect(env.getMenuItemText(env.basedOnSelect, 0)).toContain('ParatextP1');
         expect(env.getMenuItemText(env.basedOnSelect, 1)).toContain('ParatextP2');
+      }));
+
+      it('should display projects then resources', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        env.wait();
+        env.wait();
+        expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
+        expect(env.basedOnSelect).not.toBeNull();
+        expect(env.getMenuItems(env.basedOnSelect).length).toEqual(5);
+        expect(env.getMenuItemText(env.basedOnSelect, 1)).toBe('ParatextP2');
+        expect(env.getMenuItemText(env.basedOnSelect, 2)).toBe('Sob Jonah and Luke');
       }));
 
       it('should not save Translation Suggestions enable if Based On not set', fakeAsync(() => {
@@ -403,6 +417,37 @@ class TestEnvironment {
     this.isOnline = new BehaviorSubject<boolean>(hasConnection);
     when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
     when(mockedPwaService.isOnline).thenReturn(this.isOnline.getValue());
+    when(mockedParatextService.getResources()).thenReturn(
+      of([
+        {
+          paratextId: 'e01f11e9b4b8e338',
+          projectId: undefined,
+          name: 'Sob Jonah and Luke',
+          shortName: 'SobP15',
+          languageTag: 'urw',
+          isConnectable: false,
+          isConnected: false
+        },
+        {
+          paratextId: '5e51f89e89947acb',
+          projectId: undefined,
+          name: 'Aruamu New Testament [msy] Papua New Guinea 2004 DBL',
+          shortName: 'AruNT04',
+          languageTag: 'msy',
+          isConnectable: false,
+          isConnected: false
+        },
+        {
+          paratextId: '9bb76cd3e5a7f9b4',
+          projectId: undefined,
+          name: 'Revised Version with Apocrypha 1885, 1895',
+          shortName: 'RV1895',
+          languageTag: 'en',
+          isConnectable: false,
+          isConnected: false
+        }
+      ])
+    );
     this.setupParatextProjects([
       {
         paratextId: 'paratextId01',
@@ -568,6 +613,7 @@ class TestEnvironment {
       translationSuggestionsEnabled: true,
       source: {
         paratextId: 'paratextId01',
+        projectRef: 'paratext01',
         name: 'ParatextP1',
         shortName: 'PT1',
         writingSystem: {

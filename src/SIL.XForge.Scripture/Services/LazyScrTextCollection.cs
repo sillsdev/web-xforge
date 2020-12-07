@@ -1,10 +1,10 @@
 using System.IO;
+using System.Linq;
 using System.Xml.Linq;
 using Paratext.Data;
 using Paratext.Data.ProjectSettingsAccess;
-using SIL.XForge.Services;
 using SIL.XForge.Scripture.Models;
-using Paratext.Data.Users;
+using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -33,8 +33,7 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         /// <param name="ptUsername"> The username of the user retrieving the ScrText. </param>
         /// <param name="projectId"> The ID of the target project. </param>
-        /// <param name="textType"> Target or Source. </param>
-        public ScrText FindById(string ptUsername, string projectId, Models.TextType textType)
+        public ScrText FindById(string ptUsername, string projectId)
         {
             if (projectId == null)
                 return null;
@@ -42,18 +41,33 @@ namespace SIL.XForge.Scripture.Services
             if (!FileSystemService.DirectoryExists(baseProjectPath))
                 return null;
 
-            string fullProjectPath = Path.Combine(baseProjectPath, TextTypeUtils.DirectoryName(textType));
+            string fullProjectPath = Path.Combine(baseProjectPath, "target");
             string settingsFile = Path.Combine(fullProjectPath, ProjectSettings.fileName);
             if (!FileSystemService.FileExists(settingsFile))
-                return null;
+            {
+                // If this is an older project (most likely a resource), there will be an SSF file
+                settingsFile = FileSystemService.EnumerateFiles(fullProjectPath, "*.ssf").FirstOrDefault();
+
+                // We couldn't find the xml or ssf file
+                if (settingsFile == null)
+                {
+                    return null;
+                }
+            }
 
             string name = GetNameFromSettings(settingsFile);
             if (name != null)
-                return CreateScrText(ptUsername, new ProjectName()
+            {
+                ScrText scrText = CreateScrText(ptUsername, new ProjectName()
                 {
                     ProjectPath = fullProjectPath,
                     ShortName = name
                 });
+
+                // return the object
+                return scrText;
+            }
+
             return null;
         }
 

@@ -24,6 +24,8 @@ interface RealtimeServerOptions {
   authority: string;
   bugsnagApiKey: string;
   releaseStage: string;
+  migrationsDisabled: boolean;
+  siteId: string;
   version: string;
 }
 
@@ -51,7 +53,12 @@ async function startServer(options: RealtimeServerOptions): Promise<void> {
     const DBType = MetadataDB(ShareDBMongo);
     const client = await MongoClient.connect(options.connectionString, { useUnifiedTopology: true });
     const db = client.db();
-    server = new RealtimeServerType(new DBType(callback => callback(null, client)), new SchemaVersionRepository(db));
+    server = new RealtimeServerType(
+      options.siteId,
+      options.migrationsDisabled,
+      new DBType(callback => callback(null, client)),
+      new SchemaVersionRepository(db)
+    );
     await server.createIndexes(db);
     await server.migrateIfNecessary();
 

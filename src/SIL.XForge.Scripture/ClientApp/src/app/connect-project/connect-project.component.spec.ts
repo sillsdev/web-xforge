@@ -61,6 +61,7 @@ describe('ConnectProjectComponent', () => {
   it('should display login button when PT projects is null', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedParatextService.getProjects()).thenReturn(of(undefined));
+    when(mockedParatextService.getResources()).thenReturn(of(undefined));
     env.waitForProjectsResponse();
 
     expect(env.component.state).toEqual('login');
@@ -73,6 +74,7 @@ describe('ConnectProjectComponent', () => {
   it('should display form when PT projects is empty', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedParatextService.getProjects()).thenReturn(of([]));
+    when(mockedParatextService.getResources()).thenReturn(of([]));
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
     expect(env.connectProjectForm).not.toBeNull();
@@ -80,9 +82,31 @@ describe('ConnectProjectComponent', () => {
     expect(env.noProjectsMessage.nativeElement.textContent).toBe('A translated string.');
   }));
 
+  it('should display projects then resources', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupDefaultProjectData();
+    env.waitForProjectsResponse();
+    expect(env.component.state).toEqual('input');
+    expect(env.connectProjectForm).not.toBeNull();
+
+    env.changeSelectValue(env.projectSelect, 'pt01');
+
+    env.clickElement(env.inputElement(env.checkingCheckbox));
+
+    env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
+    expect(env.sourceParatextIdControl.valid).toBe(true);
+    expect(env.sourceParatextIdControl.disabled).toBe(false);
+    // NOTE: The source projects list excludes pt01 (as it is our selected project above)
+    expect(env.getMenuItems(env.sourceProjectSelect).length).toEqual(6);
+    expect(env.getMenuItemText(env.sourceProjectSelect, 2)).toBe('Thai');
+    expect(env.getMenuItemText(env.sourceProjectSelect, 3)).toBe('Sob Jonah and Luke');
+    expect(env.component.connectProjectForm.valid).toBe(true);
+  }));
+
   it('should do nothing when form is invalid', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedParatextService.getProjects()).thenReturn(of([]));
+    when(mockedParatextService.getResources()).thenReturn(of([]));
     env.waitForProjectsResponse();
 
     expect(env.submitButton.nativeElement.disabled).toBe(true);
@@ -96,6 +120,7 @@ describe('ConnectProjectComponent', () => {
   it('should display loading when getting PT projects', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedParatextService.getProjects()).thenReturn(defer(() => Promise.resolve([])));
+    when(mockedParatextService.getResources()).thenReturn(defer(() => Promise.resolve([])));
     env.fixture.detectChanges();
 
     expect(env.component.state).toEqual('loading');
@@ -178,6 +203,7 @@ describe('ConnectProjectComponent', () => {
         }
       ])
     );
+    when(mockedParatextService.getResources()).thenReturn(of([]));
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
     expect(env.getMenuItems(env.projectSelect).length).toEqual(3);
@@ -367,6 +393,7 @@ class TestEnvironment {
               ? undefined
               : {
                   paratextId: settings.sourceParatextId,
+                  projectRef: 'project02',
                   name: 'Source',
                   shortName: 'SRC',
                   writingSystem: { tag: 'qaa' }
@@ -547,6 +574,37 @@ class TestEnvironment {
           languageTag: 'th',
           isConnectable: true,
           isConnected: true
+        }
+      ])
+    );
+    when(mockedParatextService.getResources()).thenReturn(
+      of([
+        {
+          paratextId: 'e01f11e9b4b8e338',
+          projectId: undefined,
+          name: 'Sob Jonah and Luke',
+          shortName: 'SobP15',
+          languageTag: 'urw',
+          isConnectable: false,
+          isConnected: false
+        },
+        {
+          paratextId: '5e51f89e89947acb',
+          projectId: undefined,
+          name: 'Aruamu New Testament [msy] Papua New Guinea 2004 DBL',
+          shortName: 'AruNT04',
+          languageTag: 'msy',
+          isConnectable: false,
+          isConnected: false
+        },
+        {
+          paratextId: '9bb76cd3e5a7f9b4',
+          projectId: undefined,
+          name: 'Revised Version with Apocrypha 1885, 1895',
+          shortName: 'RV1895',
+          languageTag: 'en',
+          isConnectable: false,
+          isConnected: false
         }
       ])
     );

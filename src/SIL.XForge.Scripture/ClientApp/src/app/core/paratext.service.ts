@@ -22,6 +22,12 @@ export class ParatextService {
       .pipe(map(r => (r == null ? undefined : r)));
   }
 
+  getResources(): Observable<ParatextProject[] | undefined> {
+    return this.http
+      .get<ParatextProject[]>('paratext-api/resources', { headers: this.getHeaders() })
+      .pipe(map(r => (r == null ? undefined : r)));
+  }
+
   getParatextUsername(): Observable<string | undefined> {
     return this.http
       .get<string>('paratext-api/username', { headers: this.getHeaders() })

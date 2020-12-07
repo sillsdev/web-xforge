@@ -1,16 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
 using SIL.Machine.WebApi.Services;
 using SIL.Scripture;
-using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
@@ -28,7 +25,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
 
-            await env.Runner.RunAsync("project02", "user01", false);
+            await env.Runner.RunAsync("project03", "user01", false);
         }
 
         [Test]
@@ -37,7 +34,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.SetupSFData(true, true, true);
 
-            await env.Runner.RunAsync("project01", "user02", false);
+            await env.Runner.RunAsync("project01", "user03", false);
 
             SFProject project = env.GetProject();
             Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
@@ -68,15 +65,15 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user01", true);
 
-            Assert.That(env.ContainsText("MAT", 1, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MRK", 1, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MRK", 2, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
+            Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
+            Assert.That(env.ContainsText("project01", "MRK", 1), Is.True);
+            Assert.That(env.ContainsText("project01", "MRK", 2), Is.True);
 
-            Assert.That(env.ContainsText("MAT", 1, TextType.Source), Is.False);
-            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.False);
-            Assert.That(env.ContainsText("MRK", 1, TextType.Source), Is.False);
-            Assert.That(env.ContainsText("MRK", 2, TextType.Source), Is.False);
+            Assert.That(env.ContainsText("project02", "MAT", 1), Is.False);
+            Assert.That(env.ContainsText("project02", "MAT", 2), Is.False);
+            Assert.That(env.ContainsText("project02", "MRK", 1), Is.False);
+            Assert.That(env.ContainsText("project02", "MRK", 2), Is.False);
 
             Assert.That(env.ContainsQuestion("MAT", 1), Is.False);
             Assert.That(env.ContainsQuestion("MAT", 2), Is.False);
@@ -97,17 +94,18 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2, false));
 
+            await env.Runner.RunAsync("project02", "user01", true);
             await env.Runner.RunAsync("project01", "user01", true);
 
-            Assert.That(env.ContainsText("MAT", 1, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MRK", 1, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MRK", 2, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
+            Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
+            Assert.That(env.ContainsText("project01", "MRK", 1), Is.True);
+            Assert.That(env.ContainsText("project01", "MRK", 2), Is.True);
 
-            Assert.That(env.ContainsText("MAT", 1, TextType.Source), Is.True);
-            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.True);
-            Assert.That(env.ContainsText("MRK", 1, TextType.Source), Is.False);
-            Assert.That(env.ContainsText("MRK", 2, TextType.Source), Is.False);
+            Assert.That(env.ContainsText("project02", "MAT", 1), Is.True);
+            Assert.That(env.ContainsText("project02", "MAT", 2), Is.True);
+            Assert.That(env.ContainsText("project02", "MRK", 1), Is.False);
+            Assert.That(env.ContainsText("project02", "MRK", 2), Is.False);
 
             Assert.That(env.ContainsQuestion("MAT", 1), Is.False);
             Assert.That(env.ContainsQuestion("MAT", 2), Is.False);
@@ -128,17 +126,18 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, false, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2, false));
 
+            await env.Runner.RunAsync("project02", "user01", true);
             await env.Runner.RunAsync("project01", "user01", true);
 
-            Assert.That(env.ContainsText("MAT", 1, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MRK", 1, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MRK", 2, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
+            Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
+            Assert.That(env.ContainsText("project01", "MRK", 1), Is.True);
+            Assert.That(env.ContainsText("project01", "MRK", 2), Is.True);
 
-            Assert.That(env.ContainsText("MAT", 1, TextType.Source), Is.True);
-            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.True);
-            Assert.That(env.ContainsText("MRK", 1, TextType.Source), Is.False);
-            Assert.That(env.ContainsText("MRK", 2, TextType.Source), Is.False);
+            Assert.That(env.ContainsText("project02", "MAT", 1), Is.True);
+            Assert.That(env.ContainsText("project02", "MAT", 2), Is.True);
+            Assert.That(env.ContainsText("project02", "MRK", 1), Is.False);
+            Assert.That(env.ContainsText("project02", "MRK", 2), Is.False);
 
             Assert.That(env.ContainsQuestion("MAT", 1), Is.False);
             Assert.That(env.ContainsQuestion("MAT", 2), Is.False);
@@ -161,15 +160,15 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user01", true);
 
-            Assert.That(env.ContainsText("MAT", 1, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MRK", 1, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MRK", 2, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
+            Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
+            Assert.That(env.ContainsText("project01", "MRK", 1), Is.True);
+            Assert.That(env.ContainsText("project01", "MRK", 2), Is.True);
 
-            Assert.That(env.ContainsText("MAT", 1, TextType.Source), Is.False);
-            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.False);
-            Assert.That(env.ContainsText("MRK", 1, TextType.Source), Is.False);
-            Assert.That(env.ContainsText("MRK", 2, TextType.Source), Is.False);
+            Assert.That(env.ContainsText("project02", "MAT", 1), Is.False);
+            Assert.That(env.ContainsText("project02", "MAT", 2), Is.False);
+            Assert.That(env.ContainsText("project02", "MRK", 1), Is.False);
+            Assert.That(env.ContainsText("project02", "MRK", 2), Is.False);
 
             Assert.That(env.ContainsQuestion("MAT", 1), Is.False);
             Assert.That(env.ContainsQuestion("MAT", 2), Is.False);
@@ -200,15 +199,15 @@ namespace SIL.XForge.Scripture.Services
             env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<string>());
 
             var delta = Delta.New().InsertText("text");
-            Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(delta), Is.True);
-            Assert.That(env.GetText("MAT", 2, TextType.Target).DeepEquals(delta), Is.True);
-            Assert.That(env.GetText("MRK", 1, TextType.Target).DeepEquals(delta), Is.True);
-            Assert.That(env.GetText("MRK", 2, TextType.Target).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project01", "MAT", 1).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project01", "MAT", 2).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project01", "MRK", 1).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project01", "MRK", 2).DeepEquals(delta), Is.True);
 
-            Assert.That(env.GetText("MAT", 1, TextType.Source).DeepEquals(delta), Is.True);
-            Assert.That(env.GetText("MAT", 2, TextType.Source).DeepEquals(delta), Is.True);
-            Assert.That(env.GetText("MRK", 1, TextType.Source).DeepEquals(delta), Is.True);
-            Assert.That(env.GetText("MRK", 2, TextType.Source).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project02", "MAT", 1).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project02", "MAT", 2).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project02", "MRK", 1).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project02", "MRK", 2).DeepEquals(delta), Is.True);
 
             env.ParatextService.DidNotReceive().PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
 
@@ -230,24 +229,25 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, true, books);
             env.SetupPTData(books);
 
+            await env.Runner.RunAsync("project02", "user01", false);
             await env.Runner.RunAsync("project01", "user01", false);
 
             env.ParatextService.Received().PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>());
             env.ParatextService.Received().PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<string>());
 
-            env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<string>());
-            env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<string>());
+            env.ParatextService.Received().PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<string>());
+            env.ParatextService.Received().PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<string>());
 
             var delta = Delta.New().InsertText("text");
-            Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(delta), Is.True);
-            Assert.That(env.GetText("MAT", 2, TextType.Target).DeepEquals(delta), Is.True);
-            Assert.That(env.GetText("MRK", 1, TextType.Target).DeepEquals(delta), Is.True);
-            Assert.That(env.GetText("MRK", 2, TextType.Target).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project01", "MAT", 1).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project01", "MAT", 2).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project01", "MRK", 1).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project01", "MRK", 2).DeepEquals(delta), Is.True);
 
-            Assert.That(env.GetText("MAT", 1, TextType.Source).DeepEquals(delta), Is.True);
-            Assert.That(env.GetText("MAT", 2, TextType.Source).DeepEquals(delta), Is.True);
-            Assert.That(env.GetText("MRK", 1, TextType.Source).DeepEquals(delta), Is.True);
-            Assert.That(env.GetText("MRK", 2, TextType.Source).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project02", "MAT", 1).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project02", "MAT", 2).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project02", "MRK", 1).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project02", "MRK", 2).DeepEquals(delta), Is.True);
 
             env.ParatextService.Received(2).PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
 
@@ -267,26 +267,27 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, false, true, books);
             env.SetupPTData(books);
 
+            await env.Runner.RunAsync("project02", "user01", false);
             await env.Runner.RunAsync("project01", "user01", false);
 
             env.ParatextService.Received().PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>());
             env.ParatextService.Received().PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<string>());
 
-            env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<string>());
-            env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<string>());
+            env.ParatextService.Received().PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<string>());
+            env.ParatextService.Received().PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<string>());
 
             env.ParatextService.DidNotReceive().PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
 
             var delta = Delta.New().InsertText("text");
-            Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(delta), Is.True);
-            Assert.That(env.GetText("MAT", 2, TextType.Target).DeepEquals(delta), Is.True);
-            Assert.That(env.GetText("MRK", 1, TextType.Target).DeepEquals(delta), Is.True);
-            Assert.That(env.GetText("MRK", 2, TextType.Target).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project01", "MAT", 1).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project01", "MAT", 2).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project01", "MRK", 1).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project01", "MRK", 2).DeepEquals(delta), Is.True);
 
-            Assert.That(env.GetText("MAT", 1, TextType.Source).DeepEquals(delta), Is.True);
-            Assert.That(env.GetText("MAT", 2, TextType.Source).DeepEquals(delta), Is.True);
-            Assert.That(env.GetText("MRK", 1, TextType.Source).DeepEquals(delta), Is.True);
-            Assert.That(env.GetText("MRK", 2, TextType.Source).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project02", "MAT", 1).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project02", "MAT", 2).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project02", "MRK", 1).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project02", "MRK", 2).DeepEquals(delta), Is.True);
 
             SFProjectSecret projectSecret = env.GetProjectSecret();
             Assert.That(projectSecret.SyncUsers.Count, Is.EqualTo(1));
@@ -303,13 +304,14 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, false, new Book("MAT", 2), new Book("MRK", 2));
             env.SetupPTData(new Book("MAT", 3), new Book("MRK", 1));
 
+            await env.Runner.RunAsync("project02", "user01", false);
             await env.Runner.RunAsync("project01", "user01", false);
 
-            Assert.That(env.ContainsText("MAT", 3, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MRK", 2, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("project01", "MAT", 3), Is.True);
+            Assert.That(env.ContainsText("project01", "MRK", 2), Is.False);
 
-            Assert.That(env.ContainsText("MAT", 3, TextType.Source), Is.True);
-            Assert.That(env.ContainsText("MRK", 2, TextType.Source), Is.False);
+            Assert.That(env.ContainsText("project02", "MAT", 3), Is.True);
+            Assert.That(env.ContainsText("project02", "MRK", 2), Is.False);
 
             Assert.That(env.ContainsQuestion("MAT", 2), Is.True);
             Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
@@ -345,17 +347,18 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, false, new Book("MAT", 2), new Book("MRK", 2));
             env.SetupPTData(new Book("MAT", 2), new Book("LUK", 2));
 
+            await env.Runner.RunAsync("project02", "user01", false);
             await env.Runner.RunAsync("project01", "user01", false);
 
-            Assert.That(env.ContainsText("MRK", 1, TextType.Target), Is.False);
-            Assert.That(env.ContainsText("MRK", 2, TextType.Target), Is.False);
-            Assert.That(env.ContainsText("LUK", 1, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("LUK", 2, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("project01", "MRK", 1), Is.False);
+            Assert.That(env.ContainsText("project01", "MRK", 2), Is.False);
+            Assert.That(env.ContainsText("project01", "LUK", 1), Is.True);
+            Assert.That(env.ContainsText("project01", "LUK", 2), Is.True);
 
-            Assert.That(env.ContainsText("MRK", 1, TextType.Source), Is.False);
-            Assert.That(env.ContainsText("MRK", 2, TextType.Source), Is.False);
-            Assert.That(env.ContainsText("LUK", 1, TextType.Source), Is.True);
-            Assert.That(env.ContainsText("LUK", 2, TextType.Source), Is.True);
+            Assert.That(env.ContainsText("project02", "MRK", 1), Is.False);
+            Assert.That(env.ContainsText("project02", "MRK", 2), Is.False);
+            Assert.That(env.ContainsText("project02", "LUK", 1), Is.True);
+            Assert.That(env.ContainsText("project02", "LUK", 2), Is.True);
 
             Assert.That(env.ContainsQuestion("MRK", 1), Is.False);
             Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
@@ -391,6 +394,64 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task SyncAsync_UserHasNoResourcePermission()
+        {
+            var env = new TestEnvironment();
+            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+            env.SetupSFData(true, true, false, books);
+            env.SetupPTData(books);
+            var ptUserRoles = new Dictionary<string, string>
+            {
+                { "pt01", SFProjectRole.Translator }
+            };
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
+                .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
+            var ptSourcePermissions = new Dictionary<string, string>()
+            {
+                { "user01", TextInfoPermission.Read },
+                { "user02", TextInfoPermission.None },
+            };
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>())
+                .Returns(Task.FromResult(ptSourcePermissions));
+
+            await env.Runner.RunAsync("project01", "user01", false);
+
+            SFProject project = env.GetProject();
+            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            Assert.That(project.Texts.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.None));
+        }
+
+        [Test]
+        public async Task SyncAsync_UserHasResourcePermission()
+        {
+            var env = new TestEnvironment();
+            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+            env.SetupSFData(true, true, false, books);
+            env.SetupPTData(books);
+            var ptUserRoles = new Dictionary<string, string>
+            {
+                { "pt01", SFProjectRole.Translator }
+            };
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
+                .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
+            var ptSourcePermissions = new Dictionary<string, string>()
+            {
+                { "user01", TextInfoPermission.Read },
+                { "user02", TextInfoPermission.Read },
+            };
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>())
+                .Returns(Task.FromResult(ptSourcePermissions));
+
+            await env.Runner.RunAsync("project01", "user01", false);
+
+            SFProject project = env.GetProject();
+            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            Assert.That(project.Texts.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.Read));
+        }
+
+        [Test]
         public async Task SyncAsync_CheckerWithPTAccountNotRemoved()
         {
             var env = new TestEnvironment();
@@ -423,13 +484,13 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, false, false, books);
             env.SetupPTData(books);
 
-            env.ParatextService.IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), "target", TextType.Target)
+            env.ParatextService.IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), "target")
                 .Returns(true);
             await env.Runner.RunAsync("project01", "user01", false);
 
             SFProject project = env.GetProject();
-            env.ParatextService.Received().IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), "target", TextType.Target);
-            env.ParatextService.Received().IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), "target", TextType.Source);
+            env.ParatextService.Received().IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), "target");
+            env.ParatextService.Received().IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), "source");
             Assert.That(project.IsRightToLeft, Is.True);
             Assert.That(project.TranslateConfig.Source.IsRightToLeft, Is.False);
         }
@@ -442,19 +503,19 @@ namespace SIL.XForge.Scripture.Services
             env.RealtimeService.GetRepository<TextData>()
                 .Add(new TextData(Delta.New().InsertText("old text"))
                 {
-                    Id = TextData.GetTextDocId("project01", 42, 1, TextType.Target)
+                    Id = TextData.GetTextDocId("project01", 42, 1)
                 });
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2), new Book("LUK", 2));
 
             await env.Runner.RunAsync("project01", "user01", false);
 
             var delta = Delta.New().InsertText("text");
-            Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(delta), Is.True);
-            Assert.That(env.GetText("MAT", 2, TextType.Target).DeepEquals(delta), Is.True);
-            Assert.That(env.GetText("MRK", 1, TextType.Target).DeepEquals(delta), Is.True);
-            Assert.That(env.GetText("MRK", 2, TextType.Target).DeepEquals(delta), Is.True);
-            Assert.That(env.GetText("LUK", 1, TextType.Target).DeepEquals(delta), Is.True);
-            Assert.That(env.GetText("LUK", 2, TextType.Target).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project01", "MAT", 1).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project01", "MAT", 2).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project01", "MRK", 1).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project01", "MRK", 2).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project01", "LUK", 1).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("project01", "LUK", 2).DeepEquals(delta), Is.True);
 
             SFProject project = env.GetProject();
             Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
@@ -470,20 +531,21 @@ namespace SIL.XForge.Scripture.Services
             env.SetupPTData(new Book("MAT", 3, true));
 
             // DB should start with Target chapter 2 but without Source chapter 2.
-            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.False);
+            Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
+            Assert.That(env.ContainsText("project02", "MAT", 2), Is.False);
 
             // SUT
+            await env.Runner.RunAsync("project02", "user01", false);
             await env.Runner.RunAsync("project01", "user01", false);
 
             env.Logger.DidNotReceiveWithAnyArgs().LogError(Arg.Any<Exception>(), default, default);
 
             var chapterContent = Delta.New().InsertText("text");
             // DB should contain Source chapter 2 now from Paratext.
-            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.True);
-            Assert.That(env.GetText("MAT", 2, TextType.Target).DeepEquals(chapterContent), Is.True);
-            Assert.That(env.GetText("MAT", 2, TextType.Source).DeepEquals(chapterContent), Is.True);
+            Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
+            Assert.That(env.ContainsText("project02", "MAT", 2), Is.True);
+            Assert.That(env.GetText("project01", "MAT", 2).DeepEquals(chapterContent), Is.True);
+            Assert.That(env.GetText("project02", "MAT", 2).DeepEquals(chapterContent), Is.True);
         }
 
         [Test]
@@ -495,28 +557,29 @@ namespace SIL.XForge.Scripture.Services
             env.SetupPTData(new Book("MAT", 3, 3) { MissingTargetChapters = { 2 }, MissingSourceChapters = { 2 } });
 
             var chapterContent = Delta.New().InsertText("text");
-            Assert.That(env.ContainsText("MAT", 1, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MAT", 1, TextType.Source), Is.True);
+            Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
+            Assert.That(env.ContainsText("project02", "MAT", 1), Is.True);
             // DB should start with a chapter 2.
-            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.True);
-            Assert.That(env.GetText("MAT", 2, TextType.Target).DeepEquals(chapterContent), Is.True);
-            Assert.That(env.GetText("MAT", 2, TextType.Source).DeepEquals(chapterContent), Is.True);
-            Assert.That(env.ContainsText("MAT", 3, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MAT", 3, TextType.Source), Is.True);
+            Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
+            Assert.That(env.ContainsText("project02", "MAT", 2), Is.True);
+            Assert.That(env.GetText("project01", "MAT", 2).DeepEquals(chapterContent), Is.True);
+            Assert.That(env.GetText("project02", "MAT", 2).DeepEquals(chapterContent), Is.True);
+            Assert.That(env.ContainsText("project01", "MAT", 3), Is.True);
+            Assert.That(env.ContainsText("project02", "MAT", 3), Is.True);
 
             // SUT
+            await env.Runner.RunAsync("project02", "user01", false);
             await env.Runner.RunAsync("project01", "user01", false);
 
             env.Logger.DidNotReceiveWithAnyArgs().LogError(Arg.Any<Exception>(), default, default);
 
             // DB should now be missing chapter 2, but retain chapters 1 and 3.
-            Assert.That(env.ContainsText("MAT", 1, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MAT", 1, TextType.Source), Is.True);
-            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.False);
-            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.False);
-            Assert.That(env.ContainsText("MAT", 3, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MAT", 3, TextType.Source), Is.True);
+            Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
+            Assert.That(env.ContainsText("project02", "MAT", 1), Is.True);
+            Assert.That(env.ContainsText("project01", "MAT", 2), Is.False);
+            Assert.That(env.ContainsText("project02", "MAT", 2), Is.False);
+            Assert.That(env.ContainsText("project01", "MAT", 3), Is.True);
+            Assert.That(env.ContainsText("project02", "MAT", 3), Is.True);
         }
 
         [Test]
@@ -528,8 +591,8 @@ namespace SIL.XForge.Scripture.Services
             env.SetupPTData(new Book("MAT", 3, 3) { MissingSourceChapters = { 2 } });
 
             // DB should start without Source chapter 2.
-            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.False);
+            Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
+            Assert.That(env.ContainsText("project02", "MAT", 2), Is.False);
 
             // SUT
             await env.Runner.RunAsync("project01", "user01", false);
@@ -537,8 +600,8 @@ namespace SIL.XForge.Scripture.Services
             env.Logger.DidNotReceiveWithAnyArgs().LogError(Arg.Any<Exception>(), default, default);
 
             // DB should still be missing Source chapter 2.
-            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.False);
+            Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
+            Assert.That(env.ContainsText("project02", "MAT", 2), Is.False);
         }
 
         [Test]
@@ -550,27 +613,28 @@ namespace SIL.XForge.Scripture.Services
             env.SetupPTData(new Book("MAT", 0, true));
 
             var chapterContent = Delta.New().InsertText("text");
-            Assert.That(env.ContainsText("MAT", 1, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MAT", 1, TextType.Source), Is.True);
-            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.True);
-            Assert.That(env.GetText("MAT", 2, TextType.Target).DeepEquals(chapterContent), Is.True);
-            Assert.That(env.GetText("MAT", 2, TextType.Source).DeepEquals(chapterContent), Is.True);
-            Assert.That(env.ContainsText("MAT", 3, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MAT", 3, TextType.Source), Is.True);
+            Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
+            Assert.That(env.ContainsText("project02", "MAT", 1), Is.True);
+            Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
+            Assert.That(env.ContainsText("project02", "MAT", 2), Is.True);
+            Assert.That(env.GetText("project01", "MAT", 2).DeepEquals(chapterContent), Is.True);
+            Assert.That(env.GetText("project02", "MAT", 2).DeepEquals(chapterContent), Is.True);
+            Assert.That(env.ContainsText("project01", "MAT", 3), Is.True);
+            Assert.That(env.ContainsText("project02", "MAT", 3), Is.True);
 
             // SUT
+            await env.Runner.RunAsync("project02", "user01", false);
             await env.Runner.RunAsync("project01", "user01", false);
 
             env.Logger.DidNotReceiveWithAnyArgs().LogError(Arg.Any<Exception>(), default, default);
 
             // DB should now be missing all chapters except for the first, implicit chapter.
-            Assert.That(env.ContainsText("MAT", 1, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MAT", 1, TextType.Source), Is.True);
-            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.False);
-            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.False);
-            Assert.That(env.ContainsText("MAT", 3, TextType.Target), Is.False);
-            Assert.That(env.ContainsText("MAT", 3, TextType.Source), Is.False);
+            Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
+            Assert.That(env.ContainsText("project02", "MAT", 1), Is.True);
+            Assert.That(env.ContainsText("project01", "MAT", 2), Is.False);
+            Assert.That(env.ContainsText("project02", "MAT", 2), Is.False);
+            Assert.That(env.ContainsText("project01", "MAT", 3), Is.False);
+            Assert.That(env.ContainsText("project02", "MAT", 3), Is.False);
         }
 
         [Test]
@@ -580,13 +644,14 @@ namespace SIL.XForge.Scripture.Services
             var numberChapters = 3;
             var book = new Book("MAT", numberChapters, true);
             env.SetupSFData(true, true, false, book);
-            await env.Runner.InitAsync("project01", "user01");
 
             // SUT
+            await env.Runner.InitAsync("project01", "user01");
             SortedList<int, IDocument<TextData>> targetFetch =
-                await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book), TextType.Target);
+                await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
+            await env.Runner.InitAsync("project02", "user01");
             SortedList<int, IDocument<TextData>> sourceFetch =
-                await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book), TextType.Source);
+                await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
             env.Runner.CloseConnection();
 
             // Fetched numberChapters chapters, none of which are missing their chapter content.
@@ -619,11 +684,13 @@ namespace SIL.XForge.Scripture.Services
                 Is.GreaterThan(existingSourceChapters.Count()), "setup");
             var book = new Book("MAT", highestChapter, true) { MissingSourceChapters = missingSourceChapters };
             env.SetupSFData(true, true, false, book);
-            await env.Runner.InitAsync("project01", "user01");
 
             // SUT
-            var targetFetch = await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book), TextType.Target);
-            var sourceFetch = await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book), TextType.Source);
+            await env.Runner.InitAsync("project01", "user01");
+            var targetFetch = await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
+
+            await env.Runner.InitAsync("project02", "user01");
+            var sourceFetch = await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
 
             env.Runner.CloseConnection();
 
@@ -666,18 +733,15 @@ namespace SIL.XForge.Scripture.Services
 
             public TestEnvironment()
             {
-                IOptions<SiteOptions> siteOptions = Microsoft.Extensions.Options.Options.Create(
-                    new SiteOptions()
-                    {
-                        SiteDir = "scriptureforge"
-                    });
                 var userSecrets = new MemoryRepository<UserSecret>(new[]
                 {
-                    new UserSecret { Id = "user01" }
+                    new UserSecret { Id = "user01" },
+                    new UserSecret { Id = "user02" },
                 });
                 _projectSecrets = new MemoryRepository<SFProjectSecret>(new[]
                 {
-                    new SFProjectSecret { Id = "project01" }
+                    new SFProjectSecret { Id = "project01" },
+                    new SFProjectSecret { Id = "project02" },
                 });
                 SFProjectService = Substitute.For<ISFProjectService>();
                 EngineService = Substitute.For<IEngineService>();
@@ -690,9 +754,9 @@ namespace SIL.XForge.Scripture.Services
                 };
                 ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
                     .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
-                ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<string>()))
+                ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>()))
                     .Do(x => _sendReceivedCalled = true);
-                ParatextService.IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<TextType>())
+                ParatextService.IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), Arg.Any<string>())
                     .Returns(false);
                 RealtimeService = new SFMemoryRealtimeService();
                 DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
@@ -721,16 +785,16 @@ namespace SIL.XForge.Scripture.Services
                 return _projectSecrets.Get("project01");
             }
 
-            public bool ContainsText(string bookId, int chapter, TextType textType)
+            public bool ContainsText(string projectId, string bookId, int chapter)
             {
                 return RealtimeService.GetRepository<TextData>()
-                    .Contains(TextData.GetTextDocId("project01", Canon.BookIdToNumber(bookId), chapter, textType));
+                    .Contains(TextData.GetTextDocId(projectId, Canon.BookIdToNumber(bookId), chapter));
             }
 
-            public TextData GetText(string bookId, int chapter, TextType textType)
+            public TextData GetText(string projectId, string bookId, int chapter)
             {
                 return RealtimeService.GetRepository<TextData>()
-                    .Get(TextData.GetTextDocId("project01", Canon.BookIdToNumber(bookId), chapter, textType));
+                    .Get(TextData.GetTextDocId(projectId, Canon.BookIdToNumber(bookId), chapter));
             }
 
             public bool ContainsQuestion(string bookId, int chapter)
@@ -780,6 +844,7 @@ namespace SIL.XForge.Scripture.Services
                                 Source = new TranslateSource
                                 {
                                     ParatextId = "source",
+                                    ProjectRef = "project02",
                                     Name = "Source",
                                     ShortName = "SRC",
                                     WritingSystem = new WritingSystem
@@ -798,6 +863,32 @@ namespace SIL.XForge.Scripture.Services
                             {
                                 QueuedCount = 1
                             }
+                        },
+                        new SFProject
+                        {
+                            Id = "project02",
+                            Name = "Source",
+                            ShortName = "SRC",
+                            UserRoles = new Dictionary<string, string>(),
+                            ParatextId = "source",
+                            IsRightToLeft = false,
+                            TranslateConfig = new TranslateConfig
+                            {
+                                TranslationSuggestionsEnabled = false
+                            },
+                            CheckingConfig = new CheckingConfig
+                            {
+                                CheckingEnabled = checkingEnabled
+                            },
+                            WritingSystem = new WritingSystem
+                            {
+                                Tag = "en"
+                            },
+                            Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
+                            Sync = new Sync
+                            {
+                                QueuedCount = 0
+                            }
                         }
                     }));
 
@@ -805,9 +896,9 @@ namespace SIL.XForge.Scripture.Services
                 RealtimeService.AddRepository("questions", OTType.Json0, new MemoryRepository<Question>());
                 foreach (Book book in books)
                 {
-                    AddSFBook(book.Id, book.HighestTargetChapter, TextType.Target, changed, book.MissingTargetChapters);
+                    AddSFBook("project01", "target", book.Id, book.HighestTargetChapter, changed, book.MissingTargetChapters);
                     if (book.HighestSourceChapter > 0)
-                        AddSFBook(book.Id, book.HighestSourceChapter, TextType.Source, changed, book.MissingSourceChapters);
+                        AddSFBook("project02", "source", book.Id, book.HighestSourceChapter, changed, book.MissingSourceChapters);
                 }
 
                 var notesElem = new XElement("notes");
@@ -842,20 +933,20 @@ namespace SIL.XForge.Scripture.Services
 
             public void SetupPTData(params Book[] books)
             {
-                ParatextService.GetBookList(Arg.Any<UserSecret>(), "target", TextType.Target)
+                ParatextService.GetBookList(Arg.Any<UserSecret>(), "target")
                     .Returns(books.Select(b => Canon.BookIdToNumber(b.Id)).ToArray());
                 // Include book with Source even if there are no chapters, if there are also no chapters in Target. PT
                 // can actually have or not have books which do or do not have chapters more flexibly than this. But in
                 // this way, allow tests to request a Source book exist even with zero chapters.
-                ParatextService.GetBookList(Arg.Any<UserSecret>(), "target", TextType.Source)
+                ParatextService.GetBookList(Arg.Any<UserSecret>(), "source")
                     .Returns(books
                         .Where(b => b.HighestSourceChapter > 0 || b.HighestSourceChapter == b.HighestTargetChapter)
                         .Select(b => Canon.BookIdToNumber(b.Id)).ToArray());
                 foreach (Book book in books)
                 {
-                    AddPTBook(book.Id, book.HighestTargetChapter, TextType.Target, book.MissingTargetChapters, book.InvalidChapters);
+                    AddPTBook("target", book.Id, book.HighestTargetChapter, book.MissingTargetChapters, book.InvalidChapters);
                     if (book.HighestSourceChapter > 0 || book.HighestSourceChapter == book.HighestTargetChapter)
-                        AddPTBook(book.Id, book.HighestSourceChapter, TextType.Source, book.MissingSourceChapters);
+                        AddPTBook("source", book.Id, book.HighestSourceChapter, book.MissingSourceChapters);
                 }
             }
 
@@ -865,13 +956,12 @@ namespace SIL.XForge.Scripture.Services
                     u.Set(pr => pr.UserRoles[userId], role));
             }
 
-            private void AddPTBook(string bookId, int highestChapter, TextType textType, HashSet<int> missingChapters,
+            private void AddPTBook(string paratextId, string bookId, int highestChapter, HashSet<int> missingChapters,
                 HashSet<int> invalidChapters = null)
             {
-                MockGetBookText(bookId, textType);
-                string paratextProject = GetParatextProject(textType);
+                MockGetBookText(paratextId, bookId);
                 Func<XDocument, bool> predicate = d => (string)d?.Root?.Element("book")?.Attribute("code") == bookId
-                        && (string)d?.Root?.Element("book") == paratextProject;
+                        && (string)d?.Root?.Element("book") == paratextId;
                 var chapterDeltas = Enumerable.Range(1, highestChapter)
                     .Where(chapterNumber => !(missingChapters?.Contains(chapterNumber) ?? false))
                     .Select(c => new ChapterDelta(c, 10, !(invalidChapters?.Contains(c) ?? false),
@@ -884,19 +974,20 @@ namespace SIL.XForge.Scripture.Services
                 DeltaUsxMapper.ToChapterDeltas(Arg.Is<XDocument>(d => predicate(d))).Returns(chapterDeltas);
             }
 
-            private void AddSFBook(string bookId, int highestChapter, TextType textType, bool changed, HashSet<int> missingChapters = null)
+            private void AddSFBook(string projectId, string paratextId, string bookId, int highestChapter, bool changed,
+                HashSet<int> missingChapters = null)
             {
-                MockGetBookText(bookId, textType);
+                MockGetBookText(paratextId, bookId);
                 int bookNum = Canon.BookIdToNumber(bookId);
-                string newBookText = GetBookText(textType, bookId, changed ? 2 : 1);
+                string newBookText = GetBookText(paratextId, bookId, changed ? 2 : 1);
                 Func<XDocument, bool> predicate = d => (string)d?.Root?.Element("book")?.Attribute("code") == bookId
-                    && (string)d?.Root?.Element("book") == GetParatextProject(textType);
+                    && (string)d?.Root?.Element("book") == paratextId;
                 DeltaUsxMapper.ToUsx(Arg.Is<XDocument>(d => predicate(d)), Arg.Any<IEnumerable<ChapterDelta>>())
                     .Returns(XDocument.Parse(newBookText));
 
                 for (int c = 1; c <= highestChapter; c++)
                 {
-                    string id = TextData.GetTextDocId("project01", bookNum, c, textType);
+                    string id = TextData.GetTextDocId(projectId, bookNum, c);
                     if (!(missingChapters?.Contains(c) ?? false))
                     {
                         RealtimeService.GetRepository<TextData>()
@@ -906,44 +997,26 @@ namespace SIL.XForge.Scripture.Services
                     {
                         new Question
                         {
-                            Id = $"project01:question{bookId}{c}",
+                            Id = $"{projectId}:question{bookId}{c}",
                             DataId = $"question{bookId}{c}",
-                            ProjectRef = "project01",
+                            ProjectRef = projectId,
                             VerseRef = new VerseRefData(bookNum, c, 1)
                         }
                     });
                 }
             }
 
-            private void MockGetBookText(string bookId, TextType textType)
+            private void MockGetBookText(string paratextId, string bookId)
             {
-                string oldBookText = GetBookText(textType, bookId, 1);
-                string remoteBookText = GetBookText(textType, bookId, 3);
-                ParatextService.GetBookText(Arg.Any<UserSecret>(), "target", Canon.BookIdToNumber(bookId),
-                    textType).Returns(x => _sendReceivedCalled ? remoteBookText : oldBookText);
+                string oldBookText = GetBookText(paratextId, bookId, 1);
+                string remoteBookText = GetBookText(paratextId, bookId, 3);
+                ParatextService.GetBookText(Arg.Any<UserSecret>(), paratextId, Canon.BookIdToNumber(bookId))
+                    .Returns(x => _sendReceivedCalled ? remoteBookText : oldBookText);
             }
 
-            private static string GetBookText(TextType textType, string bookId, int version)
+            private static string GetBookText(string paratextId, string bookId, int version)
             {
-                string projectName = GetParatextProject(textType);
-                return $"<usx version=\"2.5\"><book code=\"{bookId}\" style=\"id\">{projectName}</book><content version=\"{version}\"/></usx>";
-            }
-
-            private static string GetParatextProject(TextType textType)
-            {
-                string projectName;
-                switch (textType)
-                {
-                    case TextType.Source:
-                        projectName = "source";
-                        break;
-                    case TextType.Target:
-                        projectName = "target";
-                        break;
-                    default:
-                        throw new InvalidEnumArgumentException(nameof(textType), (int)textType, typeof(TextType));
-                }
-                return projectName;
+                return $"<usx version=\"2.5\"><book code=\"{bookId}\" style=\"id\">{paratextId}</book><content version=\"{version}\"/></usx>";
             }
         }
     }

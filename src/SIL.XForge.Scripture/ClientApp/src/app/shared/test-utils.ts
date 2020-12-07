@@ -2,6 +2,7 @@ import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/ch
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextData } from 'realtime-server/lib/scriptureforge/models/text-data';
+import { TextInfoPermission } from 'realtime-server/lib/scriptureforge/models/text-info-permission';
 import { Delta, TextDocId } from '../core/models/text-doc';
 
 export function getTextDoc(id: TextDocId): TextData {
@@ -48,7 +49,8 @@ export function getSFProject(id: string): SFProject {
           { number: 1, lastVerse: 3, isValid: true },
           { number: 2, lastVerse: 3, isValid: true }
         ],
-        hasSource: true
+        hasSource: true,
+        permissions: {}
       }
     ]
   };

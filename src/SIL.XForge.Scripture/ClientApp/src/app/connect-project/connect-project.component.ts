@@ -37,6 +37,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     })
   });
   projects?: ParatextProject[];
+  resources?: ParatextProject[];
   sourceProjects?: ParatextProject[];
   state: 'connecting' | 'loading' | 'input' | 'login' | 'offline' = 'loading';
   connectProjectName?: string;
@@ -111,11 +112,16 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   }
 
   ngOnInit(): void {
-    this.subscribe(this.paratextIdControl.valueChanges, (paratextId: string) => {
+    this.subscribe(this.paratextIdControl.valueChanges, async (paratextId: string) => {
       if (this.state !== 'input' || this.projects == null) {
         return;
       }
-      this.sourceProjects = this.projects.filter(p => p.paratextId !== paratextId);
+      let paratextProjects = this.projects.filter(p => p.paratextId !== paratextId);
+      // Merge the resources collection with the projects collection
+      if (this.resources != null) {
+        paratextProjects = paratextProjects?.concat(this.resources) ?? this.resources;
+      }
+      this.sourceProjects = paratextProjects;
       const settings = this.settings;
       if (this.showSettings) {
         settings.enable();
@@ -213,6 +219,8 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     this.loadingStarted();
     const paratextProjects = await this.paratextService.getProjects().toPromise();
     this.projects = paratextProjects == null ? undefined : paratextProjects;
+    const paratextResources = await this.paratextService.getResources().toPromise();
+    this.resources = paratextResources == null ? undefined : paratextResources;
     if (paratextProjects != null) {
       this.targetProjects = paratextProjects.filter(p => p.isConnectable);
       this.state = 'input';

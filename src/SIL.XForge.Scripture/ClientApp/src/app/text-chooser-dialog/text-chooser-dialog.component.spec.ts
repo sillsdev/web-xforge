@@ -364,7 +364,8 @@ class TestEnvironment {
     chapters: [
       { number: 1, lastVerse: 25, isValid: true },
       { number: 3, lastVerse: 17, isValid: true }
-    ]
+    ],
+    permissions: {}
   };
   static textsByBookId = { ['MAT']: TestEnvironment.matthewText };
   static testProject: SFProject = {
