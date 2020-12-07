@@ -303,8 +303,8 @@
     "browser_unsupported": "This browser is unsupported",
     "safari_for_audio_on_ios": "Audio recording on iPhone and iPad only works in Safari.",
     "some_features_may_not_work": "Some of the features of this website may not work correctly with your browser.",
-    "upgrade_chrome_firefox": " We recommend upgrading to the latest {{ chromeLink }} or {{ firefoxLink }}.",
-    "upgrade_safari": "We recommend upgrading to the latest {{ safariLink }}."
+    "upgrade_chrome_firefox": "{{ newLine }}We recommend upgrading to the latest {{ chromeLink }} or {{ firefoxLink }}.",
+    "upgrade_safari": "{{ newLine }}We recommend upgrading to the latest {{ safariLink }}."
   },
   "text_chooser_dialog": {
     "cancel": "Cancel",

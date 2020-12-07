@@ -85,6 +85,8 @@ describe('CheckingAudioRecorderComponent', () => {
     await env.waitForRecorder(100);
     verify(mockedDialog.open(SupportedBrowsersDialogComponent, anything())).once();
     env.component.mediaDevicesUnsupported = false;
+    env.clickButton(env.recordButton);
+    await env.waitForRecorder(100);
     verify(mockedDialog.open(SupportedBrowsersDialogComponent, anything())).once();
     expect().nothing();
   });
