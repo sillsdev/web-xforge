@@ -181,7 +181,8 @@
             },
             "developmentBeta": {
               "browserTarget": "SIL.XForge.Scripture:build:developmentBeta",
-              "port": 9200
+              "port": 9200,
+              "host": "beta.localhost"
             }
           }
         },
