@@ -174,7 +174,11 @@ namespace SIL.XForge.Scripture
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.UseRealtimeServer();
+            // Don't use the realtime server on beta
+            if (!siteOptions.Value.Beta)
+            {
+                app.UseRealtimeServer();
+            }
 
             app.UseMachine();
 

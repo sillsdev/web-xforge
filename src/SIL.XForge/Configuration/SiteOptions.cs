@@ -7,6 +7,7 @@ namespace SIL.XForge.Configuration
         public string Id { get; set; }
         public string Name { get; set; }
         public Uri Origin { get; set; }
+        public bool Beta { get; set; }
         public string SmtpServer { get; set; }
         public string PortNumber { get; set; }
         public string EmailFromAddress { get; set; }

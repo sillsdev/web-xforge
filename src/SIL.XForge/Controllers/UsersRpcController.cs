@@ -82,5 +82,16 @@ namespace SIL.XForge.Controllers
                 return ForbiddenError();
             }
         }
+
+        public async Task<IRpcMethodResult> CheckUserNeedsMigrating(string userId)
+        {
+            return Ok(await _userService.CheckUserNeedsMigratingAsync(userId));
+        }
+
+        public async Task<IRpcMethodResult> UserMigrationComplete(string userId)
+        {
+            await _userService.UserMigrationCompleteAsync(userId);
+            return Ok();
+        }
     }
 }

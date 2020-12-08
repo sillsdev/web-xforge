@@ -16,6 +16,7 @@ import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon'
 import { combineLatest, from, merge, Observable, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, switchMap, tap } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
+import { BetaMigrationDialogComponent } from 'xforge-common/beta-migration/beta-migration-dialog/beta-migration-dialog.component';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FileService } from 'xforge-common/file.service';
@@ -107,6 +108,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       // Check authentication when coming back online
       // This is also run on first load when the websocket connects for the first time
       if (this.isAppOnline && !this.isAppLoading) {
+        // Redirect to the master site unless the referrer was the master site
+        if (environment.beta && document.referrer.includes(environment.masterUrl)) {
+          // window.location.href = environment.masterUrl + window.location.pathname;
+        }
         this.authService.checkOnlineAuth();
       }
     });
@@ -271,6 +276,25 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       this.reportingService.addMeta({ isBrowserSupported });
       if (isNewlyLoggedIn && !isBrowserSupported) {
         this.dialog.open(SupportedBrowsersDialogComponent, { autoFocus: false, data: BrowserIssue.upgrade });
+      }
+
+      if (!environment.beta && (await this.checkUserNeedsMigrating())) {
+        const migrationDialog = this.dialog.open(BetaMigrationDialogComponent, {
+          autoFocus: false,
+          clickOutsideToClose: false,
+          escapeToClose: false
+        });
+        const migrationDialogSub = migrationDialog.componentInstance.onProgress.subscribe((progress: number) => {
+          if (progress === 100) {
+            // Automatically close the dialog after 5 seconds - the close button will also be available for manual close
+            setTimeout(() => {
+              migrationDialog.close();
+            }, 5000);
+          }
+        });
+        migrationDialog.afterClosed().subscribe(() => {
+          migrationDialogSub.unsubscribe();
+        });
       }
 
       const projectDocs$ = this.currentUserDoc.remoteChanges$.pipe(
@@ -509,6 +533,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         }
       });
     });
+  }
+
+  private async checkUserNeedsMigrating(): Promise<boolean> {
+    return (await this.userService.checkUserNeedsMigrating()) ?? false;
   }
 
   private disposeQuestionQueries(): void {
