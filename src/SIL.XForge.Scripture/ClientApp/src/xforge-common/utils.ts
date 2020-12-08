@@ -38,6 +38,10 @@ export function supportedBrowser(): boolean {
   return isSupportedBrowser ? true : false;
 }
 
+export function isIosDevice(): boolean {
+  return BROWSER.getOSName(true) === 'ios';
+}
+
 export function getBrowserEngine(): string {
   const engine = BROWSER.getEngine().name;
   return engine == null ? '' : engine.toLowerCase();
@@ -109,7 +113,8 @@ export function getI18nLocales(): Locale[] {
 export function browserLinks() {
   return {
     chromeLink: getLinkHTML(translate('error.chrome'), 'https://www.google.com/chrome/'),
-    firefoxLink: getLinkHTML(translate('error.firefox'), 'https://firefox.com')
+    firefoxLink: getLinkHTML(translate('error.firefox'), 'https://firefox.com'),
+    safariLink: getLinkHTML(translate('error.safari'), 'https://www.apple.com/safari/')
   };
 }
 
