@@ -389,7 +389,7 @@ namespace SourceTargetSplitting
         public async Task MigrateChapterAndBookPermissions(bool doWrite)
         {
             // Get the existing projects from MongoDB
-            List<SFProject> existingProjects = this._realtimeService.QuerySnapshots<SFProject>().ToList();
+            List<SFProject> existingProjects = await this._realtimeService.QuerySnapshots<SFProject>().ToListAsync();
 
             // If we are testing, add the test projects
             if (!doWrite)
@@ -398,8 +398,8 @@ namespace SourceTargetSplitting
             }
 
             // Get every user id and username from the user secrets
-            Dictionary<string, string> userMapping = this._userSecrets.Query()
-                .ToDictionary(u => u.Id, u => this._paratextService.GetParatextUsername(u));
+            Dictionary<string, string> userMapping = await this._userSecrets.Query()
+                .ToDictionaryAsync(u => u.Id, u => this._paratextService.GetParatextUsername(u));
 
             // Iterate over every project
             foreach (SFProject project in existingProjects)
@@ -440,6 +440,9 @@ namespace SourceTargetSplitting
                         return;
 
                     // Iterate over every book then every chapter
+                    var bookPermissionOperations = new List<(int i, Dictionary<string, string> bookPermissions)>();
+                    var chapterPermissionOperations =
+                        new List<(int i, int j, Dictionary<string, string> chapterPermissions)>();
                     for (int i = 0; i < project.Texts.Count; i++)
                     {
                         Program.Log($"Migrating Permissions For {project.Id} Book {project.Texts[i].BookNum}...");
@@ -448,11 +451,11 @@ namespace SourceTargetSplitting
                         var bookPermissions = new Dictionary<string, string>();
 
                         // Calculate the book permissions
-                        foreach ((string uid, string role) in project.UserRoles)
+                        foreach (string uid in project.UserRoles.Keys)
                         {
                             // See if the user is in the project members list
-                            userMapping.TryGetValue(uid, out string? userName);
-                            if (string.IsNullOrWhiteSpace(userName))
+                            if (!userMapping.TryGetValue(uid, out string? userName)
+                                || string.IsNullOrWhiteSpace(userName))
                             {
                                 bookPermissions.Add(uid, TextInfoPermission.None);
                             }
@@ -478,14 +481,8 @@ namespace SourceTargetSplitting
                             }
                         }
 
-                        // Write the book permissions
-                        if (doWrite)
-                        {
-                            await projectDoc.SubmitJson0OpAsync(op =>
-                            {
-                                op.Set(pd => pd.Texts[i].Permissions, bookPermissions);
-                            });
-                        }
+                        // Store the book permissions operation in a tuple
+                        bookPermissionOperations.Add((i, bookPermissions));
 
                         // Iterate over every chapter in the book
                         for (int j = 0; j < project.Texts[i].Chapters.Count; j++)
@@ -494,11 +491,11 @@ namespace SourceTargetSplitting
                             var chapterPermissions = new Dictionary<string, string>();
 
                             // Calculate the chapter permissions
-                            foreach ((string uid, string role) in project.UserRoles)
+                            foreach (string uid in project.UserRoles.Keys)
                             {
                                 // See if the user is in the project members list
-                                userMapping.TryGetValue(uid, out string? userName);
-                                if (string.IsNullOrWhiteSpace(userName))
+                                if (!userMapping.TryGetValue(uid, out string? userName)
+                                    || string.IsNullOrWhiteSpace(userName))
                                 {
                                     chapterPermissions.Add(uid, TextInfoPermission.None);
                                 }
@@ -517,15 +514,27 @@ namespace SourceTargetSplitting
                                 }
                             }
 
-                            // Write the chapter permissions
-                            if (doWrite)
-                            {
-                                await projectDoc.SubmitJson0OpAsync(op =>
-                                {
-                                    op.Set(pd => pd.Texts[i].Chapters[j].Permissions, chapterPermissions);
-                                });
-                            }
+                            // Store the chapter permissions operation in a tuple
+                            chapterPermissionOperations.Add((i, j, bookPermissions));
                         }
+                    }
+
+                    // Write the chapter permissions
+                    if (doWrite)
+                    {
+                        await projectDoc.SubmitJson0OpAsync(op =>
+                        {
+                            foreach ((int i, Dictionary<string, string> bookPermissions) in bookPermissionOperations)
+                            {
+                                op.Set(pd => pd.Texts[i].Permissions, bookPermissions);
+                            }
+
+                            foreach ((int i, int j, Dictionary<string, string> chapterPermissions) in
+                                chapterPermissionOperations)
+                            {
+                                op.Set(pd => pd.Texts[i].Chapters[j].Permissions, chapterPermissions);
+                            }
+                        });
                     }
                 }
                 else if (project.ParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
@@ -615,7 +624,7 @@ namespace SourceTargetSplitting
                 this._testProjectCollection.Add(testProject);
 
                 // Load the source project from the target project's source directory (it is not moved in test mode)
-                ScrText? scrText = this.SourceScrTextCollection.FindById("admin", targetId);
+                ScrText? scrText = SourceScrTextCollection.FindById("admin", targetId);
                 if (scrText != null)
                 {
                     // Create the test text objects for all of the books
@@ -656,14 +665,14 @@ namespace SourceTargetSplitting
                 bool someoneCanAccessSourceProject = false;
                 foreach (string userId in userIds)
                 {
-                    Attempt<UserSecret> userSecretAttempt = await this._userSecrets.TryGetAsync(userId);
+                    Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(userId);
                     if (!userSecretAttempt.TryResult(out UserSecret userSecret))
                     {
                         throw new DataNotFoundException("The user does not exist.");
                     }
 
                     // We check projects first, in case it is a project
-                    IReadOnlyList<ParatextProject> ptProjects = await this._paratextService.GetProjectsAsync(userSecret);
+                    IReadOnlyList<ParatextProject> ptProjects = await _paratextService.GetProjectsAsync(userSecret);
                     if (ptProjects.Any(p => p.ParatextId == sourceId))
                     {
                         someoneCanAccessSourceProject = true;

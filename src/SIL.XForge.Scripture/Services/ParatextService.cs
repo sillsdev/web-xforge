@@ -333,7 +333,7 @@ namespace SIL.XForge.Scripture.Services
             // See if the source is a resource
             if (project.ParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
             {
-                foreach ((string uid, string role) in project.UserRoles)
+                foreach (string uid in project.UserRoles.Keys)
                 {
                     permissions.Add(uid, await this.GetResourcePermissionAsync(userSecret, project.ParatextId, uid));
                 }
@@ -342,26 +342,25 @@ namespace SIL.XForge.Scripture.Services
             {
                 // Get the mapping for paratext users ids to names from the registry
                 string response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get,
-                $"projects/{project.ParatextId}/members");
+                    $"projects/{project.ParatextId}/members");
                 Dictionary<string, string> paratextMapping = JArray.Parse(response).OfType<JObject>()
                     .Where(m => !string.IsNullOrEmpty((string)m["userId"])
                         && !string.IsNullOrEmpty((string)m["username"]))
                     .ToDictionary(m => (string)m["userId"], m => (string)m["username"]);
 
                 // Get the mapping of paratext user ids to scripture forge user ids
-                Dictionary<string, string> userMapping = this._realtimeService.QuerySnapshots<User>()
+                Dictionary<string, string> userMapping = await this._realtimeService.QuerySnapshots<User>()
                         .Where(u => paratextMapping.Keys.Contains(u.ParatextId))
-                        .ToDictionary(u => u.Id, u => paratextMapping[u.ParatextId]);
+                        .ToDictionaryAsync(u => u.Id, u => paratextMapping[u.ParatextId]);
 
                 // Get the scripture text so we can retrieve the permissions from the XML
                 ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), project.ParatextId);
 
                 // Calculate the project and resource permissions
-                foreach ((string uid, string role) in project.UserRoles)
+                foreach (string uid in project.UserRoles.Keys)
                 {
                     // See if the user is in the project members list
-                    userMapping.TryGetValue(uid, out string userName);
-                    if (string.IsNullOrWhiteSpace(userName))
+                    if (!userMapping.TryGetValue(uid, out string userName) || string.IsNullOrWhiteSpace(userName))
                     {
                         permissions.Add(uid, TextInfoPermission.None);
                     }

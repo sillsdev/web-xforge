@@ -638,7 +638,17 @@ namespace SIL.XForge.Scripture.Services
 
             public int GetHashCode(Dictionary<TKey, TValue> obj)
             {
-                throw new NotImplementedException();
+                int hash = 0;
+                if (obj != null)
+                {
+                    foreach (KeyValuePair<TKey, TValue> element in obj)
+                    {
+                        hash ^= element.Key.GetHashCode();
+                        hash ^= element.Value.GetHashCode();
+                    }
+                }
+
+                return hash;
             }
         }
     }
