@@ -322,6 +322,37 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task SyncAsync_ChaptersDidntChangeWithoutPermission()
+        {
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, false, new Book("MAT", 2), new Book("MRK", 2));
+            env.SetupPTData(new Book("MAT", 3), new Book("MRK", 3));
+
+            env.ParatextService.GetEditableChapters(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<int>())
+                .Returns(Enumerable.Range(1, 2).ToArray());
+
+            await env.Runner.RunAsync("project02", "user01", false);
+            await env.Runner.RunAsync("project01", "user01", false);
+
+            Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
+            Assert.That(env.ContainsText("project01", "MRK", 2), Is.True);
+            Assert.That(env.ContainsText("project02", "MAT", 2), Is.True);
+            Assert.That(env.ContainsText("project02", "MRK", 2), Is.True);
+
+            Assert.That(env.ContainsText("project01", "MAT", 3), Is.False);
+            Assert.That(env.ContainsText("project01", "MRK", 3), Is.False);
+            Assert.That(env.ContainsText("project02", "MAT", 3), Is.False);
+            Assert.That(env.ContainsText("project02", "MRK", 3), Is.False);
+
+            Assert.That(env.ContainsQuestion("MAT", 2), Is.True);
+            Assert.That(env.ContainsQuestion("MRK", 2), Is.True);
+
+            SFProject project = env.GetProject();
+            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+        }
+
+        [Test]
         public async Task SyncAsync_ChapterValidityChanged()
         {
             var env = new TestEnvironment();
@@ -362,6 +393,45 @@ namespace SIL.XForge.Scripture.Services
 
             Assert.That(env.ContainsQuestion("MRK", 1), Is.False);
             Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
+            Assert.That(env.ContainsQuestion("MAT", 1), Is.True);
+            Assert.That(env.ContainsQuestion("MAT", 2), Is.True);
+
+            SFProject project = env.GetProject();
+            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+        }
+
+        [Test]
+        public async Task SyncAsync_BooksDidntChangeWithoutPermission()
+        {
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, false, new Book("MAT", 3), new Book("MRK", 2));
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2), new Book("LUK", 2));
+
+            env.ParatextService.GetEditableBooks(Arg.Any<UserSecret>(), Arg.Any<string>())
+                .Returns(new int[] { Canon.BookIdToNumber("MAT"), Canon.BookIdToNumber("LUK") });
+
+            await env.Runner.RunAsync("project02", "user01", false);
+            await env.Runner.RunAsync("project01", "user01", false);
+
+            Assert.That(env.ContainsText("project02", "MAT", 1), Is.True);
+            Assert.That(env.ContainsText("project02", "MAT", 2), Is.True);
+            Assert.That(env.ContainsText("project01", "MRK", 1), Is.True);
+            Assert.That(env.ContainsText("project01", "MRK", 2), Is.True);
+            Assert.That(env.ContainsText("project01", "MRK", 3), Is.False);
+            Assert.That(env.ContainsText("project01", "LUK", 1), Is.True);
+            Assert.That(env.ContainsText("project01", "LUK", 2), Is.True);
+
+            Assert.That(env.ContainsText("project02", "MAT", 1), Is.True);
+            Assert.That(env.ContainsText("project02", "MAT", 2), Is.True);
+            Assert.That(env.ContainsText("project02", "MRK", 1), Is.True);
+            Assert.That(env.ContainsText("project02", "MRK", 2), Is.True);
+            Assert.That(env.ContainsText("project02", "MRK", 3), Is.False);
+            Assert.That(env.ContainsText("project02", "LUK", 1), Is.True);
+            Assert.That(env.ContainsText("project02", "LUK", 2), Is.True);
+
+            Assert.That(env.ContainsQuestion("MRK", 1), Is.True);
+            Assert.That(env.ContainsQuestion("MRK", 2), Is.True);
             Assert.That(env.ContainsQuestion("MAT", 1), Is.True);
             Assert.That(env.ContainsQuestion("MAT", 2), Is.True);
 
@@ -998,10 +1068,16 @@ namespace SIL.XForge.Scripture.Services
             {
                 ParatextService.GetBookList(Arg.Any<UserSecret>(), "target")
                     .Returns(books.Select(b => Canon.BookIdToNumber(b.Id)).ToArray());
+                ParatextService.GetEditableBooks(Arg.Any<UserSecret>(), "target")
+                    .Returns(books.Select(b => Canon.BookIdToNumber(b.Id)).ToArray());
                 // Include book with Source even if there are no chapters, if there are also no chapters in Target. PT
                 // can actually have or not have books which do or do not have chapters more flexibly than this. But in
                 // this way, allow tests to request a Source book exist even with zero chapters.
                 ParatextService.GetBookList(Arg.Any<UserSecret>(), "source")
+                    .Returns(books
+                        .Where(b => b.HighestSourceChapter > 0 || b.HighestSourceChapter == b.HighestTargetChapter)
+                        .Select(b => Canon.BookIdToNumber(b.Id)).ToArray());
+                ParatextService.GetEditableBooks(Arg.Any<UserSecret>(), "source")
                     .Returns(books
                         .Where(b => b.HighestSourceChapter > 0 || b.HighestSourceChapter == b.HighestTargetChapter)
                         .Select(b => Canon.BookIdToNumber(b.Id)).ToArray());
@@ -1035,6 +1111,11 @@ namespace SIL.XForge.Scripture.Services
                     chapterDeltas = chapterDeltas.Append(new ChapterDelta(1, 0, true, Delta.New()));
                 }
                 DeltaUsxMapper.ToChapterDeltas(Arg.Is<XDocument>(d => predicate(d))).Returns(chapterDeltas);
+                int bookNum = Canon.BookIdToNumber(bookId);
+                ParatextService.GetEditableChapters(Arg.Any<UserSecret>(), paratextId, bookNum)
+                    .Returns(Enumerable.Range(1, highestChapter)
+                        .Where(chapterNumber => !(missingChapters?.Contains(chapterNumber) ?? false))
+                        .ToArray());
             }
 
             private void AddSFBook(string projectId, string paratextId, string bookId, int highestChapter, bool changed,

@@ -127,6 +127,10 @@ namespace SIL.XForge.Scripture.Services
                 var targetBooksToDelete = new HashSet<int>(_projectDoc.Data.Texts.Select(t => t.BookNum)
                     .Except(targetBooks));
 
+                // Only include editable books in the target books
+                var editableBooks = new HashSet<int>(_paratextService.GetEditableBooks(_userSecret, targetParatextId));
+                targetBooks.IntersectWith(editableBooks);
+
                 // delete all data for removed books
                 if (targetBooksToDelete.Count > 0)
                 {
@@ -214,7 +218,11 @@ namespace SIL.XForge.Scripture.Services
                         targetTextDocs = new SortedList<int, IDocument<TextData>>();
                     }
 
-                    List<Chapter> newChapters = await UpdateTextDocsAsync(text, targetParatextId, targetTextDocs);
+                    // Only include editable books in the target books
+                    HashSet<int> editableChapters =
+                        new HashSet<int>(_paratextService.GetEditableChapters(_userSecret, targetParatextId, bookNum));
+                    List<Chapter> newChapters =
+                        await UpdateTextDocsAsync(text, targetParatextId, targetTextDocs, editableChapters);
 
                     // update question docs
                     if (questionDocsByBook.TryGetValue(text.BookNum,
@@ -355,15 +363,30 @@ namespace SIL.XForge.Scripture.Services
             Dictionary<int, ChapterDelta> deltas = _deltaUsxMapper.ToChapterDeltas(usxDoc)
                 .ToDictionary(cd => cd.Number);
             var chapters = new List<Chapter>();
+            List<int> chaptersToRemove = textDocs.Keys.Where(c => !deltas.ContainsKey(c)).ToList();
             foreach (KeyValuePair<int, ChapterDelta> kvp in deltas)
             {
                 bool addChapter = true;
                 if (textDocs.TryGetValue(kvp.Key, out IDocument<TextData> textDataDoc))
                 {
-                    Delta diffDelta = textDataDoc.Data.Diff(kvp.Value.Delta);
-                    if (diffDelta.Ops.Count > 0)
-                        tasks.Add(textDataDoc.SubmitOpAsync(diffDelta));
-                    textDocs.Remove(kvp.Key);
+                    if (chaptersToInclude == null || chaptersToInclude.Contains(kvp.Key))
+                    {
+                        Delta diffDelta = textDataDoc.Data.Diff(kvp.Value.Delta);
+                        if (diffDelta.Ops.Count > 0)
+                            tasks.Add(textDataDoc.SubmitOpAsync(diffDelta));
+                        textDocs.Remove(kvp.Key);
+                    }
+                    else
+                    {
+                        // We are not to update this chapter
+                        Chapter existingChapter = text.Chapters.FirstOrDefault(c => c.Number == kvp.Key);
+                        if (existingChapter != null)
+                        {
+                            chapters.Add(existingChapter);
+                        }
+
+                        addChapter = false;
+                    }
                 }
                 else if (chaptersToInclude == null || chaptersToInclude.Contains(kvp.Key))
                 {
@@ -393,7 +416,15 @@ namespace SIL.XForge.Scripture.Services
                 }
             }
             foreach (KeyValuePair<int, IDocument<TextData>> kvp in textDocs)
-                tasks.Add(kvp.Value.DeleteAsync());
+            {
+                if (chaptersToInclude == null
+                    || chaptersToInclude.Contains(kvp.Key)
+                    || chaptersToRemove.Contains(kvp.Key))
+                {
+                    tasks.Add(kvp.Value.DeleteAsync());
+                }
+            }
+
             await Task.WhenAll(tasks);
             return chapters;
         }
@@ -511,7 +542,7 @@ namespace SIL.XForge.Scripture.Services
             IReadOnlyDictionary<string, string> ptUserRoles;
             if (_projectDoc.Data.ParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
             {
-                // Do not update permissions on sync, if this is a resource porject
+                // Do not update permissions on sync, if this is a resource project
                 // Permission updates will be performed when a target project is synchronized
                 ptUserRoles = new Dictionary<string, string>();
                 updateRoles = false;

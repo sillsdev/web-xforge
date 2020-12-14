@@ -412,6 +412,52 @@ namespace SIL.XForge.Scripture.Services
             return permissions;
         }
 
+        public IReadOnlyList<int> GetEditableBooks(UserSecret userSecret, string ptProjectId)
+        {
+            string userName = GetParatextUsername(userSecret);
+            ScrText scrText = ScrTextCollection.FindById(userName, ptProjectId);
+
+            // See if the source is a resource
+            if (ptProjectId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+            {
+                return scrText.Settings.BooksPresentSet.SelectedBookNumbers.ToArray();
+            }
+            else
+            {
+                int[] editableBooks =  scrText.Permissions
+                    .GetEditableBooks(Paratext.Data.Users.PermissionSet.Merged, userName)
+                    .ToArray();
+
+                // If no editable books were returned, see if the user can edit all of them
+                if (!editableBooks.Any() && scrText.Permissions.CanEditAllBooks(userName))
+                {
+                    editableBooks =  scrText.Settings.BooksPresentSet.SelectedBookNumbers.ToArray();
+                }
+
+                return editableBooks;
+            }
+        }
+
+        public IReadOnlyList<int> GetEditableChapters(UserSecret userSecret, string ptProjectId, int bookNum)
+        {
+            string userName = GetParatextUsername(userSecret);
+            ScrText scrText = ScrTextCollection.FindById(userName, ptProjectId);
+
+            // See if the source is a resource
+            if (ptProjectId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+            {
+                return null;
+            }
+            else
+            {
+                return scrText.Permissions.GetEditableChapters(
+                    bookNum,
+                    scrText.Settings.Versification,
+                    userName,
+                    Paratext.Data.Users.PermissionSet.Merged).ToArray();
+            }
+        }
+
         public async Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(UserSecret userSecret,
             string projectId)
         {
