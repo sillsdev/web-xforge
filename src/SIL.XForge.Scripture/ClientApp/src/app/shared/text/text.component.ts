@@ -16,6 +16,7 @@ import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
 import { fromEvent } from 'rxjs';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { UserService } from 'xforge-common/user.service';
 import { getBrowserEngine } from 'xforge-common/utils';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -168,6 +169,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   constructor(
     private readonly projectService: SFProjectService,
+    private readonly userService: UserService,
     private readonly transloco: TranslocoService,
     private readonly pwaService: PwaService,
     private readonly changeDetector: ChangeDetectorRef
@@ -457,8 +459,9 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     } else {
       this.displayMessage = this.transloco.translate('text.not_available_offline');
     }
+    const projectDoc = await this.projectService.get(this._id.projectId);
     const textDoc = await this.projectService.getText(this._id);
-    this.viewModel.bind(textDoc, this.subscribeToUpdates);
+    this.viewModel.bind(textDoc, this._id, projectDoc, this.userService.currentUserId, this.subscribeToUpdates);
     this.updatePlaceholderText();
 
     this.loaded.emit();

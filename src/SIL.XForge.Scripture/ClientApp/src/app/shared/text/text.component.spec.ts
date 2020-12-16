@@ -16,6 +16,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
@@ -25,6 +26,7 @@ import { getSFProject, getTextDoc } from '../test-utils';
 import { TextComponent } from './text.component';
 
 const mockedTranslocoService = mock(TranslocoService);
+const mockedUserService = mock(UserService);
 const mockedPwaService = mock(PwaService);
 const mockedProjectService = mock(SFProjectService);
 
@@ -42,6 +44,7 @@ describe('TextComponent', () => {
     ],
     providers: [
       { provide: TranslocoService, useMock: mockedTranslocoService },
+      { provide: UserService, useMock: mockedUserService },
       { provide: PwaService, useMock: mockedPwaService }
     ]
   }));

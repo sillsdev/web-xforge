@@ -382,6 +382,30 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('save last updated by userid when a typing character', fakeAsync(async () => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
+      env.wait();
+      expect(env.component.target!.segmentRef).toBe('verse_1_5');
+      expect(env.component.showSuggestions).toBe(true);
+
+      env.insertSuggestion(1);
+      expect(env.component.target!.segmentText).toBe('target: chapter 1, verse');
+      expect(env.component.showSuggestions).toBe(true);
+
+      const selectionIndex = env.typeCharacters('5');
+      expect(env.component.target!.segmentText).toBe('target: chapter 1, verse 5');
+      expect(env.component.showSuggestions).toBe(false);
+      const selection = env.targetEditor.getSelection();
+      expect(selection!.index).toBe(selectionIndex + 1);
+      expect(selection!.length).toBe(0);
+
+      env.wait();
+      const projectDoc = env.getProjectDoc();
+      expect(projectDoc.data?.texts[0].chapters[0].lastUpdatedBy).toBe('user01');
+      env.dispose();
+    }));
+
     it('train a modified segment after selecting a different segment', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
@@ -1387,6 +1411,10 @@ class TestEnvironment {
       SFProjectUserConfigDoc.COLLECTION,
       getSFProjectUserConfigDocId('project01', userId)
     );
+  }
+
+  getProjectDoc(projectId: string = 'project01'): SFProjectDoc {
+    return this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, projectId);
   }
 
   getChapterElement(index: number): Element | null {

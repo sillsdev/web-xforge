@@ -1,7 +1,8 @@
 import cloneDeep from 'lodash/cloneDeep';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
 import { Subscription } from 'rxjs';
-import { Delta, TextDoc } from '../../core/models/text-doc';
+import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 
 const PARA_STYLES: Set<string> = new Set<string>([
   // Paragraphs
@@ -94,6 +95,9 @@ export class TextViewModel {
   private remoteChangesSub?: Subscription;
   private onCreateSub?: Subscription;
   private textDoc?: TextDoc;
+  private textDocId?: TextDocId;
+  private userId?: string;
+  private projectDoc?: SFProjectDoc;
 
   constructor() {}
 
@@ -113,13 +117,22 @@ export class TextViewModel {
     return textData.ops == null || textData.ops.length === 0;
   }
 
-  bind(textDoc: TextDoc, subscribeToUpdates: boolean): void {
+  bind(
+    textDoc: TextDoc,
+    textDocId: TextDocId,
+    projectDoc: SFProjectDoc,
+    userId: string,
+    subscribeToUpdates: boolean
+  ): void {
     const editor = this.checkEditor();
     if (this.textDoc != null) {
       this.unbind();
     }
 
     this.textDoc = textDoc;
+    this.textDocId = textDocId;
+    this.projectDoc = projectDoc;
+    this.userId = userId;
     editor.setContents(this.textDoc.data as DeltaStatic);
     editor.history.clear();
     if (subscribeToUpdates) {
@@ -141,6 +154,9 @@ export class TextViewModel {
       this.onCreateSub.unsubscribe();
     }
     this.textDoc = undefined;
+    this.textDocId = undefined;
+    this.projectDoc = undefined;
+    this.userId = undefined;
     if (this.editor != null) {
       this.editor.setText('', 'silent');
     }
@@ -163,6 +179,24 @@ export class TextViewModel {
       const modelDelta = this.viewToData(delta);
       if (modelDelta.ops != null && modelDelta.ops.length > 0) {
         this.textDoc.submit(modelDelta, this.editor);
+        // Update the last updated by value for the book
+        if (this.projectDoc != null && this.textDocId != null && this.userId != null) {
+          const bookIndex = this.projectDoc?.data?.texts.findIndex(t => t.bookNum === this.textDocId?.bookNum) ?? -1;
+          if (bookIndex !== -1) {
+            const chapterIndex =
+              this.projectDoc?.data?.texts[bookIndex]?.chapters?.findIndex(
+                c => c.number === this.textDocId?.chapterNum
+              ) ?? -1;
+            if (
+              chapterIndex !== -1 &&
+              this.projectDoc?.data?.texts[bookIndex].chapters[chapterIndex].lastUpdatedBy !== this.userId
+            ) {
+              this.projectDoc?.submitJson0Op(op => {
+                op.set(pd => pd.texts[bookIndex].chapters[chapterIndex].lastUpdatedBy!, this.userId);
+              });
+            }
+          }
+        }
       }
     }
 
