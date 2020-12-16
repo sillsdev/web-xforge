@@ -406,7 +406,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             env.SetupSFData(true, true, false, new Book("MAT", 3), new Book("MRK", 2));
-            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2), new Book("LUK", 2));
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 3), new Book("LUK", 2));
 
             env.ParatextService.GetEditableBooks(Arg.Any<UserSecret>(), Arg.Any<string>())
                 .Returns(new int[] { Canon.BookIdToNumber("MAT"), Canon.BookIdToNumber("LUK") });
@@ -414,8 +414,9 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project02", "user01", false);
             await env.Runner.RunAsync("project01", "user01", false);
 
-            Assert.That(env.ContainsText("project02", "MAT", 1), Is.True);
-            Assert.That(env.ContainsText("project02", "MAT", 2), Is.True);
+            Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
+            Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
+            Assert.That(env.ContainsText("project01", "MAT", 3), Is.False);
             Assert.That(env.ContainsText("project01", "MRK", 1), Is.True);
             Assert.That(env.ContainsText("project01", "MRK", 2), Is.True);
             Assert.That(env.ContainsText("project01", "MRK", 3), Is.False);
@@ -424,6 +425,7 @@ namespace SIL.XForge.Scripture.Services
 
             Assert.That(env.ContainsText("project02", "MAT", 1), Is.True);
             Assert.That(env.ContainsText("project02", "MAT", 2), Is.True);
+            Assert.That(env.ContainsText("project02", "MAT", 3), Is.False);
             Assert.That(env.ContainsText("project02", "MRK", 1), Is.True);
             Assert.That(env.ContainsText("project02", "MRK", 2), Is.True);
             Assert.That(env.ContainsText("project02", "MRK", 3), Is.False);
