@@ -127,10 +127,6 @@ namespace SIL.XForge.Scripture.Services
                 var targetBooksToDelete = new HashSet<int>(_projectDoc.Data.Texts.Select(t => t.BookNum)
                     .Except(targetBooks));
 
-                // Only include editable books in the target books
-                var editableBooks = new HashSet<int>(_paratextService.GetEditableBooks(_userSecret, targetParatextId));
-                targetBooks.IntersectWith(editableBooks);
-
                 // delete all data for removed books
                 if (targetBooksToDelete.Count > 0)
                 {
@@ -218,11 +214,7 @@ namespace SIL.XForge.Scripture.Services
                         targetTextDocs = new SortedList<int, IDocument<TextData>>();
                     }
 
-                    // Only include editable books in the target books
-                    HashSet<int> editableChapters =
-                        new HashSet<int>(_paratextService.GetEditableChapters(_userSecret, targetParatextId, bookNum));
-                    List<Chapter> newChapters =
-                        await UpdateTextDocsAsync(text, targetParatextId, targetTextDocs, editableChapters);
+                    List<Chapter> newChapters = await UpdateTextDocsAsync(text, targetParatextId, targetTextDocs);
 
                     // update question docs
                     if (questionDocsByBook.TryGetValue(text.BookNum,
@@ -329,7 +321,15 @@ namespace SIL.XForge.Scripture.Services
                 .Select(c => new ChapterDelta(c.Number, c.LastVerse, c.IsValid, textDocs[c.Number].Data)));
 
             if (!XNode.DeepEquals(oldUsxDoc, newUsxDoc))
-                _paratextService.PutBookText(_userSecret, paratextId, text.BookNum, newUsxDoc.Root.ToString());
+            {
+                // Build the dictionary of chapter authors
+                Dictionary<int, string> chapterAuthors = text.Chapters
+                    .ToDictionary(
+                    c => c.Number,
+                    c => c.LastUpdatedBy ?? c.Permissions.FirstOrDefault(p => p.Value == TextInfoPermission.Write).Key);
+                string usx = newUsxDoc.Root.ToString();
+                _paratextService.PutBookText(_userSecret, paratextId, text.BookNum, usx, chapterAuthors);
+            }
         }
 
         /// <summary>
