@@ -107,6 +107,10 @@ namespace SIL.XForge.Services
                         new JProperty("client_secret", options.BackendClientSecret),
                         new JProperty("audience", _authOptions.Value.ManagementAudience));
                     request.Content = new StringContent(requestObj.ToString(), Encoding.UTF8, "application/json");
+                    if (string.IsNullOrEmpty(options.BackendClientSecret))
+                    {
+                        Console.WriteLine("Note: AuthService is using an empty BackendClientSecret.");
+                    }
                     HttpResponseMessage response = await _httpClient.SendAsync(request);
                     await _exceptionHandler.EnsureSuccessStatusCode(response);
 

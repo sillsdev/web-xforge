@@ -44,7 +44,7 @@ namespace SIL.XForge.Scripture
         {
             get
             {
-                if (Environment.IsDevelopment())
+                if (IsDevelopmentEnvironment)
                 {
                     string startNgServe = Configuration.GetValue("start-ng-serve", "yes");
                     switch (startNgServe)
@@ -55,7 +55,7 @@ namespace SIL.XForge.Scripture
                             return SpaDevServerStartup.Listen;
                     }
                 }
-                else if (Environment.IsEnvironment("Testing"))
+                else if (IsTestingEnvironment)
                 {
                     return SpaDevServerStartup.Listen;
                 }
@@ -63,7 +63,8 @@ namespace SIL.XForge.Scripture
             }
         }
 
-        private bool IsDevelopment => Environment.IsDevelopment() || Environment.IsEnvironment("Testing");
+        private bool IsDevelopmentEnvironment => Environment.IsDevelopment() || Environment.IsEnvironment("DevelopmentBeta");
+        private bool IsTestingEnvironment => Environment.IsEnvironment("Testing") || Environment.IsEnvironment("TestingBeta");
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public IServiceProvider ConfigureServices(IServiceCollection services)
@@ -74,7 +75,7 @@ namespace SIL.XForge.Scripture
 
             services.AddConfiguration(Configuration);
 
-            services.AddSFRealtimeServer(LoggerFactory, Configuration, IsDevelopment);
+            services.AddSFRealtimeServer(LoggerFactory, Configuration, IsDevelopmentEnvironment || IsTestingEnvironment);
 
             services.AddSFServices();
 
@@ -133,7 +134,7 @@ namespace SIL.XForge.Scripture
         public void Configure(IApplicationBuilder app, IHostApplicationLifetime appLifetime,
             IExceptionHandler exceptionHandler)
         {
-            if (IsDevelopment)
+            if (IsDevelopmentEnvironment || IsTestingEnvironment)
             {
                 app.UseDeveloperExceptionPage();
             }
@@ -203,11 +204,24 @@ namespace SIL.XForge.Scripture
                 switch (SpaDevServerStartup)
                 {
                     case SpaDevServerStartup.Start:
-                        spa.UseAngularCliServer(npmScript: "start:no-progress");
+                        string npmScript = "start";
+                        if (Environment.IsEnvironment("DevelopmentBeta"))
+                        {
+                            npmScript = "startBeta";
+                        }
+                        Console.WriteLine($"Info: SF is serving angular using script {npmScript}.");
+                        spa.UseAngularCliServer(npmScript);
                         break;
 
                     case SpaDevServerStartup.Listen:
-                        spa.UseProxyToSpaDevelopmentServer("http://localhost:4200");
+                        int port = 4200;
+                        if (Environment.IsEnvironment("DevelopmentBeta"))
+                        {
+                            port = 9200;
+                        }
+                        string ngServeUri = $"http://localhost:{port}";
+                        Console.WriteLine($"Info: SF will use an existing angular serve at {ngServeUri}.");
+                        spa.UseProxyToSpaDevelopmentServer(ngServeUri);
                         break;
                 }
             });
