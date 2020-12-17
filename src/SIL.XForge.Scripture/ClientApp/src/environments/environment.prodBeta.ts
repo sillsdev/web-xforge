@@ -10,7 +10,7 @@ export const environment = {
   assets: '/assets/',
   helps: 'https://help.scriptureforge.org',
   bugsnagApiKey: 'b72a46a8924a3cd161d4c5534287923c',
-  realtimePort: 9003,
+  realtimePort: 0,
   realtimeUrl: '/realtime-api/',
   authDomain: 'login.languagetechnology.org',
   authClientId: 'tY2wXn40fsL5VsPM4uIHNtU6ZUEXGeFn',
