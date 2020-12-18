@@ -9,7 +9,6 @@ import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
@@ -25,7 +24,6 @@ import {
 } from './translate-metrics-session';
 
 const mockedSFProjectService = mock(SFProjectService);
-const mockedUserService = mock(UserService);
 const mockedPwaService = mock(PwaService);
 
 describe('TranslateMetricsSession', () => {
@@ -34,7 +32,6 @@ describe('TranslateMetricsSession', () => {
     imports: [QuillModule.forRoot(), TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: SFProjectService, useMock: mockedSFProjectService },
-      { provide: UserService, useMock: mockedUserService },
       { provide: PwaService, useMock: mockedPwaService }
     ]
   }));

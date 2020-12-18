@@ -2,7 +2,6 @@ export interface Chapter {
   number: number;
   lastVerse: number;
   isValid: boolean;
-  lastUpdatedBy?: string;
   permissions: { [userRef: string]: string };
 }
 

@@ -20,7 +20,6 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { UserService } from 'xforge-common/user.service';
 import { CheckingModule } from '../checking/checking.module';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
@@ -29,7 +28,6 @@ import { SFProjectService } from '../core/sf-project.service';
 import { TextChooserDialogComponent, TextChooserDialogData, TextSelection } from './text-chooser-dialog.component';
 
 const mockedProjectService = mock(SFProjectService);
-const mockedUserService = mock(UserService);
 const mockedDocument = mock(Document);
 const mockedPwaService = mock(PwaService);
 
@@ -39,7 +37,6 @@ describe('TextChooserDialogComponent', () => {
     providers: [
       { provide: AuthService, useMock: mock(AuthService) },
       { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: UserService, useMock: mockedUserService },
       { provide: DOCUMENT, useMock: mockedDocument },
       { provide: CookieService, useMock: mock(CookieService) },
       { provide: PwaService, useMock: mockedPwaService }

@@ -477,35 +477,10 @@ namespace SIL.XForge.Scripture.Services
             if (chapterAuthors == null || chapterAuthors.Count == 0)
             {
                 // If we don't have chapter authors, update only what we have permission for
-                // This is the same check ScrText.PutText() will use to block the Put action with a SafetyCheckException
-                if (scrText.Permissions.CanEdit(bookNum, 0))
-                {
-                    scrText.PutText(bookNum, 0, false, usfm, null);
-                    _logger.LogInformation("{0} updated {1} in {2}.", userSecret.Id,
-                        Canon.BookNumberToEnglishName(bookNum), scrText.Name);
-                }
-                else
-                {
-                    // See if the user has permissions for individual chapters
-                    IEnumerable<int> editableChapters =
-                        scrText.Permissions.GetEditableChapters(bookNum, scrText.Settings.Versification);
-                    if (editableChapters != null && editableChapters.Any())
-                    {
-                        // Split the usfm into chapters
-                        List<string> chapters = ScrText.SplitIntoChapters(scrText.Name, bookNum, usfm);
-
-                        // Put the individual chapters
-                        foreach (int chapterNum in editableChapters)
-                        {
-                            if ((chapterNum - 1) < chapters.Count)
-                            {
-                                scrText.PutText(bookNum, chapterNum, false, chapters[chapterNum - 1], null);
-                                _logger.LogInformation("{0} updated chapter {1} of {2} in {3}.", userSecret.Id,
-                                    chapterNum, Canon.BookNumberToEnglishName(bookNum), scrText.Name);
-                            }
-                        }
-                    }
-                }
+                // This will throw a SafetyCheckException if the user does not haver permission for every chapter
+                scrText.PutText(bookNum, 0, false, usfm, null);
+                _logger.LogInformation("{0} updated {1} in {2}.", userSecret.Id,
+                    Canon.BookNumberToEnglishName(bookNum), scrText.Name);
             }
             else
             {

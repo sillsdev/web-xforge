@@ -107,7 +107,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     SortedList<int, IDocument<TextData>> targetTextDocs = await FetchTextDocsAsync(text);
                     targetTextDocsByBook[text.BookNum] = targetTextDocs;
-                    UpdateParatextBook(text, targetParatextId, targetTextDocs);
+                    await UpdateParatextBook(text, targetParatextId, targetTextDocs);
 
                     IReadOnlyList<IDocument<Question>> questionDocs = await FetchQuestionDocsAsync(text);
                     questionDocsByBook[text.BookNum] = questionDocs;
@@ -313,7 +313,7 @@ namespace SIL.XForge.Scripture.Services
             _conn?.Dispose();
         }
 
-        private void UpdateParatextBook(TextInfo text, string paratextId, SortedList<int, IDocument<TextData>> textDocs)
+        private async Task UpdateParatextBook(TextInfo text, string paratextId, SortedList<int, IDocument<TextData>> textDocs)
         {
             string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
             var oldUsxDoc = XDocument.Parse(bookText);
@@ -322,13 +322,7 @@ namespace SIL.XForge.Scripture.Services
 
             if (!XNode.DeepEquals(oldUsxDoc, newUsxDoc))
             {
-                // Build the dictionary of chapter authors
-                Dictionary<int, string> chapterAuthors = text.Chapters
-                    .ToDictionary(
-                    c => c.Number,
-                    c => c.LastUpdatedBy ?? c.Permissions.FirstOrDefault(p => p.Value == TextInfoPermission.Write).Key);
-                string usx = newUsxDoc.Root.ToString();
-                _paratextService.PutBookText(_userSecret, paratextId, text.BookNum, usx, chapterAuthors);
+                await _paratextService.PutBookText(_userSecret, paratextId, text.BookNum, newUsxDoc.Root.ToString());
             }
         }
 
