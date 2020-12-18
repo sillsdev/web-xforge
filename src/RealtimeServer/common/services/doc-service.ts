@@ -50,7 +50,7 @@ export abstract class DocService<T = any> {
   }
 
   protected addUpdateListener(server: RealtimeServer, handler: (docId: string, ops: any) => Promise<void>): void {
-    server.use('afterSubmit', (context, callback) => {
+    server.use('afterWrite', (context, callback) => {
       if (context.collection === this.collection) {
         handler(context.id, context.op.op)
           .then(() => callback())

@@ -49,7 +49,7 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
   init(server: RealtimeServer): void {
     super.init(server);
     if (this.listenForUpdates) {
-      server.use('afterSubmit', (context, callback) => {
+      server.use('afterWrite', (context, callback) => {
         if (context.collection === this.collection) {
           this.handleAfterSubmit(context)
             .then(() => callback())

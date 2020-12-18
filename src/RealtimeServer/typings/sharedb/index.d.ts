@@ -180,7 +180,7 @@ declare namespace ShareDB {
 
   namespace middleware {
     interface ActionContextMap {
-      afterSubmit: SubmitContext;
+      afterWrite: SubmitContext;
       apply: ApplyContext;
       commit: CommitContext;
       connect: ConnectContext;
