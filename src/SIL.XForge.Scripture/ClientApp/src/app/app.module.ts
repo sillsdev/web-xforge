@@ -19,6 +19,7 @@ import { CheckingModule } from './checking/checking.module';
 import { ConnectProjectComponent } from './connect-project/connect-project.component';
 import { CoreModule } from './core/core.module';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
+import { ProjectSelectComponent } from './project-select/project-select.component';
 import { ProjectComponent } from './project/project.component';
 import { ScriptureChooserDialogComponent } from './scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { DeleteProjectDialogComponent } from './settings/delete-project-dialog/delete-project-dialog.component';
@@ -41,7 +42,8 @@ import { UsersModule } from './users/users.module';
     ScriptureChooserDialogComponent,
     SupportedBrowsersDialogComponent,
     ErrorComponent,
-    EditNameDialogComponent
+    EditNameDialogComponent,
+    ProjectSelectComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),

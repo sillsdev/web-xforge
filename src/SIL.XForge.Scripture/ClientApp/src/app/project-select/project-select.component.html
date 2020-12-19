@@ -1,0 +1,24 @@
+<ng-container *transloco="let t; read: 'project_select'">
+  <mat-form-field>
+    <input
+      type="text"
+      matInput
+      [placeholder]="placeholder"
+      [formControl]="paratextIdControl"
+      [matAutocomplete]="auto"
+    />
+    <mat-autocomplete
+      #auto="matAutocomplete"
+      [displayWith]="projectDisplayText"
+      (opened)="autocompleteOpened()"
+      class="project-select"
+    >
+      <mat-optgroup label="{{ t('projects') }}" *ngIf="(projects$ | async).length > 0">
+        <mat-option *ngFor="let project of projects$ | async" [value]="project">{{ project.name }}</mat-option>
+      </mat-optgroup>
+      <mat-optgroup label="{{ t('resources') }}" *ngIf="(resources$ | async).length > 0">
+        <mat-option *ngFor="let resource of resources$ | async" [value]="resource">{{ resource.name }}</mat-option>
+      </mat-optgroup>
+    </mat-autocomplete>
+  </mat-form-field>
+</ng-container>

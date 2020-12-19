@@ -39,7 +39,6 @@ import { Snapshot } from 'xforge-common/models/snapshot';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
-import { ProjectService } from 'xforge-common/project.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
