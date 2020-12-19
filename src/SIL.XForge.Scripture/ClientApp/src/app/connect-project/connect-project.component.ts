@@ -9,7 +9,7 @@ import { PwaService } from 'xforge-common/pwa.service';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectCreateSettings } from '../core/models/sf-project-create-settings';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
-import { ParatextService } from '../core/paratext.service';
+import { ParatextService, SelectableProject } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 
 interface ConnectProjectFormValues {
@@ -37,8 +37,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     })
   });
   projects?: ParatextProject[];
-  resources?: ParatextProject[];
-  sourceProjects?: ParatextProject[];
+  resources?: SelectableProject[];
   state: 'connecting' | 'loading' | 'input' | 'login' | 'offline' = 'loading';
   connectProjectName?: string;
 
@@ -112,24 +111,17 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   }
 
   ngOnInit(): void {
-    this.subscribe(this.paratextIdControl.valueChanges, async (paratextId: string) => {
-      if (this.state !== 'input' || this.projects == null) {
+    this.subscribe(this.paratextIdControl.valueChanges, () => {
+      if (this.state !== 'input') {
         return;
       }
-      let paratextProjects = this.projects.filter(p => p.paratextId !== paratextId);
-      // Merge the resources collection with the projects collection
-      if (this.resources != null) {
-        paratextProjects = paratextProjects?.concat(this.resources) ?? this.resources;
-      }
-      this.sourceProjects = paratextProjects;
-      const settings = this.settings;
       if (this.showSettings) {
-        settings.enable();
+        this.settings.enable();
       } else {
-        settings.disable();
+        this.settings.disable();
       }
       if (!this.translationSuggestionsEnabled) {
-        const sourceParatextId = settings.controls.sourceParatextId;
+        const sourceParatextId = this.settings.controls.sourceParatextId;
         sourceParatextId.reset();
         sourceParatextId.disable();
       }
@@ -217,12 +209,9 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   private async populateProjectList() {
     this.state = 'loading';
     this.loadingStarted();
-    const paratextProjects = await this.paratextService.getProjects().toPromise();
-    this.projects = paratextProjects == null ? undefined : paratextProjects;
-    const paratextResources = await this.paratextService.getResources().toPromise();
-    this.resources = paratextResources == null ? undefined : paratextResources;
-    if (paratextProjects != null) {
-      this.targetProjects = paratextProjects.filter(p => p.isConnectable);
+    [this.projects, this.resources] = await this.paratextService.getProjectsAndResources();
+    if (this.projects != null) {
+      this.targetProjects = this.projects.filter(p => p.isConnectable);
       this.state = 'input';
     } else {
       this.state = 'login';

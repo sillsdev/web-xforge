@@ -113,6 +113,10 @@
     "previous_page": "Previous page",
     "range_label": "{{ startIndex }} - {{ endIndex }} of {{ length }}"
   },
+  "project_select": {
+    "projects": "Projects",
+    "resources": "Resources"
+  },
   "question_answered_dialog": {
     "cancel": "Cancel",
     "consider_creating_new_question": "Consider creating a new question instead of editing this question.",

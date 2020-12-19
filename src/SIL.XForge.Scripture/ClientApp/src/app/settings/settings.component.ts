@@ -13,7 +13,7 @@ import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectSettings } from '../core/models/sf-project-settings';
-import { ParatextService } from '../core/paratext.service';
+import { ParatextService, SelectableProject } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
 
@@ -32,12 +32,13 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     shareEnabled: new FormControl(false),
     shareLevel: new FormControl(undefined)
   });
-  sourceProjects?: ParatextProject[];
+  projects?: ParatextProject[];
+  resources?: SelectableProject[];
+  nonSelectableProjects?: SelectableProject[];
 
   private projectDoc?: SFProjectDoc;
   /** Elements in this component and their states. */
   private controlStates = new Map<Extract<keyof SFProjectSettings, string>, ElementState>();
-  private paratextProjects?: ParatextProject[];
   private previousFormValues: SFProjectSettings = {};
   private _isAppOnline: boolean = false;
 
@@ -64,7 +65,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   get isLoggedInToParatext(): boolean {
-    return this.paratextProjects != null;
+    return this.projects != null;
   }
 
   get translationSuggestionsEnabled(): boolean {
@@ -117,20 +118,15 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     );
     this.subscribe(combineLatest(this.pwaService.onlineStatus, projectId$), async ([isOnline, projectId]) => {
       this.isAppOnline = isOnline;
-      if (isOnline && this.paratextProjects == null) {
+      if (isOnline && this.projects == null) {
         this.loadingStarted();
-        let paratextProjects = await this.paratextService.getProjects().toPromise();
-        // Merge the resources collection with the projects collection
-        const paratextResources = await this.paratextService.getResources().toPromise();
-        if (paratextResources != null) {
-          paratextProjects = paratextProjects?.concat(paratextResources) ?? paratextResources;
-        }
-        this.projectDoc = await this.projectService.get(projectId);
-        this.paratextProjects = paratextProjects == null ? undefined : paratextProjects;
+        const projectDocPromise = this.projectService.get(projectId);
+        [this.projects, this.resources] = await this.paratextService.getProjectsAndResources();
+        this.projectDoc = await projectDocPromise;
         if (this.projectDoc != null) {
           this.updateSettingsInfo();
-          this.updateSourceProjects();
-          this.subscribe(this.projectDoc.remoteChanges$, () => this.updateSourceProjects());
+          this.updateNonSelectableProjects();
+          this.subscribe(this.projectDoc.remoteChanges$, () => this.updateNonSelectableProjects());
         }
         this.loadingFinished();
       }
@@ -297,27 +293,16 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.controlStates.set('shareLevel', ElementState.InSync);
   }
 
-  private updateSourceProjects(): void {
-    if (this.projectDoc == null || this.projectDoc.data == null || this.paratextProjects == null) {
-      return;
+  private updateNonSelectableProjects(): void {
+    const source = this.projectDoc?.data?.translateConfig?.source;
+    if (
+      source != null &&
+      (this.projects?.find(p => p.paratextId === source.paratextId) ||
+        this.resources?.find(r => r.paratextId === source.paratextId)) == null
+    ) {
+      this.nonSelectableProjects = [{ paratextId: source.paratextId, name: source.name }];
+    } else {
+      this.nonSelectableProjects = [];
     }
-
-    const projectId = this.projectDoc.id;
-    const sourceProjects = this.paratextProjects.filter(p => p.projectId !== projectId);
-    const curSource = this.projectDoc.data.translateConfig.source;
-    if (curSource != null) {
-      const sourceProject = sourceProjects.find(p => p.paratextId === curSource.paratextId);
-      if (sourceProject == null) {
-        sourceProjects.unshift({
-          paratextId: curSource.paratextId,
-          name: curSource.name,
-          shortName: curSource.shortName,
-          languageTag: curSource.writingSystem.tag,
-          isConnectable: false,
-          isConnected: false
-        });
-      }
-    }
-    this.sourceProjects = sourceProjects;
   }
 }

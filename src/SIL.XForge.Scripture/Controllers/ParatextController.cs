@@ -58,7 +58,7 @@ namespace SIL.XForge.Scripture.Controllers
         /// so we just return the base class <see cref="ParatextProject" />.
         /// </remarks>
         [HttpGet("resources")]
-        public async Task<ActionResult<IEnumerable<ParatextProject>>> ResourcesAsync()
+        public async Task<ActionResult<Dictionary<string, string>>> ResourcesAsync()
         {
             Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
             if (!attempt.TryResult(out UserSecret userSecret))
@@ -67,7 +67,12 @@ namespace SIL.XForge.Scripture.Controllers
             try
             {
                 var resources = _paratextService.GetResources(userSecret);
-                return Ok(resources);
+                var result = new Dictionary<string, string>();
+                foreach (var resource in resources)
+                {
+                    result.Add(resource.ParatextId, resource.Name);
+                }
+                return Ok(result);
             }
             catch (SecurityException)
             {

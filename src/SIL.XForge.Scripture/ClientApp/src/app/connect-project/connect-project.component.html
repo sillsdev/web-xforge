@@ -84,18 +84,16 @@
             class="indented-field-row"
           >
             <div fxFlex="44px" class="indent"></div>
-            <mdc-form-field fxLayout="column" fxLayoutAlign="start" id="based-on-field">
-              <mdc-select placeholder="{{ t('based_on') }}" formControlName="sourceParatextId">
-                <mdc-menu>
-                  <mdc-list>
-                    <mdc-list-item *ngFor="let project of sourceProjects" [value]="project.paratextId">
-                      {{ project.name }}
-                    </mdc-list-item>
-                  </mdc-list>
-                </mdc-menu>
-              </mdc-select>
+            <div fxLayout="column" fxFlex="grow">
+              <app-project-select
+                formControlName="sourceParatextId"
+                placeholder="{{ t('based_on') }}"
+                [projects]="projects"
+                [resources]="resources"
+                [hideProjectId]="paratextIdControl.value"
+              ></app-project-select>
               <div class="helper-text">{{ t("choose_the_mother_project") }}</div>
-            </mdc-form-field>
+            </div>
           </div>
         </div>
         <mdc-list-divider></mdc-list-divider>
