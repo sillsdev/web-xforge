@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Security;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -58,7 +59,7 @@ namespace SIL.XForge.Scripture.Controllers
         /// so we just return the base class <see cref="ParatextProject" />.
         /// </remarks>
         [HttpGet("resources")]
-        public async Task<ActionResult<IEnumerable<ParatextProject>>> ResourcesAsync()
+        public async Task<ActionResult<Dictionary<string, string>>> ResourcesAsync()
         {
             Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
             if (!attempt.TryResult(out UserSecret userSecret))
@@ -67,7 +68,7 @@ namespace SIL.XForge.Scripture.Controllers
             try
             {
                 var resources = _paratextService.GetResources(userSecret);
-                return Ok(resources);
+                return Ok(resources.ToDictionary(r => r.ParatextId, r => r.Name));
             }
             catch (SecurityException)
             {

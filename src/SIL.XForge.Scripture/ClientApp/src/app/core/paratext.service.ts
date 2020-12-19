@@ -5,6 +5,11 @@ import { map } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { ParatextProject } from './models/paratext-project';
 
+export interface SelectableProject {
+  name: string;
+  paratextId: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -15,23 +20,31 @@ export class ParatextService {
     this.authService.linkParatext(returnUrl);
   }
 
-  /** Get projects the user has access to. */
-  getProjects(): Observable<ParatextProject[] | undefined> {
-    return this.http
-      .get<ParatextProject[]>('paratext-api/projects', { headers: this.getHeaders() })
-      .pipe(map(r => (r == null ? undefined : r)));
-  }
-
-  getResources(): Observable<ParatextProject[] | undefined> {
-    return this.http
-      .get<ParatextProject[]>('paratext-api/resources', { headers: this.getHeaders() })
-      .pipe(map(r => (r == null ? undefined : r)));
+  /** Fetch projects and resources in parallel */
+  getProjectsAndResources(): Promise<[ParatextProject[] | undefined, SelectableProject[] | undefined]> {
+    return Promise.all<ParatextProject[] | undefined, SelectableProject[] | undefined>([
+      this.getProjects(),
+      this.getResources()
+    ]);
   }
 
   getParatextUsername(): Observable<string | undefined> {
     return this.http
-      .get<string>('paratext-api/username', { headers: this.getHeaders() })
-      .pipe(map(r => (r == null ? undefined : r)));
+      .get<string | null>('paratext-api/username', { headers: this.getHeaders() })
+      .pipe(map(r => r ?? undefined));
+  }
+
+  private getProjects(): Promise<ParatextProject[] | undefined> {
+    return this.http
+      .get<ParatextProject[] | undefined>('paratext-api/projects', { headers: this.getHeaders() })
+      .toPromise();
+  }
+
+  private getResources(): Promise<SelectableProject[] | undefined> {
+    return this.http
+      .get<{ [key: string]: string }[]>('paratext-api/resources', { headers: this.getHeaders() })
+      .pipe(map(r => (r ? Object.keys(r).map(key => ({ paratextId: key, name: r[key] })) : undefined)))
+      .toPromise();
   }
 
   private getHeaders(): HttpHeaders {

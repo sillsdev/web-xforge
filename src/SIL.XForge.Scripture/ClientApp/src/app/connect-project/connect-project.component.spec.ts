@@ -9,7 +9,7 @@ import { Router } from '@angular/router';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { BehaviorSubject, defer, of } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { anything, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -24,8 +24,9 @@ import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectCreateSettings } from '../core/models/sf-project-create-settings';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
-import { ParatextService } from '../core/paratext.service';
+import { ParatextService, SelectableProject } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
+import { ProjectSelectComponent } from '../project-select/project-select.component';
 import { ConnectProjectComponent } from './connect-project.component';
 
 const mockedParatextService = mock(ParatextService);
@@ -46,7 +47,7 @@ describe('ConnectProjectComponent', () => {
       TestTranslocoModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
     ],
-    declarations: [ConnectProjectComponent],
+    declarations: [ConnectProjectComponent, ProjectSelectComponent],
     providers: [
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: Router, useMock: mockedRouter },
@@ -60,8 +61,7 @@ describe('ConnectProjectComponent', () => {
 
   it('should display login button when PT projects is null', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedParatextService.getProjects()).thenReturn(of(undefined));
-    when(mockedParatextService.getResources()).thenReturn(of(undefined));
+    when(mockedParatextService.getProjectsAndResources()).thenReturn(Promise.resolve([undefined, undefined]));
     env.waitForProjectsResponse();
 
     expect(env.component.state).toEqual('login');
@@ -73,8 +73,7 @@ describe('ConnectProjectComponent', () => {
 
   it('should display form when PT projects is empty', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedParatextService.getProjects()).thenReturn(of([]));
-    when(mockedParatextService.getResources()).thenReturn(of([]));
+    when(mockedParatextService.getProjectsAndResources()).thenReturn(Promise.resolve([[], []]));
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
     expect(env.connectProjectForm).not.toBeNull();
@@ -96,17 +95,18 @@ describe('ConnectProjectComponent', () => {
     env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
     expect(env.sourceParatextIdControl.valid).toBe(true);
     expect(env.sourceParatextIdControl.disabled).toBe(false);
+    env.openSourceProjectAutocomplete();
     // NOTE: The source projects list excludes pt01 (as it is our selected project above)
-    expect(env.getMenuItems(env.sourceProjectSelect).length).toEqual(6);
-    expect(env.getMenuItemText(env.sourceProjectSelect, 2)).toBe('Thai');
-    expect(env.getMenuItemText(env.sourceProjectSelect, 3)).toBe('Sob Jonah and Luke');
+    expect(env.selectableSourceProjectsAndResources.projects.length).toEqual(3);
+    expect(env.selectableSourceProjectsAndResources.resources.length).toEqual(3);
+    expect(env.selectableSourceProjectsAndResources.projects[2]).toBe('Thai');
+    expect(env.selectableSourceProjectsAndResources.resources[0]).toBe('Sob Jonah and Luke');
     expect(env.component.connectProjectForm.valid).toBe(true);
   }));
 
   it('should do nothing when form is invalid', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedParatextService.getProjects()).thenReturn(of([]));
-    when(mockedParatextService.getResources()).thenReturn(of([]));
+    when(mockedParatextService.getProjectsAndResources()).thenReturn(Promise.resolve([[], []]));
     env.waitForProjectsResponse();
 
     expect(env.submitButton.nativeElement.disabled).toBe(true);
@@ -119,8 +119,7 @@ describe('ConnectProjectComponent', () => {
 
   it('should display loading when getting PT projects', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedParatextService.getProjects()).thenReturn(defer(() => Promise.resolve([])));
-    when(mockedParatextService.getResources()).thenReturn(defer(() => Promise.resolve([])));
+    when(mockedParatextService.getProjectsAndResources()).thenReturn(Promise.resolve([[], []]));
     env.fixture.detectChanges();
 
     expect(env.component.state).toEqual('loading');
@@ -173,37 +172,39 @@ describe('ConnectProjectComponent', () => {
 
   it('should not display non-administrator message', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedParatextService.getProjects()).thenReturn(
-      of<ParatextProject[]>([
-        {
-          paratextId: 'pt01',
-          name: 'Target1',
-          shortName: 'TA1',
-          languageTag: 'en',
-          isConnectable: true,
-          isConnected: false
-        },
-        {
-          paratextId: 'pt02',
-          projectId: 'project02',
-          name: 'Target2',
-          shortName: 'TA2',
-          languageTag: 'mri',
-          isConnectable: false,
-          isConnected: true
-        },
-        {
-          paratextId: 'pt03',
-          projectId: 'project03',
-          name: 'Target3',
-          shortName: 'TA3',
-          languageTag: 'th',
-          isConnectable: true,
-          isConnected: true
-        }
+    when(mockedParatextService.getProjectsAndResources()).thenReturn(
+      Promise.resolve([
+        [
+          {
+            paratextId: 'pt01',
+            name: 'Target1',
+            shortName: 'TA1',
+            languageTag: 'en',
+            isConnectable: true,
+            isConnected: false
+          },
+          {
+            paratextId: 'pt02',
+            projectId: 'project02',
+            name: 'Target2',
+            shortName: 'TA2',
+            languageTag: 'mri',
+            isConnectable: false,
+            isConnected: true
+          },
+          {
+            paratextId: 'pt03',
+            projectId: 'project03',
+            name: 'Target3',
+            shortName: 'TA3',
+            languageTag: 'th',
+            isConnectable: true,
+            isConnected: true
+          }
+        ],
+        []
       ])
     );
-    when(mockedParatextService.getResources()).thenReturn(of([]));
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
     expect(env.getMenuItems(env.projectSelect).length).toEqual(3);
@@ -277,7 +278,7 @@ describe('ConnectProjectComponent', () => {
     expect(env.sourceParatextIdControl.valid).toBe(true);
     expect(env.sourceParatextIdControl.disabled).toBe(false);
 
-    env.changeSelectValue(env.sourceProjectSelect, 'pt04');
+    env.selectSourceProject('pt04');
     expect(env.component.connectProjectForm.valid).toBe(true);
     env.clickElement(env.submitButton);
     tick();
@@ -361,7 +362,7 @@ describe('ConnectProjectComponent', () => {
     tick();
     env.fixture.detectChanges();
 
-    verify(mockedParatextService.getProjects()).once();
+    verify(mockedParatextService.getProjectsAndResources()).once();
     verify(mockedErrorHandler.handleError(anything())).once();
     expect(env.component.state).toEqual('input');
     expect(env.progressBar).toBeNull();
@@ -467,7 +468,7 @@ class TestEnvironment {
   }
 
   get sourceProjectSelect(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#based-on-field mdc-select'));
+    return this.fixture.debugElement.query(By.css('app-project-select'));
   }
 
   get sourceParatextIdControl(): AbstractControl {
@@ -486,6 +487,32 @@ class TestEnvironment {
     this.isOnline.next(hasConnection);
     tick();
     this.fixture.detectChanges();
+  }
+
+  get sourceProjectSelectComponent(): ProjectSelectComponent {
+    return this.sourceProjectSelect.componentInstance as ProjectSelectComponent;
+  }
+
+  get selectableSourceProjectsAndResources(): { projects: string[]; resources: string[] } {
+    const groups = (this.sourceProjectSelectComponent.autocomplete.panel.nativeElement as HTMLElement).querySelectorAll(
+      'mat-optgroup'
+    );
+    const [projects, resources] = [groups[0], groups[1]].map(group =>
+      Array.from(group.querySelectorAll('mat-option')).map(option => option.textContent || '')
+    );
+    return { projects, resources };
+  }
+
+  selectSourceProject(projectId: string) {
+    this.sourceProjectSelectComponent.value = projectId;
+    this.fixture.detectChanges();
+    tick();
+  }
+
+  openSourceProjectAutocomplete() {
+    this.sourceProjectSelectComponent.autocompleteTrigger.openPanel();
+    this.fixture.detectChanges();
+    tick();
   }
 
   changeSelectValue(select: DebugElement, value: string): void {
@@ -539,73 +566,49 @@ class TestEnvironment {
   }
 
   setupDefaultProjectData(): void {
-    when(mockedParatextService.getProjects()).thenReturn(
-      of<ParatextProject[]>([
-        {
-          paratextId: 'pt01',
-          name: 'English',
-          shortName: 'ENG',
-          languageTag: 'en',
-          isConnectable: true,
-          isConnected: false
-        },
-        {
-          paratextId: 'pt02',
-          projectId: 'project02',
-          name: 'Maori',
-          shortName: 'MRI',
-          languageTag: 'mri',
-          isConnectable: false,
-          isConnected: true
-        },
-        {
-          paratextId: 'pt04',
-          name: 'Spanish',
-          shortName: 'ESP',
-          languageTag: 'es',
-          isConnectable: false,
-          isConnected: false
-        },
-        {
-          paratextId: 'pt03',
-          projectId: 'project03',
-          name: 'Thai',
-          shortName: 'THA',
-          languageTag: 'th',
-          isConnectable: true,
-          isConnected: true
-        }
-      ])
-    );
-    when(mockedParatextService.getResources()).thenReturn(
-      of([
-        {
-          paratextId: 'e01f11e9b4b8e338',
-          projectId: undefined,
-          name: 'Sob Jonah and Luke',
-          shortName: 'SobP15',
-          languageTag: 'urw',
-          isConnectable: false,
-          isConnected: false
-        },
-        {
-          paratextId: '5e51f89e89947acb',
-          projectId: undefined,
-          name: 'Aruamu New Testament [msy] Papua New Guinea 2004 DBL',
-          shortName: 'AruNT04',
-          languageTag: 'msy',
-          isConnectable: false,
-          isConnected: false
-        },
-        {
-          paratextId: '9bb76cd3e5a7f9b4',
-          projectId: undefined,
-          name: 'Revised Version with Apocrypha 1885, 1895',
-          shortName: 'RV1895',
-          languageTag: 'en',
-          isConnectable: false,
-          isConnected: false
-        }
+    when(mockedParatextService.getProjectsAndResources()).thenReturn(
+      Promise.resolve<[ParatextProject[], SelectableProject[]]>([
+        [
+          {
+            paratextId: 'pt01',
+            name: 'English',
+            shortName: 'ENG',
+            languageTag: 'en',
+            isConnectable: true,
+            isConnected: false
+          },
+          {
+            paratextId: 'pt02',
+            projectId: 'project02',
+            name: 'Maori',
+            shortName: 'MRI',
+            languageTag: 'mri',
+            isConnectable: false,
+            isConnected: true
+          },
+          {
+            paratextId: 'pt04',
+            name: 'Spanish',
+            shortName: 'ESP',
+            languageTag: 'es',
+            isConnectable: false,
+            isConnected: false
+          },
+          {
+            paratextId: 'pt03',
+            projectId: 'project03',
+            name: 'Thai',
+            shortName: 'THA',
+            languageTag: 'th',
+            isConnectable: true,
+            isConnected: true
+          }
+        ],
+        [
+          { paratextId: 'e01f11e9b4b8e338', name: 'Sob Jonah and Luke' },
+          { paratextId: '5e51f89e89947acb', name: 'Aruamu New Testament [msy] Papua New Guinea 2004 DBL' },
+          { paratextId: '9bb76cd3e5a7f9b4', name: 'Revised Version with Apocrypha 1885, 1895' }
+        ]
       ])
     );
   }
