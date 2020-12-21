@@ -144,6 +144,11 @@ describe('ExceptionHandlingService', () => {
           selector: 'DIV.mdc-button__ripple',
           expectedText: 'Ripple text',
           expectedSelector: 'DIV.mdc-button__ripple'
+        },
+        {
+          selector: 'BUTTON.mdc-button.child-element > i',
+          expectedText: 'Child',
+          expectedSelector: 'BUTTON.mdc-button.child-element span'
         }
       ];
       for (const test of tests) {
@@ -166,6 +171,7 @@ interface BreadcrumbTests {
   template: `
     <button class="mdc-button plain-text">Plain text</button>
     <button class="mdc-button include-icon"><i>icon_name</i><span>Inside span</span></button>
+    <button class="mdc-button child-element"><i>icon_name</i><span>Child</span></button>
     <button
       id="activated_button"
       class="mdc-button mdc-ripple-upgraded mdc-ripple-upgraded--background-focused mdc-ripple-upgraded--foreground-activation"

@@ -54,8 +54,8 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
     ) {
       return;
     }
-    let targetSelector = breadcrumb.metadata.targetSelector;
-    let targetText = breadcrumb.metadata.targetText;
+    let targetSelector: string = breadcrumb.metadata.targetSelector;
+    let targetText: string = breadcrumb.metadata.targetText;
     // Only check for MDC selectors Bugsnag has trouble with
     const selectors: BreadcrumbSelector[] = [
       { element: 'BUTTON', selector: 'span' },
@@ -65,11 +65,11 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
     if (selector == null) {
       return;
     }
-    let query;
+    let query: Node | null;
     const specificElement = selector.selector;
     // Sometimes Bugsnag narrows it down to a nested element so we need to use the parent node
     if (selector.useParent != null && selector.useParent) {
-      query = document.querySelector(targetSelector).parentNode;
+      query = document.querySelector(targetSelector)!.parentNode;
     } else {
       // Strip out classes that are triggered on click
       const classes = [
@@ -79,14 +79,11 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
       ];
       for (let cls of classes) {
         cls = '.' + cls;
-        if (!targetSelector.includes(cls)) {
-          continue;
-        }
         targetSelector = targetSelector.replace(cls, '');
       }
       // Remove CSS specific selectors that Bugsnag added as they aren't compatible with the querySelector
       if (targetSelector.includes('>')) {
-        targetSelector = targetSelector.substr(0, targetSelector.indexOf('>'));
+        targetSelector = targetSelector.substr(0, targetSelector.indexOf('>')).trim();
       }
       // Check we can still query the element
       query = document.querySelector(targetSelector);
@@ -95,19 +92,21 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
       }
       // Append the more specific selector so long as something is still returned
       const specificQuery = document.querySelector(targetSelector + ' ' + specificElement);
-      if (specificQuery !== null) {
+      if (specificQuery != null) {
         targetSelector += ' ' + specificElement;
         query = specificQuery;
       }
     }
     // We only want the text part of this node
-    for (const node of query.childNodes) {
-      // Only want text nodes or the specific node element
-      if (node.nodeType !== 3 && node.nodeName.toLowerCase() !== specificElement) {
-        continue;
-      }
-      targetText = node.textContent.trim();
+    if (!query!.childNodes.length) {
+      return;
     }
+    query!.childNodes.forEach((node: Node) => {
+      // Only want text nodes or the specific node element
+      if ((node.nodeType === 3 || node.nodeName.toLowerCase() === specificElement) && node.textContent != null) {
+        targetText = node.textContent.trim();
+      }
+    });
     // If nothing useful is found then just use what Bugsnag already had as a fallback
     if (targetText === '') {
       return;
