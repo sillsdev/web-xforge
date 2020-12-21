@@ -316,6 +316,8 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         /// <param name="userSecret">The user secret.</param>
         /// <param name="project">The project - the UserRoles and Source ParatextId are used.</param>
+        /// <param name="book">The book number. Set to zero to check for all books.</param>
+        /// <param name="chapter">The chapter number. Set to zero to check for all books.</param>
         /// <returns>
         /// A dictionary of permissions where the key is the user ID and the value is the permission.
         /// </returns>
@@ -323,27 +325,86 @@ namespace SIL.XForge.Scripture.Services
         /// See <see cref="TextInfoPermission" /> for permission values.
         /// A dictionary is returned, as permissions can be updated.
         /// </remarks>
-        public async Task<Dictionary<string, string>> GetPermissionsAsync(UserSecret userSecret, SFProject project)
+        public async Task<Dictionary<string, string>> GetPermissionsAsync(UserSecret userSecret, SFProject project,
+            int book = 0, int chapter = 0)
         {
-            // Calculate the project and resource permissions
             var permissions = new Dictionary<string, string>();
-            foreach ((string uid, string role) in project.UserRoles)
+
+            // See if the source is a resource
+            if (project.ParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
             {
-                // See if the source is a resource
-                if (project.ParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+                foreach (string uid in project.UserRoles.Keys)
                 {
                     permissions.Add(uid, await this.GetResourcePermissionAsync(userSecret, project.ParatextId, uid));
                 }
-                else
+            }
+            else
+            {
+                // Get the mapping for paratext users ids to names from the registry
+                string response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get,
+                    $"projects/{project.ParatextId}/members");
+                Dictionary<string, string> paratextMapping = JArray.Parse(response).OfType<JObject>()
+                    .Where(m => !string.IsNullOrEmpty((string)m["userId"])
+                        && !string.IsNullOrEmpty((string)m["username"]))
+                    .ToDictionary(m => (string)m["userId"], m => (string)m["username"]);
+
+                // Get the mapping of paratext user ids to scripture forge user ids
+                Dictionary<string, string> userMapping = await this._realtimeService.QuerySnapshots<User>()
+                        .Where(u => paratextMapping.Keys.Contains(u.ParatextId))
+                        .ToDictionaryAsync(u => u.Id, u => paratextMapping[u.ParatextId]);
+
+                // Get the scripture text so we can retrieve the permissions from the XML
+                ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), project.ParatextId);
+
+                // Calculate the project and resource permissions
+                foreach (string uid in project.UserRoles.Keys)
                 {
-                    // TODO: Check for correct book permissions
-                    if (role == SFProjectRole.Administrator || role == SFProjectRole.Translator)
+                    // See if the user is in the project members list
+                    if (!userMapping.TryGetValue(uid, out string userName) || string.IsNullOrWhiteSpace(userName))
                     {
-                        permissions.Add(uid, TextInfoPermission.Write);
+                        permissions.Add(uid, TextInfoPermission.None);
                     }
                     else
                     {
-                        permissions.Add(uid, TextInfoPermission.Read);
+                        string textInfoPermission = TextInfoPermission.Read;
+                        if (book == 0)
+                        {
+                            // Project level
+                            if (scrText.Permissions.CanEditAllBooks(userName))
+                            {
+                                textInfoPermission = TextInfoPermission.Write;
+                            }
+                        }
+                        else if (chapter == 0)
+                        {
+                            // Book level
+                            IEnumerable<int> editable = scrText.Permissions.GetEditableBooks(
+                                Paratext.Data.Users.PermissionSet.Merged, userName);
+                            if (editable == null || !editable.Any())
+                            {
+                                // If there are no editable book permissions, check if they can edit all books
+                                if (scrText.Permissions.CanEditAllBooks(userName))
+                                {
+                                    textInfoPermission = TextInfoPermission.Write;
+                                }
+                            }
+                            else if (editable.Contains(book))
+                            {
+                                textInfoPermission = TextInfoPermission.Write;
+                            }
+                        }
+                        else
+                        {
+                            // Chapter level
+                            IEnumerable<int> editable = scrText.Permissions.GetEditableChapters(book,
+                                scrText.Settings.Versification, userName, Paratext.Data.Users.PermissionSet.Merged);
+                            if (editable?.Contains(chapter) ?? false)
+                            {
+                                textInfoPermission = TextInfoPermission.Write;
+                            }
+                        }
+
+                        permissions.Add(uid, textInfoPermission);
                     }
                 }
             }
@@ -399,9 +460,11 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary> Write up-to-date book text from mongo database to Paratext project folder. </summary>
-        public void PutBookText(UserSecret userSecret, string projectId, int bookNum, string usx)
+        public async Task PutBookText(UserSecret userSecret, string projectId, int bookNum, string usx,
+            Dictionary<int, string> chapterAuthors = null)
         {
-            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), projectId);
+            string username = GetParatextUsername(userSecret);
+            ScrText scrText = ScrTextCollection.FindById(username, projectId);
             var doc = new XmlDocument
             {
                 PreserveWhitespace = true
@@ -410,9 +473,59 @@ namespace SIL.XForge.Scripture.Services
             UsxFragmenter.FindFragments(scrText.ScrStylesheet(bookNum), doc.CreateNavigator(),
                 XPathExpression.Compile("*[false()]"), out string usfm);
             usfm = UsfmToken.NormalizeUsfm(scrText.ScrStylesheet(bookNum), usfm, false, scrText.RightToLeft, scrText);
-            scrText.PutText(bookNum, 0, false, usfm, null);
-            _logger.LogInformation("{0} updated {1} in {2}.", userSecret.Id,
-                Canon.BookNumberToEnglishName(bookNum), scrText.Name);
+
+            if (chapterAuthors == null || chapterAuthors.Count == 0)
+            {
+                // If we don't have chapter authors, update only what we have permission for
+                // This will throw a SafetyCheckException if the user does not haver permission for every chapter
+                scrText.PutText(bookNum, 0, false, usfm, null);
+                _logger.LogInformation("{0} updated {1} in {2}.", userSecret.Id,
+                    Canon.BookNumberToEnglishName(bookNum), scrText.Name);
+            }
+            else
+            {
+                // As we have a list of chapter authors, build a dictionary of ScrTexts for each of them
+                Dictionary<string, ScrText> scrTexts = new Dictionary<string, ScrText>();
+                foreach (string userId in chapterAuthors.Values.Distinct())
+                {
+                    if (userId == userSecret.Id)
+                    {
+                        scrTexts.Add(userId, scrText);
+                    }
+                    else
+                    {
+                        // Get their user secret, so we can get their username, and create their ScrText
+                        UserSecret authorUserSecret = await _userSecretRepository.GetAsync(userId);
+                        string authorUserName = GetParatextUsername(authorUserSecret);
+                        scrTexts.Add(userId, ScrTextCollection.FindById(authorUserName, projectId));
+                    }
+                }
+
+                // If there is only one author, just write the book
+                if (scrTexts.Count == 1)
+                {
+                    scrTexts.Values.First().PutText(bookNum, 0, false, usfm, null);
+                    _logger.LogInformation("{0} updated {1} in {2}.", scrTexts.Keys.First(),
+                        Canon.BookNumberToEnglishName(bookNum), scrText.Name);
+                }
+                else
+                {
+                    // Split the usfm into chapters
+                    List<string> chapters = ScrText.SplitIntoChapters(scrText.Name, bookNum, usfm);
+
+                    // Put the individual chapters
+                    foreach ((int chapterNum, string authorUserId) in chapterAuthors)
+                    {
+                        if ((chapterNum - 1) < chapters.Count)
+                        {
+                            // The ScrText permissions will be the same as the last sync's permissions, so no need to check
+                            scrTexts[authorUserId].PutText(bookNum, chapterNum, false, chapters[chapterNum - 1], null);
+                            _logger.LogInformation("{0} updated chapter {1} of {2} in {3}.", authorUserId,
+                                chapterNum, Canon.BookNumberToEnglishName(bookNum), scrText.Name);
+                        }
+                    }
+                }
+            }
         }
 
         /// <summary> Get notes from the Paratext project folder. </summary>

@@ -192,11 +192,11 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>());
-            env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<string>());
+            await env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>());
+            await env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<string>());
 
-            env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<string>());
-            env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<string>());
+            await env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<string>());
+            await env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<string>());
 
             var delta = Delta.New().InsertText("text");
             Assert.That(env.GetText("project01", "MAT", 1).DeepEquals(delta), Is.True);
@@ -232,11 +232,15 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project02", "user01", false);
             await env.Runner.RunAsync("project01", "user01", false);
 
-            env.ParatextService.Received().PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>());
-            env.ParatextService.Received().PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<string>());
+            await env.ParatextService.Received()
+                .PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>(), Arg.Any<Dictionary<int, string>>());
+            await env.ParatextService.Received()
+                .PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<string>(), Arg.Any<Dictionary<int, string>>());
 
-            env.ParatextService.Received().PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<string>());
-            env.ParatextService.Received().PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<string>());
+            await env.ParatextService.Received()
+                .PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<string>(), Arg.Any<Dictionary<int, string>>());
+            await env.ParatextService.Received()
+                .PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<string>(), Arg.Any<Dictionary<int, string>>());
 
             var delta = Delta.New().InsertText("text");
             Assert.That(env.GetText("project01", "MAT", 1).DeepEquals(delta), Is.True);
@@ -270,11 +274,15 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project02", "user01", false);
             await env.Runner.RunAsync("project01", "user01", false);
 
-            env.ParatextService.Received().PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>());
-            env.ParatextService.Received().PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<string>());
+            await env.ParatextService.Received()
+                .PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>(), Arg.Any<Dictionary<int, string>>());
+            await env.ParatextService.Received()
+                .PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<string>(), Arg.Any<Dictionary<int, string>>());
 
-            env.ParatextService.Received().PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<string>());
-            env.ParatextService.Received().PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<string>());
+            await env.ParatextService.Received()
+                .PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<string>(), Arg.Any<Dictionary<int, string>>());
+            await env.ParatextService.Received()
+                .PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<string>(), Arg.Any<Dictionary<int, string>>());
 
             env.ParatextService.DidNotReceive().PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
 
@@ -411,7 +419,8 @@ namespace SIL.XForge.Scripture.Services
                 { "user01", TextInfoPermission.Read },
                 { "user02", TextInfoPermission.None },
             };
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>())
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
+                Arg.Any<int>(), Arg.Any<int>())
                 .Returns(Task.FromResult(ptSourcePermissions));
 
             await env.Runner.RunAsync("project01", "user01", false);
@@ -420,6 +429,36 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
             Assert.That(project.Texts.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.None));
+        }
+
+        [Test]
+        public async Task SyncAsync_UserHasNoChapterPermission()
+        {
+            var env = new TestEnvironment();
+            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+            env.SetupSFData(true, true, false, books);
+            env.SetupPTData(books);
+            var ptUserRoles = new Dictionary<string, string>
+            {
+                { "pt01", SFProjectRole.Translator }
+            };
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
+                .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
+            var ptChapterPermissions = new Dictionary<string, string>()
+            {
+                { "user01", TextInfoPermission.Read },
+                { "user02", TextInfoPermission.None },
+            };
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
+                Arg.Any<int>(), Arg.Any<int>())
+                .Returns(Task.FromResult(ptChapterPermissions));
+
+            await env.Runner.RunAsync("project01", "user01", false);
+
+            SFProject project = env.GetProject();
+            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            Assert.That(project.Texts.First().Chapters.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.None));
         }
 
         [Test]
@@ -440,7 +479,8 @@ namespace SIL.XForge.Scripture.Services
                 { "user01", TextInfoPermission.Read },
                 { "user02", TextInfoPermission.Read },
             };
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>())
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
+                Arg.Any<int>(), Arg.Any<int>())
                 .Returns(Task.FromResult(ptSourcePermissions));
 
             await env.Runner.RunAsync("project01", "user01", false);
@@ -449,6 +489,36 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
             Assert.That(project.Texts.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.Read));
+        }
+
+        [Test]
+        public async Task SyncAsync_UserHasChapterPermission()
+        {
+            var env = new TestEnvironment();
+            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+            env.SetupSFData(true, true, false, books);
+            env.SetupPTData(books);
+            var ptUserRoles = new Dictionary<string, string>
+            {
+                { "pt01", SFProjectRole.Translator }
+            };
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
+                .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
+            var ptChapterPermissions = new Dictionary<string, string>()
+            {
+                { "user01", TextInfoPermission.Read },
+                { "user02", TextInfoPermission.Read },
+            };
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
+                Arg.Any<int>(), Arg.Any<int>())
+                .Returns(Task.FromResult(ptChapterPermissions));
+
+            await env.Runner.RunAsync("project01", "user01", false);
+
+            SFProject project = env.GetProject();
+            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            Assert.That(project.Texts.First().Chapters.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.Read));
         }
 
         [Test]
@@ -924,7 +994,8 @@ namespace SIL.XForge.Scripture.Services
                         {
                             Number = c,
                             LastVerse = 10,
-                            IsValid = !book.InvalidChapters.Contains(c)
+                            IsValid = !book.InvalidChapters.Contains(c),
+                            Permissions = { }
                         }).ToList(),
                     HasSource = book.HighestSourceChapter > 0
                 };

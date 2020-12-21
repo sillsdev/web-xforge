@@ -45,6 +45,8 @@ namespace SIL.XForge.Scripture.Services
     {
         private static readonly IEqualityComparer<List<Chapter>> ChapterListEqualityComparer =
             SequenceEqualityComparer.Create(new ChapterEqualityComparer());
+        private static readonly IEqualityComparer<Dictionary<string, string>> PermissionDictionaryEqualityComparer =
+            new DictionaryComparer<string, string>();
 
         private readonly IRepository<UserSecret> _userSecrets;
         private readonly IRepository<SFProjectSecret> _projectSecrets;
@@ -105,7 +107,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     SortedList<int, IDocument<TextData>> targetTextDocs = await FetchTextDocsAsync(text);
                     targetTextDocsByBook[text.BookNum] = targetTextDocs;
-                    UpdateParatextBook(text, targetParatextId, targetTextDocs);
+                    await UpdateParatextBook(text, targetParatextId, targetTextDocs);
 
                     IReadOnlyList<IDocument<Question>> questionDocs = await FetchQuestionDocsAsync(text);
                     questionDocsByBook[text.BookNum] = questionDocs;
@@ -221,10 +223,27 @@ namespace SIL.XForge.Scripture.Services
                         await UpdateQuestionDocsAsync(questionDocs, newChapters);
                     }
 
-                    // Get the permissions for the book if this is not a resource
-                    if (_projectDoc.Data.ParatextId.Length != SFInstallableDblResource.ResourceIdentifierLength)
+                    // Get the permissions for the book and chapters if this is not a resource
+                    if (_projectDoc.Data.ParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
                     {
-                        permissions = await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data);
+                        // Add chapter permissions for the resource
+                        foreach (Chapter chapter in newChapters)
+                        {
+                            chapter.Permissions = permissions;
+                        }
+                    }
+                    else
+                    {
+                        // Get the project permissions for the book
+                        permissions =
+                            await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data, bookNum);
+                        foreach (Chapter chapter in newChapters)
+                        {
+                            // Get and set the project permissions for the chapter
+                            Dictionary<string, string> chapterPermissions = await _paratextService.GetPermissionsAsync(
+                                _userSecret, _projectDoc.Data, bookNum, chapter.Number);
+                            chapter.Permissions = chapterPermissions;
+                        }
                     }
 
                     // update project metadata
@@ -242,7 +261,8 @@ namespace SIL.XForge.Scripture.Services
                             // update text info
                             op.Set(pd => pd.Texts[textIndex].Chapters, newChapters, ChapterListEqualityComparer);
                             op.Set(pd => pd.Texts[textIndex].HasSource, hasSource);
-                            op.Set(pd => pd.Texts[textIndex].Permissions, permissions);
+                            op.Set(pd => pd.Texts[textIndex].Permissions, permissions,
+                                PermissionDictionaryEqualityComparer);
                         }
                     });
                 }
@@ -293,7 +313,7 @@ namespace SIL.XForge.Scripture.Services
             _conn?.Dispose();
         }
 
-        private void UpdateParatextBook(TextInfo text, string paratextId, SortedList<int, IDocument<TextData>> textDocs)
+        private async Task UpdateParatextBook(TextInfo text, string paratextId, SortedList<int, IDocument<TextData>> textDocs)
         {
             string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
             var oldUsxDoc = XDocument.Parse(bookText);
@@ -301,7 +321,9 @@ namespace SIL.XForge.Scripture.Services
                 .Select(c => new ChapterDelta(c.Number, c.LastVerse, c.IsValid, textDocs[c.Number].Data)));
 
             if (!XNode.DeepEquals(oldUsxDoc, newUsxDoc))
-                _paratextService.PutBookText(_userSecret, paratextId, text.BookNum, newUsxDoc.Root.ToString());
+            {
+                await _paratextService.PutBookText(_userSecret, paratextId, text.BookNum, newUsxDoc.Root.ToString());
+            }
         }
 
         /// <summary>
@@ -335,15 +357,30 @@ namespace SIL.XForge.Scripture.Services
             Dictionary<int, ChapterDelta> deltas = _deltaUsxMapper.ToChapterDeltas(usxDoc)
                 .ToDictionary(cd => cd.Number);
             var chapters = new List<Chapter>();
+            List<int> chaptersToRemove = textDocs.Keys.Where(c => !deltas.ContainsKey(c)).ToList();
             foreach (KeyValuePair<int, ChapterDelta> kvp in deltas)
             {
                 bool addChapter = true;
                 if (textDocs.TryGetValue(kvp.Key, out IDocument<TextData> textDataDoc))
                 {
-                    Delta diffDelta = textDataDoc.Data.Diff(kvp.Value.Delta);
-                    if (diffDelta.Ops.Count > 0)
-                        tasks.Add(textDataDoc.SubmitOpAsync(diffDelta));
-                    textDocs.Remove(kvp.Key);
+                    if (chaptersToInclude == null || chaptersToInclude.Contains(kvp.Key))
+                    {
+                        Delta diffDelta = textDataDoc.Data.Diff(kvp.Value.Delta);
+                        if (diffDelta.Ops.Count > 0)
+                            tasks.Add(textDataDoc.SubmitOpAsync(diffDelta));
+                        textDocs.Remove(kvp.Key);
+                    }
+                    else
+                    {
+                        // We are not to update this chapter
+                        Chapter existingChapter = text.Chapters.FirstOrDefault(c => c.Number == kvp.Key);
+                        if (existingChapter != null)
+                        {
+                            chapters.Add(existingChapter);
+                        }
+
+                        addChapter = false;
+                    }
                 }
                 else if (chaptersToInclude == null || chaptersToInclude.Contains(kvp.Key))
                 {
@@ -367,12 +404,21 @@ namespace SIL.XForge.Scripture.Services
                     {
                         Number = kvp.Key,
                         LastVerse = kvp.Value.LastVerse,
-                        IsValid = kvp.Value.IsValid
+                        IsValid = kvp.Value.IsValid,
+                        Permissions = { }
                     });
                 }
             }
             foreach (KeyValuePair<int, IDocument<TextData>> kvp in textDocs)
-                tasks.Add(kvp.Value.DeleteAsync());
+            {
+                if (chaptersToInclude == null
+                    || chaptersToInclude.Contains(kvp.Key)
+                    || chaptersToRemove.Contains(kvp.Key))
+                {
+                    tasks.Add(kvp.Value.DeleteAsync());
+                }
+            }
+
             await Task.WhenAll(tasks);
             return chapters;
         }
@@ -490,7 +536,7 @@ namespace SIL.XForge.Scripture.Services
             IReadOnlyDictionary<string, string> ptUserRoles;
             if (_projectDoc.Data.ParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
             {
-                // Do not update permissions on sync, if this is a resource porject
+                // Do not update permissions on sync, if this is a resource project
                 // Permission updates will be performed when a target project is synchronized
                 ptUserRoles = new Dictionary<string, string>();
                 updateRoles = false;
@@ -593,7 +639,8 @@ namespace SIL.XForge.Scripture.Services
         {
             public bool Equals(Chapter x, Chapter y)
             {
-                return x.Number == y.Number && x.LastVerse == y.LastVerse && x.IsValid == y.IsValid;
+                return x.Number == y.Number && x.LastVerse == y.LastVerse && x.IsValid == y.IsValid
+                    && PermissionDictionaryEqualityComparer.Equals(x.Permissions, y.Permissions);
             }
 
             public int GetHashCode(Chapter obj)
@@ -603,6 +650,30 @@ namespace SIL.XForge.Scripture.Services
                 code = code * 31 + obj.LastVerse.GetHashCode();
                 code = code * 31 + obj.IsValid.GetHashCode();
                 return code;
+            }
+        }
+
+        private class DictionaryComparer<TKey, TValue> : IEqualityComparer<Dictionary<TKey, TValue>>
+        {
+            public bool Equals(Dictionary<TKey, TValue> x, Dictionary<TKey, TValue> y)
+            {
+                return (x ?? new Dictionary<TKey, TValue>()).OrderBy(p => p.Key)
+                    .SequenceEqual((y ?? new Dictionary<TKey, TValue>()).OrderBy(p => p.Key));
+            }
+
+            public int GetHashCode(Dictionary<TKey, TValue> obj)
+            {
+                int hash = 0;
+                if (obj != null)
+                {
+                    foreach (KeyValuePair<TKey, TValue> element in obj)
+                    {
+                        hash ^= element.Key.GetHashCode();
+                        hash ^= element.Value.GetHashCode();
+                    }
+                }
+
+                return hash;
             }
         }
     }

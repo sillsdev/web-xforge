@@ -93,12 +93,23 @@ namespace SourceTargetSplitting
         }
 
         /// <summary>
-        /// The source scripture text collection.
+        /// Gets the source scripture text collection.
         /// </summary>
+        /// <value>
+        /// The source scripture text collection.
+        /// </value>
         /// <remarks>
         /// This is only used for testing.
         /// </remarks>
         internal SourceScrTextCollection SourceScrTextCollection { get; } = new SourceScrTextCollection();
+
+        /// <summary>
+        /// Gets the target scripture text collection.
+        /// </summary>
+        /// <value>
+        /// The target scripture text collection.
+        /// </value>
+        internal LazyScrTextCollection TargetScrTextCollection { get; } = new LazyScrTextCollection();
 
         /// <summary>
         /// Creates the project from a source project reference.
@@ -186,13 +197,14 @@ namespace SourceTargetSplitting
                 if (!projectDoc.IsLoaded)
                     return;
 
-                Dictionary<string, string>? permissions =
-                    await this._paratextService.GetPermissionsAsync(userSecret, projectDoc.Data);
-
                 // Add all of the books
                 foreach (int bookNum in this._paratextService.GetBookList(userSecret, sourceId))
                 {
-                    TextInfo text = new TextInfo {
+                    Dictionary<string, string>? permissions =
+                        await this._paratextService.GetPermissionsAsync(userSecret, projectDoc.Data, bookNum);
+
+                    TextInfo text = new TextInfo
+                    {
                         BookNum = bookNum,
                         HasSource = false,
                         Permissions = permissions,
@@ -366,6 +378,172 @@ namespace SourceTargetSplitting
                 else
                 {
                     Program.Log($"Error Migrating TextData {textId} - Could Not Load From MongoDB");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Migrates the chapter and book permissions for all projects.
+        /// </summary>
+        /// <param name="doWrite">If set to <c>true</c>, do write changes to the database.</param>
+        public async Task MigrateChapterAndBookPermissions(bool doWrite)
+        {
+            // Get the existing projects from MongoDB
+            List<SFProject> existingProjects = await this._realtimeService.QuerySnapshots<SFProject>().ToListAsync();
+
+            // If we are testing, add the test projects
+            if (!doWrite)
+            {
+                existingProjects.AddRange(this._testProjectCollection);
+            }
+
+            // Get every user id and username from the user secrets
+            Dictionary<string, string> userMapping = await this._userSecrets.Query()
+                .ToDictionaryAsync(u => u.Id, u => this._paratextService.GetParatextUsername(u));
+
+            // Iterate over every project
+            foreach (SFProject project in existingProjects)
+            {
+                // Get the scripture text for the project
+                ScrText? scrText = null;
+                if (!doWrite && this._testProjectCollection.Contains(project))
+                {
+                    // If we are in testing, find the original target project to get the source ScrText object
+                    SFProject? targetProject =
+                        existingProjects.FirstOrDefault(p => p.TranslateConfig.Source.ParatextId == project.ParatextId);
+                    if (targetProject != null)
+                    {
+                        scrText = this.SourceScrTextCollection.FindById("admin", targetProject.ParatextId);
+                    }
+                    else
+                    {
+                        Program.Log($"Test Error Migrating Permissions For {project.Id} - Could Not Find Target");
+                    }
+                }
+                else
+                {
+                    scrText = this.TargetScrTextCollection.FindById("admin", project.ParatextId);
+                }
+
+                Program.Log($"Migrating Permissions For {project.Id}...");
+
+                // If we found the scripture text collection, we can migrate permissions.
+                if (scrText != null)
+                {
+                    // Connect to the realtime service
+                    using IConnection connection = await this._realtimeService.ConnectAsync();
+
+                    // Get the project
+                    IDocument<SFProject>? projectDoc =
+                        await connection.FetchAsync<SFProject>(project.Id);
+                    if (!projectDoc.IsLoaded)
+                        return;
+
+                    // Iterate over every book then every chapter
+                    var bookPermissionOperations = new List<(int i, Dictionary<string, string> bookPermissions)>();
+                    var chapterPermissionOperations =
+                        new List<(int i, int j, Dictionary<string, string> chapterPermissions)>();
+                    for (int i = 0; i < project.Texts.Count; i++)
+                    {
+                        Program.Log($"Migrating Permissions For {project.Id} Book {project.Texts[i].BookNum}...");
+
+                        // Declare the book permissions
+                        var bookPermissions = new Dictionary<string, string>();
+
+                        // Calculate the book permissions
+                        foreach (string uid in project.UserRoles.Keys)
+                        {
+                            // See if the user is in the project members list
+                            if (!userMapping.TryGetValue(uid, out string? userName)
+                                || string.IsNullOrWhiteSpace(userName))
+                            {
+                                bookPermissions.Add(uid, TextInfoPermission.None);
+                            }
+                            else
+                            {
+                                string textInfoPermission = TextInfoPermission.Read;
+                                IEnumerable<int> editable = scrText.Permissions.GetEditableBooks(
+                                        Paratext.Data.Users.PermissionSet.Merged, userName);
+                                if (editable == null || !editable.Any())
+                                {
+                                    // If there are no editable book permissions, check if they can edit all books
+                                    if (scrText.Permissions.CanEditAllBooks(userName))
+                                    {
+                                        textInfoPermission = TextInfoPermission.Write;
+                                    }
+                                }
+                                else if (editable.Contains(project.Texts[i].BookNum))
+                                {
+                                    textInfoPermission = TextInfoPermission.Write;
+                                }
+
+                                bookPermissions.Add(uid, textInfoPermission);
+                            }
+                        }
+
+                        // Store the book permissions operation in a tuple
+                        bookPermissionOperations.Add((i, bookPermissions));
+
+                        // Iterate over every chapter in the book
+                        for (int j = 0; j < project.Texts[i].Chapters.Count; j++)
+                        {
+                            // Declare the chapter permissions
+                            var chapterPermissions = new Dictionary<string, string>();
+
+                            // Calculate the chapter permissions
+                            foreach (string uid in project.UserRoles.Keys)
+                            {
+                                // See if the user is in the project members list
+                                if (!userMapping.TryGetValue(uid, out string? userName)
+                                    || string.IsNullOrWhiteSpace(userName))
+                                {
+                                    chapterPermissions.Add(uid, TextInfoPermission.None);
+                                }
+                                else
+                                {
+                                    string textInfoPermission = TextInfoPermission.Read;
+                                    IEnumerable<int>? editable = scrText.Permissions.GetEditableChapters(
+                                        project.Texts[i].BookNum, scrText.Settings.Versification, userName,
+                                        Paratext.Data.Users.PermissionSet.Merged);
+                                    if (editable?.Contains(project.Texts[i].Chapters[j].Number) ?? false)
+                                    {
+                                        textInfoPermission = TextInfoPermission.Write;
+                                    }
+
+                                    chapterPermissions.Add(uid, textInfoPermission);
+                                }
+                            }
+
+                            // Store the chapter permissions operation in a tuple
+                            chapterPermissionOperations.Add((i, j, bookPermissions));
+                        }
+                    }
+
+                    // Write the chapter permissions
+                    if (doWrite)
+                    {
+                        await projectDoc.SubmitJson0OpAsync(op =>
+                        {
+                            foreach ((int i, Dictionary<string, string> bookPermissions) in bookPermissionOperations)
+                            {
+                                op.Set(pd => pd.Texts[i].Permissions, bookPermissions);
+                            }
+
+                            foreach ((int i, int j, Dictionary<string, string> chapterPermissions) in
+                                chapterPermissionOperations)
+                            {
+                                op.Set(pd => pd.Texts[i].Chapters[j].Permissions, chapterPermissions);
+                            }
+                        });
+                    }
+                }
+                else if (project.ParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+                {
+                    Program.Log($"Error Migrating Permissions For {project.Id} - Cannot Migrate A Resource");
+                }
+                else
+                {
+                    Program.Log($"Error Migrating Permissions For {project.Id} - Could Not Find ScrText");
                 }
             }
         }

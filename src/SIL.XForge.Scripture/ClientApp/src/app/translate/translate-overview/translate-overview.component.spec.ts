@@ -11,7 +11,6 @@ import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/ch
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
-import { TextInfoPermission } from 'realtime-server/lib/scriptureforge/models/text-info-permission';
 import * as RichText from 'rich-text';
 import { defer, of, Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
@@ -279,8 +278,8 @@ class TestEnvironment {
           {
             bookNum: 40,
             chapters: [
-              { number: 1, lastVerse: 3, isValid: true },
-              { number: 2, lastVerse: 3, isValid: true }
+              { number: 1, lastVerse: 3, isValid: true, permissions: {} },
+              { number: 2, lastVerse: 3, isValid: true, permissions: {} }
             ],
             hasSource: true,
             permissions: {}
@@ -288,8 +287,8 @@ class TestEnvironment {
           {
             bookNum: 41,
             chapters: [
-              { number: 1, lastVerse: 3, isValid: true },
-              { number: 2, lastVerse: 3, isValid: true }
+              { number: 1, lastVerse: 3, isValid: true, permissions: {} },
+              { number: 2, lastVerse: 3, isValid: true, permissions: {} }
             ],
             hasSource: true,
             permissions: {}
@@ -297,8 +296,8 @@ class TestEnvironment {
           {
             bookNum: 42,
             chapters: [
-              { number: 1, lastVerse: 3, isValid: true },
-              { number: 2, lastVerse: 3, isValid: true }
+              { number: 1, lastVerse: 3, isValid: true, permissions: {} },
+              { number: 2, lastVerse: 3, isValid: true, permissions: {} }
             ],
             hasSource: true,
             permissions: {}
@@ -306,8 +305,8 @@ class TestEnvironment {
           {
             bookNum: 43,
             chapters: [
-              { number: 1, lastVerse: 3, isValid: true },
-              { number: 2, lastVerse: 3, isValid: true }
+              { number: 1, lastVerse: 3, isValid: true, permissions: {} },
+              { number: 2, lastVerse: 3, isValid: true, permissions: {} }
             ],
             hasSource: false,
             permissions: {}

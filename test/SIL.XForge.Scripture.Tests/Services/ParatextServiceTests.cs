@@ -389,7 +389,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public void PutBookText_TextEdited_BookTextIsUpdated()
+        public async Task PutBookText_TextEdited_BookTextIsUpdated()
         {
             var env = new TestEnvironment();
             var associatedPtUser = new SFParatextUser(env.Username01);
@@ -415,7 +415,7 @@ namespace SIL.XForge.Scripture.Services
             DeltaUsxMapper mapper = new DeltaUsxMapper(new TestGuidService(), Substitute.For<ILogger<DeltaUsxMapper>>(),
                 Substitute.For<IExceptionHandler>());
             var newDocUsx = mapper.ToUsx(oldDocUsx, new List<ChapterDelta> { new ChapterDelta(1, 2, true, data) });
-            env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, newDocUsx.Root.ToString());
+            await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, newDocUsx.Root.ToString());
             env.ProjectScrText.FileManager.Received(1)
                 .WriteFileCreatingBackup(Arg.Any<string>(), Arg.Any<Action<string>>());
 
@@ -922,15 +922,18 @@ namespace SIL.XForge.Scripture.Services
                                 new TextInfo
                                 {
                                     BookNum = 40,
-                                    Chapters = { new Chapter { Number = 1, LastVerse = 3, IsValid = true } }
+                                    Chapters =
+                                    {
+                                        new Chapter { Number = 1, LastVerse = 3, IsValid = true, Permissions = { } }
+                                    }
                                 },
                                 new TextInfo
                                 {
                                     BookNum = 41,
                                     Chapters =
                                     {
-                                        new Chapter { Number = 1, LastVerse = 3, IsValid = true },
-                                        new Chapter { Number = 2, LastVerse = 3, IsValid = true }
+                                        new Chapter { Number = 1, LastVerse = 3, IsValid = true, Permissions = { } },
+                                        new Chapter { Number = 2, LastVerse = 3, IsValid = true, Permissions = { } }
                                     }
                                 }
                             }
