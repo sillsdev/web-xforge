@@ -1,0 +1,13 @@
+:host,
+mat-form-field {
+  width: 100%;
+}
+
+::ng-deep .mat-autocomplete-panel.project-select mat-option {
+  height: unset;
+  white-space: initial;
+  min-height: 48px;
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  line-height: 1.5em;
+}

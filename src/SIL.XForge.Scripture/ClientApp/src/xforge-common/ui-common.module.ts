@@ -24,8 +24,10 @@ import { MdcTypographyModule } from '@angular-mdc/web/typography';
 import { NgModule } from '@angular/core';
 import { BREAKPOINT, FlexLayoutModule } from '@angular/flex-layout';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatOptionModule } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
@@ -43,6 +45,8 @@ const modules = [
   DonutChartModule,
   FlexLayoutModule,
   FormsModule,
+  MatAutocompleteModule,
+  MatInputModule,
   MatFormFieldModule,
   MatOptionModule,
   MatPaginatorModule,
