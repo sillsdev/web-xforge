@@ -515,7 +515,7 @@ namespace SourceTargetSplitting
                             }
 
                             // Store the chapter permissions operation in a tuple
-                            chapterPermissionOperations.Add((i, j, bookPermissions));
+                            chapterPermissionOperations.Add((i, j, chapterPermissions));
                         }
                     }
 
