@@ -263,8 +263,7 @@ class ChildViewContainerComponent {
     ChildViewContainerComponent,
     ScriptureChooserDialogComponent,
     ImportQuestionsDialogComponent
-  ],
-  entryComponents: [ChildViewContainerComponent, ImportQuestionsDialogComponent, ScriptureChooserDialogComponent]
+  ]
 })
 class DialogTestModule {}
 

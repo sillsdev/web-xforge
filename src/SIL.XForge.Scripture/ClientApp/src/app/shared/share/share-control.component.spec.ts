@@ -157,8 +157,7 @@ describe('ShareControlComponent', () => {
   @NgModule({
     imports: [BrowserModule, HttpClientTestingModule, RouterTestingModule, UICommonModule, TestTranslocoModule],
     declarations: [ShareControlComponent],
-    exports: [ShareControlComponent],
-    entryComponents: [ShareControlComponent]
+    exports: [ShareControlComponent]
   })
   class TestModule {}
 

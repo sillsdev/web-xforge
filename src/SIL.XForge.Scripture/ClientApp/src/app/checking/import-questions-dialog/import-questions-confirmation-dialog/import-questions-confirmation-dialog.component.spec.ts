@@ -121,8 +121,7 @@ class ChildViewContainerComponent {
 @NgModule({
   imports: [CommonModule, UICommonModule, TestTranslocoModule],
   declarations: [ViewContainerDirective, ChildViewContainerComponent, ImportQuestionsConfirmationDialogComponent],
-  exports: [ViewContainerDirective, ChildViewContainerComponent, ImportQuestionsConfirmationDialogComponent],
-  entryComponents: [ChildViewContainerComponent, ImportQuestionsConfirmationDialogComponent]
+  exports: [ViewContainerDirective, ChildViewContainerComponent, ImportQuestionsConfirmationDialogComponent]
 })
 class DialogTestModule {}
 

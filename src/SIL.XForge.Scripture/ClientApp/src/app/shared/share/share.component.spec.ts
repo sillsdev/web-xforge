@@ -156,8 +156,7 @@ describe('ShareComponent', () => {
     TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
   ],
   exports: [ShareDialogComponent, ShareControlComponent],
-  declarations: [ShareDialogComponent, ShareControlComponent],
-  entryComponents: [ShareDialogComponent, ShareControlComponent]
+  declarations: [ShareDialogComponent, ShareControlComponent]
 })
 class DialogTestModule {}
 

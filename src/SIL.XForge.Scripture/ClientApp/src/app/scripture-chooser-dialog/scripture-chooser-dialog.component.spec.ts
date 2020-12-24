@@ -429,8 +429,7 @@ describe('ScriptureChooserDialog', () => {
       TestTranslocoModule
     ],
     declarations: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent],
-    exports: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent],
-    entryComponents: [ChildViewContainerComponent, ScriptureChooserDialogComponent]
+    exports: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent]
   })
   class TestModule {}
 

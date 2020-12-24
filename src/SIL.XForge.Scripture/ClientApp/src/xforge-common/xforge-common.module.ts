@@ -32,8 +32,6 @@ const componentExports = [
   WriteStatusComponent
 ];
 
-export const xForgeCommonEntryComponents = [SaDeleteDialogComponent];
-
 @NgModule({
   imports: [
     // AvatarModule included here rather than `ui-common.module.ts` so unit tests don't access the internet
@@ -46,7 +44,6 @@ export const xForgeCommonEntryComponents = [SaDeleteDialogComponent];
   ],
   declarations: componentExports,
   exports: componentExports,
-  entryComponents: [MessageDialogComponent],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthHttpInterceptor, multi: true },
     { provide: RealtimeRemoteStore, useExisting: SharedbRealtimeRemoteStore },

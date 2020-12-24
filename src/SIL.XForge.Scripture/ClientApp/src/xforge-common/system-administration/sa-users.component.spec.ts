@@ -162,8 +162,7 @@ class TestProjectDoc extends ProjectDoc {
 @NgModule({
   imports: [NoopAnimationsModule, AvatarTestingModule, UICommonModule],
   exports: [SaDeleteDialogComponent],
-  declarations: [SaDeleteDialogComponent],
-  entryComponents: [SaDeleteDialogComponent]
+  declarations: [SaDeleteDialogComponent]
 })
 class DialogTestModule {}
 

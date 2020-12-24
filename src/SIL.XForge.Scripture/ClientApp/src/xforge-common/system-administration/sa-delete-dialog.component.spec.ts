@@ -53,8 +53,7 @@ class ChildViewContainerComponent {
 @NgModule({
   imports: [AvatarTestingModule, CommonModule, UICommonModule],
   declarations: [ViewContainerDirective, ChildViewContainerComponent, SaDeleteDialogComponent],
-  exports: [ViewContainerDirective, ChildViewContainerComponent, SaDeleteDialogComponent],
-  entryComponents: [ChildViewContainerComponent, SaDeleteDialogComponent]
+  exports: [ViewContainerDirective, ChildViewContainerComponent, SaDeleteDialogComponent]
 })
 class TestModule {}
 

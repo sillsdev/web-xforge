@@ -646,7 +646,6 @@ class TestEnvironment {
 @NgModule({
   imports: [UICommonModule, TestTranslocoModule],
   declarations: [DeleteProjectDialogComponent],
-  entryComponents: [DeleteProjectDialogComponent],
   exports: [DeleteProjectDialogComponent]
 })
 class DialogTestModule {}
