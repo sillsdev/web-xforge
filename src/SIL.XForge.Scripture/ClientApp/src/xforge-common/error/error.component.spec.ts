@@ -74,13 +74,13 @@ class TestEnvironment {
 
   constructor(dialogData: ErrorAlert) {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
-    this.element = TestBed.get(OverlayContainer).getContainerElement();
+    this.element = TestBed.inject(OverlayContainer).getContainerElement();
     const viewContainerRef = this.fixture.componentInstance.childViewContainer;
     const config: MdcDialogConfig<ErrorAlert> = {
       data: dialogData,
       viewContainerRef
     };
-    TestBed.get(MdcDialog).open(ErrorComponent, config);
+    TestBed.inject(MdcDialog).open(ErrorComponent, config);
     this.fixture.detectChanges();
     // open dialog animation
     tick(166);

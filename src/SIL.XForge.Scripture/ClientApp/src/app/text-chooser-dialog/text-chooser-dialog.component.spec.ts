@@ -401,7 +401,7 @@ class TestEnvironment {
 
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
   readonly overlayContainerElement: HTMLElement;
-  readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   readonly mockedScriptureChooserMdcDialogRef = mock(MdcDialogRef);
 
@@ -473,11 +473,11 @@ class TestEnvironment {
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
 
-    const dialogRef = TestBed.get(MdcDialog).open(TextChooserDialogComponent, { data: config });
+    const dialogRef = TestBed.inject(MdcDialog).open(TextChooserDialogComponent, { data: config });
     this.component = dialogRef.componentInstance;
     this.resultPromise = dialogRef.afterClosed().toPromise();
 
-    this.overlayContainerElement = TestBed.get(OverlayContainer).getContainerElement();
+    this.overlayContainerElement = TestBed.inject(OverlayContainer).getContainerElement();
 
     // Set up MdcDialog mocking after it's already used above in creating the component.
     const dialogSpy = spy(this.component.dialog);

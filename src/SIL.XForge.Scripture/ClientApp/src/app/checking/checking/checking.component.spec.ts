@@ -1455,7 +1455,7 @@ interface UserInfo {
 class TestEnvironment {
   readonly component: CheckingComponent;
   readonly fixture: ComponentFixture<CheckingComponent>;
-  readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   readonly mockedAnsweredDialogRef: MdcDialogRef<QuestionAnsweredDialogComponent> = mock(MdcDialogRef);
   readonly mockedTextChooserDialogComponent: MdcDialogRef<TextChooserDialogComponent> = mock(MdcDialogRef);
   readonly location: Location;
@@ -1590,7 +1590,7 @@ class TestEnvironment {
     when(mockedFileService.fileSyncComplete$).thenReturn(this.fileSyncComplete);
     this.fixture = TestBed.createComponent(CheckingComponent);
     this.component = this.fixture.componentInstance;
-    this.location = TestBed.get(Location);
+    this.location = TestBed.inject(Location);
     // Need to wait for questions, text promises, and slider position calculations to finish
     this.fixture.detectChanges();
     tick(1);

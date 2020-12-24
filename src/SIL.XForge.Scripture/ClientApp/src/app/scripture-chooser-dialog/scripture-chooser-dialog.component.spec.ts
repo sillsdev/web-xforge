@@ -501,10 +501,10 @@ describe('ScriptureChooserDialog', () => {
         viewContainerRef: viewContainerRef,
         data: { input: inputScriptureReference, booksAndChaptersToShow: booksAndChaptersToShow, rangeStart: rangeStart }
       };
-      this.dialogRef = TestBed.get(MdcDialog).open(ScriptureChooserDialogComponent, config);
+      this.dialogRef = TestBed.inject(MdcDialog).open(ScriptureChooserDialogComponent, config);
       this.dialogRef.afterClosed().subscribe(result => (this.dialogResult = result));
       this.component = this.dialogRef.componentInstance;
-      this.overlayContainerElement = TestBed.get(OverlayContainer).getContainerElement();
+      this.overlayContainerElement = TestBed.inject(OverlayContainer).getContainerElement();
 
       this.fixture.detectChanges();
     }

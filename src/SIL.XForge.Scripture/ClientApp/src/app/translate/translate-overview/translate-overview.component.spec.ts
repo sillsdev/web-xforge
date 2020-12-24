@@ -167,7 +167,7 @@ class TestEnvironment {
 
   readonly mockedRemoteTranslationEngine = mock(RemoteTranslationEngine);
 
-  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private trainingProgress$ = new Subject<ProgressStatus>();
 
   constructor(translationSuggestionsEnabled: boolean = true) {

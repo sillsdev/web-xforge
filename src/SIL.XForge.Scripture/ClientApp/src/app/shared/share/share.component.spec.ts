@@ -165,7 +165,7 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<ShareComponent>;
   readonly overlayContainer: OverlayContainer;
 
-  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
     when(mockedProjectService.onlineInvite('project01', anything())).thenResolve();
@@ -183,7 +183,7 @@ class TestEnvironment {
 
     this.fixture = TestBed.createComponent(ShareComponent);
     this.component = this.fixture.componentInstance;
-    this.overlayContainer = TestBed.get(OverlayContainer);
+    this.overlayContainer = TestBed.inject(OverlayContainer);
   }
 
   get shareButton(): HTMLButtonElement {

@@ -542,7 +542,7 @@ class TestEnvironment {
 
   readonly mockedScriptureChooserMdcDialogRef = mock(MdcDialogRef);
 
-  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor(question?: Question, defaultVerseRef?: VerseRef, isRtl: boolean = false) {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
@@ -590,11 +590,11 @@ class TestEnvironment {
       viewContainerRef
     };
 
-    this.dialogRef = TestBed.get(MdcDialog).open(QuestionDialogComponent, config);
+    this.dialogRef = TestBed.inject(MdcDialog).open(QuestionDialogComponent, config);
     this.afterCloseCallback = jasmine.createSpy('afterClose callback');
     this.dialogRef.afterClosed().subscribe(this.afterCloseCallback);
     this.component = this.dialogRef.componentInstance;
-    this.overlayContainerElement = TestBed.get(OverlayContainer).getContainerElement();
+    this.overlayContainerElement = TestBed.inject(OverlayContainer).getContainerElement();
 
     // Set up MdcDialog mocking after it's already used above in creating the component.
     this.dialogSpy = spy(this.component.dialog);

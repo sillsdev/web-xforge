@@ -94,7 +94,7 @@ class TestEnvironment {
     });
     this.fixture = TestBed.createComponent(DialogOpenerComponent);
     this.component = this.fixture.componentInstance;
-    this.overlayContainer = TestBed.get(OverlayContainer);
+    this.overlayContainer = TestBed.inject(OverlayContainer);
   }
 
   get submitButton(): HTMLElement {

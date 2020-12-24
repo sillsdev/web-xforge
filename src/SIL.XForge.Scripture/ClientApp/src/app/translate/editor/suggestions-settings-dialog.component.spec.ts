@@ -135,7 +135,7 @@ class TestEnvironment {
   readonly overlayContainerElement: HTMLElement;
   onlineStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
 
-  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor(translationSuggestionsEnabled = true) {
     this.setProjectUserConfig({
@@ -145,7 +145,7 @@ class TestEnvironment {
     });
 
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
-    this.overlayContainerElement = TestBed.get(OverlayContainer).getContainerElement();
+    this.overlayContainerElement = TestBed.inject(OverlayContainer).getContainerElement();
 
     when(mockedPwaService.isOnline).thenCall(() => this.onlineStatus.getValue());
     when(mockedPwaService.onlineStatus).thenReturn(this.onlineStatus.asObservable());
@@ -189,7 +189,7 @@ class TestEnvironment {
           data: { projectUserConfigDoc },
           viewContainerRef
         };
-        const dialogRef = TestBed.get(MdcDialog).open(SuggestionsSettingsDialogComponent, config);
+        const dialogRef = TestBed.inject(MdcDialog).open(SuggestionsSettingsDialogComponent, config);
         this.component = dialogRef.componentInstance;
       });
     this.wait();

@@ -292,9 +292,9 @@ class TestEnvironment {
     when(mockedPwaService.onlineStatus).thenReturn(this.isOnline);
     when(mockedAuthService.isLoggedIn).thenResolve(true);
 
-    this.realtimeService = TestBed.get(RealtimeService);
-    this.service = TestBed.get(FileService);
-    this.httpMock = TestBed.get(HttpTestingController);
+    this.realtimeService = TestBed.inject(TestRealtimeService);
+    this.service = TestBed.inject(FileService);
+    this.httpMock = TestBed.inject(HttpTestingController);
 
     this.realtimeService.addSnapshot(TestDataDoc.COLLECTION, {
       id: this.dataId,

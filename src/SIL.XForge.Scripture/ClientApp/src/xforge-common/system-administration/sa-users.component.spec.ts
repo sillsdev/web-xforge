@@ -173,7 +173,7 @@ class TestEnvironment {
 
   readonly mockedDeleteUserDialogRef: MdcDialogRef<SaDeleteDialogComponent> = mock(MdcDialogRef);
 
-  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
     when(mockedMdcDialog.open(anything(), anything())).thenReturn(instance(this.mockedDeleteUserDialogRef));
@@ -195,7 +195,7 @@ class TestEnvironment {
 
     this.fixture = TestBed.createComponent(SaUsersComponent);
     this.component = this.fixture.componentInstance;
-    this.overlayContainer = TestBed.get(OverlayContainer);
+    this.overlayContainer = TestBed.inject(OverlayContainer);
   }
 
   get noUsersLabel(): DebugElement {

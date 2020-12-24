@@ -304,9 +304,9 @@ class TestEnvironment {
       textsByBookId
     };
     const config = { data: configData };
-    this.dialogRef = TestBed.get(MdcDialog).open(ImportQuestionsDialogComponent, config);
+    this.dialogRef = TestBed.inject(MdcDialog).open(ImportQuestionsDialogComponent, config);
     this.component = this.dialogRef.componentInstance;
-    this.overlayContainerElement = TestBed.get(OverlayContainer).getContainerElement();
+    this.overlayContainerElement = TestBed.inject(OverlayContainer).getContainerElement();
 
     // Set up MdcDialog mocking after it's already used above in creating the component.
     this.dialogSpy = spy(this.component.dialog);

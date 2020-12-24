@@ -409,7 +409,7 @@ class TestEnvironment {
   readonly overlayContainer: OverlayContainer;
   readonly location: Location;
 
-  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private isOnline: BehaviorSubject<boolean>;
 
   constructor(hasConnection: boolean = true) {
@@ -453,8 +453,8 @@ class TestEnvironment {
 
     this.fixture = TestBed.createComponent(SettingsComponent);
     this.component = this.fixture.componentInstance;
-    this.overlayContainer = TestBed.get(OverlayContainer);
-    this.location = TestBed.get(Location);
+    this.overlayContainer = TestBed.inject(OverlayContainer);
+    this.location = TestBed.inject(Location);
   }
 
   get atLeastOneError(): DebugElement {
