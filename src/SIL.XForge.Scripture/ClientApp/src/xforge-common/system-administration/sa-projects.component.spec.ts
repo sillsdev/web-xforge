@@ -193,7 +193,7 @@ class TestEnvironment {
 
   private readonly roleColumn = 2;
   private readonly syncDisabledColumn = 3;
-  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
     when(mockedUserService.currentUserId).thenReturn('user01');

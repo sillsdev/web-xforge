@@ -81,7 +81,7 @@ class TestEnvironment {
         }
       }
     };
-    this.dialogRef = TestBed.get(MdcDialog).open(SaDeleteDialogComponent, config);
+    this.dialogRef = TestBed.inject(MdcDialog).open(SaDeleteDialogComponent, config);
     this.afterCloseCallback = jasmine.createSpy('afterClose callback');
     this.dialogRef.afterClosed().subscribe(this.afterCloseCallback);
     this.component = this.dialogRef.componentInstance;

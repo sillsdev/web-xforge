@@ -96,7 +96,7 @@ class TestEnvironment {
     });
     TestBed.overrideComponent(HostComponent, { set: { template: template } });
 
-    this.realtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+    this.realtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
     this.realtimeService.addSnapshot<UserProfile>(UserProfileDoc.COLLECTION, {
       id: 'user01',
       data: {

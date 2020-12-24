@@ -349,7 +349,7 @@ class TestEnvironment {
   readonly targetFixture: ComponentFixture<TextComponent>;
   readonly session: TranslateMetricsSession;
 
-  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private readonly tokenizer = new LatinWordTokenizer();
 
   constructor() {

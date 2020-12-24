@@ -134,9 +134,9 @@ class TestEnvironment {
   constructor(questionCount: number = 2) {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     const configData: ImportQuestionsConfirmationDialogData = { questions: this.getQuestions(questionCount) };
-    this.dialogRef = TestBed.get(MdcDialog).open(ImportQuestionsConfirmationDialogComponent, { data: configData });
+    this.dialogRef = TestBed.inject(MdcDialog).open(ImportQuestionsConfirmationDialogComponent, { data: configData });
     this.component = this.dialogRef.componentInstance;
-    this.overlayContainerElement = TestBed.get(OverlayContainer).getContainerElement();
+    this.overlayContainerElement = TestBed.inject(OverlayContainer).getContainerElement();
     tick();
     this.fixture.detectChanges();
     flush();

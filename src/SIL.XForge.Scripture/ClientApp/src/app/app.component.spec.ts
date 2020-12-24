@@ -397,7 +397,7 @@ class TestEnvironment {
   readonly ngZone: NgZone;
   readonly isProjectAdmin$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
 
-  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
     this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
@@ -460,12 +460,12 @@ class TestEnvironment {
     when(mockedPwaService.onlineStatus).thenReturn(of(true));
     when(mockedFileService.notifyUserIfStorageQuotaBelow(anything())).thenResolve();
 
-    this.router = TestBed.get(Router);
-    this.location = TestBed.get(Location);
-    this.ngZone = TestBed.get(NgZone);
+    this.router = TestBed.inject(Router);
+    this.location = TestBed.inject(Location);
+    this.ngZone = TestBed.inject(NgZone);
     this.fixture = TestBed.createComponent(AppComponent);
     this.component = this.fixture.componentInstance;
-    this.overlayContainer = TestBed.get(OverlayContainer);
+    this.overlayContainer = TestBed.inject(OverlayContainer);
     this.ngZone.run(() => this.router.initialNavigation());
 
     this.questions = [

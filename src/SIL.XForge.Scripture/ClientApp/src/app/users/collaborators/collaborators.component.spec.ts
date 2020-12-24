@@ -416,7 +416,7 @@ class TestEnvironment {
   readonly project01Id: string = 'project01';
   private isOnline: BehaviorSubject<boolean>;
 
-  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor(hasConnection: boolean = true) {
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: this.project01Id }));

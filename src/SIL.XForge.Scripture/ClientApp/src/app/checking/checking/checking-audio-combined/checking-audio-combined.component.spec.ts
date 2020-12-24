@@ -89,7 +89,7 @@ class TestEnvironment {
   readonly component: CheckingAudioCombinedComponent;
   readonly fixture: ComponentFixture<CheckingAudioCombinedComponent>;
 
-  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
     this.fixture = TestBed.createComponent(CheckingAudioCombinedComponent);

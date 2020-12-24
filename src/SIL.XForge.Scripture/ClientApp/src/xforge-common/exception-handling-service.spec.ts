@@ -134,7 +134,7 @@ class TestEnvironment {
   } as UserDoc;
 
   constructor() {
-    this.service = TestBed.get(ExceptionHandlingService);
+    this.service = TestBed.inject(ExceptionHandlingService);
 
     when(mockedMdcDialog.open(anything(), anything())).thenReturn({
       afterClosed: () => {
