@@ -11,7 +11,6 @@ import { TranslateRoutingModule } from './translate-routing.module';
 
 @NgModule({
   declarations: [EditorComponent, SuggestionsComponent, TranslateOverviewComponent, SuggestionsSettingsDialogComponent],
-  imports: [TranslateRoutingModule, CommonModule, SharedModule, UICommonModule, TranslocoModule],
-  entryComponents: [SuggestionsSettingsDialogComponent]
+  imports: [TranslateRoutingModule, CommonModule, SharedModule, UICommonModule, TranslocoModule]
 })
 export class TranslateModule {}

@@ -383,7 +383,6 @@ describe('AppComponent', () => {
 @NgModule({
   imports: [CommonModule, UICommonModule, TestTranslocoModule],
   declarations: [ProjectDeletedDialogComponent],
-  entryComponents: [ProjectDeletedDialogComponent],
   exports: [ProjectDeletedDialogComponent]
 })
 class DialogTestModule {}

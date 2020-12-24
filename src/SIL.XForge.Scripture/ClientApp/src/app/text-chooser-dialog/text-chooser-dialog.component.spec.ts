@@ -346,8 +346,7 @@ class ChildViewContainerComponent {
 @NgModule({
   imports: [CommonModule, UICommonModule, CheckingModule, TestTranslocoModule],
   exports: [ViewContainerDirective, ChildViewContainerComponent],
-  declarations: [ViewContainerDirective, ChildViewContainerComponent],
-  entryComponents: [ChildViewContainerComponent, TextChooserDialogComponent]
+  declarations: [ViewContainerDirective, ChildViewContainerComponent]
 })
 class DialogTestModule {}
 

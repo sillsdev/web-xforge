@@ -63,7 +63,6 @@ import { QuestionDialogComponent } from './question-dialog/question-dialog.compo
     ngfModule,
     TranslocoModule
   ],
-  exports: [CheckingAudioRecorderComponent, CheckingAudioPlayerComponent],
-  entryComponents: [QuestionDialogComponent, QuestionAnsweredDialogComponent, TextChooserDialogComponent]
+  exports: [CheckingAudioRecorderComponent, CheckingAudioPlayerComponent]
 })
 export class CheckingModule {}

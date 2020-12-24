@@ -146,7 +146,6 @@ class TestEnvironment {
 @NgModule({
   imports: [UICommonModule, CommonModule, TestTranslocoModule],
   declarations: [EditNameDialogComponent],
-  entryComponents: [EditNameDialogComponent],
   exports: [EditNameDialogComponent]
 })
 class DialogTestModule {}
