@@ -1,4 +1,4 @@
-import { OnDestroy } from '@angular/core';
+import { Directive, OnDestroy } from '@angular/core';
 import { NoticeService } from './notice.service';
 import { SubscriptionDisposable } from './subscription-disposable';
 
@@ -8,6 +8,9 @@ import { SubscriptionDisposable } from './subscription-disposable';
  * It automatically unsubscribes from observables by extending the SubscriptionDisposable class and properly handles
  * loading status using the NoticeService.
  */
+// Decorator required by Angular compiler
+@Directive()
+// tslint:disable-next-line: directive-class-suffix
 export abstract class DataLoadingComponent extends SubscriptionDisposable implements OnDestroy {
   private _isLoading: boolean = false;
 
