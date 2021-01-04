@@ -1,8 +1,11 @@
-import { OnDestroy } from '@angular/core';
+import { Directive, OnDestroy } from '@angular/core';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 /** Handles Observable unsubscribing */
+// Decorator required by Angular compiler
+@Directive()
+// tslint:disable-next-line: directive-class-suffix
 export abstract class SubscriptionDisposable implements OnDestroy {
   private ngUnsubscribe: Subject<void> = new Subject<void>();
 

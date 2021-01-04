@@ -1,8 +1,11 @@
-import { OnDestroy } from '@angular/core';
+import { Directive, OnDestroy } from '@angular/core';
 import { MatPaginatorIntl } from '@angular/material/paginator';
 import { translate, TranslocoService } from '@ngneat/transloco';
 import { Subscription } from 'rxjs';
 
+// Decorator required by Angular compiler
+@Directive()
+// tslint:disable-next-line: directive-class-suffix
 export class Paginator extends MatPaginatorIntl implements OnDestroy {
   itemsPerPageLabel = '';
   nextPageLabel = '';
