@@ -118,28 +118,28 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="LearnCheckingHow" xml:space="preserve">
-    <value>Learn how to set up and use {0}Community Checking{1}.</value>
+    <value>Aprende cómo configurar y usar {0}Comprobación por la comunidad{1}.</value>
   </data>
   <data name="LearnCheckingTitle" xml:space="preserve">
     <value>Comprobación por la comunidad</value>
   </data>
   <data name="LearnHeader" xml:space="preserve">
-    <value>Learn more on Scripture Forge</value>
+    <value>Más información en Scripture Forge</value>
   </data>
   <data name="LearnSliderCheckingSeeAnswer" xml:space="preserve">
-    <value>{0}Answering questions{1} in text and audio form.</value>
+    <value>{0}Contestando a las preguntas{1} en forma de texto y audio.</value>
   </data>
   <data name="LearnSliderCheckingSeeConnect" xml:space="preserve">
-    <value>{0}Connecting to a Scripture Forge project{1} as an invited {2}Community Checker{3}.</value>
+    <value>{0}Conectando a un proyecto de Scripture Forge{1} como un {2}revisor de la comunidad{3} invitado.</value>
   </data>
   <data name="LearnSliderCheckingSeeDescription" xml:space="preserve">
-    <value>{0}Community Checkers{1} and {0}Administrators{1} should {2}watch this video{3} to see how {0}Community Checkers{1} can answer questions and interact with each other. It covers:</value>
+    <value>{0}Revisores de la comunidad{1} y {0}Administradores{1} deben {2}ver este video{3} para ver cómo {0}revisores de la comunidad{1} pueden responder a preguntas e interactuar entre sí. Cubre:</value>
   </data>
   <data name="LearnSliderCheckingSeeHeader" xml:space="preserve">
-    <value>Watch How Community Checking Works</value>
+    <value>Vea cómo funciona la Comprobación por la comunidad</value>
   </data>
   <data name="LearnSliderCheckingSeeInteract" xml:space="preserve">
-    <value>{0}Interacting{1} with other {2}Community Checkers{3} by adding comments to their answers.</value>
+    <value>{0}Interactuando{1} con otros {2}revisores de la comunidad{3} añadiendo comentarios a sus respuestas.</value>
   </data>
   <data name="LearnSliderCheckingSeeReference" xml:space="preserve">
     <value>{0}Selecting Scripture{1} to reference with answers.</value>
@@ -154,13 +154,13 @@
     <value>Paratext project {0}Administrators{1} can {2}watch this video{3} to learn about setting up {0}Community Checking{1}. It covers:</value>
   </data>
   <data name="LearnSliderCheckingSetupHeader" xml:space="preserve">
-    <value>Setting Up Community Checking</value>
+    <value>Configurar la Comprobación por la comunidad</value>
   </data>
   <data name="LearnSliderCheckingSetupShare" xml:space="preserve">
-    <value>{0}Sharing the project{1} by inviting {2}Community Checkers{3} to answer questions.</value>
+    <value>{0}Compartiendo el proyecto{1} invitando a {2}revisores de la comunidad{3} a responder a preguntas.</value>
   </data>
   <data name="LearnSliderCheckingSetupSync" xml:space="preserve">
-    <value>{0}Synchronizing{1} the {2}Community Checkers'{3} answers with Paratext.</value>
+    <value>{0}Sincronizando{1} las respuestas de los {2}revisores de la comunidad{3} con Paratext.</value>
   </data>
   <data name="LearnSliderSuggestionSetupBased" xml:space="preserve">
     <value>Select a project the translation is {0}Based on{1} and the intelligent suggestion engine can be trained to {2}provide helpful translation suggestions{3}.</value>
@@ -214,15 +214,15 @@
     <value>See other {0}Translators'{1} {2}edits in real time{3}, as they type.</value>
   </data>
   <data name="LearnSliderTranslateCollaborateVerse" xml:space="preserve">
-    <value>Collaborate on the same book, same chapter, or {0}even the same verse{1}.</value>
+    <value>Colaborar en el mismo libro, el mismo capítulo, o {0}incluso el mismo versículo{1}.</value>
   </data>
   <data name="LearnTranslateHow" xml:space="preserve">
-    <value>Learn how to edit Scripture collaboratively and use translation suggestions.</value>
+    <value>Aprende a editar las Escrituras en colaboración y a utilizar las sugerencias de traducción.</value>
   </data>
   <data name="LearnTranslateTitle" xml:space="preserve">
     <value>Traducción</value>
   </data>
   <data name="ReadyToTry" xml:space="preserve">
-    <value>Ready to try Scripture Forge?</value>
+    <value>¿Listo para probar Scripture Forge?</value>
   </data>
 </root>

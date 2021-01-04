@@ -231,6 +231,7 @@
     "error_occurred": "Une erreur s'est produite",
     "firefox": "Firefox",
     "hide_details": "Masquer les détails",
+    "safari": "Safari",
     "show_details": "Afficher les détails",
     "to_report_issue_email": "Pour signaler un problème, envoyez un e-mail à {{ issueEmailLink }}.",
     "unsupported_browser": "Vous utilisez actuellement un navigateur non pris en charge, ce qui peut expliquer cette erreur. Nous vous recommandons de passer à la dernière version de {{ chromeLink }} ou {{ firefoxLink }}."
@@ -297,9 +298,13 @@
     "not_connected_to_any_projects": "Il semble que vous n'êtes encore connecté à aucun projet."
   },
   "supported_browsers_dialog": {
+    "audio_recording_not_supported": "L'enregistrement audio n'est pas pris en charge dans ce navigateur.",
     "dismiss": "Ignorer",
     "browser_unsupported": "Ce navigateur n’est pas pris en charge",
-    "upgrade_chrome_firefox": "Certaines fonctionnalités de ce site web peuvent ne pas fonctionner correctement avec votre navigateur. Nous vous recommandons de passer à la dernière version de {{ chromeLink }} ou {{ firefoxLink }}."
+    "safari_for_audio_on_ios": "L'enregistrement audio sur iPhone et iPad ne fonctionne que dans Safari.",
+    "some_features_may_not_work": "Certaines fonctionnalités de ce site web peuvent ne pas fonctionner correctement avec votre navigateur.",
+    "upgrade_chrome_firefox": "{{ newLine }}Nous vous recommandons de passer à la dernière version de {{ chromeLink }} ou {{ firefoxLink }}.",
+    "upgrade_safari": "{{ newLine }}Nous vous recommandons de passer à la dernière version de {{ safariLink }}."
   },
   "text_chooser_dialog": {
     "cancel": "Annuler",

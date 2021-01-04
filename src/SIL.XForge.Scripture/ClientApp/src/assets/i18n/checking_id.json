@@ -231,6 +231,7 @@
     "error_occurred": "Kesalahan terjadi",
     "firefox": "Firefox",
     "hide_details": "Sembunyikan detail",
+    "safari": "Safari",
     "show_details": "Tampilkan detail",
     "to_report_issue_email": "Untuk melaporkan sebuah masalah, kirim surel {{ issueEmailLink }}.",
     "unsupported_browser": "Anda menggunakan peramban yang tidak didukung, yang mungkin menyebabkan masalah ini. Kami menyarankan menggunakan yang terbaru dari {{ chromeLink }} atau {{ firefoxLink }}."
@@ -297,9 +298,13 @@
     "not_connected_to_any_projects": "Sepertinya Anda belum terhubung di proyek apapun."
   },
   "supported_browsers_dialog": {
+    "audio_recording_not_supported": "Audio recording is not supported in this browser.",
     "dismiss": "Hentikan",
     "browser_unsupported": "Peramban ini tidak didukung",
-    "upgrade_chrome_firefox": "Beberapa fitur situs web ini mungkin tidak berfungsi dengan baik dengan peramban Anda. Kami menyarankan untuk meningkatkan ke {{ chromeLink }} atau {{ firefoxLink }} terbaru."
+    "safari_for_audio_on_ios": "Audio recording on iPhone and iPad only works in Safari.",
+    "some_features_may_not_work": "Some of the features of this website may not work correctly with your browser.",
+    "upgrade_chrome_firefox": "{{ newLine }}We recommend upgrading to the latest {{ chromeLink }} or {{ firefoxLink }}.",
+    "upgrade_safari": "{{ newLine }}We recommend upgrading to the latest {{ safariLink }}."
   },
   "text_chooser_dialog": {
     "cancel": "Batal",

@@ -76,7 +76,7 @@
     "cannot_edit_chapter_formatting_invalid": "Este capítulo não pode ser editado porque a formatação é inválida. Por favor, corrija a formatação no Paratext.",
     "completed_successfully": "Concluído com sucesso",
     "configure_translation_suggestions": "Configurar sugestões de tradução",
-    "swap_source_and_target": "Trocar fonte e destino",
+    "swap_source_and_target": "Trocar origem e destino",
     "training": "Treinamento",
     "training_completed_successfully": "Treinamento concluído com sucesso",
     "verse_too_long_for_suggestions": "Este versículo é muito longo para gerar sugestões."
@@ -90,14 +90,17 @@
     "transcelerator": "Transcelerator"
   },
   "import_questions_dialog": {
+    "all": "Tudo",
     "cancel": "Cancelar",
     "filter_questions": "Filtrar perguntas",
+    "import": "Importar",
     "import_count_questions": "Importar {{ count }} Perguntas Selecionadas",
     "import_from_transcelerator": "Importar perguntas do Transcelerator",
     "importing_questions": "Importando {{ count }} perguntas...",
     "loading": "Carregando...",
     "must_be_valid_reference": "Deve ser uma referência válida",
     "no_questions_available": "Não há perguntas para os livros neste projeto.",
+    "question": "Pergunta",
     "reference_from": "Referência de",
     "reference_to": "Referência a",
     "select_all": "Selecionar Tudo",

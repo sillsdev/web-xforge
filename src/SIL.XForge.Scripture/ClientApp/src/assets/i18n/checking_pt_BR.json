@@ -231,6 +231,7 @@
     "error_occurred": "Ocorreu um erro",
     "firefox": "Firefox",
     "hide_details": "Ocultar detalhes",
+    "safari": "Safari",
     "show_details": "Exibir detalhes",
     "to_report_issue_email": "Para relatar um problema, envie um e-mail {{ issueEmailLink }}.",
     "unsupported_browser": "Você está usando um navegador sem suporte, o que pode ser a razão deste erro. Recomendamos atualizar para o mais recente {{ chromeLink }} ou {{ firefoxLink }}."
@@ -297,9 +298,13 @@
     "not_connected_to_any_projects": "Parece que você ainda não está conectado a nenhum projeto."
   },
   "supported_browsers_dialog": {
+    "audio_recording_not_supported": "A gravação de áudio não é compatível com este navegador.",
     "dismiss": "Ignorar",
     "browser_unsupported": "Este navegador não tem suporte",
-    "upgrade_chrome_firefox": "Alguns recursos deste site podem não funcionar corretamente com seu navegador. Recomendamos que você atualize para o mais recente {{ chromeLink }} ou {{ firefoxLink }} ."
+    "safari_for_audio_on_ios": "A gravação de áudio em iPhone e iPad só funciona no Safari.",
+    "some_features_may_not_work": "Alguns recursos deste site podem não funcionar corretamente com seu navegador.",
+    "upgrade_chrome_firefox": "{{ newLine }} Recomendamos atualizar para a versão mais recente de {{ chromeLink }} ou {{ firefoxLink }}.",
+    "upgrade_safari": "{{ newLine }} Recomendamos atualizar para a versão mais recente de {{ safariLink }}."
   },
   "text_chooser_dialog": {
     "cancel": "Cancelar",

@@ -90,14 +90,17 @@
     "transcelerator": "Transcelerator"
   },
   "import_questions_dialog": {
+    "all": "All",
     "cancel": "Ləğv etmək",
     "filter_questions": "Filter questions",
+    "import": "Import",
     "import_count_questions": "Import {{ count }} Selected Questions",
     "import_from_transcelerator": "Import Questions from Transcelerator",
     "importing_questions": "Importing {{ count }} questions...",
     "loading": "Yüklənir...",
     "must_be_valid_reference": "Must be a valid reference",
     "no_questions_available": "There are no questions for the books in this project.",
+    "question": "Sual",
     "reference_from": "Reference from",
     "reference_to": "Reference to",
     "select_all": "Select All",
