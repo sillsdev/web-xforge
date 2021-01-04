@@ -476,9 +476,18 @@ namespace SIL.XForge.Scripture.Services
 
             if (chapterAuthors == null || chapterAuthors.Count == 0)
             {
-                // If we don't have chapter authors, update only what we have permission for
-                // This will throw a SafetyCheckException if the user does not haver permission for every chapter
-                scrText.PutText(bookNum, 0, false, usfm, null);
+                // If we don't have chapter authors, update book as current user
+                if (scrText.Permissions.AmAdministrator)
+                {
+                    // if the current user is an administrator, then always allow editing the book text even if the user
+                    // doesn't have permission. This will ensure that a sync by an administrator never fails.
+                    scrText.Permissions.RunWithEditPermision(bookNum,
+                        () => scrText.PutText(bookNum, 0, false, usfm, null));
+                }
+                else
+                {
+                    scrText.PutText(bookNum, 0, false, usfm, null);
+                }
                 _logger.LogInformation("{0} updated {1} in {2}.", userSecret.Id,
                     Canon.BookNumberToEnglishName(bookNum), scrText.Name);
             }
