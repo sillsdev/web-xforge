@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -393,7 +392,8 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             var associatedPtUser = new SFParatextUser(env.Username01);
-            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            // should be able to edit the book text even if the admin user does not have permission
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser, hasEditPermission: false);
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01);
 
             int ruthBookNum = 8;
@@ -542,7 +542,7 @@ namespace SIL.XForge.Scripture.Services
             // Passing a PT project Id for a project the user does not have access to fails early without doing S/R
             // SUT 2
             ArgumentException resultingException = Assert.ThrowsAsync<ArgumentException>(() =>
-                env.Service.SendReceiveAsync(user01Secret,"unknownPtProjectId8"));
+                env.Service.SendReceiveAsync(user01Secret, "unknownPtProjectId8"));
             Assert.That(resultingException.Message, Does.Contain("unknownPtProjectId8"));
             env.MockSharingLogicWrapper.DidNotReceive().ShareChanges(default, Arg.Any<SharedRepositorySource>(),
                 out Arg.Any<List<SendReceiveResult>>(), default);
@@ -559,8 +559,8 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSuccessfulSendReceive();
             var associatedPtUser = new SFParatextUser(env.Username01);
             // FindById fails the first time, and then succeeds the second time after the pt project repo is cloned.
-            env.MockScrTextCollection.FindById(env.Username01, ptProjectId)
-                .Returns(null, env.GetScrText(associatedPtUser, ptProjectId));
+            MockScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
+            env.MockScrTextCollection.FindById(env.Username01, ptProjectId).Returns(null, scrText);
 
             string clonePath = Path.Combine(env.SyncDir, ptProjectId, "target");
             env.MockFileSystemService.DirectoryExists(clonePath).Returns(false);
@@ -966,23 +966,28 @@ namespace SIL.XForge.Scripture.Services
                 return notesElem.ToString();
             }
 
-            public string SetupProject(string baseId, ParatextUser associatedPtUser)
+            public string SetupProject(string baseId, ParatextUser associatedPtUser, bool hasEditPermission = true)
             {
                 string ptProjectId = "paratext_" + baseId;
-                ProjectScrText = GetScrText(associatedPtUser, baseId);
+                ProjectScrText = GetScrText(associatedPtUser, baseId, hasEditPermission);
                 ProjectCommentManager = CommentManager.Get(ProjectScrText);
                 MockScrTextCollection.FindById(Arg.Any<string>(), ptProjectId)
                     .Returns(ProjectScrText);
                 return ptProjectId;
             }
 
-            public MockScrText GetScrText(ParatextUser associatedPtUser, string projectId)
+            public MockScrText GetScrText(ParatextUser associatedPtUser, string projectId,
+                bool hasEditPermission = true)
             {
                 string scrtextDir = Path.Combine(SyncDir, projectId, "target");
                 ProjectName projectName = new ProjectName() { ProjectPath = scrtextDir, ShortName = "Proj" };
                 var scrText = new MockScrText(associatedPtUser, projectName);
                 scrText.CachedGuid = projectId;
+                scrText.Permissions.CreateFirstAdminUser();
                 scrText.Data.Add("RUT", ruthBookUsfm);
+                scrText.Settings.BooksPresentSet = new BookSet("RUT");
+                if (!hasEditPermission)
+                    scrText.Permissions.SetPermission(null, 8, PermissionSet.Manual, false);
                 return scrText;
             }
 
