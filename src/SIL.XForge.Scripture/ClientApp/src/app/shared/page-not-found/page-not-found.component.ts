@@ -15,5 +15,5 @@ export class PageNotFoundComponent {
     takeWhile(val => (val <= 1 ? true : this.router.navigateByUrl('/projects') && false))
   );
 
-  constructor(private router: Router) {}
+  constructor(readonly router: Router) {}
 }
