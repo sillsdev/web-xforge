@@ -1,7 +1,6 @@
 import { MdcSelect } from '@angular-mdc/web';
 import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web/dialog';
 import { MdcSlider } from '@angular-mdc/web/slider';
-import { OverlayContainer } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { Component, DebugElement, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
@@ -9,8 +8,8 @@ import { By } from '@angular/platform-browser';
 import cloneDeep from 'lodash/cloneDeep';
 import {
   getSFProjectUserConfigDocId,
-  SF_PROJECT_USER_CONFIGS_COLLECTION,
-  SFProjectUserConfig
+  SFProjectUserConfig,
+  SF_PROJECT_USER_CONFIGS_COLLECTION
 } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { BehaviorSubject } from 'rxjs';
 import { mock, when } from 'ts-mockito';
@@ -132,7 +131,6 @@ class DialogTestModule {}
 class TestEnvironment {
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
   component?: SuggestionsSettingsDialogComponent;
-  readonly overlayContainerElement: HTMLElement;
   onlineStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
@@ -145,10 +143,13 @@ class TestEnvironment {
     });
 
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
-    this.overlayContainerElement = TestBed.inject(OverlayContainer).getContainerElement();
 
     when(mockedPwaService.isOnline).thenCall(() => this.onlineStatus.getValue());
     when(mockedPwaService.onlineStatus).thenReturn(this.onlineStatus.asObservable());
+  }
+
+  get overlayContainerElement(): HTMLElement {
+    return this.fixture.nativeElement.parentElement.querySelector('.cdk-overlay-container');
   }
 
   get confidenceThresholdSlider(): MdcSlider {

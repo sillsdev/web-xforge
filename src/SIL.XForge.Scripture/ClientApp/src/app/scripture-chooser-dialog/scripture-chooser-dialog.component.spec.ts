@@ -1,5 +1,4 @@
 import { MdcDialog, MdcDialogConfig, MdcDialogModule, MdcDialogRef } from '@angular-mdc/web/dialog';
-import { OverlayContainer } from '@angular/cdk/overlay';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -437,7 +436,6 @@ describe('ScriptureChooserDialog', () => {
     fixture: ComponentFixture<ChildViewContainerComponent>;
     component: ScriptureChooserDialogComponent;
     dialogRef: MdcDialogRef<ScriptureChooserDialogComponent>;
-    overlayContainerElement: HTMLElement;
     dialogResult?: 'close' | VerseRef;
     closeIconName = 'close';
     backIconName = 'navigate_before';
@@ -504,9 +502,12 @@ describe('ScriptureChooserDialog', () => {
       this.dialogRef = TestBed.inject(MdcDialog).open(ScriptureChooserDialogComponent, config);
       this.dialogRef.afterClosed().subscribe(result => (this.dialogResult = result));
       this.component = this.dialogRef.componentInstance;
-      this.overlayContainerElement = TestBed.inject(OverlayContainer).getContainerElement();
 
       this.fixture.detectChanges();
+    }
+
+    get overlayContainerElement(): HTMLElement {
+      return this.fixture.nativeElement.parentElement.querySelector('.cdk-overlay-container');
     }
 
     get dialogText(): string | null {

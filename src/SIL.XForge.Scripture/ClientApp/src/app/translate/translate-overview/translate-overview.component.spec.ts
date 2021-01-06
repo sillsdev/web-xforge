@@ -109,6 +109,7 @@ describe('TranslateOverviewComponent', () => {
       verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).never();
       env.simulateTranslateSuggestionsEnabled();
       verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      expect().nothing();
     }));
 
     it('training progress status', fakeAsync(() => {
