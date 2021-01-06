@@ -70,11 +70,9 @@ class DialogTestModule {}
 
 class TestEnvironment {
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
-  readonly element: HTMLElement;
 
   constructor(dialogData: ErrorAlert) {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
-    this.element = TestBed.inject(OverlayContainer).getContainerElement();
     const viewContainerRef = this.fixture.componentInstance.childViewContainer;
     const config: MdcDialogConfig<ErrorAlert> = {
       data: dialogData,
@@ -82,27 +80,34 @@ class TestEnvironment {
     };
     TestBed.inject(MdcDialog).open(ErrorComponent, config);
     this.fixture.detectChanges();
-    // open dialog animation
-    tick(166);
+    tick();
+  }
+
+  get overlayContainerElement(): HTMLElement {
+    return this.fixture.nativeElement.parentElement.querySelector('.cdk-overlay-container');
   }
 
   get errorMessage(): HTMLElement {
-    return this.element.querySelector('mdc-dialog-content p') as HTMLElement;
+    return this.selectElement('mdc-dialog-content p')!;
   }
 
   get showDetails(): HTMLElement {
-    return this.element.querySelector('mdc-dialog-content > a') as HTMLElement;
+    return this.selectElement('mdc-dialog-content > a')!;
   }
 
   get stackTrace(): HTMLElement {
-    return this.element.querySelector('pre') as HTMLElement;
+    return this.selectElement('pre')!;
   }
 
   get errorId(): HTMLElement {
-    return this.element.querySelector('.error-id') as HTMLElement;
+    return this.selectElement('.error-id')!;
   }
 
   get closeButton(): HTMLElement {
-    return this.element.querySelector('button') as HTMLElement;
+    return this.selectElement('button')!;
+  }
+
+  private selectElement(selector: string): HTMLElement | null {
+    return this.overlayContainerElement.querySelector(selector);
   }
 }

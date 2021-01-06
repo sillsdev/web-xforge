@@ -1,5 +1,4 @@
 import { MdcList, MdcListItem } from '@angular-mdc/web/list';
-import { OverlayContainer } from '@angular/cdk/overlay';
 import { CommonModule, Location } from '@angular/common';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, NgModule, NgZone } from '@angular/core';
@@ -392,7 +391,6 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<AppComponent>;
   readonly router: Router;
   readonly location: Location;
-  readonly overlayContainer: OverlayContainer;
   readonly questions: Question[];
   readonly ngZone: NgZone;
   readonly isProjectAdmin$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
@@ -465,7 +463,6 @@ class TestEnvironment {
     this.ngZone = TestBed.inject(NgZone);
     this.fixture = TestBed.createComponent(AppComponent);
     this.component = this.fixture.componentInstance;
-    this.overlayContainer = TestBed.inject(OverlayContainer);
     this.ngZone.run(() => this.router.initialNavigation());
 
     this.questions = [
@@ -494,6 +491,10 @@ class TestEnvironment {
     ];
   }
 
+  get overlayContainerElement(): HTMLElement {
+    return this.fixture.nativeElement.parentElement.querySelector('.cdk-overlay-container');
+  }
+
   get menuDrawer(): DebugElement {
     return this.fixture.debugElement.query(By.css('#menu-drawer'));
   }
@@ -520,13 +521,11 @@ class TestEnvironment {
   }
 
   get projectDeletedDialog(): HTMLElement {
-    const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('mdc-dialog') as HTMLElement;
+    return this.overlayContainerElement.querySelector('mdc-dialog') as HTMLElement;
   }
 
   get okButton(): HTMLElement {
-    const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('#ok-button') as HTMLElement;
+    return this.overlayContainerElement.querySelector('#ok-button') as HTMLElement;
   }
 
   get currentUserDisplayName(): string {

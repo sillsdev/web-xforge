@@ -1,5 +1,4 @@
 import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
-import { OverlayContainer } from '@angular/cdk/overlay';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, inject, TestBed, tick } from '@angular/core/testing';
 import { CookieService } from 'ngx-cookie-service';
@@ -19,7 +18,6 @@ describe('DeleteProjectDialogComponent', () => {
   }));
 
   let dialog: MdcDialog;
-  let overlayContainer: OverlayContainer;
   let viewContainerFixture: ComponentFixture<ChildViewContainerComponent>;
   let testViewContainerRef: ViewContainerRef;
 
@@ -53,7 +51,6 @@ describe('DeleteProjectDialogComponent', () => {
     fixture: ComponentFixture<ChildViewContainerComponent>;
     component: DeleteProjectDialogComponent;
     dialogRef: MdcDialogRef<DeleteProjectDialogComponent>;
-    overlayContainerElement: HTMLElement;
 
     afterCloseCallback: jasmine.Spy;
 
@@ -63,9 +60,12 @@ describe('DeleteProjectDialogComponent', () => {
       this.dialogRef = dialog.open(DeleteProjectDialogComponent, config);
       this.dialogRef.afterClosed().subscribe(this.afterCloseCallback);
       this.component = this.dialogRef.componentInstance;
-      this.overlayContainerElement = overlayContainer.getContainerElement();
       this.fixture = viewContainerFixture;
       this.fixture.detectChanges();
+    }
+
+    get overlayContainerElement(): HTMLElement {
+      return this.fixture.nativeElement.parentElement.querySelector('.cdk-overlay-container');
     }
 
     get deleteButton(): HTMLElement {
@@ -95,18 +95,13 @@ describe('DeleteProjectDialogComponent', () => {
     }
   }
 
-  beforeEach(inject([MdcDialog, OverlayContainer], (d: MdcDialog, oc: OverlayContainer) => {
+  beforeEach(inject([MdcDialog], (d: MdcDialog) => {
     dialog = d;
-    overlayContainer = oc;
   }));
 
   beforeEach(() => {
     viewContainerFixture = TestBed.createComponent(ChildViewContainerComponent);
     testViewContainerRef = viewContainerFixture.componentInstance.childViewContainer;
-  });
-
-  afterEach(() => {
-    overlayContainer.ngOnDestroy();
   });
 });
 

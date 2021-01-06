@@ -1,5 +1,4 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
-import { OverlayContainer } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
@@ -399,7 +398,6 @@ class TestEnvironment {
   }
 
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
-  readonly overlayContainerElement: HTMLElement;
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   readonly mockedScriptureChooserMdcDialogRef = mock(MdcDialogRef);
@@ -476,8 +474,6 @@ class TestEnvironment {
     this.component = dialogRef.componentInstance;
     this.resultPromise = dialogRef.afterClosed().toPromise();
 
-    this.overlayContainerElement = TestBed.inject(OverlayContainer).getContainerElement();
-
     // Set up MdcDialog mocking after it's already used above in creating the component.
     const dialogSpy = spy(this.component.dialog);
     when(dialogSpy.open(anything(), anything())).thenReturn(instance(this.mockedScriptureChooserMdcDialogRef));
@@ -488,6 +484,10 @@ class TestEnvironment {
 
     this.fixture.detectChanges();
     flush();
+  }
+
+  get overlayContainerElement(): HTMLElement {
+    return this.fixture.nativeElement.parentElement.querySelector('.cdk-overlay-container');
   }
 
   get saveButton(): HTMLButtonElement {
