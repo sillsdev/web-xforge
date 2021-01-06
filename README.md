@@ -28,8 +28,8 @@ The rest of this document discusses the development of the underlying software.
   - [Gitflow](#gitflow)
   - [Style Guides](#style-guides)
   - [Layout](#layout)
-  - [Recommended Development Environment](#recommended-development-environment)
-    - [Vagrant GUI Setup](#vagrant-gui-setup)
+  - [Development Environment](#development-environment)
+    - [Vagrant Development Machine](#vagrant-development-machine)
     - [Local Linux Development Setup](#local-linux-development-setup)
     - [Manual Setup](#manual-setup)
   - [Development Process](#development-process)
@@ -298,16 +298,38 @@ Or just use VS Code with this project's recommended extensions.
 
 ### Angular Unit Testing
 
-To run front end unit tests, make sure `ng serve` is **not** running (_CTRL-C_ to end them), then from the repo root
+Tests are run by Karma in a browser. Help Karma find Chromium by setting CHROME_BIN. Set it persistently with
 
 ```bash
-cd src/SIL.XForge.Scripture/ClientApp/
-CHROME_BIN=chromium-browser ng test
+tee -a ~/.pam_environment <<< "CHROME_BIN=chromium-browser"
 ```
 
-You can make the environment variable (`CHROME_BIN=chromium-browser`) permanent by following the instructions [here](https://help.ubuntu.com/community/EnvironmentVariables), then you can simply run `ng test`. The environment variable is already set in the vagrant.
+and then log back in to your desktop, or set it temporarily with
 
-`ng test` will monitor and run tests in a Chromium browser window. You can also monitor and run tests headlessly from the command line by running
+```bash
+export CHROME_BIN=chromium-browser
+```
+
+CHROME_BIN is already set in the vagrant.
+
+Run all the front-end unit tests, automatically re-running when you change a file:
+
+```bash
+cd src/SIL.XForge.Scripture/ClientApp
+npm test
+```
+
+Run tests only in a specific spec file, or only in all spec files in a directory, with the following, where PATH is a
+_relative_ path to a file or directory. PATH must be relative to `ClientApp/src`; for example
+`app/sync/sync.component.spec.ts` or `app/sync`.
+
+```bash
+cd src/SIL.XForge.Scripture/ClientApp/src
+npm test -- --include PATH
+```
+
+`npm test` will monitor and run tests in a Chromium browser window. You can also monitor and run tests headlessly from
+the command line by running
 
 ```bash
 src/SIL.XForge.Scripture/ClientApp/monitor-test-headless.sh
