@@ -82,6 +82,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
   private projectUserConfigChangesSub?: Subscription;
   private text?: TextInfo;
+  private sourceText?: TextInfo;
+  private sourceProjectDoc?: SFProjectDoc;
   private sourceLoaded: boolean = false;
   private targetLoaded: boolean = false;
   private _chapter?: number;
@@ -186,14 +188,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.currentUserDoc == null ? undefined : this.currentUserDoc.data;
   }
 
-  get hasSource(): boolean {
-    const sourceId = this.projectDoc?.data?.translateConfig.source?.projectRef;
-    if (!this.canEdit || this.text == null || this.currentUser === undefined || sourceId === undefined) {
-      return false;
-    } else {
-      const projects = this.currentUser.sites[environment.siteId].projects;
-      return this.text.hasSource && projects.includes(sourceId);
-    }
+  get showSource(): boolean {
+    return this.hasSource && this.hasSourceViewRight;
   }
 
   get hasEditRight(): boolean {
@@ -207,6 +203,23 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       const chapter = this.text?.chapters.find(c => c.number === this._chapter);
       if (chapter != null) {
         return chapter.permissions[this.userService.currentUserId] === TextInfoPermission.Write;
+      }
+    }
+
+    return false;
+  }
+
+  get hasSourceViewRight(): boolean {
+    if (this.sourceProjectDoc == null || this.sourceProjectDoc.data == null) {
+      return false;
+    }
+
+    const projectRole = this.sourceProjectDoc.data.userRoles[this.userService.currentUserId];
+    if (SF_PROJECT_RIGHTS.hasRight(projectRole, { projectDomain: SFProjectDomain.Texts, operation: Operation.View })) {
+      // Check for chapter rights
+      const chapter = this.sourceText?.chapters.find(c => c.number === this._chapter);
+      if (chapter != null) {
+        return chapter.permissions[this.userService.currentUserId] !== TextInfoPermission.None;
       }
     }
 
@@ -240,6 +253,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return chapter != null && chapter.isValid;
   }
 
+  private get hasSource(): boolean {
+    const sourceId = this.projectDoc?.data?.translateConfig.source?.projectRef;
+    if (!this.canEdit || this.text == null || this.currentUser === undefined || sourceId === undefined) {
+      return false;
+    } else {
+      const projects = this.currentUser.sites[environment.siteId].projects;
+      return this.text.hasSource && projects.includes(sourceId);
+    }
+  }
+
   ngAfterViewInit(): void {
     this.subscribe(fromEvent(window, 'resize'), () => this.setTextHeight());
     this.subscribe(
@@ -264,6 +287,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             projectId,
             this.userService.currentUserId
           );
+
+          const sourceId = this.projectDoc?.data?.translateConfig.source?.projectRef;
+          if (sourceId != null) {
+            this.sourceProjectDoc = await this.projectService.get(sourceId);
+            if (this.sourceProjectDoc != null && this.sourceProjectDoc.data != null) {
+              this.sourceText = this.sourceProjectDoc.data.texts.find(t => t.bookNum === bookNum);
+            }
+          }
 
           if (this.projectUserConfigChangesSub != null) {
             this.projectUserConfigChangesSub.unsubscribe();
