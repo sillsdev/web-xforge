@@ -1,10 +1,10 @@
 import {
-  MDC_DIALOG_DATA,
   MdcCheckboxChange,
   MDCDataTable,
   MdcDialog,
   MdcDialogConfig,
-  MdcDialogRef
+  MdcDialogRef,
+  MDC_DIALOG_DATA
 } from '@angular-mdc/web';
 import { MdcCheckbox } from '@angular-mdc/web/checkbox';
 import { Component, Inject, ViewChild } from '@angular/core';

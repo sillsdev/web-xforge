@@ -10,7 +10,7 @@ import { OfflineData, OfflineStore } from 'xforge-common/offline-store';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { MachineHttpClient } from './machine-http-client';
-import { EDITED_SEGMENTS, EditedSegmentData } from './models/edited-segment-data';
+import { EditedSegmentData, EDITED_SEGMENTS } from './models/edited-segment-data';
 import { SFProjectService } from './sf-project.service';
 
 /**
