@@ -1,10 +1,10 @@
 import Quill, { DeltaOperation, DeltaStatic } from 'quill';
 import {
   getTextDocId,
-  TEXT_INDEX_PATHS,
   TextData,
   TEXTS_COLLECTION,
-  TextType
+  TextType,
+  TEXT_INDEX_PATHS
 } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { RealtimeDoc } from 'xforge-common/models/realtime-doc';
 

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/models/question';
-import { SF_PROJECTS_COLLECTION, SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import { SFProject, SF_PROJECTS_COLLECTION } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { getSFProjectUserConfigDocId } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { CommandService } from 'xforge-common/command.service';
 import { FileService } from 'xforge-common/file.service';

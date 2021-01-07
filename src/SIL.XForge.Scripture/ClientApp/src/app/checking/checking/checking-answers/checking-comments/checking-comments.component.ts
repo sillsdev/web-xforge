@@ -6,7 +6,7 @@ import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { debounceTime } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';

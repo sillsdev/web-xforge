@@ -1,4 +1,4 @@
-import { MDC_DIALOG_DATA, MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
+import { MdcDialog, MdcDialogConfig, MdcDialogRef, MDC_DIALOG_DATA } from '@angular-mdc/web';
 import { Component, ElementRef, Inject, Optional, ViewChild } from '@angular/core';
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';

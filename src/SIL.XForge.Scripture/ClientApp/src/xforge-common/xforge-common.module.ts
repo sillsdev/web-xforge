@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { TRANSLOCO_CONFIG, TRANSLOCO_LOADER, TranslocoModule } from '@ngneat/transloco';
+import { TranslocoModule, TRANSLOCO_CONFIG, TRANSLOCO_LOADER } from '@ngneat/transloco';
 import { ngfModule } from 'angular-file';
 import { AvatarModule } from 'ngx-avatar';
 import { PageNotFoundComponent } from '../app/shared/page-not-found/page-not-found.component';

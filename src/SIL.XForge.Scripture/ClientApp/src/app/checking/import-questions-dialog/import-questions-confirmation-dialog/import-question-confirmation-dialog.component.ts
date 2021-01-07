@@ -1,4 +1,4 @@
-import { MDC_DIALOG_DATA, MDCDataTableRowSelectionChangedEvent, MdcDialogRef } from '@angular-mdc/web';
+import { MDCDataTableRowSelectionChangedEvent, MdcDialogRef, MDC_DIALOG_DATA } from '@angular-mdc/web';
 import { Component, Inject } from '@angular/core';
 
 export interface ImportQuestionsConfirmationDialogData {
