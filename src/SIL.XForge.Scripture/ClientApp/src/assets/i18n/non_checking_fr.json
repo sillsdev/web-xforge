@@ -90,14 +90,17 @@
     "transcelerator": "Transcelerator"
   },
   "import_questions_dialog": {
+    "all": "Tout",
     "cancel": "Annuler",
     "filter_questions": "Filtrer les questions",
+    "import": "Importer",
     "import_count_questions": "Importer {{ count }} questions sélectionnées",
     "import_from_transcelerator": "Importer des questions depuis Transcelerator",
     "importing_questions": "Importation de {{ count }} questions...",
     "loading": "Chargement...",
     "must_be_valid_reference": "Doit être une référence valide",
     "no_questions_available": "Il n'y a pas de questions pour les livres dans ce projet.",
+    "question": "Question",
     "reference_from": "Début de référence",
     "reference_to": "Fin de référence",
     "select_all": "Tout sélectionner",

@@ -231,6 +231,7 @@
     "error_occurred": "Bir səhv baş verib",
     "firefox": "Firefox",
     "hide_details": "Detalları gizlət",
+    "safari": "Safari",
     "show_details": "Detalları göstər",
     "to_report_issue_email": "Problemi bildirmək üçün {{ issueEmailLink }}-a e-poçt göndərin.",
     "unsupported_browser": "Bu xətaya səbəb dəstəklənməyən brauzerdən istifadə etməyiniz ola bilər. Məsləhət görürük ki, onu {{ chromeLink }}-un və ya {{ firefoxLink }}-un ən son versiyası ilə yeniləyəsiniz."
@@ -297,9 +298,13 @@
     "not_connected_to_any_projects": "Elə görünür ki, siz hələ heç bir layihəyə qoşulmamısınız."
   },
   "supported_browsers_dialog": {
+    "audio_recording_not_supported": "Audio recording is not supported in this browser.",
     "dismiss": "İmtina et",
     "browser_unsupported": "Bu brauzerə dəstək göstərilmir",
-    "upgrade_chrome_firefox": "Bu vebsaytın bəzi xüsusiyyətləri sizin brauzerinizlə düzgün işləməyəcək. Biz məsləhət görürük ki, onu {{ chromeLink }} və ya {{ firefoxLink }} -in ən son versiyası ilə yeniləyəsiniz."
+    "safari_for_audio_on_ios": "Audio recording on iPhone and iPad only works in Safari.",
+    "some_features_may_not_work": "Some of the features of this website may not work correctly with your browser.",
+    "upgrade_chrome_firefox": "{{ newLine }}We recommend upgrading to the latest {{ chromeLink }} or {{ firefoxLink }}.",
+    "upgrade_safari": "{{ newLine }}We recommend upgrading to the latest {{ safariLink }}."
   },
   "text_chooser_dialog": {
     "cancel": "Ləğv etmək",
