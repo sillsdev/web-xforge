@@ -360,7 +360,8 @@ namespace SIL.XForge.Scripture.Services
                 foreach (string uid in project.UserRoles.Keys)
                 {
                     // See if the user is in the project members list
-                    if (!userMapping.TryGetValue(uid, out string userName) || string.IsNullOrWhiteSpace(userName))
+                    if (!userMapping.TryGetValue(uid, out string userName) || string.IsNullOrWhiteSpace(userName)
+                        || scrText.Permissions.GetRole(userName) == Paratext.Data.Users.UserRoles.None)
                     {
                         permissions.Add(uid, TextInfoPermission.None);
                     }

@@ -455,7 +455,8 @@ namespace SourceTargetSplitting
                         {
                             // See if the user is in the project members list
                             if (!userMapping.TryGetValue(uid, out string? userName)
-                                || string.IsNullOrWhiteSpace(userName))
+                                || string.IsNullOrWhiteSpace(userName)
+                                || scrText.Permissions.GetRole(userName) == Paratext.Data.Users.UserRoles.None)
                             {
                                 bookPermissions.Add(uid, TextInfoPermission.None);
                             }
@@ -495,7 +496,8 @@ namespace SourceTargetSplitting
                             {
                                 // See if the user is in the project members list
                                 if (!userMapping.TryGetValue(uid, out string? userName)
-                                    || string.IsNullOrWhiteSpace(userName))
+                                    || string.IsNullOrWhiteSpace(userName)
+                                    || scrText.Permissions.GetRole(userName) == Paratext.Data.Users.UserRoles.None)
                                 {
                                     chapterPermissions.Add(uid, TextInfoPermission.None);
                                 }
