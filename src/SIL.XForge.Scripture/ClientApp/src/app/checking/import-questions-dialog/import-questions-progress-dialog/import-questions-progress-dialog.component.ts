@@ -1,4 +1,4 @@
-import { MDC_DIALOG_DATA, MdcDialog } from '@angular-mdc/web/dialog';
+import { MdcDialog, MDC_DIALOG_DATA } from '@angular-mdc/web/dialog';
 import { Component, Inject } from '@angular/core';
 
 export interface ImportQuestionsProgressDialogData {

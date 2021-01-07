@@ -1,7 +1,7 @@
 import {
-  SF_PROJECT_USER_CONFIG_INDEX_PATHS,
+  SFProjectUserConfig,
   SF_PROJECT_USER_CONFIGS_COLLECTION,
-  SFProjectUserConfig
+  SF_PROJECT_USER_CONFIG_INDEX_PATHS
 } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { ProjectDataDoc } from 'xforge-common/models/project-data-doc';
 

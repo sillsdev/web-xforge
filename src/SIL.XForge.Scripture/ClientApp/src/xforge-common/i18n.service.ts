@@ -15,7 +15,7 @@ import enNonChecking from '../assets/i18n/non_checking_en.json';
 import { environment } from '../environments/environment';
 import { AuthService } from './auth.service';
 import { Locale } from './models/i18n-locale';
-import { ASP_CULTURE_COOKIE_NAME, aspCultureCookieValue, getAspCultureCookieLanguage, getI18nLocales } from './utils';
+import { aspCultureCookieValue, ASP_CULTURE_COOKIE_NAME, getAspCultureCookieLanguage, getI18nLocales } from './utils';
 
 type DateFormat = Intl.DateTimeFormatOptions | ((date: Date) => string);
 

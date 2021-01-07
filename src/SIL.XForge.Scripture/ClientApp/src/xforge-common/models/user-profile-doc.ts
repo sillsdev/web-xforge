@@ -1,7 +1,7 @@
 import {
-  USER_PROFILE_INDEX_PATHS,
+  UserProfile,
   USER_PROFILES_COLLECTION,
-  UserProfile
+  USER_PROFILE_INDEX_PATHS
 } from 'realtime-server/lib/common/models/user';
 import { JsonRealtimeDoc } from './json-realtime-doc';
 

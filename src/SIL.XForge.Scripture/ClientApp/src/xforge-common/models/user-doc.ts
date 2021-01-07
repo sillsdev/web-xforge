@@ -1,4 +1,4 @@
-import { User, USER_INDEX_PATHS, USERS_COLLECTION } from 'realtime-server/lib/common/models/user';
+import { User, USERS_COLLECTION, USER_INDEX_PATHS } from 'realtime-server/lib/common/models/user';
 import { JsonRealtimeDoc } from './json-realtime-doc';
 
 export class UserDoc extends JsonRealtimeDoc<User> {

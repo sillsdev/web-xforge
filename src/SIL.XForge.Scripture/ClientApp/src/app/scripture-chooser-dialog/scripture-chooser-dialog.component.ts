@@ -1,4 +1,4 @@
-import { MDC_DIALOG_DATA, MdcDialogRef } from '@angular-mdc/web/dialog';
+import { MdcDialogRef, MDC_DIALOG_DATA } from '@angular-mdc/web/dialog';
 import { Component, Inject, OnInit } from '@angular/core';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';

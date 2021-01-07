@@ -1,7 +1,7 @@
 import {
-  SF_PROJECT_INDEX_PATHS,
+  SFProject,
   SF_PROJECTS_COLLECTION,
-  SFProject
+  SF_PROJECT_INDEX_PATHS
 } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { TEXTS_COLLECTION } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { ProjectDoc } from 'xforge-common/models/project-doc';

@@ -1,4 +1,4 @@
-import { MDC_DIALOG_DATA, MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
+import { MdcDialog, MdcDialogConfig, MdcDialogRef, MDC_DIALOG_DATA } from '@angular-mdc/web/dialog';
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
 import { translate } from '@ngneat/transloco';

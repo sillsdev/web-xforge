@@ -1,8 +1,8 @@
 import { obj, PathItem } from 'realtime-server/lib/common/utils/obj-path';
 import {
   Question,
-  QUESTION_INDEX_PATHS,
-  QUESTIONS_COLLECTION
+  QUESTIONS_COLLECTION,
+  QUESTION_INDEX_PATHS
 } from 'realtime-server/lib/scriptureforge/models/question';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { ProjectDataDoc } from 'xforge-common/models/project-data-doc';
