@@ -260,7 +260,7 @@ namespace SIL.XForge.Scripture.Services
                         jwtTokenHelper,
                         exceptionHandler,
                         baseUrl);
-                    return resources.Any(r => r.DBLEntryUid == id);
+                    return resources.Any(r => r.DBLEntryUid.Id == id);
                 }
                 else if (ex.Source == "NSubstitute")
                 {
@@ -351,9 +351,9 @@ namespace SIL.XForge.Scripture.Services
             {
                 throw new ArgumentNullException(nameof(path));
             }
-            else if (string.IsNullOrWhiteSpace(this.DBLEntryUid))
+            else if (string.IsNullOrWhiteSpace(this.DBLEntryUid.Id))
             {
-                throw new ArgumentNullException(nameof(this.DBLEntryUid));
+                throw new ArgumentNullException(nameof(this.DBLEntryUid.Id));
             }
             else if (string.IsNullOrWhiteSpace(this.Name))
             {
@@ -387,9 +387,9 @@ namespace SIL.XForge.Scripture.Services
             // Easier to check parameters here than fill the temp directory with files
             // NOTE: This is not an exhaustive list of the required parameters!
             //       You will need to refer to InstallableResource.Install() for that.
-            if (string.IsNullOrWhiteSpace(this.DBLEntryUid))
+            if (string.IsNullOrWhiteSpace(this.DBLEntryUid.Id))
             {
-                throw new ArgumentNullException(nameof(this.DBLEntryUid));
+                throw new ArgumentNullException(nameof(this.DBLEntryUid.Id));
             }
             else if (string.IsNullOrWhiteSpace(this.DblSourceUrl))
             {
@@ -635,7 +635,7 @@ namespace SIL.XForge.Scripture.Services
                         FullName = fullname,
                         LanguageID = languageId,
                         DblSourceUrl = url,
-                        DBLEntryUid = id,
+                        DBLEntryUid = HexId.FromStr(id),
                         DBLRevision = int.Parse(revision),
                         PermissionsChecksum = permissionsChecksum,
                         ManifestChecksum = manifestChecksum,

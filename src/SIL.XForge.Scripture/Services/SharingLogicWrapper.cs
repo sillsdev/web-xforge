@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Paratext.Data;
 using Paratext.Data.Repository;
 
 namespace SIL.XForge.Scripture.Services
@@ -18,7 +19,7 @@ namespace SIL.XForge.Scripture.Services
         public SharedProject CreateSharedProject(string projId, string proj, SharedRepositorySource source,
             IEnumerable<SharedRepository> sourceRepositories)
         {
-            return SharingLogic.CreateSharedProject(projId, proj, source, sourceRepositories);
+            return SharingLogic.CreateSharedProject(HexId.FromStr(projId), proj, source, sourceRepositories);
         }
 
         public bool HandleErrors(Action action, bool throwExceptions = false)
