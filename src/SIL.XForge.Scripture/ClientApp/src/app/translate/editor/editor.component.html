@@ -2,7 +2,7 @@
   <div class="content" mdcMenuSurfaceAnchor #trainingProgressAnchor fxLayout="column">
     <div class="toolbar" fxLayout="row wrap" fxLayoutAlign="start center">
       <app-chapter-nav [bookNum]="bookNum" [(chapter)]="chapter" [chapters]="chapters"></app-chapter-nav>
-      <ng-container *ngIf="hasSource">
+      <ng-container *ngIf="showSource">
         <div class="toolbar-separator">&nbsp;</div>
         <button
           mdc-icon-button
@@ -24,7 +24,7 @@
       </ng-container>
     </div>
     <div [fxLayout]="isTargetTextRight ? 'row' : 'row-reverse'" fxLayoutGap="5px">
-      <div id="source-text-area" [fxShow.gt-xs]="hasSource" fxHide.xs class="text-area">
+      <div id="source-text-area" [fxShow.gt-xs]="showSource" fxHide.xs class="text-area">
         <div class="language-label" mdcSubtitle1>{{ sourceLabel }}</div>
         <div #sourceContainer class="text-container" [style.height]="textHeight">
           <app-text
@@ -37,8 +37,12 @@
           ></app-text>
         </div>
       </div>
-      <div class="text-area" [ngClass.gt-xs]="{ 'text-area-full-width': !hasSource }" ngClass.xs="text-area-full-width">
-        <div class="language-label" [fxShow.gt-xs]="hasSource" fxHide.xs mdcSubtitle1>{{ targetLabel }}</div>
+      <div
+        class="text-area"
+        [ngClass.gt-xs]="{ 'text-area-full-width': !showSource }"
+        ngClass.xs="text-area-full-width"
+      >
+        <div class="language-label" [fxShow.gt-xs]="showSource" fxHide.xs mdcSubtitle1>{{ targetLabel }}</div>
         <div *ngIf="!isValid && hasEditRight" class="invalid-warning">
           {{ t("cannot_edit_chapter_formatting_invalid") }}
         </div>

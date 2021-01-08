@@ -197,11 +197,15 @@ namespace SourceTargetSplitting
                 if (!projectDoc.IsLoaded)
                     return;
 
+                // Get Paratext username mapping
+                IReadOnlyDictionary<string, string> ptUsernameMapping =
+                    await _paratextService.GetParatextUsernameMappingAsync(userSecret, projectDoc.Data.ParatextId);
+
                 // Add all of the books
                 foreach (int bookNum in this._paratextService.GetBookList(userSecret, sourceId))
                 {
-                    Dictionary<string, string>? permissions =
-                        await this._paratextService.GetPermissionsAsync(userSecret, projectDoc.Data, bookNum);
+                    Dictionary<string, string>? permissions = await this._paratextService.GetPermissionsAsync(
+                        userSecret, projectDoc.Data, ptUsernameMapping, bookNum);
 
                     TextInfo text = new TextInfo
                     {
@@ -455,7 +459,8 @@ namespace SourceTargetSplitting
                         {
                             // See if the user is in the project members list
                             if (!userMapping.TryGetValue(uid, out string? userName)
-                                || string.IsNullOrWhiteSpace(userName))
+                                || string.IsNullOrWhiteSpace(userName)
+                                || scrText.Permissions.GetRole(userName) == Paratext.Data.Users.UserRoles.None)
                             {
                                 bookPermissions.Add(uid, TextInfoPermission.None);
                             }
@@ -495,7 +500,8 @@ namespace SourceTargetSplitting
                             {
                                 // See if the user is in the project members list
                                 if (!userMapping.TryGetValue(uid, out string? userName)
-                                    || string.IsNullOrWhiteSpace(userName))
+                                    || string.IsNullOrWhiteSpace(userName)
+                                    || scrText.Permissions.GetRole(userName) == Paratext.Data.Users.UserRoles.None)
                                 {
                                     chapterPermissions.Add(uid, TextInfoPermission.None);
                                 }

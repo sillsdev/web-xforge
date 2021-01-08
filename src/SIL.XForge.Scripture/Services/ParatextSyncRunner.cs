@@ -184,12 +184,17 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
 
+                // Get Paratext username mapping
+                IReadOnlyDictionary<string, string> ptUsernameMapping =
+                    await _paratextService.GetParatextUsernameMappingAsync(_userSecret, _projectDoc.Data.ParatextId);
+
                 // Get the permissions if this is a resource
                 // Resources do not have per-book permissions
                 Dictionary<string, string> permissions;
                 if (_projectDoc.Data.ParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
                 {
-                    permissions = await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data);
+                    permissions = await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data,
+                        ptUsernameMapping);
                 }
                 else
                 {
@@ -235,13 +240,13 @@ namespace SIL.XForge.Scripture.Services
                     else
                     {
                         // Get the project permissions for the book
-                        permissions =
-                            await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data, bookNum);
+                        permissions = await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data,
+                            ptUsernameMapping, bookNum);
                         foreach (Chapter chapter in newChapters)
                         {
                             // Get and set the project permissions for the chapter
                             Dictionary<string, string> chapterPermissions = await _paratextService.GetPermissionsAsync(
-                                _userSecret, _projectDoc.Data, bookNum, chapter.Number);
+                                _userSecret, _projectDoc.Data, ptUsernameMapping, bookNum, chapter.Number);
                             chapter.Permissions = chapterPermissions;
                         }
                     }
