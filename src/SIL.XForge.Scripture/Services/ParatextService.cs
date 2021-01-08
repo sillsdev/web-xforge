@@ -312,10 +312,35 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>
+        /// Gets the Paratext username mapping.
+        /// </summary>
+        /// <param name="userSecret">The user secret.</param>
+        /// <param name="paratextId">The project ParatextId.</param>
+        /// <returns>
+        /// A dictionary where the key is user ID and the value is Paratext username.
+        /// </returns>
+        public async Task<IReadOnlyDictionary<string, string>> GetParatextUsernameMappingAsync(UserSecret userSecret,
+            string paratextId)
+        {
+            // Get the mapping for paratext users ids to usernames from the registry
+            string response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get,
+                $"projects/{paratextId}/members");
+            Dictionary<string, string> paratextMapping = JArray.Parse(response).OfType<JObject>()
+                .Where(m => !string.IsNullOrEmpty((string)m["userId"])
+                    && !string.IsNullOrEmpty((string)m["username"]))
+                .ToDictionary(m => (string)m["userId"], m => (string)m["username"]);
+
+            // Get the mapping of Scripture Forge user IDs to Paratext usernames
+            return await this._realtimeService.QuerySnapshots<User>()
+                    .Where(u => paratextMapping.Keys.Contains(u.ParatextId))
+                    .ToDictionaryAsync(u => u.Id, u => paratextMapping[u.ParatextId]);
+        }
+        /// <summary>
         /// Gets the permissions for a project or resource.
         /// </summary>
         /// <param name="userSecret">The user secret.</param>
-        /// <param name="project">The project - the UserRoles and Source ParatextId are used.</param>
+        /// <param name="project">The project - the UserRoles and ParatextId are used.</param>
+        /// <param name="ptUsernameMapping">A mapping of user ID to Paratext username.</param>
         /// <param name="book">The book number. Set to zero to check for all books.</param>
         /// <param name="chapter">The chapter number. Set to zero to check for all books.</param>
         /// <returns>
@@ -326,7 +351,7 @@ namespace SIL.XForge.Scripture.Services
         /// A dictionary is returned, as permissions can be updated.
         /// </remarks>
         public async Task<Dictionary<string, string>> GetPermissionsAsync(UserSecret userSecret, SFProject project,
-            int book = 0, int chapter = 0)
+            IReadOnlyDictionary<string, string> ptUsernameMapping, int book = 0, int chapter = 0)
         {
             var permissions = new Dictionary<string, string>();
 
@@ -340,19 +365,6 @@ namespace SIL.XForge.Scripture.Services
             }
             else
             {
-                // Get the mapping for paratext users ids to names from the registry
-                string response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get,
-                    $"projects/{project.ParatextId}/members");
-                Dictionary<string, string> paratextMapping = JArray.Parse(response).OfType<JObject>()
-                    .Where(m => !string.IsNullOrEmpty((string)m["userId"])
-                        && !string.IsNullOrEmpty((string)m["username"]))
-                    .ToDictionary(m => (string)m["userId"], m => (string)m["username"]);
-
-                // Get the mapping of paratext user ids to scripture forge user ids
-                Dictionary<string, string> userMapping = await this._realtimeService.QuerySnapshots<User>()
-                        .Where(u => paratextMapping.Keys.Contains(u.ParatextId))
-                        .ToDictionaryAsync(u => u.Id, u => paratextMapping[u.ParatextId]);
-
                 // Get the scripture text so we can retrieve the permissions from the XML
                 ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), project.ParatextId);
 
@@ -360,7 +372,7 @@ namespace SIL.XForge.Scripture.Services
                 foreach (string uid in project.UserRoles.Keys)
                 {
                     // See if the user is in the project members list
-                    if (!userMapping.TryGetValue(uid, out string userName) || string.IsNullOrWhiteSpace(userName)
+                    if (!ptUsernameMapping.TryGetValue(uid, out string userName) || string.IsNullOrWhiteSpace(userName)
                         || scrText.Permissions.GetRole(userName) == Paratext.Data.Users.UserRoles.None)
                     {
                         permissions.Add(uid, TextInfoPermission.None);

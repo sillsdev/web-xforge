@@ -283,8 +283,13 @@ namespace SIL.XForge.Scripture.Services
             var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
             var project = projects.First();
             project.ParatextId = "resid_is_16_char";
+            var ptUsernameMapping = new Dictionary<string, string>()
+                {
+                    { env.User01, env.Username01 },
+                    { env.User02, env.Username02 },
+                };
 
-            var permissions = await env.Service.GetPermissionsAsync(user01Secret, project);
+            var permissions = await env.Service.GetPermissionsAsync(user01Secret, project, ptUsernameMapping);
             Assert.That(permissions.Count(), Is.EqualTo(2));
             Assert.That(permissions.First().Value, Is.EqualTo(TextInfoPermission.Read));
             Assert.That(permissions.Last().Value, Is.EqualTo(TextInfoPermission.None));

@@ -197,11 +197,15 @@ namespace SourceTargetSplitting
                 if (!projectDoc.IsLoaded)
                     return;
 
+                // Get Paratext username mapping
+                IReadOnlyDictionary<string, string> ptUsernameMapping =
+                    await _paratextService.GetParatextUsernameMappingAsync(userSecret, projectDoc.Data.ParatextId);
+
                 // Add all of the books
                 foreach (int bookNum in this._paratextService.GetBookList(userSecret, sourceId))
                 {
-                    Dictionary<string, string>? permissions =
-                        await this._paratextService.GetPermissionsAsync(userSecret, projectDoc.Data, bookNum);
+                    Dictionary<string, string>? permissions = await this._paratextService.GetPermissionsAsync(
+                        userSecret, projectDoc.Data, ptUsernameMapping, bookNum);
 
                     TextInfo text = new TextInfo
                     {

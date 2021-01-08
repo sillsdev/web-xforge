@@ -420,7 +420,7 @@ namespace SIL.XForge.Scripture.Services
                 { "user02", TextInfoPermission.None },
             };
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
-                Arg.Any<int>(), Arg.Any<int>())
+                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>())
                 .Returns(Task.FromResult(ptSourcePermissions));
 
             await env.Runner.RunAsync("project01", "user01", false);
@@ -450,7 +450,7 @@ namespace SIL.XForge.Scripture.Services
                 { "user02", TextInfoPermission.None },
             };
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
-                Arg.Any<int>(), Arg.Any<int>())
+                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>())
                 .Returns(Task.FromResult(ptChapterPermissions));
 
             await env.Runner.RunAsync("project01", "user01", false);
@@ -480,7 +480,7 @@ namespace SIL.XForge.Scripture.Services
                 { "user02", TextInfoPermission.Read },
             };
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
-                Arg.Any<int>(), Arg.Any<int>())
+                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>())
                 .Returns(Task.FromResult(ptSourcePermissions));
 
             await env.Runner.RunAsync("project01", "user01", false);
@@ -510,7 +510,7 @@ namespace SIL.XForge.Scripture.Services
                 { "user02", TextInfoPermission.Read },
             };
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
-                Arg.Any<int>(), Arg.Any<int>())
+                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>())
                 .Returns(Task.FromResult(ptChapterPermissions));
 
             await env.Runner.RunAsync("project01", "user01", false);
