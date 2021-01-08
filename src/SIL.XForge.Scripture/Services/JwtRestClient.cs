@@ -13,21 +13,5 @@ namespace SIL.XForge.Scripture.Services
             this.JwtToken = jwtToken;
             ReflectionHelperLite.SetField(this, "authentication", null);
         }
-
-        /// <inheritdoc />
-        public string Head(CgiCallOptions options, string cgiCall, params string[] queryvars)
-        {
-            if (queryvars == null)
-            {
-                queryvars = Array.Empty<string>();
-            }
-
-            if (cgiCall == null)
-            {
-                cgiCall = string.Empty;
-            }
-
-            return ReflectionHelperLite.GetResult(this, "GetInternal", options, cgiCall, "HEAD", queryvars) as string;
-        }
     }
 }

@@ -25,7 +25,7 @@ namespace SIL.XForge.Scripture.Services
             _language = new MockScrLanguage(this);
         }
 
-        public string CachedGuid
+        public HexId CachedGuid
         {
             set
             {
