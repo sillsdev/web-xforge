@@ -413,8 +413,8 @@ namespace SourceTargetSplitting
                 if (!doWrite && this._testProjectCollection.Contains(project))
                 {
                     // If we are in testing, find the original target project to get the source ScrText object
-                    SFProject? targetProject =
-                        existingProjects.FirstOrDefault(p => p.TranslateConfig.Source.ParatextId == project.ParatextId);
+                    SFProject? targetProject = existingProjects
+                        .FirstOrDefault(p => p.TranslateConfig.Source?.ParatextId == project.ParatextId);
                     if (targetProject != null)
                     {
                         scrText = this.SourceScrTextCollection.FindById("admin", targetProject.ParatextId);
