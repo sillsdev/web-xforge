@@ -231,6 +231,7 @@
     "error_occurred": "ꤢ꤬ꤞꤢꤦ ꤥ꤬ꤕꤢ꤬ ꤒꤣ꤬ꤊꤟꤌꤣ꤬",
     "firefox": "Firefox",
     "hide_details": "ꤙꤢꤩ꤬ꤢꤟꤌꤣꤊꤛꤢ꤭ ꤢ꤬ꤕꤢ꤬ꤒꤤ ꤒꤢ꤬ꤟꤢꤩ꤬",
+    "safari": "Safari",
     "show_details": "ꤙꤢꤩ꤬ꤜꤟꤌꤣ꤭ ꤢ꤬ꤕꤢ꤬ꤒꤤ ꤒꤢ꤬ꤟꤢꤩ꤬",
     "to_report_issue_email": "ꤜꤟꤢꤩꤘꤛꤢꤩꤜꤟꤌꤣ꤭ꤓꤛꤢ꤬ ꤒꤟꤢꤧ꤬ꤚꤤ꤬ꤒꤟꤢꤧ꤬ꤊꤛꤢ꤭, email {{ issueEmailLink }}.",
     "unsupported_browser": "ꤢ꤬ꤞꤢꤦ ꤥ꤬ꤓꤛꤢ꤬ ꤔꤌꤣ꤬ꤗꤢ꤬ ꤗꤟꤢꤘꤣ ꤔꤟꤢꤧ꤬ ꤔꤢꤪ꤭ꤢꤩ꤬ browser ꤘꤣ ꤢꤨ꤭ ꤢꤩ꤬ꤊꤜꤟꤢꤪ꤬ ꤜꤢꤨ꤭ ꤒꤥ꤬ ꤔꤌꤣ꤬ ꤊꤥ꤭ꤜꤢꤩ꤬꤯ ꤕꤟꤢꤧ꤬ ꤞꤢꤧꤐꤟꤢꤦ ꤔꤢꤪ꤭ ꤔꤢꤪ꤭ꤢꤩ꤬ ꤔꤟꤢꤧ꤬ ꤔꤢ browser ꤘꤣ ꤢ꤬ꤓꤢꤩ꤬ ꤔꤥ꤬ ꤜꤣ {{ chromeLink }} ꤗꤟꤢꤒꤥ꤬ꤚꤢꤪ {{ firefoxLink }}."
@@ -297,9 +298,13 @@
     "not_connected_to_any_projects": "ꤢ꤬ꤞꤛꤢ ꤔꤢ ꤔꤟꤢꤧ꤬ ꤕꤜꤝꤥ꤭ꤓꤢꤦ꤭ ꤟꤤ ꤔꤢ projects ꤒꤣ꤬ꤊꤟꤌꤣ꤬꤮ ꤟꤤꤒꤥ꤬ ꤠꤢ꤭꤯ "
   },
   "supported_browsers_dialog": {
+    "audio_recording_not_supported": "Audio recording is not supported in this browser.",
     "dismiss": "ꤏꤥ꤭ꤒꤢ꤬ꤕꤟꤢ꤬ꤊꤛꤢ꤭",
     "browser_unsupported": "Browser ꤛꤢꤩ꤭ꤗꤢ꤬ ꤢꤨ꤭ ꤢꤩ꤬ꤊꤜꤟꤢꤪ꤬ ꤟꤤ ꤜꤢꤨ꤭ ꤒꤥ꤬꤯ ",
-    "upgrade_chrome_firefox": "Website ꤢ꤬ꤒꤟꤢꤧ꤬ꤗꤟꤢꤩ꤬ ꤒꤢ꤬ꤟꤢꤩ꤬ꤟꤢꤩ꤬ꤗꤢ꤬ ꤢ꤬ ꤗꤟꤢꤩ꤬ꤒꤟꤢ꤭ꤒꤥ꤭ꤒꤟꤢ꤭ꤙꤢꤧ꤬ ꤡꤟꤛꤢ ꤒꤟꤢꤧ꤬ꤗꤟꤢꤩ꤬ ꤔꤢ browser ꤛꤢꤩ꤭ ꤒꤥ꤬꤯ ꤕꤟꤢꤧ꤬ ꤞꤢꤧꤐꤟꤢꤦ ꤔꤢꤪ꤭ upgrade ꤔꤟꤢꤧ꤬ ꤔꤢ ꤘꤣ ꤢ꤬ꤔꤥ꤬ ꤜꤣ꤮ ꤒꤣ꤬ꤊꤟꤌꤣ꤬꤯ {{ chromeLink }} ꤗꤟꤢꤒꤥ꤬ꤚꤢꤪ {{ firefoxLink }}."
+    "safari_for_audio_on_ios": "Audio recording on iPhone and iPad only works in Safari.",
+    "some_features_may_not_work": "Some of the features of this website may not work correctly with your browser.",
+    "upgrade_chrome_firefox": "{{ newLine }}We recommend upgrading to the latest {{ chromeLink }} or {{ firefoxLink }}.",
+    "upgrade_safari": "{{ newLine }}We recommend upgrading to the latest {{ safariLink }}."
   },
   "text_chooser_dialog": {
     "cancel": "ꤗꤟꤢꤩ꤬ꤕꤜꤤ꤭ꤊꤛꤢ꤭",

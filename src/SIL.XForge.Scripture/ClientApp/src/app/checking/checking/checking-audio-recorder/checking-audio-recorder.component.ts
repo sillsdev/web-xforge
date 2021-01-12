@@ -1,9 +1,14 @@
+import { MdcDialog } from '@angular-mdc/web';
 import { Component, EventEmitter, Inject, OnDestroy, OnInit, Output } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import RecordRTC from 'recordrtc';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
+import {
+  BrowserIssue,
+  SupportedBrowsersDialogComponent
+} from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { UserService } from 'xforge-common/user.service';
 
 export interface AudioAttachment {
@@ -21,6 +26,7 @@ export interface AudioAttachment {
 export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
   @Output() status = new EventEmitter<AudioAttachment>();
   audioUrl: string = '';
+  mediaDevicesUnsupported: boolean = false;
   private stream?: MediaStream;
   private recordRTC?: RecordRTC;
   private user?: UserDoc;
@@ -28,7 +34,8 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
   constructor(
     private readonly userService: UserService,
     private readonly noticeService: NoticeService,
-    @Inject(NAVIGATOR) private readonly navigator: Navigator
+    @Inject(NAVIGATOR) private readonly navigator: Navigator,
+    private readonly dialog: MdcDialog
   ) {}
 
   get hasAudioAttachment(): boolean {
@@ -51,6 +58,7 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
 
   async ngOnInit() {
     this.user = await this.userService.getCurrentUser();
+    this.mediaDevicesUnsupported = this.navigator.mediaDevices?.getUserMedia == null;
   }
 
   processAudio(audioVideoWebMURL: string) {
@@ -75,9 +83,9 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
 
   startRecording() {
     const mediaConstraints: MediaStreamConstraints = { audio: true };
-    if (this.navigator.mediaDevices == null) {
+    if (this.mediaDevicesUnsupported) {
       this.status.emit({ status: 'denied' });
-      this.noticeService.show(translate('checking_audio_recorder.not_available'));
+      this.dialog.open(SupportedBrowsersDialogComponent, { data: BrowserIssue.audioRecording });
       return;
     }
     this.navigator.mediaDevices

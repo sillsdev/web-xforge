@@ -231,6 +231,7 @@
     "error_occurred": "Произошла ошибка",
     "firefox": "Firefox",
     "hide_details": "Скрыть подробности",
+    "safari": "Safari",
     "show_details": "Показать подробности",
     "to_report_issue_email": "Чтобы сообщить о проблеме, отправьте сообщение по электронной почте {{ issueEmailLink }}.",
     "unsupported_browser": "Вы используете неподдерживаемый браузер, что может быть причиной этой ошибки. Мы рекомендуем обновиться до {{ chromeLink }} или {{ firefoxLink }}."
@@ -297,9 +298,13 @@
     "not_connected_to_any_projects": "Похоже, вы ещё не подключены ни к одному проекту."
   },
   "supported_browsers_dialog": {
+    "audio_recording_not_supported": "Audio recording is not supported in this browser.",
     "dismiss": "Пропустить",
     "browser_unsupported": "Этот браузер не поддерживается",
-    "upgrade_chrome_firefox": "Некоторые функции этого сайта могут работать некорректно с вашим браузером. Мы рекомендуем обновиться до последней версии {{ chromeLink }} или {{ firefoxLink }}."
+    "safari_for_audio_on_ios": "Audio recording on iPhone and iPad only works in Safari.",
+    "some_features_may_not_work": "Some of the features of this website may not work correctly with your browser.",
+    "upgrade_chrome_firefox": "{{ newLine }}We recommend upgrading to the latest {{ chromeLink }} or {{ firefoxLink }}.",
+    "upgrade_safari": "{{ newLine }}We recommend upgrading to the latest {{ safariLink }}."
   },
   "text_chooser_dialog": {
     "cancel": "Отменить",

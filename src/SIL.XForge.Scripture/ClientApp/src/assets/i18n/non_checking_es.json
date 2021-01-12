@@ -34,7 +34,7 @@
     "awaiting_response_from": "Esperando respuesta de{{ newLine }}{{ email }}",
     "cancel_invite": "Cancelar la invitación",
     "change_roles_and_permissions": "Los roles y permisos de los usuarios {{ boldStart }}sólo{{ boldEnd }} pueden ser cambiados en {{ boldStart }}Paratext{{ boldEnd }}. Abra el proyecto en {{ boldStart }}Paratext{{ boldEnd }}, en la ventana del proyecto haga clic en {{ templateTagBoundary }}{{ templateTagBoundary }}, luego {{ boldStart }}Configuración del proyecto{{ boldEnd }}, luego {{ boldStart }}Permisos de usuario{{ boldEnd }}. Después un {{ italicsStart }}Enviar/Recibir{{ italicsEnd }} en {{ boldStart }}Paratext{{ boldEnd }} y luego un {{ italicsStart }}Sincronizar{{ italicsEnd }} en {{ boldStart }}Scripture Forge{{ boldEnd }}, su rol entrará en vigor aquí, una vez que el usuario inicie la sesión con su cuenta de {{ boldStart }}Paratext{{ boldEnd }} .",
-    "connect_network_to_manage_users": "User management is disabled while offline. Please connect to the internet to manage users.",
+    "connect_network_to_manage_users": "La administración de usuarios está desactivada cuando no está en línea. Por favor, conéctese a Internet para gestionar los usuarios.",
     "filter_users": "Filtrar usuarios...",
     "me": "yo",
     "no_users_found": "Usuarios no encontrados",
@@ -57,7 +57,7 @@
     "no_connectable_projects": "Parece que no hay proyectos conectables para usted.{{ newLine }}Por favor, vaya a Paratext para registrar un proyecto al cual conectarse.",
     "only_paratext_admins_can_start": "** Usted debe ser el Administrador de un proyecto en Paratext para comenzarlo aquí. Pídele a su administrador que se conecte a su proyecto, luego también podrá conectarse aquí.",
     "paratext_project": "Proyecto de Paratext",
-    "problem_already_connected": "The project is already connected. Maybe another project administrator connected the project at the same time. Please try again. If it continues to be a problem, please report the issue so we can get it fixed.",
+    "problem_already_connected": "El proyecto ya está conectado. Tal vez otro administrador del proyecto conectó el proyecto al mismo tiempo. Por favor, inténtelo de nuevo. Si sigue siendo un problema, por favor informe del problema para que podamos arreglarlo.",
     "translation_suggestions": "Sugerencias de traducción",
     "translations_will_be_suggested_as_you_edit": "Se sugerirán traducciones de palabras y frases a medida que edite la Escritura. Se recomienda que su proyecto se configure como {{ boldStart }}Traducción hija{{ boldEnd }} en Paratext.",
     "you_can_change_later": "Puede cambiarlo más tarde.",
@@ -90,14 +90,17 @@
     "transcelerator": "Transcelerador"
   },
   "import_questions_dialog": {
+    "all": "Todo",
     "cancel": "Cancelar",
     "filter_questions": "Filtrar las preguntas",
+    "import": "Importar",
     "import_count_questions": "Importar {{ count }} preguntas seleccionadas",
     "import_from_transcelerator": "Importar preguntas del Transcelerador",
     "importing_questions": "Importando {{ count }} preguntas...",
     "loading": "Cargando...",
     "must_be_valid_reference": "Debe ser una referencia válida",
     "no_questions_available": "No hay preguntas para los libros de este proyecto.",
+    "question": "Pregunta",
     "reference_from": "Referencia de",
     "reference_to": "Referencia a",
     "select_all": "Seleccionar todos",
@@ -188,13 +191,13 @@
     "synchronize": "Sincronizar",
     "synchronize_project": "Sincronizar {{ projectName }} con Paratext",
     "your_project_is_being_synchronized": "Su proyecto está siendo sincronizado...",
-    "sync_is_disabled": "Synchronization for this project needed to be disabled, so it is not available at this time. Please contact {{ email }} to discuss what needs to be done so project synchronization can be enabled again."
+    "sync_is_disabled": "La sincronización para este proyecto tenía que ser desactivada, por lo que no está disponible en este momento. Por favor, contacte con {{ email }} para discutir lo que hay que hacer para que la sincronización del proyecto pueda ser activada de nuevo."
   },
   "text": {
     "book_does_not_exist": "Este libro no existe.",
     "book_is_empty": "Este libro está vacío. Añadir capítulos en Paratext.",
     "loading": "Cargando...",
-    "not_available_offline": "This text is not available offline. Connect to the Internet to see the text."
+    "not_available_offline": "Este texto no está disponible fuera de línea. Conéctese a Internet para ver el texto."
   },
   "translate_overview": {
     "progress": "Progreso",

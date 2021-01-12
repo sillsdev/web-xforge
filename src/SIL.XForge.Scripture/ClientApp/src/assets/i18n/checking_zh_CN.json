@@ -231,6 +231,7 @@
     "error_occurred": "发生了错误",
     "firefox": "火狐浏览器",
     "hide_details": "隐藏细节",
+    "safari": "Safari",
     "show_details": "显示细节",
     "to_report_issue_email": "以便报告问题, 发电子邮件给{{ issueEmailLink }}",
     "unsupported_browser": "您使用的浏览器不受支持，这可能是导致此错误的原因。 我们建议升级到最新版本{{ chromeLink }} 或{{ firefoxLink }}"
@@ -297,9 +298,13 @@
     "not_connected_to_any_projects": "Looks like you aren't connected to any projects yet."
   },
   "supported_browsers_dialog": {
+    "audio_recording_not_supported": "Audio recording is not supported in this browser.",
     "dismiss": "Dismiss",
     "browser_unsupported": "This browser is unsupported",
-    "upgrade_chrome_firefox": "Some of the features of this website may not work correctly with your browser. We recommend upgrading to the latest {{ chromeLink }} or {{ firefoxLink }}."
+    "safari_for_audio_on_ios": "Audio recording on iPhone and iPad only works in Safari.",
+    "some_features_may_not_work": "Some of the features of this website may not work correctly with your browser.",
+    "upgrade_chrome_firefox": "{{ newLine }}We recommend upgrading to the latest {{ chromeLink }} or {{ firefoxLink }}.",
+    "upgrade_safari": "{{ newLine }}We recommend upgrading to the latest {{ safariLink }}."
   },
   "text_chooser_dialog": {
     "cancel": "取消",

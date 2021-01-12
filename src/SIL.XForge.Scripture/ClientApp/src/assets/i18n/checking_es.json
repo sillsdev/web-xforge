@@ -183,7 +183,7 @@
   },
   "checking_audio_player": {
     "audio_unavailable": "El audio no está disponible.",
-    "audio_cannot_be_accessed": "There was an error trying to access the audio file. If this persists, please upload a new file.",
+    "audio_cannot_be_accessed": "Hubo un error al intentar acceder al archivo de audio. Si esto persiste, por favor carga un nuevo archivo.",
     "audio_cannot_be_played": "Este audio no puede ser reproducido mientras esté desconectado porque no ha sido descargado. Conéctese a Internet para reproducirlo.",
     "audio_cannot_be_previewed": "El audio está en un formato que no se puede previsualizar. Guarda cualquier cambio y conéctate a Internet para reproducirlo."
   },
@@ -231,6 +231,7 @@
     "error_occurred": "Se ha producido un error",
     "firefox": "Firefox",
     "hide_details": "Ocultar detalles",
+    "safari": "Safari",
     "show_details": "Mostrar detalles",
     "to_report_issue_email": "Para informar de un problema, envíe un correo electrónico {{ issueEmailLink }}.",
     "unsupported_browser": "Está utilizando un navegador que no es compatible, lo que puede ser la razón de este error. Recomendamos actualizar a la última versión de {{ chromeLink }} o {{ firefoxLink }}."
@@ -297,9 +298,13 @@
     "not_connected_to_any_projects": "Parece que aún no estás conectado a ningún proyecto."
   },
   "supported_browsers_dialog": {
+    "audio_recording_not_supported": "La grabación de audio no es compatible con este navegador.",
     "dismiss": "Descartar",
     "browser_unsupported": "Este navegador no es compatible",
-    "upgrade_chrome_firefox": "Algunas de las características de este sitio web pueden no funcionar correctamente con su navegador. Recomendamos actualizar a la última {{ chromeLink }} o {{ firefoxLink }}."
+    "safari_for_audio_on_ios": "La grabación de audio en iPhone y iPad sólo funciona en Safari.",
+    "some_features_may_not_work": "Algunas de las características de este sitio web pueden no funcionar correctamente con su navegador.",
+    "upgrade_chrome_firefox": "{{ newLine }}Recomendamos actualizar a la última versión de {{ chromeLink }} o {{ firefoxLink }}.",
+    "upgrade_safari": "{{ newLine }}Recomendamos actualizar a la última versión de {{ safariLink }}."
   },
   "text_chooser_dialog": {
     "cancel": "Cancelar",

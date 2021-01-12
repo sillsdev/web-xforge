@@ -25,7 +25,10 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
-import { SupportedBrowsersDialogComponent } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
+import {
+  BrowserIssue,
+  SupportedBrowsersDialogComponent
+} from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { UserService } from 'xforge-common/user.service';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import { version } from '../../../version.json';
@@ -264,7 +267,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       const isBrowserSupported = supportedBrowser();
       this.reportingService.addMeta({ isBrowserSupported });
       if (isNewlyLoggedIn && !isBrowserSupported) {
-        this.dialog.open(SupportedBrowsersDialogComponent, { autoFocus: false });
+        this.dialog.open(SupportedBrowsersDialogComponent, { autoFocus: false, data: BrowserIssue.upgrade });
       }
 
       const projectDocs$ = this.currentUserDoc.remoteChanges$.pipe(

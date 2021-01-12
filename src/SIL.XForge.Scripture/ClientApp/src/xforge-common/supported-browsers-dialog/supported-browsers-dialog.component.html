@@ -3,7 +3,9 @@
     <mdc-dialog-container>
       <mdc-dialog-surface>
         <mdc-dialog-title>{{ t("browser_unsupported") }}</mdc-dialog-title>
-        <mdc-dialog-content> <p [innerHTML]="t('upgrade_chrome_firefox', browserLinks)"></p> </mdc-dialog-content>
+        <mdc-dialog-content>
+          <p [innerHTML]="dialogMessage"></p>
+        </mdc-dialog-content>
         <mdc-dialog-actions>
           <button mdcDialogButton type="button" mdcDialogAction="close">{{ t("dismiss") }}</button>
         </mdc-dialog-actions>

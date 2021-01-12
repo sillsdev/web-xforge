@@ -1,3 +1,4 @@
+import { MdcDialog } from '@angular-mdc/web';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -7,6 +8,7 @@ import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
+import { SupportedBrowsersDialogComponent } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -20,6 +22,7 @@ const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
 const mockedNavigator = mock(Navigator);
 const mockedPwaService = mock(PwaService);
+const mockedDialog = mock(MdcDialog);
 
 describe('CheckingAudioRecorderComponent', () => {
   configureTestingModule(() => ({
@@ -29,7 +32,8 @@ describe('CheckingAudioRecorderComponent', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: NAVIGATOR, useMock: mockedNavigator },
-      { provide: PwaService, useMock: mockedPwaService }
+      { provide: PwaService, useMock: mockedPwaService },
+      { provide: MdcDialog, useMock: mockedDialog }
     ]
   }));
 
@@ -73,6 +77,18 @@ describe('CheckingAudioRecorderComponent', () => {
     env.clickButton(env.stopRecordingButton);
     await env.waitForRecorder(100);
     expect(env.component.hasAudioAttachment).toBe(true);
+  });
+
+  it('should show browser unsupported dialog', async () => {
+    env.component.mediaDevicesUnsupported = true;
+    env.clickButton(env.recordButton);
+    await env.waitForRecorder(100);
+    verify(mockedDialog.open(SupportedBrowsersDialogComponent, anything())).once();
+    env.component.mediaDevicesUnsupported = false;
+    env.clickButton(env.recordButton);
+    await env.waitForRecorder(100);
+    verify(mockedDialog.open(SupportedBrowsersDialogComponent, anything())).once();
+    expect().nothing();
   });
 });
 
