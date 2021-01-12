@@ -77,7 +77,11 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   get projectId(): string {
-    return this.projectDoc == null ? '' : this.projectDoc.id;
+    return this.projectDoc?.id || '';
+  }
+
+  get projectParatextId(): string | undefined {
+    return this.projectDoc?.data?.paratextId;
   }
 
   set isAppOnline(isOnline: boolean) {
