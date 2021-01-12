@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Security;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -40,6 +41,34 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 IReadOnlyList<ParatextProject> projects = await _paratextService.GetProjectsAsync(userSecret);
                 return Ok(projects);
+            }
+            catch (SecurityException)
+            {
+                return NoContent();
+            }
+        }
+
+        /// <summary>
+        /// GET /paratext-api/resources/
+        /// </summary>
+        /// <returns>
+        /// The resources as projects
+        /// </returns>
+        /// <remarks>
+        /// The UI does not need the extra properties found in the <see cref="ParatextResource" /> class,
+        /// so we just return the base class <see cref="ParatextProject" />.
+        /// </remarks>
+        [HttpGet("resources")]
+        public async Task<ActionResult<Dictionary<string, string>>> ResourcesAsync()
+        {
+            Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
+            if (!attempt.TryResult(out UserSecret userSecret))
+                return NoContent();
+
+            try
+            {
+                var resources = _paratextService.GetResources(userSecret);
+                return Ok(resources.ToDictionary(r => r.ParatextId, r => r.Name));
             }
             catch (SecurityException)
             {

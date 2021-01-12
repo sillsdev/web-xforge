@@ -31,7 +31,7 @@ namespace SIL.XForge.Scripture.Services
         public void FindById_DoesNotExist_ReturnsNull()
         {
             string username = "User";
-            Assert.IsNull(_lazyScrTextCollection.FindById(username, "projectDoesNotExist", Models.TextType.Target));
+            Assert.IsNull(_lazyScrTextCollection.FindById(username, "projectDoesNotExist"));
         }
 
         [Test]
@@ -45,29 +45,9 @@ namespace SIL.XForge.Scripture.Services
             _fileSystemService.FileReadText(Arg.Any<string>()).Returns(content);
             _fileSystemService.FileExists(Arg.Any<string>()).Returns(true);
 
-            ScrText scrText = _lazyScrTextCollection.FindById(username, projectId, Models.TextType.Target);
+            ScrText scrText = _lazyScrTextCollection.FindById(username, projectId);
             Assert.NotNull(scrText);
             Assert.AreEqual(projectTextName, scrText.Name);
-            Assert.AreEqual(path, scrText.Directory);
-            _fileSystemService.Received(1).FileExists(Path.Combine(path, ProjectSettings.fileName));
-        }
-
-        [Test]
-        public void FindById_SourceProjectExists_ReturnsProject()
-        {
-            string targetProjectId = "target01";
-            string sourceProjectId = "source01";
-            string username = "User";
-            string sourceTextName = "Src01";
-            string path = Path.Combine(_testDirectory, targetProjectId, "source");
-            string content =
-                $"<ScriptureText><Name>{sourceTextName}</Name><guid>{sourceProjectId}</guid></ScriptureText>";
-            _fileSystemService.FileReadText(Arg.Any<string>()).Returns(content);
-            _fileSystemService.FileExists(Arg.Any<string>()).Returns(true);
-
-            ScrText scrText = _lazyScrTextCollection.FindById(username, targetProjectId, Models.TextType.Source);
-            Assert.NotNull(scrText);
-            Assert.AreEqual(sourceTextName, scrText.Name);
             Assert.AreEqual(path, scrText.Directory);
             _fileSystemService.Received(1).FileExists(Path.Combine(path, ProjectSettings.fileName));
         }

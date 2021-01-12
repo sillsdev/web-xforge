@@ -4,6 +4,7 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Route } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CookieService } from 'ngx-cookie-service';
@@ -21,11 +22,11 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
-import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
-import { ParatextService } from '../core/paratext.service';
+import { ParatextService, SelectableProject } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
+import { ProjectSelectComponent } from '../project-select/project-select.component';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
 import { SettingsComponent } from './settings.component';
 
@@ -53,9 +54,10 @@ describe('SettingsComponent', () => {
       RouterTestingModule.withRoutes(ROUTES),
       UICommonModule,
       TestTranslocoModule,
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+      NoopAnimationsModule
     ],
-    declarations: [SettingsComponent, WriteStatusComponent, MockComponent],
+    declarations: [SettingsComponent, WriteStatusComponent, MockComponent, ProjectSelectComponent],
     providers: [
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: AuthService, useMock: mockedAuthService },
@@ -137,7 +139,7 @@ describe('SettingsComponent', () => {
       it('should see login button when Paratext account not connected', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject();
-        env.setupParatextProjects(undefined);
+        when(mockedParatextService.getProjectsAndResources()).thenReturn(Promise.resolve([undefined, undefined]));
         env.wait();
         expect(env.loginButton).not.toBeNull();
         expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(true);
@@ -153,7 +155,7 @@ describe('SettingsComponent', () => {
         expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
         expect(env.loginButton).toBeNull();
         expect(env.basedOnSelect).not.toBeNull();
-        expect(env.basedOnSelect.nativeElement.innerText).toContain('ParatextP1');
+        expect(env.basedOnSelectValue).toContain('ParatextP1');
 
         env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
 
@@ -170,7 +172,7 @@ describe('SettingsComponent', () => {
         expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
         expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
         expect(env.basedOnSelect).not.toBeNull();
-        expect(env.basedOnSelect.nativeElement.innerText).toContain('ParatextP1');
+        expect(env.basedOnSelectValue).toContain('ParatextP1');
 
         env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
 
@@ -183,7 +185,7 @@ describe('SettingsComponent', () => {
         env.wait();
         expect(env.statusDone(env.translationSuggestionsStatus)).not.toBeNull();
         expect(env.basedOnSelect).not.toBeNull();
-        expect(env.basedOnSelect.nativeElement.innerText).toContain('ParatextP1');
+        expect(env.basedOnSelectValue).toContain('ParatextP1');
       }));
 
       it('should change Based On select value', fakeAsync(() => {
@@ -193,35 +195,52 @@ describe('SettingsComponent', () => {
         env.wait();
         expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
         expect(env.basedOnSelect).not.toBeNull();
-        expect(env.basedOnSelect.nativeElement.innerText).toContain('ParatextP1');
+        expect(env.basedOnSelectValue).toContain('ParatextP1');
         expect(env.statusDone(env.basedOnStatus)).toBeNull();
 
-        env.setSelectValue(env.basedOnSelect, 'paratextId02');
+        env.setBasedOnValue('paratextId02');
 
-        expect(env.basedOnSelect.nativeElement.innerText).toContain('ParatextP2');
+        expect(env.basedOnSelectValue).toContain('ParatextP2');
         expect(env.statusDone(env.basedOnStatus)).not.toBeNull();
       }));
 
       it('should display Based On project even if user is not a member', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject();
-        env.setupParatextProjects([
-          {
-            paratextId: 'paratextId02',
-            name: 'ParatextP2',
-            shortName: 'PT2',
-            languageTag: 'qaa',
-            isConnectable: true,
-            isConnected: false
-          }
-        ]);
+        when(mockedParatextService.getProjectsAndResources()).thenReturn(
+          Promise.resolve([
+            [
+              {
+                paratextId: 'paratextId02',
+                name: 'ParatextP2',
+                shortName: 'PT2',
+                languageTag: 'qaa',
+                isConnectable: true,
+                isConnected: false
+              }
+            ],
+            []
+          ])
+        );
         env.wait();
         env.wait();
         expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
         expect(env.basedOnSelect).not.toBeNull();
-        expect(env.getMenuItems(env.basedOnSelect).length).toEqual(2);
-        expect(env.getMenuItemText(env.basedOnSelect, 0)).toContain('ParatextP1');
-        expect(env.getMenuItemText(env.basedOnSelect, 1)).toContain('ParatextP2');
+        expect(env.basedOnSelectValue).toBe('ParatextP1');
+        expect(env.basedOnSelectProjectsResources.length).toEqual(1);
+        expect(env.basedOnSelectProjectsResources[0].name).toBe('ParatextP2');
+      }));
+
+      it('should display projects then resources', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        env.wait();
+        env.wait();
+        expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
+        expect(env.basedOnSelect).not.toBeNull();
+        expect(env.basedOnSelectProjectsResources.length).toEqual(5);
+        expect(env.basedOnSelectProjectsResources[1].name).toBe('ParatextP2');
+        expect(env.basedOnSelectProjectsResources[2].name).toBe('Sob Jonah and Luke');
       }));
 
       it('should not save Translation Suggestions enable if Based On not set', fakeAsync(() => {
@@ -243,7 +262,8 @@ describe('SettingsComponent', () => {
         expect(env.statusNone(env.translationSuggestionsStatus)).toBe(true);
         expect(env.loginButton).toBeNull();
         expect(env.basedOnSelect).not.toBeNull();
-        expect(env.basedOnSelect.nativeElement.innerText).toEqual('Based on');
+        expect(env.basedOnSelectValue).toEqual('');
+        expect(env.basedOnSelect.nativeElement.textContent).toEqual('Based on');
         expect(env.statusDone(env.basedOnStatus)).toBeNull();
       }));
 
@@ -278,9 +298,9 @@ describe('SettingsComponent', () => {
         expect(env.statusDone(env.translationSuggestionsStatus)).toBeNull();
         expect(env.statusDone(env.basedOnStatus)).toBeNull();
 
-        env.setSelectValue(env.basedOnSelect, 'paratextId02');
+        env.setBasedOnValue('paratextId02');
 
-        expect(env.basedOnSelect.nativeElement.innerText).toContain('ParatextP2');
+        expect(env.basedOnSelectValue).toEqual('ParatextP2');
         expect(env.statusDone(env.translationSuggestionsStatus)).not.toBeNull();
         expect(env.statusDone(env.basedOnStatus)).not.toBeNull();
       }));
@@ -403,24 +423,33 @@ class TestEnvironment {
     this.isOnline = new BehaviorSubject<boolean>(hasConnection);
     when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
     when(mockedPwaService.isOnline).thenReturn(this.isOnline.getValue());
-    this.setupParatextProjects([
-      {
-        paratextId: 'paratextId01',
-        name: 'ParatextP1',
-        shortName: 'PT1',
-        languageTag: 'qaa',
-        isConnectable: true,
-        isConnected: false
-      },
-      {
-        paratextId: 'paratextId02',
-        name: 'ParatextP2',
-        shortName: 'PT2',
-        languageTag: 'qaa',
-        isConnectable: true,
-        isConnected: false
-      }
-    ]);
+    when(mockedParatextService.getProjectsAndResources()).thenReturn(
+      Promise.resolve([
+        [
+          {
+            paratextId: 'paratextId01',
+            name: 'ParatextP1',
+            shortName: 'PT1',
+            languageTag: 'qaa',
+            isConnectable: true,
+            isConnected: false
+          },
+          {
+            paratextId: 'paratextId02',
+            name: 'ParatextP2',
+            shortName: 'PT2',
+            languageTag: 'qaa',
+            isConnectable: true,
+            isConnected: false
+          }
+        ],
+        [
+          { paratextId: 'e01f11e9b4b8e338', name: 'Sob Jonah and Luke' },
+          { paratextId: '5e51f89e89947acb', name: 'Aruamu New Testament [msy] Papua New Guinea 2004 DBL' },
+          { paratextId: '9bb76cd3e5a7f9b4', name: 'Revised Version with Apocrypha 1885, 1895' }
+        ]
+      ])
+    );
 
     this.fixture = TestBed.createComponent(SettingsComponent);
     this.component = this.fixture.componentInstance;
@@ -441,7 +470,7 @@ class TestEnvironment {
   }
 
   get basedOnSelect(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#based-on-select'));
+    return this.fixture.debugElement.query(By.css('app-project-select'));
   }
 
   get basedOnStatus(): DebugElement {
@@ -509,6 +538,18 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
+  get basedOnSelectValue(): string {
+    return this.basedOnSelectComponent.paratextIdControl.value?.name || '';
+  }
+
+  get basedOnSelectComponent(): ProjectSelectComponent {
+    return this.basedOnSelect.componentInstance as ProjectSelectComponent;
+  }
+
+  get basedOnSelectProjectsResources(): SelectableProject[] {
+    return (this.basedOnSelectComponent.projects || []).concat(this.basedOnSelectComponent.resources || []);
+  }
+
   confirmDialog(confirm: boolean): void {
     let button: HTMLElement;
     const oce = this.overlayContainer.getContainerElement();
@@ -551,8 +592,8 @@ class TestEnvironment {
     return element.nativeElement.querySelector('.error-icon') as HTMLElement;
   }
 
-  setSelectValue(element: DebugElement, value: string): void {
-    element.componentInstance.setSelectionByValue(value);
+  setBasedOnValue(value: string): void {
+    this.basedOnSelectComponent.value = value;
     this.wait();
   }
 
@@ -568,6 +609,7 @@ class TestEnvironment {
       translationSuggestionsEnabled: true,
       source: {
         paratextId: 'paratextId01',
+        projectRef: 'paratext01',
         name: 'ParatextP1',
         shortName: 'PT1',
         writingSystem: {
@@ -598,18 +640,6 @@ class TestEnvironment {
         userRoles: {}
       }
     });
-  }
-
-  setupParatextProjects(paratextProjects: ParatextProject[] | undefined) {
-    when(mockedParatextService.getProjects()).thenReturn(of(paratextProjects));
-  }
-
-  getMenuItems(menu: DebugElement): DebugElement[] {
-    return menu.queryAll(By.css('mdc-list-item'));
-  }
-
-  getMenuItemText(menu: DebugElement, index: number): string {
-    return this.getMenuItems(menu)[index].nativeElement.textContent.trim();
   }
 }
 

@@ -282,8 +282,18 @@ class TestEnvironment {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     this.setupTransceleratorQuestions();
 
-    const gen: TextInfo = { bookNum: 1, chapters: [{ number: 41, lastVerse: 57, isValid: true }], hasSource: false };
-    const mat: TextInfo = { bookNum: 40, chapters: [{ number: 1, lastVerse: 5, isValid: true }], hasSource: false };
+    const gen: TextInfo = {
+      bookNum: 1,
+      chapters: [{ number: 41, lastVerse: 57, isValid: true, permissions: {} }],
+      hasSource: false,
+      permissions: {}
+    };
+    const mat: TextInfo = {
+      bookNum: 40,
+      chapters: [{ number: 1, lastVerse: 5, isValid: true, permissions: {} }],
+      hasSource: false,
+      permissions: {}
+    };
     const textsByBookId: TextsByBookId = {};
     textsByBookId[Canon.bookNumberToId(mat.bookNum)] = mat;
     if (includeAllBooks) {

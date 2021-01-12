@@ -120,6 +120,41 @@ namespace SIL.XForge.DataAccess
                 return queryable.Any(predicate);
         }
 
+        public static async Task<Dictionary<TKey, TElement>> ToDictionaryAsync<TSource, TKey, TElement>(
+            this IQueryable<TSource> queryable, Func<TSource, Task<TKey>> keySelector,
+            Func<TSource, Task<TElement>> elementSelector, IEqualityComparer<TKey> comparer = null)
+        {
+            var results = new Dictionary<TKey, TElement>(comparer);
+            if (queryable is IMongoQueryable<TSource> mongoQueryable)
+            {
+                using IAsyncCursor<TSource> cursor = await mongoQueryable.ToCursorAsync();
+                while (await cursor.MoveNextAsync())
+                {
+                    foreach (TSource entity in cursor.Current)
+                        results.Add(await keySelector(entity), await elementSelector(entity));
+                }
+            }
+            else
+            {
+                foreach (TSource entity in queryable)
+                {
+                    results.Add(await keySelector(entity), await elementSelector(entity));
+                }
+            }
+
+            return results;
+        }
+
+        public static Task<Dictionary<TKey, TElement>> ToDictionaryAsync<TSource, TKey, TElement>(
+            this IQueryable<TSource> queryable, Func<TSource, TKey> keySelector,
+            Func<TSource, TElement> elementSelector, IEqualityComparer<TKey> comparer = null)
+        {
+            return queryable.ToDictionaryAsync(
+                k => Task.FromResult(keySelector(k)),
+                v => Task.FromResult(elementSelector(v)),
+                comparer);
+        }
+
         public static async Task<List<T>> ToListAsync<T>(this IQueryable<T> queryable)
         {
             if (queryable is IMongoQueryable<T> mongoQueryable)

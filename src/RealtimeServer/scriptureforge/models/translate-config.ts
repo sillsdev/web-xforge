@@ -7,6 +7,7 @@ export interface TranslateConfig {
 
 export interface TranslateSource {
   paratextId: string;
+  projectRef: string;
   name: string;
   shortName: string;
   writingSystem: WritingSystem;

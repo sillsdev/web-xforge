@@ -54,21 +54,14 @@
               <ng-container *ngIf="translationSuggestionsEnabled && isLoggedInToParatext">
                 <div class="tool-setting select-indent">
                   <div class="tool-setting-field">
-                    <mdc-form-field fxFlexFill>
-                      <mdc-select
-                        placeholder="{{ t('based_on') }}"
-                        formControlName="sourceParatextId"
-                        id="based-on-select"
-                      >
-                        <mdc-menu>
-                          <mdc-list>
-                            <mdc-list-item *ngFor="let project of sourceProjects" [value]="project.paratextId">
-                              {{ project.name }}
-                            </mdc-list-item>
-                          </mdc-list>
-                        </mdc-menu>
-                      </mdc-select>
-                    </mdc-form-field>
+                    <app-project-select
+                      formControlName="sourceParatextId"
+                      placeholder="{{ t('based_on') }}"
+                      [projects]="projects"
+                      [resources]="resources"
+                      [nonSelectableProjects]="nonSelectableProjects"
+                      [hideProjectId]="projectParatextId"
+                    ></app-project-select>
                     <app-write-status
                       [state]="getControlState('sourceParatextId')"
                       [formGroup]="form"

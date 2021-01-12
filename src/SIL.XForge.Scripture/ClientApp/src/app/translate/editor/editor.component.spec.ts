@@ -17,6 +17,8 @@ import {
 import cloneDeep from 'lodash/cloneDeep';
 import { CookieService } from 'ngx-cookie-service';
 import Quill from 'quill';
+import { SystemRole } from 'realtime-server/lib/common/models/system-role';
+import { User } from 'realtime-server/lib/common/models/user';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -24,12 +26,15 @@ import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
 } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
+import { TextType } from 'realtime-server/lib/scriptureforge/models/text-data';
+import { TextInfoPermission } from 'realtime-server/lib/scriptureforge/models/text-info-permission';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, of, Subject } from 'rxjs';
 import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { CONSOLE } from 'xforge-common/browser-globals';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -115,7 +120,7 @@ describe('EditorComponent', () => {
       expect(env.bookName).toEqual('Matthew');
       expect(env.component.chapter).toBe(2);
       expect(env.component.target!.segmentRef).toEqual('verse_2_1');
-      verify(mockedTranslationEngineService.trainSelectedSegment(anything())).never();
+      verify(mockedTranslationEngineService.trainSelectedSegment(anything(), anything())).never();
       const selection = env.targetEditor.getSelection();
       expect(selection!.index).toBe(30);
       expect(selection!.length).toBe(0);
@@ -126,7 +131,7 @@ describe('EditorComponent', () => {
 
     it('source retrieved after target', fakeAsync(() => {
       const env = new TestEnvironment();
-      const sourceId = new TextDocId('project01', 40, 1, 'source');
+      const sourceId = new TextDocId('project02', 40, 1);
       let resolve: ((value?: TextDoc) => void) | undefined;
       when(mockedSFProjectService.getText(deepEqual(sourceId))).thenReturn(new Promise(r => (resolve = r)));
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_2' });
@@ -416,7 +421,7 @@ describe('EditorComponent', () => {
       const range = env.component.target!.getSegmentRange('verse_1_1');
       env.targetEditor.setSelection(range!.index, 0, 'user');
       env.wait();
-      verify(mockedTranslationEngineService.storeTrainingSegment('project01', 40, 1, 'verse_1_5')).once();
+      verify(mockedTranslationEngineService.storeTrainingSegment('project01', 'project02', 40, 1, 'verse_1_5')).once();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
       expect(env.lastApprovedPrefix).toEqual([]);
 
@@ -470,7 +475,7 @@ describe('EditorComponent', () => {
       env.targetEditor.setSelection(range!.index, 0, 'user');
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      verify(mockedTranslationEngineService.trainSelectedSegment(anything())).once();
+      verify(mockedTranslationEngineService.trainSelectedSegment(anything(), anything())).once();
 
       env.dispose();
     }));
@@ -697,6 +702,74 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('user can edit a chapter with permission', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setCurrentUser('user03');
+      env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2 });
+      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.wait();
+      expect(env.bookName).toEqual('Luke');
+      expect(env.component.chapter).toBe(2);
+      expect(env.component.sourceLabel).toEqual('SRC');
+      expect(env.component.targetLabel).toEqual('TRG');
+      expect(env.component.target!.segmentRef).toEqual('');
+      const selection = env.targetEditor.getSelection();
+      expect(selection).toBeNull();
+      expect(env.component.canEdit).toBe(true);
+      expect(env.isSourceAreaHidden).toBe(true);
+      env.dispose();
+    }));
+
+    it('user cannot edit a chapter with permission', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setCurrentUser('user03');
+      env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 1 });
+      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.wait();
+      expect(env.bookName).toEqual('Luke');
+      expect(env.component.chapter).toBe(1);
+      expect(env.component.sourceLabel).toEqual('SRC');
+      expect(env.component.targetLabel).toEqual('TRG');
+      expect(env.component.target!.segmentRef).toEqual('');
+      const selection = env.targetEditor.getSelection();
+      expect(selection).toBeNull();
+      expect(env.component.canEdit).toBe(false);
+      expect(env.isSourceAreaHidden).toBe(true);
+      env.dispose();
+    }));
+
+    it('user has no resource access', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject({
+        translateConfig: {
+          translationSuggestionsEnabled: true,
+          source: {
+            paratextId: 'resource01',
+            name: 'Resource 1',
+            shortName: 'SRC',
+            projectRef: 'resource01',
+            writingSystem: {
+              tag: 'qaa'
+            }
+          }
+        }
+      });
+      env.setCurrentUser('user01');
+      env.setProjectUserConfig();
+      env.updateParams({ projectId: 'project01', bookId: 'ACT' });
+      env.wait();
+      expect(env.bookName).toEqual('Acts');
+      expect(env.component.chapter).toBe(1);
+      expect(env.component.sourceLabel).toEqual('SRC');
+      expect(env.component.targetLabel).toEqual('TRG');
+      expect(env.component.target!.segmentRef).toEqual('');
+      const selection = env.targetEditor.getSelection();
+      expect(selection).toBeNull();
+      expect(env.component.canEdit).toBe(true);
+      expect(env.isSourceAreaHidden).toBe(true);
+      env.dispose();
+    }));
+
     it('empty book', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
@@ -842,6 +915,76 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('user can edit a chapter with permission', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject({ translateConfig: { translationSuggestionsEnabled: false } });
+      env.setCurrentUser('user03');
+      env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2 });
+      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.wait();
+      expect(env.bookName).toEqual('Luke');
+      expect(env.component.chapter).toBe(2);
+      expect(env.component.sourceLabel).toEqual('SRC');
+      expect(env.component.targetLabel).toEqual('TRG');
+      expect(env.component.target!.segmentRef).toEqual('');
+      const selection = env.targetEditor.getSelection();
+      expect(selection).toBeNull();
+      expect(env.component.canEdit).toBe(true);
+      expect(env.isSourceAreaHidden).toBe(true);
+      env.dispose();
+    }));
+
+    it('user cannot edit a chapter with permission', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject({ translateConfig: { translationSuggestionsEnabled: false } });
+      env.setCurrentUser('user03');
+      env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 1 });
+      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.wait();
+      expect(env.bookName).toEqual('Luke');
+      expect(env.component.chapter).toBe(1);
+      expect(env.component.sourceLabel).toEqual('SRC');
+      expect(env.component.targetLabel).toEqual('TRG');
+      expect(env.component.target!.segmentRef).toEqual('');
+      const selection = env.targetEditor.getSelection();
+      expect(selection).toBeNull();
+      expect(env.component.canEdit).toBe(false);
+      expect(env.isSourceAreaHidden).toBe(true);
+      env.dispose();
+    }));
+
+    it('user has no resource access', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject({
+        translateConfig: {
+          translationSuggestionsEnabled: false,
+          source: {
+            paratextId: 'resource01',
+            name: 'Resource 1',
+            shortName: 'SRC',
+            projectRef: 'resource01',
+            writingSystem: {
+              tag: 'qaa'
+            }
+          }
+        }
+      });
+      env.setCurrentUser('user01');
+      env.setProjectUserConfig();
+      env.updateParams({ projectId: 'project01', bookId: 'ACT' });
+      env.wait();
+      expect(env.bookName).toEqual('Acts');
+      expect(env.component.chapter).toBe(1);
+      expect(env.component.sourceLabel).toEqual('SRC');
+      expect(env.component.targetLabel).toEqual('TRG');
+      expect(env.component.target!.segmentRef).toEqual('');
+      const selection = env.targetEditor.getSelection();
+      expect(selection).toBeNull();
+      expect(env.component.canEdit).toBe(true);
+      expect(env.isSourceAreaHidden).toBe(true);
+      env.dispose();
+    }));
+
     it('chapter is invalid', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setupProject({ translateConfig: { translationSuggestionsEnabled: false } });
@@ -950,12 +1093,17 @@ class TestEnvironment {
     paratextId: 'target01',
     shortName: 'TRG',
     isRightToLeft: false,
-    userRoles: { user01: SFProjectRole.ParatextTranslator, user02: SFProjectRole.ParatextConsultant },
+    userRoles: {
+      user01: SFProjectRole.ParatextTranslator,
+      user02: SFProjectRole.ParatextConsultant,
+      user03: SFProjectRole.ParatextTranslator
+    },
     writingSystem: { tag: 'qaa' },
     translateConfig: {
       translationSuggestionsEnabled: true,
       source: {
         paratextId: 'source01',
+        projectRef: 'project02',
         name: 'source',
         shortName: 'SRC',
         writingSystem: {
@@ -974,41 +1122,97 @@ class TestEnvironment {
       {
         bookNum: 40,
         chapters: [
-          { number: 1, lastVerse: 3, isValid: true },
-          { number: 2, lastVerse: 3, isValid: true }
+          {
+            number: 1,
+            lastVerse: 3,
+            isValid: true,
+            permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+          },
+          {
+            number: 2,
+            lastVerse: 3,
+            isValid: true,
+            permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+          }
         ],
-        hasSource: true
+        hasSource: true,
+        permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
       },
-      { bookNum: 41, chapters: [{ number: 1, lastVerse: 3, isValid: false }], hasSource: true },
+      {
+        bookNum: 41,
+        chapters: [
+          {
+            number: 1,
+            lastVerse: 3,
+            isValid: false,
+            permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+          }
+        ],
+        hasSource: true,
+        permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+      },
       {
         bookNum: 42,
         chapters: [
-          { number: 1, lastVerse: 3, isValid: true },
-          { number: 2, lastVerse: 3, isValid: true }
+          {
+            number: 1,
+            lastVerse: 3,
+            isValid: true,
+            permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+          },
+          {
+            number: 2,
+            lastVerse: 3,
+            isValid: true,
+            permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Write }
+          }
         ],
-        hasSource: false
+        hasSource: false,
+        permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
       },
       {
         bookNum: 43,
-        chapters: [{ number: 1, lastVerse: 0, isValid: true }],
-        hasSource: false
+        chapters: [
+          {
+            number: 1,
+            lastVerse: 0,
+            isValid: true,
+            permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+          }
+        ],
+        hasSource: false,
+        permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+      },
+      {
+        bookNum: 44,
+        chapters: [
+          {
+            number: 1,
+            lastVerse: 3,
+            isValid: true,
+            permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+          }
+        ],
+        hasSource: true,
+        permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
       }
     ]
   };
 
   constructor() {
     this.params$ = new BehaviorSubject<Params>({ projectId: 'project01', bookId: 'MAT' });
-    this.addTextDoc(new TextDocId('project01', 40, 1, 'source'));
+    this.addTextDoc(new TextDocId('project02', 40, 1, 'target'), 'source');
     this.addTextDoc(new TextDocId('project01', 40, 1, 'target'));
-    this.addTextDoc(new TextDocId('project01', 40, 2, 'source'));
+    this.addTextDoc(new TextDocId('project02', 40, 2, 'target'), 'source');
     this.addTextDoc(new TextDocId('project01', 40, 2, 'target'));
-    this.addTextDoc(new TextDocId('project01', 41, 1, 'source'));
+    this.addTextDoc(new TextDocId('project02', 41, 1, 'target'), 'source');
     this.addTextDoc(new TextDocId('project01', 41, 1, 'target'));
     this.addTextDoc(new TextDocId('project01', 42, 1, 'target'));
     this.addTextDoc(new TextDocId('project01', 42, 2, 'target'));
     this.addEmptyTextDoc(new TextDocId('project01', 43, 1, 'target'));
 
     when(mockedActivatedRoute.params).thenReturn(this.params$);
+    this.setupUsers();
     this.setCurrentUser('user01');
     when(mockedTranslationEngineService.createTranslationEngine('project01')).thenReturn(
       instance(this.mockedRemoteTranslationEngine)
@@ -1021,6 +1225,9 @@ class TestEnvironment {
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
     when(mockedSFProjectService.get('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
+    );
+    when(mockedSFProjectService.get('project02')).thenCall(() =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project02')
     );
     when(mockedSFProjectService.getUserConfig('project01', anything())).thenCall((_projectId, userId) =>
       this.realtimeService.subscribe(
@@ -1085,6 +1292,61 @@ class TestEnvironment {
 
   setCurrentUser(userId: string): void {
     when(mockedUserService.currentUserId).thenReturn(userId);
+    when(mockedUserService.getCurrentUser()).thenCall(() => this.realtimeService.subscribe(UserDoc.COLLECTION, userId));
+  }
+
+  setupUsers(): void {
+    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
+      id: 'user01',
+      data: {
+        name: 'User 01',
+        email: 'user1@example.com',
+        role: SystemRole.User,
+        isDisplayNameConfirmed: true,
+        avatarUrl: '',
+        authId: 'auth01',
+        displayName: 'User 01',
+        sites: {
+          sf: {
+            projects: ['project01', 'project02', 'project03']
+          }
+        }
+      }
+    });
+    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
+      id: 'user02',
+      data: {
+        name: 'User 02',
+        email: 'user2@example.com',
+        role: SystemRole.User,
+        isDisplayNameConfirmed: true,
+        avatarUrl: '',
+        authId: 'auth02',
+        displayName: 'User 02',
+        sites: {
+          sf: {
+            projects: ['project01', 'project02', 'project03']
+          }
+        }
+      }
+    });
+    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
+      id: 'user03',
+      data: {
+        name: 'User 03',
+        email: 'user3@example.com',
+        role: SystemRole.User,
+        isDisplayNameConfirmed: true,
+        avatarUrl: '',
+        authId: 'auth03',
+        displayName: 'User 03',
+        sites: {
+          sf: {
+            projects: ['project01', 'project02', 'project03']
+          }
+        }
+      }
+    });
   }
 
   setupProject(data: Partial<SFProject> = {}): void {
@@ -1092,11 +1354,18 @@ class TestEnvironment {
     if (data.translateConfig?.translationSuggestionsEnabled != null) {
       projectData.translateConfig.translationSuggestionsEnabled = data.translateConfig.translationSuggestionsEnabled;
     }
+    if (data.translateConfig?.source !== undefined) {
+      projectData.translateConfig.source = data.translateConfig?.source;
+    }
     if (data.isRightToLeft != null) {
       projectData.isRightToLeft = data.isRightToLeft;
     }
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
       id: 'project01',
+      data: projectData
+    });
+    this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
+      id: 'project02',
       data: projectData
     });
   }
@@ -1108,6 +1377,9 @@ class TestEnvironment {
     const user2Config = cloneDeep(userConfig);
     user2Config.ownerRef = 'user02';
     this.addProjectUserConfig(user2Config as SFProjectUserConfig);
+    const user3Config = cloneDeep(userConfig);
+    user3Config.ownerRef = 'user03';
+    this.addProjectUserConfig(user3Config as SFProjectUserConfig);
   }
 
   getProjectUserConfigDoc(userId: string = 'user01'): SFProjectUserConfigDoc {
@@ -1238,14 +1510,14 @@ class TestEnvironment {
     this.component.metricsSession!.dispose();
   }
 
-  addTextDoc(id: TextDocId): void {
+  addTextDoc(id: TextDocId, textType: TextType = 'target'): void {
     const delta = new Delta();
     delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
     delta.insert({ blank: true }, { segment: 'p_1' });
     delta.insert({ verse: { number: '1', style: 'v' } });
     delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 1.`, { segment: `verse_${id.chapterNum}_1` });
     delta.insert({ verse: { number: '2', style: 'v' } });
-    switch (id.textType) {
+    switch (textType) {
       case 'source':
         delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 2.`, { segment: `verse_${id.chapterNum}_2` });
         break;
@@ -1260,7 +1532,7 @@ class TestEnvironment {
     delta.insert('\n', { para: { style: 'p' } });
     delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_4/p_1` });
     delta.insert({ verse: { number: '5', style: 'v' } });
-    switch (id.textType) {
+    switch (textType) {
       case 'source':
         delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 5.`, { segment: `verse_${id.chapterNum}_5` });
         break;

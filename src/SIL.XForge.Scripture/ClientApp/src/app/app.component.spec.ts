@@ -429,21 +429,21 @@ class TestEnvironment {
     });
 
     this.addProject('project01', { user01: SFProjectRole.ParatextTranslator }, [
-      { bookNum: 40, hasSource: true, chapters: [] },
-      { bookNum: 41, hasSource: false, chapters: [] }
+      { bookNum: 40, hasSource: true, chapters: [], permissions: {} },
+      { bookNum: 41, hasSource: false, chapters: [], permissions: {} }
     ]);
     // Books are out-of-order on purpose so that we can test that books are displayed in canonical order
     this.addProject('project02', { user01: SFProjectRole.CommunityChecker }, [
-      { bookNum: 43, hasSource: false, chapters: [] },
-      { bookNum: 42, hasSource: false, chapters: [] }
+      { bookNum: 43, hasSource: false, chapters: [], permissions: {} },
+      { bookNum: 42, hasSource: false, chapters: [], permissions: {} }
     ]);
     this.addProject('project03', { user01: SFProjectRole.CommunityChecker }, [
-      { bookNum: 44, hasSource: true, chapters: [] },
-      { bookNum: 45, hasSource: true, chapters: [] }
+      { bookNum: 44, hasSource: true, chapters: [], permissions: {} },
+      { bookNum: 45, hasSource: true, chapters: [], permissions: {} }
     ]);
     this.addProject('project04', {}, [
-      { bookNum: 46, hasSource: true, chapters: [] },
-      { bookNum: 47, hasSource: true, chapters: [] }
+      { bookNum: 46, hasSource: true, chapters: [], permissions: {} },
+      { bookNum: 47, hasSource: true, chapters: [], permissions: {} }
     ]);
 
     when(mockedSFProjectService.get(anything())).thenCall(projectId =>

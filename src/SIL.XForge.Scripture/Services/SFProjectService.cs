@@ -72,22 +72,6 @@ namespace SIL.XForge.Scripture.Services
             if (ptProject == null)
                 throw new DataNotFoundException("The paratext project does not exist.");
 
-            TranslateSource source = null;
-            if (settings.SourceParatextId != null)
-            {
-                ParatextProject sourcePTProject = ptProjects
-                    .SingleOrDefault(p => p.ParatextId == settings.SourceParatextId);
-                if (sourcePTProject == null)
-                    throw new DataNotFoundException("The source paratext project does not exist.");
-                source = new TranslateSource
-                {
-                    ParatextId = settings.SourceParatextId,
-                    Name = sourcePTProject.Name,
-                    ShortName = sourcePTProject.ShortName,
-                    WritingSystem = new WritingSystem { Tag = sourcePTProject.LanguageTag }
-                };
-            }
-
             var project = new SFProject
             {
                 ParatextId = settings.ParatextId,
@@ -96,8 +80,7 @@ namespace SIL.XForge.Scripture.Services
                 WritingSystem = new WritingSystem { Tag = ptProject.LanguageTag },
                 TranslateConfig = new TranslateConfig
                 {
-                    TranslationSuggestionsEnabled = settings.TranslationSuggestionsEnabled,
-                    Source = source
+                    TranslationSuggestionsEnabled = settings.TranslationSuggestionsEnabled
                 },
                 CheckingConfig = new CheckingConfig
                 {
@@ -122,13 +105,26 @@ namespace SIL.XForge.Scripture.Services
                 IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
                 await AddUserToProjectAsync(conn, projectDoc, userDoc, SFProjectRole.Administrator, false);
 
-                if (project.TranslateConfig.TranslationSuggestionsEnabled)
+                // Add the source after the project has been created
+                // This will make the source project appear after the target, if it needs to be created
+                if (settings.SourceParatextId != null && settings.SourceParatextId != settings.ParatextId)
+                {
+                    TranslateSource source = await this.GetTranslateSourceAsync(
+                        curUserId, userSecret, settings.SourceParatextId, ptProjects);
+
+                    await projectDoc.SubmitJson0OpAsync(op =>
+                    {
+                        UpdateSetting(op, p => p.TranslateConfig.Source, source);
+                    });
+                }
+
+                if (projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled)
                 {
                     var machineProject = new MachineProject
                     {
                         Id = projectDoc.Id,
-                        SourceLanguageTag = project.TranslateConfig.Source.WritingSystem.Tag,
-                        TargetLanguageTag = project.WritingSystem.Tag
+                        SourceLanguageTag = projectDoc.Data.TranslateConfig.Source.WritingSystem.Tag,
+                        TargetLanguageTag = projectDoc.Data.WritingSystem.Tag
                     };
                     await _engineService.AddProjectAsync(machineProject);
                 }
@@ -136,6 +132,46 @@ namespace SIL.XForge.Scripture.Services
 
             await _syncService.SyncAsync(curUserId, projectId, true);
             return projectId;
+        }
+
+        /// <summary>
+        /// Asynchronously creates a project for a Paratext resource.
+        /// </summary>
+        /// <param name="curUserId">The current user identifier.</param>
+        /// <param name="paratextId">The paratext resource identifier.</param>
+        /// <returns>SF project id of created project</returns>
+        /// <remarks>
+        /// This method will also work for a source project that has been deleted for some reason.
+        /// </remarks>
+        /// <exception cref="DataNotFoundException">
+        /// The user does not exist.
+        /// or
+        /// The paratext project does not exist.
+        /// </exception>
+        /// <exception cref="InvalidOperationException"></exception>
+        public async Task<string> CreateResourceProjectAsync(string curUserId, string paratextId)
+        {
+            Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
+            if (!userSecretAttempt.TryResult(out UserSecret userSecret))
+            {
+                throw new DataNotFoundException("The user does not exist.");
+            }
+
+            // We check projects first, in case it is a project
+            IReadOnlyList<ParatextProject> ptProjects = await _paratextService.GetProjectsAsync(userSecret);
+            ParatextProject ptProject = ptProjects.SingleOrDefault(p => p.ParatextId == paratextId);
+            if (ptProject == null)
+            {
+                // If it is not a project, see if there is a matching resource
+                IReadOnlyList<ParatextResource> resources = this._paratextService.GetResources(userSecret);
+                ptProject = resources.SingleOrDefault(r => r.ParatextId == paratextId);
+                if (ptProject == null)
+                {
+                    throw new DataNotFoundException("The paratext project or resource does not exist.");
+                }
+            }
+
+            return await CreateResourceProjectInternalAsync(curUserId, ptProject);
         }
 
         public async Task DeleteProjectAsync(string curUserId, string projectId)
@@ -177,28 +213,6 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task UpdateSettingsAsync(string curUserId, string projectId, SFProjectSettings settings)
         {
-            TranslateSource source = null;
-            if (settings.SourceParatextId != null)
-            {
-                Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
-                if (!userSecretAttempt.TryResult(out UserSecret userSecret))
-                    throw new DataNotFoundException("The user does not exist.");
-
-                IReadOnlyList<ParatextProject> ptProjects = await _paratextService.GetProjectsAsync(userSecret);
-
-                ParatextProject sourcePTProject = ptProjects
-                    .SingleOrDefault(p => p.ParatextId == settings.SourceParatextId);
-                if (sourcePTProject == null)
-                    throw new DataNotFoundException("The source paratext project does not exist.");
-                source = new TranslateSource
-                {
-                    ParatextId = settings.SourceParatextId,
-                    Name = sourcePTProject.Name,
-                    ShortName = sourcePTProject.ShortName,
-                    WritingSystem = new WritingSystem { Tag = sourcePTProject.LanguageTag }
-                };
-            }
-
             using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
                 IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
@@ -206,6 +220,24 @@ namespace SIL.XForge.Scripture.Services
                     throw new DataNotFoundException("The project does not exist.");
                 if (!IsProjectAdmin(projectDoc.Data, curUserId))
                     throw new ForbiddenException();
+
+                // Get the source - any creation or permission updates are handled in GetTranslateSourceAsync
+                TranslateSource source = null;
+                if (settings.SourceParatextId != null)
+                {
+                    Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
+                    if (!userSecretAttempt.TryResult(out UserSecret userSecret))
+                        throw new DataNotFoundException("The user does not exist.");
+
+                    IReadOnlyList<ParatextProject> ptProjects = await _paratextService.GetProjectsAsync(userSecret);
+                    source = await GetTranslateSourceAsync(curUserId, userSecret, settings.SourceParatextId,
+                        ptProjects, projectDoc.Data.UserRoles);
+                    if (source.ProjectRef == projectId)
+                    {
+                        // A project cannot reference itself
+                        source = null;
+                    }
+                }
 
                 await projectDoc.SubmitJson0OpAsync(op =>
                 {
@@ -438,6 +470,32 @@ namespace SIL.XForge.Scripture.Services
             await base.AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, removeShareKeys);
             await conn.CreateAsync<SFProjectUserConfig>(SFProjectUserConfig.GetDocId(projectDoc.Id, userDoc.Id),
                 new SFProjectUserConfig { ProjectRef = projectDoc.Id, OwnerRef = userDoc.Id });
+
+            // Add to the source project, if required
+            bool translationSuggestionsEnabled = projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled;
+            string sourceProjectId = projectDoc.Data.TranslateConfig.Source?.ProjectRef;
+            string sourceParatextId = projectDoc.Data.TranslateConfig.Source?.ParatextId;
+            if (translationSuggestionsEnabled
+                && !string.IsNullOrWhiteSpace(sourceProjectId)
+                && !string.IsNullOrWhiteSpace(sourceParatextId))
+            {
+                // Load the source project role from MongoDB
+                IDocument<SFProject> sourceProjectDoc = await GetProjectDocAsync(sourceProjectId, conn);
+                if (sourceProjectDoc.IsLoaded && !sourceProjectDoc.Data.UserRoles.ContainsKey(userDoc.Id))
+                {
+                    // Not found in Mongo, so load the project role from Paratext
+                    Attempt<string> attempt = await TryGetProjectRoleAsync(sourceProjectDoc.Data, userDoc.Id);
+                    if (attempt.TryResult(out string sourceProjectRole))
+                    {
+                        // If they are in Paratext, add the user to the source project
+                        await this.AddUserToProjectAsync(conn, sourceProjectDoc, userDoc, sourceProjectRole,
+                            removeShareKeys);
+                        await conn.CreateAsync<SFProjectUserConfig>(
+                            SFProjectUserConfig.GetDocId(sourceProjectDoc.Id, userDoc.Id),
+                            new SFProjectUserConfig { ProjectRef = sourceProjectDoc.Id, OwnerRef = userDoc.Id });
+                    }
+                }
+            }
         }
 
         protected override async Task RemoveUserFromProjectAsync(IConnection conn, IDocument<SFProject> projectDoc,
@@ -454,11 +512,26 @@ namespace SIL.XForge.Scripture.Services
             Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(userId);
             if (userSecretAttempt.TryResult(out UserSecret userSecret))
             {
-                Attempt<string> roleAttempt = await _paratextService.TryGetProjectRoleAsync(userSecret,
-                    project.ParatextId);
-                if (roleAttempt.TryResult(out string role))
+                if (project.ParatextId?.Length == SFInstallableDblResource.ResourceIdentifierLength)
                 {
-                    return Attempt.Success(role);
+                    // If the project is a resource, get the permission from the DBL
+                    string permission = await _paratextService.GetResourcePermissionAsync(
+                               userSecret, project.ParatextId, userId);
+                    return permission switch
+                    {
+                        TextInfoPermission.None => Attempt.Failure((string)null),
+                        TextInfoPermission.Read => Attempt.Success(SFProjectRole.Observer),
+                        _ => throw new ArgumentException("Unknown resource permission", nameof(permission)),
+                    };
+                }
+                else
+                {
+                    Attempt<string> roleAttempt = await _paratextService.TryGetProjectRoleAsync(userSecret,
+                        project.ParatextId);
+                    if (roleAttempt.TryResult(out string role))
+                    {
+                        return Attempt.Success(role);
+                    }
                 }
             }
 
@@ -470,6 +543,122 @@ namespace SIL.XForge.Scripture.Services
         {
             if (setting != null)
                 builder.Set(field, setting);
+        }
+
+        /// <summary>
+        /// Asynchronously creates a Scripture Forge project from Paratext resource/project.
+        /// </summary>
+        /// <param name="curUserId">The current user identifier.</param>
+        /// <param name="ptProject">The paratext project.</param>
+        /// <returns>SF project id of created project</returns>
+        /// <remarks>
+        /// This method will also work for a source project that has been deleted for some reason.
+        /// </remarks>
+        /// <exception cref="InvalidOperationException"></exception>
+        private async Task<string> CreateResourceProjectInternalAsync(string curUserId, ParatextProject ptProject)
+        {
+            var project = new SFProject
+            {
+                ParatextId = ptProject.ParatextId,
+                Name = ptProject.Name,
+                ShortName = ptProject.ShortName,
+                WritingSystem = new WritingSystem { Tag = ptProject.LanguageTag },
+                TranslateConfig = new TranslateConfig
+                {
+                    TranslationSuggestionsEnabled = false,
+                    Source = null
+                },
+                CheckingConfig = new CheckingConfig
+                {
+                    CheckingEnabled = false
+                }
+            };
+
+            // Create the new project using the realtime service
+            string projectId = ObjectId.GenerateNewId().ToString();
+            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+            {
+                if (this.RealtimeService.QuerySnapshots<SFProject>().Any(
+                    (SFProject sfProject) => sfProject.ParatextId == project.ParatextId))
+                {
+                    throw new InvalidOperationException(ErrorAlreadyConnectedKey);
+                }
+                IDocument<SFProject> projectDoc = await conn.CreateAsync(projectId, project);
+                await ProjectSecrets.InsertAsync(new SFProjectSecret { Id = projectDoc.Id });
+
+                // Resource projects do not have administrators, so users are added as needed
+            }
+
+            return projectId;
+        }
+
+        /// <summary>
+        /// Gets the translate source asynchronously.
+        /// </summary>
+        /// <param name="curUserId">The current user identifier.</param>
+        /// <param name="userSecret">The user secret.</param>
+        /// <param name="paratextId">The paratext identifier.</param>
+        /// <param name="ptProjects">The paratext projects.</param>
+        /// <param name="userIds">The ids and roles of the users who will need to access the source.</param>
+        /// <returns>The <see cref="TranslateSource"/> object for the specified resource.</returns>
+        /// <exception cref="DataNotFoundException">The source paratext project does not exist.</exception>
+        private async Task<TranslateSource> GetTranslateSourceAsync(string curUserId, UserSecret userSecret,
+            string paratextId, IReadOnlyList<ParatextProject> ptProjects,
+            IReadOnlyDictionary<string, string> userRoles = null)
+        {
+            ParatextProject sourcePTProject = ptProjects.SingleOrDefault(p => p.ParatextId == paratextId);
+            string sourceProjectRef = null;
+            if (sourcePTProject == null)
+            {
+                // If it is not a project, see if there is a matching resource
+                IReadOnlyList<ParatextResource> resources = this._paratextService.GetResources(userSecret);
+                sourcePTProject = resources.SingleOrDefault(r => r.ParatextId == paratextId);
+                if (sourcePTProject == null)
+                {
+                    throw new DataNotFoundException("The source paratext project does not exist.");
+                }
+            }
+
+            // Get the users who will access this source resource or project
+            IEnumerable<string> userIds = userRoles != null ? userRoles.Keys : new string[] { curUserId };
+
+            // Get the project reference
+            SFProject sourceProject = RealtimeService.QuerySnapshots<SFProject>()
+               .FirstOrDefault(p => p.ParatextId == paratextId);
+            if (sourceProject != null)
+            {
+                sourceProjectRef = sourceProject.Id;
+            }
+            else
+            {
+                sourceProjectRef = await this.CreateResourceProjectAsync(curUserId, paratextId);
+            }
+
+            // Add each user in the target project to the source project so they can access it
+            foreach (string userId in userIds)
+            {
+                try
+                {
+                    // Add the user to the project, if the user does not have a role in it
+                    if (sourceProject == null || !sourceProject.UserRoles.ContainsKey(userId))
+                    {
+                        await this.AddUserAsync(userId, sourceProjectRef, null);
+                    }
+                }
+                catch (ForbiddenException)
+                {
+                    // The user does not have Paratext access
+                }
+            }
+
+            return new TranslateSource
+            {
+                ParatextId = paratextId,
+                ProjectRef = sourceProjectRef,
+                Name = sourcePTProject.Name,
+                ShortName = sourcePTProject.ShortName,
+                WritingSystem = new WritingSystem { Tag = sourcePTProject.LanguageTag }
+            };
         }
     }
 }

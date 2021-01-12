@@ -10,6 +10,7 @@ namespace SIL.XForge.Configuration
     {
         public string AppModuleName { get; set; }
         public int Port { get; set; } = 5003;
+        public bool MigrationsDisabled = false;
         public DocConfig UserDoc { get; set; } = new DocConfig("users", typeof(User));
         public DocConfig ProjectDoc { get; set; }
         public List<DocConfig> ProjectDataDocs { get; set; } = new List<DocConfig>();

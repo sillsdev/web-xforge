@@ -15,18 +15,22 @@ import {
 import isEqual from 'lodash/isEqual';
 import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
+import { User } from 'realtime-server/lib/common/models/user';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { TextType } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
+import { TextInfoPermission } from 'realtime-server/lib/scriptureforge/models/text-info-permission';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { fromEvent, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, delayWhen, filter, repeat, retryWhen, tap } from 'rxjs/operators';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
 import XRegExp from 'xregexp';
+import { environment } from '../../../environments/environment';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { Delta } from '../../core/models/text-doc';
@@ -73,10 +77,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private translationSession?: InteractiveTranslationSession;
   private readonly translationSuggester: TranslationSuggester = new PhraseTranslationSuggester();
   private insertSuggestionEnd: number = -1;
+  private currentUserDoc?: UserDoc;
   private projectDoc?: SFProjectDoc;
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
   private projectUserConfigChangesSub?: Subscription;
   private text?: TextInfo;
+  private sourceText?: TextInfo;
+  private sourceProjectDoc?: SFProjectDoc;
   private sourceLoaded: boolean = false;
   private targetLoaded: boolean = false;
   private _chapter?: number;
@@ -177,11 +184,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.text == null ? '' : Canon.bookNumberToEnglishName(this.text.bookNum);
   }
 
-  get hasSource(): boolean {
-    if (!this.canEdit) {
-      return false;
-    }
-    return this.text == null ? false : this.text.hasSource;
+  get currentUser(): User | undefined {
+    return this.currentUserDoc == null ? undefined : this.currentUserDoc.data;
+  }
+
+  get showSource(): boolean {
+    return this.hasSource && this.hasSourceViewRight;
   }
 
   get hasEditRight(): boolean {
@@ -190,7 +198,32 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     const projectRole = this.projectDoc.data.userRoles[this.userService.currentUserId];
-    return SF_PROJECT_RIGHTS.hasRight(projectRole, { projectDomain: SFProjectDomain.Texts, operation: Operation.Edit });
+    if (SF_PROJECT_RIGHTS.hasRight(projectRole, { projectDomain: SFProjectDomain.Texts, operation: Operation.Edit })) {
+      // Check for chapter rights
+      const chapter = this.text?.chapters.find(c => c.number === this._chapter);
+      if (chapter != null) {
+        return chapter.permissions[this.userService.currentUserId] === TextInfoPermission.Write;
+      }
+    }
+
+    return false;
+  }
+
+  get hasSourceViewRight(): boolean {
+    if (this.sourceProjectDoc == null || this.sourceProjectDoc.data == null) {
+      return false;
+    }
+
+    const projectRole = this.sourceProjectDoc.data.userRoles[this.userService.currentUserId];
+    if (SF_PROJECT_RIGHTS.hasRight(projectRole, { projectDomain: SFProjectDomain.Texts, operation: Operation.View })) {
+      // Check for chapter rights
+      const chapter = this.sourceText?.chapters.find(c => c.number === this._chapter);
+      if (chapter != null) {
+        return chapter.permissions[this.userService.currentUserId] !== TextInfoPermission.None;
+      }
+    }
+
+    return false;
   }
 
   get canEdit(): boolean {
@@ -220,6 +253,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return chapter != null && chapter.isValid;
   }
 
+  private get hasSource(): boolean {
+    const sourceId = this.projectDoc?.data?.translateConfig.source?.projectRef;
+    if (!this.canEdit || this.text == null || this.currentUser === undefined || sourceId === undefined) {
+      return false;
+    } else {
+      const projects = this.currentUser.sites[environment.siteId].projects;
+      return this.text.hasSource && projects.includes(sourceId);
+    }
+  }
+
   ngAfterViewInit(): void {
     this.subscribe(fromEvent(window, 'resize'), () => this.setTextHeight());
     this.subscribe(
@@ -233,6 +276,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         const bookId = params['bookId'] as string;
         const bookNum = bookId != null ? Canon.bookIdToNumber(bookId) : 0;
 
+        if (this.currentUserDoc === undefined) {
+          this.currentUserDoc = await this.userService.getCurrentUser();
+        }
+
         const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
         if (projectId !== prevProjectId) {
           this.projectDoc = await this.projectService.get(projectId);
@@ -240,6 +287,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             projectId,
             this.userService.currentUserId
           );
+
+          const sourceId = this.projectDoc?.data?.translateConfig.source?.projectRef;
+          if (sourceId != null) {
+            this.sourceProjectDoc = await this.projectService.get(sourceId);
+            if (this.sourceProjectDoc != null && this.sourceProjectDoc.data != null) {
+              this.sourceText = this.sourceProjectDoc.data.texts.find(t => t.bookNum === bookNum);
+            }
+          }
 
           if (this.projectUserConfigChangesSub != null) {
             this.projectUserConfigChangesSub.unsubscribe();
@@ -264,7 +319,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.projectDataChangesSub = this.projectDoc.remoteChanges$.subscribe(() => {
             let sourceId: TextDocId | undefined;
             if (this.hasSource && this.text != null && this._chapter != null) {
-              sourceId = new TextDocId(this.projectDoc!.id, this.text.bookNum, this._chapter, 'source');
+              sourceId = new TextDocId(
+                this.projectDoc!.data!.translateConfig.source!.projectRef,
+                this.text.bookNum,
+                this._chapter
+              );
               if (!isEqual(this.source!.id, sourceId)) {
                 this.sourceLoaded = false;
                 this.loadingStarted();
@@ -341,10 +400,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             this.projectUserConfigDoc.data.selectedChapterNum !== this._chapter ||
             this.projectUserConfigDoc.data.selectedSegment !== this.target.segmentRef)
         ) {
-          if (prevSegment == null || this.translationSession == null) {
-            await this.translationEngineService.trainSelectedSegment(this.projectUserConfigDoc.data);
+          const sourceProjectRef = this.projectDoc?.data?.translateConfig.source?.projectRef;
+          if ((prevSegment == null || this.translationSession == null) && sourceProjectRef !== undefined) {
+            await this.translationEngineService.trainSelectedSegment(this.projectUserConfigDoc.data, sourceProjectRef);
           } else {
-            await this.trainSegment(prevSegment);
+            await this.trainSegment(prevSegment, sourceProjectRef);
           }
           await this.projectUserConfigDoc.submitJson0Op(op => {
             op.set<string>(puc => puc.selectedTask!, 'translate');
@@ -608,7 +668,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
     if (this.source != null) {
       this.source.id = this.hasSource
-        ? new TextDocId(this.projectDoc.id, this.text.bookNum, this._chapter, 'source')
+        ? new TextDocId(this.projectDoc.data!.translateConfig.source!.projectRef, this.text.bookNum, this._chapter)
         : undefined;
     }
     const targetId = new TextDocId(this.projectDoc.id, this.text.bookNum, this._chapter, 'target');
@@ -726,18 +786,20 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return { index: i, length: 0 };
   }
 
-  private async trainSegment(segment: Segment | undefined): Promise<void> {
+  private async trainSegment(segment: Segment | undefined, sourceProjectRef: string | undefined): Promise<void> {
     if (segment == null || !this.canTrainSegment(segment)) {
       return;
     }
     if (
       !this.pwaService.isOnline &&
+      sourceProjectRef != null &&
       this.projectUserConfigDoc?.data != null &&
       this.projectUserConfigDoc.data.selectedBookNum != null &&
       this.projectUserConfigDoc.data.selectedChapterNum != null
     ) {
       this.translationEngineService.storeTrainingSegment(
         this.projectUserConfigDoc.data.projectRef,
+        sourceProjectRef,
         this.projectUserConfigDoc.data.selectedBookNum,
         this.projectUserConfigDoc.data.selectedChapterNum,
         this.projectUserConfigDoc.data.selectedSegment
