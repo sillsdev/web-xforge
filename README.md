@@ -108,7 +108,13 @@ We use [Prettier](https://prettier.io/) with a pre-commit hook.
 
 ### Layout
 
-We use [Angular Flex-Layout](https://github.com/angular/flex-layout) with [Angular MDC](https://trimox.github.io/angular-mdc-web) including the [Material Design Icons](https://google.github.io/material-design-icons/).
+We use [Angular Flex-Layout](https://github.com/angular/flex-layout) with
+[Angular MDC](https://trimox.github.io/angular-mdc-web) including the
+[Material Design Icons](https://google.github.io/material-design-icons/).
+
+To generate `src/SIL.XForge.Scripture/wwwroot/css/sf.min.css`, install VS Code extension "ritwickdey.live-sass", which
+can watch and re-generate it upon changes to `wwwroot/scss` files, or manually with "Compile Sass" from the VS Code
+Command Palette.
 
 ### Development Environment
 
