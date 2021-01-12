@@ -22,7 +22,9 @@ cat <<EOF > $BUILD_OUTPUT/app/secrets.json
 {
   "Paratext": {
     "ClientId": "$PARATEXT_CLIENT_ID",
-    "ClientSecret": "$PARATEXT_API_TOKEN"
+    "ClientSecret": "$PARATEXT_API_TOKEN",
+    "ResourcePasswordHash": "$PARATEXT_RESOURCE_PASSWORD_HASH",
+    "ResourcePasswordBase64": "$PARATEXT_RESOURCE_PASSWORD_BASE64"
   },
   "Auth": {
     "BackendClientSecret": "$AUTH_BACKEND_SECRET",
