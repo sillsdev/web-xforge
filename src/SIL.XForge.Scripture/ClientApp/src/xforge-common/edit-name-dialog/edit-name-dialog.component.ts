@@ -1,4 +1,4 @@
-import { MDC_DIALOG_DATA, MdcDialogRef } from '@angular-mdc/web/dialog';
+import { MdcDialogRef, MDC_DIALOG_DATA } from '@angular-mdc/web/dialog';
 import { Component, Inject } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { XFValidators } from 'xforge-common/xfvalidators';

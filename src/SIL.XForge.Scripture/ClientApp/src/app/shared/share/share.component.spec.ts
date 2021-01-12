@@ -156,17 +156,15 @@ describe('ShareComponent', () => {
     TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
   ],
   exports: [ShareDialogComponent, ShareControlComponent],
-  declarations: [ShareDialogComponent, ShareControlComponent],
-  entryComponents: [ShareDialogComponent, ShareControlComponent]
+  declarations: [ShareDialogComponent, ShareControlComponent]
 })
 class DialogTestModule {}
 
 class TestEnvironment {
   readonly component: ShareComponent;
   readonly fixture: ComponentFixture<ShareComponent>;
-  readonly overlayContainer: OverlayContainer;
 
-  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
     when(mockedProjectService.onlineInvite('project01', anything())).thenResolve();
@@ -184,7 +182,10 @@ class TestEnvironment {
 
     this.fixture = TestBed.createComponent(ShareComponent);
     this.component = this.fixture.componentInstance;
-    this.overlayContainer = TestBed.get(OverlayContainer);
+  }
+
+  get overlayContainerElement(): HTMLElement {
+    return this.fixture.nativeElement.parentElement.querySelector('.cdk-overlay-container');
   }
 
   get shareButton(): HTMLButtonElement {
@@ -192,28 +193,23 @@ class TestEnvironment {
   }
 
   get sendInviteButton(): HTMLButtonElement {
-    const overlayContainerElement = this.overlayContainer.getContainerElement();
-    return overlayContainerElement.querySelector('#send-btn') as HTMLButtonElement;
+    return this.overlayContainerElement.querySelector('#send-btn') as HTMLButtonElement;
   }
 
   get closeButton(): HTMLButtonElement {
-    const overlayContainerElement = this.overlayContainer.getContainerElement();
-    return overlayContainerElement.querySelector('#close-btn') as HTMLButtonElement;
+    return this.overlayContainerElement.querySelector('#close-btn') as HTMLButtonElement;
   }
 
   get emailInput(): HTMLElement {
-    const overlayContainerElement = this.overlayContainer.getContainerElement();
-    return overlayContainerElement.querySelector('#email') as HTMLElement;
+    return this.overlayContainerElement.querySelector('#email') as HTMLElement;
   }
 
   get shareLink(): HTMLInputElement {
-    const overlayContainerElement = this.overlayContainer.getContainerElement();
-    return overlayContainerElement.querySelector('#share-link input') as HTMLInputElement;
+    return this.overlayContainerElement.querySelector('#share-link input') as HTMLInputElement;
   }
 
   get shareLinkCopyIcon(): HTMLElement {
-    const overlayContainerElement = this.overlayContainer.getContainerElement();
-    return overlayContainerElement.querySelector('#share-link-copy-icon') as HTMLElement;
+    return this.overlayContainerElement.querySelector('#share-link-copy-icon') as HTMLElement;
   }
 
   clickElement(element: HTMLElement): void {

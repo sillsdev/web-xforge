@@ -20,7 +20,6 @@ const componentExports = [
 @NgModule({
   imports: [CommonModule, QuillModule.forRoot(), UICommonModule, TranslocoModule],
   declarations: componentExports,
-  exports: componentExports,
-  entryComponents: [ShareDialogComponent]
+  exports: componentExports
 })
 export class SharedModule {}

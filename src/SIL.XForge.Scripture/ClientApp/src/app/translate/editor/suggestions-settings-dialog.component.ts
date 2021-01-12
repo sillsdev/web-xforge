@@ -1,4 +1,4 @@
-import { MDC_DIALOG_DATA, MdcDialogRef } from '@angular-mdc/web/dialog';
+import { MdcDialogRef, MDC_DIALOG_DATA } from '@angular-mdc/web/dialog';
 import { MdcSlider } from '@angular-mdc/web/slider';
 import { Component, Inject, ViewChild } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';

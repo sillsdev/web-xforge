@@ -99,7 +99,7 @@ class TestEnvironment {
   readonly component: CheckingTextComponent;
   readonly fixture: ComponentFixture<CheckingTextComponent>;
 
-  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private isOnline: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
 
   constructor() {

@@ -16,7 +16,7 @@ import isEqual from 'lodash/isEqual';
 import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { User } from 'realtime-server/lib/common/models/user';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { TextType } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/scriptureforge/models/text-info-permission';

@@ -426,7 +426,7 @@ class TestEnvironment {
   location: Location;
 
   readonly mockedAnsweredDialogRef: MdcDialogRef<QuestionAnsweredDialogComponent> = mock(MdcDialogRef);
-  readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   adminUser = this.createUser('01', SFProjectRole.ParatextAdministrator);
   checkerUser = this.createUser('02', SFProjectRole.CommunityChecker);
@@ -751,7 +751,7 @@ class TestEnvironment {
 
     this.fixture = TestBed.createComponent(CheckingOverviewComponent);
     this.component = this.fixture.componentInstance;
-    this.location = TestBed.get(Location);
+    this.location = TestBed.inject(Location);
   }
 
   get addQuestionButton(): DebugElement {

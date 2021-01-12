@@ -187,10 +187,10 @@ class TestEnvironment {
       [this.adminUser.id]: this.adminUser.role
     }
   };
-  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
-    this.service = TestBed.get(QuestionDialogService);
+    this.service = TestBed.inject(QuestionDialogService);
     this.textsByBookId = { ['MAT']: this.matthewText };
 
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {

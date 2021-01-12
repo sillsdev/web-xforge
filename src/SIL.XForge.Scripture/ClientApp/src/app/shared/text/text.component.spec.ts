@@ -90,7 +90,7 @@ class TestEnvironment {
   readonly component: TextComponent;
   readonly hostComponent: HostComponent;
   readonly fixture: ComponentFixture<HostComponent>;
-  realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private _onlineStatus = new BehaviorSubject<boolean>(true);
   private isOnline: boolean = true;
 

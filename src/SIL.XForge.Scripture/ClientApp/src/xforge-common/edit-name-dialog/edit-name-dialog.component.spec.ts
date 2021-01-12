@@ -1,5 +1,4 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
-import { OverlayContainer } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { Component, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
@@ -85,7 +84,6 @@ describe('EditNameDialogComponent', () => {
 class TestEnvironment {
   fixture: ComponentFixture<DialogOpenerComponent>;
   component: DialogOpenerComponent;
-  overlayContainer: OverlayContainer;
 
   constructor() {
     TestBed.configureTestingModule({
@@ -94,37 +92,34 @@ class TestEnvironment {
     });
     this.fixture = TestBed.createComponent(DialogOpenerComponent);
     this.component = this.fixture.componentInstance;
-    this.overlayContainer = TestBed.get(OverlayContainer);
+  }
+
+  get overlayContainerElement(): HTMLElement {
+    return this.fixture.nativeElement.parentElement.querySelector('.cdk-overlay-container');
   }
 
   get submitButton(): HTMLElement {
-    const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('#submit-button') as HTMLElement;
+    return this.selectElement('#submit-button')!;
   }
 
   get cancelButton(): HTMLElement | null {
-    const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('#cancel-button') as HTMLElement;
+    return this.selectElement('#cancel-button');
   }
 
   get nameConfirmDialog(): HTMLElement {
-    const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('mdc-dialog') as HTMLElement;
+    return this.selectElement('mdc-dialog')!;
   }
 
   get nameInput(): HTMLElement {
-    const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('#name-input') as HTMLElement;
+    return this.selectElement('#name-input')!;
   }
 
   get title(): HTMLElement {
-    const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('mdc-dialog-title') as HTMLElement;
+    return this.selectElement('mdc-dialog-title')!;
   }
 
   get description(): HTMLElement {
-    const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('p') as HTMLElement;
+    return this.selectElement('p')!;
   }
 
   openDialog(): void {
@@ -141,12 +136,15 @@ class TestEnvironment {
     inputElem.dispatchEvent(new Event('input'));
     this.fixture.detectChanges();
   }
+
+  private selectElement(selector: string): HTMLElement | null {
+    return this.overlayContainerElement.querySelector(selector);
+  }
 }
 
 @NgModule({
   imports: [UICommonModule, CommonModule, TestTranslocoModule],
   declarations: [EditNameDialogComponent],
-  entryComponents: [EditNameDialogComponent],
   exports: [EditNameDialogComponent]
 })
 class DialogTestModule {}

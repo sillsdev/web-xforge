@@ -109,6 +109,7 @@ describe('TranslateOverviewComponent', () => {
       verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).never();
       env.simulateTranslateSuggestionsEnabled();
       verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      expect().nothing();
     }));
 
     it('training progress status', fakeAsync(() => {
@@ -167,7 +168,7 @@ class TestEnvironment {
 
   readonly mockedRemoteTranslationEngine = mock(RemoteTranslationEngine);
 
-  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private trainingProgress$ = new Subject<ProgressStatus>();
 
   constructor(translationSuggestionsEnabled: boolean = true) {

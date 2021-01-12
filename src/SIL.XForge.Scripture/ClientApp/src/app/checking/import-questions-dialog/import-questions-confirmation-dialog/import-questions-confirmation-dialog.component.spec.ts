@@ -1,5 +1,4 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
-import { OverlayContainer } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
@@ -121,8 +120,7 @@ class ChildViewContainerComponent {
 @NgModule({
   imports: [CommonModule, UICommonModule, TestTranslocoModule],
   declarations: [ViewContainerDirective, ChildViewContainerComponent, ImportQuestionsConfirmationDialogComponent],
-  exports: [ViewContainerDirective, ChildViewContainerComponent, ImportQuestionsConfirmationDialogComponent],
-  entryComponents: [ChildViewContainerComponent, ImportQuestionsConfirmationDialogComponent]
+  exports: [ViewContainerDirective, ChildViewContainerComponent, ImportQuestionsConfirmationDialogComponent]
 })
 class DialogTestModule {}
 
@@ -130,17 +128,19 @@ class TestEnvironment {
   fixture: ComponentFixture<ChildViewContainerComponent>;
   component: ImportQuestionsConfirmationDialogComponent;
   dialogRef: MdcDialogRef<ImportQuestionsConfirmationDialogComponent>;
-  overlayContainerElement: HTMLElement;
 
   constructor(questionCount: number = 2) {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     const configData: ImportQuestionsConfirmationDialogData = { questions: this.getQuestions(questionCount) };
-    this.dialogRef = TestBed.get(MdcDialog).open(ImportQuestionsConfirmationDialogComponent, { data: configData });
+    this.dialogRef = TestBed.inject(MdcDialog).open(ImportQuestionsConfirmationDialogComponent, { data: configData });
     this.component = this.dialogRef.componentInstance;
-    this.overlayContainerElement = TestBed.get(OverlayContainer).getContainerElement();
     tick();
     this.fixture.detectChanges();
     flush();
+  }
+
+  get overlayContainerElement(): HTMLElement {
+    return this.fixture.nativeElement.parentElement.querySelector('.cdk-overlay-container');
   }
 
   get dialogTitle(): HTMLElement {

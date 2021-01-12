@@ -1,4 +1,3 @@
-import { OverlayContainer } from '@angular/cdk/overlay';
 import { Location } from '@angular/common';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, NgModule } from '@angular/core';
@@ -406,10 +405,9 @@ describe('SettingsComponent', () => {
 class TestEnvironment {
   readonly component: SettingsComponent;
   readonly fixture: ComponentFixture<SettingsComponent>;
-  readonly overlayContainer: OverlayContainer;
   readonly location: Location;
 
-  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private isOnline: BehaviorSubject<boolean>;
 
   constructor(hasConnection: boolean = true) {
@@ -453,8 +451,11 @@ class TestEnvironment {
 
     this.fixture = TestBed.createComponent(SettingsComponent);
     this.component = this.fixture.componentInstance;
-    this.overlayContainer = TestBed.get(OverlayContainer);
-    this.location = TestBed.get(Location);
+    this.location = TestBed.inject(Location);
+  }
+
+  get overlayContainerElement(): HTMLElement {
+    return this.fixture.nativeElement.parentElement.querySelector('.cdk-overlay-container');
   }
 
   get atLeastOneError(): DebugElement {
@@ -514,18 +515,15 @@ class TestEnvironment {
   }
 
   get deleteDialog(): HTMLElement {
-    const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('mdc-dialog') as HTMLElement;
+    return this.overlayContainerElement.querySelector('mdc-dialog') as HTMLElement;
   }
 
   get confirmDeleteBtn(): HTMLElement {
-    const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('#project-delete-btn') as HTMLElement;
+    return this.overlayContainerElement.querySelector('#project-delete-btn') as HTMLElement;
   }
 
   get cancelDeleteBtn(): HTMLElement {
-    const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('#cancel-btn') as HTMLElement;
+    return this.overlayContainerElement.querySelector('#cancel-btn') as HTMLElement;
   }
 
   get offlineMessage(): HTMLElement {
@@ -552,9 +550,8 @@ class TestEnvironment {
 
   confirmDialog(confirm: boolean): void {
     let button: HTMLElement;
-    const oce = this.overlayContainer.getContainerElement();
     if (confirm) {
-      const projectInput = oce.querySelector('#project-entry')!.querySelector('input') as HTMLInputElement;
+      const projectInput = this.overlayContainerElement.querySelector('#project-entry input') as HTMLInputElement;
       projectInput.value = 'project 01';
       projectInput.dispatchEvent(new Event('input'));
       button = this.confirmDeleteBtn;
@@ -646,7 +643,6 @@ class TestEnvironment {
 @NgModule({
   imports: [UICommonModule, TestTranslocoModule],
   declarations: [DeleteProjectDialogComponent],
-  entryComponents: [DeleteProjectDialogComponent],
   exports: [DeleteProjectDialogComponent]
 })
 class DialogTestModule {}

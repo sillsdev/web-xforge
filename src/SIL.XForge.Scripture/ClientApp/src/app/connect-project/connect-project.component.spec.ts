@@ -377,7 +377,7 @@ class TestEnvironment {
   readonly component: ConnectProjectComponent;
   readonly fixture: ComponentFixture<ConnectProjectComponent>;
 
-  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private isOnline: BehaviorSubject<boolean>;
 
   constructor(hasConnection: boolean = true) {

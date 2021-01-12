@@ -7,7 +7,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';

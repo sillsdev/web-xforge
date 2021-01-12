@@ -4,7 +4,7 @@ import { RemoteTranslationEngine } from '@sillsdev/machine';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { ANY_INDEX, obj } from 'realtime-server/lib/common/utils/obj-path';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { Subscription, timer } from 'rxjs';

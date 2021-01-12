@@ -145,7 +145,7 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<SyncComponent>;
   readonly component: SyncComponent;
 
-  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private isLoading: boolean = false;
   private isOnline: BehaviorSubject<boolean>;
 

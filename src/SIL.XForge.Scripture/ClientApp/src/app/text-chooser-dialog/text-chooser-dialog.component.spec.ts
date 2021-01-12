@@ -1,5 +1,4 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
-import { OverlayContainer } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
@@ -346,8 +345,7 @@ class ChildViewContainerComponent {
 @NgModule({
   imports: [CommonModule, UICommonModule, CheckingModule, TestTranslocoModule],
   exports: [ViewContainerDirective, ChildViewContainerComponent],
-  declarations: [ViewContainerDirective, ChildViewContainerComponent],
-  entryComponents: [ChildViewContainerComponent, TextChooserDialogComponent]
+  declarations: [ViewContainerDirective, ChildViewContainerComponent]
 })
 class DialogTestModule {}
 
@@ -401,8 +399,7 @@ class TestEnvironment {
   }
 
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
-  readonly overlayContainerElement: HTMLElement;
-  readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   readonly mockedScriptureChooserMdcDialogRef = mock(MdcDialogRef);
 
@@ -474,11 +471,9 @@ class TestEnvironment {
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
 
-    const dialogRef = TestBed.get(MdcDialog).open(TextChooserDialogComponent, { data: config });
+    const dialogRef = TestBed.inject(MdcDialog).open(TextChooserDialogComponent, { data: config });
     this.component = dialogRef.componentInstance;
     this.resultPromise = dialogRef.afterClosed().toPromise();
-
-    this.overlayContainerElement = TestBed.get(OverlayContainer).getContainerElement();
 
     // Set up MdcDialog mocking after it's already used above in creating the component.
     const dialogSpy = spy(this.component.dialog);
@@ -490,6 +485,10 @@ class TestEnvironment {
 
     this.fixture.detectChanges();
     flush();
+  }
+
+  get overlayContainerElement(): HTMLElement {
+    return this.fixture.nativeElement.parentElement.querySelector('.cdk-overlay-container');
   }
 
   get saveButton(): HTMLButtonElement {

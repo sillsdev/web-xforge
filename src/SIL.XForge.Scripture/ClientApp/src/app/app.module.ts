@@ -11,7 +11,7 @@ import { ErrorComponent } from 'xforge-common/error/error.component';
 import { ExceptionHandlingService } from 'xforge-common/exception-handling-service';
 import { SupportedBrowsersDialogComponent } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { xForgeCommonEntryComponents, XForgeCommonModule } from 'xforge-common/xforge-common.module';
+import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -63,15 +63,6 @@ import { UsersModule } from './users/users.module';
     AppRoutingModule
   ],
   providers: [CookieService, DatePipe, { provide: ErrorHandler, useClass: ExceptionHandlingService }],
-  entryComponents: [
-    EditNameDialogComponent,
-    ErrorComponent,
-    DeleteProjectDialogComponent,
-    ProjectDeletedDialogComponent,
-    ScriptureChooserDialogComponent,
-    SupportedBrowsersDialogComponent,
-    ...xForgeCommonEntryComponents
-  ],
   bootstrap: [AppComponent]
 })
 export class AppModule {}

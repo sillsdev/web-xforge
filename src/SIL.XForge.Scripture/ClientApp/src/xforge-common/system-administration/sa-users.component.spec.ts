@@ -162,19 +162,17 @@ class TestProjectDoc extends ProjectDoc {
 @NgModule({
   imports: [NoopAnimationsModule, AvatarTestingModule, UICommonModule],
   exports: [SaDeleteDialogComponent],
-  declarations: [SaDeleteDialogComponent],
-  entryComponents: [SaDeleteDialogComponent]
+  declarations: [SaDeleteDialogComponent]
 })
 class DialogTestModule {}
 
 class TestEnvironment {
   readonly component: SaUsersComponent;
   readonly fixture: ComponentFixture<SaUsersComponent>;
-  readonly overlayContainer: OverlayContainer;
 
   readonly mockedDeleteUserDialogRef: MdcDialogRef<SaDeleteDialogComponent> = mock(MdcDialogRef);
 
-  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
     when(mockedMdcDialog.open(anything(), anything())).thenReturn(instance(this.mockedDeleteUserDialogRef));
@@ -196,7 +194,6 @@ class TestEnvironment {
 
     this.fixture = TestBed.createComponent(SaUsersComponent);
     this.component = this.fixture.componentInstance;
-    this.overlayContainer = TestBed.get(OverlayContainer);
   }
 
   get noUsersLabel(): DebugElement {
@@ -223,16 +220,6 @@ class TestEnvironment {
 
   get nextPageButton(): DebugElement {
     return this.paginator.query(By.css('.mat-paginator-navigation-next'));
-  }
-
-  get deleteDialogDeleteButton(): HTMLButtonElement {
-    const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('#confirm-button-yes') as HTMLButtonElement;
-  }
-
-  get deleteDialogCancelButton(): HTMLButtonElement {
-    const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('#confirm-button-no') as HTMLButtonElement;
   }
 
   cell(row: number, column: number): DebugElement {

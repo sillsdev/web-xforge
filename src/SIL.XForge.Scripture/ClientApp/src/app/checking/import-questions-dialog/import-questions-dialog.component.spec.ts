@@ -1,5 +1,4 @@
 import { MdcCheckbox, MdcDialog, MdcDialogRef } from '@angular-mdc/web';
-import { OverlayContainer } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
@@ -263,8 +262,7 @@ class ChildViewContainerComponent {
     ChildViewContainerComponent,
     ScriptureChooserDialogComponent,
     ImportQuestionsDialogComponent
-  ],
-  entryComponents: [ChildViewContainerComponent, ImportQuestionsDialogComponent, ScriptureChooserDialogComponent]
+  ]
 })
 class DialogTestModule {}
 
@@ -273,7 +271,6 @@ class TestEnvironment {
   component: ImportQuestionsDialogComponent;
   dialogRef: MdcDialogRef<ImportQuestionsDialogComponent>;
   dialogSpy: MdcDialog;
-  overlayContainerElement: HTMLElement;
   mockedScriptureChooserMdcDialogRef = mock(MdcDialogRef);
   mockedImportQuestionsConfirmationMdcDialogRef = mock(MdcDialogRef);
   editedTransceleratorQuestionIds: string[] = [];
@@ -305,9 +302,8 @@ class TestEnvironment {
       textsByBookId
     };
     const config = { data: configData };
-    this.dialogRef = TestBed.get(MdcDialog).open(ImportQuestionsDialogComponent, config);
+    this.dialogRef = TestBed.inject(MdcDialog).open(ImportQuestionsDialogComponent, config);
     this.component = this.dialogRef.componentInstance;
-    this.overlayContainerElement = TestBed.get(OverlayContainer).getContainerElement();
 
     // Set up MdcDialog mocking after it's already used above in creating the component.
     this.dialogSpy = spy(this.component.dialog);
@@ -320,6 +316,10 @@ class TestEnvironment {
     this.fixture.detectChanges();
     tick();
     this.fixture.detectChanges();
+  }
+
+  get overlayContainerElement(): HTMLElement {
+    return this.fixture.nativeElement.parentElement.querySelector('.cdk-overlay-container');
   }
 
   get questionRows(): HTMLElement[] {

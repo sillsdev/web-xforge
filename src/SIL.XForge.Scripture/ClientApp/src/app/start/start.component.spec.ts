@@ -90,7 +90,7 @@ class TestEnvironment {
   readonly component: StartComponent;
   readonly fixture: ComponentFixture<StartComponent>;
 
-  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
     when(mockedUserService.getCurrentUser()).thenCall(() =>

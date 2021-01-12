@@ -157,8 +157,7 @@ describe('ShareControlComponent', () => {
   @NgModule({
     imports: [BrowserModule, HttpClientTestingModule, RouterTestingModule, UICommonModule, TestTranslocoModule],
     declarations: [ShareControlComponent],
-    exports: [ShareControlComponent],
-    entryComponents: [ShareControlComponent]
+    exports: [ShareControlComponent]
   })
   class TestModule {}
 
@@ -188,7 +187,7 @@ describe('ShareControlComponent', () => {
     readonly component: ShareControlComponent;
     private _onlineStatus = new BehaviorSubject<boolean>(true);
 
-    private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+    private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
     constructor(isLinkSharingEnabled?: boolean, projectId?: string) {
       when(mockedPwaService.onlineStatus).thenReturn(this._onlineStatus.asObservable());

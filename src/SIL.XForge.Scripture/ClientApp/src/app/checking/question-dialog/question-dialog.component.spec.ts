@@ -1,5 +1,4 @@
 import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
-import { OverlayContainer } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
@@ -528,8 +527,7 @@ class ChildViewContainerComponent {
 @NgModule({
   imports: [CommonModule, UICommonModule, CheckingModule, TestTranslocoModule],
   declarations: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent],
-  exports: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent],
-  entryComponents: [ChildViewContainerComponent, QuestionDialogComponent, ScriptureChooserDialogComponent]
+  exports: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent]
 })
 class DialogTestModule {}
 
@@ -537,13 +535,12 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
   readonly component: QuestionDialogComponent;
   readonly dialogRef: MdcDialogRef<QuestionDialogComponent>;
-  readonly overlayContainerElement: HTMLElement;
   readonly afterCloseCallback: jasmine.Spy;
   readonly dialogSpy: MdcDialog;
 
   readonly mockedScriptureChooserMdcDialogRef = mock(MdcDialogRef);
 
-  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor(question?: Question, defaultVerseRef?: VerseRef, isRtl: boolean = false) {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
@@ -591,11 +588,10 @@ class TestEnvironment {
       viewContainerRef
     };
 
-    this.dialogRef = TestBed.get(MdcDialog).open(QuestionDialogComponent, config);
+    this.dialogRef = TestBed.inject(MdcDialog).open(QuestionDialogComponent, config);
     this.afterCloseCallback = jasmine.createSpy('afterClose callback');
     this.dialogRef.afterClosed().subscribe(this.afterCloseCallback);
     this.component = this.dialogRef.componentInstance;
-    this.overlayContainerElement = TestBed.get(OverlayContainer).getContainerElement();
 
     // Set up MdcDialog mocking after it's already used above in creating the component.
     this.dialogSpy = spy(this.component.dialog);
@@ -614,6 +610,10 @@ class TestEnvironment {
     );
     when(mockedPwaService.onlineStatus).thenReturn(of(true));
     this.fixture.detectChanges();
+  }
+
+  get overlayContainerElement(): HTMLElement {
+    return this.fixture.nativeElement.parentElement.querySelector('.cdk-overlay-container');
   }
 
   get cancelButton(): HTMLButtonElement {
