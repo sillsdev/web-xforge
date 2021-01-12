@@ -9,6 +9,16 @@ header {
     top: 0;
     width: 100%;
     z-index: 100;
+    .mdl-grid {
+      padding-bottom: 0;
+      .login-buttons {
+        flex-wrap: wrap;
+        justify-content: center;
+        a {
+          margin-bottom: 8px;
+        }
+      }
+    }
     @include media-breakpoint-down(md) {
       .mdl-cell {
         margin-top: 0;
