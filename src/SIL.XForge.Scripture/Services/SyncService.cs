@@ -15,7 +15,9 @@ namespace SIL.XForge.Scripture.Services
         private readonly IBackgroundJobClient _backgroundJobClient;
         private readonly IRealtimeService _realtimeService;
 
-        public SyncService(IBackgroundJobClient backgroundJobClient, IRealtimeService realtimeService)
+        public SyncService(
+            IBackgroundJobClient backgroundJobClient,
+            IRealtimeService realtimeService)
         {
             _backgroundJobClient = backgroundJobClient;
             _realtimeService = realtimeService;
@@ -23,6 +25,7 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task SyncAsync(string curUserId, string projectId, bool trainEngine)
         {
+            string sourceProjectId = null;
             using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
             {
                 IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
@@ -30,9 +33,37 @@ namespace SIL.XForge.Scripture.Services
                 {
                     throw new ForbiddenException();
                 }
+
+                sourceProjectId = projectDoc.Data.TranslateConfig.Source?.ProjectRef;
                 await projectDoc.SubmitJson0OpAsync(op => op.Inc(pd => pd.Sync.QueuedCount));
+
+                // See if we can sync the source project
+                if (!string.IsNullOrWhiteSpace(sourceProjectId))
+                {
+                    IDocument<SFProject> sourceProjectDoc = await conn.FetchAsync<SFProject>(sourceProjectId);
+                    if (!sourceProjectDoc.IsLoaded || sourceProjectDoc.Data.SyncDisabled)
+                    {
+                        sourceProjectId = null;
+                    }
+                    else
+                    {
+                        await sourceProjectDoc.SubmitJson0OpAsync(op => op.Inc(pd => pd.Sync.QueuedCount));
+                    }
+                }
             }
-            _backgroundJobClient.Enqueue<ParatextSyncRunner>(r => r.RunAsync(projectId, curUserId, trainEngine));
+
+            if (!string.IsNullOrWhiteSpace(sourceProjectId))
+            {
+                // We need to sync the source first so that we can link the source texts and train the engine
+                string parentId = _backgroundJobClient.Enqueue<ParatextSyncRunner>(
+                    r => r.RunAsync(sourceProjectId, curUserId, false));
+                _backgroundJobClient.ContinueJobWith<ParatextSyncRunner>(parentId,
+                    r => r.RunAsync(projectId, curUserId, trainEngine));
+            }
+            else
+            {
+                _backgroundJobClient.Enqueue<ParatextSyncRunner>(r => r.RunAsync(projectId, curUserId, trainEngine));
+            }
         }
     }
 }

@@ -161,9 +161,10 @@ class TestEnvironment {
     bookNum: 40,
     hasSource: false,
     chapters: [
-      { number: 1, lastVerse: 25, isValid: true },
-      { number: 3, lastVerse: 17, isValid: true }
-    ]
+      { number: 1, lastVerse: 25, isValid: true, permissions: {} },
+      { number: 3, lastVerse: 17, isValid: true, permissions: {} }
+    ],
+    permissions: {}
   };
   readonly PROJECT01: string = 'project01';
   adminUser: UserInfo = { id: 'user01', role: SFProjectRole.ParatextAdministrator };

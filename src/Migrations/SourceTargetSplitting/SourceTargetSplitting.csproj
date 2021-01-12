@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\SIL.XForge.Scripture\SIL.XForge.Scripture.csproj" />
+    <ProjectReference Include="..\..\SIL.XForge\SIL.XForge.csproj" />
+  </ItemGroup>
+
+</Project>

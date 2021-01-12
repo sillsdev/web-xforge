@@ -7,6 +7,7 @@ export const EDITED_SEGMENTS = 'edited_segments';
  */
 export interface EditedSegmentData extends OfflineData {
   projectRef: string;
+  sourceProjectRef: string;
   bookNum: number;
   chapterNum: number;
   segment: string;

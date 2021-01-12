@@ -11,7 +11,12 @@ import { createFetchQuery, docFetch } from './utils/sharedb-utils';
 export const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
 export const XF_ROLE_CLAIM = 'http://xforge.org/role';
 
-export type RealtimeServerConstructor = new (db: ShareDB.DB, schemaVersions: SchemaVersionRepository) => RealtimeServer;
+export type RealtimeServerConstructor = new (
+  siteId: string,
+  migrationsDisabled: boolean,
+  db: ShareDB.DB,
+  schemaVersions: SchemaVersionRepository
+) => RealtimeServer;
 
 /**
  * This class extends the ShareDB connection class to preserve the migration version property in the request.
@@ -86,6 +91,8 @@ export class RealtimeServer extends ShareDB {
   private readonly docServices = new Map<string, DocService>();
 
   constructor(
+    private readonly siteId: string,
+    readonly migrationsDisabled: boolean,
     docServices: DocService[],
     private readonly projectsCollection: string,
     db: ShareDB.DB,
@@ -185,6 +192,9 @@ export class RealtimeServer extends ShareDB {
   }
 
   async migrateIfNecessary(): Promise<void> {
+    if (this.migrationsDisabled) {
+      return;
+    }
     const versionMap = new Map<string, number>();
     for (const schemaVersion of await this.schemaVersions.getAll()) {
       versionMap.set(schemaVersion.collection, schemaVersion.version);

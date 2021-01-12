@@ -55,6 +55,7 @@ namespace SIL.XForge.Scripture.Services
         protected override ProjectFileManager CreateFileManager()
         {
             _fileManager = Substitute.For<ProjectFileManager>(this, null);
+            _fileManager.IsWritable.Returns(true);
             return _fileManager;
         }
 

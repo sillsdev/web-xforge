@@ -11,7 +11,6 @@ import { ProjectService } from 'xforge-common/project.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { TransceleratorQuestion } from '../checking/import-questions-dialog/import-questions-dialog.component';
-import { MachineHttpClient } from './machine-http-client';
 import { QuestionDoc } from './models/question-doc';
 import { SFProjectCreateSettings } from './models/sf-project-create-settings';
 import { SFProjectDoc } from './models/sf-project-doc';
@@ -30,7 +29,6 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   constructor(
     realtimeService: RealtimeService,
     commandService: CommandService,
-    private readonly machineHttp: MachineHttpClient,
     private readonly fileService: FileService
   ) {
     super(realtimeService, commandService, SF_PROJECT_ROLES);

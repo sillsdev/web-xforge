@@ -28,7 +28,7 @@ namespace SIL.XForge.Scripture.Services
 
             string ptUsername = _jwtTokenHelper.GetParatextUsername(userSecret);
             var ptUser = new SFParatextUser(ptUsername);
-            JwtRESTClient jwtClient = GenerateParatextRegistryJwtClient(userSecret, registryServerUri,
+            JwtRestClient jwtClient = GenerateParatextRegistryJwtClient(userSecret, registryServerUri,
                 applicationProductVersion);
             IInternetSharedRepositorySource source =
                 new JwtInternetSharedRepositorySource(userSecret.ParatextTokens.AccessToken,
@@ -40,13 +40,13 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>
         /// Initialize the Registry Server with a Jwt REST Client.
         /// </summary>
-        private JwtRESTClient GenerateParatextRegistryJwtClient(UserSecret userSecret,
+        private JwtRestClient GenerateParatextRegistryJwtClient(UserSecret userSecret,
             string registryServerUri, string applicationProductVersion)
         {
             string jwtToken = _jwtTokenHelper.GetJwtTokenFromUserSecret(userSecret);
 
             string api = registryServerUri + "/api8/";
-            return new JwtRESTClient(api, applicationProductVersion, jwtToken);
+            return new JwtRestClient(api, applicationProductVersion, jwtToken);
         }
     }
 }
