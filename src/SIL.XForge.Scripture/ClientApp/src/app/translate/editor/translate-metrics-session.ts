@@ -1,6 +1,6 @@
 import { RangeTokenizer } from '@sillsdev/machine';
-import cloneDeep from 'lodash/cloneDeep';
-import isEqual from 'lodash/isEqual';
+import cloneDeep from 'lodash-es/cloneDeep';
+import isEqual from 'lodash-es/isEqual';
 import { fromEvent, interval, merge, Subject } from 'rxjs';
 import { buffer, debounceTime, filter, map, tap } from 'rxjs/operators';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';

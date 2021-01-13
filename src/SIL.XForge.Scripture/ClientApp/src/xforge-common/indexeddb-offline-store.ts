@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import isObjectLike from 'lodash/isObjectLike';
+import isObjectLike from 'lodash-es/isObjectLike';
 import { environment } from '../environments/environment';
 import { OfflineData, OfflineStore } from './offline-store';
 import { Filter, performQuery, QueryParameters, QueryResults } from './query-parameters';

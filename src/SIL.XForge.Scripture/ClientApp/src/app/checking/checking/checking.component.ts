@@ -5,7 +5,7 @@ import { Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SplitComponent } from 'angular-split';
-import cloneDeep from 'lodash/cloneDeep';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
