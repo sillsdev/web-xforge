@@ -4,7 +4,7 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
-import merge from 'lodash/merge';
+import merge from 'lodash-es/merge';
 import { Project } from 'realtime-server/lib/common/models/project';
 import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { combineLatest, from, Observable } from 'rxjs';

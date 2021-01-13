@@ -1,6 +1,6 @@
 import { MdcList } from '@angular-mdc/web/list';
 import { Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
-import isEqual from 'lodash/isEqual';
+import isEqual from 'lodash-es/isEqual';
 import Quill from 'quill';
 import { fromEvent } from 'rxjs';
 import { filter, first } from 'rxjs/operators';

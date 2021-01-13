@@ -12,7 +12,7 @@ import {
   RemoteTranslationEngine,
   TranslationSuggester
 } from '@sillsdev/machine';
-import isEqual from 'lodash/isEqual';
+import isEqual from 'lodash-es/isEqual';
 import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { User } from 'realtime-server/lib/common/models/user';

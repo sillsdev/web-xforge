@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import merge from 'lodash/merge';
+import merge from 'lodash-es/merge';
 import * as OTJson0 from 'ot-json0';
 import { MemoryOfflineStore } from './memory-offline-store';
 import { MemoryRealtimeQueryAdapter, MemoryRealtimeRemoteStore } from './memory-realtime-remote-store';

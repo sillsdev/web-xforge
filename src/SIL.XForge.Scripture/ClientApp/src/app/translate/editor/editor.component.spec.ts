@@ -14,7 +14,7 @@ import {
   TranslationResultBuilder,
   WordAlignmentMatrix
 } from '@sillsdev/machine';
-import cloneDeep from 'lodash/cloneDeep';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { CookieService } from 'ngx-cookie-service';
 import Quill from 'quill';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';

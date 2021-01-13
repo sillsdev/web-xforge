@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import cloneDeep from 'lodash/cloneDeep';
+import cloneDeep from 'lodash-es/cloneDeep';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import * as RichText from 'rich-text';
 import { fromEvent, Observable, Subject } from 'rxjs';

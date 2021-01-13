@@ -1,4 +1,4 @@
-import cloneDeep from 'lodash/cloneDeep';
+import cloneDeep from 'lodash-es/cloneDeep';
 import Parchment from 'parchment';
 import Quill, { Clipboard, DeltaOperation, DeltaStatic, History, HistoryStackType } from 'quill';
 

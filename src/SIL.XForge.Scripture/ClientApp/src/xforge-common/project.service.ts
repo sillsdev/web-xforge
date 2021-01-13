@@ -1,4 +1,4 @@
-import merge from 'lodash/merge';
+import merge from 'lodash-es/merge';
 import { Project } from 'realtime-server/lib/common/models/project';
 import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { combineLatest, Observable } from 'rxjs';

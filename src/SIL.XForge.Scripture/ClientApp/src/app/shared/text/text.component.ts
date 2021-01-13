@@ -10,8 +10,8 @@ import {
   ViewChild
 } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
-import isEqual from 'lodash/isEqual';
-import merge from 'lodash/merge';
+import isEqual from 'lodash-es/isEqual';
+import merge from 'lodash-es/merge';
 import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
 import { fromEvent } from 'rxjs';
 import { PwaService } from 'xforge-common/pwa.service';

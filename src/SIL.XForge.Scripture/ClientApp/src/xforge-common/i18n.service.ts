@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import Bugsnag from '@bugsnag/js';
 import { Translation, TranslocoLoader } from '@ngneat/transloco';
 import { TranslocoConfig, TranslocoService } from '@ngneat/transloco';
-import merge from 'lodash/merge';
+import merge from 'lodash-es/merge';
 import { CookieService } from 'ngx-cookie-service';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
