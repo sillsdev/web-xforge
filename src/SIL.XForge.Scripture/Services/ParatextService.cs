@@ -313,17 +313,18 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>
-        /// Gets the Paratext username mapping.
+        /// Queries the ParatextRegistry for the project and builds a dictionary of SF user id
+        /// to paratext user names for members of the project.
         /// </summary>
         /// <param name="userSecret">The user secret.</param>
         /// <param name="paratextId">The project ParatextId.</param>
         /// <returns>
-        /// A dictionary where the key is user ID and the value is Paratext username.
+        /// A dictionary where the key is the SF user ID and the value is Paratext username. (May be empty)
         /// </returns>
         public async Task<IReadOnlyDictionary<string, string>> GetParatextUsernameMappingAsync(UserSecret userSecret,
             string paratextId)
         {
-            // See if the project is a resource
+            // Skip all the work if the project is a resource. Resources don't have project members
             if (paratextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
             {
                 return new Dictionary<string, string>();
