@@ -186,12 +186,12 @@ namespace SIL.XForge.Scripture.Services
 
                 // Get Paratext username mapping
                 IReadOnlyDictionary<string, string> ptUsernameMapping =
-                    await _paratextService.GetParatextUsernameMappingAsync(_userSecret, _projectDoc.Data.ParatextId);
+                    await _paratextService.GetParatextUsernameMappingAsync(_userSecret, targetParatextId);
 
                 // Get the permissions if this is a resource
                 // Resources do not have per-book permissions
                 Dictionary<string, string> permissions;
-                if (_projectDoc.Data.ParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+                if (targetParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
                 {
                     permissions = await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data,
                         ptUsernameMapping);
@@ -229,7 +229,7 @@ namespace SIL.XForge.Scripture.Services
                     }
 
                     // Get the permissions for the book and chapters if this is not a resource
-                    if (_projectDoc.Data.ParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+                    if (targetParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
                     {
                         // Add chapter permissions for the resource
                         foreach (Chapter chapter in newChapters)

@@ -322,6 +322,12 @@ namespace SIL.XForge.Scripture.Services
         public async Task<IReadOnlyDictionary<string, string>> GetParatextUsernameMappingAsync(UserSecret userSecret,
             string paratextId)
         {
+            // See if the project is a resource
+            if (paratextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+            {
+                return new Dictionary<string, string>();
+            }
+
             // Get the mapping for paratext users ids to usernames from the registry
             string response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get,
                 $"projects/{paratextId}/members");
@@ -335,6 +341,7 @@ namespace SIL.XForge.Scripture.Services
                     .Where(u => paratextMapping.Keys.Contains(u.ParatextId))
                     .ToDictionaryAsync(u => u.Id, u => paratextMapping[u.ParatextId]);
         }
+
         /// <summary>
         /// Gets the permissions for a project or resource.
         /// </summary>
