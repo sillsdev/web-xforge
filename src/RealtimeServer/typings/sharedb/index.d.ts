@@ -121,9 +121,13 @@ declare namespace ShareDB {
   class Agent {
     constructor(backend: ShareDB, stream: any);
 
+    protected clientId: string;
+
     close(err: any): void;
     _open(): void;
-    _createOp(request: any): any;
+    _handleMessage(request: any, callback: (...args: any[]) => any): void;
+    _checkRequest(request: any): string | undefined;
+    _submit(collection: string, id: string, op: any, callback: (...args: any[]) => any): void;
   }
 
   abstract class PubSub {
@@ -180,7 +184,7 @@ declare namespace ShareDB {
 
   namespace middleware {
     interface ActionContextMap {
-      afterSubmit: SubmitContext;
+      afterWrite: SubmitContext;
       apply: ApplyContext;
       commit: CommitContext;
       connect: ConnectContext;
