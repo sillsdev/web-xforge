@@ -3,7 +3,7 @@ import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angu
 import { MediaObserver } from '@angular/flex-layout';
 import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
-import cloneDeep from 'lodash/cloneDeep';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';

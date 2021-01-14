@@ -1,6 +1,6 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Injectable } from '@angular/core';
-import merge from 'lodash/merge';
+import merge from 'lodash-es/merge';
 import { User } from 'realtime-server/lib/common/models/user';
 import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { combineLatest, from, Observable } from 'rxjs';

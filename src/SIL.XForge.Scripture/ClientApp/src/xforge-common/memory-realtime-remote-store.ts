@@ -1,4 +1,4 @@
-import isEqual from 'lodash/isEqual';
+import isEqual from 'lodash-es/isEqual';
 import * as OTJson0 from 'ot-json0';
 import { EMPTY, Subject } from 'rxjs';
 import { OTType, types } from 'sharedb/lib/client';

@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { translate } from '@ngneat/transloco';
-import cloneDeep from 'lodash/cloneDeep';
-import sortBy from 'lodash/sortBy';
+import cloneDeep from 'lodash-es/cloneDeep';
+import sortBy from 'lodash-es/sortBy';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';

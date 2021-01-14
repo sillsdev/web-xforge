@@ -1,6 +1,6 @@
 import { MdcList, MdcListItem } from '@angular-mdc/web';
 import { Component, EventEmitter, Input, Output, ViewChild, ViewChildren } from '@angular/core';
-import sortBy from 'lodash/sortBy';
+import sortBy from 'lodash-es/sortBy';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
