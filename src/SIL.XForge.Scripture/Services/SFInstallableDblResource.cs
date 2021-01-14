@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using Ionic.Zip;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Paratext.Data;
@@ -203,7 +205,8 @@ namespace SIL.XForge.Scripture.Services
         /// restClientFactory</exception>
         public static bool CheckResourcePermission(string id, UserSecret userSecret,
             ParatextOptions paratextOptions, ISFRestClientFactory restClientFactory,
-            IFileSystemService fileSystemService, IJwtTokenHelper jwtTokenHelper, string baseUrl = null)
+            IFileSystemService fileSystemService, IJwtTokenHelper jwtTokenHelper,
+            IExceptionHandler exceptionHandler, string baseUrl = null)
         {
             // Parameter check
             if (string.IsNullOrWhiteSpace(id))
@@ -256,6 +259,7 @@ namespace SIL.XForge.Scripture.Services
                         restClientFactory,
                         fileSystemService,
                         jwtTokenHelper,
+                        exceptionHandler,
                         baseUrl);
                     return resources.Any(r => r.DBLEntryUid == id);
                 }
@@ -286,9 +290,11 @@ namespace SIL.XForge.Scripture.Services
         /// <exception cref="ArgumentNullException">restClientFactory
         /// or
         /// userSecret</exception>
+        /// <remarks>Tests on this method can be found in ParatextServiceTests.cs calling GetResources().</remarks>
         public static IEnumerable<SFInstallableDblResource> GetInstallableDblResources(UserSecret userSecret,
             ParatextOptions paratextOptions, ISFRestClientFactory restClientFactory,
-            IFileSystemService fileSystemService, IJwtTokenHelper jwtTokenHelper, string baseUrl = null)
+            IFileSystemService fileSystemService, IJwtTokenHelper jwtTokenHelper, IExceptionHandler exceptionHandler,
+             string baseUrl = null)
         {
             // Parameter check (just like the constructor)
             if (restClientFactory == null)
@@ -303,7 +309,21 @@ namespace SIL.XForge.Scripture.Services
             ISFRestClient client =
                 restClientFactory.Create(string.Empty, ApplicationProduct.DefaultVersion, userSecret);
             baseUrl = string.IsNullOrWhiteSpace(baseUrl) ? InternetAccess.ParatextDBLServer : baseUrl;
-            string response = client.Get(BuildDblResourceEntriesUrl(baseUrl));
+            string response = null;
+            try
+            {
+                response = client.Get(BuildDblResourceEntriesUrl(baseUrl));
+            }
+            catch (WebException e)
+            {
+                // If we get a temporary 401 Unauthorized response, return an empty list.
+                string errorExplanation = "GetInstallableDblResources failed when attempting to inquire about"
+                    + $" resources and is ignoring error {e}";
+                var report = new Exception(errorExplanation);
+                // Report to bugsnag, but don't throw.
+                exceptionHandler.ReportException(report);
+                return Enumerable.Empty<SFInstallableDblResource>();
+            }
             IEnumerable<SFInstallableDblResource> resources = ConvertJsonResponseToInstallableDblResources(baseUrl,
                 response, restClientFactory, fileSystemService, jwtTokenHelper, DateTime.Now, userSecret,
                 paratextOptions, new ParatextProjectDeleter(), new ParatextMigrationOperations(),
