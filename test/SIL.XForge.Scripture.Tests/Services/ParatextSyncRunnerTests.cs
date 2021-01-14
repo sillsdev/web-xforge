@@ -771,6 +771,16 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(sourceFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
         }
 
+        [Test]
+        public async Task GetParatextUsernameMappingAsync_ReturnsEmptyMappingForResourceProject()
+        {
+            var env = new TestEnvironment();
+            const string resourceId = "1234567890abcdef";
+            Assert.That(resourceId.Length, Is.EqualTo(SFInstallableDblResource.ResourceIdentifierLength));
+            var mapping = await env.ParatextService.GetParatextUsernameMappingAsync(Arg.Any<UserSecret>(), resourceId);
+            Assert.That(mapping.Count, Is.EqualTo(0));
+        }
+
         private class Book
         {
             public Book(string bookId, int highestChapter, bool hasSource = true)
