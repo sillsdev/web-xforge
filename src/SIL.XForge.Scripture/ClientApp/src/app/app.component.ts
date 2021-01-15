@@ -313,7 +313,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       );
 
       // select the current project
-      this.subscribe(combineLatest(projectDocs$, projectId$), async ([projectDocs, projectId]) => {
+      this.subscribe(combineLatest([projectDocs$, projectId$]), async ([projectDocs, projectId]) => {
         this.projectDocs = projectDocs;
         // if the project deleted dialog is displayed, don't do anything
         if (this.projectDeletedDialogRef != null) {

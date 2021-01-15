@@ -41,16 +41,16 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
 
   resourceCountLimit$ = new BehaviorSubject<number>(25);
 
-  projects$: Observable<SelectableProject[]> = combineLatest(
+  projects$: Observable<SelectableProject[]> = combineLatest([
     this.paratextIdControl.valueChanges.pipe(startWith('')),
     this.hideProjectId$
-  ).pipe(map(value => this.filterGroup(value[0], this.projects || [])));
+  ]).pipe(map(value => this.filterGroup(value[0], this.projects || [])));
 
-  resources$: Observable<SelectableProject[]> = combineLatest(
+  resources$: Observable<SelectableProject[]> = combineLatest([
     this.paratextIdControl.valueChanges.pipe(startWith('')),
     this.resourceCountLimit$,
     this.hideProjectId$
-  ).pipe(map(value => this.filterGroup(value[0], this.resources || [], value[1])));
+  ]).pipe(map(value => this.filterGroup(value[0], this.resources || [], value[1])));
 
   constructor() {
     super();

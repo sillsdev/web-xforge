@@ -209,7 +209,7 @@ class TestEnvironment {
     when(mockedProjectService.onlineUpdateCurrentUserRole(anything(), anything())).thenResolve();
     when(mockedProjectService.onlineQuery(anything(), anything())).thenCall(
       (term$: Observable<string>, parameters$: Observable<QueryParameters>) =>
-        combineLatest(term$, parameters$).pipe(
+        combineLatest([term$, parameters$]).pipe(
           switchMap(([term, queryParameters]) => {
             const filters: Filters = {
               [obj<Project>().pathStr(p => p.name)]: { $regex: `.*${XRegExp.escape(term)}.*`, $options: 'i' }

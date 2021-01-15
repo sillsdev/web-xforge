@@ -195,7 +195,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       });
     });
     this.subscribe(
-      combineLatest(projectId$, this.pwaService.onlineStatus).pipe(filter(([_, isOnline]) => isOnline)),
+      combineLatest([projectId$, this.pwaService.onlineStatus]).pipe(filter(([_, isOnline]) => isOnline)),
       async ([projectId, _]) => {
         await projectDocPromise;
         this._hasTransceleratorQuestions =

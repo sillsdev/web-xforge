@@ -44,7 +44,7 @@ export abstract class ProjectService<
   ): Observable<RealtimeQuery<TDoc>> {
     const debouncedTerm$ = term$.pipe(debounceTime(400), distinctUntilChanged());
 
-    return combineLatest(debouncedTerm$, queryParameters$).pipe(
+    return combineLatest([debouncedTerm$, queryParameters$]).pipe(
       switchMap(([term, queryParameters]) => {
         term = XRegExp.escape(term.trim());
         let filters: Filters = {};
