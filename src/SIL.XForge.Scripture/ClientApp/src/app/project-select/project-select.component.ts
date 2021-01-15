@@ -122,6 +122,10 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
     });
   }
 
+  inputClicked() {
+    this.autocompleteTrigger.openPanel();
+  }
+
   private filterGroup(
     value: string | SelectableProject,
     collection: SelectableProject[],

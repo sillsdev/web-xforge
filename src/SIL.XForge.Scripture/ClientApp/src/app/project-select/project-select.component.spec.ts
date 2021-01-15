@@ -30,7 +30,7 @@ describe('ProjectSelectComponent', () => {
     expect(env.component.sourceParatextId.value).toBeNull();
     env.clickOption(0, 0);
     expect(env.component.sourceParatextId.value).toBe('p01');
-    env.openMenu();
+    env.clickInput();
     env.clickOption(1, 1);
     expect(env.component.sourceParatextId.value).toBe('r02');
   }));
@@ -40,7 +40,7 @@ describe('ProjectSelectComponent', () => {
     expect(env.component.sourceParatextId.value).toBeNull();
     env.clickOption(0, 0);
     expect(env.component.sourceParatextId.value).toBe('p01');
-    env.openMenu();
+    env.clickInput();
     env.clickOption(1, 1);
     expect(env.component.sourceParatextId.value).toBe('r02');
   }));
@@ -53,6 +53,16 @@ describe('ProjectSelectComponent', () => {
     expect(env.options(1).length).toBe(25);
     env.scrollMenu(2500);
     expect(env.options(1).length).toBe(50);
+  }));
+
+  it('opens the panel when input is clicked after already selecting a project', fakeAsync(() => {
+    const env = new TestEnvironment();
+    expect(env.component.sourceParatextId.value).toBeNull();
+    env.clickOption(0, 0);
+    expect(env.component.sourceParatextId.value).toBe('p01');
+    env.clickInput();
+    env.clickOption(1, 1);
+    expect(env.component.sourceParatextId.value).toBe('r02');
   }));
 });
 
@@ -113,11 +123,11 @@ class TestEnvironment {
 
     this.fixture.detectChanges();
     tick();
-    this.openMenu();
+    this.clickInput();
   }
 
-  openMenu() {
-    this.component.projectSelect.autocompleteTrigger.openPanel();
+  clickInput() {
+    (this.fixture.nativeElement as HTMLElement).querySelector('input')!.click();
     this.fixture.detectChanges();
     tick();
   }
