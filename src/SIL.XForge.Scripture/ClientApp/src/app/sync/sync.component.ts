@@ -1,7 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
-import { Subscription } from 'rxjs';
+import { OtJson0Op } from 'ot-json0';
+import { merge, Observable, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -24,6 +25,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
   syncDisabled: boolean = false;
 
   private projectDoc?: SFProjectDoc;
+  private sourceProjectDoc?: SFProjectDoc;
   private paratextUsername?: string;
   private projectDataSub?: Subscription;
 
@@ -42,10 +44,23 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
     return this.paratextUsername != null && this.paratextUsername.length > 0;
   }
 
+  /** The progress as a decimal between 0 and 1 for the target project and the source project, if one exists. */
   get percentComplete(): number | undefined {
-    return this.projectDoc == null || this.projectDoc.data == null
-      ? undefined
-      : this.projectDoc.data.sync.percentCompleted;
+    if (this.projectDoc?.data == null) {
+      return;
+    }
+    if (this.sourceProjectDoc?.data == null) {
+      return this.projectDoc.data.sync.percentCompleted;
+    }
+    let percent: number = 0;
+    if (this.sourceProjectDoc.data.sync.queuedCount > 0) {
+      percent += (this.sourceProjectDoc.data.sync.percentCompleted || 0) * 0.5;
+    } else {
+      // The source project has synchronized so this is the midway point
+      percent = 0.5;
+    }
+    percent += (this.projectDoc.data.sync.percentCompleted || 0) * 0.5;
+    return percent;
   }
 
   get isProgressDeterminate(): boolean {
@@ -110,11 +125,19 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
 
     this.subscribe(projectId$, async projectId => {
       this.projectDoc = await this.projectService.get(projectId);
+      if (this.projectDoc?.data?.translateConfig.translationSuggestionsEnabled != null) {
+        const sourceProjectId = this.projectDoc.data.translateConfig.source?.projectRef;
+        this.sourceProjectDoc = sourceProjectId == null ? undefined : await this.projectService.get(sourceProjectId);
+      }
       this.checkSyncStatus();
       if (this.projectDataSub != null) {
         this.projectDataSub.unsubscribe();
       }
-      this.projectDataSub = this.projectDoc.remoteChanges$.subscribe(() => this.checkSyncStatus());
+      const checkSyncStatus$: Observable<OtJson0Op[]> =
+        this.sourceProjectDoc == null
+          ? this.projectDoc.remoteChanges$
+          : merge(this.projectDoc.remoteChanges$, this.sourceProjectDoc.remoteChanges$);
+      this.projectDataSub = checkSyncStatus$.subscribe(() => this.checkSyncStatus());
       this.loadingFinished();
     });
   }
