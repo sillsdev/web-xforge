@@ -252,6 +252,34 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void GetResources_Problem_EmptyList()
+        {
+            // Set up environment
+            var env = new TestEnvironment();
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user02Secret = env.MakeUserSecret(env.User02, env.Username02);
+            env.MockRepository.Query().Returns(new List<UserSecret>() { user01Secret, user02Secret }.AsQueryable());
+
+            // Set up mock REST client to return unsuccessfully.
+            ISFRestClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
+            ISFRestClient failureMockClient = Substitute.For<ISFRestClient>();
+            failureMockClient.Get(Arg.Any<string>()).Throws<WebException>();
+            mockRestClientFactory
+                .Create(Arg.Any<string>(), Arg.Any<string>(), user02Secret)
+                .Returns(failureMockClient);
+
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+
+            IEnumerable<ParatextResource> resources = null;
+            // SUT
+            Assert.DoesNotThrow(() => resources = env.Service.GetResources(user02Secret),
+            "Don't crash when permission problem");
+            Assert.AreEqual(0, resources.Count(), "An empty set of resources should have been returned");
+            env.MockExceptionHandler.Received().ReportException(Arg.Is<Exception>((Exception e) =>
+                e.Message.Contains("inquire about resources and is ignoring error")));
+        }
+
+        [Test]
         public async Task GetPermissionsAsync_UserResourcePermission()
         {
             // Set up environment

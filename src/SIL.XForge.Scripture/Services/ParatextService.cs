@@ -299,6 +299,7 @@ namespace SIL.XForge.Scripture.Services
                         this._restClientFactory,
                         this._fileSystemService,
                         this._jwtTokenHelper,
+                        _exceptionHandler,
                         this._dblServerUri);
                 }
 
@@ -859,6 +860,7 @@ namespace SIL.XForge.Scripture.Services
                 this._restClientFactory,
                 this._fileSystemService,
                 this._jwtTokenHelper,
+                _exceptionHandler,
                 this._dblServerUri);
             IReadOnlyDictionary<string, int> resourceRevisions =
                 SFInstallableDblResource.GetInstalledResourceRevisions();
