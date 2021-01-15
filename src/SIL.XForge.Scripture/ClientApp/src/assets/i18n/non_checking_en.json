@@ -114,6 +114,7 @@
     "range_label": "{{ startIndex }} - {{ endIndex }} of {{ length }}"
   },
   "project_select": {
+    "please_select_valid_project_or_resource": "Please select a valid project or resource",
     "projects": "Projects",
     "resources": "Resources"
   },

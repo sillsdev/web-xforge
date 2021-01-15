@@ -54,6 +54,17 @@ describe('ProjectSelectComponent', () => {
     env.scrollMenu(2500);
     expect(env.options(1).length).toBe(50);
   }));
+
+  it('informs user that a selection is invalid', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.inputText('does not exist');
+    tick();
+    expect(env.selectionInvalidMessage).not.toBeNull();
+    env.inputText('p');
+    env.openMenu();
+    env.clickOption(0, 0);
+    expect(env.selectionInvalidMessage).toBeNull();
+  }));
 });
 
 @Component({
@@ -116,6 +127,14 @@ class TestEnvironment {
     this.openMenu();
   }
 
+  get selectionInvalidMessage(): HTMLElement | null {
+    return this.fixture.nativeElement.querySelector('#invalidSelection');
+  }
+
+  get textInputElement(): HTMLInputElement {
+    return this.fixture.nativeElement.querySelector('mat-form-field input');
+  }
+
   openMenu() {
     this.component.projectSelect.autocompleteTrigger.openPanel();
     this.fixture.detectChanges();
@@ -134,6 +153,13 @@ class TestEnvironment {
     (this.options(group)[item] as HTMLElement).click();
     this.fixture.detectChanges();
     tick();
+  }
+
+  inputText(text: string): void {
+    this.textInputElement.value = text;
+    this.textInputElement.dispatchEvent(new Event('input'));
+    tick();
+    this.fixture.detectChanges();
   }
 
   scrollMenu(top: number) {
