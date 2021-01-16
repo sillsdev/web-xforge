@@ -1,10 +1,12 @@
 import { Component, EventEmitter, forwardRef, Input, Output, ViewChild } from '@angular/core';
 import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { ShowOnDirtyErrorStateMatcher } from '@angular/material/core';
 import { BehaviorSubject, combineLatest, fromEvent, Observable } from 'rxjs';
 import { map, startWith, takeUntil, tap } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SelectableProject } from '../core/paratext.service';
+import { SFValidators } from '../shared/sfvalidators';
 
 // A value accessor is necessary in order to create a custom form control
 export const PROJECT_SELECT_VALUE_ACCESSOR: any = {
@@ -13,6 +15,7 @@ export const PROJECT_SELECT_VALUE_ACCESSOR: any = {
   multi: true
 };
 
+/** This component can be used within a form to list projects and resources from which a user can make a selection. */
 @Component({
   selector: 'app-project-select',
   templateUrl: 'project-select.component.html',
@@ -27,12 +30,12 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
   @ViewChild(MatAutocomplete) autocomplete!: MatAutocomplete;
   @ViewChild(MatAutocompleteTrigger) autocompleteTrigger!: MatAutocompleteTrigger;
 
-  readonly paratextIdControl = new FormControl();
-
+  readonly paratextIdControl = new FormControl(null, [SFValidators.selectableProject()]);
   @Input() projects?: SelectableProject[];
   @Input() resources?: SelectableProject[];
   /** Projects that can be an already selected value, but not given as an option in the menu */
   @Input() nonSelectableProjects?: SelectableProject[];
+  readonly matcher = new ShowOnDirtyErrorStateMatcher();
 
   hideProjectId$ = new BehaviorSubject<string>('');
 
