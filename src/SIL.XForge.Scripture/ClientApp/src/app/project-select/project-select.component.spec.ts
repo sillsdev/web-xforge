@@ -172,7 +172,7 @@ class TestEnvironment {
   }
 
   scrollMenu(top: number) {
-    this.panel.scrollTop = 2500;
+    this.panel.scrollTop = top;
     // Just scrolling the element doesn't cause the event to be fired
     this.panel.dispatchEvent(new Event('scroll'));
     this.fixture.detectChanges();
