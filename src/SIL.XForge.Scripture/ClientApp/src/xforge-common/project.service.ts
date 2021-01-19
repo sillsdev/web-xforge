@@ -26,10 +26,10 @@ export abstract class ProjectService<
   ) {
     super();
     this.roles = new Map<string, ProjectRoleInfo>();
+    this.roles.set(NONE_ROLE.role, NONE_ROLE);
     for (const role of roles) {
       this.roles.set(role.role, role);
     }
-    this.roles.set(NONE_ROLE.role, NONE_ROLE);
   }
 
   protected abstract get collection(): string;
