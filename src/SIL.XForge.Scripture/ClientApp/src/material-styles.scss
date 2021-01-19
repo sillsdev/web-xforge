@@ -1,0 +1,18 @@
+@import '~@angular/material/theming';
+
+@include mat-core();
+
+// Styles for angular material components. Refer to https://material.angular.io/guide/theming
+$greyDark: mat-palette($mat-gray, 800);
+$greenLight: mat-palette($mat-light-green, 300);
+
+$material-app-theme: mat-light-theme(
+  (
+    color: (
+      primary: $greyDark,
+      accent: $greenLight
+    )
+  )
+);
+
+@include angular-material-theme($material-app-theme);

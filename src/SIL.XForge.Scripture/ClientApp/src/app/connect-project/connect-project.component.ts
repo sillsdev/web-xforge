@@ -40,8 +40,8 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   resources?: SelectableProject[];
   state: 'connecting' | 'loading' | 'input' | 'login' | 'offline' = 'loading';
   connectProjectName?: string;
+  projectDoc?: SFProjectDoc;
 
-  private projectDoc?: SFProjectDoc;
   private targetProjects?: ParatextProject[];
   private _isAppOnline: boolean = false;
 
@@ -57,16 +57,6 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   ) {
     super(noticeService);
     this.connectProjectForm.disable();
-  }
-
-  get connectProgress(): number | undefined {
-    return this.projectDoc == null || this.projectDoc.data == null
-      ? undefined
-      : this.projectDoc.data.sync.percentCompleted;
-  }
-
-  get isProgressDeterminate(): boolean {
-    return this.connectProgress != null && this.connectProgress > 0;
   }
 
   get hasConnectableProjects(): boolean {
@@ -174,7 +164,6 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       return;
     }
     if (project.projectId == null) {
-      this.state = 'connecting';
       this.connectProjectName = project.name;
       const settings: SFProjectCreateSettings = {
         paratextId: project.paratextId,
@@ -198,11 +187,16 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
         return;
       }
       this.projectDoc = await this.projectService.get(projectId);
-      this.checkSyncStatus();
-      this.subscribe(this.projectDoc.remoteChanges$, () => this.checkSyncStatus());
+      this.state = 'connecting';
     } else {
       await this.projectService.onlineAddCurrentUser(project.projectId);
       this.router.navigate(['/projects', project.projectId]);
+    }
+  }
+
+  updateStatus(inProgress: boolean): void {
+    if (!inProgress && this.projectDoc != null) {
+      this.router.navigate(['/projects', this.projectDoc.id]);
     }
   }
 
@@ -217,11 +211,5 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       this.state = 'login';
     }
     this.loadingFinished();
-  }
-
-  private checkSyncStatus(): void {
-    if (this.projectDoc != null && this.projectDoc.data != null && this.projectDoc.data.sync.queuedCount === 0) {
-      this.router.navigate(['/projects', this.projectDoc.id]);
-    }
   }
 }

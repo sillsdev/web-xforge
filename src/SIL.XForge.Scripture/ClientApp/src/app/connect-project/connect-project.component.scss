@@ -1,5 +1,4 @@
 @use '@material/button/mixins' as button;
-@use '@material/linear-progress/mixins' as linear-progress;
 
 @import 'src/variables';
 
@@ -43,11 +42,11 @@
   .progress-container {
     display: flex;
     flex-direction: column;
-    align-items: center;
     padding: 32px;
 
     > .progress-label {
       margin-bottom: 19px;
+      align-self: center;
     }
   }
 
@@ -124,8 +123,4 @@ mdc-select {
 mdc-list-item {
   height: unset;
   min-height: 48px;
-}
-
-mdc-linear-progress ::ng-deep {
-  @include linear-progress.bar-color($mdc-theme-secondary);
 }

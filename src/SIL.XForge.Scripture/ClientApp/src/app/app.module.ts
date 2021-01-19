@@ -25,6 +25,7 @@ import { ScriptureChooserDialogComponent } from './scripture-chooser-dialog/scri
 import { DeleteProjectDialogComponent } from './settings/delete-project-dialog/delete-project-dialog.component';
 import { SettingsComponent } from './settings/settings.component';
 import { StartComponent } from './start/start.component';
+import { SyncProgressComponent } from './sync/sync-progress/sync-progress.component';
 import { SyncComponent } from './sync/sync.component';
 import { TranslateModule } from './translate/translate.module';
 import { UsersModule } from './users/users.module';
@@ -43,7 +44,8 @@ import { UsersModule } from './users/users.module';
     SupportedBrowsersDialogComponent,
     ErrorComponent,
     EditNameDialogComponent,
-    ProjectSelectComponent
+    ProjectSelectComponent,
+    SyncProgressComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
