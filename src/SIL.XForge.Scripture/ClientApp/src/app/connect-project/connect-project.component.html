@@ -10,11 +10,7 @@
     </div>
     <mdc-card outlined *ngSwitchCase="'connecting'" class="progress-container">
       <div class="progress-label" mdcBody1>{{ t("connecting_to_project", { projectName: connectProjectName }) }}</div>
-      <mdc-linear-progress
-        [determinate]="isProgressDeterminate"
-        [progress]="connectProgress"
-        [buffer]="1"
-      ></mdc-linear-progress>
+      <app-sync-progress [projectDoc]="projectDoc" (inProgress)="updateStatus($event)"></app-sync-progress>
     </mdc-card>
     <form *ngSwitchDefault [formGroup]="connectProjectForm" (ngSubmit)="submit()">
       <ng-container *ngIf="projects?.length > 0 || state === 'offline'; else noProjectMsg">

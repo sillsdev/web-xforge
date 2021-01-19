@@ -19,6 +19,7 @@ import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
+import { SyncProgressComponent } from './sync-progress/sync-progress.component';
 import { SyncComponent } from './sync.component';
 
 const mockedAuthService = mock(AuthService);
@@ -31,7 +32,7 @@ const mockedPwaService = mock(PwaService);
 
 describe('SyncComponent', () => {
   configureTestingModule(() => ({
-    declarations: [SyncComponent],
+    declarations: [SyncComponent, SyncProgressComponent],
     imports: [CommonModule, UICommonModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
@@ -88,37 +89,7 @@ describe('SyncComponent', () => {
     verify(mockedProjectService.onlineSync('testProject01')).once();
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).not.toBeNull();
-    expect(env.component.isProgressDeterminate).toBe(false);
-    expect(env.syncMessage.textContent).toContain('Your project is being synchronized');
-    expect(env.logInButton).toBeNull();
-    expect(env.syncButton).toBeNull();
-    // Simulate sync starting
-    env.emitSyncProgress(0, 'testProject01');
-    expect(env.component.isProgressDeterminate).toBe(false);
-    // Simulate sync in progress
-    env.emitSyncProgress(0.5, 'testProject01');
-    expect(env.component.isProgressDeterminate).toBe(true);
-    env.emitSyncProgress(1, 'testProject01');
-    // Simulate sync completed
     env.emitSyncComplete(true, 'testProject01');
-    expect(env.component.syncActive).toBe(false);
-    verify(mockedNoticeService.show('Successfully synchronized Sync Test Project with Paratext.')).once();
-  }));
-
-  it('show progress as source and target combined', fakeAsync(() => {
-    const env = new TestEnvironment(true, false, true, false, true);
-    env.clickElement(env.syncButton);
-    expect(env.progressBar).not.toBeNull();
-    env.emitSyncProgress(0, 'sourceProject02');
-    expect(env.component.isProgressDeterminate).toBe(false);
-    env.emitSyncProgress(0.8, 'sourceProject02');
-    expect(env.component.percentComplete).toEqual(0.4);
-    env.emitSyncComplete(true, 'sourceProject02');
-    expect(env.component.percentComplete).toEqual(0.5);
-    env.emitSyncProgress(0.8, 'testProject01');
-    expect(env.component.percentComplete).toEqual(0.9);
-    env.emitSyncComplete(true, 'testProject01');
-    expect(env.component.syncActive).toBe(false);
     verify(mockedNoticeService.show('Successfully synchronized Sync Test Project with Paratext.')).once();
   }));
 
@@ -170,8 +141,7 @@ class TestEnvironment {
     isParatextAccountConnected: boolean = false,
     isInProgress: boolean = false,
     isOnline: boolean = true,
-    isSyncDisabled: boolean = false,
-    hasSource: boolean = false
+    isSyncDisabled: boolean = false
   ) {
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'testProject01' }));
     const ptUsername = isParatextAccountConnected ? 'Paratext User01' : '';
@@ -196,19 +166,7 @@ class TestEnvironment {
         writingSystem: {
           tag: 'en'
         },
-        translateConfig: hasSource
-          ? {
-              translationSuggestionsEnabled: true,
-              source: {
-                paratextId: 'pt02',
-                projectRef: 'sourceProject02',
-                isRightToLeft: false,
-                writingSystem: { tag: 'en' },
-                name: 'Sync Source Project',
-                shortName: 'P02'
-              }
-            }
-          : { translationSuggestionsEnabled: false },
+        translateConfig: { translationSuggestionsEnabled: false },
         checkingConfig: {
           checkingEnabled: false,
           usersSeeEachOthersResponses: true,
@@ -227,41 +185,8 @@ class TestEnvironment {
       }
     });
 
-    if (hasSource) {
-      this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
-        id: 'sourceProject02',
-        data: {
-          name: 'Sync Source Project',
-          paratextId: 'pt02',
-          shortName: 'P02',
-          writingSystem: {
-            tag: 'en'
-          },
-          translateConfig: {
-            translationSuggestionsEnabled: false
-          },
-          checkingConfig: {
-            checkingEnabled: false,
-            usersSeeEachOthersResponses: true,
-            shareEnabled: true,
-            shareLevel: CheckingShareLevel.Specific
-          },
-          sync: {
-            queuedCount: 0,
-            lastSyncSuccessful: true,
-            dateLastSuccessfulSync: date.toJSON()
-          },
-          syncDisabled: isSyncDisabled,
-          texts: [],
-          userRoles: {}
-        }
-      });
-    }
     when(mockedProjectService.get('testProject01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'testProject01')
-    );
-    when(mockedProjectService.get('sourceProject02')).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'sourceProject02')
     );
 
     this.fixture = TestBed.createComponent(SyncComponent);
@@ -280,7 +205,7 @@ class TestEnvironment {
   }
 
   get progressBar(): DebugElement {
-    return this.fixture.debugElement.query(By.css('mdc-linear-progress'));
+    return this.fixture.debugElement.query(By.css('mat-progress-bar'));
   }
 
   get title(): HTMLElement {
