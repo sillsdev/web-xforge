@@ -106,6 +106,8 @@ To this end you'll also want to be familiar with [Upgrading from AngularJS](http
 
 We use [Prettier](https://prettier.io/) with a pre-commit hook.
 
+Microsoft .NET library [design guidelines](https://docs.microsoft.com/en-us/dotnet/standard/design-guidelines/).
+
 ### Layout
 
 We use [Angular Flex-Layout](https://github.com/angular/flex-layout) with
