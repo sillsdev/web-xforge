@@ -1,3 +1,4 @@
+import { ErrorHandler } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { TranslocoService } from '@ngneat/transloco';
@@ -29,6 +30,7 @@ const mockedRouter = mock(Router);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
 const mockedTranslocoService = mock(TranslocoService);
+const mockedErrorHandler = mock(ErrorHandler);
 
 describe('ProjectComponent', () => {
   configureTestingModule(() => ({
@@ -40,6 +42,7 @@ describe('ProjectComponent', () => {
       { provide: Router, useMock: mockedRouter },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: ErrorHandler, useMock: mockedErrorHandler },
       { provide: TranslocoService, useMock: mockedTranslocoService }
     ]
   }));
@@ -118,13 +121,18 @@ describe('ProjectComponent', () => {
     expect().nothing();
   }));
 
-  it('do not navigate when project does not exist', fakeAsync(() => {
+  it('if project does not exist, send user to /projects rather than show confusing blank page', fakeAsync(() => {
+    // If project.component.ts does not find a project, it just shows a blank page with a forever-going progress bar.
+    // This is confusing, and may be related to a couple issues (SF-1137, SF-1064). Tell the user that there was a
+    // problem and navigate to something with content.
+
     const env = new TestEnvironment();
     env.fixture.detectChanges();
     tick();
 
     verify(mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
-    verify(mockedRouter.navigate(anything(), anything())).never();
+    verify(mockedErrorHandler.handleError(anything())).once();
+    verify(mockedRouter.navigateByUrl('/projects', anything())).once();
     expect().nothing();
   }));
 
@@ -221,6 +229,7 @@ class TestEnvironment {
     when(mockedSFProjectService.get('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
+    when(mockedErrorHandler.handleError(anything())).thenReturn();
     when(mockedTranslocoService.translate<string>(anything())).thenReturn('The project link is invalid.');
     this.setLinkSharing(false);
 
