@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ErrorHandler, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoService } from '@ngneat/transloco';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -23,6 +23,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     private readonly router: Router,
     private readonly userService: UserService,
     private readonly transloco: TranslocoService,
+    private readonly errorHandler: ErrorHandler,
     noticeService: NoticeService
   ) {
     super(noticeService);
@@ -65,6 +66,13 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
         const project = projectDoc.data;
 
         if (project == null || projectUserConfig == null) {
+          const message: string = this.transloco.translate('project.problem_finding_project', {
+            projectID: projectDoc.id
+          });
+          const error: Error = new Error(message);
+          this.errorHandler.handleError(error);
+          this.userService.setCurrentProjectId();
+          this.router.navigateByUrl('/projects', { replaceUrl: true });
           return;
         }
 

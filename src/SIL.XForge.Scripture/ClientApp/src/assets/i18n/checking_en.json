@@ -262,7 +262,8 @@
     "dismiss": "Dismiss"
   },
   "project": {
-    "project_link_is_invalid": "The project link is invalid."
+    "project_link_is_invalid": "The project link is invalid.",
+    "problem_finding_project": "There was a problem finding a project ({{ projectID }}) or user specific information for the project. There may be a typo in the URL you specified. You may have tried to access a project that is no longer available."
   },
   "project_deleted_dialog": {
     "ok": "OK",
