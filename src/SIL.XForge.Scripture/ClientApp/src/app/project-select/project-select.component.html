@@ -6,7 +6,12 @@
       [placeholder]="placeholder"
       [formControl]="paratextIdControl"
       [matAutocomplete]="auto"
+      (click)="inputClicked()"
+      [errorStateMatcher]="matcher"
     />
+    <mat-error id="invalidSelection">
+      {{ t("please_select_valid_project_or_resource") }}
+    </mat-error>
     <mat-autocomplete
       #auto="matAutocomplete"
       [displayWith]="projectDisplayText"

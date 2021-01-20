@@ -178,7 +178,7 @@ class TestEnvironment {
     when(mockedMdcDialog.open(anything(), anything())).thenReturn(instance(this.mockedDeleteUserDialogRef));
     when(mockedUserService.onlineQuery(anything(), anything(), anything())).thenCall(
       (term$: Observable<string>, parameters$: Observable<QueryParameters>, reload$: Observable<void>) =>
-        combineLatest(term$, parameters$, reload$).pipe(
+        combineLatest([term$, parameters$, reload$]).pipe(
           switchMap(([term, queryParameters]) => {
             const filters: Filters = {
               [obj<User>().pathStr(u => u.name)]: { $regex: `.*${XRegExp.escape(term)}.*`, $options: 'i' }

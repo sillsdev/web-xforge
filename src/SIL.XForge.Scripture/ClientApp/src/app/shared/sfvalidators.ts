@@ -10,6 +10,7 @@ import {
 } from '@angular/forms';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
+import { SelectableProject } from '../core/paratext.service';
 
 export class SFValidators {
   static verseStr(textsByBookId?: TextsByBookId): ValidatorFn {
@@ -54,6 +55,19 @@ export class SFValidators {
       }
 
       return isRangeValid ? null : { verseRange: true };
+    };
+  }
+
+  static selectableProject(): ValidatorFn {
+    return function validateProject(control: AbstractControl): ValidationErrors | null {
+      if (control.value == null) {
+        return null;
+      }
+      const selectedProject = control.value as SelectableProject;
+      if (selectedProject.paratextId != null && selectedProject.name != null) {
+        return null;
+      }
+      return { invalidSelection: true };
     };
   }
 

@@ -12,6 +12,7 @@
     "orta.vscode-jest",
     "raagh.angular-karma-test-explorer",
     "streetsidesoftware.code-spell-checker",
-    "yzhang.markdown-all-in-one"
+    "yzhang.markdown-all-in-one",
+    "ms-azuretools.vscode-cosmosdb"
   ]
 }

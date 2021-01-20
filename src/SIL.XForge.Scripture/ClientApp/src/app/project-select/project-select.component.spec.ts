@@ -30,7 +30,7 @@ describe('ProjectSelectComponent', () => {
     expect(env.component.sourceParatextId.value).toBeNull();
     env.clickOption(0, 0);
     expect(env.component.sourceParatextId.value).toBe('p01');
-    env.openMenu();
+    env.clickInput();
     env.clickOption(1, 1);
     expect(env.component.sourceParatextId.value).toBe('r02');
   }));
@@ -40,7 +40,7 @@ describe('ProjectSelectComponent', () => {
     expect(env.component.sourceParatextId.value).toBeNull();
     env.clickOption(0, 0);
     expect(env.component.sourceParatextId.value).toBe('p01');
-    env.openMenu();
+    env.clickInput();
     env.clickOption(1, 1);
     expect(env.component.sourceParatextId.value).toBe('r02');
   }));
@@ -53,6 +53,26 @@ describe('ProjectSelectComponent', () => {
     expect(env.options(1).length).toBe(25);
     env.scrollMenu(2500);
     expect(env.options(1).length).toBe(50);
+  }));
+
+  it('opens the panel when input is clicked after already selecting a project', fakeAsync(() => {
+    const env = new TestEnvironment();
+    expect(env.component.sourceParatextId.value).toBeNull();
+    env.clickOption(0, 0);
+    expect(env.component.sourceParatextId.value).toBe('p01');
+    env.clickInput();
+    env.clickOption(1, 1);
+    expect(env.component.sourceParatextId.value).toBe('r02');
+  }));
+
+  it('informs user that a selection is invalid', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.inputText('does not exist');
+    expect(env.selectionInvalidMessage).not.toBeNull();
+    env.inputText('p');
+    env.clickInput();
+    env.clickOption(0, 0);
+    expect(env.selectionInvalidMessage).toBeNull();
   }));
 });
 
@@ -113,11 +133,19 @@ class TestEnvironment {
 
     this.fixture.detectChanges();
     tick();
-    this.openMenu();
+    this.clickInput();
   }
 
-  openMenu() {
-    this.component.projectSelect.autocompleteTrigger.openPanel();
+  get selectionInvalidMessage(): HTMLElement | null {
+    return this.fixture.nativeElement.querySelector('#invalidSelection');
+  }
+
+  get textInputElement(): HTMLInputElement {
+    return this.fixture.nativeElement.querySelector('mat-form-field input');
+  }
+
+  clickInput() {
+    (this.fixture.nativeElement as HTMLElement).querySelector('input')!.click();
     this.fixture.detectChanges();
     tick();
   }
@@ -136,8 +164,15 @@ class TestEnvironment {
     tick();
   }
 
+  inputText(text: string): void {
+    this.textInputElement.value = text;
+    this.textInputElement.dispatchEvent(new Event('input'));
+    tick();
+    this.fixture.detectChanges();
+  }
+
   scrollMenu(top: number) {
-    this.panel.scrollTop = 2500;
+    this.panel.scrollTop = top;
     // Just scrolling the element doesn't cause the event to be fired
     this.panel.dispatchEvent(new Event('scroll'));
     this.fixture.detectChanges();

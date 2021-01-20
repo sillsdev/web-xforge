@@ -102,9 +102,9 @@ We merge from `master` to the QA testing branch, then ship from the QA branch to
 
 TypeScript follows the [Angular Style Guide](https://angular.io/guide/styleguide). This is opinionated not only about things like file name conventions but also file and folder structure.
 
-To this end you'll also want to be familiar with [Upgrading from AngularJS](https://angular.io/guide/upgrade) particularly the [Preparation](https://angular.io/guide/upgrade#preparation) section.
-
 We use [Prettier](https://prettier.io/) with a pre-commit hook.
+
+Microsoft .NET library [design guidelines](https://docs.microsoft.com/en-us/dotnet/standard/design-guidelines/).
 
 ### Layout
 

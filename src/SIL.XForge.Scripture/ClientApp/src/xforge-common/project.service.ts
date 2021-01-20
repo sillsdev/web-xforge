@@ -26,10 +26,10 @@ export abstract class ProjectService<
   ) {
     super();
     this.roles = new Map<string, ProjectRoleInfo>();
+    this.roles.set(NONE_ROLE.role, NONE_ROLE);
     for (const role of roles) {
       this.roles.set(role.role, role);
     }
-    this.roles.set(NONE_ROLE.role, NONE_ROLE);
   }
 
   protected abstract get collection(): string;
@@ -44,7 +44,7 @@ export abstract class ProjectService<
   ): Observable<RealtimeQuery<TDoc>> {
     const debouncedTerm$ = term$.pipe(debounceTime(400), distinctUntilChanged());
 
-    return combineLatest(debouncedTerm$, queryParameters$).pipe(
+    return combineLatest([debouncedTerm$, queryParameters$]).pipe(
       switchMap(([term, queryParameters]) => {
         term = XRegExp.escape(term.trim());
         let filters: Filters = {};
