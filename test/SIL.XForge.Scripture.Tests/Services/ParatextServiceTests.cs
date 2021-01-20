@@ -693,6 +693,17 @@ namespace SIL.XForge.Scripture.Services
             await env.Service.SendReceiveAsync(user01Secret, resourceId);
         }
 
+
+        [Test]
+        public async Task GetParatextUsernameMappingAsync_ReturnsEmptyMappingForResourceProject()
+        {
+            var env = new TestEnvironment();
+            const string resourceId = "1234567890abcdef";
+            Assert.That(resourceId.Length, Is.EqualTo(SFInstallableDblResource.ResourceIdentifierLength));
+            var mapping = await env.Service.GetParatextUsernameMappingAsync(env.MakeUserSecret(env.User01, env.Username01), resourceId);
+            Assert.That(mapping.Count, Is.EqualTo(0));
+        }
+
         private class TestEnvironment
         {
             public readonly string Project01 = "project01";
