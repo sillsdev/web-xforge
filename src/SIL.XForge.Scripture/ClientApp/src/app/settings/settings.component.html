@@ -61,6 +61,7 @@
                       [resources]="resources"
                       [nonSelectableProjects]="nonSelectableProjects"
                       [hideProjectId]="projectParatextId"
+                      [isDisabled]="!isAppOnline"
                     ></app-project-select>
                     <app-write-status
                       [state]="getControlState('sourceParatextId')"

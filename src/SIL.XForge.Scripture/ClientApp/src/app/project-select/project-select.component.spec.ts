@@ -12,6 +12,7 @@ import { ProjectSelectComponent } from './project-select.component';
 describe('ProjectSelectComponent', () => {
   it('should list projects and resources', fakeAsync(() => {
     const env = new TestEnvironment('p02');
+    env.clickInput();
     // Expect two projects and two resources (one of the projects should be hidden)
     expect(env.groupLabels.length).toBe(2);
     expect(env.groupLabels[0]).toBe('Projects');
@@ -22,11 +23,13 @@ describe('ProjectSelectComponent', () => {
 
   it('it only lists groups with menu items', fakeAsync(() => {
     const env = new TestEnvironment(undefined, undefined, []);
+    env.clickInput();
     expect(env.groupLabels.length).toBe(1);
   }));
 
   it('functions as a form control', fakeAsync(() => {
     const env = new TestEnvironment();
+    env.clickInput();
     expect(env.component.sourceParatextId.value).toBeNull();
     env.clickOption(0, 0);
     expect(env.component.sourceParatextId.value).toBe('p01');
@@ -35,8 +38,31 @@ describe('ProjectSelectComponent', () => {
     expect(env.component.sourceParatextId.value).toBe('r02');
   }));
 
+  it('selects project when valid name typed manually', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.clickInput();
+    env.inputText('Project 1');
+    expect(env.component.sourceParatextId.value).toBe('p01');
+  }));
+
+  it('does not open autocomplete when disabled', fakeAsync(() => {
+    const env = new TestEnvironment();
+    expect(env.autoCompleteShowing).toBe(false);
+    env.component.isDisabled = true;
+    tick();
+    env.fixture.detectChanges();
+    env.clickInput();
+    expect(env.autoCompleteShowing).toBe(false);
+    env.component.isDisabled = false;
+    tick();
+    env.fixture.detectChanges();
+    env.clickInput();
+    expect(env.autoCompleteShowing).toBe(true);
+  }));
+
   it("doesn't list hidden projects", fakeAsync(() => {
     const env = new TestEnvironment();
+    env.clickInput();
     expect(env.component.sourceParatextId.value).toBeNull();
     env.clickOption(0, 0);
     expect(env.component.sourceParatextId.value).toBe('p01');
@@ -48,6 +74,7 @@ describe('ProjectSelectComponent', () => {
   it('adds list items as the user scrolls the list', fakeAsync(() => {
     const resources = [...Array(100).keys()].map(key => ({ paratextId: 'r' + key, name: 'Resource ' + (key + 1) }));
     const env = new TestEnvironment('p03', undefined, resources);
+    env.clickInput();
     expect(env.optGroups.length).toBe(2);
     expect(env.optionsText(0)).toEqual(['Project 1', 'Project 2']);
     expect(env.options(1).length).toBe(25);
@@ -57,6 +84,7 @@ describe('ProjectSelectComponent', () => {
 
   it('opens the panel when input is clicked after already selecting a project', fakeAsync(() => {
     const env = new TestEnvironment();
+    env.clickInput();
     expect(env.component.sourceParatextId.value).toBeNull();
     env.clickOption(0, 0);
     expect(env.component.sourceParatextId.value).toBe('p01');
@@ -67,6 +95,7 @@ describe('ProjectSelectComponent', () => {
 
   it('informs user that a selection is invalid', fakeAsync(() => {
     const env = new TestEnvironment();
+    env.clickInput();
     env.inputText('does not exist');
     expect(env.selectionInvalidMessage).not.toBeNull();
     env.inputText('p');
@@ -86,6 +115,7 @@ describe('ProjectSelectComponent', () => {
       [resources]="resources"
       [hideProjectId]="hideProjectId"
       [nonSelectableProjects]="nonSelectableProjects"
+      [isDisabled]="isDisabled"
     ></app-project-select>
   </form>`
 })
@@ -94,6 +124,7 @@ class HostComponent {
   readonly connectProjectForm = new FormGroup({ sourceParatextId: this.sourceParatextId });
 
   @ViewChild(ProjectSelectComponent) projectSelect!: ProjectSelectComponent;
+  isDisabled: boolean = false;
 
   projects: SelectableProject[] = [
     { name: 'Project 1', paratextId: 'p01' },
@@ -133,7 +164,6 @@ class TestEnvironment {
 
     this.fixture.detectChanges();
     tick();
-    this.clickInput();
   }
 
   get selectionInvalidMessage(): HTMLElement | null {
@@ -169,6 +199,7 @@ class TestEnvironment {
     this.textInputElement.dispatchEvent(new Event('input'));
     tick();
     this.fixture.detectChanges();
+    tick();
   }
 
   scrollMenu(top: number) {
@@ -189,5 +220,9 @@ class TestEnvironment {
 
   get groupLabels(): string[] {
     return Array.from(this.panel.querySelectorAll('mat-optgroup label')).map(e => e.textContent?.trim() || '');
+  }
+
+  get autoCompleteShowing(): boolean {
+    return this.component.projectSelect.autocompleteTrigger.panelOpen;
   }
 }
