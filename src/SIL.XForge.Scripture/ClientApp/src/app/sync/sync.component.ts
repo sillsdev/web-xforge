@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { map, tap } from 'rxjs/operators';
@@ -16,7 +16,7 @@ import { SFProjectService } from '../core/sf-project.service';
   templateUrl: './sync.component.html',
   styleUrls: ['./sync.component.scss']
 })
-export class SyncComponent extends DataLoadingComponent implements OnInit, OnDestroy {
+export class SyncComponent extends DataLoadingComponent implements OnInit {
   isAppOnline: boolean = false;
   showParatextLogin = false;
   syncDisabled: boolean = false;
@@ -74,12 +74,12 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
   }
 
   set syncActive(isActive: boolean) {
-    if (this._syncActive && !isActive) {
-      if (this.projectDoc?.data != null && this.projectDoc.data.sync.lastSyncSuccessful) {
+    if (this._syncActive && !isActive && this.projectDoc?.data != null) {
+      if (this.projectDoc.data.sync.lastSyncSuccessful) {
         this.noticeService.show(
           translate('sync.successfully_synchronized_with_paratext', { projectName: this.projectDoc.data.name })
         );
-      } else if (this.projectDoc?.data != null) {
+      } else {
         const name: string = this.projectDoc.data.name;
         this.noticeService.showMessageDialog(() =>
           translate('sync.something_went_wrong_synchronizing_this_project', { projectName: name })
@@ -141,11 +141,12 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
   }
 
   private checkSyncStatus(): void {
-    if (this.projectDoc?.data != null) {
-      if (this.projectDoc.data.syncDisabled != null) {
-        this.syncDisabled = this.projectDoc.data.syncDisabled;
-      }
-      this._syncActive = this.projectDoc.data.sync.queuedCount > 0;
+    if (this.projectDoc?.data == null) {
+      return;
     }
+    if (this.projectDoc.data.syncDisabled != null) {
+      this.syncDisabled = this.projectDoc.data.syncDisabled;
+    }
+    this._syncActive = this.projectDoc.data.sync.queuedCount > 0;
   }
 }

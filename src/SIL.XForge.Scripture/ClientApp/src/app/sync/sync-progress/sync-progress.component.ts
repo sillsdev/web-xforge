@@ -36,7 +36,7 @@ export class SyncProgressComponent extends SubscriptionDisposable implements OnI
     return progress * 100;
   }
 
-  get isProgressDeterminate(): ProgressBarMode {
+  get mode(): ProgressBarMode {
     // Show indeterminate at the beginning and at the halfway point if a source project was synced
     const sourceSyncCompleted = this.sourceProjectDoc?.data != null && this.sourceProjectDoc.data.sync.queuedCount < 1;
     const determinate =

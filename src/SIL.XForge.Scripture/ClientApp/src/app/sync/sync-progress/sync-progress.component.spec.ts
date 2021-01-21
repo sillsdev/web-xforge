@@ -12,7 +12,6 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
-
 import { SyncProgressComponent } from './sync-progress.component';
 
 const mockedNoticeService = mock(NoticeService);
@@ -34,10 +33,10 @@ describe('SyncProgressComponent', () => {
     // Simulate sync starting
     env.emitSyncProgress(0, 'testProject01');
     expect(env.progressBar).not.toBeNull();
-    expect(env.host.syncProgress.isProgressDeterminate).toBe('indeterminate');
+    expect(env.host.syncProgress.mode).toBe('indeterminate');
     // Simulate sync in progress
     env.emitSyncProgress(0.5, 'testProject01');
-    expect(env.host.syncProgress.isProgressDeterminate).toBe('determinate');
+    expect(env.host.syncProgress.mode).toBe('determinate');
     // Simulate sync completed
     env.emitSyncComplete(true, 'testProject01');
     expect(env.progressBar).toBeNull();
@@ -51,13 +50,13 @@ describe('SyncProgressComponent', () => {
     env.emitSyncProgress(0, 'sourceProject02');
     verify(mockedProjectService.get('sourceProject02')).once();
     expect(env.progressBar).not.toBeNull();
-    expect(env.host.syncProgress.isProgressDeterminate).toBe('indeterminate');
+    expect(env.host.syncProgress.mode).toBe('indeterminate');
     env.emitSyncProgress(0.8, 'sourceProject02');
     expect(env.host.syncProgress.syncProgressPercent).toEqual(40);
-    expect(env.host.syncProgress.isProgressDeterminate).toBe('determinate');
+    expect(env.host.syncProgress.mode).toBe('determinate');
     env.emitSyncComplete(true, 'sourceProject02');
     expect(env.host.syncProgress.syncProgressPercent).toEqual(50);
-    expect(env.host.syncProgress.isProgressDeterminate).toBe('indeterminate');
+    expect(env.host.syncProgress.mode).toBe('indeterminate');
     env.emitSyncProgress(0.8, 'testProject01');
     expect(env.host.syncProgress.syncProgressPercent).toEqual(90);
     env.emitSyncComplete(true, 'testProject01');

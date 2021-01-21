@@ -89,6 +89,8 @@ describe('SyncComponent', () => {
     verify(mockedProjectService.onlineSync('testProject01')).once();
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).not.toBeNull();
+    expect(env.logInButton).toBeNull();
+    expect(env.syncButton).toBeNull();
     env.emitSyncComplete(true, 'testProject01');
     verify(mockedNoticeService.show('Successfully synchronized Sync Test Project with Paratext.')).once();
   }));
