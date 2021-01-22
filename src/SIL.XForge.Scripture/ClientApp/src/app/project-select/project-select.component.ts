@@ -64,7 +64,7 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
           p =>
             p.length === 1 &&
             typeof this.paratextIdControl.value === 'string' &&
-            p[0].name.toLowerCase() === this.paratextIdControl.value.toLocaleLowerCase()
+            p[0].name.toLowerCase() === this.paratextIdControl.value.toLowerCase()
         )
       ),
       projects => this.paratextIdControl.setValue(projects[0])
@@ -75,7 +75,7 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
           r =>
             r.length === 1 &&
             typeof this.paratextIdControl.value === 'string' &&
-            r[0].name.toLowerCase() === this.paratextIdControl.value.toLocaleLowerCase()
+            r[0].name.toLowerCase() === this.paratextIdControl.value.toLowerCase()
         )
       ),
       resources => this.paratextIdControl.setValue(resources[0])
@@ -97,6 +97,7 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
     if (value) {
       this.paratextIdControl.disable();
     } else if (this.paratextIdControl.disabled) {
+      // This check is required otherwise it results in a strange null value error
       this.paratextIdControl.enable();
     }
   }
@@ -158,7 +159,7 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
     collection: SelectableProject[],
     limit?: number
   ): SelectableProject[] {
-    const valueLower = typeof value === 'string' ? value.toLocaleLowerCase() : '';
+    const valueLower = typeof value === 'string' ? value.toLowerCase() : '';
     return collection
       .filter(project => project.name.toLowerCase().includes(valueLower) && project.paratextId !== this.hideProjectId)
       .sort((a, b) => a.name.toLowerCase().indexOf(valueLower) - b.name.toLowerCase().indexOf(valueLower))
