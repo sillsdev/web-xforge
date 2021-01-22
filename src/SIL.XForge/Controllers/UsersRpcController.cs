@@ -1,3 +1,4 @@
+using System;
 using System.Text.Json;
 using System.Threading.Tasks;
 using EdjCase.JsonRpc.Router.Abstractions;
@@ -52,8 +53,15 @@ namespace SIL.XForge.Controllers
 
         public async Task<IRpcMethodResult> LinkParatextAccount(string authId)
         {
-            await _userService.LinkParatextAccountAsync(UserId, AuthId, authId);
-            return Ok();
+            try
+            {
+                await _userService.LinkParatextAccountAsync(UserId, AuthId, authId);
+                return Ok();
+            }
+            catch (ArgumentException e)
+            {
+                return InvalidParamsError(e.Message);
+            }
         }
 
         public async Task<IRpcMethodResult> UpdateInterfaceLanguage(string language)

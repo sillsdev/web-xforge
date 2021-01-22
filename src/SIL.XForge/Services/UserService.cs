@@ -96,6 +96,11 @@ namespace SIL.XForge.Services
         /// </summary>
         public async Task LinkParatextAccountAsync(string curUserId, string primaryAuthId, string secondaryAuthId)
         {
+            if (!await CheckParatextProfileIsNew(secondaryAuthId))
+            {
+                // Another auth0 profile already exists that is linked to the paratext account
+                throw new ArgumentException("paratext_account_already_linked");
+            }
             await _authService.LinkAccounts(primaryAuthId, secondaryAuthId);
             JObject userProfile = JObject.Parse(await _authService.GetUserAsync(primaryAuthId));
             var identities = (JArray)userProfile["identities"];
@@ -161,6 +166,14 @@ namespace SIL.XForge.Services
         private static string GetIdpIdFromAuthId(string authId)
         {
             return authId.Split('|')[1];
+        }
+
+        private async Task<bool> CheckParatextProfileIsNew(string authId)
+        {
+            JObject userProfile = JObject.Parse(await _authService.GetUserAsync(authId));
+            if (!((string)userProfile["user_id"]).Contains("paratext"))
+                return false;
+            return (int)userProfile["logins_count"] <= 1;
         }
     }
 }
