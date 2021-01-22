@@ -4,7 +4,7 @@ using Jering.Javascript.NodeJS;
 
 namespace SIL.XForge.Realtime
 {
-    public class RealtimeServer
+    public class RealtimeServer : IRealtimeServer
     {
         private readonly INodeJSService _nodeJSService;
         private readonly string _modulePath;

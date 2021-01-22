@@ -17,6 +17,10 @@ namespace SIL.XForge.Configuration
 
         public string CollectionName { get; }
         public Type Type { get; }
+
+        /// <summary>
+        /// Or `null` if there is no corresponding "o_..." collection for this document type.
+        /// </summary>
         public string OTTypeName { get; }
     }
 }

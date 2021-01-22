@@ -10,11 +10,11 @@ namespace SIL.XForge.Realtime
     /// </summary>
     public class Document<T> : IDocument<T> where T : IIdentifiable
     {
-        private readonly RealtimeServer _server;
+        private readonly IRealtimeServer _server;
         private readonly int _connHandle;
         private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
 
-        internal Document(RealtimeServer server, int connHandle, string otTypeName, string collection, string id)
+        internal Document(IRealtimeServer server, int connHandle, string otTypeName, string collection, string id)
         {
             _server = server;
             _connHandle = connHandle;

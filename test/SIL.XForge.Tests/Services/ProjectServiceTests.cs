@@ -179,6 +179,85 @@ namespace SIL.XForge.Services
             Assert.That(env.GetProject(Project02).SyncDisabled, Is.EqualTo(false));
         }
 
+        [Test]
+        public void RemoveUserFromProjectAsync_BadArguments()
+        {
+            var env = new TestEnvironment();
+            IConnection connection = Substitute.For<IConnection>();
+            IDocument<TestProject> projectDoc = Substitute.For<IDocument<TestProject>>();
+            IDocument<User> userDoc = Substitute.For<IDocument<User>>();
+            Assert.ThrowsAsync<ArgumentNullException>(() =>
+                env.Service.RemoveUserFromProjectAsync(null, projectDoc, userDoc));
+            Assert.ThrowsAsync<ArgumentNullException>(() =>
+                env.Service.RemoveUserFromProjectAsync(connection, null, userDoc));
+            Assert.ThrowsAsync<ArgumentNullException>(() =>
+                env.Service.RemoveUserFromProjectAsync(connection, projectDoc, null));
+        }
+
+        [Test]
+        public void RemoveUserAsync_BadArguments()
+        {
+            var env = new TestEnvironment();
+            Assert.ThrowsAsync<ArgumentNullException>(() =>
+                env.Service.RemoveUserAsync(null, "projectId", "projectUserId"));
+            Assert.ThrowsAsync<ArgumentNullException>(() =>
+                env.Service.RemoveUserAsync("curUserId", null, "projectUserId"));
+            Assert.ThrowsAsync<ArgumentNullException>(() =>
+                env.Service.RemoveUserAsync("curUserId", "projectId", null));
+        }
+
+        [Test]
+        public async Task RemoveUserAsync_DisassociatesUserAndProject()
+        {
+            var env = new TestEnvironment();
+            string requestingUser = User01;
+            string project = Project01;
+            string userToDisassociate = User02;
+            Assert.That(env.GetProject(project).UserRoles, Does.ContainKey(userToDisassociate), "setup");
+            Assert.That(env.GetUser(userToDisassociate).Sites[SiteId].Projects, Does.Contain(project), "setup");
+            // SUT
+            await env.Service.RemoveUserAsync(requestingUser, project, userToDisassociate);
+            Assert.That(env.GetProject(project).UserRoles, Does.Not.ContainKey(userToDisassociate));
+            Assert.That(env.GetUser(userToDisassociate).Sites[SiteId].Projects, Does.Not.Contain(project));
+        }
+
+        [Test]
+        public void RemoveUserFromAllProjectsAsync_BadArguments()
+        {
+            var env = new TestEnvironment();
+            Assert.ThrowsAsync<ArgumentNullException>(() =>
+                env.Service.RemoveUserFromAllProjectsAsync(null, "projectUserId"));
+            Assert.ThrowsAsync<ArgumentNullException>(() =>
+                env.Service.RemoveUserFromAllProjectsAsync("curUserId", null));
+        }
+
+        [Test]
+        public async Task RemoveUserFromAllProjectsAsync_DisassociatesUserAndProjects()
+        {
+            var env = new TestEnvironment();
+            string requestingUser = User02;
+            string userToDisassociate = User01;
+
+            Assert.That(env.GetProject(Project01).UserRoles[requestingUser] != TestProjectRole.Administrator,
+                "setup: user requesting deletion should not be a project administrator to demonstrate the " +
+                    "functionality");
+            Assert.That(env.GetProject(Project02).UserRoles[requestingUser] != TestProjectRole.Administrator,
+                "setup: user requesting deletion should not be a project administrator to demonstrate the " +
+                    "functionality");
+            Assert.That(requestingUser, Is.Not.EqualTo(userToDisassociate), "setup: not demonstrating functionality");
+
+            Assert.That(env.GetProject(Project01).UserRoles, Does.ContainKey(userToDisassociate), "setup");
+            Assert.That(env.GetUser(userToDisassociate).Sites[SiteId].Projects, Does.Contain(Project01), "setup");
+            Assert.That(env.GetProject(Project02).UserRoles, Does.ContainKey(userToDisassociate), "setup");
+            Assert.That(env.GetUser(userToDisassociate).Sites[SiteId].Projects, Does.Contain(Project02), "setup");
+            // SUT
+            await env.Service.RemoveUserFromAllProjectsAsync(requestingUser, userToDisassociate);
+            Assert.That(env.GetProject(Project01).UserRoles, Does.Not.ContainKey(userToDisassociate));
+            Assert.That(env.GetUser(userToDisassociate).Sites[SiteId].Projects, Does.Not.Contain(Project01));
+            Assert.That(env.GetProject(Project02).UserRoles, Does.Not.ContainKey(userToDisassociate));
+            Assert.That(env.GetUser(userToDisassociate).Sites[SiteId].Projects, Does.Not.Contain(Project02));
+        }
+
         private class TestEnvironment
         {
             public TestEnvironment(bool isResetLinkExpired = false)
@@ -191,13 +270,35 @@ namespace SIL.XForge.Services
                         {
                             Id = User01,
                             Email = "user01@example.com",
-                            Sites = new Dictionary<string, Site> { { SiteId, new Site() } }
+                            Sites = new Dictionary<string, Site>
+                            {
+                                { SiteId, new Site()
+                                    {
+                                        Projects = new List<String>()
+                                        {
+                                            Project01,
+                                            Project02
+                                        }
+                                    }
+                                }
+                            }
                         },
                         new User
                         {
                             Id = User02,
                             Email = "user02@example.com",
-                            Sites = new Dictionary<string, Site> { { SiteId, new Site() } }
+                            Sites = new Dictionary<string, Site>
+                            {
+                                { SiteId, new Site()
+                                    {
+                                        Projects = new List<String>()
+                                        {
+                                            Project01,
+                                            Project02
+                                        }
+                                    }
+                                }
+                            }
                         },
                         new User
                         {

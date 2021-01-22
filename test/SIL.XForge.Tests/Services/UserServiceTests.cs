@@ -114,8 +114,120 @@ namespace SIL.XForge.Services
             Assert.That(user2.InterfaceLanguage, Is.EqualTo("mri"));
         }
 
+        [Test]
+        public void DeleteAsync_BadArguments()
+        {
+            var env = new TestEnvironment();
+            Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.DeleteAsync(null, "systemRole", "userId"));
+            Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.DeleteAsync("curUserId", null, "userId"));
+            Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.DeleteAsync("curUserId", "systemRole", null));
+        }
+
+        [Test]
+        public void DeleteAsync_UserCannotDeleteAnotherUser()
+        {
+            var env = new TestEnvironment();
+            string curUserId = "user01";
+            // Role is not a system admin
+            string curUserSystemRole = SystemRole.User;
+            string userIdToDelete = "user02";
+            Assert.That(env.ContainsUser(userIdToDelete), Is.True);
+            // SUT
+            Assert.ThrowsAsync<ForbiddenException>(() =>
+                env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete));
+            Assert.That(env.RealtimeService.CallCountDeleteUserAsync, Is.EqualTo(0));
+        }
+
+        [Test]
+        public async Task DeleteAsync_UserCanDeleteSelf()
+        {
+            var env = new TestEnvironment();
+            string curUserId = "user01";
+            // Role is not a system admin
+            string curUserSystemRole = SystemRole.User;
+            string userIdToDelete = "user01";
+            Assert.That(env.ContainsUser(userIdToDelete), Is.True);
+            // SUT
+            await env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete);
+            Assert.That(env.RealtimeService.CallCountDeleteUserAsync, Is.EqualTo(1));
+        }
+
+        [Test]
+        public async Task DeleteAsync_SysAdminCanDeleteUser()
+        {
+            var env = new TestEnvironment();
+            string curUserId = "user01";
+            string curUserSystemRole = SystemRole.SystemAdmin;
+            string userIdToDelete = "user02";
+            Assert.That(env.ContainsUser(userIdToDelete), Is.True);
+            // SUT
+            await env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete);
+            Assert.That(env.RealtimeService.CallCountDeleteUserAsync, Is.EqualTo(1));
+        }
+
+        [Test]
+        public async Task DeleteAsync_SysAdminCanDeleteSelf()
+        {
+            var env = new TestEnvironment();
+            string curUserId = "user01";
+            string curUserSystemRole = SystemRole.SystemAdmin;
+            string userIdToDelete = "user01";
+            Assert.That(env.ContainsUser(userIdToDelete), Is.True);
+            // SUT
+            await env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete);
+            Assert.That(env.RealtimeService.CallCountDeleteUserAsync, Is.EqualTo(1));
+        }
+
+        [Test]
+        public async Task DeleteAsync_DisassociatesFromProjects()
+        {
+            var env = new TestEnvironment();
+            string curUserId = "user01";
+            string curUserSystemRole = SystemRole.User;
+            string userIdToDelete = "user01";
+            // SUT
+            await env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete);
+            env.ProjectService.Received(1).RemoveUserFromAllProjectsAsync(curUserId, userIdToDelete);
+        }
+
+        [Test]
+        public async Task DeleteAsync_RemovesUserSecret()
+        {
+            var env = new TestEnvironment();
+            string curUserId = "user01";
+            string curUserSystemRole = SystemRole.User;
+            string userIdToDelete = "user01";
+            Assert.That(env.UserSecrets.Contains(userIdToDelete), Is.True);
+            // SUT
+            await env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete);
+            Assert.That(env.UserSecrets.Contains(userIdToDelete), Is.False);
+        }
+
+        [Test]
+        public async Task DeleteAsync_RequestsDocDeletion()
+        {
+            // Before just removing the user docs from the database, first call IDocument<User>.DeleteAsync(). This way,
+            // clients can be notified of and handle the change. For example, redirecting a deleted user to a landing
+            // page.
+            var env = new TestEnvironment();
+            string curUserId = "user01";
+            string curUserSystemRole = SystemRole.User;
+            string userIdToDelete = "user01";
+            Assert.That(env.ContainsUser(userIdToDelete), Is.True);
+            // SUT
+            await env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete);
+            Assert.That(env.ContainsUser(userIdToDelete), Is.False);
+        }
+
         private class TestEnvironment
         {
+            public UserService Service { get; }
+            public MemoryRepository<UserSecret> UserSecrets { get; }
+            public MemoryRealtimeService RealtimeService { get; }
+            public IAuthService AuthService = Substitute.For<IAuthService>();
+            public DateTime IssuedAt => DateTime.UtcNow;
+            public IProjectService ProjectService = Substitute.For<IProjectService>();
+
             public TestEnvironment()
             {
                 UserSecrets = new MemoryRepository<UserSecret>(new[]
@@ -157,16 +269,8 @@ namespace SIL.XForge.Services
                     Origin = new Uri("http://localhost")
                 });
 
-                AuthService = Substitute.For<IAuthService>();
-
-                Service = new UserService(RealtimeService, options, UserSecrets, AuthService);
+                Service = new UserService(RealtimeService, options, UserSecrets, AuthService, ProjectService);
             }
-
-            public UserService Service { get; }
-            public MemoryRepository<UserSecret> UserSecrets { get; }
-            public MemoryRealtimeService RealtimeService { get; }
-            public IAuthService AuthService { get; }
-            public DateTime IssuedAt => DateTime.UtcNow;
 
             public User GetUser(string id)
             {
