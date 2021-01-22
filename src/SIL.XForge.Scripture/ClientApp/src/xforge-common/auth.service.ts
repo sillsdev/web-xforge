@@ -4,6 +4,7 @@ import Bugsnag from '@bugsnag/js';
 import { translate } from '@ngneat/transloco';
 import { Auth0DecodedHash, AuthorizeOptions, WebAuth } from 'auth0-js';
 import jwtDecode from 'jwt-decode';
+import { clone } from 'lodash-es';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { of, Subscription, timer } from 'rxjs';
@@ -28,6 +29,7 @@ const ID_TOKEN_SETTING = 'id_token';
 const USER_ID_SETTING = 'user_id';
 const ROLE_SETTING = 'role';
 const EXPIRES_AT_SETTING = 'expires_at';
+const PARATEXT_ACCOUNT_ALREADY_LINKED = 'paratext_account_already_linked';
 
 interface AuthState {
   returnUrl?: string;
@@ -250,7 +252,30 @@ export class AuthService {
     this.scheduleRenewal();
     await this.remoteStore.init(() => this.accessToken);
     if (secondaryId != null) {
-      await this.commandService.onlineInvoke(USERS_URL, 'linkParatextAccount', { authId: secondaryId });
+      try {
+        await this.commandService.onlineInvoke(USERS_URL, 'linkParatextAccount', { authId: secondaryId });
+      } catch (err) {
+        if (!(err.message as string).includes(PARATEXT_ACCOUNT_ALREADY_LINKED)) {
+          console.error(err);
+          return false;
+        }
+        this.noticeService
+          .showMessageDialog(
+            () =>
+              translate('connect_project.paratext_account_linked_to_another_user', {
+                email: authResult.idTokenPayload.email
+              }),
+            () => translate('connect_project.proceed')
+          )
+          .then(async () => {
+            const parsedHash = clone(authResult);
+            if (parsedHash != null) {
+              parsedHash.state = undefined;
+            }
+            this.handleOnlineAuth(parsedHash);
+            this.locationService.go(this.locationService.origin + this.locationService.pathname);
+          });
+      }
     } else if (!environment.production) {
       try {
         await this.commandService.onlineInvoke(USERS_URL, 'pullAuthUserProfile');

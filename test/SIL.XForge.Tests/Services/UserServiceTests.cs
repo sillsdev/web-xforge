@@ -93,12 +93,26 @@ namespace SIL.XForge.Services
             env.AuthService.LinkAccounts("auth02", "auth03").Returns(Task.CompletedTask);
             JObject userProfile = env.CreateUserProfile("user02", "auth02", env.IssuedAt);
             env.AuthService.GetUserAsync("auth02").Returns(Task.FromResult(userProfile.ToString()));
-
-            await env.Service.LinkParatextAccountAsync("user02", "auth02", "auth03");
+            JObject ptProfile = env.CreateUserProfile("newPtProfile", "paratext|paratext01", env.IssuedAt);
+            env.AuthService.GetUserAsync("paratext|paratext01").Returns(Task.FromResult(ptProfile.ToString()));
+            Console.WriteLine("Link Account");
+            await env.Service.LinkParatextAccountAsync("user02", "auth02", "paratext|paratext01");
             User user2 = env.GetUser("user02");
             Assert.That(user2.ParatextId, Is.EqualTo("paratext01"));
             UserSecret userSecret = env.UserSecrets.Get("user02");
             Assert.That(userSecret.ParatextTokens.RefreshToken, Is.EqualTo("new_refresh_token"));
+        }
+
+        [Test]
+        public void LinkParatextAccountAsync_ParatextLoginUsingExistingSFUserEmail_ThrowsError()
+        {
+            var env = new TestEnvironment();
+            JObject userProfile = env.CreateUserProfile("user03", "notPt03", env.IssuedAt);
+            env.AuthService.GetUserAsync("notPt03").Returns(Task.FromResult(userProfile.ToString()));
+
+            Assert.ThrowsAsync<ArgumentException>(() =>
+                env.Service.LinkParatextAccountAsync("user02", "auth02", "notPt03")
+            );
         }
 
         [Test]
@@ -297,7 +311,8 @@ namespace SIL.XForge.Services
                             new JProperty("connection", "paratext"),
                             new JProperty("user_id", "paratext|paratext01"),
                             new JProperty("access_token", TokenHelper.CreateAccessToken(issuedAt)),
-                            new JProperty("refresh_token", "new_refresh_token")))));
+                            new JProperty("refresh_token", "new_refresh_token")))),
+                    new JProperty("logins_count", 1));
             }
         }
     }
