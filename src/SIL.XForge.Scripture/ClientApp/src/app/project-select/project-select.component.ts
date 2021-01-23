@@ -3,7 +3,7 @@ import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR } from '@angular/f
 import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { ShowOnDirtyErrorStateMatcher } from '@angular/material/core';
 import { BehaviorSubject, combineLatest, fromEvent, Observable } from 'rxjs';
-import { map, startWith, takeUntil, tap } from 'rxjs/operators';
+import { filter, map, startWith, takeUntil, tap } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SelectableProject } from '../core/paratext.service';
 import { SFValidators } from '../shared/sfvalidators';
@@ -30,7 +30,7 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
   @ViewChild(MatAutocomplete) autocomplete!: MatAutocomplete;
   @ViewChild(MatAutocompleteTrigger) autocompleteTrigger!: MatAutocompleteTrigger;
 
-  readonly paratextIdControl = new FormControl(null, [SFValidators.selectableProject()]);
+  readonly paratextIdControl = new FormControl('', [SFValidators.selectableProject()]);
   @Input() projects?: SelectableProject[];
   @Input() resources?: SelectableProject[];
   /** Projects that can be an already selected value, but not given as an option in the menu */
@@ -57,6 +57,29 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
     this.subscribe(this.paratextIdControl.valueChanges, (value: SelectableProject) =>
       this.valueChange.next(value.paratextId)
     );
+
+    this.subscribe(
+      this.projects$.pipe(
+        filter(
+          p =>
+            p.length === 1 &&
+            typeof this.paratextIdControl.value === 'string' &&
+            p[0].name.toLowerCase() === this.paratextIdControl.value.toLowerCase()
+        )
+      ),
+      projects => this.paratextIdControl.setValue(projects[0])
+    );
+    this.subscribe(
+      this.resources$.pipe(
+        filter(
+          r =>
+            r.length === 1 &&
+            typeof this.paratextIdControl.value === 'string' &&
+            r[0].name.toLowerCase() === this.paratextIdControl.value.toLowerCase()
+        )
+      ),
+      resources => this.paratextIdControl.setValue(resources[0])
+    );
   }
 
   @Input() set value(id: string) {
@@ -69,14 +92,16 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
     }
   }
 
-  @Input() set disabled(value: boolean) {
+  // To avoid a warning in the console this property was renamed from 'disabled'
+  @Input() set isDisabled(value: boolean) {
     if (value) {
       this.paratextIdControl.disable();
-    } else {
+    } else if (this.paratextIdControl.disabled) {
+      // This check is required otherwise it results in a strange null value error
       this.paratextIdControl.enable();
     }
   }
-  get disabled(): boolean {
+  get isDisabled(): boolean {
     return this.paratextIdControl.disabled;
   }
 
@@ -134,7 +159,7 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
     collection: SelectableProject[],
     limit?: number
   ): SelectableProject[] {
-    const valueLower = typeof value === 'string' ? value.toLocaleLowerCase() : '';
+    const valueLower = typeof value === 'string' ? value.toLowerCase() : '';
     return collection
       .filter(project => project.name.toLowerCase().includes(valueLower) && project.paratextId !== this.hideProjectId)
       .sort((a, b) => a.name.toLowerCase().indexOf(valueLower) - b.name.toLowerCase().indexOf(valueLower))
