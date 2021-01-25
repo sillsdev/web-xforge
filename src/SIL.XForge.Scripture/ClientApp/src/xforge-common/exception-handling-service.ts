@@ -44,7 +44,7 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
   }
 
   /**
-   * Bugsnag doesn't always do well trying to get the actual text from some MDC elements i.e. buttons
+   * Bugsnag doesn't always do well trying to get the actual text from some MDC elements e.g. buttons
    * This method does further investigation to try and determine the actual text before creating the breadcrumb
    */
   static handleBreadcrumb(breadcrumb: Breadcrumb) {
@@ -61,15 +61,20 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
       { element: 'BUTTON', selector: 'span' },
       { element: 'DIV.mdc-button__ripple', selector: 'span', useParent: true }
     ];
-    const selector = selectors.filter(bs => targetSelector.startsWith(bs.element))[0];
+    const selector = selectors.find(bs => targetSelector.startsWith(bs.element));
     if (selector == null) {
       return;
     }
-    let query: Node | null;
+    let query: Node;
     const specificElement = selector.selector;
     // Sometimes Bugsnag narrows it down to a nested element so we need to use the parent node
-    if (selector.useParent != null && selector.useParent) {
-      query = document.querySelector(targetSelector)!.parentNode;
+    if (selector.useParent) {
+      const node = document.querySelector(targetSelector)?.parentNode;
+      if (node == null) {
+        return;
+      } else {
+        query = node;
+      }
     } else {
       // Strip out classes that are triggered on click
       const classes = [
@@ -86,9 +91,11 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
         targetSelector = targetSelector.substr(0, targetSelector.indexOf('>')).trim();
       }
       // Check we can still query the element
-      query = document.querySelector(targetSelector);
-      if (query === null) {
+      const node = document.querySelector(targetSelector);
+      if (node == null) {
         return;
+      } else {
+        query = node;
       }
       // Append the more specific selector so long as something is still returned
       const specificQuery = document.querySelector(targetSelector + ' ' + specificElement);
@@ -98,15 +105,19 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
       }
     }
     // We only want the text part of this node
-    if (!query!.childNodes.length) {
+    if (!query.hasChildNodes) {
       return;
     }
-    query!.childNodes.forEach((node: Node) => {
+    for (const node of Array.from(query.childNodes)) {
       // Only want text nodes or the specific node element
-      if ((node.nodeType === 3 || node.nodeName.toLowerCase() === specificElement) && node.textContent != null) {
+      if (
+        (node.nodeType === Node.TEXT_NODE || node.nodeName.toLowerCase() === specificElement) &&
+        node.textContent != null
+      ) {
         targetText = node.textContent.trim();
+        break;
       }
-    });
+    }
     // If nothing useful is found then just use what Bugsnag already had as a fallback
     if (targetText === '') {
       return;
