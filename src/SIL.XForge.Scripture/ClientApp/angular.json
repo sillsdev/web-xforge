@@ -37,7 +37,8 @@
               {
                 "input": "node_modules/@angular/material/prebuilt-themes/indigo-pink.css"
               },
-              "src/styles.scss"
+              "src/styles.scss",
+              "src/material-styles.scss"
             ],
             "stylePreprocessorOptions": {
               "includePaths": ["node_modules"]
@@ -142,7 +143,8 @@
               {
                 "input": "node_modules/@angular/material/prebuilt-themes/indigo-pink.css"
               },
-              "src/styles.scss"
+              "src/styles.scss",
+              "src/material-styles.scss"
             ],
             "stylePreprocessorOptions": {
               "includePaths": ["node_modules"]

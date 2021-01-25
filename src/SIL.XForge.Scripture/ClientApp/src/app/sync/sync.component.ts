@@ -1,7 +1,6 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
-import { Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -17,15 +16,14 @@ import { SFProjectService } from '../core/sf-project.service';
   templateUrl: './sync.component.html',
   styleUrls: ['./sync.component.scss']
 })
-export class SyncComponent extends DataLoadingComponent implements OnInit, OnDestroy {
-  syncActive: boolean = false;
+export class SyncComponent extends DataLoadingComponent implements OnInit {
   isAppOnline: boolean = false;
   showParatextLogin = false;
   syncDisabled: boolean = false;
+  projectDoc?: SFProjectDoc;
 
-  private projectDoc?: SFProjectDoc;
   private paratextUsername?: string;
-  private projectDataSub?: Subscription;
+  private _syncActive: boolean = false;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -42,15 +40,6 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
     return this.paratextUsername != null && this.paratextUsername.length > 0;
   }
 
-  get percentComplete(): number | undefined {
-    return this.projectDoc == null || this.projectDoc.data == null
-      ? undefined
-      : this.projectDoc.data.sync.percentCompleted;
-  }
-
-  get isProgressDeterminate(): boolean {
-    return this.percentComplete != null && this.percentComplete > 0;
-  }
   // Todo: This may not be return the correct data on reconnect
   get lastSyncNotice(): string {
     if (this.projectDoc == null || this.projectDoc.data == null) {
@@ -78,6 +67,26 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
 
   get projectName(): string {
     return this.projectDoc == null || this.projectDoc.data == null ? '' : this.projectDoc.data.name;
+  }
+
+  get syncActive(): boolean {
+    return this._syncActive;
+  }
+
+  set syncActive(isActive: boolean) {
+    if (this._syncActive && !isActive && this.projectDoc?.data != null) {
+      if (this.projectDoc.data.sync.lastSyncSuccessful) {
+        this.noticeService.show(
+          translate('sync.successfully_synchronized_with_paratext', { projectName: this.projectDoc.data.name })
+        );
+      } else {
+        const name: string = this.projectDoc.data.name;
+        this.noticeService.showMessageDialog(() =>
+          translate('sync.something_went_wrong_synchronizing_this_project', { projectName: name })
+        );
+      }
+    }
+    this._syncActive = isActive;
   }
 
   get syncDisabledMessage(): string {
@@ -111,19 +120,8 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
     this.subscribe(projectId$, async projectId => {
       this.projectDoc = await this.projectService.get(projectId);
       this.checkSyncStatus();
-      if (this.projectDataSub != null) {
-        this.projectDataSub.unsubscribe();
-      }
-      this.projectDataSub = this.projectDoc.remoteChanges$.subscribe(() => this.checkSyncStatus());
       this.loadingFinished();
     });
-  }
-
-  ngOnDestroy(): void {
-    super.ngOnDestroy();
-    if (this.projectDataSub != null) {
-      this.projectDataSub.unsubscribe();
-    }
   }
 
   logInWithParatext(): void {
@@ -138,32 +136,17 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
     if (this.projectDoc == null) {
       return;
     }
-    this.syncActive = true;
+    this._syncActive = true;
     this.projectService.onlineSync(this.projectDoc.id);
   }
 
   private checkSyncStatus(): void {
-    if (this.projectDoc == null || this.projectDoc.data == null) {
+    if (this.projectDoc?.data == null) {
       return;
     }
-
     if (this.projectDoc.data.syncDisabled != null) {
       this.syncDisabled = this.projectDoc.data.syncDisabled;
     }
-
-    if (this.projectDoc.data.sync.queuedCount > 0) {
-      this.syncActive = true;
-    } else if (this.syncActive) {
-      this.syncActive = false;
-      if (this.projectDoc.data.sync.lastSyncSuccessful) {
-        this.noticeService.show(
-          translate('sync.successfully_synchronized_with_paratext', { projectName: this.projectName })
-        );
-      } else {
-        this.noticeService.showMessageDialog(() =>
-          translate('sync.something_went_wrong_synchronizing_this_project', { projectName: this.projectName })
-        );
-      }
-    }
+    this._syncActive = this.projectDoc.data.sync.queuedCount > 0;
   }
 }

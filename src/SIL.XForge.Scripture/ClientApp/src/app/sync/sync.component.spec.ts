@@ -19,6 +19,7 @@ import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
+import { SyncProgressComponent } from './sync-progress/sync-progress.component';
 import { SyncComponent } from './sync.component';
 
 const mockedAuthService = mock(AuthService);
@@ -31,7 +32,7 @@ const mockedPwaService = mock(PwaService);
 
 describe('SyncComponent', () => {
   configureTestingModule(() => ({
-    declarations: [SyncComponent],
+    declarations: [SyncComponent, SyncProgressComponent],
     imports: [CommonModule, UICommonModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
@@ -88,20 +89,9 @@ describe('SyncComponent', () => {
     verify(mockedProjectService.onlineSync('testProject01')).once();
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).not.toBeNull();
-    expect(env.component.isProgressDeterminate).toBe(false);
-    expect(env.syncMessage.textContent).toContain('Your project is being synchronized');
     expect(env.logInButton).toBeNull();
     expect(env.syncButton).toBeNull();
-    // Simulate sync starting
-    env.emitSyncProgress(0);
-    expect(env.component.isProgressDeterminate).toBe(false);
-    // Simulate sync in progress
-    env.emitSyncProgress(0.5);
-    expect(env.component.isProgressDeterminate).toBe(true);
-    env.emitSyncProgress(1);
-    // Simulate sync completed
-    env.emitSyncComplete(true);
-    expect(env.component.syncActive).toBe(false);
+    env.emitSyncComplete(true, 'testProject01');
     verify(mockedNoticeService.show('Successfully synchronized Sync Test Project with Paratext.')).once();
   }));
 
@@ -113,9 +103,9 @@ describe('SyncComponent', () => {
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).not.toBeNull();
     // Simulate sync in progress
-    env.emitSyncProgress(0);
+    env.emitSyncProgress(0, 'testProject01');
     // Simulate sync error
-    env.emitSyncComplete(false);
+    env.emitSyncComplete(false, 'testProject01');
     expect(env.component.syncActive).toBe(false);
     verify(mockedNoticeService.showMessageDialog(anything())).once();
   }));
@@ -158,7 +148,9 @@ class TestEnvironment {
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'testProject01' }));
     const ptUsername = isParatextAccountConnected ? 'Paratext User01' : '';
     when(mockedParatextService.getParatextUsername()).thenReturn(of(ptUsername));
-    when(mockedProjectService.onlineSync('testProject01')).thenResolve();
+    when(mockedProjectService.onlineSync(anything()))
+      .thenCall(id => this.emitSyncProgress(0, id))
+      .thenResolve();
     when(mockedNoticeService.loadingStarted()).thenCall(() => (this.isLoading = true));
     when(mockedNoticeService.loadingFinished()).thenCall(() => (this.isLoading = false));
     when(mockedNoticeService.isAppLoading).thenCall(() => this.isLoading);
@@ -176,9 +168,7 @@ class TestEnvironment {
         writingSystem: {
           tag: 'en'
         },
-        translateConfig: {
-          translationSuggestionsEnabled: false
-        },
+        translateConfig: { translationSuggestionsEnabled: false },
         checkingConfig: {
           checkingEnabled: false,
           usersSeeEachOthersResponses: true,
@@ -196,6 +186,7 @@ class TestEnvironment {
         userRoles: {}
       }
     });
+
     when(mockedProjectService.get('testProject01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'testProject01')
     );
@@ -216,7 +207,7 @@ class TestEnvironment {
   }
 
   get progressBar(): DebugElement {
-    return this.fixture.debugElement.query(By.css('mdc-linear-progress'));
+    return this.fixture.debugElement.query(By.css('mat-progress-bar'));
   }
 
   get title(): HTMLElement {
@@ -254,8 +245,8 @@ class TestEnvironment {
     tick();
   }
 
-  emitSyncProgress(percentCompleted: number): void {
-    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'testProject01');
+  emitSyncProgress(percentCompleted: number, projectId: string): void {
+    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(ops => {
       ops.set<number>(p => p.sync.queuedCount, 1);
       ops.set(p => p.sync.percentCompleted!, percentCompleted);
@@ -263,8 +254,8 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  emitSyncComplete(successful: boolean): void {
-    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'testProject01');
+  emitSyncComplete(successful: boolean, projectId: string): void {
+    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(ops => {
       ops.set<number>(p => p.sync.queuedCount, 0);
       ops.unset(p => p.sync.percentCompleted!);

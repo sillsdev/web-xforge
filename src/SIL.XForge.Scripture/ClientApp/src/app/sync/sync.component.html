@@ -33,13 +33,11 @@
           <span *ngIf="syncActive" id="sync-message" class="sync-info">{{
             t("your_project_is_being_synchronized")
           }}</span>
-          <mdc-linear-progress
+          <app-sync-progress
             *ngIf="syncActive"
-            class="progress-bar"
-            [determinate]="isProgressDeterminate"
-            [progress]="percentComplete"
-            [buffer]="1"
-          ></mdc-linear-progress>
+            [projectDoc]="projectDoc"
+            (inProgress)="syncActive = $event"
+          ></app-sync-progress>
           <span *ngIf="!syncActive" [title]="lastSyncDate" id="date-last-sync" class="sync-info">
             {{ lastSyncNotice }}
           </span>

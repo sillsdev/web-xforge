@@ -27,6 +27,7 @@ import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { ParatextService, SelectableProject } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { ProjectSelectComponent } from '../project-select/project-select.component';
+import { SyncProgressComponent } from '../sync/sync-progress/sync-progress.component';
 import { ConnectProjectComponent } from './connect-project.component';
 
 const mockedParatextService = mock(ParatextService);
@@ -47,7 +48,7 @@ describe('ConnectProjectComponent', () => {
       TestTranslocoModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
     ],
-    declarations: [ConnectProjectComponent, ProjectSelectComponent],
+    declarations: [ConnectProjectComponent, ProjectSelectComponent, SyncProgressComponent],
     providers: [
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: Router, useMock: mockedRouter },
@@ -285,12 +286,6 @@ describe('ConnectProjectComponent', () => {
 
     expect(env.component.state).toEqual('connecting');
     expect(env.progressBar).not.toBeNull();
-    expect(env.component.isProgressDeterminate).toEqual(false);
-
-    env.emitSyncProgress(0);
-    expect(env.component.isProgressDeterminate).toEqual(false);
-    env.emitSyncProgress(0.5);
-    expect(env.component.isProgressDeterminate).toEqual(true);
     env.emitSyncProgress(1);
     env.emitSyncComplete();
 
@@ -318,12 +313,6 @@ describe('ConnectProjectComponent', () => {
 
     expect(env.component.state).toEqual('connecting');
     expect(env.progressBar).not.toBeNull();
-    expect(env.component.isProgressDeterminate).toEqual(false);
-
-    env.emitSyncProgress(0);
-    expect(env.component.isProgressDeterminate).toEqual(false);
-    env.emitSyncProgress(0.5);
-    expect(env.component.isProgressDeterminate).toEqual(true);
     env.emitSyncProgress(1);
     env.emitSyncComplete();
 
@@ -366,7 +355,6 @@ describe('ConnectProjectComponent', () => {
     verify(mockedErrorHandler.handleError(anything())).once();
     expect(env.component.state).toEqual('input');
     expect(env.progressBar).toBeNull();
-    expect(env.component.connectProgress).toBeUndefined();
     verify(mockedSFProjectService.onlineCreate(anything())).once();
     verify(mockedSFProjectService.onlineAddCurrentUser(anything())).never();
     verify(mockedRouter.navigate(deepEqual(['/projects', 'project01']))).never();
@@ -476,7 +464,7 @@ class TestEnvironment {
   }
 
   get progressBar(): DebugElement {
-    return this.fixture.debugElement.query(By.css('mdc-linear-progress'));
+    return this.fixture.debugElement.query(By.css('mat-progress-bar'));
   }
 
   get offlineMessage(): DebugElement {
@@ -529,6 +517,7 @@ class TestEnvironment {
     element.click();
     this.fixture.detectChanges();
     tick();
+    this.fixture.detectChanges();
   }
 
   getMenuItems(menu: DebugElement): DebugElement[] {
