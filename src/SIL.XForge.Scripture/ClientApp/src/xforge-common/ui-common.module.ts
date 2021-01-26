@@ -25,6 +25,7 @@ import { NgModule } from '@angular/core';
 import { BREAKPOINT, FlexLayoutModule } from '@angular/flex-layout';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatButtonModule } from '@angular/material/button';
 import { MatOptionModule } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -47,6 +48,7 @@ const modules = [
   FlexLayoutModule,
   FormsModule,
   MatAutocompleteModule,
+  MatButtonModule,
   MatInputModule,
   MatFormFieldModule,
   MatOptionModule,

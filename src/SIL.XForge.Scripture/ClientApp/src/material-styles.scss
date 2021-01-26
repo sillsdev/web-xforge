@@ -1,18 +1,65 @@
+@import 'variables';
 @import '~@angular/material/theming';
 
 @include mat-core();
 
+$mat-sf-purple: (
+  200: $purpleLight,
+  500: $purpleMedium,
+  800: $purpleDark,
+  contrast: (
+    200: $dark-primary-text,
+    500: $light-primary-text,
+    800: $light-primary-text
+  )
+);
+
+$mat-sf-grey: (
+  200: $greyLight,
+  800: $greyDark,
+  contrast: (
+    200: $dark-primary-text,
+    800: $light-primary-text
+  )
+);
+
+$mat-sf-green: (
+  200: #dcedc8,
+  500: $greenLight,
+  800: $greenDark,
+  contrast: (
+    200: $dark-primary-text,
+    500: $dark-primary-text,
+    800: $light-primary-text
+  )
+);
+
+$mat-sf-blue: (
+  500: $blueMedium,
+  contrast: (
+    500: $light-primary-text
+  )
+);
+
+$mat-sf-orange: (
+  500: #ff7300,
+  contrast: (
+    500: $light-primary-text
+  )
+);
+
 // Styles for angular material components. Refer to https://material.angular.io/guide/theming
-$greyDark: mat-palette($mat-gray, 800);
-$greenLight: mat-palette($mat-light-green, 300);
+$matGrey: mat-palette($mat-sf-grey, 800);
+$matGreenLight: mat-palette($mat-sf-green, 500, 200);
 
 $material-app-theme: mat-light-theme(
   (
     color: (
-      primary: $greyDark,
-      accent: $greenLight
+      primary: $matGrey,
+      accent: $matGreenLight
     )
   )
 );
 
-@include angular-material-theme($material-app-theme);
+@include mat-button-theme($material-app-theme);
+@include mat-progress-bar-theme($material-app-theme);
