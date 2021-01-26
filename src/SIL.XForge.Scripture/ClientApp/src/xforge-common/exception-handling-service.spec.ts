@@ -1,6 +1,8 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
-import { TestBed } from '@angular/core/testing';
+import { Component } from '@angular/core';
+import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { NotifiableError } from '@bugsnag/js';
+import { Breadcrumb } from '@bugsnag/js';
 import { CookieService } from 'ngx-cookie-service';
 import { User } from 'realtime-server/lib/common/models/user';
 import { Observable } from 'rxjs';
@@ -41,6 +43,7 @@ class MockConsole {
 
 describe('ExceptionHandlingService', () => {
   configureTestingModule(() => ({
+    declarations: [HostComponent],
     providers: [
       ExceptionHandlingService,
       { provide: AuthService, useMock: mockedAuthService },
@@ -54,7 +57,7 @@ describe('ExceptionHandlingService', () => {
     imports: [TestTranslocoModule]
   }));
 
-  it('should not crash on anything', async () => {
+  it('should not crash on anything', fakeAsync(() => {
     const env = new TestEnvironment();
     const values = [
       undefined,
@@ -73,13 +76,13 @@ describe('ExceptionHandlingService', () => {
       () => {},
       BigInt(3)
     ];
-    await Promise.all(values.map(value => env.service.handleError(value)));
+    Promise.all(values.map(value => env.handleError(value)));
     expect(env.errorReports.length).toBe(values.length);
-  });
+  }));
 
-  it('should unwrap a rejection from a promise', async () => {
+  it('should unwrap a rejection from a promise', fakeAsync(() => {
     const env = new TestEnvironment();
-    await env.service.handleError({
+    env.handleError({
       message: 'This is the outer message',
       stack: 'Stack trace trace to promise implementation',
       rejection: {
@@ -90,35 +93,102 @@ describe('ExceptionHandlingService', () => {
 
     expect(env.oneAndOnlyReport.error.message).toBe('Original error');
     expect(env.oneAndOnlyReport.error.name).toBe('Original error name');
-  });
+  }));
 
-  it('should handle arbitrary objects', async () => {
+  it('should handle arbitrary objects', fakeAsync(() => {
     const env = new TestEnvironment();
-    await env.service.handleError({
+    env.handleError({
       a: 1
     });
     expect(env.oneAndOnlyReport.error.message).toBe('Unknown error: {"a":1}');
-  });
+  }));
 
-  it('should handle circular objects', async () => {
+  it('should handle circular objects', fakeAsync(() => {
     const env = new TestEnvironment();
     const z = { z: {} };
     z.z = z;
     expect(() => JSON.stringify(z)).toThrow();
-    await env.service.handleError(z);
+    env.handleError(z);
     expect(env.oneAndOnlyReport.error.message).toBe('Unknown error (with circular references): [object Object]');
-  });
+  }));
 
-  it('should handle storage quota exceeded errors', async () => {
+  it('should handle storage quota exceeded errors', fakeAsync(() => {
     const env = new TestEnvironment();
-    await env.service.handleError(new DOMException('error', 'QuotaExceededError'));
+    env.handleError(new DOMException('error', 'QuotaExceededError'));
+
     verify(mockedNoticeService.showError(anything())).once();
     expect().nothing();
+  }));
+
+  describe('Bugsnag', () => {
+    it('should extract text from button', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const tests: BreadcrumbTests[] = [
+        {
+          selector: 'BUTTON.mdc-button.plain-text',
+          expectedText: 'Plain text',
+          expectedSelector: 'BUTTON.mdc-button.plain-text'
+        },
+        {
+          selector: 'BUTTON.mdc-button.include-icon',
+          expectedText: 'Inside span',
+          expectedSelector: 'BUTTON.mdc-button.include-icon span'
+        },
+        {
+          selector:
+            'BUTTON#activated_button.mdc-ripple-upgraded.mdc-ripple-upgraded--background-focused.mdc-ripple-upgraded--foreground-activation',
+          expectedText: 'Button with ID',
+          expectedSelector: 'BUTTON#activated_button span'
+        },
+        {
+          selector: 'DIV.mdc-button__ripple',
+          expectedText: 'Ripple text',
+          expectedSelector: 'DIV.mdc-button__ripple'
+        },
+        {
+          selector: 'BUTTON.mdc-button.child-element > i',
+          expectedText: 'Child',
+          expectedSelector: 'BUTTON.mdc-button.child-element span'
+        }
+      ];
+      for (const test of tests) {
+        const breadcrumb = env.addBreadcrumb(test.selector);
+        expect(breadcrumb.metadata.targetText).toBe(test.expectedText);
+        expect(breadcrumb.metadata.targetSelector).toBe(test.expectedSelector);
+      }
+    }));
   });
 });
 
+interface BreadcrumbTests {
+  selector: string;
+  expectedText: string;
+  expectedSelector: string;
+}
+
+@Component({
+  selector: 'app-host',
+  template: `
+    <button class="mdc-button plain-text">Plain text</button>
+    <button class="mdc-button include-icon"><i>icon_name</i><span>Inside span</span></button>
+    <button class="mdc-button child-element"><i>icon_name</i><span>Child</span></button>
+    <button
+      id="activated_button"
+      class="mdc-button mdc-ripple-upgraded mdc-ripple-upgraded--background-focused mdc-ripple-upgraded--foreground-activation"
+    >
+      <span>Button with ID</span>
+    </button>
+    <button id="ripple_button">
+      <div class="mdc-button__ripple"></div>
+      <span>Ripple text</span>
+    </button>
+  `
+})
+class HostComponent {}
+
 class TestEnvironment {
   readonly errorReports: { error: any }[] = [];
+  readonly fixture: ComponentFixture<HostComponent>;
   readonly service: ExceptionHandlingService;
   rejectUser = false;
   timeoutUser = false;
@@ -134,7 +204,9 @@ class TestEnvironment {
   } as UserDoc;
 
   constructor() {
-    this.service = TestBed.inject(ExceptionHandlingService);
+    this.service = TestBed.get(ExceptionHandlingService);
+    this.fixture = TestBed.createComponent(HostComponent);
+    this.fixture.detectChanges();
 
     when(mockedMdcDialog.open(anything(), anything())).thenReturn({
       afterClosed: () => {
@@ -154,5 +226,24 @@ class TestEnvironment {
   get oneAndOnlyReport() {
     expect(this.errorReports.length).toEqual(1);
     return this.errorReports[this.errorReports.length - 1];
+  }
+
+  addBreadcrumb(targetSelector: string): Breadcrumb {
+    const breadcrumb: Breadcrumb = {
+      message: 'UI click',
+      timestamp: new Date(),
+      type: 'log',
+      metadata: {
+        targetSelector,
+        targetText: '(...)'
+      }
+    };
+    ExceptionHandlingService.handleBreadcrumb(breadcrumb);
+    return breadcrumb;
+  }
+
+  async handleError(error: any) {
+    await this.service.handleError(error);
+    flush();
   }
 }

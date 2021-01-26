@@ -1,6 +1,6 @@
 import { MdcDialog } from '@angular-mdc/web/dialog';
 import { Injectable, Injector, NgZone } from '@angular/core';
-import Bugsnag, { BrowserConfig } from '@bugsnag/js';
+import Bugsnag, { Breadcrumb, BrowserConfig } from '@bugsnag/js';
 import { BugsnagErrorHandler } from '@bugsnag/plugin-angular';
 import { translate } from '@ngneat/transloco';
 import { version } from '../../../version.json';
@@ -10,6 +10,12 @@ import { ErrorReportingService } from './error-reporting.service';
 import { ErrorAlert, ErrorComponent } from './error/error.component';
 import { NoticeService } from './notice.service';
 import { objectId } from './utils';
+
+export interface BreadcrumbSelector {
+  element: string;
+  selector: string;
+  useParent?: boolean;
+}
 
 export class AppError extends Error {
   constructor(message: string, private readonly data?: any) {
@@ -28,12 +34,96 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
       appType: 'angular',
       enabledReleaseStages: ['live', 'qa'],
       releaseStage: environment.releaseStage,
-      autoDetectErrors: false
+      autoDetectErrors: false,
+      onBreadcrumb: ExceptionHandlingService.handleBreadcrumb
     };
     if (environment.releaseStage === 'dev') {
       config.logger = null;
     }
     Bugsnag.start(config);
+  }
+
+  /**
+   * Bugsnag doesn't always do well trying to get the actual text from some MDC elements e.g. buttons
+   * This method does further investigation to try and determine the actual text before creating the breadcrumb
+   */
+  static handleBreadcrumb(breadcrumb: Breadcrumb) {
+    if (
+      !['targetSelector', 'targetText'].every(property => breadcrumb.metadata.hasOwnProperty(property)) ||
+      breadcrumb.message !== 'UI click'
+    ) {
+      return;
+    }
+    let targetSelector: string = breadcrumb.metadata.targetSelector;
+    let targetText: string = breadcrumb.metadata.targetText;
+    // Only check for MDC selectors Bugsnag has trouble with
+    const selectors: BreadcrumbSelector[] = [
+      { element: 'BUTTON', selector: 'span' },
+      { element: 'DIV.mdc-button__ripple', selector: 'span', useParent: true }
+    ];
+    const selector = selectors.find(bs => targetSelector.startsWith(bs.element));
+    if (selector == null) {
+      return;
+    }
+    let query: Node;
+    const specificElement = selector.selector;
+    // Sometimes Bugsnag narrows it down to a nested element so we need to use the parent node
+    if (selector.useParent) {
+      const node = document.querySelector(targetSelector)?.parentNode;
+      if (node == null) {
+        return;
+      } else {
+        query = node;
+      }
+    } else {
+      // Strip out classes that are triggered on click
+      const classes = [
+        'mdc-ripple-upgraded--foreground-activation',
+        'mdc-ripple-upgraded--background-focused',
+        'mdc-ripple-upgraded'
+      ];
+      for (let cls of classes) {
+        cls = '.' + cls;
+        targetSelector = targetSelector.replace(cls, '');
+      }
+      // Remove CSS specific selectors that Bugsnag added as they aren't compatible with the querySelector
+      if (targetSelector.includes('>')) {
+        targetSelector = targetSelector.substr(0, targetSelector.indexOf('>')).trim();
+      }
+      // Check we can still query the element
+      const node = document.querySelector(targetSelector);
+      if (node == null) {
+        return;
+      } else {
+        query = node;
+      }
+      // Append the more specific selector so long as something is still returned
+      const specificQuery = document.querySelector(targetSelector + ' ' + specificElement);
+      if (specificQuery != null) {
+        targetSelector += ' ' + specificElement;
+        query = specificQuery;
+      }
+    }
+    // We only want the text part of this node
+    if (!query.hasChildNodes) {
+      return;
+    }
+    for (const node of Array.from(query.childNodes)) {
+      // Only want text nodes or the specific node element
+      if (
+        (node.nodeType === Node.TEXT_NODE || node.nodeName.toLowerCase() === specificElement) &&
+        node.textContent != null
+      ) {
+        targetText = node.textContent.trim();
+        break;
+      }
+    }
+    // If nothing useful is found then just use what Bugsnag already had as a fallback
+    if (targetText === '') {
+      return;
+    }
+    breadcrumb.metadata.targetText = targetText;
+    breadcrumb.metadata.targetSelector = targetSelector;
   }
 
   // Use injected console when it's available, for the sake of tests, but fall back to window.console if injection fails
