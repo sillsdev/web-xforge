@@ -75,10 +75,10 @@ namespace SIL.XForge.Services
             }
         }
 
-        public async Task<string> RoleOnProjectAsync(string curUserId, string projectId)
+        public async Task<string> GetProjectRoleAsync(string curUserId, string projectId)
         {
             TModel project = await GetProjectAsync(projectId);
-            var attempt = await TryGetProjectRoleAsync(project, curUserId);
+            Attempt<string> attempt = await TryGetProjectRoleAsync(project, curUserId);
             return attempt.Result;
         }
 

@@ -8,7 +8,7 @@ namespace SIL.XForge.Services
     {
         Task AddUserAsync(string curUserId, string projectId, string projectRole = null);
         Task RemoveUserAsync(string curUserId, string projectId, string projectUserId);
-        Task<string> RoleOnProjectAsync(string curUserId, string projectId);
+        Task<string> GetProjectRoleAsync(string curUserId, string projectId);
         Task UpdateRoleAsync(string curUserId, string systemRole, string projectId, string projectRole);
         Task<Uri> SaveAudioAsync(string curUserId, string projectId, string dataId, string extension,
             Stream inputStream);

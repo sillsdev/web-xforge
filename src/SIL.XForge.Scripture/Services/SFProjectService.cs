@@ -519,7 +519,7 @@ namespace SIL.XForge.Scripture.Services
                                userSecret, project.ParatextId, userId);
                     return permission switch
                     {
-                        TextInfoPermission.None => Attempt.Failure((string)null),
+                        TextInfoPermission.None => Attempt.Failure(ProjectRole.None),
                         TextInfoPermission.Read => Attempt.Success(SFProjectRole.Observer),
                         _ => throw new ArgumentException("Unknown resource permission", nameof(permission)),
                     };

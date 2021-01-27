@@ -75,7 +75,7 @@ export abstract class ProjectService<
   }
 
   onlineGetProjectRole(id: string): Promise<string | undefined> {
-    return this.onlineInvoke<string>('projectRole', { projectId: id });
+    return this.onlineInvoke<string>('getProjectRole', { projectId: id });
   }
 
   onlineUpdateCurrentUserRole(id: string, projectRole: string): Promise<void> {
