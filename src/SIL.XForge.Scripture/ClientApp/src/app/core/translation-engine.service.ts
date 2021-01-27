@@ -1,5 +1,11 @@
 import { Injectable } from '@angular/core';
-import { LatinWordTokenizer, MAX_SEGMENT_LENGTH, RemoteTranslationEngine } from '@sillsdev/machine';
+import {
+  createInteractiveTranslator,
+  ErrorCorrectionModel,
+  LatinWordTokenizer,
+  MAX_SEGMENT_LENGTH,
+  RemoteTranslationEngine
+} from '@sillsdev/machine';
 import * as crc from 'crc-32';
 import { SFProjectUserConfig } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
@@ -131,7 +137,7 @@ export class TranslationEngineService extends SubscriptionDisposable {
     }
 
     const translationEngine = this.createTranslationEngine(projectRef);
-    const session = await translationEngine.translateInteractively(sourceWords);
+    const session = await createInteractiveTranslator(new ErrorCorrectionModel(), translationEngine, sourceWords);
     const tokenRanges = wordTokenizer.tokenizeAsRanges(targetText);
     const prefix = tokenRanges.map(r => targetText.substring(r.start, r.end));
     const isLastWordComplete =
