@@ -1,4 +1,5 @@
 import { HttpClient } from '@angular/common/http';
+import { SwUpdate } from '@angular/service-worker';
 import { instance, mock } from 'ts-mockito';
 import { PwaService } from './pwa.service';
 
@@ -56,7 +57,8 @@ class TestEnvironment {
 
   constructor() {
     const mockedHttpClient = mock(HttpClient);
-    this.pwaService = new PwaService(instance(mockedHttpClient));
+    const mockedSwUpdate = mock(SwUpdate);
+    this.pwaService = new PwaService(instance(mockedHttpClient), instance(mockedSwUpdate));
     spyOnProperty(window.navigator, 'onLine').and.returnValue(this.navigatorOnline);
   }
 

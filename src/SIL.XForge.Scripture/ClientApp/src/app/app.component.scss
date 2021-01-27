@@ -104,11 +104,22 @@
 
     .mdc-top-app-bar__section {
       padding: 4px;
+      .refresh-message {
+        margin: auto;
+        padding: 0px 8px;
+      }
+      .mat-raised-button {
+        margin-right: 8px;
+      }
     }
   }
 
   .mdc-top-app-bar-adjust {
     margin-top: top-app-bar.$mobile-row-height;
+  }
+
+  .mdc-top-app-bar-adjust-double {
+    margin-top: top-app-bar.$mobile-row-height * 2;
   }
 
   .app-content {

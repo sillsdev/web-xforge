@@ -15,7 +15,7 @@ import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/m
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, of, Subject } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
@@ -240,6 +240,20 @@ describe('AppComponent', () => {
     expect(env.location.path()).toEqual('/projects');
   }));
 
+  it('shows banner when update is available', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.navigate(['/projects', 'project01']);
+    env.init();
+
+    expect(env.refreshButton).toBeNull();
+    env.hasUpdate$.next('update!');
+    env.wait();
+    expect(env.refreshButton).not.toBeNull();
+    env.refreshButton.nativeElement.click();
+    env.wait();
+    verify(mockedPwaService.activateUpdates()).once();
+  }));
+
   it('user added to project after init', fakeAsync(() => {
     const env = new TestEnvironment();
     env.navigate(['/projects']);
@@ -394,6 +408,7 @@ class TestEnvironment {
   readonly questions: Question[];
   readonly ngZone: NgZone;
   readonly isProjectAdmin$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
+  readonly hasUpdate$: Subject<any> = new Subject<any>();
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
@@ -457,6 +472,7 @@ class TestEnvironment {
     when(mockedPwaService.isOnline).thenReturn(true);
     when(mockedPwaService.onlineStatus).thenReturn(of(true));
     when(mockedFileService.notifyUserIfStorageQuotaBelow(anything())).thenResolve();
+    when(mockedPwaService.hasUpdate).thenReturn(this.hasUpdate$);
 
     this.router = TestBed.inject(Router);
     this.location = TestBed.inject(Location);
@@ -506,6 +522,10 @@ class TestEnvironment {
 
   get navBar(): DebugElement {
     return this.fixture.debugElement.query(By.css('mdc-top-app-bar'));
+  }
+
+  get refreshButton(): DebugElement {
+    return this.navBar.query(By.css('.update-banner .mat-raised-button'));
   }
 
   get selectedProjectId(): string {
