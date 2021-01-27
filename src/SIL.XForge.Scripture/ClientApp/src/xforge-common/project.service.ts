@@ -74,6 +74,10 @@ export abstract class ProjectService<
     return this.onlineInvoke('removeUser', { projectId: id, projectUserId: userId });
   }
 
+  onlineGetProjectRole(id: string): Promise<string | undefined> {
+    return this.onlineInvoke<string>('projectRole', { projectId: id });
+  }
+
   onlineUpdateCurrentUserRole(id: string, projectRole: string): Promise<void> {
     return this.onlineInvoke('updateRole', { projectId: id, projectRole });
   }

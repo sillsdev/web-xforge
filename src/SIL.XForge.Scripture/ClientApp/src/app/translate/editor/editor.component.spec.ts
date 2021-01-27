@@ -740,6 +740,7 @@ describe('EditorComponent', () => {
 
     it('user has no resource access', fakeAsync(() => {
       const env = new TestEnvironment();
+      when(mockedSFProjectService.onlineGetProjectRole('resource01')).thenResolve('None');
       env.setupProject({
         translateConfig: {
           translationSuggestionsEnabled: true,
@@ -758,6 +759,8 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.updateParams({ projectId: 'project01', bookId: 'ACT' });
       env.wait();
+      verify(mockedSFProjectService.onlineGetProjectRole('resource01')).once();
+      verify(mockedSFProjectService.get('resource01')).never();
       expect(env.bookName).toEqual('Acts');
       expect(env.component.chapter).toBe(1);
       expect(env.component.sourceLabel).toEqual('SRC');
@@ -955,6 +958,7 @@ describe('EditorComponent', () => {
 
     it('user has no resource access', fakeAsync(() => {
       const env = new TestEnvironment();
+      when(mockedSFProjectService.onlineGetProjectRole('resource01')).thenResolve('None');
       env.setupProject({
         translateConfig: {
           translationSuggestionsEnabled: false,
@@ -973,6 +977,8 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.updateParams({ projectId: 'project01', bookId: 'ACT' });
       env.wait();
+      verify(mockedSFProjectService.onlineGetProjectRole('resource01')).once();
+      verify(mockedSFProjectService.get('resource01')).never();
       expect(env.bookName).toEqual('Acts');
       expect(env.component.chapter).toBe(1);
       expect(env.component.sourceLabel).toEqual('SRC');
@@ -1084,6 +1090,11 @@ class TestEnvironment {
 
   lastApprovedPrefix: string[] = [];
 
+  private userRolesOnProject = {
+    user01: SFProjectRole.ParatextTranslator,
+    user02: SFProjectRole.ParatextConsultant,
+    user03: SFProjectRole.ParatextTranslator
+  };
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private readonly params$: BehaviorSubject<Params>;
   private trainingProgress$ = new Subject<ProgressStatus>();
@@ -1093,11 +1104,7 @@ class TestEnvironment {
     paratextId: 'target01',
     shortName: 'TRG',
     isRightToLeft: false,
-    userRoles: {
-      user01: SFProjectRole.ParatextTranslator,
-      user02: SFProjectRole.ParatextConsultant,
-      user03: SFProjectRole.ParatextTranslator
-    },
+    userRoles: this.userRolesOnProject,
     writingSystem: { tag: 'qaa' },
     translateConfig: {
       translationSuggestionsEnabled: true,
@@ -1293,6 +1300,8 @@ class TestEnvironment {
   setCurrentUser(userId: string): void {
     when(mockedUserService.currentUserId).thenReturn(userId);
     when(mockedUserService.getCurrentUser()).thenCall(() => this.realtimeService.subscribe(UserDoc.COLLECTION, userId));
+    when(mockedSFProjectService.onlineGetProjectRole('project01')).thenResolve(this.userRolesOnProject[userId]);
+    when(mockedSFProjectService.onlineGetProjectRole('project02')).thenResolve(this.userRolesOnProject[userId]);
   }
 
   setupUsers(): void {
