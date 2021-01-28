@@ -24,6 +24,9 @@ namespace SIL.XForge.Models
             }
         }
 
+        /// <summary>
+        /// Checks whether the access token is valid and not about to expire within the next minute.
+        /// </summary>
         public bool ValidateLifetime()
         {
             if (AccessToken == null)
@@ -32,7 +35,7 @@ namespace SIL.XForge.Models
             }
             var accessToken = new JwtSecurityToken(AccessToken);
             var now = DateTime.UtcNow;
-            return now >= accessToken.ValidFrom && now <= accessToken.ValidTo;
+            return now >= accessToken.ValidFrom && now <= accessToken.ValidTo - TimeSpan.FromMinutes(1);
         }
     }
 }
