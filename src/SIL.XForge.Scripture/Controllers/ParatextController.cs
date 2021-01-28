@@ -67,7 +67,7 @@ namespace SIL.XForge.Scripture.Controllers
 
             try
             {
-                var resources = _paratextService.GetResources(userSecret);
+                var resources = await _paratextService.GetResourcesAsync(userSecret);
                 return Ok(resources.ToDictionary(r => r.ParatextId, r => r.Name));
             }
             catch (SecurityException)
