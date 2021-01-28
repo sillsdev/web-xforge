@@ -234,25 +234,25 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public void GetResources_BadArguments()
+        public void GetResourcesAsync_BadArguments()
         {
             var env = new TestEnvironment();
-            Assert.Throws<ArgumentNullException>(() => env.Service.GetResources(null));
+            Assert.ThrowsAsync<NullReferenceException>(async () => await env.Service.GetResourcesAsync(null));
         }
 
         [Test]
-        public void GetResources_ReturnResources()
+        public async Task GetResourcesAsync_ReturnResources()
         {
             var env = new TestEnvironment();
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
             env.SetRestClientFactory(user01Secret);
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
-            IEnumerable<ParatextResource> resources = env.Service.GetResources(user01Secret);
+            IEnumerable<ParatextResource> resources = await env.Service.GetResourcesAsync(user01Secret);
             Assert.AreEqual(3, resources.Count());
         }
 
         [Test]
-        public void GetResources_Problem_EmptyList()
+        public void GetResourcesAsync_Problem_EmptyList()
         {
             // Set up environment
             var env = new TestEnvironment();
@@ -272,7 +272,7 @@ namespace SIL.XForge.Scripture.Services
 
             IEnumerable<ParatextResource> resources = null;
             // SUT
-            Assert.DoesNotThrow(() => resources = env.Service.GetResources(user02Secret),
+            Assert.DoesNotThrowAsync(async () => resources = await env.Service.GetResourcesAsync(user02Secret),
             "Don't crash when permission problem");
             Assert.AreEqual(0, resources.Count(), "An empty set of resources should have been returned");
             env.MockExceptionHandler.Received().ReportException(Arg.Is<Exception>((Exception e) =>
@@ -769,7 +769,7 @@ namespace SIL.XForge.Scripture.Services
 
                 MockJwtTokenHelper.GetParatextUsername(Arg.Any<UserSecret>()).Returns(User01);
                 MockJwtTokenHelper.GetJwtTokenFromUserSecret(Arg.Any<UserSecret>()).Returns("token_1234");
-                MockJwtTokenHelper.RefreshAccessTokenAsync(Arg.Any<ParatextOptions>(), Arg.Any<Tokens>(),
+                MockJwtTokenHelper.RefreshAccessTokenAsync(Arg.Any<ParatextOptions>(), Arg.Any<UserSecret>(),
                     Arg.Any<HttpClient>())
                     .Returns(Task.FromResult(new Tokens
                     {
