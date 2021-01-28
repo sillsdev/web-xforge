@@ -219,8 +219,9 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>Get Paratext resources that a user has access to. </summary>
-        public IReadOnlyList<ParatextResource> GetResources(UserSecret userSecret)
+        public async Task<IReadOnlyList<ParatextResource>> GetResourcesAsync(UserSecret userSecret)
         {
+            await RefreshAccessTokenAsync(userSecret);
             return this.GetResourcesInternal(userSecret, false);
         }
 
@@ -783,13 +784,8 @@ namespace SIL.XForge.Scripture.Services
 
         private async Task RefreshAccessTokenAsync(UserSecret userSecret)
         {
-            ParatextOptions options = _paratextOptions.Value;
-
-            userSecret.ParatextTokens = await _jwtTokenHelper.RefreshAccessTokenAsync(options,
-                userSecret.ParatextTokens, _registryClient);
-
-            await _userSecretRepository.UpdateAsync(userSecret, b =>
-                b.Set(u => u.ParatextTokens, userSecret.ParatextTokens));
+            userSecret.ParatextTokens = await _jwtTokenHelper.GetValidAccessTokenAsync(_paratextOptions.Value,
+                userSecret, _registryClient);
         }
 
         private async Task<string> CallApiAsync(HttpClient client, UserSecret userSecret, HttpMethod method,

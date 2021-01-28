@@ -1,13 +1,18 @@
 using System;
+using System.Collections.Concurrent;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using SIL.XForge.Configuration;
+using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
+using SIL.XForge.Services;
+using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -15,10 +20,14 @@ namespace SIL.XForge.Scripture.Services
     public class JwtTokenHelper : IJwtTokenHelper
     {
         private readonly IExceptionHandler _exceptionHandler;
+        private readonly IRepository<UserSecret> _userSecrets;
 
-        public JwtTokenHelper(IExceptionHandler exceptionHandler)
+        /// <summary> Map user IDs to semaphores </summary>
+        private readonly ConcurrentDictionary<string, SemaphoreSlim> _tokenRefreshSemaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
+        public JwtTokenHelper(IExceptionHandler exceptionHandler, IRepository<UserSecret> userSecrets)
         {
             _exceptionHandler = exceptionHandler;
+            _userSecrets = userSecrets;
         }
 
         /// <summary> Get the Paratext username from the access token stored in the UserSecret. </summary>
@@ -42,20 +51,60 @@ namespace SIL.XForge.Scripture.Services
             return jwtToken;
         }
 
-        /// <summary> Refresh the Paratext access token if expired with the given HttpClient. </summary>
-        public async Task<Tokens> RefreshAccessTokenAsync(ParatextOptions options, Tokens paratextTokens,
+        /// <summary>
+        /// Gets an up-to-date (valid, refreshed if needed) Paratext access token. Uses the given HttpClient if a
+        /// refresh is necessary. Attempts to ensure that making multiple concurrent calls to this method does not
+        /// cause multiple token refresh attempts for a given user.
+        /// </summary>
+        public async Task<Tokens> GetValidAccessTokenAsync(ParatextOptions options, UserSecret initialUserSecret,
             HttpClient client)
         {
-            bool expired = !paratextTokens.ValidateLifetime();
-            if (!expired)
-                return paratextTokens;
+            if (initialUserSecret.ParatextTokens.ValidateLifetime())
+            {
+                return initialUserSecret.ParatextTokens;
+            }
+
+            string userId = initialUserSecret.Id;
+            SemaphoreSlim semaphore = _tokenRefreshSemaphores.GetOrAdd(userId, new SemaphoreSlim(1, 1));
+
+            await semaphore.WaitAsync();
+
+            try
+            {
+                UserSecret updatedSecretFromDB = await GetLatestUserSecretFromDBAsync(userId);
+                if (updatedSecretFromDB.ParatextTokens.ValidateLifetime())
+                {
+                    return updatedSecretFromDB.ParatextTokens;
+                }
+                Tokens refreshedUserTokens = await RequestNewTokenAsync(options, initialUserSecret, client);
+                await _userSecrets.UpdateAsync(userId, b => b.Set(u => u.ParatextTokens, refreshedUserTokens));
+                return refreshedUserTokens;
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+        }
+
+        private async Task<UserSecret> GetLatestUserSecretFromDBAsync(string userId)
+        {
+            Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(userId);
+            if (!attempt.TryResult(out UserSecret userSecret))
+            {
+                throw new DataNotFoundException("Could not find user secrets");
+            }
+            return userSecret;
+        }
+
+        private async Task<Tokens> RequestNewTokenAsync(ParatextOptions options, UserSecret userSecret, HttpClient client)
+        {
             using (var request = new HttpRequestMessage(HttpMethod.Post, "api8/token"))
             {
                 var requestObj = new JObject(
                     new JProperty("grant_type", "refresh_token"),
                     new JProperty("client_id", options.ClientId),
                     new JProperty("client_secret", options.ClientSecret),
-                    new JProperty("refresh_token", paratextTokens.RefreshToken));
+                    new JProperty("refresh_token", userSecret.ParatextTokens.RefreshToken));
                 request.Content = new StringContent(requestObj.ToString(), Encoding.Default, "application/json");
                 HttpResponseMessage response = await client.SendAsync(request);
                 await _exceptionHandler.EnsureSuccessStatusCode(response);
