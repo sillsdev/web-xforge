@@ -121,6 +121,19 @@ namespace SIL.XForge.Scripture.Controllers
             }
         }
 
+        public async Task<IRpcMethodResult> GetProjectRole(string projectId)
+        {
+            try
+            {
+                string role = await _projectService.GetProjectRoleAsync(UserId, projectId);
+                return Ok(role);
+            }
+            catch (DataNotFoundException dnfe)
+            {
+                return NotFoundError(dnfe.Message);
+            }
+        }
+
         public async Task<IRpcMethodResult> UpdateRole(string projectId, string projectRole)
         {
             try

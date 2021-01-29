@@ -75,6 +75,12 @@ namespace SIL.XForge.Services
             }
         }
 
+        public async Task<string> GetProjectRoleAsync(string curUserId, string projectId)
+        {
+            TModel project = await GetProjectAsync(projectId);
+            Attempt<string> attempt = await TryGetProjectRoleAsync(project, curUserId);
+            return attempt.Result;
+        }
 
         /// <summary>
         /// Disassociate user projectUserId from project projectId, without checking permissions.

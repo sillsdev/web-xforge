@@ -1,5 +1,6 @@
 import merge from 'lodash-es/merge';
 import { Project } from 'realtime-server/lib/common/models/project';
+import { ProjectRole } from 'realtime-server/lib/common/models/project-role';
 import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { combineLatest, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
@@ -72,6 +73,10 @@ export abstract class ProjectService<
 
   onlineRemoveUser(id: string, userId: string): Promise<void> {
     return this.onlineInvoke('removeUser', { projectId: id, projectUserId: userId });
+  }
+
+  async onlineGetProjectRole(id: string): Promise<string> {
+    return (await this.onlineInvoke<string>('getProjectRole', { projectId: id })) || ProjectRole.None;
   }
 
   onlineUpdateCurrentUserRole(id: string, projectRole: string): Promise<void> {
