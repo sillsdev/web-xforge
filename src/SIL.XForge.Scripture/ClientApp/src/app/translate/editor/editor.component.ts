@@ -291,7 +291,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
           const sourceId = this.projectDoc?.data?.translateConfig.source?.projectRef;
           if (sourceId != null) {
-            const userRole: string | undefined = await this.projectService.onlineGetProjectRole(sourceId);
+            const userRole: string = await this.projectService.onlineGetProjectRole(sourceId);
             this.sourceProjectDoc = hasParatextRole(userRole) ? await this.projectService.get(sourceId) : undefined;
             if (this.sourceProjectDoc != null && this.sourceProjectDoc.data != null) {
               this.sourceText = this.sourceProjectDoc.data.texts.find(t => t.bookNum === bookNum);
