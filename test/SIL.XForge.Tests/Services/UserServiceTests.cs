@@ -90,12 +90,12 @@ namespace SIL.XForge.Services
         public async Task LinkParatextAccountAsync()
         {
             var env = new TestEnvironment();
-            env.AuthService.LinkAccounts("auth02", "auth03").Returns(Task.CompletedTask);
+            env.AuthService.LinkAccounts("auth02", "paratext|paratext01").Returns(Task.CompletedTask);
             JObject userProfile = env.CreateUserProfile("user02", "auth02", env.IssuedAt);
             env.AuthService.GetUserAsync("auth02").Returns(Task.FromResult(userProfile.ToString()));
             JObject ptProfile = env.CreateUserProfile("newPtProfile", "paratext|paratext01", env.IssuedAt);
             env.AuthService.GetUserAsync("paratext|paratext01").Returns(Task.FromResult(ptProfile.ToString()));
-            Console.WriteLine("Link Account");
+
             await env.Service.LinkParatextAccountAsync("user02", "auth02", "paratext|paratext01");
             User user2 = env.GetUser("user02");
             Assert.That(user2.ParatextId, Is.EqualTo("paratext01"));

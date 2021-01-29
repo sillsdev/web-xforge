@@ -94,14 +94,14 @@ namespace SIL.XForge.Services
         /// <summary>
         /// Links the secondary Auth0 account (Paratext account) to the primary Auth0 account for the specified user.
         /// </summary>
-        public async Task LinkParatextAccountAsync(string curUserId, string primaryAuthId, string secondaryAuthId)
+        public async Task LinkParatextAccountAsync(string curUserId, string primaryAuthId, string paratextAuthId)
         {
-            if (!await CheckParatextProfileIsNew(secondaryAuthId))
+            if (!await CheckIsParatextProfileAndFirstLogin(paratextAuthId))
             {
                 // Another auth0 profile already exists that is linked to the paratext account
                 throw new ArgumentException("paratext_account_already_linked");
             }
-            await _authService.LinkAccounts(primaryAuthId, secondaryAuthId);
+            await _authService.LinkAccounts(primaryAuthId, paratextAuthId);
             JObject userProfile = JObject.Parse(await _authService.GetUserAsync(primaryAuthId));
             var identities = (JArray)userProfile["identities"];
             JObject ptIdentity = identities.OfType<JObject>()
@@ -168,9 +168,11 @@ namespace SIL.XForge.Services
             return authId.Split('|')[1];
         }
 
-        private async Task<bool> CheckParatextProfileIsNew(string authId)
+        private async Task<bool> CheckIsParatextProfileAndFirstLogin(string authId)
         {
             JObject userProfile = JObject.Parse(await _authService.GetUserAsync(authId));
+            // Check that the profile for 'authId' is from a paratext connection. If it is not, then
+            // this 'authId' is just another auth0 account.
             if (!((string)userProfile["user_id"]).Contains("paratext"))
                 return false;
             return (int)userProfile["logins_count"] <= 1;

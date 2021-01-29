@@ -273,7 +273,8 @@ export class AuthService {
               parsedHash.state = undefined;
             }
             this.handleOnlineAuth(parsedHash);
-            this.locationService.go(this.locationService.origin + this.locationService.pathname);
+            // Reload the app for the new current user id to take effect
+            document.location.reload();
           });
       }
     } else if (!environment.production) {
