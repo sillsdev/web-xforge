@@ -62,6 +62,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   projectDocs?: SFProjectDoc[];
   isProjectAdmin$?: Observable<boolean>;
+  hasUpdate: boolean = false;
 
   private currentUserDoc?: UserDoc;
   private _projectSelect?: MdcSelect;
@@ -87,7 +88,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     readonly noticeService: NoticeService,
     readonly i18n: I18nService,
     readonly media: MediaObserver,
-    pwaService: PwaService,
+    private readonly pwaService: PwaService,
     iconRegistry: MdcIconRegistry,
     sanitizer: DomSanitizer
   ) {
@@ -109,6 +110,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         this.authService.checkOnlineAuth();
       }
     });
+
+    this.subscribe(pwaService.hasUpdate, () => (this.hasUpdate = true));
 
     // Google Analytics - send data at end of navigation so we get data inside the SPA client-side routing
     if (environment.releaseStage === 'live') {
@@ -473,6 +476,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   hasQuestions(text: TextInfo): boolean {
     const query = this.questionCountQueries.get(text.bookNum);
     return query != null && query.count > 0;
+  }
+
+  reloadWithUpdates(): void {
+    this.pwaService.activateUpdates();
   }
 
   private async checkCheckingBookQuestions(): Promise<void> {

@@ -120,6 +120,14 @@
           </div>
         </mdc-top-app-bar-section>
       </mdc-top-app-bar-row>
+      <mdc-top-app-bar-row *ngIf="hasUpdate" class="update-banner">
+        <mdc-top-app-bar-section align="start">
+          <span class="refresh-message">{{ t("update_is_available") }}</span>
+          <div>
+            <button mat-raised-button color="accent" (click)="reloadWithUpdates()">{{ t("refresh") }}</button>
+          </div>
+        </mdc-top-app-bar-section>
+      </mdc-top-app-bar-row>
     </mdc-top-app-bar>
   </header>
   <mdc-drawer
@@ -246,7 +254,7 @@
       </mdc-list>
     </mdc-drawer-content>
   </mdc-drawer>
-  <div #appContent class="app-content mdc-top-app-bar-adjust">
+  <div #appContent class="app-content mdc-top-app-bar-adjust" [class.mdc-top-app-bar-adjust-double]="hasUpdate">
     <div>
       <router-outlet></router-outlet>
       <p *ngIf="showCheckingDisabled" class="checking-unavailable">{{ t("scripture_checking_not_available") }}</p>
