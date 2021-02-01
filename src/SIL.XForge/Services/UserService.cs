@@ -172,7 +172,7 @@ namespace SIL.XForge.Services
         {
             JObject userProfile = JObject.Parse(await _authService.GetUserAsync(authId));
             // Check that the profile for 'authId' is from a paratext connection. If it is not, then
-            // this 'authId' is just another auth0 account.
+            // this 'authId' is not from an account with paratext as the primary connection.
             if (!((string)userProfile["user_id"]).Contains("paratext"))
                 return false;
             return (int)userProfile["logins_count"] <= 1;

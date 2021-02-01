@@ -11,7 +11,7 @@ import { of, Subscription, timer } from 'rxjs';
 import { filter, mergeMap } from 'rxjs/operators';
 import { PwaService } from 'xforge-common/pwa.service';
 import { environment } from '../environments/environment';
-import { CommandService } from './command.service';
+import { CommandError, CommandErrorCode, CommandService } from './command.service';
 import { ErrorReportingService } from './error-reporting.service';
 import { LocalSettingsService } from './local-settings.service';
 import { LocationService } from './location.service';
@@ -29,7 +29,6 @@ const ID_TOKEN_SETTING = 'id_token';
 const USER_ID_SETTING = 'user_id';
 const ROLE_SETTING = 'role';
 const EXPIRES_AT_SETTING = 'expires_at';
-const PARATEXT_ACCOUNT_ALREADY_LINKED = 'paratext_account_already_linked';
 
 interface AuthState {
   returnUrl?: string;
@@ -255,7 +254,7 @@ export class AuthService {
       try {
         await this.commandService.onlineInvoke(USERS_URL, 'linkParatextAccount', { authId: secondaryId });
       } catch (err) {
-        if (!(err.message as string).includes(PARATEXT_ACCOUNT_ALREADY_LINKED)) {
+        if (!(err instanceof CommandError) || err.code !== CommandErrorCode.InvalidParams) {
           console.error(err);
           return false;
         }
