@@ -7,12 +7,12 @@ import { ActivatedRoute, Params } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import {
   createRange,
-  InteractiveTranslationSession,
   ProgressStatus,
   RemoteTranslationEngine,
-  TranslationResult,
-  TranslationResultBuilder,
-  WordAlignmentMatrix
+  TranslationSources,
+  WordAlignmentMatrix,
+  WordGraph,
+  WordGraphArc
 } from '@sillsdev/machine';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { CookieService } from 'ngx-cookie-service';
@@ -124,7 +124,7 @@ describe('EditorComponent', () => {
       const selection = env.targetEditor.getSelection();
       expect(selection!.index).toBe(30);
       expect(selection!.length).toBe(0);
-      verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).once();
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
       expect(env.component.showSuggestions).toBe(false);
       env.dispose();
     }));
@@ -137,13 +137,13 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_2' });
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_2');
-      verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).never();
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
       expect(env.component.showSuggestions).toBe(false);
 
       resolve!(env.getTextDoc(sourceId));
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_2');
-      verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).once();
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
       expect(env.component.showSuggestions).toBe(true);
 
       env.dispose();
@@ -154,7 +154,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).once();
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
       expect(env.component.showSuggestions).toBe(false);
 
       resetCalls(env.mockedRemoteTranslationEngine);
@@ -166,7 +166,7 @@ describe('EditorComponent', () => {
       expect(selection!.index).toBe(33);
       expect(selection!.length).toBe(0);
       expect(env.getProjectUserConfigDoc().data!.selectedSegment).toBe('verse_1_3');
-      verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).once();
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
       expect(env.component.showSuggestions).toBe(false);
 
       env.dispose();
@@ -187,7 +187,7 @@ describe('EditorComponent', () => {
       expect(selection!.index).toBe(31);
       expect(selection!.length).toBe(0);
       expect(env.getProjectUserConfigDoc().data!.selectedSegment).toBe('verse_1_2');
-      verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).once();
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
       expect(env.component.showSuggestions).toBe(true);
       expect(env.component.suggestions[0].words).toEqual(['target']);
 
@@ -260,7 +260,7 @@ describe('EditorComponent', () => {
       env.targetEditor.setSelection(range!.index, 0, 'user');
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_5');
-      verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).once();
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
       expect(env.component.showSuggestions).toBe(false);
 
       env.dispose();
@@ -276,7 +276,7 @@ describe('EditorComponent', () => {
       env.targetEditor.setSelection(range!.index + range!.length, 0, 'user');
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_5');
-      verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).once();
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
       expect(env.component.showSuggestions).toBe(true);
       expect(env.component.suggestions[0].words).toEqual(['verse', '5']);
 
@@ -328,8 +328,8 @@ describe('EditorComponent', () => {
       expect(env.component.target!.segmentText).toBe('target: chapter 1, verse');
       expect(env.component.showSuggestions).toBe(true);
 
-      const selectionIndex = env.typeCharacters('5');
-      expect(env.component.target!.segmentText).toBe('target: chapter 1, verse 5');
+      const selectionIndex = env.typeCharacters('5.');
+      expect(env.component.target!.segmentText).toBe('target: chapter 1, verse 5.');
       expect(env.component.showSuggestions).toBe(false);
       const selection = env.targetEditor.getSelection();
       expect(selection!.index).toBe(selectionIndex + 1);
@@ -396,7 +396,13 @@ describe('EditorComponent', () => {
       env.targetEditor.setSelection(range!.index, 0, 'user');
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      expect(env.lastApprovedPrefix).toEqual(['target', ':', 'chapter', '1', ',', 'verse', '5']);
+      verify(
+        env.mockedRemoteTranslationEngine.trainSegment(
+          anything(),
+          deepEqual(['target', ':', 'chapter', '1', ',', 'verse', '5']),
+          true
+        )
+      ).once();
 
       env.dispose();
     }));
@@ -423,7 +429,7 @@ describe('EditorComponent', () => {
       env.wait();
       verify(mockedTranslationEngineService.storeTrainingSegment('project01', 'project02', 40, 1, 'verse_1_5')).once();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      expect(env.lastApprovedPrefix).toEqual([]);
+      verify(env.mockedRemoteTranslationEngine.trainSegment(anything(), anything(), anything())).never();
 
       env.dispose();
     }));
@@ -442,7 +448,7 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.bookName).toEqual('Mark');
       expect(env.component.target!.segmentRef).toEqual('verse_1_5');
-      expect(env.lastApprovedPrefix).toEqual([]);
+      verify(env.mockedRemoteTranslationEngine.trainSegment(anything(), anything(), anything())).never();
 
       env.updateParams({ projectId: 'project01', bookId: 'MAT' });
       env.wait();
@@ -452,7 +458,13 @@ describe('EditorComponent', () => {
       env.targetEditor.setSelection(range!.index, 0, 'user');
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      expect(env.lastApprovedPrefix).toEqual(['target', ':', 'chapter', '1', ',', 'verse', '5']);
+      verify(
+        env.mockedRemoteTranslationEngine.trainSegment(
+          anything(),
+          deepEqual(['target', ':', 'chapter', '1', ',', 'verse', '5']),
+          true
+        )
+      ).once();
 
       env.dispose();
     }));
@@ -499,7 +511,7 @@ describe('EditorComponent', () => {
       env.targetEditor.setSelection(range!.index, 0, 'user');
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      expect(env.lastApprovedPrefix).toEqual([]);
+      verify(env.mockedRemoteTranslationEngine.trainSegment(anything(), anything(), anything())).never();
 
       env.dispose();
     }));
@@ -510,21 +522,21 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.bookName).toEqual('Matthew');
       expect(env.component.target!.segmentRef).toEqual('verse_1_1');
-      verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).once();
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
 
       resetCalls(env.mockedRemoteTranslationEngine);
       env.updateParams({ projectId: 'project01', bookId: 'MRK' });
       env.wait();
       expect(env.bookName).toEqual('Mark');
       expect(env.component.target!.segmentRef).toEqual('verse_1_1');
-      verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).never();
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
 
       resetCalls(env.mockedRemoteTranslationEngine);
       env.updateParams({ projectId: 'project01', bookId: 'MAT' });
       env.wait();
       expect(env.bookName).toEqual('Matthew');
       expect(env.component.target!.segmentRef).toEqual('verse_1_1');
-      verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).once();
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
 
       env.dispose();
     }));
@@ -535,7 +547,7 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.component.chapter).toBe(1);
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).once();
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
 
       resetCalls(env.mockedRemoteTranslationEngine);
       env.component.chapter = 2;
@@ -543,13 +555,13 @@ describe('EditorComponent', () => {
       const verseText = env.component.target!.getSegmentText('verse_2_1');
       expect(verseText).toBe('target: chapter 2, verse 1.');
       expect(env.component.target!.segmentRef).toEqual('verse_1_1');
-      verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).never();
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
 
       resetCalls(env.mockedRemoteTranslationEngine);
       env.component.chapter = 1;
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).once();
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
 
       env.dispose();
     }));
@@ -581,7 +593,7 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
       expect(env.component.showTrainingProgress).toBe(false);
-      verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).once();
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
       verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
 
       resetCalls(env.mockedRemoteTranslationEngine);
@@ -597,7 +609,7 @@ describe('EditorComponent', () => {
       expect(env.component.showTrainingProgress).toBe(true);
       tick(5000);
       env.wait();
-      verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).once();
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
       expect(env.trainingProgress).toBeNull();
       expect(env.component.showTrainingProgress).toBe(false);
       env.updateTrainingProgress(0.1);
@@ -614,7 +626,7 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
       expect(env.component.showTrainingProgress).toBe(false);
-      verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).once();
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
       verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
 
       resetCalls(env.mockedRemoteTranslationEngine);
@@ -629,7 +641,7 @@ describe('EditorComponent', () => {
       env.completeTrainingProgress();
       env.wait();
       verify(mockedNoticeService.show(anything())).once();
-      verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).once();
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
 
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress).not.toBeNull();
@@ -645,7 +657,7 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
       expect(env.component.showTrainingProgress).toBe(false);
-      verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).once();
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
       verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
 
       resetCalls(env.mockedRemoteTranslationEngine);
@@ -679,7 +691,7 @@ describe('EditorComponent', () => {
       const selection = env.targetEditor.getSelection();
       expect(selection!.index).toBe(30);
       expect(selection!.length).toBe(0);
-      verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).never();
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
       expect(env.component.showSuggestions).toBe(false);
       expect(env.isSourceAreaHidden).toBe(true);
       env.dispose();
@@ -782,7 +794,7 @@ describe('EditorComponent', () => {
       expect(env.component.chapter).toBe(1);
       expect(env.component.sourceLabel).toEqual('SRC');
       expect(env.component.targetLabel).toEqual('TRG');
-      verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).never();
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
       expect(env.component.showSuggestions).toBe(false);
       expect(env.isSourceAreaHidden).toBe(true);
       expect(env.component.target!.readOnlyEnabled).toBe(true);
@@ -893,7 +905,7 @@ describe('EditorComponent', () => {
       const selection = env.targetEditor.getSelection();
       expect(selection!.index).toBe(30);
       expect(selection!.length).toBe(0);
-      verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).never();
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
       expect(env.component.showSuggestions).toBe(false);
       expect(env.isSourceAreaHidden).toBe(true);
       env.dispose();
@@ -1012,83 +1024,11 @@ describe('EditorComponent', () => {
   });
 });
 
-class MockInteractiveTranslationSession implements InteractiveTranslationSession {
-  prefix: string[] = [];
-  isLastWordComplete: boolean = true;
-
-  private currentResults: TranslationResult[] = [];
-
-  constructor(public readonly sourceSegment: string[], private readonly approved: (prefix: string[]) => void) {
-    this.updateCurrentResults();
-  }
-
-  setPrefix(prefix: string[], isLastWordComplete: boolean): void {
-    this.prefix.length = 0;
-    this.prefix.push(...prefix);
-    this.isLastWordComplete = isLastWordComplete;
-    this.updateCurrentResults();
-  }
-
-  appendToPrefix(addition: string, isLastWordComplete: boolean): void {
-    if (this.isLastWordComplete) {
-      this.prefix.push(addition);
-    } else {
-      this.prefix[this.prefix.length - 1] = this.prefix[this.prefix.length - 1] + addition;
-    }
-    this.isLastWordComplete = isLastWordComplete;
-    this.updateCurrentResults();
-  }
-
-  appendWordsToPrefix(words: string[]): void {
-    for (const word of words) {
-      if (this.isLastWordComplete) {
-        this.prefix.push(word);
-      } else {
-        this.prefix[this.prefix.length - 1] = word;
-      }
-      this.isLastWordComplete = true;
-    }
-    this.updateCurrentResults();
-  }
-
-  approve(): Promise<void> {
-    this.approved(this.prefix);
-    return Promise.resolve();
-  }
-
-  getCurrentResults(): IterableIterator<TranslationResult> {
-    return this.currentResults.values();
-  }
-
-  private updateCurrentResults(): void {
-    this.currentResults = [this.getTranslationResults(), this.getTranslationResults('versa')];
-  }
-
-  private getTranslationResults(verseTranslation?: string): TranslationResult {
-    const builder = new TranslationResultBuilder();
-    for (let i = 0; i < this.sourceSegment.length; i++) {
-      let targetWord = this.sourceSegment[i];
-      if (targetWord === 'source') {
-        targetWord = 'target';
-      } else if (verseTranslation != null && targetWord === 'verse') {
-        targetWord = verseTranslation;
-      }
-      builder.appendWord(targetWord, 0.5);
-      const alignment = new WordAlignmentMatrix(1, 1);
-      alignment.set(0, 0, true);
-      builder.markPhrase(createRange(i, i + 1), alignment);
-    }
-    return builder.toResult(this.sourceSegment, this.prefix.length);
-  }
-}
-
 class TestEnvironment {
   readonly component: EditorComponent;
   readonly fixture: ComponentFixture<EditorComponent>;
 
   readonly mockedRemoteTranslationEngine = mock(RemoteTranslationEngine);
-
-  lastApprovedPrefix: string[] = [];
 
   private userRolesOnProject = {
     user01: SFProjectRole.ParatextTranslator,
@@ -1225,9 +1165,10 @@ class TestEnvironment {
       instance(this.mockedRemoteTranslationEngine)
     );
     this.setupProject();
-    when(this.mockedRemoteTranslationEngine.translateInteractively(anything())).thenCall((segment: string[]) =>
-      Promise.resolve(new MockInteractiveTranslationSession(segment, prefix => (this.lastApprovedPrefix = prefix)))
+    when(this.mockedRemoteTranslationEngine.getWordGraph(anything())).thenCall(segment =>
+      Promise.resolve(this.createWordGraph(segment))
     );
+    when(this.mockedRemoteTranslationEngine.trainSegment(anything(), anything(), anything())).thenResolve();
     when(this.mockedRemoteTranslationEngine.listenForTrainingStatus()).thenReturn(defer(() => this.trainingProgress$));
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
     when(mockedSFProjectService.get('project01')).thenCall(() =>
@@ -1490,10 +1431,12 @@ class TestEnvironment {
     this.targetEditor.setSelection(selectionIndex, 'user');
     const keyEvent: any = document.createEvent('CustomEvent');
     this.wait();
-    keyEvent.key = str.substring(0, 1);
-    keyEvent.initEvent('keyup', true, true);
-    this.component.target!.editor!.root.dispatchEvent(keyEvent);
-    this.wait();
+    for (const c of str) {
+      keyEvent.key = c;
+      keyEvent.initEvent('keyup', true, true);
+      this.component.target!.editor!.root.dispatchEvent(keyEvent);
+      this.wait();
+    }
     return selectionIndex;
   }
 
@@ -1579,5 +1522,26 @@ class TestEnvironment {
       type: RichText.type.name,
       data: new Delta()
     });
+  }
+
+  private createWordGraph(segment: string[]): WordGraph {
+    const arcs: WordGraphArc[] = [];
+    for (let i = 0; i < segment.length; i++) {
+      let targetWord = segment[i];
+      if (targetWord === 'source') {
+        targetWord = 'target';
+      }
+      const alignment = new WordAlignmentMatrix(1, 1);
+      alignment.set(0, 0, true);
+      arcs.push(
+        new WordGraphArc(i, i + 1, -10, [targetWord], alignment, createRange(i, i + 1), [TranslationSources.Smt], [0.5])
+      );
+      if (targetWord === 'verse') {
+        arcs.push(
+          new WordGraphArc(i, i + 1, -11, ['versa'], alignment, createRange(i, i + 1), [TranslationSources.Smt], [0.4])
+        );
+      }
+    }
+    return new WordGraph(arcs, [segment.length]);
   }
 }

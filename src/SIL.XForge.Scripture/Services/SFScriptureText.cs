@@ -17,7 +17,7 @@ namespace SIL.XForge.Scripture.Services
         /// { "insert": "In the beginning ...",
         ///   "attributes": { "segment": "verse_1_1" } }
         /// </remarks>
-        public SFScriptureText(ITokenizer<string, int> wordTokenizer, string projectId, int book, int chapter,
+        public SFScriptureText(ITokenizer<string, int, string> wordTokenizer, string projectId, int book, int chapter,
             BsonDocument doc)
         {
             if (doc == null)
@@ -34,7 +34,10 @@ namespace SIL.XForge.Scripture.Services
 
         public IEnumerable<TextSegment> Segments { get; }
 
-        private static IEnumerable<TextSegment> GetSegments(ITokenizer<string, int> wordTokenizer, BsonDocument doc)
+        public string SortKey => Id;
+
+        private static IEnumerable<TextSegment> GetSegments(ITokenizer<string, int, string> wordTokenizer,
+            BsonDocument doc)
         {
             string prevRef = null;
             var sb = new StringBuilder();
@@ -68,7 +71,7 @@ namespace SIL.XForge.Scripture.Services
                 yield return CreateSegment(wordTokenizer, prevRef, sb.ToString());
         }
 
-        private static TextSegment CreateSegment(ITokenizer<string, int> wordTokenizer, string segRef,
+        private static TextSegment CreateSegment(ITokenizer<string, int, string> wordTokenizer, string segRef,
             string segmentStr)
         {
             var keys = new List<string>();
@@ -81,7 +84,7 @@ namespace SIL.XForge.Scripture.Services
                 else
                     keys.AddRange(partKeys);
             }
-            string[] segment = wordTokenizer.TokenizeToStrings(segmentStr).ToArray();
+            string[] segment = wordTokenizer.Tokenize(segmentStr).ToArray();
             return new TextSegment(new TextSegmentRef(keys), segment);
         }
     }

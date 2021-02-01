@@ -4,7 +4,9 @@ import { MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import {
-  InteractiveTranslationSession,
+  createInteractiveTranslator,
+  ErrorCorrectionModel,
+  InteractiveTranslator,
   LatinWordTokenizer,
   MAX_SEGMENT_LENGTH,
   PhraseTranslationSuggester,
@@ -75,8 +77,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private isTranslating: boolean = false;
   private readonly sourceWordTokenizer: RangeTokenizer;
   private readonly targetWordTokenizer: RangeTokenizer;
-  private translationSession?: InteractiveTranslationSession;
+  private translator?: InteractiveTranslator;
   private readonly translationSuggester: TranslationSuggester = new PhraseTranslationSuggester();
+  private readonly ecm = new ErrorCorrectionModel();
   private insertSuggestionEnd: number = -1;
   private currentUserDoc?: UserDoc;
   private projectDoc?: SFProjectDoc;
@@ -403,7 +406,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             this.projectUserConfigDoc.data.selectedSegment !== this.target.segmentRef)
         ) {
           const sourceProjectRef = this.projectDoc?.data?.translateConfig.source?.projectRef;
-          if ((prevSegment == null || this.translationSession == null) && sourceProjectRef !== undefined) {
+          if ((prevSegment == null || this.translator == null) && sourceProjectRef !== undefined) {
             await this.translationEngineService.trainSelectedSegment(this.projectUserConfigDoc.data, sourceProjectRef);
           } else {
             await this.trainSegment(prevSegment, sourceProjectRef);
@@ -511,8 +514,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const words = wordIndex === -1 ? suggestion.words : suggestion.words.slice(0, wordIndex + 1);
     // TODO: use detokenizer to build suggestion text
     let insertText = words.join(' ');
-    if (this.translationSession != null && !this.translationSession.isLastWordComplete) {
-      const lastWord = this.translationSession.prefix[this.translationSession.prefix.length - 1];
+    if (this.translator != null && !this.translator.isLastWordComplete) {
+      const lastWord = this.translator.prefix[this.translator.prefix.length - 1];
       insertText = insertText.substring(lastWord.length);
     }
     if (this.insertSuggestionEnd !== -1) {
@@ -559,7 +562,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.trainingSub.unsubscribe();
       this.trainingSub = undefined;
     }
-    this.translationSession = undefined;
+    this.translator = undefined;
     this.translationEngine = undefined;
     if (this.projectDoc == null || !this.translationSuggestionsProjectEnabled || !this.hasEditRight) {
       return;
@@ -696,7 +699,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private async translateSegment(): Promise<void> {
-    this.translationSession = undefined;
+    this.translator = undefined;
     if (this.translationEngine == null || this.source == null || !this.pwaService.isOnline) {
       return;
     }
@@ -705,15 +708,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (words.length === 0) {
       return;
     } else if (words.length > MAX_SEGMENT_LENGTH) {
-      this.translationSession = undefined;
+      this.translator = undefined;
       this.noticeService.show(translate('editor.verse_too_long_for_suggestions'));
       return;
     }
 
     const start = performance.now();
-    const translationSession = await this.translationEngine.translateInteractively(words);
+    const translator = await createInteractiveTranslator(this.ecm, this.translationEngine, words);
     if (sourceSegment === this.source.segmentText) {
-      this.translationSession = translationSession;
+      this.translator = translator;
       const finish = performance.now();
       this.console.log(`Translated segment, length: ${words.length}, time: ${finish - start}ms`);
     }
@@ -731,7 +734,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     // only bother updating the suggestion if the cursor is at the end of the segment
     if (!this.isTranslating && this.target.isSelectionAtSegmentEnd) {
-      if (this.translationSession == null) {
+      if (this.translator == null) {
         this.suggestions = [];
       } else {
         const range = this.skipInitialWhitespace(this.target.editor, this.target.editor.getSelection()!);
@@ -746,12 +749,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.insertSuggestionEnd !== -1 ||
           tokenRanges.length === 0 ||
           tokenRanges[tokenRanges.length - 1].end !== text.length;
-        this.translationSession.setPrefix(prefix, isLastWordComplete);
+        this.translator.setPrefix(prefix, isLastWordComplete);
         const machineSuggestions = this.translationSuggester.getSuggestions(
           this.numSuggestions,
           prefix.length,
           isLastWordComplete,
-          this.translationSession.getCurrentResults()
+          this.translator.getCurrentResults()
         );
         if (machineSuggestions.length === 0) {
           this.suggestions = [];
@@ -809,10 +812,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
 
-    if (this.translationSession == null) {
+    if (this.translator == null) {
       return;
     }
-    await this.translationSession.approve(true);
+    await this.translator.approve(true);
     segment.acceptChanges();
     this.console.log(
       'Segment ' + segment.ref + ' of document ' + Canon.bookNumberToId(segment.bookNum) + ' was trained successfully.'
