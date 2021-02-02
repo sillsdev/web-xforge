@@ -11,7 +11,7 @@ import { of, Subscription, timer } from 'rxjs';
 import { filter, mergeMap } from 'rxjs/operators';
 import { PwaService } from 'xforge-common/pwa.service';
 import { environment } from '../environments/environment';
-import { CommandError, CommandErrorCode, CommandService } from './command.service';
+import { CommandError, CommandService } from './command.service';
 import { ErrorReportingService } from './error-reporting.service';
 import { LocalSettingsService } from './local-settings.service';
 import { LocationService } from './location.service';
