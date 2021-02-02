@@ -4,13 +4,14 @@ import Bugsnag from '@bugsnag/js';
 import { translate } from '@ngneat/transloco';
 import { Auth0DecodedHash, AuthorizeOptions, WebAuth } from 'auth0-js';
 import jwtDecode from 'jwt-decode';
+import { clone } from 'lodash-es';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { of, Subscription, timer } from 'rxjs';
 import { filter, mergeMap } from 'rxjs/operators';
 import { PwaService } from 'xforge-common/pwa.service';
 import { environment } from '../environments/environment';
-import { CommandService } from './command.service';
+import { CommandError, CommandService } from './command.service';
 import { ErrorReportingService } from './error-reporting.service';
 import { LocalSettingsService } from './local-settings.service';
 import { LocationService } from './location.service';
@@ -48,6 +49,7 @@ interface LoginResult {
   providedIn: 'root'
 })
 export class AuthService {
+  readonly ptLinkedToAnotherUserKey: string = 'paratext-linked-to-another-user';
   private tryLogInPromise: Promise<LoginResult>;
   private refreshSubscription?: Subscription;
 
@@ -250,7 +252,31 @@ export class AuthService {
     this.scheduleRenewal();
     await this.remoteStore.init(() => this.accessToken);
     if (secondaryId != null) {
-      await this.commandService.onlineInvoke(USERS_URL, 'linkParatextAccount', { authId: secondaryId });
+      try {
+        await this.commandService.onlineInvoke(USERS_URL, 'linkParatextAccount', { authId: secondaryId });
+      } catch (err) {
+        if (!(err instanceof CommandError) || !err.message.includes(this.ptLinkedToAnotherUserKey)) {
+          console.error(err);
+          return false;
+        }
+        this.noticeService
+          .showMessageDialog(
+            () =>
+              translate('connect_project.paratext_account_linked_to_another_user', {
+                email: authResult.idTokenPayload.email
+              }),
+            () => translate('connect_project.proceed')
+          )
+          .then(async () => {
+            const parsedHash = clone(authResult);
+            if (parsedHash != null) {
+              parsedHash.state = undefined;
+            }
+            this.handleOnlineAuth(parsedHash);
+            // Reload the app for the new current user id to take effect
+            document.location.reload();
+          });
+      }
     } else if (!environment.production) {
       try {
         await this.commandService.onlineInvoke(USERS_URL, 'pullAuthUserProfile');

@@ -17,6 +17,7 @@ namespace SIL.XForge.Services
     /// </summary>
     public class UserService : IUserService
     {
+        public static readonly string PTLinkedToAnotherUserKey = "paratext-linked-to-another-user";
         private const string EMAIL_PATTERN = "^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9.-]+[.]+[a-zA-Z]{2,}$";
 
         private readonly IRealtimeService _realtimeService;
@@ -94,9 +95,14 @@ namespace SIL.XForge.Services
         /// <summary>
         /// Links the secondary Auth0 account (Paratext account) to the primary Auth0 account for the specified user.
         /// </summary>
-        public async Task LinkParatextAccountAsync(string curUserId, string primaryAuthId, string secondaryAuthId)
+        public async Task LinkParatextAccountAsync(string curUserId, string primaryAuthId, string paratextAuthId)
         {
-            await _authService.LinkAccounts(primaryAuthId, secondaryAuthId);
+            if (!await CheckIsParatextProfileAndFirstLogin(paratextAuthId))
+            {
+                // Another auth0 profile already exists that is linked to the paratext account
+                throw new ArgumentException(PTLinkedToAnotherUserKey);
+            }
+            await _authService.LinkAccounts(primaryAuthId, paratextAuthId);
             JObject userProfile = JObject.Parse(await _authService.GetUserAsync(primaryAuthId));
             var identities = (JArray)userProfile["identities"];
             JObject ptIdentity = identities.OfType<JObject>()
@@ -161,6 +167,16 @@ namespace SIL.XForge.Services
         private static string GetIdpIdFromAuthId(string authId)
         {
             return authId.Split('|')[1];
+        }
+
+        private async Task<bool> CheckIsParatextProfileAndFirstLogin(string authId)
+        {
+            JObject userProfile = JObject.Parse(await _authService.GetUserAsync(authId));
+            // Check that the profile for 'authId' is from a paratext connection. If it is not, then
+            // this 'authId' is not from an account with paratext as the primary connection.
+            if (!((string)userProfile["user_id"]).Contains("paratext"))
+                return false;
+            return (int)userProfile["logins_count"] <= 1;
         }
     }
 }
