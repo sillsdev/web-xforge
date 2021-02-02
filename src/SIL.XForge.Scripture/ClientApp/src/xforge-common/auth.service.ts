@@ -49,6 +49,7 @@ interface LoginResult {
   providedIn: 'root'
 })
 export class AuthService {
+  readonly ptLinkedToAnotherUserKey: string = 'paratext-linked-to-another-user';
   private tryLogInPromise: Promise<LoginResult>;
   private refreshSubscription?: Subscription;
 
@@ -254,7 +255,7 @@ export class AuthService {
       try {
         await this.commandService.onlineInvoke(USERS_URL, 'linkParatextAccount', { authId: secondaryId });
       } catch (err) {
-        if (!(err instanceof CommandError) || err.code !== CommandErrorCode.InvalidParams) {
+        if (!(err instanceof CommandError) || !err.message.includes(this.ptLinkedToAnotherUserKey)) {
           console.error(err);
           return false;
         }

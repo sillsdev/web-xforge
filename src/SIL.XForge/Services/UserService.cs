@@ -17,6 +17,7 @@ namespace SIL.XForge.Services
     /// </summary>
     public class UserService : IUserService
     {
+        public static readonly string PTLinkedToAnotherUserKey = "paratext-linked-to-another-user";
         private const string EMAIL_PATTERN = "^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9.-]+[.]+[a-zA-Z]{2,}$";
 
         private readonly IRealtimeService _realtimeService;
@@ -99,7 +100,7 @@ namespace SIL.XForge.Services
             if (!await CheckIsParatextProfileAndFirstLogin(paratextAuthId))
             {
                 // Another auth0 profile already exists that is linked to the paratext account
-                throw new ArgumentException("paratext_account_already_linked");
+                throw new ArgumentException(PTLinkedToAnotherUserKey);
             }
             await _authService.LinkAccounts(primaryAuthId, paratextAuthId);
             JObject userProfile = JObject.Parse(await _authService.GetUserAsync(primaryAuthId));
