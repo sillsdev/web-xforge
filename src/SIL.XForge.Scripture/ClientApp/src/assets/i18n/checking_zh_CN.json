@@ -18,9 +18,11 @@
     "product_version": "产品版本：v {{ version }}",
     "project_home": "项目首页",
     "redirecting_in_moments": "Redirecting in a few moments...",
+    "refresh": "Refresh",
     "report_issue_email": "电子邮件{{ email }}",
     "report_issue": "报告问题",
-    "scripture_checking_not_available": "圣经检查在该项目中不可用。"
+    "scripture_checking_not_available": "圣经检查在该项目中不可用。",
+    "update_is_available": "An update is available. Please refresh the page."
   },
   "canon": {
     "book_names": {
@@ -151,6 +153,7 @@
   },
   "checking": {
     "me": "我",
+    "unknown_author": "Unknown author",
     "next": "下一个",
     "previous": "前一个",
     "questions": "问题 （{{ count }}）",
@@ -261,7 +264,8 @@
     "dismiss": "Dismiss"
   },
   "project": {
-    "project_link_is_invalid": "The project link is invalid."
+    "project_link_is_invalid": "The project link is invalid.",
+    "problem_finding_project": "There was a problem finding a project ({{ projectID }}) or user specific information for the project. There may be a typo in the URL you specified. You may have tried to access a project that is no longer available."
   },
   "project_deleted_dialog": {
     "ok": "OK",

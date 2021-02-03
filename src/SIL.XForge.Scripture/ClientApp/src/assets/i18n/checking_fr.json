@@ -18,9 +18,11 @@
     "product_version": "Version du produit : v{{ version }}",
     "project_home": "Accueil du projet",
     "redirecting_in_moments": "Redirection dans quelques instants...",
+    "refresh": "Refresh",
     "report_issue_email": "e-mail {{ email }}",
     "report_issue": "Signaler un problème",
-    "scripture_checking_not_available": "La vérification des écritures n'est pas disponible dans ce projet."
+    "scripture_checking_not_available": "La vérification des écritures n'est pas disponible dans ce projet.",
+    "update_is_available": "An update is available. Please refresh the page."
   },
   "canon": {
     "book_names": {
@@ -151,6 +153,7 @@
   },
   "checking": {
     "me": "Moi",
+    "unknown_author": "Auteur inconnu",
     "next": "Suivant",
     "previous": "Précédent",
     "questions": "Questions ({{ count }})",
@@ -261,7 +264,8 @@
     "dismiss": "Ignorer"
   },
   "project": {
-    "project_link_is_invalid": "Le lien du projet n'est pas valide."
+    "project_link_is_invalid": "Le lien du projet n'est pas valide.",
+    "problem_finding_project": "Il y a eu un problème pour trouver un projet ({{ projectID }}) ou des informations spécifiques à l'utilisateur pour le projet. Il se peut qu'il y ait une faute de frappe dans l'URL que vous avez spécifiée. Vous avez peut-être essayé d'accéder à un projet qui n'est plus disponible."
   },
   "project_deleted_dialog": {
     "ok": "OK",

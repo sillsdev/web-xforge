@@ -18,9 +18,11 @@
     "product_version": "ꤒꤟꤢ꤭ꤤ꤭ꤒꤟꤢꤧ꤬ version: v {{version}}",
     "project_home": "Project ꤟꤤ꤬",
     "redirecting_in_moments": "Redirecting in a few moments...",
+    "refresh": "Refresh",
     "report_issue_email": "email {{email}}",
     "report_issue": "ꤘꤛꤢꤩꤜꤟꤌꤣ꤭ꤓꤛꤢ꤬ ꤒꤟꤢꤧ꤬ꤚꤤ꤬ꤒꤟꤢꤧ꤬ꤊꤛꤢ꤭",
-    "scripture_checking_not_available": "ꤙꤤ project ꤛꤢꤩ꤭ ꤢ꤬ꤊꤢꤨ꤭ ꤗꤢ꤬ ꤒꤟꤢꤧ꤬ꤓꤢꤦꤡꤢꤩ꤭ ꤜꤤ꤬ꤡꤢ꤭ꤏꤢꤧ꤭ ꤔꤌꤣ꤬ ꤢ꤬ꤔꤟꤤ ꤒꤥ꤬꤯"
+    "scripture_checking_not_available": "ꤙꤤ project ꤛꤢꤩ꤭ ꤢ꤬ꤊꤢꤨ꤭ ꤗꤢ꤬ ꤒꤟꤢꤧ꤬ꤓꤢꤦꤡꤢꤩ꤭ ꤜꤤ꤬ꤡꤢ꤭ꤏꤢꤧ꤭ ꤔꤌꤣ꤬ ꤢ꤬ꤔꤟꤤ ꤒꤥ꤬꤯",
+    "update_is_available": "An update is available. Please refresh the page."
   },
   "canon": {
     "book_names": {
@@ -151,6 +153,7 @@
   },
   "checking": {
     "me": "ꤠꤢ꤭",
+    "unknown_author": "Unknown author",
     "next": "ꤘꤣꤋꤛꤢꤩ꤭ꤕꤟꤥ",
     "previous": "ꤘꤣꤢ꤬ꤚꤟꤢꤩ",
     "questions": "ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭ ({{ count }})",
@@ -261,7 +264,8 @@
     "dismiss": "ꤏꤥ꤭ꤒꤢ꤬ꤕꤟꤢ꤬ꤊꤛꤢ꤭"
   },
   "project": {
-    "project_link_is_invalid": "Project link ꤛꤢꤩ꤭ ꤢ꤬ ꤒꤥ꤭ꤒꤥ꤬꤯ "
+    "project_link_is_invalid": "Project link ꤛꤢꤩ꤭ ꤢ꤬ ꤒꤥ꤭ꤒꤥ꤬꤯ ",
+    "problem_finding_project": "There was a problem finding a project ({{ projectID }}) or user specific information for the project. There may be a typo in the URL you specified. You may have tried to access a project that is no longer available."
   },
   "project_deleted_dialog": {
     "ok": "ꤢ꤬ꤚꤛꤢ",

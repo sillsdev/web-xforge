@@ -56,8 +56,10 @@
     "log_in_with_paratext": "Войти через Paratext",
     "no_connectable_projects": "Похоже, для вас нет подключаемых проектов.{{ newLine }}Пожалуйста, перейдите в Paratext, чтобы зарегистрировать проект для подключения.",
     "only_paratext_admins_can_start": "** Вы должны быть администратором проекта, чтобы начать его здесь. Попросите вашего администратора подключиться к вашему проекту, после чего вы также сможете подключиться к нему здесь.",
+    "paratext_account_linked_to_another_user": "You have logged into a Paratext account that is already linked to a user with the email {{ email }}. You will be logged out of your current account and proceed as the Paratext user.",
     "paratext_project": "Проект Paratext",
     "problem_already_connected": "The project is already connected. Maybe another project administrator connected the project at the same time. Please try again. If it continues to be a problem, please report the issue so we can get it fixed.",
+    "proceed": "Proceed",
     "translation_suggestions": "Предлагаемые варианты перевода",
     "translations_will_be_suggested_as_you_edit": "При редактировании Писания будут предложены переводы для слов и фраз. Рекомендуется настроить ваш проект как {{ boldStart }}Дочерний перевод{{ boldEnd }} в Paratext.",
     "you_can_change_later": "Вы сможете изменить это позже.",
@@ -112,6 +114,11 @@
     "next_page": "Следующая страница",
     "previous_page": "Предыдущая страница",
     "range_label": "{{ startIndex }} - {{ endIndex }} из {{ length }}"
+  },
+  "project_select": {
+    "please_select_valid_project_or_resource": "Please select a valid project or resource",
+    "projects": "Projects",
+    "resources": "Resources"
   },
   "question_answered_dialog": {
     "cancel": "Отмена",

@@ -56,8 +56,10 @@
     "log_in_with_paratext": "Entrar no Paratext",
     "no_connectable_projects": "Parece que não há nenhum projeto conectável para você.{{ newLine }}Por favor, vá ao Paratext para registrar um projeto para se conectar.",
     "only_paratext_admins_can_start": "** Você precisa ser o Administrador de um projeto do Paratext para iniciá-lo aqui. Peça ao seu administrador para se conectar ao seu projeto; depois disso, você também pode se conectar aqui.",
+    "paratext_account_linked_to_another_user": "You have logged into a Paratext account that is already linked to a user with the email {{ email }}. You will be logged out of your current account and proceed as the Paratext user.",
     "paratext_project": "Projeto do Paratext",
     "problem_already_connected": "O projeto já está conectado. Talvez outro administrador de projeto tenha conectado o projeto ao mesmo tempo. Por favor, tente novamente. Se o problema persistir, por favor informe para que possamos corrigir o problema.",
+    "proceed": "Proceed",
     "translation_suggestions": "Sugestões de Tradução",
     "translations_will_be_suggested_as_you_edit": "Traduções para palavras e frases serão sugeridas enquanto você edita o Texto Bíblico. É recomendável que seu projeto seja configurado como uma {{ boldStart }}Tradução Derivada{{ boldEnd }} no Paratext.",
     "you_can_change_later": "Você pode alterar isto depois.",
@@ -112,6 +114,11 @@
     "next_page": "Próxima página",
     "previous_page": "Página anterior",
     "range_label": "{{ startIndex }} - {{ endIndex }} de {{ length }}"
+  },
+  "project_select": {
+    "please_select_valid_project_or_resource": "Please select a valid project or resource",
+    "projects": "Projects",
+    "resources": "Resources"
   },
   "question_answered_dialog": {
     "cancel": "Cancelar",

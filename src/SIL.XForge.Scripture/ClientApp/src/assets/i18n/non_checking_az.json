@@ -56,8 +56,10 @@
     "log_in_with_paratext": "Paratekst vasitəsilə daxil olmaq",
     "no_connectable_projects": "Görünür ki, sizin üçün qoşula bilən layihələr yoxdur. {{ newLine }} Zəhmət olmazsa, layihəyə qoşulmaq məqsədilə qeydiyyatdan keçmək üçün Paratekst proqramına daxil olun.",
     "only_paratext_admins_can_start": "Burada lahiyə başlamaq üçün, onun Paratekst Administratoru olmalısınız. Sizin Administratorunuzdan lahiyənizə qoşmağa xahiş ediniz, sonra siz də burada qoşula bilərsiniz.",
+    "paratext_account_linked_to_another_user": "You have logged into a Paratext account that is already linked to a user with the email {{ email }}. You will be logged out of your current account and proceed as the Paratext user.",
     "paratext_project": "Paratekst layihəsi",
     "problem_already_connected": "The project is already connected. Maybe another project administrator connected the project at the same time. Please try again. If it continues to be a problem, please report the issue so we can get it fixed.",
+    "proceed": "Proceed",
     "translation_suggestions": "Tərcümə təklifləri",
     "translations_will_be_suggested_as_you_edit": "Siz Kəlamı redaktə etdikcə sözlər və ifadələr üçün tərcümələr təklif olunacaq. Məsləhət görülür ki, layihəniz Paratextdə {{ boldStart }} Filial Tərcümə kimi {{ boldEnd }}quraşdırılsın.",
     "you_can_change_later": "Bunları sonra dəyişdirə bilərsiniz.",
@@ -112,6 +114,11 @@
     "next_page": "Növbəti səhifə",
     "previous_page": "Əvvəlki səhifə",
     "range_label": "{{ length }}-in {{ startIndex }} - {{ endIndex }}"
+  },
+  "project_select": {
+    "please_select_valid_project_or_resource": "Please select a valid project or resource",
+    "projects": "Projects",
+    "resources": "Resources"
   },
   "question_answered_dialog": {
     "cancel": "Ləğv etmək",
