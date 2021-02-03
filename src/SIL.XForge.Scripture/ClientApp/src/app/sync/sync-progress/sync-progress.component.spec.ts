@@ -2,6 +2,7 @@ import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { mock, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ProjectService } from 'xforge-common/project.service';
@@ -29,11 +30,13 @@ describe('SyncProgressComponent', () => {
 
   it('should show progress when sync is active', fakeAsync(() => {
     const env = new TestEnvironment(false);
+    env.setCurrentUser('user01');
     expect(env.progressBar).toBeNull();
     // Simulate sync starting
     env.emitSyncProgress(0, 'testProject01');
     expect(env.progressBar).not.toBeNull();
     expect(env.host.syncProgress.mode).toBe('indeterminate');
+    verify(mockedProjectService.onlineGetProjectRole('sourceProject02')).never();
     // Simulate sync in progress
     env.emitSyncProgress(0.5, 'testProject01');
     expect(env.host.syncProgress.mode).toBe('determinate');
@@ -45,6 +48,7 @@ describe('SyncProgressComponent', () => {
 
   it('show progress as source and target combined', fakeAsync(() => {
     const env = new TestEnvironment(true);
+    env.setCurrentUser('user01');
     expect(env.progressBar).toBeNull();
     env.emitSyncProgress(0, 'testProject01');
     env.emitSyncProgress(0, 'sourceProject02');
@@ -59,6 +63,19 @@ describe('SyncProgressComponent', () => {
     expect(env.host.syncProgress.mode).toBe('indeterminate');
     env.emitSyncProgress(0.8, 'testProject01');
     expect(env.host.syncProgress.syncProgressPercent).toEqual(90);
+    env.emitSyncComplete(true, 'testProject01');
+    expect(env.fixture.componentInstance.inProgress).toBe(false);
+  }));
+
+  it('does not access source project if user does not have a paratext role', fakeAsync(() => {
+    const env = new TestEnvironment(true);
+    env.setCurrentUser('user02');
+    env.emitSyncProgress(0, 'testProject01');
+    env.emitSyncProgress(0, 'sourceProject02');
+    verify(mockedProjectService.get('sourceProject02')).never();
+    env.emitSyncComplete(true, 'sourceProject02');
+    env.emitSyncProgress(0.5, 'testProject01');
+    expect(env.host.syncProgress.syncProgressPercent).toEqual(50);
     env.emitSyncComplete(true, 'testProject01');
     expect(env.fixture.componentInstance.inProgress).toBe(false);
   }));
@@ -87,6 +104,8 @@ class TestEnvironment {
   readonly host: HostComponent;
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
+  private userRoleTarget = { user01: SFProjectRole.ParatextAdministrator, user02: SFProjectRole.ParatextAdministrator };
+  private userRoleSource = { user01: SFProjectRole.ParatextAdministrator };
 
   constructor(hasSource: boolean, isInProgress = false) {
     const date = new Date();
@@ -126,7 +145,7 @@ class TestEnvironment {
           dateLastSuccessfulSync: date.toJSON()
         },
         texts: [],
-        userRoles: {}
+        userRoles: this.userRoleTarget
       }
     });
 
@@ -155,7 +174,7 @@ class TestEnvironment {
             dateLastSuccessfulSync: date.toJSON()
           },
           texts: [],
-          userRoles: {}
+          userRoles: this.userRoleSource
         }
       });
     }
@@ -201,5 +220,9 @@ class TestEnvironment {
       }
     }, false);
     this.fixture.detectChanges();
+  }
+
+  setCurrentUser(userId: string): void {
+    when(mockedProjectService.onlineGetProjectRole('sourceProject02')).thenResolve(this.userRoleSource[userId]);
   }
 }
