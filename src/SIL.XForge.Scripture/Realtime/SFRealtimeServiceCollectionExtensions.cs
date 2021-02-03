@@ -24,7 +24,8 @@ namespace Microsoft.Extensions.DependencyInjection
                     {
                         new DocConfig("sf_project_user_configs", typeof(SFProjectUserConfig)),
                         new DocConfig("texts", typeof(TextData), OTType.RichText),
-                        new DocConfig("questions", typeof(Question))
+                        new DocConfig("questions", typeof(Question)),
+                        new DocConfig("paratext_note_threads", typeof(ParatextNoteThread))
                     });
                     o.UserDataDocs.AddRange(new[]
                     {
