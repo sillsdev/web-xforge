@@ -19,7 +19,10 @@ import { CookieService } from 'ngx-cookie-service';
 import Quill from 'quill';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
+import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
+import { ParatextNote } from 'realtime-server/lib/scriptureforge/models/paratext-note';
+import { ParatextNoteThread } from 'realtime-server/lib/scriptureforge/models/paratext-note-thread';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import {
@@ -31,6 +34,7 @@ import { TextInfoPermission } from 'realtime-server/lib/scriptureforge/models/te
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, of, Subject } from 'rxjs';
+import { ParatextNoteThreadDoc } from 'src/app/core/models/paratext-note-thread-doc';
 import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { CONSOLE } from 'xforge-common/browser-globals';
@@ -1066,6 +1070,7 @@ class TestEnvironment {
     user02: TextInfoPermission.None,
     user03: TextInfoPermission.Read
   };
+  private readonly dateNow: string = new Date().toUTCString();
 
   private testProject: SFProject = {
     name: 'project 01',
@@ -1200,6 +1205,7 @@ class TestEnvironment {
       instance(this.mockedRemoteTranslationEngine)
     );
     this.setupProject();
+    this.addParatextNoteThread(['user01', 'user02', 'user03']);
     when(this.mockedRemoteTranslationEngine.getWordGraph(anything())).thenCall(segment =>
       Promise.resolve(this.createWordGraph(segment))
     );
@@ -1228,6 +1234,11 @@ class TestEnvironment {
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
     when(mockedSFProjectService.isProjectAdmin('project01', 'user04')).thenResolve(true);
+    when(mockedSFProjectService.queryNoteThreads('project01')).thenCall(id =>
+      this.realtimeService.subscribeQuery(ParatextNoteThreadDoc.COLLECTION, {
+        [obj<ParatextNoteThread>().pathStr(t => t.projectRef)]: id
+      })
+    );
     when(mockedPwaService.isOnline).thenReturn(true);
     when(mockedPwaService.onlineStatus).thenReturn(of(true));
 
@@ -1580,6 +1591,27 @@ class TestEnvironment {
     this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
       id: getSFProjectUserConfigDocId('project01', userConfig.ownerRef),
       data: userConfig
+    });
+  }
+
+  private addParatextNoteThread(userIds: string[]): void {
+    const comments: ParatextNote[] = [];
+    for (const id of userIds) {
+      const comment: ParatextNote = {
+        threadId: 'thread01',
+        ownerRef: id,
+        paratextUser: `pt_${id}`,
+        dataId: `${id}_note`,
+        dateCreated: this.dateNow,
+        dateModified: this.dateNow,
+        content: `Note from ${id}`
+      };
+      comments.push(comment);
+    }
+
+    this.realtimeService.addSnapshot<ParatextNoteThread>(ParatextNoteThreadDoc.COLLECTION, {
+      id: 'project01:thread01',
+      data: { projectRef: 'project01', ownerRef: 'user01', threadId: 'thread01', comments, verseRefStr: 'MAT 1:1' }
     });
   }
 

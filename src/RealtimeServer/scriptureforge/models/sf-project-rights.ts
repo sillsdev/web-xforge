@@ -7,7 +7,9 @@ export enum SFProjectDomain {
   Questions = 1200,
   Answers = 1300,
   AnswerComments = 1400,
-  Likes = 1500
+  Likes = 1500,
+  ParatextNoteThreads = 1600,
+  ParatextNote = 1700
 }
 
 export class SFProjectRights extends ProjectRights {
@@ -26,7 +28,11 @@ export class SFProjectRights extends ProjectRights {
 
       { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.View },
 
-      { projectDomain: SFProjectDomain.Likes, operation: Operation.View }
+      { projectDomain: SFProjectDomain.Likes, operation: Operation.View },
+
+      { projectDomain: SFProjectDomain.ParatextNoteThreads, operation: Operation.View },
+
+      { projectDomain: SFProjectDomain.ParatextNote, operation: Operation.View }
     ];
     this.addRights(SFProjectRole.ParatextObserver, observerRights);
     this.addRights(SFProjectRole.Observer, observerRights);
