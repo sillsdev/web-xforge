@@ -18,9 +18,11 @@
     "product_version": "Версия продукта: v{{ version }}",
     "project_home": "Домашняя страница проекта",
     "redirecting_in_moments": "Redirecting in a few moments...",
+    "refresh": "Refresh",
     "report_issue_email": "электронная почта {{ email }}",
     "report_issue": "Сообщить о проблеме",
-    "scripture_checking_not_available": "Проверка Писания в этом проекте недоступна."
+    "scripture_checking_not_available": "Проверка Писания в этом проекте недоступна.",
+    "update_is_available": "An update is available. Please refresh the page."
   },
   "canon": {
     "book_names": {
@@ -151,6 +153,7 @@
   },
   "checking": {
     "me": "Я",
+    "unknown_author": "Unknown author",
     "next": "Далее",
     "previous": "Назад",
     "questions": "Вопросы ({{ count }} )",
@@ -261,7 +264,8 @@
     "dismiss": "Пропустить"
   },
   "project": {
-    "project_link_is_invalid": "Ссылка на проект недействительна."
+    "project_link_is_invalid": "Ссылка на проект недействительна.",
+    "problem_finding_project": "There was a problem finding a project ({{ projectID }}) or user specific information for the project. There may be a typo in the URL you specified. You may have tried to access a project that is no longer available."
   },
   "project_deleted_dialog": {
     "ok": "OK",

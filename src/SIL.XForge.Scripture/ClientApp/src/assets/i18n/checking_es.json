@@ -18,9 +18,11 @@
     "product_version": "Versión del producto: v{{ version }}",
     "project_home": "Página de inicio del proyecto",
     "redirecting_in_moments": "Redirigiendo en unos momentos...",
+    "refresh": "Refresh",
     "report_issue_email": "correo electrónico {{ email }}",
     "report_issue": "Informar de un problema",
-    "scripture_checking_not_available": "La verificación de las Escrituras no está disponible en este proyecto."
+    "scripture_checking_not_available": "La verificación de las Escrituras no está disponible en este proyecto.",
+    "update_is_available": "An update is available. Please refresh the page."
   },
   "canon": {
     "book_names": {
@@ -151,6 +153,7 @@
   },
   "checking": {
     "me": "Yo",
+    "unknown_author": "Autor desconocido",
     "next": "Siguiente",
     "previous": "Anterior",
     "questions": "Preguntas ({{ count }})",
@@ -261,7 +264,8 @@
     "dismiss": "Descartar"
   },
   "project": {
-    "project_link_is_invalid": "El enlace del proyecto no es válido."
+    "project_link_is_invalid": "El enlace del proyecto no es válido.",
+    "problem_finding_project": "There was a problem finding a project ({{ projectID }}) or user specific information for the project. There may be a typo in the URL you specified. You may have tried to access a project that is no longer available."
   },
   "project_deleted_dialog": {
     "ok": "OK",

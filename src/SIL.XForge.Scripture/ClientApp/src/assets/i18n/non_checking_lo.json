@@ -56,8 +56,10 @@
     "log_in_with_paratext": "Log in with Paratext",
     "no_connectable_projects": "Looks like there are no connectable projects for you.{{ newLine }}Please go to Paratext to register a project to connect to.",
     "only_paratext_admins_can_start": "** You must be the Paratext Administrator of a project to start it here. Ask your Administrator to connect to your project then you can also connect to it here after that.",
+    "paratext_account_linked_to_another_user": "You have logged into a Paratext account that is already linked to a user with the email {{ email }}. You will be logged out of your current account and proceed as the Paratext user.",
     "paratext_project": "Paratext Project",
     "problem_already_connected": "The project is already connected. Maybe another project administrator connected the project at the same time. Please try again. If it continues to be a problem, please report the issue so we can get it fixed.",
+    "proceed": "Proceed",
     "translation_suggestions": "Translation Suggestions",
     "translations_will_be_suggested_as_you_edit": "Translations for words and phrases will be suggested as you edit Scripture. It is recommended that your project is setup as a {{ boldStart }}Daughter Translation{{ boldEnd }} in Paratext.",
     "you_can_change_later": "You can change these later.",
@@ -112,6 +114,11 @@
     "next_page": "Next page",
     "previous_page": "Previous page",
     "range_label": "{{ startIndex }} - {{ endIndex }} of {{ length }}"
+  },
+  "project_select": {
+    "please_select_valid_project_or_resource": "Please select a valid project or resource",
+    "projects": "Projects",
+    "resources": "Resources"
   },
   "question_answered_dialog": {
     "cancel": "ຍົກເລີກ",

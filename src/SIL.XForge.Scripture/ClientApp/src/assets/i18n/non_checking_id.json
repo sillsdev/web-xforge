@@ -56,8 +56,10 @@
     "log_in_with_paratext": "Masuk dengan Paratext",
     "no_connectable_projects": "Sepertinya tidak ada proyek yang terhubung dengan Anda. {{ newLine }} Silakan buka Paratext untuk mendaftarkan proyek yang akan dihubungkan.",
     "only_paratext_admins_can_start": "** Anda harus menjadi Administrator Paratext dari sebuah proyek untuk memulainya di sini. Minta Administrator Anda untuk menghubungkan ke proyek Anda maka Anda juga dapat terhubung ke sini setelah itu.",
+    "paratext_account_linked_to_another_user": "You have logged into a Paratext account that is already linked to a user with the email {{ email }}. You will be logged out of your current account and proceed as the Paratext user.",
     "paratext_project": "Proyek Paratext",
     "problem_already_connected": "The project is already connected. Maybe another project administrator connected the project at the same time. Please try again. If it continues to be a problem, please report the issue so we can get it fixed.",
+    "proceed": "Proceed",
     "translation_suggestions": "Saran Terjemahan",
     "translations_will_be_suggested_as_you_edit": "Terjemahan untuk kata dan frasa akan disarankan saat Anda menyunting Alkitab. Disarankan agar proyek Anda diatur sebagai {{ boldStart }}Daughter Translation{{ boldEnd }} di Paratext.",
     "you_can_change_later": "Anda dapat mengubahnya nanti.",
@@ -112,6 +114,11 @@
     "next_page": "Halaman berikutnya",
     "previous_page": "Halaman sebelumnya",
     "range_label": "{{ startIndex }} - {{ endIndex }} dari {{ length }}"
+  },
+  "project_select": {
+    "please_select_valid_project_or_resource": "Please select a valid project or resource",
+    "projects": "Projects",
+    "resources": "Resources"
   },
   "question_answered_dialog": {
     "cancel": "Batal",

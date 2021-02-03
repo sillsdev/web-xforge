@@ -56,8 +56,10 @@
     "log_in_with_paratext": "Connectez-vous avec Paratext",
     "no_connectable_projects": "Il semble qu'il n'y ait pas de projet connectable pour vous.{{ newLine }}Veuillez vous rendre sur Paratext pour enregistrer un projet à connecter.",
     "only_paratext_admins_can_start": "** Vous devez être l'administrateur Paratext d'un projet pour le commencer ici. Demandez à votre administrateur de connecter votre projet, ensuite vous pourrez également vous connecter à celui-ci ici.",
+    "paratext_account_linked_to_another_user": "You have logged into a Paratext account that is already linked to a user with the email {{ email }}. You will be logged out of your current account and proceed as the Paratext user.",
     "paratext_project": "Projet Paratext",
     "problem_already_connected": "Le projet est déjà connecté. Peut-être qu'un autre administrateur de projet a connecté le projet en même temps. Veuillez réessayer. Si le problème persiste, veuillez nous le signaler afin que nous puissions régler le problème.",
+    "proceed": "Proceed",
     "translation_suggestions": "Suggestions de traduction",
     "translations_will_be_suggested_as_you_edit": "Des traductions pour des mots et des phrases seront suggérées alors que vous modifiez les Écritures. Il est recommandé que votre projet soit configuré comme une {{ boldStart }}traduction-fille{{ boldEnd }} dans Paratext.",
     "you_can_change_later": "Vous pourrez les modifier plus tard.",
@@ -112,6 +114,11 @@
     "next_page": "Page suivante",
     "previous_page": "Page précédente",
     "range_label": "{{ startIndex }} - {{ endIndex }} sur {{ length }}"
+  },
+  "project_select": {
+    "please_select_valid_project_or_resource": "Veuillez sélectionner un projet ou une ressource valide",
+    "projects": "Projets",
+    "resources": "Ressources"
   },
   "question_answered_dialog": {
     "cancel": "Annuler",

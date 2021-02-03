@@ -56,8 +56,10 @@
     "log_in_with_paratext": "Iniciar sesión con Paratext",
     "no_connectable_projects": "Parece que no hay proyectos conectables para usted.{{ newLine }}Por favor, vaya a Paratext para registrar un proyecto al cual conectarse.",
     "only_paratext_admins_can_start": "** Usted debe ser el Administrador de un proyecto en Paratext para comenzarlo aquí. Pídele a su administrador que se conecte a su proyecto, luego también podrá conectarse aquí.",
+    "paratext_account_linked_to_another_user": "You have logged into a Paratext account that is already linked to a user with the email {{ email }}. You will be logged out of your current account and proceed as the Paratext user.",
     "paratext_project": "Proyecto de Paratext",
     "problem_already_connected": "El proyecto ya está conectado. Tal vez otro administrador del proyecto conectó el proyecto al mismo tiempo. Por favor, inténtelo de nuevo. Si sigue siendo un problema, por favor informe del problema para que podamos arreglarlo.",
+    "proceed": "Proceed",
     "translation_suggestions": "Sugerencias de traducción",
     "translations_will_be_suggested_as_you_edit": "Se sugerirán traducciones de palabras y frases a medida que edite la Escritura. Se recomienda que su proyecto se configure como {{ boldStart }}Traducción hija{{ boldEnd }} en Paratext.",
     "you_can_change_later": "Puede cambiarlo más tarde.",
@@ -112,6 +114,11 @@
     "next_page": "Página siguiente",
     "previous_page": "Página anterior",
     "range_label": "{{ startIndex }} - {{ endIndex }} de {{ length }}"
+  },
+  "project_select": {
+    "please_select_valid_project_or_resource": "Por favor, seleccione un proyecto o recurso válido",
+    "projects": "Proyectos",
+    "resources": "Recursos"
   },
   "question_answered_dialog": {
     "cancel": "Cancelar",
