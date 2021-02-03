@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ProgressBarMode } from '@angular/material/progress-bar';
 import { OtJson0Op } from 'ot-json0';
+import { hasParatextRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { merge, Observable } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -51,7 +52,11 @@ export class SyncProgressComponent extends SubscriptionDisposable implements OnI
     }
     if (this.projectDoc?.data?.translateConfig.translationSuggestionsEnabled) {
       const sourceProjectId: string | undefined = this.projectDoc.data.translateConfig.source?.projectRef;
-      this.sourceProjectDoc = sourceProjectId == null ? undefined : await this.projectService.get(sourceProjectId);
+      if (sourceProjectId != null) {
+        const role: string = await this.projectService.onlineGetProjectRole(sourceProjectId);
+        // Only show progress for the source project when the user has sync permission
+        this.sourceProjectDoc = hasParatextRole(role) ? await this.projectService.get(sourceProjectId) : undefined;
+      }
     }
 
     const checkSyncStatus$: Observable<OtJson0Op[]> =
