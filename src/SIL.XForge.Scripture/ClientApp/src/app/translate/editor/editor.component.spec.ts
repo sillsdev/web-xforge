@@ -752,7 +752,6 @@ describe('EditorComponent', () => {
 
     it('user has no resource access', fakeAsync(() => {
       const env = new TestEnvironment();
-      when(mockedSFProjectService.onlineGetProjectRole('resource01')).thenResolve('None');
       env.setupProject({
         translateConfig: {
           translationSuggestionsEnabled: true,
@@ -771,7 +770,8 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.updateParams({ projectId: 'project01', bookId: 'ACT' });
       env.wait();
-      verify(mockedSFProjectService.onlineGetProjectRole('resource01')).once();
+      // Gets a projectUserConfig with no data because the user is not on the resource project
+      verify(mockedSFProjectService.getUserConfig('resource01', 'user01')).once();
       verify(mockedSFProjectService.get('resource01')).never();
       expect(env.bookName).toEqual('Acts');
       expect(env.component.chapter).toBe(1);
@@ -970,7 +970,6 @@ describe('EditorComponent', () => {
 
     it('user has no resource access', fakeAsync(() => {
       const env = new TestEnvironment();
-      when(mockedSFProjectService.onlineGetProjectRole('resource01')).thenResolve('None');
       env.setupProject({
         translateConfig: {
           translationSuggestionsEnabled: false,
@@ -989,7 +988,8 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.updateParams({ projectId: 'project01', bookId: 'ACT' });
       env.wait();
-      verify(mockedSFProjectService.onlineGetProjectRole('resource01')).once();
+      // Gets a projectUserConfig with no data because the user is not on the resource project
+      verify(mockedSFProjectService.getUserConfig('resource01', 'user01')).once();
       verify(mockedSFProjectService.get('resource01')).never();
       expect(env.bookName).toEqual('Acts');
       expect(env.component.chapter).toBe(1);
@@ -1183,6 +1183,12 @@ class TestEnvironment {
         getSFProjectUserConfigDocId('project01', userId)
       )
     );
+    when(mockedSFProjectService.getUserConfig('project02', anything())).thenCall((_projectId, userId) =>
+      this.realtimeService.subscribe(
+        SFProjectUserConfigDoc.COLLECTION,
+        getSFProjectUserConfigDocId('project02', userId)
+      )
+    );
     when(mockedSFProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
@@ -1241,8 +1247,6 @@ class TestEnvironment {
   setCurrentUser(userId: string): void {
     when(mockedUserService.currentUserId).thenReturn(userId);
     when(mockedUserService.getCurrentUser()).thenCall(() => this.realtimeService.subscribe(UserDoc.COLLECTION, userId));
-    when(mockedSFProjectService.onlineGetProjectRole('project01')).thenResolve(this.userRolesOnProject[userId]);
-    when(mockedSFProjectService.onlineGetProjectRole('project02')).thenResolve(this.userRolesOnProject[userId]);
   }
 
   setupUsers(): void {
@@ -1306,6 +1310,14 @@ class TestEnvironment {
     }
     if (data.translateConfig?.source !== undefined) {
       projectData.translateConfig.source = data.translateConfig?.source;
+      when(
+        mockedSFProjectService.getUserConfig(data.translateConfig.source.projectRef, anything())
+      ).thenCall((projectId, userId) =>
+        this.realtimeService.subscribe(
+          SFProjectUserConfigDoc.COLLECTION,
+          getSFProjectUserConfigDocId(projectId, userId)
+        )
+      );
     }
     if (data.isRightToLeft != null) {
       projectData.isRightToLeft = data.isRightToLeft;
