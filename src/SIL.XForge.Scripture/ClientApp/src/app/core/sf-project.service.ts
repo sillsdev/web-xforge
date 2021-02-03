@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { obj } from 'realtime-server/lib/common/utils/obj-path';
+import { ParatextNoteThread } from 'realtime-server/lib/scriptureforge/models/paratext-note-thread';
 import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProject, SF_PROJECTS_COLLECTION } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -13,6 +14,7 @@ import { QueryParameters } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { TransceleratorQuestion } from '../checking/import-questions-dialog/import-questions-dialog.component';
 import { InviteeStatus } from '../users/collaborators/collaborators.component';
+import { ParatextNoteThreadDoc } from './models/paratext-note-thread-doc';
 import { QuestionDoc } from './models/question-doc';
 import { SFProjectCreateSettings } from './models/sf-project-create-settings';
 import { SFProjectDoc } from './models/sf-project-doc';
@@ -110,6 +112,11 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
       question.audioUrl = audioUrl;
     }
     return this.realtimeService.create<QuestionDoc>(QuestionDoc.COLLECTION, docId, question);
+  }
+
+  queryNoteThreads(id: string): Promise<RealtimeQuery<ParatextNoteThreadDoc>> {
+    const queryParams: QueryParameters = { [obj<ParatextNoteThread>().pathStr(t => t.projectRef)]: id };
+    return this.realtimeService.subscribeQuery(ParatextNoteThreadDoc.COLLECTION, queryParams);
   }
 
   onlineSync(id: string): Promise<void> {
