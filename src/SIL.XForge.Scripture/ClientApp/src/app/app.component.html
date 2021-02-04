@@ -254,7 +254,13 @@
       </mdc-list>
     </mdc-drawer-content>
   </mdc-drawer>
-  <div #appContent class="app-content mdc-top-app-bar-adjust" [class.mdc-top-app-bar-adjust-double]="hasUpdate">
+  <!-- The cdkScrollable attribute is needed so the CDK can listen to scroll events within this container -->
+  <div
+    #appContent
+    cdkScrollable
+    class="app-content mdc-top-app-bar-adjust"
+    [class.mdc-top-app-bar-adjust-double]="hasUpdate"
+  >
     <div>
       <router-outlet></router-outlet>
       <p *ngIf="showCheckingDisabled" class="checking-unavailable">{{ t("scripture_checking_not_available") }}</p>
