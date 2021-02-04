@@ -1,7 +1,6 @@
-import { ErrorHandler } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
-import { HashMap, TranslocoService } from '@ngneat/transloco';
+import { TranslocoService } from '@ngneat/transloco';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -10,7 +9,7 @@ import {
   SFProjectUserConfig
 } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { of } from 'rxjs';
-import { anything, capture, deepEqual, mock, verify, when } from 'ts-mockito';
+import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -30,7 +29,6 @@ const mockedRouter = mock(Router);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
 const mockedTranslocoService = mock(TranslocoService);
-const mockedErrorHandler = mock(ErrorHandler);
 
 describe('ProjectComponent', () => {
   configureTestingModule(() => ({
@@ -42,7 +40,6 @@ describe('ProjectComponent', () => {
       { provide: Router, useMock: mockedRouter },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: ErrorHandler, useMock: mockedErrorHandler },
       { provide: TranslocoService, useMock: mockedTranslocoService }
     ]
   }));
@@ -121,22 +118,13 @@ describe('ProjectComponent', () => {
     expect().nothing();
   }));
 
-  it('if project does not exist, send user to /projects rather than show confusing blank page', fakeAsync(() => {
-    // If project.component.ts does not find a project, it just shows a blank page with a forever-going progress bar.
-    // This is confusing, and may be related to a couple issues (SF-1137, SF-1064). Tell the user that there was a
-    // problem and navigate to something with content.
-
+  it('do not navigate when project does not exist', fakeAsync(() => {
     const env = new TestEnvironment();
     env.fixture.detectChanges();
     tick();
 
     verify(mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
-    verify(mockedErrorHandler.handleError(anything())).once();
-    const errorMessage: string = capture(mockedErrorHandler.handleError).last()[0].message;
-    expect(errorMessage).toContain('problem_finding_project');
-    expect(errorMessage).toContain('projectID=project01');
-    verify(mockedUserService.setCurrentProjectId()).once();
-    verify(mockedRouter.navigateByUrl('/projects', anything())).once();
+    verify(mockedRouter.navigate(anything(), anything())).never();
     expect().nothing();
   }));
 
@@ -233,19 +221,7 @@ class TestEnvironment {
     when(mockedSFProjectService.get('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
-    when(mockedErrorHandler.handleError(anything())).thenReturn();
-    when(mockedTranslocoService.translate<string>(anything(), anything())).thenCall(
-      (translationStringKey: string, params: HashMap<any>) => {
-        if (params == null) {
-          return translationStringKey;
-        }
-        let output: string = translationStringKey;
-        for (const param of Object.keys(params)) {
-          output += `, ${param}=${params[param]}`;
-        }
-        return output;
-      }
-    );
+    when(mockedTranslocoService.translate<string>(anything())).thenReturn('The project link is invalid.');
     this.setLinkSharing(false);
 
     this.fixture = TestBed.createComponent(ProjectComponent);
