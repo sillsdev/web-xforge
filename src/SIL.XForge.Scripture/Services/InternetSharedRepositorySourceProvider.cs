@@ -1,5 +1,4 @@
 using System;
-using Paratext.Data.Users;
 using SIL.XForge.Models;
 using SIL.XForge.Scripture.Models;
 
