@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Paratext.Data;
 using SIL.WritingSystems;
 
@@ -11,6 +12,9 @@ namespace SIL.XForge.Scripture.Services
     /// </summary>
     public class SFScrTextCollection : ScrTextCollection
     {
+        // Keep track of languages that weren't found in SLDR so we don't call over and over for the same bad code.
+        private static readonly List<string> _sldrLookupFailed = new List<string>();
+
         protected override string DictionariesDirectoryInternal => null;
 
         protected override void InitializeInternal(string settingsDir, bool allowMigration)
@@ -38,9 +42,26 @@ namespace SIL.XForge.Scripture.Services
             throw new NotImplementedException("This method should not be used in SF context.");
         }
 
+        /// <remarks>This method's implementation was mostly copied from ParatextBase.</remarks>
         protected override WritingSystemDefinition CreateWsDef(string languageId, bool allowSldr)
         {
-            return null;
+            // Only check SLDR if allowed for this call and all internet access is enabled - SLDR isn't set up to use proxy.
+            WritingSystemDefinition wsDef = null;
+            if (allowSldr && InternetAccess.Status == InternetUse.Enabled && !_sldrLookupFailed.Contains(languageId))
+            {
+                try
+                {
+                    var sldrFactory = new SldrWritingSystemFactory();
+                    sldrFactory.Create(languageId, out wsDef);
+                }
+                catch (Exception)
+                {
+                    // Ignore any SLDR errors - there have been problems with entries on the server failing to parse.
+                    // Also the id being provided may not be valid.
+                    _sldrLookupFailed.Add(languageId);
+                }
+            }
+            return wsDef;
         }
 
         protected override UnsupportedReason MigrateProjectIfNeeded(ScrText scrText)
