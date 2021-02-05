@@ -84,6 +84,22 @@
       }
     },
     {
+      "name": "Migration SourceTargetSplitting",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-migrator-SourceTargetSplitting",
+      "program": "${workspaceRoot}/src/Migrations/SourceTargetSplitting/bin/Debug/netcoreapp3.1/SourceTargetSplitting.dll",
+      "cwd": "${workspaceRoot}/src/Migrations/SourceTargetSplitting",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "args": ["NOTrun"],
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "Realtime__Port": "5005",
+        "SF_APP_DIR": "../../SIL.XForge.Scripture"
+      }
+    },
+    {
       "type": "node",
       "request": "launch",
       "name": "vscode-jest-tests",
