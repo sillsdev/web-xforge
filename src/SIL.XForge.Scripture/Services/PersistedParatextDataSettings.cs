@@ -1,8 +1,5 @@
 using Paratext.Data;
 using PtxUtils;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SIL.XForge.Scripture
 {

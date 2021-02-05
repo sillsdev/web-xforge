@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using Ionic.Zip;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Paratext.Data;
