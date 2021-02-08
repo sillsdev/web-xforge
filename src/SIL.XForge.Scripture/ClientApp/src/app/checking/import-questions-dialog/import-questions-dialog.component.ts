@@ -234,6 +234,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
                 .set(q => q.dateModified, currentDate)
             );
           }
+          return undefined;
         } else {
           const newQuestion: Question = {
             dataId: objectId(),

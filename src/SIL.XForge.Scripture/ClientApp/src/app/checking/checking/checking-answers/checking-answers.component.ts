@@ -328,6 +328,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     if (url != null && url !== '' && this.fileSources.has(url)) {
       return this.fileSources.get(url);
     }
+    return undefined;
   }
 
   selectScripture() {

@@ -117,6 +117,7 @@ export class FileService extends SubscriptionDisposable {
       return URL.createObjectURL(localFileData.blob);
     } catch (error) {
       await this.onCachingError(error);
+      return undefined;
     }
   }
 
@@ -230,6 +231,7 @@ export class FileService extends SubscriptionDisposable {
         return fileData;
       }
     } catch {}
+    return undefined;
   }
 
   private async syncFiles(): Promise<void> {
