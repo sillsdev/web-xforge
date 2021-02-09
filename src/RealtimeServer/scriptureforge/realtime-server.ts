@@ -4,6 +4,7 @@ import { SchemaVersionRepository } from '../common/schema-version-repository';
 import { DocService } from '../common/services/doc-service';
 import { UserService } from '../common/services/user-service';
 import { SF_PROJECTS_COLLECTION } from './models/sf-project';
+import { ParatextNoteThreadService } from './services/paratext-note-thread-service'
 import { QuestionService } from './services/question-service';
 import { SFProjectService } from './services/sf-project-service';
 import { SFProjectUserConfigService } from './services/sf-project-user-config-service';
@@ -14,7 +15,8 @@ const SF_DOC_SERVICES: DocService[] = [
   new SFProjectService(),
   new SFProjectUserConfigService(),
   new TextService(),
-  new QuestionService()
+  new QuestionService(),
+  new ParatextNoteThreadService()
 ];
 
 /**

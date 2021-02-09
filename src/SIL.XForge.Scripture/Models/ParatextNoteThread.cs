@@ -11,6 +11,5 @@ namespace SIL.XForge.Scripture.Models
         public List<ParatextNote> Notes { get; set; } = new List<ParatextNote>();
         public string SelectedText { get; set; }
         public string ParatextUser { get; set; }
-        public DateTime DateCreated { get; set; }
     }
 }
