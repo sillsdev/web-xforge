@@ -213,7 +213,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
     }
   }
 
-  importQuestions() {
+  importQuestions(): void {
     const listItems = this.questionList.filter(listItem => listItem.checked);
     const config: MdcDialogConfig<ImportQuestionsProgressDialogData> = {
       clickOutsideToClose: false,
@@ -222,36 +222,38 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
     };
     const progressDialog = this.dialog.open(ImportQuestionsProgressDialogComponent, config);
     Promise.all(
-      listItems.map(listItem => {
-        const currentDate = new Date().toJSON();
-        const verseRefData = this.verseRefData(listItem.question);
-        if (listItem.sfVersionOfQuestion != null) {
-          if (this.questionsDiffer(listItem)) {
-            listItem.sfVersionOfQuestion.submitJson0Op(op =>
-              op
-                .set(q => q.text!, listItem.question.text)
-                .set(q => q.verseRef, verseRefData)
-                .set(q => q.dateModified, currentDate)
-            );
+      listItems.map(
+        (listItem): Promise<unknown> => {
+          const currentDate = new Date().toJSON();
+          const verseRefData = this.verseRefData(listItem.question);
+          if (listItem.sfVersionOfQuestion != null) {
+            if (this.questionsDiffer(listItem)) {
+              return listItem.sfVersionOfQuestion.submitJson0Op(op =>
+                op
+                  .set(q => q.text!, listItem.question.text)
+                  .set(q => q.verseRef, verseRefData)
+                  .set(q => q.dateModified, currentDate)
+              );
+            }
+            return Promise.resolve();
+          } else {
+            const newQuestion: Question = {
+              dataId: objectId(),
+              projectRef: this.data.projectId,
+              ownerRef: this.data.userId,
+              verseRef: verseRefData,
+              text: listItem.question.text,
+              audioUrl: undefined,
+              answers: [],
+              isArchived: false,
+              dateCreated: currentDate,
+              dateModified: currentDate,
+              transceleratorQuestionId: listItem.question.id
+            };
+            return this.projectService.createQuestion(this.data.projectId, newQuestion, undefined, undefined);
           }
-          return undefined;
-        } else {
-          const newQuestion: Question = {
-            dataId: objectId(),
-            projectRef: this.data.projectId,
-            ownerRef: this.data.userId,
-            verseRef: verseRefData,
-            text: listItem.question.text,
-            audioUrl: undefined,
-            answers: [],
-            isArchived: false,
-            dateCreated: currentDate,
-            dateModified: currentDate,
-            transceleratorQuestionId: listItem.question.id
-          };
-          return this.projectService.createQuestion(this.data.projectId, newQuestion, undefined, undefined);
         }
-      })
+      )
     ).finally(() => {
       progressDialog.close();
       this.dialogRef.close();
