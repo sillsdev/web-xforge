@@ -47,7 +47,11 @@ export class SFProjectRights extends ProjectRights {
       { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.DeleteOwn },
 
       { projectDomain: SFProjectDomain.Likes, operation: Operation.Create },
-      { projectDomain: SFProjectDomain.Likes, operation: Operation.DeleteOwn }
+      { projectDomain: SFProjectDomain.Likes, operation: Operation.DeleteOwn },
+
+      { projectDomain: SFProjectDomain.ParatextNote, operation: Operation.Create },
+      { projectDomain: SFProjectDomain.ParatextNote, operation: Operation.EditOwn },
+      { projectDomain: SFProjectDomain.ParatextNote, operation: Operation.DeleteOwn }
     ]);
     this.addRights(SFProjectRole.Reviewer, reviewerRights);
     this.addRights(SFProjectRole.ParatextConsultant, reviewerRights);
@@ -73,7 +77,14 @@ export class SFProjectRights extends ProjectRights {
       { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.Delete },
 
       { projectDomain: SFProjectDomain.Likes, operation: Operation.Create },
-      { projectDomain: SFProjectDomain.Likes, operation: Operation.DeleteOwn }
+      { projectDomain: SFProjectDomain.Likes, operation: Operation.DeleteOwn },
+
+      { projectDomain: SFProjectDomain.ParatextNoteThreads, operation: Operation.Create },
+      { projectDomain: SFProjectDomain.ParatextNoteThreads, operation: Operation.Delete },
+
+      { projectDomain: SFProjectDomain.ParatextNote, operation: Operation.Create },
+      { projectDomain: SFProjectDomain.ParatextNote, operation: Operation.Edit },
+      { projectDomain: SFProjectDomain.ParatextNote, operation: Operation.Delete }
     ]);
     this.addRights(SFProjectRole.ParatextAdministrator, administratorRights);
   }
