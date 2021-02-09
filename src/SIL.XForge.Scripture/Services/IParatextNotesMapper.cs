@@ -14,5 +14,7 @@ namespace SIL.XForge.Scripture.Services
         Task InitAsync(UserSecret currentUserSecret, SFProjectSecret projectSecret, List<User> ptUsers,
             string paratextProjectId);
         Task<XElement> GetNotesChangelistAsync(XElement oldNotesElem, IEnumerable<IDocument<Question>> questionsDocs);
+        IEnumerable<ParatextNoteThreadChange> GetNoteThreadChangesFromPT(XElement ptNotesElem,
+            IEnumerable<IDocument<ParatextNoteThread>> noteThreads);
     }
 }

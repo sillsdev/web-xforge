@@ -32,7 +32,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task SyncAsync_UserDoesNotExist()
         {
             var env = new TestEnvironment();
-            env.SetupSFData(true, true, true);
+            env.SetupSFData(true, true, true, false);
 
             await env.Runner.RunAsync("project01", "user03", false);
 
@@ -45,7 +45,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task SyncAsync_Error()
         {
             var env = new TestEnvironment();
-            env.SetupSFData(true, true, false);
+            env.SetupSFData(true, true, false, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
             env.DeltaUsxMapper.When(d => d.ToChapterDeltas(Arg.Any<XDocument>())).Do(x => throw new Exception());
 
@@ -60,7 +60,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task SyncAsync_NewProjectTranslationSuggestionsAndCheckingDisabled()
         {
             var env = new TestEnvironment();
-            env.SetupSFData(false, false, false);
+            env.SetupSFData(false, false, false, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2, false));
 
             await env.Runner.RunAsync("project01", "user01", true);
@@ -91,7 +91,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task SyncAsync_NewProjectTranslationSuggestionsAndCheckingEnabled()
         {
             var env = new TestEnvironment();
-            env.SetupSFData(true, true, false);
+            env.SetupSFData(true, true, false, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2, false));
 
             await env.Runner.RunAsync("project02", "user01", true);
@@ -123,7 +123,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task SyncAsync_NewProjectOnlyTranslationSuggestionsEnabled()
         {
             var env = new TestEnvironment();
-            env.SetupSFData(true, false, false);
+            env.SetupSFData(true, false, false, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2, false));
 
             await env.Runner.RunAsync("project02", "user01", true);
@@ -155,7 +155,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task SyncAsync_NewProjectOnlyCheckingEnabled()
         {
             var env = new TestEnvironment();
-            env.SetupSFData(false, true, false);
+            env.SetupSFData(false, true, false, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2, false));
 
             await env.Runner.RunAsync("project01", "user01", true);
@@ -187,7 +187,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-            env.SetupSFData(true, true, false, books);
+            env.SetupSFData(true, true, false, false, books);
             env.SetupPTData(books);
 
             await env.Runner.RunAsync("project01", "user01", false);
@@ -226,7 +226,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-            env.SetupSFData(true, true, true, books);
+            env.SetupSFData(true, true, true, false, books);
             env.SetupPTData(books);
 
             await env.Runner.RunAsync("project02", "user01", false);
@@ -268,7 +268,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-            env.SetupSFData(true, false, true, books);
+            env.SetupSFData(true, false, true, false, books);
             env.SetupPTData(books);
 
             await env.Runner.RunAsync("project02", "user01", false);
@@ -309,7 +309,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task SyncAsync_ChaptersChanged()
         {
             var env = new TestEnvironment();
-            env.SetupSFData(true, true, false, new Book("MAT", 2), new Book("MRK", 2));
+            env.SetupSFData(true, true, false, false, new Book("MAT", 2), new Book("MRK", 2));
             env.SetupPTData(new Book("MAT", 3), new Book("MRK", 1));
 
             await env.Runner.RunAsync("project02", "user01", false);
@@ -333,7 +333,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task SyncAsync_ChapterValidityChanged()
         {
             var env = new TestEnvironment();
-            env.SetupSFData(true, true, false, new Book("MAT", 2), new Book("MRK", 2) { InvalidChapters = { 1 } });
+            env.SetupSFData(true, true, false, false, new Book("MAT", 2), new Book("MRK", 2) { InvalidChapters = { 1 } });
             env.SetupPTData(new Book("MAT", 2) { InvalidChapters = { 2 } }, new Book("MRK", 2));
 
             await env.Runner.RunAsync("project01", "user01", false);
@@ -352,7 +352,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task SyncAsync_BooksChanged()
         {
             var env = new TestEnvironment();
-            env.SetupSFData(true, true, false, new Book("MAT", 2), new Book("MRK", 2));
+            env.SetupSFData(true, true, false, false, new Book("MAT", 2), new Book("MRK", 2));
             env.SetupPTData(new Book("MAT", 2), new Book("LUK", 2));
 
             await env.Runner.RunAsync("project02", "user01", false);
@@ -383,7 +383,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-            env.SetupSFData(true, true, false, books);
+            env.SetupSFData(true, true, false, false, books);
             env.SetupPTData(books);
             var ptUserRoles = new Dictionary<string, string>
             {
@@ -406,7 +406,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-            env.SetupSFData(true, true, false, books);
+            env.SetupSFData(true, true, false, false, books);
             env.SetupPTData(books);
             var ptUserRoles = new Dictionary<string, string>
             {
@@ -436,7 +436,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-            env.SetupSFData(true, true, false, books);
+            env.SetupSFData(true, true, false, false, books);
             env.SetupPTData(books);
             var ptUserRoles = new Dictionary<string, string>
             {
@@ -466,7 +466,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-            env.SetupSFData(true, true, false, books);
+            env.SetupSFData(true, true, false, false, books);
             env.SetupPTData(books);
             var ptUserRoles = new Dictionary<string, string>
             {
@@ -496,7 +496,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-            env.SetupSFData(true, true, false, books);
+            env.SetupSFData(true, true, false, false, books);
             env.SetupPTData(books);
             var ptUserRoles = new Dictionary<string, string>
             {
@@ -526,7 +526,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-            env.SetupSFData(true, true, false, books);
+            env.SetupSFData(true, true, false, false, books);
             env.SetupPTData(books);
             var ptUserRoles = new Dictionary<string, string>
             {
@@ -551,7 +551,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-            env.SetupSFData(true, false, false, books);
+            env.SetupSFData(true, false, false, false, books);
             env.SetupPTData(books);
 
             env.ParatextService.IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), "target")
@@ -569,7 +569,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task SyncAsync_TextDocAlreadyExists()
         {
             var env = new TestEnvironment();
-            env.SetupSFData(false, false, false, new Book("MAT", 2), new Book("MRK", 2));
+            env.SetupSFData(false, false, false, false, new Book("MAT", 2), new Book("MRK", 2));
             env.RealtimeService.GetRepository<TextData>()
                 .Add(new TextData(Delta.New().InsertText("old text"))
                 {
@@ -597,7 +597,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // The project in the DB has a book, but a Source chapter is missing from that book.
             var env = new TestEnvironment();
-            env.SetupSFData(true, true, false, new Book("MAT", 3, 3) { MissingSourceChapters = { 2 } });
+            env.SetupSFData(true, true, false, false, new Book("MAT", 3, 3) { MissingSourceChapters = { 2 } });
             env.SetupPTData(new Book("MAT", 3, true));
 
             // DB should start with Target chapter 2 but without Source chapter 2.
@@ -623,7 +623,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // The project in Paratext has a book, but a chapter is missing from that book.
             var env = new TestEnvironment();
-            env.SetupSFData(true, true, false, new Book("MAT", 3, true));
+            env.SetupSFData(true, true, false, false, new Book("MAT", 3, true));
             env.SetupPTData(new Book("MAT", 3, 3) { MissingTargetChapters = { 2 }, MissingSourceChapters = { 2 } });
 
             var chapterContent = Delta.New().InsertText("text");
@@ -657,7 +657,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // The project has a book, but a Source chapter is missing from that book. Both in the DB and in Paratext.
             var env = new TestEnvironment();
-            env.SetupSFData(true, true, false, new Book("MAT", 3, 3) { MissingSourceChapters = { 2 } });
+            env.SetupSFData(true, true, false, false, new Book("MAT", 3, 3) { MissingSourceChapters = { 2 } });
             env.SetupPTData(new Book("MAT", 3, 3) { MissingSourceChapters = { 2 } });
 
             // DB should start without Source chapter 2.
@@ -679,7 +679,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // The project in PT has a book, but no chapters.
             var env = new TestEnvironment();
-            env.SetupSFData(true, true, false, new Book("MAT", 3, true));
+            env.SetupSFData(true, true, false, false, new Book("MAT", 3, true));
             env.SetupPTData(new Book("MAT", 0, true));
 
             var chapterContent = Delta.New().InsertText("text");
@@ -713,7 +713,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             var numberChapters = 3;
             var book = new Book("MAT", numberChapters, true);
-            env.SetupSFData(true, true, false, book);
+            env.SetupSFData(true, true, false, false, book);
 
             // SUT
             await env.Runner.InitAsync("project01", "user01");
@@ -753,7 +753,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(existingTargetChapters.Count(),
                 Is.GreaterThan(existingSourceChapters.Count()), "setup");
             var book = new Book("MAT", highestChapter, true) { MissingSourceChapters = missingSourceChapters };
-            env.SetupSFData(true, true, false, book);
+            env.SetupSFData(true, true, false, false, book);
 
             // SUT
             await env.Runner.InitAsync("project01", "user01");
@@ -769,6 +769,58 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(sourceFetch.Keys.SequenceEqual(existingSourceChapters));
             Assert.That(targetFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
             Assert.That(sourceFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
+        }
+
+        [Test]
+        public async Task SyncAsync_UpdatesParatextNoteThreadDoc()
+        {
+            var env = new TestEnvironment();
+            var book = new Book("MAT", 3, true);
+            env.SetupSFData(true, false, false, true, book);
+            env.SetupPTData(book);
+            env.SetupParatextCommentChanges("thread01");
+
+            await env.Runner.RunAsync("project01", "user01", false);
+
+            ParatextNoteThread thread01 = env.GetNoteThread("project01", "thread01");
+            Assert.That(thread01.Notes.Count, Is.EqualTo(3));
+            Assert.That(thread01.VerseRef.ToString(), Is.EqualTo("MAT 1:1"));
+            Assert.That(thread01.Notes[0].Content, Is.EqualTo("thread01 added."));
+            Assert.That(thread01.Notes[1].Content, Is.EqualTo("thread01 updated."));
+            Assert.That(thread01.Notes[2].Deleted, Is.True);
+            SFProject project = env.GetProject();
+            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+        }
+
+        [Test]
+        public async Task SyncAsync_AddParatextNoteThreadDoc()
+        {
+            var env = new TestEnvironment();
+            var book = new Book("MAT", 3, true);
+            env.SetupSFData(true, false, false, true, book);
+            env.SetupPTData(book);
+            env.SetupNewCommentThreadChange("thread02", "syncuser01");
+
+            await env.Runner.RunAsync("project01", "user01", false);
+
+            ParatextNoteThread thread02 = env.GetNoteThread("project01", "thread02");
+            Assert.That(thread02.VerseRef.ToString(), Is.EqualTo("MAT 1:1"));
+            Assert.That(thread02.Notes.Count, Is.EqualTo(1));
+            Assert.That(thread02.Notes[0].Content, Is.EqualTo("New thread02 added."));
+            Assert.That(thread02.Notes[0].OwnerRef, Is.EqualTo("user01"));
+            SFProject project = env.GetProject();
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+
+            env.SetupNewCommentThreadChange("thread03", "syncuser02", "MAT 1:5");
+            await env.Runner.RunAsync("project01", "user01", false);
+            ParatextNoteThread thread03 = env.GetNoteThread("project01", "thread03");
+            Assert.That(thread03.VerseRef.ToString(), Is.EqualTo("MAT 1:5"));
+            Assert.That(thread03.Notes.Count, Is.EqualTo(1));
+            Assert.That(thread03.Notes[0].OwnerRef, Is.EqualTo("user02"));
+
+            project = env.GetProject();
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
         }
 
         private class Book
@@ -828,6 +880,8 @@ namespace SIL.XForge.Scripture.Services
                     .Do(x => _sendReceivedCalled = true);
                 ParatextService.IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), Arg.Any<string>())
                     .Returns(false);
+                ParatextService.GetNotes(Arg.Any<UserSecret>(), "target", Arg.Any<int>()).Returns("<notes/>");
+                ParatextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user01")).Returns("User 1");
                 RealtimeService = new SFMemoryRealtimeService();
                 DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
                 _notesMapper = Substitute.For<IParatextNotesMapper>();
@@ -877,8 +931,13 @@ namespace SIL.XForge.Scripture.Services
                 return RealtimeService.GetRepository<Question>().Get($"project01:question{bookId}{chapter}");
             }
 
+            public ParatextNoteThread GetNoteThread(string projectId, string threadId)
+            {
+                return RealtimeService.GetRepository<ParatextNoteThread>().Get($"{projectId}:{threadId}");
+            }
+
             public void SetupSFData(bool translationSuggestionsEnabled, bool checkingEnabled, bool changed,
-                params Book[] books)
+                bool hasNoteThreads, params Book[] books)
             {
                 RealtimeService.AddRepository("users", OTType.Json0, new MemoryRepository<User>(new[]
                 {
@@ -964,6 +1023,10 @@ namespace SIL.XForge.Scripture.Services
 
                 RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>());
                 RealtimeService.AddRepository("questions", OTType.Json0, new MemoryRepository<Question>());
+                if (hasNoteThreads && books.Length > 0)
+                    AddParatextNoteThreadData(books[0]);
+                else
+                    SetupEmptyNoteThreads();
                 foreach (Book book in books)
                 {
                     AddSFBook("project01", "target", book.Id, book.HighestTargetChapter, changed, book.MissingTargetChapters);
@@ -1027,6 +1090,81 @@ namespace SIL.XForge.Scripture.Services
                     u.Set(pr => pr.UserRoles[userId], role));
             }
 
+            public void SetupParatextCommentChanges(string threadId, string verseRef = "MAT 1:1")
+            {
+                var noteThreadChange = new ParatextNoteThreadChange(threadId, verseRef, $"{threadId} selected text.");
+                noteThreadChange.AddChange(
+                    GetNote(threadId, "User 1", $"{threadId} updated.", ChangeType.Updated), ChangeType.Updated);
+                noteThreadChange.AddChange(
+                    GetNote(threadId, "User 2", $"{threadId} deleted.", ChangeType.Deleted), ChangeType.Deleted);
+                noteThreadChange.AddChange(
+                    GetNote(threadId, "User 3", $"{threadId} added.", ChangeType.Added), ChangeType.Added);
+                _notesMapper.GetNoteThreadChangesFromPT(Arg.Any<XElement>(),
+                    Arg.Any<IEnumerable<IDocument<ParatextNoteThread>>>())
+                    .Returns(new[] { noteThreadChange });
+            }
+
+            public void SetupNewCommentThreadChange(string threadId, string syncUserId, string verseRef = "MAT 1:1")
+            {
+                var noteThreadChange = new ParatextNoteThreadChange(threadId, verseRef, $"{threadId} selected text.");
+                noteThreadChange.AddChange(
+                    GetNote(threadId, syncUserId, $"New {threadId} added.", ChangeType.Added), ChangeType.Added);
+                _notesMapper.GetNoteThreadChangesFromPT(Arg.Any<XElement>(),
+                    Arg.Any<IEnumerable<IDocument<ParatextNoteThread>>>())
+                    .Returns(new[] { noteThreadChange });
+                if (syncUserId == "syncuser02")
+                {
+                    var su01 = new SyncUser { Id = "syncuser01", ParatextUsername = "User 1" };
+                    var su02 = new SyncUser { Id = "syncuser02", ParatextUsername = "User 2" };
+                    _notesMapper.NewSyncUsers.Returns(new List<SyncUser> { su01, su02 });
+                    ParatextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user02")).Returns("User 2");
+                }
+            }
+
+            public void AddParatextNoteThreadData(Book book)
+            {
+                RealtimeService.AddRepository("note_threads", OTType.Json0,
+                    new MemoryRepository<ParatextNoteThread>(new[]
+                    {
+                        new ParatextNoteThread
+                        {
+                            Id = "project01:thread01",
+                            DataId = "thread01",
+                            ProjectRef = "project01",
+                            OwnerRef = "user01",
+                            VerseRef = new VerseRefData(Canon.BookIdToNumber(book.Id), 1, 1),
+                            SelectedText = "Scripture text in project.",
+                            Notes = new List<ParatextNote>()
+                            {
+                                new ParatextNote
+                                {
+                                    DataId = "thread01:User 1:2019-01-01T08:00:00.0000000+00:00",
+                                    ThreadId = "thread01",
+                                    SyncUserRef = "User 1",
+                                    ExtUserId = "user02",
+                                    Content = "Paratext note 1.",
+                                    DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc)
+                                },
+                                new ParatextNote
+                                {
+                                    DataId = "thread01:User 2:2019-01-01T08:00:00.0000000+00:00",
+                                    ThreadId = "thread01",
+                                    SyncUserRef = "User 2",
+                                    ExtUserId = "user03",
+                                    Content = "Paratext note 2.",
+                                    DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc)
+                                },
+                            }
+                        }
+                    })
+                );
+            }
+
+            public void SetupEmptyNoteThreads()
+            {
+                RealtimeService.AddRepository("note_threads", OTType.Json0, new MemoryRepository<ParatextNoteThread>());
+            }
+
             private void AddPTBook(string paratextId, string bookId, int highestChapter, HashSet<int> missingChapters,
                 HashSet<int> invalidChapters = null)
             {
@@ -1088,6 +1226,21 @@ namespace SIL.XForge.Scripture.Services
             private static string GetBookText(string paratextId, string bookId, int version)
             {
                 return $"<usx version=\"2.5\"><book code=\"{bookId}\" style=\"id\">{paratextId}</book><content version=\"{version}\"/></usx>";
+            }
+
+            private ParatextNote GetNote(string threadId, string user, string content, ChangeType type)
+            {
+
+                return new ParatextNote
+                {
+                    DataId = $"{threadId}:{user}:2019-01-01T08:00:00.0000000+00:00",
+                    ThreadId = threadId,
+                    OwnerRef = "",
+                    SyncUserRef = user,
+                    Content = content,
+                    DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc),
+                    Deleted = type == ChangeType.Deleted
+                };
             }
         }
     }
