@@ -121,7 +121,7 @@
         </mdc-top-app-bar-section>
       </mdc-top-app-bar-row>
       <mdc-top-app-bar-row *ngIf="hasUpdate" class="update-banner">
-        <mdc-top-app-bar-section align="start">
+        <mdc-top-app-bar-section align="start" class="display-behind">
           <span class="refresh-message">{{ t("update_is_available") }}</span>
           <div>
             <button mat-raised-button color="accent" (click)="reloadWithUpdates()">{{ t("refresh") }}</button>
