@@ -151,11 +151,11 @@ namespace SIL.XForge.Scripture.Controllers
             }
         }
 
-        public async Task<IRpcMethodResult> Invite(string projectId, string email)
+        public async Task<IRpcMethodResult> Invite(string projectId, string email, string locale)
         {
             try
             {
-                if (await _projectService.InviteAsync(UserId, projectId, email))
+                if (await _projectService.InviteAsync(UserId, projectId, email, locale))
                     return Ok();
                 return Ok(AlreadyProjectMemberResponse);
             }

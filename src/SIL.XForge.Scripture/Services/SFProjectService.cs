@@ -4,6 +4,7 @@ using System;
 using System.IO;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using System.Globalization;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
@@ -317,7 +318,7 @@ namespace SIL.XForge.Scripture.Services
             await _syncService.SyncAsync(curUserId, projectId, false);
         }
 
-        public async Task<bool> InviteAsync(string curUserId, string projectId, string email)
+        public async Task<bool> InviteAsync(string curUserId, string projectId, string email, string locale)
         {
             SFProject project = await GetProjectAsync(projectId);
             if (await RealtimeService.QuerySnapshots<User>()
@@ -331,6 +332,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 throw new ForbiddenException();
             }
+            CultureInfo.CurrentUICulture = new CultureInfo(locale);
 
             // Invite a specific person. Reuse prior code, if any.
             SFProjectSecret projectSecret = await ProjectSecrets.UpdateAsync(

@@ -125,8 +125,8 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.onlineInvoke('checkLinkSharing', { projectId: id, shareKey });
   }
 
-  onlineInvite(id: string, email: string): Promise<string | undefined> {
-    return this.onlineInvoke('invite', { projectId: id, email });
+  onlineInvite(id: string, email: string, locale: string): Promise<string | undefined> {
+    return this.onlineInvoke('invite', { projectId: id, email, locale });
   }
 
   async onlineUninviteUser(projectId: string, emailToUninvite: string): Promise<string> {
