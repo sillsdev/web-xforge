@@ -1,7 +1,8 @@
 import { MdcTextField } from '@angular-mdc/web/textfield';
 import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
+import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -22,14 +23,15 @@ export class ShareControlComponent extends SubscriptionDisposable implements Aft
   @Input() readonly isLinkSharingEnabled: boolean = false;
   @ViewChild('shareLinkField') shareLinkField?: MdcTextField;
 
-  sendInviteForm: FormGroup = new FormGroup({
-    email: new FormControl('', [XFValidators.email])
-  });
+  email = new FormControl('', [XFValidators.email]);
+  localeControl = new FormControl('', [Validators.required]);
+  sendInviteForm: FormGroup = new FormGroup({ email: this.email, locale: this.localeControl });
   isSubmitted: boolean = false;
   isAlreadyInvited: boolean = false;
   readonly alreadyProjectMemberResponse: string = 'alreadyProjectMember';
 
   constructor(
+    readonly i18n: I18nService,
     private readonly noticeService: NoticeService,
     private readonly projectService: SFProjectService,
     private readonly locationService: LocationService,
@@ -51,10 +53,6 @@ export class ShareControlComponent extends SubscriptionDisposable implements Aft
     });
   }
 
-  get email(): FormControl {
-    return this.sendInviteForm.controls.email as FormControl;
-  }
-
   get shareLink(): string {
     return this.locationService.origin + '/projects/' + this.projectId + '?sharing=true';
   }
@@ -73,11 +71,11 @@ export class ShareControlComponent extends SubscriptionDisposable implements Aft
     this.noticeService.show(translate('share_control.link_copied'));
   }
 
-  async onEmailInput(newValue: string): Promise<void> {
+  async onEmailInput(): Promise<void> {
     if (this.projectId == null || this.email.invalid) {
       return;
     }
-    this.isAlreadyInvited = await this.projectService.onlineIsAlreadyInvited(this.projectId, newValue);
+    this.isAlreadyInvited = await this.projectService.onlineIsAlreadyInvited(this.projectId, this.email.value);
   }
 
   async sendEmail(): Promise<void> {
@@ -86,7 +84,7 @@ export class ShareControlComponent extends SubscriptionDisposable implements Aft
     }
 
     this.isSubmitted = true;
-    const response = await this.projectService.onlineInvite(this.projectId, this.sendInviteForm.value.email);
+    const response = await this.projectService.onlineInvite(this.projectId, this.email.value, this.localeControl.value);
     this.isSubmitted = false;
     this.isAlreadyInvited = false;
     let message = '';
@@ -98,6 +96,6 @@ export class ShareControlComponent extends SubscriptionDisposable implements Aft
     }
 
     this.noticeService.show(message);
-    this.sendInviteForm.reset();
+    this.email.reset();
   }
 }

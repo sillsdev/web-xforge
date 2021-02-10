@@ -1,11 +1,14 @@
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, NgModule, ViewChild } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { flush } from '@angular/core/testing';
 import { BrowserModule, By } from '@angular/platform-browser';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import { BehaviorSubject } from 'rxjs';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
+import { I18nService } from 'xforge-common/i18n.service';
+import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -20,15 +23,19 @@ import { ShareControlComponent } from './share-control.component';
 const mockedProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
 const mockedPwaService = mock(PwaService);
+const mockedI18nService = mock(I18nService);
+const mockedLocationService = mock(LocationService);
 
 describe('ShareControlComponent', () => {
   configureTestingModule(() => ({
     declarations: [TestHostComponent],
-    imports: [TestModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [TestModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), NoopAnimationsModule],
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: PwaService, useMock: mockedPwaService }
+      { provide: PwaService, useMock: mockedPwaService },
+      { provide: I18nService, useMock: mockedI18nService },
+      { provide: LocationService, useMock: mockedLocationService }
     ]
   }));
 
@@ -63,6 +70,7 @@ describe('ShareControlComponent', () => {
   it('Resend button changes back to Send after sending', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setTextFieldValue(env.emailTextField, 'already@example.com');
+    env.setInvitationLanguage('en');
     expect(env.elementText(env.sendButton).trim()).toEqual('Resend');
     env.click(env.sendButton);
     expect(env.elementText(env.sendButton).trim()).toEqual('Send');
@@ -82,18 +90,20 @@ describe('ShareControlComponent', () => {
   it('Message shown for not-yet-known invitee', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setTextFieldValue(env.emailTextField, 'unknown-address@example.com');
+    env.setInvitationLanguage('en');
     env.click(env.sendButton);
     verify(mockedNoticeService.show(anything())).once();
-    verify(mockedProjectService.onlineInvite(anything(), anything())).once();
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything())).once();
     expect(capture(mockedNoticeService.show).last()[0]).toContain('email has been sent');
   }));
 
   it('Already-member message shown if invitee is already project member', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setTextFieldValue(env.emailTextField, 'already-project-member@example.com');
+    env.setInvitationLanguage('en');
     env.click(env.sendButton);
     verify(mockedNoticeService.show(anything())).once();
-    verify(mockedProjectService.onlineInvite(anything(), anything())).once();
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything())).once();
 
     expect(capture(mockedNoticeService.show).last()[0]).toContain('is already');
   }));
@@ -106,38 +116,40 @@ describe('ShareControlComponent', () => {
 
   it('Does not crash inviting blank email address if click Send twice', fakeAsync(() => {
     const env = new TestEnvironment();
+    env.setInvitationLanguage('en');
 
     // Cannot invite blank or invalid email address
     env.click(env.sendButton);
-    verify(mockedProjectService.onlineInvite(anything(), anything())).never();
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything())).never();
     env.setTextFieldValue(env.emailTextField, '');
     env.click(env.sendButton);
-    verify(mockedProjectService.onlineInvite(anything(), anything())).never();
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything())).never();
     env.setTextFieldValue(env.emailTextField, 'unknown-addre');
     env.click(env.sendButton);
-    verify(mockedProjectService.onlineInvite(anything(), anything())).never();
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything())).never();
 
     // Invite
     env.setTextFieldValue(env.emailTextField, 'unknown-address@example.com');
     expect(env.getTextFieldValue(env.emailTextField)).toEqual('unknown-address@example.com', 'test setup');
     env.click(env.sendButton);
-    verify(mockedProjectService.onlineInvite(anything(), anything())).once();
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything())).once();
 
     // Can not immediately request an invite to a blank email address
     expect(env.getTextFieldValue(env.emailTextField)).toEqual('', 'test setup');
     env.click(env.sendButton);
     // Not called a second time
-    verify(mockedProjectService.onlineInvite(anything(), anything())).once();
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything())).once();
 
     // Invite
     env.setTextFieldValue(env.emailTextField, 'unknown-address2@example.com');
     env.click(env.sendButton);
-    verify(mockedProjectService.onlineInvite(anything(), anything())).twice();
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything())).twice();
   }));
 
   it('Output event fires after invitation is sent', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setTextFieldValue(env.emailTextField, 'unknown-address@example.com');
+    env.setInvitationLanguage('en');
     expect(env.hostComponent.invitedCount).toEqual(0);
     env.click(env.sendButton);
     expect(env.hostComponent.invitedCount).toEqual(1);
@@ -154,123 +166,176 @@ describe('ShareControlComponent', () => {
     expect(env.offlineMessage).not.toBeNull();
   }));
 
-  @NgModule({
-    imports: [BrowserModule, HttpClientTestingModule, RouterTestingModule, UICommonModule, TestTranslocoModule],
-    declarations: [ShareControlComponent],
-    exports: [ShareControlComponent]
-  })
-  class TestModule {}
+  it('share link should be hidden if link sharing is turned off', fakeAsync(() => {
+    const env = new TestEnvironment();
+    expect(env.shareLink).toBeNull();
+    env.hostComponent.isLinkSharingEnabled = true;
+    env.wait();
+    expect(env.shareLink).not.toBeNull();
+  }));
 
-  @Component({
-    template: `
-      <app-share-control
-        [projectId]="projectId"
-        [isLinkSharingEnabled]="isLinkSharingEnabled"
-        (invited)="onInvited()"
-      ></app-share-control>
-    `
-  })
-  class TestHostComponent {
-    @ViewChild(ShareControlComponent) component!: ShareControlComponent;
-    projectId = '';
-    isLinkSharingEnabled = false;
-    invitedCount = 0;
+  it('clicking copy link icon should copy link to clipboard', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.hostComponent.isLinkSharingEnabled = true;
+    // Two waits are needed, otherwise the link text is not set by the time of the next expectation
+    env.wait();
+    env.wait();
+    expect(env.shareLink.nativeElement.value).toEqual('https://scriptureforge.org/projects/project123?sharing=true');
+    env.click(env.shareLinkCopyIcon);
+    // TODO: figure out a way to check the clipboard data
+    verify(mockedNoticeService.show(anything())).once();
+  }));
 
-    onInvited() {
-      this.invitedCount++;
-    }
-  }
-
-  class TestEnvironment {
-    readonly fixture: ComponentFixture<TestHostComponent>;
-    readonly hostComponent: TestHostComponent;
-    readonly component: ShareControlComponent;
-    private _onlineStatus = new BehaviorSubject<boolean>(true);
-
-    private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
-
-    constructor(isLinkSharingEnabled?: boolean, projectId?: string) {
-      when(mockedPwaService.onlineStatus).thenReturn(this._onlineStatus.asObservable());
-      when(mockedPwaService.isOnline).thenCall(() => this._onlineStatus.getValue());
-      this.fixture = TestBed.createComponent(TestHostComponent);
-      this.fixture.detectChanges();
-      this.component = this.fixture.componentInstance.component;
-      this.hostComponent = this.fixture.componentInstance;
-
-      this.fixture.componentInstance.projectId = projectId === undefined ? 'project123' : projectId;
-      this.fixture.componentInstance.isLinkSharingEnabled =
-        isLinkSharingEnabled === undefined ? false : isLinkSharingEnabled;
-
-      this.realtimeService.addSnapshot(SFProjectDoc.COLLECTION, {
-        id: 'project01',
-        data: {}
-      });
-      when(mockedProjectService.get('project01')).thenCall(() =>
-        this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
-      );
-      when(mockedProjectService.onlineInvite(anything(), 'unknown-address@example.com')).thenResolve(undefined);
-      when(mockedProjectService.onlineInvite(anything(), 'already-project-member@example.com')).thenResolve(
-        this.component.alreadyProjectMemberResponse
-      );
-      when(mockedProjectService.onlineIsAlreadyInvited(anything(), 'unknown-address@example.com')).thenResolve(false);
-      when(mockedProjectService.onlineIsAlreadyInvited(anything(), 'already@example.com')).thenResolve(true);
-
-      this.fixture.detectChanges();
-    }
-
-    get sendButton(): DebugElement {
-      return this.fetchElement('#send-btn');
-    }
-
-    get emailTextField(): DebugElement {
-      return this.fetchElement('#email');
-    }
-
-    get inputElement(): DebugElement {
-      return this.emailTextField.query(By.css('input[type="email"]'));
-    }
-
-    get offlineMessage(): DebugElement {
-      return this.fetchElement('.offline-text');
-    }
-
-    set onlineStatus(value: boolean) {
-      this._onlineStatus.next(value);
-      flush();
-      this.fixture.detectChanges();
-    }
-
-    fetchElement(query: string) {
-      return this.fixture.debugElement.query(By.css(query));
-    }
-
-    elementText(element: DebugElement): string {
-      return element.nativeElement.textContent;
-    }
-
-    click(element: DebugElement): void {
-      element.nativeElement.click();
-      flush();
-      this.fixture.detectChanges();
-    }
-
-    setTextFieldValue(element: HTMLElement | DebugElement, value: string) {
-      if (element instanceof DebugElement) {
-        element = element.nativeElement;
-      }
-      const inputElem = (element as HTMLElement).querySelector('input') as HTMLInputElement;
-      inputElem.value = value;
-      inputElem.dispatchEvent(new Event('input'));
-      flush();
-      this.fixture.detectChanges();
-    }
-
-    getTextFieldValue(element: HTMLElement | DebugElement) {
-      if (element instanceof DebugElement) {
-        element = element.nativeElement;
-      }
-      const inputElem = (element as HTMLElement).querySelector('input') as HTMLInputElement;
-      return inputElem.value;
-    }
-  }
+  it('should require selecting a language before sending the invitation', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setTextFieldValue(env.emailTextField, 'already@example.com');
+    env.click(env.sendButton);
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything())).never();
+    expect(env.localeErrorText).toContain('Select a language for the invitation email');
+    env.setInvitationLanguage('en');
+    env.click(env.sendButton);
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything())).once();
+  }));
 });
+
+@NgModule({
+  imports: [BrowserModule, HttpClientTestingModule, RouterTestingModule, UICommonModule, TestTranslocoModule],
+  declarations: [ShareControlComponent],
+  exports: [ShareControlComponent]
+})
+class TestModule {}
+
+@Component({
+  template: `
+    <app-share-control
+      [projectId]="projectId"
+      [isLinkSharingEnabled]="isLinkSharingEnabled"
+      (invited)="onInvited()"
+    ></app-share-control>
+  `
+})
+class TestHostComponent {
+  @ViewChild(ShareControlComponent) component!: ShareControlComponent;
+  projectId = '';
+  isLinkSharingEnabled = false;
+  invitedCount = 0;
+
+  onInvited() {
+    this.invitedCount++;
+  }
+}
+
+class TestEnvironment {
+  readonly fixture: ComponentFixture<TestHostComponent>;
+  readonly hostComponent: TestHostComponent;
+  readonly component: ShareControlComponent;
+  private _onlineStatus = new BehaviorSubject<boolean>(true);
+
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
+
+  constructor(isLinkSharingEnabled?: boolean, projectId?: string) {
+    when(mockedPwaService.onlineStatus).thenReturn(this._onlineStatus.asObservable());
+    when(mockedPwaService.isOnline).thenCall(() => this._onlineStatus.getValue());
+    this.fixture = TestBed.createComponent(TestHostComponent);
+    this.fixture.detectChanges();
+    this.component = this.fixture.componentInstance.component;
+    this.hostComponent = this.fixture.componentInstance;
+
+    this.fixture.componentInstance.projectId = projectId === undefined ? 'project123' : projectId;
+    this.fixture.componentInstance.isLinkSharingEnabled =
+      isLinkSharingEnabled === undefined ? false : isLinkSharingEnabled;
+
+    this.realtimeService.addSnapshot(SFProjectDoc.COLLECTION, {
+      id: 'project01',
+      data: {}
+    });
+    when(mockedProjectService.get('project01')).thenCall(() =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
+    );
+    when(mockedProjectService.onlineInvite(anything(), 'unknown-address@example.com', anything())).thenResolve(
+      undefined
+    );
+    when(mockedProjectService.onlineInvite(anything(), 'already-project-member@example.com', anything())).thenResolve(
+      this.component.alreadyProjectMemberResponse
+    );
+    when(mockedProjectService.onlineIsAlreadyInvited(anything(), 'unknown-address@example.com')).thenResolve(false);
+    when(mockedProjectService.onlineIsAlreadyInvited(anything(), 'already@example.com')).thenResolve(true);
+    when(mockedLocationService.origin).thenReturn('https://scriptureforge.org');
+
+    this.fixture.detectChanges();
+  }
+
+  get sendButton(): DebugElement {
+    return this.fetchElement('#send-btn');
+  }
+
+  get emailTextField(): DebugElement {
+    return this.fetchElement('#email');
+  }
+
+  get inputElement(): DebugElement {
+    return this.emailTextField.query(By.css('input[type="email"]'));
+  }
+
+  get offlineMessage(): DebugElement {
+    return this.fetchElement('.offline-text');
+  }
+
+  get shareLink(): DebugElement {
+    return this.fetchElement('#share-link input');
+  }
+
+  get shareLinkCopyIcon(): DebugElement {
+    return this.fetchElement('#share-link-copy-icon');
+  }
+
+  set onlineStatus(value: boolean) {
+    this._onlineStatus.next(value);
+    this.wait();
+  }
+
+  get localeErrorText(): string {
+    return this.elementText(this.fetchElement('mat-form-field mat-error'));
+  }
+
+  fetchElement(query: string) {
+    return this.fixture.debugElement.query(By.css(query));
+  }
+
+  elementText(element: DebugElement): string {
+    return element.nativeElement.textContent;
+  }
+
+  click(element: DebugElement): void {
+    element.nativeElement.click();
+    this.wait();
+  }
+
+  setTextFieldValue(element: HTMLElement | DebugElement, value: string) {
+    if (element instanceof DebugElement) {
+      element = element.nativeElement;
+    }
+    const inputElem = (element as HTMLElement).querySelector('input') as HTMLInputElement;
+    inputElem.value = value;
+    inputElem.dispatchEvent(new Event('input'));
+    this.wait();
+  }
+
+  getTextFieldValue(element: HTMLElement | DebugElement) {
+    if (element instanceof DebugElement) {
+      element = element.nativeElement;
+    }
+    const inputElem = (element as HTMLElement).querySelector('input') as HTMLInputElement;
+    return inputElem.value;
+  }
+
+  setInvitationLanguage(language: string) {
+    this.component.localeControl.setValue(language);
+    this.wait();
+  }
+
+  wait(): void {
+    flush();
+    this.fixture.detectChanges();
+  }
+}

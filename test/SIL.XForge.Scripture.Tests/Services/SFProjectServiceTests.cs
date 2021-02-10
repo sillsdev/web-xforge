@@ -41,7 +41,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             const string email = "newuser@example.com";
 
-            await env.Service.InviteAsync(User01, Project01, email);
+            await env.Service.InviteAsync(User01, Project01, email, "en");
             await env.EmailService.Received(1).SendEmailAsync(email, Arg.Any<string>(),
                 Arg.Is<string>(body =>
                     body.Contains($"http://localhost/projects/{Project01}?sharing=true&shareKey=1234abc")
@@ -54,7 +54,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             const string email = "newuser@example.com";
 
-            await env.Service.InviteAsync(User01, Project03, email);
+            await env.Service.InviteAsync(User01, Project03, email, "en");
             await env.EmailService.Received(1).SendEmailAsync(email, Arg.Any<string>(),
                 Arg.Is<string>(body =>
                     body.Contains($"http://localhost/projects/{Project03}?sharing=true&shareKey=1234abc")
@@ -75,7 +75,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == email), Is.False, "setup");
 
             env.SecurityService.GenerateKey().Returns("1111", "3333");
-            await env.Service.InviteAsync(User01, Project03, email);
+            await env.Service.InviteAsync(User01, Project03, email, "en");
             await env.EmailService.Received(1).SendEmailAsync(email, Arg.Any<string>(),
                 Arg.Is<string>(body =>
                     body.Contains($"http://localhost/projects/{Project03}?sharing=true&shareKey=1111")));
@@ -84,7 +84,7 @@ namespace SIL.XForge.Scripture.Services
             projectSecret = env.ProjectSecrets.Get(Project03);
             Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == email), Is.True);
 
-            await env.Service.InviteAsync(User01, Project03, email);
+            await env.Service.InviteAsync(User01, Project03, email, "en");
             // Invitation email was sent again, but with first code
             await env.EmailService.Received(2).SendEmailAsync(Arg.Is(email), Arg.Any<string>(),
                 Arg.Is<string>(body =>
@@ -104,7 +104,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.CheckingConfig.ShareLevel, Is.EqualTo(CheckingShareLevel.Anyone), "setup: link sharing should be enabled");
             const string email = "newuser@example.com";
             // SUT
-            await env.Service.InviteAsync(User01, Project02, email);
+            await env.Service.InviteAsync(User01, Project02, email, "en");
             await env.EmailService.Received(1).SendEmailAsync(email, Arg.Any<string>(),
                 Arg.Is<string>(body => body.Contains($"http://localhost/projects/{Project02}?sharing=true&shareKey=1234abc")));
         }
@@ -114,7 +114,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             Assert.ThrowsAsync<ForbiddenException>(
-                () => env.Service.InviteAsync(User02, Project01, "newuser@example.com"));
+                () => env.Service.InviteAsync(User02, Project01, "newuser@example.com", "en"));
             await env.EmailService.DidNotReceiveWithAnyArgs().SendEmailAsync(default, default, default);
         }
 
@@ -127,7 +127,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.UserRoles.ContainsKey(User01), Is.True,
                 "setup - user should already be a project user");
 
-            Assert.That(await env.Service.InviteAsync(User01, Project03, email), Is.False);
+            Assert.That(await env.Service.InviteAsync(User01, Project03, email, "en"), Is.False);
             project = env.GetProject(Project03);
             Assert.That(project.UserRoles.ContainsKey(User01), Is.True, "user should still be a project user");
 
