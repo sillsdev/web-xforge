@@ -1,5 +1,4 @@
 import { MdcDialogModule, MdcDialogRef } from '@angular-mdc/web/dialog';
-import { OverlayContainer } from '@angular/cdk/overlay';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -10,6 +9,7 @@ import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project'
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
+import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -32,6 +32,7 @@ const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedLocationService = mock(LocationService);
 const mockedUserService = mock(UserService);
 const mockedPwaService = mock(PwaService);
+const mockedI18nService = mock(I18nService);
 
 describe('ShareComponent', () => {
   configureTestingModule(() => ({
@@ -44,7 +45,8 @@ describe('ShareComponent', () => {
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: LocationService, useMock: mockedLocationService },
       { provide: UserService, useMock: mockedUserService },
-      { provide: PwaService, useMock: mockedPwaService }
+      { provide: PwaService, useMock: mockedPwaService },
+      { provide: I18nService, useMock: mockedI18nService }
     ]
   }));
 
@@ -77,71 +79,8 @@ describe('ShareComponent', () => {
     env.clickElement(env.shareButton);
 
     env.clickElement(env.closeButton);
-    verify(mockedProjectService.onlineInvite('project01', anything())).never();
+    verify(mockedProjectService.onlineInvite('project01', anything(), anything())).never();
     expect().nothing();
-  }));
-
-  it('dialog should not send when email is invalid', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.wait();
-
-    env.clickElement(env.shareButton);
-    env.clickElement(env.emailInput);
-    env.setInputValue(env.emailInput, 'notAnEmailAddress');
-    env.clickElement(env.sendInviteButton);
-
-    env.clickElement(env.closeButton);
-    verify(mockedProjectService.onlineInvite('project01', anything())).never();
-    expect().nothing();
-  }));
-
-  it('dialog should not send when email is empty', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.wait();
-
-    env.clickElement(env.shareButton);
-    env.setInputValue(env.emailInput, 'notAnEmailAddress');
-    env.clickElement(env.emailInput);
-    env.setInputValue(env.emailInput, '');
-    env.clickElement(env.sendInviteButton);
-
-    env.clickElement(env.closeButton);
-    verify(mockedProjectService.onlineInvite('project01', anything())).never();
-    expect().nothing();
-  }));
-
-  it('dialog should send when email is valid', fakeAsync(() => {
-    const emailAddress = 'me@example.com';
-    const env = new TestEnvironment();
-    env.wait();
-
-    env.clickElement(env.shareButton);
-    env.setInputValue(env.emailInput, emailAddress);
-    expect(env.emailInput.querySelector('input')!.value).toBe(emailAddress);
-    env.clickElement(env.sendInviteButton);
-
-    env.clickElement(env.closeButton);
-    verify(mockedProjectService.onlineInvite('project01', emailAddress)).once();
-  }));
-
-  it('share link should be hidden if link sharing is turned off', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setShareConfig(true, CheckingShareLevel.Specific);
-    env.wait();
-
-    env.clickElement(env.shareButton);
-    expect(env.shareLink).toBeNull();
-  }));
-
-  it('clicking copy link icon should copy link to clipboard', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.wait();
-
-    env.clickElement(env.shareButton);
-    expect(env.shareLink.value).toEqual('https://scriptureforge.org/projects/project01?sharing=true');
-    env.clickElement(env.shareLinkCopyIcon);
-    // TODO: figure out a way to check the clipboard data
-    verify(mockedNoticeService.show(anything())).once();
   }));
 });
 
@@ -167,7 +106,7 @@ class TestEnvironment {
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
-    when(mockedProjectService.onlineInvite('project01', anything())).thenResolve();
+    when(mockedProjectService.onlineInvite('project01', anything(), anything())).thenResolve();
     when(mockedNoticeService.show(anything())).thenResolve();
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(mockedLocationService.origin).thenReturn('https://scriptureforge.org');
@@ -192,38 +131,14 @@ class TestEnvironment {
     return this.fixture.nativeElement.querySelector('#share-btn');
   }
 
-  get sendInviteButton(): HTMLButtonElement {
-    return this.overlayContainerElement.querySelector('#send-btn') as HTMLButtonElement;
-  }
-
   get closeButton(): HTMLButtonElement {
     return this.overlayContainerElement.querySelector('#close-btn') as HTMLButtonElement;
-  }
-
-  get emailInput(): HTMLElement {
-    return this.overlayContainerElement.querySelector('#email') as HTMLElement;
-  }
-
-  get shareLink(): HTMLInputElement {
-    return this.overlayContainerElement.querySelector('#share-link input') as HTMLInputElement;
-  }
-
-  get shareLinkCopyIcon(): HTMLElement {
-    return this.overlayContainerElement.querySelector('#share-link-copy-icon') as HTMLElement;
   }
 
   clickElement(element: HTMLElement): void {
     element.click();
     flush();
     this.fixture.detectChanges();
-  }
-
-  setInputValue(textField: HTMLElement, value: string): void {
-    const inputElem = textField.querySelector('input') as HTMLInputElement;
-    inputElem.value = value;
-    inputElem.dispatchEvent(new Event('input'));
-    this.fixture.detectChanges();
-    tick();
   }
 
   setShareConfig(shareEnabled: boolean, shareLevel: CheckingShareLevel, role = SFProjectRole.CommunityChecker): void {

@@ -426,7 +426,7 @@ class TestEnvironment {
     }
     roles.set(NONE_ROLE.role, NONE_ROLE);
     when(mockedProjectService.roles).thenReturn(roles);
-    when(mockedProjectService.onlineInvite(this.project01Id, anything())).thenResolve();
+    when(mockedProjectService.onlineInvite(this.project01Id, anything(), anything())).thenResolve();
     when(mockedProjectService.onlineInvitedUsers(this.project01Id)).thenResolve([]);
     when(mockedNoticeService.show(anything())).thenResolve();
     when(mockedLocationService.origin).thenReturn('https://scriptureforge.org');
