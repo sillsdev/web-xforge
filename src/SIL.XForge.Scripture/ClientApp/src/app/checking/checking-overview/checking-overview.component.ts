@@ -1,4 +1,4 @@
-import { MdcDialog } from '@angular-mdc/web/dialog';
+import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
@@ -47,6 +47,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   private dataChangesSub?: Subscription;
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
   private questionsQuery?: RealtimeQuery<QuestionDoc>;
+  private isImportDialogOpen: boolean = false;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -359,8 +360,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     this.initTextsWithLoadingIndicator();
   }
 
-  importDialog() {
-    if (this.projectDoc == null) {
+  importDialog(): void {
+    if (this.projectDoc == null || this.isImportDialogOpen) {
       return;
     }
     const data: ImportQuestionsDialogData = {
@@ -368,7 +369,15 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       userId: this.userService.currentUserId,
       textsByBookId: this.textsByBookId
     };
-    this.dialog.open(ImportQuestionsDialogComponent, { autoFocus: false, data });
+    const dialogRef: MdcDialogRef<ImportQuestionsDialogComponent> = this.dialog.open(ImportQuestionsDialogComponent, {
+      autoFocus: false,
+      data
+    });
+    dialogRef
+      .afterClosed()
+      .toPromise()
+      .then(() => (this.isImportDialogOpen = false));
+    this.isImportDialogOpen = true;
   }
 
   getBookName(text: TextInfo): string {

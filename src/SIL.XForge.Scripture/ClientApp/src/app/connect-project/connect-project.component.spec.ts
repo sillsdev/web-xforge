@@ -281,8 +281,11 @@ describe('ConnectProjectComponent', () => {
 
     env.selectSourceProject('pt04');
     expect(env.component.connectProjectForm.valid).toBe(true);
-    env.clickElement(env.submitButton);
+    env.submitButton.nativeElement.click();
+    env.fixture.detectChanges();
+    expect(env.submitButton.nativeElement.disabled).toBe(true);
     tick();
+    env.fixture.detectChanges();
 
     expect(env.component.state).toEqual('connecting');
     expect(env.progressBar).not.toBeNull();

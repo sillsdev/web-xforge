@@ -19,7 +19,7 @@ import {
   SFProjectUserConfig
 } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -257,6 +257,19 @@ describe('CheckingOverviewComponent', () => {
       env.onlineStatus = true;
       expect(env.importButton).not.toBeNull();
     }));
+
+    it('should not open dialog if already open', fakeAsync(() => {
+      when(mockedProjectService.hasTransceleratorQuestions('project01')).thenResolve(true);
+      const env = new TestEnvironment();
+      env.waitForQuestions();
+      env.clickElement(env.importButton);
+      verify(mockedMdcDialog.open(ImportQuestionsDialogComponent, anything())).once();
+      env.waitForQuestions();
+      // This can happen if the user clicks 'enter' after the dialog opens
+      env.clickElement(env.importButton);
+      verify(mockedMdcDialog.open(ImportQuestionsDialogComponent, anything())).once();
+      expect().nothing();
+    }));
   });
 
   describe('for Reviewer', () => {
@@ -426,6 +439,7 @@ class TestEnvironment {
   location: Location;
 
   readonly mockedAnsweredDialogRef: MdcDialogRef<QuestionAnsweredDialogComponent> = mock(MdcDialogRef);
+  readonly mockedImportDialogRef: MdcDialogRef<ImportQuestionsDialogComponent> = mock(MdcDialogRef);
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   adminUser = this.createUser('01', SFProjectRole.ParatextAdministrator);
@@ -735,6 +749,10 @@ class TestEnvironment {
     when(mockedQuestionDialogService.questionDialog(anything())).thenResolve();
     when(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).thenReturn(instance(this.mockedAnsweredDialogRef));
     when(this.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('accept'));
+    when(mockedMdcDialog.open(ImportQuestionsDialogComponent, anything())).thenReturn(
+      instance(this.mockedImportDialogRef)
+    );
+    when(this.mockedImportDialogRef.afterClosed()).thenReturn(new Observable<void>());
     when(mockedProjectService.get(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id)
     );
