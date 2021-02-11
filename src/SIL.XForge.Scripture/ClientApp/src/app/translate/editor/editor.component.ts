@@ -297,9 +297,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
           const sourceId = this.projectDoc?.data?.translateConfig.source?.projectRef;
           if (sourceId != null) {
-            const config = await this.projectService.getUserConfig(sourceId, this.userService.currentUserId);
-            // If the user does not have a projectUserConfig then they are not on the project
-            this.sourceProjectDoc = config.data == null ? undefined : await this.projectService.get(sourceId);
+            const userOnProject: boolean = !!this.currentUser?.sites[environment.siteId].projects.includes(sourceId);
+            // Only get the project doc if the user is on the project to avoid an error.
+            this.sourceProjectDoc = userOnProject ? await this.projectService.get(sourceId) : undefined;
             if (this.sourceProjectDoc != null && this.sourceProjectDoc.data != null) {
               this.sourceText = this.sourceProjectDoc.data.texts.find(t => t.bookNum === bookNum);
             }

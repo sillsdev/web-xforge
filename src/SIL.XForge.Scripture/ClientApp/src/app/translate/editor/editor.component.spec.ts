@@ -770,8 +770,6 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.updateParams({ projectId: 'project01', bookId: 'ACT' });
       env.wait();
-      // Gets a projectUserConfig with no data because the user is not on the resource project
-      verify(mockedSFProjectService.getUserConfig('resource01', 'user01')).once();
       verify(mockedSFProjectService.get('resource01')).never();
       expect(env.bookName).toEqual('Acts');
       expect(env.component.chapter).toBe(1);
@@ -988,8 +986,6 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.updateParams({ projectId: 'project01', bookId: 'ACT' });
       env.wait();
-      // Gets a projectUserConfig with no data because the user is not on the resource project
-      verify(mockedSFProjectService.getUserConfig('resource01', 'user01')).once();
       verify(mockedSFProjectService.get('resource01')).never();
       expect(env.bookName).toEqual('Acts');
       expect(env.component.chapter).toBe(1);
@@ -1181,12 +1177,6 @@ class TestEnvironment {
       this.realtimeService.subscribe(
         SFProjectUserConfigDoc.COLLECTION,
         getSFProjectUserConfigDocId('project01', userId)
-      )
-    );
-    when(mockedSFProjectService.getUserConfig('project02', anything())).thenCall((_projectId, userId) =>
-      this.realtimeService.subscribe(
-        SFProjectUserConfigDoc.COLLECTION,
-        getSFProjectUserConfigDocId('project02', userId)
       )
     );
     when(mockedSFProjectService.getText(anything())).thenCall(id =>
