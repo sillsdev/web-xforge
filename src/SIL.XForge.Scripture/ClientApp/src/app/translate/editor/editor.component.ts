@@ -205,7 +205,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (SF_PROJECT_RIGHTS.hasRight(projectRole, { projectDomain: SFProjectDomain.Texts, operation: Operation.Edit })) {
       // Check for chapter rights
       const chapter = this.text?.chapters.find(c => c.number === this._chapter);
-      if (chapter != null) {
+      // Even though permissions is guaranteed to be there in the model, its not in IndexedDB the first time the project
+      // is accessed after migration
+      if (chapter != null && chapter.permissions != null) {
         return chapter.permissions[this.userService.currentUserId] === TextInfoPermission.Write;
       }
     }
@@ -222,7 +224,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (SF_PROJECT_RIGHTS.hasRight(projectRole, { projectDomain: SFProjectDomain.Texts, operation: Operation.View })) {
       // Check for chapter rights
       const chapter = this.sourceText?.chapters.find(c => c.number === this._chapter);
-      if (chapter != null) {
+      // Even though permissions is guaranteed to be there in the model, its not in IndexedDB the first time the project
+      // is accessed after migration
+      if (chapter != null && chapter.permissions != null) {
         return chapter.permissions[this.userService.currentUserId] !== TextInfoPermission.None;
       }
     }
