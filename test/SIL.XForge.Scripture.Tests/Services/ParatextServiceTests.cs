@@ -1033,7 +1033,7 @@ namespace SIL.XForge.Scripture.Services
                 string scrtextDir = Path.Combine(SyncDir, projectId, "target");
                 ProjectName projectName = new ProjectName() { ProjectPath = scrtextDir, ShortName = "Proj" };
                 var scrText = new MockScrText(associatedPtUser, projectName);
-                scrText.CachedGuid = HexId.FromStrSafe(projectId);
+                scrText.CachedGuid = HexId.FromStr(projectId);
                 scrText.Permissions.CreateFirstAdminUser();
                 scrText.Data.Add("RUT", ruthBookUsfm);
                 scrText.Settings.BooksPresentSet = new BookSet("RUT");
