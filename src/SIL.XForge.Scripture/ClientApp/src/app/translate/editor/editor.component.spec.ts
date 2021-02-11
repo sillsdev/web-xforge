@@ -1300,14 +1300,6 @@ class TestEnvironment {
     }
     if (data.translateConfig?.source !== undefined) {
       projectData.translateConfig.source = data.translateConfig?.source;
-      when(
-        mockedSFProjectService.getUserConfig(data.translateConfig.source.projectRef, anything())
-      ).thenCall((projectId, userId) =>
-        this.realtimeService.subscribe(
-          SFProjectUserConfigDoc.COLLECTION,
-          getSFProjectUserConfigDocId(projectId, userId)
-        )
-      );
     }
     if (data.isRightToLeft != null) {
       projectData.isRightToLeft = data.isRightToLeft;
