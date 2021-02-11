@@ -490,9 +490,6 @@ namespace SIL.XForge.Scripture.Services
                         // If they are in Paratext, add the user to the source project
                         await this.AddUserToProjectAsync(conn, sourceProjectDoc, userDoc, sourceProjectRole,
                             removeShareKeys);
-                        await conn.CreateAsync<SFProjectUserConfig>(
-                            SFProjectUserConfig.GetDocId(sourceProjectDoc.Id, userDoc.Id),
-                            new SFProjectUserConfig { ProjectRef = sourceProjectDoc.Id, OwnerRef = userDoc.Id });
                     }
                 }
             }
