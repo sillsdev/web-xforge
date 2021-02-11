@@ -44,6 +44,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
 
   private targetProjects?: ParatextProject[];
   private _isAppOnline: boolean = false;
+  private submitted: boolean = false;
 
   constructor(
     private readonly paratextService: ParatextService,
@@ -83,6 +84,10 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     const paratextId: string = this.paratextIdControl.value;
     const project = this.projects.find(p => p.paratextId === paratextId);
     return project != null && project.projectId == null;
+  }
+
+  get submitDisabled(): boolean {
+    return !this.hasConnectableProjects || !this.isAppOnline || this.submitted;
   }
 
   get hasNonAdministratorProject(): boolean {
@@ -174,6 +179,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
 
       let projectId: string = '';
       try {
+        this.submitted = true;
         projectId = await this.projectService.onlineCreate(settings);
       } catch (err) {
         if (!err.message?.includes(ConnectProjectComponent.errorAlreadyConnectedKey)) {
@@ -182,6 +188,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
 
         err.message = this.translocoService.translate('connect_project.problem_already_connected');
         this.errorHandler.handleError(err);
+        this.submitted = false;
         this.state = 'input';
         this.populateProjectList();
         return;
