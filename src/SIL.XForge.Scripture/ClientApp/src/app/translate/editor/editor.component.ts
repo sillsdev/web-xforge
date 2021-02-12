@@ -19,7 +19,6 @@ import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { User } from 'realtime-server/lib/common/models/user';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
-import { hasParatextRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextType } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/scriptureforge/models/text-info-permission';
@@ -298,8 +297,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
           const sourceId = this.projectDoc?.data?.translateConfig.source?.projectRef;
           if (sourceId != null) {
-            const userRole: string = await this.projectService.onlineGetProjectRole(sourceId);
-            this.sourceProjectDoc = hasParatextRole(userRole) ? await this.projectService.get(sourceId) : undefined;
+            const userOnProject: boolean = !!this.currentUser?.sites[environment.siteId].projects.includes(sourceId);
+            // Only get the project doc if the user is on the project to avoid an error.
+            this.sourceProjectDoc = userOnProject ? await this.projectService.get(sourceId) : undefined;
             if (this.sourceProjectDoc != null && this.sourceProjectDoc.data != null) {
               this.sourceText = this.sourceProjectDoc.data.texts.find(t => t.bookNum === bookNum);
             }

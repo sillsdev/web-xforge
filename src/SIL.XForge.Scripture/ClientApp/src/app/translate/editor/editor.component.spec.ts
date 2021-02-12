@@ -752,7 +752,6 @@ describe('EditorComponent', () => {
 
     it('user has no resource access', fakeAsync(() => {
       const env = new TestEnvironment();
-      when(mockedSFProjectService.onlineGetProjectRole('resource01')).thenResolve('None');
       env.setupProject({
         translateConfig: {
           translationSuggestionsEnabled: true,
@@ -771,7 +770,6 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.updateParams({ projectId: 'project01', bookId: 'ACT' });
       env.wait();
-      verify(mockedSFProjectService.onlineGetProjectRole('resource01')).once();
       verify(mockedSFProjectService.get('resource01')).never();
       expect(env.bookName).toEqual('Acts');
       expect(env.component.chapter).toBe(1);
@@ -970,7 +968,6 @@ describe('EditorComponent', () => {
 
     it('user has no resource access', fakeAsync(() => {
       const env = new TestEnvironment();
-      when(mockedSFProjectService.onlineGetProjectRole('resource01')).thenResolve('None');
       env.setupProject({
         translateConfig: {
           translationSuggestionsEnabled: false,
@@ -989,7 +986,6 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.updateParams({ projectId: 'project01', bookId: 'ACT' });
       env.wait();
-      verify(mockedSFProjectService.onlineGetProjectRole('resource01')).once();
       verify(mockedSFProjectService.get('resource01')).never();
       expect(env.bookName).toEqual('Acts');
       expect(env.component.chapter).toBe(1);
@@ -1241,8 +1237,6 @@ class TestEnvironment {
   setCurrentUser(userId: string): void {
     when(mockedUserService.currentUserId).thenReturn(userId);
     when(mockedUserService.getCurrentUser()).thenCall(() => this.realtimeService.subscribe(UserDoc.COLLECTION, userId));
-    when(mockedSFProjectService.onlineGetProjectRole('project01')).thenResolve(this.userRolesOnProject[userId]);
-    when(mockedSFProjectService.onlineGetProjectRole('project02')).thenResolve(this.userRolesOnProject[userId]);
   }
 
   setupUsers(): void {
