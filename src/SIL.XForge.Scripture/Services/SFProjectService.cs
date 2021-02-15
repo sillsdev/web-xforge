@@ -342,7 +342,7 @@ namespace SIL.XForge.Scripture.Services
             if (projectSecret == null)
                 projectSecret = await ProjectSecrets.GetAsync(projectId);
             string key = projectSecret.ShareKeys.Single(sk => sk.Email == email).Key;
-            string url = $"{siteOptions.Origin}projects/{projectId}?sharing=true&shareKey={key}";
+            string url = $"{siteOptions.Origin}projects/{projectId}?sharing=true&shareKey={key}&locale={locale}";
             string emailSpecificLinkMessage = _localizer[SharedResource.Keys.InviteLinkSharingOff];
 
             User inviter = await RealtimeService.GetSnapshotAsync<User>(curUserId);
