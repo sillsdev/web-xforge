@@ -58,13 +58,13 @@ namespace SIL.XForge.Scripture.Services
             // TODO Make PT repos in data that should not be returned.
             foreach (string projectName in new string[] { env.Project01, env.Project03, env.Project02 })
             {
-                Assert.That(repos.Single(project => project.ParatextId == "paratext_" + projectName), Is.Not.Null);
+                Assert.That(repos.Single(project => project.ParatextId == env.PTProjectIds[projectName].Id), Is.Not.Null);
             }
 
             // Properties of one of the returned repos have the correct values.
             ParatextProject expectedProject01 = new ParatextProject
             {
-                ParatextId = "paratext_" + env.Project01,
+                ParatextId = env.PTProjectIds[env.Project01].Id,
                 Name = "Full Name " + env.Project01,
                 ShortName = "P01",
                 LanguageTag = "writingsystem_tag",
@@ -74,7 +74,7 @@ namespace SIL.XForge.Scripture.Services
                 // Is connected since is in SF database and user is on project
                 IsConnected = true
             };
-            Assert.That(repos.Single(project => project.ParatextId == "paratext_" + env.Project01).ToString(),
+            Assert.That(repos.Single(project => project.ParatextId == env.PTProjectIds[env.Project01].Id).ToString(),
                 Is.EqualTo(expectedProject01.ToString()));
 
             // Repos are returned in alphabetical order by paratext project name.
@@ -103,10 +103,10 @@ namespace SIL.XForge.Scripture.Services
             // Repos returned are the ones we expect.
             foreach (string projectName in new string[] { env.Project01, env.Project03, env.Project02 })
             {
-                Assert.That(repos.Single(project => project.ParatextId == "paratext_" + projectName), Is.Not.Null);
+                Assert.That(repos.Single(project => project.ParatextId == env.PTProjectIds[projectName].Id), Is.Not.Null);
             }
             // Not the ones we don't.
-            Assert.That(repos.Any<ParatextProject>(Project => Project.ParatextId == "paratext_" + env.Project04),
+            Assert.That(repos.Any<ParatextProject>(Project => Project.ParatextId == env.PTProjectIds[env.Project04].Id),
                 Is.False, "Should not have had project 4");
         }
 
@@ -118,7 +118,7 @@ namespace SIL.XForge.Scripture.Services
             env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
             IEnumerable<ParatextProject> projects = await env.Service.GetProjectsAsync(user01Secret);
 
-            ParatextProject project02 = projects.Single(p => p.ParatextId == "paratext_" + env.Project02);
+            ParatextProject project02 = projects.Single(p => p.ParatextId == env.PTProjectIds[env.Project02].Id);
             Assert.That(project02.Name, Is.EqualTo("Full Name " + env.Project02));
         }
 
@@ -138,7 +138,7 @@ namespace SIL.XForge.Scripture.Services
                 new
                 {
                     // Data
-                    paratextProjectId = "paratext_" + env.Project01,
+                    paratextProjectId = env.PTProjectIds[env.Project01].Id,
                     sfUserId = env.User01,
                     ptUsername = "user 01",
                     userSecret = user01Secret,
@@ -154,7 +154,7 @@ namespace SIL.XForge.Scripture.Services
                 },
                 new
                 {
-                    paratextProjectId = "paratext_" + env.Project01,
+                    paratextProjectId = env.PTProjectIds[env.Project01].Id,
                     sfUserId = env.User03,
                     ptUsername = "user 01",
                     userSecret = user03Secret,
@@ -170,7 +170,7 @@ namespace SIL.XForge.Scripture.Services
                 },
                 new
                 {
-                    paratextProjectId = "paratext_" + env.Project02,
+                    paratextProjectId = env.PTProjectIds[env.Project02].Id,
                     sfUserId = env.User01,
                     ptUsername = "user 01",
                     userSecret = user01Secret,
@@ -186,7 +186,7 @@ namespace SIL.XForge.Scripture.Services
                 },
                 new
                 {
-                    paratextProjectId = "paratext_" + env.Project02,
+                    paratextProjectId = env.PTProjectIds[env.Project02].Id,
                     sfUserId = env.User03,
                     ptUsername = "user 03",
                     userSecret = user03Secret,
@@ -217,7 +217,7 @@ namespace SIL.XForge.Scripture.Services
                 }
                 Assert.That(env.MockInternetSharedRepositorySourceProvider.GetSource(testCase.userSecret,
                     string.Empty, string.Empty, string.Empty).GetRepositories()
-                    .FirstOrDefault(sharedRepository => sharedRepository.SendReceiveId == testCase.paratextProjectId)
+                    .FirstOrDefault(sharedRepository => sharedRepository.SendReceiveId.Id == testCase.paratextProjectId)
                     .SourceUsers.GetRole(testCase.ptUsername) == UserRoles.Administrator,
                     Is.EqualTo(testCase.ptUserIsAdminOnPtProject),
                     "not set up - whether pt user is an admin on pt project");
@@ -409,7 +409,7 @@ namespace SIL.XForge.Scripture.Services
         public void GetBookText_NoSuchPtProjectKnown()
         {
             var env = new TestEnvironment();
-            string ptProjectId = "paratext_" + env.Project01;
+            string ptProjectId = env.PTProjectIds[env.Project01].Id;
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
             IInternetSharedRepositorySource mockSource =
                 env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
@@ -522,7 +522,7 @@ namespace SIL.XForge.Scripture.Services
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
             Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.SendReceiveAsync(null, null, null));
             Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.SendReceiveAsync(null,
-                "paratext_" + env.Project01, null));
+                env.PTProjectIds[env.Project01].Id, null));
             Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.SendReceiveAsync(user01Secret, null, null));
         }
 
@@ -566,9 +566,9 @@ namespace SIL.XForge.Scripture.Services
             // SUT 1
             await env.Service.SendReceiveAsync(user01Secret, ptProjectId, null);
             env.MockSharingLogicWrapper.Received(1).ShareChanges(Arg.Is<List<SharedProject>>(list =>
-                list.Count == 1 && list[0].SendReceiveId == ptProjectId), Arg.Any<SharedRepositorySource>(),
+                list.Count == 1 && list[0].SendReceiveId.Id == ptProjectId), Arg.Any<SharedRepositorySource>(),
                 out Arg.Any<List<SendReceiveResult>>(),
-                Arg.Is<List<SharedProject>>(list => list.Count == 1 && list[0].SendReceiveId == ptProjectId));
+                Arg.Is<List<SharedProject>>(list => list.Count == 1 && list[0].SendReceiveId.Id == ptProjectId));
             mockSource.DidNotReceive().Pull(Arg.Any<string>(), Arg.Any<SharedRepository>());
             env.MockSharingLogicWrapper.ClearReceivedCalls();
 
@@ -585,7 +585,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task SendReceiveAsync_ProjectNotYetCloned()
         {
             var env = new TestEnvironment();
-            string ptProjectId = "paratext_" + env.Project02;
+            string ptProjectId = env.PTProjectIds[env.Project02].Id;
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
             IInternetSharedRepositorySource mockSource =
                 env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
@@ -612,7 +612,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             var associatedPtUser = new SFParatextUser(env.Username01);
             string targetProjectId = env.SetupProject(env.Project01, associatedPtUser);
-            string sourceProjectId = "paratext_" + env.Project02;
+            string sourceProjectId = env.PTProjectIds[env.Project02].Id;
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
             IInternetSharedRepositorySource mockSource =
                 env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
@@ -632,14 +632,15 @@ namespace SIL.XForge.Scripture.Services
             env.MockSharingLogicWrapper.Received(2).ShareChanges(
                 Arg.Is<List<SharedProject>>(
                     list =>
-                    list.Count().Equals(1) && (list[0].SendReceiveId == targetProjectId || list[0].SendReceiveId == sourceProjectId)
-                        && Object.ReferenceEquals(list[0].Permissions, list[0].ScrText.Permissions)),
+                    list.Count().Equals(1) &&
+                        (list[0].SendReceiveId.Id == targetProjectId || list[0].SendReceiveId.Id == sourceProjectId) &&
+                        Object.ReferenceEquals(list[0].Permissions, list[0].ScrText.Permissions)),
                     Arg.Any<SharedRepositorySource>(), out Arg.Any<List<SendReceiveResult>>(),
                     Arg.Any<List<SharedProject>>());
             env.MockFileSystemService.DidNotReceive().DeleteDirectory(Arg.Any<string>());
 
             // Replaces obsolete source project if the source project has been changed
-            string newSourceProjectId = "paratext_" + env.Project03;
+            string newSourceProjectId = env.PTProjectIds[env.Project03].Id;
             string sourcePath = Path.Combine(env.SyncDir, newSourceProjectId, "target");
 
             // Only set the the new source ScrText when it is "cloned" to the filesystem
@@ -655,7 +656,7 @@ namespace SIL.XForge.Scripture.Services
             env.MockFileSystemService.DidNotReceive().DeleteDirectory(Arg.Any<string>());
             env.MockFileSystemService.Received(1).CreateDirectory(sourcePath);
             mockSource.Received(1).Pull(sourcePath, Arg.Is<SharedRepository>(repo =>
-                repo.SendReceiveId == newSourceProjectId));
+                repo.SendReceiveId.Id == newSourceProjectId));
             env.MockHgWrapper.Received(1).Update(sourcePath);
         }
 
@@ -710,6 +711,7 @@ namespace SIL.XForge.Scripture.Services
             public readonly string Project02 = "project02";
             public readonly string Project03 = "project03";
             public readonly string Project04 = "project04";
+            public readonly Dictionary<string, HexId> PTProjectIds = new Dictionary<string, HexId>();
             public readonly string User01 = "user01";
             public readonly string User02 = "user02";
             public readonly string User03 = "user03";
@@ -766,6 +768,11 @@ namespace SIL.XForge.Scripture.Services
                 Service.SharingLogicWrapper = MockSharingLogicWrapper;
                 Service.HgWrapper = MockHgWrapper;
                 Service.SyncDir = SyncDir;
+
+                PTProjectIds.Add(Project01, HexId.CreateNew());
+                PTProjectIds.Add(Project02, HexId.CreateNew());
+                PTProjectIds.Add(Project03, HexId.CreateNew());
+                PTProjectIds.Add(Project04, HexId.CreateNew());
 
                 MockJwtTokenHelper.GetParatextUsername(Arg.Any<UserSecret>()).Returns(User01);
                 MockJwtTokenHelper.GetJwtTokenFromUserSecret(Arg.Any<UserSecret>()).Returns("token_1234");
@@ -884,32 +891,32 @@ namespace SIL.XForge.Scripture.Services
                 IInternetSharedRepositorySource mockSource = Substitute.For<IInternetSharedRepositorySource>();
                 SharedRepository repo1 = new SharedRepository
                 {
-                    SendReceiveId = "paratext_" + Project01,
+                    SendReceiveId = PTProjectIds[Project01],
                     ScrTextName = "P01",
                     SourceUsers = sourceUsers
                 };
                 SharedRepository repo2 = new SharedRepository
                 {
-                    SendReceiveId = "paratext_" + Project02,
+                    SendReceiveId = PTProjectIds[Project02],
                     ScrTextName = "P02",
                     SourceUsers = sourceUsers
                 };
                 SharedRepository repo3 = new SharedRepository
                 {
-                    SendReceiveId = "paratext_" + Project03,
+                    SendReceiveId = PTProjectIds[Project03],
                     ScrTextName = "P03",
                     SourceUsers = sourceUsers
                 };
                 SharedRepository repo4 = new SharedRepository
                 {
-                    SendReceiveId = "paratext_" + Project04,
+                    SendReceiveId = PTProjectIds[Project04],
                     ScrTextName = "P04",
                     SourceUsers = sourceUsers
                 };
 
-                ProjectMetadata projMeta1 = GetMetadata("paratext_" + Project01, "Full Name " + Project01);
-                ProjectMetadata projMeta2 = GetMetadata("paratext_" + Project02, "Full Name " + Project02);
-                ProjectMetadata projMeta3 = GetMetadata("paratext_" + Project03, "Full Name " + Project03);
+                ProjectMetadata projMeta1 = GetMetadata(PTProjectIds[Project01].Id, "Full Name " + Project01);
+                ProjectMetadata projMeta2 = GetMetadata(PTProjectIds[Project02].Id, "Full Name " + Project02);
+                ProjectMetadata projMeta3 = GetMetadata(PTProjectIds[Project03].Id, "Full Name " + Project03);
 
                 var sharedRepositories = new List<SharedRepository> { repo1, repo3, repo2 };
                 if (extraSharedRepository)
@@ -931,7 +938,7 @@ namespace SIL.XForge.Scripture.Services
                         new SFProject
                         {
                             Id = "sf_id_" + Project01,
-                            ParatextId = "paratext_" + Project01,
+                            ParatextId = PTProjectIds[Project01].Id,
                             Name = "Full Name " + Project01,
                             ShortName = "P01",
                             WritingSystem = new WritingSystem
@@ -1012,8 +1019,8 @@ namespace SIL.XForge.Scripture.Services
 
             public string SetupProject(string baseId, ParatextUser associatedPtUser, bool hasEditPermission = true)
             {
-                string ptProjectId = "paratext_" + baseId;
-                ProjectScrText = GetScrText(associatedPtUser, baseId, hasEditPermission);
+                string ptProjectId = PTProjectIds[baseId].Id;
+                ProjectScrText = GetScrText(associatedPtUser, ptProjectId, hasEditPermission);
                 ProjectCommentManager = CommentManager.Get(ProjectScrText);
                 MockScrTextCollection.FindById(Arg.Any<string>(), ptProjectId)
                     .Returns(ProjectScrText);
@@ -1026,7 +1033,7 @@ namespace SIL.XForge.Scripture.Services
                 string scrtextDir = Path.Combine(SyncDir, projectId, "target");
                 ProjectName projectName = new ProjectName() { ProjectPath = scrtextDir, ShortName = "Proj" };
                 var scrText = new MockScrText(associatedPtUser, projectName);
-                scrText.CachedGuid = projectId;
+                scrText.CachedGuid = HexId.FromStr(projectId);
                 scrText.Permissions.CreateFirstAdminUser();
                 scrText.Data.Add("RUT", ruthBookUsfm);
                 scrText.Settings.BooksPresentSet = new BookSet("RUT");
@@ -1039,7 +1046,10 @@ namespace SIL.XForge.Scripture.Services
             {
                 MockSharingLogicWrapper.CreateSharedProject(Arg.Any<string>(), Arg.Any<string>(),
                     Arg.Any<SharedRepositorySource>(), Arg.Any<IEnumerable<SharedRepository>>())
-                    .Returns(callInfo => new SharedProject() { SendReceiveId = callInfo.ArgAt<string>(0) });
+                    .Returns(callInfo => new SharedProject()
+                    {
+                        SendReceiveId = HexId.FromStr(callInfo.ArgAt<string>(0))
+                    });
                 MockSharingLogicWrapper.ShareChanges(Arg.Any<List<SharedProject>>(), Arg.Any<SharedRepositorySource>(),
                     out Arg.Any<List<SendReceiveResult>>(), Arg.Any<List<SharedProject>>()).Returns(true);
                 // Have the HandleErrors method run its first argument, which would be the ShareChanges() call.

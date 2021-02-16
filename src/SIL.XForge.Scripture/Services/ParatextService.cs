@@ -158,7 +158,7 @@ namespace SIL.XForge.Scripture.Services
             IInternetSharedRepositorySource source = await GetInternetSharedRepositorySource(userSecret);
             IEnumerable<SharedRepository> repositories = source.GetRepositories();
             IEnumerable<ProjectMetadata> projectsMetadata = source.GetProjectsMetaData();
-            var projectGuids = projectsMetadata.Select(pmd => pmd.ProjectGuid);
+            IEnumerable<string> projectGuids = projectsMetadata.Select(pmd => pmd.ProjectGuid.Id);
             Dictionary<string, ParatextProject> ptProjectsAvailable =
                 GetProjects(userSecret, repositories, projectsMetadata).ToDictionary(ptProject => ptProject.ParatextId);
             if (!projectGuids.Contains(ptTargetId))
@@ -649,7 +649,7 @@ namespace SIL.XForge.Scripture.Services
             foreach (SharedRepository remotePtProject in remotePtProjects)
             {
                 SFProject correspondingSfProject =
-                    existingSfProjects.FirstOrDefault(sfProj => sfProj.ParatextId == remotePtProject.SendReceiveId);
+                    existingSfProjects.FirstOrDefault(sfProj => sfProj.ParatextId == remotePtProject.SendReceiveId.Id);
 
                 bool sfProjectExists = correspondingSfProject != null;
                 bool sfUserIsOnSfProject = correspondingSfProject?.UserRoles.ContainsKey(userSecret.Id) ?? false;
@@ -666,7 +666,7 @@ namespace SIL.XForge.Scripture.Services
 
                 paratextProjects.Add(new ParatextProject
                 {
-                    ParatextId = remotePtProject.SendReceiveId,
+                    ParatextId = remotePtProject.SendReceiveId.Id,
                     Name = fullOrShortName,
                     ShortName = remotePtProject.ScrTextName,
                     LanguageTag = correspondingSfProject?.WritingSystem.Tag,
@@ -727,7 +727,7 @@ namespace SIL.XForge.Scripture.Services
             }
             else if (targetNeedsCloned)
             {
-                SharedRepository targetRepo = new SharedRepository(target.ShortName, target.ParatextId,
+                SharedRepository targetRepo = new SharedRepository(target.ShortName, HexId.FromStr(target.ParatextId),
                     RepositoryType.Shared);
                 CloneProjectRepo(repositorySource, target.ParatextId, targetRepo);
             }
@@ -869,13 +869,14 @@ namespace SIL.XForge.Scripture.Services
             {
                 AvailableRevision = r.DBLRevision,
                 InstallableResource = includeInstallableResource ? r : null,
-                InstalledRevision = resourceRevisions.ContainsKey(r.DBLEntryUid) ? resourceRevisions[r.DBLEntryUid] : 0,
+                InstalledRevision = resourceRevisions
+                    .ContainsKey(r.DBLEntryUid.Id) ? resourceRevisions[r.DBLEntryUid.Id] : 0,
                 IsConnectable = false,
                 IsConnected = false,
-                IsInstalled = resourceRevisions.ContainsKey(r.DBLEntryUid),
+                IsInstalled = resourceRevisions.ContainsKey(r.DBLEntryUid.Id),
                 LanguageTag = r.LanguageID.Code,
                 Name = r.FullName,
-                ParatextId = r.DBLEntryUid,
+                ParatextId = r.DBLEntryUid.Id,
                 ProjectId = null,
                 ShortName = r.Name,
             }).ToArray();
