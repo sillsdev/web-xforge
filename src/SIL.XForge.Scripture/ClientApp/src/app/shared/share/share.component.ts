@@ -35,11 +35,11 @@ export class ShareComponent implements OnInit {
     return false;
   }
 
-  private get shareLevel(): CheckingShareLevel {
-    if (this.projectDoc != null && this.projectDoc.data != null) {
-      return this.projectDoc.data.checkingConfig.shareLevel;
-    }
-    return CheckingShareLevel.Specific;
+  private get isLinkSharingEnabled(): boolean {
+    return (
+      this.projectDoc?.data?.checkingConfig.shareLevel === CheckingShareLevel.Anyone &&
+      this.projectDoc?.data?.checkingConfig.shareEnabled === true
+    );
   }
 
   ngOnInit(): void {
@@ -53,7 +53,7 @@ export class ShareComponent implements OnInit {
     this.dialog.open(ShareDialogComponent, {
       data: {
         projectId: this.projectId,
-        isLinkSharingEnabled: this.shareLevel === CheckingShareLevel.Anyone
+        isLinkSharingEnabled: this.isLinkSharingEnabled
       } as ShareDialogData
     });
   }
