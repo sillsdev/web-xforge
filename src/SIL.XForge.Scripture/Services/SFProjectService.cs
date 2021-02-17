@@ -333,10 +333,11 @@ namespace SIL.XForge.Scripture.Services
                 throw new ForbiddenException();
             }
             CultureInfo.CurrentUICulture = new CultureInfo(locale);
-            // Remove any expired sharekeys on this project
+            // Remove the user sharekey if expired
             await ProjectSecrets.UpdateAsync(
                 p => p.Id == projectId,
-                update => update.RemoveAll(p => p.ShareKeys, sk => sk.ExpirationTime < DateTime.UtcNow)
+                update => update.RemoveAll(p => p.ShareKeys,
+                    sk => sk.Email == email && sk.ExpirationTime < DateTime.UtcNow)
             );
             DateTime expTime = DateTime.UtcNow.AddDays(14);
 
@@ -348,10 +349,10 @@ namespace SIL.XForge.Scripture.Services
             );
             if (projectSecret == null)
             {
-                // Renew the expiration time of the valid key
                 projectSecret = await ProjectSecrets.GetAsync(projectId);
                 int index = projectSecret.ShareKeys.FindIndex(sk => sk.Email == email);
 
+                // Renew the expiration time of the valid key
                 await ProjectSecrets.UpdateAsync(
                     p => p.Id == projectId && p.ShareKeys.Any(sk => sk.Email == email),
                     update => update.Set(p => p.ShareKeys[index].ExpirationTime, expTime)
@@ -408,7 +409,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>Return list of email addresses with outstanding invitations</summary>
-        public async Task<string[]> InvitedUsersAsync(string curUserId, string projectId)
+        public async Task<IReadOnlyList<InviteeStatus>> InvitedUsersAsync(string curUserId, string projectId)
         {
             SFProject project = await GetProjectAsync(projectId);
 
@@ -417,7 +418,9 @@ namespace SIL.XForge.Scripture.Services
 
             SFProjectSecret projectSecret = await ProjectSecrets.GetAsync(projectId);
 
-            return projectSecret.ShareKeys.Select(sk => sk.Email).ToArray();
+            DateTime now = DateTime.UtcNow;
+            return projectSecret.ShareKeys.Select(sk =>
+                new InviteeStatus { Email = sk.Email, Expired = sk.ExpirationTime < now }).ToArray();
         }
 
         public async Task CheckLinkSharingAsync(string curUserId, string projectId, string shareKey = null)
@@ -434,13 +437,9 @@ namespace SIL.XForge.Scripture.Services
 
                 if (shareKey != null)
                 {
-                    // Remove any expired sharekeys on this project
-                    await ProjectSecrets.UpdateAsync(
-                        p => p.Id == projectId,
-                        update => update.RemoveAll(p => p.ShareKeys, sk => sk.ExpirationTime < DateTime.UtcNow)
-                    );
                     SFProjectSecret projectSecret = await ProjectSecrets.UpdateAsync(
-                        p => p.Id == projectId && p.ShareKeys.Any(sk => sk.Key == shareKey),
+                        p => p.Id == projectId && p.ShareKeys.Any(
+                            sk => sk.Key == shareKey && sk.ExpirationTime > DateTime.UtcNow),
                         update => update.RemoveAll(p => p.ShareKeys, sk => sk.Key == shareKey)
                     );
                     if (projectSecret != null)

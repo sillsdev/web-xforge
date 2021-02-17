@@ -75,7 +75,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).ExpirationTime,
                 Is.LessThan(DateTime.UtcNow.AddDays(2)), "setup");
             var invitees = await env.Service.InvitedUsersAsync(User01, Project03);
-            Assert.That(invitees, Is.EquivalentTo(
+            Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(
                 new[] { "bob@example.com", "user02@example.com", "user03@example.com", "bill@example.com" }), "setup");
 
             await env.Service.InviteAsync(User01, Project03, email, "en");
@@ -90,10 +90,9 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).ExpirationTime,
                 Is.GreaterThan(DateTime.UtcNow.AddDays(13)));
 
-            // user02 sharekey expired and removed from project sharekeys
             invitees = await env.Service.InvitedUsersAsync(User01, Project03);
-            Assert.That(invitees,
-                Is.EquivalentTo(new[] { "bob@example.com", "user03@example.com", "bill@example.com" }));
+            Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(
+                new[] { "bob@example.com", "user02@example.com", "user03@example.com", "bill@example.com" }));
         }
 
         [Test]
@@ -226,7 +225,7 @@ namespace SIL.XForge.Scripture.Services
 
             Assert.That(project.UserRoles.ContainsKey(User04), Is.False, "setup");
             var invitees = await env.Service.InvitedUsersAsync(User01, Project03);
-            Assert.That(invitees, Is.EquivalentTo(
+            Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(
                 new[] { "bob@example.com", "user02@example.com", "user03@example.com", "bill@example.com" }), "setup");
 
             // Use the sharekey linked to user03
@@ -237,10 +236,9 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.False,
                 "Key should have been removed from project");
 
-            // user02 sharekey expired and also removed from project sharekeys
             invitees = await env.Service.InvitedUsersAsync(User01, Project03);
-            Assert.That(invitees,
-                Is.EquivalentTo(new[] { "bob@example.com", "bill@example.com" }));
+            Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(
+                new[] { "bob@example.com", "user02@example.com", "bill@example.com" }));
         }
 
         [Test]
@@ -256,10 +254,9 @@ namespace SIL.XForge.Scripture.Services
             Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CheckLinkSharingAsync(User02, Project03, "keyexp"),
                 "The user should be forbidden to join the project: Email was in ShareKeys, but code was expired.");
 
-            // Removes the expired key for user02 from list of invited users
             var invitees = await env.Service.InvitedUsersAsync(User01, Project03);
-            Assert.That(invitees,
-                Is.EquivalentTo(new[] { "bob@example.com", "user03@example.com", "bill@example.com" }));
+            Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(new[] {
+                "bob@example.com", "user02@example.com", "user03@example.com", "bill@example.com" }));
         }
 
         [Test]
@@ -363,16 +360,16 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             // Project with no outstanding invitations
-            Assert.That((await env.Service.InvitedUsersAsync(User01, Project01)).Length, Is.EqualTo(0));
+            Assert.That((await env.Service.InvitedUsersAsync(User01, Project01)).Count, Is.EqualTo(0));
 
             // Project with several outstanding invitations
-            var invitees = (await env.Service.InvitedUsersAsync(User01, Project03));
-            Assert.That(invitees.Length, Is.EqualTo(4));
+            IReadOnlyList<InviteeStatus> invitees = await env.Service.InvitedUsersAsync(User01, Project03);
+            Assert.That(invitees.Count, Is.EqualTo(4));
             string[] expectedEmailList =
                 { "bob@example.com", "user02@example.com", "user03@example.com", "bill@example.com" };
             foreach (var expectedEmail in expectedEmailList)
             {
-                Assert.That(Array.Exists(invitees, invitee => invitee == expectedEmail), Is.True);
+                Assert.That(invitees.Any(i => i.Email == expectedEmail), Is.True);
             }
         }
 

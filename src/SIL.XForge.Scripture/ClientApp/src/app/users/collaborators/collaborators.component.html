@@ -41,16 +41,18 @@
           </ng-container>
           <ng-container matColumnDef="name">
             <td mat-cell *matCellDef="let userRow">
-              <div *ngIf="!userRow.isInvitee" class="display-name-label">
+              <div *ngIf="!userRow.inviteeStatus" class="display-name-label">
                 {{ userRow.user?.displayName }}
                 <b *ngIf="isCurrentUser(userRow)" class="current-user-label">&nbsp;{{ t("me") }}</b>
               </div>
               <div
-                *ngIf="userRow.isInvitee"
+                *ngIf="userRow.inviteeStatus"
                 [innerHtml]="
-                  i18n.translateAndInsertTags('collaborators.awaiting_response_from', {
-                    email: userRow.user?.email
-                  })
+                  userRow.inviteeStatus.expired
+                    ? i18n.translateAndInsertTags('collaborators.invitation_expired', { email: userRow.user?.email })
+                    : i18n.translateAndInsertTags('collaborators.awaiting_response_from', {
+                        email: userRow.user?.email
+                      })
                 "
               ></div>
             </td>
@@ -66,7 +68,7 @@
                 mdc-icon-button
                 icon="clear"
                 class="remove-user"
-                *ngIf="!userRow.isInvitee && !isCurrentUser(userRow)"
+                *ngIf="!userRow.inviteeStatus && !isCurrentUser(userRow)"
                 type="button"
                 [disabled]="!isAppOnline"
                 (click)="removeProjectUser(userRow.id)"
@@ -75,7 +77,7 @@
 
               <!-- 2 buttons below are 1 button displayed mutually exclusively, different style on breakpoints -->
               <button
-                *ngIf="userRow.isInvitee"
+                *ngIf="userRow.inviteeStatus"
                 fxHide.lt-sm
                 fxShow
                 mdc-button
@@ -93,7 +95,7 @@
                 icon="clear"
                 color="warn"
                 class="cancel-invite"
-                *ngIf="userRow.isInvitee"
+                *ngIf="userRow.inviteeStatus"
                 fxHide
                 fxShow.lt-sm
                 type="button"

@@ -17,7 +17,7 @@ namespace SIL.XForge.Scripture.Services
         Task<bool> IsAlreadyInvitedAsync(string curUserId, string projectId, string email);
         Task UninviteUserAsync(string curUserId, string projectId, string email);
         Task CheckLinkSharingAsync(string curUserId, string projectId, string shareKey = null);
-        Task<string[]> InvitedUsersAsync(string curUserId, string projectId);
+        Task<IReadOnlyList<InviteeStatus>> InvitedUsersAsync(string curUserId, string projectId);
         Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestions(string curUserId, string projectId);
         Task<bool> HasTransceleratorQuestions(string curUserId, string projectId);
     }

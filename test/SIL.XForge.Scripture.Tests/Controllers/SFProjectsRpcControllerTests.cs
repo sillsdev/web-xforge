@@ -15,7 +15,7 @@ namespace SIL.XForge.Scripture.Controllers
         {
             var env = new TestEnvironment();
             var output = ((await env.Controller.InvitedUsers("some-project-id")) as RpcMethodSuccessResult).ReturnObject;
-            Assert.That(output, Is.TypeOf(typeof(string[])));
+            Assert.That(output, Is.Not.Null);
         }
 
         [Test]
