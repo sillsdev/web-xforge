@@ -5,7 +5,6 @@ import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project'
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { mock, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
-import { ProjectService } from 'xforge-common/project.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -16,7 +15,7 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { SyncProgressComponent } from './sync-progress.component';
 
 const mockedNoticeService = mock(NoticeService);
-const mockedProjectService = mock(ProjectService);
+const mockedProjectService = mock(SFProjectService);
 
 describe('SyncProgressComponent', () => {
   configureTestingModule(() => ({
@@ -28,10 +27,16 @@ describe('SyncProgressComponent', () => {
     ]
   }));
 
+  it('does not initialize if projectDoc is undefined', fakeAsync(() => {
+    const env = new TestEnvironment(false, 'user01');
+    expect(env.host.projectDoc).toBeUndefined();
+    verify(mockedProjectService.get('sourceProject02')).never();
+    expect(env.host.syncProgress!.mode).toBe('indeterminate');
+  }));
+
   it('should show progress when sync is active', fakeAsync(() => {
-    const env = new TestEnvironment(false);
-    env.setCurrentUser('user01');
-    expect(env.progressBar).toBeNull();
+    const env = new TestEnvironment(false, 'user01');
+    env.setupProjectDoc();
     // Simulate sync starting
     env.emitSyncProgress(0, 'testProject01');
     expect(env.progressBar).not.toBeNull();
@@ -42,16 +47,15 @@ describe('SyncProgressComponent', () => {
     expect(env.host.syncProgress.mode).toBe('determinate');
     // Simulate sync completed
     env.emitSyncComplete(true, 'testProject01');
-    expect(env.progressBar).toBeNull();
     tick();
   }));
 
   it('show progress as source and target combined', fakeAsync(() => {
-    const env = new TestEnvironment(true);
-    env.setCurrentUser('user01');
-    expect(env.progressBar).toBeNull();
+    const env = new TestEnvironment(true, 'user01');
+    env.setupProjectDoc();
     env.emitSyncProgress(0, 'testProject01');
     env.emitSyncProgress(0, 'sourceProject02');
+    verify(mockedProjectService.onlineGetProjectRole('sourceProject02')).once();
     verify(mockedProjectService.get('sourceProject02')).once();
     expect(env.progressBar).not.toBeNull();
     expect(env.host.syncProgress.mode).toBe('indeterminate');
@@ -64,12 +68,11 @@ describe('SyncProgressComponent', () => {
     env.emitSyncProgress(0.8, 'testProject01');
     expect(env.host.syncProgress.syncProgressPercent).toEqual(90);
     env.emitSyncComplete(true, 'testProject01');
-    expect(env.fixture.componentInstance.inProgress).toBe(false);
   }));
 
   it('does not access source project if user does not have a paratext role', fakeAsync(() => {
-    const env = new TestEnvironment(true);
-    env.setCurrentUser('user02');
+    const env = new TestEnvironment(true, 'user02');
+    env.setupProjectDoc();
     env.emitSyncProgress(0, 'testProject01');
     env.emitSyncProgress(0, 'sourceProject02');
     verify(mockedProjectService.get('sourceProject02')).never();
@@ -77,37 +80,32 @@ describe('SyncProgressComponent', () => {
     env.emitSyncProgress(0.5, 'testProject01');
     expect(env.host.syncProgress.syncProgressPercent).toEqual(50);
     env.emitSyncComplete(true, 'testProject01');
-    expect(env.fixture.componentInstance.inProgress).toBe(false);
   }));
 });
 
 @Component({
-  template: `<app-sync-progress
-    *ngIf="inProgress"
-    [projectDoc]="projectDoc"
-    (inProgress)="inProgress = $event"
-  ></app-sync-progress>`
+  template: `<app-sync-progress [projectDoc]="projectDoc" (inProgress)="inProgress = $event"></app-sync-progress>`
 })
 class HostComponent {
-  inProgress: boolean = false;
   projectDoc?: SFProjectDoc;
   @ViewChild(SyncProgressComponent) syncProgress!: SyncProgressComponent;
 
-  constructor(private readonly projectService: SFProjectService) {
+  constructor(private readonly projectService: SFProjectService) {}
+
+  getProjectDoc(): void {
     this.projectService.get('testProject01').then(doc => (this.projectDoc = doc));
   }
 }
 
 class TestEnvironment {
   readonly fixture: ComponentFixture<HostComponent>;
-  readonly component: SyncProgressComponent;
   readonly host: HostComponent;
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private userRoleTarget = { user01: SFProjectRole.ParatextAdministrator, user02: SFProjectRole.ParatextAdministrator };
   private userRoleSource = { user01: SFProjectRole.ParatextAdministrator };
 
-  constructor(hasSource: boolean, isInProgress = false) {
+  constructor(hasSource: boolean, userId: string, isInProgress = false) {
     const date = new Date();
     date.setMonth(date.getMonth() - 2);
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
@@ -184,10 +182,10 @@ class TestEnvironment {
     when(mockedProjectService.get('sourceProject02')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'sourceProject02')
     );
+    when(mockedProjectService.onlineGetProjectRole('sourceProject02')).thenResolve(this.userRoleSource[userId]);
 
     this.fixture = TestBed.createComponent(HostComponent);
     this.host = this.fixture.componentInstance;
-    this.component = this.fixture.componentInstance.syncProgress;
     this.fixture.detectChanges();
     tick();
     this.fixture.detectChanges();
@@ -198,7 +196,6 @@ class TestEnvironment {
   }
 
   emitSyncProgress(percentCompleted: number, projectId: string): void {
-    this.host.inProgress = true;
     const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(ops => {
       ops.set<number>(p => p.sync.queuedCount, 1);
@@ -222,7 +219,9 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  setCurrentUser(userId: string): void {
-    when(mockedProjectService.onlineGetProjectRole('sourceProject02')).thenResolve(this.userRoleSource[userId]);
+  setupProjectDoc(): void {
+    this.host.getProjectDoc();
+    tick();
+    this.fixture.detectChanges();
   }
 }
