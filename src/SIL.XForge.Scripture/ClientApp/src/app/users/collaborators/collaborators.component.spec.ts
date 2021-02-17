@@ -110,9 +110,9 @@ describe('CollaboratorsComponent', () => {
   it('displays invited users', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
-      'alice@a.aa',
-      'bob@b.bb',
-      'charles@c.cc'
+      { email: 'alice@a.aa', expired: false },
+      { email: 'bob@b.bb', expired: false },
+      { email: 'charles@c.cc', expired: true }
     ]);
 
     env.setupProjectData();
@@ -128,6 +128,10 @@ describe('CollaboratorsComponent', () => {
     const inviteeDisplay = env.elementTextContent(env.cell(inviteeRow, 1));
     expect(inviteeDisplay).toContain('Awaiting');
     expect(inviteeDisplay).toContain('alice@a.aa');
+    const expiredRow = 5;
+    const expiredInvitee = env.elementTextContent(env.cell(expiredRow, 1));
+    expect(expiredInvitee).toContain('Invitation has expired');
+    expect(expiredInvitee).toContain('charles@c.cc');
     // Invitee row has cancel button but not remove button.
     expect(env.removeUserButtonOnRow(inviteeRow)).toBeFalsy();
     expect(env.cancelInviteButtonOnRow(inviteeRow)).toBeTruthy();
@@ -173,7 +177,9 @@ describe('CollaboratorsComponent', () => {
 
   it('should refresh user list after inviting a new user', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve(['alice@a.aa']);
+    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
+      { email: 'alice@a.aa', expired: false }
+    ]);
     env.setupProjectData();
     env.fixture.detectChanges();
     tick();
@@ -186,8 +192,8 @@ describe('CollaboratorsComponent', () => {
 
     // Simulate invitation event
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
-      'alice@a.aa',
-      'new-invitee@example.com'
+      { email: 'alice@a.aa', expired: false },
+      { email: 'new-invitee@example.com', expired: false }
     ]);
     numInvitees++;
     env.component.onInvitationSent();
@@ -201,7 +207,9 @@ describe('CollaboratorsComponent', () => {
   it('should un-invite user from project', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedProjectService.onlineUninviteUser(anything(), anything())).thenResolve();
-    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve(['alice@a.aa']);
+    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
+      { email: 'alice@a.aa', expired: false }
+    ]);
     env.setupProjectData();
     env.fixture.detectChanges();
     tick();
@@ -248,7 +256,9 @@ describe('CollaboratorsComponent', () => {
   it('should filter users', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupProjectData();
-    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve(['bob@example.com']);
+    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
+      { email: 'bob@example.com', expired: false }
+    ]);
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
@@ -388,7 +398,9 @@ describe('CollaboratorsComponent', () => {
   it('should disable collaborators if not connected', fakeAsync(() => {
     const env = new TestEnvironment(false);
     env.setupProjectData();
-    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve(['alice@a.aa']);
+    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
+      { email: 'alice@a.aa', expired: false }
+    ]);
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
