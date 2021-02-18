@@ -24,7 +24,12 @@ interface Row {
   readonly id: string;
   readonly user: UserInfo;
   readonly role: string;
-  readonly isInvitee: boolean;
+  readonly inviteeStatus?: InviteeStatus;
+}
+
+export interface InviteeStatus {
+  email: string;
+  expired: boolean;
 }
 
 @Component({
@@ -219,10 +224,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
       tasks.push(
         this.userService
           .getProfile(userId)
-          .then(
-            userProfileDoc =>
-              (userRows[index] = { id: userProfileDoc.id, user: userProfileDoc.data || {}, role, isInvitee: false })
-          )
+          .then(userProfileDoc => (userRows[index] = { id: userProfileDoc.id, user: userProfileDoc.data || {}, role }))
       );
     }
     await Promise.all(tasks);
@@ -231,9 +233,9 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
       const invitees: Row[] = (await this.projectService.onlineInvitedUsers(this.projectId)).map(invitee => {
         return {
           id: '',
-          user: { email: invitee },
+          user: { email: invitee.email },
           role: '',
-          isInvitee: true
+          inviteeStatus: invitee
         } as Row;
       });
       this._userRows = userRows.concat(invitees);

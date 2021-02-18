@@ -11,6 +11,7 @@ import { ProjectService } from 'xforge-common/project.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { TransceleratorQuestion } from '../checking/import-questions-dialog/import-questions-dialog.component';
+import { InviteeStatus } from '../users/collaborators/collaborators.component';
 import { QuestionDoc } from './models/question-doc';
 import { SFProjectCreateSettings } from './models/sf-project-create-settings';
 import { SFProjectDoc } from './models/sf-project-doc';
@@ -116,8 +117,8 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
 
   /** Get list of email addresses that have outstanding invitations on project.
    * Caller must be an admin on the project. */
-  async onlineInvitedUsers(projectId: string): Promise<string[]> {
-    return (await this.onlineInvoke<string[]>('invitedUsers', { projectId }))!;
+  async onlineInvitedUsers(projectId: string): Promise<InviteeStatus[]> {
+    return (await this.onlineInvoke<InviteeStatus[]>('invitedUsers', { projectId }))!;
   }
 
   /** Get added into project, with optionally specified shareKey code. */

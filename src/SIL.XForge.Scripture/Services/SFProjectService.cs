@@ -333,17 +333,34 @@ namespace SIL.XForge.Scripture.Services
                 throw new ForbiddenException();
             }
             CultureInfo.CurrentUICulture = new CultureInfo(locale);
+            // Remove the user sharekey if expired
+            await ProjectSecrets.UpdateAsync(
+                p => p.Id == projectId,
+                update => update.RemoveAll(p => p.ShareKeys,
+                    sk => sk.Email == email && sk.ExpirationTime < DateTime.UtcNow)
+            );
+            DateTime expTime = DateTime.UtcNow.AddDays(14);
 
             // Invite a specific person. Reuse prior code, if any.
             SFProjectSecret projectSecret = await ProjectSecrets.UpdateAsync(
                 p => p.Id == projectId && !p.ShareKeys.Any(sk => sk.Email == email),
                 update => update.Add(p => p.ShareKeys,
-                    new ShareKey { Email = email, Key = _securityService.GenerateKey() }));
+                    new ShareKey { Email = email, Key = _securityService.GenerateKey(), ExpirationTime = expTime })
+            );
             if (projectSecret == null)
+            {
                 projectSecret = await ProjectSecrets.GetAsync(projectId);
+                int index = projectSecret.ShareKeys.FindIndex(sk => sk.Email == email);
+
+                // Renew the expiration time of the valid key
+                await ProjectSecrets.UpdateAsync(
+                    p => p.Id == projectId && p.ShareKeys.Any(sk => sk.Email == email),
+                    update => update.Set(p => p.ShareKeys[index].ExpirationTime, expTime)
+                );
+            }
             string key = projectSecret.ShareKeys.Single(sk => sk.Email == email).Key;
             string url = $"{siteOptions.Origin}projects/{projectId}?sharing=true&shareKey={key}&locale={locale}";
-            string emailSpecificLinkMessage = _localizer[SharedResource.Keys.InviteLinkSharingOff];
+            string linkExpires = _localizer[SharedResource.Keys.InviteLinkExpires];
 
             User inviter = await RealtimeService.GetSnapshotAsync<User>(curUserId);
             string subject = _localizer[SharedResource.Keys.InviteSubject, project.Name, siteOptions.Name];
@@ -354,7 +371,7 @@ namespace SIL.XForge.Scripture.Services
             var facebook = $"<li>{_localizer[SharedResource.Keys.InviteFacebookOption, "<b>", "</b>", siteOptions.Name]}</li>";
             var withemail = $"<li>{_localizer[SharedResource.Keys.InviteEmailOption, siteOptions.Name]}</li></ul></p><p></p>";
             var signoff = $"<p>{_localizer[SharedResource.Keys.InviteSignature, "<p>", siteOptions.Name]}</p>";
-            var emailBody = $"{greeting}{emailSpecificLinkMessage}{instructions}{pt}{google}{facebook}{withemail}{signoff}";
+            var emailBody = $"{greeting}{linkExpires}{instructions}{pt}{google}{facebook}{withemail}{signoff}";
             await _emailService.SendEmailAsync(email, subject, emailBody);
             return true;
         }
@@ -392,7 +409,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>Return list of email addresses with outstanding invitations</summary>
-        public async Task<string[]> InvitedUsersAsync(string curUserId, string projectId)
+        public async Task<IReadOnlyList<InviteeStatus>> InvitedUsersAsync(string curUserId, string projectId)
         {
             SFProject project = await GetProjectAsync(projectId);
 
@@ -401,7 +418,9 @@ namespace SIL.XForge.Scripture.Services
 
             SFProjectSecret projectSecret = await ProjectSecrets.GetAsync(projectId);
 
-            return projectSecret.ShareKeys.Select(sk => sk.Email).ToArray();
+            DateTime now = DateTime.UtcNow;
+            return projectSecret.ShareKeys.Select(sk =>
+                new InviteeStatus { Email = sk.Email, Expired = sk.ExpirationTime < now }).ToArray();
         }
 
         public async Task CheckLinkSharingAsync(string curUserId, string projectId, string shareKey = null)
@@ -415,13 +434,14 @@ namespace SIL.XForge.Scripture.Services
                 IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
                 Attempt<string> attempt = await TryGetProjectRoleAsync(projectDoc.Data, curUserId);
                 string projectRole = attempt.Result;
+
                 if (shareKey != null)
                 {
-                    string currentUserEmail = userDoc.Data.Email;
                     SFProjectSecret projectSecret = await ProjectSecrets.UpdateAsync(
-                        p => p.Id == projectId
-                            && p.ShareKeys.Any(sk => sk.Email == currentUserEmail && sk.Key == shareKey),
-                        update => update.RemoveAll(p => p.ShareKeys, sk => sk.Email == currentUserEmail));
+                        p => p.Id == projectId && p.ShareKeys.Any(
+                            sk => sk.Key == shareKey && sk.ExpirationTime > DateTime.UtcNow),
+                        update => update.RemoveAll(p => p.ShareKeys, sk => sk.Key == shareKey)
+                    );
                     if (projectSecret != null)
                     {
                         await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, false);
