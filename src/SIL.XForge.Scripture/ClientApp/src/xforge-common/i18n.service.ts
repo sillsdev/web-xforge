@@ -14,6 +14,7 @@ import enChecking from '../assets/i18n/checking_en.json';
 import enNonChecking from '../assets/i18n/non_checking_en.json';
 import { environment } from '../environments/environment';
 import { AuthService } from './auth.service';
+import { LocationService } from './location.service';
 import { Locale } from './models/i18n-locale';
 import { aspCultureCookieValue, ASP_CULTURE_COOKIE_NAME, getAspCultureCookieLanguage, getI18nLocales } from './utils';
 
@@ -85,14 +86,22 @@ export class I18nService {
   private currentLocale: Locale = I18nService.defaultLocale;
 
   constructor(
+    locationService: LocationService,
     private readonly authService: AuthService,
     private readonly transloco: TranslocoService,
     private readonly cookieService: CookieService,
     private readonly reportingService: ErrorReportingService
   ) {
-    const language = this.cookieService.get(ASP_CULTURE_COOKIE_NAME);
-    if (language != null) {
-      this.trySetLocale(getAspCultureCookieLanguage(language), false);
+    // Note that if the user is already logged in, and the user has a different interface language specified in their
+    // Auth0 profile, then the locale from the URL will end up being overridden.
+    const urlLocale = new URLSearchParams(locationService.search).get('locale');
+    if (urlLocale != null) {
+      this.trySetLocale(urlLocale, false);
+    } else {
+      const cookieLocale = this.cookieService.get(ASP_CULTURE_COOKIE_NAME);
+      if (cookieLocale != null) {
+        this.trySetLocale(getAspCultureCookieLanguage(cookieLocale), false);
+      }
     }
   }
 
