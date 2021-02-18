@@ -134,7 +134,23 @@ describe('TranslateMetricsSession', () => {
       verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
       expect(env.session.metrics.type).toBe('edit');
       expect(env.session.metrics.mouseClickCount).toBe(1);
+      env.session.dispose();
+    }));
 
+    it('editing increases activity timespan', fakeAsync(() => {
+      const env = new TestEnvironment();
+      // Milliseconds delay between key down and key up, to make sure the timespan between them is not rounded down
+      // to 0. But not greater than the timeout.
+      const momentaryDelay = ACTIVE_EDIT_TIMEOUT * 0.5;
+
+      expect(env.session.metrics.timeEditActive).toBeUndefined();
+      env.keyPress('a', momentaryDelay);
+      tick(ACTIVE_EDIT_TIMEOUT);
+      expect(env.session.metrics.type).toBe('edit');
+      expect(env.session.metrics.timeEditActive).toEqual(momentaryDelay);
+      env.keyPress('b', momentaryDelay);
+      tick(ACTIVE_EDIT_TIMEOUT);
+      expect(env.session.metrics.timeEditActive).toEqual(2 * momentaryDelay);
       env.session.dispose();
     }));
 
@@ -387,7 +403,8 @@ class TestEnvironment {
     tick();
   }
 
-  keyPress(key: string): void {
+  /** @param timeSpanMs Optional milliseconds delay between pressing and releasing key. */
+  keyPress(key: string, timeSpanMs: number = 0): void {
     const keydownEvent: any = document.createEvent('CustomEvent');
     keydownEvent.key = key;
     keydownEvent.ctrlKey = false;
@@ -395,6 +412,7 @@ class TestEnvironment {
     keydownEvent.initEvent('keydown', true, true);
     this.target.editor!.root.dispatchEvent(keydownEvent);
 
+    tick(timeSpanMs);
     const keyupEvent: any = document.createEvent('CustomEvent');
     keyupEvent.key = key;
     keyupEvent.ctrlKey = false;
