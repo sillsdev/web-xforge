@@ -24,7 +24,8 @@ namespace SIL.XForge.Scripture.Models
         public int? ProductiveCharacterCount { get; set; }
         public int? SuggestionAcceptedCount { get; set; }
         public int? SuggestionTotalCount { get; set; }
-        public int? TimeEditActive { get; set; }
+        /// <remarks>In milliseconds.</remarks>
+        public Int64? TimeEditActive { get; set; }
         public string EditEndEvent { get; set; }
 
         // navigation metrics
