@@ -48,7 +48,7 @@ function getKeyActivityType(event: KeyboardEvent): ActivityType {
 }
 
 function createKeyActivity(event: KeyboardEvent): Activity {
-  return { type: getKeyActivityType(event), event };
+  return { type: getKeyActivityType(event), event, whenStarted: Date.now() };
 }
 
 function isActiveEditKeyActivity(type: ActivityType): boolean {
@@ -68,8 +68,13 @@ enum ActivityType {
 interface Activity {
   type: ActivityType;
   event: Event;
+  /** In ms since start of UNIX epoch. */
+  whenStarted: number;
 }
 
+/**
+ * This records and submits usage information for a visit to the editor component.
+ */
 export class TranslateMetricsSession extends SubscriptionDisposable {
   readonly id: string;
   metrics!: TranslateMetrics;
@@ -140,7 +145,7 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
   }
 
   onSuggestionAccepted(event: Event): void {
-    this.suggestionAccepted$.next({ type: ActivityType.Suggestion, event });
+    this.suggestionAccepted$.next({ type: ActivityType.Suggestion, event, whenStarted: Date.now() });
   }
 
   private setupSubscriptions(): void {
@@ -157,7 +162,7 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
       map<KeyboardEvent, Activity>(event => createKeyActivity(event))
     );
     const mouseClicks$ = fromEvent(window.document, 'mousedown').pipe(
-      map<Event, Activity>(event => ({ type: ActivityType.Click, event }))
+      map<Event, Activity>(event => ({ type: ActivityType.Click, event, whenStarted: Date.now() }))
     );
 
     // navigation keystrokes
@@ -246,7 +251,7 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
 
     let timeSpan = 30;
     if (activities.length > 1) {
-      timeSpan = activities[activities.length - 1].event.timeStamp - activities[0].event.timeStamp;
+      timeSpan = activities[activities.length - 1].whenStarted - activities[0].whenStarted;
     }
     this.incrementMetric('timeEditActive', Math.round(timeSpan));
   }
