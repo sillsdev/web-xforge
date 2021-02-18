@@ -85,6 +85,10 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     return project != null && project.projectId == null;
   }
 
+  get submitDisabled(): boolean {
+    return !this.hasConnectableProjects || !this.isAppOnline;
+  }
+
   get hasNonAdministratorProject(): boolean {
     if (!this.projects) {
       return false;
@@ -163,6 +167,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     if (project == null) {
       return;
     }
+    this.state = 'connecting';
     if (project.projectId == null) {
       this.connectProjectName = project.name;
       const settings: SFProjectCreateSettings = {
@@ -187,7 +192,6 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
         return;
       }
       this.projectDoc = await this.projectService.get(projectId);
-      this.state = 'connecting';
     } else {
       await this.projectService.onlineAddCurrentUser(project.projectId);
       this.router.navigate(['/projects', project.projectId]);

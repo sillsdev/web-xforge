@@ -359,7 +359,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     this.initTextsWithLoadingIndicator();
   }
 
-  importDialog() {
+  importDialog(): void {
     if (this.projectDoc == null) {
       return;
     }
@@ -368,7 +368,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       userId: this.userService.currentUserId,
       textsByBookId: this.textsByBookId
     };
-    this.dialog.open(ImportQuestionsDialogComponent, { autoFocus: false, data });
+    this.dialog.open(ImportQuestionsDialogComponent, { data });
   }
 
   getBookName(text: TextInfo): string {

@@ -282,9 +282,9 @@ describe('ConnectProjectComponent', () => {
     env.selectSourceProject('pt04');
     expect(env.component.connectProjectForm.valid).toBe(true);
     env.clickElement(env.submitButton);
-    tick();
 
     expect(env.component.state).toEqual('connecting');
+    expect(env.submitButton).toBeNull();
     expect(env.progressBar).not.toBeNull();
     env.emitSyncProgress(1);
     env.emitSyncComplete();

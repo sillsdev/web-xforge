@@ -106,13 +106,7 @@
           </div>
         </div>
       </mdc-card>
-      <button
-        mdc-button
-        unelevated
-        type="submit"
-        id="connect-submit-button"
-        [disabled]="!hasConnectableProjects || !isAppOnline"
-      >
+      <button mdc-button unelevated type="submit" id="connect-submit-button" [disabled]="submitDisabled">
         {{ t("connect") }}
       </button>
     </form>
