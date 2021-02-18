@@ -11,6 +11,7 @@ import {
 import { of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
+import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -29,6 +30,7 @@ const mockedRouter = mock(Router);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
 const mockedTranslocoService = mock(TranslocoService);
+const mockedLocationService = mock(LocationService);
 
 describe('ProjectComponent', () => {
   configureTestingModule(() => ({
@@ -40,8 +42,21 @@ describe('ProjectComponent', () => {
       { provide: Router, useMock: mockedRouter },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: TranslocoService, useMock: mockedTranslocoService }
+      { provide: TranslocoService, useMock: mockedTranslocoService },
+      { provide: LocationService, useMock: mockedLocationService }
     ]
+  }));
+
+  it('shows error message if project data unavailable', fakeAsync(() => {
+    when(mockedNoticeService.showMessageDialog(anything(), anything())).thenResolve();
+    const env = new TestEnvironment();
+    tick();
+    env.fixture.detectChanges();
+    verify(mockedSFProjectService.getUserConfig(anything(), anything())).once();
+    tick();
+    verify(mockedNoticeService.showMessageDialog(anything(), anything())).once();
+    verify(mockedLocationService.refresh()).once();
+    expect().nothing();
   }));
 
   it('navigate to last text', fakeAsync(() => {

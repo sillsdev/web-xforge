@@ -6,6 +6,7 @@ import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon'
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { canAccessTranslateApp } from '../core/models/sf-project-role-info';
@@ -23,6 +24,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     private readonly router: Router,
     private readonly userService: UserService,
     private readonly transloco: TranslocoService,
+    private readonly locationService: LocationService,
     noticeService: NoticeService
   ) {
     super(noticeService);
@@ -65,6 +67,14 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
         const project = projectDoc.data;
 
         if (project == null || projectUserConfig == null) {
+          // One way this happens is by having a tab open and then clicking an invite link in an email.
+          // There is currently no reliable way to predict when this will happen. Showing a message seems to be
+          // the most informative way forward for the user.
+          await this.noticeService.showMessageDialog(
+            () => this.transloco.translate('project.error_occurred_try_refreshing'),
+            () => this.transloco.translate('app.refresh')
+          );
+          this.locationService.refresh();
           return;
         }
 
