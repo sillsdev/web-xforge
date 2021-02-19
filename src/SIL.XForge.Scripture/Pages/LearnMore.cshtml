@@ -45,6 +45,19 @@
                     </div>
                     <iframe width="560" height="315" src='@(ViewData["Scheme"])://www.youtube-nocookie.com/embed/MfNV4IaGWy8?origin=@(ViewData["Origin"])' frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 </div>
+                <div class="feature">
+                    <div class="text">
+                        <h3>@Localizer["LearnSliderCheckingOfflineHeader"]</h3>
+                        <p><i class="material-icons">cloud_off</i>@(Html.Raw(Model.Localizer["LearnSliderCheckingOfflineDescription", "<i>", "</i>", "<span class=\"highlight\">", "</span>"]))</p>
+                        <ol>
+                            <li>@(Html.Raw(Model.Localizer["LearnSliderCheckingOfflineLoading", "<span class=\"highlight\">", "</span>"]))</li>
+                            <li>@(Html.Raw(Model.Localizer["LearnSliderCheckingOfflineAnwering", "<span class=\"highlight\">", "</span>"]))</li>
+                            <li>@(Html.Raw(Model.Localizer["LearnSliderCheckingOfflineInstalling", "<span class=\"highlight\">", "</span>", "<i>", "</i>"]))</li>
+                            <li>@(Html.Raw(Model.Localizer["LearnSliderCheckingOfflineSaving", "<span class=\"highlight\">", "</span>"]))</li>
+                        </ol>
+                    </div>
+                    <iframe width="560" height="315" src='@(ViewData["Scheme"])://www.youtube-nocookie.com/embed/lnBew9W7Bk4?origin=@(ViewData["Origin"])' frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
             </div>
         </div>
         <div class="mdl-grid section-header">
