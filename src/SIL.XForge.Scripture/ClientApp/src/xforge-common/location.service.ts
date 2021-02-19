@@ -40,7 +40,7 @@ export class LocationService {
     window.location.href = url;
   }
 
-  refresh(): void {
-    document.location.reload();
+  reload(): void {
+    window.location.reload();
   }
 }
