@@ -8,6 +8,11 @@ using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services
 {
+
+    /// <summary>
+    /// A class that can be used to get a ScrText without using a cache. This class is not
+    /// related by inheritance or type to ScrTextCollection.
+    /// </summary>
     public class LazyScrTextCollection : IScrTextCollection
     {
         public LazyScrTextCollection()
