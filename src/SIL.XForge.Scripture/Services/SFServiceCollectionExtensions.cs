@@ -1,5 +1,3 @@
-using Paratext.Data;
-using Paratext.Data.Archiving;
 using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
 

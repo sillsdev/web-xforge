@@ -8,6 +8,11 @@ using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services
 {
+
+    /// <summary>
+    /// Provides a FindById() method that can be queried for a specific Paratext username. This class is not
+    /// related by inheritance or type to ScrTextCollection.
+    /// </summary>
     public class LazyScrTextCollection : IScrTextCollection
     {
         public LazyScrTextCollection()
