@@ -274,7 +274,7 @@ export class AuthService {
             }
             this.handleOnlineAuth(parsedHash);
             // Reload the app for the new current user id to take effect
-            document.location.reload();
+            this.locationService.reload();
           });
       }
     } else if (!environment.production) {
