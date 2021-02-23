@@ -6,6 +6,7 @@ using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.SpaServices.AngularCli;
@@ -28,6 +29,23 @@ namespace SIL.XForge.Scripture
 
     public class Startup
     {
+        private static readonly HashSet<string> SpaRoutes = new HashSet<string>
+        {
+            "runtime.js",
+            "polyfills.js",
+            "styles.js",
+            "vendor.js",
+            "main.js",
+            "manifest.json",
+            "sockjs-node",
+
+            "connect-project",
+            "login",
+            "projects",
+            "system-administration",
+            "assets"
+        };
+
         public Startup(IConfiguration configuration, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
             Configuration = configuration;
@@ -192,27 +210,44 @@ namespace SIL.XForge.Scripture
             // Map JSON-RPC controllers after MVC controllers, so that MVC controllers take precedence.
             app.UseSFJsonRpc();
 
-            // setup all server-side routes before SPA client-side routes, so that the server-side routes supercede the
-            // client-side routes
-            app.UseSpa(spa =>
+            app.MapWhen(IsSpaRoute, spaApp =>
             {
-                // To learn more about options for serving an Angular SPA from ASP.NET Core,
-                // see https://go.microsoft.com/fwlink/?linkid=864501
-                spa.Options.SourcePath = "ClientApp";
-
-                switch (SpaDevServerStartup)
+                // setup all server-side routes before SPA client-side routes, so that the server-side routes supercede
+                // the client-side routes
+                spaApp.UseSpa(spa =>
                 {
-                    case SpaDevServerStartup.Start:
-                        spa.UseAngularCliServer(npmScript: "start:no-progress");
-                        break;
+                    // To learn more about options for serving an Angular SPA from ASP.NET Core,
+                    // see https://go.microsoft.com/fwlink/?linkid=864501
+                    spa.Options.SourcePath = "ClientApp";
 
-                    case SpaDevServerStartup.Listen:
-                        spa.UseProxyToSpaDevelopmentServer("http://localhost:4200");
-                        break;
-                }
+                    switch (SpaDevServerStartup)
+                    {
+                        case SpaDevServerStartup.Start:
+                            spa.UseAngularCliServer(npmScript: "start:no-progress");
+                            break;
+
+                        case SpaDevServerStartup.Listen:
+                            spa.UseProxyToSpaDevelopmentServer("http://localhost:4200");
+                            break;
+                    }
+                });
             });
 
             appLifetime.ApplicationStopped.Register(() => ApplicationContainer.Dispose());
+        }
+
+        private bool IsSpaRoute(HttpContext ctxt)
+        {
+            if (ctxt.Request.Method != HttpMethods.Get)
+                return false;
+            string path = ctxt.Request.Path.Value;
+            if (path.Length <= 1)
+                return false;
+            int index = path.IndexOf("/", 1);
+            if (index == -1)
+                index = path.Length;
+            string prefix = path.Substring(1, index - 1);
+            return SpaRoutes.Contains(prefix);
         }
     }
 }
