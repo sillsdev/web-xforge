@@ -134,6 +134,10 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return (await this.onlineInvoke<string>('uninviteUser', { projectId, emailToUninvite }))!;
   }
 
+  async onlineIsSourceProject(projectId: string): Promise<boolean> {
+    return (await this.onlineInvoke<boolean>('isSourceProject', { projectId }))!;
+  }
+
   async transceleratorQuestions(projectId: string): Promise<TransceleratorQuestion[]> {
     return (await this.onlineInvoke<TransceleratorQuestion[]>('transceleratorQuestions', { projectId }))!;
   }

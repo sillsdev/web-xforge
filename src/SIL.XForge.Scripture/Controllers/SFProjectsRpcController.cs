@@ -240,6 +240,11 @@ namespace SIL.XForge.Scripture.Controllers
             return await CheckLinkSharing(projectId, null);
         }
 
+        public IRpcMethodResult IsSourceProject(string projectId)
+        {
+            return Ok(_projectService.IsSourceProject(projectId));
+        }
+
         public async Task<IRpcMethodResult> AddTranslateMetrics(string projectId, TranslateMetrics metrics)
         {
             try
