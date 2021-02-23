@@ -460,6 +460,12 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
+        public bool IsSourceProject(string projectId)
+        {
+            return RealtimeService.QuerySnapshots<SFProject>()
+                .Any(p => p.TranslateConfig.Source != null && p.TranslateConfig.Source.ProjectRef == projectId);
+        }
+
         public async Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestions(string curUserId, string projectId)
         {
             using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
@@ -502,18 +508,25 @@ namespace SIL.XForge.Scripture.Services
                 && !string.IsNullOrWhiteSpace(sourceProjectId)
                 && !string.IsNullOrWhiteSpace(sourceParatextId))
             {
-                // Load the source project role from MongoDB
-                IDocument<SFProject> sourceProjectDoc = await GetProjectDocAsync(sourceProjectId, conn);
-                if (sourceProjectDoc.IsLoaded && !sourceProjectDoc.Data.UserRoles.ContainsKey(userDoc.Id))
+                try
                 {
-                    // Not found in Mongo, so load the project role from Paratext
-                    Attempt<string> attempt = await TryGetProjectRoleAsync(sourceProjectDoc.Data, userDoc.Id);
-                    if (attempt.TryResult(out string sourceProjectRole))
+                    // Load the source project role from MongoDB
+                    IDocument<SFProject> sourceProjectDoc = await GetProjectDocAsync(sourceProjectId, conn);
+                    if (sourceProjectDoc.IsLoaded && !sourceProjectDoc.Data.UserRoles.ContainsKey(userDoc.Id))
                     {
-                        // If they are in Paratext, add the user to the source project
-                        await this.AddUserToProjectAsync(conn, sourceProjectDoc, userDoc, sourceProjectRole,
-                            removeShareKeys);
+                        // Not found in Mongo, so load the project role from Paratext
+                        Attempt<string> attempt = await TryGetProjectRoleAsync(sourceProjectDoc.Data, userDoc.Id);
+                        if (attempt.TryResult(out string sourceProjectRole))
+                        {
+                            // If they are in Paratext, add the user to the source project
+                            await this.AddUserToProjectAsync(conn, sourceProjectDoc, userDoc, sourceProjectRole,
+                                removeShareKeys);
+                        }
                     }
+                }
+                catch (DataNotFoundException)
+                {
+                    // The source project was invalid so the user will not be added
                 }
             }
         }
