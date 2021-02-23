@@ -73,7 +73,8 @@
     "delete_this_project": "Delete this project",
     "i_understand_the_consequences": "I understand the consequences, delete this project",
     "please_type_project_name": "Please type in the name of the project to confirm.",
-    "project_name": "Project Name"
+    "project_name": "Project Name",
+    "source_projects_cannot_be_deleted": "This project is being used as the source translation for another project on Scripture Forge and cannot be deleted."
   },
   "editor": {
     "cannot_edit_chapter_formatting_invalid": "This chapter cannot be edited because the formatting is invalid. Please fix the formatting in Paratext.",
