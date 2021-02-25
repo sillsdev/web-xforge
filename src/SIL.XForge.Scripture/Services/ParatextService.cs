@@ -88,7 +88,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 _httpClientHandler.ServerCertificateCustomValidationCallback
                     = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-                _dblServerUri = "https://paratext-qa.thedigitalbiblelibrary.org/";
+                _dblServerUri = "https://qa.thedigitalbiblelibrary.org/";
                 _registryServerUri = "https://registry-dev.paratext.org";
                 _registryClient.BaseAddress = new Uri(_registryServerUri);
                 _sendReceiveServerUri = InternetAccess.uriDevelopment;
