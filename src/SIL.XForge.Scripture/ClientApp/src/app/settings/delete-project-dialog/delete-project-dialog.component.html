@@ -12,19 +12,14 @@
             "
           ></p>
           <br />
-          <p *ngIf="isSourceProject; else deleteForm" class="source-project-msg">
-            {{ t("source_projects_cannot_be_deleted") }}
-          </p>
-          <ng-template #deleteForm>
-            <p>{{ t("please_type_project_name") }}</p>
-            <mdc-form-field>
-              <mdc-text-field
-                id="project-entry"
-                label="{{ t('project_name') }}"
-                [formControl]="projectNameEntry"
-              ></mdc-text-field>
-            </mdc-form-field>
-          </ng-template>
+          <p>{{ t("please_type_project_name") }}</p>
+          <mdc-form-field>
+            <mdc-text-field
+              id="project-entry"
+              label="{{ t('project_name') }}"
+              [formControl]="projectNameEntry"
+            ></mdc-text-field>
+          </mdc-form-field>
         </mdc-dialog-content>
         <mdc-dialog-actions>
           <button mdcDialogButton type="button" id="cancel-btn" mdcDialogAction="cancel">{{ t("cancel") }}</button>

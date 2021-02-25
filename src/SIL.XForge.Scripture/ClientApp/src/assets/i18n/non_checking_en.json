@@ -73,8 +73,7 @@
     "delete_this_project": "Delete this project",
     "i_understand_the_consequences": "I understand the consequences, delete this project",
     "please_type_project_name": "Please type in the name of the project to confirm.",
-    "project_name": "Project Name",
-    "source_projects_cannot_be_deleted": "This project is being used as the source translation for another project on Scripture Forge and cannot be deleted."
+    "project_name": "Project Name"
   },
   "editor": {
     "cannot_edit_chapter_formatting_invalid": "This chapter cannot be edited because the formatting is invalid. Please fix the formatting in Paratext.",
@@ -171,6 +170,7 @@
     "settings": "Settings",
     "share": "Share",
     "specific_people": "Specific people",
+    "source_projects_cannot_be_deleted": "Another project is based on this project and so it cannot be deleted.",
     "tools": "Tools",
     "translate": "Translate",
     "translate_tool_is_always_available": "The translate tool is always available to collaborate with other translators working on the same text.",

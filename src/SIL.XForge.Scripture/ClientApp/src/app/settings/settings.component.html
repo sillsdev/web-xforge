@@ -155,12 +155,17 @@
       <div mdcHeadline6>{{ t("danger_zone") }}</div>
       <mdc-card class="card-content" id="delete-project">
         <h4>{{ t("delete_this_project") }}</h4>
-        <p>{{ t("delete_project_cannot_be_undone") }}</p>
-        <p>
-          <span [innerHTML]="synchronizeWarning?.before"></span>
-          <a [appRouterLink]="['/projects', projectId, 'sync']">{{ synchronizeWarning?.templateTagText }}</a>
-          <span>{{ synchronizeWarning?.after }}</span>
+        <p *ngIf="isSourceProject; else deleteMessage" class="source-project-msg">
+          {{ t("source_projects_cannot_be_deleted") }}
         </p>
+        <ng-template #deleteMessage>
+          <p>{{ t("delete_project_cannot_be_undone") }}</p>
+          <p>
+            <span [innerHTML]="synchronizeWarning?.before"></span>
+            <a [appRouterLink]="['/projects', projectId, 'sync']">{{ synchronizeWarning?.templateTagText }}</a>
+            <span>{{ synchronizeWarning?.after }}</span>
+          </p>
+        </ng-template>
         <div fxLayout="row" fxLayoutAlign="end stretch">
           <button
             id="delete-btn"
@@ -168,7 +173,7 @@
             unelevated
             type="button"
             (click)="openDeleteProjectDialog()"
-            [disabled]="isLoading || !isAppOnline"
+            [disabled]="deleteButtonDisabled"
           >
             {{ t("delete_this_project") }}
           </button>

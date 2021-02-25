@@ -3,7 +3,6 @@ import { ProgressBarMode } from '@angular/material/progress-bar';
 import { OtJson0Op } from 'ot-json0';
 import { hasParatextRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { merge, Observable } from 'rxjs';
-import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -60,15 +59,9 @@ export class SyncProgressComponent extends SubscriptionDisposable {
     if (this._projectDoc?.data?.translateConfig.translationSuggestionsEnabled) {
       const sourceProjectId: string | undefined = this._projectDoc.data.translateConfig.source?.projectRef;
       if (sourceProjectId != null) {
-        try {
-          const role: string = await this.projectService.onlineGetProjectRole(sourceProjectId);
-          // Only show progress for the source project when the user has sync permission
-          this.sourceProjectDoc = hasParatextRole(role) ? await this.projectService.get(sourceProjectId) : undefined;
-        } catch (err) {
-          if (!(err instanceof CommandError && err.code === CommandErrorCode.NotFound)) {
-            throw err;
-          }
-        }
+        const role: string = await this.projectService.onlineGetProjectRole(sourceProjectId);
+        // Only show progress for the source project when the user has sync permission
+        this.sourceProjectDoc = hasParatextRole(role) ? await this.projectService.get(sourceProjectId) : undefined;
       }
     }
 
