@@ -379,6 +379,16 @@ describe('SettingsComponent', () => {
       expect(env.deleteProjectButton.disabled).toBe(false);
     }));
 
+    it('should disable Delete button if project is a source project', fakeAsync(() => {
+      const env = new TestEnvironment(true, true);
+      env.setupProject();
+      env.wait();
+      env.fixture.detectChanges();
+      expect(env.deleteProjectButton).not.toBeNull();
+      expect(env.deleteProjectButton.disabled).toBe(true);
+      expect(env.sourceProjectMessage).not.toBeNull();
+    }));
+
     it('should delete project if user confirms on the dialog', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setupProject();
@@ -412,8 +422,9 @@ class TestEnvironment {
   private isOnline: BehaviorSubject<boolean>;
   private mockedDialogRef: MdcDialogRef<DeleteProjectDialogComponent> = mock(MdcDialogRef);
 
-  constructor(hasConnection: boolean = true) {
+  constructor(hasConnection: boolean = true, isSource: boolean = false) {
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
+    when(mockedSFProjectService.onlineIsSourceProject('project01')).thenResolve(isSource);
     when(mockedSFProjectService.onlineDelete(anything())).thenResolve();
     when(mockedSFProjectService.onlineUpdateSettings('project01', anything())).thenResolve();
     when(mockedUserService.currentProjectId).thenReturn('project01');
@@ -510,6 +521,10 @@ class TestEnvironment {
 
   get dangerZoneTitle(): HTMLElement {
     return this.fixture.nativeElement.querySelector('#danger-zone div');
+  }
+
+  get sourceProjectMessage(): HTMLElement {
+    return this.fixture.nativeElement.querySelector('#danger-zone .source-project-msg');
   }
 
   get deleteProjectButton(): HTMLButtonElement {

@@ -508,25 +508,20 @@ namespace SIL.XForge.Scripture.Services
                 && !string.IsNullOrWhiteSpace(sourceProjectId)
                 && !string.IsNullOrWhiteSpace(sourceParatextId))
             {
-                try
+                // Load the source project role from MongoDB
+                IDocument<SFProject> sourceProjectDoc = await TryGetProjectDocAsync(sourceProjectId, conn);
+                if (sourceProjectDoc == null)
+                    return;
+                if (sourceProjectDoc.IsLoaded && !sourceProjectDoc.Data.UserRoles.ContainsKey(userDoc.Id))
                 {
-                    // Load the source project role from MongoDB
-                    IDocument<SFProject> sourceProjectDoc = await GetProjectDocAsync(sourceProjectId, conn);
-                    if (sourceProjectDoc.IsLoaded && !sourceProjectDoc.Data.UserRoles.ContainsKey(userDoc.Id))
+                    // Not found in Mongo, so load the project role from Paratext
+                    Attempt<string> attempt = await TryGetProjectRoleAsync(sourceProjectDoc.Data, userDoc.Id);
+                    if (attempt.TryResult(out string sourceProjectRole))
                     {
-                        // Not found in Mongo, so load the project role from Paratext
-                        Attempt<string> attempt = await TryGetProjectRoleAsync(sourceProjectDoc.Data, userDoc.Id);
-                        if (attempt.TryResult(out string sourceProjectRole))
-                        {
-                            // If they are in Paratext, add the user to the source project
-                            await this.AddUserToProjectAsync(conn, sourceProjectDoc, userDoc, sourceProjectRole,
-                                removeShareKeys);
-                        }
+                        // If they are in Paratext, add the user to the source project
+                        await this.AddUserToProjectAsync(conn, sourceProjectDoc, userDoc, sourceProjectRole,
+                            removeShareKeys);
                     }
-                }
-                catch (DataNotFoundException)
-                {
-                    // The source project was invalid so the user will not be added
                 }
             }
         }
@@ -569,6 +564,19 @@ namespace SIL.XForge.Scripture.Services
             }
 
             return Attempt.Failure(SFProjectRole.CommunityChecker);
+        }
+
+        private async Task<IDocument<SFProject>> TryGetProjectDocAsync(string projectId, IConnection conn)
+        {
+            try
+            {
+                IDocument<SFProject> projectDoc = await base.GetProjectDocAsync(projectId, conn);
+                return projectDoc;
+            }
+            catch (DataNotFoundException)
+            {
+                return null;
+            }
         }
 
         private static void UpdateSetting<T>(Json0OpBuilder<SFProject> builder, Expression<Func<SFProject, T>> field,

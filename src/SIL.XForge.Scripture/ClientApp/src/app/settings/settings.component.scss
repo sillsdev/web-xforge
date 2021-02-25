@@ -95,6 +95,9 @@
 
 #delete-project {
   border: 2px solid red;
+  .source-project-msg {
+    color: var(--mdc-theme-error);
+  }
 }
 
 #delete-btn {

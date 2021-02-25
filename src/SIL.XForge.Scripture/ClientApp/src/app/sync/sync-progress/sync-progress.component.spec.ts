@@ -4,7 +4,6 @@ import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/ch
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { mock, verify, when } from 'ts-mockito';
-import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -36,9 +35,7 @@ describe('SyncProgressComponent', () => {
   }));
 
   it('ignores source if source project is invalid', fakeAsync(() => {
-    when(mockedProjectService.onlineGetProjectRole('invalid_source')).thenReject(
-      new CommandError(CommandErrorCode.NotFound, 'source is invalid')
-    );
+    when(mockedProjectService.onlineGetProjectRole('invalid_source')).thenResolve(SFProjectRole.None);
     const env = new TestEnvironment('user01', 'invalid_source');
     env.setupProjectDoc();
     verify(mockedProjectService.onlineGetProjectRole('invalid_source')).once();

@@ -1,24 +1,19 @@
 import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
-import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, inject, TestBed, tick } from '@angular/core/testing';
 import { CookieService } from 'ngx-cookie-service';
-import { anything, mock, when } from 'ts-mockito';
+import { mock } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { SFProjectService } from '../../core/sf-project.service';
 import { DeleteProjectDialogComponent } from './delete-project-dialog.component';
-
-const mockedProjectService = mock(SFProjectService);
 
 describe('DeleteProjectDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [DialogTestModule, UICommonModule],
     providers: [
       { provide: AuthService, useMock: mock(AuthService) },
-      { provide: CookieService, useMock: mock(CookieService) },
-      { provide: SFProjectService, useMock: mockedProjectService }
+      { provide: CookieService, useMock: mock(CookieService) }
     ]
   }));
 
@@ -52,13 +47,6 @@ describe('DeleteProjectDialogComponent', () => {
     expect(env.afterCloseCallback).toHaveBeenCalledWith('cancel');
   }));
 
-  it('shows message when the project is a source project', fakeAsync(() => {
-    const env = new TestEnvironment(true);
-    expect(env.component.isSourceProject).toBe(true);
-    expect(env.projectInput).toBeNull();
-    expect(env.sourceProjectMessage).not.toBeNull();
-  }));
-
   class TestEnvironment {
     fixture: ComponentFixture<ChildViewContainerComponent>;
     component: DeleteProjectDialogComponent;
@@ -66,19 +54,13 @@ describe('DeleteProjectDialogComponent', () => {
 
     afterCloseCallback: jasmine.Spy;
 
-    constructor(isSourceProject: boolean = false) {
-      when(mockedProjectService.onlineIsSourceProject('p01')).thenResolve(isSourceProject);
+    constructor() {
       this.afterCloseCallback = jasmine.createSpy('afterClose callback');
-      const config: MdcDialogConfig = {
-        data: { name: 'project01', projectId: 'p01' },
-        viewContainerRef: testViewContainerRef
-      };
+      const config: MdcDialogConfig = { data: { name: 'project01' }, viewContainerRef: testViewContainerRef };
       this.dialogRef = dialog.open(DeleteProjectDialogComponent, config);
       this.dialogRef.afterClosed().subscribe(this.afterCloseCallback);
       this.component = this.dialogRef.componentInstance;
       this.fixture = viewContainerFixture;
-      this.fixture.detectChanges();
-      tick();
       this.fixture.detectChanges();
     }
 
@@ -96,10 +78,6 @@ describe('DeleteProjectDialogComponent', () => {
 
     get projectInput(): HTMLElement {
       return this.overlayContainerElement.querySelector('#project-entry') as HTMLElement;
-    }
-
-    get sourceProjectMessage(): HTMLElement {
-      return this.overlayContainerElement.querySelector('.source-project-msg') as HTMLElement;
     }
 
     inputValue(element: HTMLElement, value: string) {
@@ -149,7 +127,7 @@ class ChildViewContainerComponent {
 }
 
 @NgModule({
-  imports: [UICommonModule, CommonModule, TestTranslocoModule],
+  imports: [UICommonModule, TestTranslocoModule],
   declarations: [ViewContainerDirective, ChildViewContainerComponent, DeleteProjectDialogComponent],
   exports: [ViewContainerDirective, ChildViewContainerComponent, DeleteProjectDialogComponent]
 })

@@ -504,6 +504,8 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             Assert.DoesNotThrowAsync(() => env.Service.AddUserAsync(User01, Project04, SFProjectRole.Translator));
+            var project = env.GetProject(Project04);
+            Assert.That(project.UserRoles[User01], Is.EqualTo(SFProjectRole.Translator));
         }
 
         [Test]

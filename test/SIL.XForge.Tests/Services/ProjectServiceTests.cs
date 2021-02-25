@@ -130,6 +130,14 @@ namespace SIL.XForge.Services
         }
 
         [Test]
+        public async Task GetProjectRoleAsync_InvalidProjectId_ReturnsNull()
+        {
+            var env = new TestEnvironment();
+            var role = await env.Service.GetProjectRoleAsync(User02, "invalid_project_id");
+            Assert.That(role, Is.Null);
+        }
+
+        [Test]
         public async Task UpdateRoleAsync_SystemAdmin_RoleUpdated()
         {
             var env = new TestEnvironment();
