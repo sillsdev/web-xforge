@@ -489,9 +489,10 @@ namespace SIL.XForge.Scripture.Services
         protected override async Task AddUserToProjectAsync(IConnection conn, IDocument<SFProject> projectDoc,
             IDocument<User> userDoc, string projectRole, bool removeShareKeys = true)
         {
-            await base.AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, removeShareKeys);
             await conn.CreateAsync<SFProjectUserConfig>(SFProjectUserConfig.GetDocId(projectDoc.Id, userDoc.Id),
                 new SFProjectUserConfig { ProjectRef = projectDoc.Id, OwnerRef = userDoc.Id });
+            // Listeners can now assume the ProjectUserConfig is ready when the user is added.
+            await base.AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, removeShareKeys);
 
             // Add to the source project, if required
             bool translationSuggestionsEnabled = projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled;

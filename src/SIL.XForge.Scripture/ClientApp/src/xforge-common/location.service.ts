@@ -39,4 +39,8 @@ export class LocationService {
   go(url: string): void {
     window.location.href = url;
   }
+
+  reload(): void {
+    window.location.reload();
+  }
 }

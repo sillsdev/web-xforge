@@ -4,6 +4,7 @@ import { SwUpdate, UpdateAvailableEvent } from '@angular/service-worker';
 import { BehaviorSubject, fromEvent, merge, Observable, of } from 'rxjs';
 import { mapTo } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { LocationService } from './location.service';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +14,11 @@ export class PwaService extends SubscriptionDisposable {
   private windowOnLineStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(navigator.onLine);
   private webSocketStatus: BehaviorSubject<boolean | null> = new BehaviorSubject<boolean | null>(null);
 
-  constructor(private readonly http: HttpClient, private readonly updates: SwUpdate) {
+  constructor(
+    private readonly http: HttpClient,
+    private readonly updates: SwUpdate,
+    private readonly locationService: LocationService
+  ) {
     super();
     // Check for any online changes from the browser window
     this.subscribe(
@@ -68,6 +73,6 @@ export class PwaService extends SubscriptionDisposable {
 
   activateUpdates(): void {
     this.updates.activateUpdate();
-    document.location.reload();
+    this.locationService.reload();
   }
 }
