@@ -29,7 +29,7 @@ namespace SIL.XForge.Scripture
 
     public class Startup
     {
-        private static readonly HashSet<string> SpaRoutes = new HashSet<string>
+        private static readonly HashSet<string> DevelopmentSpaRoutes = new HashSet<string>
         {
             "runtime.js",
             "polyfills.js",
@@ -37,8 +37,21 @@ namespace SIL.XForge.Scripture
             "vendor.js",
             "main.js",
             "manifest.json",
-            "sockjs-node",
-
+            "sockjs-node"
+        };
+        // examples of filenames are "main-es5.4e5295b95e4b6c37b696.js", "styles.a2f070be0b37085d72ba.css"
+        private static readonly HashSet<string> ProductionSpaRoutes = new HashSet<string>
+        {
+            "polyfills-es2015",
+            "polyfills-es5",
+            "runtime-es2015",
+            "runtime-es5",
+            "main-es2015",
+            "main-es5",
+            "styles"
+        };
+        private static readonly HashSet<string> SpaRoutes = new HashSet<string>
+        {
             "connect-project",
             "login",
             "projects",
@@ -51,6 +64,10 @@ namespace SIL.XForge.Scripture
             Configuration = configuration;
             Environment = env;
             LoggerFactory = loggerFactory;
+            if (Environment.IsDevelopment())
+                SpaRoutes.UnionWith(DevelopmentSpaRoutes);
+            else
+                SpaRoutes.UnionWith(ProductionSpaRoutes);
         }
 
         public IConfiguration Configuration { get; }
@@ -236,17 +253,22 @@ namespace SIL.XForge.Scripture
             appLifetime.ApplicationStopped.Register(() => ApplicationContainer.Dispose());
         }
 
-        private bool IsSpaRoute(HttpContext ctxt)
+        internal bool IsSpaRoute(HttpContext context)
         {
-            if (ctxt.Request.Method != HttpMethods.Get)
+            if (context.Request.Method != HttpMethods.Get)
                 return false;
-            string path = ctxt.Request.Path.Value;
+            string path = context.Request.Path.Value;
             if (path.Length <= 1)
                 return false;
             int index = path.IndexOf("/", 1);
             if (index == -1)
                 index = path.Length;
             string prefix = path.Substring(1, index - 1);
+            if (!Environment.IsDevelopment() && (prefix.EndsWith(".js") || prefix.EndsWith(".css")))
+            {
+                int periodIndex = path.IndexOf(".");
+                prefix = prefix.Substring(0, periodIndex - 1);
+            }
             return SpaRoutes.Contains(prefix);
         }
     }
