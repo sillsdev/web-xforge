@@ -1,16 +1,16 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Security;
 using System.Security.Claims;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.XPath;
@@ -62,6 +62,8 @@ namespace SIL.XForge.Scripture.Services
         private string _sendReceiveServerUri = InternetAccess.uriProduction;
         private readonly IInternetSharedRepositorySourceProvider _internetSharedRepositorySourceProvider;
         private readonly ISFRestClientFactory _restClientFactory;
+        /// <summary> Map user IDs to semaphores </summary>
+        private readonly ConcurrentDictionary<string, SemaphoreSlim> _tokenRefreshSemaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
 
         public ParatextService(IWebHostEnvironment env, IOptions<ParatextOptions> paratextOptions,
             IRepository<UserSecret> userSecretRepository, IRealtimeService realtimeService,
@@ -155,7 +157,7 @@ namespace SIL.XForge.Scripture.Services
         {
             if (userSecret == null || ptTargetId == null) { throw new ArgumentNullException(); }
 
-            IInternetSharedRepositorySource source = await GetInternetSharedRepositorySource(userSecret);
+            IInternetSharedRepositorySource source = await GetInternetSharedRepositorySource(userSecret.Id);
             IEnumerable<SharedRepository> repositories = source.GetRepositories();
             IEnumerable<ProjectMetadata> projectsMetadata = source.GetProjectsMetaData();
             IEnumerable<string> projectGuids = projectsMetadata.Select(pmd => pmd.ProjectGuid.Id);
@@ -164,7 +166,7 @@ namespace SIL.XForge.Scripture.Services
             if (!projectGuids.Contains(ptTargetId))
             {
                 // See if this is a resource
-                IReadOnlyList<ParatextResource> resources = this.GetResourcesInternal(userSecret, true);
+                IReadOnlyList<ParatextResource> resources = await this.GetResourcesInternalAsync(userSecret.Id, true);
                 ParatextResource resource = resources.SingleOrDefault(r => r.ParatextId == ptTargetId);
                 if (resource != null)
                 {
@@ -208,7 +210,7 @@ namespace SIL.XForge.Scripture.Services
         /// <summary> Get Paratext projects that a user has access to. </summary>
         public async Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret)
         {
-            IInternetSharedRepositorySource ptRepoSource = await GetInternetSharedRepositorySource(userSecret);
+            IInternetSharedRepositorySource ptRepoSource = await GetInternetSharedRepositorySource(userSecret.Id);
             List<SharedRepository> remotePtProjects = ptRepoSource.GetRepositories().ToList();
             List<ProjectMetadata> projectMetadata = ptRepoSource.GetProjectsMetaData().ToList();
 
@@ -219,9 +221,9 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>Get Paratext resources that a user has access to. </summary>
-        public IReadOnlyList<ParatextResource> GetResources(UserSecret userSecret)
+        public async Task<IReadOnlyList<ParatextResource>> GetResourcesAsync(string userId)
         {
-            return this.GetResourcesInternal(userSecret, false);
+            return await this.GetResourcesInternalAsync(userId, false);
         }
 
         public async Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId)
@@ -234,7 +236,7 @@ namespace SIL.XForge.Scripture.Services
                 Claim subClaim = accessToken.Claims.FirstOrDefault(c => c.Type == JwtClaimTypes.Subject);
                 // Paratext RegistryServer has methods to do this, but it is unreliable to use it in a multi-user
                 // environment so instead we call the registry API.
-                string response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get,
+                string response = await CallApiAsync(userSecret, HttpMethod.Get,
                     $"projects/{paratextId}/members/{subClaim.Value}");
                 var memberObj = JObject.Parse(response);
                 return Attempt.Success((string)memberObj["role"]);
@@ -254,7 +256,6 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>
         /// Gets the permission a user has to access a resource.
         /// </summary>
-        /// <param name="userSecret">The user secret.</param>
         /// <param name="paratextId">The paratext resource identifier.</param>
         /// <param name="userId">The user identifier.</param>
         /// <returns>
@@ -263,52 +264,26 @@ namespace SIL.XForge.Scripture.Services
         /// <remarks>
         /// See <see cref="TextInfoPermission" /> for permission values.
         /// </remarks>
-        public async Task<string> GetResourcePermissionAsync(UserSecret userSecret, string paratextId, string userId)
+        public async Task<string> GetResourcePermissionAsync(string paratextId, string userId)
         {
             // See if the source is a resource
-            if (paratextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
-            {
-                // The resource id is a 41 character project id truncated to 16 characters
-                UserSecret thisUserSecret;
-                if (userId == userSecret.Id)
-                {
-                    thisUserSecret = userSecret;
-                }
-                else
-                {
-                    // Get the user secret
-                    Attempt<UserSecret> userSecretAttempt = await this._userSecretRepository.TryGetAsync(userId);
-                    if (!userSecretAttempt.TryResult(out thisUserSecret))
-                    {
-                        thisUserSecret = null;
-                    }
-                }
-
-                bool canRead = false;
-                if (thisUserSecret != null)
-                {
-                    if (!(thisUserSecret.ParatextTokens?.ValidateLifetime() ?? false))
-                    {
-                        await this.RefreshAccessTokenAsync(thisUserSecret);
-                    }
-
-                    canRead = SFInstallableDblResource.CheckResourcePermission(
-                        paratextId,
-                        thisUserSecret,
-                        this._paratextOptions.Value,
-                        this._restClientFactory,
-                        this._fileSystemService,
-                        this._jwtTokenHelper,
-                        _exceptionHandler,
-                        this._dblServerUri);
-                }
-
-                return canRead ? TextInfoPermission.Read : TextInfoPermission.None;
-            }
-            else
+            if (paratextId.Length != SFInstallableDblResource.ResourceIdentifierLength)
             {
                 // Default to no permissions for projects used as sources
                 return TextInfoPermission.None;
+            }
+            using (ParatextAccessLock accessLock = await GetParatextAccessLock(userId))
+            {
+                bool canRead = SFInstallableDblResource.CheckResourcePermission(
+                        paratextId,
+                        accessLock.UserSecret,
+                        _paratextOptions.Value,
+                        _restClientFactory,
+                        _fileSystemService,
+                        _jwtTokenHelper,
+                        _exceptionHandler,
+                        _dblServerUri);
+                return canRead ? TextInfoPermission.Read : TextInfoPermission.None;
             }
         }
 
@@ -331,7 +306,7 @@ namespace SIL.XForge.Scripture.Services
             }
 
             // Get the mapping for paratext users ids to usernames from the registry
-            string response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get,
+            string response = await CallApiAsync(userSecret, HttpMethod.Get,
                 $"projects/{paratextId}/members");
             Dictionary<string, string> paratextMapping = JArray.Parse(response).OfType<JObject>()
                 .Where(m => !string.IsNullOrEmpty((string)m["userId"])
@@ -369,7 +344,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 foreach (string uid in project.UserRoles.Keys)
                 {
-                    permissions.Add(uid, await this.GetResourcePermissionAsync(userSecret, project.ParatextId, uid));
+                    permissions.Add(uid, await this.GetResourcePermissionAsync(project.ParatextId, uid));
                 }
             }
             else
@@ -446,7 +421,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 // Paratext RegistryServer has methods to do this, but it is unreliable to use it in a multi-user
                 // environment so instead we call the registry API.
-                string response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get,
+                string response = await CallApiAsync(userSecret, HttpMethod.Get,
                     $"projects/{projectId}/members");
                 var members = JArray.Parse(response);
                 return members.OfType<JObject>()
@@ -781,68 +756,40 @@ namespace SIL.XForge.Scripture.Services
             HgWrapper.Update(clonePath);
         }
 
-        private async Task RefreshAccessTokenAsync(UserSecret userSecret)
-        {
-            ParatextOptions options = _paratextOptions.Value;
-
-            userSecret.ParatextTokens = await _jwtTokenHelper.RefreshAccessTokenAsync(options,
-                userSecret.ParatextTokens, _registryClient);
-
-            await _userSecretRepository.UpdateAsync(userSecret, b =>
-                b.Set(u => u.ParatextTokens, userSecret.ParatextTokens));
-        }
-
-        private async Task<string> CallApiAsync(HttpClient client, UserSecret userSecret, HttpMethod method,
+        private async Task<string> CallApiAsync(UserSecret userSecret, HttpMethod method,
             string url, string content = null)
         {
-            if (userSecret == null)
-                throw new SecurityException("The current user is not signed into Paratext.");
-
-            bool expired = !userSecret.ParatextTokens.ValidateLifetime();
-            bool refreshed = false;
-            while (!refreshed)
+            using (ParatextAccessLock accessLock = await GetParatextAccessLock(userSecret.Id))
+            using (var request = new HttpRequestMessage(method, $"api8/{url}"))
             {
-                if (expired)
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+                    accessLock.UserSecret.ParatextTokens.AccessToken);
+                if (content != null)
                 {
-                    await RefreshAccessTokenAsync(userSecret);
-                    refreshed = true;
+                    request.Content = new StringContent(content);
                 }
-
-                using (var request = new HttpRequestMessage(method, $"api8/{url}"))
+                HttpResponseMessage response = await _registryClient.SendAsync(request);
+                if (response.IsSuccessStatusCode)
                 {
-                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
-                        userSecret.ParatextTokens.AccessToken);
-                    if (content != null)
-                        request.Content = new StringContent(content);
-                    HttpResponseMessage response = await client.SendAsync(request);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        return await response.Content.ReadAsStringAsync();
-                    }
-                    else if (response.StatusCode == HttpStatusCode.Unauthorized)
-                    {
-                        expired = true;
-                    }
-                    else
-                    {
-                        throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
-                    }
+                    return await response.Content.ReadAsStringAsync();
+                }
+                else
+                {
+                    throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
                 }
             }
-
-            throw new SecurityException("The current user's Paratext access token is invalid.");
         }
 
         /// <summary>
         /// Get access to a source for PT project repositories, based on user secret.
         ///</summary>
-        private async Task<IInternetSharedRepositorySource> GetInternetSharedRepositorySource(UserSecret userSecret)
+        private async Task<IInternetSharedRepositorySource> GetInternetSharedRepositorySource(string userId)
         {
-            if (userSecret == null) throw new ArgumentNullException();
-            await RefreshAccessTokenAsync(userSecret);
-            IInternetSharedRepositorySource source = _internetSharedRepositorySourceProvider.GetSource(userSecret,
-                _sendReceiveServerUri, _registryServerUri, _applicationProductVersion);
-            return source;
+            using (ParatextAccessLock accessLock = await GetParatextAccessLock(userId))
+            {
+                return _internetSharedRepositorySourceProvider.GetSource(accessLock.UserSecret,
+                        _sendReceiveServerUri, _registryServerUri, _applicationProductVersion);
+            }
         }
 
         /// <summary>
@@ -853,16 +800,20 @@ namespace SIL.XForge.Scripture.Services
         /// <returns>
         /// The available resources.
         /// </returns>
-        private IReadOnlyList<ParatextResource> GetResourcesInternal(UserSecret userSecret, bool includeInstallableResource)
+        private async Task<IReadOnlyList<ParatextResource>> GetResourcesInternalAsync(string userId, bool includeInstallableResource)
         {
-            IEnumerable<SFInstallableDblResource> resources = SFInstallableDblResource.GetInstallableDblResources(
-                userSecret,
-                this._paratextOptions.Value,
-                this._restClientFactory,
-                this._fileSystemService,
-                this._jwtTokenHelper,
-                _exceptionHandler,
-                this._dblServerUri);
+            IEnumerable<SFInstallableDblResource> resources;
+            using (ParatextAccessLock accessLock = await GetParatextAccessLock(userId))
+            {
+                resources = SFInstallableDblResource.GetInstallableDblResources(
+                    accessLock.UserSecret,
+                    this._paratextOptions.Value,
+                    this._restClientFactory,
+                    this._fileSystemService,
+                    this._jwtTokenHelper,
+                    _exceptionHandler,
+                    this._dblServerUri);
+            }
             IReadOnlyDictionary<string, int> resourceRevisions =
                 SFInstallableDblResource.GetInstalledResourceRevisions();
             return resources.OrderBy(r => r.FullName).Select(r => new ParatextResource
@@ -889,6 +840,42 @@ namespace SIL.XForge.Scripture.Services
                 return;
             var progressDisplay = new SyncProgressDisplay(progress);
             PtxUtils.Progress.Progress.Mgr.SetDisplay(progressDisplay);
+        }
+
+        private async Task<ParatextAccessLock> GetParatextAccessLock(string userId)
+        {
+            SemaphoreSlim semaphore = _tokenRefreshSemaphores.GetOrAdd(userId, (string key) => new SemaphoreSlim(1, 1));
+            await semaphore.WaitAsync();
+
+            Attempt<UserSecret> attempt = await _userSecretRepository.TryGetAsync(userId);
+            if (!attempt.TryResult(out UserSecret userSecret))
+            {
+                throw new DataNotFoundException("Could not find user secrets for " + userId);
+            }
+
+            if (!userSecret.ParatextTokens.ValidateLifetime())
+            {
+                Tokens refreshedUserTokens = await _jwtTokenHelper.RefreshAccessTokenAsync(_paratextOptions.Value, userSecret.ParatextTokens, _registryClient);
+                userSecret = await _userSecretRepository.UpdateAsync(userId, b => b.Set(u => u.ParatextTokens, refreshedUserTokens));
+            }
+            return new ParatextAccessLock(semaphore, userSecret);
+        }
+    }
+
+    class ParatextAccessLock : DisposableBase
+    {
+        private SemaphoreSlim _userSemaphore;
+        public readonly UserSecret UserSecret;
+
+        public ParatextAccessLock(SemaphoreSlim userSemaphore, UserSecret userSecret)
+        {
+            _userSemaphore = userSemaphore;
+            UserSecret = userSecret;
+        }
+
+        protected override void DisposeManagedResources()
+        {
+            _userSemaphore.Release();
         }
     }
 }

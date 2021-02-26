@@ -16,8 +16,8 @@ namespace SIL.XForge.Scripture.Services
         Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(UserSecret userSecret, string projectId);
         bool IsProjectLanguageRightToLeft(UserSecret userSecret, string ptProjectId);
 
-        IReadOnlyList<ParatextResource> GetResources(UserSecret userSecret);
-        Task<string> GetResourcePermissionAsync(UserSecret userSecret, string paratextId, string userId);
+        Task<IReadOnlyList<ParatextResource>> GetResourcesAsync(string userId);
+        Task<string> GetResourcePermissionAsync(string paratextId, string userId);
         Task<IReadOnlyDictionary<string, string>> GetParatextUsernameMappingAsync(UserSecret userSecret,
             string paratextId);
         Task<Dictionary<string, string>> GetPermissionsAsync(UserSecret userSecret, SFProject project,

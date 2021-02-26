@@ -164,7 +164,7 @@ namespace SIL.XForge.Scripture.Services
             if (ptProject == null)
             {
                 // If it is not a project, see if there is a matching resource
-                IReadOnlyList<ParatextResource> resources = this._paratextService.GetResources(userSecret);
+                IReadOnlyList<ParatextResource> resources = await this._paratextService.GetResourcesAsync(curUserId);
                 ptProject = resources.SingleOrDefault(r => r.ParatextId == paratextId);
                 if (ptProject == null)
                 {
@@ -543,8 +543,7 @@ namespace SIL.XForge.Scripture.Services
                 if (project.ParatextId?.Length == SFInstallableDblResource.ResourceIdentifierLength)
                 {
                     // If the project is a resource, get the permission from the DBL
-                    string permission = await _paratextService.GetResourcePermissionAsync(
-                               userSecret, project.ParatextId, userId);
+                    string permission = await _paratextService.GetResourcePermissionAsync(project.ParatextId, userId);
                     return permission switch
                     {
                         TextInfoPermission.None => Attempt.Failure(ProjectRole.None),
@@ -652,7 +651,7 @@ namespace SIL.XForge.Scripture.Services
             if (sourcePTProject == null)
             {
                 // If it is not a project, see if there is a matching resource
-                IReadOnlyList<ParatextResource> resources = this._paratextService.GetResources(userSecret);
+                IReadOnlyList<ParatextResource> resources = await this._paratextService.GetResourcesAsync(curUserId);
                 sourcePTProject = resources.SingleOrDefault(r => r.ParatextId == paratextId);
                 if (sourcePTProject == null)
                 {

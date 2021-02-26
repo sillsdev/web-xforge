@@ -174,7 +174,7 @@ namespace SIL.XForge.Scripture.Services
                         foreach (string uid in usersToCheck)
                         {
                             string permission =
-                                await _paratextService.GetResourcePermissionAsync(_userSecret, sourceParatextId, uid);
+                                await _paratextService.GetResourcePermissionAsync(sourceParatextId, uid);
                             if (permission == TextInfoPermission.None)
                             {
                                 // As resource projects don't have administrators, connect as the user we are to remove

@@ -632,7 +632,7 @@ namespace SIL.XForge.Scripture.Services
             int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
             env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
                .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), User01)
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User01)
                 .Returns(Task.FromResult(TextInfoPermission.Read));
             // SUT
             string sfProjectId = await env.Service.CreateProjectAsync(User01, new SFProjectCreateSettings()
@@ -708,7 +708,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task AddUserToResourceProjectAsync_UserResourcePermission()
         {
             var env = new TestEnvironment();
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), User01)
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User01)
                 .Returns(Task.FromResult(TextInfoPermission.Read));
 
             User user = env.GetUser(User01);
@@ -724,7 +724,7 @@ namespace SIL.XForge.Scripture.Services
         public void AddUserToResourceProjectAsync_UserResourceNoPermission()
         {
             var env = new TestEnvironment();
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), User01)
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User01)
                 .Returns(Task.FromResult(TextInfoPermission.None));
 
             User user = env.GetUser(User01);
@@ -962,7 +962,7 @@ namespace SIL.XForge.Scripture.Services
                         ParatextId = GetProject(Resource01).ParatextId
                     }
                 };
-                ParatextService.GetResources(Arg.Any<UserSecret>()).Returns(ptResources);
+                ParatextService.GetResourcesAsync(Arg.Any<string>()).Returns(ptResources);
                 var userSecrets = new MemoryRepository<UserSecret>(new[]
                 {
                     new UserSecret { Id = User01 },
