@@ -1,5 +1,6 @@
 using System;
 using NUnit.Framework;
+using SIL.XForge.Services;
 
 namespace SIL.XForge.Models
 {
@@ -30,6 +31,36 @@ namespace SIL.XForge.Models
             tokens.RefreshToken = "refresh-token-123";
             // SUT 2, where RefreshToken is not null.
             Assert.That(tokens.ValidateLifetime(), Is.False);
+        }
+
+        [Test]
+        public void ValidateLifetime_FalseIfAboutToExpire()
+        {
+            var issuedAt = DateTime.Now;
+            var expiration = issuedAt + TimeSpan.FromSeconds(50);
+            var tokens = new Tokens()
+            {
+                AccessToken = TokenHelper.CreateAccessToken(issuedAt, expiration),
+                RefreshToken = null
+            };
+
+            // SUT
+            Assert.That(tokens.ValidateLifetime(), Is.False);
+        }
+
+        [Test]
+        public void ValidateLifetime_TrueIfUnexpired()
+        {
+            var issuedAt = DateTime.Now;
+            var expiration = issuedAt + TimeSpan.FromSeconds(70);
+            var tokens = new Tokens()
+            {
+                AccessToken = TokenHelper.CreateAccessToken(issuedAt, expiration),
+                RefreshToken = null
+            };
+
+            // SUT
+            Assert.That(tokens.ValidateLifetime(), Is.True);
         }
     }
 }

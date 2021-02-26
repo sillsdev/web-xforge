@@ -962,7 +962,7 @@ namespace SIL.XForge.Scripture.Services
                         ParatextId = GetProject(Resource01).ParatextId
                     }
                 };
-                ParatextService.GetResources(Arg.Any<UserSecret>()).Returns(ptResources);
+                ParatextService.GetResourcesAsync(Arg.Any<string>()).Returns(ptResources);
                 var userSecrets = new MemoryRepository<UserSecret>(new[]
                 {
                     new UserSecret { Id = User01 },
