@@ -164,7 +164,7 @@ namespace SIL.XForge.Scripture.Services
             if (ptProject == null)
             {
                 // If it is not a project, see if there is a matching resource
-                IReadOnlyList<ParatextResource> resources = this._paratextService.GetResources(userSecret);
+                IReadOnlyList<ParatextResource> resources = await this._paratextService.GetResourcesAsync(curUserId);
                 ptProject = resources.SingleOrDefault(r => r.ParatextId == paratextId);
                 if (ptProject == null)
                 {
@@ -631,7 +631,7 @@ namespace SIL.XForge.Scripture.Services
             if (sourcePTProject == null)
             {
                 // If it is not a project, see if there is a matching resource
-                IReadOnlyList<ParatextResource> resources = this._paratextService.GetResources(userSecret);
+                IReadOnlyList<ParatextResource> resources = await this._paratextService.GetResourcesAsync(curUserId);
                 sourcePTProject = resources.SingleOrDefault(r => r.ParatextId == paratextId);
                 if (sourcePTProject == null)
                 {

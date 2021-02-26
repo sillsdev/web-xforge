@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using Paratext;
-using Paratext.Data;
 using Paratext.Data.Repository;
 using Paratext.Data.Users;
 using Paratext.Data.RegistryServerAccess;
