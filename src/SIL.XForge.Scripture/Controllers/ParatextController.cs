@@ -61,13 +61,9 @@ namespace SIL.XForge.Scripture.Controllers
         [HttpGet("resources")]
         public async Task<ActionResult<Dictionary<string, string>>> ResourcesAsync()
         {
-            Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
-            if (!attempt.TryResult(out UserSecret userSecret))
-                return NoContent();
-
             try
             {
-                var resources = _paratextService.GetResources(userSecret);
+                var resources = await _paratextService.GetResourcesAsync(_userAccessor.UserId);
                 return Ok(resources.ToDictionary(r => r.ParatextId, r => r.Name));
             }
             catch (SecurityException)

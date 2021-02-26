@@ -1,16 +1,16 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Security;
 using System.Security.Claims;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.XPath;
@@ -62,13 +62,14 @@ namespace SIL.XForge.Scripture.Services
         private string _sendReceiveServerUri = InternetAccess.uriProduction;
         private readonly IInternetSharedRepositorySourceProvider _internetSharedRepositorySourceProvider;
         private readonly ISFRestClientFactory _restClientFactory;
+        private readonly IParatextAccessLockService _paratextAccessLockService;
 
         public ParatextService(IWebHostEnvironment env, IOptions<ParatextOptions> paratextOptions,
             IRepository<UserSecret> userSecretRepository, IRealtimeService realtimeService,
             IExceptionHandler exceptionHandler, IOptions<SiteOptions> siteOptions, IFileSystemService fileSystemService,
             ILogger<ParatextService> logger, IJwtTokenHelper jwtTokenHelper, IParatextDataHelper paratextDataHelper,
             IInternetSharedRepositorySourceProvider internetSharedRepositorySourceProvider,
-            ISFRestClientFactory restClientFactory)
+            ISFRestClientFactory restClientFactory, IParatextAccessLockService paratextAccessLockService)
         {
             _paratextOptions = paratextOptions;
             _userSecretRepository = userSecretRepository;
@@ -81,6 +82,7 @@ namespace SIL.XForge.Scripture.Services
             _paratextDataHelper = paratextDataHelper;
             _internetSharedRepositorySourceProvider = internetSharedRepositorySourceProvider;
             _restClientFactory = restClientFactory;
+            _paratextAccessLockService = paratextAccessLockService;
 
             _httpClientHandler = new HttpClientHandler();
             _registryClient = new HttpClient(_httpClientHandler);
@@ -155,7 +157,7 @@ namespace SIL.XForge.Scripture.Services
         {
             if (userSecret == null || ptTargetId == null) { throw new ArgumentNullException(); }
 
-            IInternetSharedRepositorySource source = await GetInternetSharedRepositorySource(userSecret);
+            IInternetSharedRepositorySource source = await GetInternetSharedRepositorySource(userSecret.Id);
             IEnumerable<SharedRepository> repositories = source.GetRepositories();
             IEnumerable<ProjectMetadata> projectsMetadata = source.GetProjectsMetaData();
             IEnumerable<string> projectGuids = projectsMetadata.Select(pmd => pmd.ProjectGuid.Id);
@@ -208,7 +210,7 @@ namespace SIL.XForge.Scripture.Services
         /// <summary> Get Paratext projects that a user has access to. </summary>
         public async Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret)
         {
-            IInternetSharedRepositorySource ptRepoSource = await GetInternetSharedRepositorySource(userSecret);
+            IInternetSharedRepositorySource ptRepoSource = await GetInternetSharedRepositorySource(userSecret.Id);
             List<SharedRepository> remotePtProjects = ptRepoSource.GetRepositories().ToList();
             List<ProjectMetadata> projectMetadata = ptRepoSource.GetProjectsMetaData().ToList();
 
@@ -219,9 +221,12 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>Get Paratext resources that a user has access to. </summary>
-        public IReadOnlyList<ParatextResource> GetResources(UserSecret userSecret)
+        public async Task<IReadOnlyList<ParatextResource>> GetResourcesAsync(string userId)
         {
-            return this.GetResourcesInternal(userSecret, false);
+            using (ParatextAccessLock accessLock = await _paratextAccessLockService.GetLock(userId, _registryClient))
+            {
+                return this.GetResourcesInternal(accessLock.UserSecret, false);
+            }
         }
 
         public async Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId)
@@ -266,49 +271,23 @@ namespace SIL.XForge.Scripture.Services
         public async Task<string> GetResourcePermissionAsync(UserSecret userSecret, string paratextId, string userId)
         {
             // See if the source is a resource
-            if (paratextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
-            {
-                // The resource id is a 41 character project id truncated to 16 characters
-                UserSecret thisUserSecret;
-                if (userId == userSecret.Id)
-                {
-                    thisUserSecret = userSecret;
-                }
-                else
-                {
-                    // Get the user secret
-                    Attempt<UserSecret> userSecretAttempt = await this._userSecretRepository.TryGetAsync(userId);
-                    if (!userSecretAttempt.TryResult(out thisUserSecret))
-                    {
-                        thisUserSecret = null;
-                    }
-                }
-
-                bool canRead = false;
-                if (thisUserSecret != null)
-                {
-                    if (!(thisUserSecret.ParatextTokens?.ValidateLifetime() ?? false))
-                    {
-                        await this.RefreshAccessTokenAsync(thisUserSecret);
-                    }
-
-                    canRead = SFInstallableDblResource.CheckResourcePermission(
-                        paratextId,
-                        thisUserSecret,
-                        this._paratextOptions.Value,
-                        this._restClientFactory,
-                        this._fileSystemService,
-                        this._jwtTokenHelper,
-                        _exceptionHandler,
-                        this._dblServerUri);
-                }
-
-                return canRead ? TextInfoPermission.Read : TextInfoPermission.None;
-            }
-            else
+            if (paratextId.Length != SFInstallableDblResource.ResourceIdentifierLength)
             {
                 // Default to no permissions for projects used as sources
                 return TextInfoPermission.None;
+            }
+            using (ParatextAccessLock accessLock = await _paratextAccessLockService.GetLock(userId, _registryClient))
+            {
+                bool canRead = SFInstallableDblResource.CheckResourcePermission(
+                        paratextId,
+                        accessLock.UserSecret,
+                        _paratextOptions.Value,
+                        _restClientFactory,
+                        _fileSystemService,
+                        _jwtTokenHelper,
+                        _exceptionHandler,
+                        _dblServerUri);
+                return canRead ? TextInfoPermission.Read : TextInfoPermission.None;
             }
         }
 
@@ -781,68 +760,40 @@ namespace SIL.XForge.Scripture.Services
             HgWrapper.Update(clonePath);
         }
 
-        private async Task RefreshAccessTokenAsync(UserSecret userSecret)
-        {
-            ParatextOptions options = _paratextOptions.Value;
-
-            userSecret.ParatextTokens = await _jwtTokenHelper.RefreshAccessTokenAsync(options,
-                userSecret.ParatextTokens, _registryClient);
-
-            await _userSecretRepository.UpdateAsync(userSecret, b =>
-                b.Set(u => u.ParatextTokens, userSecret.ParatextTokens));
-        }
-
         private async Task<string> CallApiAsync(HttpClient client, UserSecret userSecret, HttpMethod method,
             string url, string content = null)
         {
-            if (userSecret == null)
-                throw new SecurityException("The current user is not signed into Paratext.");
-
-            bool expired = !userSecret.ParatextTokens.ValidateLifetime();
-            bool refreshed = false;
-            while (!refreshed)
+            using (ParatextAccessLock accessLock = await _paratextAccessLockService.GetLock(userSecret.Id, client))
+            using (var request = new HttpRequestMessage(method, $"api8/{url}"))
             {
-                if (expired)
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+                    accessLock.UserSecret.ParatextTokens.AccessToken);
+                if (content != null)
                 {
-                    await RefreshAccessTokenAsync(userSecret);
-                    refreshed = true;
+                    request.Content = new StringContent(content);
                 }
-
-                using (var request = new HttpRequestMessage(method, $"api8/{url}"))
+                HttpResponseMessage response = await client.SendAsync(request);
+                if (response.IsSuccessStatusCode)
                 {
-                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
-                        userSecret.ParatextTokens.AccessToken);
-                    if (content != null)
-                        request.Content = new StringContent(content);
-                    HttpResponseMessage response = await client.SendAsync(request);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        return await response.Content.ReadAsStringAsync();
-                    }
-                    else if (response.StatusCode == HttpStatusCode.Unauthorized)
-                    {
-                        expired = true;
-                    }
-                    else
-                    {
-                        throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
-                    }
+                    return await response.Content.ReadAsStringAsync();
+                }
+                else
+                {
+                    throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
                 }
             }
-
-            throw new SecurityException("The current user's Paratext access token is invalid.");
         }
 
         /// <summary>
         /// Get access to a source for PT project repositories, based on user secret.
         ///</summary>
-        private async Task<IInternetSharedRepositorySource> GetInternetSharedRepositorySource(UserSecret userSecret)
+        private async Task<IInternetSharedRepositorySource> GetInternetSharedRepositorySource(string userId)
         {
-            if (userSecret == null) throw new ArgumentNullException();
-            await RefreshAccessTokenAsync(userSecret);
-            IInternetSharedRepositorySource source = _internetSharedRepositorySourceProvider.GetSource(userSecret,
-                _sendReceiveServerUri, _registryServerUri, _applicationProductVersion);
-            return source;
+            using (ParatextAccessLock accessLock = await _paratextAccessLockService.GetLock(userId, _registryClient))
+            {
+                return _internetSharedRepositorySourceProvider.GetSource(accessLock.UserSecret,
+                        _sendReceiveServerUri, _registryServerUri, _applicationProductVersion);
+            }
         }
 
         /// <summary>
