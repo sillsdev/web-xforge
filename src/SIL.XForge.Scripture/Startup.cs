@@ -6,6 +6,7 @@ using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.SpaServices.AngularCli;
@@ -28,11 +29,45 @@ namespace SIL.XForge.Scripture
 
     public class Startup
     {
+        private static readonly HashSet<string> DevelopmentSpaRoutes = new HashSet<string>
+        {
+            "runtime.js",
+            "polyfills.js",
+            "styles.js",
+            "vendor.js",
+            "main.js",
+            "manifest.json",
+            "sockjs-node"
+        };
+        // examples of filenames are "main-es5.4e5295b95e4b6c37b696.js", "styles.a2f070be0b37085d72ba.css"
+        private static readonly HashSet<string> ProductionSpaRoutes = new HashSet<string>
+        {
+            "polyfills-es2015",
+            "polyfills-es5",
+            "runtime-es2015",
+            "runtime-es5",
+            "main-es2015",
+            "main-es5",
+            "styles"
+        };
+        private static readonly HashSet<string> SpaRoutes = new HashSet<string>
+        {
+            "connect-project",
+            "login",
+            "projects",
+            "system-administration",
+            "assets"
+        };
+
         public Startup(IConfiguration configuration, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
             Configuration = configuration;
             Environment = env;
             LoggerFactory = loggerFactory;
+            if (Environment.IsDevelopment())
+                SpaRoutes.UnionWith(DevelopmentSpaRoutes);
+            else
+                SpaRoutes.UnionWith(ProductionSpaRoutes);
         }
 
         public IConfiguration Configuration { get; }
@@ -192,27 +227,49 @@ namespace SIL.XForge.Scripture
             // Map JSON-RPC controllers after MVC controllers, so that MVC controllers take precedence.
             app.UseSFJsonRpc();
 
-            // setup all server-side routes before SPA client-side routes, so that the server-side routes supercede the
-            // client-side routes
-            app.UseSpa(spa =>
+            app.MapWhen(IsSpaRoute, spaApp =>
             {
-                // To learn more about options for serving an Angular SPA from ASP.NET Core,
-                // see https://go.microsoft.com/fwlink/?linkid=864501
-                spa.Options.SourcePath = "ClientApp";
-
-                switch (SpaDevServerStartup)
+                // setup all server-side routes before SPA client-side routes, so that the server-side routes supercede
+                // the client-side routes
+                spaApp.UseSpa(spa =>
                 {
-                    case SpaDevServerStartup.Start:
-                        spa.UseAngularCliServer(npmScript: "start:no-progress");
-                        break;
+                    // To learn more about options for serving an Angular SPA from ASP.NET Core,
+                    // see https://go.microsoft.com/fwlink/?linkid=864501
+                    spa.Options.SourcePath = "ClientApp";
 
-                    case SpaDevServerStartup.Listen:
-                        spa.UseProxyToSpaDevelopmentServer("http://localhost:4200");
-                        break;
-                }
+                    switch (SpaDevServerStartup)
+                    {
+                        case SpaDevServerStartup.Start:
+                            spa.UseAngularCliServer(npmScript: "start:no-progress");
+                            break;
+
+                        case SpaDevServerStartup.Listen:
+                            spa.UseProxyToSpaDevelopmentServer("http://localhost:4200");
+                            break;
+                    }
+                });
             });
 
             appLifetime.ApplicationStopped.Register(() => ApplicationContainer.Dispose());
+        }
+
+        internal bool IsSpaRoute(HttpContext context)
+        {
+            if (context.Request.Method != HttpMethods.Get)
+                return false;
+            string path = context.Request.Path.Value;
+            if (path.Length <= 1)
+                return false;
+            int index = path.IndexOf("/", 1);
+            if (index == -1)
+                index = path.Length;
+            string prefix = path.Substring(1, index - 1);
+            if (!Environment.IsDevelopment() && (prefix.EndsWith(".js") || prefix.EndsWith(".css")))
+            {
+                int periodIndex = path.IndexOf(".");
+                prefix = prefix.Substring(0, periodIndex - 1);
+            }
+            return SpaRoutes.Contains(prefix);
         }
     }
 }
