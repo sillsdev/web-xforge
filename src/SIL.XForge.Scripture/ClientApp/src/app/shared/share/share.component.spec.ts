@@ -79,7 +79,7 @@ describe('ShareComponent', () => {
     env.clickElement(env.shareButton);
 
     env.clickElement(env.closeButton);
-    verify(mockedProjectService.onlineInvite('project01', anything(), anything())).never();
+    verify(mockedProjectService.onlineInvite('project01', anything(), anything(), anything())).never();
     expect().nothing();
   }));
 });
@@ -106,7 +106,7 @@ class TestEnvironment {
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
-    when(mockedProjectService.onlineInvite('project01', anything(), anything())).thenResolve();
+    when(mockedProjectService.onlineInvite('project01', anything(), anything(), anything())).thenResolve();
     when(mockedNoticeService.show(anything())).thenResolve();
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(mockedLocationService.origin).thenReturn('https://scriptureforge.org');

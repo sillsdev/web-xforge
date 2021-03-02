@@ -13,7 +13,8 @@ namespace SIL.XForge.Scripture.Services
         Task UpdateSettingsAsync(string curUserId, string projectId, SFProjectSettings settings);
         Task AddTranslateMetricsAsync(string curUserId, string projectId, TranslateMetrics metrics);
         Task SyncAsync(string curUserId, string projectId);
-        Task<bool> InviteAsync(string curUserId, string projectId, string email, string locale);
+        Task<bool> InviteAsync(string curUserId, string projectId, string email, string locale, string role);
+        Task<string> GetLinkSharingKeyAsync(string projectId, string role);
         Task<bool> IsAlreadyInvitedAsync(string curUserId, string projectId, string email);
         Task UninviteUserAsync(string curUserId, string projectId, string email);
         Task CheckLinkSharingAsync(string curUserId, string projectId, string shareKey = null);
