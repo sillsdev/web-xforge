@@ -1,6 +1,6 @@
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, NgModule, ViewChild } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { flush } from '@angular/core/testing';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -93,7 +93,7 @@ describe('ShareControlComponent', () => {
     env.setInvitationLanguage('en');
     env.click(env.sendButton);
     verify(mockedNoticeService.show(anything())).once();
-    verify(mockedProjectService.onlineInvite(anything(), anything(), anything())).once();
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything(), anything())).once();
     expect(capture(mockedNoticeService.show).last()[0]).toContain('email has been sent');
   }));
 
@@ -103,14 +103,16 @@ describe('ShareControlComponent', () => {
     env.setInvitationLanguage('en');
     env.click(env.sendButton);
     verify(mockedNoticeService.show(anything())).once();
-    verify(mockedProjectService.onlineInvite(anything(), anything(), anything())).once();
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything(), anything())).once();
 
     expect(capture(mockedNoticeService.show).last()[0]).toContain('is already');
   }));
 
-  it('shareLink is for projectId', fakeAsync(() => {
+  it('shareLink is for projectId and has specific key', fakeAsync(() => {
     const env = new TestEnvironment(true, 'myProject1');
-    expect(env.component.shareLink).toContain('myProject1');
+    env.wait();
+    verify(mockedProjectService.onlineGetLinkSharingKey('myProject1', anything())).once();
+    expect(env.hostComponent.component.shareLink).toContain('myProject1?sharing=true&shareKey=linkSharing01');
     flush();
   }));
 
@@ -120,30 +122,30 @@ describe('ShareControlComponent', () => {
 
     // Cannot invite blank or invalid email address
     env.click(env.sendButton);
-    verify(mockedProjectService.onlineInvite(anything(), anything(), anything())).never();
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything(), anything())).never();
     env.setTextFieldValue(env.emailTextField, '');
     env.click(env.sendButton);
-    verify(mockedProjectService.onlineInvite(anything(), anything(), anything())).never();
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything(), anything())).never();
     env.setTextFieldValue(env.emailTextField, 'unknown-addre');
     env.click(env.sendButton);
-    verify(mockedProjectService.onlineInvite(anything(), anything(), anything())).never();
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything(), anything())).never();
 
     // Invite
     env.setTextFieldValue(env.emailTextField, 'unknown-address@example.com');
     expect(env.getTextFieldValue(env.emailTextField)).toEqual('unknown-address@example.com', 'test setup');
     env.click(env.sendButton);
-    verify(mockedProjectService.onlineInvite(anything(), anything(), anything())).once();
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything(), anything())).once();
 
     // Can not immediately request an invite to a blank email address
     expect(env.getTextFieldValue(env.emailTextField)).toEqual('', 'test setup');
     env.click(env.sendButton);
     // Not called a second time
-    verify(mockedProjectService.onlineInvite(anything(), anything(), anything())).once();
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything(), anything())).once();
 
     // Invite
     env.setTextFieldValue(env.emailTextField, 'unknown-address2@example.com');
     env.click(env.sendButton);
-    verify(mockedProjectService.onlineInvite(anything(), anything(), anything())).twice();
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything(), anything())).twice();
   }));
 
   it('Output event fires after invitation is sent', fakeAsync(() => {
@@ -157,6 +159,7 @@ describe('ShareControlComponent', () => {
 
   it('Does not allow sending invites when offline', fakeAsync(() => {
     const env = new TestEnvironment();
+    env.wait();
     expect(env.component.sendInviteForm.enabled).toEqual(true);
     expect((env.inputElement.nativeElement as HTMLInputElement).disabled).toEqual(false);
     expect(env.offlineMessage).toBeNull();
@@ -175,12 +178,13 @@ describe('ShareControlComponent', () => {
   }));
 
   it('clicking copy link icon should copy link to clipboard', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.hostComponent.isLinkSharingEnabled = true;
+    const env = new TestEnvironment(true, 'project123');
     // Two waits are needed, otherwise the link text is not set by the time of the next expectation
     env.wait();
     env.wait();
-    expect(env.shareLink.nativeElement.value).toEqual('https://scriptureforge.org/projects/project123?sharing=true');
+    expect(env.shareLink.nativeElement.value).toEqual(
+      'https://scriptureforge.org/projects/project123?sharing=true&shareKey=linkSharing01'
+    );
     env.click(env.shareLinkCopyIcon);
     // TODO: figure out a way to check the clipboard data
     verify(mockedNoticeService.show(anything())).once();
@@ -190,11 +194,11 @@ describe('ShareControlComponent', () => {
     const env = new TestEnvironment();
     env.setTextFieldValue(env.emailTextField, 'already@example.com');
     env.click(env.sendButton);
-    verify(mockedProjectService.onlineInvite(anything(), anything(), anything())).never();
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything(), anything())).never();
     expect(env.localeErrorText).toContain('Select a language for the invitation email');
     env.setInvitationLanguage('en');
     env.click(env.sendButton);
-    verify(mockedProjectService.onlineInvite(anything(), anything(), anything())).once();
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything(), anything())).once();
   }));
 });
 
@@ -233,15 +237,18 @@ class TestEnvironment {
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-  constructor(isLinkSharingEnabled?: boolean, projectId?: string) {
+  constructor(isLinkSharingEnabled?: boolean, projectId: string = 'project123') {
     when(mockedPwaService.onlineStatus).thenReturn(this._onlineStatus.asObservable());
     when(mockedPwaService.isOnline).thenCall(() => this._onlineStatus.getValue());
+    when(mockedProjectService.onlineGetLinkSharingKey(projectId, anything())).thenResolve(
+      isLinkSharingEnabled ? 'linkSharing01' : ''
+    );
     this.fixture = TestBed.createComponent(TestHostComponent);
     this.fixture.detectChanges();
     this.component = this.fixture.componentInstance.component;
     this.hostComponent = this.fixture.componentInstance;
 
-    this.fixture.componentInstance.projectId = projectId === undefined ? 'project123' : projectId;
+    this.fixture.componentInstance.projectId = projectId;
     this.fixture.componentInstance.isLinkSharingEnabled =
       isLinkSharingEnabled === undefined ? false : isLinkSharingEnabled;
 
@@ -252,12 +259,12 @@ class TestEnvironment {
     when(mockedProjectService.get('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
-    when(mockedProjectService.onlineInvite(anything(), 'unknown-address@example.com', anything())).thenResolve(
-      undefined
-    );
-    when(mockedProjectService.onlineInvite(anything(), 'already-project-member@example.com', anything())).thenResolve(
-      this.component.alreadyProjectMemberResponse
-    );
+    when(
+      mockedProjectService.onlineInvite(anything(), 'unknown-address@example.com', anything(), anything())
+    ).thenResolve(undefined);
+    when(
+      mockedProjectService.onlineInvite(anything(), 'already-project-member@example.com', anything(), anything())
+    ).thenResolve(this.component.alreadyProjectMemberResponse);
     when(mockedProjectService.onlineIsAlreadyInvited(anything(), 'unknown-address@example.com')).thenResolve(false);
     when(mockedProjectService.onlineIsAlreadyInvited(anything(), 'already@example.com')).thenResolve(true);
     when(mockedLocationService.origin).thenReturn('https://scriptureforge.org');

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProject, SF_PROJECTS_COLLECTION } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { getSFProjectUserConfigDocId } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { CommandService } from 'xforge-common/command.service';
 import { FileService } from 'xforge-common/file.service';
@@ -126,8 +127,8 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.onlineInvoke('checkLinkSharing', { projectId: id, shareKey });
   }
 
-  onlineInvite(id: string, email: string, locale: string): Promise<string | undefined> {
-    return this.onlineInvoke('invite', { projectId: id, email, locale });
+  onlineInvite(id: string, email: string, locale: string, role: string): Promise<string | undefined> {
+    return this.onlineInvoke('invite', { projectId: id, email, locale, role });
   }
 
   async onlineUninviteUser(projectId: string, emailToUninvite: string): Promise<string> {
@@ -136,6 +137,10 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
 
   async onlineIsSourceProject(projectId: string): Promise<boolean> {
     return (await this.onlineInvoke<boolean>('isSourceProject', { projectId }))!;
+  }
+
+  async onlineGetLinkSharingKey(projectId: string, role: SFProjectRole): Promise<string> {
+    return (await this.onlineInvoke<string>('linkSharingKey', { projectId, role })) ?? '';
   }
 
   async transceleratorQuestions(projectId: string): Promise<TransceleratorQuestion[]> {
