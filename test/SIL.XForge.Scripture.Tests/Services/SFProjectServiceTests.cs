@@ -28,6 +28,7 @@ namespace SIL.XForge.Scripture.Services
         private const string Project01 = "project01";
         private const string Project02 = "project02";
         private const string Project03 = "project03";
+        private const string Project04 = "project04";
         private const string Resource01 = "resource_project";
         private const string User01 = "user01";
         private const string User02 = "user02";
@@ -499,6 +500,25 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void AddUserAsync_SourceProjectUnavailable_SkipProject()
+        {
+            var env = new TestEnvironment();
+            Assert.DoesNotThrowAsync(() => env.Service.AddUserAsync(User01, Project04, SFProjectRole.Translator));
+            var project = env.GetProject(Project04);
+            Assert.That(project.UserRoles[User01], Is.EqualTo(SFProjectRole.Translator));
+        }
+
+        [Test]
+        public void IsSourceProject_TrueWhenProjectIsATranslationSource()
+        {
+            var env = new TestEnvironment();
+            bool isSourceProject = env.Service.IsSourceProject(Resource01);
+            Assert.That(isSourceProject, Is.True);
+            isSourceProject = env.Service.IsSourceProject(Project01);
+            Assert.That(isSourceProject, Is.False);
+        }
+
+        [Test]
         public async Task UpdateSettingsAsync_ChangeSourceProject_RecreateMachineProjectAndSync()
         {
             var env = new TestEnvironment();
@@ -769,9 +789,10 @@ namespace SIL.XForge.Scripture.Services
                                 TranslationSuggestionsEnabled = true,
                                 Source = new TranslateSource
                                 {
-                                    ParatextId = "paratextId",
-                                    Name = "Source",
-                                    ShortName = "SRC",
+                                    ProjectRef = Resource01,
+                                    ParatextId = "resid_is_16_char",
+                                    Name = "resource project",
+                                    ShortName = "RES",
                                     WritingSystem = new WritingSystem
                                     {
                                         Tag = "qaa"
@@ -836,6 +857,20 @@ namespace SIL.XForge.Scripture.Services
                             UserRoles =
                             {
                                 { User01, SFProjectRole.Administrator }
+                            }
+                        },
+                        new SFProject
+                        {
+                            Id = Project04,
+                            Name = "project04",
+                            TranslateConfig = new TranslateConfig
+                            {
+                                TranslationSuggestionsEnabled = true,
+                                Source = new TranslateSource
+                                {
+                                    ProjectRef = "Invalid_Source",
+                                    ParatextId = "P04"
+                                }
                             }
                         },
                         new SFProject

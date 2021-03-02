@@ -41,6 +41,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   private controlStates = new Map<Extract<keyof SFProjectSettings, string>, ElementState>();
   private previousFormValues: SFProjectSettings = {};
   private _isAppOnline: boolean = false;
+  private isSourceProject: boolean = false;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -93,6 +94,10 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     return this._isAppOnline;
   }
 
+  get deleteButtonDisabled(): boolean {
+    return !this.isAppOnline || this.isLoading || this.isSourceProject;
+  }
+
   private get isOnlyBasedOnInvalid(): boolean {
     let invalidCount = 0;
     const controls = this.form.controls;
@@ -132,6 +137,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
           this.updateNonSelectableProjects();
           this.subscribe(this.projectDoc.remoteChanges$, () => this.updateNonSelectableProjects());
         }
+        this.isSourceProject = await this.projectService.onlineIsSourceProject(projectId);
         this.loadingFinished();
       }
     });

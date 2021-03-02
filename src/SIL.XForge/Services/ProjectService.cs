@@ -77,7 +77,15 @@ namespace SIL.XForge.Services
 
         public async Task<string> GetProjectRoleAsync(string curUserId, string projectId)
         {
-            TModel project = await GetProjectAsync(projectId);
+            TModel project;
+            try
+            {
+                project = await GetProjectAsync(projectId);
+            }
+            catch (DataNotFoundException)
+            {
+                return null;
+            }
             Attempt<string> attempt = await TryGetProjectRoleAsync(project, curUserId);
             return attempt.Result;
         }

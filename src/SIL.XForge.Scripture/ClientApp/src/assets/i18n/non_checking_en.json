@@ -170,6 +170,7 @@
     "settings": "Settings",
     "share": "Share",
     "specific_people": "Specific people",
+    "source_projects_cannot_be_deleted": "Another project is based on this project and so it cannot be deleted.",
     "tools": "Tools",
     "translate": "Translate",
     "translate_tool_is_always_available": "The translate tool is always available to collaborate with other translators working on the same text.",

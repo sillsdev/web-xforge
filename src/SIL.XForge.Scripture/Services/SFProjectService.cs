@@ -460,6 +460,12 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
+        public bool IsSourceProject(string projectId)
+        {
+            return RealtimeService.QuerySnapshots<SFProject>()
+                .Any(p => p.TranslateConfig.Source != null && p.TranslateConfig.Source.ProjectRef == projectId);
+        }
+
         public async Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestions(string curUserId, string projectId)
         {
             using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
@@ -503,7 +509,9 @@ namespace SIL.XForge.Scripture.Services
                 && !string.IsNullOrWhiteSpace(sourceParatextId))
             {
                 // Load the source project role from MongoDB
-                IDocument<SFProject> sourceProjectDoc = await GetProjectDocAsync(sourceProjectId, conn);
+                IDocument<SFProject> sourceProjectDoc = await TryGetProjectDocAsync(sourceProjectId, conn);
+                if (sourceProjectDoc == null)
+                    return;
                 if (sourceProjectDoc.IsLoaded && !sourceProjectDoc.Data.UserRoles.ContainsKey(userDoc.Id))
                 {
                     // Not found in Mongo, so load the project role from Paratext
@@ -556,6 +564,19 @@ namespace SIL.XForge.Scripture.Services
             }
 
             return Attempt.Failure(SFProjectRole.CommunityChecker);
+        }
+
+        private async Task<IDocument<SFProject>> TryGetProjectDocAsync(string projectId, IConnection conn)
+        {
+            try
+            {
+                IDocument<SFProject> projectDoc = await base.GetProjectDocAsync(projectId, conn);
+                return projectDoc;
+            }
+            catch (DataNotFoundException)
+            {
+                return null;
+            }
         }
 
         private static void UpdateSetting<T>(Json0OpBuilder<SFProject> builder, Expression<Func<SFProject, T>> field,

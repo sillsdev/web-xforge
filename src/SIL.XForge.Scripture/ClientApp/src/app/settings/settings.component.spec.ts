@@ -1,6 +1,7 @@
+import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
 import { Location } from '@angular/common';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { Component, DebugElement, NgModule } from '@angular/core';
+import { Component, DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -11,7 +12,7 @@ import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/scriptur
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { TranslateConfig } from 'realtime-server/lib/scriptureforge/models/translate-config';
 import { BehaviorSubject, of } from 'rxjs';
-import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
+import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -37,6 +38,7 @@ const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
+const mockedDialog = mock(MdcDialog);
 
 @Component({
   template: `<div>Mock</div>`
@@ -48,7 +50,6 @@ const ROUTES: Route[] = [{ path: 'projects', component: MockComponent }];
 describe('SettingsComponent', () => {
   configureTestingModule(() => ({
     imports: [
-      DialogTestModule,
       HttpClientTestingModule,
       RouterTestingModule.withRoutes(ROUTES),
       UICommonModule,
@@ -65,7 +66,8 @@ describe('SettingsComponent', () => {
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: CookieService, useMock: mockedCookieService },
-      { provide: PwaService, useMock: mockedPwaService }
+      { provide: PwaService, useMock: mockedPwaService },
+      { provide: MdcDialog, useMock: mockedDialog }
     ]
   }));
 
@@ -377,13 +379,22 @@ describe('SettingsComponent', () => {
       expect(env.deleteProjectButton.disabled).toBe(false);
     }));
 
+    it('should disable Delete button if project is a source project', fakeAsync(() => {
+      const env = new TestEnvironment(true, true);
+      env.setupProject();
+      env.wait();
+      env.fixture.detectChanges();
+      expect(env.deleteProjectButton).not.toBeNull();
+      expect(env.deleteProjectButton.disabled).toBe(true);
+      expect(env.sourceProjectMessage).not.toBeNull();
+    }));
+
     it('should delete project if user confirms on the dialog', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setupProject();
+      env.setDialogResponse(true);
       env.wait();
       env.clickElement(env.deleteProjectButton);
-      expect(env.deleteDialog).not.toBeNull();
-      env.confirmDialog(true);
       verify(mockedUserService.setCurrentProjectId()).once();
       verify(mockedSFProjectService.onlineDelete(anything())).once();
       expect(env.location.path()).toEqual('/projects');
@@ -392,12 +403,12 @@ describe('SettingsComponent', () => {
     it('should not delete project if user cancels', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setupProject();
+      env.setDialogResponse(false);
       env.wait();
       env.clickElement(env.deleteProjectButton);
-      expect(env.deleteDialog).not.toBeNull();
-      env.confirmDialog(false);
       verify(mockedUserService.setCurrentProjectId()).never();
       verify(mockedSFProjectService.onlineDelete(anything())).never();
+      expect().nothing();
     }));
   });
 });
@@ -409,9 +420,11 @@ class TestEnvironment {
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private isOnline: BehaviorSubject<boolean>;
+  private mockedDialogRef: MdcDialogRef<DeleteProjectDialogComponent> = mock(MdcDialogRef);
 
-  constructor(hasConnection: boolean = true) {
+  constructor(hasConnection: boolean = true, isSource: boolean = false) {
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
+    when(mockedSFProjectService.onlineIsSourceProject('project01')).thenResolve(isSource);
     when(mockedSFProjectService.onlineDelete(anything())).thenResolve();
     when(mockedSFProjectService.onlineUpdateSettings('project01', anything())).thenResolve();
     when(mockedUserService.currentProjectId).thenReturn('project01');
@@ -510,12 +523,12 @@ class TestEnvironment {
     return this.fixture.nativeElement.querySelector('#danger-zone div');
   }
 
-  get deleteProjectButton(): HTMLButtonElement {
-    return this.fixture.nativeElement.querySelector('#delete-btn');
+  get sourceProjectMessage(): HTMLElement {
+    return this.fixture.nativeElement.querySelector('#danger-zone .source-project-msg');
   }
 
-  get deleteDialog(): HTMLElement {
-    return this.overlayContainerElement.querySelector('mdc-dialog') as HTMLElement;
+  get deleteProjectButton(): HTMLButtonElement {
+    return this.fixture.nativeElement.querySelector('#delete-btn');
   }
 
   get confirmDeleteBtn(): HTMLElement {
@@ -548,20 +561,9 @@ class TestEnvironment {
     return (this.basedOnSelectComponent.projects || []).concat(this.basedOnSelectComponent.resources || []);
   }
 
-  confirmDialog(confirm: boolean): void {
-    let button: HTMLElement;
-    if (confirm) {
-      const projectInput = this.overlayContainerElement.querySelector('#project-entry input') as HTMLInputElement;
-      projectInput.value = 'project 01';
-      projectInput.dispatchEvent(new Event('input'));
-      button = this.confirmDeleteBtn;
-    } else {
-      button = this.cancelDeleteBtn;
-    }
-    this.fixture.detectChanges();
-    tick();
-    this.clickElement(button);
-    tick();
+  setDialogResponse(confirm: boolean): void {
+    when(this.mockedDialogRef.afterClosed()).thenReturn(of(confirm ? 'accept' : 'cancel'));
+    when(mockedDialog.open(DeleteProjectDialogComponent, anything())).thenReturn(instance(this.mockedDialogRef));
   }
 
   clickElement(element: HTMLElement | DebugElement): void {
@@ -639,10 +641,3 @@ class TestEnvironment {
     });
   }
 }
-
-@NgModule({
-  imports: [UICommonModule, TestTranslocoModule],
-  declarations: [DeleteProjectDialogComponent],
-  exports: [DeleteProjectDialogComponent]
-})
-class DialogTestModule {}
