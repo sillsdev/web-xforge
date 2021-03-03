@@ -97,7 +97,8 @@ describe('I18nService', () => {
     service.setLocale('en-GB');
     expect(service.formatDate(date)).toEqual('25 Nov 1991, 5:28 pm');
     service.setLocale('zh-CN');
-    expect(service.formatDate(date)).toEqual('1991/11/25 下午5:28');
+    // Chromium 88 stopped including a space. This removal of spaces could be removed once everyone is on v88.
+    expect(service.formatDate(date).replace(' ', '')).toEqual('1991/11/25下午5:28');
     service.setLocale('az');
     expect(service.formatDate(date)).toEqual('25.11.1991 17:28');
   });
