@@ -3,6 +3,9 @@ using SIL.XForge.Models;
 
 namespace SIL.XForge.Scripture.Models
 {
+    /// <summary>
+    /// Usage information for a short amount of user activity in the editor component.
+    /// </summary>
     public class TranslateMetrics : IIdentifiable
     {
         public string Id { get; set; }
@@ -24,6 +27,7 @@ namespace SIL.XForge.Scripture.Models
         public int? ProductiveCharacterCount { get; set; }
         public int? SuggestionAcceptedCount { get; set; }
         public int? SuggestionTotalCount { get; set; }
+        /// <remarks>In milliseconds.</remarks>
         public int? TimeEditActive { get; set; }
         public string EditEndEvent { get; set; }
 
