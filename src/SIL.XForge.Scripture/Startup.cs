@@ -174,9 +174,10 @@ namespace SIL.XForge.Scripture
             app.UseAuthentication();
             app.UseAuthorization();
 
-            // Allow beta to not load the realtime server - useful for testing
+            // Allow beta to enable the realtime server for testing purposes
+            // Non-beta environments will always load the realtime server
             if (!siteOptions.Value.Beta ||
-                (siteOptions.Value.Beta && Configuration.GetValue<string>("disable-realtime-server") != "yes")
+                (siteOptions.Value.Beta && Configuration.GetValue<string>("enable-beta-realtime-server") == "yes")
                 )
             {
                 app.UseRealtimeServer();
