@@ -29,18 +29,18 @@ namespace SIL.XForge.Scripture
 
     public class Startup
     {
-        private static readonly HashSet<string> DevelopmentSpaRoutes = new HashSet<string>
+        private static readonly HashSet<string> DevelopmentSpaGetRoutes = new HashSet<string>
         {
-            "runtime.js",
-            "polyfills.js",
-            "styles.js",
-            "vendor.js",
-            "main.js",
+            "runtime.js", "runtime.js.map",
+            "polyfills.js", "polyfills.js.map",
+            "styles.js", "styles.js.map",
+            "vendor.js", "vendor.js.map",
+            "main.js", "main.js.map",
             "manifest.json",
             "sockjs-node"
         };
         // examples of filenames are "main-es5.4e5295b95e4b6c37b696.js", "styles.a2f070be0b37085d72ba.css"
-        private static readonly HashSet<string> ProductionSpaRoutes = new HashSet<string>
+        private static readonly HashSet<string> ProductionSpaGetRoutes = new HashSet<string>
         {
             "polyfills-es2015",
             "polyfills-es5",
@@ -50,14 +50,22 @@ namespace SIL.XForge.Scripture
             "main-es5",
             "styles"
         };
-        private static readonly HashSet<string> SpaRoutes = new HashSet<string>
+        private static readonly HashSet<string> SpaGetRoutes = new HashSet<string>
         {
             "connect-project",
             "login",
             "projects",
             "system-administration",
+            "favicon.ico",
             "assets"
         };
+
+        private static readonly HashSet<string> DevelopmentSpaPostRoutes = new HashSet<string>
+        {
+            "sockjs-node"
+        };
+        private static readonly HashSet<string> ProductionSpaPostRoutes = new HashSet<string>();
+        private static readonly HashSet<string> SpaPostRoutes = new HashSet<string>();
 
         public Startup(IConfiguration configuration, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
@@ -65,9 +73,15 @@ namespace SIL.XForge.Scripture
             Environment = env;
             LoggerFactory = loggerFactory;
             if (Environment.IsDevelopment())
-                SpaRoutes.UnionWith(DevelopmentSpaRoutes);
+            {
+                SpaGetRoutes.UnionWith(DevelopmentSpaGetRoutes);
+                SpaPostRoutes.UnionWith(DevelopmentSpaPostRoutes);
+            }
             else
-                SpaRoutes.UnionWith(ProductionSpaRoutes);
+            {
+                SpaGetRoutes.UnionWith(ProductionSpaGetRoutes);
+                SpaPostRoutes.UnionWith(ProductionSpaPostRoutes);
+            }
         }
 
         public IConfiguration Configuration { get; }
@@ -255,8 +269,6 @@ namespace SIL.XForge.Scripture
 
         internal bool IsSpaRoute(HttpContext context)
         {
-            if (context.Request.Method != HttpMethods.Get)
-                return false;
             string path = context.Request.Path.Value;
             if (path.Length <= 1)
                 return false;
@@ -264,12 +276,14 @@ namespace SIL.XForge.Scripture
             if (index == -1)
                 index = path.Length;
             string prefix = path.Substring(1, index - 1);
-            if (!Environment.IsDevelopment() && (prefix.EndsWith(".js") || prefix.EndsWith(".css")))
+            if (!Environment.IsDevelopment() && (prefix.EndsWith(".js") || prefix.EndsWith(".js.map") ||
+                prefix.EndsWith(".css") || prefix.EndsWith(".css.map")))
             {
                 int periodIndex = path.IndexOf(".");
                 prefix = prefix.Substring(0, periodIndex - 1);
             }
-            return SpaRoutes.Contains(prefix);
+            return (context.Request.Method == HttpMethods.Get && SpaGetRoutes.Contains(prefix)) ||
+                (context.Request.Method == HttpMethods.Post && SpaPostRoutes.Contains(prefix));
         }
     }
 }
