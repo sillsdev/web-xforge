@@ -33,6 +33,7 @@ namespace SIL.XForge.Scripture
         public void IsSpaRoute_MethodNotGet_NotRoute()
         {
             _context.Request.Method = HttpMethods.Post;
+            _context.Request.Path = new PathString("/system-administration");
 
             Assert.IsFalse(_startup.IsSpaRoute(_context));
         }
@@ -74,6 +75,17 @@ namespace SIL.XForge.Scripture
         {
             _env.EnvironmentName = Environments.Development;
             _startup = new Startup(_configuration, _env, _loggerFactory);
+            _context.Request.Path = new PathString("/sockjs-node");
+
+            Assert.IsTrue(_startup.IsSpaRoute(_context));
+        }
+
+        [Test]
+        public void IsSpaRoute_DevelopmentPathValidPost_IsRoute()
+        {
+            _env.EnvironmentName = Environments.Development;
+            _startup = new Startup(_configuration, _env, _loggerFactory);
+            _context.Request.Method = HttpMethods.Post;
             _context.Request.Path = new PathString("/sockjs-node");
 
             Assert.IsTrue(_startup.IsSpaRoute(_context));
