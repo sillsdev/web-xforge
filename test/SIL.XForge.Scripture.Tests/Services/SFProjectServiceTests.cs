@@ -1015,12 +1015,14 @@ namespace SIL.XForge.Scripture.Services
                             {
                                 Email = "user03@example.com",
                                 Key = "key1234",
+                                ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.CommunityChecker
                             },
                             new ShareKey
                             {
                                 Email = "bill@example.com",
                                 Key = "key2222",
+                                ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.CommunityChecker
                             }
                         }
