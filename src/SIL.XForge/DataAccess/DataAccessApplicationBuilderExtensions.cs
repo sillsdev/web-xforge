@@ -13,6 +13,7 @@ namespace Microsoft.AspNetCore.Builder
             app.UseHangfireDashboard();
 
             app.InitRepository<UserSecret>();
+            app.InitRepository<BetaMigration>();
         }
 
         public static void InitRepository<T>(this IApplicationBuilder app) where T : IIdentifiable
