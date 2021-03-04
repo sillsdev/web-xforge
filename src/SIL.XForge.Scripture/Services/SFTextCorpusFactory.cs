@@ -1,7 +1,10 @@
-using System.Linq;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -24,12 +27,17 @@ namespace SIL.XForge.Scripture.Services
         private readonly IMongoClient _mongoClient;
         private readonly IOptions<DataAccessOptions> _dataAccessOptions;
         private readonly IRealtimeService _realtimeService;
+        private readonly IOptions<SiteOptions> _siteOptions;
+        private readonly IFileSystemService _fileSystemService;
 
-        public SFTextCorpusFactory(IOptions<DataAccessOptions> dataAccessOptions, IRealtimeService realtimeService)
+        public SFTextCorpusFactory(IOptions<DataAccessOptions> dataAccessOptions, IRealtimeService realtimeService,
+            IOptions<SiteOptions> siteOptions, IFileSystemService fileSystemService)
         {
             _dataAccessOptions = dataAccessOptions;
             _mongoClient = new MongoClient(dataAccessOptions.Value.ConnectionString);
             _realtimeService = realtimeService;
+            _siteOptions = siteOptions;
+            _fileSystemService = fileSystemService;
         }
 
         public async Task<ITextCorpus> CreateAsync(IEnumerable<string> projects, TextCorpusType type)
@@ -52,12 +60,26 @@ namespace SIL.XForge.Scripture.Services
                 {
                     throw new DataNotFoundException("The source project reference is missing");
                 }
-                string textCorpusProjectId = type switch
+
+                string textCorpusProjectId;
+                string paratextId;
+                switch (type)
                 {
-                    TextCorpusType.Source => project.TranslateConfig.Source.ProjectRef,
-                    TextCorpusType.Target => projectId,
-                    _ => throw new InvalidEnumArgumentException(nameof(type), (int)type, typeof(TextCorpusType)),
-                };
+                    case TextCorpusType.Source:
+                        textCorpusProjectId = project.TranslateConfig.Source.ProjectRef;
+                        paratextId = project.TranslateConfig.Source.ParatextId;
+                        break;
+
+                    case TextCorpusType.Target:
+                        textCorpusProjectId = projectId;
+                        paratextId = project.ParatextId;
+                        break;
+
+                    default:
+                        throw new InvalidEnumArgumentException(nameof(type), (int)type, typeof(TextCorpusType));
+
+                }
+
                 foreach (TextInfo text in project.Texts.Where(t => t.HasSource))
                 {
                     foreach (Chapter chapter in text.Chapters)
@@ -68,6 +90,16 @@ namespace SIL.XForge.Scripture.Services
                         if (doc != null && doc.TryGetValue("ops", out BsonValue ops) && ops as BsonArray != null)
                             texts.Add(new SFScriptureText(wordTokenizer, projectId, text.BookNum, chapter.Number, doc));
                     }
+                }
+
+                string termRenderingsFileName = Path.Combine(_siteOptions.Value.SiteDir, "sync", paratextId,
+                    "target", "TermRenderings.xml");
+                if (_fileSystemService.FileExists(termRenderingsFileName))
+                {
+                    using var stream = _fileSystemService.OpenFile(termRenderingsFileName, FileMode.Open);
+                    XDocument termRenderingsDoc = await XDocument.LoadAsync(stream, LoadOptions.None,
+                        CancellationToken.None);
+                    texts.Add(new SFBiblicalTermsText(wordTokenizer, projectId, termRenderingsDoc));
                 }
             }
 
