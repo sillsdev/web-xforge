@@ -391,6 +391,7 @@ namespace SIL.XForge.Scripture.Services
             if (!(project.CheckingConfig.ShareEnabled && project.CheckingConfig.ShareLevel == "anyone"))
                 return null;
             SFProjectSecret projectSecret = await ProjectSecrets.GetAsync(projectId);
+            // Link sharing keys have Email set to null and ExpirationTime set to null.
             string key = projectSecret.ShareKeys.SingleOrDefault(
                 sk => sk.Email == null && sk.ProjectRole == role)?.Key;
             if (!string.IsNullOrEmpty(key))
@@ -456,6 +457,8 @@ namespace SIL.XForge.Scripture.Services
             return projectSecret.ShareKeys.Where(s => s.Email != null).Select(sk =>
                 new InviteeStatus { Email = sk.Email, Expired = sk.ExpirationTime < now }).ToArray();
         }
+
+        /// <summary> Check that a share link is valid for a project and add the user to the project. </summary>
         public async Task CheckLinkSharingAsync(string curUserId, string projectId, string shareKey)
         {
             using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
@@ -466,6 +469,7 @@ namespace SIL.XForge.Scripture.Services
 
                 IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
                 string projectRole;
+                // Attempt to get the role for the user from the Paratext registry
                 Attempt<string> attempt = await TryGetProjectRoleAsync(projectDoc.Data, curUserId);
                 if (!attempt.TryResult(out projectRole))
                 {
@@ -474,6 +478,7 @@ namespace SIL.XForge.Scripture.Services
                     if (psAttempt.TryResult(out SFProjectSecret ps))
                         projectRole = ps.ShareKeys.SingleOrDefault(sk => sk.Key == shareKey)?.ProjectRole;
                 }
+                // The share key was invalid
                 if (projectRole == null)
                     throw new ForbiddenException();
 
@@ -481,10 +486,12 @@ namespace SIL.XForge.Scripture.Services
                     projectDoc.Data.CheckingConfig.ShareLevel == CheckingShareLevel.Anyone;
                 if (linkSharing)
                 {
+                    // Add the user and remove the specific user share key if it exists. Link sharing keys
+                    // have Email set to null and will not be removed.
                     await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, true);
                     return;
                 }
-                // Look for a valid specific user share key
+                // Look for a valid specific user share key.
                 SFProjectSecret projectSecret = await ProjectSecrets.UpdateAsync(
                     p => p.Id == projectId && p.ShareKeys.Any(
                         sk => sk.Email != null && sk.Key == shareKey && sk.ExpirationTime > DateTime.UtcNow),
