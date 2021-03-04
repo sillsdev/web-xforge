@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.AspNetCore.Hosting;
@@ -38,7 +39,7 @@ namespace SIL.XForge.Scripture.Services
         public void GetProjectsAsync_BadArguments()
         {
             var env = new TestEnvironment();
-            Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.GetProjectsAsync(null));
+            Assert.ThrowsAsync<NullReferenceException>(() => env.Service.GetProjectsAsync(null));
         }
 
         [Test]
@@ -234,46 +235,37 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public void GetResources_BadArguments()
-        {
-            var env = new TestEnvironment();
-            Assert.Throws<ArgumentNullException>(() => env.Service.GetResources(null));
-        }
-
-        [Test]
-        public void GetResources_ReturnResources()
+        public async Task GetResourcesAsync_ReturnResources()
         {
             var env = new TestEnvironment();
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
             env.SetRestClientFactory(user01Secret);
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
-            IEnumerable<ParatextResource> resources = env.Service.GetResources(user01Secret);
+            IEnumerable<ParatextResource> resources = await env.Service.GetResourcesAsync(env.User01);
             Assert.AreEqual(3, resources.Count());
         }
 
         [Test]
-        public void GetResources_Problem_EmptyList()
+        public void GetResourcesAsync_Problem_EmptyList()
         {
             // Set up environment
             var env = new TestEnvironment();
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
-            UserSecret user02Secret = env.MakeUserSecret(env.User02, env.Username02);
-            env.MockRepository.Query().Returns(new List<UserSecret>() { user01Secret, user02Secret }.AsQueryable());
 
             // Set up mock REST client to return unsuccessfully.
             ISFRestClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
             ISFRestClient failureMockClient = Substitute.For<ISFRestClient>();
             failureMockClient.Get(Arg.Any<string>()).Throws<WebException>();
             mockRestClientFactory
-                .Create(Arg.Any<string>(), Arg.Any<string>(), user02Secret)
+                .Create(Arg.Any<string>(), Arg.Any<string>(), Arg.Is<UserSecret>(s => s.Id == env.User02))
                 .Returns(failureMockClient);
 
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
 
             IEnumerable<ParatextResource> resources = null;
             // SUT
-            Assert.DoesNotThrow(() => resources = env.Service.GetResources(user02Secret),
-            "Don't crash when permission problem");
+            Assert.DoesNotThrowAsync(async () => resources = await env.Service.GetResourcesAsync(env.User02));
+            // "Don't crash when permission problem");
             Assert.AreEqual(0, resources.Count(), "An empty set of resources should have been returned");
             env.MockExceptionHandler.Received().ReportException(Arg.Is<Exception>((Exception e) =>
                 e.Message.Contains("inquire about resources and is ignoring error")));
@@ -285,26 +277,20 @@ namespace SIL.XForge.Scripture.Services
             // Set up environment
             var env = new TestEnvironment();
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
-            UserSecret user02Secret = env.MakeUserSecret(env.User02, env.Username02);
-            env.MockRepository.Query().Returns(new List<UserSecret>() { user01Secret, user02Secret }.AsQueryable());
-
-            // This is to make Tokens.ValidateLifetime() return false
-            user01Secret.ParatextTokens.AccessToken = null;
-            user02Secret.ParatextTokens.AccessToken = null;
 
             // Set up mock REST client to return a successful HEAD request
             ISFRestClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
             ISFRestClient successMockClient = Substitute.For<ISFRestClient>();
             successMockClient.Head(Arg.Any<string>()).Returns(string.Empty);
             mockRestClientFactory
-                .Create(Arg.Any<string>(), Arg.Any<string>(), user01Secret)
+                .Create(Arg.Any<string>(), Arg.Any<string>(), Arg.Is<UserSecret>(s => s.Id == env.User01))
                 .Returns(successMockClient);
 
             // Set up mock REST client to return an unsuccessful HEAD request
             ISFRestClient failureMockClient = Substitute.For<ISFRestClient>();
             failureMockClient.Head(Arg.Any<string>()).Throws<WebException>();
             mockRestClientFactory
-                .Create(Arg.Any<string>(), Arg.Any<string>(), user02Secret)
+                .Create(Arg.Any<string>(), Arg.Any<string>(), Arg.Is<UserSecret>(s => s.Id == env.User02))
                 .Returns(failureMockClient);
 
             // Set up mock project
@@ -329,10 +315,6 @@ namespace SIL.XForge.Scripture.Services
             // Set up environment
             var env = new TestEnvironment();
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
-            env.MockRepository.Query().Returns(new List<UserSecret>() { user01Secret }.AsQueryable());
-
-            // This is to make Tokens.ValidateLifetime() return false
-            user01Secret.ParatextTokens.AccessToken = null;
 
             // Set up mock REST client to return a successful HEAD request
             ISFRestClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
@@ -343,7 +325,7 @@ namespace SIL.XForge.Scripture.Services
                 .Returns(mockClient);
 
             var paratextId = "resid_is_16_char";
-            var permission = await env.Service.GetResourcePermissionAsync(user01Secret, paratextId, env.User01);
+            var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01);
             Assert.That(permission, Is.EqualTo(TextInfoPermission.None));
         }
 
@@ -353,10 +335,6 @@ namespace SIL.XForge.Scripture.Services
             // Set up environment
             var env = new TestEnvironment();
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
-            env.MockRepository.Query().Returns(new List<UserSecret>() { user01Secret }.AsQueryable());
-
-            // This is to make Tokens.ValidateLifetime() return false
-            user01Secret.ParatextTokens.AccessToken = null;
 
             // Set up mock REST client to return a successful HEAD request
             ISFRestClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
@@ -368,7 +346,7 @@ namespace SIL.XForge.Scripture.Services
 
             var paratextId = "resid_is_16_char";
 
-            var permission = await env.Service.GetResourcePermissionAsync(user01Secret, paratextId, env.User01);
+            var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01);
             Assert.That(permission, Is.EqualTo(TextInfoPermission.Read));
         }
 
@@ -745,7 +723,6 @@ namespace SIL.XForge.Scripture.Services
             {
                 MockWebHostEnvironment = Substitute.For<IWebHostEnvironment>();
                 MockParatextOptions = Substitute.For<IOptions<ParatextOptions>>();
-                MockRepository = Substitute.For<IRepository<UserSecret>>();
                 MockExceptionHandler = Substitute.For<IExceptionHandler>();
                 MockSiteOptions = Substitute.For<IOptions<SiteOptions>>();
                 MockFileSystemService = Substitute.For<IFileSystemService>();
@@ -757,6 +734,15 @@ namespace SIL.XForge.Scripture.Services
                 MockParatextDataHelper = Substitute.For<IParatextDataHelper>();
                 MockInternetSharedRepositorySourceProvider = Substitute.For<IInternetSharedRepositorySourceProvider>();
                 MockRestClientFactory = Substitute.For<ISFRestClientFactory>();
+
+                DateTime aSecondAgo = DateTime.Now - TimeSpan.FromSeconds(1);
+                string accessToken = TokenHelper.CreateAccessToken(aSecondAgo - TimeSpan.FromMinutes(20), aSecondAgo);
+                Tokens tokens = new Tokens { AccessToken = accessToken, RefreshToken = "refresh_token_1234" };
+                MockRepository = new MemoryRepository<UserSecret>(new[] {
+                    new UserSecret { Id = User01, ParatextTokens = tokens },
+                    new UserSecret { Id = User02, ParatextTokens = tokens },
+                    new UserSecret { Id = User03, ParatextTokens = tokens },
+                });
 
                 RealtimeService = new SFMemoryRealtimeService();
 
@@ -775,12 +761,12 @@ namespace SIL.XForge.Scripture.Services
                 PTProjectIds.Add(Project04, HexId.CreateNew());
 
                 MockJwtTokenHelper.GetParatextUsername(Arg.Any<UserSecret>()).Returns(User01);
-                MockJwtTokenHelper.GetJwtTokenFromUserSecret(Arg.Any<UserSecret>()).Returns("token_1234");
+                MockJwtTokenHelper.GetJwtTokenFromUserSecret(Arg.Any<UserSecret>()).Returns(accessToken);
                 MockJwtTokenHelper.RefreshAccessTokenAsync(Arg.Any<ParatextOptions>(), Arg.Any<Tokens>(),
                     Arg.Any<HttpClient>())
                     .Returns(Task.FromResult(new Tokens
                     {
-                        AccessToken = "token_1234",
+                        AccessToken = accessToken,
                         RefreshToken = "refresh_token_1234"
                     }));
                 MockFileSystemService.DirectoryExists(SyncDir).Returns(true);
@@ -794,14 +780,13 @@ namespace SIL.XForge.Scripture.Services
 
             public UserSecret MakeUserSecret(string userSecretId, string username)
             {
-                var userSecret = new UserSecret();
-                userSecret.Id = userSecretId;
-                var ptToken = new Tokens
+                DateTime aSecondAgo = DateTime.Now - TimeSpan.FromSeconds(1);
+                string accessToken = TokenHelper.CreateAccessToken(aSecondAgo - TimeSpan.FromMinutes(20), aSecondAgo);
+                UserSecret userSecret = new UserSecret
                 {
-                    AccessToken = "access_token_1234",
-                    RefreshToken = "refresh_token_1234"
+                    Id = userSecretId,
+                    ParatextTokens = new Tokens { AccessToken = accessToken, RefreshToken = "refresh_token_1234" }
                 };
-                userSecret.ParatextTokens = ptToken;
                 MockJwtTokenHelper.GetParatextUsername(Arg.Any<UserSecret>()).Returns(username);
                 return userSecret;
             }
@@ -874,7 +859,7 @@ namespace SIL.XForge.Scripture.Services
                     .GetFile(Arg.Any<string>(), Arg.Any<string>())
                     .Returns(true);
                 MockRestClientFactory
-                    .Create(Arg.Any<string>(), Arg.Any<string>(), userSecret)
+                    .Create(Arg.Any<string>(), Arg.Any<string>(), Arg.Is<UserSecret>(s => s.Id == userSecret.Id))
                     .Returns(mockClient);
                 return MockRestClientFactory;
             }
@@ -925,8 +910,8 @@ namespace SIL.XForge.Scripture.Services
                 }
                 mockSource.GetRepositories().Returns(sharedRepositories);
                 mockSource.GetProjectsMetaData().Returns(new[] { projMeta1, projMeta2, projMeta3 });
-                MockInternetSharedRepositorySourceProvider.GetSource(userSecret, Arg.Any<string>(),
-                    Arg.Any<string>(), Arg.Any<string>()).Returns(mockSource);
+                MockInternetSharedRepositorySourceProvider.GetSource(Arg.Is<UserSecret>(s => s.Id == userSecret.Id),
+                        Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns(mockSource);
                 return mockSource;
             }
 
