@@ -5,6 +5,8 @@ DEPLOY_RUNTIME=${DEPLOY_RUNTIME:-linux-x64}
 ANGULAR_CONFIG=${ANGULAR_CONFIG:-production}
 BUILD_OUTPUT=artifacts
 DEPLOY_PATH=/var/www/$APP_NAME.org$APP_SUFFIX
+# Relative to repo root
+ERROR_PAGES_PATH=src/SIL.XForge.Scripture/ErrorPages
 
 pushd .. > /dev/null
 
@@ -36,6 +38,9 @@ EOF
 sudo chown -R :www-data $BUILD_OUTPUT/app
 
 rsync -progzlt --chmod=Dug=rwx,Fug=rwx,o-rwx --delete-during --stats --rsync-path="sudo rsync" --rsh="ssh -v -i $DEPLOY_CREDENTIALS" artifacts/app/ root@$DEPLOY_DESTINATION:$DEPLOY_PATH/app || exit 1
+
+rsync -vaz --rsync-path="sudo rsync" --rsh="ssh -v -i ${DEPLOY_CREDENTIALS}" \
+  "${ERROR_PAGES_PATH}/" root@${DEPLOY_DESTINATION}:"${DEPLOY_PATH}/htdocs" || exit 2
 
 popd > /dev/null
 
