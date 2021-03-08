@@ -34,6 +34,7 @@ namespace SIL.XForge.Scripture.Services
         private const string User02 = "user02";
         private const string User03 = "user03";
         private const string User04 = "user04";
+        private const string LinkExpiredUser = "linkexpireduser";
         private const string SiteId = "xf";
 
         [Test]
@@ -41,12 +42,15 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             const string email = "newuser@example.com";
+            const string role = SFProjectRole.CommunityChecker;
 
-            await env.Service.InviteAsync(User01, Project01, email, "en");
+            await env.Service.InviteAsync(User01, Project01, email, "en", role);
             await env.EmailService.Received(1).SendEmailAsync(email, Arg.Any<string>(),
                 Arg.Is<string>(body =>
                     body.Contains($"http://localhost/projects/{Project01}?sharing=true&shareKey=1234abc")
                     && body.Contains("The project invitation link expires in 14 days")));
+            SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project01);
+            Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).ProjectRole, Is.EqualTo(role));
         }
 
         [Test]
@@ -54,8 +58,9 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             const string email = "newuser@example.com";
+            const string role = SFProjectRole.CommunityChecker;
 
-            await env.Service.InviteAsync(User01, Project03, email, "en");
+            await env.Service.InviteAsync(User01, Project03, email, "en", role);
             await env.EmailService.Received(1).SendEmailAsync(email, Arg.Any<string>(),
                 Arg.Is<string>(body =>
                     body.Contains($"http://localhost/projects/{Project03}?sharing=true&shareKey=1234abc")
@@ -64,6 +69,7 @@ namespace SIL.XForge.Scripture.Services
             // Code was recorded in database and email address was encoded in ShareKeys
             SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
             Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).Key, Is.EqualTo("1234abc"));
+            Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).ProjectRole, Is.EqualTo(role));
         }
 
         [Test]
@@ -71,15 +77,16 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             const string email = "bob@example.com";
+            const string role = SFProjectRole.CommunityChecker;
 
             SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
             Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).ExpirationTime,
                 Is.LessThan(DateTime.UtcNow.AddDays(2)), "setup");
             var invitees = await env.Service.InvitedUsersAsync(User01, Project03);
             Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(
-                new[] { "bob@example.com", "user02@example.com", "user03@example.com", "bill@example.com" }), "setup");
+                new[] { "bob@example.com", "expired@example.com", "user03@example.com", "bill@example.com" }), "setup");
 
-            await env.Service.InviteAsync(User01, Project03, email, "en");
+            await env.Service.InviteAsync(User01, Project03, email, "en", role);
             // Invitation email was resent but with original code and updated time
             await env.EmailService.Received(1).SendEmailAsync(Arg.Is(email), Arg.Any<string>(),
                 Arg.Is<string>(body =>
@@ -90,24 +97,26 @@ namespace SIL.XForge.Scripture.Services
                 "Code should not have been changed");
             Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).ExpirationTime,
                 Is.GreaterThan(DateTime.UtcNow.AddDays(13)));
+            Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).ProjectRole, Is.EqualTo(role));
 
             invitees = await env.Service.InvitedUsersAsync(User01, Project03);
             Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(
-                new[] { "bob@example.com", "user02@example.com", "user03@example.com", "bill@example.com" }));
+                new[] { "bob@example.com", "expired@example.com", "user03@example.com", "bill@example.com" }));
         }
 
         [Test]
         public async Task Invite_SpecificSharingEnabledCodeExpired_UserInvitedWithNewCode()
         {
             var env = new TestEnvironment();
-            const string email = "user02@example.com";
+            const string email = "expired@example.com";
+            const string role = SFProjectRole.CommunityChecker;
 
             SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
             Assert.That(projectSecret.ShareKeys.Any(
                 sk => sk.Email == email && sk.ExpirationTime < DateTime.UtcNow), Is.True, "setup");
 
             env.SecurityService.GenerateKey().Returns("newkey");
-            await env.Service.InviteAsync(User01, Project03, email, "en");
+            await env.Service.InviteAsync(User01, Project03, email, "en", role);
             // Invitation email was sent with a new code
             await env.EmailService.Received(1).SendEmailAsync(Arg.Is(email), Arg.Any<string>(),
                 Arg.Is<string>(body =>
@@ -116,6 +125,7 @@ namespace SIL.XForge.Scripture.Services
             projectSecret = env.ProjectSecrets.Get(Project03);
             Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).Key, Is.EqualTo("newkey"),
                 "Code should not have been changed");
+            Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).ProjectRole, Is.EqualTo(role));
         }
 
         [Test]
@@ -127,20 +137,64 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.CheckingConfig.ShareLevel,
                 Is.EqualTo(CheckingShareLevel.Anyone), "setup: link sharing should be enabled");
             const string email = "newuser@example.com";
+            const string role = SFProjectRole.CommunityChecker;
             // SUT
-            await env.Service.InviteAsync(User01, Project02, email, "en");
+            await env.Service.InviteAsync(User01, Project02, email, "en", role);
             await env.EmailService.Received(1).SendEmailAsync(email, Arg.Any<string>(),
                 Arg.Is<string>(
                     body => body.Contains($"http://localhost/projects/{Project02}?sharing=true&shareKey=1234abc"))
             );
+            SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project02);
+            Assert.That(projectSecret.ShareKeys.Single(sk => sk.Key == "1234abc").ProjectRole, Is.EqualTo(role));
+        }
+
+        [Test]
+        public async Task GetLinkSharingKeyAsync_LinkDoesNotExist_NewShareKeyCreated()
+        {
+            var env = new TestEnvironment();
+            await env.Service.UpdateSettingsAsync(User01, Project03, new SFProjectSettings { ShareLevel = "anyone" });
+            SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
+            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == null), Is.False);
+            env.SecurityService.GenerateKey().Returns("newkey");
+
+            string shareLink = await env.Service.GetLinkSharingKeyAsync(Project03, SFProjectRole.CommunityChecker);
+            Assert.That(shareLink, Is.EqualTo("newkey"));
+            projectSecret = env.ProjectSecrets.Get(Project03);
+            Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == null && sk.ExpirationTime == null).Key,
+                Is.EqualTo("newkey"));
+        }
+
+        [Test]
+        public async Task GetLinkSharingKeyAsync_LinkExists_ReturnsExistingKey()
+        {
+            var env = new TestEnvironment();
+            const string role = SFProjectRole.CommunityChecker;
+            SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project02);
+
+            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == null && sk.ProjectRole == role), Is.True,
+                "setup - a link sharing key should exist");
+            string shareLink = await env.Service.GetLinkSharingKeyAsync(Project02, role);
+            Assert.That(shareLink, Is.EqualTo("linksharing02"));
+        }
+
+        [Test]
+        public async Task GetLinkSharingKeyAsync_LinkSharingDisabled_ForbiddenError()
+        {
+            var env = new TestEnvironment();
+            SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project01);
+            Assert.That(projectSecret.ShareKeys.Count, Is.EqualTo(0));
+            string key = await env.Service.GetLinkSharingKeyAsync(Project01, SFProjectRole.CommunityChecker);
+            Assert.That(key, Is.Null);
+            projectSecret = env.ProjectSecrets.Get(Project01);
+            Assert.That(projectSecret.ShareKeys.Count, Is.EqualTo(0));
         }
 
         [Test]
         public async Task InviteAsync_SharingDisabled_ForbiddenError()
         {
             var env = new TestEnvironment();
-            Assert.ThrowsAsync<ForbiddenException>(
-                () => env.Service.InviteAsync(User02, Project01, "newuser@example.com", "en"));
+            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.InviteAsync(User02, Project01,
+                "newuser@example.com", "en", SFProjectRole.CommunityChecker));
             await env.EmailService.DidNotReceiveWithAnyArgs().SendEmailAsync(default, default, default);
         }
 
@@ -148,14 +202,16 @@ namespace SIL.XForge.Scripture.Services
         public async Task InviteAsync_SpecificSharingEnabled_ProjectUserNotInvited()
         {
             var env = new TestEnvironment();
-            const string email = "user01@example.com";
+            const string email = "user02@example.com";
+            const string role = SFProjectRole.CommunityChecker;
             SFProject project = env.GetProject(Project03);
-            Assert.That(project.UserRoles.ContainsKey(User01), Is.True,
+            Assert.That(project.UserRoles.TryGetValue(User02, out string userRole), Is.True,
                 "setup - user should already be a project user");
+            Assert.That(userRole, Is.EqualTo(role));
 
-            Assert.That(await env.Service.InviteAsync(User01, Project03, email, "en"), Is.False);
+            Assert.That(await env.Service.InviteAsync(User01, Project03, email, "en", role), Is.False);
             project = env.GetProject(Project03);
-            Assert.That(project.UserRoles.ContainsKey(User01), Is.True, "user should still be a project user");
+            Assert.That(project.UserRoles.ContainsKey(User02), Is.True, "user should still be a project user");
 
             SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
             Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == email), Is.False,
@@ -171,16 +227,18 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             SFProject project = env.GetProject(Project01);
             Assert.That(project.UserRoles.ContainsKey(User02), Is.True, "setup");
-            Assert.DoesNotThrowAsync(() => env.Service.CheckLinkSharingAsync(User02, Project01));
+            Assert.DoesNotThrowAsync(() => env.Service.CheckLinkSharingAsync(User02, Project01, "abcd"));
         }
 
         [Test]
-        public void CheckLinkSharingAsync_LinkSharingDisabledAndUserNotOnProject_Forbidden()
+        public async Task CheckLinkSharingAsync_LinkSharingDisabledAndUserNotOnProject_Forbidden()
         {
             var env = new TestEnvironment();
-            SFProject project = env.GetProject(Project01);
+            SFProject project = env.GetProject(Project02);
             Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
-            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CheckLinkSharingAsync(User03, Project01));
+            await env.Service.UpdateSettingsAsync(User02, Project02, new SFProjectSettings { ShareEnabled = false });
+            Assert.ThrowsAsync<ForbiddenException>(
+                () => env.Service.CheckLinkSharingAsync(User03, Project02, "linksharing02"));
         }
 
         [Test]
@@ -190,9 +248,10 @@ namespace SIL.XForge.Scripture.Services
             SFProject project = env.GetProject(Project02);
             Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
 
-            await env.Service.CheckLinkSharingAsync(User03, Project02);
+            await env.Service.CheckLinkSharingAsync(User03, Project02, "linksharing02");
             project = env.GetProject(Project02);
-            Assert.That(project.UserRoles.ContainsKey(User03), Is.True);
+            Assert.That(project.UserRoles.TryGetValue(User03, out string userRole), Is.True);
+            Assert.That(userRole, Is.EqualTo(SFProjectRole.CommunityChecker));
             User user = env.GetUser(User03);
             Assert.That(user.Sites[SiteId].Projects, Contains.Item(Project02));
         }
@@ -201,19 +260,17 @@ namespace SIL.XForge.Scripture.Services
         public async Task CheckLinkSharingAsync_LinkSharingEnabledAndShareKeyExists_UserJoinedAndKeyRemoved()
         {
             var env = new TestEnvironment();
-            SFProject project = env.GetProject(Project03);
-            SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
+            SFProject project = env.GetProject(Project02);
+            SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project02);
 
             Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
-            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.True, "setup");
+            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "existingkeyuser03"), Is.True, "setup");
 
-            await env.Service.UpdateSettingsAsync(User01, Project03,
-                new SFProjectSettings { ShareLevel = CheckingShareLevel.Anyone });
-            await env.Service.CheckLinkSharingAsync(User03, Project03);
-            project = env.GetProject(Project03);
-            projectSecret = env.ProjectSecrets.Get(Project03);
+            await env.Service.CheckLinkSharingAsync(User03, Project02, "existingkeyuser03");
+            project = env.GetProject(Project02);
+            projectSecret = env.ProjectSecrets.Get(Project02);
             Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
-            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.False,
+            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "existingkeyuser03"), Is.False,
                 "Key should have been removed from project");
         }
 
@@ -227,7 +284,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.UserRoles.ContainsKey(User04), Is.False, "setup");
             var invitees = await env.Service.InvitedUsersAsync(User01, Project03);
             Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(
-                new[] { "bob@example.com", "user02@example.com", "user03@example.com", "bill@example.com" }), "setup");
+                new[] { "bob@example.com", "expired@example.com", "user03@example.com", "bill@example.com" }), "setup");
 
             // Use the sharekey linked to user03
             await env.Service.CheckLinkSharingAsync(User04, Project03, "key1234");
@@ -239,7 +296,7 @@ namespace SIL.XForge.Scripture.Services
 
             invitees = await env.Service.InvitedUsersAsync(User01, Project03);
             Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(
-                new[] { "bob@example.com", "user02@example.com", "bill@example.com" }));
+                new[] { "bob@example.com", "expired@example.com", "bill@example.com" }));
         }
 
         [Test]
@@ -249,15 +306,17 @@ namespace SIL.XForge.Scripture.Services
             SFProject project = env.GetProject(Project03);
             SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
 
-            Assert.That(project.UserRoles.ContainsKey(User02), Is.False, "setup");
-            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == "user02@example.com"), Is.True, "setup");
+            Assert.That(project.UserRoles.ContainsKey(LinkExpiredUser), Is.False, "setup");
+            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == "expired@example.com"), Is.True, "setup");
 
-            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CheckLinkSharingAsync(User02, Project03, "keyexp"),
-                "The user should be forbidden to join the project: Email was in ShareKeys, but code was expired.");
+            Assert.ThrowsAsync<ForbiddenException>(() =>
+                env.Service.CheckLinkSharingAsync(LinkExpiredUser, Project03, "keyexp"),
+                "The user should be forbidden to join the project: Email was in ShareKeys, but code was expired."
+            );
 
             var invitees = await env.Service.InvitedUsersAsync(User01, Project03);
             Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(new[] {
-                "bob@example.com", "user02@example.com", "user03@example.com", "bill@example.com" }));
+                "bob@example.com", "expired@example.com", "user03@example.com", "bill@example.com" }));
         }
 
         [Test]
@@ -270,7 +329,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
             Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == "user03@example.com"), Is.True, "setup");
 
-            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CheckLinkSharingAsync(User03, Project03),
+            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CheckLinkSharingAsync(User03, Project03, "badcode"),
                 "The user should be forbidden to join the project: Email address was in ShareKeys list, but wrong code was given.");
         }
 
@@ -357,21 +416,24 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(await env.Service.IsAlreadyInvitedAsync(User03, Project02, "nobody@example.com"), Is.False);
         }
 
+        [Test]
         public async Task InvitedUsers_Reports()
         {
             var env = new TestEnvironment();
             // Project with no outstanding invitations
             Assert.That((await env.Service.InvitedUsersAsync(User01, Project01)).Count, Is.EqualTo(0));
 
+            // Project with one specific shareKey and one link sharing shareKey record
+            IReadOnlyList<InviteeStatus> invitees = await env.Service.InvitedUsersAsync(User02, Project02);
+            Assert.That(invitees.Count, Is.EqualTo(1));
+            Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(new string[] { "user03@example.com" }));
+
             // Project with several outstanding invitations
-            IReadOnlyList<InviteeStatus> invitees = await env.Service.InvitedUsersAsync(User01, Project03);
+            invitees = await env.Service.InvitedUsersAsync(User01, Project03);
             Assert.That(invitees.Count, Is.EqualTo(4));
             string[] expectedEmailList =
-                { "bob@example.com", "user02@example.com", "user03@example.com", "bill@example.com" };
-            foreach (var expectedEmail in expectedEmailList)
-            {
-                Assert.That(invitees.Any(i => i.Email == expectedEmail), Is.True);
-            }
+                { "bob@example.com", "expired@example.com", "user03@example.com", "bill@example.com" };
+            Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(expectedEmailList));
         }
 
         [Test]
@@ -773,6 +835,12 @@ namespace SIL.XForge.Scripture.Services
                         Email = "user04@example.com",
                         Sites = new Dictionary<string,Site> { { SiteId, new Site() } },
                         Role = SystemRole.SystemAdmin
+                    },
+                    new User
+                    {
+                        Id = LinkExpiredUser,
+                        Email = "expired@example.com",
+                        Sites = new Dictionary<string, Site> { { SiteId, new Site() }}
                     }
                 }));
                 RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(
@@ -856,7 +924,8 @@ namespace SIL.XForge.Scripture.Services
                             },
                             UserRoles =
                             {
-                                { User01, SFProjectRole.Administrator }
+                                { User01, SFProjectRole.Administrator },
+                                { User02, SFProjectRole.CommunityChecker }
                             }
                         },
                         new SFProject
@@ -900,10 +969,29 @@ namespace SIL.XForge.Scripture.Services
                 });
                 var audioService = Substitute.For<IAudioService>();
                 EmailService = Substitute.For<IEmailService>();
+                var currentTime = DateTime.Now;
                 ProjectSecrets = new MemoryRepository<SFProjectSecret>(new[]
                 {
                     new SFProjectSecret { Id = Project01 },
-                    new SFProjectSecret { Id = Project02 },
+                    new SFProjectSecret
+                    {
+                        Id = Project02,
+                        ShareKeys = new List<ShareKey>
+                        {
+                            new ShareKey
+                            {
+                                Key = "linksharing02",
+                                ProjectRole = SFProjectRole.CommunityChecker
+                            },
+                            new ShareKey
+                            {
+                                Email = "user03@example.com",
+                                Key = "existingkeyuser03",
+                                ExpirationTime = currentTime.AddDays(1),
+                                ProjectRole = SFProjectRole.CommunityChecker
+                            }
+                        }
+                    },
                     new SFProjectSecret
                     {
                         Id = Project03,
@@ -913,16 +1001,30 @@ namespace SIL.XForge.Scripture.Services
                             {
                                 Email = "bob@example.com",
                                 Key = "key1111",
-                                ExpirationTime = DateTime.Now.AddDays(1)
+                                ExpirationTime = currentTime.AddDays(1),
+                                ProjectRole = SFProjectRole.CommunityChecker
                             },
                             new ShareKey
                             {
-                                Email = "user02@example.com",
+                                Email = "expired@example.com",
                                 Key = "keyexp",
-                                ExpirationTime = DateTime.Now.AddDays(-1)
+                                ExpirationTime = currentTime.AddDays(-1),
+                                ProjectRole = SFProjectRole.CommunityChecker,
                             },
-                            new ShareKey { Email = "user03@example.com", Key = "key1234" },
-                            new ShareKey { Email = "bill@example.com", Key = "key2222" }
+                            new ShareKey
+                            {
+                                Email = "user03@example.com",
+                                Key = "key1234",
+                                ExpirationTime = currentTime.AddDays(1),
+                                ProjectRole = SFProjectRole.CommunityChecker
+                            },
+                            new ShareKey
+                            {
+                                Email = "bill@example.com",
+                                Key = "key2222",
+                                ExpirationTime = currentTime.AddDays(1),
+                                ProjectRole = SFProjectRole.CommunityChecker
+                            }
                         }
                     },
                 });

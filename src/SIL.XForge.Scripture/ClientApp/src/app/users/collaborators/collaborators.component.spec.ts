@@ -438,7 +438,7 @@ class TestEnvironment {
     }
     roles.set(NONE_ROLE.role, NONE_ROLE);
     when(mockedProjectService.roles).thenReturn(roles);
-    when(mockedProjectService.onlineInvite(this.project01Id, anything(), anything())).thenResolve();
+    when(mockedProjectService.onlineInvite(this.project01Id, anything(), anything(), anything())).thenResolve();
     when(mockedProjectService.onlineInvitedUsers(this.project01Id)).thenResolve([]);
     when(mockedNoticeService.show(anything())).thenResolve();
     when(mockedLocationService.origin).thenReturn('https://scriptureforge.org');
@@ -448,6 +448,7 @@ class TestEnvironment {
     when(mockedProjectService.get(anything())).thenCall(projectId =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId)
     );
+    when(mockedProjectService.onlineGetLinkSharingKey(this.project01Id, anything())).thenResolve('linkSharingKey01');
     this.realtimeService.addSnapshots<UserProfile>(UserProfileDoc.COLLECTION, [
       {
         id: 'user01',

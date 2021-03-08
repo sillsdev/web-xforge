@@ -151,11 +151,11 @@ namespace SIL.XForge.Scripture.Controllers
             }
         }
 
-        public async Task<IRpcMethodResult> Invite(string projectId, string email, string locale)
+        public async Task<IRpcMethodResult> Invite(string projectId, string email, string locale, string role)
         {
             try
             {
-                if (await _projectService.InviteAsync(UserId, projectId, email, locale))
+                if (await _projectService.InviteAsync(UserId, projectId, email, locale, role))
                     return Ok();
                 return Ok(AlreadyProjectMemberResponse);
             }
@@ -243,6 +243,18 @@ namespace SIL.XForge.Scripture.Controllers
         public IRpcMethodResult IsSourceProject(string projectId)
         {
             return Ok(_projectService.IsSourceProject(projectId));
+        }
+
+        public async Task<IRpcMethodResult> LinkSharingKey(string projectId, string role)
+        {
+            try
+            {
+                return Ok(await _projectService.GetLinkSharingKeyAsync(projectId, role));
+            }
+            catch (DataNotFoundException dnfe)
+            {
+                return NotFoundError(dnfe.Message);
+            }
         }
 
         public async Task<IRpcMethodResult> AddTranslateMetrics(string projectId, TranslateMetrics metrics)
