@@ -146,9 +146,8 @@
   <data name="InviteInstructions" xml:space="preserve">
     <value>如果您还不是{0}用户，则在单击链接后，单击{1}注册{2}并执行以下操作之一：</value>
   </data>
-  <data name="InviteLinkSharingOff" xml:space="preserve">
-    <value>该链接仅适用于该电子邮件地址。</value>
-    <comment>Previously this text was used when link sharing was turned off for a project, but now it is always used when sending an invitation whether link sharing is on or off.</comment>
+  <data name="InviteLinkExpires" xml:space="preserve">
+    <value>The project invitation link expires in 14 days.</value>
   </data>
   <data name="InvitePTOption" xml:space="preserve">
     <value>点击{0}使用Paratext注册{1}，然后按照说明使用现有的圣经辅助工具帐户访问{2}，或者</value>

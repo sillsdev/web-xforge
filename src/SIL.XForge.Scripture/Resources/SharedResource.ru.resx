@@ -146,9 +146,8 @@
   <data name="InviteInstructions" xml:space="preserve">
     <value>Если вы еще не являетесь пользователем {0}, то после перехода по ссылке нажмите {1}Sign Up{2} и выполните одно из следующих действий:</value>
   </data>
-  <data name="InviteLinkSharingOff" xml:space="preserve">
-    <value>Эта ссылка будет работать только на этот адрес электронной почты.</value>
-    <comment>Previously this text was used when link sharing was turned off for a project, but now it is always used when sending an invitation whether link sharing is on or off.</comment>
+  <data name="InviteLinkExpires" xml:space="preserve">
+    <value>The project invitation link expires in 14 days.</value>
   </data>
   <data name="InvitePTOption" xml:space="preserve">
     <value>Нажмите {0}Зарегистрироваться в Paratext{1} и следуйте инструкциям для доступа к {2} с помощью существующей учетной записи Paratext, или</value>

@@ -146,9 +146,8 @@
   <data name="InviteInstructions" xml:space="preserve">
     <value>Si aún no es usuario de {0}, después de hacer clic en el enlace, haga clic en {1}Registrarse{2} y realice una de las siguientes acciones:</value>
   </data>
-  <data name="InviteLinkSharingOff" xml:space="preserve">
-    <value>Este enlace sólo funcionará para esta dirección de correo electrónico.</value>
-    <comment>Previously this text was used when link sharing was turned off for a project, but now it is always used when sending an invitation whether link sharing is on or off.</comment>
+  <data name="InviteLinkExpires" xml:space="preserve">
+    <value>The project invitation link expires in 14 days.</value>
   </data>
   <data name="InvitePTOption" xml:space="preserve">
     <value>Haga clic en {0}Regístrese con Paratext{1} y siga las instrucciones para acceder a {2} utilizando una cuenta de Paratext existente, o bien</value>
