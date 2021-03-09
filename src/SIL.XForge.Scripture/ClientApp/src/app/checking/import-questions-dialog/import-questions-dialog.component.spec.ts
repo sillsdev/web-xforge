@@ -207,25 +207,6 @@ describe('ImportQuestionsDialogComponent', () => {
       verseNum: 2
     });
   }));
-
-  it('should prompt the user for importing a question that has had the reference changed', fakeAsync(() => {
-    const env = new TestEnvironment(true);
-    when(env.mockedImportQuestionsConfirmationMdcDialogRef.afterClosed()).thenReturn(
-      of({
-        questions: [
-          {
-            before: 'GEN 43:2 Now the famine was severe in the land.',
-            after: 'GEN 43:1 Now the famine was severe in the land.',
-            checked: true
-          }
-        ]
-      } as ImportQuestionsConfirmationDialogData)
-    );
-    env.selectQuestion(env.questionRows[1]);
-    verify(env.dialogSpy.open(anything(), anything())).once();
-    env.click(env.submitButton);
-    expect(env.editedTransceleratorQuestionIds).toEqual(['4']);
-  }));
 });
 
 @Directive({
