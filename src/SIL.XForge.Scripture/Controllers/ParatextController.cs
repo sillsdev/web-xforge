@@ -66,6 +66,10 @@ namespace SIL.XForge.Scripture.Controllers
                 var resources = await _paratextService.GetResourcesAsync(_userAccessor.UserId);
                 return Ok(resources.ToDictionary(r => r.ParatextId, r => r.Name));
             }
+            catch (DataNotFoundException)
+            {
+                return NoContent();
+            }
             catch (SecurityException)
             {
                 return NoContent();
