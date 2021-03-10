@@ -1,3 +1,16 @@
+@import 'bootstrap/scss/mixins/breakpoints';
+
+@import 'src/variables';
+form {
+  display: flex;
+  width: 100%;
+  @include media-breakpoint-down(sm) {
+    flex-direction: column;
+  }
+  #email {
+    flex: 1;
+  }
+}
 mdc-text-field {
   width: 100%;
 }
@@ -10,6 +23,22 @@ mdc-text-field {
 #send-btn {
   // add margin that is same height as the text field helper text, so the button is centered properly
   margin-bottom: 19px;
+}
+
+:host:not(.share-dialog) {
+  mat-form-field {
+    &:not(:last-child) {
+      @include media-breakpoint-up(md) {
+        margin-right: 20px;
+      }
+    }
+  }
+}
+
+:host.share-dialog {
+  form {
+    flex-direction: column;
+  }
 }
 
 .invite-by-link .offline-text {
