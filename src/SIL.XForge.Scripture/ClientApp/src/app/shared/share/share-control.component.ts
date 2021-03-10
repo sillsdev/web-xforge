@@ -3,7 +3,8 @@ import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, Outpu
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { combineLatest, Subject } from 'rxjs';
+import { BehaviorSubject, combineLatest } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -33,7 +34,7 @@ export class ShareControlComponent extends SubscriptionDisposable implements Aft
 
   private _projectId?: string;
   private linkSharingKey: string = '';
-  private projectId$: Subject<string> = new Subject<string>();
+  private projectId$: BehaviorSubject<string> = new BehaviorSubject<string>('');
 
   constructor(
     readonly i18n: I18nService,
@@ -57,18 +58,21 @@ export class ShareControlComponent extends SubscriptionDisposable implements Aft
   ngAfterViewInit() {
     // TODO: Allow user to select a role for the invitation link
     const role = SFProjectRole.CommunityChecker;
-    this.subscribe(combineLatest([this.pwaService.onlineStatus, this.projectId$]), async ([isOnline, _]) => {
-      if (isOnline) {
-        if (this._projectId != null) {
-          this.linkSharingKey = await this.projectService.onlineGetLinkSharingKey(this._projectId, role);
+    this.subscribe(
+      combineLatest([this.pwaService.onlineStatus, this.projectId$]).pipe(filter(([_, projectId]) => projectId !== '')),
+      async ([isOnline, _]) => {
+        if (isOnline) {
+          if (this._projectId != null) {
+            this.linkSharingKey = await this.projectService.onlineGetLinkSharingKey(this._projectId, role);
+          }
+          this.sendInviteForm.enable();
+        } else {
+          this.sendInviteForm.disable();
+          // Workaround for angular/angular#17793 (ExpressionChangedAfterItHasBeenCheckedError after form disabled)
+          this.changeDetector.detectChanges();
         }
-        this.sendInviteForm.enable();
-      } else {
-        this.sendInviteForm.disable();
-        // Workaround for angular/angular#17793 (ExpressionChangedAfterItHasBeenCheckedError after form disabled)
-        this.changeDetector.detectChanges();
       }
-    });
+    );
   }
 
   get shareLink(): string {
