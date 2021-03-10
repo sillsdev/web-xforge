@@ -18,11 +18,11 @@
     "product_version": "Versão do produto: v{{ version }}",
     "project_home": "Página inicial do projeto",
     "redirecting_in_moments": "Redirecionando em alguns instantes...",
-    "refresh": "Refresh",
+    "refresh": "Atualizar",
     "report_issue_email": "e-mail {{ email }}",
     "report_issue": "Relatar um problema",
     "scripture_checking_not_available": "A verificação do Texto Bíblico não está disponível neste projeto.",
-    "update_is_available": "An update is available. Please refresh the page."
+    "update_is_available": "Uma atualização está disponível. Por favor, atualize a página."
   },
   "canon": {
     "book_names": {
@@ -153,7 +153,7 @@
   },
   "checking": {
     "me": "Eu",
-    "unknown_author": "Unknown author",
+    "unknown_author": "Autor desconhecido",
     "next": "Próximo",
     "previous": "Anterior",
     "questions": "Perguntas ({{ count }})",
@@ -265,7 +265,7 @@
   },
   "project": {
     "project_link_is_invalid": "O link do projeto é inválido.",
-    "problem_finding_project": "There was a problem finding a project ({{ projectID }}) or user specific information for the project. There may be a typo in the URL you specified. You may have tried to access a project that is no longer available."
+    "problem_finding_project": "Ocorreu um problema ao localizar um projeto ({{ projectID }}) ou informações específicas do usuário do projeto. Pode haver um erro de digitação no URL que você indicou. Você pode ter tentado acessar um projeto que não está mais disponível."
   },
   "project_deleted_dialog": {
     "ok": "OK",
@@ -284,12 +284,14 @@
     "copy_link": "Copiar link",
     "email_invalid": "O endereço de e-mail é inválido",
     "email": "E-mail",
+    "invitation_language": "Idioma do convite",
     "invitation_sent": "Um e-mail de convite foi enviado para {{ email }}",
     "invite_people": "Convidar pessoas",
     "link_copied": "Link copiado para a área de transferência",
     "link_sharing": "Compartilhamento de link",
     "not_inviting_already_member": "Não convidar: Usuário já é membro deste projeto",
     "resend": "Reenviar",
+    "select_invitation_language": "Selecione um idioma para o e-mail do convite",
     "send": "Enviar",
     "share_by_email_not_available_offline": "Convidar usuários por e-mail não está disponível enquanto estiver offline."
   },

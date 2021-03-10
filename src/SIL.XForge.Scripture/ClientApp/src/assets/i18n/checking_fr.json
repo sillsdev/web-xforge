@@ -18,11 +18,11 @@
     "product_version": "Version du produit : v{{ version }}",
     "project_home": "Accueil du projet",
     "redirecting_in_moments": "Redirection dans quelques instants...",
-    "refresh": "Refresh",
+    "refresh": "Rafraîchir",
     "report_issue_email": "e-mail {{ email }}",
     "report_issue": "Signaler un problème",
     "scripture_checking_not_available": "La vérification des écritures n'est pas disponible dans ce projet.",
-    "update_is_available": "An update is available. Please refresh the page."
+    "update_is_available": "Une mise à jour est disponible. Veuillez rafraîchir la page."
   },
   "canon": {
     "book_names": {
@@ -172,7 +172,7 @@
     "record_upload": "Enregistrer/Télétransmettre",
     "record": "Enregistrer",
     "recording_automatically_stopped": "L'enregistrement de votre réponse a été arrêté automatiquement.",
-    "save_answer": "Enregistrer la réponse",
+    "save_answer": "Envoyer la réponse",
     "select_text": "Sélectionner le texte",
     "select_verses": "Sélectionner des versets",
     "select": "Sélectionner",
@@ -284,12 +284,14 @@
     "copy_link": "Copier le lien",
     "email_invalid": "L'adresse e-mail n'est pas valide",
     "email": "E-mail",
+    "invitation_language": "Langue d'invitation",
     "invitation_sent": "Un e-mail d'invitation a été envoyé à {{ email }}",
     "invite_people": "Inviter des personnes",
     "link_copied": "Lien copié dans le presse-papiers",
     "link_sharing": "Partage de lien",
     "not_inviting_already_member": "Pas d'invitation : L'utilisateur est déjà membre de ce projet",
     "resend": "Renvoyer",
+    "select_invitation_language": "Sélectionnez une langue pour l'e-mail d'invitation",
     "send": "Envoyer",
     "share_by_email_not_available_offline": "L'invitation d'utilisateurs par e-mail n'est pas disponible hors-connexion."
   },
