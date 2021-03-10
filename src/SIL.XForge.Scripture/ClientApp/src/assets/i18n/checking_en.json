@@ -299,6 +299,7 @@
     "email_invalid": "Email address is invalid",
     "email": "Email",
     "invitation_language": "Invitation language",
+    "invitation_role": "Role",
     "invitation_sent": "An invitation email has been sent to {{ email }}",
     "invite_people": "Invite people",
     "link_copied": "Link copied to clipboard",
@@ -307,6 +308,7 @@
     "not_inviting_already_member": "Not inviting: User is already a member of this project",
     "resend": "Resend",
     "select_invitation_language": "Select a language for the invitation email",
+    "select_invitation_role": "Select a role for the invited user",
     "send": "Send",
     "share_by_email_not_available_offline": "Inviting users by email is unavailable while offline."
   },

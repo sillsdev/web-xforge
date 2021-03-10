@@ -5,8 +5,10 @@
         <mdc-dialog-title>{{ t("share_with_others") }}</mdc-dialog-title>
         <mdc-dialog-content>
           <app-share-control
+            class="share-dialog"
             [projectId]="data.projectId"
             [isLinkSharingEnabled]="data.isLinkSharingEnabled"
+            [defaultRole]="data.defaultRole"
           ></app-share-control>
         </mdc-dialog-content>
         <mdc-dialog-actions align="end">

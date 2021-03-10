@@ -199,8 +199,8 @@ class TestEnvironment {
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedProjectService.roles).thenReturn(
       new Map<string, ProjectRoleInfo>([
-        ['admin', { role: 'admin', displayName: 'Administrator' }],
-        ['user', { role: 'user', displayName: 'User' }],
+        ['admin', { role: 'admin', displayName: 'Administrator', canBeShared: false }],
+        ['user', { role: 'user', displayName: 'User', canBeShared: false }],
         [NONE_ROLE.role, NONE_ROLE]
       ])
     );

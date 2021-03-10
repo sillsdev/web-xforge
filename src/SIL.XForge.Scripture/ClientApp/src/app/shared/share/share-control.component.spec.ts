@@ -5,6 +5,7 @@ import { flush } from '@angular/core/testing';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
+import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { BehaviorSubject } from 'rxjs';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -15,7 +16,9 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ShareControlComponent } from './share-control.component';
@@ -25,6 +28,7 @@ const mockedNoticeService = mock(NoticeService);
 const mockedPwaService = mock(PwaService);
 const mockedI18nService = mock(I18nService);
 const mockedLocationService = mock(LocationService);
+const mockedUserService = mock(UserService);
 
 describe('ShareControlComponent', () => {
   configureTestingModule(() => ({
@@ -35,17 +39,18 @@ describe('ShareControlComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: PwaService, useMock: mockedPwaService },
       { provide: I18nService, useMock: mockedI18nService },
-      { provide: LocationService, useMock: mockedLocationService }
+      { provide: LocationService, useMock: mockedLocationService },
+      { provide: UserService, useMock: mockedUserService }
     ]
   }));
 
   it('shows Send button when link sharing enabled', () => {
-    const env = new TestEnvironment(true);
+    const env = new TestEnvironment({ isLinkSharingEnabled: true });
     expect(env.sendButton).not.toBeNull();
   });
 
   it('shows Send button when link sharing is disabled', () => {
-    const env = new TestEnvironment(false);
+    const env = new TestEnvironment({ isLinkSharingEnabled: false });
     expect(env.sendButton).not.toBeNull();
   });
 
@@ -109,7 +114,7 @@ describe('ShareControlComponent', () => {
   }));
 
   it('shareLink is for projectId and has specific key', fakeAsync(() => {
-    const env = new TestEnvironment(true, 'myProject1');
+    const env = new TestEnvironment({ isLinkSharingEnabled: true, projectId: 'myProject1' });
     env.wait();
     verify(mockedProjectService.onlineGetLinkSharingKey('myProject1', anything())).once();
     expect(env.hostComponent.component.shareLink).toContain('myProject1?sharing=true&shareKey=linkSharing01');
@@ -187,7 +192,7 @@ describe('ShareControlComponent', () => {
   }));
 
   it('clicking copy link icon should copy link to clipboard', fakeAsync(() => {
-    const env = new TestEnvironment(true, 'project123');
+    const env = new TestEnvironment({ isLinkSharingEnabled: true, projectId: 'project123' });
     // Two waits are needed, otherwise the link text is not set by the time of the next expectation
     env.wait();
     env.wait();
@@ -209,6 +214,40 @@ describe('ShareControlComponent', () => {
     env.click(env.sendButton);
     verify(mockedProjectService.onlineInvite(anything(), anything(), anything(), anything())).once();
   }));
+
+  it('changing user role refreshes the share key', fakeAsync(() => {
+    const env = new TestEnvironment({ isLinkSharingEnabled: true, projectId: 'myProject1' });
+    env.wait();
+    env.hostComponent.component.roleControl.setValue(SFProjectRole.Observer);
+    env.wait();
+    verify(mockedProjectService.onlineGetLinkSharingKey('myProject1', anything())).twice();
+    expect().nothing();
+    flush();
+  }));
+
+  it('role should be visible for administrators', fakeAsync(() => {
+    const env = new TestEnvironment({ userId: 'user02', projectId: 'project01' });
+    env.wait();
+    expect(env.roleField).toBeTruthy();
+  }));
+
+  it('role should be hidden for non-administrators', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.wait();
+    expect(env.roleField).toBeFalsy();
+  }));
+
+  it('default role can be set', fakeAsync(() => {
+    const env = new TestEnvironment({ defaultRole: SF_DEFAULT_TRANSLATE_SHARE_ROLE });
+    env.wait();
+    expect(env.hostComponent.component.roleControl.value).toEqual(SF_DEFAULT_TRANSLATE_SHARE_ROLE);
+  }));
+
+  it('default share role to be community checker', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.wait();
+    expect(env.hostComponent.component.roleControl.value).toEqual(SF_DEFAULT_SHARE_ROLE);
+  }));
 });
 
 @NgModule({
@@ -223,6 +262,7 @@ class TestModule {}
     <app-share-control
       [projectId]="projectId"
       [isLinkSharingEnabled]="isLinkSharingEnabled"
+      [defaultRole]="defaultRole"
       (invited)="onInvited()"
     ></app-share-control>
   `
@@ -232,10 +272,18 @@ class TestHostComponent {
   projectId = '';
   isLinkSharingEnabled = false;
   invitedCount = 0;
+  defaultRole?: SFProjectRole | undefined;
 
   onInvited() {
     this.invitedCount++;
   }
+}
+
+interface TestEnvironmentArgs {
+  isLinkSharingEnabled: boolean;
+  projectId: string;
+  defaultRole: SFProjectRole;
+  userId: string;
 }
 
 class TestEnvironment {
@@ -246,28 +294,35 @@ class TestEnvironment {
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-  constructor(isLinkSharingEnabled?: boolean, projectId: string = 'project123') {
-    when(mockedPwaService.onlineStatus).thenReturn(this._onlineStatus.asObservable());
-    when(mockedPwaService.isOnline).thenCall(() => this._onlineStatus.getValue());
-    when(mockedProjectService.onlineGetLinkSharingKey(projectId, anything())).thenResolve(
-      isLinkSharingEnabled ? 'linkSharing01' : ''
-    );
-    this.fixture = TestBed.createComponent(TestHostComponent);
-    this.fixture.detectChanges();
-    this.component = this.fixture.componentInstance.component;
-    this.hostComponent = this.fixture.componentInstance;
-
-    this.fixture.componentInstance.projectId = projectId;
-    this.fixture.componentInstance.isLinkSharingEnabled =
-      isLinkSharingEnabled === undefined ? false : isLinkSharingEnabled;
-
+  constructor(args: Partial<TestEnvironmentArgs> = {}) {
+    const defaultArgs: Partial<TestEnvironmentArgs> = {
+      projectId: 'project123',
+      userId: 'user01'
+    };
+    args = { ...defaultArgs, ...args };
     this.realtimeService.addSnapshot(SFProjectDoc.COLLECTION, {
       id: 'project01',
-      data: {}
+      data: { userRoles: { user01: SFProjectRole.CommunityChecker, user02: SFProjectRole.ParatextAdministrator } }
     });
     when(mockedProjectService.get('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
+    when(mockedPwaService.onlineStatus).thenReturn(this._onlineStatus.asObservable());
+    when(mockedPwaService.isOnline).thenCall(() => this._onlineStatus.getValue());
+    when(mockedUserService.currentUserId).thenReturn(args.userId!);
+    when(mockedProjectService.onlineGetLinkSharingKey(args.projectId!, anything())).thenResolve(
+      args.isLinkSharingEnabled ? 'linkSharing01' : ''
+    );
+    when(mockedProjectService.isProjectAdmin('project01', 'user02')).thenResolve(true);
+    this.fixture = TestBed.createComponent(TestHostComponent);
+    this.fixture.componentInstance.projectId = args.projectId!;
+    this.fixture.componentInstance.isLinkSharingEnabled =
+      args.isLinkSharingEnabled === undefined ? false : args.isLinkSharingEnabled;
+    this.fixture.componentInstance.defaultRole = args.defaultRole;
+    this.fixture.detectChanges();
+    this.component = this.fixture.componentInstance.component;
+    this.hostComponent = this.fixture.componentInstance;
+
     when(
       mockedProjectService.onlineInvite(anything(), 'unknown-address@example.com', anything(), anything())
     ).thenResolve(undefined);
@@ -299,6 +354,10 @@ class TestEnvironment {
 
   get emailSharingOfflineMessage(): DebugElement {
     return this.fetchElement('.invite-by-email .offline-text');
+  }
+
+  get roleField(): DebugElement {
+    return this.fetchElement('#invitation_role');
   }
 
   get shareLink(): DebugElement {
