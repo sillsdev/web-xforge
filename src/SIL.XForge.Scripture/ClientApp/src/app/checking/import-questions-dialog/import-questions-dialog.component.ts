@@ -139,7 +139,10 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
           doc =>
             doc.data != null &&
             doc.data.transceleratorQuestionId != null &&
-            doc.data.transceleratorQuestionId === question.id
+            doc.data.transceleratorQuestionId === question.id &&
+            // The id should be unique for a given verse, but not across different verses
+            // Transcelerator does not allow changing the reference for a question, as of 2021-03-09
+            !this.verseRefDataDiffers(doc.data.verseRef, this.verseRefData(question))
         ) || null;
 
       this.questionList.push({
