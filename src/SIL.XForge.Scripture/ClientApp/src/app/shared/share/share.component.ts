@@ -1,5 +1,5 @@
 import { MdcDialog } from '@angular-mdc/web/dialog';
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -15,6 +15,8 @@ import { ShareDialogComponent, ShareDialogData } from './share-dialog.component'
   styleUrls: ['./share.component.scss']
 })
 export class ShareComponent implements OnInit {
+  @Input() readonly defaultRole?: string;
+
   private projectDoc?: SFProjectDoc;
   private projectId?: string;
 
@@ -53,7 +55,8 @@ export class ShareComponent implements OnInit {
     this.dialog.open(ShareDialogComponent, {
       data: {
         projectId: this.projectId,
-        isLinkSharingEnabled: this.isLinkSharingEnabled
+        isLinkSharingEnabled: this.isLinkSharingEnabled,
+        defaultRole: this.defaultRole
       } as ShareDialogData
     });
   }

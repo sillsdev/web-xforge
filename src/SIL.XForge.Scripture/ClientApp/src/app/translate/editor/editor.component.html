@@ -22,6 +22,10 @@
           title="{{ t('configure_translation_suggestions') }}"
         ></button>
       </ng-container>
+      <ng-container *ngIf="isProjectAdmin">
+        <div class="toolbar-separator">&nbsp;</div>
+        <app-share [defaultRole]="defaultShareRole"></app-share>
+      </ng-container>
     </div>
     <div [fxLayout]="isTargetTextRight ? 'row' : 'row-reverse'" fxLayoutGap="5px">
       <div id="source-text-area" [fxShow.gt-xs]="showSource" fxHide.xs class="text-area">
