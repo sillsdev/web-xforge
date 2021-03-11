@@ -221,7 +221,7 @@ namespace SIL.XForge.Scripture.Services
                 throw new ArgumentNullException(nameof(restClientFactory));
             }
 
-            ISFRestClient client = restClientFactory.Create(string.Empty, ApplicationProduct.DefaultVersion, userSecret);
+            ISFRestClient client = restClientFactory.Create(string.Empty, userSecret);
             baseUrl = string.IsNullOrWhiteSpace(baseUrl) ? InternetAccess.ParatextDBLServer : baseUrl;
             try
             {
@@ -306,7 +306,7 @@ namespace SIL.XForge.Scripture.Services
             }
 
             ISFRestClient client =
-                restClientFactory.Create(string.Empty, ApplicationProduct.DefaultVersion, userSecret);
+                restClientFactory.Create(string.Empty, userSecret);
             baseUrl = string.IsNullOrWhiteSpace(baseUrl) ? InternetAccess.ParatextDBLServer : baseUrl;
             string response = null;
             try
@@ -680,7 +680,7 @@ namespace SIL.XForge.Scripture.Services
         private bool GetFile(string filePath)
         {
             ISFRestClient client =
-                this._restClientFactory.Create(string.Empty, ApplicationProduct.DefaultVersion, this._userSecret);
+                this._restClientFactory.Create(string.Empty, this._userSecret);
             string dblUrlToResource = CreateDblUrlWithUsernameQuery(this);
             return client.GetFile(dblUrlToResource, filePath);
         }
