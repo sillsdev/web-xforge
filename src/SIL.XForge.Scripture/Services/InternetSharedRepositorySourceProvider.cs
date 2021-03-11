@@ -1,4 +1,6 @@
 using System;
+using Microsoft.Extensions.Options;
+using SIL.XForge.Configuration;
 using SIL.XForge.Models;
 using SIL.XForge.Scripture.Models;
 
@@ -10,25 +12,26 @@ namespace SIL.XForge.Scripture.Services
     public class InternetSharedRepositorySourceProvider : IInternetSharedRepositorySourceProvider
     {
         private readonly IJwtTokenHelper _jwtTokenHelper;
+        private readonly IOptions<SiteOptions> _siteOptions;
 
-        public InternetSharedRepositorySourceProvider(IJwtTokenHelper jwtTokenHelper)
+        public InternetSharedRepositorySourceProvider(IJwtTokenHelper jwtTokenHelper, IOptions<SiteOptions> siteOptions)
         {
             _jwtTokenHelper = jwtTokenHelper;
+            _siteOptions = siteOptions;
         }
 
         public IInternetSharedRepositorySource GetSource(UserSecret userSecret, string sendReceiveServerUri,
-            string registryServerUri, string applicationProductVersion)
+            string registryServerUri)
         {
             if (userSecret == null || string.IsNullOrEmpty(sendReceiveServerUri)
-                || string.IsNullOrEmpty(registryServerUri) || string.IsNullOrEmpty(applicationProductVersion))
+                || string.IsNullOrEmpty(registryServerUri))
             {
                 throw new ArgumentException();
             }
 
             string ptUsername = _jwtTokenHelper.GetParatextUsername(userSecret);
             var ptUser = new SFParatextUser(ptUsername);
-            JwtRestClient jwtClient = GenerateParatextRegistryJwtClient(userSecret, registryServerUri,
-                applicationProductVersion);
+            JwtRestClient jwtClient = GenerateParatextRegistryJwtClient(userSecret, registryServerUri);
             IInternetSharedRepositorySource source =
                 new JwtInternetSharedRepositorySource(userSecret.ParatextTokens.AccessToken,
                     jwtClient, ptUser, sendReceiveServerUri);
@@ -39,13 +42,12 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>
         /// Initialize the Registry Server with a Jwt REST Client.
         /// </summary>
-        private JwtRestClient GenerateParatextRegistryJwtClient(UserSecret userSecret,
-            string registryServerUri, string applicationProductVersion)
+        private JwtRestClient GenerateParatextRegistryJwtClient(UserSecret userSecret, string registryServerUri)
         {
             string jwtToken = _jwtTokenHelper.GetJwtTokenFromUserSecret(userSecret);
 
             string api = registryServerUri + "/api8/";
-            return new JwtRestClient(api, applicationProductVersion, jwtToken);
+            return new JwtRestClient(api, _siteOptions.Value.Name, jwtToken);
         }
     }
 }

@@ -217,7 +217,7 @@ namespace SIL.XForge.Scripture.Services
                         "not set up - whether user is on existing sf project or not");
                 }
                 Assert.That(env.MockInternetSharedRepositorySourceProvider.GetSource(testCase.userSecret,
-                    string.Empty, string.Empty, string.Empty).GetRepositories()
+                    string.Empty, string.Empty).GetRepositories()
                     .FirstOrDefault(sharedRepository => sharedRepository.SendReceiveId.Id == testCase.paratextProjectId)
                     .SourceUsers.GetRole(testCase.ptUsername) == UserRoles.Administrator,
                     Is.EqualTo(testCase.ptUserIsAdminOnPtProject),
@@ -257,7 +257,7 @@ namespace SIL.XForge.Scripture.Services
             ISFRestClient failureMockClient = Substitute.For<ISFRestClient>();
             failureMockClient.Get(Arg.Any<string>()).Throws<WebException>();
             mockRestClientFactory
-                .Create(Arg.Any<string>(), Arg.Any<string>(), Arg.Is<UserSecret>(s => s.Id == env.User02))
+                .Create(Arg.Any<string>(), Arg.Is<UserSecret>(s => s.Id == env.User02))
                 .Returns(failureMockClient);
 
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
@@ -283,14 +283,14 @@ namespace SIL.XForge.Scripture.Services
             ISFRestClient successMockClient = Substitute.For<ISFRestClient>();
             successMockClient.Head(Arg.Any<string>()).Returns(string.Empty);
             mockRestClientFactory
-                .Create(Arg.Any<string>(), Arg.Any<string>(), Arg.Is<UserSecret>(s => s.Id == env.User01))
+                .Create(Arg.Any<string>(), Arg.Is<UserSecret>(s => s.Id == env.User01))
                 .Returns(successMockClient);
 
             // Set up mock REST client to return an unsuccessful HEAD request
             ISFRestClient failureMockClient = Substitute.For<ISFRestClient>();
             failureMockClient.Head(Arg.Any<string>()).Throws<WebException>();
             mockRestClientFactory
-                .Create(Arg.Any<string>(), Arg.Any<string>(), Arg.Is<UserSecret>(s => s.Id == env.User02))
+                .Create(Arg.Any<string>(), Arg.Is<UserSecret>(s => s.Id == env.User02))
                 .Returns(failureMockClient);
 
             // Set up mock project
@@ -321,7 +321,7 @@ namespace SIL.XForge.Scripture.Services
             ISFRestClient mockClient = Substitute.For<ISFRestClient>();
             mockClient.Head(Arg.Any<string>()).Throws<WebException>();
             mockRestClientFactory
-                .Create(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<UserSecret>())
+                .Create(Arg.Any<string>(), Arg.Any<UserSecret>())
                 .Returns(mockClient);
 
             var paratextId = "resid_is_16_char";
@@ -341,7 +341,7 @@ namespace SIL.XForge.Scripture.Services
             ISFRestClient mockClient = Substitute.For<ISFRestClient>();
             mockClient.Head(Arg.Any<string>()).Returns(string.Empty);
             mockRestClientFactory
-                .Create(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<UserSecret>())
+                .Create(Arg.Any<string>(), Arg.Any<UserSecret>())
                 .Returns(mockClient);
 
             var paratextId = "resid_is_16_char";
@@ -859,7 +859,7 @@ namespace SIL.XForge.Scripture.Services
                     .GetFile(Arg.Any<string>(), Arg.Any<string>())
                     .Returns(true);
                 MockRestClientFactory
-                    .Create(Arg.Any<string>(), Arg.Any<string>(), Arg.Is<UserSecret>(s => s.Id == userSecret.Id))
+                    .Create(Arg.Any<string>(), Arg.Is<UserSecret>(s => s.Id == userSecret.Id))
                     .Returns(mockClient);
                 return MockRestClientFactory;
             }
@@ -911,7 +911,7 @@ namespace SIL.XForge.Scripture.Services
                 mockSource.GetRepositories().Returns(sharedRepositories);
                 mockSource.GetProjectsMetaData().Returns(new[] { projMeta1, projMeta2, projMeta3 });
                 MockInternetSharedRepositorySourceProvider.GetSource(Arg.Is<UserSecret>(s => s.Id == userSecret.Id),
-                        Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns(mockSource);
+                        Arg.Any<string>(), Arg.Any<string>()).Returns(mockSource);
                 return mockSource;
             }
 
