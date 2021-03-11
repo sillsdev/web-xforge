@@ -56,7 +56,6 @@ namespace SIL.XForge.Scripture.Services
         private readonly ILogger _logger;
         private readonly IJwtTokenHelper _jwtTokenHelper;
         private readonly IParatextDataHelper _paratextDataHelper;
-        private string _applicationProductVersion = "SF";
         private string _dblServerUri = "https://paratext.thedigitalbiblelibrary.org/";
         private string _registryServerUri = "https://registry.paratext.org";
         private string _sendReceiveServerUri = InternetAccess.uriProduction;
@@ -788,7 +787,7 @@ namespace SIL.XForge.Scripture.Services
             using (ParatextAccessLock accessLock = await GetParatextAccessLock(userId))
             {
                 return _internetSharedRepositorySourceProvider.GetSource(accessLock.UserSecret,
-                        _sendReceiveServerUri, _registryServerUri, _applicationProductVersion);
+                        _sendReceiveServerUri, _registryServerUri);
             }
         }
 

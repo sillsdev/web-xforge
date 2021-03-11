@@ -11,9 +11,8 @@ namespace SIL.XForge.Scripture.Services
         /// Creates the rest client.
         /// </summary>
         /// <param name="baseUri">The base URI.</param>
-        /// <param name="applicationProductVersion">The application product version.</param>
         /// <param name="userSecret">The user secret.</param>
         /// <returns>The rest client.</returns>
-        ISFRestClient Create(string baseUri, string applicationProductVersion, UserSecret userSecret);
+        ISFRestClient Create(string baseUri, UserSecret userSecret);
     }
 }

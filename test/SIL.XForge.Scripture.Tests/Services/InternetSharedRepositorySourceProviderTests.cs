@@ -1,8 +1,10 @@
 using System;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
 using Paratext.Data;
 using PtxUtils;
+using SIL.XForge.Configuration;
 using SIL.XForge.Models;
 using SIL.XForge.Services;
 
@@ -15,17 +17,12 @@ namespace SIL.XForge.Scripture.Services
         public void GetSource_BadArguments()
         {
             var env = new TestEnvironment();
-            Assert.Throws<ArgumentException>(() => env.Provider.GetSource(null, null, null, null));
-            Assert.Throws<ArgumentException>(() => env.Provider.GetSource(null, "abc", "abc", "abc"));
-            Assert.Throws<ArgumentException>(() => env.Provider.GetSource(new UserSecret(), null, "abc", "abc"));
-            Assert.Throws<ArgumentException>(() => env.Provider.GetSource(new UserSecret(), "abc", null, "abc"));
-            Assert.Throws<ArgumentException>(() => env.Provider.GetSource(new UserSecret(), "abc", "abc", null));
-            Assert.Throws<ArgumentException>(() =>
-                env.Provider.GetSource(new UserSecret(), string.Empty, "abc", "abc"));
-            Assert.Throws<ArgumentException>(() =>
-                env.Provider.GetSource(new UserSecret(), "abc", string.Empty, "abc"));
-            Assert.Throws<ArgumentException>(() =>
-                env.Provider.GetSource(new UserSecret(), "abc", "abc", string.Empty));
+            Assert.Throws<ArgumentException>(() => env.Provider.GetSource(null, null, null));
+            Assert.Throws<ArgumentException>(() => env.Provider.GetSource(null, "abc", "abc"));
+            Assert.Throws<ArgumentException>(() => env.Provider.GetSource(new UserSecret(), null, "abc"));
+            Assert.Throws<ArgumentException>(() => env.Provider.GetSource(new UserSecret(), "abc", null));
+            Assert.Throws<ArgumentException>(() => env.Provider.GetSource(new UserSecret(), string.Empty, "abc"));
+            Assert.Throws<ArgumentException>(() => env.Provider.GetSource(new UserSecret(), "abc", string.Empty));
         }
 
         [Test]
@@ -41,7 +38,7 @@ namespace SIL.XForge.Scripture.Services
                     RefreshToken = "refresh_token01"
                 }
             };
-            IInternetSharedRepositorySource source = env.Provider.GetSource(userSecret, "srServer", "regServer", "1");
+            IInternetSharedRepositorySource source = env.Provider.GetSource(userSecret, "srServer", "regServer");
             Assert.That(source, Is.Not.Null);
         }
 
@@ -56,7 +53,14 @@ namespace SIL.XForge.Scripture.Services
                 MockJwtTokenHelper.GetJwtTokenFromUserSecret(Arg.Any<UserSecret>()).Returns("token_1234");
                 RegistryU.Implementation = new DotNetCoreRegistry();
                 InternetAccess.RawStatus = InternetUse.Enabled;
-                Provider = new InternetSharedRepositorySourceProvider(MockJwtTokenHelper);
+                var siteOptions = Substitute.For<IOptions<SiteOptions>>();
+                siteOptions.Value.Returns(new SiteOptions
+                {
+                    Name = "xForge",
+                    Origin = new Uri("http://localhost"),
+                    SiteDir = "xforge"
+                });
+                Provider = new InternetSharedRepositorySourceProvider(MockJwtTokenHelper, siteOptions);
             }
         }
     }
