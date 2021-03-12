@@ -93,7 +93,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
         listItem.matchesFilter =
           listItem.question.text.toLowerCase().includes(searchTerm) &&
           this.isBetweenRefs(
-            new VerseRef(listItem.question.book, listItem.question.startChapter, listItem.question.startVerse),
+            this.verseRefFromQuestion(listItem.question),
             fromRef.success ? fromRef.verseRef : null,
             toRef.success ? toRef.verseRef : null
           );
@@ -132,6 +132,10 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
       await questionQuery.ready$.pipe(first()).toPromise();
     }
     questionQuery.dispose();
+
+    transceleratorQuestions.sort(
+      (a, b) => this.verseRefFromQuestion(a).BBBCCCVVV - this.verseRefFromQuestion(b).BBBCCCVVV
+    );
 
     for (const question of transceleratorQuestions.filter(q => this.data.textsByBookId[q.book] != null)) {
       const sfVersionOfQuestion =
@@ -264,7 +268,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
   }
 
   private verseRefData(q: TransceleratorQuestion): VerseRefData {
-    const verse = new VerseRef(q.book, q.startChapter, q.startVerse);
+    const verse = this.verseRefFromQuestion(q);
     const verseRefData: VerseRefData = {
       bookNum: verse.bookNum,
       chapterNum: verse.chapterNum,
@@ -326,5 +330,9 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
 
   private verseRefDataDiffers(a: VerseRefData, b: VerseRefData): boolean {
     return !toVerseRef(a).equals(toVerseRef(b));
+  }
+
+  private verseRefFromQuestion(question: TransceleratorQuestion): VerseRef {
+    return new VerseRef(question.book, question.startChapter, question.startVerse);
   }
 }
