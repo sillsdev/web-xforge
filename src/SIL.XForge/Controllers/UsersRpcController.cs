@@ -43,7 +43,7 @@ namespace SIL.XForge.Controllers
         /// </summary>
         public async Task<IRpcMethodResult> PullAuthUserProfile()
         {
-            if (!_hostingEnv.IsDevelopment())
+            if (!(_hostingEnv.IsDevelopment() || _hostingEnv.IsEnvironment("DevelopmentBeta")))
                 return ForbiddenError();
 
             string userProfile = await _authService.GetUserAsync(AuthId);
@@ -81,6 +81,17 @@ namespace SIL.XForge.Controllers
             {
                 return ForbiddenError();
             }
+        }
+
+        public async Task<IRpcMethodResult> CheckUserNeedsMigrating(string userId)
+        {
+            return Ok(await _userService.CheckUserNeedsMigratingAsync(userId));
+        }
+
+        public async Task<IRpcMethodResult> UserMigrationComplete(string userId)
+        {
+            await _userService.UserMigrationCompleteAsync(userId);
+            return Ok();
         }
     }
 }

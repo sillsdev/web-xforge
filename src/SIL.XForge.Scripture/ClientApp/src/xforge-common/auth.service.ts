@@ -277,7 +277,7 @@ export class AuthService {
             this.locationService.reload();
           });
       }
-    } else if (!environment.production) {
+    } else if (!environment.production && !environment.beta) {
       try {
         await this.commandService.onlineInvoke(USERS_URL, 'pullAuthUserProfile');
       } catch (err) {

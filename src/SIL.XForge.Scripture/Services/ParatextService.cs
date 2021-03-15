@@ -85,7 +85,7 @@ namespace SIL.XForge.Scripture.Services
 
             _httpClientHandler = new HttpClientHandler();
             _registryClient = new HttpClient(_httpClientHandler);
-            if (env.IsDevelopment() || env.IsEnvironment("Testing"))
+            if (env.IsDevelopment() || env.IsEnvironment("DevelopmentBeta") || env.IsEnvironment("Testing") || env.IsEnvironment("TestingBeta"))
             {
                 _httpClientHandler.ServerCertificateCustomValidationCallback
                     = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
