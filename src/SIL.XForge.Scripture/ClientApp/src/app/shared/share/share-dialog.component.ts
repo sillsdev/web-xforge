@@ -1,5 +1,5 @@
 import { MDC_DIALOG_DATA } from '@angular-mdc/web/dialog';
-import { Component, Inject, ViewEncapsulation } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 
 export interface ShareDialogData {
   projectId: string;
