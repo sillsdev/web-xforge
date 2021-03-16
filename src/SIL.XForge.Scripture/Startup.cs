@@ -57,7 +57,9 @@ namespace SIL.XForge.Scripture
             "projects",
             "system-administration",
             "favicon.ico",
-            "assets"
+            "assets",
+
+            "migration" // TODO: remove when migrations to non-beta are done - IJH 2021-03-16
         };
 
         private static readonly HashSet<string> DevelopmentSpaPostRoutes = new HashSet<string>
@@ -72,7 +74,7 @@ namespace SIL.XForge.Scripture
             Configuration = configuration;
             Environment = env;
             LoggerFactory = loggerFactory;
-            if (Environment.IsDevelopment())
+            if (IsDevelopmentEnvironment)
             {
                 SpaGetRoutes.UnionWith(DevelopmentSpaGetRoutes);
                 SpaPostRoutes.UnionWith(DevelopmentSpaPostRoutes);
@@ -297,7 +299,7 @@ namespace SIL.XForge.Scripture
             if (index == -1)
                 index = path.Length;
             string prefix = path.Substring(1, index - 1);
-            if (!Environment.IsDevelopment() && (prefix.EndsWith(".js") || prefix.EndsWith(".js.map") ||
+            if (!IsDevelopmentEnvironment && (prefix.EndsWith(".js") || prefix.EndsWith(".js.map") ||
                 prefix.EndsWith(".css") || prefix.EndsWith(".css.map")))
             {
                 int periodIndex = path.IndexOf(".");
