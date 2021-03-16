@@ -846,18 +846,28 @@ namespace SIL.XForge.Scripture.Services
             SemaphoreSlim semaphore = _tokenRefreshSemaphores.GetOrAdd(userId, (string key) => new SemaphoreSlim(1, 1));
             await semaphore.WaitAsync();
 
-            Attempt<UserSecret> attempt = await _userSecretRepository.TryGetAsync(userId);
-            if (!attempt.TryResult(out UserSecret userSecret))
+            try
             {
-                throw new DataNotFoundException("Could not find user secrets for " + userId);
-            }
+                Attempt<UserSecret> attempt = await _userSecretRepository.TryGetAsync(userId);
+                if (!attempt.TryResult(out UserSecret userSecret))
+                {
+                    throw new DataNotFoundException("Could not find user secrets for " + userId);
+                }
 
-            if (!userSecret.ParatextTokens.ValidateLifetime())
-            {
-                Tokens refreshedUserTokens = await _jwtTokenHelper.RefreshAccessTokenAsync(_paratextOptions.Value, userSecret.ParatextTokens, _registryClient);
-                userSecret = await _userSecretRepository.UpdateAsync(userId, b => b.Set(u => u.ParatextTokens, refreshedUserTokens));
+                if (!userSecret.ParatextTokens.ValidateLifetime())
+                {
+                    Tokens refreshedUserTokens = await _jwtTokenHelper.RefreshAccessTokenAsync(_paratextOptions.Value, userSecret.ParatextTokens, _registryClient);
+                    userSecret = await _userSecretRepository.UpdateAsync(userId, b => b.Set(u => u.ParatextTokens, refreshedUserTokens));
+                }
+                return new ParatextAccessLock(semaphore, userSecret);
             }
-            return new ParatextAccessLock(semaphore, userSecret);
+            catch
+            {
+                // If an exception is thrown between awaiting the semaphore and returning the ParatextAccessLock, the
+                // caller of the method will not get a reference to a ParatextAccessLock and can't release the semaphore.
+                semaphore.Release();
+                throw;
+            }
         }
     }
 
