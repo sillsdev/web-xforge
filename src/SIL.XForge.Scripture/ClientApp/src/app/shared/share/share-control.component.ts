@@ -90,7 +90,7 @@ export class ShareControlComponent extends SubscriptionDisposable implements OnI
   }
 
   get defaultShareRole(): string {
-    if (this.defaultRole != null && this.roles.filter(r => r.role === this.defaultRole).length) {
+    if (this.defaultRole != null && this.roles.filter(r => r.role === this.defaultRole).length > 0) {
       return this.defaultRole;
     }
     return SF_DEFAULT_SHARE_ROLE;

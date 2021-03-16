@@ -357,7 +357,7 @@ class TestEnvironment {
   }
 
   get roleField(): DebugElement {
-    return this.fetchElement('#invitation_role');
+    return this.fetchElement('#invitation-role');
   }
 
   get shareLink(): DebugElement {
