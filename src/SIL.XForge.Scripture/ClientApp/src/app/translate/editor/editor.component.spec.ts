@@ -108,7 +108,7 @@ describe('EditorComponent', () => {
     env.setCurrentUser('user04');
     env.updateParams({ projectId: 'project01', bookId: 'MAT' });
     env.wait();
-    expect(env.sharingButton).toBeTruthy();
+    expect(env.sharingButton).not.toBeNull();
     env.dispose();
   }));
 

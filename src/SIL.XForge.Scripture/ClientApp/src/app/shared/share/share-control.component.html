@@ -33,7 +33,7 @@
               {{ t("email_invalid") }}
             </mat-error>
           </mat-form-field>
-          <mat-form-field *ngIf="isProjectAdmin" id="invitation_role">
+          <mat-form-field *ngIf="isProjectAdmin" id="invitation-role">
             <mat-label>{{ t("invitation_role") }}</mat-label>
             <mat-select formControlName="role">
               <mat-option *ngFor="let role of roles" [value]="role.role">
@@ -42,7 +42,7 @@
             </mat-select>
             <mat-error *ngIf="roleControl.hasError('required')">{{ t("select_invitation_role") }}</mat-error>
           </mat-form-field>
-          <mat-form-field id="invitation_language">
+          <mat-form-field id="invitation-language">
             <mat-label>{{ t("invitation_language") }}</mat-label>
             <mat-select formControlName="locale">
               <mat-option *ngFor="let locale of i18n.locales" [value]="locale.canonicalTag">
@@ -53,7 +53,8 @@
           </mat-form-field>
           <button
             id="send-btn"
-            mdc-button
+            mat-flat-button
+            color="primary"
             form="email-form"
             type="submit"
             (click)="sendEmail()"
