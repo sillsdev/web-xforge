@@ -31,10 +31,11 @@ import {
 } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { TextType } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { TextInfoPermission } from 'realtime-server/lib/scriptureforge/models/text-info-permission';
+import { fromVerseRef, VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
+import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, of, Subject } from 'rxjs';
-import { ParatextNoteThreadDoc } from 'src/app/core/models/paratext-note-thread-doc';
 import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { CONSOLE } from 'xforge-common/browser-globals';
@@ -46,6 +47,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { ParatextNoteThreadDoc } from '../../core/models/paratext-note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -901,6 +903,17 @@ describe('EditorComponent', () => {
 
       env.dispose();
     }));
+
+    it('adds question count attribute to element', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+      const segment = env.targetTextEditor.nativeElement.querySelector('usx-segment[data-segment=verse_1_1]')!;
+      expect(segment).not.toBeNull();
+      expect(segment.hasAttribute('data-note-thread-count')).toBe(true);
+      expect(segment.getAttribute('data-note-thread-count')).toBe('1');
+      env.dispose();
+    }));
   });
 
   describe('Translation Suggestions disabled', () => {
@@ -1274,6 +1287,10 @@ class TestEnvironment {
     return this.trainingProgress.query(By.css('#training-close-button'));
   }
 
+  get targetTextEditor(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#target-text-area .ql-container'));
+  }
+
   get sourceTextArea(): DebugElement {
     return this.fixture.debugElement.query(By.css('#source-text-area'));
   }
@@ -1595,23 +1612,26 @@ class TestEnvironment {
   }
 
   private addParatextNoteThread(userIds: string[]): void {
-    const comments: ParatextNote[] = [];
+    const notes: ParatextNote[] = [];
     for (const id of userIds) {
-      const comment: ParatextNote = {
+      const note: ParatextNote = {
         threadId: 'thread01',
         ownerRef: id,
-        paratextUser: `pt_${id}`,
         dataId: `${id}_note`,
         dateCreated: this.dateNow,
         dateModified: this.dateNow,
-        content: `Note from ${id}`
+        content: `Note from ${id}`,
+        extUserId: 'ext_user_01',
+        versionNumber: 1,
+        deleted: false
       };
-      comments.push(comment);
+      notes.push(note);
     }
 
+    const vrd: VerseRefData = fromVerseRef(VerseRef.parse('MAT 1:1'));
     this.realtimeService.addSnapshot<ParatextNoteThread>(ParatextNoteThreadDoc.COLLECTION, {
       id: 'project01:thread01',
-      data: { projectRef: 'project01', ownerRef: 'user01', threadId: 'thread01', comments, verseRefStr: 'MAT 1:1' }
+      data: { projectRef: 'project01', dataId: 'thread01', verseRef: vrd, ownerRef: 'user01', selectedText: '', notes }
     });
   }
 
