@@ -36,3 +36,19 @@ export function combineVerseRefStrs(startStr?: string, endStr?: string): VerseRe
   }
   return range.verseRef;
 }
+
+export function verseRefFromMouseEvent(event: MouseEvent, bookNum: number): VerseRef | undefined {
+  let target = event.target;
+  if (target == null) {
+    return;
+  }
+  if (target['offsetParent']['nodeName'] === 'USX-SEGMENT') {
+    target = target['offsetParent'] as EventTarget;
+  }
+  if (target['nodeName'] === 'USX-SEGMENT') {
+    const clickSegment = target['attributes']['data-segment'].value;
+    const segmentParts = clickSegment.split('_', 3);
+    return new VerseRef(bookNum, segmentParts[1], segmentParts[2]);
+  }
+  return;
+}

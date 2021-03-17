@@ -13,10 +13,11 @@ import { TranslocoService } from '@ngneat/transloco';
 import isEqual from 'lodash-es/isEqual';
 import merge from 'lodash-es/merge';
 import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
+import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { fromEvent } from 'rxjs';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { getBrowserEngine } from 'xforge-common/utils';
+import { getBrowserEngine, verseSlug } from 'xforge-common/utils';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { registerScripture } from './quill-scripture';
@@ -396,6 +397,76 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   hasSegmentRange(ref: string): boolean {
     return this.viewModel.hasSegmentRange(ref);
+  }
+
+  getVerseSegments(verseRef?: VerseRef): string[] {
+    if (verseRef == null) {
+      return [];
+    }
+    const segments: string[] = [];
+    let segment = '';
+    for (const verseInRange of verseRef.allVerses()) {
+      segment = verseSlug(verseInRange);
+      if (!segments.includes(segment)) {
+        segments.push(segment);
+      }
+      // Check for related segments like this verse i.e. verse_1_2/q1
+      for (const relatedSegment of this.getRelatedSegmentRefs(segment)) {
+        const text = this.getSegmentText(relatedSegment);
+        if (text !== '' && !segments.includes(relatedSegment)) {
+          segments.push(relatedSegment);
+        }
+      }
+    }
+    return segments;
+  }
+
+  getSegmentElement(segment: string): Element | null {
+    return this.editor == null ? null : this.editor.container.querySelector(`usx-segment[data-segment="${segment}"]`);
+  }
+
+  toggleFeaturedVerseRefs(value: boolean, featureVerseRefs: VerseRef[], app: 'translate' | 'checking'): string[] {
+    if (this.editor == null) {
+      return [];
+    }
+    const segments: string[] = [];
+    const verseFeatureCount = new Map<string, number>();
+    for (const verse of featureVerseRefs) {
+      const referenceSegments = this.getVerseSegments(verse);
+      if (referenceSegments.length > 0) {
+        const count = verseFeatureCount.get(referenceSegments[0]);
+        if (count != null) {
+          verseFeatureCount.set(referenceSegments[0], count + 1);
+        } else {
+          verseFeatureCount.set(referenceSegments[0], 1);
+        }
+
+        for (const segment of referenceSegments) {
+          if (!segments.includes(segment)) {
+            segments.push(segment);
+          }
+        }
+      }
+    }
+
+    // Format the featured verse refs
+    for (const segment of segments) {
+      const range = this.getSegmentRange(segment);
+      const element = this.getSegmentElement(segment);
+      if (range == null || element == null) {
+        continue;
+      }
+      const formats: any = app === 'checking' ? { 'question-segment': value } : { 'note-thread-segment': value };
+      const count = verseFeatureCount.get(segment);
+      const formatCount: string = app === 'checking' ? 'question-count' : 'note-thread-count';
+
+      if (count != null) {
+        formats[formatCount] = value ? count : false;
+      }
+      this.editor.formatText(range.index, range.length, formats, 'silent');
+    }
+
+    return segments;
   }
 
   onContentChanged(delta: DeltaStatic, source: Sources): void {

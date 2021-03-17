@@ -5,9 +5,9 @@ import isEqual from 'lodash-es/isEqual';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { fromEvent, Subscription } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { verseSlug } from 'xforge-common/utils';
 import { TextDocId } from '../../../core/models/text-doc';
 import { TextComponent } from '../../../shared/text/text.component';
+import { verseRefFromMouseEvent } from '../../../shared/utils';
 
 @Component({
   selector: 'app-checking-text',
@@ -86,27 +86,15 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     if (!this.isEditorLoaded || this.questionVerses == null) {
       return;
     }
-
-    const segments: string[] = [];
-    const questionCounts = new Map<string, number>();
-    for (const verse of this.questionVerses) {
-      const referenceSegments = this.getVerseSegments(verse);
-      if (referenceSegments.length > 0) {
-        const count = questionCounts.get(referenceSegments[0]);
-        if (count != null) {
-          questionCounts.set(referenceSegments[0], count + 1);
-        } else {
-          questionCounts.set(referenceSegments[0], 1);
-        }
-
-        for (const segment of referenceSegments) {
-          if (!segments.includes(segment)) {
-            segments.push(segment);
-          }
-        }
+    const segments = this.textComponent.toggleFeaturedVerseRefs(value, this.questionVerses, 'checking');
+    if (value) {
+      this.subscribeClickEvents(segments);
+    } else {
+      // Un-subscribe from all segment click events as these all get setup again
+      for (const event of this.clickSubs) {
+        event.unsubscribe();
       }
     }
-    this.toggleQuestionSegments(questionCounts, segments, value);
   }
 
   private highlightActiveVerse(): void {
@@ -114,32 +102,10 @@ export class CheckingTextComponent extends SubscriptionDisposable {
       return;
     }
 
-    const refs = this.getVerseSegments(this._activeVerse);
+    const refs = this.textComponent.getVerseSegments(this._activeVerse);
     this.textComponent.highlight(refs);
   }
-
-  private getVerseSegments(verseRef?: VerseRef): string[] {
-    if (verseRef == null) {
-      return [];
-    }
-    const segments: string[] = [];
-    let segment = '';
-    for (const verseInRange of verseRef.allVerses()) {
-      segment = verseSlug(verseInRange);
-      if (!segments.includes(segment)) {
-        segments.push(segment);
-      }
-      // Check for related segments like this verse i.e. verse_1_2/q1
-      for (const relatedSegment of this.textComponent.getRelatedSegmentRefs(segment)) {
-        const text = this.textComponent.getSegmentText(relatedSegment);
-        if (text !== '' && !segments.includes(relatedSegment)) {
-          segments.push(relatedSegment);
-        }
-      }
-    }
-    return segments;
-  }
-
+  /*
   private toggleQuestionSegments(questionCounts: Map<string, number>, segments: string[], value: boolean): void {
     if (this.textComponent.editor == null) {
       return;
@@ -147,7 +113,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
 
     for (const segment of segments) {
       const range = this.textComponent.getSegmentRange(segment);
-      const element = this.getSegmentElement(segment);
+      const element = this.textComponent.getSegmentElement(segment);
       if (range == null || element == null) {
         continue;
       }
@@ -185,23 +151,37 @@ export class CheckingTextComponent extends SubscriptionDisposable {
       }
     }
   }
+*/
+  private subscribeClickEvents(segments: string[]): void {
+    for (const segment of segments) {
+      const element: Element | null = this.textComponent.getSegmentElement(segment);
+      if (element == null) {
+        continue;
+      }
+      this.clickSubs.push(
+        this.subscribe(fromEvent<MouseEvent>(element, 'click'), event => {
+          if (this._id == null) {
+            return;
+          }
+          const verseRef = verseRefFromMouseEvent(event, this._id.bookNum);
+          if (verseRef != null) {
+            this.questionVerseSelected.emit(verseRef);
+          }
+        })
+      );
+    }
+  }
 
   private scrollToActiveVerse() {
     if (this.activeVerse != null && this.textComponent.editor != null) {
-      const firstSegment = this.getVerseSegments(this.activeVerse)[0];
+      const firstSegment = this.textComponent.getVerseSegments(this.activeVerse)[0];
       const editor = this.textComponent.editor.container.querySelector('.ql-editor');
       if (firstSegment != null && editor != null) {
-        const element = this.getSegmentElement(firstSegment) as HTMLElement;
+        const element = this.textComponent.getSegmentElement(firstSegment) as HTMLElement;
         if (element != null) {
           editor.scrollTo({ top: element.offsetTop - 20, behavior: 'smooth' });
         }
       }
     }
-  }
-
-  private getSegmentElement(segment: string): Element | null {
-    return this.textComponent.editor == null
-      ? null
-      : this.textComponent.editor.container.querySelector(`usx-segment[data-segment="${segment}"]`);
   }
 }
