@@ -81,7 +81,8 @@ quill-editor {
 }
 
 quill-editor.ltr {
-  .question-segment[data-question-count] {
+  .question-segment[data-question-count],
+  .note-thread-segment[data-note-thread-count] {
     margin-left: 1.75em;
 
     &:before {
@@ -94,13 +95,52 @@ quill-editor.ltr {
   }
 }
 quill-editor.rtl {
-  .question-segment[data-question-count] {
+  .question-segment[data-question-count],
+  .note-thread-segment[data-note-thread-count] {
     margin-right: 1.75em;
     &:before {
       right: -2.25em;
     }
     &:after {
       right: -1.5em;
+    }
+  }
+}
+
+.ql-editor .note-thread-segment {
+  cursor: pointer;
+  position: relative;
+  &[data-note-thread-count] {
+    &:before {
+      content: '';
+      width: 1em;
+      height: 1em;
+      display: block;
+      background: url('/assets/icons/TagIcons/01flag1.png') no-repeat;
+      color: #fff;
+      position: absolute;
+      top: 0em;
+      text-indent: 0;
+      margin: 0em 0.5em;
+    }
+  }
+
+  &[data-question-count]:not([data-question-count='1']) {
+    &:after {
+      content: attr(data-question-count);
+      border-radius: 50%;
+      width: 1.5em;
+      height: 1.5em;
+      font-size: 0.7em;
+      display: flex;
+      align-content: center;
+      justify-content: center;
+      background: $questionAnswerBubbleBackgroundColor;
+      color: $questionAnswerBubbleColor;
+      font-weight: bold;
+      position: absolute;
+      top: -0.55em;
+      text-indent: 0;
     }
   }
 }

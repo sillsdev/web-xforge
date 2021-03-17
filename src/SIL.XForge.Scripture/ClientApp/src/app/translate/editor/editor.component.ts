@@ -22,17 +22,21 @@ import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/scriptur
 import { TextType } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/scriptureforge/models/text-info-permission';
+import { toVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
-import { fromEvent, Subject, Subscription, timer } from 'rxjs';
+import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
+import { BehaviorSubject, fromEvent, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, delayWhen, filter, repeat, retryWhen, tap } from 'rxjs/operators';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
 import XRegExp from 'xregexp';
 import { environment } from '../../../environments/environment';
+import { ParatextNoteThreadDoc } from '../../core/models/paratext-note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { Delta } from '../../core/models/text-doc';
@@ -41,6 +45,7 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { Segment } from '../../shared/text/segment';
 import { TextComponent } from '../../shared/text/text.component';
+import { verseRefFromMouseEvent } from '../../shared/utils';
 import {
   SuggestionsSettingsDialogComponent,
   SuggestionsSettingsDialogData
@@ -96,6 +101,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private projectDataChangesSub?: Subscription;
   private trainingProgressClosed: boolean = false;
   private trainingCompletedTimeout: any;
+  private clickSubs: Subscription[] = [];
+  private noteThreadQuery?: RealtimeQuery<ParatextNoteThreadDoc>;
+  private toggleNoteThreadVerseRefs$: BehaviorSubject<void> = new BehaviorSubject<void>(undefined);
+  private toggleNoteThreadSub?: Subscription;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -174,8 +183,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   set chapter(value: number | undefined) {
     if (this._chapter !== value) {
       this.showSuggestions = false;
+      this.toggleNoteThreadVerses(false);
       this._chapter = value;
       this.changeText();
+      this.toggleNoteThreadVerses(true);
     }
   }
 
@@ -270,6 +281,18 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
+  private get chapterNoteThreadsVerseRefs(): VerseRef[] {
+    if (this.noteThreadQuery == null || this.bookNum == null || this._chapter == null) {
+      return [];
+    }
+    return this.noteThreadQuery.docs
+      .filter(
+        nt =>
+          nt.data != null && nt.data.verseRef.bookNum === this.bookNum && nt.data.verseRef.chapterNum === this._chapter
+      )
+      .map(nt => toVerseRef(nt.data!.verseRef));
+  }
+
   ngAfterViewInit(): void {
     this.subscribe(fromEvent(window, 'resize'), () => this.setTextHeight());
     this.subscribe(
@@ -315,6 +338,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         if (this.projectDoc == null || this.projectDoc.data == null) {
           return;
         }
+        await this.loadNoteThreadDocs(this.projectDoc.id);
         this.text = this.projectDoc.data.texts.find(t => t.bookNum === bookNum);
         this.chapters = this.text == null ? [] : this.text.chapters.map(c => c.number);
 
@@ -485,6 +509,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         break;
       case 'target':
         this.targetLoaded = true;
+        this.toggleNoteThreadVerseRefs$.next();
         break;
     }
     if ((!this.hasSource || this.sourceLoaded) && this.targetLoaded) {
@@ -559,6 +584,29 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       }
       this.updateSuggestions();
     });
+  }
+
+  private toggleNoteThreadVerses(value: boolean): void {
+    if (this.target?.editor == null) {
+      return;
+    }
+    const segments: string[] = this.target.toggleFeaturedVerseRefs(
+      value,
+      this.chapterNoteThreadsVerseRefs,
+      'translate'
+    );
+    if (value) {
+      this.subscribeClickEvents(segments);
+    } else {
+      // Un-subscribe from all segment click events as these all get setup again
+      for (const event of this.clickSubs) {
+        event.unsubscribe();
+      }
+    }
+  }
+
+  private showNoteThread(verseRef: VerseRef): void {
+    // Show the Paratext note thread
   }
 
   private setupTranslationEngine(): void {
@@ -661,7 +709,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (this.target == null) {
       return;
     }
-
     let selectedSegment: string | undefined;
     let selectedSegmentChecksum: number | undefined;
     if (
@@ -830,6 +877,35 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return segment.range.length > 0 && segment.text !== '' && segment.isChanged;
   }
 
+  private subscribeClickEvents(segments: string[]): void {
+    if (this.target == null) {
+      return;
+    }
+    for (const segment of segments) {
+      const element: Element | null = this.target.getSegmentElement(segment);
+      if (element == null) {
+        continue;
+      }
+      this.clickSubs.push(
+        this.subscribe(fromEvent<MouseEvent>(element, 'click'), event => {
+          if (this.bookNum == null) {
+            return;
+          }
+          const verseRef = verseRefFromMouseEvent(event, this.bookNum);
+          if (verseRef != null) {
+            this.showNoteThread(verseRef);
+          }
+        })
+      );
+    }
+  }
+
+  private async loadNoteThreadDocs(projectId: string): Promise<void> {
+    this.noteThreadQuery = await this.projectService.queryNoteThreads(projectId);
+    this.toggleNoteThreadSub?.unsubscribe();
+    this.toggleNoteThreadSub = this.subscribe(this.toggleNoteThreadVerseRefs$, () => this.toggleNoteThreadVerses(true));
+  }
+
   private loadProjectUserConfig() {
     let chapter = 1;
     if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
@@ -841,8 +917,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         }
       }
     }
+    this.toggleNoteThreadVerses(false);
     this._chapter = chapter;
     this.changeText();
+    this.toggleNoteThreadVerses(true);
   }
 
   private syncScroll(): void {
