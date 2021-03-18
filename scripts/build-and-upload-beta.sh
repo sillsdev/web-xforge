@@ -5,6 +5,10 @@ DEPLOY_RUNTIME=${DEPLOY_RUNTIME:-linux-x64}
 ANGULAR_CONFIG=${ANGULAR_CONFIG:-production}
 BUILD_OUTPUT=artifacts
 DEPLOY_PATH=/var/www/$APP_NAME.org$APP_SUFFIX
+SERVICE_UNIT_SUFFIX=""
+if grep "beta" <<< ${APP_SUFFIX}; then
+  SERVICE_UNIT_SUFFIX="_beta"
+fi
 
 pushd .. > /dev/null
 
@@ -39,4 +43,4 @@ rsync -progzlt --chmod=Dug=rwx,Fug=rwx,o-rwx --delete-during --stats --rsync-pat
 
 popd > /dev/null
 
-ssh root@$DEPLOY_DESTINATION "systemctl restart $APP_NAME-web-app"
+ssh root@${DEPLOY_DESTINATION} "systemctl restart ${APP_NAME}-web-app${SERVICE_UNIT_SUFFIX}"
