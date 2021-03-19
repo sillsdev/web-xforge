@@ -279,24 +279,25 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         this.dialog.open(SupportedBrowsersDialogComponent, { autoFocus: false, data: BrowserIssue.upgrade });
       }
 
-      if (!environment.beta && (await this.checkUserNeedsMigrating())) {
-        const migrationDialog = this.dialog.open(BetaMigrationDialogComponent, {
-          autoFocus: false,
-          clickOutsideToClose: false,
-          escapeToClose: false
-        });
-        const migrationDialogSub = migrationDialog.componentInstance.onProgress.subscribe((progress: number) => {
-          if (progress === 100) {
-            // Automatically close the dialog after 5 seconds - the close button will also be available for manual close
-            setTimeout(() => {
-              migrationDialog.close();
-            }, 5000);
-          }
-        });
-        migrationDialog.afterClosed().subscribe(() => {
-          migrationDialogSub.unsubscribe();
-        });
-      }
+      this.pwaService.online.then(async () => {
+        if (!environment.beta && (await this.checkUserNeedsMigrating())) {
+          const migrationDialog = this.dialog.open(BetaMigrationDialogComponent, {
+            autoFocus: false,
+            clickOutsideToClose: false,
+            escapeToClose: false
+          });
+          const migrationDialogSub = migrationDialog.componentInstance.onProgress.subscribe((progress: number) => {
+            if (progress === 100) {
+              // Automatically close the dialog after 5 seconds
+              // The close button will also be available for manual close
+              setTimeout(() => migrationDialog.close(), 5000);
+            }
+          });
+          migrationDialog.afterClosed().subscribe(() => {
+            migrationDialogSub.unsubscribe();
+          });
+        }
+      });
 
       const projectDocs$ = this.currentUserDoc.remoteChanges$.pipe(
         startWith(null),
