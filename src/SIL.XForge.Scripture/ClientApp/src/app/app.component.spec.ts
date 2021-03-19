@@ -1,3 +1,4 @@
+import { MdcDialog } from '@angular-mdc/web';
 import { MdcList, MdcListItem } from '@angular-mdc/web/list';
 import { CommonModule, Location } from '@angular/common';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
@@ -49,7 +50,8 @@ const mockedLocationService = mock(LocationService);
 const mockedNoticeService = mock(NoticeService);
 const mockedPwaService = mock(PwaService);
 const mockedFileService = mock(FileService);
-const mockErrorReportingService = mock(ErrorReportingService);
+const mockedErrorReportingService = mock(ErrorReportingService);
+const mockedMdcDialog = mock(MdcDialog);
 
 @Component({
   template: `<div>Mock</div>`
@@ -90,7 +92,8 @@ describe('AppComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: PwaService, useMock: mockedPwaService },
       { provide: FileService, useMock: mockedFileService },
-      { provide: ErrorReportingService, useMock: mockErrorReportingService }
+      { provide: ErrorReportingService, useMock: mockedErrorReportingService },
+      { provide: MdcDialog, useMock: mockedMdcDialog }
     ]
   }));
 
@@ -287,8 +290,13 @@ describe('AppComponent', () => {
     const env = new TestEnvironment();
     env.init();
 
-    verify(mockErrorReportingService.addMeta(anything(), 'user')).once();
+    verify(mockedErrorReportingService.addMeta(anything(), 'user')).once();
     expect().nothing();
+  }));
+
+  it('waits for the user to be online and then migrates data', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.init();
   }));
 
   describe('Community Checking', () => {
@@ -470,6 +478,7 @@ class TestEnvironment {
     when(mockedSFAdminAuthGuard.allowTransition(anything())).thenReturn(this.isProjectAdmin$);
     when(mockedCookieService.get(anything())).thenReturn('en');
     when(mockedPwaService.isOnline).thenReturn(true);
+    when(mockedPwaService.online).thenResolve();
     when(mockedPwaService.onlineStatus).thenReturn(of(true));
     when(mockedFileService.notifyUserIfStorageQuotaBelow(anything())).thenResolve();
     when(mockedPwaService.hasUpdate).thenReturn(this.hasUpdate$);

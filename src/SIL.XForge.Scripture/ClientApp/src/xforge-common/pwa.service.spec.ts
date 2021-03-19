@@ -1,4 +1,5 @@
 import { HttpClient } from '@angular/common/http';
+import { fakeAsync, flush } from '@angular/core/testing';
 import { SwUpdate } from '@angular/service-worker';
 import { instance, mock } from 'ts-mockito';
 import { LocationService } from './location.service';
@@ -34,6 +35,27 @@ describe('PwaService', () => {
     env.onlineStatus = true;
     expect(env.pwaService.isOnline).toBe(true);
   });
+
+  it('informs the caller when the user is back online', fakeAsync(() => {
+    env.onlineStatus = false;
+    let onlineFiredCount = 0;
+    env.pwaService.online.then(() => onlineFiredCount++);
+    flush();
+    expect(onlineFiredCount).toBe(0);
+
+    env.onlineStatus = true;
+    flush();
+    expect(onlineFiredCount).toBe(1);
+
+    env.pwaService.online.then(() => onlineFiredCount++);
+    flush();
+    expect(onlineFiredCount).toBe(2);
+
+    env.onlineStatus = false;
+    env.pwaService.online.then(() => onlineFiredCount++);
+    flush();
+    expect(onlineFiredCount).toBe(2);
+  }));
 
   it('switch to offline when navigator is online but websocket status is false', () => {
     env.onlineStatus = true;

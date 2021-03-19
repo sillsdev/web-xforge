@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { SwUpdate, UpdateAvailableEvent } from '@angular/service-worker';
 import { BehaviorSubject, fromEvent, merge, Observable, of } from 'rxjs';
-import { mapTo } from 'rxjs/operators';
+import { filter, mapTo, take } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { LocationService } from './location.service';
 
@@ -58,6 +58,21 @@ export class PwaService extends SubscriptionDisposable {
     if (status !== this.webSocketStatus.getValue()) {
       this.webSocketStatus.next(status);
     }
+  }
+
+  /**
+   * Returns a promise that will resolve immediately if the user is online, or when the user comes online.
+   */
+  get online(): Promise<void> {
+    return new Promise<void>(resolve => {
+      this.onlineStatus
+        .pipe(
+          filter(isOnline => isOnline),
+          take(1)
+        )
+        .toPromise()
+        .then(() => resolve());
+    });
   }
 
   async checkOnline(): Promise<boolean> {
