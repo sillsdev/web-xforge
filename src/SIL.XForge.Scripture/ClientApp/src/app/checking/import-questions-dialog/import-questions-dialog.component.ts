@@ -220,51 +220,50 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
     }
   }
 
-  importQuestions(): void {
+  async importQuestions(): Promise<void> {
     const listItems = this.questionList.filter(listItem => listItem.checked);
+    const dialogData: ImportQuestionsProgressDialogData = { count: listItems.length, completed: 0 };
     const config: MdcDialogConfig<ImportQuestionsProgressDialogData> = {
       clickOutsideToClose: false,
       escapeToClose: false,
-      data: { count: listItems.length }
+      data: dialogData
     };
     const progressDialog = this.dialog.open(ImportQuestionsProgressDialogComponent, config);
-    Promise.all(
-      listItems.map(
-        (listItem): Promise<unknown> => {
-          const currentDate = new Date().toJSON();
-          const verseRefData = this.verseRefData(listItem.question);
-          if (listItem.sfVersionOfQuestion != null) {
-            if (this.questionsDiffer(listItem)) {
-              return listItem.sfVersionOfQuestion.submitJson0Op(op =>
-                op
-                  .set(q => q.text!, listItem.question.text)
-                  .set(q => q.verseRef, verseRefData)
-                  .set(q => q.dateModified, currentDate)
-              );
-            }
-            return Promise.resolve();
-          } else {
-            const newQuestion: Question = {
-              dataId: objectId(),
-              projectRef: this.data.projectId,
-              ownerRef: this.data.userId,
-              verseRef: verseRefData,
-              text: listItem.question.text,
-              audioUrl: undefined,
-              answers: [],
-              isArchived: false,
-              dateCreated: currentDate,
-              dateModified: currentDate,
-              transceleratorQuestionId: listItem.question.id
-            };
-            return this.projectService.createQuestion(this.data.projectId, newQuestion, undefined, undefined);
-          }
-        }
-      )
-    ).finally(() => {
-      progressDialog.close();
-      this.dialogRef.close();
-    });
+
+    // Using Promise.all seems like a better choice than awaiting promises in a loop, but experimentally it appears to
+    // take the same amount of time or significantly longer, especially with large numbers of questions, possibly due to
+    // queuing too many tasks simultaneously. Additionally, running in series makes it much easier to track progress.
+    for (const listItem of listItems) {
+      const currentDate = new Date().toJSON();
+      const verseRefData = this.verseRefData(listItem.question);
+      if (listItem.sfVersionOfQuestion == null) {
+        const newQuestion: Question = {
+          dataId: objectId(),
+          projectRef: this.data.projectId,
+          ownerRef: this.data.userId,
+          verseRef: verseRefData,
+          text: listItem.question.text,
+          audioUrl: undefined,
+          answers: [],
+          isArchived: false,
+          dateCreated: currentDate,
+          dateModified: currentDate,
+          transceleratorQuestionId: listItem.question.id
+        };
+        await this.projectService.createQuestion(this.data.projectId, newQuestion, undefined, undefined);
+      } else if (this.questionsDiffer(listItem)) {
+        await listItem.sfVersionOfQuestion.submitJson0Op(op =>
+          op
+            .set(q => q.text!, listItem.question.text)
+            .set(q => q.verseRef, verseRefData)
+            .set(q => q.dateModified, currentDate)
+        );
+      }
+      dialogData.completed++;
+    }
+
+    progressDialog.close();
+    this.dialogRef.close();
   }
 
   private verseRefData(q: TransceleratorQuestion): VerseRefData {
