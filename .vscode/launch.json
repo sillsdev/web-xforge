@@ -39,6 +39,20 @@
       }
     },
     {
+      "name": ".NET Core - npm start (SF) - Beta",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "dotnet build",
+      "program": "${workspaceRoot}/src/SIL.XForge.Scripture/bin/Debug/netcoreapp3.1/SIL.XForge.Scripture.dll",
+      "args": ["--start-ng-serve=yes", "--enable-beta-realtime-server=yes"],
+      "cwd": "${workspaceRoot}/src/SIL.XForge.Scripture/",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "DevelopmentBeta"
+      }
+    },
+    {
       "name": ".NET Core (SF)",
       "type": "coreclr",
       "request": "launch",
