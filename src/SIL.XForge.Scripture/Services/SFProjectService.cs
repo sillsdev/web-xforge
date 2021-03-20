@@ -388,7 +388,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task<string> GetLinkSharingKeyAsync(string projectId, string role)
         {
             SFProject project = await GetProjectAsync(projectId);
-            if (!(project.CheckingConfig.ShareEnabled && project.CheckingConfig.ShareLevel == "anyone"))
+            if (!(project.CheckingConfig.ShareEnabled && project.CheckingConfig.ShareLevel == CheckingShareLevel.Anyone))
                 return null;
             SFProjectSecret projectSecret = await ProjectSecrets.GetAsync(projectId);
             // Link sharing keys have Email set to null and ExpirationTime set to null.
