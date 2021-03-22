@@ -45,6 +45,19 @@
                     </div>
                     <iframe width="560" height="315" src='@(ViewData["Scheme"])://www.youtube-nocookie.com/embed/MfNV4IaGWy8?origin=@(ViewData["Origin"])' frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 </div>
+                <div class="feature">
+                    <div class="text">
+                        <h3>@Localizer["LearnSliderCheckingOfflineHeader"]</h3>
+                        <p><i class="material-icons">cloud_off</i>@(Html.Raw(Model.Localizer["LearnSliderCheckingOfflineDescription", "<i>", "</i>", "<span class=\"highlight\">", "</span>"]))</p>
+                        <ol>
+                            <li>@(Html.Raw(Model.Localizer["LearnSliderCheckingOfflineLoading", "<span class=\"highlight\">", "</span>"]))</li>
+                            <li>@(Html.Raw(Model.Localizer["LearnSliderCheckingOfflineAnwering", "<span class=\"highlight\">", "</span>"]))</li>
+                            <li>@(Html.Raw(Model.Localizer["LearnSliderCheckingOfflineInstalling", "<span class=\"highlight\">", "</span>", "<i>", "</i>"]))</li>
+                            <li>@(Html.Raw(Model.Localizer["LearnSliderCheckingOfflineSaving", "<span class=\"highlight\">", "</span>"]))</li>
+                        </ol>
+                    </div>
+                    <iframe width="560" height="315" src='@(ViewData["Scheme"])://www.youtube-nocookie.com/embed/lnBew9W7Bk4?origin=@(ViewData["Origin"])' frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
             </div>
         </div>
         <div class="mdl-grid section-header">
@@ -69,7 +82,7 @@
                             <li>@(Html.Raw(Model.Localizer["LearnSliderTranslateEditSync", "<span class=\"highlight\">", "</span>"]))</li>
                         </ol>
                     </div>
-                    <img src="/images/TranslateTool_TET_MRK_1.png" alt="" />
+                    <img src="/images/TranslateTool_TET_MRK_1.png" loading="lazy" alt="Scripture editor" />
                 </div>
                 <div class="feature">
                     <div class="text">
@@ -81,7 +94,7 @@
                             <li>@(Html.Raw(Model.Localizer["LearnSliderTranslateCollaborateRealtime", "<i>", "</i>", "<span class=\"highlight\">", "</span>"]))</li>
                         </ol>
                     </div>
-                    <img src="/images/CollaborateOnScripture.gif" alt="" />
+                    <img src="/images/CollaborateOnScripture.gif" loading="lazy" alt="Scripture realtime collaboration" />
                 </div>
                 <div class="feature right">
                     <div class="text">
@@ -92,7 +105,7 @@
                             <li>@(Html.Raw(Model.Localizer["LearnSliderSuggestionSetupBest", "<span class=\"highlight\">", "</span>"]))</li>
                         </ol>
                     </div>
-                    <img src="/images/Settings_NLTTest.png" alt="" />
+                    <img src="/images/Settings_NLTTest.png" loading="lazy" alt="Translation suggestions settings" />
                 </div>
                 <div class="feature">
                     <div class="text">
@@ -104,7 +117,7 @@
                             <li>@(Html.Raw(Model.Localizer["LearnSliderSuggestionAcceptLearn", "<span class=\"highlight\">", "</span>"]))</li>
                         </ol>
                     </div>
-                    <img src="/images/TranslateTool_NLT_JHN_1_Suggestion.png" alt="" />
+                    <img src="/images/TranslateTool_NLT_JHN_1_Suggestion.png" loading="lazy" alt="Translation suggestion" />
                 </div>
             </div>
         </div>
