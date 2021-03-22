@@ -27,7 +27,7 @@
     <div class="container">
         <div class="mdl-grid">
             <div class="mdl-cell mdl-cell--12-col align-center">
-                <img src="~/images/multi-devices.svg" alt="Works on multiple devices" />
+                <img src="~/images/multi-devices.svg" loading="lazy" alt="Works on multiple devices" />
                 <h1 class="align-center">@Localizer["Description"]</h1>
             </div>
         </div>
@@ -40,15 +40,15 @@
                 <div class="title align-center">@Localizer["EngageTitle"]</div>
                 <div class="engage-features">
                     <div class="engage-feature">
-                        <img src="~/images/logo-paratext.svg" alt="Paratext">
+                        <img src="~/images/logo-paratext.svg" loading="lazy" alt="Paratext">
                         <span>@Localizer["EngageCollaborate"]</span>
                     </div>
                     <div class="engage-feature">
-                        <img src="~/images/community-checking.svg" alt="Community Checking">
+                        <img src="~/images/community-checking.svg" loading="lazy" alt="Community Checking">
                         <span>@Localizer["EngageChecking"]</span>
                     </div>
                     <div class="engage-feature">
-                        <img src="~/images/translate2.svg" alt="Translate">
+                        <img src="~/images/translate2.svg" loading="lazy" alt="Translate">
                         <span>@Localizer["EngageSuggestions"]</span>
                     </div>
                 </div>
@@ -74,7 +74,7 @@
             <div class="mdl-cell mdl-cell--12-col">
                 <div class="about-features">
                     <div class="about-feature">
-                        <img src="~/images/logo-paratext.svg" alt="Paratext">
+                        <img src="~/images/logo-paratext.svg" loading="lazy" alt="Paratext">
                         <span>@Localizer["AboutParatext"]</span>
                         <p>@(Html.Raw(Model.Localizer["AboutParatextDescription", "<span class=\"highlight\">", "</span>"]))</p>
                     </div>
@@ -95,7 +95,7 @@
 </section>
 <section class="quote">
     <div class="quote-container">
-        <img src="/images/quoter.jpg" alt="" />
+        <img src="/images/quoter.jpg" loading="lazy" alt="Quoter" />
         <div class="quote-text">
             <i class="material-icons">format_quote</i>
             <p>

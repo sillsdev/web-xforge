@@ -152,7 +152,8 @@ namespace SIL.XForge.Scripture.Services
         public async Task GetLinkSharingKeyAsync_LinkDoesNotExist_NewShareKeyCreated()
         {
             var env = new TestEnvironment();
-            await env.Service.UpdateSettingsAsync(User01, Project03, new SFProjectSettings { ShareLevel = "anyone" });
+            await env.Service.UpdateSettingsAsync(User01, Project03,
+                new SFProjectSettings { ShareLevel = CheckingShareLevel.Anyone });
             SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
             Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == null), Is.False);
             env.SecurityService.GenerateKey().Returns("newkey");
