@@ -305,6 +305,27 @@ describe('SettingsComponent', () => {
         expect(env.statusDone(env.translationSuggestionsStatus)).not.toBeNull();
         expect(env.statusDone(env.basedOnStatus)).not.toBeNull();
       }));
+
+      it('requires based on to be reset if old source does not exist', fakeAsync(() => {
+        const env = new TestEnvironment();
+        when(mockedSFProjectService.onlineIsSourceProject('source_unavailable', anything())).thenResolve(false);
+        env.setupProject({
+          translationSuggestionsEnabled: false,
+          source: {
+            projectRef: 'source_unavailable',
+            paratextId: 'pt_source',
+            name: 'PT Source',
+            shortName: 'PTS',
+            isRightToLeft: false,
+            writingSystem: { tag: 'en' }
+          }
+        });
+        env.wait();
+        expect(env.component.form.get('sourceParatextId')!.value).toBeNull();
+        env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
+        expect(env.basedOnSelect).not.toBeNull();
+        expect(env.component.form.get('sourceParatextId')!.value).toBeNull();
+      }));
     });
 
     describe('Checking options', () => {
@@ -380,7 +401,8 @@ describe('SettingsComponent', () => {
     }));
 
     it('should disable Delete button if project is a source project', fakeAsync(() => {
-      const env = new TestEnvironment(true, true);
+      const env = new TestEnvironment(true);
+      when(mockedSFProjectService.onlineIsSourceProject('project01', anything())).thenResolve(true);
       env.setupProject();
       env.wait();
       env.fixture.detectChanges();
@@ -422,9 +444,10 @@ class TestEnvironment {
   private isOnline: BehaviorSubject<boolean>;
   private mockedDialogRef: MdcDialogRef<DeleteProjectDialogComponent> = mock(MdcDialogRef);
 
-  constructor(hasConnection: boolean = true, isSource: boolean = false) {
+  constructor(hasConnection: boolean = true) {
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
-    when(mockedSFProjectService.onlineIsSourceProject('project01')).thenResolve(isSource);
+    when(mockedSFProjectService.onlineIsSourceProject('project01', anything())).thenResolve(false);
+    when(mockedSFProjectService.onlineIsSourceProject('paratext01', anything())).thenResolve(true);
     when(mockedSFProjectService.onlineDelete(anything())).thenResolve();
     when(mockedSFProjectService.onlineUpdateSettings('project01', anything())).thenResolve();
     when(mockedUserService.currentProjectId).thenReturn('project01');
@@ -443,7 +466,7 @@ class TestEnvironment {
             shortName: 'PT1',
             languageTag: 'qaa',
             isConnectable: true,
-            isConnected: false
+            isConnected: true
           },
           {
             paratextId: 'paratextId02',
@@ -623,21 +646,44 @@ class TestEnvironment {
       shareLevel: CheckingShareLevel.Specific
     }
   ) {
-    this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
-      id: 'project01',
-      data: {
-        name: 'project 01',
-        paratextId: 'pt01',
-        shortName: 'P01',
-        writingSystem: {
-          tag: 'en'
-        },
-        translateConfig,
-        checkingConfig,
-        sync: { queuedCount: 0 },
-        texts: [],
-        userRoles: {}
+    this.realtimeService.addSnapshots<SFProject>(SFProjectDoc.COLLECTION, [
+      {
+        id: 'project01',
+        data: {
+          name: 'project 01',
+          paratextId: 'pt01',
+          shortName: 'P01',
+          writingSystem: {
+            tag: 'en'
+          },
+          translateConfig,
+          checkingConfig,
+          sync: { queuedCount: 0 },
+          texts: [],
+          userRoles: {}
+        }
+      },
+      {
+        id: 'paratext01',
+        data: {
+          name: 'Source Project 01',
+          paratextId: 'paratextId01',
+          shortName: 'SP1',
+          writingSystem: {
+            tag: 'en'
+          },
+          translateConfig: { translationSuggestionsEnabled: false },
+          checkingConfig: {
+            checkingEnabled: false,
+            shareEnabled: false,
+            usersSeeEachOthersResponses: false,
+            shareLevel: CheckingShareLevel.Specific
+          },
+          sync: { queuedCount: 0 },
+          texts: [],
+          userRoles: {}
+        }
       }
-    });
+    ]);
   }
 }

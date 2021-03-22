@@ -135,8 +135,8 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return (await this.onlineInvoke<string>('uninviteUser', { projectId, emailToUninvite }))!;
   }
 
-  async onlineIsSourceProject(projectId: string): Promise<boolean> {
-    return (await this.onlineInvoke<boolean>('isSourceProject', { projectId }))!;
+  async onlineIsSourceProject(projectId: string, includeInactive: boolean): Promise<boolean> {
+    return (await this.onlineInvoke<boolean>('isSourceProject', { projectId, includeInactive }))!;
   }
 
   async onlineGetLinkSharingKey(projectId: string, role: SFProjectRole): Promise<string> {
