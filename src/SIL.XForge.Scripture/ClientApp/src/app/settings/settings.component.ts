@@ -1,6 +1,6 @@
 import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web/dialog';
 import { Component, OnInit } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -41,7 +41,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   private controlStates = new Map<Extract<keyof SFProjectSettings, string>, ElementState>();
   private previousFormValues: SFProjectSettings = {};
   private _isAppOnline: boolean = false;
-  private isSourceProject: boolean = false;
+  private isActiveSourceProject: boolean = false;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -95,24 +95,11 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   get deleteButtonDisabled(): boolean {
-    return !this.isAppOnline || this.isLoading || this.isSourceProject;
-  }
-
-  private get isOnlyBasedOnInvalid(): boolean {
-    let invalidCount = 0;
-    const controls = this.form.controls;
-    for (const name in this.form.controls) {
-      if (controls[name].invalid) {
-        invalidCount++;
-      }
-    }
-
-    return this.form.controls.sourceParatextId.invalid && invalidCount === 1;
+    return !this.isAppOnline || this.isLoading || this.isActiveSourceProject;
   }
 
   ngOnInit(): void {
     this.form.disable();
-    this.form.setErrors({ required: true });
     this.form.valueChanges.subscribe(value => this.onFormValueChanges(value));
     this.setAllControlsToInSync();
     this.isAppOnline = this.pwaService.isOnline;
@@ -133,11 +120,11 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
         [this.projects, this.resources] = await this.paratextService.getProjectsAndResources();
         this.projectDoc = await projectDocPromise;
         if (this.projectDoc != null) {
-          this.updateSettingsInfo();
+          await this.updateSettingsInfo();
           this.updateNonSelectableProjects();
           this.subscribe(this.projectDoc.remoteChanges$, () => this.updateNonSelectableProjects());
         }
-        this.isSourceProject = await this.projectService.onlineIsSourceProject(projectId);
+        this.isActiveSourceProject = await this.projectService.onlineIsSourceProject(projectId, false);
         this.loadingFinished();
       }
     });
@@ -180,64 +167,38 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     if (this.projectDoc == null || this.projectDoc.data == null) {
       return;
     }
-
-    if (this.form.valid || this.isOnlyBasedOnInvalid) {
-      // Set status and include values for changed form items
-      if (
-        newValue.translationSuggestionsEnabled !== this.previousFormValues.translationSuggestionsEnabled &&
-        this.form.controls.translationSuggestionsEnabled.enabled
-      ) {
-        this.setValidators();
-        if (
-          !newValue.translationSuggestionsEnabled ||
-          (this.form.valid && this.projectDoc.data.translateConfig.source != null)
-        ) {
-          this.updateSetting(newValue, 'translationSuggestionsEnabled');
-        } else {
-          this.controlStates.set('translationSuggestionsEnabled', ElementState.InSync);
-        }
-      }
-      if (newValue.sourceParatextId !== this.previousFormValues.sourceParatextId) {
-        if (newValue.translationSuggestionsEnabled && newValue.sourceParatextId != null) {
-          const settings: SFProjectSettings = {
-            sourceParatextId: newValue.sourceParatextId
-          };
-          if (this.previousFormValues.sourceParatextId == null) {
-            settings.translationSuggestionsEnabled = true;
-          }
-          const updateTaskPromise = this.projectService.onlineUpdateSettings(this.projectDoc.id, settings);
-          this.checkUpdateStatus('sourceParatextId', updateTaskPromise);
-          if (this.previousFormValues.sourceParatextId == null) {
-            this.checkUpdateStatus('translationSuggestionsEnabled', updateTaskPromise);
-          }
-          this.previousFormValues = newValue;
-        }
-      }
-      if (newValue.checkingEnabled !== this.previousFormValues.checkingEnabled) {
-        this.updateSetting(newValue, 'checkingEnabled');
-      }
-      if (newValue.usersSeeEachOthersResponses !== this.previousFormValues.usersSeeEachOthersResponses) {
-        this.updateSetting(newValue, 'usersSeeEachOthersResponses');
-      }
-      if (newValue.shareEnabled !== this.previousFormValues.shareEnabled) {
-        this.updateSetting(newValue, 'shareEnabled');
-        const shareLevelControl = this.form.controls.shareLevel;
-        if (newValue.shareEnabled) {
-          // when a control is disabled the value is undefined, so reset back to previous value
-          this.previousFormValues.shareLevel = this.projectDoc.data.checkingConfig.shareLevel;
-          shareLevelControl.enable();
-        } else {
-          shareLevelControl.disable();
-        }
-      }
-      if (
-        newValue.shareLevel != null &&
-        newValue.shareLevel !== this.previousFormValues.shareLevel &&
-        this.form.controls.shareLevel.enabled
-      ) {
-        this.updateSetting(newValue, 'shareLevel');
+    // Set status and include values for changed form items
+    const sourceProjectChanged: boolean = newValue.sourceParatextId !== this.previousFormValues.sourceParatextId;
+    if (
+      newValue.translationSuggestionsEnabled !== this.previousFormValues.translationSuggestionsEnabled &&
+      this.form.controls.translationSuggestionsEnabled.enabled
+    ) {
+      if (!newValue.translationSuggestionsEnabled || (newValue.sourceParatextId != null && !sourceProjectChanged)) {
+        // Translation suggestions is set to false or is re-enabled
+        this.updateSetting(newValue, 'translationSuggestionsEnabled');
+        return;
+      } else {
+        this.controlStates.set('translationSuggestionsEnabled', ElementState.InSync);
       }
     }
+    // Check if the source project needs to be updated
+    if (newValue.translationSuggestionsEnabled && newValue.sourceParatextId != null && sourceProjectChanged) {
+      const settings: SFProjectSettings = {
+        sourceParatextId: newValue.sourceParatextId
+      };
+      if (this.previousFormValues.sourceParatextId == null) {
+        settings.translationSuggestionsEnabled = true;
+      }
+      const updateTaskPromise = this.projectService.onlineUpdateSettings(this.projectDoc.id, settings);
+      this.checkUpdateStatus('sourceParatextId', updateTaskPromise);
+      if (this.previousFormValues.sourceParatextId == null) {
+        this.checkUpdateStatus('translationSuggestionsEnabled', updateTaskPromise);
+      }
+      this.previousFormValues = newValue;
+      return;
+    }
+
+    this.updateCheckingConfig(newValue);
   }
 
   private updateSetting(newValue: SFProjectSettings, setting: Extract<keyof SFProjectSettings, string>): void {
@@ -249,6 +210,36 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.previousFormValues = newValue;
   }
 
+  private updateCheckingConfig(newValue: SFProjectSettings): void {
+    if (this.projectDoc?.data == null) {
+      return;
+    }
+    if (newValue.checkingEnabled !== this.previousFormValues.checkingEnabled) {
+      this.updateSetting(newValue, 'checkingEnabled');
+    }
+    if (newValue.usersSeeEachOthersResponses !== this.previousFormValues.usersSeeEachOthersResponses) {
+      this.updateSetting(newValue, 'usersSeeEachOthersResponses');
+    }
+    if (newValue.shareEnabled !== this.previousFormValues.shareEnabled) {
+      this.updateSetting(newValue, 'shareEnabled');
+      const shareLevelControl = this.form.controls.shareLevel;
+      if (newValue.shareEnabled) {
+        // when a control is disabled the value is undefined, so reset back to previous value
+        this.previousFormValues.shareLevel = this.projectDoc.data.checkingConfig.shareLevel;
+        shareLevelControl.enable();
+      } else {
+        shareLevelControl.disable();
+      }
+    }
+    if (
+      newValue.shareLevel != null &&
+      newValue.shareLevel !== this.previousFormValues.shareLevel &&
+      this.form.controls.shareLevel.enabled
+    ) {
+      this.updateSetting(newValue, 'shareLevel');
+    }
+  }
+
   private checkUpdateStatus(setting: Extract<keyof SFProjectSettings, string>, updatePromise: Promise<void>): void {
     this.controlStates.set(setting, ElementState.Submitting);
     updatePromise
@@ -256,21 +247,22 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       .catch(() => this.controlStates.set(setting, ElementState.Error));
   }
 
-  private updateSettingsInfo(): void {
+  private async updateSettingsInfo(): Promise<void> {
     if (this.projectDoc == null || this.projectDoc.data == null) {
       return;
     }
 
     const curSource = this.projectDoc.data.translateConfig.source;
+    const sourceProjectExists =
+      curSource == null ? false : await this.projectService.onlineIsSourceProject(curSource.projectRef, true);
     this.previousFormValues = {
       translationSuggestionsEnabled: this.projectDoc.data.translateConfig.translationSuggestionsEnabled,
-      sourceParatextId: curSource != null ? curSource.paratextId : undefined,
+      sourceParatextId: curSource != null && sourceProjectExists ? curSource.paratextId : undefined,
       checkingEnabled: this.projectDoc.data.checkingConfig.checkingEnabled,
       usersSeeEachOthersResponses: this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses,
       shareEnabled: this.projectDoc.data.checkingConfig.shareEnabled,
       shareLevel: this.projectDoc.data.checkingConfig.shareLevel
     };
-    this.setValidators();
     this.form.reset(this.previousFormValues);
     if (!this.isLoggedInToParatext) {
       this.form.controls.translationSuggestionsEnabled.disable();
@@ -279,19 +271,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       this.form.controls.shareLevel.disable();
     }
     this.setAllControlsToInSync();
-  }
-
-  private setValidators(): void {
-    if (
-      this.projectDoc != null &&
-      this.projectDoc.data != null &&
-      this.projectDoc.data.translateConfig.translationSuggestionsEnabled &&
-      this.isLoggedInToParatext
-    ) {
-      this.form.controls.sourceParatextId.setValidators(Validators.required);
-    } else {
-      this.form.controls.sourceParatextId.setValidators(null);
-    }
   }
 
   private setAllControlsToInSync(): void {

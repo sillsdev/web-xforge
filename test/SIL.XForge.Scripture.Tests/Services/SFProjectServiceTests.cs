@@ -30,6 +30,7 @@ namespace SIL.XForge.Scripture.Services
         private const string Project03 = "project03";
         private const string Project04 = "project04";
         private const string Resource01 = "resource_project";
+        private const string DisabledSource = "disabled_source";
         private const string User01 = "user01";
         private const string User02 = "user02";
         private const string User03 = "user03";
@@ -575,10 +576,11 @@ namespace SIL.XForge.Scripture.Services
         public void IsSourceProject_TrueWhenProjectIsATranslationSource()
         {
             var env = new TestEnvironment();
-            bool isSourceProject = env.Service.IsSourceProject(Resource01);
-            Assert.That(isSourceProject, Is.True);
-            isSourceProject = env.Service.IsSourceProject(Project01);
-            Assert.That(isSourceProject, Is.False);
+            Assert.That(env.Service.IsSourceProject(Resource01, false), Is.True);
+            Assert.That(env.Service.IsSourceProject(Project01, false), Is.False);
+            Assert.That(env.Service.IsSourceProject(DisabledSource, true), Is.True);
+            Assert.That(env.Service.IsSourceProject(DisabledSource, false), Is.False);
+            Assert.That(env.Service.IsSourceProject("Bad project", false), Is.False);
         }
 
         [Test]
@@ -923,6 +925,14 @@ namespace SIL.XForge.Scripture.Services
                                 ShareEnabled = true,
                                 ShareLevel = CheckingShareLevel.Specific
                             },
+                            TranslateConfig = {
+                                TranslationSuggestionsEnabled = false,
+                                Source = new TranslateSource
+                                {
+                                    ProjectRef = DisabledSource,
+                                    ParatextId = "pt_dis"
+                                }
+                            },
                             UserRoles =
                             {
                                 { User01, SFProjectRole.Administrator },
@@ -949,6 +959,13 @@ namespace SIL.XForge.Scripture.Services
                             ParatextId = "resid_is_16_char",
                             Name = "resource project",
                             ShortName = "RES",
+                        },
+                        new SFProject
+                        {
+                            Id = DisabledSource,
+                            ParatextId = "pt_dis",
+                            Name = "Disabled Source Project",
+                            ShortName = "DSP"
                         }
                     }));
                 RealtimeService.AddRepository("sf_project_user_configs", OTType.Json0,

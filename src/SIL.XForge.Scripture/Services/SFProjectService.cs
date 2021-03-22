@@ -506,10 +506,22 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        public bool IsSourceProject(string projectId)
+        /// <summary> Determine if the specified project is a source project. </summary>
+        public bool IsSourceProject(string projectId, bool includeInactive)
         {
-            return RealtimeService.QuerySnapshots<SFProject>()
-                .Any(p => p.TranslateConfig.Source != null && p.TranslateConfig.Source.ProjectRef == projectId);
+            if (string.IsNullOrEmpty(projectId))
+                return false;
+            IQueryable<SFProject> projectQuery = RealtimeService.QuerySnapshots<SFProject>();
+            bool exists = projectQuery.Any(p => p.Id == projectId);
+            bool isSource = includeInactive
+                ? projectQuery.Any(p =>
+                    p.TranslateConfig.Source != null && p.TranslateConfig.Source.ProjectRef == projectId)
+                : projectQuery.Any(p =>
+                    p.TranslateConfig.Source != null &&
+                    p.TranslateConfig.Source.ProjectRef == projectId &&
+                    p.TranslateConfig.TranslationSuggestionsEnabled
+                );
+            return exists && isSource;
         }
 
         public async Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestions(string curUserId, string projectId)

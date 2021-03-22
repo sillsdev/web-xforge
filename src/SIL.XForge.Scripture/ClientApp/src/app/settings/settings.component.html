@@ -155,7 +155,7 @@
       <div mdcHeadline6>{{ t("danger_zone") }}</div>
       <mdc-card class="card-content" id="delete-project">
         <h4>{{ t("delete_this_project") }}</h4>
-        <p *ngIf="isSourceProject; else deleteMessage" class="source-project-msg">
+        <p *ngIf="isActiveSourceProject; else deleteMessage" class="source-project-msg">
           {{ t("source_projects_cannot_be_deleted") }}
         </p>
         <ng-template #deleteMessage>
