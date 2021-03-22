@@ -240,9 +240,9 @@ namespace SIL.XForge.Scripture.Controllers
             return await CheckLinkSharing(projectId, null);
         }
 
-        public IRpcMethodResult IsSourceProject(string projectId)
+        public IRpcMethodResult IsSourceProject(string projectId, bool includeInactive)
         {
-            return Ok(_projectService.IsSourceProject(projectId));
+            return Ok(_projectService.IsSourceProject(projectId, includeInactive));
         }
 
         public async Task<IRpcMethodResult> LinkSharingKey(string projectId, string role)
