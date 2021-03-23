@@ -52,6 +52,7 @@ import { TranslationEngineService } from '../../core/translation-engine.service'
 import { Segment } from '../../shared/text/segment';
 import { FeaturedVerseRefInfo, TextComponent } from '../../shared/text/text.component';
 import { verseRefFromMouseEvent } from '../../shared/utils';
+import { NoteDialogComponent, NoteDialogData } from './note-dialog/note-dialog.component';
 import {
   SuggestionsSettingsDialogComponent,
   SuggestionsSettingsDialogData
@@ -654,8 +655,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private showNoteThread(verseRef: VerseRef): void {
-    console.log('verse clicked ' + verseRef.toString());
-    // Show the Paratext note thread
+    this.dialog.open(NoteDialogComponent, {
+      clickOutsideToClose: true,
+      escapeToClose: true,
+      autoFocus: false,
+      data: {
+        id: '659baff4'
+      } as NoteDialogData
+    });
+    console.log(verseRef);
   }
 
   private setupTranslationEngine(): void {
