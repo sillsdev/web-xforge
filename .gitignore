@@ -6,7 +6,7 @@
 .settings
 .vagrant/
 deploy/**/*.retry
-deploy/callback_plugins/*.pyc
+deploy/callback_plugins/**/*.pyc
 deploy/site_files/
 deploy/site_info/
 node_modules/
