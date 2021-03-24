@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -8,6 +9,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
+using Paratext.Data;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -104,7 +106,7 @@ namespace SIL.XForge.Scripture.Services
                     <notes version=""1.1"">
                         <thread id=""thread01"">
                             <selection verseRef=""MAT 1:2"" startPos=""0"" selectedText="""" />
-                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
+                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"" tagAdded=""1"">
                                 <content>
                                     <p>Paratext note 1.</p>
                                 </content>
@@ -120,7 +122,7 @@ namespace SIL.XForge.Scripture.Services
                         </thread>
                         <thread id=""thread02"">
                             <selection verseRef=""MAT 1:3"" startPos=""0"" selectedText=""note 3 text"" />
-                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
+                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"" tagAdded=""2"">
                                 <content>
                                     <p>Paratext note 3.</p>
                                 </content>
@@ -135,7 +137,7 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(thread01.VerseRefStr, Is.EqualTo("MAT 1:2"));
                 Assert.That(thread01.NotesAdded.Count, Is.EqualTo(1));
                 string expected1 = "thread01:syncuser01:2019-01-01T08:00:00.0000000+00:00-" +
-                    "user03-" + "Paratext note 2.-" + "False";
+                    "user03-" + "Paratext note 2.-" + "False-" + "icon1";
                 Assert.That(env.ParatextNoteToString(thread01.NotesAdded[0]), Is.EqualTo(expected1));
                 Assert.That(thread01.NotesUpdated.Count, Is.EqualTo(0));
                 ParatextNoteThreadChange thread02 = changes.Last();
@@ -143,7 +145,7 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(thread02.SelectedText, Is.EqualTo("note 3 text"));
                 Assert.That(thread02.NotesAdded.Count, Is.EqualTo(1));
                 string expected2 = "thread02:syncuser01:2019-01-01T08:00:00.0000000+00:00-" +
-                    "user02-" + "Paratext note 3.-" + "False";
+                    "user02-" + "Paratext note 3.-" + "False-" + "icon2";
                 Assert.That(env.ParatextNoteToString(thread02.NotesAdded[0]), Is.EqualTo(expected2));
             }
         }
@@ -369,21 +371,9 @@ namespace SIL.XForge.Scripture.Services
             {
                 const string ptNotesText = @"
                     <notes version=""1.1"">
-                        <thread id=""ANSWER_answer01"">
-                            <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
-                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
-                                <content>
-                                    <p><span style=""bold"">Test question?</span></p>
-                                    <p>Test answer 1.</p>
-                                </content>
-                            </comment>
-                            <comment user=""PT User 3"" date=""2019-01-01T09:00:00.0000000+00:00"">
-                                <content>Test comment 1.</content>
-                            </comment>
-                        </thread>
                         <thread id=""thread01"">
                             <selection verseRef=""MAT 1:2"" startPos=""0"" selectedText="""" />
-                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
+                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"" tagAdded=""1"">
                                 <content>
                                     <p>Paratext note 1 updated in Paratext.</p>
                                 </content>
@@ -400,7 +390,7 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(thread01.NotesAdded.Count, Is.EqualTo(0));
                 Assert.That(thread01.NotesUpdated.Count, Is.EqualTo(1));
                 string expected = "thread01:syncuser01:2019-01-01T08:00:00.0000000+00:00-" +
-                    "user02-" + "Paratext note 1 updated in Paratext.-" + "False";
+                    "user02-" + "Paratext note 1 updated in Paratext.-" + "False-" + "icon1";
                 Assert.That(env.ParatextNoteToString(thread01.NotesUpdated[0]), Is.EqualTo(expected));
             }
         }
@@ -503,7 +493,7 @@ namespace SIL.XForge.Scripture.Services
                     <notes version=""1.1"">
                         <thread id=""thread01"">
                             <selection verseRef=""MAT 1:2"" startPos=""0"" selectedText="""" />
-                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"" deleted=""true"">
+                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"" deleted=""true"" tagAdded=""1"">
                                 <content>
                                     <p>Paratext note 1.</p>
                                 </content>
@@ -519,7 +509,7 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(thread01.NotesUpdated.Count, Is.EqualTo(0));
                 Assert.That(thread01.NotesDeleted.Count, Is.EqualTo(1));
                 string expected = "thread01:syncuser01:2019-01-01T08:00:00.0000000+00:00-" +
-                    "user02-" + "Paratext note 1.-" + "True";
+                    "user02-" + "Paratext note 1.-" + "True-" + "icon1";
                 Assert.That(env.ParatextNoteToString(thread01.NotesDeleted[0]), Is.EqualTo(expected));
             }
         }
@@ -558,11 +548,13 @@ namespace SIL.XForge.Scripture.Services
             public SFMemoryRealtimeService RealtimeService { get; }
             public IParatextService ParatextService { get; }
             public IStringLocalizer<SharedResource> Localizer { get; }
+            public Paratext.Data.ProjectComments.CommentTags Tags { get; set; }
 
             public async Task InitMapperAsync(bool includeSyncUsers, bool twoPtUsersOnProject)
             {
+                SetCommentTags(new int[] { 1, 2, 3 });
                 await Mapper.InitAsync(UserSecrets.Get("user01"), ProjectSecret(includeSyncUsers),
-                    ParatextUsersOnProject(twoPtUsersOnProject), "paratextId");
+                    ParatextUsersOnProject(twoPtUsersOnProject), "paratextId", Tags);
             }
 
             public void AddData(string answerSyncUserId1, string answerSyncUserId2, string commentSyncUserId1,
@@ -646,7 +638,8 @@ namespace SIL.XForge.Scripture.Services
                                     SyncUserRef = "syncuser01",
                                     ExtUserId = "user02",
                                     Content = "Paratext note 1.",
-                                    DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc)
+                                    DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc),
+                                    TagIcon = "icon1"
                                 }
                             }
                         }
@@ -676,9 +669,23 @@ namespace SIL.XForge.Scripture.Services
                 ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(ptUserRoles);
             }
 
+            public void SetCommentTags(int[] tagIds)
+            {
+                var scrtextDir = Path.Combine(Path.GetTempPath(), "project01", "target");
+                var associatedPtUser = new SFParatextUser("user01");
+                ProjectName projectName = new ProjectName() { ProjectPath = scrtextDir, ShortName = "Proj" };
+                MockScrText scrText = new MockScrText(associatedPtUser, projectName);
+                var tags = new MockCommentTags(scrText);
+                tags.InitializeTagList(tagIds);
+                Tags = tags;
+            }
+
             public string ParatextNoteToString(ParatextNote note)
             {
-                return $"{note.DataId}-{note.ExtUserId}-{note.Content}-{note.Deleted}";
+                string result = $"{note.DataId}-{note.ExtUserId}-{note.Content}-{note.Deleted}";
+                if (note.TagIcon != null)
+                    result = result + $"-{note.TagIcon}";
+                return result;
             }
 
             private static SFProjectSecret ProjectSecret(bool includeSyncUsers)

@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.AspNetCore.Hosting;
@@ -491,6 +490,24 @@ namespace SIL.XForge.Scripture.Services
 
             // PT username is not written to server logs
             Assert.That(env.MockLogger.Messages.Any((string message) => message.Contains(env.Username01)), Is.False);
+        }
+
+        [Test]
+        public void GetCommentTagSettings_ReturnsSettings()
+        {
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01);
+            MockScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
+            CommentTag tag = new CommentTag("test01", "01flag1", 1);
+            CommentTags.CommentTagList list = new CommentTags.CommentTagList();
+            list.SerializedData = new CommentTag[] { tag };
+            scrText._fileManager.GetXml<CommentTags.CommentTagList>(Arg.Any<string>()).Returns(list);
+            env.MockScrTextCollection.FindById(env.Username01, ptProjectId).Returns(scrText);
+
+            CommentTags commentTags = env.Service.GetCommentTags(userSecret, ptProjectId);
+            Assert.That(commentTags.Get(1).Icon, Is.EqualTo("01flag1"));
         }
 
         [Test]
