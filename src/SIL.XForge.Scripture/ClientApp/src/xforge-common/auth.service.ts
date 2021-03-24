@@ -124,7 +124,7 @@ export class AuthService {
     return this.tryLogInPromise.then(result => result.newlyLoggedIn);
   }
 
-  private get isAuthenticated(): boolean {
+  private get hasExpired(): boolean {
     return this.expiresAt != null && Date.now() < this.expiresAt;
   }
 
@@ -149,6 +149,13 @@ export class AuthService {
         }
       });
     }
+  }
+
+  async isAuthenticated(): Promise<boolean> {
+    if (!this.hasExpired) {
+      await this.renewTokens();
+    }
+    return true;
   }
 
   logIn(returnUrl: string, signUp?: boolean): void {
@@ -243,9 +250,7 @@ export class AuthService {
     const state: AuthState = authResult.state == null ? {} : JSON.parse(authResult.state);
     if (state.linking != null && state.linking) {
       secondaryId = authResult.idTokenPayload.sub;
-      if (!this.isAuthenticated) {
-        await this.renewTokens();
-      }
+      await this.isAuthenticated();
     } else {
       await this.localLogIn(authResult.accessToken, authResult.idToken, authResult.expiresIn);
     }
