@@ -528,6 +528,11 @@ export function registerScripture(): string[] {
   );
   formats.push(NoteThreadCountAttribute);
 
+  const TagStyleAttribute = new QuillParchment.Attributor.Attribute('tag-style', 'style', {
+    scope: Parchment.Scope.INLINE
+  });
+  formats.push(TagStyleAttribute);
+
   const InvalidBlockClass = new ClassAttributor('invalid-block', 'invalid-block', {
     scope: Parchment.Scope.BLOCK
   });

@@ -116,18 +116,18 @@ quill-editor.rtl {
       width: 1em;
       height: 1em;
       display: block;
-      background: url('/assets/icons/TagIcons/01flag1.png') no-repeat;
       color: #fff;
       position: absolute;
       top: 0em;
       text-indent: 0;
       margin: 0em 0.5em;
+      background: var(--icon-file) no-repeat;
     }
   }
 
-  &[data-question-count]:not([data-question-count='1']) {
+  &[data-note-thread-count]:not([data-note-thread-count='1']) {
     &:after {
-      content: attr(data-question-count);
+      content: attr(data-note-thread-count);
       border-radius: 50%;
       width: 1.5em;
       height: 1.5em;

@@ -6,4 +6,5 @@ export interface ParatextNote extends Comment {
   extUserId: string;
   versionNumber: number;
   deleted: boolean;
+  tagIcon: string;
 }

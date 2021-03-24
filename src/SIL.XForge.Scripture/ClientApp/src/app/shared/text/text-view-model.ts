@@ -283,6 +283,10 @@ export class TextViewModel {
           'para-contents',
           'question-segment',
           'question-count',
+          'note-thread-segment',
+          'note-thread-count',
+          'tag-style',
+          'tag-icon',
           'initial',
           'direction-segment',
           'direction-block'

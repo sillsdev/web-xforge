@@ -6,7 +6,7 @@ import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/ver
 import { fromEvent, Subscription } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { TextDocId } from '../../../core/models/text-doc';
-import { TextComponent } from '../../../shared/text/text.component';
+import { FeaturedVerseRefInfo, TextComponent } from '../../../shared/text/text.component';
 import { verseRefFromMouseEvent } from '../../../shared/utils';
 
 @Component({
@@ -86,7 +86,8 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     if (!this.isEditorLoaded || this.questionVerses == null) {
       return;
     }
-    const segments = this.textComponent.toggleFeaturedVerseRefs(value, this.questionVerses, 'checking');
+    const verseRefInfo: FeaturedVerseRefInfo[] = this.questionVerses.map(v => ({ verseRef: v }));
+    const segments = this.textComponent.toggleFeaturedVerseRefs(value, verseRefInfo, 'checking');
     if (value) {
       this.subscribeClickEvents(segments);
     } else {

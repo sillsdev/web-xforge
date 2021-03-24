@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
+using Paratext.Data.ProjectComments;
 using SIL.Machine.WebApi.Services;
 using SIL.ObjectModel;
 using SIL.Scripture;
@@ -313,7 +314,9 @@ namespace SIL.XForge.Scripture.Services
             List<User> paratextUsers = await _realtimeService.QuerySnapshots<User>()
                 .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
                 .ToListAsync();
-            await _notesMapper.InitAsync(_userSecret, _projectSecret, paratextUsers, _projectDoc.Data.ParatextId);
+            CommentTags commentTags = _paratextService.GetCommentTags(_userSecret, _projectDoc.Data.ParatextId);
+            await _notesMapper
+                .InitAsync(_userSecret, _projectSecret, paratextUsers, _projectDoc.Data.ParatextId, commentTags);
 
             await _projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.Sync.PercentCompleted, 0));
             return true;

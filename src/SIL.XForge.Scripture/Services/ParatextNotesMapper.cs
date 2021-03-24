@@ -39,6 +39,7 @@ namespace SIL.XForge.Scripture.Services
         private string _currentParatextUsername;
         private SFProjectSecret _projectSecret;
         private HashSet<string> _ptProjectUsersWhoCanWriteNotes;
+        private Paratext.Data.ProjectComments.CommentTags _commentTags;
 
         public ParatextNotesMapper(IRepository<UserSecret> userSecrets, IParatextService paratextService,
             IStringLocalizer<SharedResource> localizer, IOptions<SiteOptions> siteOptions)
@@ -52,11 +53,12 @@ namespace SIL.XForge.Scripture.Services
         public List<SyncUser> NewSyncUsers { get; } = new List<SyncUser>();
 
         public async Task InitAsync(UserSecret currentUserSecret, SFProjectSecret projectSecret, List<User> ptUsers,
-            string paratextProjectId)
+            string paratextProjectId, Paratext.Data.ProjectComments.CommentTags commentTags)
         {
             _currentUserSecret = currentUserSecret;
             _currentParatextUsername = _paratextService.GetParatextUsername(currentUserSecret);
             _projectSecret = projectSecret;
+            _commentTags = commentTags;
             _idToSyncUser.Clear();
             _usernameToSyncUser.Clear();
             foreach (SyncUser syncUser in projectSecret.SyncUsers)
@@ -365,6 +367,13 @@ namespace SIL.XForge.Scripture.Services
             int version = 0;
             if (versionNbr != null && int.TryParse(versionNbr, out int nbr))
                 version = nbr;
+
+            // Add the Paratext Comment tag icon to the note
+            string tagAdded = commentElem.Attribute("tagAdded")?.Value;
+            int tagId = Paratext.Data.ProjectComments.CommentTag.toDoTagId;
+            if (tagAdded != null && int.TryParse(tagAdded, out int t))
+                tagId = t;
+            string tagIcon = _commentTags.Get(tagId).Icon;
             return new ParatextNote
             {
                 DataId = $"{threadId}:{syncUser.Id}:{date}",
@@ -377,7 +386,8 @@ namespace SIL.XForge.Scripture.Services
                 DateCreated = DateTime.Parse(date),
                 DateModified = DateTime.Parse(date),
                 VersionNumber = version,
-                Deleted = commentElem.Attribute("deleted")?.Value == "true"
+                Deleted = commentElem.Attribute("deleted")?.Value == "true",
+                TagIcon = tagIcon
             };
         }
 

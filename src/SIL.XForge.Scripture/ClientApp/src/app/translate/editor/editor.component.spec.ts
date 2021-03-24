@@ -904,7 +904,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('adds question count attribute to element', fakeAsync(() => {
+    it('adds note thread segment attribute to element', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
@@ -912,6 +912,8 @@ describe('EditorComponent', () => {
       expect(segment).not.toBeNull();
       expect(segment.hasAttribute('data-note-thread-count')).toBe(true);
       expect(segment.getAttribute('data-note-thread-count')).toBe('1');
+      expect(segment.hasAttribute('style')).toBe(true);
+      expect(segment.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
       env.dispose();
     }));
   });
@@ -1623,7 +1625,8 @@ class TestEnvironment {
         content: `Note from ${id}`,
         extUserId: 'ext_user_01',
         versionNumber: 1,
-        deleted: false
+        deleted: false,
+        tagIcon: '01flag1'
       };
       notes.push(note);
     }
@@ -1631,7 +1634,14 @@ class TestEnvironment {
     const vrd: VerseRefData = fromVerseRef(VerseRef.parse('MAT 1:1'));
     this.realtimeService.addSnapshot<ParatextNoteThread>(ParatextNoteThreadDoc.COLLECTION, {
       id: 'project01:thread01',
-      data: { projectRef: 'project01', dataId: 'thread01', verseRef: vrd, ownerRef: 'user01', selectedText: '', notes }
+      data: {
+        projectRef: 'project01',
+        dataId: 'thread01',
+        verseRef: vrd,
+        ownerRef: 'user01',
+        selectedText: '',
+        notes
+      }
     });
   }
 
