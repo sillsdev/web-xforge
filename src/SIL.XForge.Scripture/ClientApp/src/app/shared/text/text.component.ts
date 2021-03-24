@@ -46,6 +46,10 @@ function onNativeSelectionChanged(): void {
   }
 }
 
+function getTagIconUrl(name: string): string {
+  return `url(/assets/icons/TagIcons/${name}.png)`;
+}
+
 const USX_FORMATS = registerScripture();
 window.document.addEventListener('selectionchange', onNativeSelectionChanged);
 
@@ -53,6 +57,11 @@ export interface TextUpdatedEvent {
   delta?: DeltaStatic;
   prevSegment?: Segment;
   segment?: Segment;
+}
+
+export interface FeaturedVerseRefInfo {
+  verseRef: VerseRef;
+  iconName?: string;
 }
 
 /** View of an editable text document. Used for displaying Scripture. */
@@ -425,14 +434,19 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return this.editor == null ? null : this.editor.container.querySelector(`usx-segment[data-segment="${segment}"]`);
   }
 
-  toggleFeaturedVerseRefs(value: boolean, featureVerseRefs: VerseRef[], app: 'translate' | 'checking'): string[] {
+  toggleFeaturedVerseRefs(
+    value: boolean,
+    featureVerseRefs: FeaturedVerseRefInfo[],
+    app: 'translate' | 'checking'
+  ): string[] {
     if (this.editor == null) {
       return [];
     }
     const segments: string[] = [];
     const verseFeatureCount = new Map<string, number>();
-    for (const verse of featureVerseRefs) {
-      const referenceSegments = this.getVerseSegments(verse);
+    const featureIcons = new Map<string, string>();
+    for (const verseInfo of featureVerseRefs) {
+      const referenceSegments = this.getVerseSegments(verseInfo.verseRef);
       if (referenceSegments.length > 0) {
         const count = verseFeatureCount.get(referenceSegments[0]);
         if (count != null) {
@@ -442,6 +456,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         }
 
         for (const segment of referenceSegments) {
+          if (app === 'translate') {
+            // Create a map from segment to icon
+            featureIcons[referenceSegments[0]] = verseInfo.iconName;
+          }
           if (!segments.includes(segment)) {
             segments.push(segment);
           }
@@ -462,6 +480,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
       if (count != null) {
         formats[formatCount] = value ? count : false;
+      }
+      if (app === 'translate') {
+        const iconName: string = featureIcons.get(segment) ?? '01flag1';
+        formats['tag-style'] = `--icon-file: ${getTagIconUrl(iconName)};`;
       }
       this.editor.formatText(range.index, range.length, formats, 'silent');
     }

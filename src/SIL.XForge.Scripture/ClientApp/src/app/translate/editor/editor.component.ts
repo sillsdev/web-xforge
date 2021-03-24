@@ -44,7 +44,7 @@ import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { Segment } from '../../shared/text/segment';
-import { TextComponent } from '../../shared/text/text.component';
+import { FeaturedVerseRefInfo, TextComponent } from '../../shared/text/text.component';
 import { verseRefFromMouseEvent } from '../../shared/utils';
 import {
   SuggestionsSettingsDialogComponent,
@@ -281,7 +281,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  private get chapterNoteThreadsVerseRefs(): VerseRef[] {
+  private get chapterNoteThreadsVerseRefs(): FeaturedVerseRefInfo[] {
     if (this.noteThreadQuery == null || this.bookNum == null || this._chapter == null) {
       return [];
     }
@@ -290,7 +290,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         nt =>
           nt.data != null && nt.data.verseRef.bookNum === this.bookNum && nt.data.verseRef.chapterNum === this._chapter
       )
-      .map(nt => toVerseRef(nt.data!.verseRef));
+      .map(nt => ({
+        verseRef: toVerseRef(nt.data!.verseRef),
+        iconName: nt.data!.notes[nt.data!.notes.length - 1].tagIcon
+      }));
   }
 
   ngAfterViewInit(): void {

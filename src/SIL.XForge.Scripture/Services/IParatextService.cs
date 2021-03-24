@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Paratext.Data.ProjectComments;
 using SIL.XForge.Models;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Utils;
@@ -29,7 +30,7 @@ namespace SIL.XForge.Scripture.Services
             Dictionary<int, string> chapterAuthors = null);
         string GetNotes(UserSecret userSecret, string ptProjectId, int bookNum);
         void PutNotes(UserSecret userSecret, string ptProjectId, string notesText);
-
+        CommentTags GetCommentTags(UserSecret userSecret, string ptProjectId);
         Task SendReceiveAsync(UserSecret userSecret, string ptTargetId, IProgress<ProgressState> progress = null);
     }
 }
