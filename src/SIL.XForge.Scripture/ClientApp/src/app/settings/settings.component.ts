@@ -120,11 +120,11 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
         [this.projects, this.resources] = await this.paratextService.getProjectsAndResources();
         this.projectDoc = await projectDocPromise;
         if (this.projectDoc != null) {
-          await this.updateSettingsInfo();
+          this.updateSettingsInfo();
           this.updateNonSelectableProjects();
           this.subscribe(this.projectDoc.remoteChanges$, () => this.updateNonSelectableProjects());
         }
-        this.isActiveSourceProject = await this.projectService.onlineIsSourceProject(projectId, false);
+        this.isActiveSourceProject = await this.projectService.onlineIsSourceProject(projectId);
         this.loadingFinished();
       }
     });
@@ -247,17 +247,15 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       .catch(() => this.controlStates.set(setting, ElementState.Error));
   }
 
-  private async updateSettingsInfo(): Promise<void> {
+  private updateSettingsInfo(): void {
     if (this.projectDoc == null || this.projectDoc.data == null) {
       return;
     }
 
     const curSource = this.projectDoc.data.translateConfig.source;
-    const sourceProjectExists =
-      curSource == null ? false : await this.projectService.onlineIsSourceProject(curSource.projectRef, true);
     this.previousFormValues = {
       translationSuggestionsEnabled: this.projectDoc.data.translateConfig.translationSuggestionsEnabled,
-      sourceParatextId: curSource != null && sourceProjectExists ? curSource.paratextId : undefined,
+      sourceParatextId: curSource != null ? curSource.paratextId : undefined,
       checkingEnabled: this.projectDoc.data.checkingConfig.checkingEnabled,
       usersSeeEachOthersResponses: this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses,
       shareEnabled: this.projectDoc.data.checkingConfig.shareEnabled,
