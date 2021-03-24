@@ -11,6 +11,8 @@ SERVICE_UNIT_SUFFIX=""
 if grep "beta" <<< "${APP_SUFFIX}"; then
   SERVICE_UNIT_SUFFIX="_beta"
 fi
+# Relative to repo root
+ERROR_PAGES_PATH="src/SIL.XForge.Scripture/ErrorPages"
 
 cd ..
 
@@ -44,5 +46,8 @@ sudo chown -R :www-data "${BUILD_OUTPUT}/app"
 
 rsync -progzlt --chmod=Dug=rwx,Fug=rwx,o-rwx --delete-during --stats --rsync-path="sudo rsync" \
   --rsh="ssh -v -i ${DEPLOY_CREDENTIALS}" artifacts/app/ root@"${DEPLOY_DESTINATION}:${DEPLOY_PATH}/app"
+
+rsync -vaz --rsync-path="sudo rsync" --rsh="ssh -v -i ${DEPLOY_CREDENTIALS}" \
+  "${ERROR_PAGES_PATH}/" root@"${DEPLOY_DESTINATION}:${DEPLOY_PATH}/htdocs"
 
 ssh root@"${DEPLOY_DESTINATION}" "systemctl restart ${APP_NAME}-web-app${SERVICE_UNIT_SUFFIX}"
