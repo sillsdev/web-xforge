@@ -198,6 +198,15 @@ namespace SIL.XForge.Scripture.Services
                 var tasks = new List<Task>();
                 foreach (string projectUserId in projectUserIds)
                     tasks.Add(removeUser(projectUserId));
+
+                string[] referringProjects = GetProjectWithReferenceToSource(projectId, true);
+                async Task removeSourceReference(string projectId)
+                {
+                    IDocument<SFProject> doc = await conn.FetchAsync<SFProject>(projectId);
+                    await doc.SubmitJson0OpAsync(op => op.Unset(d => d.TranslateConfig.Source));
+                }
+                foreach (string projId in referringProjects)
+                    tasks.Add(removeSourceReference(projId));
                 await Task.WhenAll(tasks);
             }
 
@@ -506,22 +515,10 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        /// <summary> Determine if the specified project is a source project. </summary>
-        public bool IsSourceProject(string projectId, bool includeInactive)
+        /// <summary> Determine if the specified project is an active source project. </summary>
+        public bool IsSourceProject(string projectId)
         {
-            if (string.IsNullOrEmpty(projectId))
-                return false;
-            IQueryable<SFProject> projectQuery = RealtimeService.QuerySnapshots<SFProject>();
-            bool exists = projectQuery.Any(p => p.Id == projectId);
-            bool isSource = includeInactive
-                ? projectQuery.Any(p =>
-                    p.TranslateConfig.Source != null && p.TranslateConfig.Source.ProjectRef == projectId)
-                : projectQuery.Any(p =>
-                    p.TranslateConfig.Source != null &&
-                    p.TranslateConfig.Source.ProjectRef == projectId &&
-                    p.TranslateConfig.TranslationSuggestionsEnabled
-                );
-            return exists && isSource;
+            return GetProjectWithReferenceToSource(projectId, false).Length > 0;
         }
 
         public async Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestions(string curUserId, string projectId)
@@ -757,6 +754,22 @@ namespace SIL.XForge.Scripture.Services
                 ShortName = sourcePTProject.ShortName,
                 WritingSystem = new WritingSystem { Tag = sourcePTProject.LanguageTag }
             };
+        }
+
+        private string[] GetProjectWithReferenceToSource(string projectId, bool includeInactive)
+        {
+            if (string.IsNullOrEmpty(projectId))
+                return new string[0];
+            IQueryable<SFProject> projectQuery = RealtimeService.QuerySnapshots<SFProject>();
+            var projects = includeInactive
+                ? projectQuery.Where(p =>
+                    p.TranslateConfig.Source != null && p.TranslateConfig.Source.ProjectRef == projectId)
+                : projectQuery.Where(p =>
+                    p.TranslateConfig.Source != null &&
+                    p.TranslateConfig.Source.ProjectRef == projectId &&
+                    p.TranslateConfig.TranslationSuggestionsEnabled
+                );
+            return projects.Select(p => p.Id).ToArray();
         }
     }
 }
