@@ -219,7 +219,7 @@ describe('AppComponent', () => {
     env.deleteProject('project01', false);
     verify(mockedMdcDialog.open(ProjectDeletedDialogComponent)).once();
     verify(mockedUserService.setCurrentProjectId()).once();
-    env.projectDeletedDialogRefAfterClosed$.next('close');
+    env.confirmProjectDeletedDialog();
     // Get past setTimeout to navigation
     tick();
     env.fixture.detectChanges();
@@ -247,7 +247,7 @@ describe('AppComponent', () => {
     expect(env.selectedProjectId).toEqual('project01');
     env.removesUserFromProject('project01');
     verify(mockedMdcDialog.open(ProjectDeletedDialogComponent)).once();
-    env.projectDeletedDialogRefAfterClosed$.next('close');
+    env.confirmProjectDeletedDialog();
     // Get past setTimeout to navigation
     tick();
     expect(env.location.path()).toEqual('/projects');
@@ -734,6 +734,10 @@ class TestEnvironment {
     const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.CommunityChecker), false);
     this.currentUserDoc.submitJson0Op(op => op.add<string>(u => u.sites['sf'].projects, 'project04'), false);
+  }
+
+  confirmProjectDeletedDialog() {
+    this.projectDeletedDialogRefAfterClosed$.next('close');
   }
 
   private addProject(projectId: string, userRoles: { [userRef: string]: string }, texts: TextInfo[]): void {
