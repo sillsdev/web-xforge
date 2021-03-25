@@ -30,6 +30,7 @@ namespace SIL.XForge.Scripture.Services
         private const string Project03 = "project03";
         private const string Project04 = "project04";
         private const string Resource01 = "resource_project";
+        private const string DisabledSource = "disabled_source";
         private const string User01 = "user01";
         private const string User02 = "user02";
         private const string User03 = "user03";
@@ -575,10 +576,10 @@ namespace SIL.XForge.Scripture.Services
         public void IsSourceProject_TrueWhenProjectIsATranslationSource()
         {
             var env = new TestEnvironment();
-            bool isSourceProject = env.Service.IsSourceProject(Resource01);
-            Assert.That(isSourceProject, Is.True);
-            isSourceProject = env.Service.IsSourceProject(Project01);
-            Assert.That(isSourceProject, Is.False);
+            Assert.That(env.Service.IsSourceProject(Resource01), Is.True);
+            Assert.That(env.Service.IsSourceProject(Project01), Is.False);
+            Assert.That(env.Service.IsSourceProject(DisabledSource), Is.False);
+            Assert.That(env.Service.IsSourceProject("Bad project"), Is.False);
         }
 
         [Test]
@@ -667,6 +668,17 @@ namespace SIL.XForge.Scripture.Services
             await env.EngineService.Received().RemoveProjectAsync(Project01);
             env.FileSystemService.Received().DeleteDirectory(ptProjectDir);
             Assert.That(env.ProjectSecrets.Contains(Project01), Is.False);
+
+            ptProjectDir = Path.Combine("xforge", "sync", "pt_dis");
+            env.FileSystemService.DirectoryExists(ptProjectDir).Returns(true);
+            Assert.That(env.GetProject(Project03).TranslateConfig.Source, Is.Not.Null);
+            await env.Service.DeleteProjectAsync(User01, DisabledSource);
+
+            await env.EngineService.Received().RemoveProjectAsync(DisabledSource);
+            env.FileSystemService.Received().DeleteDirectory(ptProjectDir);
+            Assert.That(env.ContainsProject(DisabledSource), Is.False);
+            Assert.That(env.GetUser(User01).Sites[SiteId].Projects, Does.Not.Contain(DisabledSource));
+            Assert.That(env.GetProject(Project02).TranslateConfig.Source, Is.Null);
         }
 
         [Test]
@@ -717,7 +729,7 @@ namespace SIL.XForge.Scripture.Services
 
             // The source should appear after the target in the user's project array
             User user = env.GetUser(User01);
-            Assert.That(user.Sites[SiteId].Projects.Skip(2).First(), Is.EqualTo(
+            Assert.That(user.Sites[SiteId].Projects.Skip(3).First(), Is.EqualTo(
                 projects.First().Id), "target is first");
             Assert.That(user.Sites[SiteId].Projects.Last(), Is.EqualTo(projects.Last().Id), "source is last");
         }
@@ -812,7 +824,7 @@ namespace SIL.XForge.Scripture.Services
                         Email = "user01@example.com",
                         Sites = new Dictionary<string, Site>
                         {
-                            { SiteId, new Site { Projects = { Project01, Project03 } } }
+                            { SiteId, new Site { Projects = { Project01, Project03, DisabledSource } } }
                         }
                     },
                     new User
@@ -923,6 +935,14 @@ namespace SIL.XForge.Scripture.Services
                                 ShareEnabled = true,
                                 ShareLevel = CheckingShareLevel.Specific
                             },
+                            TranslateConfig = {
+                                TranslationSuggestionsEnabled = false,
+                                Source = new TranslateSource
+                                {
+                                    ProjectRef = DisabledSource,
+                                    ParatextId = "pt_dis"
+                                }
+                            },
                             UserRoles =
                             {
                                 { User01, SFProjectRole.Administrator },
@@ -949,6 +969,14 @@ namespace SIL.XForge.Scripture.Services
                             ParatextId = "resid_is_16_char",
                             Name = "resource project",
                             ShortName = "RES",
+                        },
+                        new SFProject
+                        {
+                            Id = DisabledSource,
+                            ParatextId = "pt_dis",
+                            Name = "Disabled Source Project",
+                            ShortName = "DSP",
+                            UserRoles = { { User01, SFProjectRole.Administrator } }
                         }
                     }));
                 RealtimeService.AddRepository("sf_project_user_configs", OTType.Json0,
@@ -958,7 +986,8 @@ namespace SIL.XForge.Scripture.Services
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User02) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project02, User02) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project03, User01) },
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project03, User02) }
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project03, User02) },
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(DisabledSource, User01) }
                     }));
                 var siteOptions = Substitute.For<IOptions<SiteOptions>>();
                 siteOptions.Value.Returns(new SiteOptions
