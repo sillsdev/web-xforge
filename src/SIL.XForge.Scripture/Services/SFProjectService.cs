@@ -198,6 +198,15 @@ namespace SIL.XForge.Scripture.Services
                 var tasks = new List<Task>();
                 foreach (string projectUserId in projectUserIds)
                     tasks.Add(removeUser(projectUserId));
+
+                string[] referringProjects = GetProjectWithReferenceToSource(projectId);
+                async Task removeSourceReference(string projectId)
+                {
+                    IDocument<SFProject> doc = await conn.FetchAsync<SFProject>(projectId);
+                    await doc.SubmitJson0OpAsync(op => op.Unset(d => d.TranslateConfig.Source));
+                }
+                foreach (string projId in referringProjects)
+                    tasks.Add(removeSourceReference(projId));
                 await Task.WhenAll(tasks);
             }
 
@@ -506,10 +515,15 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
+        /// <summary> Determine if the specified project is an active source project. </summary>
         public bool IsSourceProject(string projectId)
         {
-            return RealtimeService.QuerySnapshots<SFProject>()
-                .Any(p => p.TranslateConfig.Source != null && p.TranslateConfig.Source.ProjectRef == projectId);
+            IQueryable<SFProject> projectQuery = RealtimeService.QuerySnapshots<SFProject>();
+            return projectQuery.Any(p =>
+                p.TranslateConfig.Source != null &&
+                p.TranslateConfig.Source.ProjectRef == projectId &&
+                p.TranslateConfig.TranslationSuggestionsEnabled
+            );
         }
 
         public async Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestions(string curUserId, string projectId)
@@ -745,6 +759,17 @@ namespace SIL.XForge.Scripture.Services
                 ShortName = sourcePTProject.ShortName,
                 WritingSystem = new WritingSystem { Tag = sourcePTProject.LanguageTag }
             };
+        }
+
+        private string[] GetProjectWithReferenceToSource(string projectId)
+        {
+            if (string.IsNullOrEmpty(projectId))
+                return new string[0];
+            IQueryable<SFProject> projectQuery = RealtimeService.QuerySnapshots<SFProject>();
+            return projectQuery
+                .Where(p => p.TranslateConfig.Source != null && p.TranslateConfig.Source.ProjectRef == projectId)
+                .Select(p => p.Id)
+                .ToArray();
         }
     }
 }
