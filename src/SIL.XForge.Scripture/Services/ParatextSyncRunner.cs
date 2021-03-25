@@ -87,17 +87,21 @@ namespace SIL.XForge.Scripture.Services
         [Mutex("{0}")]
         public async Task RunAsync(string projectId, string userId, bool trainEngine)
         {
+            Debug($"RunAsync starting with projectId: {projectId}, userId: {userId}, trainEngine: {trainEngine}");
             try
             {
                 if (!await InitAsync(projectId, userId))
                 {
-                    await CompleteSync(false);
+                    await CompleteSync(false, projectId);
+                    Debug($"RunAsync completing due to InitAsync failure with projectId: {projectId}");
                     return;
                 }
 
                 string targetParatextId = _projectDoc.Data.ParatextId;
                 string sourceParatextId = _projectDoc.Data.TranslateConfig.Source?.ParatextId;
                 string sourceProjectRef = _projectDoc.Data.TranslateConfig.Source?.ProjectRef;
+
+                Debug($"RunAsync info for {projectId}: targetParatextId: {targetParatextId}, sourceParatextId: {sourceParatextId}, sourceProjectRef: {sourceProjectRef}");
 
                 var targetTextDocsByBook = new Dictionary<int, SortedList<int, IDocument<TextData>>>();
                 var questionDocsByBook = new Dictionary<int, IReadOnlyList<IDocument<Question>>>();
@@ -113,10 +117,13 @@ namespace SIL.XForge.Scripture.Services
                     questionDocsByBook[text.BookNum] = questionDocs;
                     await UpdateParatextNotesAsync(text, questionDocs);
                 }
+                Debug($"RunAsync status for {projectId}: Finished updating target Paratext books and notes. Initiating send and receive.");
 
                 // perform Paratext send/receive
                 await _paratextService.SendReceiveAsync(_userSecret, targetParatextId,
                     UseNewProgress());
+
+                Debug($"RunAsync status for {projectId}: send and receive complete");
 
                 var targetBooks = new HashSet<int>(_paratextService.GetBookList(_userSecret, targetParatextId));
                 var sourceBooks = new HashSet<int>(TranslationSuggestionsEnabled
@@ -126,6 +133,8 @@ namespace SIL.XForge.Scripture.Services
 
                 var targetBooksToDelete = new HashSet<int>(_projectDoc.Data.Texts.Select(t => t.BookNum)
                     .Except(targetBooks));
+
+                Debug($"RunAsync status for {projectId}: About to delete data for any removed books");
 
                 // delete all data for removed books
                 if (targetBooksToDelete.Count > 0)
@@ -141,6 +150,8 @@ namespace SIL.XForge.Scripture.Services
                         await DeleteAllQuestionsDocsForBookAsync(text);
                     }
                 }
+
+                Debug($"RunAsync status for {projectId}: Finished deleting data for any removed books");
 
                 // Update user resource access, if this project has a source resource
                 // The updating of a source project's permissions is done when that project is synced.
@@ -184,6 +195,8 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
 
+                Debug($"RunAsync status for {projectId}: Getting paratext username mapping");
+
                 // Get Paratext username mapping
                 IReadOnlyDictionary<string, string> ptUsernameMapping =
                     await _paratextService.GetParatextUsernameMappingAsync(_userSecret, targetParatextId);
@@ -200,6 +213,8 @@ namespace SIL.XForge.Scripture.Services
                 {
                     permissions = null;
                 }
+
+                Debug($"RunAsync status for {projectId}: Updating real-time docs");
 
                 // update source and target real-time docs
                 foreach (int bookNum in targetBooks)
@@ -272,18 +287,22 @@ namespace SIL.XForge.Scripture.Services
                     });
                 }
 
+                Debug($"RunAsync status for {projectId}: Checking whether training is needed");
+
                 if (TranslationSuggestionsEnabled && trainEngine)
                 {
                     // start training Machine engine
                     await _engineService.StartBuildByProjectIdAsync(projectId);
                 }
 
-                await CompleteSync(true);
+                Debug($"RunAsync status for {projectId}: Done. Marking sync as complete.");
+
+                await CompleteSync(true, projectId);
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "Error occurred while executing Paratext sync for project '{Project}'", projectId);
-                await CompleteSync(false);
+                await CompleteSync(false, projectId);
             }
             finally
             {
@@ -532,8 +551,9 @@ namespace SIL.XForge.Scripture.Services
             await Task.WhenAll(tasks);
         }
 
-        private async Task CompleteSync(bool successful)
+        private async Task CompleteSync(bool successful, string projectId)
         {
+            Debug($"CompleteSync starting with successful: {successful}, projectId: {projectId}");
             if (_projectDoc == null || _projectSecret == null)
                 return;
 
@@ -610,6 +630,11 @@ namespace SIL.XForge.Scripture.Services
                         u.Add(p => p.SyncUsers, syncUser);
                 });
             }
+        }
+
+        private void Debug(string message)
+        {
+            Console.WriteLine("ParatextSyncRunner_Debug: " + message);
         }
 
         private IDocument<TextData> GetTextDoc(TextInfo text, int chapter)

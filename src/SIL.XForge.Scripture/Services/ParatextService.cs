@@ -156,6 +156,8 @@ namespace SIL.XForge.Scripture.Services
         {
             if (userSecret == null || ptTargetId == null) { throw new ArgumentNullException(); }
 
+            Debug($"Starting SendReceive for user {userSecret.Id} with ptTargetId {ptTargetId}");
+
             IInternetSharedRepositorySource source = await GetInternetSharedRepositorySource(userSecret.Id);
             IEnumerable<SharedRepository> repositories = source.GetRepositories();
             IEnumerable<ProjectMetadata> projectsMetadata = source.GetProjectsMetaData();
@@ -182,28 +184,39 @@ namespace SIL.XForge.Scripture.Services
                     $"PT projects with the following PT ids were requested but without access or they don't exist: {ptTargetId}");
             }
 
+            Debug($"SendReceive status for {ptTargetId}: Ensuring project repos exist");
             EnsureProjectReposExists(userSecret, targetPtProject, source);
+            Debug($"SendReceive status for {ptTargetId}: Starting progress reporting");
             StartProgressReporting(progress);
             if (!(targetPtProject is ParatextResource))
             {
+                Debug($"SendReceive status for {ptTargetId}: Constructing project");
                 SharedProject targetSharedProj = SharingLogicWrapper.CreateSharedProject(ptTargetId,
                     targetPtProject.ShortName, source.AsInternetSharedRepositorySource(), repositories);
                 string username = GetParatextUsername(userSecret);
+                Debug($"SendReceive status for {ptTargetId}: Username is {username}");
+                Debug($"SendReceive status for {ptTargetId}: Finding permissions");
                 // Specifically set the ScrText property of the SharedProject to indicate the project is available locally
                 targetSharedProj.ScrText = ScrTextCollection.FindById(username, ptTargetId);
                 targetSharedProj.Permissions = targetSharedProj.ScrText.Permissions;
+                Debug($"SendReceive status for {ptTargetId}: Finished finding permissions");
                 List<SharedProject> sharedPtProjectsToSr = new List<SharedProject> { targetSharedProj };
 
                 // TODO report results
+                Debug($"SendReceive status for {ptTargetId}: Starting to report results");
                 List<SendReceiveResult> results = Enumerable.Empty<SendReceiveResult>().ToList();
                 bool success = false;
                 bool noErrors = SharingLogicWrapper.HandleErrors(() => success = SharingLogicWrapper
                     .ShareChanges(sharedPtProjectsToSr, source.AsInternetSharedRepositorySource(),
                     out results, sharedPtProjectsToSr));
+                Debug($"SendReceive status for {ptTargetId}: noErrors: {noErrors}");
+                Debug($"SendReceive status for {ptTargetId}: success: {success}");
+
                 if (!noErrors || !success)
                     throw new InvalidOperationException(
                         "Failed: Errors occurred while performing the sync with the Paratext Server.");
             }
+            Debug($"SendReceive for {ptTargetId} complete");
         }
 
         /// <summary> Get Paratext projects that a user has access to. </summary>
@@ -868,6 +881,11 @@ namespace SIL.XForge.Scripture.Services
                 semaphore.Release();
                 throw;
             }
+        }
+
+        private void Debug(string message)
+        {
+            Console.WriteLine("ParatextService_Debug: " + message);
         }
     }
 
