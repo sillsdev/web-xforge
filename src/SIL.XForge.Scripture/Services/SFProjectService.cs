@@ -199,7 +199,7 @@ namespace SIL.XForge.Scripture.Services
                 foreach (string projectUserId in projectUserIds)
                     tasks.Add(removeUser(projectUserId));
 
-                string[] referringProjects = GetProjectWithReferenceToSource(projectId, true);
+                string[] referringProjects = GetProjectWithReferenceToSource(projectId);
                 async Task removeSourceReference(string projectId)
                 {
                     IDocument<SFProject> doc = await conn.FetchAsync<SFProject>(projectId);
@@ -518,7 +518,12 @@ namespace SIL.XForge.Scripture.Services
         /// <summary> Determine if the specified project is an active source project. </summary>
         public bool IsSourceProject(string projectId)
         {
-            return GetProjectWithReferenceToSource(projectId, false).Length > 0;
+            IQueryable<SFProject> projectQuery = RealtimeService.QuerySnapshots<SFProject>();
+            return projectQuery.Any(p =>
+                p.TranslateConfig.Source != null &&
+                p.TranslateConfig.Source.ProjectRef == projectId &&
+                p.TranslateConfig.TranslationSuggestionsEnabled
+            );
         }
 
         public async Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestions(string curUserId, string projectId)
@@ -756,20 +761,15 @@ namespace SIL.XForge.Scripture.Services
             };
         }
 
-        private string[] GetProjectWithReferenceToSource(string projectId, bool includeInactive)
+        private string[] GetProjectWithReferenceToSource(string projectId)
         {
             if (string.IsNullOrEmpty(projectId))
                 return new string[0];
             IQueryable<SFProject> projectQuery = RealtimeService.QuerySnapshots<SFProject>();
-            var projects = includeInactive
-                ? projectQuery.Where(p =>
-                    p.TranslateConfig.Source != null && p.TranslateConfig.Source.ProjectRef == projectId)
-                : projectQuery.Where(p =>
-                    p.TranslateConfig.Source != null &&
-                    p.TranslateConfig.Source.ProjectRef == projectId &&
-                    p.TranslateConfig.TranslationSuggestionsEnabled
-                );
-            return projects.Select(p => p.Id).ToArray();
+            return projectQuery
+                .Where(p => p.TranslateConfig.Source != null && p.TranslateConfig.Source.ProjectRef == projectId)
+                .Select(p => p.Id)
+                .ToArray();
         }
     }
 }
