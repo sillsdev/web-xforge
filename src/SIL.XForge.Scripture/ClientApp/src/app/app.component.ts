@@ -1,5 +1,5 @@
 import { MdcIconRegistry } from '@angular-mdc/web';
-import { MdcDialog } from '@angular-mdc/web/dialog';
+import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { MdcSelect } from '@angular-mdc/web/select';
 import { MdcTopAppBar } from '@angular-mdc/web/top-app-bar';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
@@ -67,7 +67,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   private currentUserDoc?: UserDoc;
   private _projectSelect?: MdcSelect;
-  private projectDeletedDialogRef: any;
+  private projectDeletedDialogRef: MdcDialogRef<ProjectDeletedDialogComponent> | null = null;
   private _topAppBar?: MdcTopAppBar;
   private selectedProjectDoc?: SFProjectDoc;
   private selectedProjectDeleteSub?: Subscription;
@@ -279,24 +279,30 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         this.dialog.open(SupportedBrowsersDialogComponent, { autoFocus: false, data: BrowserIssue.upgrade });
       }
 
-      if (!environment.beta && (await this.checkUserNeedsMigrating())) {
-        const migrationDialog = this.dialog.open(BetaMigrationDialogComponent, {
-          autoFocus: false,
-          clickOutsideToClose: false,
-          escapeToClose: false
-        });
-        const migrationDialogSub = migrationDialog.componentInstance.onProgress.subscribe((progress: number) => {
-          if (progress === 100) {
-            // Automatically close the dialog after 5 seconds - the close button will also be available for manual close
-            setTimeout(() => {
-              migrationDialog.close();
-            }, 5000);
-          }
-        });
-        migrationDialog.afterClosed().subscribe(() => {
-          migrationDialogSub.unsubscribe();
-        });
-      }
+      this.pwaService.online.then(async () => {
+        if (!environment.beta && (await this.checkUserNeedsMigrating())) {
+          const migrationDialog: MdcDialogRef<BetaMigrationDialogComponent> = this.dialog.open(
+            BetaMigrationDialogComponent,
+            {
+              autoFocus: false,
+              clickOutsideToClose: false,
+              escapeToClose: false
+            }
+          );
+          const migrationDialogSub: Subscription = migrationDialog.componentInstance.onProgress.subscribe(
+            (progress: number) => {
+              if (progress === 100) {
+                // Automatically close the dialog after 5 seconds
+                // The close button will also be available for manual close
+                setTimeout(() => migrationDialog.close(), 5000);
+              }
+            }
+          );
+          migrationDialog.afterClosed().subscribe(() => {
+            migrationDialogSub.unsubscribe();
+          });
+        }
+      });
 
       const projectDocs$ = this.currentUserDoc.remoteChanges$.pipe(
         startWith(null),
