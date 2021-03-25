@@ -312,7 +312,7 @@ export class AuthService {
       mergeMap(expAt => {
         const now = Date.now();
         // Expiry 30 seconds sooner than the actual expiry date to avoid any inflight expiry issues
-        return timer(Math.max(1, expAt - now - 7158000));
+        return timer(Math.max(1, expAt - now - 30000));
       }),
       filter(() => this.pwaService.isOnline)
     );
