@@ -28,6 +28,6 @@ export class AuthHttpInterceptor implements HttpInterceptor {
     const authReq = req.clone({
       headers: req.headers.set('Authorization', 'Bearer ' + this.authService.accessToken)
     });
-    return next.handle(authReq).toPromise();
+    return await next.handle(authReq).toPromise();
   }
 }
