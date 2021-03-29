@@ -46,8 +46,8 @@ function onNativeSelectionChanged(): void {
   }
 }
 
-function getTagIconUrl(name: string): string {
-  return `url(/assets/icons/TagIcons/${name}.png)`;
+function iconSourceProp(name: string): string {
+  return `--icon-file: url(/assets/icons/TagIcons/${name}.png);`;
 }
 
 const USX_FORMATS = registerScripture();
@@ -62,6 +62,7 @@ export interface TextUpdatedEvent {
 export interface FeaturedVerseRefInfo {
   verseRef: VerseRef;
   iconName?: string;
+  startPos?: number;
 }
 
 /** View of an editable text document. Used for displaying Scripture. */
@@ -444,24 +445,25 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
     const segments: string[] = [];
     const verseFeatureCount = new Map<string, number>();
-    const featureIcons = new Map<string, string>();
+    const featureInfo = new Map<string, FeaturedVerseRefInfo[]>();
     for (const verseInfo of featureVerseRefs) {
       const referenceSegments = this.getVerseSegments(verseInfo.verseRef);
       if (referenceSegments.length > 0) {
-        const count = verseFeatureCount.get(referenceSegments[0]);
-        if (count != null) {
-          verseFeatureCount.set(referenceSegments[0], count + 1);
-        } else {
-          verseFeatureCount.set(referenceSegments[0], 1);
-        }
+        const featureStartSegment = referenceSegments[0];
+        const count: number = verseFeatureCount.get(featureStartSegment) ?? 0;
+        verseFeatureCount.set(featureStartSegment, count + 1);
 
         for (const segment of referenceSegments) {
-          if (app === 'translate') {
-            // Create a map from segment to icon
-            featureIcons[referenceSegments[0]] = verseInfo.iconName;
-          }
           if (!segments.includes(segment)) {
             segments.push(segment);
+          }
+        }
+        if (app === 'translate') {
+          // Create a map from segment to icon
+          if (featureInfo.get(featureStartSegment) == null) {
+            featureInfo.set(featureStartSegment, [verseInfo]);
+          } else {
+            featureInfo.get(featureStartSegment)!.push(verseInfo);
           }
         }
       }
@@ -482,8 +484,14 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         formats[formatCount] = value ? count : false;
       }
       if (app === 'translate') {
-        const iconName: string = featureIcons.get(segment) ?? '01flag1';
-        formats['tag-style'] = `--icon-file: ${getTagIconUrl(iconName)};`;
+        const segmentFeatureInfo: FeaturedVerseRefInfo[] = featureInfo.get(segment) ?? [];
+        for (const verseInfo of segmentFeatureInfo) {
+          const iconName: string = verseInfo.iconName ?? '01flag1';
+          const nodeProp: string = iconSourceProp(iconName);
+          // Get the position relative to the start of the segment
+          const index = (verseInfo.startPos ?? 0) + range.index;
+          this.editor.formatText(index, 1, 'note-thread', { iconsrc: nodeProp }, 'silent');
+        }
       }
       this.editor.formatText(range.index, range.length, formats, 'silent');
     }

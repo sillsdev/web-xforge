@@ -609,9 +609,7 @@ namespace SIL.XForge.Scripture.Services
         public CommentTags GetCommentTags(UserSecret userSecret, string projectId)
         {
             ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), projectId);
-            Console.WriteLine($"is null: {scrText == null}");
-            Console.WriteLine($"directory is: {scrText.Directory}");
-            return CommentTags.Get(scrText);
+            return scrText == null ? null : CommentTags.Get(scrText);
         }
 
         protected override void DisposeManagedResources()

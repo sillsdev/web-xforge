@@ -35,6 +35,10 @@ interface Chapter extends UsxStyle {
   eid?: string;
 }
 
+interface NoteThread extends UsxStyle {
+  iconsrc: string;
+}
+
 interface Verse extends UsxStyle {
   number: string;
   altnumber?: string;
@@ -463,6 +467,22 @@ export function registerScripture(): string[] {
     }
   }
   formats.push(ChapterEmbed);
+
+  class NoteThreadInLine extends Inline {
+    static blotName = 'note-thread';
+    static tagName = 'display-note';
+
+    static create(value: NoteThread) {
+      const node = super.create(value) as HTMLElement;
+      node.setAttribute('style', value.iconsrc);
+      return node;
+    }
+
+    static value(node: HTMLElement): NoteThread {
+      return getUsxValue(node);
+    }
+  }
+  formats.push(NoteThreadInLine);
 
   Scroll.allowedChildren.push(ParaBlock);
   Scroll.allowedChildren.push(ChapterEmbed);

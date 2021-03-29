@@ -88,7 +88,11 @@ quill-editor.ltr {
     &:before {
       left: -2.25em;
     }
-
+    display-note {
+      &:before {
+        left: -2.25em;
+      }
+    }
     &:after {
       left: -1.5em;
     }
@@ -101,6 +105,11 @@ quill-editor.rtl {
     &:before {
       right: -2.25em;
     }
+    display-note {
+      &:before {
+        right: -2.25em;
+      }
+    }
     &:after {
       right: -1.5em;
     }
@@ -108,10 +117,10 @@ quill-editor.rtl {
 }
 
 .ql-editor .note-thread-segment {
-  cursor: pointer;
   position: relative;
-  &[data-note-thread-count] {
+  & display-note {
     &:before {
+      cursor: pointer;
       content: '';
       width: 1em;
       height: 1em;

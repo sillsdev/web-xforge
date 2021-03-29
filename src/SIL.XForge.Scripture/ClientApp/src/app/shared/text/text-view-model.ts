@@ -285,8 +285,8 @@ export class TextViewModel {
           'question-count',
           'note-thread-segment',
           'note-thread-count',
+          'note-thread',
           'tag-style',
-          'tag-icon',
           'initial',
           'direction-segment',
           'direction-block'
