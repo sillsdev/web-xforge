@@ -51,6 +51,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         public List<SyncUser> NewSyncUsers { get; } = new List<SyncUser>();
+        public Paratext.Data.ProjectComments.CommentTags Tags { set { _commentTags = value; } }
 
         public async Task InitAsync(UserSecret currentUserSecret, SFProjectSecret projectSecret, List<User> ptUsers,
             string paratextProjectId, Paratext.Data.ProjectComments.CommentTags commentTags)
@@ -149,6 +150,7 @@ namespace SIL.XForge.Scripture.Services
             IEnumerable<IDocument<ParatextNoteThread>> noteThreads)
         {
             Dictionary<string, XElement> ptCommentElems = GetPTCommentElements(ptNotesElem, false);
+            Dictionary<string, XElement> threadSelectionElems = GetThreadSelectionElements(ptNotesElem);
             List<ParatextNoteThreadChange> changes = new List<ParatextNoteThreadChange>();
             // Loop through all note thread docs
             foreach (IDocument<ParatextNoteThread> threadDoc in noteThreads)
@@ -163,7 +165,9 @@ namespace SIL.XForge.Scripture.Services
                     {
                         if (existingCommentElem.Element("content").Value != comment.Content)
                         {
-                            ParatextNote note = GetNoteFromCommentElement(existingCommentElem, threadDoc.Data.DataId);
+                            string threadId = GetThreadIdFromCommentKey(key);
+                            threadSelectionElems.TryGetValue(threadId, out XElement selection);
+                            ParatextNote note = GetNoteFromCommentElement(existingCommentElem, selection, threadDoc.Data.DataId);
                             threadChange.AddChange(note, ChangeType.Updated);
                         }
                         ptCommentElems.Remove(key);
@@ -179,7 +183,6 @@ namespace SIL.XForge.Scripture.Services
                     changes.Add(threadChange);
                 }
             }
-            Dictionary<string, XElement> threadSelectionElems = GetThreadSelectionElements(ptNotesElem);
             // Add all new Paratext Comments to the note thread changes
             foreach (string key in ptCommentElems.Keys)
             {
@@ -187,7 +190,7 @@ namespace SIL.XForge.Scripture.Services
                 threadSelectionElems.TryGetValue(threadId, out XElement selection);
                 if (ptCommentElems.TryGetValue(key, out XElement addedComment) && addedComment != null)
                 {
-                    ParatextNote note = GetNoteFromCommentElement(addedComment, threadId);
+                    ParatextNote note = GetNoteFromCommentElement(addedComment, selection, threadId);
                     string verseRef = selection?.Attribute("verseRef")?.Value;
                     string selectedText = selection?.Attribute("selectedText")?.Value;
                     // Add the note to the corresponding thread change object or add to a new thread change object
@@ -356,7 +359,7 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        private ParatextNote GetNoteFromCommentElement(XElement commentElem, string threadId)
+        private ParatextNote GetNoteFromCommentElement(XElement commentElem, XElement selectionElem, string threadId)
         {
             string user = commentElem.Attribute("user")?.Value;
             FindOrCreateSyncUser(user, out SyncUser syncUser);
@@ -364,9 +367,9 @@ namespace SIL.XForge.Scripture.Services
             string extUser = commentElem.Attribute("extUser")?.Value;
             string versionNbr = commentElem.Attribute("versionNbr")?.Value;
             bool deleted = commentElem.Attribute("deleted")?.Value == "true";
-            int version = 0;
-            if (versionNbr != null && int.TryParse(versionNbr, out int nbr))
-                version = nbr;
+            int version = versionNbr != null && int.TryParse(versionNbr, out int nbr) ? nbr : 0;
+            string startPositionStr = selectionElem.Attribute("startPos")?.Value;
+            int startPos = startPositionStr != null && int.TryParse(startPositionStr, out int sp) ? sp : 0;
 
             // Add the Paratext Comment tag icon to the note
             string tagAdded = commentElem.Attribute("tagAdded")?.Value;
@@ -387,7 +390,8 @@ namespace SIL.XForge.Scripture.Services
                 DateModified = DateTime.Parse(date),
                 VersionNumber = version,
                 Deleted = commentElem.Attribute("deleted")?.Value == "true",
-                TagIcon = tagIcon
+                TagIcon = tagIcon,
+                StartPosition = startPos
             };
         }
 

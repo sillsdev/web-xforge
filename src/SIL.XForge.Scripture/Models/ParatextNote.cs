@@ -8,5 +8,6 @@ namespace SIL.XForge.Scripture.Models
         public int VersionNumber { get; set; }
         public bool Deleted { get; set; }
         public string TagIcon { get; set; }
+        public int StartPosition { get; set; }
     }
 }
