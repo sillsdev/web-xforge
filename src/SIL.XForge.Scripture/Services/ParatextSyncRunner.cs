@@ -119,6 +119,7 @@ namespace SIL.XForge.Scripture.Services
                 // perform Paratext send/receive
                 await _paratextService.SendReceiveAsync(_userSecret, targetParatextId,
                     UseNewProgress());
+                _notesMapper.Tags = _paratextService.GetCommentTags(_userSecret, _projectDoc.Data.ParatextId);
 
                 var targetBooks = new HashSet<int>(_paratextService.GetBookList(_userSecret, targetParatextId));
                 var sourceBooks = new HashSet<int>(TranslationSuggestionsEnabled

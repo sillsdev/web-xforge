@@ -14,6 +14,7 @@ import {
   RemoteTranslationEngine,
   TranslationSuggester
 } from '@sillsdev/machine';
+import clone from 'lodash-es/clone';
 import isEqual from 'lodash-es/isEqual';
 import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
@@ -303,7 +304,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       )
       .map(nt => ({
         verseRef: toVerseRef(nt.data!.verseRef),
-        iconName: nt.data!.notes[nt.data!.notes.length - 1].tagIcon
+        iconName: clone(nt.data!.notes).sort((a, b) => Date.parse(b.dateCreated) - Date.parse(a.dateCreated))[0]
+          .tagIcon,
+        startPos: nt.data!.notes[0].startPosition
       }));
   }
 
@@ -897,7 +900,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
     for (const segment of segments) {
-      const element: Element | null = this.target.getSegmentElement(segment);
+      const element = this.target.getSegmentElement(segment)?.querySelector('display-note');
       if (element == null) {
         continue;
       }

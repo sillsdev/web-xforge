@@ -11,6 +11,7 @@ namespace SIL.XForge.Scripture.Services
     public interface IParatextNotesMapper
     {
         List<SyncUser> NewSyncUsers { get; }
+        CommentTags Tags { set; }
 
         Task InitAsync(UserSecret currentUserSecret, SFProjectSecret projectSecret, List<User> ptUsers,
             string paratextProjectId, CommentTags commentTags);
