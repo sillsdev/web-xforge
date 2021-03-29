@@ -865,41 +865,42 @@ describe('EditorComponent', () => {
 
       env.typeCharacters('test');
       let contents = env.targetEditor.getContents();
-      expect(contents.ops![5].insert).toEqual('test');
-      expect(contents.ops![5].attributes).toEqual({
+      expect(contents.ops![6].insert).toEqual('test');
+      expect(contents.ops![6].attributes).toEqual({
         'para-contents': true,
         segment: 'verse_1_2',
         'highlight-segment': true
       });
-      expect(contents.ops![6].insert).toEqual({ verse: { number: '3', style: 'v' } });
-      expect(contents.ops![6].attributes).toEqual({ 'para-contents': true });
+
+      expect(contents.ops![7].insert).toEqual({ verse: { number: '3', style: 'v' } });
+      expect(contents.ops![7].attributes).toEqual({ 'para-contents': true });
 
       env.triggerUndo();
       contents = env.targetEditor.getContents();
       // check that edit has been undone
-      expect(contents.ops![5].insert).toEqual({ blank: true });
-      expect(contents.ops![5].attributes).toEqual({
+      expect(contents.ops![6].insert).toEqual({ blank: true });
+      expect(contents.ops![6].attributes).toEqual({
         'para-contents': true,
         segment: 'verse_1_2',
         'highlight-segment': true
       });
       // check to make sure that data after the affected segment hasn't gotten corrupted
-      expect(contents.ops![6].insert).toEqual({ verse: { number: '3', style: 'v' } });
-      expect(contents.ops![6].attributes).toEqual({ 'para-contents': true });
+      expect(contents.ops![7].insert).toEqual({ verse: { number: '3', style: 'v' } });
+      expect(contents.ops![7].attributes).toEqual({ 'para-contents': true });
       const selection = env.targetEditor.getSelection();
       expect(selection!.index).toBe(31);
       expect(selection!.length).toBe(0);
 
       env.triggerRedo();
       contents = env.targetEditor.getContents();
-      expect(contents.ops![5].insert).toEqual('test');
-      expect(contents.ops![5].attributes).toEqual({
+      expect(contents.ops![6].insert).toEqual('test');
+      expect(contents.ops![6].attributes).toEqual({
         'para-contents': true,
         segment: 'verse_1_2',
         'highlight-segment': true
       });
-      expect(contents.ops![6].insert).toEqual({ verse: { number: '3', style: 'v' } });
-      expect(contents.ops![6].attributes).toEqual({ 'para-contents': true });
+      expect(contents.ops![7].insert).toEqual({ verse: { number: '3', style: 'v' } });
+      expect(contents.ops![7].attributes).toEqual({ 'para-contents': true });
 
       env.dispose();
     }));
@@ -908,12 +909,16 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
-      const segment = env.targetTextEditor.nativeElement.querySelector('usx-segment[data-segment=verse_1_1]')!;
+      const segment: HTMLElement = env.targetTextEditor.nativeElement.querySelector(
+        'usx-segment[data-segment=verse_1_1]'
+      )!;
       expect(segment).not.toBeNull();
       expect(segment.hasAttribute('data-note-thread-count')).toBe(true);
       expect(segment.getAttribute('data-note-thread-count')).toBe('1');
-      expect(segment.hasAttribute('style')).toBe(true);
-      expect(segment.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
+      const note = segment.querySelector('display-note');
+      expect(note).not.toBeNull();
+      expect(note!.hasAttribute('style')).toBe(true);
+      expect(note!.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag3.png);');
       env.dispose();
     }));
   });
@@ -1615,18 +1620,22 @@ class TestEnvironment {
 
   private addParatextNoteThread(userIds: string[]): void {
     const notes: ParatextNote[] = [];
-    for (const id of userIds) {
+    for (let i = 0; i < userIds.length; i++) {
+      const id = userIds[i];
+      const date = new Date('2021-03-01T12:00:00');
+      date.setHours(date.getHours() + i);
       const note: ParatextNote = {
         threadId: 'thread01',
         ownerRef: id,
-        dataId: `${id}_note`,
-        dateCreated: this.dateNow,
-        dateModified: this.dateNow,
+        dataId: `thread01_note${id}`,
+        dateCreated: date.toJSON(),
+        dateModified: date.toJSON(),
         content: `Note from ${id}`,
         extUserId: 'ext_user_01',
         versionNumber: 1,
         deleted: false,
-        tagIcon: '01flag1'
+        tagIcon: `01flag${i + 1}`,
+        startPosition: 0
       };
       notes.push(note);
     }
