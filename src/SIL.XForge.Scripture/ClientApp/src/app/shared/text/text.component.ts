@@ -63,6 +63,7 @@ export interface FeaturedVerseRefInfo {
   verseRef: VerseRef;
   iconName?: string;
   startPos?: number;
+  preview?: string;
 }
 
 /** View of an editable text document. Used for displaying Scripture. */
@@ -485,12 +486,12 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       }
       if (app === 'translate') {
         const segmentFeatureInfo: FeaturedVerseRefInfo[] = featureInfo.get(segment) ?? [];
-        for (const verseInfo of segmentFeatureInfo) {
-          const iconName: string = verseInfo.iconName ?? '01flag1';
+        for (const info of segmentFeatureInfo) {
+          const iconName: string = info.iconName ?? '01flag1';
           const nodeProp: string = iconSourceProp(iconName);
           // Get the position relative to the start of the segment
-          const index = (verseInfo.startPos ?? 0) + range.index;
-          this.editor.formatText(index, 1, 'note-thread', { iconsrc: nodeProp }, 'silent');
+          const index = (info.startPos ?? 0) + range.index;
+          this.editor.formatText(index, 1, 'note-thread', { iconsrc: nodeProp, preview: info.preview }, 'silent');
         }
       }
       this.editor.formatText(range.index, range.length, formats, 'silent');
