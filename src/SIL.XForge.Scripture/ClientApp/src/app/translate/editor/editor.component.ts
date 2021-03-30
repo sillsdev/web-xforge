@@ -19,6 +19,8 @@ import isEqual from 'lodash-es/isEqual';
 import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { User } from 'realtime-server/lib/common/models/user';
+import { ParatextNote } from 'realtime-server/lib/scriptureforge/models/paratext-note';
+import { ParatextNoteThread } from 'realtime-server/lib/scriptureforge/models/paratext-note-thread';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { TextType } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
@@ -291,12 +293,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         nt =>
           nt.data != null && nt.data.verseRef.bookNum === this.bookNum && nt.data.verseRef.chapterNum === this._chapter
       )
-      .map(nt => ({
-        verseRef: toVerseRef(nt.data!.verseRef),
-        iconName: clone(nt.data!.notes).sort((a, b) => Date.parse(b.dateCreated) - Date.parse(a.dateCreated))[0]
-          .tagIcon,
-        startPos: nt.data!.notes[0].startPosition
-      }));
+      .map(nt => this.configureNoteThread(nt.data!));
   }
 
   ngAfterViewInit(): void {
@@ -927,6 +924,22 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this._chapter = chapter;
     this.changeText();
     this.toggleNoteThreadVerses(true);
+  }
+
+  private configureNoteThread(thread: ParatextNoteThread): FeaturedVerseRefInfo {
+    const notes: ParatextNote[] = clone(thread.notes).sort(
+      (a, b) => Date.parse(a.dateCreated) - Date.parse(b.dateCreated)
+    );
+    let preview: string = notes[0].content;
+    if (notes.length > 1) {
+      preview += translate('editor.more_notes', { count: notes.length - 1 });
+    }
+    return {
+      verseRef: toVerseRef(thread.verseRef),
+      preview,
+      iconName: notes[notes.length - 1].tagIcon,
+      startPos: notes[0].startPosition
+    };
   }
 
   private syncScroll(): void {
