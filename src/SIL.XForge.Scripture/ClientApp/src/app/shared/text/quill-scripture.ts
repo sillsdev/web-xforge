@@ -37,6 +37,7 @@ interface Chapter extends UsxStyle {
 
 interface NoteThread extends UsxStyle {
   iconsrc: string;
+  preview: string;
 }
 
 interface Verse extends UsxStyle {
@@ -475,6 +476,7 @@ export function registerScripture(): string[] {
     static create(value: NoteThread) {
       const node = super.create(value) as HTMLElement;
       node.setAttribute('style', value.iconsrc);
+      node.setAttribute('title', value.preview);
       return node;
     }
 

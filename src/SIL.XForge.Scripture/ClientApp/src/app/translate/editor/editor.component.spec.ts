@@ -919,6 +919,8 @@ describe('EditorComponent', () => {
       expect(note).not.toBeNull();
       expect(note!.hasAttribute('style')).toBe(true);
       expect(note!.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag3.png);');
+      expect(note!.hasAttribute('title')).toBe(true);
+      expect(note!.getAttribute('title')).toEqual('Note from user01--- 2 more note(s) ---');
       env.dispose();
     }));
   });
