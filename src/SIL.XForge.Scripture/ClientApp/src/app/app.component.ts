@@ -110,7 +110,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       if (this.isAppOnline && !this.isAppLoading) {
         // Redirect to the master site unless the referrer was the master site
         if (environment.beta && !document.referrer.includes(environment.masterUrl)) {
-          window.location.href = environment.masterUrl + window.location.pathname;
+          this.locationService.go(environment.masterUrl + window.location.pathname);
         }
         this.authService.checkOnlineAuth();
       }

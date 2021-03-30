@@ -17,7 +17,7 @@ import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project'
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { BehaviorSubject, of, Subject } from 'rxjs';
-import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { anyString, anything, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { BetaMigrationDialogComponent } from 'xforge-common/beta-migration/beta-migration-dialog/beta-migration-dialog.component';
@@ -304,6 +304,23 @@ describe('AppComponent', () => {
     expect().nothing();
   }));
 
+  it('non-beta site does not navigate to non-beta site', fakeAsync(() => {
+    environment.beta = false;
+    // SUT is in component constructor()
+    const env = new TestEnvironment('online');
+    verify(mockedLocationService.go(anyString())).never();
+    expect().nothing();
+  }));
+
+  it('beta site navigates to non-beta site', fakeAsync(() => {
+    environment.beta = true;
+    // SUT is in component constructor()
+    const env = new TestEnvironment('online');
+    verify(mockedLocationService.go(anyString())).once();
+    environment.beta = false;
+    expect().nothing();
+  }));
+
   it('does not show beta migration dialog on beta server', fakeAsync(() => {
     environment.beta = true;
     const env = new TestEnvironment('online');
@@ -312,6 +329,7 @@ describe('AppComponent', () => {
     // SUT is in ngOnInit()
     env.init();
     verify(mockedMdcDialog.open(BetaMigrationDialogComponent, anything())).never();
+    environment.beta = false;
   }));
 
   it('shows beta migration dialog on non-beta server, if migration needed and online', fakeAsync(() => {
