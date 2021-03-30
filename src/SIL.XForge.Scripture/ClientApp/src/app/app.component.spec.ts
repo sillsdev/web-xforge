@@ -304,6 +304,14 @@ describe('AppComponent', () => {
     expect().nothing();
   }));
 
+  it('a', () => {
+    expect().nothing();
+  });
+
+  it('b', () => {
+    expect().nothing();
+  });
+
   it('does not show beta migration dialog on beta server', fakeAsync(() => {
     environment.beta = true;
     const env = new TestEnvironment('online');
