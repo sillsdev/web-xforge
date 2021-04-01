@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Xml;
 using System.Xml.Linq;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
@@ -490,6 +491,27 @@ namespace SIL.XForge.Scripture.Services
 
             // PT username is not written to server logs
             Assert.That(env.MockLogger.Messages.Any((string message) => message.Contains(env.Username01)), Is.False);
+        }
+
+        [Test]
+        public void GetCommentThreads_RetrievesComments()
+        {
+            int ruthBookNum = 8;
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01);
+            env.AddParatextComments(new[] { "ANSWER_answer01", "thread01" }, associatedPtUser);
+
+            IEnumerable<Paratext.Data.ProjectComments.CommentThread> threads =
+                env.Service.GetCommentThreads(userSecret, ptProjectId, ruthBookNum);
+            // Threads that start with "ANSWER_" are excluded
+            Assert.That(threads.Count(), Is.EqualTo(1));
+            string date = "2019-01-01T08:00:00.0000000+00:00";
+            string commentId = $"thread01/{env.Username01}/{date}";
+            string expected = "thread01 note 1.";
+            var comm = threads.Single(t => t.Id == "thread01").Comments.Single(c => c.Id == commentId);
+            Assert.That(comm.Contents.InnerText, Is.EqualTo(expected));
         }
 
         [Test]
@@ -1027,6 +1049,19 @@ namespace SIL.XForge.Scripture.Services
                 MockScrTextCollection.FindById(Arg.Any<string>(), ptProjectId)
                     .Returns(ProjectScrText);
                 return ptProjectId;
+            }
+
+            public void AddParatextComments(string[] threadIds, ParatextUser associatedPtUser)
+            {
+                XmlDocument doc = new XmlDocument();
+                foreach (string threadId in threadIds)
+                {
+                    string date = "2019-01-01T08:00:00.0000000+00:00";
+                    XmlElement content = doc.CreateElement("Contents");
+                    content.InnerText = $"{threadId} note 1.";
+                    ProjectCommentManager.AddComment(new Paratext.Data.ProjectComments.Comment(associatedPtUser)
+                    { Thread = threadId, VerseRefStr = "RUT 1:1", Contents = content, Date = date });
+                }
             }
 
             public MockScrText GetScrText(ParatextUser associatedPtUser, string projectId,

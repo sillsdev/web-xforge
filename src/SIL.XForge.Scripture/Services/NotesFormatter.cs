@@ -75,12 +75,6 @@ namespace SIL.XForge.Scripture.Services
                 commentElem.Add(new XAttribute("extUser", comment.ExternalUser));
             if (comment.Deleted)
                 commentElem.Add(new XAttribute("deleted", "true"));
-            if (comment.VersionNumber != 0)
-                commentElem.Add(new XAttribute("versionNbr", comment.VersionNumber.ToString()));
-            // Begin: Modified from Paratext Data Access
-            if (comment.TagsAdded != null)
-                commentElem.Add(new XAttribute("tagAdded", comment.TagsAdded[0]));
-            // End: Modified from Paratext Data Access
             commentElem.Add(FormatContent(comment.Contents));
             return commentElem;
         }
@@ -178,15 +172,6 @@ namespace SIL.XForge.Scripture.Services
             comment.Date = commentElem.Attribute("date")?.Value;
             comment.ExternalUser = commentElem.Attribute("extUser")?.Value;
             comment.Deleted = commentElem.Attribute("deleted")?.Value == "true";
-            string verStr = commentElem.Attribute("versionNbr")?.Value;
-            int verNbr;
-            if (!string.IsNullOrEmpty(verStr) && int.TryParse(verStr, out verNbr))
-                comment.VersionNumber = verNbr;
-            // Begin: Modified from Paratext Data Access
-            string tagAdded = commentElem.Attribute("tagAdded")?.Value;
-            if (!string.IsNullOrEmpty(tagAdded))
-                comment.TagsAdded.Append(tagAdded);
-            // End: Modified from Paratext Data Access
             ParseContents(commentElem.Element("content"), comment);
         }
 

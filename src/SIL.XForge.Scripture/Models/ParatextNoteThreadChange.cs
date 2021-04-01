@@ -6,7 +6,8 @@ namespace SIL.XForge.Scripture.Models
     {
         Added,
         Updated,
-        Deleted
+        Deleted,
+        None
     }
 
     public class ParatextNoteThreadChange
