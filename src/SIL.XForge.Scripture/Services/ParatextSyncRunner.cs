@@ -114,12 +114,14 @@ namespace SIL.XForge.Scripture.Services
                     IReadOnlyList<IDocument<Question>> questionDocs = await FetchQuestionDocsAsync(text);
                     questionDocsByBook[text.BookNum] = questionDocs;
                     await UpdateParatextNotesAsync(text, questionDocs);
+
+                    // Update Paratext Comments
+
                 }
 
                 // perform Paratext send/receive
                 await _paratextService.SendReceiveAsync(_userSecret, targetParatextId,
                     UseNewProgress());
-                _notesMapper.Tags = _paratextService.GetCommentTags(_userSecret, _projectDoc.Data.ParatextId);
 
                 var targetBooks = new HashSet<int>(_paratextService.GetBookList(_userSecret, targetParatextId));
                 var sourceBooks = new HashSet<int>(TranslationSuggestionsEnabled
@@ -458,17 +460,17 @@ namespace SIL.XForge.Scripture.Services
         private Task UpdateNoteThreadDocsAsync(TextInfo text,
             Dictionary<string, IDocument<ParatextNoteThread>> noteThreadDocs)
         {
-            XElement ptNotesElem;
-            string ptNotesText = _paratextService.GetNotes(_userSecret, _projectDoc.Data.ParatextId, text.BookNum);
-            if (!string.IsNullOrEmpty(ptNotesText))
-                ptNotesElem = ParseText(ptNotesText);
-            else
+            var commentThreads = _paratextService.GetCommentThreads(_userSecret, _projectDoc.Data.ParatextId, text.BookNum);
+            if (commentThreads == null)
             {
                 // Paratext has no notes for the book.
                 return Task.WhenAll();
             }
-            IEnumerable<ParatextNoteThreadChange> noteThreadChanges =
-                _notesMapper.GetNoteThreadChangesFromPT(ptNotesElem, noteThreadDocs.Values);
+
+            Paratext.Data.ProjectComments.CommentTags commentTags =
+                _paratextService.GetCommentTags(_userSecret, _projectDoc.Data.ParatextId);
+            IEnumerable<ParatextNoteThreadChange> noteThreadChanges = _notesMapper.PTCommentThreadChanges(
+                noteThreadDocs.Values, commentThreads, commentTags);
             var tasks = new List<Task>();
             foreach (ParatextNoteThreadChange change in noteThreadChanges)
             {
@@ -591,6 +593,7 @@ namespace SIL.XForge.Scripture.Services
             // Get a list of all existing and new sync users
             IEnumerable<SyncUser> syncUsers = _projectSecret.SyncUsers.Concat(_notesMapper.NewSyncUsers);
             Dictionary<string, string> usernamesToIds = UsernamesToIds();
+            bool needsTagIcon = string.IsNullOrEmpty(threadDoc.Data.TagIcon);
             return threadDoc.SubmitJson0OpAsync(op =>
             {
                 // Update content for updated notes
@@ -609,6 +612,12 @@ namespace SIL.XForge.Scripture.Services
                         // The note can be easily removed by using op.Remove if that is preferred
                         op.Set(td => td.Notes[index].Deleted, true);
                     }
+                }
+                if (needsTagIcon && change.NotesAdded.Count > 0)
+                {
+                    var commentTags = _paratextService.GetCommentTags(_userSecret, _projectDoc.Data.ParatextId);
+                    string icon = change.NotesAdded.First().TagIcon ?? commentTags.Get(1).Icon;
+                    op.Set(td => td.TagIcon, icon);
                 }
                 // Add new notes, giving each note an associated SF userId if the user is also a Paratext user.
                 foreach (ParatextNote added in change.NotesAdded)

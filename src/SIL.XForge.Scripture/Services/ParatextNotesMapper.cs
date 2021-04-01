@@ -51,7 +51,6 @@ namespace SIL.XForge.Scripture.Services
         }
 
         public List<SyncUser> NewSyncUsers { get; } = new List<SyncUser>();
-        public Paratext.Data.ProjectComments.CommentTags Tags { set { _commentTags = value; } }
 
         public async Task InitAsync(UserSecret currentUserSecret, SFProjectSecret projectSecret, List<User> ptUsers,
             string paratextProjectId, Paratext.Data.ProjectComments.CommentTags commentTags)
@@ -84,7 +83,7 @@ namespace SIL.XForge.Scripture.Services
             IEnumerable<IDocument<Question>> questionsDocs)
         {
             var version = (string)oldNotesElem.Attribute("version");
-            Dictionary<string, XElement> oldCommentElems = GetPTCommentElements(oldNotesElem, true);
+            Dictionary<string, XElement> oldCommentElems = GetPTCommentElements(oldNotesElem);
 
             var notesElem = new XElement("notes", new XAttribute("version", version));
             foreach (IDocument<Question> questionDoc in questionsDocs)
@@ -145,75 +144,80 @@ namespace SIL.XForge.Scripture.Services
             return notesElem;
         }
 
-        /// <summary> Get a list of changes that can be used to update ParatextNoteThread docs in the SF DB. </summary>
-        public IEnumerable<ParatextNoteThreadChange> GetNoteThreadChangesFromPT(XElement ptNotesElem,
-            IEnumerable<IDocument<ParatextNoteThread>> noteThreads)
+        /// <summary> Get the change objects from the up-to-date Comments in Paratext. </summary>
+        public IEnumerable<ParatextNoteThreadChange> PTCommentThreadChanges(
+            IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs,
+            IEnumerable<Paratext.Data.ProjectComments.CommentThread> commentThreads,
+            Paratext.Data.ProjectComments.CommentTags commentTags)
         {
-            Dictionary<string, XElement> ptCommentElems = GetPTCommentElements(ptNotesElem, false);
-            Dictionary<string, XElement> threadSelectionElems = GetThreadSelectionElements(ptNotesElem);
+            _commentTags = commentTags;
+            List<string> matchedThreadIds = new List<string>();
             List<ParatextNoteThreadChange> changes = new List<ParatextNoteThreadChange>();
-            // Loop through all note thread docs
-            foreach (IDocument<ParatextNoteThread> threadDoc in noteThreads)
+            foreach (var threadDoc in noteThreadDocs)
             {
+                List<string> matchedCommentIds = new List<string>();
                 ParatextNoteThreadChange threadChange = new ParatextNoteThreadChange(
                     threadDoc.Data.DataId, threadDoc.Data.VerseRef.ToString(), threadDoc.Data.SelectedText);
-                foreach (ParatextNote comment in threadDoc.Data.Notes)
+                // Find the corresponding thread
+                var existingThread = commentThreads.FirstOrDefault(ct => ct.Id == threadDoc.Data.DataId);
+                if (existingThread == null)
                 {
-                    string key = GetCommentKey(threadDoc.Data.DataId, comment.SyncUserRef, comment.ExtUserId,
-                        comment.DateCreated);
-                    if (ptCommentElems.TryGetValue(key, out XElement existingCommentElem))
+                    // No corresponding Paratext comment thread
+                    continue;
+                }
+                matchedThreadIds.Add(existingThread.Id);
+                foreach (ParatextNote note in threadDoc.Data.Notes)
+                {
+                    var matchedComment = GetMatchingCommentFromNote(note, existingThread);
+                    if (matchedComment != null)
                     {
-                        if (existingCommentElem.Element("content").Value != comment.Content)
-                        {
-                            string threadId = GetThreadIdFromCommentKey(key);
-                            threadSelectionElems.TryGetValue(threadId, out XElement selection);
-                            ParatextNote note = GetNoteFromCommentElement(existingCommentElem, selection, threadDoc.Data.DataId);
-                            threadChange.AddChange(note, ChangeType.Updated);
-                        }
-                        ptCommentElems.Remove(key);
+                        matchedCommentIds.Add(matchedComment.Id);
+                        ChangeType changeType = GetCommentChangeType(matchedComment, note);
+                        if (changeType != ChangeType.None)
+                            threadChange.AddChange(CreateNoteFromComment(matchedComment), changeType);
                     }
-                    else if (!comment.Deleted)
-                    {
-                        comment.Deleted = true;
-                        threadChange.AddChange(comment, ChangeType.Deleted);
-                    }
+                }
+                // Add new Comments to note thread change
+                var ptCommentIds = existingThread.Comments.Select(c => c.Id);
+                var newCommentIds = ptCommentIds.Except(matchedCommentIds);
+                foreach (string commentId in newCommentIds)
+                {
+                    threadChange.AddChange(CreateNoteFromComment(existingThread.Comments
+                        .Single(c => c.Id == commentId)), ChangeType.Added);
                 }
                 if (threadChange.HasChange)
-                {
                     changes.Add(threadChange);
-                }
             }
-            // Add all new Paratext Comments to the note thread changes
-            foreach (string key in ptCommentElems.Keys)
+            var ptThreadIds = commentThreads.Select(ct => ct.Id);
+            var newThreadIds = ptThreadIds.Except(matchedThreadIds);
+            foreach (string threadId in newThreadIds)
             {
-                string threadId = GetThreadIdFromCommentKey(key);
-                threadSelectionElems.TryGetValue(threadId, out XElement selection);
-                if (ptCommentElems.TryGetValue(key, out XElement addedComment) && addedComment != null)
+                Paratext.Data.ProjectComments.CommentThread thread = commentThreads.Single(ct => ct.Id == threadId);
+                string verseRef = thread.Comments[0].VerseRefStr;
+                string selectedText = thread.Comments[0].SelectedText;
+
+                ParatextNoteThreadChange newThread =
+                    new ParatextNoteThreadChange(threadId, verseRef, selectedText);
+                foreach (var comm in thread.Comments)
                 {
-                    ParatextNote note = GetNoteFromCommentElement(addedComment, selection, threadId);
-                    string verseRef = selection?.Attribute("verseRef")?.Value;
-                    string selectedText = selection?.Attribute("selectedText")?.Value;
-                    // Add the note to the corresponding thread change object or add to a new thread change object
-                    AddNoteToThreadChanges(note, verseRef, selectedText, changes);
+                    newThread.AddChange(CreateNoteFromComment(comm), ChangeType.Added);
                 }
+                changes.Add(newThread);
             }
             return changes;
         }
 
         /// <summar>
-        /// Get the Paratext Comment elements from a project, filtering for
-        /// community checking question notes if specified.
+        /// Get the Paratext Comment elements from a project that are associated with Community Checking answers.
         /// </summary>
-        private Dictionary<string, XElement> GetPTCommentElements(XElement ptNotesElement, bool questionNotes)
+        private Dictionary<string, XElement> GetPTCommentElements(XElement ptNotesElement)
         {
             var ptCommentElems = new Dictionary<string, XElement>();
             // collect already pushed Paratext notes
             foreach (XElement threadElem in ptNotesElement.Elements("thread"))
             {
                 var threadId = (string)threadElem.Attribute("id");
-                if (questionNotes && !threadId.StartsWith("ANSWER_"))
-                    continue;
-                if (!questionNotes && threadId.StartsWith("ANSWER_"))
+                if (!threadId.StartsWith("ANSWER_"))
                     continue;
                 foreach (XElement commentElem in threadElem.Elements("comment"))
                 {
@@ -359,39 +363,26 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        private ParatextNote GetNoteFromCommentElement(XElement commentElem, XElement selectionElem, string threadId)
+        private ParatextNote CreateNoteFromComment(Paratext.Data.ProjectComments.Comment comment)
         {
-            string user = commentElem.Attribute("user")?.Value;
-            FindOrCreateSyncUser(user, out SyncUser syncUser);
-            string date = commentElem.Attribute("date")?.Value;
-            string extUser = commentElem.Attribute("extUser")?.Value;
-            string versionNbr = commentElem.Attribute("versionNbr")?.Value;
-            bool deleted = commentElem.Attribute("deleted")?.Value == "true";
-            int version = versionNbr != null && int.TryParse(versionNbr, out int nbr) ? nbr : 0;
-            string startPositionStr = selectionElem.Attribute("startPos")?.Value;
-            int startPos = startPositionStr != null && int.TryParse(startPositionStr, out int sp) ? sp : 0;
-
-            // Add the Paratext Comment tag icon to the note
-            string tagAdded = commentElem.Attribute("tagAdded")?.Value;
-            int tagId = Paratext.Data.ProjectComments.CommentTag.toDoTagId;
-            if (tagAdded != null && int.TryParse(tagAdded, out int t))
-                tagId = t;
-            string tagIcon = _commentTags.Get(tagId).Icon;
+            FindOrCreateSyncUser(comment.User, out SyncUser syncUser);
+            var tag = comment.TagsAdded == null || comment.TagsAdded.Length == 0
+                ? null
+                : _commentTags.Get(int.Parse(comment.TagsAdded[0]));
             return new ParatextNote
             {
-                DataId = $"{threadId}:{syncUser.Id}:{date}",
-                ThreadId = threadId,
-                ExtUserId = extUser,
+                DataId = $"{comment.Thread}:{syncUser.Id}:{comment.Date}",
+                ThreadId = comment.Thread,
+                ExtUserId = comment.ExternalUser,
                 // The owner is unknown at this point and is determined when submitting the ops to the note thread docs
                 OwnerRef = "",
                 SyncUserRef = syncUser.Id,
-                Content = (string)commentElem.Element("content")?.Value,
-                DateCreated = DateTime.Parse(date),
-                DateModified = DateTime.Parse(date),
-                VersionNumber = version,
-                Deleted = commentElem.Attribute("deleted")?.Value == "true",
-                TagIcon = tagIcon,
-                StartPosition = startPos
+                Content = comment.Contents?.InnerText,
+                DateCreated = DateTime.Parse(comment.Date),
+                DateModified = DateTime.Parse(comment.Date),
+                Deleted = comment.Deleted,
+                TagIcon = tag?.Icon,
+                StartPosition = comment.StartPosition
             };
         }
 
@@ -410,42 +401,44 @@ namespace SIL.XForge.Scripture.Services
             noteThreadChange.AddChange(note, ChangeType.Added);
         }
 
+        /// <summary> Get the corresponding Comment from a note. </summary>
+        private Paratext.Data.ProjectComments.Comment GetMatchingCommentFromNote(ParatextNote note,
+            Paratext.Data.ProjectComments.CommentThread thread)
+        {
+            if (_idToSyncUser.TryGetValue(note.SyncUserRef, out SyncUser su))
+            {
+                string date = new DateTimeOffset(note.DateCreated).ToString("o");
+                // Comment ids are generated using the Paratext username. Since we do not want to transparently
+                // store a username to a note in SF we construct the intended Comment id at runtime.
+                string commentId = string.Format("{0}/{1}/{2}", note.ThreadId, su.ParatextUsername, date);
+                return thread.Comments.FirstOrDefault(c => c.Id == commentId);
+            }
+            return null;
+        }
+
+        private ChangeType GetCommentChangeType(Paratext.Data.ProjectComments.Comment comment, ParatextNote note)
+        {
+            if (comment.Deleted && !note.Deleted)
+                return ChangeType.Deleted;
+            // If the content does not match it has been updated in Paratext
+            if (comment.Contents?.InnerText != note.Content)
+                return ChangeType.Updated;
+            return ChangeType.None;
+        }
+
         private string GetCommentKey(string threadId, XElement commentElem)
         {
             var user = (string)commentElem.Attribute("user");
             FindOrCreateSyncUser(user, out SyncUser syncUser);
             var extUser = (string)commentElem.Attribute("extUser") ?? "";
             var date = (string)commentElem.Attribute("date");
-            var dateString = ToUtcString(date);
-
-            return $"{threadId}|{syncUser.Id}|{extUser}|{dateString}";
-        }
-
-        private string GetCommentKey(string threadId, string syncUser, string extUser, DateTime date)
-        {
-            string dateString = ToUtcString(date);
-            return $"{threadId}|{syncUser}|{extUser}|{dateString}";
-        }
-
-        private string GetThreadIdFromCommentKey(string commentKey)
-        {
-            return commentKey.Split('|')[0];
-        }
-
-        private string ToUtcString(string date)
-        {
-            return DateTimeOffset.Parse(date).ToString("u");
-        }
-
-        private string ToUtcString(DateTime date)
-        {
-            return new DateTimeOffset(date).ToString("u");
+            return $"{threadId}|{syncUser.Id}|{extUser}|{date}";
         }
 
         /// <summary> Formats a DateTime object to a string that is compatible with a Paratext Comment. </summary>
         private string FormatCommentDate(DateTime date)
         {
-            return date.ToString("o").Replace("Z", "+00:00");
+            return new DateTimeOffset(date).ToString("o");
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Xml;
 using System.Xml.Linq;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -92,7 +93,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetNoteThreadChangesFromPT_AddParatextNotes()
+        public async Task PTCommentThreadChanges_AddParatextNote()
         {
             var env = new TestEnvironment();
             env.SetParatextProjectRoles(true);
@@ -102,50 +103,27 @@ namespace SIL.XForge.Scripture.Services
 
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
-                const string ptNotesText = @"
-                    <notes version=""1.1"">
-                        <thread id=""thread01"">
-                            <selection verseRef=""MAT 1:2"" startPos=""0"" selectedText="""" />
-                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"" tagAdded=""1"">
-                                <content>
-                                    <p>Paratext note 1.</p>
-                                </content>
-                            </comment>
-                        </thread>
-                        <thread id=""thread01"">
-                            <selection verseRef=""MAT 1:2"" startPos=""0"" selectedText="""" />
-                            <comment user=""PT User 1"" extUser=""user03"" date=""2019-01-01T08:00:00.0000000+00:00"">
-                                <content>
-                                    <p>Paratext note 2.</p>
-                                </content>
-                            </comment>
-                        </thread>
-                        <thread id=""thread02"">
-                            <selection verseRef=""MAT 1:3"" startPos=""10"" selectedText=""note 3 text"" />
-                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"" tagAdded=""2"">
-                                <content>
-                                    <p>Paratext note 3.</p>
-                                </content>
-                            </comment>
-                        </thread>
-                    </notes>";
-
-                IEnumerable<ParatextNoteThreadChange> changes = env.Mapper.GetNoteThreadChangesFromPT(
-                    XElement.Parse(ptNotesText), await env.GetNoteThreadDocsAsync(conn));
+                IEnumerable<Paratext.Data.ProjectComments.CommentThread> commentThreads = new[]
+                {
+                    env.GetCommentThread(1, 2, 0),
+                    env.GetCommentThread(2, 1, 10)
+                };
+                IEnumerable<ParatextNoteThreadChange> changes = env.Mapper.PTCommentThreadChanges(
+                    await env.GetNoteThreadDocsAsync(conn), commentThreads, env.Tags);
                 Assert.That(changes.Count, Is.EqualTo(2));
                 ParatextNoteThreadChange thread01 = changes.First();
                 Assert.That(thread01.VerseRefStr, Is.EqualTo("MAT 1:2"));
                 Assert.That(thread01.NotesAdded.Count, Is.EqualTo(1));
-                string expected1 = "thread01:syncuser01:2019-01-01T08:00:00.0000000+00:00-" +
-                    "user03-" + "Paratext note 2.-" + "False-" + "0-" + "icon1";
+                string expected1 = "thread01:syncuser01:2019-01-02T08:00:00.0000000+00:00-" +
+                    "user03-" + "thread01 note 2.-" + "False-" + "0-" + "icon2";
                 Assert.That(env.ParatextNoteToString(thread01.NotesAdded[0]), Is.EqualTo(expected1));
                 Assert.That(thread01.NotesUpdated.Count, Is.EqualTo(0));
                 ParatextNoteThreadChange thread02 = changes.Last();
                 Assert.That(thread02.VerseRefStr, Is.EqualTo("MAT 1:3"));
-                Assert.That(thread02.SelectedText, Is.EqualTo("note 3 text"));
+                Assert.That(thread02.SelectedText, Is.EqualTo("Text selected thread02"));
                 Assert.That(thread02.NotesAdded.Count, Is.EqualTo(1));
                 string expected2 = "thread02:syncuser01:2019-01-01T08:00:00.0000000+00:00-" +
-                    "user02-" + "Paratext note 3.-" + "False-" + "10-" + "icon2";
+                    "user02-" + "thread02 note 1.-" + "False-" + "10-" + "icon1";
                 Assert.That(env.ParatextNoteToString(thread02.NotesAdded[0]), Is.EqualTo(expected2));
             }
         }
@@ -359,7 +337,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetNoteThreadChangesFromPT_UpdateParatextNotes()
+        public async Task PTCommentThreadChanges_UpdateParatextNotes()
         {
             var env = new TestEnvironment();
             env.SetParatextProjectRoles(true);
@@ -369,28 +347,19 @@ namespace SIL.XForge.Scripture.Services
 
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
-                const string ptNotesText = @"
-                    <notes version=""1.1"">
-                        <thread id=""thread01"">
-                            <selection verseRef=""MAT 1:2"" startPos=""0"" selectedText="""" />
-                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"" tagAdded=""1"">
-                                <content>
-                                    <p>Paratext note 1 updated in Paratext.</p>
-                                </content>
-                            </comment>
-                        </thread>
-                    </notes>";
+                IEnumerable<Paratext.Data.ProjectComments.CommentThread> commentThreads = new[]
+                {
+                    env.GetCommentThread(1, 1, 0, true),
+                };
+                IEnumerable<ParatextNoteThreadChange> changes = env.Mapper.PTCommentThreadChanges(
+                    await env.GetNoteThreadDocsAsync(conn), commentThreads, env.Tags);
 
-                IEnumerable<ParatextNoteThreadChange> changes = env.Mapper.GetNoteThreadChangesFromPT(
-                    XElement.Parse(ptNotesText), await env.GetNoteThreadDocsAsync(conn));
-
-                // Does not add the thread from a community checking question
                 Assert.That(changes.Count, Is.EqualTo(1));
                 ParatextNoteThreadChange thread01 = changes.First();
                 Assert.That(thread01.NotesAdded.Count, Is.EqualTo(0));
                 Assert.That(thread01.NotesUpdated.Count, Is.EqualTo(1));
                 string expected = "thread01:syncuser01:2019-01-01T08:00:00.0000000+00:00-" +
-                    "user02-" + "Paratext note 1 updated in Paratext.-" + "False-" + "0-" + "icon1";
+                    "user02-" + "thread01 note 1: EDITED.-" + "False-" + "0-" + "icon1";
                 Assert.That(env.ParatextNoteToString(thread01.NotesUpdated[0]), Is.EqualTo(expected));
             }
         }
@@ -479,7 +448,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetNoteThreadChangesFromPT_DeleteParatextNotes()
+        public async Task PTCommentThreadChanges_DeleteParatextNotes()
         {
             var env = new TestEnvironment();
             env.SetParatextProjectRoles(true);
@@ -489,27 +458,19 @@ namespace SIL.XForge.Scripture.Services
 
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
-                const string ptNotesText = @"
-                    <notes version=""1.1"">
-                        <thread id=""thread01"">
-                            <selection verseRef=""MAT 1:2"" startPos=""0"" selectedText="""" />
-                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"" deleted=""true"" tagAdded=""1"">
-                                <content>
-                                    <p>Paratext note 1.</p>
-                                </content>
-                            </comment>
-                        </thread>
-                    </notes>";
-
-                IEnumerable<ParatextNoteThreadChange> changes = env.Mapper.GetNoteThreadChangesFromPT(
-                    XElement.Parse(ptNotesText), await env.GetNoteThreadDocsAsync(conn));
+                IEnumerable<Paratext.Data.ProjectComments.CommentThread> commentThreads = new[]
+                {
+                    env.GetCommentThread(1, 1, 0, false, true),
+                };
+                IEnumerable<ParatextNoteThreadChange> changes = env.Mapper.PTCommentThreadChanges(
+                    await env.GetNoteThreadDocsAsync(conn), commentThreads, env.Tags);
 
                 Assert.That(changes.Count, Is.EqualTo(1));
                 ParatextNoteThreadChange thread01 = changes.First();
                 Assert.That(thread01.NotesUpdated.Count, Is.EqualTo(0));
                 Assert.That(thread01.NotesDeleted.Count, Is.EqualTo(1));
                 string expected = "thread01:syncuser01:2019-01-01T08:00:00.0000000+00:00-" +
-                    "user02-" + "Paratext note 1.-" + "True-" + "0-" + "icon1";
+                    "user02-" + "thread01 note 1.-" + "True-" + "0-" + "icon1";
                 Assert.That(env.ParatextNoteToString(thread01.NotesDeleted[0]), Is.EqualTo(expected));
             }
         }
@@ -626,7 +587,7 @@ namespace SIL.XForge.Scripture.Services
                             DataId = "thread01",
                             ProjectRef = "project01",
                             OwnerRef = "user01",
-                            VerseRef = new VerseRefData(40, 1, 1),
+                            VerseRef = new VerseRefData(40, 1, 2),
                             SelectedText = "Scripture text in project.",
                             Notes = new List<ParatextNote>
                             {
@@ -637,7 +598,7 @@ namespace SIL.XForge.Scripture.Services
                                     OwnerRef = "user02",
                                     SyncUserRef = "syncuser01",
                                     ExtUserId = "user02",
-                                    Content = "Paratext note 1.",
+                                    Content = "thread01 note 1.",
                                     DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc),
                                     TagIcon = "icon1"
                                 }
@@ -671,13 +632,9 @@ namespace SIL.XForge.Scripture.Services
 
             public void SetCommentTags(int[] tagIds)
             {
-                var scrtextDir = Path.Combine(Path.GetTempPath(), "project01", "target");
-                var associatedPtUser = new SFParatextUser("user01");
-                ProjectName projectName = new ProjectName() { ProjectPath = scrtextDir, ShortName = "Proj" };
-                MockScrText scrText = new MockScrText(associatedPtUser, projectName);
-                var tags = new MockCommentTags(scrText);
-                tags.InitializeTagList(tagIds);
-                Tags = tags;
+                var commentTags = MockCommentTags.GetCommentTags("user01", "paratextId");
+                commentTags.InitializeTagList(tagIds);
+                Tags = commentTags;
             }
 
             public string ParatextNoteToString(ParatextNote note)
@@ -686,6 +643,35 @@ namespace SIL.XForge.Scripture.Services
                 if (note.TagIcon != null)
                     result = result + $"-{note.TagIcon}";
                 return result;
+            }
+
+            public Paratext.Data.ProjectComments.CommentThread GetCommentThread(int threadNum, int commentNum,
+                int startPos, bool updated = false, bool deleted = false)
+            {
+                string threadId = $"thread0{threadNum}";
+                var thread = new Paratext.Data.ProjectComments.CommentThread();
+                XmlDocument doc = new XmlDocument();
+                var ptUser = new SFParatextUser("PT User 1");
+                for (int i = 1; i <= commentNum; i++)
+                {
+                    var content = doc.CreateElement("Contents");
+                    content.InnerText = updated ? $"{threadId} note {i}: EDITED." : $"{threadId} note {i}.";
+                    var comment = new Paratext.Data.ProjectComments.Comment(ptUser)
+                    {
+                        Contents = content,
+                        TagsAdded = new[] { $"{i}" },
+                        ExternalUser = $"user0{i + 1}",
+                        Date = $"2019-01-0{i}T08:00:00.0000000+00:00",
+                        StartPosition = startPos,
+                        SelectedText = $"Text selected {threadId}",
+                        VerseRefStr = $"MAT 1:{threadNum + 1}",
+                        Deleted = deleted
+                    };
+
+                    comment.Thread = threadId;
+                    thread.Comments.Add(comment);
+                }
+                return thread;
             }
 
             private static SFProjectSecret ProjectSecret(bool includeSyncUsers)

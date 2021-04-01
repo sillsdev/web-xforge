@@ -1,5 +1,7 @@
+using System.IO;
 using Paratext.Data;
 using Paratext.Data.ProjectComments;
+using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -14,7 +16,16 @@ namespace SIL.XForge.Scripture.Services
             set { list = value; }
         }
 
-        public void InitializeTagList(int[] tagIds)
+        public static MockCommentTags GetCommentTags(string username, string ptProjectId)
+        {
+            var scrtextDir = Path.Combine(Path.GetTempPath(), ptProjectId, "target");
+            var associatedPtUser = new SFParatextUser(username);
+            ProjectName projectName = new ProjectName() { ProjectPath = scrtextDir, ShortName = "Proj" };
+            MockScrText scrText = new MockScrText(associatedPtUser, projectName);
+            return new MockCommentTags(scrText);
+        }
+
+        internal void InitializeTagList(int[] tagIds)
         {
             CommentTag[] tags = new CommentTag[tagIds.Length];
             for (int i = 0; i < tagIds.Length; i++)
