@@ -806,6 +806,7 @@ namespace SIL.XForge.Scripture.Services
 
             ParatextNoteThread thread02 = env.GetNoteThread("project01", "thread02");
             Assert.That(thread02.VerseRef.ToString(), Is.EqualTo("MAT 1:1"));
+            Assert.That(thread02.TagIcon, Is.EqualTo("icon1"));
             Assert.That(thread02.Notes.Count, Is.EqualTo(1));
             Assert.That(thread02.Notes[0].Content, Is.EqualTo("New thread02 added."));
             Assert.That(thread02.Notes[0].OwnerRef, Is.EqualTo("user01"));
@@ -882,6 +883,9 @@ namespace SIL.XForge.Scripture.Services
                     .Returns(false);
                 ParatextService.GetNotes(Arg.Any<UserSecret>(), "target", Arg.Any<int>()).Returns("<notes/>");
                 ParatextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user01")).Returns("User 1");
+                var commentTags = MockCommentTags.GetCommentTags("User 1", "target");
+                commentTags.InitializeTagList(new int[] { 1, 2, 3 });
+                ParatextService.GetCommentTags(Arg.Any<UserSecret>(), "target").Returns(commentTags);
                 RealtimeService = new SFMemoryRealtimeService();
                 DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
                 _notesMapper = Substitute.For<IParatextNotesMapper>();
@@ -1099,9 +1103,10 @@ namespace SIL.XForge.Scripture.Services
                     GetNote(threadId, "User 2", $"{threadId} deleted.", ChangeType.Deleted), ChangeType.Deleted);
                 noteThreadChange.AddChange(
                     GetNote(threadId, "User 3", $"{threadId} added.", ChangeType.Added), ChangeType.Added);
-                _notesMapper.GetNoteThreadChangesFromPT(Arg.Any<XElement>(),
-                    Arg.Any<IEnumerable<IDocument<ParatextNoteThread>>>())
-                    .Returns(new[] { noteThreadChange });
+                _notesMapper.PTCommentThreadChanges(Arg.Any<IEnumerable<IDocument<ParatextNoteThread>>>(),
+                    Arg.Any<IEnumerable<Paratext.Data.ProjectComments.CommentThread>>(),
+                    Arg.Any<Paratext.Data.ProjectComments.CommentTags>())
+                    .Returns(new[] { noteThreadChange }, new ParatextNoteThreadChange[0]);
             }
 
             public void SetupNewCommentThreadChange(string threadId, string syncUserId, string verseRef = "MAT 1:1")
@@ -1109,8 +1114,9 @@ namespace SIL.XForge.Scripture.Services
                 var noteThreadChange = new ParatextNoteThreadChange(threadId, verseRef, $"{threadId} selected text.");
                 noteThreadChange.AddChange(
                     GetNote(threadId, syncUserId, $"New {threadId} added.", ChangeType.Added), ChangeType.Added);
-                _notesMapper.GetNoteThreadChangesFromPT(Arg.Any<XElement>(),
-                    Arg.Any<IEnumerable<IDocument<ParatextNoteThread>>>())
+                _notesMapper.PTCommentThreadChanges(Arg.Any<IEnumerable<IDocument<ParatextNoteThread>>>(),
+                    Arg.Any<IEnumerable<Paratext.Data.ProjectComments.CommentThread>>(),
+                    Arg.Any<Paratext.Data.ProjectComments.CommentTags>())
                     .Returns(new[] { noteThreadChange });
                 if (syncUserId == "syncuser02")
                 {
@@ -1239,7 +1245,8 @@ namespace SIL.XForge.Scripture.Services
                     SyncUserRef = user,
                     Content = content,
                     DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc),
-                    Deleted = type == ChangeType.Deleted
+                    Deleted = type == ChangeType.Deleted,
+                    TagIcon = "icon1"
                 };
             }
         }
