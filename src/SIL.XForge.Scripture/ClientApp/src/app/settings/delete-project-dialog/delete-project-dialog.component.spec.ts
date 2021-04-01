@@ -38,6 +38,9 @@ describe('DeleteProjectDialogComponent', () => {
     env.clickElement(env.deleteButton);
     flush();
     expect(env.afterCloseCallback).toHaveBeenCalledTimes(0);
+    env.clickElement(env.cancelButton);
+    flush();
+    expect(env.afterCloseCallback).toHaveBeenCalledWith('cancel');
   }));
 
   it('should allow user to cancel', fakeAsync(() => {

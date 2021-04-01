@@ -25,15 +25,18 @@ describe('ScriptureChooserDialog', () => {
     ]
   }));
 
+  let env: TestEnvironment;
+  afterEach(() => env.dialogRef.close());
+
   it('initially shows book chooser, close button', () => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     expect(env.dialogText).toContain(env.closeIconName);
     expect(env.dialogText).toContain('book');
     expect(env.dialogText).toContain('Matthew');
   });
 
   it('clicking book goes to chapter chooser, shows back button', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     env.click(env.bookEphesians);
     expect(env.reference.trim()).toEqual('Ephesians');
     expect(env.dialogText).not.toContain(env.closeIconName);
@@ -45,7 +48,7 @@ describe('ScriptureChooserDialog', () => {
   }));
 
   it('clicking chapter goes to verse chooser, shows back button', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     env.click(env.bookEphesians);
     env.click(env.chapter3);
     expect(env.reference).toEqual('Ephesians 3');
@@ -58,7 +61,7 @@ describe('ScriptureChooserDialog', () => {
   }));
 
   it('clicking verse closes and reports selection', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     env.click(env.bookEphesians);
     env.click(env.chapter3);
     env.click(env.verse21);
@@ -66,13 +69,13 @@ describe('ScriptureChooserDialog', () => {
   }));
 
   it('clicking X closes. dialog reports cancelled.', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     env.click(env.backoutButton);
     expect(env.dialogResult).toEqual('close');
   }));
 
   it('clicking back at chapter selection goes to book selection', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     env.click(env.bookEphesians);
     env.click(env.backoutButton);
     expect(env.dialogText).toContain(env.closeIconName);
@@ -81,7 +84,7 @@ describe('ScriptureChooserDialog', () => {
   }));
 
   it('clicking back at verse selection goes to chapter selection', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     env.click(env.bookEphesians);
     env.click(env.chapter3);
     env.click(env.backoutButton);
@@ -91,76 +94,76 @@ describe('ScriptureChooserDialog', () => {
   }));
 
   it('book not highlighted, if no (undefined) incoming reference', fakeAsync(() => {
-    const env = new TestEnvironment({ inputScriptureReference: undefined });
+    env = new TestEnvironment({ inputScriptureReference: undefined });
     expect(env.highlightedButton).toBeNull();
   }));
 
   it('book not highlighted, if no (omitted) incoming reference', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     expect(env.highlightedButton).toBeNull();
   }));
 
   it('book highlighted', fakeAsync(() => {
-    const env = new TestEnvironment({ inputScriptureReference: new VerseRef('ROM', '11', '33') });
+    env = new TestEnvironment({ inputScriptureReference: new VerseRef('ROM', '11', '33') });
     env.fixture.detectChanges();
     expect(env.highlightedButton).not.toBeNull();
   }));
 
   it('chapter not highlighted, if no incoming reference', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     env.click(env.bookRomans);
     expect(env.highlightedButton).toBeNull();
   }));
 
   it('chapter highlighted, if showing incoming book reference', fakeAsync(() => {
-    const env = new TestEnvironment({ inputScriptureReference: new VerseRef('ROM', '11', '33') });
+    env = new TestEnvironment({ inputScriptureReference: new VerseRef('ROM', '11', '33') });
     env.click(env.bookRomans);
     expect(env.highlightedButton).not.toBeNull();
   }));
 
   it('chapter not highlighted if not in right book', fakeAsync(() => {
-    const env = new TestEnvironment({ inputScriptureReference: new VerseRef('ROM', '11', '33') });
+    env = new TestEnvironment({ inputScriptureReference: new VerseRef('ROM', '11', '33') });
     env.click(env.bookEphesians);
     expect(env.highlightedButton).toBeNull();
   }));
 
   it('verse not highlighted, if no incoming reference', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     env.click(env.bookRomans);
     env.click(env.chapter11);
     expect(env.highlightedButton).toBeNull();
   }));
 
   it('verse highlighted, if showing incoming book and chapter reference', fakeAsync(() => {
-    const env = new TestEnvironment({ inputScriptureReference: new VerseRef('ROM', '11', '33') });
+    env = new TestEnvironment({ inputScriptureReference: new VerseRef('ROM', '11', '33') });
     env.click(env.bookRomans);
     env.click(env.chapter11);
     expect(env.highlightedButton).not.toBeNull();
   }));
 
   it('verse not highlighted if in right book but wrong chapter', fakeAsync(() => {
-    const env = new TestEnvironment({ inputScriptureReference: new VerseRef('ROM', '11', '33') });
+    env = new TestEnvironment({ inputScriptureReference: new VerseRef('ROM', '11', '33') });
     env.click(env.bookRomans);
     env.click(env.chapter3);
     expect(env.highlightedButton).toBeNull();
   }));
 
   it('verse not highlighted if in right chapter number but wrong book', fakeAsync(() => {
-    const env = new TestEnvironment({ inputScriptureReference: new VerseRef('ROM', '3', '1') });
+    env = new TestEnvironment({ inputScriptureReference: new VerseRef('ROM', '3', '1') });
     env.click(env.bookEphesians);
     env.click(env.chapter3);
     expect(env.highlightedButton).toBeNull();
   }));
 
   it('input is received', fakeAsync(() => {
-    const env = new TestEnvironment({ inputScriptureReference: new VerseRef('EPH', '3', '21') });
+    env = new TestEnvironment({ inputScriptureReference: new VerseRef('EPH', '3', '21') });
     expect(env.component.data.input!.book).toEqual('EPH');
     expect(env.component.data.input!.chapter).toEqual('3');
     expect(env.component.data.input!.verse).toEqual('21');
   }));
 
   it('only shows books that we seed (from project)', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     expect(env.dialogText).toContain('Exodus');
     expect(env.dialogText).toContain('Matthew');
     expect(env.dialogText).not.toContain('Genesis');
@@ -168,7 +171,7 @@ describe('ScriptureChooserDialog', () => {
   }));
 
   it('only shows chapters that we seed (from project)', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     env.click(env.bookRomans);
     expect(env.dialogText).toContain('11');
     expect(env.dialogText).toContain('12');
@@ -176,7 +179,7 @@ describe('ScriptureChooserDialog', () => {
   }));
 
   it('shows correct number of verses for a given book and chapter', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     env.click(env.bookRomans);
     env.click(env.chapter11);
     expect(env.dialogText).toContain('1');
@@ -191,14 +194,14 @@ describe('ScriptureChooserDialog', () => {
   }));
 
   it('identifies OT book', () => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     expect(env.component.isOT('GEN')).toBe(true);
     expect(env.component.isOT('LUK')).toBe(false);
     expect(env.component.isOT('XYZ')).toBe(false);
   });
 
   it('splits input books by OT and NT', () => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     expect(env.component.otBooks.includes('EXO')).toBe(true);
     expect(env.component.ntBooks.includes('EXO')).toBe(false);
     expect(env.component.ntBooks.includes('MAT')).toBe(true);
@@ -208,7 +211,7 @@ describe('ScriptureChooserDialog', () => {
   });
 
   it('knows if project has any OT books', () => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     expect(env.component.hasOTBooks).toBe(true);
   });
 
@@ -231,12 +234,12 @@ describe('ScriptureChooserDialog', () => {
         permissions: {}
       }
     ];
-    const env = new TestEnvironment({ textsInProject: onlyNTTexts });
+    env = new TestEnvironment({ textsInProject: onlyNTTexts });
     expect(env.component.hasOTBooks).toBe(false);
   });
 
   it('only shows verses if providing end-selection', fakeAsync(() => {
-    const env = new TestEnvironment({
+    env = new TestEnvironment({
       inputScriptureReference: new VerseRef('EPH', '3', '17'),
       rangeStart: new VerseRef('EPH', '3', '15')
     });
@@ -255,7 +258,7 @@ describe('ScriptureChooserDialog', () => {
   }));
 
   it('close button works for end-selection chooser', fakeAsync(() => {
-    const env = new TestEnvironment({
+    env = new TestEnvironment({
       rangeStart: new VerseRef('EPH', '3', '15')
     });
     expect(env.dialogText).toContain(env.closeIconName);
@@ -285,7 +288,7 @@ describe('ScriptureChooserDialog', () => {
       // No RUT text
     ];
 
-    const env = new TestEnvironment({
+    env = new TestEnvironment({
       inputScriptureReference: new VerseRef('EPH', '3', '17'),
       textsInProject: texts,
       // rangeStart is for book that is not in texts
@@ -329,7 +332,7 @@ describe('ScriptureChooserDialog', () => {
       }
     ];
 
-    const env = new TestEnvironment({
+    env = new TestEnvironment({
       inputScriptureReference: new VerseRef('EPH', '3', '17'),
       textsInProject: texts,
       // rangeStart is for chapter that is not in texts
@@ -373,7 +376,7 @@ describe('ScriptureChooserDialog', () => {
       }
     ];
 
-    const env = new TestEnvironment({
+    env = new TestEnvironment({
       inputScriptureReference: new VerseRef('EPH', '3', '17'),
       textsInProject: texts,
       // rangeStart is for invalid verse

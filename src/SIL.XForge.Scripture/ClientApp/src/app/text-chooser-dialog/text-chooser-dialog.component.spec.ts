@@ -282,6 +282,7 @@ describe('TextChooserDialogComponent', () => {
     expect(dividingNode.textContent).toEqual(' text');
     expect(env.component.textContent(element, dividingNode, 3, true)).toEqual('xt');
     expect(env.component.textContent(element, dividingNode, 3, false)).toEqual('Here  te');
+    env.closeDialog();
   }));
 
   it('calculates range offsets correctly', fakeAsync(() => {
@@ -312,12 +313,14 @@ describe('TextChooserDialogComponent', () => {
       startOffset: 'Lor'.length,
       endOffset: 'Lorem ipsum'.length
     });
+    env.closeDialog();
   }));
 
   it('can handle right to left text', fakeAsync(() => {
     const config: TextChooserDialogData = { ...TestEnvironment.defaultDialogData, isRightToLeft: true };
     const env = new TestEnvironment([], 'verse_1_1', 'verse_1_2', config);
     expect(env.component.isTextRightToLeft).toBe(true);
+    env.closeDialog();
   }));
 });
 

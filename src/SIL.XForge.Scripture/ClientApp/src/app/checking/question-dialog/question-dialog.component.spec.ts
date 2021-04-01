@@ -57,15 +57,18 @@ describe('QuestionDialogComponent', () => {
     ]
   }));
 
+  let env: TestEnvironment;
+  afterEach(() => env.dialogRef.close());
+
   it('should allow user to cancel', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     env.clickElement(env.cancelButton);
     flush();
     expect(env.afterCloseCallback).toHaveBeenCalledWith('close');
   }));
 
   it('should not allow Save without required fields', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     env.clickElement(env.saveButton);
     flush();
     expect(env.afterCloseCallback).not.toHaveBeenCalled();
@@ -76,7 +79,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('does not accept just whitespace for a question', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     flush();
 
     env.inputValue(env.questionInput, 'Hello?');
@@ -97,7 +100,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('should validate verse fields', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     flush();
     expect(env.component.questionForm.valid).toBe(false);
     expect(env.component.scriptureStart.valid).toBe(false);
@@ -137,7 +140,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('should produce error', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     flush();
     const invalidVerses = [
       'MAT 1',
@@ -165,14 +168,14 @@ describe('QuestionDialogComponent', () => {
 
   it('should set default verse and text direction when provided', fakeAsync(() => {
     const verseRef: VerseRef = VerseRef.parse('LUK 1:1');
-    const env = new TestEnvironment(undefined, verseRef, true);
+    env = new TestEnvironment(undefined, verseRef, true);
     flush();
     expect(env.component.scriptureStart.value).toBe('LUK 1:1');
     expect(env.component.isTextRightToLeft).toBe(true);
   }));
 
   it('should validate matching book and chapter', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     flush();
     env.component.scriptureStart.setValue('MAT 1:2');
     expect(env.component.scriptureStart.valid).toBe(true);
@@ -192,7 +195,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('should validate start verse is before or same as end verse', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     flush();
     env.component.scriptureStart.setValue('MAT 1:2');
     expect(env.component.scriptureStart.valid).toBe(true);
@@ -212,7 +215,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('opens reference chooser, uses result', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     flush();
     env.component.scriptureStart.setValue('MAT 3:4');
     expect(env.component.scriptureStart.value).not.toEqual('LUK 1:2');
@@ -226,7 +229,7 @@ describe('QuestionDialogComponent', () => {
 
   // Needed for validation error messages to appear
   it('control marked as touched+dirty after reference chooser', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     flush();
     // scriptureStart control starts off untouched+undirty and changes
     env.component.scriptureStart.setValue('MAT 3:4');
@@ -250,7 +253,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('passes start reference to end-reference chooser', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     flush();
     env.component.scriptureStart.setValue('LUK 1:1');
     env.component.scriptureEnd.setValue('GEN 5:6');
@@ -270,7 +273,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('does not pass start reference as range start when opening start-reference chooser', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     flush();
     env.component.scriptureStart.setValue('LUK 1:1');
 
@@ -288,7 +291,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('disables end-reference if start-reference is invalid', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     flush();
     env.inputValue(env.scriptureStartInput, 'LUK 1:1');
     expect(env.component.scriptureEnd.disabled).toBe(false);
@@ -300,7 +303,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('does not enable end-reference until start-reference is changed', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     flush();
     expect(env.component.scriptureEnd.disabled).toBe(true);
     env.inputValue(env.scriptureStartInput, 'LUK 1:1');
@@ -308,7 +311,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('allows a question without text if audio is provided', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     flush();
     env.inputValue(env.questionInput, '');
     expect(env.component.questionText.valid).toBe(false);
@@ -324,7 +327,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('should not save with no text and audio permission is denied', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     flush();
     env.inputValue(env.questionInput, '');
     expect(env.component.questionText.valid).toBe(false);
@@ -336,7 +339,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('display quill editor', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     flush();
     expect(env.quillEditor).not.toBeNull();
     expect(env.component.textDocId).toBeUndefined();
@@ -352,7 +355,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('retrieves scripture text on editing a question', fakeAsync(() => {
-    const env = new TestEnvironment({
+    env = new TestEnvironment({
       dataId: 'question01',
       ownerRef: 'user01',
       projectRef: 'project01',
@@ -372,7 +375,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('displays error editing end reference to different book', fakeAsync(() => {
-    const env = new TestEnvironment({
+    env = new TestEnvironment({
       dataId: 'question01',
       ownerRef: 'user01',
       projectRef: 'project01',
@@ -395,7 +398,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('displays error editing start reference to a different book', fakeAsync(() => {
-    const env = new TestEnvironment({
+    env = new TestEnvironment({
       dataId: 'question01',
       ownerRef: 'user01',
       projectRef: 'project01',
@@ -415,7 +418,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('generate correct verse ref when start and end mismatch only by case or insignificant zero', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     flush();
     env.component.scriptureStart.setValue('LUK 1:1');
     env.component.scriptureEnd.setValue('luk 1:1');
@@ -429,7 +432,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('should handle invalid start reference when end reference exists', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     flush();
     env.component.scriptureStart.setValue('nonsense');
     env.component.scriptureEnd.setValue('LUK 1:1');
@@ -439,7 +442,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('should not highlight range if chapter or book differ', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     flush();
     env.component.scriptureStart.setValue('MAT 1:1');
     env.component.scriptureEnd.setValue('LUK 1:2');
@@ -450,7 +453,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('should clear highlight when starting ref is cleared', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     flush();
     env.component.scriptureStart.setValue('LUK 1:1');
     tick(500);
@@ -476,7 +479,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('should clear highlight when end ref is invalid', fakeAsync(() => {
-    const env = new TestEnvironment();
+    env = new TestEnvironment();
     flush();
     env.component.scriptureStart.setValue('LUK 1:1');
     env.component.scriptureEnd.setValue('LUK 1:2');
