@@ -1560,7 +1560,6 @@ class TestEnvironment {
         dateModified: date.toJSON(),
         content: `Note from ${id}`,
         extUserId: 'ext_user_01',
-        versionNumber: 1,
         deleted: false,
         tagIcon: `01flag${i + 1}`,
         startPosition: 0
@@ -1577,7 +1576,8 @@ class TestEnvironment {
         verseRef: vrd,
         ownerRef: 'user01',
         selectedText: '',
-        notes
+        notes,
+        tagIcon: '01flag1'
       }
     });
   }

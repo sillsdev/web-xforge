@@ -547,6 +547,18 @@ namespace SIL.XForge.Scripture.Services
             return NotesFormatter.FormatNotes(threads);
         }
 
+        public IEnumerable<CommentThread> GetCommentThreads(UserSecret userSecret, string projectId, int bookNum)
+        {
+            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), projectId);
+            if (scrText == null)
+                return null;
+
+            CommentManager manager = CommentManager.Get(scrText);
+            var threads = manager.FindThreads((commentThread) =>
+                { return commentThread.VerseRef.BookNum == bookNum; }, true);
+            return threads.Where(t => !t.Id.StartsWith("ANSWER_"));
+        }
+
         /// <summary> Write up-to-date notes from the mongo database to the Paratext project folder </summary>
         public void PutNotes(UserSecret userSecret, string projectId, string notesText)
         {

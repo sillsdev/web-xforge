@@ -11,12 +11,12 @@ namespace SIL.XForge.Scripture.Services
     public interface IParatextNotesMapper
     {
         List<SyncUser> NewSyncUsers { get; }
-        CommentTags Tags { set; }
 
         Task InitAsync(UserSecret currentUserSecret, SFProjectSecret projectSecret, List<User> ptUsers,
             string paratextProjectId, CommentTags commentTags);
         Task<XElement> GetNotesChangelistAsync(XElement oldNotesElem, IEnumerable<IDocument<Question>> questionsDocs);
-        IEnumerable<ParatextNoteThreadChange> GetNoteThreadChangesFromPT(XElement ptNotesElem,
-            IEnumerable<IDocument<ParatextNoteThread>> noteThreads);
+        IEnumerable<ParatextNoteThreadChange> PTCommentThreadChanges(
+            IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs, IEnumerable<CommentThread> commentThreads,
+            CommentTags commentTags);
     }
 }
