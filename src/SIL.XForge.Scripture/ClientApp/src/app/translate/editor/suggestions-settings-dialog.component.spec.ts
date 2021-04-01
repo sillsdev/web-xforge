@@ -3,7 +3,7 @@ import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web/dialog';
 import { MdcSlider } from '@angular-mdc/web/slider';
 import { CommonModule } from '@angular/common';
 import { Component, DebugElement, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import cloneDeep from 'lodash-es/cloneDeep';
 import {
@@ -43,6 +43,7 @@ describe('SuggestionsSettingsDialogComponent', () => {
     expect(env.component!.confidenceThreshold).toEqual(60);
     const userConfigDoc = env.getProjectUserConfigDoc();
     expect(userConfigDoc.data!.confidenceThreshold).toEqual(0.6);
+    env.click(env.closeButton);
   }));
 
   it('update suggestions enabled', fakeAsync(() => {
@@ -54,6 +55,7 @@ describe('SuggestionsSettingsDialogComponent', () => {
     expect(env.component!.translationSuggestionsUserEnabled).toBe(false);
     const userConfigDoc = env.getProjectUserConfigDoc();
     expect(userConfigDoc.data!.translationSuggestionsEnabled).toBe(false);
+    env.click(env.closeButton);
   }));
 
   it('update num suggestions', fakeAsync(() => {
@@ -65,12 +67,14 @@ describe('SuggestionsSettingsDialogComponent', () => {
     expect(env.component!.numSuggestions).toEqual('2');
     const userConfigDoc = env.getProjectUserConfigDoc();
     expect(userConfigDoc.data!.numSuggestions).toEqual(2);
+    env.click(env.closeButton);
   }));
 
   it('shows correct confidence threshold even when suggestions disabled', fakeAsync(() => {
     const env = new TestEnvironment(false);
     env.openDialog();
     expect(env.confidenceThresholdSlider.value).toEqual(50);
+    env.click(env.closeButton);
   }));
 
   it('disables settings when offline', fakeAsync(() => {
@@ -88,6 +92,7 @@ describe('SuggestionsSettingsDialogComponent', () => {
     expect(env.suggestionsEnabledSwitch.disabled).toBe(true);
     expect(env.confidenceThresholdSlider.disabled).toBe(true);
     expect(env.mdcNumSuggestionsSelect.disabled).toBe(true);
+    env.click(env.closeButton);
   }));
 
   it('the suggestions toggle is switched on when the dialog opens while offline', fakeAsync(() => {
@@ -97,6 +102,7 @@ describe('SuggestionsSettingsDialogComponent', () => {
 
     expect(env.suggestionsEnabledSwitch.disabled).toBe(true);
     expect(env.suggestionsEnabledSwitch.checked).toBe(true);
+    env.click(env.closeButton);
   }));
 });
 
@@ -172,6 +178,10 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('.offline-text'));
   }
 
+  get closeButton(): HTMLElement {
+    return this.overlayContainerElement.querySelector('button[mdcdialogaction="close"]') as HTMLElement;
+  }
+
   set isOnline(value: boolean) {
     this.onlineStatus.next(value);
     this.fixture.detectChanges();
@@ -219,8 +229,13 @@ class TestEnvironment {
   }
 
   clickSwitch(element: HTMLElement) {
-    const inputElem = element.querySelector('input');
-    inputElem!.click();
+    const inputElem = element.querySelector('input')!;
+    this.click(inputElem);
+  }
+
+  click(element: HTMLElement) {
+    element.click();
+    flush();
     this.fixture.detectChanges();
     tick();
   }

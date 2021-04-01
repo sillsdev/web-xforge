@@ -374,6 +374,7 @@ describe('AppComponent', () => {
     // SUT2 is in ngOnInit()
     tick();
     verify(mockedMdcDialog.open(BetaMigrationDialogComponent, anything())).once();
+    expect().nothing();
   }));
 
   describe('Community Checking', () => {

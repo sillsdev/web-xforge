@@ -41,6 +41,13 @@ export const configureTestingModule = (createModuleDef: () => TestModuleMetadata
     for (const mock of mocks) {
       reset(mock);
     }
+    const overlay: Element | null = document.body.querySelector('.cdk-overlay-container');
+    if (overlay?.hasChildNodes()) {
+      overlay.remove();
+      // Subsequent tests can have trouble with content left in the overlay container.
+      // (Don't try to fix the problem here because not all tests use configureTestingModule, and it's not its job)
+      throw new Error('Test did not clean up its overlay container content.');
+    }
   });
 };
 
