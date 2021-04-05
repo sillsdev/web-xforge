@@ -37,7 +37,8 @@ namespace SIL.XForge.Scripture
             "vendor.js", "vendor.js.map",
             "main.js", "main.js.map",
             "manifest.json",
-            "sockjs-node"
+            "sockjs-node",
+            "index.html"
         };
         // examples of filenames are "main-es5.4e5295b95e4b6c37b696.js", "styles.a2f070be0b37085d72ba.css"
         private static readonly HashSet<string> ProductionSpaGetRoutes = new HashSet<string>
