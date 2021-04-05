@@ -5,7 +5,7 @@
   "background_color": "#ffffff",
   "display": "standalone",
   "scope": "/",
-  "start_url": "/projects",
+  "start_url": "/index.html",
   "icons": [
     {
       "src": "assets/icons/sf-72x72.png",
