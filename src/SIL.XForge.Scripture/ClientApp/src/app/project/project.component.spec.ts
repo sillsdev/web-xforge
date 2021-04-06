@@ -132,6 +132,7 @@ describe('ProjectComponent', () => {
 
   it('do not navigate when project does not exist', fakeAsync(() => {
     const env = new TestEnvironment();
+    env.subscribeRealtimeDocs('project01');
     env.fixture.detectChanges();
     tick();
 
@@ -148,7 +149,7 @@ describe('ProjectComponent', () => {
     tick();
 
     verify(mockedSFProjectService.onlineCheckLinkSharing('project01', 'secret123')).once();
-    verify(mockedRouter.navigate(deepEqual(['projects', 'project01', 'checking', 'ALL']), anything())).once();
+    verify(mockedRouter.navigate(deepEqual(['projects', 'project01', 'translate', 'MAT']), anything())).once();
     expect().nothing();
   }));
 
@@ -188,13 +189,17 @@ describe('ProjectComponent', () => {
   it('check sharing link directs user to project offline when user is already a member', fakeAsync(() => {
     const env = new TestEnvironment();
     env.onlineStatus = false;
-    env.setProjectData({ selectedTask: 'checking', projectId: 'project01', memberProjects: ['project01'] });
+    env.setProjectData({
+      selectedTask: 'checking',
+      projectId: 'project02',
+      memberProjects: ['project01', 'project02']
+    });
     env.setLinkSharing(true, 'secret123');
     env.fixture.detectChanges();
     tick();
     verify(mockedSFProjectService.onlineCheckLinkSharing(anything(), anything())).never();
     verify(mockedNoticeService.showMessageDialog(anything())).never();
-    verify(mockedRouter.navigate(deepEqual(['projects', 'project01', 'checking', 'ALL']), anything())).once();
+    verify(mockedRouter.navigate(deepEqual(['projects', 'project02', 'checking', 'ALL']), anything())).once();
     expect().nothing();
   }));
 
@@ -260,18 +265,11 @@ class TestEnvironment {
     when(mockedUserService.getCurrentUser()).thenCall(() =>
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );
-    when(mockedSFProjectService.onlineCheckLinkSharing('project01')).thenResolve();
-    when(mockedSFProjectService.onlineCheckLinkSharing('project01', anything())).thenResolve();
+    when(mockedSFProjectService.onlineCheckLinkSharing('project01', anything())).thenCall(() =>
+      this.setProjectData({ memberProjects: ['project01'] })
+    );
     when(mockedNoticeService.showMessageDialog(anything())).thenResolve();
-    when(mockedSFProjectService.getUserConfig('project01', 'user01')).thenCall(() =>
-      this.realtimeService.subscribe(
-        SFProjectUserConfigDoc.COLLECTION,
-        getSFProjectUserConfigDocId('project01', 'user01')
-      )
-    );
-    when(mockedSFProjectService.get('project01')).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
-    );
+
     when(mockedTranslocoService.translate<string>(anything())).thenReturn('The project link is invalid.');
     this.isOnline = new BehaviorSubject<boolean>(true);
     when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
@@ -299,66 +297,70 @@ class TestEnvironment {
     if (args.projectId != null) {
       when(mockedActivatedRoute.params).thenReturn(of({ projectId: args.projectId }));
     }
-    this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
-      id: getSFProjectUserConfigDocId('project01', 'user01'),
-      data: {
-        ownerRef: 'user01',
-        projectRef: 'project01',
-        selectedTask: args.selectedTask,
-        selectedBookNum: args.selectedTask == null ? undefined : args.selectedBooknum,
-        isTargetTextRight: true,
-        confidenceThreshold: 0.2,
-        translationSuggestionsEnabled: true,
-        numSuggestions: 1,
-        selectedSegment: '',
-        questionRefsRead: [],
-        answerRefsRead: [],
-        commentRefsRead: []
-      }
-    });
+    const memberProjects: string[] = args.memberProjects ?? [];
+    for (const projectId of memberProjects) {
+      this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
+        id: getSFProjectUserConfigDocId(projectId, 'user01'),
+        data: {
+          ownerRef: 'user01',
+          projectRef: projectId,
+          selectedTask: args.selectedTask,
+          selectedBookNum: args.selectedTask == null ? undefined : args.selectedBooknum,
+          isTargetTextRight: true,
+          confidenceThreshold: 0.2,
+          translationSuggestionsEnabled: true,
+          numSuggestions: 1,
+          selectedSegment: '',
+          questionRefsRead: [],
+          answerRefsRead: [],
+          commentRefsRead: []
+        }
+      });
 
-    this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
-      id: 'project01',
-      data: {
-        name: 'project 01',
-        shortName: 'P01',
-        paratextId: 'pt01',
-        writingSystem: {
-          tag: 'qaa'
-        },
-        translateConfig: {
-          translationSuggestionsEnabled: false
-        },
-        checkingConfig: {
-          checkingEnabled: args.checkingEnabled == null ? true : args.checkingEnabled,
-          usersSeeEachOthersResponses: true,
-          shareEnabled: true,
-          shareLevel: CheckingShareLevel.Specific
-        },
-        sync: { queuedCount: 0 },
-        texts:
-          args.hasTexts == null || args.hasTexts
-            ? [
-                {
-                  bookNum: 40,
-                  chapters: [],
-                  hasSource: false,
-                  permissions: {}
-                },
-                {
-                  bookNum: 41,
-                  chapters: [],
-                  hasSource: false,
-                  permissions: {}
-                }
-              ]
-            : [],
-        userRoles:
-          args.memberProjects == null
-            ? {}
-            : { user01: args.role == null ? SFProjectRole.ParatextTranslator : args.role }
-      }
-    });
+      this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
+        id: projectId,
+        data: {
+          name: projectId,
+          shortName: 'P01',
+          paratextId: `pt-${projectId}`,
+          writingSystem: {
+            tag: 'qaa'
+          },
+          translateConfig: {
+            translationSuggestionsEnabled: false
+          },
+          checkingConfig: {
+            checkingEnabled: args.checkingEnabled == null ? true : args.checkingEnabled,
+            usersSeeEachOthersResponses: true,
+            shareEnabled: true,
+            shareLevel: CheckingShareLevel.Specific
+          },
+          sync: { queuedCount: 0 },
+          texts:
+            args.hasTexts == null || args.hasTexts
+              ? [
+                  {
+                    bookNum: 40,
+                    chapters: [],
+                    hasSource: false,
+                    permissions: {}
+                  },
+                  {
+                    bookNum: 41,
+                    chapters: [],
+                    hasSource: false,
+                    permissions: {}
+                  }
+                ]
+              : [],
+          userRoles:
+            args.memberProjects == null
+              ? {}
+              : { user01: args.role == null ? SFProjectRole.ParatextTranslator : args.role }
+        }
+      });
+      this.subscribeRealtimeDocs(projectId);
+    }
 
     this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
       id: 'user01',
@@ -370,7 +372,7 @@ class TestEnvironment {
         avatarUrl: '',
         authId: 'auth01',
         displayName: 'User 01',
-        sites: { sf: { projects: args.memberProjects ?? [] } }
+        sites: { sf: { projects: memberProjects } }
       }
     });
   }
@@ -379,5 +381,17 @@ class TestEnvironment {
     const snapshot = new ActivatedRouteSnapshot();
     snapshot.queryParams = { sharing: enabled ? 'true' : undefined, shareKey: shareKey ? shareKey : undefined };
     when(mockedActivatedRoute.snapshot).thenReturn(snapshot);
+  }
+
+  subscribeRealtimeDocs(projectId: string) {
+    when(mockedSFProjectService.getUserConfig(projectId, 'user01')).thenCall(() =>
+      this.realtimeService.subscribe(
+        SFProjectUserConfigDoc.COLLECTION,
+        getSFProjectUserConfigDocId(projectId, 'user01')
+      )
+    );
+    when(mockedSFProjectService.get(projectId)).thenCall(() =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId)
+    );
   }
 }

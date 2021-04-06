@@ -35,19 +35,18 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
+    const userProjects: string[] | undefined = (await this.userService.getCurrentUser()).data?.sites[environment.siteId]
+      .projects;
     const projectId$ = this.route.params.pipe(
       map(params => params['projectId'] as string),
       distinctUntilChanged(),
       filter(projectId => projectId != null)
     );
 
-    const userProjects: string[] | undefined = (await this.userService.getCurrentUser()).data?.sites[environment.siteId]
-      .projects;
     const navigateToProject$ = projectId$.pipe(
       filter(id => !!userProjects?.includes(id) || this.route.snapshot.queryParams['sharing'] == null)
     );
     this.subscribe(navigateToProject$, projectId => this.navigateToProject(projectId));
-
     const checkLinkSharing$ = combineLatest([projectId$, this.pwaService.onlineStatus]).pipe(
       filter(([_, isOnline]) => isOnline && (this.route.snapshot.queryParams['sharing'] as string) === 'true'),
       map(([projectId, _]) => projectId)
@@ -81,7 +80,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
         throw err;
       }
     } finally {
-      this.noticeService.loadingFinished();
+      this.loadingFinished();
     }
     this.navigateToProject(projectId);
   }
