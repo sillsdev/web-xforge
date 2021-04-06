@@ -113,6 +113,7 @@ class TestEnvironment {
     when(mockedProjectService.get('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
+    when(mockedProjectService.onlineGetLinkSharingKey(anything(), anything())).thenResolve('shareKey');
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedPwaService.isOnline).thenReturn(true);
     when(mockedPwaService.onlineStatus).thenReturn(of(true));

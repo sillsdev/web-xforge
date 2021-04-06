@@ -76,7 +76,7 @@ export class ShareControlComponent extends SubscriptionDisposable implements Aft
   }
 
   get shareLink(): string {
-    if (this.linkSharingKey.length < 1) {
+    if (this.linkSharingKey === '') {
       return '';
     }
     return (
