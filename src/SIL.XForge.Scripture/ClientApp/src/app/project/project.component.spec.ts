@@ -142,12 +142,13 @@ describe('ProjectComponent', () => {
 
   it('check sharing link passes shareKey', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setProjectData({ selectedTask: 'translate', selectedBooknum: 41 });
+    env.setProjectData();
     env.setLinkSharing(true, 'secret123');
     env.fixture.detectChanges();
     tick();
 
     verify(mockedSFProjectService.onlineCheckLinkSharing('project01', 'secret123')).once();
+    verify(mockedRouter.navigate(deepEqual(['projects', 'project01', 'checking', 'ALL']), anything())).once();
     expect().nothing();
   }));
 
@@ -170,7 +171,7 @@ describe('ProjectComponent', () => {
     expect().nothing();
   }));
 
-  it('check sharing link skipped offline and user not on project', fakeAsync(() => {
+  it('check sharing link skipped offline and redirect user if not on any projects', fakeAsync(() => {
     when(mockedNoticeService.showMessageDialog(anything())).thenResolve();
     const env = new TestEnvironment();
     env.onlineStatus = false;
@@ -181,6 +182,19 @@ describe('ProjectComponent', () => {
     verify(mockedSFProjectService.onlineCheckLinkSharing(anything(), anything())).never();
     verify(mockedNoticeService.showMessageDialog(anything())).once();
     verify(mockedRouter.navigateByUrl('/projects', anything())).once();
+    expect().nothing();
+  }));
+
+  it('check sharing link directs user to project offline when user is already a member', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.onlineStatus = false;
+    env.setProjectData({ selectedTask: 'checking', projectId: 'project01', memberProjects: ['project01'] });
+    env.setLinkSharing(true, 'secret123');
+    env.fixture.detectChanges();
+    tick();
+    verify(mockedSFProjectService.onlineCheckLinkSharing(anything(), anything())).never();
+    verify(mockedNoticeService.showMessageDialog(anything())).never();
+    verify(mockedRouter.navigate(deepEqual(['projects', 'project01', 'checking', 'ALL']), anything())).once();
     expect().nothing();
   }));
 

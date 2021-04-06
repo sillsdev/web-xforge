@@ -11,6 +11,7 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
+import { environment } from '../../environments/environment';
 import { canAccessTranslateApp } from '../core/models/sf-project-role-info';
 import { SFProjectService } from '../core/sf-project.service';
 import { selectValidProject } from '../start/start.component';
@@ -33,21 +34,30 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     super(noticeService);
   }
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     const projectId$ = this.route.params.pipe(
       map(params => params['projectId'] as string),
       distinctUntilChanged(),
       filter(projectId => projectId != null)
     );
-    const navigateToProject$ = projectId$.pipe(filter(() => this.route.snapshot.queryParams['sharing'] == null));
+
+    const userProjects: string[] | undefined = (await this.userService.getCurrentUser()).data?.sites[environment.siteId]
+      .projects;
+    const navigateToProject$ = projectId$.pipe(
+      filter(id => !!userProjects?.includes(id) || this.route.snapshot.queryParams['sharing'] == null)
+    );
     this.subscribe(navigateToProject$, projectId => this.navigateToProject(projectId));
+
     const checkLinkSharing$ = combineLatest([projectId$, this.pwaService.onlineStatus]).pipe(
       filter(([_, isOnline]) => isOnline && (this.route.snapshot.queryParams['sharing'] as string) === 'true'),
       map(([projectId, _]) => projectId)
     );
     this.subscribe(checkLinkSharing$, projectId => this.checkLinkSharing(projectId));
     const showOfflineMessage$ = combineLatest([projectId$, this.pwaService.onlineStatus]).pipe(
-      filter(([_, isOnline]) => !isOnline && (this.route.snapshot.queryParams['sharing'] as string) === 'true')
+      filter(
+        ([id, isOnline]) =>
+          !userProjects?.includes(id) && !isOnline && (this.route.snapshot.queryParams['sharing'] as string) === 'true'
+      )
     );
     this.subscribe(showOfflineMessage$, () => this.showOfflineMessage());
   }
@@ -70,6 +80,8 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
       } else {
         throw err;
       }
+    } finally {
+      this.noticeService.loadingFinished();
     }
     this.navigateToProject(projectId);
   }
