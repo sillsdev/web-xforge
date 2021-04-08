@@ -132,10 +132,7 @@ namespace SIL.XForge.Scripture
 
             services.AddXFAuthentication(Configuration);
 
-            if (!Environment.EnvironmentName.EndsWith("Beta"))
-            {
-                services.AddSFDataAccess(Configuration);
-            }
+            services.AddSFDataAccess(Configuration);
 
             services.Configure<RequestLocalizationOptions>(
                 opts =>
@@ -240,8 +237,9 @@ namespace SIL.XForge.Scripture
 
                 app.UseSFServices();
 
-                app.UseSFDataAccess();
             }
+
+            app.UseSFDataAccess(siteOptions.Value.Beta);
 
             app.UsePing();
 
