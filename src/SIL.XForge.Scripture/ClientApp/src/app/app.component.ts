@@ -150,6 +150,20 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return environment.helps + '/' + (this.i18n.locale.helps || I18nService.defaultLocale.helps!);
   }
 
+  get correspondingBetaUrl(): string {
+    return environment.betaUrl + window.location.pathname;
+  }
+
+  /** @remarks Helps template get at the value. */
+  get isBeta(): boolean {
+    return environment.beta;
+  }
+
+  /** If is production server. */
+  get isLive(): boolean {
+    return environment.releaseStage === 'live';
+  }
+
   @ViewChild('topAppBar', { static: true })
   set topAppBar(value: MdcTopAppBar) {
     this._topAppBar = value;
