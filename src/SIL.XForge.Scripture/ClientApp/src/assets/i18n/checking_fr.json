@@ -24,6 +24,18 @@
     "scripture_checking_not_available": "La vérification des écritures n'est pas disponible dans ce projet.",
     "update_is_available": "Une mise à jour est disponible. Veuillez rafraîchir la page."
   },
+  "beta_migration": {
+    "checking_for_data": "Vérification de présence de données hors ligne",
+    "cleaning_up": "Nettoyage en cours",
+    "close": "Fermer",
+    "completed": "Migration terminée — cette boîte de dialogue va maintenant se fermer",
+    "data_migration": "Migration des données",
+    "fetching_data": "Récupération des données",
+    "loading": "Chargement en cours",
+    "loading_retry": "Chargement - nouvelle tentative en cours ({{ attempt }})",
+    "login_required": "Connexion requise",
+    "please_wait": "Scripture Forge n'est plus en version bêta - génial ! Tenez bon pendant que nous migrons rapidement votre compte vers la nouvelle version complète."
+  },
   "canon": {
     "book_names": {
       "GEN": "Genèse",

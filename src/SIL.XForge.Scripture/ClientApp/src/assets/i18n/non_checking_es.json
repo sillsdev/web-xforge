@@ -157,7 +157,7 @@
     "anyone_with_a_link": "Cualquiera con un enlace",
     "based_on": "Basado en",
     "connect_network_to_change_settings": "La configuración del proyecto no puede cambiarse mientras esté desconectado. Por favor, conéctese a Internet para hacer cambios.",
-    "choose_the_paratext_project": "Seleccione el proyecto de Paratext en el que se basa su proyecto.",
+    "choose_the_paratext_project": "Choose the Paratext project or Digital Bible Library resource that your project is based on.",
     "danger_zone": "Zona de Peligro",
     "delete_this_project": "Borrar este proyecto",
     "delete_project_cannot_be_undone": "Una vez que se borra un proyecto, no hay vuelta atrás. Por favor, asegúrese.",
@@ -175,7 +175,7 @@
     "translate": "Traducir",
     "translate_tool_is_always_available": "La herramienta de traducción está siempre disponible para colaborar con otros traductores que trabajan en el mismo texto.",
     "translation_suggestions": "Sugerencias de traducción",
-    "translations_will_be_suggested": "Se sugerirán traducciones de palabras y frases a medida que edite la Escritura. Se recomienda que su proyecto se configure como {{ boldStart }}Traducción hija{{ boldEnd }} en Paratext.",
+    "translations_will_be_suggested": "Translations for words and phrases will be suggested as you edit Scripture. It is recommended that your project is setup as a {{ boldStart }}Daughter Translation{{ boldEnd }} in Paratext only if your project is based on another Paratext project. It does not apply if your project is based on a resource.",
     "users_can_interact_with_each_other": "Los usuarios pueden ver las respuestas y comentarios de los demás para interactuar entre ellos.",
     "users_can_share_the_project": "Los usuarios pueden compartir invitando a un amigo a unirse al proyecto.{{ newLine }}{{ italicsStart }}Los administradores{{ italicsEnd }} siempre pueden invitar a otros al proyecto en {{ templateTagBoundary }}Usuarios{{ templateTagBoundary }}.",
     "will_not_delete_paratext_project": "Esto {{ boldStart }}no{{ boldEnd }} borrará su proyecto de Paratext, pero borrará cualquier dato no sincronizado almacenado en Scripture Forge. Se recomienda {{ templateTagBoundary }}Sincronizar{{ templateTagBoundary }} primero antes de borrar."

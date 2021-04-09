@@ -157,7 +157,7 @@
     "anyone_with_a_link": "Keçid ilə hər bir kəs",
     "based_on": "Əsasında",
     "connect_network_to_change_settings": "Şəbəkədə olmayan zaman layihə parametrləri deyişdirmək mümkün deyil. Xahiş edirik, deyişliklər etmək üçün internetə qoşulun.",
-    "choose_the_paratext_project": "Layihənizin əsaslandığı Paratext layihəsini seçin.",
+    "choose_the_paratext_project": "Choose the Paratext project or Digital Bible Library resource that your project is based on.",
     "danger_zone": "Təhlükə Zonası",
     "delete_this_project": "Bu layihəni silmək",
     "delete_project_cannot_be_undone": "Siz layihəni sildikdən sonra geriyə qaytarmaq mümkün deyil. Xahiş edirik, buna əmin olun.",
@@ -175,7 +175,7 @@
     "translate": "Tərcümə etmək",
     "translate_tool_is_always_available": "Tərcümə aləti eyni mətn üzərində çalışan başqa tərcüməçilər ilə əməkdaşlıq etmək üçün həmişə mövcuddur.",
     "translation_suggestions": "Tərcümə təklifləri",
-    "translations_will_be_suggested": "Siz Kəlamı redaktə etdikcə sözlər və ifadələr üçün tərcümələr təklif olunacaq. Məsləhət görülür ki, layihəniz Paratextdə {{ boldStart }} Filial Tərcümə kimi {{ boldEnd }}quraşdırılsın.",
+    "translations_will_be_suggested": "Translations for words and phrases will be suggested as you edit Scripture. It is recommended that your project is setup as a {{ boldStart }}Daughter Translation{{ boldEnd }} in Paratext only if your project is based on another Paratext project. It does not apply if your project is based on a resource.",
     "users_can_interact_with_each_other": "İstifadəçilər öz aralarında əlaqə saxlamaq üçün bir-birilərinin cavablarını və şərhlərini görə bilər.",
     "users_can_share_the_project": "İstifadəçilər dostu layihəyə qoşulmağa dəvət etməklə paylaşa bilərlər.{ newLine }}{{ italicsStart }}-da menecerlər{{ italicsEnd }} həmişə {{ templateTagBoundary }}-da layihəyə başqalarını{{ templateTagBoundary }}-da İstifadəçiləri dəvət edə bilərlər. ",
     "will_not_delete_paratext_project": "Bu sizin {{ boldStart }} Paratext layihənizi {{ boldEnd }} silməyəcək, amma Kəlamın Kürəsində saxlanılmış sinxronlaşdırılmamış hər bir məlumatı siləcək. Məsləhət görülür ki, {{ templateTagBoundary }} silməzdən qabaq əvvəlcə {{ templateTagBoundary }} sinxronlaşdırasınız."
