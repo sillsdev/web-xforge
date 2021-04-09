@@ -377,6 +377,64 @@ describe('AppComponent', () => {
     expect().nothing();
   }));
 
+  it('beta url is available (for template)', fakeAsync(() => {
+    environment.beta = false;
+    environment.betaUrl = 'https://beta/url';
+    const locationWhenTesting = '/context.html';
+    const env = new TestEnvironment();
+    env.init();
+    expect(env.component.correspondingBetaUrl).toEqual(environment.betaUrl + locationWhenTesting);
+  }));
+
+  it('isBeta is available (for template)', fakeAsync(() => {
+    environment.beta = false;
+    const env = new TestEnvironment();
+    env.init();
+    expect(env.component.isBeta).toEqual(environment.beta);
+
+    environment.beta = true;
+    expect(env.component.isBeta).toEqual(environment.beta);
+    environment.beta = false;
+  }));
+
+  it('isLive is available (for template)', fakeAsync(() => {
+    environment.releaseStage = 'dev';
+    const env = new TestEnvironment();
+    env.init();
+    expect(env.component.isLive).toEqual(false);
+
+    environment.releaseStage = 'qa';
+    expect(env.component.isLive).toEqual(false);
+
+    environment.releaseStage = 'live';
+    expect(env.component.isLive).toEqual(true);
+    environment.releaseStage = 'dev';
+  }));
+
+  it('beta site link shows when appropriate', fakeAsync(() => {
+    // In help menu on stable site, but never at Live.
+
+    const testCases: { isBeta: boolean; releaseStage: 'dev' | 'qa' | 'live'; showLink: boolean }[] = [
+      { isBeta: true, releaseStage: 'dev', showLink: false },
+      { isBeta: false, releaseStage: 'dev', showLink: true },
+      { isBeta: true, releaseStage: 'qa', showLink: false },
+      { isBeta: false, releaseStage: 'qa', showLink: true },
+      { isBeta: true, releaseStage: 'live', showLink: false },
+      { isBeta: false, releaseStage: 'live', showLink: false }
+    ];
+    for (const testCase of testCases) {
+      environment.beta = testCase.isBeta;
+      environment.releaseStage = testCase.releaseStage;
+      const env = new TestEnvironment();
+      env.init();
+      env.fixture.debugElement.query(By.css('#helpMenuIcon')).nativeElement.click();
+      env.fixture.detectChanges();
+      expect(env.someHelpMenuItemContains('beta site')).toBe(testCase.showLink);
+    }
+    environment.beta = false;
+    environment.releaseStage = 'dev';
+  }));
+
   describe('Community Checking', () => {
     it('no books showing in the menu', fakeAsync(() => {
       const env = new TestEnvironment();
@@ -631,6 +689,11 @@ class TestEnvironment {
     return listElem.componentInstance;
   }
 
+  get helpMenuList(): MdcList {
+    const listElem = this.fixture.debugElement.query(By.css('#help-menu-list'));
+    return listElem.componentInstance;
+  }
+
   get navBar(): DebugElement {
     return this.fixture.debugElement.query(By.css('mdc-top-app-bar'));
   }
@@ -668,8 +731,18 @@ class TestEnvironment {
     return this.menuList.items.find((item: MdcListItem) => item.elementRef.nativeElement.innerText.includes(substring));
   }
 
+  getHelpMenuItemContaining(substring: string): MdcListItem | undefined {
+    return this.helpMenuList.items.find((item: MdcListItem) =>
+      item.elementRef.nativeElement.innerText.includes(substring)
+    );
+  }
+
   someMenuItemContains(substring: string): boolean {
     return this.getMenuItemContaining(substring) !== undefined;
+  }
+
+  someHelpMenuItemContains(substring: string): boolean {
+    return this.getHelpMenuItemContaining(substring) !== undefined;
   }
 
   remoteAddQuestion(newQuestion: Question): void {
