@@ -31,6 +31,8 @@ namespace SIL.XForge.Scripture.Services
         string GetNotes(UserSecret userSecret, string ptProjectId, int bookNum);
         IEnumerable<CommentThread> GetCommentThreads(UserSecret userSecret, string projectId, int bookNum);
         void PutNotes(UserSecret userSecret, string ptProjectId, string notesText);
+        void PutCommentThreads(UserSecret userSecret, string ptProjectId,
+            List<List<Paratext.Data.ProjectComments.Comment>> changeList);
         CommentTags GetCommentTags(UserSecret userSecret, string ptProjectId);
         Task SendReceiveAsync(UserSecret userSecret, string ptTargetId, IProgress<ProgressState> progress = null);
     }

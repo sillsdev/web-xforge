@@ -772,13 +772,30 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task SyncAsync_UpdatesParatextComments()
+        {
+            var env = new TestEnvironment();
+            var book = new Book("MAT", 3, true);
+            env.SetupSFData(true, false, false, true, book);
+            env.SetupPTData(book);
+            env.SetupNoteChanges("thread01", "MAT 1:1", false);
+
+            await env.Runner.RunAsync("project01", "user01", false);
+            env.ParatextService.Received().GetCommentThreads(Arg.Any<UserSecret>(), "target", 40);
+            env.ParatextService.Received(1).PutCommentThreads(Arg.Any<UserSecret>(), "target",
+                Arg.Is<List<List<Paratext.Data.ProjectComments.Comment>>>(
+                    p => p.Count() == 1 && p.First().Count() == 1 && p.First().First().Thread == "thread01")
+            );
+        }
+
+        [Test]
         public async Task SyncAsync_UpdatesParatextNoteThreadDoc()
         {
             var env = new TestEnvironment();
             var book = new Book("MAT", 3, true);
             env.SetupSFData(true, false, false, true, book);
             env.SetupPTData(book);
-            env.SetupParatextCommentChanges("thread01");
+            env.SetupNoteChanges("thread01");
 
             await env.Runner.RunAsync("project01", "user01", false);
 
@@ -1094,19 +1111,36 @@ namespace SIL.XForge.Scripture.Services
                     u.Set(pr => pr.UserRoles[userId], role));
             }
 
-            public void SetupParatextCommentChanges(string threadId, string verseRef = "MAT 1:1")
+            public void SetupNoteChanges(string threadId, string verseRef = "MAT 1:1", bool fromParatext = true)
             {
-                var noteThreadChange = new ParatextNoteThreadChange(threadId, verseRef, $"{threadId} selected text.");
-                noteThreadChange.AddChange(
-                    GetNote(threadId, "User 1", $"{threadId} updated.", ChangeType.Updated), ChangeType.Updated);
-                noteThreadChange.AddChange(
-                    GetNote(threadId, "User 2", $"{threadId} deleted.", ChangeType.Deleted), ChangeType.Deleted);
-                noteThreadChange.AddChange(
-                    GetNote(threadId, "User 3", $"{threadId} added.", ChangeType.Added), ChangeType.Added);
-                _notesMapper.PTCommentThreadChanges(Arg.Any<IEnumerable<IDocument<ParatextNoteThread>>>(),
-                    Arg.Any<IEnumerable<Paratext.Data.ProjectComments.CommentThread>>(),
-                    Arg.Any<Paratext.Data.ProjectComments.CommentTags>())
-                    .Returns(new[] { noteThreadChange }, new ParatextNoteThreadChange[0]);
+                if (fromParatext)
+                {
+                    var noteThreadChange = new ParatextNoteThreadChange(threadId, verseRef, $"{threadId} selected text.");
+                    noteThreadChange.AddChange(
+                        GetNote(threadId, "User 1", $"{threadId} updated.", ChangeType.Updated), ChangeType.Updated);
+                    noteThreadChange.AddChange(
+                        GetNote(threadId, "User 2", $"{threadId} deleted.", ChangeType.Deleted), ChangeType.Deleted);
+                    noteThreadChange.AddChange(
+                        GetNote(threadId, "User 3", $"{threadId} added.", ChangeType.Added), ChangeType.Added);
+
+                    _notesMapper.PTCommentThreadChanges(Arg.Any<IEnumerable<IDocument<ParatextNoteThread>>>(),
+                        Arg.Any<IEnumerable<Paratext.Data.ProjectComments.CommentThread>>(),
+                        Arg.Any<Paratext.Data.ProjectComments.CommentTags>())
+                        .Returns(new[] { noteThreadChange }, new ParatextNoteThreadChange[0]);
+                }
+                else
+                {
+                    var noteChange = new Paratext.Data.ProjectComments.Comment(new SFParatextUser("User 1"))
+                    {
+                        Thread = threadId,
+                        VerseRefStr = verseRef
+                    };
+                    var changeList = (new[] { (new[] { noteChange }).ToList() }).ToList();
+                    _notesMapper.SFNotesToCommentChangeList(Arg.Any<IEnumerable<IDocument<ParatextNoteThread>>>(),
+                        Arg.Any<IEnumerable<Paratext.Data.ProjectComments.CommentThread>>(),
+                        Arg.Any<Paratext.Data.ProjectComments.CommentTags>())
+                        .Returns(changeList);
+                }
             }
 
             public void SetupNewCommentThreadChange(string threadId, string syncUserId, string verseRef = "MAT 1:1")
