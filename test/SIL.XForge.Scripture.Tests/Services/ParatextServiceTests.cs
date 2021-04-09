@@ -494,6 +494,48 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void PutCommentThreads_ThreadsCorrectlyUpdated()
+        {
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01);
+            // DateTime date = DateTime.Now; // This must be consistent as it is a part of the comment id
+
+            string threadId = "thread01";
+            string verseRefStr = "MAT 1:1";
+            string selectedText = $"{threadId} selected text.";
+            var changeList = env.GetNoteThreadChanges(threadId, verseRefStr, selectedText, ChangeType.Added);
+            env.Service.PutCommentThreads(userSecret, ptProjectId, changeList);
+            CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
+            Assert.That(thread.Comments.Count, Is.EqualTo(1));
+            var comment = thread.Comments.First();
+            Assert.That(comment.VerseRefStr, Is.EqualTo(verseRefStr));
+            Assert.That(comment.User, Is.EqualTo(env.Username01));
+            Assert.That(comment.Contents.InnerText, Is.EqualTo("thread01 note added."));
+
+            // Edit a comment
+            changeList = env.GetNoteThreadChanges(threadId, verseRefStr, selectedText, ChangeType.Updated);
+            env.Service.PutCommentThreads(userSecret, ptProjectId, changeList);
+
+            Assert.That(thread.Comments.Count, Is.EqualTo(1));
+            comment = thread.Comments.First();
+            Assert.That(comment.Contents.InnerText, Is.EqualTo($"{threadId} note updated."));
+
+            // Delete a comment
+            changeList = env.GetNoteThreadChanges(threadId, verseRefStr, selectedText, ChangeType.Deleted);
+            env.Service.PutCommentThreads(userSecret, ptProjectId, changeList);
+
+            Assert.That(thread.Comments.Count, Is.EqualTo(1));
+            comment = thread.Comments.First();
+            Assert.That(comment.Deleted, Is.True, "Comment should be marked deleted");
+
+            // PT username is not written to server logs
+            Assert.That(env.MockLogger.Messages.Any((string message) => message.Contains(env.Username01)), Is.False);
+
+        }
+
+        [Test]
         public void GetCommentThreads_RetrievesComments()
         {
             int ruthBookNum = 8;
@@ -1041,6 +1083,35 @@ namespace SIL.XForge.Scripture.Services
                 return notesElem.ToString();
             }
 
+            public List<List<Paratext.Data.ProjectComments.Comment>> GetNoteThreadChanges(string threadId,
+                string verseRef, string selectedText, ChangeType changeType)
+            {
+
+                string noteContent = "";
+                switch (changeType)
+                {
+                    case ChangeType.Added:
+                        noteContent = $"{threadId} note added.";
+                        break;
+                    case ChangeType.Updated:
+                        noteContent = $"{threadId} note updated.";
+                        break;
+                }
+                var ptUser = new SFParatextUser(Username01);
+                var comment = new Paratext.Data.ProjectComments.Comment(ptUser)
+                {
+                    Thread = threadId,
+                    VerseRefStr = verseRef,
+                    SelectedText = selectedText,
+                    Date = "2019-01-01T08:00:00.0000000+00:00",
+                    Deleted = changeType == ChangeType.Deleted
+                };
+                comment.AddTextToContent("", false);
+                comment.Contents.InnerText = noteContent;
+
+                return (new[] { (new[] { comment }).ToList() }).ToList();
+            }
+
             public string SetupProject(string baseId, ParatextUser associatedPtUser, bool hasEditPermission = true)
             {
                 string ptProjectId = PTProjectIds[baseId].Id;
@@ -1096,6 +1167,22 @@ namespace SIL.XForge.Scripture.Services
                     callInfo.Arg<Action>()();
                     return true;
                 });
+            }
+
+            private ParatextNote GetNote(string threadId, string user, string content, ChangeType type)
+            {
+
+                return new ParatextNote
+                {
+                    DataId = $"{threadId}:{user}:2019-01-01T08:00:00.0000000+00:00",
+                    ThreadId = threadId,
+                    OwnerRef = "",
+                    SyncUserRef = user,
+                    Content = content,
+                    DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc),
+                    Deleted = type == ChangeType.Deleted,
+                    TagIcon = "icon1"
+                };
             }
 
             private ProjectMetadata GetMetadata(string projectId, string fullname)
