@@ -64,6 +64,7 @@ namespace SIL.XForge.Scripture.Services
         private UserSecret _userSecret;
         private IDocument<SFProject> _projectDoc;
         private SFProjectSecret _projectSecret;
+        private CommentTags _commentTags;
 
         public ParatextSyncRunner(IRepository<UserSecret> userSecrets, IRepository<SFProjectSecret> projectSecrets,
             ISFProjectService projectService, IEngineService engineService, IParatextService paratextService,
@@ -114,15 +115,16 @@ namespace SIL.XForge.Scripture.Services
                     IReadOnlyList<IDocument<Question>> questionDocs = await FetchQuestionDocsAsync(text);
                     questionDocsByBook[text.BookNum] = questionDocs;
                     await UpdateParatextNotesAsync(text, questionDocs);
-
-                    // Update Paratext Comments
-
+                    IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs =
+                        (await FetchNoteThreadDocsAsync(text.BookNum)).Values;
+                    UpdateParatextCommentsAsync(noteThreadDocs, text.BookNum);
                 }
 
                 // perform Paratext send/receive
                 await _paratextService.SendReceiveAsync(_userSecret, targetParatextId,
                     UseNewProgress());
 
+                _commentTags = _paratextService.GetCommentTags(_userSecret, targetParatextId);
                 var targetBooks = new HashSet<int>(_paratextService.GetBookList(_userSecret, targetParatextId));
                 var sourceBooks = new HashSet<int>(TranslationSuggestionsEnabled
                     ? _paratextService.GetBookList(_userSecret, sourceParatextId)
@@ -317,9 +319,9 @@ namespace SIL.XForge.Scripture.Services
             List<User> paratextUsers = await _realtimeService.QuerySnapshots<User>()
                 .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
                 .ToListAsync();
-            CommentTags commentTags = _paratextService.GetCommentTags(_userSecret, _projectDoc.Data.ParatextId);
+            _commentTags = _paratextService.GetCommentTags(_userSecret, _projectDoc.Data.ParatextId);
             await _notesMapper
-                .InitAsync(_userSecret, _projectSecret, paratextUsers, _projectDoc.Data.ParatextId, commentTags);
+                .InitAsync(_userSecret, _projectSecret, paratextUsers, _projectDoc.Data.ParatextId);
 
             await _projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.Sync.PercentCompleted, 0));
             return true;
@@ -467,10 +469,8 @@ namespace SIL.XForge.Scripture.Services
                 return Task.WhenAll();
             }
 
-            Paratext.Data.ProjectComments.CommentTags commentTags =
-                _paratextService.GetCommentTags(_userSecret, _projectDoc.Data.ParatextId);
             IEnumerable<ParatextNoteThreadChange> noteThreadChanges = _notesMapper.PTCommentThreadChanges(
-                noteThreadDocs.Values, commentThreads, commentTags);
+                noteThreadDocs.Values, commentThreads, _commentTags);
             var tasks = new List<Task>();
             foreach (ParatextNoteThreadChange change in noteThreadChanges)
             {
@@ -501,6 +501,19 @@ namespace SIL.XForge.Scripture.Services
                     tasks.Add(SubmitChangesOnNoteThreadDocAsync(threadDoc, change));
             }
             return Task.WhenAll(tasks);
+        }
+
+        private void UpdateParatextCommentsAsync(IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs,
+            int bookNum)
+        {
+            if (noteThreadDocs.Count() == 0)
+                return;
+            IEnumerable<Paratext.Data.ProjectComments.CommentThread> commentThreads =
+                _paratextService.GetCommentThreads(_userSecret, _projectDoc.Data.ParatextId, bookNum);
+            List<List<Paratext.Data.ProjectComments.Comment>> noteThreadChangeList =
+                _notesMapper.SFNotesToCommentChangeList(noteThreadDocs, commentThreads, _commentTags);
+
+            _paratextService.PutCommentThreads(_userSecret, _projectDoc.Data.ParatextId, noteThreadChangeList);
         }
 
         /// <summary>

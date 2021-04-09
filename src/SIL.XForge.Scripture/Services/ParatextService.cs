@@ -565,6 +565,13 @@ namespace SIL.XForge.Scripture.Services
         public void PutNotes(UserSecret userSecret, string projectId, string notesText)
         {
             // TODO: should accept some data structure instead of XML
+            var changeList = NotesFormatter.ParseNotes(notesText, new SFParatextUser(GetParatextUsername(userSecret)));
+            PutCommentThreads(userSecret, projectId, changeList);
+        }
+
+        public void PutCommentThreads(UserSecret userSecret, string projectId,
+            List<List<Paratext.Data.ProjectComments.Comment>> changeList)
+        {
             string username = GetParatextUsername(userSecret);
             List<string> users = new List<string>();
             int nbrAddedComments = 0, nbrDeletedComments = 0, nbrUpdatedComments = 0;
@@ -573,10 +580,9 @@ namespace SIL.XForge.Scripture.Services
                 throw new DataNotFoundException("Can't get access to cloned project.");
             CommentManager manager = CommentManager.Get(scrText);
             var ptUser = new SFParatextUser(username);
-            var notes = NotesFormatter.ParseNotes(notesText, ptUser);
 
             // Algorithm sourced from Paratext DataAccessServer
-            foreach (var thread in notes)
+            foreach (var thread in changeList)
             {
                 CommentThread existingThread = manager.FindThread(thread[0].Thread);
                 foreach (var comment in thread)
