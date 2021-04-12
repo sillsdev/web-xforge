@@ -43,12 +43,16 @@
             </div>
           </div>
           <div mdcMenuSurfaceAnchor #helpMenuAnchor>
-            <mdc-icon mdcTopAppBarActionItem title="{{ t('help') }}" (click)="helpMenu.open = !helpMenu.open"
+            <mdc-icon
+              id="helpMenuIcon"
+              mdcTopAppBarActionItem
+              title="{{ t('help') }}"
+              (click)="helpMenu.open = !helpMenu.open"
               >help</mdc-icon
             >
             <mdc-menu #helpMenu [anchorCorner]="'bottomStart'" [anchorElement]="helpMenuAnchor">
               <mdc-list-group>
-                <mdc-list>
+                <mdc-list id="help-menu-list">
                   <a mdc-list-item target="_blank" [href]="helpsPage">{{ t("help") }}</a>
                   <a mdc-list-item target="_blank" [href]="issueMailTo">
                     <mdc-list-item-text
@@ -58,6 +62,7 @@
                       </mdc-list-item-secondary>
                     </mdc-list-item-text>
                   </a>
+                  <a *ngIf="!isBeta && !isLive" mdc-list-item [href]="correspondingBetaUrl">Go to beta site</a>
                   <mdc-list-divider></mdc-list-divider>
                   <div mdcListGroupSubheader class="version">{{ t("product_version", { version: version }) }}</div>
                 </mdc-list>
