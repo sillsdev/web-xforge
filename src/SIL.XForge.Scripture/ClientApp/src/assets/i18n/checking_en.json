@@ -35,9 +35,7 @@
     "loading_retry": "Loading - retrying ({{ attempt }})",
     "login_required": "Login required",
     "please_wait": "Scripture Forge is now out of Beta — yay! Hold tight while we quickly migrate your account to the new full release version.",
-    "recourse_beginning": "Make sure you aren't using an incognito/private web browser window, and are connected to the Internet. If you continue to have trouble, please ",
-    "recourse_help_link_text": "ask for help",
-    "recourse_ending": "."
+    "recourse": "Make sure you aren't using an incognito/private web browser window, and are connected to the Internet. If you continue to have trouble, please {{ templateTagBoundary }}ask for help{{ templateTagBoundary }}."
   },
   "canon": {
     "book_names": {
