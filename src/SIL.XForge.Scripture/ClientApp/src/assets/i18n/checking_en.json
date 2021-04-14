@@ -301,6 +301,7 @@
     "invitation_sent": "An invitation email has been sent to {{ email }}",
     "invite_people": "Invite people",
     "link_copied": "Link copied to clipboard",
+    "link_sharing_not_available_offline": "Inviting users by link sharing is unavailable while offline.",
     "link_sharing": "Link sharing",
     "not_inviting_already_member": "Not inviting: User is already a member of this project",
     "resend": "Resend",

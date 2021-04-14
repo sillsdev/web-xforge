@@ -1,8 +1,15 @@
 <ng-container *transloco="let t; read: 'share_control'">
   <div fxLayout="column" fxLayoutGap="20px">
-    <div *ngIf="isLinkSharingEnabled">
+    <div *ngIf="isLinkSharingEnabled" class="invite-by-link">
       <div mdcSubtitle1>{{ t("link_sharing") }}</div>
-      <mdc-text-field id="share-link" #shareLinkField outlined [value]="shareLink" [readonly]="true">
+      <mdc-text-field
+        id="share-link"
+        #shareLinkField
+        outlined
+        [value]="shareLink"
+        [disabled]="!shareLink"
+        [readonly]="true"
+      >
         <mdc-icon
           id="share-link-copy-icon"
           mdcTextFieldIcon
@@ -13,8 +20,9 @@
           >file_copy
         </mdc-icon>
       </mdc-text-field>
+      <div *ngIf="showLinkSharingUnavailable" class="offline-text">{{ t("link_sharing_not_available_offline") }}</div>
     </div>
-    <div>
+    <div class="invite-by-email">
       <div mdcSubtitle1>{{ t("invite_people") }}</div>
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="10px">
         <form fxFlex="100%" fxLayout.gt-xs="row" fxLayout.xs="column" id="email-form" [formGroup]="sendInviteForm">
