@@ -2,8 +2,10 @@ import { Component, EventEmitter } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { interval } from 'rxjs';
 import { takeWhile } from 'rxjs/operators';
+import { AuthService } from 'xforge-common/auth.service';
 import { BetaMigrationMessage } from 'xforge-common/beta-migration/beta-migration.component';
 import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
+import { LocationService } from 'xforge-common/location.service';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -19,7 +21,12 @@ export class BetaMigrationDialogComponent {
   private hasLoaded: boolean = false;
   private message: BetaMigrationMessage = { message: 'loading', progress: 0 };
 
-  constructor(private sanitizer: DomSanitizer, private readonly i18n: I18nService) {
+  constructor(
+    private sanitizer: DomSanitizer,
+    private readonly locationService: LocationService,
+    private readonly authService: AuthService,
+    private readonly i18n: I18nService
+  ) {
     this.betaUrl = this.migrationUrl;
     window.addEventListener('message', event => {
       if (event.origin !== environment.betaUrl) {
@@ -30,7 +37,7 @@ export class BetaMigrationDialogComponent {
       this.onProgress.emit(this.progress);
       // Check if login is required
       if (this.label === 'login_required') {
-        window.location.href = environment.betaUrl + window.location.pathname;
+        this.authService.logIn(this.locationService.pathname + this.locationService.search);
       }
     });
 

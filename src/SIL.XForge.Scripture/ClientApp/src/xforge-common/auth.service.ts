@@ -9,6 +9,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { of, Subscription, timer } from 'rxjs';
 import { filter, mergeMap } from 'rxjs/operators';
+import { BetaMigrationMessage } from 'xforge-common/beta-migration/beta-migration.component';
 import { PwaService } from 'xforge-common/pwa.service';
 import { environment } from '../environments/environment';
 import { CommandError, CommandService } from './command.service';
@@ -174,6 +175,9 @@ export class AuthService {
     const authOptions: AuthorizeOptions = { state: JSON.stringify(state), language: JSON.stringify({ tag, options }) };
     if (signUp) {
       authOptions.login_hint = 'signUp';
+    }
+    if (environment.beta) {
+      window.parent.postMessage(<BetaMigrationMessage>{ message: 'login_required' }, environment.masterUrl);
     }
     this.auth0.authorize(authOptions);
   }
