@@ -111,18 +111,19 @@ namespace SIL.XForge.Scripture.Services
                     await env.GetNoteThreadDocsAsync(conn, new[] { "thread01" }), commentThreads, env.Tags);
                 Assert.That(changes.Count, Is.EqualTo(2));
                 ParatextNoteThreadChange thread01 = changes.First();
-                Assert.That(thread01.VerseRefStr, Is.EqualTo("MAT 1:2"));
+                Assert.That(env.ParatextThreadChangeToString(thread01),
+                    Is.EqualTo("Context before Text selected thread01 context after-Start:15-MAT 1:2"));
                 Assert.That(thread01.NotesAdded.Count, Is.EqualTo(1));
                 string expected1 = "thread01:syncuser01:2019-01-02T08:00:00.0000000+00:00-" +
-                    "user03-" + "<p>thread01 note 2.</p>-" + "0-" + "icon2";
+                    "user03-" + "<p>thread01 note 2.</p>-" + "icon2";
                 Assert.That(env.ParatextNoteToString(thread01.NotesAdded[0]), Is.EqualTo(expected1));
                 Assert.That(thread01.NotesUpdated.Count, Is.EqualTo(0));
                 ParatextNoteThreadChange thread02 = changes.Last();
-                Assert.That(thread02.VerseRefStr, Is.EqualTo("MAT 1:3"));
-                Assert.That(thread02.SelectedText, Is.EqualTo("Text selected thread02"));
+                Assert.That(env.ParatextThreadChangeToString(thread02),
+                    Is.EqualTo("Context before Text selected thread02 context after-Start:15-MAT 1:3"));
                 Assert.That(thread02.NotesAdded.Count, Is.EqualTo(1));
                 string expected2 = "thread02:syncuser01:2019-01-01T08:00:00.0000000+00:00-" +
-                    "user02-" + "<p>thread02 note 1.</p>-" + "10-" + "icon1";
+                    "user02-" + "<p>thread02 note 1.</p>-" + "icon1";
                 Assert.That(env.ParatextNoteToString(thread02.NotesAdded[0]), Is.EqualTo(expected2));
             }
         }
@@ -152,7 +153,7 @@ namespace SIL.XForge.Scripture.Services
                 var comment = thread01.First();
                 Assert.That(comment.VerseRefStr, Is.EqualTo("MAT 1:2"));
                 string expected1 = "thread01/PT User 1/2019-01-01T08:00:00.0000000+00:00-" +
-                    "user02-" + "<p>thread01 note 1.</p>-" + "0-" + "Tag:1";
+                    "user02-" + "<p>thread01 note 1.</p>-" + "Start:15-" + "Tag:1";
                 Assert.That(env.ParatextCommentToString(comment), Is.EqualTo(expected1));
                 var thread02 = changes.Last();
                 Assert.That(thread02.Count, Is.EqualTo(1));
@@ -160,7 +161,7 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(comment.VerseRefStr, Is.EqualTo("MAT 1:3"));
                 Assert.That(comment.SelectedText, Is.EqualTo("Text selected thread02"));
                 string expected2 = "thread02/PT User 1/2019-01-02T08:00:00.0000000+00:00-" +
-                    "user02-" + "<p>thread02 note 2.</p>-" + "10-" + "Tag:2";
+                    "user02-" + "<p>thread02 note 2.</p>-" + "Start:15-" + "Tag:2";
                 Assert.That(env.ParatextCommentToString(comment), Is.EqualTo(expected2));
             }
         }
@@ -397,7 +398,7 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(thread01.NotesAdded.Count, Is.EqualTo(0));
                 Assert.That(thread01.NotesUpdated.Count, Is.EqualTo(1));
                 string expected = "thread01:syncuser01:2019-01-01T08:00:00.0000000+00:00-" +
-                    "user02-" + "<p>thread01 note 1: EDITED.</p>-" + "0-" + "icon1";
+                    "user02-" + "<p>thread01 note 1: EDITED.</p>-" + "icon1";
                 Assert.That(env.ParatextNoteToString(thread01.NotesUpdated[0]), Is.EqualTo(expected));
             }
         }
@@ -425,7 +426,7 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(thread01.Count, Is.EqualTo(1));
                 Paratext.Data.ProjectComments.Comment comment = thread01.First();
                 string expected = "thread01/PT User 1/2019-01-01T08:00:00.0000000+00:00-" +
-                    "user02-" + "<p>thread01 note 1: EDITED.</p>-" + "0-" + "Tag:1";
+                    "user02-" + "<p>thread01 note 1: EDITED.</p>-" + "Start:15-" + "Tag:1";
                 Assert.That(env.ParatextCommentToString(comment), Is.EqualTo(expected));
             }
         }
@@ -537,7 +538,7 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(thread01.NotesUpdated.Count, Is.EqualTo(0));
                 Assert.That(thread01.NotesDeleted.Count, Is.EqualTo(1));
                 string expected = "thread01:syncuser01:2019-01-01T08:00:00.0000000+00:00-" +
-                    "user02-" + "<p>thread01 note 1.</p>-" + "0-" + "deleted-" + "icon1";
+                    "user02-" + "<p>thread01 note 1.</p>-" + "deleted-" + "icon1";
                 Assert.That(env.ParatextNoteToString(thread01.NotesDeleted[0]), Is.EqualTo(expected));
             }
         }
@@ -564,7 +565,7 @@ namespace SIL.XForge.Scripture.Services
                 var thread01 = changes.First();
                 Paratext.Data.ProjectComments.Comment comment = thread01.First();
                 string expected = "thread01/PT User 1/2019-01-01T08:00:00.0000000+00:00-" +
-                    "user02-" + "<p>thread01 note 1.</p>-" + "0-" + "deleted-" + "Tag:1";
+                    "user02-" + "<p>thread01 note 1.</p>-" + "Start:15-" + "deleted-" + "Tag:1";
                 Assert.That(env.ParatextCommentToString(comment), Is.EqualTo(expected));
             }
         }
@@ -691,7 +692,10 @@ namespace SIL.XForge.Scripture.Services
                         ProjectRef = "project01",
                         OwnerRef = "user01",
                         VerseRef = new VerseRefData(40, 1, comp.threadNum + 1),
-                        SelectedText = "Text selected " + threadId
+                        SelectedText = "Text selected " + threadId,
+                        ContextBefore = "Context before ",
+                        StartPosition = 15,
+                        ContextAfter = " context after"
                     };
                     List<ParatextNote> notes = new List<ParatextNote>();
                     for (int i = 1; i <= comp.noteCount; i++)
@@ -706,7 +710,6 @@ namespace SIL.XForge.Scripture.Services
                             Content = comp.isEdited ? $"<p>{threadId} note {i}: EDITED.</p>" : $"<p>{threadId} note {i}.</p>",
                             DateCreated = new DateTime(2019, 1, i, 8, 0, 0, DateTimeKind.Utc),
                             TagIcon = $"icon{i}",
-                            StartPosition = 10 * (comp.threadNum - 1),
                             Deleted = comp.isDeleted
                         });
                     }
@@ -758,7 +761,7 @@ namespace SIL.XForge.Scripture.Services
 
             public string ParatextNoteToString(ParatextNote note)
             {
-                string result = $"{note.DataId}-{note.ExtUserId}-{note.Content}-{note.StartPosition}";
+                string result = $"{note.DataId}-{note.ExtUserId}-{note.Content}";
                 if (note.Deleted)
                     result = result + "-deleted";
                 if (note.TagIcon != null)
@@ -766,9 +769,15 @@ namespace SIL.XForge.Scripture.Services
                 return result;
             }
 
+            public string ParatextThreadChangeToString(ParatextNoteThreadChange thread)
+            {
+                return thread.ContextBefore + thread.SelectedText + thread.ContextAfter +
+                    $"-Start:{thread.StartPosition}-{thread.VerseRefStr}";
+            }
+
             public string ParatextCommentToString(Paratext.Data.ProjectComments.Comment comment)
             {
-                string result = $"{comment.Id}-{comment.ExternalUser}-{comment.Contents.InnerXml}-{comment.StartPosition}";
+                string result = $"{comment.Id}-{comment.ExternalUser}-{comment.Contents.InnerXml}-Start:{comment.StartPosition}";
                 if (comment.Deleted)
                     result = result + "-deleted";
                 if (comment.TagsAdded != null)
@@ -792,8 +801,10 @@ namespace SIL.XForge.Scripture.Services
                         TagsAdded = new[] { $"{i}" },
                         ExternalUser = $"user0{i + 1}",
                         Date = $"2019-01-0{i}T08:00:00.0000000+00:00",
-                        StartPosition = 10 * (comp.threadNum - 1),
+                        StartPosition = 15,
                         SelectedText = $"Text selected {threadId}",
+                        ContextBefore = "Context before ",
+                        ContextAfter = " context after",
                         VerseRefStr = $"MAT 1:{comp.threadNum + 1}",
                         Deleted = comp.isDeleted
                     };

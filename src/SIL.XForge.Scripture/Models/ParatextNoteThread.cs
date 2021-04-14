@@ -9,6 +9,9 @@ namespace SIL.XForge.Scripture.Models
         public VerseRefData VerseRef { get; set; }
         public List<ParatextNote> Notes { get; set; } = new List<ParatextNote>();
         public string SelectedText { get; set; }
+        public string ContextBefore { get; set; }
+        public string ContextAfter { get; set; }
+        public int StartPosition { get; set; }
         public string ParatextUser { get; set; }
         public string TagIcon { get; set; }
     }

@@ -153,8 +153,9 @@ namespace SIL.XForge.Scripture.Services
             foreach (var threadDoc in noteThreadDocs)
             {
                 List<string> matchedCommentIds = new List<string>();
-                ParatextNoteThreadChange threadChange = new ParatextNoteThreadChange(
-                    threadDoc.Data.DataId, threadDoc.Data.VerseRef.ToString(), threadDoc.Data.SelectedText);
+                ParatextNoteThreadChange threadChange = new ParatextNoteThreadChange(threadDoc.Data.DataId,
+                    threadDoc.Data.VerseRef.ToString(), threadDoc.Data.SelectedText, threadDoc.Data.ContextBefore,
+                    threadDoc.Data.ContextAfter, threadDoc.Data.StartPosition);
                 // Find the corresponding comment thread
                 var existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
                 if (existingThread == null)
@@ -190,11 +191,11 @@ namespace SIL.XForge.Scripture.Services
             foreach (string threadId in newThreadIds)
             {
                 Paratext.Data.ProjectComments.CommentThread thread = commentThreads.Single(ct => ct.Id == threadId);
-                string verseRef = thread.Comments[0].VerseRefStr;
-                string selectedText = thread.Comments[0].SelectedText;
+                Paratext.Data.ProjectComments.Comment info = thread.Comments[0];
 
                 ParatextNoteThreadChange newThread =
-                    new ParatextNoteThreadChange(threadId, verseRef, selectedText);
+                    new ParatextNoteThreadChange(threadId, info.VerseRefStr, info.SelectedText, info.ContextBefore,
+                    info.ContextAfter, info.StartPosition);
                 foreach (var comm in thread.Comments)
                 {
                     newThread.AddChange(CreateNoteFromComment(comm, commentTags), ChangeType.Added);
@@ -251,7 +252,10 @@ namespace SIL.XForge.Scripture.Services
                         var comment = new Paratext.Data.ProjectComments.Comment(ptUser)
                         {
                             VerseRefStr = threadDoc.Data.VerseRef.ToString(),
-                            SelectedText = threadDoc.Data.SelectedText
+                            SelectedText = threadDoc.Data.SelectedText,
+                            ContextBefore = threadDoc.Data.ContextBefore,
+                            ContextAfter = threadDoc.Data.ContextAfter,
+                            StartPosition = threadDoc.Data.StartPosition
                         };
                         ExtractNoteToComment(note, comment, commentTags);
                         thread.Add(comment);
@@ -438,24 +442,8 @@ namespace SIL.XForge.Scripture.Services
                 DateCreated = DateTime.Parse(comment.Date),
                 DateModified = DateTime.Parse(comment.Date),
                 Deleted = comment.Deleted,
-                TagIcon = tag?.Icon,
-                StartPosition = comment.StartPosition
+                TagIcon = tag?.Icon
             };
-        }
-
-        private void AddNoteToThreadChanges(ParatextNote note, string verseRef, string selectedText,
-            List<ParatextNoteThreadChange> threadChanges)
-        {
-            ParatextNoteThreadChange noteThreadChange = threadChanges.Find(c => c.ThreadId == note.ThreadId);
-            if (noteThreadChange == null)
-            {
-                // The note belongs to a new thread
-                noteThreadChange = new ParatextNoteThreadChange(note.ThreadId, verseRef, selectedText);
-                noteThreadChange.AddChange(note, ChangeType.Added);
-                threadChanges.Add(noteThreadChange);
-                return;
-            }
-            noteThreadChange.AddChange(note, ChangeType.Added);
         }
 
         /// <summary> Get the corresponding Comment from a note. </summary>
@@ -478,7 +466,7 @@ namespace SIL.XForge.Scripture.Services
             if (comment.Deleted != note.Deleted)
                 return ChangeType.Deleted;
             // If the content does not match it has been updated in Paratext
-            if (comment.Contents.InnerXml != note.Content)
+            if (comment.Contents?.InnerXml != note.Content)
                 return ChangeType.Updated;
             return ChangeType.None;
         }
@@ -490,7 +478,6 @@ namespace SIL.XForge.Scripture.Services
             comment.Thread = note.ThreadId;
             comment.Date = new DateTimeOffset(note.DateCreated).ToString("o");
             comment.Deleted = note.Deleted;
-            comment.StartPosition = note.StartPosition;
 
             comment.AddTextToContent("", false);
             comment.Contents.InnerXml = note.Content;
