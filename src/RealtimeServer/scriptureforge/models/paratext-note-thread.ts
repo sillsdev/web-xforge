@@ -10,5 +10,8 @@ export interface ParatextNoteThread extends ProjectData {
   verseRef: VerseRefData;
   notes: ParatextNote[];
   selectedText: string;
+  contextBefore: string;
+  contextAfter: string;
+  startPosition: number;
   tagIcon: string;
 }

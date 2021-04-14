@@ -490,7 +490,10 @@ namespace SIL.XForge.Scripture.Services
                             DataId = change.ThreadId,
                             ProjectRef = _projectDoc.Id,
                             VerseRef = vrd,
-                            SelectedText = change.SelectedText
+                            SelectedText = change.SelectedText,
+                            ContextBefore = change.ContextBefore,
+                            ContextAfter = change.ContextAfter,
+                            StartPosition = change.StartPosition
                         });
                         await SubmitChangesOnNoteThreadDocAsync(doc, change);
                     }
