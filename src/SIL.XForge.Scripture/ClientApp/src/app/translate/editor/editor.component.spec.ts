@@ -865,42 +865,42 @@ describe('EditorComponent', () => {
 
       env.typeCharacters('test');
       let contents = env.targetEditor.getContents();
-      expect(contents.ops![6].insert).toEqual('test');
-      expect(contents.ops![6].attributes).toEqual({
+      expect(contents.ops![7].insert).toEqual('test');
+      expect(contents.ops![7].attributes).toEqual({
         'para-contents': true,
         segment: 'verse_1_2',
         'highlight-segment': true
       });
 
-      expect(contents.ops![7].insert).toEqual({ verse: { number: '3', style: 'v' } });
-      expect(contents.ops![7].attributes).toEqual({ 'para-contents': true });
+      expect(contents.ops![8].insert).toEqual({ verse: { number: '3', style: 'v' } });
+      expect(contents.ops![8].attributes).toEqual({ 'para-contents': true });
 
       env.triggerUndo();
       contents = env.targetEditor.getContents();
       // check that edit has been undone
-      expect(contents.ops![6].insert).toEqual({ blank: true });
-      expect(contents.ops![6].attributes).toEqual({
+      expect(contents.ops![7].insert).toEqual({ blank: true });
+      expect(contents.ops![7].attributes).toEqual({
         'para-contents': true,
         segment: 'verse_1_2',
         'highlight-segment': true
       });
       // check to make sure that data after the affected segment hasn't gotten corrupted
-      expect(contents.ops![7].insert).toEqual({ verse: { number: '3', style: 'v' } });
-      expect(contents.ops![7].attributes).toEqual({ 'para-contents': true });
+      expect(contents.ops![8].insert).toEqual({ verse: { number: '3', style: 'v' } });
+      expect(contents.ops![8].attributes).toEqual({ 'para-contents': true });
       const selection = env.targetEditor.getSelection();
       expect(selection!.index).toBe(31);
       expect(selection!.length).toBe(0);
 
       env.triggerRedo();
       contents = env.targetEditor.getContents();
-      expect(contents.ops![6].insert).toEqual('test');
-      expect(contents.ops![6].attributes).toEqual({
+      expect(contents.ops![7].insert).toEqual('test');
+      expect(contents.ops![7].attributes).toEqual({
         'para-contents': true,
         segment: 'verse_1_2',
         'highlight-segment': true
       });
-      expect(contents.ops![7].insert).toEqual({ verse: { number: '3', style: 'v' } });
-      expect(contents.ops![7].attributes).toEqual({ 'para-contents': true });
+      expect(contents.ops![8].insert).toEqual({ verse: { number: '3', style: 'v' } });
+      expect(contents.ops![8].attributes).toEqual({ 'para-contents': true });
 
       env.dispose();
     }));
@@ -915,12 +915,13 @@ describe('EditorComponent', () => {
       expect(segment).not.toBeNull();
       expect(segment.hasAttribute('data-note-thread-count')).toBe(true);
       expect(segment.getAttribute('data-note-thread-count')).toBe('1');
-      const note = segment.querySelector('display-note');
+      const note = segment.querySelector('display-note')! as HTMLElement;
       expect(note).not.toBeNull();
-      expect(note!.hasAttribute('style')).toBe(true);
-      expect(note!.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag3.png);');
-      expect(note!.hasAttribute('title')).toBe(true);
-      expect(note!.getAttribute('title')).toEqual('Note from user01--- 2 more note(s) ---');
+      expect(note.hasAttribute('style')).toBe(true);
+      expect(note.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag3.png);');
+      expect(note.hasAttribute('title')).toBe(true);
+      expect(note.getAttribute('title')).toEqual('Note from user01\n--- 2 more note(s) ---');
+      expect(note.innerText).toEqual('chapter 1');
       env.dispose();
     }));
   });
@@ -1632,16 +1633,15 @@ class TestEnvironment {
         dataId: `thread01_note${id}`,
         dateCreated: date.toJSON(),
         dateModified: date.toJSON(),
-        content: `Note from ${id}`,
+        content: `<p><bold>Note from ${id}</bold></p>`,
         extUserId: 'ext_user_01',
         deleted: false,
-        tagIcon: `01flag${i + 1}`,
-        startPosition: 0
+        tagIcon: `01flag${i + 1}`
       };
       notes.push(note);
     }
 
-    const vrd: VerseRefData = fromVerseRef(VerseRef.parse('MAT 1:1'));
+    const vrd: VerseRefData = { bookNum: 40, chapterNum: 1, verseNum: 1 };
     this.realtimeService.addSnapshot<ParatextNoteThread>(ParatextNoteThreadDoc.COLLECTION, {
       id: 'project01:thread01',
       data: {
@@ -1649,9 +1649,12 @@ class TestEnvironment {
         dataId: 'thread01',
         verseRef: vrd,
         ownerRef: 'user01',
-        selectedText: '',
+        selectedText: 'chapter 1',
         notes,
-        tagIcon: '01flag1'
+        tagIcon: '01flag1',
+        contextBefore: 'target: ',
+        contextAfter: ', verse 1.',
+        startPosition: 8
       }
     });
   }

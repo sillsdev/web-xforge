@@ -63,6 +63,7 @@ export interface FeaturedVerseRefInfo {
   verseRef: VerseRef;
   iconName?: string;
   startPos?: number;
+  selectionLength?: number;
   preview?: string;
 }
 
@@ -491,7 +492,13 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
           const nodeProp: string = iconSourceProp(iconName);
           // Get the position relative to the start of the segment
           const index = (info.startPos ?? 0) + range.index;
-          this.editor.formatText(index, 1, 'note-thread', { iconsrc: nodeProp, preview: info.preview }, 'silent');
+          this.editor.formatText(
+            index,
+            info.selectionLength ?? 1,
+            'note-thread',
+            { iconsrc: nodeProp, preview: info.preview },
+            'silent'
+          );
         }
       }
       this.editor.formatText(range.index, range.length, formats, 'silent');
