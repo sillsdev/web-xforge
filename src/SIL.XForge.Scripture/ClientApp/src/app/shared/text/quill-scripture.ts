@@ -35,7 +35,7 @@ interface Chapter extends UsxStyle {
   eid?: string;
 }
 
-interface NoteThread extends UsxStyle {
+interface NoteThread {
   iconsrc: string;
   preview: string;
 }
@@ -480,8 +480,26 @@ export function registerScripture(): string[] {
       return node;
     }
 
+    static formats(node: HTMLElement): NoteThread {
+      return NoteThreadInLine.value(node);
+    }
+
     static value(node: HTMLElement): NoteThread {
-      return getUsxValue(node);
+      return {
+        iconsrc: node.getAttribute('style')!,
+        preview: node.getAttribute('title')!
+      };
+    }
+
+    format(name: string, value: any): void {
+      if (name === NoteThreadInLine.blotName && value != null) {
+        const ref = value as NoteThread;
+        const elem = this.domNode as HTMLElement;
+        elem.setAttribute('style', ref.iconsrc);
+        elem.setAttribute('title', ref.preview);
+      } else {
+        super.format(name, value);
+      }
     }
   }
   formats.push(NoteThreadInLine);
@@ -550,10 +568,15 @@ export function registerScripture(): string[] {
   );
   formats.push(NoteThreadCountAttribute);
 
-  const TagStyleAttribute = new QuillParchment.Attributor.Attribute('tag-style', 'style', {
+  const IconSourceAttribute = new QuillParchment.Attributor.Attribute('note-icon-source', 'style', {
     scope: Parchment.Scope.INLINE
   });
-  formats.push(TagStyleAttribute);
+  formats.push(IconSourceAttribute);
+
+  const NotePreviewAttribute = new QuillParchment.Attributor.Attribute('note-preview', 'title', {
+    scope: Parchment.Scope.INLINE
+  });
+  formats.push(NotePreviewAttribute);
 
   const InvalidBlockClass = new ClassAttributor('invalid-block', 'invalid-block', {
     scope: Parchment.Scope.BLOCK

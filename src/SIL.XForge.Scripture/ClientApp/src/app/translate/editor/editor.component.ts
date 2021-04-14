@@ -942,17 +942,22 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const notes: ParatextNote[] = clone(thread.notes).sort(
       (a, b) => Date.parse(a.dateCreated) - Date.parse(b.dateCreated)
     );
-    let preview: string = notes[0].content;
+    let preview: string = this.stripXml(notes[0].content);
     if (notes.length > 1) {
-      preview += translate('editor.more_notes', { count: notes.length - 1 });
+      preview += '\n' + translate('editor.more_notes', { count: notes.length - 1 });
     }
     const iconDefinedNotes = notes.filter(n => n.tagIcon != null);
     return {
       verseRef: toVerseRef(thread.verseRef),
       preview,
       iconName: iconDefinedNotes.length === 0 ? thread.tagIcon : iconDefinedNotes[iconDefinedNotes.length - 1].tagIcon,
-      startPos: notes[0].startPosition
+      startPos: thread.startPosition,
+      selectionLength: thread.selectedText.length
     };
+  }
+
+  private stripXml(xmlContent: string): string {
+    return xmlContent.replace(/<[^>]+>/g, '');
   }
 
   private syncScroll(): void {

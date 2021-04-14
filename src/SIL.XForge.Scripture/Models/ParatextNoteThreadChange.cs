@@ -15,6 +15,9 @@ namespace SIL.XForge.Scripture.Models
         public string ThreadId { get; set; }
         public string VerseRefStr { get; set; }
         public string SelectedText { get; set; }
+        public string ContextBefore { get; set; }
+        public string ContextAfter { get; set; }
+        public int StartPosition { get; set; }
         public List<ParatextNote> NotesAdded { get; set; } = new List<ParatextNote>();
         public List<ParatextNote> NotesUpdated { get; set; } = new List<ParatextNote>();
         public List<ParatextNote> NotesDeleted { get; set; } = new List<ParatextNote>();
@@ -24,11 +27,15 @@ namespace SIL.XForge.Scripture.Models
             get { return NotesAdded.Count > 0 || NotesUpdated.Count > 0 || NotesDeleted.Count > 0; }
         }
 
-        public ParatextNoteThreadChange(string threadId, string verseRef, string selectedText)
+        public ParatextNoteThreadChange(string threadId, string verseRef, string selectedText, string contextBefore,
+            string contextAfter, int startPos)
         {
             ThreadId = threadId;
             VerseRefStr = verseRef;
             SelectedText = selectedText;
+            ContextBefore = contextBefore;
+            ContextAfter = contextAfter;
+            StartPosition = startPos;
         }
 
         public void AddChange(ParatextNote changedNote, ChangeType type)

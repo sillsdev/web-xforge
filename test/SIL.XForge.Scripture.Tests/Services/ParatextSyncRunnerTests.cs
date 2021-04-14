@@ -827,6 +827,9 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(thread02.Notes.Count, Is.EqualTo(1));
             Assert.That(thread02.Notes[0].Content, Is.EqualTo("New thread02 added."));
             Assert.That(thread02.Notes[0].OwnerRef, Is.EqualTo("user01"));
+            Assert.That(thread02.ContextBefore, Is.EqualTo("Context before "));
+            Assert.That(thread02.ContextAfter, Is.EqualTo(" context after"));
+            Assert.That(thread02.StartPosition, Is.EqualTo(17));
             SFProject project = env.GetProject();
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
 
@@ -836,7 +839,9 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(thread03.VerseRef.ToString(), Is.EqualTo("MAT 1:5"));
             Assert.That(thread03.Notes.Count, Is.EqualTo(1));
             Assert.That(thread03.Notes[0].OwnerRef, Is.EqualTo("user02"));
-
+            Assert.That(thread02.ContextBefore, Is.EqualTo("Context before "));
+            Assert.That(thread02.ContextAfter, Is.EqualTo(" context after"));
+            Assert.That(thread02.StartPosition, Is.EqualTo(17));
             project = env.GetProject();
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
         }
@@ -1115,7 +1120,8 @@ namespace SIL.XForge.Scripture.Services
             {
                 if (fromParatext)
                 {
-                    var noteThreadChange = new ParatextNoteThreadChange(threadId, verseRef, $"{threadId} selected text.");
+                    var noteThreadChange = new ParatextNoteThreadChange(threadId, verseRef, $"{threadId} selected text.",
+                        "Context before ", " context after", 17);
                     noteThreadChange.AddChange(
                         GetNote(threadId, "User 1", $"{threadId} updated.", ChangeType.Updated), ChangeType.Updated);
                     noteThreadChange.AddChange(
@@ -1145,7 +1151,8 @@ namespace SIL.XForge.Scripture.Services
 
             public void SetupNewCommentThreadChange(string threadId, string syncUserId, string verseRef = "MAT 1:1")
             {
-                var noteThreadChange = new ParatextNoteThreadChange(threadId, verseRef, $"{threadId} selected text.");
+                var noteThreadChange = new ParatextNoteThreadChange(threadId, verseRef, $"{threadId} selected text.",
+                    "Context before ", " context after", 17);
                 noteThreadChange.AddChange(
                     GetNote(threadId, syncUserId, $"New {threadId} added.", ChangeType.Added), ChangeType.Added);
                 _notesMapper.PTCommentThreadChanges(Arg.Any<IEnumerable<IDocument<ParatextNoteThread>>>(),

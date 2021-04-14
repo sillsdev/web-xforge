@@ -6,5 +6,4 @@ export interface ParatextNote extends Comment {
   extUserId: string;
   deleted: boolean;
   tagIcon?: string;
-  startPosition: number;
 }
