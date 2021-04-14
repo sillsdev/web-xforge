@@ -162,11 +162,11 @@ describe('ShareControlComponent', () => {
     env.wait();
     expect(env.component.sendInviteForm.enabled).toEqual(true);
     expect((env.inputElement.nativeElement as HTMLInputElement).disabled).toEqual(false);
-    expect(env.offlineMessage).toBeNull();
+    expect(env.emailSharingOfflineMessage).toBeNull();
     env.onlineStatus = false;
     expect(env.component.sendInviteForm.enabled).toEqual(false);
     expect((env.inputElement.nativeElement as HTMLInputElement).disabled).toEqual(true);
-    expect(env.offlineMessage).not.toBeNull();
+    expect(env.emailSharingOfflineMessage).not.toBeNull();
   }));
 
   it('share link should be hidden if link sharing is turned off', fakeAsync(() => {
@@ -175,6 +175,15 @@ describe('ShareControlComponent', () => {
     env.hostComponent.isLinkSharingEnabled = true;
     env.wait();
     expect(env.shareLink).not.toBeNull();
+  }));
+
+  it('share link should not be shown when offline', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.onlineStatus = false;
+    env.hostComponent.isLinkSharingEnabled = true;
+    env.wait();
+    expect(env.shareLink.nativeElement.value).toEqual('');
+    expect(env.linkSharingOfflineMessage).not.toBeNull();
   }));
 
   it('clicking copy link icon should copy link to clipboard', fakeAsync(() => {
@@ -284,8 +293,12 @@ class TestEnvironment {
     return this.emailTextField.query(By.css('input[type="email"]'));
   }
 
-  get offlineMessage(): DebugElement {
-    return this.fetchElement('.offline-text');
+  get linkSharingOfflineMessage(): DebugElement {
+    return this.fetchElement('.invite-by-link .offline-text');
+  }
+
+  get emailSharingOfflineMessage(): DebugElement {
+    return this.fetchElement('.invite-by-email .offline-text');
   }
 
   get shareLink(): DebugElement {

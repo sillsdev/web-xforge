@@ -88,6 +88,10 @@ export class ShareControlComponent extends SubscriptionDisposable implements Aft
     return this.pwaService.isOnline;
   }
 
+  get showLinkSharingUnavailable(): boolean {
+    return this.isLinkSharingEnabled && !this.isAppOnline && !this.shareLink;
+  }
+
   copyShareLink(): void {
     if (this.shareLinkField == null) {
       return;
