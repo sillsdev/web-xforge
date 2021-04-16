@@ -5,7 +5,7 @@
         <mdc-dialog-title>{{ t("data_migration") }}</mdc-dialog-title>
         <mdc-dialog-content>
           <p [innerHTML]="t('please_wait')"></p>
-          <iframe hidden [src]="betaUrl"></iframe>
+          <iframe *ngIf="!hasCompleted" hidden [src]="betaUrl"></iframe>
           <label>{{ t(label, { attempt: attempts }) }}</label>
           <p *ngIf="attempts > 2">
             {{ recourseMessage.before

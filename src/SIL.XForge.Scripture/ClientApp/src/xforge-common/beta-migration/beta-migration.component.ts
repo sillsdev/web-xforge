@@ -73,7 +73,7 @@ export class BetaMigrationComponent {
         // Report that the migration is completed
         this.postMessage({ message: 'completed', progress: 100 });
         // Get off the beta site as it will try and add everything back in storage again
-        this.locationService.go('/');
+        this.locationService.go(environment.masterUrl);
       });
     });
   }
