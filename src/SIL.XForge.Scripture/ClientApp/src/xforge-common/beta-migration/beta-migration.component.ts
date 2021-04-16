@@ -68,8 +68,8 @@ export class BetaMigrationComponent {
         // Mark this user as having their migration completed
         await this.userService.userMigrationComplete();
         // Clear out data
-        this.localSettings.clear();
         await this.offlineStore.deleteDB();
+        this.localSettings.clear();
         // Report that the migration is completed
         this.postMessage({ message: 'completed', progress: 100 });
         // Get off the beta site as it will try and add everything back in storage again
