@@ -111,8 +111,8 @@ export class UserService {
     }
   }
 
-  userMigrationComplete() {
-    this.onlineInvoke('userMigrationComplete', { userId: this.currentUserId });
+  async userMigrationComplete(): Promise<void> {
+    await this.onlineInvoke('userMigrationComplete', { userId: this.currentUserId });
   }
 
   private onlineInvoke<T>(method: string, params?: any): Promise<T | undefined> {

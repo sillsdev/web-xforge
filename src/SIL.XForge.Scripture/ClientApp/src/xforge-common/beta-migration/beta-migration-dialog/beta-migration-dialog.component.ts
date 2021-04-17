@@ -50,6 +50,10 @@ export class BetaMigrationDialogComponent {
       });
   }
 
+  get hasCompleted(): boolean {
+    return this.label === 'completed';
+  }
+
   get label(): string {
     return this.message.message;
   }
