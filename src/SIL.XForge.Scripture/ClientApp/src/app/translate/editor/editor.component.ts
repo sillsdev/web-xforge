@@ -226,7 +226,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       // Even though permissions is guaranteed to be there in the model, its not in IndexedDB the first time the project
       // is accessed after migration
       if (chapter != null && chapter.permissions != null) {
-        return chapter.permissions[this.userService.currentUserId] !== TextInfoPermission.None;
+        return (
+          (chapter.permissions[this.userService.currentUserId] ?? TextInfoPermission.None) !== TextInfoPermission.None
+        );
       }
     }
 
@@ -262,7 +264,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   private get hasSource(): boolean {
     const sourceId = this.projectDoc?.data?.translateConfig.source?.projectRef;
-    if (!this.canEdit || this.text == null || this.currentUser === undefined || sourceId === undefined) {
+    if (this.text == null || this.currentUser === undefined || sourceId === undefined) {
       return false;
     } else {
       const projects = this.currentUser.sites[environment.siteId].projects;

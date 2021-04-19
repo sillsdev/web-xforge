@@ -732,6 +732,17 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('user cannot edit a chapter source text visible', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setCurrentUser('user03');
+      env.setProjectUserConfig();
+      env.wait();
+      expect(env.bookName).toEqual('Matthew');
+      expect(env.component.canEdit).toBe(false);
+      expect(env.component.showSource).toBe(true);
+      env.dispose();
+    }));
+
     it('user cannot edit a chapter with permission', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setCurrentUser('user03');
@@ -812,7 +823,6 @@ describe('EditorComponent', () => {
       const selection = env.targetEditor.getSelection();
       expect(selection).toBeNull();
       expect(env.component.canEdit).toBe(false);
-      expect(env.isSourceAreaHidden).toBe(true);
       expect(env.invalidWarning).not.toBeNull();
       env.dispose();
     }));
@@ -1297,6 +1307,9 @@ class TestEnvironment {
     const projectData = cloneDeep(this.testProject);
     if (data.translateConfig?.translationSuggestionsEnabled != null) {
       projectData.translateConfig.translationSuggestionsEnabled = data.translateConfig.translationSuggestionsEnabled;
+      if (!data.translateConfig.translationSuggestionsEnabled) {
+        projectData.texts.forEach(t => (t.hasSource = false));
+      }
     }
     if (data.translateConfig?.source !== undefined) {
       projectData.translateConfig.source = data.translateConfig?.source;
