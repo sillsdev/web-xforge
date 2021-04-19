@@ -1044,6 +1044,11 @@ class TestEnvironment {
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private readonly params$: BehaviorSubject<Params>;
   private trainingProgress$ = new Subject<ProgressStatus>();
+  private textInfoPermissions = {
+    user01: TextInfoPermission.Write,
+    user02: TextInfoPermission.None,
+    user03: TextInfoPermission.Read
+  };
 
   private testProject: SFProject = {
     name: 'project 01',
@@ -1079,17 +1084,17 @@ class TestEnvironment {
             number: 1,
             lastVerse: 3,
             isValid: true,
-            permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+            permissions: this.textInfoPermissions
           },
           {
             number: 2,
             lastVerse: 3,
             isValid: true,
-            permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+            permissions: this.textInfoPermissions
           }
         ],
         hasSource: true,
-        permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+        permissions: this.textInfoPermissions
       },
       {
         bookNum: 41,
@@ -1098,11 +1103,11 @@ class TestEnvironment {
             number: 1,
             lastVerse: 3,
             isValid: false,
-            permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+            permissions: this.textInfoPermissions
           }
         ],
         hasSource: true,
-        permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+        permissions: this.textInfoPermissions
       },
       {
         bookNum: 42,
@@ -1111,17 +1116,21 @@ class TestEnvironment {
             number: 1,
             lastVerse: 3,
             isValid: true,
-            permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+            permissions: this.textInfoPermissions
           },
           {
             number: 2,
             lastVerse: 3,
             isValid: true,
-            permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Write }
+            permissions: {
+              user01: TextInfoPermission.Write,
+              user02: TextInfoPermission.None,
+              user03: TextInfoPermission.Write
+            }
           }
         ],
         hasSource: false,
-        permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+        permissions: this.textInfoPermissions
       },
       {
         bookNum: 43,
@@ -1130,11 +1139,11 @@ class TestEnvironment {
             number: 1,
             lastVerse: 0,
             isValid: true,
-            permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+            permissions: this.textInfoPermissions
           }
         ],
         hasSource: false,
-        permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+        permissions: this.textInfoPermissions
       },
       {
         bookNum: 44,
@@ -1143,11 +1152,11 @@ class TestEnvironment {
             number: 1,
             lastVerse: 3,
             isValid: true,
-            permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+            permissions: this.textInfoPermissions
           }
         ],
         hasSource: true,
-        permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+        permissions: this.textInfoPermissions
       }
     ]
   };
