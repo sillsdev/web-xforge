@@ -1,7 +1,7 @@
 export const environment = {
   releaseStage: 'dev',
   pwaTest: true,
-  production: false,
+  production: true,
   issueEmail: 'scriptureforgeissues@sil.org',
   siteName: 'Scripture Forge',
   audience: 'https://scriptureforge.org/',

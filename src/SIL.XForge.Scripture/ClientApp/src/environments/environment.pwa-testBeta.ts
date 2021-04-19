@@ -1,7 +1,7 @@
 export const environment = {
   releaseStage: 'dev',
   pwaTest: true,
-  production: false,
+  production: true,
   beta: true,
   betaUrl: 'http://beta.localhost:9000',
   masterUrl: 'http://localhost:5000',
