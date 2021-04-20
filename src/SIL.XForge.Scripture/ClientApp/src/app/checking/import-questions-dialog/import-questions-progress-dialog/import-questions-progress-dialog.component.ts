@@ -3,6 +3,7 @@ import { Component, Inject } from '@angular/core';
 
 export interface ImportQuestionsProgressDialogData {
   count: number;
+  completed: number;
 }
 
 @Component({

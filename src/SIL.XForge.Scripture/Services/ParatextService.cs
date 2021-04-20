@@ -56,7 +56,6 @@ namespace SIL.XForge.Scripture.Services
         private readonly ILogger _logger;
         private readonly IJwtTokenHelper _jwtTokenHelper;
         private readonly IParatextDataHelper _paratextDataHelper;
-        private string _applicationProductVersion = "SF";
         private string _dblServerUri = "https://paratext.thedigitalbiblelibrary.org/";
         private string _registryServerUri = "https://registry.paratext.org";
         private string _sendReceiveServerUri = InternetAccess.uriProduction;
@@ -86,11 +85,13 @@ namespace SIL.XForge.Scripture.Services
 
             _httpClientHandler = new HttpClientHandler();
             _registryClient = new HttpClient(_httpClientHandler);
-            if (env.IsDevelopment() || env.IsEnvironment("Testing"))
+            if (env.IsDevelopment() || env.IsEnvironment("DevelopmentBeta") || env.IsEnvironment("Testing") || env.IsEnvironment("TestingBeta"))
             {
                 _httpClientHandler.ServerCertificateCustomValidationCallback
                     = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-                _dblServerUri = "https://paratext-qa.thedigitalbiblelibrary.org/";
+                // This should be paratext-qa.thedigitalbiblelibrary.org, but it's broken as of 2021-04 and
+                // qa.thedigitalbiblelibrary.org should be just as good, at least for the time being.
+                _dblServerUri = "https://qa.thedigitalbiblelibrary.org/";
                 _registryServerUri = "https://registry-dev.paratext.org";
                 _registryClient.BaseAddress = new Uri(_registryServerUri);
                 _sendReceiveServerUri = InternetAccess.uriDevelopment;
@@ -788,7 +789,7 @@ namespace SIL.XForge.Scripture.Services
             using (ParatextAccessLock accessLock = await GetParatextAccessLock(userId))
             {
                 return _internetSharedRepositorySourceProvider.GetSource(accessLock.UserSecret,
-                        _sendReceiveServerUri, _registryServerUri, _applicationProductVersion);
+                        _sendReceiveServerUri, _registryServerUri);
             }
         }
 
@@ -847,18 +848,28 @@ namespace SIL.XForge.Scripture.Services
             SemaphoreSlim semaphore = _tokenRefreshSemaphores.GetOrAdd(userId, (string key) => new SemaphoreSlim(1, 1));
             await semaphore.WaitAsync();
 
-            Attempt<UserSecret> attempt = await _userSecretRepository.TryGetAsync(userId);
-            if (!attempt.TryResult(out UserSecret userSecret))
+            try
             {
-                throw new DataNotFoundException("Could not find user secrets for " + userId);
-            }
+                Attempt<UserSecret> attempt = await _userSecretRepository.TryGetAsync(userId);
+                if (!attempt.TryResult(out UserSecret userSecret))
+                {
+                    throw new DataNotFoundException("Could not find user secrets for " + userId);
+                }
 
-            if (!userSecret.ParatextTokens.ValidateLifetime())
-            {
-                Tokens refreshedUserTokens = await _jwtTokenHelper.RefreshAccessTokenAsync(_paratextOptions.Value, userSecret.ParatextTokens, _registryClient);
-                userSecret = await _userSecretRepository.UpdateAsync(userId, b => b.Set(u => u.ParatextTokens, refreshedUserTokens));
+                if (!userSecret.ParatextTokens.ValidateLifetime())
+                {
+                    Tokens refreshedUserTokens = await _jwtTokenHelper.RefreshAccessTokenAsync(_paratextOptions.Value, userSecret.ParatextTokens, _registryClient);
+                    userSecret = await _userSecretRepository.UpdateAsync(userId, b => b.Set(u => u.ParatextTokens, refreshedUserTokens));
+                }
+                return new ParatextAccessLock(semaphore, userSecret);
             }
-            return new ParatextAccessLock(semaphore, userSecret);
+            catch
+            {
+                // If an exception is thrown between awaiting the semaphore and returning the ParatextAccessLock, the
+                // caller of the method will not get a reference to a ParatextAccessLock and can't release the semaphore.
+                semaphore.Release();
+                throw;
+            }
         }
     }
 

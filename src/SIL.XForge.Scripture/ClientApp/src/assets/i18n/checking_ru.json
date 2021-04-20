@@ -24,6 +24,18 @@
     "scripture_checking_not_available": "Проверка Писания в этом проекте недоступна.",
     "update_is_available": "An update is available. Please refresh the page."
   },
+  "beta_migration": {
+    "checking_for_data": "Checking for offline data",
+    "cleaning_up": "Cleaning up",
+    "close": "Закрыть",
+    "completed": "Migration complete — this dialog will now close",
+    "data_migration": "Data migration",
+    "fetching_data": "Fetching data",
+    "loading": "Loading",
+    "loading_retry": "Loading - retrying ({{ attempt }})",
+    "login_required": "Login required",
+    "please_wait": "Scripture Forge is now out of Beta — yay! Hold tight while we quickly migrate your account to the new full release version."
+  },
   "canon": {
     "book_names": {
       "GEN": "Бытие",
@@ -284,12 +296,14 @@
     "copy_link": "Скопировать ссылку",
     "email_invalid": "Адрес электронной почты недействителен",
     "email": "Электронная почта",
+    "invitation_language": "Invitation language",
     "invitation_sent": "Электронное письмо с приглашением было отправлено на {{ email }}",
     "invite_people": "Приглашайте людей",
     "link_copied": "Ссылка скопирована в буфер обмена",
     "link_sharing": "Поделиться ссылкой",
     "not_inviting_already_member": "Не приглашает: Пользователь уже является участником данного проекта",
     "resend": "Отправить повторный запрос",
+    "select_invitation_language": "Select a language for the invitation email",
     "send": "Отправить",
     "share_by_email_not_available_offline": "Inviting users by email is unavailable while offline."
   },

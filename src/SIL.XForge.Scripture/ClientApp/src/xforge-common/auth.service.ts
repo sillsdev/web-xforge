@@ -9,6 +9,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { of, Subscription, timer } from 'rxjs';
 import { filter, mergeMap } from 'rxjs/operators';
+import { BetaMigrationMessage } from 'xforge-common/beta-migration/beta-migration.component';
 import { PwaService } from 'xforge-common/pwa.service';
 import { environment } from '../environments/environment';
 import { CommandError, CommandService } from './command.service';
@@ -52,6 +53,7 @@ export class AuthService {
   readonly ptLinkedToAnotherUserKey: string = 'paratext-linked-to-another-user';
   private tryLogInPromise: Promise<LoginResult>;
   private refreshSubscription?: Subscription;
+  private renewTokenPromise?: Promise<void>;
 
   private readonly auth0 = new WebAuth({
     clientID: environment.authClientId,
@@ -124,8 +126,8 @@ export class AuthService {
     return this.tryLogInPromise.then(result => result.newlyLoggedIn);
   }
 
-  private get isAuthenticated(): boolean {
-    return this.expiresAt != null && Date.now() < this.expiresAt;
+  private get hasExpired(): boolean {
+    return this.expiresAt != null && Date.now() < this.expiresAt && this.renewTokenPromise == null;
   }
 
   changePassword(email: string): Promise<string> {
@@ -151,6 +153,13 @@ export class AuthService {
     }
   }
 
+  async isAuthenticated(): Promise<boolean> {
+    if (!this.hasExpired) {
+      await this.renewTokens();
+    }
+    return true;
+  }
+
   logIn(returnUrl: string, signUp?: boolean): void {
     const state: AuthState = { returnUrl };
     const tag = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME));
@@ -166,6 +175,9 @@ export class AuthService {
     const authOptions: AuthorizeOptions = { state: JSON.stringify(state), language: JSON.stringify({ tag, options }) };
     if (signUp) {
       authOptions.login_hint = 'signUp';
+    }
+    if (environment.beta) {
+      window.parent.postMessage(<BetaMigrationMessage>{ message: 'login_required' }, environment.masterUrl);
     }
     this.auth0.authorize(authOptions);
   }
@@ -243,13 +255,10 @@ export class AuthService {
     const state: AuthState = authResult.state == null ? {} : JSON.parse(authResult.state);
     if (state.linking != null && state.linking) {
       secondaryId = authResult.idTokenPayload.sub;
-      if (!this.isAuthenticated) {
-        await this.renewTokens();
-      }
+      await this.isAuthenticated();
     } else {
       await this.localLogIn(authResult.accessToken, authResult.idToken, authResult.expiresIn);
     }
-    this.scheduleRenewal();
     await this.remoteStore.init(() => this.accessToken);
     if (secondaryId != null) {
       try {
@@ -277,7 +286,7 @@ export class AuthService {
             this.locationService.reload();
           });
       }
-    } else if (!environment.production) {
+    } else if (!environment.production && !environment.beta) {
       try {
         await this.commandService.onlineInvoke(USERS_URL, 'pullAuthUserProfile');
       } catch (err) {
@@ -306,14 +315,14 @@ export class AuthService {
     const expiresIn$ = of(expiresAt).pipe(
       mergeMap(expAt => {
         const now = Date.now();
-        return timer(Math.max(1, expAt - now));
+        // Expiry 30 seconds sooner than the actual expiry date to avoid any inflight expiry issues
+        return timer(Math.max(1, expAt - now - 30000));
       }),
       filter(() => this.pwaService.isOnline)
     );
 
     this.refreshSubscription = expiresIn$.subscribe(async () => {
       await this.renewTokens();
-      this.scheduleRenewal();
     });
   }
 
@@ -333,25 +342,34 @@ export class AuthService {
   }
 
   private async renewTokens(): Promise<void> {
-    let success = false;
-    try {
-      const authResult = await this.checkSession();
-      if (
-        authResult != null &&
-        authResult.accessToken != null &&
-        authResult.idToken != null &&
-        authResult.expiresIn != null
-      ) {
-        await this.localLogIn(authResult.accessToken, authResult.idToken, authResult.expiresIn);
-        success = true;
-      }
-    } catch (err) {
-      console.error('Error while renewing access token:', err);
-      success = false;
+    if (this.renewTokenPromise == null) {
+      this.renewTokenPromise = new Promise(async (resolve, reject) => {
+        let success = false;
+        try {
+          const authResult = await this.checkSession();
+          if (
+            authResult != null &&
+            authResult.accessToken != null &&
+            authResult.idToken != null &&
+            authResult.expiresIn != null
+          ) {
+            await this.localLogIn(authResult.accessToken, authResult.idToken, authResult.expiresIn);
+            success = true;
+            resolve();
+          }
+        } catch (err) {
+          console.error('Error while renewing access token:', err);
+          success = false;
+        }
+        if (!success) {
+          await this.logOut();
+          reject();
+        }
+      }).then(() => {
+        this.renewTokenPromise = undefined;
+      });
     }
-    if (!success) {
-      await this.logOut();
-    }
+    return this.renewTokenPromise;
   }
 
   private checkSession(retryUponTimeout: boolean = true): Promise<auth0.Auth0DecodedHash | null> {
@@ -387,6 +405,7 @@ export class AuthService {
     this.localSettings.set(EXPIRES_AT_SETTING, expiresAt);
     this.localSettings.set(USER_ID_SETTING, userId);
     this.localSettings.set(ROLE_SETTING, claims[XF_ROLE_CLAIM]);
+    this.scheduleRenewal();
     Bugsnag.leaveBreadcrumb(
       'Local Login',
       {

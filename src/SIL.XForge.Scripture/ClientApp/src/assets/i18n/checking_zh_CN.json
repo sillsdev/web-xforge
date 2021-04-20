@@ -24,6 +24,18 @@
     "scripture_checking_not_available": "圣经检查在该项目中不可用。",
     "update_is_available": "An update is available. Please refresh the page."
   },
+  "beta_migration": {
+    "checking_for_data": "Checking for offline data",
+    "cleaning_up": "Cleaning up",
+    "close": "关闭",
+    "completed": "Migration complete — this dialog will now close",
+    "data_migration": "Data migration",
+    "fetching_data": "Fetching data",
+    "loading": "Loading",
+    "loading_retry": "Loading - retrying ({{ attempt }})",
+    "login_required": "Login required",
+    "please_wait": "Scripture Forge is now out of Beta — yay! Hold tight while we quickly migrate your account to the new full release version."
+  },
   "canon": {
     "book_names": {
       "GEN": "Genesis",
@@ -284,12 +296,14 @@
     "copy_link": "复制链接",
     "email_invalid": "电子邮箱地址不可用",
     "email": "电子邮件",
+    "invitation_language": "Invitation language",
     "invitation_sent": "邀请电子邮件已发送至 {{ email }}",
     "invite_people": "邀请人",
     "link_copied": "链接已复制到剪贴板",
     "link_sharing": "链接共享",
     "not_inviting_already_member": "不邀请：用户已经是该项目的成员",
     "resend": "重发",
+    "select_invitation_language": "Select a language for the invitation email",
     "send": "发送",
     "share_by_email_not_available_offline": "Inviting users by email is unavailable while offline."
   },

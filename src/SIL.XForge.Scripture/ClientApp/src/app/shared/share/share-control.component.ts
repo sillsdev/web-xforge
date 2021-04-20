@@ -2,6 +2,9 @@ import { MdcTextField } from '@angular-mdc/web/textfield';
 import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
+import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
+import { BehaviorSubject, combineLatest } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -19,7 +22,6 @@ import { SFProjectService } from '../../core/sf-project.service';
 export class ShareControlComponent extends SubscriptionDisposable implements AfterViewInit {
   /** Fires when an invitation is sent. */
   @Output() invited = new EventEmitter<void>();
-  @Input() readonly projectId?: string;
   @Input() readonly isLinkSharingEnabled: boolean = false;
   @ViewChild('shareLinkField') shareLinkField?: MdcTextField;
 
@@ -29,6 +31,10 @@ export class ShareControlComponent extends SubscriptionDisposable implements Aft
   isSubmitted: boolean = false;
   isAlreadyInvited: boolean = false;
   readonly alreadyProjectMemberResponse: string = 'alreadyProjectMember';
+
+  private _projectId?: string;
+  private linkSharingKey: string = '';
+  private projectId$: BehaviorSubject<string> = new BehaviorSubject<string>('');
 
   constructor(
     readonly i18n: I18nService,
@@ -41,24 +47,49 @@ export class ShareControlComponent extends SubscriptionDisposable implements Aft
     super();
   }
 
+  @Input() set projectId(id: string | undefined) {
+    if (id == null) {
+      return;
+    }
+    this._projectId = id;
+    this.projectId$.next(id);
+  }
+
   ngAfterViewInit() {
-    this.subscribe(this.pwaService.onlineStatus, isOnline => {
-      if (isOnline) {
-        this.sendInviteForm.enable();
-      } else {
-        this.sendInviteForm.disable();
-        // Workaround for angular/angular#17793 (ExpressionChangedAfterItHasBeenCheckedError after form disabled)
-        this.changeDetector.detectChanges();
+    // TODO: Allow user to select a role for the invitation link
+    const role = SFProjectRole.CommunityChecker;
+    this.subscribe(
+      combineLatest([this.pwaService.onlineStatus, this.projectId$]).pipe(filter(([_, projectId]) => projectId !== '')),
+      async ([isOnline, _]) => {
+        if (isOnline) {
+          if (this._projectId != null) {
+            this.linkSharingKey = await this.projectService.onlineGetLinkSharingKey(this._projectId, role);
+          }
+          this.sendInviteForm.enable();
+        } else {
+          this.sendInviteForm.disable();
+          // Workaround for angular/angular#17793 (ExpressionChangedAfterItHasBeenCheckedError after form disabled)
+          this.changeDetector.detectChanges();
+        }
       }
-    });
+    );
   }
 
   get shareLink(): string {
-    return this.locationService.origin + '/projects/' + this.projectId + '?sharing=true';
+    if (this.linkSharingKey === '') {
+      return '';
+    }
+    return (
+      this.locationService.origin + '/projects/' + this._projectId + '?sharing=true&shareKey=' + this.linkSharingKey
+    );
   }
 
   get isAppOnline(): boolean {
     return this.pwaService.isOnline;
+  }
+
+  get showLinkSharingUnavailable(): boolean {
+    return this.isLinkSharingEnabled && !this.isAppOnline && !this.shareLink;
   }
 
   copyShareLink(): void {
@@ -72,19 +103,26 @@ export class ShareControlComponent extends SubscriptionDisposable implements Aft
   }
 
   async onEmailInput(): Promise<void> {
-    if (this.projectId == null || this.email.invalid) {
+    if (this._projectId == null || this.email.invalid) {
       return;
     }
-    this.isAlreadyInvited = await this.projectService.onlineIsAlreadyInvited(this.projectId, this.email.value);
+    this.isAlreadyInvited = await this.projectService.onlineIsAlreadyInvited(this._projectId, this.email.value);
   }
 
   async sendEmail(): Promise<void> {
-    if (this.projectId == null || this.email.value === '' || this.email.value == null || !this.sendInviteForm.valid) {
+    if (this._projectId == null || this.email.value === '' || this.email.value == null || !this.sendInviteForm.valid) {
       return;
     }
 
     this.isSubmitted = true;
-    const response = await this.projectService.onlineInvite(this.projectId, this.email.value, this.localeControl.value);
+    // TODO: Allow user to select a role for the invitation link
+    const inviteRole: SFProjectRole = SFProjectRole.CommunityChecker;
+    const response = await this.projectService.onlineInvite(
+      this._projectId,
+      this.email.value,
+      this.localeControl.value,
+      inviteRole
+    );
     this.isSubmitted = false;
     this.isAlreadyInvited = false;
     let message = '';

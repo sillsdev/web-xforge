@@ -93,7 +93,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
         listItem.matchesFilter =
           listItem.question.text.toLowerCase().includes(searchTerm) &&
           this.isBetweenRefs(
-            new VerseRef(listItem.question.book, listItem.question.startChapter, listItem.question.startVerse),
+            this.verseRefFromQuestion(listItem.question),
             fromRef.success ? fromRef.verseRef : null,
             toRef.success ? toRef.verseRef : null
           );
@@ -133,13 +133,20 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
     }
     questionQuery.dispose();
 
+    transceleratorQuestions.sort(
+      (a, b) => this.verseRefFromQuestion(a).BBBCCCVVV - this.verseRefFromQuestion(b).BBBCCCVVV
+    );
+
     for (const question of transceleratorQuestions.filter(q => this.data.textsByBookId[q.book] != null)) {
       const sfVersionOfQuestion =
         questionQuery.docs.find(
           doc =>
             doc.data != null &&
             doc.data.transceleratorQuestionId != null &&
-            doc.data.transceleratorQuestionId === question.id
+            doc.data.transceleratorQuestionId === question.id &&
+            // The id should be unique for a given verse, but not across different verses
+            // Transcelerator does not allow changing the reference for a question, as of 2021-03-09
+            !this.verseRefDataDiffers(doc.data.verseRef, this.verseRefData(question))
         ) || null;
 
       this.questionList.push({
@@ -213,55 +220,54 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
     }
   }
 
-  importQuestions(): void {
+  async importQuestions(): Promise<void> {
     const listItems = this.questionList.filter(listItem => listItem.checked);
+    const dialogData: ImportQuestionsProgressDialogData = { count: listItems.length, completed: 0 };
     const config: MdcDialogConfig<ImportQuestionsProgressDialogData> = {
       clickOutsideToClose: false,
       escapeToClose: false,
-      data: { count: listItems.length }
+      data: dialogData
     };
     const progressDialog = this.dialog.open(ImportQuestionsProgressDialogComponent, config);
-    Promise.all(
-      listItems.map(
-        (listItem): Promise<unknown> => {
-          const currentDate = new Date().toJSON();
-          const verseRefData = this.verseRefData(listItem.question);
-          if (listItem.sfVersionOfQuestion != null) {
-            if (this.questionsDiffer(listItem)) {
-              return listItem.sfVersionOfQuestion.submitJson0Op(op =>
-                op
-                  .set(q => q.text!, listItem.question.text)
-                  .set(q => q.verseRef, verseRefData)
-                  .set(q => q.dateModified, currentDate)
-              );
-            }
-            return Promise.resolve();
-          } else {
-            const newQuestion: Question = {
-              dataId: objectId(),
-              projectRef: this.data.projectId,
-              ownerRef: this.data.userId,
-              verseRef: verseRefData,
-              text: listItem.question.text,
-              audioUrl: undefined,
-              answers: [],
-              isArchived: false,
-              dateCreated: currentDate,
-              dateModified: currentDate,
-              transceleratorQuestionId: listItem.question.id
-            };
-            return this.projectService.createQuestion(this.data.projectId, newQuestion, undefined, undefined);
-          }
-        }
-      )
-    ).finally(() => {
-      progressDialog.close();
-      this.dialogRef.close();
-    });
+
+    // Using Promise.all seems like a better choice than awaiting promises in a loop, but experimentally it appears to
+    // take the same amount of time or significantly longer, especially with large numbers of questions, possibly due to
+    // queuing too many tasks simultaneously. Additionally, running in series makes it much easier to track progress.
+    for (const listItem of listItems) {
+      const currentDate = new Date().toJSON();
+      const verseRefData = this.verseRefData(listItem.question);
+      if (listItem.sfVersionOfQuestion == null) {
+        const newQuestion: Question = {
+          dataId: objectId(),
+          projectRef: this.data.projectId,
+          ownerRef: this.data.userId,
+          verseRef: verseRefData,
+          text: listItem.question.text,
+          audioUrl: undefined,
+          answers: [],
+          isArchived: false,
+          dateCreated: currentDate,
+          dateModified: currentDate,
+          transceleratorQuestionId: listItem.question.id
+        };
+        await this.projectService.createQuestion(this.data.projectId, newQuestion, undefined, undefined);
+      } else if (this.questionsDiffer(listItem)) {
+        await listItem.sfVersionOfQuestion.submitJson0Op(op =>
+          op
+            .set(q => q.text!, listItem.question.text)
+            .set(q => q.verseRef, verseRefData)
+            .set(q => q.dateModified, currentDate)
+        );
+      }
+      dialogData.completed++;
+    }
+
+    progressDialog.close();
+    this.dialogRef.close();
   }
 
   private verseRefData(q: TransceleratorQuestion): VerseRefData {
-    const verse = new VerseRef(q.book, q.startChapter, q.startVerse);
+    const verse = this.verseRefFromQuestion(q);
     const verseRefData: VerseRefData = {
       bookNum: verse.bookNum,
       chapterNum: verse.chapterNum,
@@ -323,5 +329,9 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
 
   private verseRefDataDiffers(a: VerseRefData, b: VerseRefData): boolean {
     return !toVerseRef(a).equals(toVerseRef(b));
+  }
+
+  private verseRefFromQuestion(question: TransceleratorQuestion): VerseRef {
+    return new VerseRef(question.book, question.startChapter, question.startVerse);
   }
 }

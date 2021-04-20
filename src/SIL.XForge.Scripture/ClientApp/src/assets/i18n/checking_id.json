@@ -24,6 +24,18 @@
     "scripture_checking_not_available": "Pemeriksaan Alkitab tidak tersedia pada proyek ini.",
     "update_is_available": "An update is available. Please refresh the page."
   },
+  "beta_migration": {
+    "checking_for_data": "Checking for offline data",
+    "cleaning_up": "Cleaning up",
+    "close": "Tutup",
+    "completed": "Migration complete — this dialog will now close",
+    "data_migration": "Data migration",
+    "fetching_data": "Fetching data",
+    "loading": "Loading",
+    "loading_retry": "Loading - retrying ({{ attempt }})",
+    "login_required": "Login required",
+    "please_wait": "Scripture Forge is now out of Beta — yay! Hold tight while we quickly migrate your account to the new full release version."
+  },
   "canon": {
     "book_names": {
       "GEN": "Kejadian",
@@ -284,12 +296,14 @@
     "copy_link": "Salin tautan",
     "email_invalid": "Alamat surel tidak valid",
     "email": "Surel",
+    "invitation_language": "Invitation language",
     "invitation_sent": "Surel Undangan sudah dikirim ke {{ email }}",
     "invite_people": "Undang orang",
     "link_copied": "Tautan telah disalin ke Papan-klip",
     "link_sharing": "Berbagi tautan",
     "not_inviting_already_member": "Tidak mengundang: Pengguna sudah menjadi anggota proyek ini",
     "resend": "Kirim ulang",
+    "select_invitation_language": "Select a language for the invitation email",
     "send": "Kirim",
     "share_by_email_not_available_offline": "Inviting users by email is unavailable while offline."
   },

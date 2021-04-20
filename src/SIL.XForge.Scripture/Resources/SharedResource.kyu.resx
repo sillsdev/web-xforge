@@ -146,9 +146,8 @@
   <data name="InviteInstructions" xml:space="preserve">
     <value>ꤔꤟꤢꤧ꤬ ꤊꤤ꤬ ꤗꤟꤢꤟꤤ  {0} user ꤒꤥ꤬ ꤟꤢꤩꤚꤢꤪ, ꤙꤤ ꤔꤟꤢꤧ꤬ ꤒꤣ꤬ꤙꤢꤧ꤬ ꤓꤌꤣ꤭ꤟꤢꤪ link ꤢ꤬ꤋꤢꤧ꤭ꤔꤌꤣ꤬, ꤒꤣ꤬ꤙꤢꤧ꤬ {1}Sign Up{2} ꤚꤢꤪ ꤗꤟꤢꤩ꤬ ꤘꤣ ꤢ꤬ꤜꤟꤢꤧ꤭ ꤛꤢꤩ꤭ꤒꤢ꤬ꤟꤢꤩ꤬:</value>
   </data>
-  <data name="InviteLinkSharingOff" xml:space="preserve">
-    <value>Link ꤛꤢꤩ꤭ꤗꤢ꤬ ꤢ꤬ꤗꤟꤢꤩ꤬ ꤒꤟꤢꤧ꤬ꤗꤟꤢꤩ꤬ ꤔꤢ ꤒꤢꤦ꤮ email ꤛꤢꤩ꤭ ꤕꤚꤢꤧ꤯</value>
-    <comment>Previously this text was used when link sharing was turned off for a project, but now it is always used when sending an invitation whether link sharing is on or off.</comment>
+  <data name="InviteLinkExpires" xml:space="preserve">
+    <value>The project invitation link expires in 14 days.</value>
   </data>
   <data name="InvitePTOption" xml:space="preserve">
     <value>ꤒꤣ꤬ꤙꤢꤧ꤬ {0}Sign up ꤔꤢ Paratext ꤔꤌꤣ꤬, {1} ꤓꤌꤣ꤭ꤚꤢꤪ ꤜꤟꤢꤩꤓꤛꤢ꤬ꤔꤟꤌꤣ꤭ ꤔꤟꤤ ꤢ꤬ꤑꤢꤩ꤭ ꤊꤚꤝꤥ꤭ꤗꤟꤢꤩ꤬ꤊꤟꤌꤣ꤭ ꤖꤢꤨ ꤒꤟꤢꤧ꤬ꤐꤟꤢꤨ꤭ꤊꤜꤛꤢ ꤔꤌꤣ꤬, {2} ꤔꤢꤪ꤭ꤢꤩ꤬ Paratext account ꤘꤣ ꤔꤢꤪ꤭ꤢꤩ꤬ꤔꤟꤤ ꤕꤢ꤭ ꤔꤌꤣ꤬, ꤗꤟꤢꤒꤥ꤬ꤚꤢꤪ</value>

@@ -1,7 +1,8 @@
+import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
 import { MdcList, MdcListItem } from '@angular-mdc/web/list';
 import { CommonModule, Location } from '@angular/common';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { Component, DebugElement, NgModule, NgZone } from '@angular/core';
+import { Component, DebugElement, EventEmitter, NgModule, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Route, Router } from '@angular/router';
@@ -16,9 +17,10 @@ import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project'
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { BehaviorSubject, of, Subject } from 'rxjs';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { anyString, anything, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
+import { BetaMigrationDialogComponent } from 'xforge-common/beta-migration/beta-migration-dialog/beta-migration-dialog.component';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FileService } from 'xforge-common/file.service';
 import { LocationService } from 'xforge-common/location.service';
@@ -32,6 +34,7 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
+import { environment } from '../environments/environment';
 import { AppComponent, CONNECT_PROJECT_OPTION } from './app.component';
 import { QuestionDoc } from './core/models/question-doc';
 import { SFProjectDoc } from './core/models/sf-project-doc';
@@ -49,7 +52,9 @@ const mockedLocationService = mock(LocationService);
 const mockedNoticeService = mock(NoticeService);
 const mockedPwaService = mock(PwaService);
 const mockedFileService = mock(FileService);
-const mockErrorReportingService = mock(ErrorReportingService);
+const mockedErrorReportingService = mock(ErrorReportingService);
+const mockedMdcDialog = mock(MdcDialog);
+const mockedBetaMigrationDialogComponent = mock(BetaMigrationDialogComponent);
 
 @Component({
   template: `<div>Mock</div>`
@@ -90,7 +95,8 @@ describe('AppComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: PwaService, useMock: mockedPwaService },
       { provide: FileService, useMock: mockedFileService },
-      { provide: ErrorReportingService, useMock: mockErrorReportingService }
+      { provide: ErrorReportingService, useMock: mockedErrorReportingService },
+      { provide: MdcDialog, useMock: mockedMdcDialog }
     ]
   }));
 
@@ -209,10 +215,15 @@ describe('AppComponent', () => {
 
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project01');
+    // SUT
     env.deleteProject('project01', false);
-    expect(env.projectDeletedDialog).not.toBeNull();
+    verify(mockedMdcDialog.open(ProjectDeletedDialogComponent)).once();
     verify(mockedUserService.setCurrentProjectId()).once();
-    env.confirmDialog();
+    env.confirmProjectDeletedDialog();
+    // Get past setTimeout to navigation
+    tick();
+    env.fixture.detectChanges();
+    tick();
     expect(env.isDrawerVisible).toEqual(false);
     expect(env.location.path()).toEqual('/projects');
   }));
@@ -235,8 +246,10 @@ describe('AppComponent', () => {
 
     expect(env.selectedProjectId).toEqual('project01');
     env.removesUserFromProject('project01');
-    expect(env.projectDeletedDialog).not.toBeNull();
-    env.confirmDialog();
+    verify(mockedMdcDialog.open(ProjectDeletedDialogComponent)).once();
+    env.confirmProjectDeletedDialog();
+    // Get past setTimeout to navigation
+    tick();
     expect(env.location.path()).toEqual('/projects');
   }));
 
@@ -287,8 +300,139 @@ describe('AppComponent', () => {
     const env = new TestEnvironment();
     env.init();
 
-    verify(mockErrorReportingService.addMeta(anything(), 'user')).once();
+    verify(mockedErrorReportingService.addMeta(anything(), 'user')).once();
     expect().nothing();
+  }));
+
+  it('non-beta site does not navigate to non-beta site', fakeAsync(() => {
+    environment.beta = false;
+    // SUT is in component constructor()
+    const env = new TestEnvironment('online');
+    verify(mockedLocationService.go(anyString())).never();
+    expect().nothing();
+  }));
+
+  it('beta site navigates to non-beta site', fakeAsync(() => {
+    environment.beta = true;
+    // SUT is in component constructor()
+    const env = new TestEnvironment('online');
+    verify(mockedLocationService.go(anyString())).once();
+    environment.beta = false;
+    expect().nothing();
+  }));
+
+  it('does not show beta migration dialog on beta server', fakeAsync(() => {
+    environment.beta = true;
+    const env = new TestEnvironment('online');
+    when(mockedUserService.checkUserNeedsMigrating()).thenResolve(false);
+    expect(env.component.isAppOnline).toBe(true);
+    // SUT is in ngOnInit()
+    env.init();
+    verify(mockedMdcDialog.open(BetaMigrationDialogComponent, anything())).never();
+    environment.beta = false;
+  }));
+
+  it('shows beta migration dialog on non-beta server, if migration needed and online', fakeAsync(() => {
+    environment.beta = false;
+    const env = new TestEnvironment('online');
+    when(mockedUserService.checkUserNeedsMigrating()).thenResolve(true);
+    expect(env.component.isAppOnline).toBe(true);
+    // SUT is in ngOnInit()
+    env.init();
+    verify(mockedMdcDialog.open(BetaMigrationDialogComponent, anything())).once();
+  }));
+
+  it('does not show beta migration dialog on non-beta server, if migration is not needed and online', fakeAsync(() => {
+    environment.beta = false;
+    const env = new TestEnvironment('online');
+    when(mockedUserService.checkUserNeedsMigrating()).thenResolve(false);
+    expect(env.component.isAppOnline).toBe(true);
+    // SUT is in ngOnInit()
+    env.init();
+    verify(mockedMdcDialog.open(BetaMigrationDialogComponent, anything())).never();
+  }));
+
+  it('does not show beta migration dialog on non-beta server, if offline, and doesnt do the online-only checkUserNeedsMigrating check', fakeAsync(() => {
+    environment.beta = false;
+    const env = new TestEnvironment('offline');
+    expect(env.component.isAppOnline).toBe(false);
+    // SUT is in ngOnInit()
+    env.init();
+    verify(mockedMdcDialog.open(BetaMigrationDialogComponent, anything())).never();
+    verify(mockedUserService.checkUserNeedsMigrating()).never();
+  }));
+
+  it('waits for the user to be online and then migrates data', fakeAsync(() => {
+    environment.beta = false;
+    const env = new TestEnvironment('offline');
+    when(mockedUserService.checkUserNeedsMigrating()).thenResolve(true);
+    // SUT1 is in ngOnInit()
+    env.init();
+    tick();
+    verify(mockedMdcDialog.open(BetaMigrationDialogComponent, anything())).never();
+    env.comesOnline$.next();
+    // SUT2 is in ngOnInit()
+    tick();
+    verify(mockedMdcDialog.open(BetaMigrationDialogComponent, anything())).once();
+    expect().nothing();
+  }));
+
+  it('beta url is available (for template)', fakeAsync(() => {
+    environment.beta = false;
+    environment.betaUrl = 'https://beta/url';
+    const locationWhenTesting = '/context.html';
+    const env = new TestEnvironment();
+    env.init();
+    expect(env.component.correspondingBetaUrl).toEqual(environment.betaUrl + locationWhenTesting);
+  }));
+
+  it('isBeta is available (for template)', fakeAsync(() => {
+    environment.beta = false;
+    const env = new TestEnvironment();
+    env.init();
+    expect(env.component.isBeta).toEqual(environment.beta);
+
+    environment.beta = true;
+    expect(env.component.isBeta).toEqual(environment.beta);
+    environment.beta = false;
+  }));
+
+  it('isLive is available (for template)', fakeAsync(() => {
+    environment.releaseStage = 'dev';
+    const env = new TestEnvironment();
+    env.init();
+    expect(env.component.isLive).toEqual(false);
+
+    environment.releaseStage = 'qa';
+    expect(env.component.isLive).toEqual(false);
+
+    environment.releaseStage = 'live';
+    expect(env.component.isLive).toEqual(true);
+    environment.releaseStage = 'dev';
+  }));
+
+  it('beta site link shows when appropriate', fakeAsync(() => {
+    // In help menu on stable site, but never at Live.
+
+    const testCases: { isBeta: boolean; releaseStage: 'dev' | 'qa' | 'live'; showLink: boolean }[] = [
+      { isBeta: true, releaseStage: 'dev', showLink: false },
+      { isBeta: false, releaseStage: 'dev', showLink: true },
+      { isBeta: true, releaseStage: 'qa', showLink: false },
+      { isBeta: false, releaseStage: 'qa', showLink: true },
+      { isBeta: true, releaseStage: 'live', showLink: false },
+      { isBeta: false, releaseStage: 'live', showLink: false }
+    ];
+    for (const testCase of testCases) {
+      environment.beta = testCase.isBeta;
+      environment.releaseStage = testCase.releaseStage;
+      const env = new TestEnvironment();
+      env.init();
+      env.fixture.debugElement.query(By.css('#helpMenuIcon')).nativeElement.click();
+      env.fixture.detectChanges();
+      expect(env.someHelpMenuItemContains('beta site')).toBe(testCase.showLink);
+    }
+    environment.beta = false;
+    environment.releaseStage = 'dev';
   }));
 
   describe('Community Checking', () => {
@@ -409,10 +553,13 @@ class TestEnvironment {
   readonly ngZone: NgZone;
   readonly isProjectAdmin$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
   readonly hasUpdate$: Subject<any> = new Subject<any>();
+  readonly mockedProjectDeletedDialogRef: MdcDialogRef<ProjectDeletedDialogComponent> = mock(MdcDialogRef);
+  readonly projectDeletedDialogRefAfterClosed$: Subject<string> = new Subject<string>();
+  readonly comesOnline$: Subject<void> = new Subject<void>();
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-  constructor() {
+  constructor(initialConnectionStatus?: 'online' | 'offline') {
     this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
       id: 'user01',
       data: {
@@ -469,10 +616,32 @@ class TestEnvironment {
     when(mockedUserService.currentProjectId).thenReturn('project01');
     when(mockedSFAdminAuthGuard.allowTransition(anything())).thenReturn(this.isProjectAdmin$);
     when(mockedCookieService.get(anything())).thenReturn('en');
-    when(mockedPwaService.isOnline).thenReturn(true);
-    when(mockedPwaService.onlineStatus).thenReturn(of(true));
+    const comesOnline = new Promise<void>(resolve => {
+      this.comesOnline$.subscribe(() => resolve());
+    });
+
+    if (initialConnectionStatus === 'offline') {
+      when(mockedPwaService.isOnline).thenReturn(false);
+      when(mockedPwaService.online).thenReturn(comesOnline);
+      when(mockedPwaService.onlineStatus).thenReturn(of(false));
+    } else {
+      when(mockedPwaService.isOnline).thenReturn(true);
+      when(mockedPwaService.online).thenReturn(comesOnline);
+      this.comesOnline$.next();
+      when(mockedPwaService.onlineStatus).thenReturn(of(true));
+    }
     when(mockedFileService.notifyUserIfStorageQuotaBelow(anything())).thenResolve();
     when(mockedPwaService.hasUpdate).thenReturn(this.hasUpdate$);
+    when(mockedMdcDialog.open(ProjectDeletedDialogComponent)).thenReturn(instance(this.mockedProjectDeletedDialogRef));
+    when(this.mockedProjectDeletedDialogRef.afterClosed()).thenReturn(this.projectDeletedDialogRefAfterClosed$);
+    const mockedBetaMigrationDialogRef: MdcDialogRef<BetaMigrationDialogComponent> = mock(MdcDialogRef);
+    when(mockedMdcDialog.open(BetaMigrationDialogComponent, anything())).thenReturn(
+      instance(mockedBetaMigrationDialogRef)
+    );
+
+    when(mockedBetaMigrationDialogRef.componentInstance).thenReturn(instance(mockedBetaMigrationDialogComponent));
+    when(mockedBetaMigrationDialogComponent.onProgress).thenReturn(new EventEmitter<number>());
+    when(mockedBetaMigrationDialogRef.afterClosed()).thenReturn(of());
 
     this.router = TestBed.inject(Router);
     this.location = TestBed.inject(Location);
@@ -520,6 +689,11 @@ class TestEnvironment {
     return listElem.componentInstance;
   }
 
+  get helpMenuList(): MdcList {
+    const listElem = this.fixture.debugElement.query(By.css('#help-menu-list'));
+    return listElem.componentInstance;
+  }
+
   get navBar(): DebugElement {
     return this.fixture.debugElement.query(By.css('mdc-top-app-bar'));
   }
@@ -540,14 +714,6 @@ class TestEnvironment {
     return this.menuDrawer != null;
   }
 
-  get projectDeletedDialog(): HTMLElement {
-    return this.overlayContainerElement.querySelector('mdc-dialog') as HTMLElement;
-  }
-
-  get okButton(): HTMLElement {
-    return this.overlayContainerElement.querySelector('#ok-button') as HTMLElement;
-  }
-
   get currentUserDisplayName(): string {
     return this.currentUserDoc.data!.displayName;
   }
@@ -565,8 +731,18 @@ class TestEnvironment {
     return this.menuList.items.find((item: MdcListItem) => item.elementRef.nativeElement.innerText.includes(substring));
   }
 
+  getHelpMenuItemContaining(substring: string): MdcListItem | undefined {
+    return this.helpMenuList.items.find((item: MdcListItem) =>
+      item.elementRef.nativeElement.innerText.includes(substring)
+    );
+  }
+
   someMenuItemContains(substring: string): boolean {
     return this.getMenuItemContaining(substring) !== undefined;
+  }
+
+  someHelpMenuItemContains(substring: string): boolean {
+    return this.getHelpMenuItemContaining(substring) !== undefined;
   }
 
   remoteAddQuestion(newQuestion: Question): void {
@@ -652,9 +828,8 @@ class TestEnvironment {
     this.currentUserDoc.submitJson0Op(op => op.add<string>(u => u.sites['sf'].projects, 'project04'), false);
   }
 
-  confirmDialog(): void {
-    this.okButton.click();
-    this.wait();
+  confirmProjectDeletedDialog() {
+    this.projectDeletedDialogRefAfterClosed$.next('close');
   }
 
   private addProject(projectId: string, userRoles: { [userRef: string]: string }, texts: TextInfo[]): void {

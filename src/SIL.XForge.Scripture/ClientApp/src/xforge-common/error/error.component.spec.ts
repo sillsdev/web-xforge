@@ -1,8 +1,7 @@
 import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web/dialog';
-import { OverlayContainer } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { configureTestingModule, TestTranslocoModule } from '../test-utils';
 import { UICommonModule } from '../ui-common.module';
 import { ErrorAlert, ErrorComponent } from './error.component';
@@ -37,6 +36,8 @@ describe('ErrorComponent', () => {
     expect(env.showDetails.textContent).toBe('Show details');
     expect(env.stackTrace.style.display).toBe('none');
     expect(env.errorId.style.display).toBe('none');
+    env.closeButton.click();
+    flush();
   }));
 });
 
@@ -104,7 +105,7 @@ class TestEnvironment {
   }
 
   get closeButton(): HTMLElement {
-    return this.selectElement('button')!;
+    return this.selectElement('button[mdcdialogaction="close"]')!;
   }
 
   private selectElement(selector: string): HTMLElement | null {

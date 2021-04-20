@@ -57,7 +57,9 @@ namespace SIL.XForge.Scripture
             "projects",
             "system-administration",
             "favicon.ico",
-            "assets"
+            "assets",
+
+            "migration" // TODO: remove when migrations to non-beta are done - IJH 2021-03-16
         };
 
         private static readonly HashSet<string> DevelopmentSpaPostRoutes = new HashSet<string>
@@ -72,7 +74,7 @@ namespace SIL.XForge.Scripture
             Configuration = configuration;
             Environment = env;
             LoggerFactory = loggerFactory;
-            if (Environment.IsDevelopment())
+            if (IsDevelopmentEnvironment)
             {
                 SpaGetRoutes.UnionWith(DevelopmentSpaGetRoutes);
                 SpaPostRoutes.UnionWith(DevelopmentSpaPostRoutes);
@@ -93,7 +95,7 @@ namespace SIL.XForge.Scripture
         {
             get
             {
-                if (Environment.IsDevelopment())
+                if (IsDevelopmentEnvironment)
                 {
                     string startNgServe = Configuration.GetValue("start-ng-serve", "yes");
                     switch (startNgServe)
@@ -104,7 +106,7 @@ namespace SIL.XForge.Scripture
                             return SpaDevServerStartup.Listen;
                     }
                 }
-                else if (Environment.IsEnvironment("Testing"))
+                else if (IsTestingEnvironment)
                 {
                     return SpaDevServerStartup.Listen;
                 }
@@ -112,7 +114,8 @@ namespace SIL.XForge.Scripture
             }
         }
 
-        private bool IsDevelopment => Environment.IsDevelopment() || Environment.IsEnvironment("Testing");
+        private bool IsDevelopmentEnvironment => Environment.IsDevelopment() || Environment.IsEnvironment("DevelopmentBeta");
+        private bool IsTestingEnvironment => Environment.IsEnvironment("Testing") || Environment.IsEnvironment("TestingBeta");
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public IServiceProvider ConfigureServices(IServiceCollection services)
@@ -123,7 +126,7 @@ namespace SIL.XForge.Scripture
 
             services.AddConfiguration(Configuration);
 
-            services.AddSFRealtimeServer(LoggerFactory, Configuration, IsDevelopment);
+            services.AddSFRealtimeServer(LoggerFactory, Configuration, IsDevelopmentEnvironment || IsTestingEnvironment);
 
             services.AddSFServices();
 
@@ -182,7 +185,7 @@ namespace SIL.XForge.Scripture
         public void Configure(IApplicationBuilder app, IHostApplicationLifetime appLifetime,
             IExceptionHandler exceptionHandler)
         {
-            if (IsDevelopment)
+            if (IsDevelopmentEnvironment || IsTestingEnvironment)
             {
                 app.UseDeveloperExceptionPage();
             }
@@ -222,13 +225,21 @@ namespace SIL.XForge.Scripture
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.UseRealtimeServer();
+            // Allow beta to enable the realtime server for testing purposes
+            // Non-beta environments will always load the realtime server
+            if (!siteOptions.Value.Beta ||
+                (siteOptions.Value.Beta && Configuration.GetValue<string>("enable-beta-realtime-server") == "yes")
+                )
+            {
+                app.UseRealtimeServer();
 
-            app.UseMachine();
+                app.UseMachine();
 
-            app.UseSFServices();
+                app.UseSFServices();
 
-            app.UseSFDataAccess();
+            }
+
+            app.UseSFDataAccess(siteOptions.Value.Beta);
 
             app.UsePing();
 
@@ -254,11 +265,24 @@ namespace SIL.XForge.Scripture
                     switch (SpaDevServerStartup)
                     {
                         case SpaDevServerStartup.Start:
-                            spa.UseAngularCliServer(npmScript: "start:no-progress");
+                        string npmScript = "start";
+                        if (Environment.IsEnvironment("DevelopmentBeta"))
+                        {
+                            npmScript = "startBeta";
+                        }
+                        Console.WriteLine($"Info: SF is serving angular using script {npmScript}.");
+                        spa.UseAngularCliServer(npmScript);
                             break;
 
                         case SpaDevServerStartup.Listen:
-                            spa.UseProxyToSpaDevelopmentServer("http://localhost:4200");
+                        int port = 4200;
+                        if (Environment.IsEnvironment("DevelopmentBeta"))
+                        {
+                            port = 9200;
+                        }
+                        string ngServeUri = $"http://localhost:{port}";
+                        Console.WriteLine($"Info: SF will use an existing angular serve at {ngServeUri}.");
+                        spa.UseProxyToSpaDevelopmentServer(ngServeUri);
                             break;
                     }
                 });
@@ -276,7 +300,7 @@ namespace SIL.XForge.Scripture
             if (index == -1)
                 index = path.Length;
             string prefix = path.Substring(1, index - 1);
-            if (!Environment.IsDevelopment() && (prefix.EndsWith(".js") || prefix.EndsWith(".js.map") ||
+            if (!IsDevelopmentEnvironment && (prefix.EndsWith(".js") || prefix.EndsWith(".js.map") ||
                 prefix.EndsWith(".css") || prefix.EndsWith(".css.map")))
             {
                 int periodIndex = path.IndexOf(".");

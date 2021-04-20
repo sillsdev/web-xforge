@@ -24,6 +24,18 @@
     "scripture_checking_not_available": "Bu layihədə Kəlamın yoxlanması mövcud deyil. ",
     "update_is_available": "An update is available. Please refresh the page."
   },
+  "beta_migration": {
+    "checking_for_data": "Checking for offline data",
+    "cleaning_up": "Cleaning up",
+    "close": "Bağla",
+    "completed": "Migration complete — this dialog will now close",
+    "data_migration": "Data migration",
+    "fetching_data": "Fetching data",
+    "loading": "Loading",
+    "loading_retry": "Loading - retrying ({{ attempt }})",
+    "login_required": "Login required",
+    "please_wait": "Scripture Forge is now out of Beta — yay! Hold tight while we quickly migrate your account to the new full release version."
+  },
   "canon": {
     "book_names": {
       "GEN": "Yaradılış",
@@ -284,12 +296,14 @@
     "copy_link": "Keçidi yaddaşa nüsxələyin. ",
     "email_invalid": "E-poçt ünvanı yanlışdır.",
     "email": "E-poçt",
+    "invitation_language": "Invitation language",
     "invitation_sent": "Dəvət e-məktubu bu ünvana {{ email }} göndərildi. ",
     "invite_people": "Başqalarını dəvət edin.",
     "link_copied": "Keçid mübadilə buferinə nüsxələndi. ",
     "link_sharing": "Keçid paylaşımı",
     "not_inviting_already_member": "Dəvət olunmur: İstifadəçi artıq bu layihənin üzvüdür. ",
     "resend": "Yenidən göndərmək",
+    "select_invitation_language": "Select a language for the invitation email",
     "send": "Göndərmək",
     "share_by_email_not_available_offline": "Şəbəkədə olmayan vaxtınızda istifadəçini dəvət etmək mümkün deyil."
   },

@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Options;
+using SIL.XForge.Configuration;
 using SIL.XForge.Models;
 
 namespace SIL.XForge.Scripture.Services
@@ -12,21 +14,23 @@ namespace SIL.XForge.Scripture.Services
         /// The JWT token helper.
         /// </summary>
         private readonly IJwtTokenHelper _jwtTokenHelper;
+        private readonly IOptions<SiteOptions> _siteOptions;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SFDblRestClientFactory"/> class.
         /// </summary>
         /// <param name="jwtTokenHelper">The JWT token helper.</param>
-        public SFDblRestClientFactory(IJwtTokenHelper jwtTokenHelper)
+        public SFDblRestClientFactory(IJwtTokenHelper jwtTokenHelper, IOptions<SiteOptions> siteOptions)
         {
-            this._jwtTokenHelper = jwtTokenHelper;
+            _jwtTokenHelper = jwtTokenHelper;
+            _siteOptions = siteOptions;
         }
 
         /// <inheritdoc />
-        public ISFRestClient Create(string baseUri, string applicationProductVersion, UserSecret userSecret)
+        public ISFRestClient Create(string baseUri, UserSecret userSecret)
         {
-            string jwtToken = this._jwtTokenHelper.GetJwtTokenFromUserSecret(userSecret);
-            return new JwtRestClient(baseUri, applicationProductVersion, jwtToken);
+            string jwtToken = _jwtTokenHelper.GetJwtTokenFromUserSecret(userSecret);
+            return new JwtRestClient(baseUri, _siteOptions.Value.Name, jwtToken);
         }
     }
 }

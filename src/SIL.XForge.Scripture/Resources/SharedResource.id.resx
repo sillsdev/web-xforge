@@ -146,9 +146,8 @@
   <data name="InviteInstructions" xml:space="preserve">
     <value>Jika Anda belum menjadi pengguna {0}, lalu setelah mengklik tautan, klik {1} Daftar {2} dan lakukan salah satu berikut ini:</value>
   </data>
-  <data name="InviteLinkSharingOff" xml:space="preserve">
-    <value>Tautan ini hanya akan berfungsi untuk alamat surel ini.</value>
-    <comment>Previously this text was used when link sharing was turned off for a project, but now it is always used when sending an invitation whether link sharing is on or off.</comment>
+  <data name="InviteLinkExpires" xml:space="preserve">
+    <value>The project invitation link expires in 14 days.</value>
   </data>
   <data name="InvitePTOption" xml:space="preserve">
     <value>Klik {0} Daftar dengan Paratext {1} dan ikuti instruksi untuk mengakses {2} menggunakan akun Paratext yang ada, atau</value>

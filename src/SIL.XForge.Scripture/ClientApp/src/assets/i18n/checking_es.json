@@ -24,6 +24,18 @@
     "scripture_checking_not_available": "La verificación de las Escrituras no está disponible en este proyecto.",
     "update_is_available": "An update is available. Please refresh the page."
   },
+  "beta_migration": {
+    "checking_for_data": "Checking for offline data",
+    "cleaning_up": "Cleaning up",
+    "close": "Cerrar",
+    "completed": "Migration complete — this dialog will now close",
+    "data_migration": "Data migration",
+    "fetching_data": "Fetching data",
+    "loading": "Loading",
+    "loading_retry": "Loading - retrying ({{ attempt }})",
+    "login_required": "Login required",
+    "please_wait": "Scripture Forge is now out of Beta — yay! Hold tight while we quickly migrate your account to the new full release version."
+  },
   "canon": {
     "book_names": {
       "GEN": "Génesis",
@@ -284,12 +296,14 @@
     "copy_link": "Copiar enlace",
     "email_invalid": "La dirección de correo electrónico no es válida",
     "email": "Correo electrónico",
+    "invitation_language": "Invitation language",
     "invitation_sent": "Se ha enviado un correo electrónico de invitación a {{ email }}",
     "invite_people": "Invitar a otras personas",
     "link_copied": "Enlace copiado al portapapeles",
     "link_sharing": "Compartir enlaces",
     "not_inviting_already_member": "No se invitó: El usuario ya es miembro de este proyecto",
     "resend": "Reenviar",
+    "select_invitation_language": "Select a language for the invitation email",
     "send": "Enviar",
     "share_by_email_not_available_offline": "Invitar usuarios por correo electrónico no está disponible cuando no se está en línea."
   },

@@ -12,12 +12,13 @@
 @{
     var requestCulture = Context.Features.Get<IRequestCultureFeature>();
     var cultureItems = LocOptions.Value.SupportedUICultures
-        .Where(c => SharedResource.Cultures[c.IetfLanguageTag].Production || !env.IsStaging() && !env.IsProduction())
+        .Where(c => SharedResource.Cultures[c.IetfLanguageTag].Production || !env.IsStaging() &&
+            !env.IsEnvironment("StagingBeta") && !env.IsProduction() && !env.IsEnvironment("Beta"))
         .Select(c => new SelectListItem
             {
                 Value = c.Name,
                 Text = SharedResource.Cultures[c.IetfLanguageTag].LocalName +
-                    (SharedResource.Cultures[c.IetfLanguageTag].Production ? "" : " *")
+                (SharedResource.Cultures[c.IetfLanguageTag].Production ? "" : " *")
             }
         )
         .ToList();

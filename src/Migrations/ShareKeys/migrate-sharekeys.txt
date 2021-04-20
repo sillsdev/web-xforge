@@ -1,0 +1,18 @@
+# For migrating sharekeys to have a role and expiration time
+
+# Steps:
+# 1. Open a mongo shell. Instructions for downloading the mongo shell are here: https://docs.mongodb.com/manual/mongo/
+# 2. Paste the following command in the mongo shell and hit 'enter'
+# 3. If there are no errors mongo will report the number of documents updated
+
+use xforge
+db.sf_project_secrets.updateMany(
+	{ },
+	{ $set: { "shareKeys.$[elem].projectRole": "sf_community_checker" } },
+	{ arrayFilters: [ { "elem.projectRole": { $exists: false } } ] }
+)
+db.sf_project_secrets.updateMany(
+	{ },
+	{ $set: { "shareKeys.$[elem].expirationTime": new Date(2021, 11) } },
+	{ arrayFilters: [ { "elem.expirationTime": { $exists: false } } ] }
+)

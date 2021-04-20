@@ -6,6 +6,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "startBeta": "ng serve --configuration=developmentBeta",
     "start:no-progress": "ng serve --progress=false",
     "start:no-reload": "ng serve --liveReload=false",
     "build": "ng build",
@@ -98,7 +99,7 @@
     "karma-jasmine-html-reporter": "^1.5.4",
     "karma-teamcity-reporter": "^1.1.0",
     "lint-staged": "^10.5.4",
-    "npm": "6.14.11",
+    "npm": "^7.8.0",
     "prettier": "^2.2.1",
     "protractor": "^7.0.0",
     "ts-mockito": "^2.6.1",

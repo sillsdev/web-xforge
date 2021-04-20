@@ -198,6 +198,15 @@ namespace SIL.XForge.Scripture.Services
                 var tasks = new List<Task>();
                 foreach (string projectUserId in projectUserIds)
                     tasks.Add(removeUser(projectUserId));
+
+                string[] referringProjects = GetProjectWithReferenceToSource(projectId);
+                async Task removeSourceReference(string projectId)
+                {
+                    IDocument<SFProject> doc = await conn.FetchAsync<SFProject>(projectId);
+                    await doc.SubmitJson0OpAsync(op => op.Unset(d => d.TranslateConfig.Source));
+                }
+                foreach (string projId in referringProjects)
+                    tasks.Add(removeSourceReference(projId));
                 await Task.WhenAll(tasks);
             }
 
@@ -318,7 +327,8 @@ namespace SIL.XForge.Scripture.Services
             await _syncService.SyncAsync(curUserId, projectId, false);
         }
 
-        public async Task<bool> InviteAsync(string curUserId, string projectId, string email, string locale)
+        public async Task<bool> InviteAsync(string curUserId, string projectId, string email, string locale,
+            string role)
         {
             SFProject project = await GetProjectAsync(projectId);
             if (await RealtimeService.QuerySnapshots<User>()
@@ -345,7 +355,14 @@ namespace SIL.XForge.Scripture.Services
             SFProjectSecret projectSecret = await ProjectSecrets.UpdateAsync(
                 p => p.Id == projectId && !p.ShareKeys.Any(sk => sk.Email == email),
                 update => update.Add(p => p.ShareKeys,
-                    new ShareKey { Email = email, Key = _securityService.GenerateKey(), ExpirationTime = expTime })
+                    new ShareKey
+                    {
+                        Email = email,
+                        Key = _securityService.GenerateKey(),
+                        ExpirationTime = expTime,
+                        ProjectRole = role
+                    }
+                )
             );
             if (projectSecret == null)
             {
@@ -374,6 +391,33 @@ namespace SIL.XForge.Scripture.Services
             var emailBody = $"{greeting}{linkExpires}{instructions}{pt}{google}{facebook}{withemail}{signoff}";
             await _emailService.SendEmailAsync(email, subject, emailBody);
             return true;
+        }
+
+        /// <summary> Get the link sharing key for a project if it exists, otherwise create a new one. </summary>
+        public async Task<string> GetLinkSharingKeyAsync(string projectId, string role)
+        {
+            SFProject project = await GetProjectAsync(projectId);
+            if (!(project.CheckingConfig.ShareEnabled && project.CheckingConfig.ShareLevel == CheckingShareLevel.Anyone))
+                return null;
+            SFProjectSecret projectSecret = await ProjectSecrets.GetAsync(projectId);
+            // Link sharing keys have Email set to null and ExpirationTime set to null.
+            string key = projectSecret.ShareKeys.SingleOrDefault(
+                sk => sk.Email == null && sk.ProjectRole == role)?.Key;
+            if (!string.IsNullOrEmpty(key))
+                return key;
+
+            // Generate a new link sharing key for the given role
+            key = _securityService.GenerateKey();
+            await ProjectSecrets.UpdateAsync(p => p.Id == projectId,
+                update => update.Add(p => p.ShareKeys,
+                new ShareKey
+                {
+                    Key = key,
+                    ProjectRole = role,
+                    ExpirationTime = null
+                }
+            ));
+            return key;
         }
 
         /// <summary>Cancel an outstanding project invitation.</summary>
@@ -419,11 +463,12 @@ namespace SIL.XForge.Scripture.Services
             SFProjectSecret projectSecret = await ProjectSecrets.GetAsync(projectId);
 
             DateTime now = DateTime.UtcNow;
-            return projectSecret.ShareKeys.Select(sk =>
+            return projectSecret.ShareKeys.Where(s => s.Email != null).Select(sk =>
                 new InviteeStatus { Email = sk.Email, Expired = sk.ExpirationTime < now }).ToArray();
         }
 
-        public async Task CheckLinkSharingAsync(string curUserId, string projectId, string shareKey = null)
+        /// <summary> Check that a share link is valid for a project and add the user to the project. </summary>
+        public async Task CheckLinkSharingAsync(string curUserId, string projectId, string shareKey)
         {
             using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
@@ -432,38 +477,53 @@ namespace SIL.XForge.Scripture.Services
                     return;
 
                 IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
+                string projectRole;
+                // Attempt to get the role for the user from the Paratext registry
                 Attempt<string> attempt = await TryGetProjectRoleAsync(projectDoc.Data, curUserId);
-                string projectRole = attempt.Result;
-
-                if (shareKey != null)
+                if (!attempt.TryResult(out projectRole))
                 {
-                    SFProjectSecret projectSecret = await ProjectSecrets.UpdateAsync(
-                        p => p.Id == projectId && p.ShareKeys.Any(
-                            sk => sk.Key == shareKey && sk.ExpirationTime > DateTime.UtcNow),
-                        update => update.RemoveAll(p => p.ShareKeys, sk => sk.Key == shareKey)
-                    );
-                    if (projectSecret != null)
-                    {
-                        await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, false);
-                        return;
-                    }
+                    // Get the project role that is specified in the sharekey
+                    Attempt<SFProjectSecret> psAttempt = await ProjectSecrets.TryGetAsync(projectId);
+                    if (psAttempt.TryResult(out SFProjectSecret ps))
+                        projectRole = ps.ShareKeys.SingleOrDefault(sk => sk.Key == shareKey)?.ProjectRole;
                 }
-                if (projectDoc.Data.CheckingConfig.ShareEnabled == true &&
-                    projectDoc.Data.CheckingConfig.ShareLevel == CheckingShareLevel.Anyone)
+                // The share key was invalid
+                if (projectRole == null)
+                    throw new ForbiddenException();
+
+                bool linkSharing = projectDoc.Data.CheckingConfig.ShareEnabled &&
+                    projectDoc.Data.CheckingConfig.ShareLevel == CheckingShareLevel.Anyone;
+                if (linkSharing)
                 {
-                    // Users with the project link get added to the project. This also covers the case where
-                    // a user was emailed a share key and the invite was cancelled, but link sharing is enabled
-                    await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole);
+                    // Add the user and remove the specific user share key if it exists. Link sharing keys
+                    // have Email set to null and will not be removed.
+                    await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, true);
+                    return;
+                }
+                // Look for a valid specific user share key.
+                SFProjectSecret projectSecret = await ProjectSecrets.UpdateAsync(
+                    p => p.Id == projectId && p.ShareKeys.Any(
+                        sk => sk.Email != null && sk.Key == shareKey && sk.ExpirationTime > DateTime.UtcNow),
+                    update => update.RemoveAll(p => p.ShareKeys, sk => sk.Key == shareKey)
+                );
+                if (projectSecret != null)
+                {
+                    await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, false);
                     return;
                 }
                 throw new ForbiddenException();
             }
         }
 
+        /// <summary> Determine if the specified project is an active source project. </summary>
         public bool IsSourceProject(string projectId)
         {
-            return RealtimeService.QuerySnapshots<SFProject>()
-                .Any(p => p.TranslateConfig.Source != null && p.TranslateConfig.Source.ProjectRef == projectId);
+            IQueryable<SFProject> projectQuery = RealtimeService.QuerySnapshots<SFProject>();
+            return projectQuery.Any(p =>
+                p.TranslateConfig.Source != null &&
+                p.TranslateConfig.Source.ProjectRef == projectId &&
+                p.TranslateConfig.TranslationSuggestionsEnabled
+            );
         }
 
         public async Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestions(string curUserId, string projectId)
@@ -562,7 +622,7 @@ namespace SIL.XForge.Scripture.Services
                 }
             }
 
-            return Attempt.Failure(SFProjectRole.CommunityChecker);
+            return Attempt.Failure(ProjectRole.None);
         }
 
         private async Task<IDocument<SFProject>> TryGetProjectDocAsync(string projectId, IConnection conn)
@@ -699,6 +759,17 @@ namespace SIL.XForge.Scripture.Services
                 ShortName = sourcePTProject.ShortName,
                 WritingSystem = new WritingSystem { Tag = sourcePTProject.LanguageTag }
             };
+        }
+
+        private string[] GetProjectWithReferenceToSource(string projectId)
+        {
+            if (string.IsNullOrEmpty(projectId))
+                return new string[0];
+            IQueryable<SFProject> projectQuery = RealtimeService.QuerySnapshots<SFProject>();
+            return projectQuery
+                .Where(p => p.TranslateConfig.Source != null && p.TranslateConfig.Source.ProjectRef == projectId)
+                .Select(p => p.Id)
+                .ToArray();
         }
     }
 }

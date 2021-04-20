@@ -1,7 +1,7 @@
 import { MdcCheckbox, MdcDialog, MdcDialogRef } from '@angular-mdc/web';
 import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';
@@ -41,6 +41,7 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.getRowQuestion(questions[0])).toBe('Transcelerator question 1:1');
     expect(env.getRowReference(questions[1])).toBe('MAT 1:2');
     expect(env.getRowQuestion(questions[1])).toBe('Transcelerator question 1:2');
+    env.click(env.cancelButton);
   }));
 
   it('can select questions in the list', fakeAsync(() => {
@@ -67,6 +68,7 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.component.filteredList[0].checked).toBe(false);
     expect(env.selectAllCheckbox.checked).toBe(false);
     expect(env.selectAllCheckbox.indeterminate).toBe(true);
+    env.click(env.cancelButton);
   }));
 
   it('select all selects and deselects all visible questions', fakeAsync(() => {
@@ -95,6 +97,7 @@ describe('ImportQuestionsDialogComponent', () => {
     env.clickSelectAll();
     expect(env.component.filteredList[0].checked).toBe(true);
     expect(env.component.filteredList[1].checked).toBe(true);
+    env.click(env.cancelButton);
   }));
 
   it('can filter questions for text', fakeAsync(() => {
@@ -102,6 +105,7 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.questionRows.length).toBe(2);
     env.setControlValue(env.component.filterControl, '1:2');
     expect(env.questionRows.length).toBe(1);
+    env.click(env.cancelButton);
   }));
 
   it('clears text from filter when show all is clicked', fakeAsync(() => {
@@ -116,6 +120,7 @@ describe('ImportQuestionsDialogComponent', () => {
     env.click(env.showAllButton);
     expect(env.component.fromControl.value).toBe('');
     expect(env.component.toControl.value).toBe('');
+    env.click(env.cancelButton);
   }));
 
   it('can filter questions with verse reference', fakeAsync(() => {
@@ -135,6 +140,7 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.questionRows.length).toBe(1);
     env.setControlValue(env.component.toControl, 'MAL 1:1');
     expect(env.questionRows.length).toBe(0);
+    env.click(env.cancelButton);
   }));
 
   it('show scripture chooser dialog', fakeAsync(() => {
@@ -143,6 +149,7 @@ describe('ImportQuestionsDialogComponent', () => {
     env.openFromScriptureChooser();
     verify(env.dialogSpy.open(anything(), anything())).once();
     expect(env.component.fromControl.value).toBe('MAT 1:1');
+    env.click(env.cancelButton);
   }));
 
   it('prompts for edited questions that have already been imported', fakeAsync(() => {
@@ -169,6 +176,7 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.component.filteredList[0].checked).toBe(false);
     expect(env.component.filteredList[1].checked).toBe(true);
     expect(env.component.filteredList[2].checked).toBe(true);
+    env.click(env.cancelButton);
   }));
 
   it('should inform the user when Transcelerator version is unsupported', fakeAsync(() => {
@@ -176,6 +184,7 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.statusMessage).toEqual(
       'The version of Transcelerator used in this project is not supported. Please update to at least Transcelerator version 1.5.3.'
     );
+    env.click(env.cancelButton);
   }));
 
   it('should import questions that cover a verse range', fakeAsync(() => {
@@ -206,25 +215,6 @@ describe('ImportQuestionsDialogComponent', () => {
       chapterNum: 1,
       verseNum: 2
     });
-  }));
-
-  it('should prompt the user for importing a question that has had the reference changed', fakeAsync(() => {
-    const env = new TestEnvironment(true);
-    when(env.mockedImportQuestionsConfirmationMdcDialogRef.afterClosed()).thenReturn(
-      of({
-        questions: [
-          {
-            before: 'GEN 43:2 Now the famine was severe in the land.',
-            after: 'GEN 43:1 Now the famine was severe in the land.',
-            checked: true
-          }
-        ]
-      } as ImportQuestionsConfirmationDialogData)
-    );
-    env.selectQuestion(env.questionRows[1]);
-    verify(env.dialogSpy.open(anything(), anything())).once();
-    env.click(env.submitButton);
-    expect(env.editedTransceleratorQuestionIds).toEqual(['4']);
   }));
 });
 
@@ -346,6 +336,12 @@ class TestEnvironment {
     return this.overlayContainerElement.querySelector('mdc-dialog-actions button[type="submit"]') as HTMLButtonElement;
   }
 
+  get cancelButton(): HTMLButtonElement {
+    return this.overlayContainerElement.querySelector(
+      'mdc-dialog-actions button[mdcdialogaction="close"]'
+    ) as HTMLButtonElement;
+  }
+
   clickSelectAll(): void {
     this.click(this.selectAllCheckbox._inputElement.nativeElement);
   }
@@ -378,6 +374,7 @@ class TestEnvironment {
     element.click();
     tick();
     this.fixture.detectChanges();
+    flush();
   }
 
   private setupTransceleratorQuestions(): void {

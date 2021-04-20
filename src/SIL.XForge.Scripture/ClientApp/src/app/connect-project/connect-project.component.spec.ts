@@ -103,6 +103,7 @@ describe('ConnectProjectComponent', () => {
     expect(env.selectableSourceProjectsAndResources.projects[2]).toBe('Thai');
     expect(env.selectableSourceProjectsAndResources.resources[0]).toBe('Sob Jonah and Luke');
     expect(env.component.connectProjectForm.valid).toBe(true);
+    env.clickElement(env.submitButton);
   }));
 
   it('should do nothing when form is invalid', fakeAsync(() => {
