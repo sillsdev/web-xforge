@@ -732,6 +732,17 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('user cannot edit a chapter source text visible', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setCurrentUser('user03');
+      env.setProjectUserConfig();
+      env.wait();
+      expect(env.bookName).toEqual('Matthew');
+      expect(env.component.canEdit).toBe(false);
+      expect(env.component.showSource).toBe(true);
+      env.dispose();
+    }));
+
     it('user cannot edit a chapter with permission', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setCurrentUser('user03');
@@ -812,7 +823,7 @@ describe('EditorComponent', () => {
       const selection = env.targetEditor.getSelection();
       expect(selection).toBeNull();
       expect(env.component.canEdit).toBe(false);
-      expect(env.isSourceAreaHidden).toBe(true);
+      expect(env.isSourceAreaHidden).toBe(false);
       expect(env.invalidWarning).not.toBeNull();
       env.dispose();
     }));
@@ -1034,6 +1045,11 @@ class TestEnvironment {
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private readonly params$: BehaviorSubject<Params>;
   private trainingProgress$ = new Subject<ProgressStatus>();
+  private textInfoPermissions = {
+    user01: TextInfoPermission.Write,
+    user02: TextInfoPermission.None,
+    user03: TextInfoPermission.Read
+  };
 
   private testProject: SFProject = {
     name: 'project 01',
@@ -1069,17 +1085,17 @@ class TestEnvironment {
             number: 1,
             lastVerse: 3,
             isValid: true,
-            permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+            permissions: this.textInfoPermissions
           },
           {
             number: 2,
             lastVerse: 3,
             isValid: true,
-            permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+            permissions: this.textInfoPermissions
           }
         ],
         hasSource: true,
-        permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+        permissions: this.textInfoPermissions
       },
       {
         bookNum: 41,
@@ -1088,11 +1104,11 @@ class TestEnvironment {
             number: 1,
             lastVerse: 3,
             isValid: false,
-            permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+            permissions: this.textInfoPermissions
           }
         ],
         hasSource: true,
-        permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+        permissions: this.textInfoPermissions
       },
       {
         bookNum: 42,
@@ -1101,17 +1117,21 @@ class TestEnvironment {
             number: 1,
             lastVerse: 3,
             isValid: true,
-            permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+            permissions: this.textInfoPermissions
           },
           {
             number: 2,
             lastVerse: 3,
             isValid: true,
-            permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Write }
+            permissions: {
+              user01: TextInfoPermission.Write,
+              user02: TextInfoPermission.None,
+              user03: TextInfoPermission.Write
+            }
           }
         ],
         hasSource: false,
-        permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+        permissions: this.textInfoPermissions
       },
       {
         bookNum: 43,
@@ -1120,11 +1140,11 @@ class TestEnvironment {
             number: 1,
             lastVerse: 0,
             isValid: true,
-            permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+            permissions: this.textInfoPermissions
           }
         ],
         hasSource: false,
-        permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+        permissions: this.textInfoPermissions
       },
       {
         bookNum: 44,
@@ -1133,11 +1153,11 @@ class TestEnvironment {
             number: 1,
             lastVerse: 3,
             isValid: true,
-            permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+            permissions: this.textInfoPermissions
           }
         ],
         hasSource: true,
-        permissions: { user01: TextInfoPermission.Write, user03: TextInfoPermission.Read }
+        permissions: this.textInfoPermissions
       }
     ]
   };
@@ -1297,6 +1317,9 @@ class TestEnvironment {
     const projectData = cloneDeep(this.testProject);
     if (data.translateConfig?.translationSuggestionsEnabled != null) {
       projectData.translateConfig.translationSuggestionsEnabled = data.translateConfig.translationSuggestionsEnabled;
+      if (!data.translateConfig.translationSuggestionsEnabled) {
+        projectData.texts.forEach(t => (t.hasSource = false));
+      }
     }
     if (data.translateConfig?.source !== undefined) {
       projectData.translateConfig.source = data.translateConfig?.source;
