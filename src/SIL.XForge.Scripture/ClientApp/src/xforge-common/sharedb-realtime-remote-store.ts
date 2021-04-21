@@ -126,16 +126,12 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
   }
 
   get pendingOps(): any[] {
-    const pendingOps = [];
+    let pendingOps = [];
     if (this.doc.hasWritePending()) {
-      if (this.doc.inflightOp != null && this.doc.inflightOp.op != null) {
-        pendingOps.push(this.doc.inflightOp.op);
-      }
+      pendingOps = this.doc.pendingOps;
 
-      for (const opInfo of this.doc.pendingOps) {
-        if (opInfo.op != null) {
-          pendingOps.push(opInfo.op);
-        }
+      if (this.doc.inflightOp != null && this.doc.inflightOp.op != null) {
+        pendingOps.push(this.doc.inflightOp);
       }
     }
     return pendingOps;

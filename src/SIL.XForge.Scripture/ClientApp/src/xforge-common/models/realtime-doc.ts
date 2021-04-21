@@ -186,12 +186,14 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
       return;
     }
 
-    const pendingOps = this.adapter.pendingOps.map(op => this.prepareDataForStore(op));
-
     // if the snapshot hasn't changed, then don't bother to update
-    if (pendingOps.length === 0 && this.adapter.version === this.offlineSnapshotVersion) {
+    if (this.adapter.pendingOps.length === 0 && this.adapter.version === this.offlineSnapshotVersion) {
       return;
     }
+
+    const pendingOps = this.adapter.pendingOps
+      .filter(opInfo => opInfo.op != null)
+      .map(opInfo => this.prepareDataForStore(opInfo.op));
 
     this.offlineSnapshotVersion = this.adapter.version;
     const offlineData: RealtimeOfflineData = {
