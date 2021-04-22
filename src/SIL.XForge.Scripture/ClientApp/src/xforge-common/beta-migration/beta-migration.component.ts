@@ -34,7 +34,7 @@ export class BetaMigrationComponent {
     const documentPromises: Promise<RealtimeDoc>[] = [];
 
     // Only run if we're in an iframe from master
-    if (window.self === window.top) {
+    if (!environment.beta || window.self === window.top) {
       this.router.navigateByUrl('/projects');
       return;
     }

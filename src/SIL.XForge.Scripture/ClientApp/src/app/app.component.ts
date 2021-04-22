@@ -108,8 +108,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       // Check authentication when coming back online
       // This is also run on first load when the websocket connects for the first time
       if (this.isAppOnline && !this.isAppLoading) {
-        // Redirect to the master site unless the referrer was the master site
-        if (environment.beta && !document.referrer.includes(environment.masterUrl)) {
+        // Redirect to the master site unless operating in the migration iframe
+        if (environment.beta && (window.self === window.top || this.locationService.pathname !== '/migration')) {
           this.locationService.go(environment.masterUrl + window.location.pathname);
         }
         this.authService.checkOnlineAuth();
