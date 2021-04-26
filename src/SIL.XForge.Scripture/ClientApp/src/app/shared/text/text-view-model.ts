@@ -286,7 +286,8 @@ export class TextViewModel {
           'note-thread-segment',
           'note-thread-count',
           'note-thread',
-          'tag-style',
+          'note-icon-source',
+          'note-preview',
           'initial',
           'direction-segment',
           'direction-block'

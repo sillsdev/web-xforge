@@ -7,7 +7,7 @@ namespace SIL.XForge.Scripture.Models
     {
         public string DataId { get; set; }
         public VerseRefData VerseRef { get; set; }
-        public List<ParatextNote> Notes { get; set; } = new List<ParatextNote>();
+        public List<Note> Notes { get; set; } = new List<Note>();
         public string SelectedText { get; set; }
         public string ContextBefore { get; set; }
         public string ContextAfter { get; set; }

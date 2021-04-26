@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
@@ -33,6 +34,7 @@ using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
+using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
@@ -56,6 +58,7 @@ namespace SIL.XForge.Scripture.Services
         private readonly ILogger _logger;
         private readonly IJwtTokenHelper _jwtTokenHelper;
         private readonly IParatextDataHelper _paratextDataHelper;
+        private readonly IGuidService _guidService;
         private string _dblServerUri = "https://paratext.thedigitalbiblelibrary.org/";
         private string _registryServerUri = "https://registry.paratext.org";
         private string _sendReceiveServerUri = InternetAccess.uriProduction;
@@ -68,7 +71,7 @@ namespace SIL.XForge.Scripture.Services
             IRepository<UserSecret> userSecretRepository, IRealtimeService realtimeService,
             IExceptionHandler exceptionHandler, IOptions<SiteOptions> siteOptions, IFileSystemService fileSystemService,
             ILogger<ParatextService> logger, IJwtTokenHelper jwtTokenHelper, IParatextDataHelper paratextDataHelper,
-            IInternetSharedRepositorySourceProvider internetSharedRepositorySourceProvider,
+            IInternetSharedRepositorySourceProvider internetSharedRepositorySourceProvider, IGuidService guidService,
             ISFRestClientFactory restClientFactory)
         {
             _paratextOptions = paratextOptions;
@@ -81,6 +84,7 @@ namespace SIL.XForge.Scripture.Services
             _jwtTokenHelper = jwtTokenHelper;
             _paratextDataHelper = paratextDataHelper;
             _internetSharedRepositorySourceProvider = internetSharedRepositorySourceProvider;
+            _guidService = guidService;
             _restClientFactory = restClientFactory;
 
             _httpClientHandler = new HttpClientHandler();
@@ -549,17 +553,6 @@ namespace SIL.XForge.Scripture.Services
             return NotesFormatter.FormatNotes(threads);
         }
 
-        public IEnumerable<CommentThread> GetCommentThreads(UserSecret userSecret, string projectId, int bookNum)
-        {
-            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), projectId);
-            if (scrText == null)
-                return null;
-
-            CommentManager manager = CommentManager.Get(scrText);
-            var threads = manager.FindThreads((commentThread) =>
-                { return commentThread.VerseRef.BookNum == bookNum; }, true);
-            return threads.Where(t => !t.Id.StartsWith("ANSWER_"));
-        }
 
         /// <summary> Write up-to-date notes from the mongo database to the Paratext project folder </summary>
         public void PutNotes(UserSecret userSecret, string projectId, string notesText)
@@ -569,68 +562,90 @@ namespace SIL.XForge.Scripture.Services
             PutCommentThreads(userSecret, projectId, changeList);
         }
 
-        public void PutCommentThreads(UserSecret userSecret, string projectId,
-            List<List<Paratext.Data.ProjectComments.Comment>> changeList)
+        public IEnumerable<ParatextNoteThreadChange> GetNoteThreadChanges(UserSecret userSecret, string projectId,
+            int bookNum, IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs, Dictionary<string, SyncUser> syncUsers)
         {
-            string username = GetParatextUsername(userSecret);
-            List<string> users = new List<string>();
-            int nbrAddedComments = 0, nbrDeletedComments = 0, nbrUpdatedComments = 0;
-            ScrText scrText = ScrTextCollection.FindById(username, projectId);
-            if (scrText == null)
-                throw new DataNotFoundException("Can't get access to cloned project.");
-            CommentManager manager = CommentManager.Get(scrText);
-            var ptUser = new SFParatextUser(username);
+            IEnumerable<CommentThread> commentThreads = GetCommentThreads(userSecret, projectId, bookNum);
+            CommentTags commentTags = GetCommentTags(userSecret, projectId);
+            List<string> matchedThreadIds = new List<string>();
+            List<ParatextNoteThreadChange> changes = new List<ParatextNoteThreadChange>();
 
-            // Algorithm sourced from Paratext DataAccessServer
-            foreach (var thread in changeList)
+            foreach (var threadDoc in noteThreadDocs)
             {
-                CommentThread existingThread = manager.FindThread(thread[0].Thread);
-                foreach (var comment in thread)
+                List<string> matchedCommentIds = new List<string>();
+                ParatextNoteThreadChange threadChange = new ParatextNoteThreadChange(threadDoc.Data.DataId,
+                    threadDoc.Data.VerseRef.ToString(), threadDoc.Data.SelectedText, threadDoc.Data.ContextBefore,
+                    threadDoc.Data.ContextAfter, threadDoc.Data.StartPosition);
+                // Find the corresponding comment thread
+                var existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
+                if (existingThread == null)
                 {
-                    var existingComment = existingThread?.Comments.FirstOrDefault(c => c.Id == comment.Id);
-                    if (existingComment == null)
-                    {
-                        manager.AddComment(comment);
-                        nbrAddedComments++;
-                    }
-                    else if (comment.Deleted)
-                    {
-                        existingComment.Deleted = true;
-                        nbrDeletedComments++;
-                    }
-                    else
-                    {
-                        existingComment.ExternalUser = comment.ExternalUser;
-                        existingComment.Contents = comment.Contents;
-                        existingComment.VersionNumber += 1;
-                        nbrUpdatedComments++;
-                    }
-
-                    if (!users.Contains(comment.User))
-                        users.Add(comment.User);
+                    // No corresponding Paratext comment thread
+                    continue;
                 }
+                matchedThreadIds.Add(existingThread.Id);
+                foreach (Note note in threadDoc.Data.Notes)
+                {
+                    Paratext.Data.ProjectComments.Comment matchedComment =
+                        GetMatchingCommentFromNote(note, existingThread, syncUsers);
+                    if (matchedComment != null)
+                    {
+                        matchedCommentIds.Add(matchedComment.Id);
+                        ChangeType changeType = GetCommentChangeType(matchedComment, note);
+                        if (changeType != ChangeType.None)
+                        {
+                            SyncUser syncUser = FindOrCreateSyncUser(matchedComment.User, syncUsers);
+                            threadChange.AddChange(CreateNoteFromComment(matchedComment, commentTags, syncUser), changeType);
+                        }
+                    }
+                }
+                // Add new Comments to note thread change
+                var ptCommentIds = existingThread.Comments.Select(c => c.Id);
+                var newCommentIds = ptCommentIds.Except(matchedCommentIds);
+                foreach (string commentId in newCommentIds)
+                {
+                    Paratext.Data.ProjectComments.Comment comment = existingThread.Comments.Single(c => c.Id == commentId);
+                    SyncUser syncUser = FindOrCreateSyncUser(comment.User, syncUsers);
+                    threadChange.AddChange(CreateNoteFromComment(existingThread.Comments
+                        .Single(c => c.Id == commentId), commentTags, syncUser), ChangeType.Added);
+                }
+                if (threadChange.HasChange)
+                    changes.Add(threadChange);
             }
+            var ptThreadIds = commentThreads.Select(ct => ct.Id);
+            var newThreadIds = ptThreadIds.Except(matchedThreadIds);
+            foreach (string threadId in newThreadIds)
+            {
+                CommentThread thread = commentThreads.Single(ct => ct.Id == threadId);
+                Paratext.Data.ProjectComments.Comment info = thread.Comments[0];
 
-            try
-            {
-                foreach (string user in users)
-                    manager.SaveUser(user, false);
-                _paratextDataHelper.CommitVersionedText(scrText, $"{nbrAddedComments} notes added and "
-                    + $"{nbrDeletedComments + nbrUpdatedComments} notes updated or deleted in synchronize");
-                _logger.LogInformation("{0} added {1} notes, updated {2} notes and deleted {3} notes", userSecret.Id,
-                    nbrAddedComments, nbrUpdatedComments, nbrDeletedComments);
+                int tagId = info.TagsAdded != null && info.TagsAdded.Length > 0 ? int.Parse(info.TagsAdded[0]) : 1;
+                string originalTagIcon = commentTags.Get(tagId).Icon;
+                ParatextNoteThreadChange newThread = new ParatextNoteThreadChange(threadId, info.VerseRefStr,
+                    info.SelectedText, info.ContextBefore, info.ContextAfter, info.StartPosition, originalTagIcon);
+                foreach (var comm in thread.Comments)
+                {
+                    SyncUser syncUser = FindOrCreateSyncUser(comm.User, syncUsers);
+                    newThread.AddChange(CreateNoteFromComment(comm, commentTags, syncUser), ChangeType.Added);
+                }
+                changes.Add(newThread);
             }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Exception while updating notes: {0}", e.Message);
-            }
+            return changes;
         }
 
-        public CommentTags GetCommentTags(UserSecret userSecret, string projectId)
+        public void UpdateParatextComments(UserSecret userSecret, string projectId, int bookNum,
+            IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs, Dictionary<string, SyncUser> syncUsers)
         {
-            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), projectId);
-            return scrText == null ? null : CommentTags.Get(scrText);
+            CommentTags commentTags = GetCommentTags(userSecret, projectId);
+            string username = GetParatextUsername(userSecret);
+            IEnumerable<CommentThread> commentThreads =
+                GetCommentThreads(userSecret, projectId, bookNum);
+            List<List<Paratext.Data.ProjectComments.Comment>> noteThreadChangeList =
+                SFNotesToCommentChangeList(noteThreadDocs, commentThreads, username, commentTags, syncUsers);
+
+            PutCommentThreads(userSecret, projectId, noteThreadChangeList);
         }
+
 
         protected override void DisposeManagedResources()
         {
@@ -781,6 +796,83 @@ namespace SIL.XForge.Scripture.Services
             HgWrapper.Update(clonePath);
         }
 
+        private IEnumerable<CommentThread> GetCommentThreads(UserSecret userSecret, string projectId, int bookNum)
+        {
+            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), projectId);
+            if (scrText == null)
+                return null;
+
+            CommentManager manager = CommentManager.Get(scrText);
+            var threads = manager.FindThreads((commentThread) =>
+                { return commentThread.VerseRef.BookNum == bookNum; }, false);
+            return threads.Where(t => !t.Id.StartsWith("ANSWER_"));
+        }
+
+
+        private void PutCommentThreads(UserSecret userSecret, string projectId,
+            List<List<Paratext.Data.ProjectComments.Comment>> changeList)
+        {
+            string username = GetParatextUsername(userSecret);
+            List<string> users = new List<string>();
+            int nbrAddedComments = 0, nbrDeletedComments = 0, nbrUpdatedComments = 0;
+            ScrText scrText = ScrTextCollection.FindById(username, projectId);
+            if (scrText == null)
+                throw new DataNotFoundException("Can't get access to cloned project.");
+            CommentManager manager = CommentManager.Get(scrText);
+            var ptUser = new SFParatextUser(username);
+
+            // Algorithm sourced from Paratext DataAccessServer
+            foreach (List<Paratext.Data.ProjectComments.Comment> thread in changeList)
+            {
+                CommentThread existingThread = manager.FindThread(thread[0].Thread);
+                foreach (Paratext.Data.ProjectComments.Comment comment in thread)
+                {
+                    Paratext.Data.ProjectComments.Comment existingComment =
+                        existingThread?.Comments.FirstOrDefault(c => c.Id == comment.Id);
+                    if (existingComment == null)
+                    {
+                        manager.AddComment(comment);
+                        nbrAddedComments++;
+                    }
+                    else if (comment.Deleted)
+                    {
+                        existingComment.Deleted = true;
+                        nbrDeletedComments++;
+                    }
+                    else
+                    {
+                        existingComment.ExternalUser = comment.ExternalUser;
+                        existingComment.Contents = comment.Contents;
+                        existingComment.VersionNumber += 1;
+                        nbrUpdatedComments++;
+                    }
+
+                    if (!users.Contains(comment.User))
+                        users.Add(comment.User);
+                }
+            }
+
+            try
+            {
+                foreach (string user in users)
+                    manager.SaveUser(user, false);
+                _paratextDataHelper.CommitVersionedText(scrText, $"{nbrAddedComments} notes added and "
+                    + $"{nbrDeletedComments + nbrUpdatedComments} notes updated or deleted in synchronize");
+                _logger.LogInformation("{0} added {1} notes, updated {2} notes and deleted {3} notes", userSecret.Id,
+                    nbrAddedComments, nbrUpdatedComments, nbrDeletedComments);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Exception while updating notes: {0}", e.Message);
+            }
+        }
+
+        private CommentTags GetCommentTags(UserSecret userSecret, string projectId)
+        {
+            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), projectId);
+            return scrText == null ? null : CommentTags.Get(scrText);
+        }
+
         private async Task<string> CallApiAsync(UserSecret userSecret, HttpMethod method,
             string url, string content = null)
         {
@@ -856,6 +948,175 @@ namespace SIL.XForge.Scripture.Services
                 ProjectId = null,
                 ShortName = r.Name,
             }).ToArray();
+        }
+
+        /// <summary> Get the corresponding Comment from a note. </summary>
+        private Paratext.Data.ProjectComments.Comment GetMatchingCommentFromNote(Note note, CommentThread thread,
+            Dictionary<string, SyncUser> syncUsers)
+        {
+            SyncUser syncUser = note.SyncUserRef == null
+                ? null
+                : syncUsers.Values.SingleOrDefault(u => u.Id == note.SyncUserRef);
+            if (syncUser == null)
+                return null;
+            string date = new DateTimeOffset(note.DateCreated).ToString("o");
+            // Comment ids are generated using the Paratext username. Since we do not want to transparently
+            // store a username to a note in SF we construct the intended Comment id at runtime.
+            string commentId = string.Format("{0}/{1}/{2}", note.ThreadId, syncUser.ParatextUsername, date);
+            Paratext.Data.ProjectComments.Comment matchingComment =
+                thread.Comments.SingleOrDefault(c => c.Id == commentId);
+            if (matchingComment != null)
+                return matchingComment;
+
+            // Try another method to find the comment
+            DateTime noteTime = note.DateCreated.ToUniversalTime();
+            return thread.Comments
+                .Where(c => DateTime.Equals(noteTime, DateTime.Parse(c.Date, null, DateTimeStyles.AdjustToUniversal)))
+                .SingleOrDefault(c => c.User == syncUser.ParatextUsername);
+        }
+
+        /// <summary>
+        /// Get the comment change lists from the up-to-date note thread docs in the Scripture Forge mongo database.
+        /// </summary>
+        private List<List<Paratext.Data.ProjectComments.Comment>> SFNotesToCommentChangeList(
+            IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs, IEnumerable<CommentThread> commentThreads,
+            string defaultUsername, CommentTags commentTags, Dictionary<string, SyncUser> syncUsers)
+        {
+            List<List<Paratext.Data.ProjectComments.Comment>> changes =
+                new List<List<Paratext.Data.ProjectComments.Comment>>();
+            foreach (IDocument<ParatextNoteThread> threadDoc in noteThreadDocs)
+            {
+                List<Paratext.Data.ProjectComments.Comment> thread = new List<Paratext.Data.ProjectComments.Comment>();
+                CommentThread existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
+                List<(int, string)> threadNoteSyncUserIds = new List<(int, string)>();
+                for (int i = 0; i < threadDoc.Data.Notes.Count(); i++)
+                {
+                    Note note = threadDoc.Data.Notes[i];
+                    var matchedComment = existingThread == null
+                        ? null
+                        : GetMatchingCommentFromNote(note, existingThread, syncUsers);
+                    if (matchedComment != null)
+                    {
+                        var comment = (Paratext.Data.ProjectComments.Comment)matchedComment.Clone();
+                        bool commentUpdated = false;
+                        if (note.Content != comment.Contents?.InnerXml)
+                        {
+                            if (comment.Contents == null)
+                                comment.AddTextToContent("", false);
+                            comment.Contents.InnerXml = note.Content;
+                            commentUpdated = true;
+                        }
+                        if (note.Deleted && !comment.Deleted)
+                        {
+                            comment.Deleted = true;
+                            commentUpdated = true;
+                        }
+                        if (commentUpdated)
+                        {
+                            thread.Add(comment);
+                        }
+                    }
+                    else
+                    {
+                        // new comment added
+                        SyncUser syncUser;
+                        UserSecret userSecret = _userSecretRepository.Query().FirstOrDefault(s => s.Id == note.OwnerRef);
+                        if (userSecret == null)
+                            syncUser = FindOrCreateSyncUser(defaultUsername, syncUsers);
+                        else
+                            syncUser = FindOrCreateSyncUser(GetParatextUsername(userSecret), syncUsers);
+
+                        SFParatextUser ptUser = new SFParatextUser(syncUser.ParatextUsername);
+                        var comment = new Paratext.Data.ProjectComments.Comment(ptUser)
+                        {
+                            VerseRefStr = threadDoc.Data.VerseRef.ToString(),
+                            SelectedText = threadDoc.Data.SelectedText,
+                            ContextBefore = threadDoc.Data.ContextBefore,
+                            ContextAfter = threadDoc.Data.ContextAfter,
+                            StartPosition = threadDoc.Data.StartPosition
+                        };
+                        ExtractCommentFromNote(note, comment, commentTags);
+                        thread.Add(comment);
+                        if (note.SyncUserRef == null)
+                        {
+                            threadNoteSyncUserIds.Add((i, syncUser.Id));
+                        }
+                    }
+                }
+                if (thread.Count() > 0)
+                    changes.Add(thread);
+                // Set the sync user ref on the notes in the SF Mongo DB
+                threadDoc.SubmitJson0OpAsync(op =>
+                {
+                    foreach ((int index, string syncUserId) in threadNoteSyncUserIds)
+                        op.Set(t => t.Notes[index].SyncUserRef, syncUserId);
+                });
+            }
+            return changes;
+        }
+
+        private ChangeType GetCommentChangeType(Paratext.Data.ProjectComments.Comment comment, Note note)
+        {
+            if (comment.Deleted != note.Deleted)
+                return ChangeType.Deleted;
+            // If the content does not match it has been updated in Paratext
+            if (comment.Contents?.InnerXml != note.Content)
+                return ChangeType.Updated;
+            return ChangeType.None;
+        }
+
+        private void ExtractCommentFromNote(Note note, Paratext.Data.ProjectComments.Comment comment,
+            CommentTags commentTags)
+        {
+
+            comment.Thread = note.ThreadId;
+            comment.Date = new DateTimeOffset(note.DateCreated).ToString("o");
+            comment.Deleted = note.Deleted;
+
+            comment.AddTextToContent("", false);
+            comment.Contents.InnerXml = note.Content;
+            if (_userSecretRepository.Query().Any(u => u.Id == note.OwnerRef))
+                comment.ExternalUser = note.OwnerRef;
+            if (note.TagIcon != null)
+            {
+                var commentTag = new CommentTag(null, note.TagIcon);
+                comment.TagsAdded = new[] { commentTags.FindMatchingTag(commentTag).ToString() };
+            }
+        }
+
+        private Note CreateNoteFromComment(Paratext.Data.ProjectComments.Comment comment, CommentTags commentTags,
+            SyncUser syncUser)
+        {
+            var tag = comment.TagsAdded == null || comment.TagsAdded.Length == 0
+                ? null
+                : commentTags.Get(int.Parse(comment.TagsAdded[0]));
+            return new Note
+            {
+                ThreadId = comment.Thread,
+                ExtUserId = comment.ExternalUser,
+                // The owner is unknown at this point and is determined when submitting the ops to the note thread docs
+                OwnerRef = "",
+                SyncUserRef = syncUser.Id,
+                Content = comment.Contents?.InnerXml,
+                DateCreated = DateTime.Parse(comment.Date),
+                DateModified = DateTime.Parse(comment.Date),
+                Deleted = comment.Deleted,
+                TagIcon = tag?.Icon
+            };
+        }
+
+        private SyncUser FindOrCreateSyncUser(string paratextUsername, Dictionary<string, SyncUser> syncUsers)
+        {
+            if (!syncUsers.TryGetValue(paratextUsername, out SyncUser syncUser))
+            {
+                syncUser = new SyncUser
+                {
+                    Id = _guidService.NewObjectId(),
+                    ParatextUsername = paratextUsername
+                };
+                syncUsers.Add(paratextUsername, syncUser);
+            }
+            return syncUser;
         }
 
         // Make sure there are no asynchronous methods called after this until the progress is completed.
