@@ -1,6 +1,6 @@
-import { Comment } from "./comment";
+import { Comment } from './comment';
 
-export interface ParatextNote extends Comment {
+export interface Note extends Comment {
   threadId: string;
   content: string;
   extUserId: string;

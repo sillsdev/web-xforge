@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Paratext.Data.ProjectComments;
 using SIL.XForge.Models;
+using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Utils;
 
@@ -29,11 +29,11 @@ namespace SIL.XForge.Scripture.Services
         Task PutBookText(UserSecret userSecret, string ptProjectId, int bookNum, string usx,
             Dictionary<int, string> chapterAuthors = null);
         string GetNotes(UserSecret userSecret, string ptProjectId, int bookNum);
-        IEnumerable<CommentThread> GetCommentThreads(UserSecret userSecret, string projectId, int bookNum);
         void PutNotes(UserSecret userSecret, string ptProjectId, string notesText);
-        void PutCommentThreads(UserSecret userSecret, string ptProjectId,
-            List<List<Paratext.Data.ProjectComments.Comment>> changeList);
-        CommentTags GetCommentTags(UserSecret userSecret, string ptProjectId);
+        void UpdateParatextComments(UserSecret userSecret, string projectId, int bookNum,
+            IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs, Dictionary<string, SyncUser> syncUsers);
+        IEnumerable<ParatextNoteThreadChange> GetNoteThreadChanges(UserSecret userSecret, string projectId, int bookNum,
+            IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs, Dictionary<string, SyncUser> syncUsers);
         Task SendReceiveAsync(UserSecret userSecret, string ptTargetId, IProgress<ProgressState> progress = null);
     }
 }

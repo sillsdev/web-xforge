@@ -1,6 +1,6 @@
 namespace SIL.XForge.Scripture.Models
 {
-    public class ParatextNote : Comment
+    public class Note : Comment
     {
         public string ThreadId { get; set; }
         public string Content { get; set; }

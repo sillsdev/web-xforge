@@ -9,7 +9,7 @@ export enum SFProjectDomain {
   AnswerComments = 1400,
   Likes = 1500,
   ParatextNoteThreads = 1600,
-  ParatextNote = 1700
+  Notes = 1700
 }
 
 export class SFProjectRights extends ProjectRights {
@@ -32,7 +32,7 @@ export class SFProjectRights extends ProjectRights {
 
       { projectDomain: SFProjectDomain.ParatextNoteThreads, operation: Operation.View },
 
-      { projectDomain: SFProjectDomain.ParatextNote, operation: Operation.View }
+      { projectDomain: SFProjectDomain.Notes, operation: Operation.View }
     ];
     this.addRights(SFProjectRole.ParatextObserver, observerRights);
     this.addRights(SFProjectRole.Observer, observerRights);
@@ -49,9 +49,9 @@ export class SFProjectRights extends ProjectRights {
       { projectDomain: SFProjectDomain.Likes, operation: Operation.Create },
       { projectDomain: SFProjectDomain.Likes, operation: Operation.DeleteOwn },
 
-      { projectDomain: SFProjectDomain.ParatextNote, operation: Operation.Create },
-      { projectDomain: SFProjectDomain.ParatextNote, operation: Operation.EditOwn },
-      { projectDomain: SFProjectDomain.ParatextNote, operation: Operation.DeleteOwn }
+      { projectDomain: SFProjectDomain.Notes, operation: Operation.Create },
+      { projectDomain: SFProjectDomain.Notes, operation: Operation.EditOwn },
+      { projectDomain: SFProjectDomain.Notes, operation: Operation.DeleteOwn }
     ]);
     this.addRights(SFProjectRole.Reviewer, reviewerRights);
     this.addRights(SFProjectRole.ParatextConsultant, reviewerRights);
@@ -82,9 +82,9 @@ export class SFProjectRights extends ProjectRights {
       { projectDomain: SFProjectDomain.ParatextNoteThreads, operation: Operation.Create },
       { projectDomain: SFProjectDomain.ParatextNoteThreads, operation: Operation.Delete },
 
-      { projectDomain: SFProjectDomain.ParatextNote, operation: Operation.Create },
-      { projectDomain: SFProjectDomain.ParatextNote, operation: Operation.Edit },
-      { projectDomain: SFProjectDomain.ParatextNote, operation: Operation.Delete }
+      { projectDomain: SFProjectDomain.Notes, operation: Operation.Create },
+      { projectDomain: SFProjectDomain.Notes, operation: Operation.Edit },
+      { projectDomain: SFProjectDomain.Notes, operation: Operation.Delete }
     ]);
     this.addRights(SFProjectRole.ParatextAdministrator, administratorRights);
   }

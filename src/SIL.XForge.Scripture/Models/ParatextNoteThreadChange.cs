@@ -18,9 +18,10 @@ namespace SIL.XForge.Scripture.Models
         public string ContextBefore { get; set; }
         public string ContextAfter { get; set; }
         public int StartPosition { get; set; }
-        public List<ParatextNote> NotesAdded { get; set; } = new List<ParatextNote>();
-        public List<ParatextNote> NotesUpdated { get; set; } = new List<ParatextNote>();
-        public List<ParatextNote> NotesDeleted { get; set; } = new List<ParatextNote>();
+        public string TagIcon { get; set; }
+        public List<Note> NotesAdded { get; set; } = new List<Note>();
+        public List<Note> NotesUpdated { get; set; } = new List<Note>();
+        public List<Note> NotesDeleted { get; set; } = new List<Note>();
 
         public bool HasChange
         {
@@ -28,7 +29,7 @@ namespace SIL.XForge.Scripture.Models
         }
 
         public ParatextNoteThreadChange(string threadId, string verseRef, string selectedText, string contextBefore,
-            string contextAfter, int startPos)
+            string contextAfter, int startPos, string tagIcon = null)
         {
             ThreadId = threadId;
             VerseRefStr = verseRef;
@@ -36,9 +37,10 @@ namespace SIL.XForge.Scripture.Models
             ContextBefore = contextBefore;
             ContextAfter = contextAfter;
             StartPosition = startPos;
+            TagIcon = tagIcon;
         }
 
-        public void AddChange(ParatextNote changedNote, ChangeType type)
+        public void AddChange(Note changedNote, ChangeType type)
         {
             switch (type)
             {
