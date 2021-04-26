@@ -469,7 +469,7 @@ export function registerScripture(): string[] {
   }
   formats.push(ChapterEmbed);
 
-  class NoteThreadInLine extends Inline {
+  class NoteThreadInline extends Inline {
     static blotName = 'note-thread';
     static tagName = 'display-note';
 
@@ -481,7 +481,7 @@ export function registerScripture(): string[] {
     }
 
     static formats(node: HTMLElement): NoteThread {
-      return NoteThreadInLine.value(node);
+      return NoteThreadInline.value(node);
     }
 
     static value(node: HTMLElement): NoteThread {
@@ -492,7 +492,7 @@ export function registerScripture(): string[] {
     }
 
     format(name: string, value: any): void {
-      if (name === NoteThreadInLine.blotName && value != null) {
+      if (name === NoteThreadInline.blotName && value != null) {
         const ref = value as NoteThread;
         const elem = this.domNode as HTMLElement;
         elem.setAttribute('style', ref.iconsrc);
@@ -502,7 +502,7 @@ export function registerScripture(): string[] {
       }
     }
   }
-  formats.push(NoteThreadInLine);
+  formats.push(NoteThreadInline);
 
   Scroll.allowedChildren.push(ParaBlock);
   Scroll.allowedChildren.push(ChapterEmbed);
@@ -568,6 +568,7 @@ export function registerScripture(): string[] {
   );
   formats.push(NoteThreadCountAttribute);
 
+  // TODO: May be able to remove these
   const IconSourceAttribute = new QuillParchment.Attributor.Attribute('note-icon-source', 'style', {
     scope: Parchment.Scope.INLINE
   });

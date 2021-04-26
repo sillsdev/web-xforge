@@ -1,4 +1,5 @@
 using System;
+using MongoDB.Bson;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -10,6 +11,11 @@ namespace SIL.XForge.Scripture.Services
         public string Generate()
         {
             return Guid.NewGuid().ToString();
+        }
+
+        public string NewObjectId()
+        {
+            return ObjectId.GenerateNewId().ToString();
         }
     }
 }
