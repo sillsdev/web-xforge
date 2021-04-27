@@ -1,3 +1,10 @@
+body {
+  display: flex;
+  flex-direction: column;
+}
+#render-body {
+  flex-grow: 1;
+}
 .flex {
   display: flex;
 }
