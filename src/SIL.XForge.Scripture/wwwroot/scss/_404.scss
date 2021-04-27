@@ -1,0 +1,23 @@
+#redirect-progress-bar {
+  background: lightgray;
+  max-width: 500px;
+  &,
+  span {
+    display: block;
+    height: 6px;
+    border-radius: 3px;
+  }
+  span {
+    background-color: $greyDark;
+    animation: progress linear 10s;
+  }
+}
+
+@keyframes progress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}

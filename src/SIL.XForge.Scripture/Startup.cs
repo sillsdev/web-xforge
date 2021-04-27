@@ -194,6 +194,8 @@ namespace SIL.XForge.Scripture
                 app.UseExceptionHandler(errorApp => exceptionHandler.ReportExceptions(errorApp));
             }
 
+            app.UseStatusCodePagesWithReExecute("/Status/Status{0}");
+
             app.UseForwardedHeaders(new ForwardedHeadersOptions
             {
                 ForwardedHeaders = ForwardedHeaders.All
