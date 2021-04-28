@@ -54,6 +54,7 @@ export class AuthService {
   private tryLogInPromise: Promise<LoginResult>;
   private refreshSubscription?: Subscription;
   private renewTokenPromise?: Promise<void>;
+  private checkSessionPromise?: Promise<Auth0DecodedHash | null>;
 
   private readonly auth0 = new WebAuth({
     clientID: environment.authClientId,
@@ -359,35 +360,44 @@ export class AuthService {
           }
         } catch (err) {
           console.error('Error while renewing access token:', err);
+          this.reportingService.silentError('Error while renewing access token', err);
           success = false;
         }
         if (!success) {
-          await this.logOut();
           reject();
         }
-      }).then(() => {
-        this.renewTokenPromise = undefined;
-      });
+      })
+        .catch(() => {
+          this.logIn(this.locationService.pathname + this.locationService.search);
+        })
+        .then(() => {
+          this.renewTokenPromise = undefined;
+        });
     }
     return this.renewTokenPromise;
   }
 
-  private checkSession(retryUponTimeout: boolean = true): Promise<auth0.Auth0DecodedHash | null> {
-    return new Promise<auth0.Auth0DecodedHash | null>((resolve, reject) => {
-      this.auth0.checkSession({ state: JSON.stringify({}) }, (err, authResult) => {
-        if (err != null) {
-          if (err.code === 'login_required') {
-            resolve(null);
-          } else if (retryUponTimeout && err.code === 'timeout') {
-            this.checkSession(false).then(resolve).catch(reject);
+  private async checkSession(retryUponTimeout: boolean = true): Promise<Auth0DecodedHash | null> {
+    if (this.checkSessionPromise == null) {
+      this.checkSessionPromise = new Promise<auth0.Auth0DecodedHash | null>((resolve, reject) => {
+        this.auth0.checkSession({ state: JSON.stringify({}) }, (err, authResult) => {
+          if (err != null) {
+            if (err.code === 'login_required') {
+              resolve(null);
+            } else if (retryUponTimeout && err.code === 'timeout') {
+              this.checkSession(false).then(resolve).catch(reject);
+            } else {
+              reject(err);
+            }
           } else {
-            reject(err);
+            resolve(authResult);
           }
-        } else {
-          resolve(authResult);
-        }
+        });
+      }).finally(() => {
+        this.checkSessionPromise = undefined;
       });
-    });
+    }
+    return this.checkSessionPromise;
   }
 
   private async localLogIn(accessToken: string, idToken: string, expiresIn: number): Promise<void> {
