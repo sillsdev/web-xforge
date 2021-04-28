@@ -21,7 +21,7 @@ import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
 import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
-import { ParatextNote } from 'realtime-server/lib/scriptureforge/models/paratext-note';
+import { Note } from 'realtime-server/lib/scriptureforge/models/note';
 import { ParatextNoteThread } from 'realtime-server/lib/scriptureforge/models/paratext-note-thread';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -31,9 +31,8 @@ import {
 } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { TextType } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { TextInfoPermission } from 'realtime-server/lib/scriptureforge/models/text-info-permission';
-import { fromVerseRef, VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
+import { VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
-import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, of, Subject } from 'rxjs';
 import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
@@ -1622,12 +1621,12 @@ class TestEnvironment {
   }
 
   private addParatextNoteThread(userIds: string[]): void {
-    const notes: ParatextNote[] = [];
+    const notes: Note[] = [];
     for (let i = 0; i < userIds.length; i++) {
       const id = userIds[i];
       const date = new Date('2021-03-01T12:00:00');
       date.setHours(date.getHours() + i);
-      const note: ParatextNote = {
+      const note: Note = {
         threadId: 'thread01',
         ownerRef: id,
         dataId: `thread01_note${id}`,

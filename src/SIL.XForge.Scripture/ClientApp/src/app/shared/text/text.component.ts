@@ -46,10 +46,6 @@ function onNativeSelectionChanged(): void {
   }
 }
 
-function iconSourceProp(name: string): string {
-  return `--icon-file: url(/assets/icons/TagIcons/${name}.png);`;
-}
-
 const USX_FORMATS = registerScripture();
 window.document.addEventListener('selectionchange', onNativeSelectionChanged);
 
@@ -439,17 +435,16 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   toggleFeaturedVerseRefs(
     value: boolean,
-    featureVerseRefs: FeaturedVerseRefInfo[],
-    app: 'translate' | 'checking'
+    featureVerseRefs: VerseRef[],
+    featureName: 'question' | 'note-thread'
   ): string[] {
     if (this.editor == null) {
       return [];
     }
     const segments: string[] = [];
     const verseFeatureCount = new Map<string, number>();
-    const featureInfo = new Map<string, FeaturedVerseRefInfo[]>();
-    for (const verseInfo of featureVerseRefs) {
-      const referenceSegments = this.getVerseSegments(verseInfo.verseRef);
+    for (const verseRef of featureVerseRefs) {
+      const referenceSegments = this.getVerseSegments(verseRef);
       if (referenceSegments.length > 0) {
         const featureStartSegment = referenceSegments[0];
         const count: number = verseFeatureCount.get(featureStartSegment) ?? 0;
@@ -458,14 +453,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         for (const segment of referenceSegments) {
           if (!segments.includes(segment)) {
             segments.push(segment);
-          }
-        }
-        if (app === 'translate') {
-          // Create a map from segment to icon
-          if (featureInfo.get(featureStartSegment) == null) {
-            featureInfo.set(featureStartSegment, [verseInfo]);
-          } else {
-            featureInfo.get(featureStartSegment)!.push(verseInfo);
           }
         }
       }
@@ -478,33 +465,29 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       if (range == null || element == null) {
         continue;
       }
-      const formats: any = app === 'checking' ? { 'question-segment': value } : { 'note-thread-segment': value };
+      const formatSegment: string = `${featureName}-segment`;
+      const formats: any = { [formatSegment]: value };
       const count = verseFeatureCount.get(segment);
-      const formatCount: string = app === 'checking' ? 'question-count' : 'note-thread-count';
+      const formatCount: string = `${featureName}-count`;
 
       if (count != null) {
         formats[formatCount] = value ? count : false;
-      }
-      if (app === 'translate') {
-        const segmentFeatureInfo: FeaturedVerseRefInfo[] = featureInfo.get(segment) ?? [];
-        for (const info of segmentFeatureInfo) {
-          const iconName: string = info.iconName ?? '01flag1';
-          const nodeProp: string = iconSourceProp(iconName);
-          // Get the position relative to the start of the segment
-          const index = (info.startPos ?? 0) + range.index;
-          this.editor.formatText(
-            index,
-            info.selectionLength ?? 1,
-            'note-thread',
-            { iconsrc: nodeProp, preview: info.preview },
-            'silent'
-          );
-        }
       }
       this.editor.formatText(range.index, range.length, formats, 'silent');
     }
 
     return segments;
+  }
+
+  toggleInlineFormat(segment: string, startPos: number, formatLength: number, formatName: string, format: any): void {
+    if (this.editor == null) {
+      return;
+    }
+    const range = this.getSegmentRange(segment);
+    if (range == null) {
+      return;
+    }
+    this.editor.formatText(range.index + startPos, formatLength, formatName, format, 'silent');
   }
 
   onContentChanged(delta: DeltaStatic, source: Sources): void {

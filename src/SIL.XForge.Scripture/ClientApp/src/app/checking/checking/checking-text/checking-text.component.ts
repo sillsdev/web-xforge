@@ -86,8 +86,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     if (!this.isEditorLoaded || this.questionVerses == null) {
       return;
     }
-    const verseRefInfo: FeaturedVerseRefInfo[] = this.questionVerses.map(v => ({ verseRef: v }));
-    const segments = this.textComponent.toggleFeaturedVerseRefs(value, verseRefInfo, 'checking');
+    const segments = this.textComponent.toggleFeaturedVerseRefs(value, this.questionVerses, 'question');
     if (value) {
       this.subscribeClickEvents(segments);
     } else {

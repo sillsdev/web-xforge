@@ -19,7 +19,7 @@ import isEqual from 'lodash-es/isEqual';
 import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { User } from 'realtime-server/lib/common/models/user';
-import { ParatextNote } from 'realtime-server/lib/scriptureforge/models/paratext-note';
+import { Note } from 'realtime-server/lib/scriptureforge/models/note';
 import { ParatextNoteThread } from 'realtime-server/lib/scriptureforge/models/paratext-note-thread';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { TextType } from 'realtime-server/lib/scriptureforge/models/text-data';
@@ -60,6 +60,10 @@ import { TranslateMetricsSession } from './translate-metrics-session';
 export const UPDATE_SUGGESTIONS_TIMEOUT = 100;
 
 const PUNCT_SPACE_REGEX = XRegExp('^(\\p{P}|\\p{S}|\\p{Cc}|\\p{Z})+$');
+
+function iconSourceProp(name: string): string {
+  return `--icon-file: url(/assets/icons/TagIcons/${name}.png);`;
+}
 
 /** Scripture editing area. Used for Translate task. */
 @Component({
@@ -293,18 +297,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       const projects = this.currentUser.sites[environment.siteId].projects;
       return this.text.hasSource && projects.includes(sourceId);
     }
-  }
-
-  private get chapterNoteThreadsVerseRefs(): FeaturedVerseRefInfo[] {
-    if (this.noteThreadQuery == null || this.bookNum == null || this._chapter == null) {
-      return [];
-    }
-    return this.noteThreadQuery.docs
-      .filter(
-        nt =>
-          nt.data != null && nt.data.verseRef.bookNum === this.bookNum && nt.data.verseRef.chapterNum === this._chapter
-      )
-      .map(nt => this.configureNoteThread(nt.data!));
   }
 
   ngAfterViewInit(): void {
@@ -602,14 +594,37 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private toggleNoteThreadVerses(value: boolean): void {
-    if (this.target?.editor == null) {
+    if (this.target?.editor == null || this.noteThreadQuery == null || this.bookNum == null || this._chapter == null) {
       return;
     }
-    const segments: string[] = this.target.toggleFeaturedVerseRefs(
-      value,
-      this.chapterNoteThreadsVerseRefs,
-      'translate'
+    const chapterNoteThreadDocs: ParatextNoteThreadDoc[] = this.noteThreadQuery.docs.filter(
+      nt =>
+        nt.data != null && nt.data.verseRef.bookNum === this.bookNum && nt.data.verseRef.chapterNum === this._chapter
     );
+    const noteThreadVerseRefs: VerseRef[] = chapterNoteThreadDocs.map(nt => toVerseRef(nt.data!.verseRef));
+    const featureVerseRefInfo: FeaturedVerseRefInfo[] = chapterNoteThreadDocs.map(nt =>
+      this.configureNoteThread(nt.data!)
+    );
+
+    const segments: string[] = this.target.toggleFeaturedVerseRefs(value, noteThreadVerseRefs, 'note-thread');
+
+    for (const featured of featureVerseRefInfo) {
+      const verseSegments = this.target.getVerseSegments(featured.verseRef);
+      if (verseSegments.length === 0) {
+        continue;
+      }
+      const iconName: string = featured.iconName ?? '01flag1';
+      const nodeProp: string = iconSourceProp(iconName);
+      const format = value ? { iconsrc: nodeProp, preview: featured.preview } : {};
+      this.target.toggleInlineFormat(
+        verseSegments[0],
+        featured.startPos ?? 0,
+        featured.selectionLength ?? 1,
+        'note-thread',
+        format
+      );
+    }
+
     if (value) {
       this.subscribeClickEvents(segments);
     } else {
@@ -939,10 +954,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private configureNoteThread(thread: ParatextNoteThread): FeaturedVerseRefInfo {
-    const notes: ParatextNote[] = clone(thread.notes).sort(
-      (a, b) => Date.parse(a.dateCreated) - Date.parse(b.dateCreated)
-    );
-    let preview: string = this.stripXml(notes[0].content);
+    const notes: Note[] = clone(thread.notes).sort((a, b) => Date.parse(a.dateCreated) - Date.parse(b.dateCreated));
+    let preview: string = this.stripXml(notes[0].content.trim());
     if (notes.length > 1) {
       preview += '\n' + translate('editor.more_notes', { count: notes.length - 1 });
     }
