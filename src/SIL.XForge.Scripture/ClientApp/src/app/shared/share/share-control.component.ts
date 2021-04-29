@@ -1,6 +1,5 @@
 import { MdcTextField } from '@angular-mdc/web/textfield';
-import { ChangeDetectorRef, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { OnInit } from '@angular/core/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
