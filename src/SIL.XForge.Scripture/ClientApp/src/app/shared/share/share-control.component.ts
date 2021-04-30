@@ -88,6 +88,9 @@ export class ShareControlComponent extends SubscriptionDisposable implements OnI
     this.roleControl.setValue(this.defaultShareRole);
   }
 
+  get canSelectRole(): boolean {
+    return this.isProjectAdmin;
+  }
   get defaultShareRole(): string {
     if (this.defaultRole != null && this.roles.filter(r => r.role === this.defaultRole).length > 0) {
       return this.defaultRole;

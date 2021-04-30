@@ -33,7 +33,7 @@
               {{ t("email_invalid") }}
             </mat-error>
           </mat-form-field>
-          <mat-form-field *ngIf="isProjectAdmin" id="invitation-role">
+          <mat-form-field *ngIf="canSelectRole" id="invitation-role">
             <mat-label>{{ t("invitation_role") }}</mat-label>
             <mat-select formControlName="role">
               <mat-option *ngFor="let role of roles" [value]="role.role">

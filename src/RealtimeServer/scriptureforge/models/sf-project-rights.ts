@@ -29,6 +29,7 @@ export class SFProjectRights extends ProjectRights {
       { projectDomain: SFProjectDomain.Likes, operation: Operation.View }
     ];
     this.addRights(SFProjectRole.ParatextObserver, observerRights);
+    this.addRights(SFProjectRole.Observer, observerRights);
 
     const reviewerRights: ProjectRight[] = observerRights.concat([
       { projectDomain: SFProjectDomain.Answers, operation: Operation.Create },
@@ -50,11 +51,6 @@ export class SFProjectRights extends ProjectRights {
       { projectDomain: SFProjectDomain.Texts, operation: Operation.Edit }
     ]);
     this.addRights(SFProjectRole.ParatextTranslator, translatorRights);
-
-    const translatorObserverRights: ProjectRight[] = reviewerRights.concat([
-      { projectDomain: SFProjectDomain.Texts, operation: Operation.View }
-    ]);
-    this.addRights(SFProjectRole.Observer, translatorObserverRights);
 
     const administratorRights: ProjectRight[] = observerRights.concat([
       { projectDomain: SFProjectDomain.Texts, operation: Operation.Edit },
