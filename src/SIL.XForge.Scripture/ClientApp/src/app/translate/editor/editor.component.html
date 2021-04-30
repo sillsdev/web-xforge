@@ -22,7 +22,7 @@
           title="{{ t('configure_translation_suggestions') }}"
         ></button>
       </ng-container>
-      <ng-container *ngIf="isProjectAdmin">
+      <ng-container *ngIf="canShare">
         <div class="toolbar-separator">&nbsp;</div>
         <app-share [defaultRole]="defaultShareRole"></app-share>
       </ng-container>

@@ -244,6 +244,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.isValid && this.hasEditRight;
   }
 
+  get canShare(): boolean {
+    return this.isProjectAdmin;
+  }
+
   get isSourceRightToLeft(): boolean {
     if (this.projectDoc?.data?.translateConfig?.source?.isRightToLeft != null) {
       return this.projectDoc.data.translateConfig?.source?.isRightToLeft;
