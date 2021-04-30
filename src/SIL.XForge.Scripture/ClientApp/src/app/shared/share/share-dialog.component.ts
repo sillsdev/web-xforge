@@ -4,6 +4,7 @@ import { Component, Inject } from '@angular/core';
 export interface ShareDialogData {
   projectId: string;
   isLinkSharingEnabled: boolean;
+  defaultRole: string;
 }
 
 @Component({

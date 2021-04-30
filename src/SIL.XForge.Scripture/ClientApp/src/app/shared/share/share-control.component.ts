@@ -1,5 +1,5 @@
 import { MdcTextField } from '@angular-mdc/web/textfield';
-import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -7,10 +7,14 @@ import { BehaviorSubject, combineLatest } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
+import { ProjectRoleInfo } from 'xforge-common/models/project-role-info';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { UserService } from 'xforge-common/user.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
+import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SF_DEFAULT_SHARE_ROLE, SF_PROJECT_ROLES } from '../../core/models/sf-project-role-info';
 import { SFProjectService } from '../../core/sf-project.service';
 
 /** UI to share project access with new users, such as by sending an invitation email. */
@@ -19,22 +23,26 @@ import { SFProjectService } from '../../core/sf-project.service';
   templateUrl: './share-control.component.html',
   styleUrls: ['./share-control.component.scss']
 })
-export class ShareControlComponent extends SubscriptionDisposable implements AfterViewInit {
+export class ShareControlComponent extends SubscriptionDisposable implements OnInit {
   /** Fires when an invitation is sent. */
   @Output() invited = new EventEmitter<void>();
   @Input() readonly isLinkSharingEnabled: boolean = false;
+  @Input() readonly defaultRole?: SFProjectRole;
   @ViewChild('shareLinkField') shareLinkField?: MdcTextField;
 
   email = new FormControl('', [XFValidators.email]);
   localeControl = new FormControl('', [Validators.required]);
-  sendInviteForm: FormGroup = new FormGroup({ email: this.email, locale: this.localeControl });
+  roleControl = new FormControl('', [Validators.required]);
+  sendInviteForm: FormGroup = new FormGroup({ email: this.email, role: this.roleControl, locale: this.localeControl });
   isSubmitted: boolean = false;
   isAlreadyInvited: boolean = false;
+  isProjectAdmin: boolean = false;
   readonly alreadyProjectMemberResponse: string = 'alreadyProjectMember';
 
   private _projectId?: string;
   private linkSharingKey: string = '';
   private projectId$: BehaviorSubject<string> = new BehaviorSubject<string>('');
+  private projectDoc?: SFProjectDoc;
 
   constructor(
     readonly i18n: I18nService,
@@ -42,9 +50,30 @@ export class ShareControlComponent extends SubscriptionDisposable implements Aft
     private readonly projectService: SFProjectService,
     private readonly locationService: LocationService,
     private readonly pwaService: PwaService,
-    private readonly changeDetector: ChangeDetectorRef
+    private readonly changeDetector: ChangeDetectorRef,
+    private readonly userService: UserService
   ) {
     super();
+    this.subscribe(
+      combineLatest([this.pwaService.onlineStatus, this.projectId$, this.roleControl.valueChanges]).pipe(
+        filter(([_, projectId, __]) => projectId !== '')
+      ),
+      async ([isOnline, projectId, __]) => {
+        if (this.projectDoc == null || projectId !== this._projectId) {
+          this.isProjectAdmin = await this.projectService.isProjectAdmin(projectId, this.userService.currentUserId);
+        }
+        if (isOnline) {
+          if (this._projectId != null) {
+            this.linkSharingKey = await this.projectService.onlineGetLinkSharingKey(this._projectId, this.shareRole);
+          }
+          this.sendInviteForm.enable({ emitEvent: false });
+        } else {
+          this.sendInviteForm.disable({ emitEvent: false });
+          // Workaround for angular/angular#17793 (ExpressionChangedAfterItHasBeenCheckedError after form disabled)
+          this.changeDetector.detectChanges();
+        }
+      }
+    );
   }
 
   @Input() set projectId(id: string | undefined) {
@@ -55,24 +84,22 @@ export class ShareControlComponent extends SubscriptionDisposable implements Aft
     this.projectId$.next(id);
   }
 
-  ngAfterViewInit() {
-    // TODO: Allow user to select a role for the invitation link
-    const role = SFProjectRole.CommunityChecker;
-    this.subscribe(
-      combineLatest([this.pwaService.onlineStatus, this.projectId$]).pipe(filter(([_, projectId]) => projectId !== '')),
-      async ([isOnline, _]) => {
-        if (isOnline) {
-          if (this._projectId != null) {
-            this.linkSharingKey = await this.projectService.onlineGetLinkSharingKey(this._projectId, role);
-          }
-          this.sendInviteForm.enable();
-        } else {
-          this.sendInviteForm.disable();
-          // Workaround for angular/angular#17793 (ExpressionChangedAfterItHasBeenCheckedError after form disabled)
-          this.changeDetector.detectChanges();
-        }
-      }
-    );
+  ngOnInit(): void {
+    this.roleControl.setValue(this.defaultShareRole);
+  }
+
+  get canSelectRole(): boolean {
+    return this.isProjectAdmin;
+  }
+  get defaultShareRole(): string {
+    if (this.defaultRole != null && this.roles.filter(r => r.role === this.defaultRole).length > 0) {
+      return this.defaultRole;
+    }
+    return SF_DEFAULT_SHARE_ROLE;
+  }
+
+  get roles(): ProjectRoleInfo[] {
+    return SF_PROJECT_ROLES.filter(r => r.canBeShared);
   }
 
   get shareLink(): string {
@@ -82,6 +109,10 @@ export class ShareControlComponent extends SubscriptionDisposable implements Aft
     return (
       this.locationService.origin + '/projects/' + this._projectId + '?sharing=true&shareKey=' + this.linkSharingKey
     );
+  }
+
+  get shareRole(): SFProjectRole {
+    return this.roleControl.value;
   }
 
   get isAppOnline(): boolean {
@@ -115,13 +146,11 @@ export class ShareControlComponent extends SubscriptionDisposable implements Aft
     }
 
     this.isSubmitted = true;
-    // TODO: Allow user to select a role for the invitation link
-    const inviteRole: SFProjectRole = SFProjectRole.CommunityChecker;
     const response = await this.projectService.onlineInvite(
       this._projectId,
       this.email.value,
       this.localeControl.value,
-      inviteRole
+      this.shareRole
     );
     this.isSubmitted = false;
     this.isAlreadyInvited = false;

@@ -29,6 +29,7 @@ export class SFProjectRights extends ProjectRights {
       { projectDomain: SFProjectDomain.Likes, operation: Operation.View }
     ];
     this.addRights(SFProjectRole.ParatextObserver, observerRights);
+    this.addRights(SFProjectRole.Observer, observerRights);
 
     const reviewerRights: ProjectRight[] = observerRights.concat([
       { projectDomain: SFProjectDomain.Answers, operation: Operation.Create },

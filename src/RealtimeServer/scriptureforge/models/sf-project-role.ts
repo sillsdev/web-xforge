@@ -10,6 +10,19 @@ export function hasParatextRole(role: string | undefined): boolean {
   }
 }
 
+export function hasTranslateRole(role: string | undefined): boolean {
+  if (hasParatextRole(role)) {
+    return true;
+  }
+  switch (role) {
+    case SFProjectRole.Reviewer:
+    case SFProjectRole.Observer:
+      return true;
+    default:
+      return false;
+  }
+}
+
 export enum SFProjectRole {
   ParatextAdministrator = 'pt_administrator',
   ParatextTranslator = 'pt_translator',
@@ -19,5 +32,6 @@ export enum SFProjectRole {
   ParatextWriteNote = 'pt_write_note',
   Reviewer = 'sf_reviewer',
   CommunityChecker = 'sf_community_checker',
+  Observer = 'sf_observer',
   None = 'none'
 }

@@ -34,6 +34,7 @@ import { UserService } from 'xforge-common/user.service';
 import XRegExp from 'xregexp';
 import { environment } from '../../../environments/environment';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { Delta } from '../../core/models/text-doc';
 import { TextDocId } from '../../core/models/text-doc';
@@ -62,6 +63,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   suggestions: Suggestion[] = [];
   showSuggestions: boolean = false;
   chapters: number[] = [];
+  isProjectAdmin: boolean = false;
   metricsSession?: TranslateMetricsSession;
   trainingPercentage: number = 0;
   trainingMessage: string = '';
@@ -191,6 +193,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.currentUserDoc == null ? undefined : this.currentUserDoc.data;
   }
 
+  get defaultShareRole(): string {
+    return SF_DEFAULT_TRANSLATE_SHARE_ROLE;
+  }
+
   get showSource(): boolean {
     return this.hasSource && this.hasSourceViewRight;
   }
@@ -236,6 +242,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   get canEdit(): boolean {
     return this.isValid && this.hasEditRight;
+  }
+
+  get canShare(): boolean {
+    return this.isProjectAdmin;
   }
 
   get isSourceRightToLeft(): boolean {
@@ -291,6 +301,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
         if (projectId !== prevProjectId) {
           this.projectDoc = await this.projectService.get(projectId);
+          this.isProjectAdmin = await this.projectService.isProjectAdmin(projectId, this.userService.currentUserId);
           this.projectUserConfigDoc = await this.projectService.getUserConfig(
             projectId,
             this.userService.currentUserId

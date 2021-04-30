@@ -25,15 +25,24 @@
     <div class="invite-by-email">
       <div mdcSubtitle1>{{ t("invite_people") }}</div>
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="10px">
-        <form fxFlex="100%" fxLayout.gt-xs="row" fxLayout.xs="column" id="email-form" [formGroup]="sendInviteForm">
-          <mat-form-field fxFlex="fill" id="email">
+        <form id="email-form" [formGroup]="sendInviteForm">
+          <mat-form-field id="email">
             <mat-label>{{ t("email") }}</mat-label>
             <input matInput type="email" formControlName="email" (input)="onEmailInput()" />
             <mat-error *ngIf="email.hasError('pattern') || email.hasError('email')">
               {{ t("email_invalid") }}
             </mat-error>
           </mat-form-field>
-          <mat-form-field>
+          <mat-form-field *ngIf="canSelectRole" id="invitation-role">
+            <mat-label>{{ t("invitation_role") }}</mat-label>
+            <mat-select formControlName="role">
+              <mat-option *ngFor="let role of roles" [value]="role.role">
+                {{ role.displayName }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="roleControl.hasError('required')">{{ t("select_invitation_role") }}</mat-error>
+          </mat-form-field>
+          <mat-form-field id="invitation-language">
             <mat-label>{{ t("invitation_language") }}</mat-label>
             <mat-select formControlName="locale">
               <mat-option *ngFor="let locale of i18n.locales" [value]="locale.canonicalTag">
@@ -42,10 +51,18 @@
             </mat-select>
             <mat-error *ngIf="localeControl.hasError('required')">{{ t("select_invitation_language") }}</mat-error>
           </mat-form-field>
+          <button
+            id="send-btn"
+            mat-flat-button
+            color="primary"
+            form="email-form"
+            type="submit"
+            (click)="sendEmail()"
+            [disabled]="isSubmitted"
+          >
+            {{ isAlreadyInvited ? t("resend") : t("send") }}
+          </button>
         </form>
-        <button id="send-btn" mdc-button form="email-form" type="submit" (click)="sendEmail()" [disabled]="isSubmitted">
-          {{ isAlreadyInvited ? t("resend") : t("send") }}
-        </button>
       </div>
       <div *ngIf="!isAppOnline" class="offline-text">{{ t("share_by_email_not_available_offline") }}</div>
     </div>

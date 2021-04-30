@@ -97,6 +97,21 @@ describe('EditorComponent', () => {
     ]
   }));
 
+  it('sharing is only enabled for administrators', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.updateParams({ projectId: 'project02', bookId: 'MAT' });
+    env.wait();
+    // Null for non admins
+    expect(env.sharingButton).toBeNull();
+
+    // Truthy for admins
+    env.setCurrentUser('user04');
+    env.updateParams({ projectId: 'project01', bookId: 'MAT' });
+    env.wait();
+    expect(env.sharingButton).not.toBeNull();
+    env.dispose();
+  }));
+
   describe('Translation Suggestions enabled', () => {
     it('start with no previous selection', fakeAsync(() => {
       const env = new TestEnvironment();
@@ -1040,7 +1055,8 @@ class TestEnvironment {
   private userRolesOnProject = {
     user01: SFProjectRole.ParatextTranslator,
     user02: SFProjectRole.ParatextConsultant,
-    user03: SFProjectRole.ParatextTranslator
+    user03: SFProjectRole.ParatextTranslator,
+    user04: SFProjectRole.ParatextAdministrator
   };
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private readonly params$: BehaviorSubject<Params>;
@@ -1180,6 +1196,9 @@ class TestEnvironment {
     when(mockedTranslationEngineService.createTranslationEngine('project01')).thenReturn(
       instance(this.mockedRemoteTranslationEngine)
     );
+    when(mockedTranslationEngineService.createTranslationEngine('project02')).thenReturn(
+      instance(this.mockedRemoteTranslationEngine)
+    );
     this.setupProject();
     when(this.mockedRemoteTranslationEngine.getWordGraph(anything())).thenCall(segment =>
       Promise.resolve(this.createWordGraph(segment))
@@ -1199,9 +1218,16 @@ class TestEnvironment {
         getSFProjectUserConfigDocId('project01', userId)
       )
     );
+    when(mockedSFProjectService.getUserConfig('project02', anything())).thenCall((_projectId, userId) =>
+      this.realtimeService.subscribe(
+        SFProjectUserConfigDoc.COLLECTION,
+        getSFProjectUserConfigDocId('project02', userId)
+      )
+    );
     when(mockedSFProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
+    when(mockedSFProjectService.isProjectAdmin('project01', 'user04')).thenResolve(true);
     when(mockedPwaService.isOnline).thenReturn(true);
     when(mockedPwaService.onlineStatus).thenReturn(of(true));
 
@@ -1211,6 +1237,10 @@ class TestEnvironment {
 
   get bookName(): string {
     return Canon.bookNumberToEnglishName(this.component.bookNum!);
+  }
+
+  get sharingButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('app-share'));
   }
 
   get suggestions(): DebugElement {
@@ -1311,6 +1341,23 @@ class TestEnvironment {
         }
       }
     });
+    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
+      id: 'user04',
+      data: {
+        name: 'User 04',
+        email: 'user4@example.com',
+        role: SystemRole.User,
+        isDisplayNameConfirmed: true,
+        avatarUrl: '',
+        authId: 'auth04',
+        displayName: 'User 04',
+        sites: {
+          sf: {
+            projects: ['project01', 'project02', 'project03']
+          }
+        }
+      }
+    });
   }
 
   setupProject(data: Partial<SFProject> = {}): void {
@@ -1347,6 +1394,9 @@ class TestEnvironment {
     const user3Config = cloneDeep(userConfig);
     user3Config.ownerRef = 'user03';
     this.addProjectUserConfig(user3Config as SFProjectUserConfig);
+    const user4Config = cloneDeep(userConfig);
+    user4Config.ownerRef = 'user04';
+    this.addProjectUserConfig(user4Config as SFProjectUserConfig);
   }
 
   getProjectUserConfigDoc(userId: string = 'user01'): SFProjectUserConfigDoc {

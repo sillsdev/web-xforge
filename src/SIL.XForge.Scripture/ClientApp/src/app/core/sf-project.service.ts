@@ -44,6 +44,14 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, getSFProjectUserConfigDocId(id, userId));
   }
 
+  async isProjectAdmin(projectId: string, userId: string): Promise<boolean> {
+    const projectDoc = await this.get(projectId);
+    return (
+      projectDoc != null &&
+      projectDoc.data != null &&
+      projectDoc.data.userRoles[userId] === SFProjectRole.ParatextAdministrator
+    );
+  }
   /**
    * Remove project from local storage which is useful when a project is no longer accessible by a user
    */
