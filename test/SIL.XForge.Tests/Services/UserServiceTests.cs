@@ -197,7 +197,7 @@ namespace SIL.XForge.Services
             string userIdToDelete = "user01";
             // SUT
             await env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete);
-            env.ProjectService.Received(1).RemoveUserFromAllProjectsAsync(curUserId, userIdToDelete);
+            await env.ProjectService.Received(1).RemoveUserFromAllProjectsAsync(curUserId, userIdToDelete);
         }
 
         [Test]

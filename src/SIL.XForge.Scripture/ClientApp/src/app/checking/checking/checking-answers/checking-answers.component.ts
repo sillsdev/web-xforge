@@ -7,8 +7,7 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { Subscription } from 'rxjs';
@@ -21,6 +20,7 @@ import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { TextsByBookId } from '../../../core/models/texts-by-book-id';
+import { RightsService } from '../../../core/rights.service';
 import {
   TextChooserDialogComponent,
   TextChooserDialogData,
@@ -216,15 +216,19 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       : false;
   }
 
-  get isProjectAdmin(): boolean {
-    return this.projectRole === SFProjectRole.ParatextAdministrator;
+  canEditQuestion(): boolean {
+    const userId = this.userService.currentUserId;
+    return (
+      this.project != null &&
+      RightsService.hasRight(this.project, userId, SFProjectDomain.Questions, Operation.Edit, this.questionDoc?.data)
+    );
   }
 
   get canAddAnswer(): boolean {
-    return SF_PROJECT_RIGHTS.hasRight(this.projectRole, {
-      projectDomain: SFProjectDomain.Answers,
-      operation: Operation.Create
-    });
+    return (
+      this.project != null &&
+      RightsService.hasRight(this.project, this.userService.currentUserId, SFProjectDomain.Answers, Operation.Create)
+    );
   }
 
   get questionDoc(): QuestionDoc | undefined {
@@ -241,13 +245,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
 
   get totalAnswers(): number {
     return this.allAnswers.length;
-  }
-
-  private get projectRole(): SFProjectRole {
-    if (this.project == null) {
-      return SFProjectRole.None;
-    }
-    return this.project.userRoles[this.userService.currentUserId] as SFProjectRole;
   }
 
   ngOnInit(): void {
@@ -355,20 +352,18 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   canEditAnswer(answer: Answer): boolean {
-    return SF_PROJECT_RIGHTS.hasRight(
-      this.projectRole,
-      { projectDomain: SFProjectDomain.Answers, operation: Operation.Edit },
-      this.userService.currentUserId,
-      answer
+    const userId = this.userService.currentUserId;
+    return (
+      this.project != null &&
+      RightsService.hasRight(this.project, userId, SFProjectDomain.Answers, Operation.Edit, answer)
     );
   }
 
   canDeleteAnswer(answer: Answer): boolean {
-    return SF_PROJECT_RIGHTS.hasRight(
-      this.projectRole,
-      { projectDomain: SFProjectDomain.Answers, operation: Operation.Delete },
-      this.userService.currentUserId,
-      answer
+    const userId = this.userService.currentUserId;
+    return (
+      this.project != null &&
+      RightsService.hasRight(this.project, userId, SFProjectDomain.Answers, Operation.Delete, answer)
     );
   }
 
@@ -482,21 +477,15 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   private canLikeAnswer(answer: Answer): LikeAnswerResponse {
+    const userId = this.userService.currentUserId;
     let result: LikeAnswerResponse = LikeAnswerResponse.granted;
-    if (this.userService.currentUserId === answer.ownerRef) {
+    if (userId === answer.ownerRef) {
       result = LikeAnswerResponse.deniedOwnAnswer;
     } else if (
+      this.project == null ||
       !(
-        SF_PROJECT_RIGHTS.hasRight(
-          this.projectRole,
-          { projectDomain: SFProjectDomain.Answers, operation: Operation.DeleteOwn },
-          this.userService.currentUserId,
-          answer
-        ) &&
-        SF_PROJECT_RIGHTS.hasRight(this.projectRole, {
-          projectDomain: SFProjectDomain.Answers,
-          operation: Operation.Create
-        })
+        RightsService.hasRight(this.project, userId, SFProjectDomain.Answers, Operation.DeleteOwn, answer) &&
+        RightsService.hasRight(this.project, userId, SFProjectDomain.Answers, Operation.Create)
       )
     ) {
       result = LikeAnswerResponse.deniedNonCommunityChecker;

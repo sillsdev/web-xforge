@@ -5,14 +5,14 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
+import { RightsService } from '../../../core/rights.service';
 import { TranslationEngineService } from '../../../core/translation-engine.service';
 import { CheckingUtils } from '../../checking.utils';
 
@@ -96,17 +96,10 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   private get canAddAnswer(): boolean {
-    return SF_PROJECT_RIGHTS.hasRight(this.projectRole, {
-      projectDomain: SFProjectDomain.Answers,
-      operation: Operation.Create
-    });
-  }
-
-  private get projectRole(): SFProjectRole {
-    if (this.project == null || this.projectUserConfigDoc == null || this.projectUserConfigDoc.data == null) {
-      return SFProjectRole.None;
-    }
-    return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] as SFProjectRole;
+    return (
+      this.project != null &&
+      RightsService.hasRight(this.project, this.userService.currentUserId, SFProjectDomain.Answers, Operation.Create)
+    );
   }
 
   getAnswers(questionDoc: QuestionDoc): Answer[] {

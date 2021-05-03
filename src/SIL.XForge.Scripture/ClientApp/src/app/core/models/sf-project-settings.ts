@@ -11,4 +11,6 @@ export interface SFProjectSettings {
   usersSeeEachOthersResponses?: boolean;
   shareEnabled?: boolean;
   shareLevel?: CheckingShareLevel;
+
+  userPermissions?: { [userId: string]: number[] };
 }

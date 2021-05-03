@@ -18,7 +18,7 @@ import isEqual from 'lodash-es/isEqual';
 import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
@@ -38,6 +38,7 @@ import { SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-ro
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { Delta } from '../../core/models/text-doc';
 import { TextDocId } from '../../core/models/text-doc';
+import { RightsService } from '../../core/rights.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { Segment } from '../../shared/text/segment';
@@ -202,12 +203,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get hasEditRight(): boolean {
-    if (this.projectDoc == null || this.projectDoc.data == null) {
+    const project = this.projectDoc?.data;
+    if (project == null) {
       return false;
     }
 
-    const projectRole = this.projectDoc.data.userRoles[this.userService.currentUserId];
-    if (SF_PROJECT_RIGHTS.hasRight(projectRole, { projectDomain: SFProjectDomain.Texts, operation: Operation.Edit })) {
+    if (RightsService.hasRight(project, this.userService.currentUserId, SFProjectDomain.Texts, Operation.Edit)) {
       // Check for chapter rights
       const chapter = this.text?.chapters.find(c => c.number === this._chapter);
       // Even though permissions is guaranteed to be there in the model, its not in IndexedDB the first time the project
@@ -221,12 +222,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get hasSourceViewRight(): boolean {
-    if (this.sourceProjectDoc == null || this.sourceProjectDoc.data == null) {
+    const sourceProject = this.sourceProjectDoc?.data;
+    if (sourceProject == null) {
       return false;
     }
 
-    const projectRole = this.sourceProjectDoc.data.userRoles[this.userService.currentUserId];
-    if (SF_PROJECT_RIGHTS.hasRight(projectRole, { projectDomain: SFProjectDomain.Texts, operation: Operation.View })) {
+    if (RightsService.hasRight(sourceProject, this.userService.currentUserId, SFProjectDomain.Texts, Operation.View)) {
       // Check for chapter rights
       const chapter = this.sourceText?.chapters.find(c => c.number === this._chapter);
       // Even though permissions is guaranteed to be there in the model, its not in IndexedDB the first time the project

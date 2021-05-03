@@ -1,23 +1,23 @@
 import { OwnedData } from './owned-data';
 
 export enum Operation {
-  Create = 1,
-  Edit = 2,
-  Delete = 3,
-  View = 4,
+  Create = 'create',
+  Edit = 'edit',
+  Delete = 'delete',
+  View = 'view',
 
-  EditOwn = 5,
-  DeleteOwn = 6,
-  ViewOwn = 7
+  EditOwn = 'edit_own',
+  DeleteOwn = 'delete_own',
+  ViewOwn = 'view_own'
 }
 
 export interface ProjectRight {
-  projectDomain: number;
+  projectDomain: string;
   operation: Operation;
 }
 
 export class ProjectRights {
-  private readonly rights = new Map<string, Set<number>>();
+  private readonly rights = new Map<string, string[]>();
 
   constructor(rights: { [role: string]: ProjectRight[] } = {}) {
     for (const role in rights) {
@@ -27,13 +27,10 @@ export class ProjectRights {
     }
   }
 
-  hasRight(role: string, right: ProjectRight, userId?: string, data?: OwnedData): boolean {
-    const rights = this.rights.get(role);
-    if (rights == null) {
-      return false;
-    }
+  hasRight(role: string, permissions: string[], right: ProjectRight, userId?: string, data?: OwnedData): boolean {
+    const rights = new Set((this.rights.get(role) || []).concat(permissions));
 
-    if (rights.has(right.projectDomain + right.operation)) {
+    if (rights.has(this.joinRight(right.projectDomain, right.operation))) {
       if (right.operation === Operation.Create && userId != null && data != null && userId !== data.ownerRef) {
         return false;
       }
@@ -55,10 +52,14 @@ export class ProjectRights {
         return false;
     }
 
-    return userId != null && data != null && rights.has(right.projectDomain + ownOperation) && data.ownerRef === userId;
+    return userId != null && data?.ownerRef === userId && rights.has(this.joinRight(right.projectDomain, ownOperation));
+  }
+
+  joinRight(domain: string, operation: string) {
+    return domain + '.' + operation;
   }
 
   protected addRights(role: string, rights: ProjectRight[]): void {
-    this.rights.set(role, new Set<number>(rights.map(r => r.projectDomain + r.operation)));
+    this.rights.set(role, Array.from(new Set<string>(rights.map(r => this.joinRight(r.projectDomain, r.operation)))));
   }
 }

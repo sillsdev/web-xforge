@@ -3,13 +3,14 @@ import { Injectable } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
+import { RightsService } from '../../core/rights.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { QuestionDialogComponent, QuestionDialogData, QuestionDialogResult } from './question-dialog.component';
 
@@ -101,14 +102,11 @@ export class QuestionDialogService {
   }
 
   private async canCreateAndEditQuestions(projectId: string): Promise<boolean> {
-    const project = await this.projectService.get(projectId);
-    if (project != null && project.data != null && this.userService.currentUserId in project.data.userRoles) {
-      const role = project.data.userRoles[this.userService.currentUserId];
-      return (
-        SF_PROJECT_RIGHTS.hasRight(role, { projectDomain: SFProjectDomain.Questions, operation: Operation.Create }) &&
-        SF_PROJECT_RIGHTS.hasRight(role, { projectDomain: SFProjectDomain.Questions, operation: Operation.Edit })
-      );
-    }
-    return false;
+    const project = (await this.projectService.get(projectId)).data;
+    return (
+      project != null &&
+      RightsService.hasRight(project, this.userService.currentUserId, SFProjectDomain.Questions, Operation.Create) &&
+      RightsService.hasRight(project, this.userService.currentUserId, SFProjectDomain.Questions, Operation.Edit)
+    );
   }
 }

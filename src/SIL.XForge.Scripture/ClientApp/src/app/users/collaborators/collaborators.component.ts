@@ -3,7 +3,10 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { PageEvent } from '@angular/material/paginator';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
+import { Operation, ProjectRight } from 'realtime-server/lib/esm/common/models/project-rights';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { hasParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
@@ -12,6 +15,7 @@ import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { RightsService } from '../../core/rights.service';
 import { SFProjectService } from '../../core/sf-project.service';
 
 interface UserInfo {
@@ -25,6 +29,9 @@ interface Row {
   readonly user: UserInfo;
   readonly role: string;
   readonly inviteeStatus?: InviteeStatus;
+  readonly allowCreatingQuestions: boolean;
+  readonly userEligibleForQuestionPermission: boolean;
+  readonly canHaveQuestionPermissionRevoked: boolean;
 }
 
 export interface InviteeStatus {
@@ -107,9 +114,9 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     return this._userRows.filter(userRow => {
       return (
         userRow.user &&
-        ((userRow.user.displayName && userRow.user.displayName.toLowerCase().includes(term)) ||
-          (userRow.role && this.i18n.localizeRole(userRow.role).toLowerCase().includes(term)) ||
-          (userRow.user.email && userRow.user.email.toLowerCase().includes(term)))
+        (userRow.user.displayName?.toLowerCase().includes(term) ||
+          (userRow.role != null && this.i18n.localizeRole(userRow.role).toLowerCase().includes(term)) ||
+          userRow.user.email?.toLowerCase().includes(term))
       );
     });
   }
@@ -123,6 +130,13 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     const rows: Row[] = term ? this.filteredRows : this._userRows;
 
     return this.page(rows);
+  }
+
+  get tableColumns(): string[] {
+    const columns = ['avatar', 'name', 'role', 'questions_permission', 'remove'];
+    return this.projectDoc?.data?.checkingConfig.checkingEnabled
+      ? columns
+      : columns.filter(s => s !== 'questions_permission');
   }
 
   ngOnInit(): void {
@@ -199,35 +213,58 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     this.loadUsers();
   }
 
+  async toggleQuestionPermission(row: Row) {
+    const permissions = new Set(this.projectDoc?.data?.userPermissions[row.id] || []);
+    [
+      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create),
+      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Edit)
+    ].forEach(right => (row.allowCreatingQuestions ? permissions.delete(right) : permissions.add(right)));
+
+    await this.projectService.onlineSetUserProjectPermissions(this.projectId, row.id, Array.from(permissions));
+    this.loadUsers();
+  }
+
   private page(rows: Row[]): Row[] {
     const start = this.pageSize * this.pageIndex;
     return rows.slice(start, start + this.pageSize);
   }
 
   private async loadUsers(): Promise<void> {
-    if (
-      this.projectDoc == null ||
-      this.projectDoc.data == null ||
-      this.projectDoc.data.userRoles == null ||
-      !this.isAppOnline
-    ) {
+    const project = this.projectDoc?.data;
+    if (project == null || project.userRoles == null || !this.isAppOnline) {
       return;
     }
 
-    const users = Object.keys(this.projectDoc.data.userRoles);
-    const userRows: Row[] = new Array(users.length);
-    const tasks: Promise<any>[] = [];
-    for (let i = 0; i < users.length; i++) {
-      const userId = users[i];
-      const index = i;
-      const role = this.projectDoc.data.userRoles[userId];
-      tasks.push(
-        this.userService
-          .getProfile(userId)
-          .then(userProfileDoc => (userRows[index] = { id: userProfileDoc.id, user: userProfileDoc.data || {}, role }))
+    const userIds = Object.keys(project.userRoles);
+    const userProfiles = await Promise.all(userIds.map(userId => this.userService.getProfile(userId)));
+    const userRows: Row[] = [];
+    for (const [index, userId] of userIds.entries()) {
+      const userProfile = userProfiles[index];
+      const role = project.userRoles[userId];
+
+      const questionRights: ProjectRight[] = [
+        { projectDomain: SFProjectDomain.Questions, operation: Operation.Create },
+        { projectDomain: SFProjectDomain.Questions, operation: Operation.Edit }
+      ];
+
+      const allowCreatingQuestions = questionRights.every(right =>
+        RightsService.hasRight(project, userId, right.projectDomain, right.operation)
       );
+
+      // Check whether creating and editing questions is already allowed by the user's role
+      const canHaveQuestionPermissionRevoked = !questionRights.every(right =>
+        SF_PROJECT_RIGHTS.hasRight(role, [], right)
+      );
+
+      userRows.push({
+        id: userProfile.id,
+        user: userProfile.data || {},
+        role,
+        allowCreatingQuestions,
+        canHaveQuestionPermissionRevoked,
+        userEligibleForQuestionPermission: hasParatextRole(role)
+      });
     }
-    await Promise.all(tasks);
 
     try {
       const invitees: Row[] = (await this.projectService.onlineInvitedUsers(this.projectId)).map(invitee => {

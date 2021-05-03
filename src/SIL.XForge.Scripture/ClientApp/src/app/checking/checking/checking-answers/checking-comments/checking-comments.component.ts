@@ -6,13 +6,13 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { debounceTime } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
+import { RightsService } from '../../../../core/rights.service';
 
 export interface CommentAction {
   action: 'delete' | 'save' | 'show-form' | 'hide-form' | 'show-comments';
@@ -69,17 +69,11 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
   }
 
   get canAddComment(): boolean {
-    return SF_PROJECT_RIGHTS.hasRight(this.projectRole, {
-      projectDomain: SFProjectDomain.AnswerComments,
-      operation: Operation.Create
-    });
-  }
-
-  private get projectRole(): SFProjectRole {
-    if (this.project == null || this.projectUserConfigDoc == null || this.projectUserConfigDoc.data == null) {
-      return SFProjectRole.None;
-    }
-    return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] as SFProjectRole;
+    const userId = this.userService.currentUserId;
+    return (
+      this.project != null &&
+      RightsService.hasRight(this.project, userId, SFProjectDomain.AnswerComments, Operation.Create)
+    );
   }
 
   getSortedComments(): Comment[] {
@@ -100,20 +94,18 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
   }
 
   canEditComment(comment: Comment): boolean {
-    return SF_PROJECT_RIGHTS.hasRight(
-      this.projectRole,
-      { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.Edit },
-      this.userService.currentUserId,
-      comment
+    const userId = this.userService.currentUserId;
+    return (
+      this.project != null &&
+      RightsService.hasRight(this.project, userId, SFProjectDomain.AnswerComments, Operation.Edit, comment)
     );
   }
 
   canDeleteComment(comment: Comment): boolean {
-    return SF_PROJECT_RIGHTS.hasRight(
-      this.projectRole,
-      { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.Delete },
-      this.userService.currentUserId,
-      comment
+    const userId = this.userService.currentUserId;
+    return (
+      this.project != null &&
+      RightsService.hasRight(this.project, userId, SFProjectDomain.AnswerComments, Operation.Delete, comment)
     );
   }
 
