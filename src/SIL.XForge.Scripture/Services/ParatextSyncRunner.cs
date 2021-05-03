@@ -492,7 +492,6 @@ namespace SIL.XForge.Scripture.Services
                         await SubmitChangesOnNoteThreadDocAsync(doc, change);
                     }
                     tasks.Add(createThreadDoc(change.ThreadId, _projectDoc.Id, change));
-                    continue;
                 }
                 else
                     tasks.Add(SubmitChangesOnNoteThreadDocAsync(threadDoc, change));
@@ -597,6 +596,8 @@ namespace SIL.XForge.Scripture.Services
                     int index = threadDoc.Data.Notes.FindIndex(n => n.DataId == updated.DataId);
                     if (index >= 0)
                         op.Set(td => td.Notes[index].Content, updated.Content);
+                    else
+                        _logger.LogWarning("Unable to update note in database with id: " + updated.DataId);
                 }
                 // Delete notes
                 foreach (Note deleted in change.NotesDeleted)
@@ -607,12 +608,13 @@ namespace SIL.XForge.Scripture.Services
                         // The note can be easily removed by using op.Remove if that is preferred
                         op.Set(td => td.Notes[index].Deleted, true);
                     }
+                    else
+                        _logger.LogWarning("Unable to delete note in database with id: " + deleted.DataId);
                 }
 
                 // Add new notes, giving each note an associated SF userId if the user is also a Paratext user.
                 foreach (Note added in change.NotesAdded)
                 {
-                    added.DataId = ObjectId.GenerateNewId().ToString();
                     string ownerRef = null;
                     string username = _currentSyncUsers.Values.Single(u => u.Id == added.SyncUserRef).ParatextUsername;
                     if (username != null)

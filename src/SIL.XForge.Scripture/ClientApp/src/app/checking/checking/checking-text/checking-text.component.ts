@@ -6,7 +6,7 @@ import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/ver
 import { fromEvent, Subscription } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { TextDocId } from '../../../core/models/text-doc';
-import { FeaturedVerseRefInfo, TextComponent } from '../../../shared/text/text.component';
+import { TextComponent } from '../../../shared/text/text.component';
 import { verseRefFromMouseEvent } from '../../../shared/utils';
 
 @Component({
@@ -105,53 +105,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     const refs = this.textComponent.getVerseSegments(this._activeVerse);
     this.textComponent.highlight(refs);
   }
-  /*
-  private toggleQuestionSegments(questionCounts: Map<string, number>, segments: string[], value: boolean): void {
-    if (this.textComponent.editor == null) {
-      return;
-    }
 
-    for (const segment of segments) {
-      const range = this.textComponent.getSegmentRange(segment);
-      const element = this.textComponent.getSegmentElement(segment);
-      if (range == null || element == null) {
-        continue;
-      }
-      const formats: any = {
-        'question-segment': value
-      };
-      const count = questionCounts.get(segment);
-      if (count != null) {
-        formats['question-count'] = value ? count : false;
-      }
-      this.textComponent.editor.formatText(range.index, range.length, formats, 'silent');
-      if (value) {
-        this.clickSubs.push(
-          this.subscribe(fromEvent<MouseEvent>(element, 'click'), event => {
-            if (this._id == null || event.target == null) {
-              return;
-            }
-            let target = event.target;
-            if (target['offsetParent']['nodeName'] === 'USX-SEGMENT') {
-              target = target['offsetParent'] as EventTarget;
-            }
-            if (target['nodeName'] === 'USX-SEGMENT') {
-              const clickSegment = target['attributes']['data-segment'].value;
-              const segmentParts = clickSegment.split('_', 3);
-              const verseRef = new VerseRef(this._id.bookNum, segmentParts[1], segmentParts[2]);
-              this.questionVerseSelected.emit(verseRef);
-            }
-          })
-        );
-      } else {
-        // Un-subscribe from all segment click events as these all get setup again
-        for (const event of this.clickSubs) {
-          event.unsubscribe();
-        }
-      }
-    }
-  }
-*/
   private subscribeClickEvents(segments: string[]): void {
     for (const segment of segments) {
       const element: Element | null = this.textComponent.getSegmentElement(segment);

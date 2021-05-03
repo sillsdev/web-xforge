@@ -1577,9 +1577,9 @@ class TestEnvironment {
         selectedText: 'chapter 1',
         notes,
         tagIcon: '01flag1',
-        contextBefore: 'target: ',
+        contextBefore: '\\v 1 target: ',
         contextAfter: ', verse 1.',
-        startPosition: 8
+        startPosition: 13
       }
     });
   }
