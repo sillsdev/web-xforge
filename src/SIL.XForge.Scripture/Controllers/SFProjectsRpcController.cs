@@ -360,5 +360,22 @@ namespace SIL.XForge.Scripture.Controllers
                 return NotFoundError(dnfe.Message);
             }
         }
+
+        public async Task<IRpcMethodResult> SetUserProjectPermissions(string projectId, string userId, string[] permissions)
+        {
+            try
+            {
+                await _projectService.SetUserProjectPermissions(UserId, projectId, userId, permissions);
+                return Ok();
+            }
+            catch (ForbiddenException)
+            {
+                return ForbiddenError();
+            }
+            catch (DataNotFoundException dnfe)
+            {
+                return NotFoundError(dnfe.Message);
+            }
+        }
     }
 }

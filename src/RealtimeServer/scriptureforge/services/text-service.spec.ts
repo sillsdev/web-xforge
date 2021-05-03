@@ -9,7 +9,7 @@ import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
 import { allowAll, clientConnect, createDoc, fetchDoc, submitOp } from '../../common/utils/test-utils';
 import { CheckingShareLevel } from '../models/checking-config';
-import { SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
+import { SFProject, SF_PROJECTS_COLLECTION } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
 import { getTextDocId, TextData, TEXTS_COLLECTION } from '../models/text-data';
 import { TextService } from './text-service';
@@ -126,7 +126,8 @@ class TestEnvironment {
       userRoles: {
         translator: SFProjectRole.ParatextTranslator,
         observer: SFProjectRole.ParatextObserver
-      }
+      },
+      userPermissions: {}
     });
 
     await createDoc<TextData>(conn, TEXTS_COLLECTION, getTextDocId('project01', 40, 1), new Delta(), 'rich-text');

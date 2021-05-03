@@ -84,11 +84,11 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   }
 
   get canEditTexts(): boolean {
-    if (this.projectDoc == null || this.projectDoc.data == null) {
-      return false;
-    }
-    const projectRole = this.projectDoc.data.userRoles[this.userService.currentUserId];
-    return SF_PROJECT_RIGHTS.hasRight(projectRole, { projectDomain: SFProjectDomain.Texts, operation: Operation.Edit });
+    const project = this.projectDoc?.data;
+    return (
+      project != null &&
+      SF_PROJECT_RIGHTS.hasRight(project, this.userService.currentUserId, SFProjectDomain.Texts, Operation.Edit)
+    );
   }
 
   ngOnInit(): void {

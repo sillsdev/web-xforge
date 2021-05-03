@@ -61,5 +61,13 @@ $material-app-theme: mat-light-theme(
   )
 );
 
+@include mat-autocomplete-theme($material-app-theme);
 @include mat-button-theme($material-app-theme);
+@include mat-checkbox-theme($material-app-theme);
+@include mat-optgroup-theme($material-app-theme);
+@include mat-option-theme($material-app-theme);
+@include mat-paginator-theme($material-app-theme);
 @include mat-progress-bar-theme($material-app-theme);
+@include mat-progress-spinner-theme($material-app-theme);
+@include mat-select-theme($material-app-theme);
+@include mat-table-theme($material-app-theme);

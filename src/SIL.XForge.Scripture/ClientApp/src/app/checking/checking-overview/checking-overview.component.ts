@@ -2,7 +2,8 @@ import { MdcDialog } from '@angular-mdc/web/dialog';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
@@ -70,7 +71,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     let count: number = 0;
     for (const questionDoc of this.allPublishedQuestions) {
       if (questionDoc.data != null) {
-        if (this.isProjectAdmin) {
+        if (this.canCreateQuestion) {
           count += questionDoc.data.answers.length;
         } else {
           count += questionDoc.data.answers.filter(a => a.ownerRef === this.userService.currentUserId).length;
@@ -86,7 +87,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     for (const questionDoc of this.allPublishedQuestions) {
       if (questionDoc.data != null) {
         for (const answer of questionDoc.data.answers) {
-          if (this.isProjectAdmin) {
+          if (this.canCreateQuestion) {
             count += answer.likes.length;
           } else {
             count += answer.likes.filter(l => l.ownerRef === this.userService.currentUserId).length;
@@ -103,7 +104,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     for (const questionDoc of this.allPublishedQuestions) {
       if (questionDoc.data != null) {
         for (const answer of questionDoc.data.answers) {
-          if (this.isProjectAdmin) {
+          if (this.canCreateQuestion) {
             count += answer.comments.length;
           } else {
             count += answer.comments.filter(c => c.ownerRef === this.userService.currentUserId).length;
@@ -116,23 +117,23 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   get canSeeOtherUserResponses(): boolean {
-    return (
-      this.projectDoc != null &&
-      this.projectDoc.data != null &&
-      this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses
-    );
+    return this.projectDoc?.data?.checkingConfig.usersSeeEachOthersResponses === true;
   }
 
   get showImportButton(): boolean {
     return this._hasTransceleratorQuestions && this.pwaService.isOnline;
   }
 
-  get isProjectAdmin(): boolean {
-    return (
-      this.projectDoc != null &&
-      this.projectDoc.data != null &&
-      this.projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator
-    );
+  get canCreateQuestion(): boolean {
+    const project = this.projectDoc?.data;
+    const userId = this.userService.currentUserId;
+    return project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.Questions, Operation.Create);
+  }
+
+  get canEditQuestion(): boolean {
+    const project = this.projectDoc?.data;
+    const userId = this.userService.currentUserId;
+    return project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.Questions, Operation.Edit);
   }
 
   get allArchivedQuestionsCount(): number {
@@ -199,7 +200,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       async ([projectId, _]) => {
         await projectDocPromise;
         this._hasTransceleratorQuestions =
-          this.isProjectAdmin && (await this.projectService.hasTransceleratorQuestions(projectId));
+          this.canCreateQuestion && (await this.projectService.hasTransceleratorQuestions(projectId));
       }
     );
   }

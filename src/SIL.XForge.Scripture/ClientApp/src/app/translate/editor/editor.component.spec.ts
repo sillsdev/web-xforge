@@ -1078,6 +1078,7 @@ class TestEnvironment {
     shortName: 'TRG',
     isRightToLeft: false,
     userRoles: this.userRolesOnProject,
+    userPermissions: {},
     writingSystem: { tag: 'qaa' },
     translateConfig: {
       translationSuggestionsEnabled: true,

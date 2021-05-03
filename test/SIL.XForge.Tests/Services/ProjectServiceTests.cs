@@ -221,11 +221,15 @@ namespace SIL.XForge.Services
             string requestingUser = User01;
             string project = Project01;
             string userToDisassociate = User02;
+            await env.Service.SetUserProjectPermissions(User01, Project01, User02, new string[] { "questions.edit" });
+            Assert.AreEqual(1, env.GetProject(project).UserPermissions.Count);
             Assert.That(env.GetProject(project).UserRoles, Does.ContainKey(userToDisassociate), "setup");
+            Assert.That(env.GetProject(project).UserPermissions, Does.ContainKey(userToDisassociate), "setup");
             Assert.That(env.GetUser(userToDisassociate).Sites[SiteId].Projects, Does.Contain(project), "setup");
             // SUT
             await env.Service.RemoveUserAsync(requestingUser, project, userToDisassociate);
             Assert.That(env.GetProject(project).UserRoles, Does.Not.ContainKey(userToDisassociate));
+            Assert.That(env.GetProject(project).UserPermissions, Does.Not.ContainKey(userToDisassociate));
             Assert.That(env.GetUser(userToDisassociate).Sites[SiteId].Projects, Does.Not.Contain(project));
         }
 
@@ -264,6 +268,47 @@ namespace SIL.XForge.Services
             Assert.That(env.GetUser(userToDisassociate).Sites[SiteId].Projects, Does.Not.Contain(Project01));
             Assert.That(env.GetProject(Project02).UserRoles, Does.Not.ContainKey(userToDisassociate));
             Assert.That(env.GetUser(userToDisassociate).Sites[SiteId].Projects, Does.Not.Contain(Project02));
+        }
+
+        [Test]
+        public async Task SetUserProjectPermissions_AdminHasPermission()
+        {
+            var env = new TestEnvironment();
+            var permissions = new string[] { "questions.create", "questions.edit" };
+
+            Project project = env.GetProject(Project01);
+            Assert.AreEqual(0, project.UserPermissions.Count, "setup");
+
+            // Admin can give user question permission
+            await env.Service.SetUserProjectPermissions(User01, Project01, User02, permissions);
+            project = env.GetProject(Project01);
+            Assert.AreEqual(1, project.UserPermissions.Count);
+            project.UserPermissions.TryGetValue(User02, out string[] value);
+            Assert.AreEqual(permissions, value);
+
+            // Admin can revoke permission, which removes the key value pair from the userPermissions property
+            await env.Service.SetUserProjectPermissions(User01, Project01, User02, new string[] { });
+            project = env.GetProject(Project01);
+            Assert.AreEqual(0, project.UserPermissions.Count);
+        }
+
+        [Test]
+        public void SetUserProjectPermissions_NonAdminDoesNotHavePermission()
+        {
+            var env = new TestEnvironment();
+            var permissions = new string[] { "questions.create", "questions.edit" };
+
+            Project project = env.GetProject(Project01);
+            Assert.AreEqual(0, project.UserPermissions.Count, "setup");
+
+            // Translator user cannot give permission to self
+            Assert.ThrowsAsync<ForbiddenException>(
+                () => env.Service.SetUserProjectPermissions(User02, Project01, User02, permissions)
+            );
+
+            // Permissions are not updated
+            project = env.GetProject(Project01);
+            Assert.AreEqual(0, project.UserPermissions.Count);
         }
 
         private class TestEnvironment

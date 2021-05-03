@@ -305,7 +305,8 @@ class TestEnvironment {
         id: 'project01',
         data: {
           name: 'Project 01',
-          userRoles: { user01: 'admin' }
+          userRoles: { user01: 'admin' },
+          userPermissions: {}
         }
       },
       {
@@ -313,6 +314,7 @@ class TestEnvironment {
         data: {
           name: 'Project 02',
           userRoles: {},
+          userPermissions: {},
           syncDisabled: true
         }
       },
@@ -320,7 +322,8 @@ class TestEnvironment {
         id: 'project03',
         data: {
           name: 'Project 03',
-          userRoles: { user01: 'user' }
+          userRoles: { user01: 'user' },
+          userPermissions: {}
         }
       }
     ]);

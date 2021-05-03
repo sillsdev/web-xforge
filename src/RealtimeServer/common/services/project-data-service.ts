@@ -2,6 +2,7 @@ import ShareDB from 'sharedb';
 import { ConnectSession } from '../connect-session';
 import { MigrationConstructor } from '../migration';
 import { OwnedData } from '../models/owned-data';
+import { Project } from '../models/project';
 import { ProjectData } from '../models/project-data';
 import { Operation, ProjectRights } from '../models/project-rights';
 import { RealtimeServer } from '../realtime-server';
@@ -13,7 +14,7 @@ import { JsonDocService } from './json-doc-service';
  * entity type stored in a JSON0 doc.
  */
 export interface ProjectDomainConfig {
-  projectDomain: number;
+  projectDomain: string;
   pathTemplate: ObjPathTemplate;
 }
 
@@ -69,16 +70,9 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
     if (this.server == null) {
       throw new Error('The doc service has not been initialized.');
     }
-    const role = await this.server.getUserProjectRole(session, doc.projectRef);
-    if (role == null) {
-      return false;
-    }
-
+    const project = await this.server.getProject(doc.projectRef);
     const domain = this.getUpdatedDomain([]);
-    if (domain == null) {
-      return false;
-    }
-    return this.hasRight(role, domain, Operation.Create, session.userId, doc);
+    return project != null && domain != null && this.hasRight(project, domain, Operation.Create, session.userId, doc);
   }
 
   protected async allowDelete(_docId: string, doc: T, session: ConnectSession): Promise<boolean> {
@@ -89,16 +83,9 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
     if (this.server == null) {
       throw new Error('The doc service has not been initialized.');
     }
-    const role = await this.server.getUserProjectRole(session, doc.projectRef);
-    if (role == null) {
-      return false;
-    }
-
+    const project = await this.server.getProject(doc.projectRef);
     const domain = this.getUpdatedDomain([]);
-    if (domain == null) {
-      return false;
-    }
-    return this.hasRight(role, domain, Operation.Delete, session.userId, doc);
+    return project != null && domain != null && this.hasRight(project, domain, Operation.Delete, session.userId, doc);
   }
 
   protected async allowRead(_docId: string, doc: T, session: ConnectSession): Promise<boolean> {
@@ -109,13 +96,13 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
     if (this.server == null) {
       throw new Error('The doc service has not been initialized.');
     }
-    const role = await this.server.getUserProjectRole(session, doc.projectRef);
-    if (role == null) {
+    const project = await this.server.getProject(doc.projectRef);
+    if (project == null) {
       return false;
     }
 
     for (const domain of this.domains) {
-      if (!this.hasRight(role, domain, Operation.View, session.userId, doc)) {
+      if (!this.hasRight(project, domain, Operation.View, session.userId, doc)) {
         return false;
       }
     }
@@ -136,8 +123,8 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
     if (this.server == null) {
       throw new Error('The doc service has not been initialized.');
     }
-    const role = await this.server.getUserProjectRole(session, oldDoc.projectRef);
-    if (role == null) {
+    const project = await this.server.getProject(oldDoc.projectRef);
+    if (project == null) {
       return false;
     }
 
@@ -154,25 +141,25 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
         const oldEntity = this.deepGet(entityPath, oldDoc);
         // if the entity doesn't exist in the old doc, then it must be inserted by a previous op that the user has a
         // right to perform, so we don't need to check this edit right
-        if (oldEntity != null && !this.hasRight(role, domain, Operation.Edit, session.userId, oldEntity)) {
+        if (oldEntity != null && !this.hasRight(project, domain, Operation.Edit, session.userId, oldEntity)) {
           return false;
         }
       } else {
         const listOp = op as ShareDB.ListReplaceOp;
         if (listOp.li != null && listOp.ld != null) {
           // replace
-          if (!this.hasRight(role, domain, Operation.Edit, session.userId, listOp.ld)) {
+          if (!this.hasRight(project, domain, Operation.Edit, session.userId, listOp.ld)) {
             return false;
           }
         } else if (listOp.li != null) {
           // create
-          if (!this.hasRight(role, domain, Operation.Create, session.userId, listOp.li)) {
+          if (!this.hasRight(project, domain, Operation.Create, session.userId, listOp.li)) {
             return false;
           }
           checkImmutableProps = false;
         } else if (listOp.ld != null) {
           // delete
-          if (!this.hasRight(role, domain, Operation.Delete, session.userId, listOp.ld)) {
+          if (!this.hasRight(project, domain, Operation.Delete, session.userId, listOp.ld)) {
             return false;
           }
           checkImmutableProps = false;
@@ -202,10 +189,10 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
    *
    * @param {string} _userId The user id.
    * @param {string} _docId The doc id.
-   * @param {number} _projectDomain The project domain of the inserted entity.
+   * @param {string} _projectDomain The project domain of the inserted entity.
    * @param {OwnedData} _entity The inserted entity.
    */
-  protected onInsert(_userId: string, _docId: string, _projectDomain: number, _entity: OwnedData): Promise<void> {
+  protected onInsert(_userId: string, _docId: string, _projectDomain: string, _entity: OwnedData): Promise<void> {
     return Promise.resolve();
   }
 
@@ -215,10 +202,10 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
    *
    * @param {string} _userId The user id.
    * @param {string} _docId The doc id.
-   * @param {number} _projectDomain The project domain of the updated entity.
+   * @param {string} _projectDomain The project domain of the updated entity.
    * @param {OwnedData} _entity The updated entity.
    */
-  protected onUpdate(_userId: string, _docId: string, _projectDomain: number, _entity: OwnedData): Promise<void> {
+  protected onUpdate(_userId: string, _docId: string, _projectDomain: string, _entity: OwnedData): Promise<void> {
     return Promise.resolve();
   }
 
@@ -228,10 +215,10 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
    *
    * @param {string} _userId The user id.
    * @param {string} _docId The doc id.
-   * @param {number} _projectDomain The project domain of the deleted entity.
+   * @param {string} _projectDomain The project domain of the deleted entity.
    * @param {OwnedData} _entity The deleted entity.
    */
-  protected onDelete(_userId: string, _docId: string, _projectDomain: number, _entity: OwnedData): Promise<void> {
+  protected onDelete(_userId: string, _docId: string, _projectDomain: string, _entity: OwnedData): Promise<void> {
     return Promise.resolve();
   }
 
@@ -248,13 +235,13 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
   }
 
   private hasRight(
-    role: string,
-    domainConfig: ProjectDomainConfig,
+    project: Project,
+    domain: ProjectDomainConfig,
     operation: Operation,
     userId: string,
     data: OwnedData
   ): boolean {
-    return this.projectRights.hasRight(role, { projectDomain: domainConfig.projectDomain, operation }, userId, data);
+    return this.projectRights.hasRight(project, userId, domain.projectDomain, operation, data);
   }
 
   private deepGet(path: ShareDB.Path, obj: any): any {

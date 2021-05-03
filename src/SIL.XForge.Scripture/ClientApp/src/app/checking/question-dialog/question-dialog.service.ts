@@ -101,14 +101,12 @@ export class QuestionDialogService {
   }
 
   private async canCreateAndEditQuestions(projectId: string): Promise<boolean> {
-    const project = await this.projectService.get(projectId);
-    if (project != null && project.data != null && this.userService.currentUserId in project.data.userRoles) {
-      const role = project.data.userRoles[this.userService.currentUserId];
-      return (
-        SF_PROJECT_RIGHTS.hasRight(role, { projectDomain: SFProjectDomain.Questions, operation: Operation.Create }) &&
-        SF_PROJECT_RIGHTS.hasRight(role, { projectDomain: SFProjectDomain.Questions, operation: Operation.Edit })
-      );
-    }
-    return false;
+    const userId = this.userService.currentUserId;
+    const project = (await this.projectService.get(projectId)).data;
+    return (
+      project != null &&
+      SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.Questions, Operation.Create) &&
+      SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.Questions, Operation.Edit)
+    );
   }
 }

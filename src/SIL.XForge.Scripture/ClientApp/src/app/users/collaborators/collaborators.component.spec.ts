@@ -4,12 +4,14 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { BehaviorSubject, of } from 'rxjs';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { CommandError } from 'xforge-common/command.service';
@@ -420,6 +422,50 @@ describe('CollaboratorsComponent', () => {
     expect(env.removeUserButtonOnRow(0).nativeElement.disabled).toBe(true);
     expect(env.cancelInviteButtonOnRow(3).nativeElement.disabled).toBe(true);
   }));
+
+  it('should allow granting question permission to non admins', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProjectData();
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+
+    // With checking disabled, the checkboxes should not exist
+    expect(env.userPermissionCheckbox(0)).toBeUndefined();
+
+    // Enable checking
+    const checkingConfig: CheckingConfig = {
+      checkingEnabled: true,
+      shareEnabled: true,
+      shareLevel: CheckingShareLevel.Anyone,
+      usersSeeEachOthersResponses: false
+    };
+    env.updateCheckingProperties(checkingConfig);
+    tick();
+    env.fixture.detectChanges();
+
+    // project admins always have permission, so the checkbox should be checked and disabled
+    expect(env.userPermissionCheckbox(0).classList).toContain('mat-checkbox-disabled');
+    expect(env.userPermissionCheckbox(0).classList).toContain('mat-checkbox-checked');
+    // translators can be given permission, or not have permission
+    expect(env.userPermissionCheckbox(1).classList).not.toContain('mat-checkbox-disabled');
+    expect(env.userPermissionCheckbox(1).classList).not.toContain('mat-checkbox-checked');
+    // community checkers cannot be given permission to manage questions
+    expect(env.userPermissionCheckbox(2)).toBeUndefined();
+
+    env.clickElement(env.userPermissionCheckbox(1));
+
+    const permissions = [
+      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create),
+      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Edit)
+    ];
+    verify(
+      mockedProjectService.onlineSetUserProjectPermissions(env.project01Id, 'user02', deepEqual(permissions))
+    ).once();
+
+    expect(env.userPermissionCheckbox(1).classList).not.toContain('mat-checkbox-disabled');
+    expect(env.userPermissionCheckbox(1).classList).toContain('mat-checkbox-checked');
+  }));
 });
 
 class TestEnvironment {
@@ -449,6 +495,12 @@ class TestEnvironment {
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId)
     );
     when(mockedProjectService.onlineGetLinkSharingKey(this.project01Id, anything())).thenResolve('linkSharingKey01');
+    when(mockedProjectService.onlineSetUserProjectPermissions(this.project01Id, 'user02', anything())).thenCall(
+      (projectId: string, userId: string, permissions: string[]) => {
+        const projectDoc: SFProjectDoc = this.realtimeService.get(SFProjectDoc.COLLECTION, projectId);
+        return projectDoc.submitJson0Op(op => op.set(p => p.userPermissions[userId], permissions));
+      }
+    );
     this.realtimeService.addSnapshots<UserProfile>(UserProfileDoc.COLLECTION, [
       {
         id: 'user01',
@@ -550,6 +602,10 @@ class TestEnvironment {
     return this.userRows[row].query(By.css('button.cancel-invite'));
   }
 
+  userPermissionCheckbox(index: number): HTMLElement {
+    return this.table.nativeElement.querySelectorAll('td.mat-column-questions_permission .mat-checkbox')[index];
+  }
+
   clickElement(element: HTMLElement | DebugElement): void {
     if (element instanceof DebugElement) {
       element = (element as DebugElement).nativeElement as HTMLElement;
@@ -620,7 +676,8 @@ class TestEnvironment {
         shareEnabled: false,
         shareLevel: CheckingShareLevel.Specific
       },
-      userRoles
+      userRoles,
+      userPermissions: {}
     };
   }
 
