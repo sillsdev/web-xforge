@@ -568,7 +568,6 @@ export function registerScripture(): string[] {
   );
   formats.push(NoteThreadCountAttribute);
 
-  // TODO: May be able to remove these
   const IconSourceAttribute = new QuillParchment.Attributor.Attribute('note-icon-source', 'style', {
     scope: Parchment.Scope.INLINE
   });

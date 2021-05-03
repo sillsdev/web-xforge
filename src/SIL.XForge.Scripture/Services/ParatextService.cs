@@ -563,7 +563,8 @@ namespace SIL.XForge.Scripture.Services
         }
 
         public IEnumerable<ParatextNoteThreadChange> GetNoteThreadChanges(UserSecret userSecret, string projectId,
-            int bookNum, IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs, Dictionary<string, SyncUser> syncUsers)
+            int bookNum, IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs,
+            Dictionary<string, SyncUser> syncUsers)
         {
             IEnumerable<CommentThread> commentThreads = GetCommentThreads(userSecret, projectId, bookNum);
             CommentTags commentTags = GetCommentTags(userSecret, projectId);
@@ -595,25 +596,27 @@ namespace SIL.XForge.Scripture.Services
                         if (changeType != ChangeType.None)
                         {
                             SyncUser syncUser = FindOrCreateSyncUser(matchedComment.User, syncUsers);
-                            threadChange.AddChange(CreateNoteFromComment(matchedComment, commentTags, syncUser), changeType);
+                            threadChange.AddChange(
+                                CreateNoteFromComment(note.DataId, matchedComment, commentTags, syncUser), changeType);
                         }
                     }
                 }
                 // Add new Comments to note thread change
-                var ptCommentIds = existingThread.Comments.Select(c => c.Id);
-                var newCommentIds = ptCommentIds.Except(matchedCommentIds);
+                IEnumerable<string> ptCommentIds = existingThread.Comments.Select(c => c.Id);
+                IEnumerable<string> newCommentIds = ptCommentIds.Except(matchedCommentIds);
                 foreach (string commentId in newCommentIds)
                 {
-                    Paratext.Data.ProjectComments.Comment comment = existingThread.Comments.Single(c => c.Id == commentId);
+                    Paratext.Data.ProjectComments.Comment comment =
+                        existingThread.Comments.Single(c => c.Id == commentId);
                     SyncUser syncUser = FindOrCreateSyncUser(comment.User, syncUsers);
-                    threadChange.AddChange(CreateNoteFromComment(existingThread.Comments
-                        .Single(c => c.Id == commentId), commentTags, syncUser), ChangeType.Added);
+                    threadChange.AddChange(CreateNoteFromComment(
+                        _guidService.NewObjectId(), comment, commentTags, syncUser), ChangeType.Added);
                 }
                 if (threadChange.HasChange)
                     changes.Add(threadChange);
             }
-            var ptThreadIds = commentThreads.Select(ct => ct.Id);
-            var newThreadIds = ptThreadIds.Except(matchedThreadIds);
+            IEnumerable<string> ptThreadIds = commentThreads.Select(ct => ct.Id);
+            IEnumerable<string> newThreadIds = ptThreadIds.Except(matchedThreadIds);
             foreach (string threadId in newThreadIds)
             {
                 CommentThread thread = commentThreads.Single(ct => ct.Id == threadId);
@@ -626,7 +629,8 @@ namespace SIL.XForge.Scripture.Services
                 foreach (var comm in thread.Comments)
                 {
                     SyncUser syncUser = FindOrCreateSyncUser(comm.User, syncUsers);
-                    newThread.AddChange(CreateNoteFromComment(comm, commentTags, syncUser), ChangeType.Added);
+                    newThread.AddChange(CreateNoteFromComment(_guidService.NewObjectId(), comm, commentTags, syncUser),
+                        ChangeType.Added);
                 }
                 changes.Add(newThread);
             }
@@ -1084,14 +1088,15 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        private Note CreateNoteFromComment(Paratext.Data.ProjectComments.Comment comment, CommentTags commentTags,
-            SyncUser syncUser)
+        private Note CreateNoteFromComment(string noteId, Paratext.Data.ProjectComments.Comment comment,
+            CommentTags commentTags, SyncUser syncUser)
         {
             var tag = comment.TagsAdded == null || comment.TagsAdded.Length == 0
                 ? null
                 : commentTags.Get(int.Parse(comment.TagsAdded[0]));
             return new Note
             {
+                DataId = noteId,
                 ThreadId = comment.Thread,
                 ExtUserId = comment.ExternalUser,
                 // The owner is unknown at this point and is determined when submitting the ops to the note thread docs
