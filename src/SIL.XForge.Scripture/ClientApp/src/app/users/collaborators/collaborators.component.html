@@ -57,9 +57,21 @@
               ></div>
             </td>
           </ng-container>
-          <ng-container matColumnDef="projects">
+          <ng-container matColumnDef="role">
             <td fxHide.xs mat-cell *matCellDef="let userRow">
               <em>{{ userRow.role ? i18n.localizeRole(userRow.role) : "" }}</em>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="questions_permission">
+            <td fxHide.xs mat-cell *matCellDef="let userRow">
+              <mat-checkbox
+                *ngIf="userRow.userEligibleForQuestionPermission"
+                [disabled]="!userRow.canHaveQuestionPermissionRevoked"
+                [checked]="userRow.allowCreatingQuestions"
+                (click)="toggleQuestionPermission(userRow)"
+              >
+                {{ t("allow_add_edit_questions") }}
+              </mat-checkbox>
             </td>
           </ng-container>
           <ng-container matColumnDef="remove">
@@ -106,7 +118,7 @@
             </td>
           </ng-container>
 
-          <tr mat-row *matRowDef="let userRow; columns: ['avatar', 'name', 'projects', 'remove']"></tr>
+          <tr mat-row *matRowDef="let userRow; columns: tableColumns"></tr>
         </table>
 
         <mat-paginator

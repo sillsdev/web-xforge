@@ -31,6 +31,7 @@
     "time_archived_stamp": "Archived on {{ timeStamp }}"
   },
   "collaborators": {
+    "allow_add_edit_questions": "Can add & edit questions",
     "awaiting_response_from": "Awaiting response from{{ newLine }}{{ email }}",
     "cancel_invite": "Cancel invite",
     "change_roles_and_permissions": "Users' roles and permissions can {{ boldStart }}only{{ boldEnd }} be changed in {{ boldStart }}Paratext{{ boldEnd }}. Open the project in {{ boldStart }}Paratext{{ boldEnd }}, on the project window click {{ templateTagBoundary }}{{ templateTagBoundary }}, then {{ boldStart }}Project settings{{ boldEnd }}, then {{ boldStart }}User permissions{{ boldEnd }}. After a {{ italicsStart }}Send/Receive{{ italicsEnd }} in {{ boldStart }}Paratext{{ boldEnd }} and then a {{ italicsStart }}Synchronize{{ italicsEnd }} in {{ boldStart }}Scripture Forge{{ boldEnd }}, their role will come into effect here, once that user logs in with their {{ boldStart }}Paratext{{ boldEnd }} account.",
@@ -129,7 +130,7 @@
     "question_has_answer": "Question already has an answer"
   },
   "question_dialog": {
-    "add_question_denied": "Permission denied: only project administrator can add and edit questions.",
+    "add_question_denied": "You don't have permission to add questions.",
     "cancel": "Cancel",
     "edit_question": "Edit Question",
     "end_reference": "End reference",

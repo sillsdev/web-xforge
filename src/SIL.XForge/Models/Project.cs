@@ -6,6 +6,7 @@ namespace SIL.XForge.Models
     {
         public string Name { get; set; }
         public Dictionary<string, string> UserRoles { get; set; } = new Dictionary<string, string>();
+        public Dictionary<string, string[]> UserPermissions { get; set; } = new Dictionary<string, string[]>();
         public bool SyncDisabled { get; set; }
     }
 }

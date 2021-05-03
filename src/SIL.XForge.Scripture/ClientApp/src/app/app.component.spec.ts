@@ -853,6 +853,7 @@ class TestEnvironment {
         },
         sync: { queuedCount: 0 },
         userRoles,
+        userPermissions: {},
         texts
       }
     });

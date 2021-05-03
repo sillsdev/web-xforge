@@ -161,7 +161,8 @@ class TestEnvironment {
         texts: [],
         userRoles: {
           user01: role
-        }
+        },
+        userPermissions: {}
       }
     });
   }
