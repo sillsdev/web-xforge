@@ -636,7 +636,8 @@ class TestEnvironment {
         checkingConfig,
         sync: { queuedCount: 0 },
         texts: [],
-        userRoles: {}
+        userRoles: {},
+        userPermissions: {}
       }
     });
   }

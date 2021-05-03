@@ -1,23 +1,24 @@
 import { OwnedData } from './owned-data';
+import { Project } from './project';
 
 export enum Operation {
-  Create = 1,
-  Edit = 2,
-  Delete = 3,
-  View = 4,
+  Create = 'create',
+  Edit = 'edit',
+  Delete = 'delete',
+  View = 'view',
 
-  EditOwn = 5,
-  DeleteOwn = 6,
-  ViewOwn = 7
+  EditOwn = 'edit_own',
+  DeleteOwn = 'delete_own',
+  ViewOwn = 'view_own'
 }
 
 export interface ProjectRight {
-  projectDomain: number;
+  projectDomain: string;
   operation: Operation;
 }
 
 export class ProjectRights {
-  private readonly rights = new Map<string, Set<number>>();
+  private readonly rights = new Map<string, string[]>();
 
   constructor(rights: { [role: string]: ProjectRight[] } = {}) {
     for (const role in rights) {
@@ -27,21 +28,15 @@ export class ProjectRights {
     }
   }
 
-  hasRight(role: string, right: ProjectRight, userId?: string, data?: OwnedData): boolean {
-    const rights = this.rights.get(role);
-    if (rights == null) {
-      return false;
-    }
+  hasRight(project: Project, userId: string, projectDomain: string, operation: Operation, data?: OwnedData): boolean {
+    const rights = (this.rights.get(project.userRoles[userId]) || []).concat(project.userPermissions[userId] || []);
 
-    if (rights.has(right.projectDomain + right.operation)) {
-      if (right.operation === Operation.Create && userId != null && data != null && userId !== data.ownerRef) {
-        return false;
-      }
-      return true;
+    if (rights.includes(this.joinRight(projectDomain, operation))) {
+      return operation === Operation.Create && userId != null && data != null ? userId === data.ownerRef : true;
     }
 
     let ownOperation: Operation;
-    switch (right.operation) {
+    switch (operation) {
       case Operation.Edit:
         ownOperation = Operation.EditOwn;
         break;
@@ -55,10 +50,18 @@ export class ProjectRights {
         return false;
     }
 
-    return userId != null && data != null && rights.has(right.projectDomain + ownOperation) && data.ownerRef === userId;
+    return userId != null && data?.ownerRef === userId && rights.includes(this.joinRight(projectDomain, ownOperation));
+  }
+
+  roleHasRight(role: string, projectDomain: string, operation: Operation): boolean {
+    return (this.rights.get(role) || []).includes(this.joinRight(projectDomain, operation));
+  }
+
+  joinRight(domain: string, operation: string) {
+    return domain + '.' + operation;
   }
 
   protected addRights(role: string, rights: ProjectRight[]): void {
-    this.rights.set(role, new Set<number>(rights.map(r => r.projectDomain + r.operation)));
+    this.rights.set(role, Array.from(new Set<string>(rights.map(r => this.joinRight(r.projectDomain, r.operation)))));
   }
 }

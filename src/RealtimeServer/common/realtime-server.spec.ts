@@ -83,7 +83,7 @@ describe('RealtimeServer', () => {
     expect(ops.length).toEqual(3);
   });
 
-  it('gets correct project role', async () => {
+  it('gets correct project', async () => {
     const env = new TestEnvironment();
     await env.createData();
     let session: ConnectSession;
@@ -95,10 +95,11 @@ describe('RealtimeServer', () => {
     const userConn = clientConnect(env.server, 'user01');
     await submitOp(userConn, PROJECTS_COLLECTION, 'project01', []);
     expect(session!.userId).toEqual('user01');
-    expect(env.server.getUserProjectRole(session!, 'project01')).resolves.toEqual('admin');
+    const project = await env.server.getProject('project01');
+    expect(project?.name).toEqual('Project 01');
   });
 
-  it('gets correct project role when new project added', async () => {
+  it('gets correct project when new project added', async () => {
     const env = new TestEnvironment();
     await env.createData();
     let session: ConnectSession;
@@ -112,29 +113,13 @@ describe('RealtimeServer', () => {
       name: 'Project 02',
       userRoles: {
         user01: 'user'
-      }
+      },
+      userPermissions: {}
     });
     await submitOp(userConn, PROJECTS_COLLECTION, 'project02', []);
     expect(session!.userId).toEqual('user01');
-    expect(env.server.getUserProjectRole(session!, 'project02')).resolves.toEqual('user');
-  });
-
-  it('gets correct project role when role changed', async () => {
-    const env = new TestEnvironment();
-    await env.createData();
-    let session: ConnectSession;
-    env.server.use('submit', (context, callback) => {
-      session = context.agent.connectSession as ConnectSession;
-      callback();
-    });
-
-    const userConn = clientConnect(env.server, 'user01');
-    await env.submitJson0Op<Project>(PROJECTS_COLLECTION, 'project01', ops =>
-      ops.set<string>(p => p.userRoles['user01'], 'user')
-    );
-    await submitOp(userConn, PROJECTS_COLLECTION, 'project01', []);
-    expect(session!.userId).toEqual('user01');
-    expect(env.server.getUserProjectRole(session!, 'project01')).resolves.toEqual('user');
+    const project = await env.server.getProject('project02');
+    expect(project?.name).toEqual('Project 02');
   });
 });
 
@@ -182,7 +167,8 @@ class TestEnvironment {
       name: 'Project 01',
       userRoles: {
         user01: 'admin'
-      }
+      },
+      userPermissions: {}
     });
   }
 
