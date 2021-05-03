@@ -487,7 +487,9 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (range == null) {
       return;
     }
-    this.editor.formatText(range.index + startPos, formatLength, formatName, format, 'silent');
+    // Limit the length of the format to the length of the range
+    const textLength = formatLength > range.length ? range.length : formatLength;
+    this.editor.formatText(range.index + startPos, textLength, formatName, format, 'silent');
   }
 
   onContentChanged(delta: DeltaStatic, source: Sources): void {
