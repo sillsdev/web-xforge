@@ -15,5 +15,6 @@ namespace SIL.XForge.Services
         Task DeleteAudioAsync(string curUserId, string projectId, string ownerId, string dataId);
         Task SetSyncDisabledAsync(string curUserId, string systemRole, string projectId, bool isDisabled);
         Task RemoveUserFromAllProjectsAsync(string curUserId, string projectUserId);
+        Task SetUserProjectPermissions(string curUserId, string projectId, string userId, string[] permissions);
     }
 }

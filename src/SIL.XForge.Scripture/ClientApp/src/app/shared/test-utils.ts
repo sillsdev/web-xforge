@@ -2,7 +2,6 @@ import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/model
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { Delta, TextDocId } from '../core/models/text-doc';
 
 export function getTextDoc(id: TextDocId): TextData {
@@ -31,6 +30,7 @@ export function getSFProject(id: string): SFProject {
     paratextId: `${id}_target`,
     shortName: 'TRG',
     userRoles: { user01: SFProjectRole.ParatextTranslator, user02: SFProjectRole.ParatextConsultant },
+    userPermissions: {},
     writingSystem: { tag: 'qaa' },
     translateConfig: {
       translationSuggestionsEnabled: false

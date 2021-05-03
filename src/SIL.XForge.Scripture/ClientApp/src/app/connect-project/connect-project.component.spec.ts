@@ -399,7 +399,8 @@ class TestEnvironment {
         texts: [],
         userRoles: {
           user01: SFProjectRole.ParatextAdministrator
-        }
+        },
+        userPermissions: {}
       };
       this.realtimeService.create(SFProjectDoc.COLLECTION, 'project01', newProject);
       return Promise.resolve('project01');

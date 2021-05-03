@@ -275,6 +275,7 @@ class TestEnvironment {
           user01: SFProjectRole.ParatextTranslator,
           user02: SFProjectRole.ParatextConsultant
         },
+        userPermissions: {},
         texts: [
           {
             bookNum: 40,

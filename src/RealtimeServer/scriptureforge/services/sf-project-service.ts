@@ -1,5 +1,5 @@
 import { ProjectService } from '../../common/services/project-service';
-import { SF_PROJECT_INDEX_PATHS, SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
+import { SFProject, SF_PROJECTS_COLLECTION, SF_PROJECT_INDEX_PATHS } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
 import { SF_PROJECT_MIGRATIONS } from './sf-project-migrations';
 

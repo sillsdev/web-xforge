@@ -1,8 +1,8 @@
 <ng-container *transloco="let t; read: 'checking_overview'">
-  <div fxLayout="row" fxLayoutAlign="start center" [ngClass]="{ 'reviewer-panels': !isProjectAdmin }">
+  <div fxLayout="row" fxLayoutAlign="start center" [ngClass]="{ 'reviewer-panels': !canCreateQuestion }">
     <mdc-icon fxFlex="32px">library_books</mdc-icon>
     <h2 fxFlex>{{ t("texts_with_questions") }}</h2>
-    <div fxFlexAlign="center" *ngIf="isProjectAdmin; else overallProgressChart" class="primary-actions">
+    <div fxFlexAlign="center" *ngIf="canCreateQuestion; else overallProgressChart" class="primary-actions">
       <button mdc-button type="button" *ngIf="showImportButton" (click)="importDialog()" id="import-btn">
         {{ t("import_questions") }}
       </button>
@@ -24,7 +24,7 @@
     </ng-template>
   </div>
 
-  <div fxLayout="column" fxLayoutAlign="space-around" *ngIf="isProjectAdmin; else reviewerQuestionPanel">
+  <div fxLayout="column" fxLayoutAlign="space-around" *ngIf="canEditQuestion; else reviewerQuestionPanel">
     <mdc-list dense id="text-with-questions-list">
       <ng-container *ngFor="let text of texts">
         <mdc-list-item
@@ -115,7 +115,7 @@
     <p>
       {{ t("no_questions") }}
       <span
-        *ngIf="isProjectAdmin"
+        *ngIf="canCreateQuestion"
         [innerHtml]="i18n.translateAndInsertTags('checking_overview.click_add_question')"
       ></span>
     </p>
@@ -183,12 +183,12 @@
     </mdc-card>
   </div>
 
-  <div fxLayout="row" fxLayoutAlign="start center" *ngIf="isProjectAdmin">
+  <div fxLayout="row" fxLayoutAlign="start center" *ngIf="canEditQuestion">
     <mdc-icon fxFlex="32px">archive</mdc-icon>
     <h2 fxFlex>{{ t("archived_questions") }}</h2>
   </div>
 
-  <div fxLayout="column" *ngIf="isProjectAdmin">
+  <div fxLayout="column" *ngIf="canEditQuestion">
     <mdc-list dense id="text-with-archived-questions">
       <ng-container *ngFor="let text of texts">
         <mdc-list-item

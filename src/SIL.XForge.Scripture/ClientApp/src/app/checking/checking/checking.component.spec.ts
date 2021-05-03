@@ -1569,7 +1569,8 @@ class TestEnvironment {
       [CHECKER_USER.id]: CHECKER_USER.role,
       [CLEAN_CHECKER_USER.id]: CLEAN_CHECKER_USER.role,
       [OBSERVER_USER.id]: OBSERVER_USER.role
-    }
+    },
+    userPermissions: {}
   };
 
   constructor(user: UserInfo, projectBookRoute: string = 'JHN', hasConnection: boolean = true) {
