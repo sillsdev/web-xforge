@@ -1092,7 +1092,6 @@ class TestEnvironment {
     user02: TextInfoPermission.None,
     user03: TextInfoPermission.Read
   };
-  private readonly dateNow: string = new Date().toUTCString();
 
   private testProject: SFProject = {
     name: 'project 01',
@@ -1651,9 +1650,9 @@ class TestEnvironment {
         selectedText: 'chapter 1',
         notes,
         tagIcon: '01flag1',
-        contextBefore: 'target: ',
+        contextBefore: '\\v 1 target: ',
         contextAfter: ', verse 1.',
-        startPosition: 8
+        startPosition: 13
       }
     });
   }
