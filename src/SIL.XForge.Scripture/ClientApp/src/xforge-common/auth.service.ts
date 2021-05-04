@@ -127,10 +127,6 @@ export class AuthService {
     return this.tryLogInPromise.then(result => result.newlyLoggedIn);
   }
 
-  private get hasExpired(): boolean {
-    return this.expiresAt != null && Date.now() < this.expiresAt && this.renewTokenPromise == null;
-  }
-
   changePassword(email: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       this.auth0.changePassword({ connection: 'Username-Password-Authentication', email }, (error, result) => {
@@ -155,7 +151,7 @@ export class AuthService {
   }
 
   async isAuthenticated(): Promise<boolean> {
-    if (!this.hasExpired) {
+    if (await this.hasExpired()) {
       await this.renewTokens();
     }
     return true;
@@ -199,6 +195,13 @@ export class AuthService {
     if (await this.isLoggedIn) {
       await this.commandService.onlineInvoke(USERS_URL, 'updateInterfaceLanguage', { language });
     }
+  }
+
+  private async hasExpired(): Promise<boolean> {
+    if (this.renewTokenPromise != null) {
+      await this.renewTokenPromise;
+    }
+    return this.expiresAt == null || Date.now() > this.expiresAt;
   }
 
   private async tryLogIn(): Promise<LoginResult> {
