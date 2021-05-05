@@ -147,6 +147,7 @@ namespace SIL.XForge.Scripture.Services
                         await DeleteAllTextDocsForBookAsync(text);
                         await DeleteAllQuestionsDocsForBookAsync(text);
                         // TODO: Also delete ParatextNoteThreadDocs
+                        await DeleteAllNoteThreadDocsForBookAsync(text);
                     }
                 }
 
@@ -492,6 +493,7 @@ namespace SIL.XForge.Scripture.Services
                         await SubmitChangesOnNoteThreadDocAsync(doc, change);
                     }
                     tasks.Add(createThreadDoc(change.ThreadId, _projectDoc.Id, change));
+                    continue;
                 }
                 else
                     tasks.Add(SubmitChangesOnNoteThreadDocAsync(threadDoc, change));
@@ -596,8 +598,6 @@ namespace SIL.XForge.Scripture.Services
                     int index = threadDoc.Data.Notes.FindIndex(n => n.DataId == updated.DataId);
                     if (index >= 0)
                         op.Set(td => td.Notes[index].Content, updated.Content);
-                    else
-                        _logger.LogWarning("Unable to update note in database with id: " + updated.DataId);
                 }
                 // Delete notes
                 foreach (Note deleted in change.NotesDeleted)
@@ -608,13 +608,12 @@ namespace SIL.XForge.Scripture.Services
                         // The note can be easily removed by using op.Remove if that is preferred
                         op.Set(td => td.Notes[index].Deleted, true);
                     }
-                    else
-                        _logger.LogWarning("Unable to delete note in database with id: " + deleted.DataId);
                 }
 
                 // Add new notes, giving each note an associated SF userId if the user is also a Paratext user.
                 foreach (Note added in change.NotesAdded)
                 {
+                    added.DataId = ObjectId.GenerateNewId().ToString();
                     string ownerRef = null;
                     string username = _currentSyncUsers.Values.Single(u => u.Id == added.SyncUserRef).ParatextUsername;
                     if (username != null)
@@ -655,6 +654,27 @@ namespace SIL.XForge.Scripture.Services
                 }
                 tasks.Add(deleteQuestion());
             }
+            await Task.WhenAll(tasks);
+        }
+
+        private async Task DeleteAllNoteThreadDocsForBookAsync(TextInfo text)
+        {
+            List<string> noteThreadDocIds = await _realtimeService.QuerySnapshots<ParatextNoteThread>()
+                .Where(n => n.VerseRef.BookNum == text.BookNum)
+                .Select(n => n.Id)
+                .ToListAsync();
+            var tasks = new List<Task>();
+            foreach (string noteThreadDocId in noteThreadDocIds)
+            {
+                async Task deleteNoteThread()
+                {
+                    IDocument<ParatextNoteThread> noteThreadDoc = await _conn.FetchAsync<ParatextNoteThread>(noteThreadDocId);
+                    if (noteThreadDoc.IsLoaded)
+                        await noteThreadDoc.DeleteAsync();
+                }
+                tasks.Add((deleteNoteThread()));
+            }
+
             await Task.WhenAll(tasks);
         }
 
