@@ -34,7 +34,8 @@
     "loading": "Loading",
     "loading_retry": "Loading - retrying ({{ attempt }})",
     "login_required": "Login required",
-    "please_wait": "Scripture Forge is now out of Beta — yay! Hold tight while we quickly migrate your account to the new full release version."
+    "please_wait": "Scripture Forge is now out of Beta — yay! Hold tight while we quickly migrate your account to the new full release version.",
+    "recourse": "Make sure you aren't using an incognito/private web browser window, and are connected to the Internet. If you continue to have trouble, please {{ templateTagBoundary }}ask for help{{ templateTagBoundary }}."
   },
   "canon": {
     "book_names": {
@@ -276,6 +277,7 @@
     "dismiss": "Пропустить"
   },
   "project": {
+    "please_connect_to_use_link": "Please connect to the internet to join a project using a link.",
     "project_link_is_invalid": "Ссылка на проект недействительна.",
     "problem_finding_project": "There was a problem finding a project ({{ projectID }}) or user specific information for the project. There may be a typo in the URL you specified. You may have tried to access a project that is no longer available."
   },
@@ -297,13 +299,16 @@
     "email_invalid": "Адрес электронной почты недействителен",
     "email": "Электронная почта",
     "invitation_language": "Invitation language",
+    "invitation_role": "Role",
     "invitation_sent": "Электронное письмо с приглашением было отправлено на {{ email }}",
     "invite_people": "Приглашайте людей",
     "link_copied": "Ссылка скопирована в буфер обмена",
+    "link_sharing_not_available_offline": "Inviting users by link sharing is unavailable while offline.",
     "link_sharing": "Поделиться ссылкой",
     "not_inviting_already_member": "Не приглашает: Пользователь уже является участником данного проекта",
     "resend": "Отправить повторный запрос",
     "select_invitation_language": "Select a language for the invitation email",
+    "select_invitation_role": "Select a role for the invited user",
     "send": "Отправить",
     "share_by_email_not_available_offline": "Inviting users by email is unavailable while offline."
   },

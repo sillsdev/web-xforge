@@ -151,7 +151,8 @@
     "pt_observer": "Наблюдатель",
     "pt_translator": "Член Группы",
     "sf_community_checker": "Редактор от сообщества",
-    "sf_reviewer": "Рецензент"
+    "sf_reviewer": "Рецензент",
+    "sf_observer": "View Translation"
   },
   "settings": {
     "anyone_with_a_link": "Любой, у кого есть ссылка",

@@ -124,25 +124,25 @@
     <value>Kələmə layihələr getdikcə coğrafi cəhətdən müxtəlif dil danışan qrupları daxil edir.</value>
   </data>
   <data name="AboutFlexible" xml:space="preserve">
-    <value>Flexible</value>
+    <value>Çevik</value>
   </data>
   <data name="AboutFlexibleDescription" xml:space="preserve">
     <value>Xüsusi vəziyyətinizə uyğun gələn {0} vahid suallar {1} tərtib edin.</value>
   </data>
   <data name="AboutHeader" xml:space="preserve">
-    <value>About Scripture Forge</value>
+    <value>Scripture Forge haqqında</value>
   </data>
   <data name="AboutParatext" xml:space="preserve">
-    <value>Works with Paratext</value>
+    <value>Paratext ilə işləyir</value>
   </data>
   <data name="AboutParatextDescription" xml:space="preserve">
     <value>1 {0} Paratekst ilə birləşdirməsi {1} və {0} davam edən sinxronizasiya {1} layihənizi ən son deyişliklər ilə uyğunlaşdırır və {0} Paratekst Qeydləri {1} vasitəsilə istifadəçi rəy verməyə imkan verir.</value>
   </data>
   <data name="AboutTitle" xml:space="preserve">
-    <value>Extend your Reach With Scripture Checking</value>
+    <value>Müqəddəs Yazıların yoxlanılması ilə genişlənin</value>
   </data>
   <data name="AboutUserEngagement" xml:space="preserve">
-    <value>User Engagement</value>
+    <value>İstifadəçi əlaqəsi</value>
   </data>
   <data name="AboutUserEngagementDescription" xml:space="preserve">
     <value>3 {0} Dəvət olunmuş istifadəçilər {1} suallara cavab verə bilər, mövcud cavablara rəy yaza və cavabları bəyənə bilər.</value>
