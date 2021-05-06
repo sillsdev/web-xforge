@@ -151,7 +151,8 @@
     "pt_observer": "Pengamat",
     "pt_translator": "Penerjemah",
     "sf_community_checker": "Pemeriksa Komunitas",
-    "sf_reviewer": "Pengulas"
+    "sf_reviewer": "Pengulas",
+    "sf_observer": "View Translation"
   },
   "settings": {
     "anyone_with_a_link": "Siapapun yang punya tautan",

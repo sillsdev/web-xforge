@@ -18,23 +18,24 @@
     "product_version": "Yekun variant: {{ version }}",
     "project_home": "Layihənin ana səhifəsi",
     "redirecting_in_moments": "Redirecting in a few moments...",
-    "refresh": "Refresh",
+    "refresh": "Təzələmək",
     "report_issue_email": "e-poçt {{ email }}",
     "report_issue": "Problemi bildirin.",
     "scripture_checking_not_available": "Bu layihədə Kəlamın yoxlanması mövcud deyil. ",
-    "update_is_available": "An update is available. Please refresh the page."
+    "update_is_available": "Yeniləmə mümkündür Xahiş edirəm səhifəni yeniləyin."
   },
   "beta_migration": {
-    "checking_for_data": "Checking for offline data",
-    "cleaning_up": "Cleaning up",
+    "checking_for_data": "Oflayn məlumatların yoxlanılması",
+    "cleaning_up": "Təmizləmə",
     "close": "Bağla",
-    "completed": "Migration complete — this dialog will now close",
-    "data_migration": "Data migration",
-    "fetching_data": "Fetching data",
-    "loading": "Loading",
-    "loading_retry": "Loading - retrying ({{ attempt }})",
-    "login_required": "Login required",
-    "please_wait": "Scripture Forge is now out of Beta — yay! Hold tight while we quickly migrate your account to the new full release version."
+    "completed": "Miqrasiya tamamlandı - bu informasiya qutusu artıq bağlanacaq",
+    "data_migration": "Məlumat köçü",
+    "fetching_data": "Məlumat götürülür",
+    "loading": "Yükləməkdədir...",
+    "loading_retry": "Yüklənir - yenidən cəhd edilir ({{attempt}})",
+    "login_required": "Giriş tələb olunur",
+    "please_wait": "Scripture Forge artıq Beta - dan çıxdı! Ura Hesabınızı yeni tam buraxılış versiyasına sürətlə köçürdükdə gözləyin.",
+    "recourse": "Gizli/xüsusi veb brauzer pəncərəsindən istifadə etmədiyinizə və İnternetə qoşulduğunuzdan əmin olun. Əgər problem ilə rastlaşmağa davam etsəniz, {{ templateTagBoundary }}kömək üçün müraciət edin {{ templateTagBoundary }}."
   },
   "canon": {
     "book_names": {
@@ -276,6 +277,7 @@
     "dismiss": "İmtina et"
   },
   "project": {
+    "please_connect_to_use_link": "Please connect to the internet to join a project using a link.",
     "project_link_is_invalid": "Layihə keçidi yanlışdır.",
     "problem_finding_project": "There was a problem finding a project ({{ projectID }}) or user specific information for the project. There may be a typo in the URL you specified. You may have tried to access a project that is no longer available."
   },
@@ -297,13 +299,16 @@
     "email_invalid": "E-poçt ünvanı yanlışdır.",
     "email": "E-poçt",
     "invitation_language": "Invitation language",
+    "invitation_role": "Role",
     "invitation_sent": "Dəvət e-məktubu bu ünvana {{ email }} göndərildi. ",
     "invite_people": "Başqalarını dəvət edin.",
     "link_copied": "Keçid mübadilə buferinə nüsxələndi. ",
+    "link_sharing_not_available_offline": "Inviting users by link sharing is unavailable while offline.",
     "link_sharing": "Keçid paylaşımı",
     "not_inviting_already_member": "Dəvət olunmur: İstifadəçi artıq bu layihənin üzvüdür. ",
     "resend": "Yenidən göndərmək",
     "select_invitation_language": "Select a language for the invitation email",
+    "select_invitation_role": "Select a role for the invited user",
     "send": "Göndərmək",
     "share_by_email_not_available_offline": "Şəbəkədə olmayan vaxtınızda istifadəçini dəvət etmək mümkün deyil."
   },
@@ -316,13 +321,13 @@
     "not_connected_to_any_projects": "Elə görünür ki, siz hələ heç bir layihəyə qoşulmamısınız."
   },
   "supported_browsers_dialog": {
-    "audio_recording_not_supported": "Audio recording is not supported in this browser.",
+    "audio_recording_not_supported": "Bu brauzerdə səs yazısı dəstəklənmir.",
     "dismiss": "İmtina et",
     "browser_unsupported": "Bu brauzerə dəstək göstərilmir",
-    "safari_for_audio_on_ios": "Audio recording on iPhone and iPad only works in Safari.",
-    "some_features_may_not_work": "Some of the features of this website may not work correctly with your browser.",
-    "upgrade_chrome_firefox": "{{ newLine }}We recommend upgrading to the latest {{ chromeLink }} or {{ firefoxLink }}.",
-    "upgrade_safari": "{{ newLine }}We recommend upgrading to the latest {{ safariLink }}."
+    "safari_for_audio_on_ios": "İPhone və iPad-də səs qeydləri yalnız Safari-də işləyir.",
+    "some_features_may_not_work": "Bu veb saytın bəzi xüsusiyyətləri brauzerinizlə düzgün işləməyə bilər.",
+    "upgrade_chrome_firefox": "{{newLine}} Ən son {{chromeLink}} və ya {{firefoxLink}} səviyyəsinə keçməyi məsləhət görürük.",
+    "upgrade_safari": "{{newLine}} Ən son {{safariLink}} səviyyəsinə keçməyi məsləhət görürük."
   },
   "text_chooser_dialog": {
     "cancel": "Ləğv etmək",

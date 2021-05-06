@@ -151,7 +151,8 @@
     "pt_observer": "Observador",
     "pt_translator": "Traductor",
     "sf_community_checker": "Revisor de la comunidad",
-    "sf_reviewer": "Revisor"
+    "sf_reviewer": "Revisor",
+    "sf_observer": "View Translation"
   },
   "settings": {
     "anyone_with_a_link": "Cualquiera con un enlace",
