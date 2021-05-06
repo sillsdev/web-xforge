@@ -47,7 +47,9 @@ namespace PtdaSyncCancelAll
                 throw;
             }
             ISyncCancelAllService tool = webHost.Services.GetService<ISyncCancelAllService>();
-            await tool.SynchronizeCancelAllProjectsAsync();
+            string projectIds = Environment.GetEnvironmentVariable("CANCEL_PROJECT_IDS");
+            var cancelProjectIds = string.IsNullOrEmpty(projectIds) ? null : new HashSet<string>(projectIds.Split(' '));
+            await tool.SynchronizeCancelAllProjectsAsync(cancelProjectIds);
             await webHost.StopAsync();
             Logger.Log("Done.");
         }
