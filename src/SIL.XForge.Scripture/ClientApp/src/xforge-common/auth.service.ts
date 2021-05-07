@@ -150,6 +150,10 @@ export class AuthService {
     }
   }
 
+  async expireToken(): Promise<void> {
+    this.localSettings.set(EXPIRES_AT_SETTING, 0);
+  }
+
   async isAuthenticated(): Promise<boolean> {
     if (await this.hasExpired()) {
       await this.renewTokens();
