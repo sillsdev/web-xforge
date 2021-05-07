@@ -78,7 +78,7 @@ namespace PTDDCloneAll
             string realtimePort = Configuration["Realtime:Port"];
             Console.WriteLine($"Realtime:Port : {realtimePort}");
             app.UseRealtimeServer();
-            app.UseSFDataAccess();
+            app.UseSFDataAccess(false);
             app.UseSFServices();
             app.UseMachine();
             appLifetime.ApplicationStopped.Register(() => ApplicationContainer.Dispose());
