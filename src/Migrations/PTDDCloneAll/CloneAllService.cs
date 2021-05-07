@@ -25,7 +25,9 @@ namespace PTDDCloneAll
         public const string CLONE = "clone";
         public const string CLONE_AND_MOVE_OLD = "cloneandmoveold";
         public const string CLONE_SILENT = "clonesilent";
+        // Discard un-synchronize SF data. S/R the project directory with PT servers. Import project directory data into SF.
         public const string SYNCHRONIZE_SF = "synchronizesf";
+        // Write SF data to project directory. S/R the project directory with PT servers. Import project directory data into SF.
         public const string SYNCHRONIZE_PT_SF = "synchronizeptsf";
         public const string INSPECT = "inspect";
 
