@@ -8,6 +8,6 @@ namespace PTDDCloneAll
     /// </summary>
     public interface IPTDDSyncRunner
     {
-        Task RunAsync(string projectId, string userId, bool trainEngine, bool silent);
+        Task RunAsync(string projectId, string userId, bool trainEngine, bool silent, bool pushLocal);
     }
 }

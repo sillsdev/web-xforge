@@ -89,7 +89,7 @@ namespace PTDDCloneAll
         // Do not allow multiple sync jobs to run in parallel on the same project by creating a mutex on the projectId
         // parameter, i.e. "{0}"
         [Mutex("{0}")]
-        public async Task RunAsync(string projectId, string userId, bool trainEngine, bool silent)
+        public async Task RunAsync(string projectId, string userId, bool trainEngine, bool silent, bool pushLocal)
         {
             try
             {
@@ -123,11 +123,13 @@ namespace PTDDCloneAll
                 {
                     SortedList<int, IDocument<TextData>> targetTextDocs = await FetchTextDocsAsync(text);
                     targetTextDocsByBook[text.BookNum] = targetTextDocs;
-                    // UpdateParatextBook(text, targetParatextId, targetTextDocs);
+                    if (pushLocal)
+                        UpdateParatextBook(text, targetParatextId, targetTextDocs);
 
                     IReadOnlyList<IDocument<Question>> questionDocs = await FetchQuestionDocsAsync(text);
                     questionDocsByBook[text.BookNum] = questionDocs;
-                    // await UpdateParatextNotesAsync(text, questionDocs);
+                    if (pushLocal)
+                        await UpdateParatextNotesAsync(text, questionDocs);
                 }
 
                 // perform Paratext send/receive
