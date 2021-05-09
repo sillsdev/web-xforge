@@ -51,7 +51,7 @@
     "buffer": "^5.7.1",
     "core-js": "^2.6.12",
     "crc-32": "^1.2.0",
-    "jwt-decode": "^2.2.0",
+    "jwt-decode": "^3.1.2",
     "lodash-es": "^4.17.21",
     "mingo": "^2.5.3",
     "ngx-avatar": "^4.0.0",
