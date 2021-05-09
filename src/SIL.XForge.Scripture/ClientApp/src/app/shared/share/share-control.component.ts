@@ -2,7 +2,7 @@ import { MdcTextField } from '@angular-mdc/web/textfield';
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
-import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
+import { SFProjectRole } from 'realtime-server/lib/cjs/scriptureforge/models/sf-project-role';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { I18nService } from 'xforge-common/i18n.service';

@@ -1,5 +1,5 @@
 import { OtJson0Op } from 'ot-json0';
-import { Json0OpBuilder } from 'realtime-server/lib/common/utils/json0-op-builder';
+import { Json0OpBuilder } from 'realtime-server/lib/cjs/common/utils/json0-op-builder';
 import { RealtimeDoc } from './realtime-doc';
 
 /** See https://github.com/ottypes/json0 */

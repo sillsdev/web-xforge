@@ -1,8 +1,8 @@
 import { MdcDialog } from '@angular-mdc/web/dialog';
 import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
-import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
+import { CheckingShareLevel } from 'realtime-server/lib/cjs/scriptureforge/models/checking-config';
+import { SFProjectRole } from 'realtime-server/lib/cjs/scriptureforge/models/sf-project-role';
 import { map } from 'rxjs/operators';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';

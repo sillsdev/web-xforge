@@ -1,4 +1,4 @@
-import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
+import { CheckingShareLevel } from 'realtime-server/lib/cjs/scriptureforge/models/checking-config';
 
 /**
  * This interface represents the project settings that can be updated using "SFProjectService.onlineUpdateSettings()".

@@ -6,7 +6,7 @@ import { Auth0DecodedHash, AuthorizeOptions, WebAuth } from 'auth0-js';
 import jwtDecode from 'jwt-decode';
 import { clone } from 'lodash-es';
 import { CookieService } from 'ngx-cookie-service';
-import { SystemRole } from 'realtime-server/lib/common/models/system-role';
+import { SystemRole } from 'realtime-server/lib/cjs/common/models/system-role';
 import { of, Subscription, timer } from 'rxjs';
 import { filter, mergeMap } from 'rxjs/operators';
 import { BetaMigrationMessage } from 'xforge-common/beta-migration/beta-migration.component';

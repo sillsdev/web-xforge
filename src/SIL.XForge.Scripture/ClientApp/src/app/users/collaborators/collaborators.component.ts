@@ -3,7 +3,7 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { PageEvent } from '@angular/material/paginator';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
-import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
+import { CheckingShareLevel } from 'realtime-server/lib/cjs/scriptureforge/models/checking-config';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';

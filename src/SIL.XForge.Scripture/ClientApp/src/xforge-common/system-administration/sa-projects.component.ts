@@ -1,6 +1,6 @@
 import { Component, HostBinding, OnInit } from '@angular/core';
-import { Project } from 'realtime-server/lib/common/models/project';
-import { obj } from 'realtime-server/lib/common/utils/obj-path';
+import { Project } from 'realtime-server/lib/cjs/common/models/project';
+import { obj } from 'realtime-server/lib/cjs/common/utils/obj-path';
 import { BehaviorSubject } from 'rxjs';
 import { DataLoadingComponent } from '../data-loading-component';
 import { ProjectDoc } from '../models/project-doc';
