@@ -1,5 +1,5 @@
 declare module 'sharedb-access' {
-  import ShareDB = require('sharedb');
+  import ShareDB from 'sharedb';
 
   function ShareDBAccess(backend: ShareDB, options?: any): void;
 
