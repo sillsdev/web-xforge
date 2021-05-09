@@ -1,8 +1,8 @@
 import { MdcDialogRef, MDC_DIALOG_DATA } from '@angular-mdc/web/dialog';
 import { Component, Inject, OnInit } from '@angular/core';
-import { TextInfo } from 'realtime-server/lib/cjs/scriptureforge/models/text-info';
-import { Canon } from 'realtime-server/lib/cjs/scriptureforge/scripture-utils/canon';
-import { VerseRef } from 'realtime-server/lib/cjs/scriptureforge/scripture-utils/verse-ref';
+import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { I18nService } from 'xforge-common/i18n.service';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
 

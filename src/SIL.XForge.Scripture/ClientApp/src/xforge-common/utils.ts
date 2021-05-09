@@ -1,7 +1,7 @@
 import { translate } from '@ngneat/transloco';
 import Bowser from 'bowser';
 import ObjectID from 'bson-objectid';
-import { VerseRef } from 'realtime-server/lib/cjs/scriptureforge/scripture-utils/verse-ref';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import locales from '../../../locales.json';
 import { version } from '../../../version.json';
 import { environment } from '../environments/environment';

@@ -1,4 +1,4 @@
-import { VerseRef } from 'realtime-server/lib/cjs/scriptureforge/scripture-utils/verse-ref';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 
 export function combineVerseRefStrs(startStr?: string, endStr?: string): VerseRef | undefined {
   if (!startStr) {

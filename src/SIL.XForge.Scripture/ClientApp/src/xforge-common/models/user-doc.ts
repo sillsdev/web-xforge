@@ -1,4 +1,4 @@
-import { User, USERS_COLLECTION, USER_INDEX_PATHS } from 'realtime-server/lib/cjs/common/models/user';
+import { User, USERS_COLLECTION, USER_INDEX_PATHS } from 'realtime-server/lib/esm/common/models/user';
 import { JsonRealtimeDoc } from './json-realtime-doc';
 
 export class UserDoc extends JsonRealtimeDoc<User> {

@@ -1,7 +1,7 @@
 import merge from 'lodash-es/merge';
-import { Project } from 'realtime-server/lib/cjs/common/models/project';
-import { ProjectRole } from 'realtime-server/lib/cjs/common/models/project-role';
-import { obj } from 'realtime-server/lib/cjs/common/utils/obj-path';
+import { Project } from 'realtime-server/lib/esm/common/models/project';
+import { ProjectRole } from 'realtime-server/lib/esm/common/models/project-role';
+import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { combineLatest, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import XRegExp from 'xregexp';

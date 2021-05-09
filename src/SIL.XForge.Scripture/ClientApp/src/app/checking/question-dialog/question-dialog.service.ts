@@ -1,10 +1,10 @@
 import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Injectable } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
-import { Operation } from 'realtime-server/lib/cjs/common/models/project-rights';
-import { Question } from 'realtime-server/lib/cjs/scriptureforge/models/question';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/cjs/scriptureforge/models/sf-project-rights';
-import { fromVerseRef } from 'realtime-server/lib/cjs/scriptureforge/models/verse-ref-data';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';

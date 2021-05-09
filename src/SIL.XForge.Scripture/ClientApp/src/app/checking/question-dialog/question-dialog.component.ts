@@ -2,8 +2,8 @@ import { MdcDialog, MdcDialogConfig, MdcDialogRef, MDC_DIALOG_DATA } from '@angu
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
-import { toStartAndEndVerseRefs } from 'realtime-server/lib/cjs/scriptureforge/models/verse-ref-data';
-import { VerseRef } from 'realtime-server/lib/cjs/scriptureforge/scripture-utils/verse-ref';
+import { toStartAndEndVerseRefs } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';

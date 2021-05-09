@@ -9,9 +9,9 @@ import {
 import { MdcCheckbox } from '@angular-mdc/web/checkbox';
 import { Component, Inject, ViewChild } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
-import { Question } from 'realtime-server/lib/cjs/scriptureforge/models/question';
-import { toVerseRef, VerseRefData } from 'realtime-server/lib/cjs/scriptureforge/models/verse-ref-data';
-import { VerseRef } from 'realtime-server/lib/cjs/scriptureforge/scripture-utils/verse-ref';
+import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { first } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { objectId } from 'xforge-common/utils';

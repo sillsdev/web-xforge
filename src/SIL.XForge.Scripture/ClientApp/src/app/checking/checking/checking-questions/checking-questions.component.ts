@@ -1,12 +1,12 @@
 import { MdcList, MdcListItem } from '@angular-mdc/web';
 import { Component, EventEmitter, Input, Output, ViewChild, ViewChildren } from '@angular/core';
 import sortBy from 'lodash-es/sortBy';
-import { Operation } from 'realtime-server/lib/cjs/common/models/project-rights';
-import { Answer } from 'realtime-server/lib/cjs/scriptureforge/models/answer';
-import { Comment } from 'realtime-server/lib/cjs/scriptureforge/models/comment';
-import { SFProject } from 'realtime-server/lib/cjs/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/cjs/scriptureforge/models/sf-project-rights';
-import { SFProjectRole } from 'realtime-server/lib/cjs/scriptureforge/models/sf-project-role';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
+import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';

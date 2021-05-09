@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, RouterStateSnapshot } from '@angular/router';
-import { SystemRole } from 'realtime-server/lib/cjs/common/models/system-role';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { Observable } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { AuthGuard } from './auth.guard';

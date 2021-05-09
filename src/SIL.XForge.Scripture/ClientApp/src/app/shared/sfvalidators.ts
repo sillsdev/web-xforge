@@ -8,7 +8,7 @@ import {
   ValidationErrors,
   ValidatorFn
 } from '@angular/forms';
-import { VerseRef } from 'realtime-server/lib/cjs/scriptureforge/scripture-utils/verse-ref';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
 import { SelectableProject } from '../core/paratext.service';
 

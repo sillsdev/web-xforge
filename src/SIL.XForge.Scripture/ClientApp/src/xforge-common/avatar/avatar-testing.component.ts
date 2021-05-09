@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { UserProfile } from 'realtime-server/lib/cjs/common/models/user';
+import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 
 @Component({
   selector: 'app-avatar',

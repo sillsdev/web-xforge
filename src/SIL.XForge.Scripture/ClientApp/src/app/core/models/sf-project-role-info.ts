@@ -1,4 +1,4 @@
-import { hasTranslateRole, SFProjectRole } from 'realtime-server/lib/cjs/scriptureforge/models/sf-project-role';
+import { hasTranslateRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { ProjectRoleInfo } from 'xforge-common/models/project-role-info';
 
 export const SF_PROJECT_ROLES: ProjectRoleInfo[] = [

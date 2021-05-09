@@ -1,9 +1,9 @@
-import { obj, PathItem } from 'realtime-server/lib/cjs/common/utils/obj-path';
+import { obj, PathItem } from 'realtime-server/lib/esm/common/utils/obj-path';
 import {
   Question,
   QUESTIONS_COLLECTION,
   QUESTION_INDEX_PATHS
-} from 'realtime-server/lib/cjs/scriptureforge/models/question';
+} from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { ProjectDataDoc } from 'xforge-common/models/project-data-doc';
 import { RealtimeOfflineData } from 'xforge-common/models/realtime-offline-data';

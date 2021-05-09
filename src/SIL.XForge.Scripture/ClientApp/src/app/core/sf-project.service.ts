@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { obj } from 'realtime-server/lib/cjs/common/utils/obj-path';
-import { getQuestionDocId, Question } from 'realtime-server/lib/cjs/scriptureforge/models/question';
-import { SFProject, SF_PROJECTS_COLLECTION } from 'realtime-server/lib/cjs/scriptureforge/models/sf-project';
-import { SFProjectRole } from 'realtime-server/lib/cjs/scriptureforge/models/sf-project-role';
-import { getSFProjectUserConfigDocId } from 'realtime-server/lib/cjs/scriptureforge/models/sf-project-user-config';
+import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
+import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { SFProject, SF_PROJECTS_COLLECTION } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { getSFProjectUserConfigDocId } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { CommandService } from 'xforge-common/command.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';

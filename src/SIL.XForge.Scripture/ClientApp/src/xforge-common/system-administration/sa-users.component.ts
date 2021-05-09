@@ -1,7 +1,7 @@
 import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Component, HostBinding, OnInit } from '@angular/core';
-import { User } from 'realtime-server/lib/cjs/common/models/user';
-import { obj } from 'realtime-server/lib/cjs/common/utils/obj-path';
+import { User } from 'realtime-server/lib/esm/common/models/user';
+import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { BehaviorSubject } from 'rxjs';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';

@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoService } from '@ngneat/transloco';
-import { SFProjectRole } from 'realtime-server/lib/cjs/scriptureforge/models/sf-project-role';
-import { Canon } from 'realtime-server/lib/cjs/scriptureforge/scripture-utils/canon';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { combineLatest } from 'rxjs';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
