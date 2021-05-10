@@ -285,7 +285,7 @@ namespace SIL.XForge.Scripture.Services
                 int textIndex = _projectDoc.Data.Texts.FindIndex(t => t.BookNum == bookNum);
                 TextInfo text;
                 if (textIndex == -1)
-                    text = new TextInfo { BookNum = bookNum, HasSource = hasSource };
+                    throw new ArgumentException($"target project does not contain specified book: {bookNum}");
                 else
                     text = _projectDoc.Data.Texts[textIndex];
 

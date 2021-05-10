@@ -522,6 +522,22 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task SetPermissionsAsync_ThrowsIfBookNotInDB()
+        {
+            var env = new TestEnvironment();
+            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+            env.SetupSFData(true, true, false, books);
+            env.SetupPTData(books);
+            var ptUserRoles = new Dictionary<string, string>
+            {
+                { "pt01", SFProjectRole.Administrator }
+            };
+            await env.Runner.InitAsync("project01", "user01");
+            // SUT. Books 40 and 41 should be present, but not 50.
+            Assert.ThrowsAsync<ArgumentException>(() => env.Runner.SetPermissionsAsync("pt01", new HashSet<int>() { 40, 41, 50 }, new HashSet<int>() { 40, 41, 50 }));
+        }
+
+        [Test]
         public async Task SetPermissionsAsync_SetsBookAndChapterPermissions()
         {
             var env = new TestEnvironment();
