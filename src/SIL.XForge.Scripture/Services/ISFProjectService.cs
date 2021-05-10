@@ -22,5 +22,6 @@ namespace SIL.XForge.Scripture.Services
         bool IsSourceProject(string projectId);
         Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestions(string curUserId, string projectId);
         Task<bool> HasTransceleratorQuestions(string curUserId, string projectId);
+        Task SetPermissionsAsync(string curUserId, string sfProjectId, string targetParatextId);
     }
 }
