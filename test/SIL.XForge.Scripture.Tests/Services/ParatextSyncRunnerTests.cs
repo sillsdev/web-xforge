@@ -534,7 +534,7 @@ namespace SIL.XForge.Scripture.Services
             };
             await env.Runner.InitAsync("project01", "user01");
             // SUT. Books 40 and 41 should be present, but not 50.
-            Assert.ThrowsAsync<ArgumentException>(() => env.Runner.SetPermissionsAsync("pt01", new HashSet<int>() { 40, 41, 50 }, new HashSet<int>() { 40, 41, 50 }));
+            Assert.ThrowsAsync<ArgumentException>(() => env.Runner.SetPermissionsAsync("pt01", new HashSet<int>() { 40, 41, 50 }));
         }
 
         [Test]
@@ -568,7 +568,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.Texts.First().Chapters.First().Permissions.Count, Is.EqualTo(0));
 
             // SUT
-            await env.Runner.SetPermissionsAsync("pt01", new HashSet<int>() { 40, 41 }, new HashSet<int>() { 40, 41 });
+            await env.Runner.SetPermissionsAsync("pt01", new HashSet<int>() { 40, 41 });
 
             project = env.GetProject();
             Assert.That(project.Texts.First().Permissions["user01"], Is.EqualTo(TextInfoPermission.Read));

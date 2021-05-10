@@ -185,7 +185,7 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 await UpdateDocsAsync(targetParatextId, targetTextDocsByBook, questionDocsByBook, targetBooks, sourceBooks);
-                await SetPermissionsAsync(targetParatextId, targetBooks, sourceBooks);
+                await SetPermissionsAsync(targetParatextId, targetBooks);
 
                 if (TranslationSuggestionsEnabled && trainEngine)
                 {
@@ -257,8 +257,7 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        internal async Task SetPermissionsAsync(string targetParatextId, HashSet<int> targetBooks,
-            HashSet<int> sourceBooks)
+        internal async Task SetPermissionsAsync(string targetParatextId, HashSet<int> targetBooks)
         {
             // Get Paratext username mapping
             IReadOnlyDictionary<string, string> ptUsernameMapping =
@@ -281,14 +280,10 @@ namespace SIL.XForge.Scripture.Services
 
             foreach (int bookNum in targetBooks)
             {
-                bool hasSource = sourceBooks.Contains(bookNum);
                 int textIndex = _projectDoc.Data.Texts.FindIndex(t => t.BookNum == bookNum);
-                TextInfo text;
                 if (textIndex == -1)
                     throw new ArgumentException($"target project does not contain specified book: {bookNum}");
-                else
-                    text = _projectDoc.Data.Texts[textIndex];
-
+                TextInfo text = _projectDoc.Data.Texts[textIndex];
                 List<Chapter> newChapters = text.Chapters;
 
                 // Get the permissions for the book and chapters
@@ -317,19 +312,9 @@ namespace SIL.XForge.Scripture.Services
                 // update project metadata
                 await _projectDoc.SubmitJson0OpAsync(op =>
                 {
-                    if (textIndex == -1)
-                    {
-                        // insert text info for new text
-                        text.Chapters = newChapters;
-                        text.Permissions = permissions;
-                        op.Add(pd => pd.Texts, text);
-                    }
-                    else
-                    {
-                        op.Set(pd => pd.Texts[textIndex].Chapters, newChapters, ChapterListEqualityComparer);
-                        op.Set(pd => pd.Texts[textIndex].Permissions, permissions,
-                            PermissionDictionaryEqualityComparer);
-                    }
+                    op.Set(pd => pd.Texts[textIndex].Chapters, newChapters, ChapterListEqualityComparer);
+                    op.Set(pd => pd.Texts[textIndex].Permissions, permissions,
+                        PermissionDictionaryEqualityComparer);
                 });
             }
         }
