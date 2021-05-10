@@ -10,7 +10,7 @@ import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig,
   SF_PROJECT_USER_CONFIGS_COLLECTION
-} from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
+} from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { BehaviorSubject } from 'rxjs';
 import { mock, when } from 'ts-mockito';
 import { PwaService } from 'xforge-common/pwa.service';

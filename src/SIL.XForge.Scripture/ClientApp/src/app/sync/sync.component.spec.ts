@@ -4,8 +4,8 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
-import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
-import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
