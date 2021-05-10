@@ -185,7 +185,7 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 await UpdateDocsAsync(targetParatextId, targetTextDocsByBook, questionDocsByBook, targetBooks, sourceBooks);
-                await _projectService.SetPermissionsAsync(userId, projectId, targetParatextId);
+                await _projectService.SetPermissionsAsync(userId, projectId);
 
                 if (TranslationSuggestionsEnabled && trainEngine)
                 {

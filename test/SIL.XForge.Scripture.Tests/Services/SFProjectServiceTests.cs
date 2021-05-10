@@ -585,7 +585,7 @@ namespace SIL.XForge.Scripture.Services
             env.ParatextService.GetBookList(Arg.Any<UserSecret>(), paratextProject01ID).Returns(new List<int>() { 40, 41, 42 });
 
             // SUT. A book in paratext is not present in the SF DB.
-            Assert.ThrowsAsync<ArgumentException>(() => env.Service.SetPermissionsAsync(User01, Project01, paratextProject01ID));
+            Assert.ThrowsAsync<ArgumentException>(() => env.Service.SetPermissionsAsync(User01, Project01));
         }
 
         [Test]
@@ -621,7 +621,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(sfProject.Texts.First().Chapters.First().Permissions.Count, Is.EqualTo(0));
 
             // SUT
-            await env.Service.SetPermissionsAsync(User01, Project01, paratextProject01ID);
+            await env.Service.SetPermissionsAsync(User01, Project01);
 
             sfProject = env.GetProject(Project01);
             Assert.That(sfProject.Texts.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Read));

@@ -586,7 +586,7 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        public async Task SetPermissionsAsync(string curUserId, string sfProjectId, string targetParatextId)
+        public async Task SetPermissionsAsync(string curUserId, string sfProjectId)
         {
             Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
             if (!userSecretAttempt.TryResult(out UserSecret userSecret))
@@ -601,6 +601,8 @@ namespace SIL.XForge.Scripture.Services
                 {
                     throw new DataNotFoundException("The project does not exist.");
                 }
+
+                string targetParatextId = projectDoc.Data.ParatextId;
 
                 HashSet<int> targetBooks = new HashSet<int>(_paratextService.GetBookList(userSecret, targetParatextId));
 
