@@ -229,13 +229,13 @@ namespace SIL.XForge.Scripture.Services
                     targetTextDocs = new SortedList<int, IDocument<TextData>>();
                 }
 
-                List<Chapter> newChapters = await UpdateTextDocsAsync(text, targetParatextId, targetTextDocs);
+                List<Chapter> newSetOfChapters = await UpdateTextDocsAsync(text, targetParatextId, targetTextDocs);
 
                 // update question docs
                 if (questionDocsByBook.TryGetValue(text.BookNum,
                     out IReadOnlyList<IDocument<Question>> questionDocs))
                 {
-                    await UpdateQuestionDocsAsync(questionDocs, newChapters);
+                    await UpdateQuestionDocsAsync(questionDocs, newSetOfChapters);
                 }
 
                 // update project metadata
@@ -244,13 +244,13 @@ namespace SIL.XForge.Scripture.Services
                     if (textIndex == -1)
                     {
                         // insert text info for new text
-                        text.Chapters = newChapters;
+                        text.Chapters = newSetOfChapters;
                         op.Add(pd => pd.Texts, text);
                     }
                     else
                     {
                         // update text info
-                        op.Set(pd => pd.Texts[textIndex].Chapters, newChapters, ChapterListEqualityComparer);
+                        op.Set(pd => pd.Texts[textIndex].Chapters, newSetOfChapters, ChapterListEqualityComparer);
                         op.Set(pd => pd.Texts[textIndex].HasSource, hasSource);
                     }
                 });
@@ -286,13 +286,13 @@ namespace SIL.XForge.Scripture.Services
                 if (textIndex == -1)
                     throw new ArgumentException($"target project does not contain specified book: {bookNum}");
                 TextInfo text = _projectDoc.Data.Texts[textIndex];
-                List<Chapter> newChapters = text.Chapters;
+                List<Chapter> chapters = text.Chapters;
 
                 // Get the permissions for the book and chapters
                 if (targetIsResource)
                 {
                     // Add chapter permissions for the resource
-                    foreach (Chapter chapter in newChapters)
+                    foreach (Chapter chapter in chapters)
                     {
                         chapter.Permissions = permissions;
                     }
@@ -302,7 +302,7 @@ namespace SIL.XForge.Scripture.Services
                     // Get the project permissions for the book
                     permissions = await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data,
                         ptUsernameMapping, bookNum);
-                    foreach (Chapter chapter in newChapters)
+                    foreach (Chapter chapter in chapters)
                     {
                         // Get and set the project permissions for the chapter
                         Dictionary<string, string> chapterPermissions = await _paratextService.GetPermissionsAsync(
@@ -314,7 +314,7 @@ namespace SIL.XForge.Scripture.Services
                 // update project metadata
                 await _projectDoc.SubmitJson0OpAsync(op =>
                 {
-                    op.Set(pd => pd.Texts[textIndex].Chapters, newChapters, ChapterListEqualityComparer);
+                    op.Set(pd => pd.Texts[textIndex].Chapters, chapters, ChapterListEqualityComparer);
                     op.Set(pd => pd.Texts[textIndex].Permissions, permissions,
                         PermissionDictionaryEqualityComparer);
                 });
