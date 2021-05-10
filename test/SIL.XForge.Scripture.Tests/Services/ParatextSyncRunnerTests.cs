@@ -525,16 +525,17 @@ namespace SIL.XForge.Scripture.Services
         public async Task SetPermissionsAsync_ThrowsIfBookNotInDB()
         {
             var env = new TestEnvironment();
-            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-            env.SetupSFData(true, true, false, books);
-            env.SetupPTData(books);
+            Book[] sfBooks = { new Book("MAT", 2), new Book("MRK", 2) };
+            Book[] ptBooks = { new Book("MAT", 2), new Book("MRK", 2), new Book("LUK", 2) };
+            env.SetupSFData(true, true, false, sfBooks);
+            env.SetupPTData("pt01", ptBooks);
             var ptUserRoles = new Dictionary<string, string>
             {
                 { "pt01", SFProjectRole.Administrator }
             };
             await env.Runner.InitAsync("project01", "user01");
-            // SUT. Books 40 and 41 should be present, but not 50.
-            Assert.ThrowsAsync<ArgumentException>(() => env.Runner.SetPermissionsAsync("pt01", new HashSet<int>() { 40, 41, 50 }));
+            // SUT. A book in paratext is not present in the SF DB.
+            Assert.ThrowsAsync<ArgumentException>(() => env.Runner.SetPermissionsAsync("pt01"));
         }
 
         [Test]
@@ -543,7 +544,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
             env.SetupSFData(true, true, false, books);
-            env.SetupPTData(books);
+            env.SetupPTData("pt01", books);
             var ptBookPermissions = new Dictionary<string, string>()
             {
                 { "user01", TextInfoPermission.Read },
@@ -568,7 +569,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.Texts.First().Chapters.First().Permissions.Count, Is.EqualTo(0));
 
             // SUT
-            await env.Runner.SetPermissionsAsync("pt01", new HashSet<int>() { 40, 41 });
+            await env.Runner.SetPermissionsAsync("pt01");
 
             project = env.GetProject();
             Assert.That(project.Texts.First().Permissions["user01"], Is.EqualTo(TextInfoPermission.Read));
@@ -1060,20 +1061,30 @@ namespace SIL.XForge.Scripture.Services
 
             public void SetupPTData(params Book[] books)
             {
-                ParatextService.GetBookList(Arg.Any<UserSecret>(), "target")
+                SetupPTDataForProjectIds("target", "source", books);
+            }
+
+            public void SetupPTData(string targetPtProjectId, params Book[] books)
+            {
+                SetupPTDataForProjectIds(targetPtProjectId, "sourceProjectId", books);
+            }
+
+            public void SetupPTDataForProjectIds(string targetPtProjectId, string sourcePtProjectId, params Book[] books)
+            {
+                ParatextService.GetBookList(Arg.Any<UserSecret>(), targetPtProjectId)
                     .Returns(books.Select(b => Canon.BookIdToNumber(b.Id)).ToArray());
                 // Include book with Source even if there are no chapters, if there are also no chapters in Target. PT
                 // can actually have or not have books which do or do not have chapters more flexibly than this. But in
                 // this way, allow tests to request a Source book exist even with zero chapters.
-                ParatextService.GetBookList(Arg.Any<UserSecret>(), "source")
+                ParatextService.GetBookList(Arg.Any<UserSecret>(), sourcePtProjectId)
                     .Returns(books
                         .Where(b => b.HighestSourceChapter > 0 || b.HighestSourceChapter == b.HighestTargetChapter)
                         .Select(b => Canon.BookIdToNumber(b.Id)).ToArray());
                 foreach (Book book in books)
                 {
-                    AddPTBook("target", book.Id, book.HighestTargetChapter, book.MissingTargetChapters, book.InvalidChapters);
+                    AddPTBook(targetPtProjectId, book.Id, book.HighestTargetChapter, book.MissingTargetChapters, book.InvalidChapters);
                     if (book.HighestSourceChapter > 0 || book.HighestSourceChapter == book.HighestTargetChapter)
-                        AddPTBook("source", book.Id, book.HighestSourceChapter, book.MissingSourceChapters);
+                        AddPTBook(sourcePtProjectId, book.Id, book.HighestSourceChapter, book.MissingSourceChapters);
                 }
             }
 
