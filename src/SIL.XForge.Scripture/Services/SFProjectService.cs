@@ -586,67 +586,82 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        internal async Task SetPermissionsAsync(string targetParatextId)
+        public async Task SetPermissionsAsync(string curUserId, string sfProjectId, string targetParatextId)
         {
-            HashSet<int> targetBooks = new HashSet<int>(_paratextService.GetBookList(_userSecret, targetParatextId));
-
-            // Get Paratext username mapping
-            IReadOnlyDictionary<string, string> ptUsernameMapping =
-                await _paratextService.GetParatextUsernameMappingAsync(_userSecret, targetParatextId);
-
-            bool targetIsResource = targetParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength;
-
-            // Get the permissions if this is a resource
-            // Resources do not have per-book permissions
-            Dictionary<string, string> permissions;
-            if (targetIsResource)
+            Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
+            if (!userSecretAttempt.TryResult(out UserSecret userSecret))
             {
-                permissions = await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data,
-                    ptUsernameMapping);
-            }
-            else
-            {
-                permissions = null;
+                throw new DataNotFoundException("The user does not exist.");
             }
 
-            foreach (int bookNum in targetBooks)
+            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
-                int textIndex = _projectDoc.Data.Texts.FindIndex(t => t.BookNum == bookNum);
-                if (textIndex == -1)
-                    throw new ArgumentException($"target project does not contain specified book: {bookNum}");
-                TextInfo text = _projectDoc.Data.Texts[textIndex];
-                List<Chapter> chapters = text.Chapters;
+                IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(sfProjectId);
+                if (!projectDoc.IsLoaded)
+                {
+                    throw new DataNotFoundException("The project does not exist.");
+                }
 
-                // Get the permissions for the book and chapters
+                HashSet<int> targetBooks = new HashSet<int>(_paratextService.GetBookList(userSecret, targetParatextId));
+
+                // Get Paratext username mapping
+                IReadOnlyDictionary<string, string> ptUsernameMapping =
+                    await _paratextService.GetParatextUsernameMappingAsync(userSecret, targetParatextId);
+
+                bool targetIsResource = targetParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength;
+
+                // Get the permissions if this is a resource
+                // Resources do not have per-book permissions
+                Dictionary<string, string> permissions;
                 if (targetIsResource)
                 {
-                    // Add chapter permissions for the resource
-                    foreach (Chapter chapter in chapters)
-                    {
-                        chapter.Permissions = permissions;
-                    }
+                    permissions = await _paratextService.GetPermissionsAsync(userSecret, projectDoc.Data,
+                        ptUsernameMapping);
                 }
                 else
                 {
-                    // Get the project permissions for the book
-                    permissions = await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data,
-                        ptUsernameMapping, bookNum);
-                    foreach (Chapter chapter in chapters)
-                    {
-                        // Get and set the project permissions for the chapter
-                        Dictionary<string, string> chapterPermissions = await _paratextService.GetPermissionsAsync(
-                            _userSecret, _projectDoc.Data, ptUsernameMapping, bookNum, chapter.Number);
-                        chapter.Permissions = chapterPermissions;
-                    }
+                    permissions = null;
                 }
 
-                // update project metadata
-                await _projectDoc.SubmitJson0OpAsync(op =>
+                foreach (int bookNum in targetBooks)
                 {
-                    op.Set(pd => pd.Texts[textIndex].Chapters, chapters, ChapterListEqualityComparer);
-                    op.Set(pd => pd.Texts[textIndex].Permissions, permissions,
-                        PermissionDictionaryEqualityComparer);
-                });
+                    int textIndex = projectDoc.Data.Texts.FindIndex(t => t.BookNum == bookNum);
+                    if (textIndex == -1)
+                        throw new ArgumentException($"target project does not contain specified book: {bookNum}");
+                    Models.TextInfo text = projectDoc.Data.Texts[textIndex];
+                    List<Chapter> chapters = text.Chapters;
+
+                    // Get the permissions for the book and chapters
+                    if (targetIsResource)
+                    {
+                        // Add chapter permissions for the resource
+                        foreach (Chapter chapter in chapters)
+                        {
+                            chapter.Permissions = permissions;
+                        }
+                    }
+                    else
+                    {
+                        // Get the project permissions for the book
+                        permissions = await _paratextService.GetPermissionsAsync(userSecret, projectDoc.Data,
+                            ptUsernameMapping, bookNum);
+                        foreach (Chapter chapter in chapters)
+                        {
+                            // Get and set the project permissions for the chapter
+                            Dictionary<string, string> chapterPermissions = await _paratextService.GetPermissionsAsync(
+                                userSecret, projectDoc.Data, ptUsernameMapping, bookNum, chapter.Number);
+                            chapter.Permissions = chapterPermissions;
+                        }
+                    }
+
+                    // update project metadata
+                    await projectDoc.SubmitJson0OpAsync(op =>
+                    {
+                        op.Set(pd => pd.Texts[textIndex].Chapters, chapters, ParatextSyncRunner.ChapterListEqualityComparer);
+                        op.Set(pd => pd.Texts[textIndex].Permissions, permissions,
+                            ParatextSyncRunner.PermissionDictionaryEqualityComparer);
+                    });
+                }
             }
         }
 

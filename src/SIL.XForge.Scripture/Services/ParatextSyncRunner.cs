@@ -43,9 +43,9 @@ namespace SIL.XForge.Scripture.Services
     /// </summary>
     public class ParatextSyncRunner : IParatextSyncRunner
     {
-        private static readonly IEqualityComparer<List<Chapter>> ChapterListEqualityComparer =
+        internal static readonly IEqualityComparer<List<Chapter>> ChapterListEqualityComparer =
             SequenceEqualityComparer.Create(new ChapterEqualityComparer());
-        private static readonly IEqualityComparer<Dictionary<string, string>> PermissionDictionaryEqualityComparer =
+        internal static readonly IEqualityComparer<Dictionary<string, string>> PermissionDictionaryEqualityComparer =
             new DictionaryComparer<string, string>();
 
         private readonly IRepository<UserSecret> _userSecrets;
