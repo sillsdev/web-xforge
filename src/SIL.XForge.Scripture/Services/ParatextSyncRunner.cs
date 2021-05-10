@@ -257,7 +257,7 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        private async Task SetPermissionsAsync(string targetParatextId, HashSet<int> targetBooks,
+        internal async Task SetPermissionsAsync(string targetParatextId, HashSet<int> targetBooks,
             HashSet<int> sourceBooks)
         {
             // Get Paratext username mapping
