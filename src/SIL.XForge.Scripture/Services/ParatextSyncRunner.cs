@@ -289,13 +289,7 @@ namespace SIL.XForge.Scripture.Services
                 else
                     text = _projectDoc.Data.Texts[textIndex];
 
-                if (!targetTextDocsByBook.TryGetValue(text.BookNum,
-                    out SortedList<int, IDocument<TextData>> targetTextDocs))
-                {
-                    targetTextDocs = new SortedList<int, IDocument<TextData>>();
-                }
-
-                List<Chapter> newChapters = await UpdateTextDocsAsync(text, targetParatextId, targetTextDocs);
+                List<Chapter> newChapters = text.Chapters;
 
                 // Get the permissions for the book and chapters if this is not a resource
                 if (targetParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
