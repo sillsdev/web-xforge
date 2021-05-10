@@ -573,7 +573,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task SetPermissionsAsync_ThrowsIfBookNotInDB()
+        public void UpdatePermissionsAsync_ThrowsIfBookNotInDB()
         {
             string paratextProject01ID = "paratext_" + Project01;
             var env = new TestEnvironment();
@@ -585,11 +585,11 @@ namespace SIL.XForge.Scripture.Services
             env.ParatextService.GetBookList(Arg.Any<UserSecret>(), paratextProject01ID).Returns(new List<int>() { 40, 41, 42 });
 
             // SUT. A book in paratext is not present in the SF DB.
-            Assert.ThrowsAsync<ArgumentException>(() => env.Service.SetPermissionsAsync(User01, Project01));
+            Assert.ThrowsAsync<ArgumentException>(() => env.Service.UpdatePermissionsAsync(User01, Project01));
         }
 
         [Test]
-        public async Task SetPermissionsAsync_SetsBookAndChapterPermissions()
+        public async Task UpdatePermissionsAsync_SetsBookAndChapterPermissions()
         {
             var env = new TestEnvironment();
             string paratextProject01ID = "paratext_" + Project01;
@@ -621,7 +621,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(sfProject.Texts.First().Chapters.First().Permissions.Count, Is.EqualTo(0));
 
             // SUT
-            await env.Service.SetPermissionsAsync(User01, Project01);
+            await env.Service.UpdatePermissionsAsync(User01, Project01);
 
             sfProject = env.GetProject(Project01);
             Assert.That(sfProject.Texts.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Read));

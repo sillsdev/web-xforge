@@ -586,7 +586,13 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        public async Task SetPermissionsAsync(string curUserId, string sfProjectId)
+        /// <summary>
+        /// Update user permissions on books and chapters in an SF project, from PT project permissions. For Paratext
+        /// projects, permissions are acquired from ScrText objects, and so presumably only what was received from
+        /// Paratext in the last synchronize. For Resources, permissions are fetched from the DBL, and so permissions
+        /// may be ahead of the last sync.
+        /// </summary>
+        public async Task UpdatePermissionsAsync(string curUserId, string sfProjectId)
         {
             Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
             if (!userSecretAttempt.TryResult(out UserSecret userSecret))
