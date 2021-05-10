@@ -1,0 +1,26 @@
+@page "{code:int?}"
+@model ErrorModel
+
+@if (Model.RedirectToHome)
+{
+    @section meta {
+<meta http-equiv="refresh" content='10;url=@ViewData["Origin"]' />
+    }
+}
+
+<section class="inside">
+    <div class="container">
+        <div class="mdl-grid">
+            <div class="mdl-cell mdl-cell--12-col">
+                @if (Model.ErrorStatusCode == 404)
+                {
+                    <partial name="_404" />
+                }
+                else
+                {
+                    <partial name="_CatchAll" />
+                }
+            </div>
+        </div>
+    </div>
+</section>

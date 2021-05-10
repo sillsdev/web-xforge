@@ -37,9 +37,7 @@ export class AuthHttpInterceptor implements HttpInterceptor {
     switch (error.status) {
       // JSON RPC responds with this status code for 401 unauthorized
       case CommandErrorCode.InvalidRequest:
-      // 404 responses can come from .NET if the authorization for the auth0 token failed even though the URI is valid
-      // It is safe to treat these as unauthorized as we only handle error responses for prequalified API endpoints
-      case 404:
+      case 401:
         await this.authService!.expireToken();
         return await this.handle(req, next);
     }
