@@ -185,7 +185,7 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 await UpdateDocsAsync(targetParatextId, targetTextDocsByBook, questionDocsByBook, targetBooks, sourceBooks);
-                await SetPermissionsAsync(targetParatextId, targetTextDocsByBook, questionDocsByBook, targetBooks, sourceBooks);
+                await SetPermissionsAsync(targetParatextId, targetBooks, sourceBooks);
 
                 if (TranslationSuggestionsEnabled && trainEngine)
                 {
@@ -257,9 +257,7 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        private async Task SetPermissionsAsync(string targetParatextId,
-            Dictionary<int, SortedList<int, IDocument<TextData>>> targetTextDocsByBook,
-            Dictionary<int, IReadOnlyList<IDocument<Question>>> questionDocsByBook, HashSet<int> targetBooks,
+        private async Task SetPermissionsAsync(string targetParatextId, HashSet<int> targetBooks,
             HashSet<int> sourceBooks)
         {
             // Get Paratext username mapping
