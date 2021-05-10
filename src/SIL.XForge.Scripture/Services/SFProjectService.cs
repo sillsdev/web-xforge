@@ -586,6 +586,70 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
+        internal async Task SetPermissionsAsync(string targetParatextId)
+        {
+            HashSet<int> targetBooks = new HashSet<int>(_paratextService.GetBookList(_userSecret, targetParatextId));
+
+            // Get Paratext username mapping
+            IReadOnlyDictionary<string, string> ptUsernameMapping =
+                await _paratextService.GetParatextUsernameMappingAsync(_userSecret, targetParatextId);
+
+            bool targetIsResource = targetParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength;
+
+            // Get the permissions if this is a resource
+            // Resources do not have per-book permissions
+            Dictionary<string, string> permissions;
+            if (targetIsResource)
+            {
+                permissions = await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data,
+                    ptUsernameMapping);
+            }
+            else
+            {
+                permissions = null;
+            }
+
+            foreach (int bookNum in targetBooks)
+            {
+                int textIndex = _projectDoc.Data.Texts.FindIndex(t => t.BookNum == bookNum);
+                if (textIndex == -1)
+                    throw new ArgumentException($"target project does not contain specified book: {bookNum}");
+                TextInfo text = _projectDoc.Data.Texts[textIndex];
+                List<Chapter> chapters = text.Chapters;
+
+                // Get the permissions for the book and chapters
+                if (targetIsResource)
+                {
+                    // Add chapter permissions for the resource
+                    foreach (Chapter chapter in chapters)
+                    {
+                        chapter.Permissions = permissions;
+                    }
+                }
+                else
+                {
+                    // Get the project permissions for the book
+                    permissions = await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data,
+                        ptUsernameMapping, bookNum);
+                    foreach (Chapter chapter in chapters)
+                    {
+                        // Get and set the project permissions for the chapter
+                        Dictionary<string, string> chapterPermissions = await _paratextService.GetPermissionsAsync(
+                            _userSecret, _projectDoc.Data, ptUsernameMapping, bookNum, chapter.Number);
+                        chapter.Permissions = chapterPermissions;
+                    }
+                }
+
+                // update project metadata
+                await _projectDoc.SubmitJson0OpAsync(op =>
+                {
+                    op.Set(pd => pd.Texts[textIndex].Chapters, chapters, ChapterListEqualityComparer);
+                    op.Set(pd => pd.Texts[textIndex].Permissions, permissions,
+                        PermissionDictionaryEqualityComparer);
+                });
+            }
+        }
+
         protected override async Task RemoveUserFromProjectAsync(IConnection conn, IDocument<SFProject> projectDoc,
             IDocument<User> userDoc)
         {

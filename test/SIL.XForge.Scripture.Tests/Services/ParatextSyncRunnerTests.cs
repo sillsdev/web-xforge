@@ -522,63 +522,6 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task SetPermissionsAsync_ThrowsIfBookNotInDB()
-        {
-            var env = new TestEnvironment();
-            Book[] sfBooks = { new Book("MAT", 2), new Book("MRK", 2) };
-            Book[] ptBooks = { new Book("MAT", 2), new Book("MRK", 2), new Book("LUK", 2) };
-            env.SetupSFData(true, true, false, sfBooks);
-            env.SetupPTData("pt01", ptBooks);
-            var ptUserRoles = new Dictionary<string, string>
-            {
-                { "pt01", SFProjectRole.Administrator }
-            };
-            await env.Runner.InitAsync("project01", "user01");
-            // SUT. A book in paratext is not present in the SF DB.
-            Assert.ThrowsAsync<ArgumentException>(() => env.Runner.SetPermissionsAsync("pt01"));
-        }
-
-        [Test]
-        public async Task SetPermissionsAsync_SetsBookAndChapterPermissions()
-        {
-            var env = new TestEnvironment();
-            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-            env.SetupSFData(true, true, false, books);
-            env.SetupPTData("pt01", books);
-            var ptBookPermissions = new Dictionary<string, string>()
-            {
-                { "user01", TextInfoPermission.Read },
-                { "user02", TextInfoPermission.Write },
-            };
-            var ptChapterPermissions = new Dictionary<string, string>()
-            {
-                { "user01", TextInfoPermission.Write },
-                { "user02", TextInfoPermission.Read },
-            };
-            int chapterValueToIndicateWholeBook = 0;
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
-                .Returns(Task.FromResult(ptBookPermissions));
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
-                .Returns(Task.FromResult(ptChapterPermissions));
-            await env.Runner.InitAsync("project01", "user01");
-
-            SFProject project = env.GetProject();
-            Assert.That(project.Texts.First().Permissions.Count, Is.EqualTo(0));
-            Assert.That(project.Texts.First().Chapters.First().Permissions.Count, Is.EqualTo(0));
-
-            // SUT
-            await env.Runner.SetPermissionsAsync("pt01");
-
-            project = env.GetProject();
-            Assert.That(project.Texts.First().Permissions["user01"], Is.EqualTo(TextInfoPermission.Read));
-            Assert.That(project.Texts.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.Write));
-            Assert.That(project.Texts.First().Chapters.First().Permissions["user01"], Is.EqualTo(TextInfoPermission.Write));
-            Assert.That(project.Texts.First().Chapters.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.Read));
-        }
-
-        [Test]
         public async Task SyncAsync_CheckerWithPTAccountNotRemoved()
         {
             var env = new TestEnvironment();
