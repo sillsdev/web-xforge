@@ -599,7 +599,7 @@ namespace SIL.XForge.Scripture.Services
             Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
             if (!userSecretAttempt.TryResult(out UserSecret userSecret))
             {
-                throw new DataNotFoundException("The user does not exist.");
+                throw new DataNotFoundException("No matching user secrets found.");
             }
 
             using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
