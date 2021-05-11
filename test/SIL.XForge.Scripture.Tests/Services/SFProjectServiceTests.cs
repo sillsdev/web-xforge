@@ -636,6 +636,19 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void UpdatePermissionsAsync_ThrowsIfUserHasNoSecrets()
+        {
+            string paratextProject01ID = "paratext_" + Project01;
+            var env = new TestEnvironment();
+            SFProject sfProject = env.GetProject(Project01);
+            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), paratextProject01ID).Returns(new List<int>() { 40, 41 });
+            Assert.That(env.ProjectSecrets.Contains(User04), Is.False, "setup");
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.UpdatePermissionsAsync(User04, Project01));
+        }
+
+        [Test]
         public async Task UpdatePermissionsAsync_SetsBookAndChapterPermissions()
         {
             var env = new TestEnvironment();
