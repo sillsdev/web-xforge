@@ -608,7 +608,8 @@ namespace SIL.XForge.Scripture.Services
                         // The note can be easily removed by using op.Remove if that is preferred
                         op.Set(td => td.Notes[index].Deleted, true);
                     }
-                    _logger.LogWarning("Unable to update note in database with id: " + deleted.DataId);
+                    else
+                        _logger.LogWarning("Unable to update note in database with id: " + deleted.DataId);
                 }
 
                 // Add new notes, giving each note an associated SF userId if the user is also a Paratext user.
