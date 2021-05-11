@@ -146,7 +146,7 @@ namespace SIL.XForge.Scripture.Services
 
                         await DeleteAllTextDocsForBookAsync(text);
                         await DeleteAllQuestionsDocsForBookAsync(text);
-                        // TODO: Also delete ParatextNoteThreadDocs
+                        await DeleteAllNoteThreadDocsForBookAsync(text);
                     }
                 }
 
@@ -609,7 +609,7 @@ namespace SIL.XForge.Scripture.Services
                         op.Set(td => td.Notes[index].Deleted, true);
                     }
                     else
-                        _logger.LogWarning("Unable to delete note in database with id: " + deleted.DataId);
+                        _logger.LogWarning("Unable to update note in database with id: " + deleted.DataId);
                 }
 
                 // Add new notes, giving each note an associated SF userId if the user is also a Paratext user.
@@ -655,6 +655,27 @@ namespace SIL.XForge.Scripture.Services
                 }
                 tasks.Add(deleteQuestion());
             }
+            await Task.WhenAll(tasks);
+        }
+
+        private async Task DeleteAllNoteThreadDocsForBookAsync(TextInfo text)
+        {
+            List<string> noteThreadDocIds = await _realtimeService.QuerySnapshots<ParatextNoteThread>()
+                .Where(n => n.VerseRef.BookNum == text.BookNum)
+                .Select(n => n.Id)
+                .ToListAsync();
+            var tasks = new List<Task>();
+            foreach (string noteThreadDocId in noteThreadDocIds)
+            {
+                async Task deleteNoteThread()
+                {
+                    IDocument<ParatextNoteThread> noteThreadDoc = await _conn.FetchAsync<ParatextNoteThread>(noteThreadDocId);
+                    if (noteThreadDoc.IsLoaded)
+                        await noteThreadDoc.DeleteAsync();
+                }
+                tasks.Add((deleteNoteThread()));
+            }
+
             await Task.WhenAll(tasks);
         }
 

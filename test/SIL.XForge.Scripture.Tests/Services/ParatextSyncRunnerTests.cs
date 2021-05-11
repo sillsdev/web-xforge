@@ -352,9 +352,12 @@ namespace SIL.XForge.Scripture.Services
         public async Task SyncAsync_BooksChanged()
         {
             var env = new TestEnvironment();
-            env.SetupSFData(true, true, false, false, new Book("MAT", 2), new Book("MRK", 2));
+            env.SetupSFData(true, true, false, true, new Book("MAT", 2), new Book("MRK", 2));
             env.SetupPTData(new Book("MAT", 2), new Book("LUK", 2));
+            // Need to make sure we have notes BEFORE the sync
+            env.AddParatextNoteThreadData(new Book("MRK", 2));
 
+            Assert.That(env.ContainsNote("MRK"), Is.True);
             await env.Runner.RunAsync("project02", "user01", false);
             await env.Runner.RunAsync("project01", "user01", false);
 
@@ -372,6 +375,8 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
             Assert.That(env.ContainsQuestion("MAT", 1), Is.True);
             Assert.That(env.ContainsQuestion("MAT", 2), Is.True);
+
+            Assert.That(env.ContainsNote("MRK"), Is.False);
 
             SFProject project = env.GetProject();
             Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
@@ -956,6 +961,14 @@ namespace SIL.XForge.Scripture.Services
             public bool ContainsQuestion(string bookId, int chapter)
             {
                 return RealtimeService.GetRepository<Question>().Contains($"project01:question{bookId}{chapter}");
+            }
+
+            public bool ContainsNote(string bookId)
+            {
+                IRepository<ParatextNoteThread> notesRep = RealtimeService.GetRepository<ParatextNoteThread>();
+                return notesRep.Query().Where(note =>
+                        note.VerseRef.BookNum == Canon.BookIdToNumber(bookId, true))
+                    .ToList().Count > 0;
             }
 
             public Question GetQuestion(string bookId, int chapter)
