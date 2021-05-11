@@ -573,7 +573,6 @@ namespace SIL.XForge.Scripture.Services
 
             foreach (var threadDoc in noteThreadDocs)
             {
-                List<string> noteIdsRemoved = new List<string>();
                 List<string> matchedCommentIds = new List<string>();
                 ParatextNoteThreadChange threadChange = new ParatextNoteThreadChange(threadDoc.Data.DataId,
                     threadDoc.Data.VerseRef.ToString(), threadDoc.Data.SelectedText, threadDoc.Data.ContextBefore,
@@ -995,7 +994,6 @@ namespace SIL.XForge.Scripture.Services
             List<List<Paratext.Data.ProjectComments.Comment>> changes =
                 new List<List<Paratext.Data.ProjectComments.Comment>>();
             IEnumerable<IDocument<ParatextNoteThread>> activeThreadDocs = noteThreadDocs.Where(t => t.Data != null);
-            List<string> matchedThreadIds = new List<string>();
             foreach (IDocument<ParatextNoteThread> threadDoc in activeThreadDocs)
             {
                 List<Paratext.Data.ProjectComments.Comment> thread = new List<Paratext.Data.ProjectComments.Comment>();
