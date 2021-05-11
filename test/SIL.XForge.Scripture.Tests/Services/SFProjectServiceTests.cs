@@ -1020,6 +1020,7 @@ namespace SIL.XForge.Scripture.Services
                             Id = Project02,
                             Name = "project02",
                             ShortName = "P02",
+                            ParatextId = "paratext_" + Project02,
                             CheckingConfig = new CheckingConfig
                             {
                                 ShareEnabled = true,
@@ -1035,6 +1036,7 @@ namespace SIL.XForge.Scripture.Services
                             Id = Project03,
                             Name = "project03",
                             ShortName = "P03",
+                            ParatextId = "paratext_" + Project03,
                             CheckingConfig = new CheckingConfig
                             {
                                 ShareEnabled = true,
@@ -1058,6 +1060,7 @@ namespace SIL.XForge.Scripture.Services
                         {
                             Id = Project04,
                             Name = "project04",
+                            ParatextId = "paratext_" + Project04,
                             TranslateConfig = new TranslateConfig
                             {
                                 TranslationSuggestionsEnabled = true,
