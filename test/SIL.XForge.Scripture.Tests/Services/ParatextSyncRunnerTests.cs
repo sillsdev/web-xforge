@@ -354,7 +354,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.SetupSFData(true, true, false, true, new Book("MAT", 2), new Book("MRK", 2));
             env.SetupPTData(new Book("MAT", 2), new Book("LUK", 2));
-            //Need to make sure we have notes BEFORE the sync
+            // Need to make sure we have notes BEFORE the sync
             env.AddParatextNoteThreadData(new Book("MRK", 2));
 
             Assert.That(env.ContainsNote("MRK"), Is.True);
@@ -965,10 +965,9 @@ namespace SIL.XForge.Scripture.Services
 
             public bool ContainsNote(string bookId)
             {
-                //return RealtimeService.GetRepository<ParatextNoteThread>().Contains($"project01:note{bookId}{chapter}");
                 IRepository<ParatextNoteThread> notesRep = RealtimeService.GetRepository<ParatextNoteThread>();
                 return notesRep.Query().Where(note =>
-                        note.VerseRef.BookNum == Canon.BookIdToNumber(bookId, true) )
+                        note.VerseRef.BookNum == Canon.BookIdToNumber(bookId, true))
                     .ToList().Count > 0;
             }
 
