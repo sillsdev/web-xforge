@@ -1,4 +1,4 @@
-import ShareDB = require('sharedb');
+import ShareDB from 'sharedb';
 import { ConnectSession } from '../connect-session';
 import { MigrationConstructor } from '../migration';
 import { OwnedData } from '../models/owned-data';
@@ -236,7 +236,10 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
   }
 
   private getUpdatedDomain(path: ShareDB.Path): ProjectDomainConfig | undefined {
-    const index = this.getMatchingPathTemplate(this.domains.map(dc => dc.pathTemplate), path);
+    const index = this.getMatchingPathTemplate(
+      this.domains.map(dc => dc.pathTemplate),
+      path
+    );
     if (index !== -1) {
       return this.domains[index];
     }

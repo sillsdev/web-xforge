@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Component, DebugElement, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { SystemRole } from 'realtime-server/lib/common/models/system-role';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { AvatarTestingModule } from '../avatar/avatar-testing.module';
 import { configureTestingModule } from '../test-utils';
 import { UICommonModule } from '../ui-common.module';

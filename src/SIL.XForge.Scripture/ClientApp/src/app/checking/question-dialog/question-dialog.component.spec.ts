@@ -5,10 +5,10 @@ import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@an
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CookieService } from 'ngx-cookie-service';
-import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/models/question';
-import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
-import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
-import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
+import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, objectContaining, spy, verify, when } from 'ts-mockito';

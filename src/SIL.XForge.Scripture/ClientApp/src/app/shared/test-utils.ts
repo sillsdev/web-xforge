@@ -1,8 +1,8 @@
-import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
-import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { TextData } from 'realtime-server/lib/scriptureforge/models/text-data';
-import { TextInfoPermission } from 'realtime-server/lib/scriptureforge/models/text-info-permission';
+import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { Delta, TextDocId } from '../core/models/text-doc';
 
 export function getTextDoc(id: TextDocId): TextData {

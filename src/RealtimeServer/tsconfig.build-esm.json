@@ -1,0 +1,4 @@
+{
+  "files": [],
+  "references": [{ "path": "./common/tsconfig.build-esm.json" }, { "path": "./scriptureforge/tsconfig.build-esm.json" }]
+}

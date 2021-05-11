@@ -1,5 +1,5 @@
-import ShareDB = require('sharedb');
-import ShareDBMingo = require('sharedb-mingo-memory');
+import ShareDB from 'sharedb';
+import ShareDBMingo from 'sharedb-mingo-memory';
 import { Doc } from 'sharedb/lib/client';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ConnectSession } from './connect-session';

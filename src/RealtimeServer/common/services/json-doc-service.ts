@@ -1,4 +1,4 @@
-import ShareDB = require('sharedb');
+import ShareDB from 'sharedb';
 import { ObjProxyArg } from 'ts-object-path';
 import { obj, ObjPathTemplate } from '../utils/obj-path';
 import { DocService } from './doc-service';

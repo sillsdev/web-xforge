@@ -17,18 +17,18 @@ import {
 import cloneDeep from 'lodash-es/cloneDeep';
 import { CookieService } from 'ngx-cookie-service';
 import Quill from 'quill';
-import { SystemRole } from 'realtime-server/lib/common/models/system-role';
-import { User } from 'realtime-server/lib/common/models/user';
-import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
-import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
+import { User } from 'realtime-server/lib/esm/common/models/user';
+import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
-} from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
-import { TextType } from 'realtime-server/lib/scriptureforge/models/text-data';
-import { TextInfoPermission } from 'realtime-server/lib/scriptureforge/models/text-info-permission';
-import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
+} from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
+import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, of, Subject } from 'rxjs';
 import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';

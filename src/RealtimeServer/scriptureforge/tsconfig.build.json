@@ -3,7 +3,7 @@
   "compilerOptions": {
     "noEmit": false,
     "rootDir": ".",
-    "outDir": "../lib/scriptureforge"
+    "outDir": "../lib/cjs/scriptureforge"
   },
   "references": [{ "path": "../common/tsconfig.build.json" }],
   "exclude": ["**/*.spec.ts"]

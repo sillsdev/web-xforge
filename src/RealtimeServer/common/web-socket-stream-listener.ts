@@ -1,10 +1,10 @@
-import express = require('express');
+import express from 'express';
 import * as http from 'http';
 import { JwtHeader, SigningKeyCallback, verify } from 'jsonwebtoken';
-import jwks = require('jwks-rsa');
-import ShareDB = require('sharedb');
-import WebSocketJSONStream = require('websocket-json-stream');
-import ws = require('ws');
+import jwks from 'jwks-rsa';
+import ShareDB from 'sharedb';
+import WebSocketJSONStream from 'websocket-json-stream';
+import ws from 'ws';
 import { ExceptionReporter } from './exception-reporter';
 
 export class WebSocketStreamListener {

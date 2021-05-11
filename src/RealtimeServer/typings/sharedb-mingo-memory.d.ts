@@ -1,5 +1,5 @@
 declare module 'sharedb-mingo-memory' {
-  import ShareDB = require('sharedb');
+  import ShareDB from 'sharedb';
 
   class ShareDBMingo extends ShareDB.DB {
     static extendMemoryDB(db: typeof ShareDB.DB): typeof ShareDBMingo;

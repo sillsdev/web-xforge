@@ -8,17 +8,21 @@ import { ActivatedRoute, Route } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ngfModule } from 'angular-file';
 import { CookieService } from 'ngx-cookie-service';
-import { SystemRole } from 'realtime-server/lib/common/models/system-role';
-import { User } from 'realtime-server/lib/common/models/user';
-import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
-import { getQuestionDocId, Question, QUESTIONS_COLLECTION } from 'realtime-server/lib/scriptureforge/models/question';
-import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
+import { User } from 'realtime-server/lib/esm/common/models/user';
+import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import {
+  getQuestionDocId,
+  Question,
+  QUESTIONS_COLLECTION
+} from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
-} from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
-import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
+} from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';

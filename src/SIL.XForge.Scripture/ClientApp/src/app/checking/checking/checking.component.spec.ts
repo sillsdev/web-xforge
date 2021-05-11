@@ -11,22 +11,22 @@ import { AngularSplitModule } from 'angular-split';
 import { cloneDeep } from 'lodash-es';
 import clone from 'lodash-es/clone';
 import { CookieService } from 'ngx-cookie-service';
-import { SystemRole } from 'realtime-server/lib/common/models/system-role';
-import { User } from 'realtime-server/lib/common/models/user';
-import { obj } from 'realtime-server/lib/common/utils/obj-path';
-import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
-import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
-import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/models/question';
-import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
+import { User } from 'realtime-server/lib/esm/common/models/user';
+import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
+import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
+import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
-} from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
-import { getTextDocId, TextData } from 'realtime-server/lib/scriptureforge/models/text-data';
-import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
-import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
-import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
+} from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { getTextDocId, TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import { first } from 'rxjs/operators';

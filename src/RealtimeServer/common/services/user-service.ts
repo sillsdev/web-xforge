@@ -1,4 +1,4 @@
-import ShareDB = require('sharedb');
+import ShareDB from 'sharedb';
 import { ConnectSession } from '../connect-session';
 import { SystemRole } from '../models/system-role';
 import { User, USER_INDEX_PATHS, USER_PROFILES_COLLECTION, USERS_COLLECTION } from '../models/user';

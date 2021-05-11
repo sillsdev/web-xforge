@@ -13,7 +13,7 @@ namespace SIL.XForge.Realtime
         public RealtimeServer(INodeJSService nodeJSService)
         {
             _nodeJSService = nodeJSService;
-            _modulePath = Path.Combine("RealtimeServer", "lib", "common", "index");
+            _modulePath = Path.Combine("RealtimeServer", "lib", "cjs", "common", "index");
         }
 
         public void Start(object options)

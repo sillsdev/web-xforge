@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.build.json",
+  "compilerOptions": {
+    "module": "ES2020",
+    "outDir": "../lib/esm/scriptureforge"
+  },
+  "references": [{ "path": "../common/tsconfig.build-esm.json" }],
+  "exclude": ["realtime-server.ts", "**/*.spec.ts"]
+}
