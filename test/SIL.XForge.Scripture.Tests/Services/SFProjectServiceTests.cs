@@ -379,6 +379,53 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task CheckLinkSharingAsync_PTUserHasPTPermissions()
+        {
+            var env = new TestEnvironment();
+            string paratextProject01ID = "paratext_" + Project01;
+            SFProject project = env.GetProject(Project01);
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03)
+                .Returns(Task.FromResult(TextInfoPermission.Read));
+
+            Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
+            Assert.That(project.Texts.First().Permissions.ContainsKey(User03), Is.False, "setup");
+            Assert.That(project.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
+            // Return book list from PT that matches what SF knows about (according to TestEnvironment setup).
+            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), paratextProject01ID).Returns(new List<int> { 40, 41 });
+
+            // PT will answer with these permissions.
+            var ptBookPermissions = new Dictionary<string, string>()
+            {
+                { User03, TextInfoPermission.Read },
+                { User01, TextInfoPermission.Read },
+            };
+            var ptChapterPermissions = new Dictionary<string, string>()
+            {
+                { User03, TextInfoPermission.Write },
+                { User01, TextInfoPermission.Read },
+            };
+            int chapterValueToIndicateWholeBook = 0;
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
+                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
+                .Returns(Task.FromResult(ptBookPermissions));
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
+                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
+                .Returns(Task.FromResult(ptChapterPermissions));
+
+            // SUT
+            await env.Service.CheckLinkSharingAsync(User03, Project01, "key12345");
+            project = env.GetProject(Project01);
+            Assert.That(project.UserRoles.TryGetValue(User03, out string userRole), Is.True, "user was added to project");
+            // This user was invited as a community checker. So that is the SF role they will have. But their _permissions_ will include what they had in PT.
+            Assert.That(userRole, Is.EqualTo(SFProjectRole.CommunityChecker));
+            User user = env.GetUser(User03);
+            Assert.That(user.Sites[SiteId].Projects, Contains.Item(Project01));
+
+            Assert.That(project.Texts.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Read));
+            Assert.That(project.Texts.First().Chapters.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Write));
+        }
+
+        [Test]
         public async Task IsAlreadyInvitedAsync_BadInput_False()
         {
             var env = new TestEnvironment();
@@ -1060,7 +1107,19 @@ namespace SIL.XForge.Scripture.Services
                 var currentTime = DateTime.Now;
                 ProjectSecrets = new MemoryRepository<SFProjectSecret>(new[]
                 {
-                    new SFProjectSecret { Id = Project01 },
+                    new SFProjectSecret { Id = Project01,
+                        ShareKeys = new List<ShareKey>
+                        {
+
+                            new ShareKey
+                            {
+                                Email = "user03@example.com",
+                                Key = "key12345",
+                                ExpirationTime = currentTime.AddDays(1),
+                                ProjectRole = SFProjectRole.CommunityChecker
+                            }
+                        }
+                    },
                     new SFProjectSecret
                     {
                         Id = Project02,
