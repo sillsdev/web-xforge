@@ -19,13 +19,21 @@ namespace SIL.XForge.Scripture.Models
         public string ContextAfter { get; set; }
         public int StartPosition { get; set; }
         public string TagIcon { get; set; }
+        /// <summary> True if the thread has been permanently removed. </summary>
+        public bool ThreadRemoved { get; set; }
         public List<Note> NotesAdded { get; set; } = new List<Note>();
         public List<Note> NotesUpdated { get; set; } = new List<Note>();
         public List<Note> NotesDeleted { get; set; } = new List<Note>();
+        /// <summary> IDs for notes that have been permanently removed. </summary>
+        public List<string> NoteIdsRemoved { get; set; } = new List<string>();
 
         public bool HasChange
         {
-            get { return NotesAdded.Count > 0 || NotesUpdated.Count > 0 || NotesDeleted.Count > 0; }
+            get
+            {
+                return NotesAdded.Count > 0 || NotesUpdated.Count > 0 || NotesDeleted.Count > 0 ||
+                    NoteIdsRemoved.Count > 0 || ThreadRemoved;
+            }
         }
 
         public ParatextNoteThreadChange(string threadId, string verseRef, string selectedText, string contextBefore,

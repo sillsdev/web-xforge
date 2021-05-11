@@ -813,9 +813,10 @@ namespace SIL.XForge.Scripture.Services
             ParatextNoteThread thread01 = env.GetNoteThread("project01", "thread01");
             Assert.That(thread01.Notes.Count, Is.EqualTo(3));
             Assert.That(thread01.VerseRef.ToString(), Is.EqualTo("MAT 1:1"));
-            foreach (var note in thread01.Notes)
-                Console.WriteLine("existing notes: " + note.DataId);
             Assert.That(thread01.Notes[0].Content, Is.EqualTo("thread01 added."));
+            string expected = "thread01-syncuser03--thread01 added.-icon1";
+            Assert.That(thread01.Notes[0].NoteToString(), Is.EqualTo(expected));
+            Assert.That(thread01.Notes[0].OwnerRef, Is.EqualTo("user03"));
             Assert.That(thread01.Notes[1].Content, Is.EqualTo("thread01 updated."));
             Assert.That(thread01.Notes[2].Deleted, Is.True);
 
@@ -850,6 +851,33 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(thread02.ContextAfter, Is.EqualTo(" context after"));
             Assert.That(thread02.StartPosition, Is.EqualTo(17));
             SFProject project = env.GetProject();
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+        }
+
+        [Test]
+        public async Task SyncAsync_RemovesParatextNoteThreadDoc()
+        {
+            var env = new TestEnvironment();
+            var book = new Book("MAT", 3, true);
+            env.SetupSFData(true, false, false, true, book);
+            env.SetupPTData(book);
+            env.SetupNoteRemovedChange("thread01", "n02");
+            ParatextNoteThread thread01 = env.GetNoteThread("project01", "thread01");
+            Assert.That(thread01.Notes.Select(n => n.DataId), Is.EquivalentTo(new[] { "n01", "n02" }));
+
+            await env.Runner.RunAsync("project01", "user01", false);
+
+            thread01 = env.GetNoteThread("project01", "thread01");
+            Assert.That(thread01.Notes.Select(n => n.DataId), Is.EquivalentTo(new[] { "n01" }));
+            SFProject project = env.GetProject();
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+
+            // Remove the entire thread
+            env.SetupNoteRemovedChange("thread01", null);
+            await env.Runner.RunAsync("project01", "user01", false);
+
+            Assert.That(env.ContainsNoteThread("project01", "thread01"), Is.False);
+            project = env.GetProject();
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
         }
 
@@ -976,6 +1004,11 @@ namespace SIL.XForge.Scripture.Services
                 return RealtimeService.GetRepository<Question>().Get($"project01:question{bookId}{chapter}");
             }
 
+            public bool ContainsNoteThread(string projectId, string threadId)
+            {
+                return RealtimeService.GetRepository<ParatextNoteThread>().Contains($"{projectId}:{threadId}");
+            }
+
             public ParatextNoteThread GetNoteThread(string projectId, string threadId)
             {
                 return RealtimeService.GetRepository<ParatextNoteThread>().Get($"{projectId}:{threadId}");
@@ -1080,16 +1113,13 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 var notesElem = new XElement("notes");
-                var newSyncUsers = new List<SyncUser>();
                 if (changed)
                 {
                     notesElem.Add(new XElement("thread"));
-                    // newSyncUsers.Add(new SyncUser { Id = "syncuser01", ParatextUsername = "User 1" });
                 }
 
                 _notesMapper.GetNotesChangelistAsync(Arg.Any<XElement>(),
                     Arg.Any<IEnumerable<IDocument<Question>>>(), Arg.Any<Dictionary<string, SyncUser>>()).Returns(Task.FromResult(notesElem));
-                // _notesMapper.NewSyncUsers.Returns(newSyncUsers);
             }
 
             public TextInfo TextInfoFromBook(Book book)
@@ -1152,10 +1182,16 @@ namespace SIL.XForge.Scripture.Services
                         Arg.Any<IEnumerable<IDocument<ParatextNoteThread>>>(), Arg.Any<Dictionary<string, SyncUser>>())
                         .Returns(x =>
                         {
-                            ((Dictionary<string, SyncUser>)x[4]).Add("User 3", new SyncUser { Id = "syncuser03", ParatextUsername = "User 3" });
+                            ((Dictionary<string, SyncUser>)x[4]).Add("User 3", new SyncUser
+                            { Id = "syncuser03", ParatextUsername = "User 3" });
                             return new[] { noteThreadChange };
                         });
-                    // When(ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target"))
+                    Dictionary<string, string> userIdsToUsernames = new Dictionary<string, string>
+                    {
+                        { "user01", "User 1" }, { "user02", "User 2" }, { "user03", "User 3" }
+                    };
+                    ParatextService.GetParatextUsernameMappingAsync(Arg.Any<UserSecret>(), "target")
+                        .Returns(userIdsToUsernames);
                 }
                 else
                 {
@@ -1174,6 +1210,19 @@ namespace SIL.XForge.Scripture.Services
                     "Context before ", " context after", 17, "icon1");
                 noteThreadChange.AddChange(
                     GetNote(threadId, "n01", syncUserId, $"New {threadId} added.", ChangeType.Added), ChangeType.Added);
+                ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
+                    Arg.Any<IEnumerable<IDocument<ParatextNoteThread>>>(), Arg.Any<Dictionary<string, SyncUser>>())
+                    .Returns(new[] { noteThreadChange });
+            }
+
+            public void SetupNoteRemovedChange(string threadId, string noteId, string verseRef = "MAT 1:1")
+            {
+                var noteThreadChange = new ParatextNoteThreadChange(threadId, verseRef, $"{threadId} selected text.",
+                    "Context before ", " context after", 17, "icon1");
+                if (noteId == null)
+                    noteThreadChange.ThreadRemoved = true;
+                else
+                    noteThreadChange.NoteIdsRemoved.Add(noteId);
                 ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
                     Arg.Any<IEnumerable<IDocument<ParatextNoteThread>>>(), Arg.Any<Dictionary<string, SyncUser>>())
                     .Returns(new[] { noteThreadChange });

@@ -505,26 +505,28 @@ namespace SIL.XForge.Scripture.Services
             env.AddParatextNoteThreadData(new[]
             {
                 new ThreadComponents { threadNum = 1, noteCount = 1 },
-                new ThreadComponents { threadNum = 2, noteCount = 1 }
+                new ThreadComponents { threadNum = 2, noteCount = 1 },
+                new ThreadComponents { threadNum = 4, noteCount = 2 },
+                new ThreadComponents { threadNum = 5, noteCount = 1 }
             });
             env.AddParatextComments(new[]
             {
                 new ThreadComponents { threadNum = 1, noteCount = 1, username = env.Username01, isEdited = true },
                 new ThreadComponents { threadNum = 2, noteCount = 1, username = env.Username01, isDeleted = true },
-                new ThreadComponents { threadNum = 3, noteCount = 1, username = env.Username02 }
+                new ThreadComponents { threadNum = 3, noteCount = 1, username = env.Username02 },
+                new ThreadComponents { threadNum = 4, noteCount = 1, username = env.Username01 }
             });
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
 
-                IDocument<ParatextNoteThread> thread01 = await env.GetNoteThreadDocAsync(conn, "thread01");
-                IDocument<ParatextNoteThread> thread02 = await env.GetNoteThreadDocAsync(conn, "thread02");
-                IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs = new[] { thread01, thread02 };
+                IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs =
+                    await env.GetNoteThreadDocsAsync(conn, new[] { "thread01", "thread02", "thread04", "thread05" });
                 Dictionary<string, SyncUser> syncUsers = new[]
                     { new SyncUser { Id = "syncuser01", ParatextUsername = env.Username01 } }
                     .ToDictionary(u => u.ParatextUsername);
                 IEnumerable<ParatextNoteThreadChange> changes = env.Service.GetNoteThreadChanges(
                     userSecret, ptProjectId, 40, noteThreadDocs, syncUsers);
-                Assert.That(changes.Count, Is.EqualTo(3));
+                Assert.That(changes.Count, Is.EqualTo(5));
 
                 // Edited comment
                 ParatextNoteThreadChange change01 = changes.Where(c => c.ThreadId == "thread01").Single();
@@ -551,6 +553,18 @@ namespace SIL.XForge.Scripture.Services
                 string expected3 = "thread03-syncuser02-user02-<p>thread03 note 1.</p>-01flag3";
                 Assert.That(change03.NotesAdded[0].NoteToString(), Is.EqualTo(expected3));
                 Assert.That(syncUsers.Keys, Is.EquivalentTo(new[] { env.Username01, env.Username02 }));
+
+                // Permanently removed comment
+                ParatextNoteThreadChange change04 = changes.Where(c => c.ThreadId == "thread04").Single();
+                Assert.That(change04.ThreadChangeToString(),
+                    Is.EqualTo("Context before Text selected thread04 context after-Start:15-MAT 1:4"));
+                Assert.That(change04.NoteIdsRemoved, Is.EquivalentTo(new[] { "n2onthread04" }));
+
+                // Permanently removed thread
+                ParatextNoteThreadChange change05 = changes.Where(c => c.ThreadId == "thread05").Single();
+                Assert.That(change05.ThreadChangeToString(),
+                    Is.EqualTo("Context before Text selected thread05 context after-Start:15-MAT 1:5"));
+                Assert.That(change05.ThreadRemoved, Is.True);
             }
         }
 
@@ -1173,19 +1187,20 @@ namespace SIL.XForge.Scripture.Services
                     {
                         notes.Add(new Note
                         {
-                            DataId = $"{threadId}:syncuser01:2019-01-0{i}T08:00:00.0000000+00:00",
+                            DataId = $"n{i}on{threadId}",
                             ThreadId = threadId,
                             OwnerRef = "user02",
                             ExtUserId = "user02",
                             Content = comp.isEdited ? $"<p>{threadId} note 1: EDITED.</p>" : $"<p>{threadId} note {i}.</p>",
                             SyncUserRef = "syncuser01",
                             DateCreated = new DateTime(2019, 1, i, 8, 0, 0, DateTimeKind.Utc),
-                            TagIcon = $"icon{i}",
+                            TagIcon = $"icon{comp.threadNum}",
                             Deleted = comp.isDeleted
                         });
                     }
                     noteThread.Notes = notes;
-                    threads = threads.Append(noteThread);
+                    if (notes.Count > 0)
+                        threads = threads.Append(noteThread);
                 }
                 RealtimeService.AddRepository("note_threads", OTType.Json0,
                     new MemoryRepository<ParatextNoteThread>(threads));
@@ -1216,6 +1231,15 @@ namespace SIL.XForge.Scripture.Services
                 return notesElem.ToString();
             }
 
+            public async Task<IEnumerable<IDocument<ParatextNoteThread>>> GetNoteThreadDocsAsync(IConnection connection,
+                string[] threadIds)
+            {
+                List<IDocument<ParatextNoteThread>> noteThreadDocs = new List<IDocument<ParatextNoteThread>>();
+                foreach (string threadId in threadIds)
+                    noteThreadDocs.Add(await GetNoteThreadDocAsync(connection, threadId));
+                return noteThreadDocs;
+            }
+
             public async Task<IDocument<ParatextNoteThread>> GetNoteThreadDocAsync(IConnection connection,
                 string threadId)
             {
@@ -1240,23 +1264,26 @@ namespace SIL.XForge.Scripture.Services
                 foreach (ThreadComponents comp in components)
                 {
                     string threadId = "thread0" + comp.threadNum;
-                    XmlElement content = doc.CreateElement("Contents");
-                    content.InnerXml = comp.isEdited ? $"<p>{threadId} note 1: EDITED.</p>" : $"<p>{threadId} note 1.</p>";
                     var associatedPtUser = new SFParatextUser(comp.username);
-                    ProjectCommentManager.AddComment(new Paratext.Data.ProjectComments.Comment(associatedPtUser)
+                    for (int i = 1; i <= comp.noteCount; i++)
                     {
-                        Thread = threadId,
-                        VerseRefStr = $"MAT 1:{comp.threadNum}",
-                        SelectedText = "Text selected " + threadId,
-                        ContextBefore = "Context before ",
-                        ContextAfter = " context after",
-                        StartPosition = 15,
-                        Contents = content,
-                        Date = date,
-                        Deleted = comp.isDeleted,
-                        ExternalUser = "user02",
-                        TagsAdded = new[] { comp.threadNum.ToString() }
-                    });
+                        XmlElement content = doc.CreateElement("Contents");
+                        content.InnerXml = comp.isEdited ? $"<p>{threadId} note {i}: EDITED.</p>" : $"<p>{threadId} note {i}.</p>";
+                        ProjectCommentManager.AddComment(new Paratext.Data.ProjectComments.Comment(associatedPtUser)
+                        {
+                            Thread = threadId,
+                            VerseRefStr = $"MAT 1:{comp.threadNum}",
+                            SelectedText = "Text selected " + threadId,
+                            ContextBefore = "Context before ",
+                            ContextAfter = " context after",
+                            StartPosition = 15,
+                            Contents = content,
+                            Date = date,
+                            Deleted = comp.isDeleted,
+                            ExternalUser = "user02",
+                            TagsAdded = new[] { comp.threadNum.ToString() }
+                        });
+                    }
                 }
             }
 

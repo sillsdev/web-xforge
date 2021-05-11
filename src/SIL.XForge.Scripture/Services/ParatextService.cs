@@ -573,6 +573,7 @@ namespace SIL.XForge.Scripture.Services
 
             foreach (var threadDoc in noteThreadDocs)
             {
+                List<string> noteIdsRemoved = new List<string>();
                 List<string> matchedCommentIds = new List<string>();
                 ParatextNoteThreadChange threadChange = new ParatextNoteThreadChange(threadDoc.Data.DataId,
                     threadDoc.Data.VerseRef.ToString(), threadDoc.Data.SelectedText, threadDoc.Data.ContextBefore,
@@ -581,7 +582,9 @@ namespace SIL.XForge.Scripture.Services
                 var existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
                 if (existingThread == null)
                 {
-                    // No corresponding Paratext comment thread
+                    // The thread has been removed
+                    threadChange.ThreadRemoved = true;
+                    changes.Add(threadChange);
                     continue;
                 }
                 matchedThreadIds.Add(existingThread.Id);
@@ -600,6 +603,8 @@ namespace SIL.XForge.Scripture.Services
                                 CreateNoteFromComment(note.DataId, matchedComment, commentTags, syncUser), changeType);
                         }
                     }
+                    else
+                        threadChange.NoteIdsRemoved.Add(note.DataId);
                 }
                 // Add new Comments to note thread change
                 IEnumerable<string> ptCommentIds = existingThread.Comments.Select(c => c.Id);
@@ -615,6 +620,7 @@ namespace SIL.XForge.Scripture.Services
                 if (threadChange.HasChange)
                     changes.Add(threadChange);
             }
+
             IEnumerable<string> ptThreadIds = commentThreads.Select(ct => ct.Id);
             IEnumerable<string> newThreadIds = ptThreadIds.Except(matchedThreadIds);
             foreach (string threadId in newThreadIds)
@@ -988,15 +994,17 @@ namespace SIL.XForge.Scripture.Services
         {
             List<List<Paratext.Data.ProjectComments.Comment>> changes =
                 new List<List<Paratext.Data.ProjectComments.Comment>>();
-            foreach (IDocument<ParatextNoteThread> threadDoc in noteThreadDocs)
+            IEnumerable<IDocument<ParatextNoteThread>> activeThreadDocs = noteThreadDocs.Where(t => t.Data != null);
+            List<string> matchedThreadIds = new List<string>();
+            foreach (IDocument<ParatextNoteThread> threadDoc in activeThreadDocs)
             {
                 List<Paratext.Data.ProjectComments.Comment> thread = new List<Paratext.Data.ProjectComments.Comment>();
                 CommentThread existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
                 List<(int, string)> threadNoteSyncUserIds = new List<(int, string)>();
-                for (int i = 0; i < threadDoc.Data.Notes.Count(); i++)
+                for (int i = 0; i < threadDoc.Data.Notes.Count; i++)
                 {
                     Note note = threadDoc.Data.Notes[i];
-                    var matchedComment = existingThread == null
+                    Paratext.Data.ProjectComments.Comment matchedComment = existingThread == null
                         ? null
                         : GetMatchingCommentFromNote(note, existingThread, syncUsers);
                     if (matchedComment != null)
