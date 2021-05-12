@@ -102,7 +102,7 @@ namespace SIL.XForge.Scripture.Services
             }
             _registryClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             ScrTextCollection = new LazyScrTextCollection();
-            HgWrapper = new HgWrapper();
+            HgHelper = new HgWrapper();
 
             SharingLogicWrapper = new SharingLogicWrapper();
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
@@ -124,7 +124,7 @@ namespace SIL.XForge.Scripture.Services
 
         internal IScrTextCollection ScrTextCollection { get; set; }
         internal ISharingLogicWrapper SharingLogicWrapper { get; set; }
-        internal IHgWrapper HgWrapper { get; set; }
+        internal IHgWrapper HgHelper { get; set; }
 
         /// <summary> Prepare access to Paratext.Data library, authenticate, and prepare Mercurial. </summary>
         public void Init()
@@ -608,6 +608,12 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
+        public string GetLatestSharedVersion(UserSecret userSecret, string ptProjectId)
+        {
+            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), ptProjectId);
+            return scrText == null ? null : HgWrapper.GetLastPublicRevision(scrText.Directory);
+        }
+
         protected override void DisposeManagedResources()
         {
             _registryClient.Dispose();
@@ -668,7 +674,7 @@ namespace SIL.XForge.Scripture.Services
                 throw new InvalidOperationException(msg);
             }
             var hgMerge = Path.Combine(AssemblyDirectory, "ParatextMerge.py");
-            HgWrapper.SetDefault(new Hg(customHgPath, hgMerge, AssemblyDirectory));
+            HgHelper.SetDefault(new Hg(customHgPath, hgMerge, AssemblyDirectory));
         }
 
         /// <summary> Copy resource files from the Assembly Directory into the sync directory. </summary>
@@ -751,10 +757,10 @@ namespace SIL.XForge.Scripture.Services
             if (!_fileSystemService.DirectoryExists(clonePath))
             {
                 _fileSystemService.CreateDirectory(clonePath);
-                HgWrapper.Init(clonePath);
+                HgHelper.Init(clonePath);
             }
             source.Pull(clonePath, repo);
-            HgWrapper.Update(clonePath);
+            HgHelper.Update(clonePath);
         }
 
         private async Task<string> CallApiAsync(UserSecret userSecret, HttpMethod method,

@@ -35,10 +35,7 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, true);
 
             await env.Runner.RunAsync("project01", "user03", false);
-
-            SFProject project = env.GetProject();
-            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
-            Assert.That(project.Sync.LastSyncSuccessful, Is.False);
+            env.VerifyProjectSync(false);
         }
 
         [Test]
@@ -50,10 +47,8 @@ namespace SIL.XForge.Scripture.Services
             env.DeltaUsxMapper.When(d => d.ToChapterDeltas(Arg.Any<XDocument>())).Do(x => throw new Exception());
 
             await env.Runner.RunAsync("project01", "user01", false);
-
-            SFProject project = env.GetProject();
-            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
-            Assert.That(project.Sync.LastSyncSuccessful, Is.False);
+            SFProject project = env.VerifyProjectSync(false);
+            Assert.That(project.Sync.DataInSync, Is.False);
         }
 
         [Test]
@@ -81,10 +76,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
 
             await env.EngineService.DidNotReceive().StartBuildByProjectIdAsync("project01");
-
-            SFProject project = env.GetProject();
-            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
-            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            env.VerifyProjectSync(true);
         }
 
         [Test]
@@ -113,10 +105,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
 
             await env.EngineService.Received().StartBuildByProjectIdAsync("project01");
-
-            SFProject project = env.GetProject();
-            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
-            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            env.VerifyProjectSync(true);
         }
 
         [Test]
@@ -145,10 +134,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
 
             await env.EngineService.Received().StartBuildByProjectIdAsync("project01");
-
-            SFProject project = env.GetProject();
-            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
-            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            env.VerifyProjectSync(true);
         }
 
         [Test]
@@ -176,10 +162,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
 
             await env.EngineService.DidNotReceive().StartBuildByProjectIdAsync("project01");
-
-            SFProject project = env.GetProject();
-            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
-            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            env.VerifyProjectSync(true);
         }
 
         [Test]
@@ -214,9 +197,7 @@ namespace SIL.XForge.Scripture.Services
             SFProjectSecret projectSecret = env.GetProjectSecret();
             Assert.That(projectSecret.SyncUsers.Count, Is.EqualTo(0));
 
-            SFProject project = env.GetProject();
-            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
-            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            SFProject project = env.VerifyProjectSync(true);
             Assert.That(project.UserRoles["user01"], Is.EqualTo(SFProjectRole.Administrator));
             Assert.That(project.UserRoles["user02"], Is.EqualTo(SFProjectRole.Translator));
         }
@@ -257,10 +238,7 @@ namespace SIL.XForge.Scripture.Services
 
             SFProjectSecret projectSecret = env.GetProjectSecret();
             Assert.That(projectSecret.SyncUsers.Count, Is.EqualTo(1));
-
-            SFProject project = env.GetProject();
-            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
-            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            env.VerifyProjectSync(true);
         }
 
         [Test]
@@ -299,10 +277,7 @@ namespace SIL.XForge.Scripture.Services
 
             SFProjectSecret projectSecret = env.GetProjectSecret();
             Assert.That(projectSecret.SyncUsers.Count, Is.EqualTo(1));
-
-            SFProject project = env.GetProject();
-            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
-            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            env.VerifyProjectSync(true);
         }
 
         [Test]
@@ -323,10 +298,7 @@ namespace SIL.XForge.Scripture.Services
 
             Assert.That(env.ContainsQuestion("MAT", 2), Is.True);
             Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
-
-            SFProject project = env.GetProject();
-            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
-            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            env.VerifyProjectSync(true);
         }
 
         [Test]
@@ -343,9 +315,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.Texts[0].Chapters[1].IsValid, Is.False);
             Assert.That(project.Texts[1].Chapters[0].IsValid, Is.True);
             Assert.That(project.Texts[1].Chapters[1].IsValid, Is.True);
-
-            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
-            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            env.VerifyProjectSync(true);
         }
 
         [Test]
@@ -372,10 +342,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
             Assert.That(env.ContainsQuestion("MAT", 1), Is.True);
             Assert.That(env.ContainsQuestion("MAT", 2), Is.True);
-
-            SFProject project = env.GetProject();
-            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
-            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            env.VerifyProjectSync(true);
         }
 
         [Test]
@@ -394,9 +361,7 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            SFProject project = env.GetProject();
-            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
-            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            SFProject project = env.VerifyProjectSync(true);
             Assert.That(project.UserRoles["user01"], Is.EqualTo(SFProjectRole.Translator));
             await env.SFProjectService.Received().RemoveUserAsync("user01", "project01", "user02");
         }
@@ -425,9 +390,7 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            SFProject project = env.GetProject();
-            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
-            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            SFProject project = env.VerifyProjectSync(true);
             Assert.That(project.Texts.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.None));
         }
 
@@ -455,9 +418,7 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            SFProject project = env.GetProject();
-            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
-            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            SFProject project = env.VerifyProjectSync(true);
             Assert.That(project.Texts.First().Chapters.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.None));
         }
 
@@ -485,9 +446,7 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            SFProject project = env.GetProject();
-            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
-            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            SFProject project = env.VerifyProjectSync(true);
             Assert.That(project.Texts.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.Read));
         }
 
@@ -515,9 +474,7 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            SFProject project = env.GetProject();
-            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
-            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            SFProject project = env.VerifyProjectSync(true);
             Assert.That(project.Texts.First().Chapters.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.Read));
         }
 
@@ -540,9 +497,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.UserRoles["user02"], Is.EqualTo(SFProjectRole.CommunityChecker));
             await env.Runner.RunAsync("project01", "user01", false);
 
-            project = env.GetProject();
-            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
-            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            env.VerifyProjectSync(true);
             await env.SFProjectService.DidNotReceiveWithAnyArgs().RemoveUserAsync("user01", "project01", "user02");
         }
 
@@ -586,10 +541,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.GetText("project01", "MRK", 2).DeepEquals(delta), Is.True);
             Assert.That(env.GetText("project01", "LUK", 1).DeepEquals(delta), Is.True);
             Assert.That(env.GetText("project01", "LUK", 2).DeepEquals(delta), Is.True);
-
-            SFProject project = env.GetProject();
-            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
-            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            env.VerifyProjectSync(true);
         }
 
         [Test]
@@ -828,6 +780,10 @@ namespace SIL.XForge.Scripture.Services
                     .Do(x => _sendReceivedCalled = true);
                 ParatextService.IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), Arg.Any<string>())
                     .Returns(false);
+                ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target")
+                    .Returns("beforeSR", "afterSR");
+                ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "source")
+                    .Returns("beforeSR", "afterSR");
                 RealtimeService = new SFMemoryRealtimeService();
                 DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
                 _notesMapper = Substitute.For<IParatextNotesMapper>();
@@ -875,6 +831,16 @@ namespace SIL.XForge.Scripture.Services
             public Question GetQuestion(string bookId, int chapter)
             {
                 return RealtimeService.GetRepository<Question>().Get($"project01:question{bookId}{chapter}");
+            }
+
+            public SFProject VerifyProjectSync(bool successful)
+            {
+                SFProject project = GetProject();
+                Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+                Assert.That(project.Sync.LastSyncSuccessful, Is.EqualTo(successful));
+                string repoVersion = successful ? "afterSR" : "beforeSR";
+                Assert.That(project.Sync.SyncedToRepositoryVersion, Is.EqualTo(repoVersion));
+                return project;
             }
 
             public void SetupSFData(bool translationSuggestionsEnabled, bool checkingEnabled, bool changed,
@@ -931,7 +897,8 @@ namespace SIL.XForge.Scripture.Services
                             Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
                             Sync = new Sync
                             {
-                                QueuedCount = 1
+                                QueuedCount = 1,
+                                SyncedToRepositoryVersion = "beforeSR"
                             }
                         },
                         new SFProject
@@ -957,7 +924,8 @@ namespace SIL.XForge.Scripture.Services
                             Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
                             Sync = new Sync
                             {
-                                QueuedCount = 0
+                                QueuedCount = 0,
+                                SyncedToRepositoryVersion = "beforeSR"
                             }
                         }
                     }));

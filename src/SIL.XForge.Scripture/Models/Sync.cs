@@ -8,5 +8,7 @@ namespace SIL.XForge.Scripture.Models
         public double? PercentCompleted { get; set; }
         public bool? LastSyncSuccessful { get; set; }
         public DateTime? DateLastSuccessfulSync { get; set; }
+        public string SyncedToRepositoryVersion { get; set; }
+        public bool? DataInSync { get; set; }
     }
 }

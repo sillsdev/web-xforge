@@ -241,7 +241,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get canEdit(): boolean {
-    return this.isValid && this.hasEditRight;
+    return this.isValid && this.hasEditRight && this.dataInSync;
   }
 
   get canShare(): boolean {
@@ -269,6 +269,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     const chapter = this.text.chapters.find(c => c.number === this._chapter);
     return chapter != null && chapter.isValid;
+  }
+
+  get dataInSync(): boolean {
+    return this.projectDoc?.data?.sync?.dataInSync !== false;
   }
 
   private get hasSource(): boolean {

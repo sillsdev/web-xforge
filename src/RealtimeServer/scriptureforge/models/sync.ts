@@ -3,4 +3,5 @@ export interface Sync {
   percentCompleted?: number;
   lastSyncSuccessful?: boolean;
   dateLastSuccessfulSync?: string;
+  dataInSync?: boolean;
 }
