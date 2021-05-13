@@ -116,6 +116,10 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.onlineInvoke('sync', { projectId: id });
   }
 
+  onlineCancelSync(id: string): Promise<void> {
+    return this.onlineInvoke('cancelSync', { projectId: id });
+  }
+
   onlineUpdateSettings(id: string, settings: SFProjectSettings): Promise<void> {
     return this.onlineInvoke('updateSettings', { projectId: id, settings });
   }
