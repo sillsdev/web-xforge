@@ -327,6 +327,18 @@ namespace SIL.XForge.Scripture.Services
             await _syncService.SyncAsync(curUserId, projectId, false);
         }
 
+        public async Task CancelSyncAsync(string curUserId, string projectId)
+        {
+            Attempt<SFProject> attempt = await RealtimeService.TryGetSnapshotAsync<SFProject>(projectId);
+            if (!attempt.TryResult(out SFProject project))
+                throw new DataNotFoundException("The project does not exist.");
+
+            if (!IsProjectAdmin(project, curUserId))
+                throw new ForbiddenException();
+
+            await _syncService.CancelSyncAsync(curUserId, projectId);
+        }
+
         public async Task<bool> InviteAsync(string curUserId, string projectId, string email, string locale,
             string role)
         {
