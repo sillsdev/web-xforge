@@ -590,13 +590,16 @@ namespace SIL.XForge.Scripture.Services
         /// Apply the changes to a ParatextNoteThread doc.
         /// TODO: Handle if verseRef changes
         /// </summary>
-        private Task SubmitChangesOnNoteThreadDocAsync(IDocument<ParatextNoteThread> threadDoc,
+        private async Task SubmitChangesOnNoteThreadDocAsync(IDocument<ParatextNoteThread> threadDoc,
             ParatextNoteThreadChange change, Dictionary<string, string> usernamesToUserIds)
         {
             if (change.ThreadRemoved)
-                return threadDoc.DeleteAsync();
+            {
+                await threadDoc.DeleteAsync();
+                return;
+            }
 
-            return threadDoc.SubmitJson0OpAsync(op =>
+            await threadDoc.SubmitJson0OpAsync(op =>
             {
                 // Update content for updated notes
                 foreach (Note updated in change.NotesUpdated)
