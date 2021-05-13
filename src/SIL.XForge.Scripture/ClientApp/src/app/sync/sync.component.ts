@@ -140,6 +140,14 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     this.projectService.onlineSync(this.projectDoc.id);
   }
 
+  cancelSync(): void {
+    if (this.projectDoc == null) {
+      return;
+    }
+    this.projectService.onlineCancelSync(this.projectDoc.id);
+    this.syncActive = false;
+  }
+
   private checkSyncStatus(): void {
     if (this.projectDoc?.data == null) {
       return;
