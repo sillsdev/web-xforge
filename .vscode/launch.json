@@ -98,6 +98,20 @@
       }
     },
     {
+      "name": "Migration PtdaSyncCancelAll",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-migrator-ptdaSyncCancelAll",
+      "program": "${workspaceRoot}/src/Migrations/PtdaSyncCancelAll/bin/Debug/netcoreapp3.1/PtdaSyncCancelAll.dll",
+      "cwd": "${workspaceRoot}/src/Migrations/PtdaSyncCancelAll",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "args": ["--start-ng-serve=listen"],
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
       "type": "node",
       "request": "launch",
       "name": "vscode-jest-tests",

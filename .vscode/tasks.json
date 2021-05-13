@@ -43,6 +43,17 @@
       "problemMatcher": "$msCompile"
     },
     {
+      "label": "build-migrator-ptdaSyncCancelAll",
+      "command": "dotnet",
+      "args": ["build", "/property:GenerateFullPaths=true"],
+      "type": "shell",
+      "group": "build",
+      "options": {
+        "cwd": "${workspaceRoot}/src/Migrations/PtdaSyncCancelAll"
+      },
+      "problemMatcher": "$msCompile"
+    },
+    {
       "label": "npm start (SF)",
       "command": "npm start",
       "type": "shell",
