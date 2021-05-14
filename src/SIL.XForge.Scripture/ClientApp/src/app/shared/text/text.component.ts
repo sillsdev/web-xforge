@@ -58,8 +58,7 @@ export interface TextUpdatedEvent {
 export interface FeaturedVerseRefInfo {
   verseRef: VerseRef;
   iconName?: string;
-  startPos?: number;
-  selectionLength?: number;
+  selectedText?: string;
   preview?: string;
 }
 
@@ -420,8 +419,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       }
       // Check for related segments like this verse i.e. verse_1_2/q1
       for (const relatedSegment of this.getRelatedSegmentRefs(segment)) {
-        const text = this.getSegmentText(relatedSegment);
-        if (text !== '' && !segments.includes(relatedSegment)) {
+        if (!segments.includes(relatedSegment)) {
           segments.push(relatedSegment);
         }
       }
@@ -479,17 +477,44 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return segments;
   }
 
-  toggleInlineFormat(segment: string, startPos: number, formatLength: number, formatName: string, format: any): void {
+  toggleInlineFormat(verseRef: VerseRef, selectedText: string, formatName: string, format: any): void {
     if (this.editor == null) {
       return;
     }
-    const range = this.getSegmentRange(segment);
-    if (range == null) {
+
+    const verseSegments = this.getVerseSegments(verseRef);
+    let noteRange: RangeStatic | undefined = this.getSegmentRange(verseSegments[0]);
+    let startPosition = 0;
+    for (const vs of verseSegments) {
+      const text = this.getSegmentText(vs);
+      const range = this.getSegmentRange(vs);
+      if (range == null) {
+        continue;
+      } else if (selectedText === '') {
+        if (text === '') {
+          // blank segments matches to blank text
+          noteRange = range;
+          break;
+        }
+      } else {
+        const start = text.indexOf(selectedText);
+        if (start >= 0) {
+          // the selected text exists in the verse
+          // TODO: Find a better way to match a note to its selected text
+          startPosition = start;
+          noteRange = range;
+          break;
+        }
+      }
+    }
+
+    if (noteRange == null) {
       return;
     }
     // Limit the length of the format to the length of the range
-    const textLength = formatLength > range.length ? range.length : formatLength;
-    this.editor.formatText(range.index + startPos, textLength, formatName, format, 'silent');
+    let textLength = selectedText?.length ?? 1;
+    textLength = textLength < 1 ? 1 : textLength;
+    this.editor.formatText(noteRange.index + startPosition, textLength, formatName, format, 'silent');
   }
 
   onContentChanged(delta: DeltaStatic, source: Sources): void {

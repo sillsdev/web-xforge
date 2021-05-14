@@ -37,7 +37,6 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
-import { verseSlug } from 'xforge-common/utils';
 import XRegExp from 'xregexp';
 import { environment } from '../../../environments/environment';
 import { ParatextNoteThreadDoc } from '../../core/models/paratext-note-thread-doc';
@@ -617,13 +616,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       const iconName: string = featured.iconName ?? '01flag1';
       const nodeProp: string = iconSourceProp(iconName);
       const format = value ? { iconsrc: nodeProp, preview: featured.preview } : {};
-      this.target.toggleInlineFormat(
-        verseSegments[0],
-        featured.startPos ?? 0,
-        featured.selectionLength ?? 1,
-        'note-thread',
-        format
-      );
+      this.target.toggleInlineFormat(featured.verseRef, featured.selectedText ?? '', 'note-thread', format);
     }
 
     if (value) {
@@ -961,15 +954,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       preview += '\n' + translate('editor.more_notes', { count: notes.length - 1 });
     }
     const iconDefinedNotes = notes.filter(n => n.tagIcon != null);
-    const segment: string = verseSlug(toVerseRef(thread.verseRef));
-    const segmentText: string = this.target!.getSegmentText(segment);
-    const contentStartPos: number = segmentText.indexOf(thread.selectedText);
     return {
       verseRef: toVerseRef(thread.verseRef),
       preview,
       iconName: iconDefinedNotes.length === 0 ? thread.tagIcon : iconDefinedNotes[iconDefinedNotes.length - 1].tagIcon,
-      startPos: contentStartPos >= 0 ? contentStartPos : 0,
-      selectionLength: thread.selectedText.length
+      selectedText: thread.selectedText
     };
   }
 

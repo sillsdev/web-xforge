@@ -514,7 +514,8 @@ namespace SIL.XForge.Scripture.Services
                 new ThreadComponents { threadNum = 1, noteCount = 1, username = env.Username01, isEdited = true },
                 new ThreadComponents { threadNum = 2, noteCount = 1, username = env.Username01, isDeleted = true },
                 new ThreadComponents { threadNum = 3, noteCount = 1, username = env.Username02 },
-                new ThreadComponents { threadNum = 4, noteCount = 1, username = env.Username01 }
+                new ThreadComponents { threadNum = 4, noteCount = 1, username = env.Username01 },
+                new ThreadComponents { threadNum = 6, noteCount = 1, username = env.Username01, isConflict = true }
             });
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
@@ -526,7 +527,7 @@ namespace SIL.XForge.Scripture.Services
                     .ToDictionary(u => u.ParatextUsername);
                 IEnumerable<ParatextNoteThreadChange> changes = env.Service.GetNoteThreadChanges(
                     userSecret, ptProjectId, 40, noteThreadDocs, syncUsers);
-                Assert.That(changes.Count, Is.EqualTo(5));
+                Assert.That(changes.Count, Is.EqualTo(6));
 
                 // Edited comment
                 ParatextNoteThreadChange change01 = changes.Where(c => c.ThreadId == "thread01").Single();
@@ -565,6 +566,12 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(change05.ThreadChangeToString(),
                     Is.EqualTo("Context before Text selected thread05 context after-Start:15-MAT 1:5"));
                 Assert.That(change05.ThreadRemoved, Is.True);
+                // Added conflict comment
+                ParatextNoteThreadChange change06 = changes.Where(c => c.ThreadId == "thread06").Single();
+                Assert.That(change04.ThreadChangeToString(),
+                    Is.EqualTo("Context before Text selected thread06 context after-Start:15-MAT 1:6-conflict1"));
+                string expected4 = "thread06-syncuser01-user02-<p>thread06 note 1.</p>-conflict1";
+                Assert.That(change04.NotesAdded[0].NoteToString(), Is.EqualTo(expected4));
             }
         }
 
@@ -868,6 +875,7 @@ namespace SIL.XForge.Scripture.Services
             public string username;
             public bool isEdited;
             public bool isDeleted;
+            public bool isConflict;
         }
 
         private class TestEnvironment
@@ -1281,7 +1289,8 @@ namespace SIL.XForge.Scripture.Services
                             Date = date,
                             Deleted = comp.isDeleted,
                             ExternalUser = "user02",
-                            TagsAdded = new[] { comp.threadNum.ToString() }
+                            TagsAdded = comp.isConflict ? null : new[] { comp.threadNum.ToString() },
+                            Type = comp.isConflict ? NoteType.Conflict : NoteType.Normal
                         });
                     }
                 }
@@ -1308,7 +1317,7 @@ namespace SIL.XForge.Scripture.Services
                 CommentTag tag2 = new CommentTag("test02", "01flag2", 2);
                 CommentTag tag3 = new CommentTag("test03", "01flag3", 3);
                 CommentTags.CommentTagList list = new CommentTags.CommentTagList();
-                list.SerializedData = new CommentTag[] { tag1, tag2, tag3 };
+                list.SerializedData = new CommentTag[] { tag1, tag2, tag3, CommentTag.ConflictTag };
                 scrText._fileManager.GetXml<CommentTags.CommentTagList>(Arg.Any<string>()).Returns(list);
             }
 

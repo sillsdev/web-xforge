@@ -628,9 +628,9 @@ namespace SIL.XForge.Scripture.Services
                 Paratext.Data.ProjectComments.Comment info = thread.Comments[0];
 
                 int tagId = info.TagsAdded != null && info.TagsAdded.Length > 0 ? int.Parse(info.TagsAdded[0]) : 1;
-                string originalTagIcon = commentTags.Get(tagId).Icon;
+                CommentTag initialTag = info.Type == NoteType.Conflict ? CommentTag.ConflictTag : commentTags.Get(tagId);
                 ParatextNoteThreadChange newThread = new ParatextNoteThreadChange(threadId, info.VerseRefStr,
-                    info.SelectedText, info.ContextBefore, info.ContextAfter, info.StartPosition, originalTagIcon);
+                    info.SelectedText, info.ContextBefore, info.ContextAfter, info.StartPosition, initialTag.Icon);
                 foreach (var comm in thread.Comments)
                 {
                     SyncUser syncUser = FindOrCreateSyncUser(comm.User, syncUsers);
@@ -1097,8 +1097,8 @@ namespace SIL.XForge.Scripture.Services
         private Note CreateNoteFromComment(string noteId, Paratext.Data.ProjectComments.Comment comment,
             CommentTags commentTags, SyncUser syncUser)
         {
-            var tag = comment.TagsAdded == null || comment.TagsAdded.Length == 0
-                ? null
+            CommentTag tag = comment.TagsAdded == null || comment.TagsAdded.Length == 0
+                ? comment.Type == NoteType.Conflict ? CommentTag.ConflictTag : null
                 : commentTags.Get(int.Parse(comment.TagsAdded[0]));
             return new Note
             {
