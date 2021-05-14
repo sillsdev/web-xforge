@@ -743,7 +743,12 @@ describe('EditorComponent', () => {
       const selection = env.targetEditor.getSelection();
       expect(selection).toBeNull();
       expect(env.component.canEdit).toBe(true);
+      expect(env.outOfSyncWarning).toBeNull();
       expect(env.isSourceAreaHidden).toBe(true);
+
+      env.setDataInSync('project01', false);
+      expect(env.component.canEdit).toBe(false);
+      expect(env.outOfSyncWarning).not.toBeNull();
       env.dispose();
     }));
 
@@ -1092,7 +1097,7 @@ class TestEnvironment {
       shareEnabled: true,
       shareLevel: CheckingShareLevel.Specific
     },
-    sync: { queuedCount: 0 },
+    sync: { queuedCount: 0, dataInSync: true },
     texts: [
       {
         bookNum: 40,
@@ -1271,6 +1276,10 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('.invalid-warning'));
   }
 
+  get outOfSyncWarning(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.out-of-sync-warning'));
+  }
+
   get isSourceAreaHidden(): boolean {
     return this.sourceTextArea.nativeElement.style.display === 'none';
   }
@@ -1428,6 +1437,13 @@ class TestEnvironment {
 
   getTextDoc(textId: TextDocId): TextDoc {
     return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, textId.toString());
+  }
+
+  setDataInSync(projectId: string, isInSync: boolean): void {
+    const projectDoc: SFProjectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, projectId);
+    projectDoc.submitJson0Op(op => op.set(p => p.sync.dataInSync!, isInSync));
+    tick();
+    this.fixture.detectChanges();
   }
 
   wait(): void {

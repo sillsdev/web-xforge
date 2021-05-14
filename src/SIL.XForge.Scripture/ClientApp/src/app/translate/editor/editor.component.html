@@ -50,6 +50,9 @@
         <div *ngIf="!isValid && hasEditRight" class="invalid-warning">
           {{ t("cannot_edit_chapter_formatting_invalid") }}
         </div>
+        <div *ngIf="!dataInSync && hasEditRight" class="out-of-sync-warning">
+          {{ t("project_data_out_of_sync") }}
+        </div>
         <div #targetContainer class="text-container" [style.height]="textHeight">
           <app-text
             #target

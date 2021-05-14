@@ -752,7 +752,7 @@ namespace SIL.XForge.Scripture.Services
                     MockRestClientFactory);
                 Service.ScrTextCollection = MockScrTextCollection;
                 Service.SharingLogicWrapper = MockSharingLogicWrapper;
-                Service.HgWrapper = MockHgWrapper;
+                Service.HgHelper = MockHgWrapper;
                 Service.SyncDir = SyncDir;
 
                 PTProjectIds.Add(Project01, HexId.CreateNew());

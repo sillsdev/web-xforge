@@ -29,6 +29,7 @@ namespace SIL.XForge.Scripture.Services
             Dictionary<int, string> chapterAuthors = null);
         string GetNotes(UserSecret userSecret, string ptProjectId, int bookNum);
         void PutNotes(UserSecret userSecret, string ptProjectId, string notesText);
+        string GetLatestSharedVersion(UserSecret userSecret, string ptProjectId);
 
         Task SendReceiveAsync(UserSecret userSecret, string ptTargetId, IProgress<ProgressState> progress = null);
     }

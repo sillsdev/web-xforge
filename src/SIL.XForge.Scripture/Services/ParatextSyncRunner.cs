@@ -101,22 +101,26 @@ namespace SIL.XForge.Scripture.Services
 
                 var targetTextDocsByBook = new Dictionary<int, SortedList<int, IDocument<TextData>>>();
                 var questionDocsByBook = new Dictionary<int, IReadOnlyList<IDocument<Question>>>();
-
+                string lastSharedVersion = _paratextService.GetLatestSharedVersion(_userSecret, targetParatextId);
+                bool isDataInSync = lastSharedVersion == null
+                    ? true
+                    : lastSharedVersion == _projectDoc.Data.Sync.SyncedToRepositoryVersion;
                 // update target Paratext books and notes
                 foreach (TextInfo text in _projectDoc.Data.Texts)
                 {
                     SortedList<int, IDocument<TextData>> targetTextDocs = await FetchTextDocsAsync(text);
                     targetTextDocsByBook[text.BookNum] = targetTextDocs;
-                    await UpdateParatextBook(text, targetParatextId, targetTextDocs);
+                    if (isDataInSync)
+                        await UpdateParatextBook(text, targetParatextId, targetTextDocs);
 
                     IReadOnlyList<IDocument<Question>> questionDocs = await FetchQuestionDocsAsync(text);
                     questionDocsByBook[text.BookNum] = questionDocs;
-                    await UpdateParatextNotesAsync(text, questionDocs);
+                    if (isDataInSync)
+                        await UpdateParatextNotesAsync(text, questionDocs);
                 }
 
                 // perform Paratext send/receive
-                await _paratextService.SendReceiveAsync(_userSecret, targetParatextId,
-                    UseNewProgress());
+                await _paratextService.SendReceiveAsync(_userSecret, targetParatextId, UseNewProgress());
 
                 var targetBooks = new HashSet<int>(_paratextService.GetBookList(_userSecret, targetParatextId));
                 var sourceBooks = new HashSet<int>(TranslationSuggestionsEnabled
@@ -571,8 +575,19 @@ namespace SIL.XForge.Scripture.Services
             {
                 op.Unset(pd => pd.Sync.PercentCompleted);
                 op.Set(pd => pd.Sync.LastSyncSuccessful, successful);
+                // Get the latest shared revision of the local hg repo. On a failed synchronize attempt, the data
+                // is known to be out of sync if the revision does not match the corresponding revision stored
+                // on the project doc.
+                string repoVersion = _paratextService.GetLatestSharedVersion(_userSecret, _projectDoc.Data.ParatextId);
+
                 if (successful)
+                {
                     op.Set(pd => pd.Sync.DateLastSuccessfulSync, DateTime.UtcNow);
+                    op.Set(pd => pd.Sync.SyncedToRepositoryVersion, repoVersion);
+                    op.Set(pd => pd.Sync.DataInSync, true);
+                }
+                else
+                    op.Set(pd => pd.Sync.DataInSync, repoVersion == _projectDoc.Data.Sync.SyncedToRepositoryVersion);
                 // the frontend checks the queued count to determine if the sync is complete. The ShareDB client emits
                 // an event for each individual op even if they are applied as a batch, so this needs to be set last,
                 // otherwise the info about the sync won't be set yet when the frontend determines that the sync is
