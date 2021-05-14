@@ -608,6 +608,9 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
+        /// <summary>
+        /// Get the most recent revision id of a commit from the last push or pull with the PT send/receive server.
+        /// </summary>
         public string GetLatestSharedVersion(UserSecret userSecret, string ptProjectId)
         {
             ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), ptProjectId);

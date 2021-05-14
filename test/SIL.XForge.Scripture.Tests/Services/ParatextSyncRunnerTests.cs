@@ -33,9 +33,11 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             env.SetupSFData(true, true, true);
+            env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target").Returns("beforeSR");
 
             await env.Runner.RunAsync("project01", "user03", false);
-            env.VerifyProjectSync(false);
+            SFProject project = env.VerifyProjectSync(false);
+            Assert.That(project.Sync.DataInSync, Is.True);
         }
 
         [Test]

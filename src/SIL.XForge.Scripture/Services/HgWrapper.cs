@@ -28,6 +28,9 @@ namespace SIL.XForge.Scripture.Services
             return Hg.Default.Pull(repository, bundle, true);
         }
 
+        /// <summary>
+        /// Get the most recent revision id of the commit from the last push or pull with the PT send/receive server.
+        /// </summary>
         public static string GetLastPublicRevision(string repository)
         {
             string ids = RunCommand(repository, "log --rev \"public()\" --template \"{node}\n\"");

@@ -743,6 +743,7 @@ describe('EditorComponent', () => {
       const selection = env.targetEditor.getSelection();
       expect(selection).toBeNull();
       expect(env.component.canEdit).toBe(true);
+      expect(env.outOfSyncWarning).toBeNull();
       expect(env.isSourceAreaHidden).toBe(true);
 
       env.setDataInSync('project01', false);
