@@ -559,7 +559,10 @@ namespace SIL.XForge.Scripture.Services
                 new SFProjectUserConfig { ProjectRef = projectDoc.Id, OwnerRef = userDoc.Id });
             // Listeners can now assume the ProjectUserConfig is ready when the user is added.
             await base.AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, removeShareKeys);
-            await UpdatePermissionsAsync(userDoc.Id, projectDoc.Id);
+            if (!string.IsNullOrWhiteSpace(userDoc.Data.ParatextId))
+            {
+                await UpdatePermissionsAsync(userDoc.Id, projectDoc.Id);
+            }
 
             // Add to the source project, if required
             bool translationSuggestionsEnabled = projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled;

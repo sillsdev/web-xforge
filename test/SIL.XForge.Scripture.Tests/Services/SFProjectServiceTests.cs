@@ -29,6 +29,7 @@ namespace SIL.XForge.Scripture.Services
         private const string Project02 = "project02";
         private const string Project03 = "project03";
         private const string Project04 = "project04";
+        private const string Project05 = "project05";
         private const string Resource01 = "resource_project";
         private const string DisabledSource = "disabled_source";
         private const string User01 = "user01";
@@ -382,16 +383,21 @@ namespace SIL.XForge.Scripture.Services
         public async Task CheckLinkSharingAsync_PTUserHasPTPermissions()
         {
             var env = new TestEnvironment();
-            string paratextProject01ID = "paratext_" + Project01;
-            SFProject project = env.GetProject(Project01);
+            string paratextProject05ID = "paratext_" + Project05;
+            SFProject project = env.GetProject(Project05);
+
+            Assert.That(env.UserSecrets.Contains(User03), Is.True, "setup. PT user is should have user secrets.");
+            User user = env.GetUser(User03);
+            Assert.That(user.ParatextId, Is.Not.Null, "setup. PT user should have a PT User ID.");
+
             env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03)
-                .Returns(Task.FromResult(TextInfoPermission.Read));
+                .Returns<Task<string>>(Task.FromResult(TextInfoPermission.Read));
 
             Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
             Assert.That(project.Texts.First().Permissions.ContainsKey(User03), Is.False, "setup");
             Assert.That(project.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
             // Return book list from PT that matches what SF knows about (according to TestEnvironment setup).
-            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), paratextProject01ID).Returns(new List<int> { 40, 41 });
+            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), paratextProject05ID).Returns(new List<int> { 40, 41 });
 
             // PT will answer with these permissions.
             var ptBookPermissions = new Dictionary<string, string>()
@@ -413,16 +419,49 @@ namespace SIL.XForge.Scripture.Services
                 .Returns(Task.FromResult(ptChapterPermissions));
 
             // SUT
-            await env.Service.CheckLinkSharingAsync(User03, Project01, "key12345");
-            project = env.GetProject(Project01);
+            await env.Service.CheckLinkSharingAsync(User03, Project05, "key12345");
+            project = env.GetProject(Project05);
             Assert.That(project.UserRoles.TryGetValue(User03, out string userRole), Is.True, "user was added to project");
             // This user was invited as a community checker. So that is the SF role they will have. But their _permissions_ will include what they had in PT.
             Assert.That(userRole, Is.EqualTo(SFProjectRole.CommunityChecker));
-            User user = env.GetUser(User03);
-            Assert.That(user.Sites[SiteId].Projects, Contains.Item(Project01));
+            user = env.GetUser(User03);
+            Assert.That(user.Sites[SiteId].Projects, Contains.Item(Project05));
 
             Assert.That(project.Texts.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Read));
             Assert.That(project.Texts.First().Chapters.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Write));
+
+
+        }
+
+        [Test]
+        public async Task CheckLinkSharingAsync_NonPTUser()
+        {
+            var env = new TestEnvironment();
+            SFProject project = env.GetProject(Project05);
+
+            Assert.That(env.UserSecrets.Contains(User04), Is.False, "setup. Non-PT user is not expected to have user secrets.");
+            User user = env.GetUser(User04);
+            Assert.That(user.ParatextId, Is.Null, "setup. Non-PT user should not have a PT User ID.");
+
+            Assert.That(project.UserRoles.ContainsKey(User04), Is.False, "setup");
+            Assert.That(project.Texts.First().Permissions.ContainsKey(User04), Is.False, "setup");
+            Assert.That(project.Texts.First().Chapters.First().Permissions.ContainsKey(User04), Is.False, "setup");
+
+            // SUT
+            await env.Service.CheckLinkSharingAsync(User04, Project05, "key12345");
+            project = env.GetProject(Project05);
+            Assert.That(project.UserRoles.TryGetValue(User04, out string userRole), Is.True, "user was added to project");
+            Assert.That(userRole, Is.EqualTo(SFProjectRole.CommunityChecker));
+            user = env.GetUser(User04);
+            Assert.That(user.Sites[SiteId].Projects, Contains.Item(Project05));
+
+            Assert.That(project.Texts.First().Permissions.ContainsKey(User04), Is.False, "no permissions should have been specified for user");
+            Assert.That(project.Texts.First().Chapters.First().Permissions.ContainsKey(User04), Is.False, "no permissions should have been specified for user");
+
+            // The get permission methods shouldn't have even been called.
+            env.ParatextService.DidNotReceiveWithAnyArgs().GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
+                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>());
+            env.ParatextService.DidNotReceiveWithAnyArgs().GetResourcePermissionAsync(Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Test]
@@ -940,6 +979,7 @@ namespace SIL.XForge.Scripture.Services
                     {
                         Id = User01,
                         Email = "user01@example.com",
+                        ParatextId="pt-user01",
                         Sites = new Dictionary<string, Site>
                         {
                             { SiteId, new Site { Projects = { Project01, Project03, DisabledSource } } }
@@ -949,6 +989,7 @@ namespace SIL.XForge.Scripture.Services
                     {
                         Id = User02,
                         Email = "user02@example.com",
+                        ParatextId="pt-user02",
                         Sites = new Dictionary<string, Site>
                         {
                             { SiteId, new Site { Projects = { Project01, Project02, Project03 } } }
@@ -958,6 +999,7 @@ namespace SIL.XForge.Scripture.Services
                     {
                         Id = User03,
                         Email = "user03@example.com",
+                        ParatextId="pt-user03",
                         Sites = new Dictionary<string, Site> { { SiteId, new Site() } }
                     },
                     new User
@@ -1086,6 +1128,57 @@ namespace SIL.XForge.Scripture.Services
                         },
                         new SFProject
                         {
+                            Id = Project05,
+                            ParatextId = "paratext_" + Project05,
+                            Name = "Project05",
+                            ShortName = "P05",
+                            TranslateConfig = new TranslateConfig
+                            {
+                                TranslationSuggestionsEnabled = true,
+                                Source = new TranslateSource
+                                {
+                                    ProjectRef = Resource01,
+                                    ParatextId = "resid_is_16_char",
+                                    Name = "resource project",
+                                    ShortName = "RES",
+                                    WritingSystem = new WritingSystem
+                                    {
+                                        Tag = "qaa"
+                                    }
+                                }
+                            },
+                            CheckingConfig = new CheckingConfig
+                            {
+                                ShareEnabled = false
+                            },
+                            UserRoles = new Dictionary<string, string>
+                            {
+                                { User01, SFProjectRole.Administrator },
+                                { User02, SFProjectRole.CommunityChecker }
+                            },
+                            Texts =
+                            {
+                                new TextInfo
+                                {
+                                    BookNum = 40,
+                                    Chapters =
+                                    {
+                                        new Chapter { Number = 1, LastVerse = 3, IsValid = true, Permissions = { } }
+                                    }
+                                },
+                                new TextInfo
+                                {
+                                    BookNum = 41,
+                                    Chapters =
+                                    {
+                                        new Chapter { Number = 1, LastVerse = 3, IsValid = true, Permissions = { } },
+                                        new Chapter { Number = 2, LastVerse = 3, IsValid = true, Permissions = { } }
+                                    }
+                                }
+                            }
+                        },
+                        new SFProject
+                        {
                             Id = Resource01,
                             ParatextId = "resid_is_16_char",
                             Name = "resource project",
@@ -1127,13 +1220,6 @@ namespace SIL.XForge.Scripture.Services
                         ShareKeys = new List<ShareKey>
                         {
 
-                            new ShareKey
-                            {
-                                Email = "user03@example.com",
-                                Key = "key12345",
-                                ExpirationTime = currentTime.AddDays(1),
-                                ProjectRole = SFProjectRole.CommunityChecker
-                            }
                         }
                     },
                     new SFProjectSecret
@@ -1190,6 +1276,19 @@ namespace SIL.XForge.Scripture.Services
                             }
                         }
                     },
+                                        new SFProjectSecret { Id = Project05,
+                        ShareKeys = new List<ShareKey>
+                        {
+
+                            new ShareKey
+                            {
+                                Email = "user03@example.com",
+                                Key = "key12345",
+                                ExpirationTime = currentTime.AddDays(1),
+                                ProjectRole = SFProjectRole.CommunityChecker
+                            }
+                        }
+                    },
                 });
                 EngineService = Substitute.For<IEngineService>();
                 SyncService = Substitute.For<ISyncService>();
@@ -1228,7 +1327,7 @@ namespace SIL.XForge.Scripture.Services
                     }
                 };
                 ParatextService.GetResourcesAsync(Arg.Any<string>()).Returns(ptResources);
-                var userSecrets = new MemoryRepository<UserSecret>(new[]
+                UserSecrets = new MemoryRepository<UserSecret>(new[]
                 {
                     new UserSecret { Id = User01 },
                     new UserSecret { Id = User02 },
@@ -1244,7 +1343,7 @@ namespace SIL.XForge.Scripture.Services
                 var transceleratorService = Substitute.For<ITransceleratorService>();
 
                 Service = new SFProjectService(RealtimeService, siteOptions, audioService, EmailService, ProjectSecrets,
-                    SecurityService, FileSystemService, EngineService, SyncService, ParatextService, userSecrets,
+                    SecurityService, FileSystemService, EngineService, SyncService, ParatextService, UserSecrets,
                     translateMetrics, Localizer, transceleratorService);
             }
 
@@ -1258,6 +1357,7 @@ namespace SIL.XForge.Scripture.Services
             public ISecurityService SecurityService { get; }
             public IParatextService ParatextService { get; }
             public IStringLocalizer<SharedResource> Localizer { get; }
+            public MemoryRepository<UserSecret> UserSecrets { get; }
 
             public SFProject GetProject(string id)
             {
