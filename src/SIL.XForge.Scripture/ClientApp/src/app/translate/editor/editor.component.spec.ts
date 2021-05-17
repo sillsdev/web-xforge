@@ -922,16 +922,14 @@ describe('EditorComponent', () => {
       expect(note.getAttribute('title')).toEqual('Note from user01\n--- 2 more note(s) ---');
       expect(note.innerText).toEqual('chapter 1');
 
-      const emptySegment: HTMLElement = env.targetTextEditor.nativeElement.querySelector(
-        'usx-segment[data-segment="verse_1_4/p_1"]'
-      )!;
-      expect(emptySegment).not.toBeNull();
-      const emptySegmentNote = emptySegment.querySelector('display-note')! as HTMLElement;
-      expect(emptySegmentNote).not.toBeNull();
-      expect(emptySegmentNote.hasAttribute('style')).toBe(true);
-      expect(emptySegmentNote.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
-      expect(emptySegmentNote.hasAttribute('title')).toBe(true);
-      expect(emptySegmentNote.getAttribute('title')).toEqual('Note from user01');
+      const blankSegmentNote = env.targetTextEditor.nativeElement.querySelector(
+        'usx-segment[data-segment="verse_1_4/p_1"] display-note'
+      )! as HTMLElement;
+      expect(blankSegmentNote).not.toBeNull();
+      expect(blankSegmentNote.hasAttribute('style')).toBe(true);
+      expect(blankSegmentNote.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
+      expect(blankSegmentNote.hasAttribute('title')).toBe(true);
+      expect(blankSegmentNote.getAttribute('title')).toEqual('Note from user01');
       env.dispose();
     }));
   });

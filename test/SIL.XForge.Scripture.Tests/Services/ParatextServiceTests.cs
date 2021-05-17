@@ -566,12 +566,13 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(change05.ThreadChangeToString(),
                     Is.EqualTo("Context before Text selected thread05 context after-Start:15-MAT 1:5"));
                 Assert.That(change05.ThreadRemoved, Is.True);
+
                 // Added conflict comment
                 ParatextNoteThreadChange change06 = changes.Where(c => c.ThreadId == "thread06").Single();
-                Assert.That(change04.ThreadChangeToString(),
+                Assert.That(change06.ThreadChangeToString(),
                     Is.EqualTo("Context before Text selected thread06 context after-Start:15-MAT 1:6-conflict1"));
-                string expected4 = "thread06-syncuser01-user02-<p>thread06 note 1.</p>-conflict1";
-                Assert.That(change04.NotesAdded[0].NoteToString(), Is.EqualTo(expected4));
+                string expected6 = "thread06-syncuser01-user02-<p>thread06 note 1.</p>-conflict1";
+                Assert.That(change06.NotesAdded[0].NoteToString(), Is.EqualTo(expected6));
             }
         }
 

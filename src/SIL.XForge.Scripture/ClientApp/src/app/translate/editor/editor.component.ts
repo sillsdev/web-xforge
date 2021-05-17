@@ -37,6 +37,7 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
+import { verseSlug } from 'xforge-common/utils';
 import XRegExp from 'xregexp';
 import { environment } from '../../../environments/environment';
 import { ParatextNoteThreadDoc } from '../../core/models/paratext-note-thread-doc';
@@ -477,7 +478,28 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.insertSuggestionEnd = -1;
           this.target.editor.setSelection(selectIndex, 0, 'user');
         }
+
+        // reset note icon was blank or is newly blank
+        const threadDocs: ParatextNoteThreadDoc[] | undefined = this.noteThreadQuery?.docs.filter(
+          n =>
+            n.data != null &&
+            this.bookNum === n.data.verseRef.bookNum &&
+            segment?.ref.startsWith(verseSlug(toVerseRef(n.data.verseRef)))
+        );
+        const noteThread = threadDocs == null || threadDocs.length < 1 ? null : threadDocs[0];
+        if (noteThread?.data != null) {
+          // check whether an edit operation occurs at the beginning of an empty verse with a note
+          if (
+            segment?.range.length === 1 &&
+            delta.ops[0].retain === segment?.range.index &&
+            (delta.ops[1].insert != null || delta.ops[1].delete != null)
+          ) {
+            this.toggleNoteThreadVerses(false);
+            this.toggleNoteThreadVerses(true);
+          }
+        }
       }
+
       if (this.insertSuggestionEnd !== -1) {
         const selection = this.target.editor.getSelection();
         if (selection == null || selection.length > 0 || selection.index !== this.insertSuggestionEnd) {
