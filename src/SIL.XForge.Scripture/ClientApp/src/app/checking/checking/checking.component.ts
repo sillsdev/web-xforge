@@ -204,7 +204,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   get questionDocs(): Readonly<QuestionDoc[]> {
-    return this.questionsQuery != null ? this.questionsQuery.docs.filter(qd => !qd.data!.isArchived) : [];
+    return this.questionsQuery?.docs.filter(qd => qd.data?.isArchived === false) || [];
   }
 
   get textsByBookId(): TextsByBookId {
