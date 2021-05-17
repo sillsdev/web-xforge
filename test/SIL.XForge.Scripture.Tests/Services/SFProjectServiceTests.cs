@@ -659,7 +659,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public void UpdatePermissionsAsync_ThrowsIfBookNotInDB()
+        public async Task UpdatePermissionsAsync_ThrowsIfBookNotInDB()
         {
             string paratextProject01ID = "paratext_" + Project01;
             var env = new TestEnvironment();
@@ -670,12 +670,15 @@ namespace SIL.XForge.Scripture.Services
             // But PT reports that there are 3 books.
             env.ParatextService.GetBookList(Arg.Any<UserSecret>(), paratextProject01ID).Returns(new List<int>() { 40, 41, 42 });
 
+            IConnection conn = await env.RealtimeService.ConnectAsync(User01);
+            IDocument<SFProject> project01Doc = await conn.FetchAsync<SFProject>(Project01);
+
             // SUT. A book in paratext is not present in the SF DB.
-            Assert.ThrowsAsync<ArgumentException>(() => env.Service.UpdatePermissionsAsync(User01, Project01));
+            Assert.ThrowsAsync<ArgumentException>(() => env.Service.UpdatePermissionsAsync(User01, project01Doc));
         }
 
         [Test]
-        public void UpdatePermissionsAsync_ThrowsIfUserHasNoSecrets()
+        public async Task UpdatePermissionsAsync_ThrowsIfUserHasNoSecrets()
         {
             string paratextProject01ID = "paratext_" + Project01;
             var env = new TestEnvironment();
@@ -683,8 +686,11 @@ namespace SIL.XForge.Scripture.Services
             env.ParatextService.GetBookList(Arg.Any<UserSecret>(), paratextProject01ID).Returns(new List<int>() { 40, 41 });
             Assert.That(env.ProjectSecrets.Contains(User04), Is.False, "setup");
 
+            IConnection conn = await env.RealtimeService.ConnectAsync(User04);
+            IDocument<SFProject> project01Doc = await conn.FetchAsync<SFProject>(Project01);
+
             // SUT
-            Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.UpdatePermissionsAsync(User04, Project01));
+            Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.UpdatePermissionsAsync(User04, project01Doc));
         }
 
         [Test]
@@ -719,8 +725,11 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(sfProject.Texts.First().Permissions.Count, Is.EqualTo(0));
             Assert.That(sfProject.Texts.First().Chapters.First().Permissions.Count, Is.EqualTo(0));
 
+            IConnection conn = await env.RealtimeService.ConnectAsync(User01);
+            IDocument<SFProject> project01Doc = await conn.FetchAsync<SFProject>(Project01);
+
             // SUT
-            await env.Service.UpdatePermissionsAsync(User01, Project01);
+            await env.Service.UpdatePermissionsAsync(User01, project01Doc);
 
             sfProject = env.GetProject(Project01);
             Assert.That(sfProject.Texts.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Read));
