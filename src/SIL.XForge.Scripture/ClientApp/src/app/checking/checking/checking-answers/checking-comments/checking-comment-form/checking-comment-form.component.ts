@@ -12,8 +12,8 @@ export class CheckingCommentFormComponent {
     this.commentText.setValue(value);
   }
 
-  @Output() save: EventEmitter<String> = new EventEmitter<String>();
-  @Output() cancel: EventEmitter<Boolean> = new EventEmitter<Boolean>();
+  @Output() save: EventEmitter<string> = new EventEmitter<string>();
+  @Output() cancel: EventEmitter<boolean> = new EventEmitter<boolean>();
 
   commentForm: FormGroup = new FormGroup({
     commentText: new FormControl('', [Validators.required, XFValidators.someNonWhitespace])

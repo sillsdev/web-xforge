@@ -36,14 +36,14 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       checking: new FormControl(true)
     })
   });
-  projects?: ParatextProject[];
   resources?: SelectableProject[];
   state: 'connecting' | 'loading' | 'input' | 'login' | 'offline' = 'loading';
   connectProjectName?: string;
   projectDoc?: SFProjectDoc;
 
-  private targetProjects?: ParatextProject[];
   private _isAppOnline: boolean = false;
+  private _projects?: ParatextProject[];
+  private targetProjects?: ParatextProject[];
 
   constructor(
     private readonly paratextService: ParatextService,
@@ -77,11 +77,11 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   }
 
   get showSettings(): boolean {
-    if (this.state !== 'input' || this.projects == null) {
+    if (this.state !== 'input' || this._projects == null) {
       return false;
     }
     const paratextId: string = this.paratextIdControl.value;
-    const project = this.projects.find(p => p.paratextId === paratextId);
+    const project = this._projects.find(p => p.paratextId === paratextId);
     return project != null && project.projectId == null;
   }
 
@@ -90,10 +90,14 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   }
 
   get hasNonAdministratorProject(): boolean {
-    if (!this.projects) {
+    if (!this._projects) {
       return false;
     }
-    return this.projects.filter(p => !p.isConnected && !p.isConnectable).length > 0;
+    return this._projects.filter(p => !p.isConnected && !p.isConnectable).length > 0;
+  }
+
+  get projects(): ParatextProject[] {
+    return this._projects != null ? this._projects : [];
   }
 
   get translationSuggestionsEnabled(): boolean {
@@ -135,7 +139,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     this.subscribe(this.pwaService.onlineStatus, async isOnline => {
       this.isAppOnline = isOnline;
       if (isOnline) {
-        if (this.projects == null) {
+        if (this._projects == null) {
           await this.populateProjectList();
         } else {
           this.state = 'input';
@@ -159,11 +163,11 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       this.settings.controls.sourceParatextId.setValidators(Validators.required);
       this.settings.controls.sourceParatextId.updateValueAndValidity();
     }
-    if (!this.connectProjectForm.valid || this.projects == null) {
+    if (!this.connectProjectForm.valid || this._projects == null) {
       return;
     }
     const values = this.connectProjectForm.value as ConnectProjectFormValues;
-    const project = this.projects.find(p => p.paratextId === values.paratextId);
+    const project = this._projects.find(p => p.paratextId === values.paratextId);
     if (project == null) {
       return;
     }
@@ -207,9 +211,9 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   private async populateProjectList() {
     this.state = 'loading';
     this.loadingStarted();
-    [this.projects, this.resources] = await this.paratextService.getProjectsAndResources();
-    if (this.projects != null) {
-      this.targetProjects = this.projects.filter(p => p.isConnectable);
+    [this._projects, this.resources] = await this.paratextService.getProjectsAndResources();
+    if (this._projects != null) {
+      this.targetProjects = this._projects.filter(p => p.isConnectable);
       this.state = 'input';
     } else {
       this.state = 'login';

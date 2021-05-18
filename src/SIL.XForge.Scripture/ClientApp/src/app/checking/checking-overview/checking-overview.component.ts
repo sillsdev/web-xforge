@@ -222,7 +222,17 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return getTextDocId(this.projectDoc.id, bookNum, chapter);
   }
 
-  getQuestionDocs(textDocId: TextDocId, fromArchive = false): QuestionDoc[] {
+  getTextDocIdType(bookNum: number, chapter: number): TextDocId | undefined {
+    if (this.projectDoc == null) {
+      return undefined;
+    }
+    return new TextDocId(this.projectDoc.id, bookNum, chapter);
+  }
+
+  getQuestionDocs(textDocId: TextDocId | undefined, fromArchive = false): QuestionDoc[] {
+    if (textDocId == null) {
+      return [];
+    }
     const textQuestionDocs = this.questionDocs.get(textDocId.toString());
     if (textQuestionDocs == null) {
       return [];

@@ -71,7 +71,9 @@
               </div>
             </mdc-list-item>
             <ng-container *ngIf="itemVisible[getTextDocId(text.bookNum, chapter.number)]">
-              <mdc-list-item *ngFor="let questionDoc of getQuestionDocs(getTextDocId(text.bookNum, chapter.number))">
+              <mdc-list-item
+                *ngFor="let questionDoc of getQuestionDocs(getTextDocIdType(text.bookNum, chapter.number))"
+              >
                 <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
                   <span fxFlex="16px" class="indent"></span>
                   <button fxFlex="64px" mdc-button type="button" (click)="questionDialog(questionDoc)" class="edit-btn">
@@ -226,7 +228,7 @@
             </mdc-list-item>
             <ng-container *ngIf="itemVisibleArchived[getTextDocId(text.bookNum, chapter.number)]">
               <mdc-list-item
-                *ngFor="let questionDoc of getQuestionDocs(getTextDocId(text.bookNum, chapter.number), true)"
+                *ngFor="let questionDoc of getQuestionDocs(getTextDocIdType(text.bookNum, chapter.number), true)"
               >
                 <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
                   <span fxFlex="40px" class="indent"></span> v{{ questionDoc.data?.verseRef.verseNum }} -&nbsp;
