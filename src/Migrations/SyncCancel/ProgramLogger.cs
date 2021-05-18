@@ -1,6 +1,6 @@
 using System;
 
-namespace PtdaSyncCancelAll
+namespace SyncCancel
 {
     /// <summary>
     /// Simple logger functionality, that can be mocked.
@@ -18,7 +18,7 @@ namespace PtdaSyncCancelAll
         public void Log(string message, bool finalNewline = true)
         {
             string when = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-            string programName = "PtdaSyncCancelAll";
+            string programName = "SyncCancel";
             string output = $"{when} {programName}[{_processId}]: {message}";
             if (finalNewline)
             {

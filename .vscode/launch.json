@@ -98,12 +98,12 @@
       }
     },
     {
-      "name": "Migration PtdaSyncCancelAll",
+      "name": "Migration SyncCancel",
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build-migrator-ptdaSyncCancelAll",
-      "program": "${workspaceRoot}/src/Migrations/PtdaSyncCancelAll/bin/Debug/netcoreapp3.1/PtdaSyncCancelAll.dll",
-      "cwd": "${workspaceRoot}/src/Migrations/PtdaSyncCancelAll",
+      "program": "${workspaceRoot}/src/Migrations/SyncCancel/bin/Debug/netcoreapp3.1/SyncCancel.dll",
+      "cwd": "${workspaceRoot}/src/Migrations/SyncCancel",
       "stopAtEntry": false,
       "console": "integratedTerminal",
       "args": ["--start-ng-serve=listen"],

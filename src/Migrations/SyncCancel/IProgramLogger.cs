@@ -1,4 +1,4 @@
-namespace PtdaSyncCancelAll
+namespace SyncCancel
 {
     /// <summary>
     /// Expected interface, to allow mocking.

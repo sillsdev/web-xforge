@@ -16,10 +16,10 @@ using SIL.XForge.Scripture;
 using SIL.XForge.Scripture.Services;
 using System.Diagnostics;
 
-namespace PtdaSyncCancelAll
+namespace SyncCancel
 {
     /// <summary>
-    /// PtdaSyncCancelAll app configuration to get needed services available.
+    /// SyncCancel app configuration to get needed services available.
     /// This was copied and modified from `SIL.XForge.Scripture/Startup.cs`.
     /// </summary>
     public class Startup
@@ -64,7 +64,7 @@ namespace PtdaSyncCancelAll
                     return new ProgramLogger(thisProcess.Id);
                 }
             });
-            services.AddSingleton<ISyncCancelAllService, SyncCancelAllService>();
+            services.AddSingleton<ISyncCancelService, SyncCancelService>();
 
             services.Configure<RequestLocalizationOptions>(
                 opts =>

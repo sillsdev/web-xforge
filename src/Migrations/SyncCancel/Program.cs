@@ -11,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SIL.XForge.Scripture.Services;
 
-namespace PtdaSyncCancelAll
+namespace SyncCancel
 {
     /// <summary>
     /// Cancel Sync on all SF projects between SF DB and Paratext Data Access Web API.
@@ -46,10 +46,10 @@ namespace PtdaSyncCancelAll
                     + "Maybe the SF server is running on this machine and needs shut down? Rethrowing.");
                 throw;
             }
-            ISyncCancelAllService tool = webHost.Services.GetService<ISyncCancelAllService>();
+            ISyncCancelService tool = webHost.Services.GetService<ISyncCancelService>();
             string projectIds = Environment.GetEnvironmentVariable("CANCEL_PROJECT_IDS");
             var cancelProjectIds = string.IsNullOrEmpty(projectIds) ? null : new HashSet<string>(projectIds.Split(' '));
-            await tool.SynchronizeCancelAllProjectsAsync(cancelProjectIds);
+            await tool.SynchronizeCancelProjectsAsync(cancelProjectIds);
             await webHost.StopAsync();
             Logger.Log("Done.");
         }

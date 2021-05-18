@@ -1,13 +1,13 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace PtdaSyncCancelAll
+namespace SyncCancel
 {
     /// <summary>
     /// Interface for service that can initiate a synchronization cancel of all SF projects.
     /// </summary>
-    public interface ISyncCancelAllService
+    public interface ISyncCancelService
     {
-        Task SynchronizeCancelAllProjectsAsync(ISet<string> sfProjectIdsToSynchronize = null);
+        Task SynchronizeCancelProjectsAsync(ISet<string> sfProjectIdsToSynchronize = null);
     }
 }

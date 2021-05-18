@@ -43,13 +43,13 @@
       "problemMatcher": "$msCompile"
     },
     {
-      "label": "build-migrator-ptdaSyncCancelAll",
+      "label": "build-migrator-syncCancel",
       "command": "dotnet",
       "args": ["build", "/property:GenerateFullPaths=true"],
       "type": "shell",
       "group": "build",
       "options": {
-        "cwd": "${workspaceRoot}/src/Migrations/PtdaSyncCancelAll"
+        "cwd": "${workspaceRoot}/src/Migrations/SyncCancel"
       },
       "problemMatcher": "$msCompile"
     },
