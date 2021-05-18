@@ -93,8 +93,11 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
     );
   }
 
-  updateSearchTerm(term: string): void {
-    this.searchTerm$.next(term);
+  updateSearchTerm(target: EventTarget | null): void {
+    const termTarget = target as HTMLInputElement;
+    if (termTarget?.value != null) {
+      this.searchTerm$.next(termTarget.value);
+    }
   }
 
   updatePage(pageIndex: number, pageSize: number): void {

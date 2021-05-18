@@ -188,11 +188,11 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
     });
   }
 
-  submit(text: string): void {
+  submit(text: String): void {
     this.action.emit({
       action: 'save',
       answer: this.answer,
-      text: text,
+      text: text.toString(),
       comment: this.activeComment
     });
     this.hideCommentForm();

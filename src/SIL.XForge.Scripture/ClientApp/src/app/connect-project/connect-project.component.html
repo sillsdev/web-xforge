@@ -13,7 +13,7 @@
       <app-sync-progress [projectDoc]="projectDoc" (inProgress)="updateStatus($event)"></app-sync-progress>
     </mdc-card>
     <form *ngSwitchDefault [formGroup]="connectProjectForm" (ngSubmit)="submit()">
-      <ng-container *ngIf="projects?.length > 0 || state === 'offline'; else noProjectMsg">
+      <ng-container *ngIf="projects.length > 0 || state === 'offline'; else noProjectMsg">
         <p *ngIf="hasNonAdministratorProject && !showSettings && isAppOnline" id="connect-non-admin-msg">
           {{ t("only_paratext_admins_can_start") }}
         </p>

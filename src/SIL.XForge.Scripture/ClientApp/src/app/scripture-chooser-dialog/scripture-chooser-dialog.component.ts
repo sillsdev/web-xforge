@@ -1,6 +1,5 @@
 import { MdcDialogRef, MDC_DIALOG_DATA } from '@angular-mdc/web/dialog';
 import { Component, Inject, OnInit } from '@angular/core';
-import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -151,15 +150,15 @@ export class ScriptureChooserDialogComponent implements OnInit {
 
   /** Returns an array of all chapters for a given book that the dialog was told about.
    * (Not necessarily all possible chapters of a given book.) */
-  chaptersOf(bookId: string): number[] | undefined {
+  chaptersOf(bookId: string | undefined): number[] {
     if (!bookId) {
-      return undefined;
+      return [];
     }
     return this.data.booksAndChaptersToShow[bookId].chapters.map(chapter => chapter.number);
   }
 
   /** Returns an array of all verses in a chapter.*/
-  versesOf(bookId: string, chapter: string, startingWithVerse?: number): number[] | undefined {
+  versesOf(bookId: string | undefined, chapter: string | undefined, startingWithVerse?: number): number[] | undefined {
     if (!bookId || !chapter) {
       return undefined;
     }
@@ -176,7 +175,18 @@ export class ScriptureChooserDialogComponent implements OnInit {
     return verses;
   }
 
-  getBookName(text: TextInfo): string {
+  getBookName(bookId: string | undefined): string {
+    if (bookId == null) {
+      return '';
+    }
+    const text = this.data.booksAndChaptersToShow[bookId];
     return this.i18n.localizeBook(text.bookNum);
+  }
+
+  getNumOrNaN(num: number | undefined): number {
+    if (num == null) {
+      return NaN;
+    }
+    return +num;
   }
 }

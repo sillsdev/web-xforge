@@ -412,7 +412,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     this.applyTextAudioValidators();
   }
 
-  scriptureTextVerseRef(verse: VerseRef | VerseRefData): string {
+  scriptureTextVerseRef(verse: VerseRef | VerseRefData | undefined): string {
     if (verse == null) {
       return '';
     }

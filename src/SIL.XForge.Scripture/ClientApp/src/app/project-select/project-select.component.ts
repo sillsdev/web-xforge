@@ -154,6 +154,13 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
     this.autocompleteTrigger.openPanel();
   }
 
+  nullableLength(project: SelectableProject[] | null): number {
+    if (project == null) {
+      return 0;
+    }
+    return project.length;
+  }
+
   private filterGroup(
     value: string | SelectableProject,
     collection: SelectableProject[],

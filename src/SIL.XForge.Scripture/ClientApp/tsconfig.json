@@ -22,5 +22,10 @@
     "paths": {
       "xforge-common/*": ["./src/xforge-common/*"]
     }
+  },
+  "angularCompilerOptions": {
+    "strictInjectionParameters": true,
+    "strictTemplates": true,
+    "strictInputTypes": false
   }
 }
