@@ -356,7 +356,8 @@ class TestEnvironment {
           userRoles:
             args.memberProjects == null
               ? {}
-              : { user01: args.role == null ? SFProjectRole.ParatextTranslator : args.role }
+              : { user01: args.role == null ? SFProjectRole.ParatextTranslator : args.role },
+          userPermissions: {}
         }
       });
       this.subscribeRealtimeDocs(projectId);

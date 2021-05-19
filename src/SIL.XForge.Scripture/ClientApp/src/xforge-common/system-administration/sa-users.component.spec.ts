@@ -303,7 +303,8 @@ class TestEnvironment {
         id: 'project01',
         data: {
           name: 'Project 01',
-          userRoles: { user01: 'admin', user03: 'user' }
+          userRoles: { user01: 'admin', user03: 'user' },
+          userPermissions: {}
         }
       }
     ]);

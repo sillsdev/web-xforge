@@ -56,7 +56,7 @@ namespace SIL.XForge.Realtime
             foreach (IMongoCollection<BsonDocument> collectionToPrune in collectionsToBePruned.Values)
             {
                 // A further enhancement would be checking that the filter._value is the desired regex.
-                collectionToPrune.Received(1).DeleteManyAsync(Arg.Any<FilterDefinition<BsonDocument>>());
+                await collectionToPrune.Received(1).DeleteManyAsync(Arg.Any<FilterDefinition<BsonDocument>>());
             }
         }
 
@@ -99,7 +99,7 @@ namespace SIL.XForge.Realtime
             foreach (IMongoCollection<BsonDocument> collectionToPrune in collectionsToBePruned.Values)
             {
                 // A further enhancement would be checking that the filter._value is the desired regex.
-                collectionToPrune.Received(1).DeleteManyAsync(Arg.Any<FilterDefinition<BsonDocument>>());
+                await collectionToPrune.Received(1).DeleteManyAsync(Arg.Any<FilterDefinition<BsonDocument>>());
             }
             env.MongoDatabase.Received(collectionNames.Length).GetCollection<BsonDocument>(Arg.Any<string>());
         }

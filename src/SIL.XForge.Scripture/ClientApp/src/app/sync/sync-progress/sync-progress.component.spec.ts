@@ -157,7 +157,8 @@ class TestEnvironment {
           dateLastSuccessfulSync: date.toJSON()
         },
         texts: [],
-        userRoles: this.userRoleTarget
+        userRoles: this.userRoleTarget,
+        userPermissions: {}
       }
     });
 
@@ -186,7 +187,8 @@ class TestEnvironment {
             dateLastSuccessfulSync: date.toJSON()
           },
           texts: [],
-          userRoles: this.userRoleSource
+          userRoles: this.userRoleSource,
+          userPermissions: {}
         }
       });
     }

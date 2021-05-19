@@ -102,6 +102,20 @@ describe('SFProjectMigrations', () => {
       expect(Object.keys(projectDoc.data.texts[1].chapters[1].permissions).length).toBe(4);
     });
   });
+  describe('version 4', () => {
+    it('adds userPermissions property to project docs', async () => {
+      const env = new TestEnvironment(3);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {});
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.userPermissions).not.toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.userPermissions).toBeDefined();
+    });
+  });
 });
 
 class TestEnvironment {

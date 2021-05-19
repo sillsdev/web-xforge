@@ -189,7 +189,8 @@ class TestEnvironment {
     sync: { queuedCount: 0 },
     userRoles: {
       [this.adminUser.id]: this.adminUser.role
-    }
+    },
+    userPermissions: {}
   };
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 

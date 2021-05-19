@@ -202,12 +202,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get hasEditRight(): boolean {
-    if (this.projectDoc == null || this.projectDoc.data == null) {
+    const project = this.projectDoc?.data;
+    if (project == null) {
       return false;
     }
 
-    const projectRole = this.projectDoc.data.userRoles[this.userService.currentUserId];
-    if (SF_PROJECT_RIGHTS.hasRight(projectRole, { projectDomain: SFProjectDomain.Texts, operation: Operation.Edit })) {
+    if (SF_PROJECT_RIGHTS.hasRight(project, this.userService.currentUserId, SFProjectDomain.Texts, Operation.Edit)) {
       // Check for chapter rights
       const chapter = this.text?.chapters.find(c => c.number === this._chapter);
       // Even though permissions is guaranteed to be there in the model, its not in IndexedDB the first time the project
@@ -221,12 +221,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get hasSourceViewRight(): boolean {
-    if (this.sourceProjectDoc == null || this.sourceProjectDoc.data == null) {
+    const sourceProject = this.sourceProjectDoc?.data;
+    if (sourceProject == null) {
       return false;
     }
 
-    const projectRole = this.sourceProjectDoc.data.userRoles[this.userService.currentUserId];
-    if (SF_PROJECT_RIGHTS.hasRight(projectRole, { projectDomain: SFProjectDomain.Texts, operation: Operation.View })) {
+    if (
+      SF_PROJECT_RIGHTS.hasRight(sourceProject, this.userService.currentUserId, SFProjectDomain.Texts, Operation.View)
+    ) {
       // Check for chapter rights
       const chapter = this.sourceText?.chapters.find(c => c.number === this._chapter);
       // Even though permissions is guaranteed to be there in the model, its not in IndexedDB the first time the project

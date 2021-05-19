@@ -201,15 +201,11 @@ export class RealtimeServer extends ShareDB {
     return agent;
   }
 
-  async getUserProjectRole(session: ConnectSession, projectId: string): Promise<string | undefined> {
+  async getProject(projectId: string): Promise<Project | undefined> {
     const conn = this.connect();
     const projectDoc = conn.get(this.projectsCollection, projectId);
     await docFetch(projectDoc);
-    if (projectDoc.data != null) {
-      const project: Project = projectDoc.data;
-      return project.userRoles[session.userId];
-    }
-    return undefined;
+    return projectDoc.data as Project | undefined;
   }
 
   async migrateIfNecessary(): Promise<void> {

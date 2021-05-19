@@ -248,9 +248,9 @@ describe('ProjectDataService', () => {
 });
 
 enum TestProjectDomain {
-  TestData = 1000,
-  SubData = 2000,
-  SubSubData = 3000
+  TestData = 'test_data',
+  SubData = 'sub_data',
+  SubSubData = 'sub_sub_data'
 }
 
 interface TestSubSubData extends OwnedData {
@@ -441,7 +441,8 @@ class TestEnvironment {
         user: 'user',
         userOwn: 'userOwn',
         observer: 'observer'
-      }
+      },
+      userPermissions: {}
     });
 
     await createDoc<TestData>(conn, TEST_DATA_COLLECTION, 'test01', {

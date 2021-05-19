@@ -2,12 +2,12 @@ import { Operation, ProjectRight, ProjectRights } from '../../common/models/proj
 import { SFProjectRole } from './sf-project-role';
 
 export enum SFProjectDomain {
-  Texts = 1000,
-  ProjectUserConfigs = 1100,
-  Questions = 1200,
-  Answers = 1300,
-  AnswerComments = 1400,
-  Likes = 1500
+  Texts = 'texts',
+  ProjectUserConfigs = 'project_user_configs',
+  Questions = 'questions',
+  Answers = 'answers',
+  AnswerComments = 'answer_comments',
+  Likes = 'likes'
 }
 
 export class SFProjectRights extends ProjectRights {

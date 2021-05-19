@@ -385,7 +385,8 @@ class TestEnvironment {
     sync: { queuedCount: 0 },
     userRoles: {
       user01: SFProjectRole.ParatextAdministrator
-    }
+    },
+    userPermissions: {}
   };
 
   static defaultDialogData = {

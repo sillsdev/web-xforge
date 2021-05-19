@@ -15,7 +15,7 @@
             <app-checking-audio-player [source]="getFileSource(questionDoc?.data?.audioUrl)">
             </app-checking-audio-player>
           </div>
-          <div class="question-footer" *ngIf="isProjectAdmin">
+          <div class="question-footer" *ngIf="canEditQuestion">
             <div class="actions">
               <button mdc-button type="button" (click)="questionDialog()" class="edit-question-button">
                 {{ t("edit") }}

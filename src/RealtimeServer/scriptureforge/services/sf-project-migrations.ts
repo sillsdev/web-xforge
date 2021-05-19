@@ -97,8 +97,22 @@ class SFProjectMigration3 implements Migration {
   }
 }
 
+class SFProjectMigration4 implements Migration {
+  static readonly VERSION = 4;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    const ops = [{ p: ['userPermissions'], oi: {} }];
+    await submitMigrationOp(SFProjectMigration4.VERSION, doc, ops);
+  }
+
+  migrateOp(_op: RawOp): void {
+    // do nothing
+  }
+}
+
 export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration1,
   SFProjectMigration2,
-  SFProjectMigration3
+  SFProjectMigration3,
+  SFProjectMigration4
 ];
