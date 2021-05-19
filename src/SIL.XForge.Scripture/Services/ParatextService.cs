@@ -1098,7 +1098,7 @@ namespace SIL.XForge.Scripture.Services
             CommentTags commentTags, SyncUser syncUser)
         {
             CommentTag tag = comment.TagsAdded == null || comment.TagsAdded.Length == 0
-                ? comment.Type == NoteType.Conflict ? CommentTag.ConflictTag : null
+                ? (comment.Type == NoteType.Conflict ? CommentTag.ConflictTag : null)
                 : commentTags.Get(int.Parse(comment.TagsAdded[0]));
             return new Note
             {

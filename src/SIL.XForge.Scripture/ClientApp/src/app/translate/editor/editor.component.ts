@@ -479,21 +479,22 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.target.editor.setSelection(selectIndex, 0, 'user');
         }
 
-        // reset note icon was blank or is newly blank
         const threadDocs: ParatextNoteThreadDoc[] | undefined = this.noteThreadQuery?.docs.filter(
           n =>
             n.data != null &&
             this.bookNum === n.data.verseRef.bookNum &&
             segment?.ref.startsWith(verseSlug(toVerseRef(n.data.verseRef)))
         );
-        const noteThread = threadDocs == null || threadDocs.length < 1 ? null : threadDocs[0];
-        if (noteThread?.data != null) {
-          // check whether an edit operation occurs at the beginning of an empty verse with a note
+        const segmentHasNote = threadDocs == null || threadDocs.length < 1 ? null : threadDocs[0].data != null;
+        if (segmentHasNote) {
+          // Check whether an edit operation occurs at the beginning of an empty segment with a note
           if (
             segment?.range.length === 1 &&
             delta.ops[0].retain === segment?.range.index &&
             (delta.ops[1].insert != null || delta.ops[1].delete != null)
           ) {
+            // Recalculate the note icon positioning when editing a blank segment or blanking out a segment
+            // This can be optimize later when we are satisfied with how notes are anchored to text
             this.toggleNoteThreadVerses(false);
             this.toggleNoteThreadVerses(true);
           }

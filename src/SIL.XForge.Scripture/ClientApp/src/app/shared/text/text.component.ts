@@ -482,12 +482,14 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       return;
     }
 
-    const verseSegments = this.getVerseSegments(verseRef);
+    // A single verse can be associated with multiple segments (e.g verse_1_1, verse_1_1/p_1)
+    const verseSegments: string[] = this.getVerseSegments(verseRef);
     let noteRange: RangeStatic | undefined = this.getSegmentRange(verseSegments[0]);
     let startPosition = 0;
+    let selectionLength = 0;
     for (const vs of verseSegments) {
-      const text = this.getSegmentText(vs);
-      const range = this.getSegmentRange(vs);
+      const text: string = this.getSegmentText(vs);
+      const range: RangeStatic | undefined = this.getSegmentRange(vs);
       if (range == null) {
         continue;
       } else if (selectedText === '') {
@@ -503,6 +505,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
           // TODO: Find a better way to match a note to its selected text
           startPosition = start;
           noteRange = range;
+          selectionLength = selectedText.length;
           break;
         }
       }
@@ -511,10 +514,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (noteRange == null) {
       return;
     }
-    // Limit the length of the format to the length of the range
-    let textLength = selectedText?.length ?? 1;
-    textLength = textLength < 1 ? 1 : textLength;
-    this.editor.formatText(noteRange.index + startPosition, textLength, formatName, format, 'silent');
+    if (selectionLength === 0) {
+      selectionLength = noteRange.length;
+    }
+    this.editor.formatText(noteRange.index + startPosition, selectionLength, formatName, format, 'silent');
   }
 
   onContentChanged(delta: DeltaStatic, source: Sources): void {
