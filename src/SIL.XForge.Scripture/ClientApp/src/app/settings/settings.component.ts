@@ -32,6 +32,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     shareEnabled: new FormControl(false),
     shareLevel: new FormControl(undefined)
   });
+  isActiveSourceProject: boolean = false;
   projects?: ParatextProject[];
   resources?: SelectableProject[];
   nonSelectableProjects?: SelectableProject[];
@@ -41,7 +42,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   private controlStates = new Map<Extract<keyof SFProjectSettings, string>, ElementState>();
   private previousFormValues: SFProjectSettings = {};
   private _isAppOnline: boolean = false;
-  private isActiveSourceProject: boolean = false;
 
   constructor(
     private readonly route: ActivatedRoute,

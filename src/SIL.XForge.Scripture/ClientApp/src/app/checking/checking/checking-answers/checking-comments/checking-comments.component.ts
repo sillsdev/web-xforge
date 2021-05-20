@@ -183,7 +183,7 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
     this.action.emit({
       action: 'save',
       answer: this.answer,
-      text: text,
+      text,
       comment: this.activeComment
     });
     this.hideCommentForm();

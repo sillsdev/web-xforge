@@ -187,10 +187,13 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     return userRow.id === this.userService.currentUserId;
   }
 
-  updateSearchTerm(term: string): void {
-    this.term = term;
-    if (term.trim().length > 0) {
-      this.pageIndex = 0;
+  updateSearchTerm(target: EventTarget | null): void {
+    const termTarget = target as HTMLInputElement;
+    if (termTarget?.value != null) {
+      this.term = termTarget.value;
+      if (termTarget.value.trim().length > 0) {
+        this.pageIndex = 0;
+      }
     }
   }
 

@@ -398,8 +398,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return this.viewModel.hasSegmentRange(ref);
   }
 
-  onContentChanged(delta: DeltaStatic, source: Sources): void {
-    this.viewModel.update(delta, source);
+  onContentChanged(delta: DeltaStatic, source: string): void {
+    this.viewModel.update(delta, source as Sources);
     this.updatePlaceholderText();
     // skip updating when only formatting changes occurred
     if (delta.ops != null && delta.ops.some(op => op.insert != null || op.delete != null)) {

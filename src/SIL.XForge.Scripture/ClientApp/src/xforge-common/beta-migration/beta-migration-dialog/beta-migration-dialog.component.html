@@ -8,11 +8,11 @@
           <iframe *ngIf="!hasCompleted" hidden [src]="betaUrl"></iframe>
           <label>{{ t(label, { attempt: attempts }) }}</label>
           <p *ngIf="attempts > 2">
-            {{ recourseMessage.before
+            {{ recourseMessage?.before
             }}<a href="https://community.scripture.software.sil.org/c/scripture-forge" target="_blank">{{
-              recourseMessage.templateTagText
+              recourseMessage?.templateTagText
             }}</a
-            >{{ recourseMessage.after }}
+            >{{ recourseMessage?.after }}
           </p>
           <mdc-linear-progress determinate [progress]="progress" [buffer]="1"></mdc-linear-progress>
         </mdc-dialog-content>
