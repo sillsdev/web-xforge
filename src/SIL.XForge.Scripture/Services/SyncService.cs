@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Hangfire;
 using SIL.XForge.Realtime;
@@ -59,15 +60,15 @@ namespace SIL.XForge.Scripture.Services
             {
                 // We need to sync the source first so that we can link the source texts and train the engine
                 string sourceJobId = _backgroundJobClient.Enqueue<ParatextSyncRunner>(
-                    r => r.RunAsync(sourceProjectId, curUserId, false));
+                    r => r.RunAsync(sourceProjectId, curUserId, false, CancellationToken.None));
                 _sourceJobIdsByProjectId[projectId] = sourceJobId;
                 _jobIdsByProjectId[projectId] = _backgroundJobClient.ContinueJobWith<ParatextSyncRunner>(sourceJobId,
-                    r => r.RunAsync(projectId, curUserId, trainEngine));
+                    r => r.RunAsync(projectId, curUserId, trainEngine, CancellationToken.None));
             }
             else
             {
                 _jobIdsByProjectId[projectId] = _backgroundJobClient.Enqueue<ParatextSyncRunner>(
-                    r => r.RunAsync(projectId, curUserId, trainEngine));
+                    r => r.RunAsync(projectId, curUserId, trainEngine, CancellationToken.None));
             }
         }
 
