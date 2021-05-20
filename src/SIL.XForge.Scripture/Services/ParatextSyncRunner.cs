@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
@@ -85,7 +86,7 @@ namespace SIL.XForge.Scripture.Services
         // Do not allow multiple sync jobs to run in parallel on the same project by creating a mutex on the projectId
         // parameter, i.e. "{0}"
         [Mutex("{0}")]
-        public async Task RunAsync(string projectId, string userId, bool trainEngine)
+        public async Task RunAsync(string projectId, string userId, bool trainEngine, CancellationToken token)
         {
             try
             {
