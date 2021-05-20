@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
@@ -25,7 +26,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
 
-            await env.Runner.RunAsync("project03", "user01", false);
+            await env.Runner.RunAsync("project03", "user01", false, CancellationToken.None);
         }
 
         [Test]
@@ -35,7 +36,8 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, true);
             env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target").Returns("beforeSR");
 
-            await env.Runner.RunAsync("project01", "user03", false);
+            await env.Runner.RunAsync("project01", "user03", false, CancellationToken.None);
+
             SFProject project = env.VerifyProjectSync(false);
             Assert.That(project.Sync.DataInSync, Is.True);
         }
@@ -48,7 +50,8 @@ namespace SIL.XForge.Scripture.Services
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
             env.DeltaUsxMapper.When(d => d.ToChapterDeltas(Arg.Any<XDocument>())).Do(x => throw new Exception());
 
-            await env.Runner.RunAsync("project01", "user01", false);
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+
             SFProject project = env.VerifyProjectSync(false);
             Assert.That(project.Sync.DataInSync, Is.False);
         }
@@ -60,7 +63,7 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(false, false, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2, false));
 
-            await env.Runner.RunAsync("project01", "user01", true);
+            await env.Runner.RunAsync("project01", "user01", true, CancellationToken.None);
 
             Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
             Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
@@ -88,8 +91,8 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2, false));
 
-            await env.Runner.RunAsync("project02", "user01", true);
-            await env.Runner.RunAsync("project01", "user01", true);
+            await env.Runner.RunAsync("project02", "user01", true, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", true, CancellationToken.None);
 
             Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
             Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
@@ -117,8 +120,8 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, false, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2, false));
 
-            await env.Runner.RunAsync("project02", "user01", true);
-            await env.Runner.RunAsync("project01", "user01", true);
+            await env.Runner.RunAsync("project02", "user01", true, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", true, CancellationToken.None);
 
             Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
             Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
@@ -146,7 +149,7 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(false, true, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2, false));
 
-            await env.Runner.RunAsync("project01", "user01", true);
+            await env.Runner.RunAsync("project01", "user01", true, CancellationToken.None);
 
             Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
             Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
@@ -175,7 +178,7 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, false, books);
             env.SetupPTData(books);
 
-            await env.Runner.RunAsync("project01", "user01", false);
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             await env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>());
             await env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<string>());
@@ -212,8 +215,8 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, true, books);
             env.SetupPTData(books);
 
-            await env.Runner.RunAsync("project02", "user01", false);
-            await env.Runner.RunAsync("project01", "user01", false);
+            await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             await env.ParatextService.Received()
                 .PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>(), Arg.Any<Dictionary<int, string>>());
@@ -251,8 +254,8 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, false, true, books);
             env.SetupPTData(books);
 
-            await env.Runner.RunAsync("project02", "user01", false);
-            await env.Runner.RunAsync("project01", "user01", false);
+            await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             await env.ParatextService.Received()
                 .PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>(), Arg.Any<Dictionary<int, string>>());
@@ -289,8 +292,8 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, false, new Book("MAT", 2), new Book("MRK", 2));
             env.SetupPTData(new Book("MAT", 3), new Book("MRK", 1));
 
-            await env.Runner.RunAsync("project02", "user01", false);
-            await env.Runner.RunAsync("project01", "user01", false);
+            await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             Assert.That(env.ContainsText("project01", "MAT", 3), Is.True);
             Assert.That(env.ContainsText("project01", "MRK", 2), Is.False);
@@ -310,7 +313,7 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, false, new Book("MAT", 2), new Book("MRK", 2) { InvalidChapters = { 1 } });
             env.SetupPTData(new Book("MAT", 2) { InvalidChapters = { 2 } }, new Book("MRK", 2));
 
-            await env.Runner.RunAsync("project01", "user01", false);
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             SFProject project = env.GetProject();
             Assert.That(project.Texts[0].Chapters[0].IsValid, Is.True);
@@ -327,8 +330,8 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, false, new Book("MAT", 2), new Book("MRK", 2));
             env.SetupPTData(new Book("MAT", 2), new Book("LUK", 2));
 
-            await env.Runner.RunAsync("project02", "user01", false);
-            await env.Runner.RunAsync("project01", "user01", false);
+            await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             Assert.That(env.ContainsText("project01", "MRK", 1), Is.False);
             Assert.That(env.ContainsText("project01", "MRK", 2), Is.False);
@@ -361,7 +364,7 @@ namespace SIL.XForge.Scripture.Services
             env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
 
-            await env.Runner.RunAsync("project01", "user01", false);
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             SFProject project = env.VerifyProjectSync(true);
             Assert.That(project.UserRoles["user01"], Is.EqualTo(SFProjectRole.Translator));
@@ -390,7 +393,7 @@ namespace SIL.XForge.Scripture.Services
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>())
                 .Returns(Task.FromResult(ptSourcePermissions));
 
-            await env.Runner.RunAsync("project01", "user01", false);
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             SFProject project = env.VerifyProjectSync(true);
             Assert.That(project.Texts.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.None));
@@ -418,7 +421,7 @@ namespace SIL.XForge.Scripture.Services
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>())
                 .Returns(Task.FromResult(ptChapterPermissions));
 
-            await env.Runner.RunAsync("project01", "user01", false);
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             SFProject project = env.VerifyProjectSync(true);
             Assert.That(project.Texts.First().Chapters.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.None));
@@ -446,7 +449,7 @@ namespace SIL.XForge.Scripture.Services
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>())
                 .Returns(Task.FromResult(ptSourcePermissions));
 
-            await env.Runner.RunAsync("project01", "user01", false);
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             SFProject project = env.VerifyProjectSync(true);
             Assert.That(project.Texts.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.Read));
@@ -474,7 +477,7 @@ namespace SIL.XForge.Scripture.Services
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>())
                 .Returns(Task.FromResult(ptChapterPermissions));
 
-            await env.Runner.RunAsync("project01", "user01", false);
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             SFProject project = env.VerifyProjectSync(true);
             Assert.That(project.Texts.First().Chapters.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.Read));
@@ -497,7 +500,7 @@ namespace SIL.XForge.Scripture.Services
             await env.SetUserRole("user02", SFProjectRole.CommunityChecker);
             SFProject project = env.GetProject();
             Assert.That(project.UserRoles["user02"], Is.EqualTo(SFProjectRole.CommunityChecker));
-            await env.Runner.RunAsync("project01", "user01", false);
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             env.VerifyProjectSync(true);
             await env.SFProjectService.DidNotReceiveWithAnyArgs().RemoveUserAsync("user01", "project01", "user02");
@@ -513,7 +516,7 @@ namespace SIL.XForge.Scripture.Services
 
             env.ParatextService.IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), "target")
                 .Returns(true);
-            await env.Runner.RunAsync("project01", "user01", false);
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             SFProject project = env.GetProject();
             env.ParatextService.Received().IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), "target");
@@ -534,7 +537,7 @@ namespace SIL.XForge.Scripture.Services
                 });
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2), new Book("LUK", 2));
 
-            await env.Runner.RunAsync("project01", "user01", false);
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             var delta = Delta.New().InsertText("text");
             Assert.That(env.GetText("project01", "MAT", 1).DeepEquals(delta), Is.True);
@@ -559,8 +562,8 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("project02", "MAT", 2), Is.False);
 
             // SUT
-            await env.Runner.RunAsync("project02", "user01", false);
-            await env.Runner.RunAsync("project01", "user01", false);
+            await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             env.Logger.DidNotReceiveWithAnyArgs().LogError(Arg.Any<Exception>(), default, default);
 
@@ -592,8 +595,8 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("project02", "MAT", 3), Is.True);
 
             // SUT
-            await env.Runner.RunAsync("project02", "user01", false);
-            await env.Runner.RunAsync("project01", "user01", false);
+            await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             env.Logger.DidNotReceiveWithAnyArgs().LogError(Arg.Any<Exception>(), default, default);
 
@@ -619,7 +622,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("project02", "MAT", 2), Is.False);
 
             // SUT
-            await env.Runner.RunAsync("project01", "user01", false);
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             env.Logger.DidNotReceiveWithAnyArgs().LogError(Arg.Any<Exception>(), default, default);
 
@@ -647,8 +650,8 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("project02", "MAT", 3), Is.True);
 
             // SUT
-            await env.Runner.RunAsync("project02", "user01", false);
-            await env.Runner.RunAsync("project01", "user01", false);
+            await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             env.Logger.DidNotReceiveWithAnyArgs().LogError(Arg.Any<Exception>(), default, default);
 
