@@ -533,7 +533,9 @@ namespace SIL.XForge.Scripture.Services
                 IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
                 if (!projectDoc.IsLoaded)
                     throw new DataNotFoundException("The project does not exist.");
-                if (!IsProjectAdmin(projectDoc.Data, curUserId))
+                // TODO Checking whether the permissions contains a particular string is not a very robust way to check
+                // permissions. A rights service needs to be created in C# land.
+                if (!IsProjectAdmin(projectDoc.Data, curUserId) && !projectDoc.Data.UserPermissions[curUserId].Contains("questions.create"))
                     throw new ForbiddenException();
                 return _transceleratorService.Questions(projectDoc.Data.ParatextId);
             }
