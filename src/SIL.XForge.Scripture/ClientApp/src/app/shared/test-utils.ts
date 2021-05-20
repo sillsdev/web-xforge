@@ -21,6 +21,10 @@ export function getTextDoc(id: TextDocId): TextData {
   delta.insert({ verse: { number: '5', style: 'v' } });
   delta.insert(`${id.textType}: chapter ${id.chapterNum}, `, { segment: `verse_${id.chapterNum}_5` });
   delta.insert('\n', { para: { style: 'p' } });
+  delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_5/p_1` });
+  delta.insert({ verse: { number: '6', style: 'v' } });
+  delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 6. `, { segment: `verse_${id.chapterNum}_6` });
+  delta.insert('\n', { para: { style: 'p' } });
   return delta;
 }
 
