@@ -6,6 +6,7 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { DefaultFocusState } from '@material/menu/constants';
 import { translate } from '@ngneat/transloco';
 import { cloneDeep } from 'lodash-es';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
@@ -39,6 +40,7 @@ import { canAccessTranslateApp } from './core/models/sf-project-role-info';
 import { SFProjectService } from './core/sf-project.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
 import { SFAdminAuthGuard } from './shared/project-router.guard';
+
 declare function gtag(...args: any): void;
 
 export const CONNECT_PROJECT_OPTION = '*connect-project*';
@@ -269,6 +271,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       }
     }
     return false;
+  }
+
+  get defaultFocusState(): DefaultFocusState {
+    return !this.isAppOnline ? DefaultFocusState.NONE : DefaultFocusState.LIST_ROOT;
   }
 
   async ngOnInit(): Promise<void> {
@@ -515,6 +521,17 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   getBookId(text: TextInfo): string {
     return Canon.bookNumberToId(text.bookNum);
+  }
+
+  getRouterLink(tool: string, extension?: string): string[] {
+    if (this.selectedProjectId == null) {
+      return [];
+    }
+    const link = ['/projects', this.selectedProjectId, tool];
+    if (extension != null && extension !== '') {
+      link.push(extension);
+    }
+    return link;
   }
 
   hasQuestions(text: TextInfo): boolean {

@@ -15,7 +15,7 @@ import { ShareDialogComponent, ShareDialogData } from './share-dialog.component'
   styleUrls: ['./share.component.scss']
 })
 export class ShareComponent implements OnInit {
-  @Input() readonly defaultRole?: string;
+  @Input() readonly defaultRole?: SFProjectRole;
 
   private projectDoc?: SFProjectDoc;
   private projectId?: string;

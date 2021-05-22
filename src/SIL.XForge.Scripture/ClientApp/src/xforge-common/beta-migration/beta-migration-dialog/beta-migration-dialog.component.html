@@ -14,7 +14,7 @@
             }}</a
             >{{ recourseMessage?.after }}
           </p>
-          <mdc-linear-progress determinate [progress]="progress" [buffer]="1"></mdc-linear-progress>
+          <mdc-linear-progress [determinate]="true" [progress]="progress" [buffer]="1"></mdc-linear-progress>
         </mdc-dialog-content>
         <mdc-dialog-actions>
           <button *ngIf="progress === 100" mdcDialogButton type="button" mdcDialogAction="close">

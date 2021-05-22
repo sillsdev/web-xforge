@@ -1,18 +1,18 @@
 <ng-container *transloco="let t; read: 'checking_comment_form'">
   <form [formGroup]="commentForm" (ngSubmit)="submit()" autocomplete="off" id="comment-form" appScrollIntoView>
-    <mdc-form-field fluid>
+    <mdc-form-field [fluid]="true">
       <mdc-text-field
         appAutofocus
         label="{{ t('your_comment') }}"
         type="text"
         formControlName="commentText"
-        outlined
+        [outlined]="true"
       ></mdc-text-field>
-      <mdc-helper-text validation>{{ t("comment_cannot_be_blank") }}</mdc-helper-text>
+      <mdc-helper-text [validation]="true">{{ t("comment_cannot_be_blank") }}</mdc-helper-text>
     </mdc-form-field>
     <div class="form-actions">
       <button mdc-button type="button" (click)="submitCancel()" class="cancel-comment">{{ t("cancel") }}</button>
-      <button mdc-button unelevated form="comment-form" type="submit" class="save-comment">
+      <button mdc-button [unelevated]="true" form="comment-form" type="submit" class="save-comment">
         {{ t("save_comment") }}
       </button>
     </div>

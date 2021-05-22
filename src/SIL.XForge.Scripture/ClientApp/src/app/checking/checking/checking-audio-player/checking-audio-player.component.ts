@@ -105,10 +105,10 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
     return this._isPlaying;
   }
 
-  @Input() set source(source: string) {
+  @Input() set source(source: string | undefined) {
     this.enabled = false;
     this.audioDataLoaded = false;
-    if (source && source !== '') {
+    if (source != null && source !== '') {
       this.audio.src = formatFileSource(FileType.Audio, source);
       this.seek = 0;
       // In Chromium the duration of blobs isn't known even after metadata is loaded

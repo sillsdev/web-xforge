@@ -35,7 +35,7 @@
           <ng-container matColumnDef="avatar">
             <td mat-cell *matCellDef="let userRow; let i = index">
               <div *ngIf="!userRow.isInvitee">
-                <app-avatar [user]="userRow.user" size="32" [round]="false"></app-avatar>
+                <app-avatar [user]="userRow.user" [size]="32" [round]="false"></app-avatar>
               </div>
             </td>
           </ng-container>
@@ -93,7 +93,7 @@
                 fxHide.lt-sm
                 fxShow
                 mdc-button
-                outlined
+                [outlined]="true"
                 color="warn"
                 class="cancel-invite"
                 type="button"
