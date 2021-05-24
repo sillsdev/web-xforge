@@ -147,7 +147,7 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 // perform Paratext send/receive
-                await _paratextService.SendReceiveAsync(_userSecret, targetParatextId, UseNewProgress());
+                await _paratextService.SendReceiveAsync(_userSecret, targetParatextId, UseNewProgress(), token);
 
                 var targetBooks = new HashSet<int>(_paratextService.GetBookList(_userSecret, targetParatextId));
                 var sourceBooks = new HashSet<int>(TranslationSuggestionsEnabled
@@ -205,7 +205,7 @@ namespace SIL.XForge.Scripture.Services
                         foreach (string uid in usersToCheck)
                         {
                             string permission =
-                                await _paratextService.GetResourcePermissionAsync(sourceParatextId, uid);
+                                await _paratextService.GetResourcePermissionAsync(sourceParatextId, uid, token);
                             if (permission == TextInfoPermission.None)
                             {
                                 // As resource projects don't have administrators, connect as the user we are to remove
@@ -225,7 +225,7 @@ namespace SIL.XForge.Scripture.Services
                 if (targetParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
                 {
                     permissions = await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data,
-                        ptUsernameMapping);
+                        ptUsernameMapping, 0, 0, token);
                 }
                 else
                 {
@@ -272,12 +272,12 @@ namespace SIL.XForge.Scripture.Services
                     {
                         // Get the project permissions for the book
                         permissions = await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data,
-                            ptUsernameMapping, bookNum);
+                            ptUsernameMapping, bookNum, 0, token);
                         foreach (Chapter chapter in newChapters)
                         {
                             // Get and set the project permissions for the chapter
                             Dictionary<string, string> chapterPermissions = await _paratextService.GetPermissionsAsync(
-                                _userSecret, _projectDoc.Data, ptUsernameMapping, bookNum, chapter.Number);
+                                _userSecret, _projectDoc.Data, ptUsernameMapping, bookNum, chapter.Number, token);
                             chapter.Permissions = chapterPermissions;
                         }
                     }
