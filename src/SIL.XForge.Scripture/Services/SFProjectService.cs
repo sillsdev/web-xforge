@@ -18,6 +18,7 @@ using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
 using MachineProject = SIL.Machine.WebApi.Models.Project;
+using System.Threading;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -727,7 +728,8 @@ namespace SIL.XForge.Scripture.Services
                 if (_paratextService.IsResource(project.ParatextId))
                 {
                     // If the project is a resource, get the permission from the DBL
-                    string permission = await _paratextService.GetResourcePermissionAsync(project.ParatextId, userId);
+                    string permission = await _paratextService.GetResourcePermissionAsync(project.ParatextId, userId,
+                        CancellationToken.None);
                     return permission switch
                     {
                         TextInfoPermission.None => Attempt.Failure(ProjectRole.None),
@@ -739,7 +741,7 @@ namespace SIL.XForge.Scripture.Services
                 else
                 {
                     Attempt<string> roleAttempt = await _paratextService.TryGetProjectRoleAsync(userSecret,
-                        project.ParatextId);
+                        project.ParatextId, CancellationToken.None);
                     if (roleAttempt.TryResult(out string role))
                     {
                         return Attempt.Success(role);
