@@ -243,10 +243,19 @@ describe('ShareControlComponent', () => {
     expect(env.hostComponent.component.roleControl.value).toEqual(SF_DEFAULT_TRANSLATE_SHARE_ROLE);
   }));
 
-  it('default share role to be community checker', fakeAsync(() => {
-    const env = new TestEnvironment();
+  it('default share role should be community checker when community checking is enabled', fakeAsync(() => {
+    const env = new TestEnvironment({ userId: 'user02', projectId: 'project01' });
     env.wait();
     expect(env.hostComponent.component.roleControl.value).toEqual(SF_DEFAULT_SHARE_ROLE);
+    expect(env.hostComponent.component.roles.length).toBe(2);
+  }));
+
+  it('default share role should be translation observer when checking is disabled', fakeAsync(() => {
+    const env = new TestEnvironment({ userId: 'user02', projectId: 'project01', checkingEnabled: false });
+    env.wait();
+    expect(env.hostComponent.component.roleControl.value).toEqual(SF_DEFAULT_TRANSLATE_SHARE_ROLE);
+    expect(env.hostComponent.component.roles.length).toBe(1);
+    expect(env.hostComponent.component.roles[0].role).toBe(SF_DEFAULT_TRANSLATE_SHARE_ROLE);
   }));
 });
 
@@ -269,7 +278,7 @@ class TestModule {}
 })
 class TestHostComponent {
   @ViewChild(ShareControlComponent) component!: ShareControlComponent;
-  projectId = '';
+  projectId = 'project01';
   isLinkSharingEnabled = false;
   invitedCount = 0;
   defaultRole?: SFProjectRole | undefined;
@@ -284,6 +293,7 @@ interface TestEnvironmentArgs {
   projectId: string;
   defaultRole: SFProjectRole;
   userId: string;
+  checkingEnabled: boolean;
 }
 
 class TestEnvironment {
@@ -296,16 +306,23 @@ class TestEnvironment {
 
   constructor(args: Partial<TestEnvironmentArgs> = {}) {
     const defaultArgs: Partial<TestEnvironmentArgs> = {
-      projectId: 'project123',
-      userId: 'user01'
+      projectId: 'project01',
+      userId: 'user01',
+      checkingEnabled: true
     };
     args = { ...defaultArgs, ...args };
     this.realtimeService.addSnapshot(SFProjectDoc.COLLECTION, {
-      id: 'project01',
-      data: { userRoles: { user01: SFProjectRole.CommunityChecker, user02: SFProjectRole.ParatextAdministrator } }
+      id: args.projectId,
+      data: {
+        userRoles: {
+          user01: SFProjectRole.CommunityChecker,
+          user02: SFProjectRole.ParatextAdministrator
+        },
+        checkingConfig: { checkingEnabled: args.checkingEnabled }
+      }
     });
-    when(mockedProjectService.get('project01')).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
+    when(mockedProjectService.get(anything())).thenCall(projectId =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId)
     );
     when(mockedPwaService.onlineStatus).thenReturn(this._onlineStatus.asObservable());
     when(mockedPwaService.isOnline).thenCall(() => this._onlineStatus.getValue());
@@ -322,6 +339,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
     this.component = this.fixture.componentInstance.component;
     this.hostComponent = this.fixture.componentInstance;
+    this.hostComponent.projectId = args.projectId || 'project01';
 
     when(
       mockedProjectService.onlineInvite(anything(), 'unknown-address@example.com', anything(), anything())

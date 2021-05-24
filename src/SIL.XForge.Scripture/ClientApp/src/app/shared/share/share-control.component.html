@@ -36,9 +36,7 @@
           <mat-form-field *ngIf="canSelectRole" id="invitation-role">
             <mat-label>{{ t("invitation_role") }}</mat-label>
             <mat-select formControlName="role">
-              <mat-option *ngFor="let role of roles" [value]="role.role">
-                {{ role.displayName }}
-              </mat-option>
+              <mat-option *ngFor="let role of roles" [value]="role.role">{{ role.displayName }}</mat-option>
             </mat-select>
             <mat-error *ngIf="roleControl.hasError('required')">{{ t("select_invitation_role") }}</mat-error>
           </mat-form-field>
