@@ -66,6 +66,7 @@ describe('CollaboratorsComponent', () => {
 
   it('should not display no-users label while loading', fakeAsync(() => {
     const env = new TestEnvironment();
+    env.setupProjectData();
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
