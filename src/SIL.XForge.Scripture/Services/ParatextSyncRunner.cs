@@ -147,7 +147,7 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 // perform Paratext send/receive
-                await _paratextService.SendReceiveAsync(_userSecret, targetParatextId, UseNewProgress());
+                await _paratextService.SendReceiveAsync(_userSecret, targetParatextId, UseNewProgress(), token);
 
                 var targetBooks = new HashSet<int>(_paratextService.GetBookList(_userSecret, targetParatextId));
                 var sourceBooks = new HashSet<int>(TranslationSuggestionsEnabled
@@ -205,7 +205,7 @@ namespace SIL.XForge.Scripture.Services
                         foreach (string uid in usersToCheck)
                         {
                             string permission =
-                                await _paratextService.GetResourcePermissionAsync(sourceParatextId, uid);
+                                await _paratextService.GetResourcePermissionAsync(sourceParatextId, uid, token);
                             if (permission == TextInfoPermission.None)
                             {
                                 // As resource projects don't have administrators, connect as the user we are to remove
