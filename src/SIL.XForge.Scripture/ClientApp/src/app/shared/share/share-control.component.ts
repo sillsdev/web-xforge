@@ -60,7 +60,10 @@ export class ShareControlComponent extends SubscriptionDisposable implements OnI
       ),
       async ([isOnline, projectId, __]) => {
         if (this.projectDoc == null || projectId !== this._projectId) {
-          this.isProjectAdmin = await this.projectService.isProjectAdmin(projectId, this.userService.currentUserId);
+          [this.projectDoc, this.isProjectAdmin] = await Promise.all([
+            this.projectService.get(projectId),
+            this.projectService.isProjectAdmin(projectId, this.userService.currentUserId)
+          ]);
         }
         if (isOnline) {
           if (this._projectId != null) {
@@ -91,15 +94,18 @@ export class ShareControlComponent extends SubscriptionDisposable implements OnI
   get canSelectRole(): boolean {
     return this.isProjectAdmin;
   }
+
   get defaultShareRole(): string {
     if (this.defaultRole != null && this.roles.filter(r => r.role === this.defaultRole).length > 0) {
       return this.defaultRole;
     }
-    return SF_DEFAULT_SHARE_ROLE;
+    return this.roles.some(r => r.role === SF_DEFAULT_SHARE_ROLE) ? SF_DEFAULT_SHARE_ROLE : this.roles[0].role;
   }
 
   get roles(): ProjectRoleInfo[] {
-    return SF_PROJECT_ROLES.filter(r => r.canBeShared);
+    return SF_PROJECT_ROLES.filter(r => r.canBeShared).filter(
+      r => this.projectDoc?.data?.checkingConfig.checkingEnabled || r.role !== SFProjectRole.CommunityChecker
+    );
   }
 
   get shareLink(): string {
