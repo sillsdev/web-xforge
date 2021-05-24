@@ -312,7 +312,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return this.isReadOnly || (this.viewModel != null && this.viewModel.isEmpty);
   }
 
-  get textDirection(): string {
+  get textDirection(): 'ltr' | 'rtl' | 'auto' {
     if (this.contentShowing) {
       return this.isRtl ? 'rtl' : 'ltr';
     }

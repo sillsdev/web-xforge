@@ -8,7 +8,7 @@
     <table mat-table fxFill id="users-table" [dataSource]="userRows">
       <ng-container matColumnDef="avatar">
         <td mat-cell *matCellDef="let userRow; let i = index">
-          <app-avatar [user]="userRow.user" size="32" [round]="false"> </app-avatar>
+          <app-avatar [user]="userRow.user" [size]="32" [round]="false"> </app-avatar>
         </td>
       </ng-container>
       <ng-container matColumnDef="name">

@@ -5,7 +5,7 @@
     <div>
       <div mdcHeadline6>{{ t("tools") }}</div>
       <p mdcBody2>{{ t("select_additional_tools_and_features") }}</p>
-      <mdc-card class="card" outlined>
+      <mdc-card class="card" [outlined]="true">
         <form [formGroup]="form">
           <div class="card-content">
             <div class="tool-setting">
@@ -170,7 +170,7 @@
           <button
             id="delete-btn"
             mdc-button
-            unelevated
+            [unelevated]="true"
             type="button"
             (click)="openDeleteProjectDialog()"
             [disabled]="deleteButtonDisabled"

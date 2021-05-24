@@ -27,7 +27,7 @@ export class ShareControlComponent extends SubscriptionDisposable implements OnI
   /** Fires when an invitation is sent. */
   @Output() invited = new EventEmitter<void>();
   @Input() readonly isLinkSharingEnabled: boolean = false;
-  @Input() readonly defaultRole?: SFProjectRole;
+  @Input() readonly defaultRole: SFProjectRole = SF_DEFAULT_SHARE_ROLE;
   @ViewChild('shareLinkField') shareLinkField?: MdcTextField;
 
   email = new FormControl('', [XFValidators.email]);

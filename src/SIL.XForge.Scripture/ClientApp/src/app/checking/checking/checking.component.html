@@ -97,9 +97,9 @@
                 direction="vertical"
                 [disabled]="!questionsPanel.activeQuestionDoc"
                 (dragEnd)="checkSliderPosition($event)"
-                useTransition="true"
+                [useTransition]="true"
               >
-                <as-split-area size="100">
+                <as-split-area [size]="100">
                   <div class="panel-content" #scripturePanelContainer>
                     <app-checking-text
                       #textPanel
@@ -112,7 +112,7 @@
                     ></app-checking-text>
                   </div>
                 </as-split-area>
-                <as-split-area size="0">
+                <as-split-area [size]="0">
                   <div *ngIf="questionsPanel.activeQuestionDoc" id="answer-panel" #answerPanelContainer>
                     <app-checking-answers
                       #answersPanel
@@ -174,7 +174,7 @@
               class="next-question"
               icon="chevron_right"
             ></button>
-            <a [appRouterLink]="['/projects', projectDoc?.id, 'checking']" id="project-summary">
+            <a [appRouterLink]="routerLink" id="project-summary">
               <app-donut-chart
                 [colors]="['#3a3a3a', '#fff', '#B8D332']"
                 [data]="[summary.unread, summary.read, summary.answered]"

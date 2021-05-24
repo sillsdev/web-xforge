@@ -9,13 +9,13 @@
             [colors]="['#b8d332', 'transparent']"
             [data]="[overallProgress.translated, overallProgress.blank]"
             backgroundColor="#ececec"
-            innerThicknessDelta="0"
-            thickness="22"
+            [innerThicknessDelta]="0"
+            [thickness]="22"
           ></app-donut-chart>
         </div>
       </div>
       <mdc-list-divider></mdc-list-divider>
-      <mdc-list *ngIf="texts != null" twoLine [interactive]="false">
+      <mdc-list *ngIf="texts != null" [twoLine]="true" [interactive]="false">
         <mdc-list-item
           *ngFor="let textProgress of texts; trackBy: trackTextByBookNum"
           [appRouterLink]="['./', getBookId(textProgress.text)]"
@@ -32,8 +32,8 @@
               [colors]="['#b8d332', 'transparent']"
               [data]="[textProgress.translated, textProgress.blank]"
               backgroundColor="#ececec"
-              innerThicknessDelta="0"
-              thickness="22"
+              [innerThicknessDelta]="0"
+              [thickness]="22"
             ></app-donut-chart>
           </div>
         </mdc-list-item>

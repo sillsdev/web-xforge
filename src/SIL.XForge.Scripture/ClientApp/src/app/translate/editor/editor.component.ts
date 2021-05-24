@@ -19,6 +19,7 @@ import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
@@ -193,7 +194,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.currentUserDoc == null ? undefined : this.currentUserDoc.data;
   }
 
-  get defaultShareRole(): string {
+  get defaultShareRole(): SFProjectRole {
     return SF_DEFAULT_TRANSLATE_SHARE_ROLE;
   }
 

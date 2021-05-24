@@ -215,6 +215,13 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     }
   }
 
+  getRouterLink(bookId: string): string[] {
+    if (this.projectId == null) {
+      return [];
+    }
+    return ['/projects', this.projectId, 'checking', bookId];
+  }
+
   getTextDocId(bookNum: number, chapter: number): string {
     if (this.projectDoc == null) {
       return '';
@@ -265,7 +272,10 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return count > 0 ? translate('checking_overview.question_count_label', { count: count }) : '';
   }
 
-  timeArchivedStamp(date: string): string {
+  timeArchivedStamp(date: string | undefined): string {
+    if (date == null) {
+      return '';
+    }
     return translate('checking_overview.time_archived_stamp', { timeStamp: this.i18n.formatDate(new Date(date)) });
   }
 

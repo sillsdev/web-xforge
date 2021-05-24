@@ -8,8 +8,10 @@ import { XFValidators } from 'xforge-common/xfvalidators';
   styleUrls: ['./checking-comment-form.component.scss']
 })
 export class CheckingCommentFormComponent {
-  @Input() set text(value: string) {
-    this.commentText.setValue(value);
+  @Input() set text(value: string | undefined) {
+    if (value != null) {
+      this.commentText.setValue(value);
+    }
   }
 
   @Output() save: EventEmitter<string> = new EventEmitter<string>();

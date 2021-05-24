@@ -37,7 +37,7 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
   pageIndex: number = 0;
   pageSize: number = 50;
 
-  userRows?: Row[];
+  userRows: Row[] = [];
 
   private readonly searchTerm$: BehaviorSubject<string>;
   private readonly queryParameters$: BehaviorSubject<QueryParameters>;
@@ -53,10 +53,6 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
     this.searchTerm$ = new BehaviorSubject<string>('');
     this.queryParameters$ = new BehaviorSubject<QueryParameters>(this.getQueryParameters());
     this.reload$ = new BehaviorSubject<void>(undefined);
-  }
-
-  get isLoading(): boolean {
-    return this.userRows == null;
   }
 
   ngOnInit() {

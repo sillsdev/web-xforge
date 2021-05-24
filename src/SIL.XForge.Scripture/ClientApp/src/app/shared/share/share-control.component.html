@@ -5,7 +5,7 @@
       <mdc-text-field
         id="share-link"
         #shareLinkField
-        outlined
+        [outlined]="true"
         [value]="shareLink"
         [disabled]="!shareLink"
         [readonly]="true"
@@ -13,8 +13,8 @@
         <mdc-icon
           id="share-link-copy-icon"
           mdcTextFieldIcon
-          trailing
-          clickable
+          [trailing]="true"
+          [clickable]="true"
           (click)="copyShareLink()"
           title="{{ t('copy_link') }}"
           >file_copy

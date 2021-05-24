@@ -54,14 +54,11 @@ interface Summary {
   styleUrls: ['./checking.component.scss']
 })
 export class CheckingComponent extends DataLoadingComponent implements OnInit, OnDestroy {
-  userDoc?: UserDoc;
-  scriptureFontSize?: string;
   @ViewChild('answerPanelContainer') set answersPanelElement(answersPanelContainerElement: ElementRef) {
     // Need to trigger the calculation for the slider after DOM has been updated
     this.answersPanelContainerElement = answersPanelContainerElement;
     this.calculateScriptureSliderPosition(true);
   }
-
   @HostBinding('class') classes = 'flex-max';
   @ViewChild(CheckingAnswersComponent) answersPanel?: CheckingAnswersComponent;
   @ViewChild(CheckingTextComponent) scripturePanel?: CheckingTextComponent;
@@ -73,6 +70,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   chapters: number[] = [];
   isExpanded: boolean = false;
+  scriptureFontSize: string = '';
   showAllBooks: boolean = false;
   summary: Summary = {
     read: 0,
@@ -84,6 +82,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   projectDoc?: SFProjectDoc;
   projectUserConfigDoc?: SFProjectUserConfigDoc;
   textDocId?: TextDocId;
+  userDoc?: UserDoc;
 
   private _book?: number;
   private _isDrawerPermanent: boolean = true;
@@ -109,41 +108,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     private readonly pwaService: PwaService
   ) {
     super(noticeService);
-  }
-
-  private get book(): number | undefined {
-    return this._book;
-  }
-
-  private set book(book: number | undefined) {
-    if (book === this.book) {
-      return;
-    }
-    const questionDocs = this.questionDocs;
-    if (this.projectDoc == null || this.projectDoc.data == null || questionDocs.length === 0) {
-      return;
-    }
-    /** Get the book from the first question if showing all the questions
-     *  - Note that this only happens on first load as the book will be changed
-     *    later on via other methods
-     */
-    if (book === 0) {
-      book = undefined;
-      if (this.questionsPanel != null) {
-        const question = this.questionsPanel.activateStoredQuestion(questionDocs);
-        if (question.data != null) {
-          book = question.data.verseRef.bookNum;
-        }
-      }
-    }
-    this._book = book;
-    this.text = this.projectDoc.data.texts.find(t => t.bookNum === book);
-    this.chapters = this.text == null ? [] : this.text.chapters.map(c => c.number);
-    this._chapter = undefined;
-    if (this.questionsPanel != null) {
-      this.chapter = this.questionsPanel.activeQuestionChapter;
-    }
-    this.triggerUpdate();
   }
 
   get activeQuestionVerseRef(): VerseRef | undefined {
@@ -215,6 +179,48 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       }
     }
     return textsByBook;
+  }
+
+  get routerLink(): string[] {
+    if (this.projectDoc == null) {
+      return [];
+    }
+    return ['/projects', this.projectDoc.id, 'checking'];
+  }
+
+  private get book(): number | undefined {
+    return this._book;
+  }
+
+  private set book(book: number | undefined) {
+    if (book === this.book) {
+      return;
+    }
+    const questionDocs = this.questionDocs;
+    if (this.projectDoc == null || this.projectDoc.data == null || questionDocs.length === 0) {
+      return;
+    }
+    /** Get the book from the first question if showing all the questions
+     *  - Note that this only happens on first load as the book will be changed
+     *    later on via other methods
+     */
+    if (book === 0) {
+      book = undefined;
+      if (this.questionsPanel != null) {
+        const question = this.questionsPanel.activateStoredQuestion(questionDocs);
+        if (question.data != null) {
+          book = question.data.verseRef.bookNum;
+        }
+      }
+    }
+    this._book = book;
+    this.text = this.projectDoc.data.texts.find(t => t.bookNum === book);
+    this.chapters = this.text == null ? [] : this.text.chapters.map(c => c.number);
+    this._chapter = undefined;
+    if (this.questionsPanel != null) {
+      this.chapter = this.questionsPanel.activeQuestionChapter;
+    }
+    this.triggerUpdate();
   }
 
   /** Height in px needed to show all elements in the bottom
