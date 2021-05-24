@@ -325,7 +325,7 @@ namespace SIL.XForge.Scripture.Services
                 .Returns(mockClient);
 
             var paratextId = "resid_is_16_char";
-            var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01);
+            var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01, CancellationToken.None);
             Assert.That(permission, Is.EqualTo(TextInfoPermission.None));
         }
 
@@ -346,7 +346,7 @@ namespace SIL.XForge.Scripture.Services
 
             var paratextId = "resid_is_16_char";
 
-            var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01);
+            var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01, CancellationToken.None);
             Assert.That(permission, Is.EqualTo(TextInfoPermission.Read));
         }
 
@@ -763,7 +763,7 @@ namespace SIL.XForge.Scripture.Services
                 MockJwtTokenHelper.GetParatextUsername(Arg.Any<UserSecret>()).Returns(User01);
                 MockJwtTokenHelper.GetJwtTokenFromUserSecret(Arg.Any<UserSecret>()).Returns(accessToken);
                 MockJwtTokenHelper.RefreshAccessTokenAsync(Arg.Any<ParatextOptions>(), Arg.Any<Tokens>(),
-                    Arg.Any<HttpClient>())
+                    Arg.Any<HttpClient>(), Arg.Any<CancellationToken>())
                     .Returns(Task.FromResult(new Tokens
                     {
                         AccessToken = accessToken,
