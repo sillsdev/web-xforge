@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -552,7 +553,8 @@ namespace SIL.XForge.Scripture.Services
 
             Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
             Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.True, "setup");
-            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
+            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
+                Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Translator)));
 
             await env.Service.AddUserAsync(User03, Project03, null);
@@ -686,7 +688,8 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
-            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
+            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
+                Arg.Any<CancellationToken>())
                .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
             // SUT
             string sfProjectId = await env.Service.CreateProjectAsync(User01, new SFProjectCreateSettings()
@@ -705,9 +708,10 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
-            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
+            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
+                Arg.Any<CancellationToken>())
                .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User01)
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User01, Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(TextInfoPermission.Read));
             // SUT
             string sfProjectId = await env.Service.CreateProjectAsync(User01, new SFProjectCreateSettings()
@@ -739,7 +743,8 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
-            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
+            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
+                Arg.Any<CancellationToken>())
                .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
             SFProject existingSfProject = env.GetProject(Project01);
             // SUT
@@ -783,7 +788,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task AddUserToResourceProjectAsync_UserResourcePermission()
         {
             var env = new TestEnvironment();
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User01)
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User01, Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(TextInfoPermission.Read));
 
             User user = env.GetUser(User01);
@@ -799,7 +804,7 @@ namespace SIL.XForge.Scripture.Services
         public void AddUserToResourceProjectAsync_UserResourceNoPermission()
         {
             var env = new TestEnvironment();
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User01)
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User01, Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(TextInfoPermission.None));
 
             User user = env.GetUser(User01);
