@@ -4,23 +4,23 @@
 @inject IHtmlLocalizer<SharedResource> SharedLocalizer
 @model IndexModel
 @section scripts {
-    <script src="https://cdn.auth0.com/js/auth0/9.10/auth0.min.js"></script>
-    <script type="text/javascript">
-        var webAuth = new auth0.WebAuth({
-            clientID: '@ViewData["ClientId"]',
-            domain: '@ViewData["Domain"]',
-            responseType: 'token id_token',
-            redirectUri: window.location.origin + '/projects',
-            scope: 'openid profile email @ViewData["Scope"]',
-            audience: '@ViewData["Audience"]'
-        });
-        webAuth.checkSession({}, function (err, authResult) {
-            if (!err) {
-                var options = { state: JSON.stringify({}) };
-                webAuth.authorize(options);
-            }
-        });
-    </script>
+<script src="https://cdn.auth0.com/js/auth0/9.16/auth0.min.js"></script>
+<script type="text/javascript">
+    var webAuth = new auth0.WebAuth({
+        clientID: '@ViewData["ClientId"]',
+        domain: '@ViewData["Domain"]',
+        responseType: 'token id_token',
+        redirectUri: window.location.origin + '/projects',
+        scope: 'openid profile email @ViewData["Scope"]',
+        audience: '@ViewData["Audience"]'
+    });
+    webAuth.checkSession({}, function (err, authResult) {
+        if (!err) {
+            var options = { state: JSON.stringify({}) };
+            webAuth.authorize(options);
+        }
+    });
+</script>
 }
 
 <section id="hero">
@@ -76,17 +76,20 @@
                     <div class="about-feature">
                         <img src="~/images/logo-paratext.svg" loading="lazy" alt="Paratext">
                         <span>@Localizer["AboutParatext"]</span>
-                        <p>@(Html.Raw(Model.Localizer["AboutParatextDescription", "<span class=\"highlight\">", "</span>"]))</p>
+                        <p>@(Html.Raw(Model.Localizer["AboutParatextDescription", "<span class=\"highlight\">",
+                            "</span>"]))</p>
                     </div>
                     <div class="about-feature">
                         <i class="material-icons">shuffle</i>
                         <span>@Localizer["AboutFlexible"]</span>
-                        <p>@(Html.Raw(Model.Localizer["AboutFlexibleDescription", "<span class=\"highlight\">", "</span>"]))</p>
+                        <p>@(Html.Raw(Model.Localizer["AboutFlexibleDescription", "<span class=\"highlight\">",
+                            "</span>"]))</p>
                     </div>
                     <div class="about-feature">
                         <i class="material-icons">group</i>
                         <span>@Localizer["AboutUserEngagement"]</span>
-                        <p>@(Html.Raw(Model.Localizer["AboutUserEngagementDescription", "<span class=\"highlight\">", "</span>"]))</p>
+                        <p>@(Html.Raw(Model.Localizer["AboutUserEngagementDescription", "<span class=\"highlight\">",
+                            "</span>"]))</p>
                     </div>
                 </div>
             </div>
@@ -119,8 +122,10 @@
                     @Localizer["Statement"]
                 </div>
                 <div class="statement-buttons flex justify-content-center">
-                    <a asp-page="LearnMore" class="mdl-button mdl-button--raised mdl-button--colored button-lg">@SharedLocalizer[SharedResource.Keys.LearnMore]</a>
-                    <a class="mdl-button mdl-button--raised mdl-button--accent button-lg" href="/login?sign-up=true">@SharedLocalizer[SharedResource.Keys.SignUp]</a>
+                    <a asp-page="LearnMore"
+                        class="mdl-button mdl-button--raised mdl-button--colored button-lg">@SharedLocalizer[SharedResource.Keys.LearnMore]</a>
+                    <a class="mdl-button mdl-button--raised mdl-button--accent button-lg"
+                        href="/login?sign-up=true">@SharedLocalizer[SharedResource.Keys.SignUp]</a>
                 </div>
             </div>
         </div>
