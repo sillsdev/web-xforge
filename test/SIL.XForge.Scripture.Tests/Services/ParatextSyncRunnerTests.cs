@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -361,7 +362,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 { "pt01", SFProjectRole.Translator }
             };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
 
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
@@ -382,7 +383,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 { "pt01", SFProjectRole.Translator }
             };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
             var ptSourcePermissions = new Dictionary<string, string>()
             {
@@ -411,7 +412,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 { "pt01", SFProjectRole.Translator }
             };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
             var ptChapterPermissions = new Dictionary<string, string>()
             {
@@ -439,7 +440,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 { "pt01", SFProjectRole.Translator }
             };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
             var ptSourcePermissions = new Dictionary<string, string>()
             {
@@ -468,7 +469,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 { "pt01", SFProjectRole.Translator }
             };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
             var ptChapterPermissions = new Dictionary<string, string>()
             {
@@ -498,7 +499,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 { "pt01", SFProjectRole.Administrator }
             };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
 
             await env.SetUserRole("user02", SFProjectRole.CommunityChecker);
@@ -759,71 +760,178 @@ namespace SIL.XForge.Scripture.Services
                 string expectedRepositoryVersion = "2";
                 env.VerifyProjectSync(true, expectedRepositoryVersion, projectSFId);
             }
-        }
+            public async Task SyncAsync_TaskCancelledByException()
+            {
+                // Set up the environment
+                var env = new TestEnvironment();
+                env.SetupSFData(true, true, false);
+                env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+                var cancellationTokenSource = new CancellationTokenSource();
 
-        [Test]
-        public async Task FetchTextDocsAsync_FetchesExistingChapters()
-        {
-            var env = new TestEnvironment();
-            var numberChapters = 3;
-            var book = new Book("MAT", numberChapters, true);
-            env.SetupSFData(true, true, false, book);
+                // Setup a trap to cancel the task
+                env.NotesMapper.When(x => x.InitAsync(Arg.Any<UserSecret>(), Arg.Any<SFProjectSecret>(),
+                    Arg.Any<List<User>>(), Arg.Any<string>(), Arg.Any<CancellationToken>()))
+                    .Do(_ => throw new TaskCanceledException());
 
-            // SUT
-            await env.Runner.InitAsync("project01", "user01");
-            SortedList<int, IDocument<TextData>> targetFetch =
-                await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
-            await env.Runner.InitAsync("project02", "user01");
-            SortedList<int, IDocument<TextData>> sourceFetch =
-                await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
-            env.Runner.CloseConnection();
+                // Run the task
+                await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
 
-            // Fetched numberChapters chapters, none of which are missing their chapter content.
-            Assert.That(targetFetch.Count, Is.EqualTo(numberChapters));
-            Assert.That(sourceFetch.Count, Is.EqualTo(numberChapters));
-            Assert.That(targetFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
-            Assert.That(sourceFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
-        }
+                // Check that the task cancelled correctly
+                SFProject project = env.VerifyProjectSync(false);
+                Assert.That(project.Sync.DataInSync, Is.True);  // Nothing was synced as this was cancelled OnInit()
+            }
 
-        [Test]
-        public async Task FetchTextDocsAsync_MissingRequestedChapters()
-        {
-            // In production, the expected chapters list, used to specify
-            // what FetchTextDocsAsync() should fetch, comes from the
-            // SF DB project doc texts.chapters array. This array
-            // specifies what Target chapter text docs the SF DB should
-            // ave. Re-using the Target chapter list when fetching Source
-            // chapter text docs from the SF DB can lead to problems if
-            // FetchTextDocsAsync() does not omit ones that aren't
-            // actually in the DB.
+            [Test]
+            public void SyncAsync_TaskCancelledEarly()
+            {
+                // Set up the environment
+                var env = new TestEnvironment();
+                env.SetupSFData(true, true, false);
+                env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+                var cancellationTokenSource = new CancellationTokenSource();
+                var watch = new Stopwatch();
 
-            var env = new TestEnvironment();
-            var highestChapter = 20;
-            var missingSourceChapters = new HashSet<int>() { 2, 3, 10, 12 };
-            var existingTargetChapters = Enumerable.Range(1, highestChapter);
-            var existingSourceChapters = Enumerable.Range(1, highestChapter).Except(missingSourceChapters);
-            Assert.That(existingSourceChapters.Count(),
-                Is.EqualTo(highestChapter - missingSourceChapters.Count()), "setup");
-            Assert.That(existingTargetChapters.Count(),
-                Is.GreaterThan(existingSourceChapters.Count()), "setup");
-            var book = new Book("MAT", highestChapter, true) { MissingSourceChapters = missingSourceChapters };
-            env.SetupSFData(true, true, false, book);
+                // Run the task
+                Task task = env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
 
-            // SUT
-            await env.Runner.InitAsync("project01", "user01");
-            var targetFetch = await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
+                // Cancel the token without awaiting the task
+                cancellationTokenSource.Cancel();
 
-            await env.Runner.InitAsync("project02", "user01");
-            var sourceFetch = await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
+                // Wait until the task has completed, or a timeout of 5 seconds has been exceeded
+                watch.Start();
+                while (!task.IsCompleted && watch.ElapsedMilliseconds < 5000) ;
+                watch.Stop();
 
-            env.Runner.CloseConnection();
+                // Check that the task was cancelled after awaiting the check above
+                SFProject project = env.VerifyProjectSync(false);
+                Assert.That(project.Sync.DataInSync, Is.False);
+            }
 
-            // Fetched only non-missing chapters. None have null Data.
-            Assert.That(targetFetch.Keys.SequenceEqual(existingTargetChapters));
-            Assert.That(sourceFetch.Keys.SequenceEqual(existingSourceChapters));
-            Assert.That(targetFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
-            Assert.That(sourceFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
-        }
+            [Test]
+            public async Task SyncAsync_TaskCancelledMidway()
+            {
+                // Set up the environment
+                var env = new TestEnvironment();
+                env.SetupSFData(true, true, false);
+                env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+                var cancellationTokenSource = new CancellationTokenSource();
+
+                // Setup a trap to cancel the task
+                env.ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
+                    Arg.Any<IProgress<ProgressState>>(), Arg.Any<CancellationToken>()))
+                    .Do(_ => cancellationTokenSource.Cancel());
+
+                // Run the task
+                await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+
+                // Check that the task cancelled correctly
+                SFProject project = env.VerifyProjectSync(false);
+                Assert.That(project.Sync.DataInSync, Is.False);
+            }
+
+            [Test]
+            public async Task SyncAsync_TaskCancelledPrematurely()
+            {
+                // Set up the environment
+                var env = new TestEnvironment();
+                env.SetupSFData(true, true, false);
+                env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+                var cancellationTokenSource = new CancellationTokenSource();
+
+                // Cancel the token before awaiting the task
+                cancellationTokenSource.Cancel();
+
+                // Run the task
+                await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+
+                // Check that the task was cancelled after awaiting the check above
+                SFProject project = env.VerifyProjectSync(false);
+                Assert.That(project.Sync.DataInSync, Is.False);
+            }
+
+            [Test]
+            public async Task SyncAsync_TaskCancelledTooLate()
+            {
+                // Set up the environment
+                var env = new TestEnvironment();
+                env.SetupSFData(true, true, false);
+                env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+                var cancellationTokenSource = new CancellationTokenSource();
+
+                // Run the task
+                await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+
+                // Cancel the token after awaiting the task
+                cancellationTokenSource.Cancel();
+
+                // Check that the sync was successful
+                SFProject project = env.VerifyProjectSync(true);
+                Assert.That(project.Sync.DataInSync, Is.True);
+            }
+
+            [Test]
+            public async Task FetchTextDocsAsync_FetchesExistingChapters()
+            {
+                var env = new TestEnvironment();
+                var numberChapters = 3;
+                var book = new Book("MAT", numberChapters, true);
+                env.SetupSFData(true, true, false, book);
+
+                // SUT
+                await env.Runner.InitAsync("project01", "user01", CancellationToken.None);
+                SortedList<int, IDocument<TextData>> targetFetch =
+                    await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
+                await env.Runner.InitAsync("project02", "user01", CancellationToken.None);
+                SortedList<int, IDocument<TextData>> sourceFetch =
+                    await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
+                env.Runner.CloseConnection();
+
+                // Fetched numberChapters chapters, none of which are missing their chapter content.
+                Assert.That(targetFetch.Count, Is.EqualTo(numberChapters));
+                Assert.That(sourceFetch.Count, Is.EqualTo(numberChapters));
+                Assert.That(targetFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
+                Assert.That(sourceFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
+            }
+
+            [Test]
+            public async Task FetchTextDocsAsync_MissingRequestedChapters()
+            {
+                // In production, the expected chapters list, used to specify
+                // what FetchTextDocsAsync() should fetch, comes from the
+                // SF DB project doc texts.chapters array. This array
+                // specifies what Target chapter text docs the SF DB should
+                // ave. Re-using the Target chapter list when fetching Source
+                // chapter text docs from the SF DB can lead to problems if
+                // FetchTextDocsAsync() does not omit ones that aren't
+                // actually in the DB.
+
+                var env = new TestEnvironment();
+                var highestChapter = 20;
+                var missingSourceChapters = new HashSet<int>() { 2, 3, 10, 12 };
+                var existingTargetChapters = Enumerable.Range(1, highestChapter);
+                var existingSourceChapters = Enumerable.Range(1, highestChapter).Except(missingSourceChapters);
+                Assert.That(existingSourceChapters.Count(),
+                    Is.EqualTo(highestChapter - missingSourceChapters.Count()), "setup");
+                Assert.That(existingTargetChapters.Count(),
+                    Is.GreaterThan(existingSourceChapters.Count()), "setup");
+                var book = new Book("MAT", highestChapter, true) { MissingSourceChapters = missingSourceChapters };
+                env.SetupSFData(true, true, false, book);
+
+                // SUT
+                await env.Runner.InitAsync("project01", "user01", CancellationToken.None);
+                var targetFetch = await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
+
+                await env.Runner.InitAsync("project02", "user01", CancellationToken.None);
+                var sourceFetch = await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
+
+                env.Runner.CloseConnection();
+
+                // Fetched only non-missing chapters. None have null Data.
+                Assert.That(targetFetch.Keys.SequenceEqual(existingTargetChapters));
+                Assert.That(sourceFetch.Keys.SequenceEqual(existingSourceChapters));
+                Assert.That(targetFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
+                Assert.That(sourceFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
+            }
 
         private class Book
         {
@@ -878,9 +986,10 @@ namespace SIL.XForge.Scripture.Services
                     { "pt01", SFProjectRole.Administrator },
                     { "pt02", SFProjectRole.Translator }
                 };
-                ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
+                ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<CancellationToken>())
                     .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
-                ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>()))
+                ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
+                    Arg.Any<IProgress<ProgressState>>(), Arg.Any<CancellationToken>()))
                     .Do(x => _sendReceivedCalled = true);
                 ParatextService.IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), Arg.Any<string>())
                     .Returns(false);
@@ -900,6 +1009,7 @@ namespace SIL.XForge.Scripture.Services
             public ParatextSyncRunner Runner { get; }
             public ISFProjectService SFProjectService { get; }
             public IEngineService EngineService { get; }
+            public IParatextNotesMapper NotesMapper { get; }
             public IParatextService ParatextService { get; }
             public SFMemoryRealtimeService RealtimeService { get; }
             public IDeltaUsxMapper DeltaUsxMapper { get; }

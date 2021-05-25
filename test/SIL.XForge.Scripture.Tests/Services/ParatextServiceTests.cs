@@ -710,7 +710,8 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             const string resourceId = "1234567890abcdef";
             Assert.That(resourceId.Length, Is.EqualTo(SFInstallableDblResource.ResourceIdentifierLength));
-            var mapping = await env.Service.GetParatextUsernameMappingAsync(env.MakeUserSecret(env.User01, env.Username01), resourceId);
+            var mapping = await env.Service.GetParatextUsernameMappingAsync(env.MakeUserSecret(env.User01, env.Username01),
+                resourceId, CancellationToken.None);
             Assert.That(mapping.Count, Is.EqualTo(0));
         }
 
