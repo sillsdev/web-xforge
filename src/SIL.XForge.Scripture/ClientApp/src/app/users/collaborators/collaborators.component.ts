@@ -216,7 +216,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   }
 
   async toggleQuestionPermission(row: Row) {
-    const permissions = new Set(this.projectDoc?.data?.userPermissions[row.id] || []);
+    const permissions = new Set((this.projectDoc?.data?.userPermissions || {})[row.id] || []);
     [
       SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create),
       SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Edit)
