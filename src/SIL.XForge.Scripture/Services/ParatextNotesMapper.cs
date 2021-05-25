@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.Extensions.Localization;
@@ -49,7 +50,7 @@ namespace SIL.XForge.Scripture.Services
         public List<SyncUser> NewSyncUsers { get; } = new List<SyncUser>();
 
         public async Task InitAsync(UserSecret currentUserSecret, SFProjectSecret projectSecret, List<User> ptUsers,
-            string paratextProjectId)
+            string paratextProjectId, CancellationToken token)
         {
             _currentUserSecret = currentUserSecret;
             _currentParatextUsername = _paratextService.GetParatextUsername(currentUserSecret);
@@ -63,7 +64,7 @@ namespace SIL.XForge.Scripture.Services
             }
             _ptProjectUsersWhoCanWriteNotes = new HashSet<string>();
             IReadOnlyDictionary<string, string> roles = await _paratextService.GetProjectRolesAsync(currentUserSecret,
-                paratextProjectId);
+                paratextProjectId, token);
             var ptRolesCanWriteNote = new HashSet<string> { SFProjectRole.Administrator, SFProjectRole.Translator,
                 SFProjectRole.Consultant, SFProjectRole.WriteNote };
             foreach (User user in ptUsers)

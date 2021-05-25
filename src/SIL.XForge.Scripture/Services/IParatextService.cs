@@ -14,13 +14,14 @@ namespace SIL.XForge.Scripture.Services
         Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret);
         string GetParatextUsername(UserSecret userSecret);
         Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId, CancellationToken token);
-        Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(UserSecret userSecret, string projectId);
+        Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(UserSecret userSecret, string projectId,
+            CancellationToken token);
         bool IsProjectLanguageRightToLeft(UserSecret userSecret, string ptProjectId);
 
         Task<IReadOnlyList<ParatextResource>> GetResourcesAsync(string userId);
         Task<string> GetResourcePermissionAsync(string paratextId, string userId, CancellationToken token);
         Task<IReadOnlyDictionary<string, string>> GetParatextUsernameMappingAsync(UserSecret userSecret,
-            string paratextId);
+            string paratextId, CancellationToken token);
         Task<Dictionary<string, string>> GetPermissionsAsync(UserSecret userSecret, SFProject project,
             IReadOnlyDictionary<string, string> ptUsernameMapping, int book = 0, int chapter = 0,
             CancellationToken token = default);
