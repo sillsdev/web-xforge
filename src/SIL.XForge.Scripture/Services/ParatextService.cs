@@ -315,7 +315,7 @@ namespace SIL.XForge.Scripture.Services
         /// A dictionary where the key is the SF user ID and the value is Paratext username. (May be empty)
         /// </returns>
         public async Task<IReadOnlyDictionary<string, string>> GetParatextUsernameMappingAsync(UserSecret userSecret,
-            string paratextId)
+            string paratextId, CancellationToken token)
         {
             // Skip all the work if the project is a resource. Resources don't have project members
             if (IsResource(paratextId))
@@ -325,7 +325,7 @@ namespace SIL.XForge.Scripture.Services
 
             // Get the mapping for paratext users ids to usernames from the registry
             string response = await CallApiAsync(userSecret, HttpMethod.Get,
-                $"projects/{paratextId}/members");
+                $"projects/{paratextId}/members", null, token);
             Dictionary<string, string> paratextMapping = JArray.Parse(response).OfType<JObject>()
                 .Where(m => !string.IsNullOrEmpty((string)m["userId"])
                     && !string.IsNullOrEmpty((string)m["username"]))
@@ -428,7 +428,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         public async Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(UserSecret userSecret,
-            string paratextId)
+            string paratextId, CancellationToken token)
         {
             if (IsResource(paratextId))
             {
@@ -440,7 +440,7 @@ namespace SIL.XForge.Scripture.Services
                 // Paratext RegistryServer has methods to do this, but it is unreliable to use it in a multi-user
                 // environment so instead we call the registry API.
                 string response = await CallApiAsync(userSecret, HttpMethod.Get,
-                    $"projects/{paratextId}/members");
+                    $"projects/{paratextId}/members", null, token);
                 var members = JArray.Parse(response);
                 return members.OfType<JObject>()
                     .Where(m => !string.IsNullOrEmpty((string)m["userId"]) && !string.IsNullOrEmpty((string)m["role"]))

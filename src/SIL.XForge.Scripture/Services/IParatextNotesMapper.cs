@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using SIL.XForge.Models;
@@ -12,7 +13,7 @@ namespace SIL.XForge.Scripture.Services
         List<SyncUser> NewSyncUsers { get; }
 
         Task InitAsync(UserSecret currentUserSecret, SFProjectSecret projectSecret, List<User> ptUsers,
-            string paratextProjectId);
+            string paratextProjectId, CancellationToken token);
         Task<XElement> GetNotesChangelistAsync(XElement oldNotesElem, IEnumerable<IDocument<Question>> questionsDocs);
     }
 }
