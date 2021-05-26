@@ -56,7 +56,8 @@ namespace SIL.XForge.Scripture.Services
                             r => r.RunAsync(sourceProjectId, curUserId, false, CancellationToken.None),
                             TimeSpan.FromSeconds(30));
                         string targetJobId = _backgroundJobClient.ContinueJobWith<ParatextSyncRunner>(sourceJobId,
-                            r => r.RunAsync(projectId, curUserId, trainEngine, CancellationToken.None));
+                            r => r.RunAsync(projectId, curUserId, trainEngine, CancellationToken.None), null,
+                            JobContinuationOptions.OnAnyFinishedState);
                         try
                         {
                             await sourceProjectDoc.SubmitJson0OpAsync(op =>
