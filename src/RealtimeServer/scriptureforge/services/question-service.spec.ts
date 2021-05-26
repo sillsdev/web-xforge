@@ -159,7 +159,7 @@ class TestEnvironment {
         shareLevel: CheckingShareLevel.Specific
       },
       texts: [],
-      sync: { queuedCount: 0 },
+      sync: { queuedCount: 0, jobIds: [] },
       userRoles: {
         projectAdmin: SFProjectRole.ParatextAdministrator,
         checker: SFProjectRole.CommunityChecker

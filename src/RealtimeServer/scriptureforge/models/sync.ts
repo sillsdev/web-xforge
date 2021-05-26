@@ -5,5 +5,5 @@ export interface Sync {
   dateLastSuccessfulSync?: string;
   /** Indicates if PT project data from the last send/receive operation was incorporated into the SF project docs */
   dataInSync?: boolean;
-  jobIds?: string[];
+  jobIds: string[];
 }

@@ -122,7 +122,7 @@ class TestEnvironment {
         shareLevel: CheckingShareLevel.Specific
       },
       texts: [],
-      sync: { queuedCount: 0 },
+      sync: { queuedCount: 0, jobIds: [] },
       userRoles: {
         translator: SFProjectRole.ParatextTranslator,
         observer: SFProjectRole.ParatextObserver

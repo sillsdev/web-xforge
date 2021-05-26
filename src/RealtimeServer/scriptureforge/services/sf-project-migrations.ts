@@ -110,9 +110,30 @@ class SFProjectMigration4 implements Migration {
   }
 }
 
+class SFProjectMigration5 implements Migration {
+  static readonly VERSION = 5;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    const ops: Op[] = [];
+    if (doc.data.sync === undefined) {
+      ops.push({ p: ['sync'], oi: { queuedCount: 0, jobIds: [] } });
+    } else if (doc.data.sync.jobIds === undefined) {
+      ops.push({ p: ['sync', 'jobIds'], oi: [] });
+    }
+    if (ops.length > 0) {
+      await submitMigrationOp(SFProjectMigration5.VERSION, doc, ops);
+    }
+  }
+
+  migrateOp(_op: RawOp): void {
+    // do nothing
+  }
+}
+
 export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration1,
   SFProjectMigration2,
   SFProjectMigration3,
-  SFProjectMigration4
+  SFProjectMigration4,
+  SFProjectMigration5
 ];
