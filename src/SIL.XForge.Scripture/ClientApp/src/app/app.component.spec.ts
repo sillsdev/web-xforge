@@ -854,7 +854,7 @@ class TestEnvironment {
           shareLevel: CheckingShareLevel.Specific,
           usersSeeEachOthersResponses: true
         },
-        sync: { queuedCount: 0 },
+        sync: { queuedCount: 0, jobIds: [] },
         userRoles,
         userPermissions: {},
         texts
