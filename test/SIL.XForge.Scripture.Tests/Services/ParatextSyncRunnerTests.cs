@@ -414,21 +414,15 @@ namespace SIL.XForge.Scripture.Services
             };
             env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
-            var ptSourcePermissions = new Dictionary<string, string>()
-            {
-                { "user01", TextInfoPermission.Read },
-                { "user02", TextInfoPermission.None },
-            };
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>())
-                .Returns(Task.FromResult(ptSourcePermissions));
 
+            // SUT
             await env.Runner.RunAsync("project01", "user01", false);
-
+            env.SFProjectService.Received().UpdatePermissionsAsync("user01",
+                Arg.Is<IDocument<SFProject>>((IDocument<SFProject> sfProjDoc) =>
+                    sfProjDoc.Data.Id == "project01" && sfProjDoc.Data.ParatextId == "target"));
             SFProject project = env.GetProject();
             Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
-            Assert.That(project.Texts.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.None));
         }
 
         [Test]

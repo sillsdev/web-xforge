@@ -623,8 +623,8 @@ namespace SIL.XForge.Scripture.Services
             Dictionary<string, string> permissions;
             if (targetIsResource)
             {
-                permissions = await _paratextService.GetPermissionsAsync(userSecret, projectDoc.Data,
-                    ptUsernameMapping);
+                permissions =
+                    await _paratextService.GetPermissionsAsync(userSecret, projectDoc.Data, ptUsernameMapping);
             }
             else
             {
@@ -645,7 +645,11 @@ namespace SIL.XForge.Scripture.Services
                     // Add chapter permissions for the resource
                     foreach (Chapter chapter in chapters)
                     {
-                        chapter.Permissions = permissions;
+                        int chapterIndex = chapters.FindIndex(c => c.Number == chapter.Number);
+                        if (chapterIndex >= 0)
+                        {
+                            chapterPermissionOperations.Add((textIndex, chapterIndex, permissions));
+                        }
                     }
                 }
                 else
