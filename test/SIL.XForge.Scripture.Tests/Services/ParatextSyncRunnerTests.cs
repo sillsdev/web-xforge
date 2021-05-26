@@ -957,6 +957,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 SFProject project = GetProject();
                 Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+                Assert.That(project.Sync.JobIds.Count, Is.EqualTo(0));
                 Assert.That(project.Sync.LastSyncSuccessful, Is.EqualTo(successful));
                 string repoVersion = successful ? "afterSR" : "beforeSR";
                 Assert.That(project.Sync.SyncedToRepositoryVersion, Is.EqualTo(repoVersion));
@@ -1018,7 +1019,8 @@ namespace SIL.XForge.Scripture.Services
                             Sync = new Sync
                             {
                                 QueuedCount = 1,
-                                SyncedToRepositoryVersion = "beforeSR"
+                                SyncedToRepositoryVersion = "beforeSR",
+                                JobIds = new List<string>{ "test_jobid" }
                             }
                         },
                         new SFProject

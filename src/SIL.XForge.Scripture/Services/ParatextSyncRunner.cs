@@ -627,6 +627,13 @@ namespace SIL.XForge.Scripture.Services
             {
                 op.Unset(pd => pd.Sync.PercentCompleted);
                 op.Set(pd => pd.Sync.LastSyncSuccessful, successful);
+
+                // If we have an id in the job ids collection, remove the first one
+                if (_projectDoc.Data.Sync.JobIds.Any())
+                {
+                    op.Remove(pd => pd.Sync.JobIds, 0);
+                }
+
                 // Get the latest shared revision of the local hg repo. On a failed synchronize attempt, the data
                 // is known to be out of sync if the revision does not match the corresponding revision stored
                 // on the project doc.
@@ -644,7 +651,14 @@ namespace SIL.XForge.Scripture.Services
                 // an event for each individual op even if they are applied as a batch, so this needs to be set last,
                 // otherwise the info about the sync won't be set yet when the frontend determines that the sync is
                 // complete.
-                op.Inc(pd => pd.Sync.QueuedCount, -1);
+                if (_projectDoc.Data.Sync.QueuedCount > 0)
+                {
+                    op.Inc(pd => pd.Sync.QueuedCount, -1);
+                }
+                else
+                {
+                    op.Set(pd => pd.Sync.QueuedCount, 0);
+                }
 
                 if (updateRoles)
                 {
