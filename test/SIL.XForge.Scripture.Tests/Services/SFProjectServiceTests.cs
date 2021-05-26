@@ -723,8 +723,8 @@ namespace SIL.XForge.Scripture.Services
                 .Returns(Task.FromResult(ptChapterPermissions));
 
             sfProject = env.GetProject(Project01);
-            Assert.That(sfProject.Texts.First().Permissions.Count, Is.EqualTo(0));
-            Assert.That(sfProject.Texts.First().Chapters.First().Permissions.Count, Is.EqualTo(0));
+            Assert.That(sfProject.Texts.First().Permissions.Count, Is.EqualTo(0), "setup");
+            Assert.That(sfProject.Texts.First().Chapters.First().Permissions.Count, Is.EqualTo(0), "setup");
 
             IConnection conn = await env.RealtimeService.ConnectAsync(User01);
             IDocument<SFProject> project01Doc = await conn.FetchAsync<SFProject>(Project01);
@@ -737,6 +737,52 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(sfProject.Texts.First().Permissions[User02], Is.EqualTo(TextInfoPermission.Write));
             Assert.That(sfProject.Texts.First().Chapters.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Write));
             Assert.That(sfProject.Texts.First().Chapters.First().Permissions[User02], Is.EqualTo(TextInfoPermission.Read));
+        }
+
+
+        [Test]
+        public async Task UpdatePermissionsAsync_UserHasNoChapterPermission()
+        {
+            var env = new TestEnvironment();
+            string paratextProject01ID = "paratext_" + Project01;
+
+            SFProject sfProject = env.GetProject(Project01);
+
+            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), paratextProject01ID).Returns(new List<int>() { 40, 41 });
+
+            var ptBookPermissions = new Dictionary<string, string>()
+            {
+                { User01, TextInfoPermission.Read },
+                { User02, TextInfoPermission.None },
+            };
+            var ptChapterPermissions = new Dictionary<string, string>()
+            {
+                { User01, TextInfoPermission.Read },
+                { User02, TextInfoPermission.None },
+            };
+            int chapterValueToIndicateWholeBook = 0;
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
+                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
+                .Returns(Task.FromResult(ptBookPermissions));
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
+                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
+                .Returns(Task.FromResult(ptChapterPermissions));
+
+            sfProject = env.GetProject(Project01);
+            Assert.That(sfProject.Texts.First().Permissions.Count, Is.EqualTo(0), "setup");
+            Assert.That(sfProject.Texts.First().Chapters.First().Permissions.Count, Is.EqualTo(0), "setup");
+
+            IConnection conn = await env.RealtimeService.ConnectAsync(User01);
+            IDocument<SFProject> project01Doc = await conn.FetchAsync<SFProject>(Project01);
+
+            // SUT
+            await env.Service.UpdatePermissionsAsync(User01, project01Doc);
+
+            sfProject = env.GetProject(Project01);
+            Assert.That(sfProject.Texts.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Read));
+            Assert.That(sfProject.Texts.First().Permissions[User02], Is.EqualTo(TextInfoPermission.None));
+            Assert.That(sfProject.Texts.First().Chapters.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Read));
+            Assert.That(sfProject.Texts.First().Chapters.First().Permissions[User02], Is.EqualTo(TextInfoPermission.None));
         }
 
         [Test]
