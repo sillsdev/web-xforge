@@ -691,32 +691,6 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public void SyncAsync_TaskCancelledEarly()
-        {
-            // Set up the environment
-            var env = new TestEnvironment();
-            env.SetupSFData(true, true, false);
-            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
-            var cancellationTokenSource = new CancellationTokenSource();
-            var watch = new Stopwatch();
-
-            // Run the task
-            Task task = env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
-
-            // Cancel the token without awaiting the task
-            cancellationTokenSource.Cancel();
-
-            // Wait until the task has completed, or a timeout of 5 seconds has been exceeded
-            watch.Start();
-            while (!task.IsCompleted && watch.ElapsedMilliseconds < 5000) ;
-            watch.Stop();
-
-            // Check that the task was cancelled after awaiting the check above
-            SFProject project = env.VerifyProjectSync(false);
-            Assert.That(project.Sync.DataInSync, Is.False);
-        }
-
-        [Test]
         public async Task SyncAsync_TaskCancelledMidway()
         {
             // Set up the environment
