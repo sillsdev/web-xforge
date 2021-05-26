@@ -383,6 +383,9 @@ namespace SIL.XForge.Scripture.Services
         [Test]
         public async Task CheckLinkSharingAsync_PTUserHasPTPermissions()
         {
+            // If a user is invited to a project, and goes to the invitation link, the user being added to the project
+            // should have their PT permissions for text books and chapters.
+
             var env = new TestEnvironment();
             string paratextProject05ID = "paratext_" + Project05;
             SFProject project = env.GetProject(Project05);
@@ -397,8 +400,8 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
             Assert.That(project.Texts.First().Permissions.ContainsKey(User03), Is.False, "setup");
             Assert.That(project.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
-            // Return book list from PT that matches what SF knows about (according to TestEnvironment setup).
-            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), paratextProject05ID).Returns(new List<int> { 40, 41 });
+            var bookList = new List<int>() { 40, 41 };
+            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(bookList);
 
             // PT will answer with these permissions.
             var ptBookPermissions = new Dictionary<string, string>()
@@ -411,18 +414,30 @@ namespace SIL.XForge.Scripture.Services
                 { User03, TextInfoPermission.Write },
                 { User01, TextInfoPermission.Read },
             };
-            int chapterValueToIndicateWholeBook = 0;
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
+            var ptSourcePermissions = new Dictionary<string, string>()
+            {
+                { User03, TextInfoPermission.Read },
+                { User01, TextInfoPermission.None },
+            };
+            const int bookValueToIndicateWholeResource = 0;
+            const int chapterValueToIndicateWholeBook = 0;
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == paratextProject05ID),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
                 .Returns(Task.FromResult(ptBookPermissions));
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == paratextProject05ID),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
                 .Returns(Task.FromResult(ptChapterPermissions));
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTID),
+                Arg.Any<IReadOnlyDictionary<string, string>>(), bookValueToIndicateWholeResource, chapterValueToIndicateWholeBook)
+                .Returns(Task.FromResult(ptSourcePermissions));
 
             // SUT
             await env.Service.CheckLinkSharingAsync(User03, Project05, "key12345");
             project = env.GetProject(Project05);
-            Assert.That(project.UserRoles.TryGetValue(User03, out string userRole), Is.True, "user was added to project");
+            Assert.That(project.UserRoles.TryGetValue(User03, out string userRole), Is.True, "user should be added to project");
             // This user was invited as a community checker. So that is the SF role they will have. But their _permissions_ will include what they had in PT.
             Assert.That(userRole, Is.EqualTo(SFProjectRole.CommunityChecker));
             user = env.GetUser(User03);
@@ -430,8 +445,9 @@ namespace SIL.XForge.Scripture.Services
 
             Assert.That(project.Texts.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Read));
             Assert.That(project.Texts.First().Chapters.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Write));
-
-
+            SFProject resource = env.GetProject(Resource01);
+            Assert.That(resource.Texts.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Read));
+            Assert.That(resource.Texts.First().Chapters.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Read));
         }
 
         [Test]
