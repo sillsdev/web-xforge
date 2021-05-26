@@ -786,7 +786,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task UpdatePermissionsAsync_UserHasNoResourcePermission()
+        public async Task UpdatePermissionsAsync_SetsResourcePermissions()
         {
             var env = new TestEnvironment();
             string paratextProject01ID = "paratext_" + Project01;
