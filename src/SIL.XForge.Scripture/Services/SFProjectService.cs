@@ -595,7 +595,8 @@ namespace SIL.XForge.Scripture.Services
         /// projects, permissions are acquired from ScrText objects, and so presumably only what was received from
         /// Paratext in the last synchronize. For Resources, permissions are fetched from the DBL, and so permissions
         /// may be ahead of the last sync.
-        /// Note that this method is not applying permissions for user `curUserId`, but rather using that user to perform PT queries and set values in the SF DB.
+        /// Note that this method is not necessarily applying permissions for user `curUserId`, but rather using that
+        /// user to perform PT queries and set values in the SF DB.
         /// </summary>
         public async Task UpdatePermissionsAsync(string curUserId, IDocument<SFProject> projectDoc)
         {
@@ -606,7 +607,6 @@ namespace SIL.XForge.Scripture.Services
             }
 
             string targetParatextId = projectDoc.Data.ParatextId;
-
             HashSet<int> targetBooks = new HashSet<int>(_paratextService.GetBookList(userSecret, targetParatextId));
 
             // Get Paratext username mapping
@@ -614,6 +614,9 @@ namespace SIL.XForge.Scripture.Services
                 await _paratextService.GetParatextUsernameMappingAsync(userSecret, targetParatextId);
 
             bool targetIsResource = targetParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength;
+
+            var chapterPermissionOperations =
+                new List<(int bookIndex, int chapterIndex, Dictionary<string, string> chapterPermissions)>();
 
             // Get the permissions if this is a resource
             // Resources do not have per-book permissions
@@ -652,17 +655,27 @@ namespace SIL.XForge.Scripture.Services
                         ptUsernameMapping, bookNum);
                     foreach (Chapter chapter in chapters)
                     {
-                        // Get and set the project permissions for the chapter
+                        // Get the project permissions for the chapter
                         Dictionary<string, string> chapterPermissions = await _paratextService.GetPermissionsAsync(
                             userSecret, projectDoc.Data, ptUsernameMapping, bookNum, chapter.Number);
-                        chapter.Permissions = chapterPermissions;
+
+                        int chapterIndex = chapters.FindIndex(c => c.Number == chapter.Number);
+                        if (chapterIndex >= 0)
+                        {
+                            chapterPermissionOperations.Add((textIndex, chapterIndex, chapterPermissions));
+                        }
                     }
                 }
 
-                // update project metadata
+                // Update project metadata
                 await projectDoc.SubmitJson0OpAsync(op =>
                 {
-                    op.Set(pd => pd.Texts[textIndex].Chapters, chapters, ParatextSyncRunner.ChapterListEqualityComparer);
+                    foreach ((int bookIndex, int chapterIndex, Dictionary<string, string> chapterPermissions)
+                        in chapterPermissionOperations)
+                    {
+                        op.Set(pd => pd.Texts[bookIndex].Chapters[chapterIndex].Permissions, chapterPermissions);
+                    }
+
                     op.Set(pd => pd.Texts[textIndex].Permissions, permissions,
                         ParatextSyncRunner.PermissionDictionaryEqualityComparer);
                 });
