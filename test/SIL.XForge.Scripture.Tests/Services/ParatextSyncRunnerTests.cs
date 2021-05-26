@@ -1052,6 +1052,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 SFProject project = GetProject(projectSFID);
                 Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+                Assert.That(project.Sync.JobIds.Count, Is.EqualTo(0));
                 Assert.That(project.Sync.LastSyncSuccessful, Is.EqualTo(successful));
                 string repoVersion = expectedRepoVersion ?? (successful ? "afterSR" : "beforeSR");
                 Assert.That(project.Sync.SyncedToRepositoryVersion, Is.EqualTo(repoVersion));
@@ -1122,7 +1123,8 @@ namespace SIL.XForge.Scripture.Services
                                 // QueuedCount is incremented before RunAsync() by SyncService.SyncAsync(). So set
                                 // it to 1 to simulate it being incremented.
                                 QueuedCount = 1,
-                                SyncedToRepositoryVersion = "beforeSR"
+                                SyncedToRepositoryVersion = "beforeSR",
+                                JobIds = new List<string>{ "test_jobid" }
                             }
                         },
                         new SFProject
