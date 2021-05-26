@@ -716,6 +716,50 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task SyncAsync_TaskCancelledByException()
+        {
+            // Set up the environment
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, false);
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+            var cancellationTokenSource = new CancellationTokenSource();
+
+            // Setup a trap to cancel the task
+            env.NotesMapper.When(x => x.InitAsync(Arg.Any<UserSecret>(), Arg.Any<SFProjectSecret>(),
+                Arg.Any<List<User>>(), Arg.Any<string>(), Arg.Any<CancellationToken>()))
+                .Do(_ => throw new TaskCanceledException());
+
+            // Run the task
+            await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+
+            // Check that the task cancelled correctly
+            SFProject project = env.VerifyProjectSync(false);
+            Assert.That(project.Sync.DataInSync, Is.True);  // Nothing was synced as this was cancelled OnInit()
+        }
+
+        [Test]
+        public async Task SyncAsync_TaskCancelledMidway()
+        {
+            // Set up the environment
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, false);
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+            var cancellationTokenSource = new CancellationTokenSource();
+
+            // Setup a trap to cancel the task
+            env.ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
+                Arg.Any<IProgress<ProgressState>>(), Arg.Any<CancellationToken>()))
+                .Do(_ => cancellationTokenSource.Cancel());
+
+            // Run the task
+            await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+
+            // Check that the task cancelled correctly
+            SFProject project = env.VerifyProjectSync(false);
+            Assert.That(project.Sync.DataInSync, Is.False);
+        }
+
+        [Test]
         public async Task RunAsync_NoRecordOfSyncedToRepositoryVersionYetOutOfSyncRecord_NotWriteToPT()
         {
             foreach (bool isChanged in new bool[] { true, false })
@@ -759,6 +803,8 @@ namespace SIL.XForge.Scripture.Services
                 string expectedRepositoryVersion = "2";
                 env.VerifyProjectSync(true, expectedRepositoryVersion, projectSFID);
             }
+
+            [Test]
             public async Task SyncAsync_TaskCancelledByException()
             {
                 // Set up the environment
@@ -778,54 +824,6 @@ namespace SIL.XForge.Scripture.Services
                 // Check that the task cancelled correctly
                 SFProject project = env.VerifyProjectSync(false);
                 Assert.That(project.Sync.DataInSync, Is.True);  // Nothing was synced as this was cancelled OnInit()
-            }
-
-            [Test]
-            public void SyncAsync_TaskCancelledEarly()
-            {
-                // Set up the environment
-                var env = new TestEnvironment();
-                env.SetupSFData(true, true, false);
-                env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
-                var cancellationTokenSource = new CancellationTokenSource();
-                var watch = new Stopwatch();
-
-                // Run the task
-                Task task = env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
-
-                // Cancel the token without awaiting the task
-                cancellationTokenSource.Cancel();
-
-                // Wait until the task has completed, or a timeout of 5 seconds has been exceeded
-                watch.Start();
-                while (!task.IsCompleted && watch.ElapsedMilliseconds < 5000) ;
-                watch.Stop();
-
-                // Check that the task was cancelled after awaiting the check above
-                SFProject project = env.VerifyProjectSync(false);
-                Assert.That(project.Sync.DataInSync, Is.False);
-            }
-
-            [Test]
-            public async Task SyncAsync_TaskCancelledMidway()
-            {
-                // Set up the environment
-                var env = new TestEnvironment();
-                env.SetupSFData(true, true, false);
-                env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
-                var cancellationTokenSource = new CancellationTokenSource();
-
-                // Setup a trap to cancel the task
-                env.ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
-                    Arg.Any<IProgress<ProgressState>>(), Arg.Any<CancellationToken>()))
-                    .Do(_ => cancellationTokenSource.Cancel());
-
-                // Run the task
-                await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
-
-                // Check that the task cancelled correctly
-                SFProject project = env.VerifyProjectSync(false);
-                Assert.That(project.Sync.DataInSync, Is.False);
             }
 
             [Test]
