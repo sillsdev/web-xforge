@@ -227,7 +227,7 @@ namespace SIL.XForge.Scripture.Services
             return await this.GetResourcesInternalAsync(userId, false);
         }
 
-        public async Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId)
+        public async Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string ptProjectId)
         {
             if (userSecret.ParatextTokens == null)
                 return Attempt.Failure((string)null);
@@ -238,7 +238,7 @@ namespace SIL.XForge.Scripture.Services
                 // Paratext RegistryServer has methods to do this, but it is unreliable to use it in a multi-user
                 // environment so instead we call the registry API.
                 string response = await CallApiAsync(userSecret, HttpMethod.Get,
-                    $"projects/{paratextId}/members/{subClaim.Value}");
+                    $"projects/{ptProjectId}/members/{subClaim.Value}");
                 var memberObj = JObject.Parse(response);
                 return Attempt.Success((string)memberObj["role"]);
             }
@@ -293,22 +293,22 @@ namespace SIL.XForge.Scripture.Services
         /// to paratext user names for members of the project.
         /// </summary>
         /// <param name="userSecret">The user secret.</param>
-        /// <param name="paratextId">The project ParatextId.</param>
+        /// <param name="ptProjectId">The project ParatextId.</param>
         /// <returns>
         /// A dictionary where the key is the SF user ID and the value is Paratext username. (May be empty)
         /// </returns>
         public async Task<IReadOnlyDictionary<string, string>> GetParatextUsernameMappingAsync(UserSecret userSecret,
-            string paratextId)
+            string ptProjectId)
         {
             // Skip all the work if the project is a resource. Resources don't have project members
-            if (paratextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+            if (ptProjectId.Length == SFInstallableDblResource.ResourceIdentifierLength)
             {
                 return new Dictionary<string, string>();
             }
 
             // Get the mapping for paratext users ids to usernames from the registry
             string response = await CallApiAsync(userSecret, HttpMethod.Get,
-                $"projects/{paratextId}/members");
+                $"projects/{ptProjectId}/members");
             Dictionary<string, string> paratextMapping = JArray.Parse(response).OfType<JObject>()
                 .Where(m => !string.IsNullOrEmpty((string)m["userId"])
                     && !string.IsNullOrEmpty((string)m["username"]))
@@ -411,9 +411,9 @@ namespace SIL.XForge.Scripture.Services
         }
 
         public async Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(UserSecret userSecret,
-            string projectId)
+            string ptProjectId)
         {
-            if (projectId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+            if (ptProjectId.Length == SFInstallableDblResource.ResourceIdentifierLength)
             {
                 // Resources do not have roles
                 return new Dictionary<string, string>();
@@ -423,7 +423,7 @@ namespace SIL.XForge.Scripture.Services
                 // Paratext RegistryServer has methods to do this, but it is unreliable to use it in a multi-user
                 // environment so instead we call the registry API.
                 string response = await CallApiAsync(userSecret, HttpMethod.Get,
-                    $"projects/{projectId}/members");
+                    $"projects/{ptProjectId}/members");
                 var members = JArray.Parse(response);
                 return members.OfType<JObject>()
                     .Where(m => !string.IsNullOrEmpty((string)m["userId"]) && !string.IsNullOrEmpty((string)m["role"]))
