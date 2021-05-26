@@ -695,6 +695,11 @@ namespace SIL.XForge.Scripture.Services
             await projectUserConfigDoc.DeleteAsync();
         }
 
+        /// <summary>
+        /// Returns `userId`'s role on project or resource `project`.
+        /// The role may be the PT role from PT Registry, or a SF role.
+        /// The returned Attempt will be Success if they have a non-None role, or otherwise Failure.
+        /// </summary>
         protected async override Task<Attempt<string>> TryGetProjectRoleAsync(SFProject project, string userId)
         {
             Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(userId);

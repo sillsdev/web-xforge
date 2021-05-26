@@ -227,6 +227,9 @@ namespace SIL.XForge.Scripture.Services
             return await this.GetResourcesInternalAsync(userId, false);
         }
 
+        /// <summary>
+        /// Returns `userSecret`'s role on a PT project according to the PT Registry.
+        /// </summary>
         public async Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string ptProjectId)
         {
             if (userSecret.ParatextTokens == null)
