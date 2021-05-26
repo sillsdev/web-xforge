@@ -382,7 +382,7 @@ class TestEnvironment {
       shareLevel: CheckingShareLevel.Anyone
     },
     texts: [TestEnvironment.matthewText],
-    sync: { queuedCount: 0 },
+    sync: { queuedCount: 0, jobIds: [] },
     userRoles: {
       user01: SFProjectRole.ParatextAdministrator
     },
