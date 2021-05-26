@@ -179,7 +179,8 @@ class TestEnvironment {
           queuedCount: isInProgress ? 1 : 0,
           percentCompleted: isInProgress ? 0.1 : undefined,
           lastSyncSuccessful: true,
-          dateLastSuccessfulSync: date.toJSON()
+          dateLastSuccessfulSync: date.toJSON(),
+          jobIds: []
         },
         syncDisabled: isSyncDisabled,
         texts: [],
