@@ -497,7 +497,7 @@ class TestEnvironment {
     translateConfig: {
       translationSuggestionsEnabled: false
     },
-    sync: { queuedCount: 0 },
+    sync: { queuedCount: 0, jobIds: [] },
     texts: [
       {
         bookNum: 40,

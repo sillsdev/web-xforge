@@ -155,7 +155,7 @@ class TestEnvironment {
           percentCompleted: isInProgress ? 0.1 : undefined,
           lastSyncSuccessful: true,
           dateLastSuccessfulSync: date.toJSON(),
-          jobIds: isInProgress ? ['test'] : undefined
+          jobIds: isInProgress ? ['test'] : []
         },
         texts: [],
         userRoles: this.userRoleTarget,
@@ -185,7 +185,8 @@ class TestEnvironment {
           sync: {
             queuedCount: 0,
             lastSyncSuccessful: true,
-            dateLastSuccessfulSync: date.toJSON()
+            dateLastSuccessfulSync: date.toJSON(),
+            jobIds: []
           },
           texts: [],
           userRoles: this.userRoleSource,
