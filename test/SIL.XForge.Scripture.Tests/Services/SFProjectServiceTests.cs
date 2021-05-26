@@ -676,6 +676,82 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task AddUserAsync_PTUserHasPTPermissions()
+        {
+            // If a user connects to an existing project from the Connect Project page, project text permissions should
+            // be updated, so that the connecting user has permissions set that are from PT.
+
+            var env = new TestEnvironment();
+            string paratextProject05ID = "paratext_" + Project05;
+            SFProject project = env.GetProject(Project05);
+
+            Assert.That(env.UserSecrets.Contains(User03), Is.True, "setup. PT user is should have user secrets.");
+            User user = env.GetUser(User03);
+            Assert.That(user.ParatextId, Is.Not.Null, "setup. PT user should have a PT User ID.");
+
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03)
+                .Returns<Task<string>>(Task.FromResult(TextInfoPermission.Read));
+            string userRoleInPT = SFProjectRole.Translator;
+            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
+                .Returns(Task.FromResult(Attempt.Success(userRoleInPT)));
+
+            Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
+            Assert.That(project.Texts.First().Permissions.ContainsKey(User03), Is.False, "setup");
+            Assert.That(project.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
+            var bookList = new List<int>() { 40, 41 };
+            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(bookList);
+
+            // PT will answer with these permissions.
+            var ptBookPermissions = new Dictionary<string, string>()
+            {
+                { User03, TextInfoPermission.Read },
+                { User01, TextInfoPermission.Read },
+            };
+            var ptChapterPermissions = new Dictionary<string, string>()
+            {
+                { User03, TextInfoPermission.Write },
+                { User01, TextInfoPermission.Read },
+            };
+            var ptSourcePermissions = new Dictionary<string, string>()
+            {
+                { User03, TextInfoPermission.Read },
+                { User01, TextInfoPermission.None },
+            };
+            const int bookValueToIndicateWholeResource = 0;
+            const int chapterValueToIndicateWholeBook = 0;
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == paratextProject05ID),
+                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
+                .Returns(Task.FromResult(ptBookPermissions));
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == paratextProject05ID),
+                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
+                .Returns(Task.FromResult(ptChapterPermissions));
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTID),
+                Arg.Any<IReadOnlyDictionary<string, string>>(), bookValueToIndicateWholeResource, chapterValueToIndicateWholeBook)
+                .Returns(Task.FromResult(ptSourcePermissions));
+
+            string projectRoleSpecifiedFromConnectProjectPage = null;
+
+            // SUT
+            await env.Service.AddUserAsync(User03, Project05, projectRoleSpecifiedFromConnectProjectPage);
+
+            project = env.GetProject(Project05);
+            Assert.That(project.UserRoles.TryGetValue(User03, out string userRole), Is.True, "user should be added to project");
+            Assert.That(userRole, Is.EqualTo(userRoleInPT));
+            user = env.GetUser(User03);
+            Assert.That(user.Sites[SiteId].Projects, Contains.Item(Project05));
+
+            Assert.That(project.Texts.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Read));
+            Assert.That(project.Texts.First().Chapters.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Write));
+
+            SFProject resource = env.GetProject(Resource01);
+            Assert.That(resource.Texts.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Read));
+            Assert.That(resource.Texts.First().Chapters.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Read));
+        }
+
+        [Test]
         public async Task UpdatePermissionsAsync_ThrowsIfBookNotInDB()
         {
             string paratextProject01ID = "paratext_" + Project01;
