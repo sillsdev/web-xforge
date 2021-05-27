@@ -635,7 +635,11 @@ namespace SIL.XForge.Scripture.Services
             {
                 int textIndex = projectDoc.Data.Texts.FindIndex(t => t.BookNum == bookNum);
                 if (textIndex == -1)
-                    throw new ArgumentException($"target project does not contain specified book: {bookNum}");
+                {
+                    // Project does not contain specified book.
+                    // This is expected if a user is connecting a project for the first time, as the project may not have been synchronized yet.
+                    continue;
+                }
                 Models.TextInfo text = projectDoc.Data.Texts[textIndex];
                 List<Chapter> chapters = text.Chapters;
 

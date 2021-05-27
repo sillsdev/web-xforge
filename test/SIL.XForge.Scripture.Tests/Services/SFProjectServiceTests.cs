@@ -39,6 +39,7 @@ namespace SIL.XForge.Scripture.Services
         private const string User04 = "user04";
         private const string LinkExpiredUser = "linkexpireduser";
         private const string SiteId = "xf";
+        private const string PTProjectIDNotYetInSF = "paratext_notYetInSF";
 
         [Test]
         public async Task InviteAsync_ProjectAdminSharingDisabled_UserInvited()
@@ -390,7 +391,7 @@ namespace SIL.XForge.Scripture.Services
             string paratextProject05ID = "paratext_" + Project05;
             SFProject project = env.GetProject(Project05);
 
-            Assert.That(env.UserSecrets.Contains(User03), Is.True, "setup. PT user is should have user secrets.");
+            Assert.That(env.UserSecrets.Contains(User03), Is.True, "setup. PT user should have user secrets.");
             User user = env.GetUser(User03);
             Assert.That(user.ParatextId, Is.Not.Null, "setup. PT user should have a PT User ID.");
 
@@ -685,7 +686,7 @@ namespace SIL.XForge.Scripture.Services
             string paratextProject05ID = "paratext_" + Project05;
             SFProject project = env.GetProject(Project05);
 
-            Assert.That(env.UserSecrets.Contains(User03), Is.True, "setup. PT user is should have user secrets.");
+            Assert.That(env.UserSecrets.Contains(User03), Is.True, "setup. PT user should have user secrets.");
             User user = env.GetUser(User03);
             Assert.That(user.ParatextId, Is.Not.Null, "setup. PT user should have a PT User ID.");
 
@@ -752,8 +753,21 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task UpdatePermissionsAsync_ThrowsIfBookNotInDB()
+        public async Task UpdatePermissionsAsync_SkipsBookNotInDB()
         {
+            // If a user connects a new project, and we seek to set permissions for the user before actually
+            // synchronizing the Scripture text, then we are missing texts on which to set permissions when running
+            // UpdatePermissionsAsync(). So silently ignore missing books.
+            // It also is conceivable that a race could occur where (1) a book is added in Paratext and SendReceived
+            // to the Paratext servers, (2) a SF user clicks Synchronize in SF, (3) SF RunAsync() gets as far as
+            // running ParatextService.SendReceiveAsync(), but doesn't yet add the new book from PT into the SF DB.
+            // (4) Another SF user joins the SF project, causing UpdatePermissionsAsync() to be called.
+            // (5) UpdatePermissionsAsync() queries for ParatextService.GetBookList(), and then tries to find the
+            // books (including the new book) in the SF project. (6) It doesn't find the new book in SF.
+            // Silently ignoring this situation will prevent a crash from 6. And whether the new user will have
+            // permissions for the new book and its chapters will depend on how smart ParatextSyncRunner's project doc
+            // is.
+
             string paratextProject01ID = "paratext_" + Project01;
             var env = new TestEnvironment();
             SFProject sfProject = env.GetProject(Project01);
@@ -763,11 +777,45 @@ namespace SIL.XForge.Scripture.Services
             // But PT reports that there are 3 books.
             env.ParatextService.GetBookList(Arg.Any<UserSecret>(), paratextProject01ID).Returns(new List<int>() { 40, 41, 42 });
 
+            var ptBookPermissions = new Dictionary<string, string>()
+            {
+                { User01, TextInfoPermission.Read },
+                { User02, TextInfoPermission.Write },
+            };
+            var ptChapterPermissions = new Dictionary<string, string>()
+            {
+                { User01, TextInfoPermission.Write },
+                { User02, TextInfoPermission.Read },
+            };
+            const int chapterValueToIndicateWholeBook = 0;
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == paratextProject01ID),
+                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
+                .Returns(Task.FromResult(ptBookPermissions));
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == paratextProject01ID),
+                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
+                .Returns(Task.FromResult(ptChapterPermissions));
+
+            sfProject = env.GetProject(Project01);
+            Assert.That(sfProject.Texts.First().Permissions.Count, Is.EqualTo(0), "setup");
+            Assert.That(sfProject.Texts.First().Chapters.First().Permissions.Count, Is.EqualTo(0), "setup");
+
             IConnection conn = await env.RealtimeService.ConnectAsync(User01);
             IDocument<SFProject> project01Doc = await conn.FetchAsync<SFProject>(Project01);
 
-            // SUT. A book in paratext is not present in the SF DB.
-            Assert.ThrowsAsync<ArgumentException>(() => env.Service.UpdatePermissionsAsync(User01, project01Doc));
+            // SUT
+            await env.Service.UpdatePermissionsAsync(User01, project01Doc);
+
+            // Permissions were set for the books and chapters that we were able to handle.
+            sfProject = env.GetProject(Project01);
+            Assert.That(sfProject.Texts.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Read));
+            Assert.That(sfProject.Texts.First().Permissions[User02], Is.EqualTo(TextInfoPermission.Write));
+            Assert.That(sfProject.Texts.First().Chapters.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Write));
+            Assert.That(sfProject.Texts.First().Chapters.First().Permissions[User02], Is.EqualTo(TextInfoPermission.Read));
+
+            // SF should still only have the 2 books.
+            Assert.That(sfProject.Texts.Count, Is.LessThan(3), "surprise");
         }
 
         [Test]
@@ -1130,6 +1178,95 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(thrown.Message, Does.Contain(SFProjectService.ErrorAlreadyConnectedKey));
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Query().Count(),
                 Is.EqualTo(projectCount), "should not have changed");
+        }
+
+
+        [Test]
+        public async Task CreateProjectAsync_RequestingPTUserHasPTPermissions()
+        {
+            // If a user connects a project that was not yet in SF via the Connect Project page, project text
+            // permissions should be set so that the connecting user has permissions set that are from PT.
+
+            var env = new TestEnvironment();
+            string targetProjectPTID = PTProjectIDNotYetInSF;
+            string sourceProjectPTID = Resource01PTID;
+
+            Assert.That(env.UserSecrets.Contains(User03), Is.True, "setup. PT user should have user secrets.");
+            User user = env.GetUser(User03);
+            Assert.That(user.ParatextId, Is.Not.Null, "setup. PT user should have a PT User ID.");
+            Assert.That(env.ContainsProject(targetProjectPTID), Is.False, "setup. No such SF should exist yet.");
+
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03)
+                .Returns<Task<string>>(Task.FromResult(TextInfoPermission.Read));
+            string userRoleInPT = SFProjectRole.Administrator;
+            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
+                .Returns(Task.FromResult(Attempt.Success(userRoleInPT)));
+
+            var bookList = new List<int>() { 40, 41 };
+            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(bookList);
+
+            // PT will answer with these permissions.
+            // Note that in the case of checking permissions for the target project, SF won't actually get to the
+            // point where it queries for the PT permissions. But leaving these settings here in case
+            // UpdatePermissionsAsync() is later modified and it starts doing that.
+            var ptBookPermissions = new Dictionary<string, string>()
+            {
+                { User03, TextInfoPermission.Read },
+                { User01, TextInfoPermission.Read },
+            };
+            var ptChapterPermissions = new Dictionary<string, string>()
+            {
+                { User03, TextInfoPermission.Write },
+                { User01, TextInfoPermission.Read },
+            };
+            var ptSourcePermissions = new Dictionary<string, string>()
+            {
+                { User03, TextInfoPermission.Read },
+                { User01, TextInfoPermission.None },
+            };
+            const int bookValueToIndicateWholeResource = 0;
+            const int chapterValueToIndicateWholeBook = 0;
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == targetProjectPTID),
+                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
+                .Returns(Task.FromResult(ptBookPermissions));
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == targetProjectPTID),
+                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
+                .Returns(Task.FromResult(ptChapterPermissions));
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == sourceProjectPTID),
+                Arg.Any<IReadOnlyDictionary<string, string>>(), bookValueToIndicateWholeResource, chapterValueToIndicateWholeBook)
+                .Returns(Task.FromResult(ptSourcePermissions));
+
+            SFProject resource = env.GetProject(Resource01);
+            Assert.That(resource.Texts.First().Permissions.Count, Is.EqualTo(0), "setup. User should not have permissions on resource yet.");
+            Assert.That(resource.Texts.First().Chapters.First().Permissions.Count, Is.EqualTo(0), "setup");
+
+            // SUT
+            string sfProjectId = await env.Service.CreateProjectAsync(User03, new SFProjectCreateSettings()
+            {
+                ParatextId = targetProjectPTID,
+                SourceParatextId = sourceProjectPTID,
+                TranslationSuggestionsEnabled = true,
+            });
+
+            SFProject project = env.GetProject(sfProjectId);
+            Assert.That(project.UserRoles.TryGetValue(User03, out string userRole), Is.True, "user should be added to project");
+            Assert.That(userRole, Is.EqualTo(userRoleInPT));
+            user = env.GetUser(User03);
+            Assert.That(user.Sites[SiteId].Projects, Contains.Item(sfProjectId));
+
+            // Initially connecting a project should have called Sync, or SF is not going to fetch books and set
+            // permissions on them.
+            env.SyncService.Received().SyncAsync(User03, sfProjectId, Arg.Any<bool>());
+
+            // Don't check that permissions were added to the target project, because we mock the Sync functionality.
+            // But we can show that source resource permissions were set:
+
+            resource = env.GetProject(Resource01);
+            Assert.That(resource.Texts.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Read));
+            Assert.That(resource.Texts.First().Chapters.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Read));
         }
 
         [Test]
@@ -1518,7 +1655,8 @@ namespace SIL.XForge.Scripture.Services
                             }
                         }
                     },
-                                        new SFProjectSecret { Id = Project05,
+                    new SFProjectSecret {
+                        Id = Project05,
                         ShareKeys = new List<ShareKey>
                         {
 
@@ -1548,6 +1686,10 @@ namespace SIL.XForge.Scripture.Services
                     new ParatextProject
                     {
                         ParatextId = GetProject(Project01).ParatextId
+                    },
+                    new ParatextProject
+                    {
+                        ParatextId = PTProjectIDNotYetInSF
                     },
                     new ParatextProject
                     {
