@@ -173,6 +173,7 @@
             [unelevated]="true"
             type="button"
             (click)="openDeleteProjectDialog()"
+            [class.enabled]="!deleteButtonDisabled"
             [disabled]="deleteButtonDisabled"
           >
             {{ t("delete_this_project") }}
