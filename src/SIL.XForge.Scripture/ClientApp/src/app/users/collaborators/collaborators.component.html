@@ -66,7 +66,7 @@
             <td fxHide.xs mat-cell *matCellDef="let userRow">
               <mat-checkbox
                 *ngIf="userRow.userEligibleForQuestionPermission"
-                [disabled]="!userRow.canHaveQuestionPermissionRevoked"
+                [disabled]="!userRow.canHaveQuestionPermissionRevoked || !isAppOnline"
                 [checked]="userRow.allowCreatingQuestions"
                 (click)="toggleQuestionPermission(userRow)"
               >

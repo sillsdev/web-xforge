@@ -11,7 +11,7 @@ import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-proj
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { BehaviorSubject, of } from 'rxjs';
-import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
+import { anything, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
@@ -448,17 +448,17 @@ describe('CollaboratorsComponent', () => {
     tick();
     env.fixture.detectChanges();
 
-    // project admins always have permission, so the checkbox should be checked and disabled
+    // project admins always have permission, so the checkbox should be checked, disabled, and do nothing when clicked
     expect(env.userPermissionCheckbox(0).classList).toContain('mat-checkbox-disabled');
     expect(env.userPermissionCheckbox(0).classList).toContain('mat-checkbox-checked');
+    env.clickElement(env.userPermissionCheckbox(0));
+    verify(mockedProjectService.onlineSetUserProjectPermissions(anything(), anything(), anything())).never();
+
     // translators can be given permission, or not have permission
     expect(env.userPermissionCheckbox(1).classList).not.toContain('mat-checkbox-disabled');
     expect(env.userPermissionCheckbox(1).classList).not.toContain('mat-checkbox-checked');
-    // community checkers cannot be given permission to manage questions
-    expect(env.userPermissionCheckbox(2)).toBeUndefined();
-
     env.clickElement(env.userPermissionCheckbox(1));
-
+    expect(env.userPermissionCheckbox(1).classList).toContain('mat-checkbox-checked');
     const permissions = [
       SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create),
       SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Edit)
@@ -467,8 +467,18 @@ describe('CollaboratorsComponent', () => {
       mockedProjectService.onlineSetUserProjectPermissions(env.project01Id, 'user02', deepEqual(permissions))
     ).once();
 
-    expect(env.userPermissionCheckbox(1).classList).not.toContain('mat-checkbox-disabled');
+    // community checkers cannot be given permission to manage questions
+    expect(env.userPermissionCheckbox(2)).toBeUndefined();
+
+    resetCalls(mockedProjectService);
+
+    // clicking a translator's checkbox should do nothing when offline
+    env.onlineStatus = false;
+    expect(env.userPermissionCheckbox(1).classList).toContain('mat-checkbox-disabled');
     expect(env.userPermissionCheckbox(1).classList).toContain('mat-checkbox-checked');
+    env.clickElement(env.userPermissionCheckbox(1));
+    expect(env.userPermissionCheckbox(1).classList).toContain('mat-checkbox-checked');
+    verify(mockedProjectService.onlineSetUserProjectPermissions(anything(), anything(), anything())).never();
   }));
 });
 
