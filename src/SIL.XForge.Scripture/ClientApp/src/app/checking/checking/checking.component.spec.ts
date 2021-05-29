@@ -1,6 +1,6 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Location } from '@angular/common';
-import { DebugElement } from '@angular/core';
+import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -223,11 +223,7 @@ describe('CheckingComponent', () => {
       const projectUserConfig = env.component.projectUserConfigDoc!.data!;
       expect(projectUserConfig.selectedTask).toEqual('checking');
       expect(projectUserConfig.selectedQuestionRef).not.toBeNull();
-      env.component.projectDoc!.submitJson0Op(
-        op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, false),
-        false
-      );
-      env.waitForSliderUpdate();
+      env.setCheckingEnabled(false);
       expect(projectUserConfig.selectedTask).toBeUndefined();
       expect(projectUserConfig.selectedQuestionRef).toBeUndefined();
       expect(env.component.projectDoc).toBeUndefined();
@@ -238,11 +234,7 @@ describe('CheckingComponent', () => {
       // User with access to translate app should get redirected there
       const env = new TestEnvironment(OBSERVER_USER, 'ALL');
       env.selectQuestion(1);
-      env.component.projectDoc!.submitJson0Op(
-        op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, false),
-        false
-      );
-      env.waitForSliderUpdate();
+      env.setCheckingEnabled(false);
       expect(env.location.path()).toEqual('/projects/project01/translate/JHN');
       expect(env.component.projectDoc).toBeUndefined();
       expect(env.component.questionDocs.length).toEqual(0);
@@ -1455,6 +1447,7 @@ interface UserInfo {
 class TestEnvironment {
   readonly component: CheckingComponent;
   readonly fixture: ComponentFixture<CheckingComponent>;
+  readonly ngZone: NgZone = TestBed.inject(NgZone);
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   readonly mockedAnsweredDialogRef: MdcDialogRef<QuestionAnsweredDialogComponent> = mock(MdcDialogRef);
   readonly mockedTextChooserDialogComponent: MdcDialogRef<TextChooserDialogComponent> = mock(MdcDialogRef);
@@ -1765,7 +1758,7 @@ class TestEnvironment {
 
   activateQuestion(dataId: string) {
     const questionDoc = this.getQuestionDoc(dataId);
-    this.component.questionsPanel!.activateQuestion(questionDoc);
+    this.ngZone.run(() => this.component.questionsPanel!.activateQuestion(questionDoc));
     tick();
     this.fixture.detectChanges();
     tick(this.questionReadTimer);
@@ -1949,6 +1942,16 @@ class TestEnvironment {
   segmentHasQuestion(chapter: number, verse: number): boolean {
     const segment = this.getVerse(chapter, verse);
     return segment != null && segment.classList.contains('question-segment');
+  }
+
+  setCheckingEnabled(isEnabled: boolean = true): void {
+    this.ngZone.run(() => {
+      this.component.projectDoc!.submitJson0Op(
+        op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, isEnabled),
+        false
+      );
+    });
+    this.waitForSliderUpdate();
   }
 
   waitForSliderUpdate(): void {
