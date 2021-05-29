@@ -26,7 +26,7 @@
     "sharedb-mongo": "^1.0.0-beta.11",
     "ts-object-path": "^0.1.2",
     "websocket-json-stream": "^0.0.3",
-    "ws": "^7.1.0"
+    "ws": "^7.4.6"
   },
   "devDependencies": {
     "@types/jest": "^26.0.20",
