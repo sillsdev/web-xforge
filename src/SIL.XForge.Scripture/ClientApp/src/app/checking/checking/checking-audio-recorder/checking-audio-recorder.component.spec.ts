@@ -1,5 +1,5 @@
 import { MdcDialog } from '@angular-mdc/web';
-import { DebugElement } from '@angular/core';
+import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
@@ -94,6 +94,7 @@ describe('CheckingAudioRecorderComponent', () => {
 
 class TestEnvironment {
   rejectUserMedia = false;
+  readonly ngZone: NgZone = TestBed.inject(NgZone);
   readonly component: CheckingAudioRecorderComponent;
   readonly fixture: ComponentFixture<CheckingAudioRecorderComponent>;
 
@@ -138,7 +139,7 @@ class TestEnvironment {
   }
 
   async waitForRecorder(ms: number) {
-    await new Promise(resolve => setTimeout(resolve, ms));
+    await new Promise(resolve => this.ngZone.runOutsideAngular(() => setTimeout(resolve, ms)));
     this.fixture.detectChanges();
   }
 }

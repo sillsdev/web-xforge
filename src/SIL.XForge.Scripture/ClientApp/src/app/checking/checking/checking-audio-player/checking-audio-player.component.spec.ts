@@ -1,4 +1,4 @@
-import { Component, DebugElement, ViewChild } from '@angular/core';
+import { Component, DebugElement, NgZone, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
@@ -129,6 +129,7 @@ class HostComponent {
 
 class TestEnvironment {
   readonly mockedPwaService = mock(PwaService);
+  readonly ngZone: NgZone;
 
   fixture: ComponentFixture<HostComponent>;
   component: HostComponent;
@@ -143,6 +144,7 @@ class TestEnvironment {
     when(this.mockedPwaService.onlineStatus).thenReturn(of(isOnline));
 
     TestBed.overrideComponent(HostComponent, { set: { template: template } });
+    this.ngZone = TestBed.inject(NgZone);
     this.fixture = TestBed.createComponent(HostComponent);
     this.component = this.fixture.componentInstance;
     this.fixture.detectChanges();
@@ -184,7 +186,7 @@ class TestEnvironment {
   }
 
   async waitForPlayer(ms: number) {
-    await new Promise(resolve => setTimeout(resolve, ms));
+    await new Promise(resolve => this.ngZone.runOutsideAngular(() => setTimeout(resolve, ms)));
     this.fixture.detectChanges();
   }
 }

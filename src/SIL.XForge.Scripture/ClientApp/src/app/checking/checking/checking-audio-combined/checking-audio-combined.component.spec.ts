@@ -1,4 +1,4 @@
-import { DebugElement } from '@angular/core';
+import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ngfModule } from 'angular-file';
@@ -85,6 +85,7 @@ describe('CheckingAudioCombinedComponent', () => {
 });
 
 class TestEnvironment {
+  readonly ngZone: NgZone = TestBed.inject(NgZone);
   readonly audioFile: string = 'test-audio-player.webm';
   readonly component: CheckingAudioCombinedComponent;
   readonly fixture: ComponentFixture<CheckingAudioCombinedComponent>;
@@ -141,7 +142,7 @@ class TestEnvironment {
   }
 
   async waitForRecorder(ms: number) {
-    await new Promise(resolve => setTimeout(resolve, ms));
+    await new Promise(resolve => this.ngZone.runOutsideAngular(() => setTimeout(resolve, ms)));
     this.fixture.detectChanges();
   }
 }
