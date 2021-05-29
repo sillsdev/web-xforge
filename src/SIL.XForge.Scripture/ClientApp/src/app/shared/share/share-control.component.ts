@@ -1,10 +1,9 @@
 import { MdcTextField } from '@angular-mdc/web/textfield';
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { BehaviorSubject, combineLatest } from 'rxjs';
-import { filter } from 'rxjs/operators';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
 import { ProjectRoleInfo } from 'xforge-common/models/project-role-info';
@@ -23,7 +22,7 @@ import { SFProjectService } from '../../core/sf-project.service';
   templateUrl: './share-control.component.html',
   styleUrls: ['./share-control.component.scss']
 })
-export class ShareControlComponent extends SubscriptionDisposable implements OnInit {
+export class ShareControlComponent extends SubscriptionDisposable {
   /** Fires when an invitation is sent. */
   @Output() invited = new EventEmitter<void>();
   @Input() readonly isLinkSharingEnabled: boolean = false;
@@ -54,26 +53,31 @@ export class ShareControlComponent extends SubscriptionDisposable implements OnI
     private readonly userService: UserService
   ) {
     super();
-    this.subscribe(
-      combineLatest([this.pwaService.onlineStatus, this.projectId$, this.roleControl.valueChanges]).pipe(
-        filter(([_, projectId, __]) => projectId !== '')
-      ),
-      async ([isOnline, projectId, __]) => {
-        if (this.projectDoc == null || projectId !== this._projectId) {
-          this.isProjectAdmin = await this.projectService.isProjectAdmin(projectId, this.userService.currentUserId);
-        }
-        if (isOnline) {
-          if (this._projectId != null) {
-            this.linkSharingKey = await this.projectService.onlineGetLinkSharingKey(this._projectId, this.shareRole);
-          }
-          this.sendInviteForm.enable({ emitEvent: false });
-        } else {
-          this.sendInviteForm.disable({ emitEvent: false });
-          // Workaround for angular/angular#17793 (ExpressionChangedAfterItHasBeenCheckedError after form disabled)
-          this.changeDetector.detectChanges();
-        }
+    this.subscribe(combineLatest([this.projectId$, this.pwaService.onlineStatus]), async ([projectId]) => {
+      if (projectId === '') {
+        return;
       }
-    );
+      if (this.projectDoc == null || projectId !== this._projectId) {
+        [this.projectDoc, this.isProjectAdmin] = await Promise.all([
+          this.projectService.get(projectId),
+          this.projectService.isProjectAdmin(projectId, this.userService.currentUserId)
+        ]);
+        this.roleControl.setValue(this.defaultShareRole);
+      }
+    });
+
+    this.subscribe(combineLatest([this.pwaService.onlineStatus, this.roleControl.valueChanges]), async ([isOnline]) => {
+      if (isOnline) {
+        if (this._projectId != null) {
+          this.linkSharingKey = await this.projectService.onlineGetLinkSharingKey(this._projectId, this.shareRole);
+        }
+        this.sendInviteForm.enable({ emitEvent: false });
+      } else {
+        this.sendInviteForm.disable({ emitEvent: false });
+        // Workaround for angular/angular#17793 (ExpressionChangedAfterItHasBeenCheckedError after form disabled)
+        this.changeDetector.detectChanges();
+      }
+    });
   }
 
   @Input() set projectId(id: string | undefined) {
@@ -84,22 +88,22 @@ export class ShareControlComponent extends SubscriptionDisposable implements OnI
     this.projectId$.next(id);
   }
 
-  ngOnInit(): void {
-    this.roleControl.setValue(this.defaultShareRole);
-  }
-
   get canSelectRole(): boolean {
     return this.isProjectAdmin;
   }
+
   get defaultShareRole(): string {
-    if (this.defaultRole != null && this.roles.filter(r => r.role === this.defaultRole).length > 0) {
+    const roles = this.roles;
+    if (this.defaultRole != null && roles.filter(r => r.role === this.defaultRole).length > 0) {
       return this.defaultRole;
     }
-    return SF_DEFAULT_SHARE_ROLE;
+    return roles.some(r => r.role === SF_DEFAULT_SHARE_ROLE) ? SF_DEFAULT_SHARE_ROLE : roles[0].role;
   }
 
   get roles(): ProjectRoleInfo[] {
-    return SF_PROJECT_ROLES.filter(r => r.canBeShared);
+    return SF_PROJECT_ROLES.filter(r => r.canBeShared).filter(
+      r => this.projectDoc?.data?.checkingConfig.checkingEnabled || r.role !== SFProjectRole.CommunityChecker
+    );
   }
 
   get shareLink(): string {
