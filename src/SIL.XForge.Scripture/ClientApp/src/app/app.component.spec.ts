@@ -829,7 +829,7 @@ class TestEnvironment {
   }
 
   confirmProjectDeletedDialog() {
-    this.projectDeletedDialogRefAfterClosed$.next('close');
+    this.ngZone.run(() => this.projectDeletedDialogRefAfterClosed$.next('close'));
   }
 
   private addProject(projectId: string, userRoles: { [userRef: string]: string }, texts: TextInfo[]): void {

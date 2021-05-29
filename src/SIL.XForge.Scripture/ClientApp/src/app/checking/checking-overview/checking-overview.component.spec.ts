@@ -1,6 +1,6 @@
 import { MdcDialog, MdcDialogModule, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Location } from '@angular/common';
-import { DebugElement, NgModule } from '@angular/core';
+import { DebugElement, NgModule, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -438,6 +438,7 @@ class TestEnvironment {
   fixture: ComponentFixture<CheckingOverviewComponent>;
   location: Location;
 
+  readonly ngZone: NgZone = TestBed.inject(NgZone);
   readonly mockedAnsweredDialogRef: MdcDialogRef<QuestionAnsweredDialogComponent> = mock(MdcDialogRef);
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
@@ -861,8 +862,10 @@ class TestEnvironment {
   }
 
   setCheckingEnabled(isEnabled: boolean): void {
-    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01');
-    projectDoc.submitJson0Op(op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, isEnabled), false);
+    this.ngZone.run(() => {
+      const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01');
+      projectDoc.submitJson0Op(op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, isEnabled), false);
+    });
     tick();
     this.fixture.detectChanges();
   }
