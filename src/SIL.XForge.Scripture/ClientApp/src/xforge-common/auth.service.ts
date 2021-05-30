@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import Bugsnag from '@bugsnag/js';
 import { translate } from '@ngneat/transloco';
 import { Auth0DecodedHash, AuthorizeOptions, WebAuth } from 'auth0-js';
 import jwtDecode from 'jwt-decode';
@@ -12,6 +11,7 @@ import { filter, mergeMap } from 'rxjs/operators';
 import { BetaMigrationMessage } from 'xforge-common/beta-migration/beta-migration.component';
 import { PwaService } from 'xforge-common/pwa.service';
 import { environment } from '../environments/environment';
+import { BugsnagService } from './bugsnag.service';
 import { CommandError, CommandService } from './command.service';
 import { ErrorReportingService } from './error-reporting.service';
 import { LocalSettingsService } from './local-settings.service';
@@ -74,6 +74,7 @@ export class AuthService {
     private readonly offlineStore: OfflineStore,
     private readonly locationService: LocationService,
     private readonly commandService: CommandService,
+    private readonly bugsnagService: BugsnagService,
     private readonly cookieService: CookieService,
     private readonly router: Router,
     private readonly localSettings: LocalSettingsService,
@@ -423,7 +424,7 @@ export class AuthService {
     this.localSettings.set(USER_ID_SETTING, userId);
     this.localSettings.set(ROLE_SETTING, claims[XF_ROLE_CLAIM]);
     this.scheduleRenewal();
-    Bugsnag.leaveBreadcrumb(
+    this.bugsnagService.leaveBreadcrumb(
       'Local Login',
       {
         userId: userId,
@@ -432,7 +433,7 @@ export class AuthService {
       },
       'log'
     );
-    Bugsnag.setUser(this.currentUserId);
+    this.bugsnagService.setUser(this.currentUserId);
   }
 
   private clearState(): void {

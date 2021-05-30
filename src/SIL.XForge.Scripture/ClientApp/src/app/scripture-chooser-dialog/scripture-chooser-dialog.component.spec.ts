@@ -11,16 +11,20 @@ import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/ca
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { mock } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
+import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
 import { ScriptureChooserDialogComponent, ScriptureChooserDialogData } from './scripture-chooser-dialog.component';
+
+const mockedBugsnagService = mock(BugsnagService);
 
 describe('ScriptureChooserDialog', () => {
   configureTestingModule(() => ({
     imports: [TestModule],
     providers: [
       { provide: AuthService, useMock: mock(AuthService) },
+      { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mock(CookieService) }
     ]
   }));

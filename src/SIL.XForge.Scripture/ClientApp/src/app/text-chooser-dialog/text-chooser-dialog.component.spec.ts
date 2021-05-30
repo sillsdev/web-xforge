@@ -14,6 +14,7 @@ import { of } from 'rxjs';
 import { anything, instance, mock, spy, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { DOCUMENT } from 'xforge-common/browser-globals';
+import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -28,6 +29,7 @@ import { TextChooserDialogComponent, TextChooserDialogData, TextSelection } from
 
 const mockedProjectService = mock(SFProjectService);
 const mockedDocument = mock(Document);
+const mockedBugsnagService = mock(BugsnagService);
 const mockedPwaService = mock(PwaService);
 
 describe('TextChooserDialogComponent', () => {
@@ -37,6 +39,7 @@ describe('TextChooserDialogComponent', () => {
       { provide: AuthService, useMock: mock(AuthService) },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: DOCUMENT, useMock: mockedDocument },
+      { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mock(CookieService) },
       { provide: PwaService, useMock: mockedPwaService }
     ]

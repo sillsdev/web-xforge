@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import Bugsnag from '@bugsnag/js';
 import uuidv1 from 'uuid/v1';
+import { BugsnagService } from './bugsnag.service';
 import { COMMAND_API_NAMESPACE } from './url-constants';
 
 export enum CommandErrorCode {
@@ -51,7 +51,7 @@ export class CommandError extends Error {
   providedIn: 'root'
 })
 export class CommandService {
-  constructor(private readonly http: HttpClient) {}
+  constructor(private readonly http: HttpClient, private readonly bugsnagService: BugsnagService) {}
 
   async onlineInvoke<T>(url: string, method: string, params: any = {}): Promise<T | undefined> {
     url = `${COMMAND_API_NAMESPACE}/${url}`;
@@ -61,7 +61,7 @@ export class CommandService {
       params,
       id: uuidv1()
     };
-    Bugsnag.leaveBreadcrumb(
+    this.bugsnagService.leaveBreadcrumb(
       'JSON-RPC',
       {
         request: url,

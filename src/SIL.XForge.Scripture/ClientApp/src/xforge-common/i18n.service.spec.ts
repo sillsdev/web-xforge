@@ -3,10 +3,12 @@ import { CookieService } from 'ngx-cookie-service';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { AuthService } from './auth.service';
+import { BugsnagService } from './bugsnag.service';
 import { I18nService } from './i18n.service';
 import { LocationService } from './location.service';
 
 const mockedLocationService = mock(LocationService);
+const mockedBugsnagService = mock(BugsnagService);
 const mockedAuthService = mock(AuthService);
 const mockedTranslocoService = mock(TranslocoService);
 const mockedCookieService = mock(CookieService);
@@ -21,6 +23,7 @@ describe('I18nService', () => {
   it('should set locale', () => {
     const service = new I18nService(
       instance(mockedLocationService),
+      instance(mockedBugsnagService),
       instance(mockedAuthService),
       instance(mockedTranslocoService),
       instance(mockedCookieService),
@@ -37,6 +40,7 @@ describe('I18nService', () => {
     when(mockedTranslocoService.translate<string>(anything(), anything())).thenReturn('translated key');
     const service = new I18nService(
       instance(mockedLocationService),
+      instance(mockedBugsnagService),
       instance(mockedAuthService),
       instance(mockedTranslocoService),
       instance(mockedCookieService),
@@ -72,6 +76,7 @@ describe('I18nService', () => {
     );
     const service = new I18nService(
       instance(mockedLocationService),
+      instance(mockedBugsnagService),
       instance(mockedAuthService),
       instance(mockedTranslocoService),
       instance(mockedCookieService),
@@ -88,6 +93,7 @@ describe('I18nService', () => {
     const date = new Date('November 25, 1991 17:28');
     const service = new I18nService(
       instance(mockedLocationService),
+      instance(mockedBugsnagService),
       instance(mockedAuthService),
       instance(mockedTranslocoService),
       instance(mockedCookieService),

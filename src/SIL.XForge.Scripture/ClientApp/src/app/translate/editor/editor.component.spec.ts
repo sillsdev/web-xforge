@@ -34,6 +34,7 @@ import { BehaviorSubject, defer, of, Subject } from 'rxjs';
 import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { CONSOLE } from 'xforge-common/browser-globals';
+import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -57,6 +58,7 @@ const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
 const mockedActivatedRoute = mock(ActivatedRoute);
+const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
 const mockedTranslationEngineService = mock(TranslationEngineService);
@@ -91,6 +93,7 @@ describe('EditorComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: CONSOLE, useValue: new MockConsole() },
+      { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: PwaService, useMock: mockedPwaService },
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService }

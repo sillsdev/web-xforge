@@ -14,6 +14,7 @@ import { BehaviorSubject, of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
+import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { CommandError } from 'xforge-common/command.service';
 import { LocationService } from 'xforge-common/location.service';
 import { NONE_ROLE, ProjectRoleInfo } from 'xforge-common/models/project-role-info';
@@ -38,6 +39,7 @@ const mockedLocationService = mock(LocationService);
 const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
+const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
 
@@ -58,6 +60,7 @@ describe('CollaboratorsComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
+      { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: PwaService, useMock: mockedPwaService },
       emptyHammerLoader

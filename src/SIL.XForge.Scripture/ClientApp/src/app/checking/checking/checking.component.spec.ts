@@ -33,6 +33,7 @@ import { first } from 'rxjs/operators';
 import { anyString, anything, deepEqual, instance, mock, reset, resetCalls, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
+import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { FileService } from 'xforge-common/file.service';
 import { createStorageFileData, FileOfflineData, FileType } from 'xforge-common/models/file-offline-data';
 import { Snapshot } from 'xforge-common/models/snapshot';
@@ -82,6 +83,7 @@ const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedMdcDialog = mock(MdcDialog);
 const mockedTextChooserDialogComponent = mock(TextChooserDialogComponent);
 const mockedQuestionDialogService = mock(QuestionDialogService);
+const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
 const mockedFileService = mock(FileService);
@@ -157,6 +159,7 @@ describe('CheckingComponent', () => {
       { provide: MdcDialog, useMock: mockedMdcDialog },
       { provide: TextChooserDialogComponent, useMock: mockedTextChooserDialogComponent },
       { provide: QuestionDialogService, useMock: mockedQuestionDialogService },
+      { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: FileService, useMock: mockedFileService },
       { provide: PwaService, useMock: mockedPwaService }

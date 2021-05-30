@@ -13,6 +13,7 @@ import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, objectContaining, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
+import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { FileService } from 'xforge-common/file.service';
 import { createStorageFileData, FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -38,6 +39,7 @@ const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedHttpClient = mock(HttpClient);
+const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedFileService = mock(FileService);
 const mockedPwaService = mock(PwaService);
@@ -51,6 +53,7 @@ describe('QuestionDialogComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: HttpClient, useMock: mockedHttpClient },
+      { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: FileService, useMock: mockedFileService },
       { provide: PwaService, useMock: mockedPwaService }
