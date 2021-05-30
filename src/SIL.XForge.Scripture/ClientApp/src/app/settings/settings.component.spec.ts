@@ -14,6 +14,7 @@ import { TranslateConfig } from 'realtime-server/lib/esm/scriptureforge/models/t
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
+import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -36,6 +37,7 @@ const mockedNoticeService = mock(NoticeService);
 const mockedParatextService = mock(ParatextService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
+const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
 const mockedDialog = mock(MdcDialog);
@@ -65,6 +67,7 @@ describe('SettingsComponent', () => {
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
+      { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: PwaService, useMock: mockedPwaService },
       { provide: MdcDialog, useMock: mockedDialog }

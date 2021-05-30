@@ -21,6 +21,7 @@ import { anyString, anything, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { BetaMigrationDialogComponent } from 'xforge-common/beta-migration/beta-migration-dialog/beta-migration-dialog.component';
+import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FileService } from 'xforge-common/file.service';
 import { LocationService } from 'xforge-common/location.service';
@@ -47,6 +48,7 @@ const mockedAuthService = mock(AuthService);
 const mockedUserService = mock(UserService);
 const mockedSFAdminAuthGuard = mock(SFAdminAuthGuard);
 const mockedSFProjectService = mock(SFProjectService);
+const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedLocationService = mock(LocationService);
 const mockedNoticeService = mock(NoticeService);
@@ -90,6 +92,7 @@ describe('AppComponent', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: SFAdminAuthGuard, useMock: mockedSFAdminAuthGuard },
       { provide: SFProjectService, useMock: mockedSFProjectService },
+      { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: LocationService, useMock: mockedLocationService },
       { provide: NoticeService, useMock: mockedNoticeService },

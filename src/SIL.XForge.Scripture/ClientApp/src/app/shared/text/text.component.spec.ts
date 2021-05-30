@@ -10,6 +10,7 @@ import * as RichText from 'rich-text';
 import { BehaviorSubject } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
+import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -24,6 +25,7 @@ import { SharedModule } from '../../shared/shared.module';
 import { getSFProject, getTextDoc } from '../test-utils';
 import { TextComponent } from './text.component';
 
+const mockedBugsnagService = mock(BugsnagService);
 const mockedTranslocoService = mock(TranslocoService);
 const mockedPwaService = mock(PwaService);
 const mockedProjectService = mock(SFProjectService);
@@ -41,6 +43,7 @@ describe('TextComponent', () => {
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
     ],
     providers: [
+      { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: TranslocoService, useMock: mockedTranslocoService },
       { provide: PwaService, useMock: mockedPwaService }
     ]
