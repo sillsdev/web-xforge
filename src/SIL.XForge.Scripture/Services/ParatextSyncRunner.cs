@@ -654,12 +654,6 @@ namespace SIL.XForge.Scripture.Services
                 op.Unset(pd => pd.Sync.PercentCompleted);
                 op.Set(pd => pd.Sync.LastSyncSuccessful, successful);
 
-                // If we have an id in the job ids collection, remove the first one
-                if (_projectDoc.Data.Sync.JobIds.Any())
-                {
-                    op.Remove(pd => pd.Sync.JobIds, 0);
-                }
-
                 // Get the latest shared revision of the local hg repo. On a failed synchronize attempt, the data
                 // is known to be out of sync if the revision does not match the corresponding revision stored
                 // on the project doc.
@@ -715,7 +709,24 @@ namespace SIL.XForge.Scripture.Services
                 {
                     foreach (SyncUser syncUser in _notesMapper.NewSyncUsers)
                         u.Add(p => p.SyncUsers, syncUser);
+
+                    // If we have an id in the job ids collection, remove the first one
+                    if (_projectSecret.JobIds.Any())
+                    {
+                        u.Remove(p => p.JobIds, _projectSecret.JobIds.First());
+                    }
                 });
+            }
+            else
+            {
+                // If we have an id in the job ids collection, remove the first one
+                if (_projectSecret.JobIds.Any())
+                {
+                    await _projectSecrets.UpdateAsync(_projectSecret.Id, u =>
+                    {
+                        u.Remove(p => p.JobIds, _projectSecret.JobIds.First());
+                    });
+                }
             }
         }
 

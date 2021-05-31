@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Hangfire;
 using Hangfire.States;
+using SIL.XForge.DataAccess;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Scripture.Models;
@@ -16,13 +18,16 @@ namespace SIL.XForge.Scripture.Services
     public class SyncService : ISyncService
     {
         private readonly IBackgroundJobClient _backgroundJobClient;
+        private readonly IRepository<SFProjectSecret> _projectSecrets;
         private readonly IRealtimeService _realtimeService;
 
         public SyncService(
             IBackgroundJobClient backgroundJobClient,
+            IRepository<SFProjectSecret> projectSecrets,
             IRealtimeService realtimeService)
         {
             _backgroundJobClient = backgroundJobClient;
+            _projectSecrets = projectSecrets;
             _realtimeService = realtimeService;
         }
 
@@ -30,10 +35,17 @@ namespace SIL.XForge.Scripture.Services
         {
             using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
             {
+                // Load the project document
                 IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
                 if (projectDoc.Data.SyncDisabled)
                 {
                     throw new ForbiddenException();
+                }
+
+                // Load the target project secrets, so we can store the job id
+                if (!(await _projectSecrets.TryGetAsync(projectId)).TryResult(out SFProjectSecret projectSecret))
+                {
+                    projectSecret = null;
                 }
 
                 // See if we can sync the source project
@@ -47,6 +59,12 @@ namespace SIL.XForge.Scripture.Services
                     }
                     else
                     {
+                        // Load the source project secrets, so we can store the job id
+                        if (!(await _projectSecrets.TryGetAsync(sourceProjectId)).TryResult(out SFProjectSecret sourceProjectSecret))
+                        {
+                            sourceProjectSecret = null;
+                        }
+
                         // Schedule the sync for 30 seconds to give us enough time to update the project's sync object
                         // We do this because there is no "draft" status in hangfire - this is close enough
                         // After we do that, we will enqueue the job. We do it this way because we don't want to start
@@ -63,13 +81,30 @@ namespace SIL.XForge.Scripture.Services
                             await sourceProjectDoc.SubmitJson0OpAsync(op =>
                             {
                                 op.Inc(pd => pd.Sync.QueuedCount);
-                                op.Add(pd => pd.Sync.JobIds, sourceJobId);
                             });
                             await projectDoc.SubmitJson0OpAsync(op =>
                             {
                                 op.Inc(pd => pd.Sync.QueuedCount);
-                                op.Add(pd => pd.Sync.JobIds, targetJobId);
                             });
+
+                            // Store the source job id so we can cancel the job later if needed
+                            if (sourceProjectSecret != null)
+                            {
+                                await _projectSecrets.UpdateAsync(sourceProjectSecret.Id, u =>
+                                {
+                                    u.Add(p => p.JobIds, sourceJobId);
+                                });
+                            }
+
+                            // Store the target job id so we can cancel the job later if needed
+                            if (projectSecret != null)
+                            {
+                                await _projectSecrets.UpdateAsync(projectSecret.Id, u =>
+                                {
+                                    u.Add(p => p.JobIds, targetJobId);
+                                });
+                            }
+
                             _backgroundJobClient.ChangeState(sourceJobId, new EnqueuedState());
                         }
                         catch (Exception)
@@ -95,8 +130,17 @@ namespace SIL.XForge.Scripture.Services
                     await projectDoc.SubmitJson0OpAsync(op =>
                     {
                         op.Inc(pd => pd.Sync.QueuedCount);
-                        op.Add(pd => pd.Sync.JobIds, jobId);
                     });
+
+                    // Store the job id so we can cancel the job later if needed
+                    if (projectSecret != null)
+                    {
+                        await _projectSecrets.UpdateAsync(projectSecret.Id, u =>
+                        {
+                            u.Add(p => p.JobIds, jobId);
+                        });
+                    }
+
                     _backgroundJobClient.ChangeState(jobId, new EnqueuedState());
                 }
                 catch (Exception)
@@ -117,25 +161,32 @@ namespace SIL.XForge.Scripture.Services
                 {
                     throw new ForbiddenException();
                 }
+
                 if (projectDoc.Data.Sync.QueuedCount > 0)
                 {
-                    // Cancel all jobs for the project
-                    foreach (string jobId in projectDoc.Data.Sync.JobIds)
+                    // Load the project secrets, so we can get any job ids
+                    if ((await _projectSecrets.TryGetAsync(projectId)).TryResult(out SFProjectSecret projectSecret))
                     {
-                        _backgroundJobClient.Delete(jobId);
-                    }
-
-                    // Mark sync as cancelled
-                    await projectDoc.SubmitJson0OpAsync(op =>
-                    {
-                        op.Set(pd => pd.Sync.QueuedCount, 0);
-                        op.Unset(pd => pd.Sync.PercentCompleted);
-                        op.Set(pd => pd.Sync.LastSyncSuccessful, false);
-                        for (int i = 0; i < projectDoc.Data.Sync.JobIds.Count; i++)
+                        // Cancel all jobs for the project
+                        foreach (string jobId in projectSecret?.JobIds)
                         {
-                            op.Remove(pd => pd.Sync.JobIds, i);
+                            _backgroundJobClient.Delete(jobId);
                         }
-                    });
+
+                        // Remove all job ids from the project secrets
+                        await _projectSecrets.UpdateAsync(projectSecret.Id, u =>
+                        {
+                            u.Set(p => p.JobIds, new List<string>());
+                        });
+
+                        // Mark sync as cancelled
+                        await projectDoc.SubmitJson0OpAsync(op =>
+                        {
+                            op.Set(pd => pd.Sync.QueuedCount, 0);
+                            op.Unset(pd => pd.Sync.PercentCompleted);
+                            op.Set(pd => pd.Sync.LastSyncSuccessful, false);
+                        });
+                    }
 
                     // Cancel all jobs for the source (if present)
                     string sourceProjectId = projectDoc.Data.TranslateConfig.Source?.ProjectRef;
@@ -146,23 +197,29 @@ namespace SIL.XForge.Scripture.Services
                         {
                             if (sourceProjectDoc.Data.Sync.QueuedCount > 0)
                             {
-                                // Cancel all jobs for the source project
-                                foreach (string jobId in sourceProjectDoc.Data.Sync.JobIds)
+                                // Load the source project secrets, so we can get any job ids
+                                if ((await _projectSecrets.TryGetAsync(sourceProjectId)).TryResult(out SFProjectSecret sourceProjectSecret))
                                 {
-                                    _backgroundJobClient.Delete(jobId);
-                                }
-
-                                // Mark source project sync as cancelled
-                                await sourceProjectDoc.SubmitJson0OpAsync(op =>
-                                {
-                                    op.Set(pd => pd.Sync.QueuedCount, 0);
-                                    op.Unset(pd => pd.Sync.PercentCompleted);
-                                    op.Set(pd => pd.Sync.LastSyncSuccessful, false);
-                                    for (int i = 0; i < sourceProjectDoc.Data.Sync.JobIds.Count; i++)
+                                    // Cancel all jobs for the source project
+                                    foreach (string jobId in sourceProjectSecret?.JobIds)
                                     {
-                                        op.Remove(pd => pd.Sync.JobIds, i);
+                                        _backgroundJobClient.Delete(jobId);
                                     }
-                                });
+
+                                    // Remove all job ids from the source project secrets
+                                    await _projectSecrets.UpdateAsync(sourceProjectSecret.Id, u =>
+                                    {
+                                        u.Set(p => p.JobIds, new List<string>());
+                                    });
+
+                                    // Mark source project sync as cancelled
+                                    await sourceProjectDoc.SubmitJson0OpAsync(op =>
+                                    {
+                                        op.Set(pd => pd.Sync.QueuedCount, 0);
+                                        op.Unset(pd => pd.Sync.PercentCompleted);
+                                        op.Set(pd => pd.Sync.LastSyncSuccessful, false);
+                                    });
+                                }
                             }
                         }
                     }

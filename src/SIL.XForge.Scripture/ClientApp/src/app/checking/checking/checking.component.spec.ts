@@ -1529,8 +1529,7 @@ class TestEnvironment {
       tag: this.project01WritingSystemTag
     },
     sync: {
-      queuedCount: 0,
-      jobIds: []
+      queuedCount: 0
     },
     checkingConfig: {
       usersSeeEachOthersResponses: true,

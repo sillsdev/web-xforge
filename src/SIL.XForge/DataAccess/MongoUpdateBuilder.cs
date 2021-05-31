@@ -49,6 +49,12 @@ namespace SIL.XForge.DataAccess
             return this;
         }
 
+        public IUpdateBuilder<T> Remove<TItem>(Expression<Func<T, IEnumerable<TItem>>> field, TItem value)
+        {
+            _defs.Add(_builder.Pull(ToFieldDefinition(field), value));
+            return this;
+        }
+
         public IUpdateBuilder<T> Add<TItem>(Expression<Func<T, IEnumerable<TItem>>> field, TItem value)
         {
             _defs.Add(_builder.Push(ToFieldDefinition(field), value));
