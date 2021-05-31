@@ -201,7 +201,7 @@ namespace SIL.XForge.Scripture.Services
                                 if ((await _projectSecrets.TryGetAsync(sourceProjectId)).TryResult(out SFProjectSecret sourceProjectSecret))
                                 {
                                     // Cancel all jobs for the source project
-                                    foreach (string jobId in sourceProjectSecret?.JobIds)
+                                    foreach (string jobId in sourceProjectSecret.JobIds)
                                     {
                                         _backgroundJobClient.Delete(jobId);
                                     }
