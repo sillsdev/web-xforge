@@ -854,7 +854,7 @@ namespace SIL.XForge.Scripture.Services
                 });
                 _projectSecrets = new MemoryRepository<SFProjectSecret>(new[]
                 {
-                    new SFProjectSecret { Id = "project01" },
+                    new SFProjectSecret { Id = "project01", JobIds = new List<string>{ "test_jobid" } },
                     new SFProjectSecret { Id = "project02" },
                 });
                 SFProjectService = Substitute.For<ISFProjectService>();
@@ -929,9 +929,10 @@ namespace SIL.XForge.Scripture.Services
 
             public SFProject VerifyProjectSync(bool successful)
             {
+                SFProjectSecret projectSecret = GetProjectSecret();
+                Assert.That(projectSecret.JobIds.Count, Is.EqualTo(0));
                 SFProject project = GetProject();
                 Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
-                Assert.That(project.Sync.JobIds.Count, Is.EqualTo(0));
                 Assert.That(project.Sync.LastSyncSuccessful, Is.EqualTo(successful));
                 string repoVersion = successful ? "afterSR" : "beforeSR";
                 Assert.That(project.Sync.SyncedToRepositoryVersion, Is.EqualTo(repoVersion));
@@ -993,8 +994,7 @@ namespace SIL.XForge.Scripture.Services
                             Sync = new Sync
                             {
                                 QueuedCount = 1,
-                                SyncedToRepositoryVersion = "beforeSR",
-                                JobIds = new List<string>{ "test_jobid" }
+                                SyncedToRepositoryVersion = "beforeSR"
                             }
                         },
                         new SFProject

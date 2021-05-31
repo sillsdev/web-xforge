@@ -179,8 +179,7 @@ class TestEnvironment {
           queuedCount: isInProgress ? 1 : 0,
           percentCompleted: isInProgress ? 0.1 : undefined,
           lastSyncSuccessful: true,
-          dateLastSuccessfulSync: date.toJSON(),
-          jobIds: []
+          dateLastSuccessfulSync: date.toJSON()
         },
         syncDisabled: isSyncDisabled,
         texts: [],
@@ -252,7 +251,6 @@ class TestEnvironment {
     projectDoc.submitJson0Op(ops => {
       ops.set<number>(p => p.sync.queuedCount, 1);
       ops.set(p => p.sync.percentCompleted!, percentCompleted);
-      ops.set<string[]>(p => p.sync.jobIds!, ['test']);
     }, false);
     this.fixture.detectChanges();
   }
@@ -263,7 +261,6 @@ class TestEnvironment {
       ops.set<number>(p => p.sync.queuedCount, 0);
       ops.unset(p => p.sync.percentCompleted!);
       ops.set(p => p.sync.lastSyncSuccessful!, successful);
-      ops.remove(p => p.sync.jobIds!, 0);
       if (successful) {
         ops.set(p => p.sync.dateLastSuccessfulSync!, new Date().toJSON());
       }

@@ -335,7 +335,7 @@ class TestEnvironment {
             shareEnabled: true,
             shareLevel: CheckingShareLevel.Specific
           },
-          sync: { queuedCount: 0, jobIds: [] },
+          sync: { queuedCount: 0 },
           texts:
             args.hasTexts == null || args.hasTexts
               ? [
