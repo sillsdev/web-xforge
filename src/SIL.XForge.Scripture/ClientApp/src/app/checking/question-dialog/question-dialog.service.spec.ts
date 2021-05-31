@@ -186,7 +186,7 @@ class TestEnvironment {
       shareLevel: CheckingShareLevel.Anyone
     },
     texts: [this.matthewText],
-    sync: { queuedCount: 0, jobIds: [] },
+    sync: { queuedCount: 0 },
     userRoles: {
       [this.adminUser.id]: this.adminUser.role
     },

@@ -395,7 +395,7 @@ class TestEnvironment {
           shareLevel: CheckingShareLevel.Specific,
           usersSeeEachOthersResponses: true
         },
-        sync: { queuedCount: 1, jobIds: ['test'] },
+        sync: { queuedCount: 1 },
         texts: [],
         userRoles: {
           user01: SFProjectRole.ParatextAdministrator
@@ -552,7 +552,6 @@ class TestEnvironment {
       op.unset(p => p.sync.percentCompleted!);
       op.set<boolean>(p => p.sync.lastSyncSuccessful!, true);
       op.set(p => p.sync.dateLastSuccessfulSync!, new Date().toJSON());
-      op.remove(p => p.sync.jobIds!, 0);
     }, false);
     this.fixture.detectChanges();
   }

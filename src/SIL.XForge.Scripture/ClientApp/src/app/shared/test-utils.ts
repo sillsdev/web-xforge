@@ -45,7 +45,7 @@ export function getSFProject(id: string): SFProject {
       shareEnabled: true,
       shareLevel: CheckingShareLevel.Specific
     },
-    sync: { queuedCount: 0, jobIds: [] },
+    sync: { queuedCount: 0 },
     texts: [
       {
         bookNum: 40,

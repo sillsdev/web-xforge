@@ -1101,7 +1101,7 @@ class TestEnvironment {
       shareEnabled: true,
       shareLevel: CheckingShareLevel.Specific
     },
-    sync: { queuedCount: 0, dataInSync: true, jobIds: [] },
+    sync: { queuedCount: 0, dataInSync: true },
     texts: [
       {
         bookNum: 40,

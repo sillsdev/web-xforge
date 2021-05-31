@@ -116,33 +116,6 @@ describe('SFProjectMigrations', () => {
       expect(projectDoc.data.userPermissions).toBeDefined();
     });
   });
-  describe('version 5', () => {
-    it('adds jobIds property to project docs without sync', async () => {
-      const env = new TestEnvironment(4);
-      const conn = env.server.connect();
-      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {});
-      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
-      expect(projectDoc.data.sync).not.toBeDefined();
-      expect(projectDoc.data.sync?.jobIds).not.toBeDefined();
-
-      await env.server.migrateIfNecessary();
-
-      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
-      expect(projectDoc.data.sync.jobIds).toBeDefined();
-    });
-    it('adds jobIds property to project docs with sync', async () => {
-      const env = new TestEnvironment(4);
-      const conn = env.server.connect();
-      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', { sync: { queuedCount: 0 } });
-      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
-      expect(projectDoc.data.sync.jobIds).not.toBeDefined();
-
-      await env.server.migrateIfNecessary();
-
-      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
-      expect(projectDoc.data.sync.jobIds).toBeDefined();
-    });
-  });
 });
 
 class TestEnvironment {
