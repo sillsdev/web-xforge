@@ -559,7 +559,11 @@ namespace SIL.XForge.Scripture.Services
                 new SFProjectUserConfig { ProjectRef = projectDoc.Id, OwnerRef = userDoc.Id });
             // Listeners can now assume the ProjectUserConfig is ready when the user is added.
             await base.AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, removeShareKeys);
-            if (!string.IsNullOrWhiteSpace(userDoc.Data.ParatextId))
+
+            // Update book and chapter permissions on SF project/resource, but only if user
+            // has a role on the PT project or permissions to the DBL resource. These permissions are needed
+            // in order to query the PT roles and DBL permissions of other SF project/resource users.
+            if ((await TryGetProjectRoleAsync(projectDoc.Data, userDoc.Id)).Success)
             {
                 await UpdatePermissionsAsync(userDoc.Id, projectDoc);
             }
@@ -590,10 +594,15 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
+        private bool paratextProjectIDIsResourceID(string paratextProjectID)
+        {
+            return paratextProjectID?.Length == SFInstallableDblResource.ResourceIdentifierLength;
+        }
+
         /// <summary>
         /// Update all user permissions on books and chapters in an SF project, from PT project permissions. For Paratext
         /// projects, permissions are acquired from ScrText objects, and so presumably only what was received from
-        /// Paratext in the last synchronize. For Resources, permissions are fetched from the DBL, and so permissions
+        /// Paratext in the last synchronize. For Resources, permissions are fetched from a DBL server, and so permissions
         /// may be ahead of the last sync.
         /// Note that this method is not necessarily applying permissions for user `curUserId`, but rather using that
         /// user to perform PT queries and set values in the SF DB.
@@ -613,7 +622,7 @@ namespace SIL.XForge.Scripture.Services
             IReadOnlyDictionary<string, string> ptUsernameMapping =
                 await _paratextService.GetParatextUsernameMappingAsync(userSecret, targetParatextId);
 
-            bool targetIsResource = targetParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength;
+            bool targetIsResource = paratextProjectIDIsResourceID(targetParatextId);
 
             var chapterPermissionOperations =
                 new List<(int bookIndex, int chapterIndex, Dictionary<string, string> chapterPermissions)>();
@@ -709,7 +718,7 @@ namespace SIL.XForge.Scripture.Services
             Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(userId);
             if (userSecretAttempt.TryResult(out UserSecret userSecret))
             {
-                if (project.ParatextId?.Length == SFInstallableDblResource.ResourceIdentifierLength)
+                if (paratextProjectIDIsResourceID(project.ParatextId))
                 {
                     // If the project is a resource, get the permission from the DBL
                     string permission = await _paratextService.GetResourcePermissionAsync(project.ParatextId, userId);

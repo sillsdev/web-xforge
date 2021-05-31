@@ -390,17 +390,33 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             string paratextProject05ID = "paratext_" + Project05;
             SFProject project = env.GetProject(Project05);
+            SFProject resource = env.GetProject(Resource01);
 
             Assert.That(env.UserSecrets.Contains(User03), Is.True, "setup. PT user should have user secrets.");
             User user = env.GetUser(User03);
             Assert.That(user.ParatextId, Is.Not.Null, "setup. PT user should have a PT User ID.");
 
+            string userRoleOnPTProject = SFProjectRole.Translator;
+            Assert.That(userRoleOnPTProject, Is.Not.EqualTo(SFProjectRole.CommunityChecker),
+                "setup. role should be different than community checker for purposes of part of what this test is testing.");
+            string shareKeyCode = "key12345";
+            ShareKey shareKeyForUserInvitation = env.ProjectSecrets.Get(project.Id).ShareKeys.First(
+                (ShareKey shareKey) => shareKey.Key == shareKeyCode);
+            Assert.That(shareKeyForUserInvitation.ProjectRole, Is.EqualTo(SFProjectRole.CommunityChecker),
+                "setup. the user should be being invited as a community checker.");
+            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
+                .Returns(Task.FromResult(Attempt.Success(userRoleOnPTProject)));
+            string userDBLPermissionForResource = TextInfoPermission.Read;
             env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03)
-                .Returns<Task<string>>(Task.FromResult(TextInfoPermission.Read));
+                .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
             Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
             Assert.That(project.Texts.First().Permissions.ContainsKey(User03), Is.False, "setup");
             Assert.That(project.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
+            Assert.That(resource.UserRoles.ContainsKey(User03), Is.False, "setup");
+            Assert.That(project.Texts.First().Permissions.ContainsKey(User03), Is.False, "setup");
+            Assert.That(project.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
+
             var bookList = new List<int>() { 40, 41 };
             env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(bookList);
 
@@ -417,7 +433,7 @@ namespace SIL.XForge.Scripture.Services
             };
             var ptSourcePermissions = new Dictionary<string, string>()
             {
-                { User03, TextInfoPermission.Read },
+                { User03, userDBLPermissionForResource },
                 { User01, TextInfoPermission.None },
             };
             const int bookValueToIndicateWholeResource = 0;
@@ -432,23 +448,36 @@ namespace SIL.XForge.Scripture.Services
                 .Returns(Task.FromResult(ptChapterPermissions));
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
                 Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTID),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), bookValueToIndicateWholeResource, chapterValueToIndicateWholeBook)
+                Arg.Any<IReadOnlyDictionary<string, string>>(),
+                bookValueToIndicateWholeResource,
+                chapterValueToIndicateWholeBook)
                 .Returns(Task.FromResult(ptSourcePermissions));
 
             // SUT
-            await env.Service.CheckLinkSharingAsync(User03, Project05, "key12345");
+            await env.Service.CheckLinkSharingAsync(User03, Project05, shareKeyCode);
+
             project = env.GetProject(Project05);
-            Assert.That(project.UserRoles.TryGetValue(User03, out string userRole), Is.True, "user should be added to project");
-            // This user was invited as a community checker. So that is the SF role they will have. But their _permissions_ will include what they had in PT.
-            Assert.That(userRole, Is.EqualTo(SFProjectRole.CommunityChecker));
+            Assert.That(project.UserRoles.TryGetValue(User03, out string userRole), Is.True,
+            "user should be added to project");
+            // This user was invited as a community checker (according to the share key). But their project role and
+            // permissions will reflect what is set on the PT project. The user will have a translator role rather than
+            // a community checker role.
+            Assert.That(userRole, Is.EqualTo(userRoleOnPTProject));
             user = env.GetUser(User03);
             Assert.That(user.Sites[SiteId].Projects, Contains.Item(Project05));
 
             Assert.That(project.Texts.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Read));
             Assert.That(project.Texts.First().Chapters.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Write));
-            SFProject resource = env.GetProject(Resource01);
-            Assert.That(resource.Texts.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Read));
-            Assert.That(resource.Texts.First().Chapters.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Read));
+
+            resource = env.GetProject(Resource01);
+            Assert.That(resource.UserRoles.TryGetValue(User03, out string resourceUserRole), Is.True,
+                "user should have been added to resource");
+            Assert.That(resourceUserRole, Is.EqualTo(SFProjectRole.Observer),
+                "user role not set correctly on resource");
+            Assert.That(user.Sites[SiteId].Projects, Contains.Item(Resource01), "user not added to resource correctly");
+            Assert.That(resource.Texts.First().Permissions[User03], Is.EqualTo(userDBLPermissionForResource));
+            Assert.That(resource.Texts.First().Chapters.First().Permissions[User03],
+                Is.EqualTo(userDBLPermissionForResource));
         }
 
         [Test]
@@ -457,7 +486,8 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             SFProject project = env.GetProject(Project05);
 
-            Assert.That(env.UserSecrets.Contains(User04), Is.False, "setup. Non-PT user is not expected to have user secrets.");
+            Assert.That(env.UserSecrets.Contains(User04), Is.False,
+                "setup. Non-PT user is not expected to have user secrets.");
             User user = env.GetUser(User04);
             Assert.That(user.ParatextId, Is.Null, "setup. Non-PT user should not have a PT User ID.");
 
@@ -467,20 +497,282 @@ namespace SIL.XForge.Scripture.Services
 
             // SUT
             await env.Service.CheckLinkSharingAsync(User04, Project05, "key12345");
+
             project = env.GetProject(Project05);
-            Assert.That(project.UserRoles.TryGetValue(User04, out string userRole), Is.True, "user was added to project");
+            Assert.That(project.UserRoles.TryGetValue(User04, out string userRole), Is.True,
+                "user was added to project");
             Assert.That(userRole, Is.EqualTo(SFProjectRole.CommunityChecker));
             user = env.GetUser(User04);
             Assert.That(user.Sites[SiteId].Projects, Contains.Item(Project05));
 
-            Assert.That(project.Texts.First().Permissions.ContainsKey(User04), Is.False, "no permissions should have been specified for user");
-            Assert.That(project.Texts.First().Chapters.First().Permissions.ContainsKey(User04), Is.False, "no permissions should have been specified for user");
+            Assert.That(project.Texts.First().Permissions.ContainsKey(User04), Is.False,
+                "no permissions should have been specified for user");
+            Assert.That(project.Texts.First().Chapters.First().Permissions.ContainsKey(User04), Is.False,
+                "no permissions should have been specified for user");
 
             // The get permission methods shouldn't have even been called.
-            env.ParatextService.DidNotReceiveWithAnyArgs().GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>());
-            env.ParatextService.DidNotReceiveWithAnyArgs().GetResourcePermissionAsync(Arg.Any<string>(), Arg.Any<string>());
+            env.ParatextService.DidNotReceiveWithAnyArgs().GetPermissionsAsync(
+                Arg.Any<UserSecret>(),
+                Arg.Any<SFProject>(),
+                Arg.Any<IReadOnlyDictionary<string, string>>(),
+                Arg.Any<int>(),
+                Arg.Any<int>());
+            env.ParatextService.DidNotReceiveWithAnyArgs().GetResourcePermissionAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>());
         }
+
+        [Test]
+        public async Task CheckLinkSharingAsync_PTUserButNotOfThisProjectAndCannotReadResource()
+        {
+            // The user joining the project _is_ a PT user, but they do not have a PT role on this particular project.
+            // Further, they do not have permission to read the DBL resource.
+
+            var env = new TestEnvironment();
+            string paratextProject05ID = "paratext_" + Project05;
+            SFProject project = env.GetProject(Project05);
+            SFProject resource = env.GetProject(Resource01);
+
+            Assert.That(env.UserSecrets.Contains(User03), Is.True,
+                "setup. This is a PT user and is expected to have user secrets.");
+            User user = env.GetUser(User03);
+            Assert.That(user.ParatextId, Is.Not.Null, "setup. PT user should have a PT User ID.");
+
+            Assert.That(project.UserRoles.ContainsKey(User03), Is.False,
+                "setup. User should not already be on the project.");
+            Assert.That(project.Texts.First().Permissions.ContainsKey(User03), Is.False,
+                "setup. User should not already have permissions on the project.");
+            Assert.That(project.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
+            Assert.That(resource.UserRoles.ContainsKey(User03), Is.False,
+                "setup. User should not already be on the project.");
+            Assert.That(resource.Texts.First().Permissions.ContainsKey(User03), Is.False,
+                "setup. User should not have permissions.");
+            Assert.That(resource.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
+
+            // If the user is not a member of the paratext project, then
+            // "GET https://registry-dev.paratext.org/api8/projects/PT_PROJECT_ID/members" will return a 404 Not Found,
+            // and in ParatextService.CallApiAsync() there originates a System.Net.Http.HttpRequestException or perhaps
+            // EdjCase.JsonRpc.Common.RpcException. Our test should not end up doing down a path that causes this
+            // exception.
+            env.ParatextService.GetParatextUsernameMappingAsync(
+                Arg.Is<UserSecret>((UserSecret userSecret) => userSecret.Id == User03),
+                Arg.Is<string>((string paratextId) => paratextId == paratextProject05ID))
+                .Returns(async x => throw new System.Net.Http.HttpRequestException());
+
+            string userRoleOnPTProject = (string)null;
+            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
+                .Returns(Task.FromResult(Attempt.Failure(userRoleOnPTProject)));
+            string userDBLPermissionForResource = TextInfoPermission.None;
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03)
+                .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
+
+            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>())
+                .Returns(x => throw new Exception("Probably can not do this."));
+
+            // PT could answer with these permissions.
+            var ptBookPermissions = new Dictionary<string, string>()
+            {
+                { User02, TextInfoPermission.Read },
+                { User01, TextInfoPermission.Read },
+            };
+            var ptChapterPermissions = new Dictionary<string, string>()
+            {
+                { User02, TextInfoPermission.Write },
+                { User01, TextInfoPermission.Read },
+            };
+            var ptSourcePermissions = new Dictionary<string, string>()
+            {
+                { User02, TextInfoPermission.Read },
+                { User01, TextInfoPermission.Read },
+            };
+            const int bookValueToIndicateWholeResource = 0;
+            const int chapterValueToIndicateWholeBook = 0;
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == paratextProject05ID),
+                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
+                .Returns(Task.FromResult(ptBookPermissions));
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == paratextProject05ID),
+                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
+                .Returns(Task.FromResult(ptChapterPermissions));
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTID),
+                Arg.Any<IReadOnlyDictionary<string, string>>(),
+                bookValueToIndicateWholeResource,
+                chapterValueToIndicateWholeBook)
+                .Returns(Task.FromResult(ptSourcePermissions));
+
+            // SUT
+            await env.Service.CheckLinkSharingAsync(User03, Project05, "key12345");
+
+            project = env.GetProject(Project05);
+            Assert.That(project.UserRoles.TryGetValue(User03, out string userRole), Is.True,
+                "user should have been added to project");
+            Assert.That(userRole, Is.EqualTo(SFProjectRole.CommunityChecker));
+            user = env.GetUser(User03);
+            Assert.That(user.Sites[SiteId].Projects, Contains.Item(Project05),
+                "user not added to project correctly");
+
+            Assert.That(project.Texts.First().Permissions.ContainsKey(User03), Is.False,
+                "no project permissions should have been specified for user");
+            Assert.That(project.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False,
+                "no project permissions should have been specified for user");
+
+            // User03 is not added to the target or source, nor do they have any permissions listed in the source.
+            resource = env.GetProject(Resource01);
+            Assert.That(resource.UserRoles.ContainsKey(User03), Is.False,
+                "user should not have been added to resource project");
+            Assert.That(resource.Texts.First().Permissions.ContainsKey(User03), Is.False,
+                "user should not have permissions to resource");
+            Assert.That(resource.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False,
+                "user should not have permissions to resource");
+            Assert.That(user.Sites[SiteId].Projects, Does.Not.Contain(Resource01), "user should not have been added to");
+
+            // With the current implementation, both ParatextService.GetPermissionsAsync(for the source resource) and
+            // ParatextService.GetPermissionsAsync(for the target project) should be called never. In a future change to
+            // the SUT, it's okay if it is called, as long as the permissions don't get applied. But for now, not
+            // getting called is a helpful indication of expected operation.
+            // The mocks above regarding env.ParatextService.GetPermissionsAsync(for the target project) are left in
+            // place in case they begin to be used.
+            env.ParatextService.DidNotReceive().GetPermissionsAsync(
+                Arg.Any<UserSecret>(), Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Project05),
+                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>());
+            env.ParatextService.DidNotReceive().GetPermissionsAsync(Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Resource01),
+                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>());
+
+            // We may not be able to query a book list for the target project without the user having a PT project role,
+            // or of the DBL resource, without the user having read permission.
+            env.ParatextService.DidNotReceive().GetBookList(Arg.Any<UserSecret>(), paratextProject05ID);
+            env.ParatextService.DidNotReceive().GetBookList(Arg.Any<UserSecret>(), Resource01PTID);
+        }
+
+        [Test]
+        public async Task CheckLinkSharingAsync_PTUserButNotOfThisProjectYetReadsResource()
+        {
+            // The user joining the project _is_ a PT user, but they do not have a PT role on this particular project.
+            // Though they do have permission to read the DBL resource.
+
+            var env = new TestEnvironment();
+            string paratextProject05ID = "paratext_" + Project05;
+            SFProject project = env.GetProject(Project05);
+            SFProject resource = env.GetProject(Resource01);
+
+            Assert.That(env.UserSecrets.Contains(User03), Is.True,
+                "setup. This is a PT user and is expected to have user secrets.");
+            User user = env.GetUser(User03);
+            Assert.That(user.ParatextId, Is.Not.Null,
+                "setup. PT user should have a PT User ID.");
+
+            Assert.That(project.UserRoles.ContainsKey(User03), Is.False,
+                "setup. User should not already be on the project.");
+            Assert.That(project.Texts.First().Permissions.ContainsKey(User03), Is.False,
+                "setup. User should not already have permissions on the project.");
+            Assert.That(project.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
+            Assert.That(resource.UserRoles.ContainsKey(User03), Is.False,
+                "setup. User should not already be on the project, for purposes of testing that they are later.");
+            Assert.That(resource.Texts.First().Permissions.ContainsKey(User03), Is.False,
+                "setup. User should not already have permissions.");
+            Assert.That(resource.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
+
+            env.ParatextService.GetParatextUsernameMappingAsync(
+                Arg.Is<UserSecret>((UserSecret userSecret) => userSecret.Id == User03),
+                Arg.Is<string>((string paratextId) => paratextId == paratextProject05ID))
+                .Returns(async x => throw new System.Net.Http.HttpRequestException());
+
+            string userRoleOnPTProject = (string)null;
+            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
+                .Returns(Task.FromResult(Attempt.Failure(userRoleOnPTProject)));
+            string userDBLPermissionForResource = TextInfoPermission.Read;
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03)
+                .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
+
+            var bookList = new List<int>() { 40, 41 };
+            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(bookList);
+
+            // PT could answer with these permissions.
+            var ptBookPermissions = new Dictionary<string, string>()
+            {
+                { User02, TextInfoPermission.Read },
+                { User01, TextInfoPermission.Read },
+            };
+            var ptChapterPermissions = new Dictionary<string, string>()
+            {
+                { User02, TextInfoPermission.Write },
+                { User01, TextInfoPermission.Read },
+            };
+            var ptSourcePermissions = new Dictionary<string, string>()
+            {
+                { User03, userDBLPermissionForResource },
+                { User02, TextInfoPermission.Read },
+                { User01, TextInfoPermission.Read },
+            };
+            const int bookValueToIndicateWholeResource = 0;
+            const int chapterValueToIndicateWholeBook = 0;
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == paratextProject05ID),
+                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
+                .Returns(Task.FromResult(ptBookPermissions));
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == paratextProject05ID),
+                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
+                .Returns(Task.FromResult(ptChapterPermissions));
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTID),
+                Arg.Any<IReadOnlyDictionary<string, string>>(),
+                bookValueToIndicateWholeResource,
+                chapterValueToIndicateWholeBook)
+                .Returns(Task.FromResult(ptSourcePermissions));
+
+            // SUT
+            await env.Service.CheckLinkSharingAsync(User03, Project05, "key12345");
+
+            project = env.GetProject(Project05);
+            Assert.That(project.UserRoles.TryGetValue(User03, out string userRole), Is.True,
+                "user should have been added to project");
+            Assert.That(userRole, Is.EqualTo(SFProjectRole.CommunityChecker));
+            user = env.GetUser(User03);
+            Assert.That(user.Sites[SiteId].Projects, Contains.Item(Project05), "user not added to project correctly");
+
+            Assert.That(project.Texts.First().Permissions.ContainsKey(User03), Is.False,
+                "no project permissions should have been specified for user");
+            Assert.That(project.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False,
+                "no project permissions should have been specified for user");
+
+            // User03 is not on project paratextProject05ID, but they have access to the source resource. So
+            // UpdatePermissionsAsync() should be inquiring about this and setting permissions as appropriate.
+            env.ParatextService.Received().GetResourcePermissionAsync(Resource01PTID, User03);
+            resource = env.GetProject(Resource01);
+            Assert.That(resource.Texts.First().Permissions[User03], Is.EqualTo(userDBLPermissionForResource),
+                "resource permissions should have been set for joining project user");
+            Assert.That(resource.Texts.First().Chapters.First().Permissions[User03],
+                Is.EqualTo(userDBLPermissionForResource),
+                "resource permissions should have been set for joining project user");
+            Assert.That(resource.UserRoles.TryGetValue(User03, out string resourceUserRole), Is.True,
+                "user should have been added to resource");
+            Assert.That(resourceUserRole, Is.EqualTo(SFProjectRole.Observer),
+                "user role not set correctly on resource");
+            Assert.That(user.Sites[SiteId].Projects, Contains.Item(Resource01),
+                "user not added to resource correctly");
+
+            // With the current implementation, ParatextService.GetPermissionsAsync(for the source resource) should be
+            // called once, but ParatextService.GetPermissionsAsync(for the target project) should be called never. In
+            // a future change to the SUT, it's okay if it is called for the target project, as long as the permissions
+            // don't get applied. But for now, not getting called is a helpful indication of expected operation.
+            // The mocks above regarding env.ParatextService.GetPermissionsAsync(for the target project) are left in
+            // place in case they begin to be used.
+            env.ParatextService.DidNotReceive().GetPermissionsAsync(Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Project05),
+                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>());
+            env.ParatextService.Received(1).GetPermissionsAsync(Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Resource01),
+                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>());
+
+            // We may not be able to query a book list for the target project without the user having a PT project role.
+            env.ParatextService.DidNotReceive().GetBookList(Arg.Any<UserSecret>(), paratextProject05ID);
+            env.ParatextService.Received(1).GetBookList(Arg.Any<UserSecret>(), Resource01PTID);
+        }
+
 
         [Test]
         public async Task IsAlreadyInvitedAsync_BadInput_False()
@@ -685,20 +977,30 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             string paratextProject05ID = "paratext_" + Project05;
             SFProject project = env.GetProject(Project05);
+            SFProject resource = env.GetProject(Resource01);
 
             Assert.That(env.UserSecrets.Contains(User03), Is.True, "setup. PT user should have user secrets.");
             User user = env.GetUser(User03);
             Assert.That(user.ParatextId, Is.Not.Null, "setup. PT user should have a PT User ID.");
 
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03)
-                .Returns<Task<string>>(Task.FromResult(TextInfoPermission.Read));
-            string userRoleInPT = SFProjectRole.Translator;
-            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
-                .Returns(Task.FromResult(Attempt.Success(userRoleInPT)));
-
-            Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
-            Assert.That(project.Texts.First().Permissions.ContainsKey(User03), Is.False, "setup");
+            Assert.That(project.UserRoles.ContainsKey(User03), Is.False,
+                "setup. User should not already be on the project.");
+            Assert.That(project.Texts.First().Permissions.ContainsKey(User03), Is.False,
+                "setup. User should not already have permissions on the project.");
             Assert.That(project.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
+            Assert.That(resource.UserRoles.ContainsKey(User03), Is.False,
+                "setup. User should not already be on the project, for purposes of testing that they are later.");
+            Assert.That(resource.Texts.First().Permissions.ContainsKey(User03), Is.False,
+                "setup. User should not already have permissions.");
+            Assert.That(resource.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
+
+            string userRoleOnPTProject = SFProjectRole.Translator;
+            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
+                .Returns(Task.FromResult(Attempt.Success(userRoleOnPTProject)));
+            string userDBLPermissionForResource = TextInfoPermission.Read;
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03)
+                .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
+
             var bookList = new List<int>() { 40, 41 };
             env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(bookList);
 
@@ -730,7 +1032,9 @@ namespace SIL.XForge.Scripture.Services
                 .Returns(Task.FromResult(ptChapterPermissions));
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
                 Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTID),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), bookValueToIndicateWholeResource, chapterValueToIndicateWholeBook)
+                Arg.Any<IReadOnlyDictionary<string, string>>(),
+                bookValueToIndicateWholeResource,
+                chapterValueToIndicateWholeBook)
                 .Returns(Task.FromResult(ptSourcePermissions));
 
             string projectRoleSpecifiedFromConnectProjectPage = null;
@@ -740,16 +1044,19 @@ namespace SIL.XForge.Scripture.Services
 
             project = env.GetProject(Project05);
             Assert.That(project.UserRoles.TryGetValue(User03, out string userRole), Is.True, "user should be added to project");
-            Assert.That(userRole, Is.EqualTo(userRoleInPT));
+            Assert.That(userRole, Is.EqualTo(userRoleOnPTProject));
             user = env.GetUser(User03);
             Assert.That(user.Sites[SiteId].Projects, Contains.Item(Project05));
 
             Assert.That(project.Texts.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Read));
             Assert.That(project.Texts.First().Chapters.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Write));
 
-            SFProject resource = env.GetProject(Resource01);
-            Assert.That(resource.Texts.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Read));
-            Assert.That(resource.Texts.First().Chapters.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Read));
+            resource = env.GetProject(Resource01);
+            Assert.That(resource.Texts.First().Permissions[User03], Is.EqualTo(userDBLPermissionForResource));
+            Assert.That(resource.Texts.First().Chapters.First().Permissions[User03], Is.EqualTo(userDBLPermissionForResource));
+            Assert.That(resource.UserRoles.TryGetValue(User03, out string resourceUserRole), Is.True, "user should have been added to resource");
+            Assert.That(resourceUserRole, Is.EqualTo(SFProjectRole.Observer), "user role not set correctly on resource");
+            Assert.That(user.Sites[SiteId].Projects, Contains.Item(Resource01), "user not added to resource correctly");
         }
 
         [Test]
@@ -1190,17 +1497,24 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             string targetProjectPTID = PTProjectIDNotYetInSF;
             string sourceProjectPTID = Resource01PTID;
+            SFProject resource = env.GetProject(Resource01);
 
             Assert.That(env.UserSecrets.Contains(User03), Is.True, "setup. PT user should have user secrets.");
             User user = env.GetUser(User03);
             Assert.That(user.ParatextId, Is.Not.Null, "setup. PT user should have a PT User ID.");
             Assert.That(env.ContainsProject(targetProjectPTID), Is.False, "setup. No such SF should exist yet.");
 
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03)
-                .Returns<Task<string>>(Task.FromResult(TextInfoPermission.Read));
-            string userRoleInPT = SFProjectRole.Administrator;
+            Assert.That(resource.UserRoles.ContainsKey(User03), Is.False,
+                "setup. User should not already be on the project, for purposes of testing that they are later.");
+            Assert.That(resource.Texts.First().Permissions.ContainsKey(User03), Is.False, "setup");
+            Assert.That(resource.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
+
+            string userRoleOnPTProject = SFProjectRole.Administrator;
             env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
-                .Returns(Task.FromResult(Attempt.Success(userRoleInPT)));
+                .Returns(Task.FromResult(Attempt.Success(userRoleOnPTProject)));
+            string userDBLPermissionForResource = TextInfoPermission.Read;
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03)
+                .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
             var bookList = new List<int>() { 40, 41 };
             env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(bookList);
@@ -1221,7 +1535,7 @@ namespace SIL.XForge.Scripture.Services
             };
             var ptSourcePermissions = new Dictionary<string, string>()
             {
-                { User03, TextInfoPermission.Read },
+                { User03, userDBLPermissionForResource },
                 { User01, TextInfoPermission.None },
             };
             const int bookValueToIndicateWholeResource = 0;
@@ -1239,8 +1553,9 @@ namespace SIL.XForge.Scripture.Services
                 Arg.Any<IReadOnlyDictionary<string, string>>(), bookValueToIndicateWholeResource, chapterValueToIndicateWholeBook)
                 .Returns(Task.FromResult(ptSourcePermissions));
 
-            SFProject resource = env.GetProject(Resource01);
-            Assert.That(resource.Texts.First().Permissions.Count, Is.EqualTo(0), "setup. User should not have permissions on resource yet.");
+            resource = env.GetProject(Resource01);
+            Assert.That(resource.Texts.First().Permissions.Count, Is.EqualTo(0),
+                "setup. User should not have permissions on resource yet.");
             Assert.That(resource.Texts.First().Chapters.First().Permissions.Count, Is.EqualTo(0), "setup");
 
             // SUT
@@ -1252,10 +1567,11 @@ namespace SIL.XForge.Scripture.Services
             });
 
             SFProject project = env.GetProject(sfProjectId);
-            Assert.That(project.UserRoles.TryGetValue(User03, out string userRole), Is.True, "user should be added to project");
-            Assert.That(userRole, Is.EqualTo(userRoleInPT));
+            Assert.That(project.UserRoles.TryGetValue(User03, out string userRole), Is.True,
+                "user should be added to project");
+            Assert.That(userRole, Is.EqualTo(userRoleOnPTProject));
             user = env.GetUser(User03);
-            Assert.That(user.Sites[SiteId].Projects, Contains.Item(sfProjectId));
+            Assert.That(user.Sites[SiteId].Projects, Contains.Item(sfProjectId), "user not added to project correctly");
 
             // Initially connecting a project should have called Sync, or SF is not going to fetch books and set
             // permissions on them.
@@ -1265,8 +1581,14 @@ namespace SIL.XForge.Scripture.Services
             // But we can show that source resource permissions were set:
 
             resource = env.GetProject(Resource01);
-            Assert.That(resource.Texts.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Read));
-            Assert.That(resource.Texts.First().Chapters.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Read));
+            Assert.That(resource.Texts.First().Permissions[User03], Is.EqualTo(userDBLPermissionForResource));
+            Assert.That(resource.Texts.First().Chapters.First().Permissions[User03],
+                Is.EqualTo(userDBLPermissionForResource));
+            Assert.That(resource.UserRoles.TryGetValue(User03, out string resourceUserRole), Is.True,
+                "user should have been added to resource");
+            Assert.That(resourceUserRole, Is.EqualTo(SFProjectRole.Observer),
+                "user role not set correctly on resource");
+            Assert.That(user.Sites[SiteId].Projects, Contains.Item(Resource01), "user not added to resource correctly");
         }
 
         [Test]

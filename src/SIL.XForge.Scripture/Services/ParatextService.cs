@@ -258,12 +258,12 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>
-        /// Gets the permission a user has to access a resource.
+        /// Gets the permission a user has to access a resource, according to a DBL server.
         /// </summary>
         /// <param name="paratextId">The paratext resource identifier.</param>
         /// <param name="userId">The user identifier.</param>
         /// <returns>
-        /// A dictionary of permissions where the key is the user ID and the value is the permission
+        /// Read or None.
         /// </returns>
         /// <remarks>
         /// See <see cref="TextInfoPermission" /> for permission values.
