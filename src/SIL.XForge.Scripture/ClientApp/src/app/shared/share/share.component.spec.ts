@@ -157,7 +157,7 @@ class TestEnvironment {
           shareEnabled,
           shareLevel
         },
-        sync: { queuedCount: 0, jobIds: [] },
+        sync: { queuedCount: 0 },
         texts: [],
         userRoles: {
           user01: role

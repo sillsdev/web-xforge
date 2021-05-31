@@ -682,7 +682,7 @@ class TestEnvironment {
       shortName: 'P01',
       texts: [],
       writingSystem: { tag: 'en' },
-      sync: { queuedCount: 0, jobIds: [] },
+      sync: { queuedCount: 0 },
       translateConfig: { translationSuggestionsEnabled: false },
       checkingConfig: {
         checkingEnabled: false,

@@ -18,6 +18,8 @@ namespace SIL.XForge.DataAccess
         IUpdateBuilder<T> RemoveAll<TItem>(Expression<Func<T, IEnumerable<TItem>>> field,
             Expression<Func<TItem, bool>> predicate);
 
+        IUpdateBuilder<T> Remove<TItem>(Expression<Func<T, IEnumerable<TItem>>> field, TItem value);
+
         IUpdateBuilder<T> Add<TItem>(Expression<Func<T, IEnumerable<TItem>>> field, TItem value);
     }
 }
