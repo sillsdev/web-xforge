@@ -34,12 +34,12 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.QueuedCount, Is.EqualTo(1));
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.QueuedCount, Is.EqualTo(1));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.JobIds.Count, Is.EqualTo(1));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.JobIds.Count, Is.EqualTo(0));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.JobIds.Count, Is.EqualTo(1));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.JobIds, Contains.Item("jobid"));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.JobIds, Is.Empty);
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.JobIds, Contains.Item("jobid"));
+            Assert.That(env.ProjectSecrets.Get(Project01).JobIds.Count, Is.EqualTo(1));
+            Assert.That(env.ProjectSecrets.Get(Project02).JobIds.Count, Is.EqualTo(0));
+            Assert.That(env.ProjectSecrets.Get(Project03).JobIds.Count, Is.EqualTo(1));
+            Assert.That(env.ProjectSecrets.Get(Project01).JobIds, Contains.Item("jobid"));
+            Assert.That(env.ProjectSecrets.Get(Project02).JobIds, Is.Empty);
+            Assert.That(env.ProjectSecrets.Get(Project03).JobIds, Contains.Item("jobid"));
 
             // Cancel sync
             await env.Service.CancelSyncAsync("userid", Project03);
@@ -49,12 +49,12 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.QueuedCount, Is.EqualTo(0));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.JobIds.Count, Is.EqualTo(0));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.JobIds.Count, Is.EqualTo(0));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.JobIds.Count, Is.EqualTo(0));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.JobIds, Is.Empty);
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.JobIds, Is.Empty);
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.JobIds, Is.Empty);
+            Assert.That(env.ProjectSecrets.Get(Project01).JobIds.Count, Is.EqualTo(0));
+            Assert.That(env.ProjectSecrets.Get(Project02).JobIds.Count, Is.EqualTo(0));
+            Assert.That(env.ProjectSecrets.Get(Project03).JobIds.Count, Is.EqualTo(0));
+            Assert.That(env.ProjectSecrets.Get(Project01).JobIds, Is.Empty);
+            Assert.That(env.ProjectSecrets.Get(Project02).JobIds, Is.Empty);
+            Assert.That(env.ProjectSecrets.Get(Project03).JobIds, Is.Empty);
         }
 
         [Test]
@@ -71,12 +71,12 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.QueuedCount, Is.EqualTo(1));
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.QueuedCount, Is.EqualTo(1));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.JobIds.Count, Is.EqualTo(1));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.JobIds.Count, Is.EqualTo(0));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.JobIds.Count, Is.EqualTo(1));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.JobIds, Contains.Item("jobid"));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.JobIds, Is.Empty);
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.JobIds, Contains.Item("jobid"));
+            Assert.That(env.ProjectSecrets.Get(Project01).JobIds.Count, Is.EqualTo(1));
+            Assert.That(env.ProjectSecrets.Get(Project02).JobIds.Count, Is.EqualTo(0));
+            Assert.That(env.ProjectSecrets.Get(Project03).JobIds.Count, Is.EqualTo(1));
+            Assert.That(env.ProjectSecrets.Get(Project01).JobIds, Contains.Item("jobid"));
+            Assert.That(env.ProjectSecrets.Get(Project02).JobIds, Is.Empty);
+            Assert.That(env.ProjectSecrets.Get(Project03).JobIds, Contains.Item("jobid"));
 
             // Cancel sync
             await env.Service.CancelSyncAsync("userid", Project01);
@@ -86,12 +86,12 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.QueuedCount, Is.EqualTo(1));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.JobIds.Count, Is.EqualTo(0));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.JobIds.Count, Is.EqualTo(0));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.JobIds.Count, Is.EqualTo(1));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.JobIds, Is.Empty);
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.JobIds, Is.Empty);
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.JobIds, Contains.Item("jobid"));
+            Assert.That(env.ProjectSecrets.Get(Project01).JobIds.Count, Is.EqualTo(0));
+            Assert.That(env.ProjectSecrets.Get(Project02).JobIds.Count, Is.EqualTo(0));
+            Assert.That(env.ProjectSecrets.Get(Project03).JobIds.Count, Is.EqualTo(1));
+            Assert.That(env.ProjectSecrets.Get(Project01).JobIds, Is.Empty);
+            Assert.That(env.ProjectSecrets.Get(Project02).JobIds, Is.Empty);
+            Assert.That(env.ProjectSecrets.Get(Project03).JobIds, Contains.Item("jobid"));
         }
 
         [Test]
@@ -108,12 +108,12 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.QueuedCount, Is.EqualTo(1));
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.QueuedCount, Is.EqualTo(0));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.JobIds.Count, Is.EqualTo(1));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.JobIds.Count, Is.EqualTo(0));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.JobIds.Count, Is.EqualTo(0));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.JobIds, Contains.Item("jobid"));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.JobIds, Is.Empty);
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.JobIds, Is.Empty);
+            Assert.That(env.ProjectSecrets.Get(Project01).JobIds.Count, Is.EqualTo(1));
+            Assert.That(env.ProjectSecrets.Get(Project02).JobIds.Count, Is.EqualTo(0));
+            Assert.That(env.ProjectSecrets.Get(Project03).JobIds.Count, Is.EqualTo(0));
+            Assert.That(env.ProjectSecrets.Get(Project01).JobIds, Contains.Item("jobid"));
+            Assert.That(env.ProjectSecrets.Get(Project02).JobIds, Is.Empty);
+            Assert.That(env.ProjectSecrets.Get(Project03).JobIds, Is.Empty);
 
             // Cancel sync
             await env.Service.CancelSyncAsync("userid", Project01);
@@ -123,12 +123,12 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.QueuedCount, Is.EqualTo(0));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.JobIds.Count, Is.EqualTo(0));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.JobIds.Count, Is.EqualTo(0));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.JobIds.Count, Is.EqualTo(0));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.JobIds, Is.Empty);
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.JobIds, Is.Empty);
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.JobIds, Is.Empty);
+            Assert.That(env.ProjectSecrets.Get(Project01).JobIds.Count, Is.EqualTo(0));
+            Assert.That(env.ProjectSecrets.Get(Project02).JobIds.Count, Is.EqualTo(0));
+            Assert.That(env.ProjectSecrets.Get(Project03).JobIds.Count, Is.EqualTo(0));
+            Assert.That(env.ProjectSecrets.Get(Project01).JobIds, Is.Empty);
+            Assert.That(env.ProjectSecrets.Get(Project02).JobIds, Is.Empty);
+            Assert.That(env.ProjectSecrets.Get(Project03).JobIds, Is.Empty);
         }
 
         [Test]
@@ -154,12 +154,12 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.QueuedCount, Is.EqualTo(1));
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.QueuedCount, Is.EqualTo(1));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.JobIds.Count, Is.EqualTo(1));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.JobIds.Count, Is.EqualTo(0));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.JobIds.Count, Is.EqualTo(1));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.JobIds, Contains.Item("jobid"));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.JobIds, Is.Empty);
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.JobIds, Contains.Item("jobid"));
+            Assert.That(env.ProjectSecrets.Get(Project01).JobIds.Count, Is.EqualTo(1));
+            Assert.That(env.ProjectSecrets.Get(Project02).JobIds.Count, Is.EqualTo(0));
+            Assert.That(env.ProjectSecrets.Get(Project03).JobIds.Count, Is.EqualTo(1));
+            Assert.That(env.ProjectSecrets.Get(Project01).JobIds, Contains.Item("jobid"));
+            Assert.That(env.ProjectSecrets.Get(Project02).JobIds, Is.Empty);
+            Assert.That(env.ProjectSecrets.Get(Project03).JobIds, Contains.Item("jobid"));
         }
 
         [Test]
@@ -176,12 +176,12 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.QueuedCount, Is.EqualTo(1));
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.QueuedCount, Is.EqualTo(0));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.JobIds.Count, Is.EqualTo(1));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.JobIds.Count, Is.EqualTo(0));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.JobIds.Count, Is.EqualTo(0));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.JobIds, Contains.Item("jobid"));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.JobIds, Is.Empty);
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.JobIds, Is.Empty);
+            Assert.That(env.ProjectSecrets.Get(Project01).JobIds.Count, Is.EqualTo(1));
+            Assert.That(env.ProjectSecrets.Get(Project02).JobIds.Count, Is.EqualTo(0));
+            Assert.That(env.ProjectSecrets.Get(Project03).JobIds.Count, Is.EqualTo(0));
+            Assert.That(env.ProjectSecrets.Get(Project01).JobIds, Contains.Item("jobid"));
+            Assert.That(env.ProjectSecrets.Get(Project02).JobIds, Is.Empty);
+            Assert.That(env.ProjectSecrets.Get(Project03).JobIds, Is.Empty);
         }
 
         [Test]
@@ -197,6 +197,12 @@ namespace SIL.XForge.Scripture.Services
             public TestEnvironment()
             {
                 BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
+                ProjectSecrets = new MemoryRepository<SFProjectSecret>(new[]
+                {
+                    new SFProjectSecret { Id = "project01" },
+                    new SFProjectSecret { Id = "project02" },
+                    new SFProjectSecret { Id = "project03" },
+                });
                 RealtimeService = new SFMemoryRealtimeService();
 
                 RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(
@@ -251,11 +257,12 @@ namespace SIL.XForge.Scripture.Services
                         }
                 }));
 
-                Service = new SyncService(BackgroundJobClient, RealtimeService);
+                Service = new SyncService(BackgroundJobClient, ProjectSecrets, RealtimeService);
             }
 
             public SyncService Service { get; }
             public IBackgroundJobClient BackgroundJobClient { get; }
+            public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
             public SFMemoryRealtimeService RealtimeService { get; }
         }
     }

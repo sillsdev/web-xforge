@@ -968,7 +968,7 @@ namespace SIL.XForge.Scripture.Services
                 });
                 _projectSecrets = new MemoryRepository<SFProjectSecret>(new[]
                 {
-                    new SFProjectSecret { Id = "project01" },
+                    new SFProjectSecret { Id = "project01", JobIds = new List<string>{ "test_jobid" } },
                     new SFProjectSecret { Id = "project02" },
                     new SFProjectSecret { Id = "project03" },
                     new SFProjectSecret { Id = "project04" },
@@ -1048,9 +1048,10 @@ namespace SIL.XForge.Scripture.Services
             public SFProject VerifyProjectSync(bool successful, string expectedRepoVersion = null,
                 string projectSFID = "project01")
             {
+                SFProjectSecret projectSecret = GetProjectSecret();
+                Assert.That(projectSecret.JobIds.Count, Is.EqualTo(0));
                 SFProject project = GetProject(projectSFID);
                 Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
-                Assert.That(project.Sync.JobIds.Count, Is.EqualTo(0));
                 Assert.That(project.Sync.LastSyncSuccessful, Is.EqualTo(successful));
                 string repoVersion = expectedRepoVersion ?? (successful ? "afterSR" : "beforeSR");
                 Assert.That(project.Sync.SyncedToRepositoryVersion, Is.EqualTo(repoVersion));
@@ -1121,8 +1122,7 @@ namespace SIL.XForge.Scripture.Services
                                 // QueuedCount is incremented before RunAsync() by SyncService.SyncAsync(). So set
                                 // it to 1 to simulate it being incremented.
                                 QueuedCount = 1,
-                                SyncedToRepositoryVersion = "beforeSR",
-                                JobIds = new List<string>{ "test_jobid" }
+                                SyncedToRepositoryVersion = "beforeSR"
                             }
                         },
                         new SFProject

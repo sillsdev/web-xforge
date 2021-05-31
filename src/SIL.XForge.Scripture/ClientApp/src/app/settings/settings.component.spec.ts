@@ -634,7 +634,7 @@ class TestEnvironment {
         },
         translateConfig,
         checkingConfig,
-        sync: { queuedCount: 0, jobIds: [] },
+        sync: { queuedCount: 0 },
         texts: [],
         userRoles: {},
         userPermissions: {}
