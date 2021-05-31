@@ -164,29 +164,7 @@ namespace SIL.XForge.Scripture.Services
 
                 if (projectDoc.Data.Sync.QueuedCount > 0)
                 {
-                    // Load the project secrets, so we can get any job ids
-                    if ((await _projectSecrets.TryGetAsync(projectId)).TryResult(out SFProjectSecret projectSecret))
-                    {
-                        // Cancel all jobs for the project
-                        foreach (string jobId in projectSecret.JobIds)
-                        {
-                            _backgroundJobClient.Delete(jobId);
-                        }
-
-                        // Remove all job ids from the project secrets
-                        await _projectSecrets.UpdateAsync(projectSecret.Id, u =>
-                        {
-                            u.Set(p => p.JobIds, new List<string>());
-                        });
-
-                        // Mark sync as cancelled
-                        await projectDoc.SubmitJson0OpAsync(op =>
-                        {
-                            op.Set(pd => pd.Sync.QueuedCount, 0);
-                            op.Unset(pd => pd.Sync.PercentCompleted);
-                            op.Set(pd => pd.Sync.LastSyncSuccessful, false);
-                        });
-                    }
+                    await CancelProjectDocumentSyncAsync(projectDoc);
 
                     // Cancel all jobs for the source (if present)
                     string sourceProjectId = projectDoc.Data.TranslateConfig.Source?.ProjectRef;
@@ -197,33 +175,38 @@ namespace SIL.XForge.Scripture.Services
                         {
                             if (sourceProjectDoc.Data.Sync.QueuedCount > 0)
                             {
-                                // Load the source project secrets, so we can get any job ids
-                                if ((await _projectSecrets.TryGetAsync(sourceProjectId)).TryResult(out SFProjectSecret sourceProjectSecret))
-                                {
-                                    // Cancel all jobs for the source project
-                                    foreach (string jobId in sourceProjectSecret.JobIds)
-                                    {
-                                        _backgroundJobClient.Delete(jobId);
-                                    }
-
-                                    // Remove all job ids from the source project secrets
-                                    await _projectSecrets.UpdateAsync(sourceProjectSecret.Id, u =>
-                                    {
-                                        u.Set(p => p.JobIds, new List<string>());
-                                    });
-
-                                    // Mark source project sync as cancelled
-                                    await sourceProjectDoc.SubmitJson0OpAsync(op =>
-                                    {
-                                        op.Set(pd => pd.Sync.QueuedCount, 0);
-                                        op.Unset(pd => pd.Sync.PercentCompleted);
-                                        op.Set(pd => pd.Sync.LastSyncSuccessful, false);
-                                    });
-                                }
+                                await CancelProjectDocumentSyncAsync(sourceProjectDoc);
                             }
                         }
                     }
                 }
+            }
+        }
+
+        private async Task CancelProjectDocumentSyncAsync(IDocument<SFProject> projectDoc)
+        {
+            // Load the project secrets, so we can get any job ids
+            if ((await _projectSecrets.TryGetAsync(projectDoc.Data.Id)).TryResult(out SFProjectSecret projectSecret))
+            {
+                // Cancel all jobs for the project
+                foreach (string jobId in projectSecret.JobIds)
+                {
+                    _backgroundJobClient.Delete(jobId);
+                }
+
+                // Remove all job ids from the project secrets
+                await _projectSecrets.UpdateAsync(projectSecret.Id, u =>
+                {
+                    u.Set(p => p.JobIds, new List<string>());
+                });
+
+                // Mark sync as cancelled
+                await projectDoc.SubmitJson0OpAsync(op =>
+                {
+                    op.Set(pd => pd.Sync.QueuedCount, 0);
+                    op.Unset(pd => pd.Sync.PercentCompleted);
+                    op.Set(pd => pd.Sync.LastSyncSuccessful, false);
+                });
             }
         }
     }
