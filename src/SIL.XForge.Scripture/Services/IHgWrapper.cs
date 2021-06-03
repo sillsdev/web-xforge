@@ -7,5 +7,6 @@ namespace SIL.XForge.Scripture.Services
         void SetDefault(Hg hgDefault);
         void Init(string repository);
         void Update(string repository);
+        string GetLastPublicRevision(string repository);
     }
 }
