@@ -63,13 +63,14 @@ namespace SIL.XForge.Scripture.Services
         private readonly ISFRestClientFactory _restClientFactory;
         /// <summary> Map user IDs to semaphores </summary>
         private readonly ConcurrentDictionary<string, SemaphoreSlim> _tokenRefreshSemaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
+        private readonly IHgWrapper _hgHelper;
 
         public ParatextService(IWebHostEnvironment env, IOptions<ParatextOptions> paratextOptions,
             IRepository<UserSecret> userSecretRepository, IRealtimeService realtimeService,
             IExceptionHandler exceptionHandler, IOptions<SiteOptions> siteOptions, IFileSystemService fileSystemService,
             ILogger<ParatextService> logger, IJwtTokenHelper jwtTokenHelper, IParatextDataHelper paratextDataHelper,
             IInternetSharedRepositorySourceProvider internetSharedRepositorySourceProvider,
-            ISFRestClientFactory restClientFactory)
+            ISFRestClientFactory restClientFactory, IHgWrapper hgWrapper)
         {
             _paratextOptions = paratextOptions;
             _userSecretRepository = userSecretRepository;
@@ -82,6 +83,7 @@ namespace SIL.XForge.Scripture.Services
             _paratextDataHelper = paratextDataHelper;
             _internetSharedRepositorySourceProvider = internetSharedRepositorySourceProvider;
             _restClientFactory = restClientFactory;
+            _hgHelper = hgWrapper;
 
             _httpClientHandler = new HttpClientHandler();
             _registryClient = new HttpClient(_httpClientHandler);
@@ -102,7 +104,6 @@ namespace SIL.XForge.Scripture.Services
             }
             _registryClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             ScrTextCollection = new LazyScrTextCollection();
-            HgHelper = new HgWrapper();
 
             SharingLogicWrapper = new SharingLogicWrapper();
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
@@ -124,7 +125,6 @@ namespace SIL.XForge.Scripture.Services
 
         internal IScrTextCollection ScrTextCollection { get; set; }
         internal ISharingLogicWrapper SharingLogicWrapper { get; set; }
-        internal IHgWrapper HgHelper { get; set; }
 
         /// <summary> Prepare access to Paratext.Data library, authenticate, and prepare Mercurial. </summary>
         public void Init()
@@ -613,8 +613,13 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         public string GetLatestSharedVersion(UserSecret userSecret, string ptProjectId)
         {
+            if (ptProjectId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+            {
+                // Not meaningful for DBL resources, which do not have a local hg repo.
+                return null;
+            }
             ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), ptProjectId);
-            return scrText == null ? null : HgWrapper.GetLastPublicRevision(scrText.Directory);
+            return scrText == null ? null : _hgHelper.GetLastPublicRevision(scrText.Directory);
         }
 
         protected override void DisposeManagedResources()
@@ -677,7 +682,7 @@ namespace SIL.XForge.Scripture.Services
                 throw new InvalidOperationException(msg);
             }
             var hgMerge = Path.Combine(AssemblyDirectory, "ParatextMerge.py");
-            HgHelper.SetDefault(new Hg(customHgPath, hgMerge, AssemblyDirectory));
+            _hgHelper.SetDefault(new Hg(customHgPath, hgMerge, AssemblyDirectory));
         }
 
         /// <summary> Copy resource files from the Assembly Directory into the sync directory. </summary>
@@ -760,10 +765,10 @@ namespace SIL.XForge.Scripture.Services
             if (!_fileSystemService.DirectoryExists(clonePath))
             {
                 _fileSystemService.CreateDirectory(clonePath);
-                HgHelper.Init(clonePath);
+                _hgHelper.Init(clonePath);
             }
             source.Pull(clonePath, repo);
-            HgHelper.Update(clonePath);
+            _hgHelper.Update(clonePath);
         }
 
         private async Task<string> CallApiAsync(UserSecret userSecret, HttpMethod method,
