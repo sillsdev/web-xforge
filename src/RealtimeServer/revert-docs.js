@@ -51,7 +51,7 @@ async function main(args) {
   const ws = new WebSocket(`ws://127.0.0.1:${port}/?server=true`);
   const conn = new ShareDB.Connection(ws);
 
-  const data = fs.readFileSync(docsJsonPath, 'string');
+  const data = fs.readFileSync(docsJsonPath, 'utf8');
   const docsToRevert = JSON.parse(data);
 
   for (const docId of Object.keys(docsToRevert)) {
@@ -62,6 +62,7 @@ async function main(args) {
     const op = doc.type.diff(doc.data, snapshot.data);
     await docSubmitOp(doc, op);
   }
+  conn.close();
 }
 
 (async () => {
