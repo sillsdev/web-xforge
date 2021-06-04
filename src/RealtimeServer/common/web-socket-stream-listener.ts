@@ -21,8 +21,7 @@ export class WebSocketStreamListener {
     private readonly scope: string,
     authority: string,
     private readonly port: number,
-    private exceptionReporter: ExceptionReporter,
-    private readonly isDevelopment: boolean
+    private exceptionReporter: ExceptionReporter
   ) {
     // Create web servers to serve files and listen to WebSocket connections
     const app = express();

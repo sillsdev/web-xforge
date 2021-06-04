@@ -67,8 +67,7 @@ async function startServer(options: RealtimeServerOptions): Promise<void> {
       options.scope,
       options.authority,
       options.port,
-      exceptionReporter,
-      options.releaseStage === 'development'
+      exceptionReporter
     );
     streamListener.listen(server);
     await streamListener.start();
