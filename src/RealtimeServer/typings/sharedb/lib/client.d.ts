@@ -1,6 +1,6 @@
 /// <reference path="common.d.ts" />
 import { EventEmitter } from 'events';
-import * as WS from 'ws';
+import WS from 'ws';
 import { ClientRequest, Op, RawOp, Snapshot } from './common';
 
 export {
@@ -35,6 +35,18 @@ export class Connection {
     options: { results?: Query[] },
     callback: (err: Error, results: any) => any
   ): Query;
+  fetchSnapshot(
+    collectionName: string,
+    documentID: string,
+    version: number | null,
+    callback: (err: Error, snapshot: Snapshot) => void
+  ): void;
+  fetchSnapshotByTimestamp(
+    collectionName: string,
+    documentID: string,
+    timestamp: number | null,
+    callback: (err: Error, snapshot: Snapshot) => void
+  ): void;
 
   sendOp(doc: Doc, op: RawOp): void;
   _addDoc(doc: Doc): void;
@@ -52,7 +64,7 @@ export interface ShareDBSourceOptions {
 }
 
 export class Doc extends EventEmitter {
-  type: string;
+  type: any;
   id: string;
   data: any;
   version: number;
