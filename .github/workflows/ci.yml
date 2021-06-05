@@ -2,7 +2,7 @@
 # versions of node and OSes.
 # See: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 
-name: Angular Production Build CI
+name: Angular Production Build
 
 on:
   push:
@@ -12,14 +12,14 @@ on:
 
 jobs:
   build:
-    name: Build and test on node ${{ matrix.node_version }} and ${{ matrix.os }}
+    name: node ${{ matrix.node_version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-        node_version: [12.x]
-        os: [windows-latest, ubuntu-latest]
+        node_version: [12.x, 16.x]
+        os: [ubuntu-latest]
 
     steps:
       - uses: actions/checkout@v2
