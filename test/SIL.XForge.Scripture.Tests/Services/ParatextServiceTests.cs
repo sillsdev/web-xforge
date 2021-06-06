@@ -685,7 +685,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetLatestSharedVersion_ForPTProject()
+        public void GetLatestSharedVersion_ForPTProject()
         {
             var env = new TestEnvironment();
             var associatedPtUser = new SFParatextUser(env.Username01);
@@ -703,10 +703,9 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetLatestSharedVersion_ForDBLResource()
+        public void GetLatestSharedVersion_ForDBLResource()
         {
             var env = new TestEnvironment();
-            var associatedPtUser = new SFParatextUser(env.Username01);
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
 
             string resourcePTID = "1234567890123456";
