@@ -65,14 +65,14 @@ namespace SIL.XForge.Scripture.Services
                             sourceProjectSecret = null;
                         }
 
-                        // Schedule the sync for 30 seconds to give us enough time to update the project's sync object
+                        // Schedule the sync for 5 minutes to give us enough time to update the project's sync object
                         // We do this because there is no "draft" status in hangfire - this is close enough
                         // After we do that, we will enqueue the job. We do it this way because we don't want to start
                         // the job unless the queued count and job ids have been incremented appropriately.
                         // We need to sync the source first so that we can link the source texts and train the engine.
                         string sourceJobId = _backgroundJobClient.Schedule<ParatextSyncRunner>(
                             r => r.RunAsync(sourceProjectId, curUserId, false, CancellationToken.None),
-                            TimeSpan.FromSeconds(30));
+                            TimeSpan.FromMinutes(5));
                         string targetJobId = _backgroundJobClient.ContinueJobWith<ParatextSyncRunner>(sourceJobId,
                             r => r.RunAsync(projectId, curUserId, trainEngine, CancellationToken.None), null,
                             JobContinuationOptions.OnAnyFinishedState);
@@ -124,7 +124,7 @@ namespace SIL.XForge.Scripture.Services
                 // See the comments in the block above regarding scheduling for rationale on the process
                 string jobId = _backgroundJobClient.Schedule<ParatextSyncRunner>(
                     r => r.RunAsync(projectId, curUserId, trainEngine, CancellationToken.None),
-                    TimeSpan.FromSeconds(30));
+                    TimeSpan.FromMinutes(5));
                 try
                 {
                     await projectDoc.SubmitJson0OpAsync(op =>
