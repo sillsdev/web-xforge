@@ -694,7 +694,7 @@ namespace SIL.XForge.Scripture.Services
                     .Returns("1", "2");
 
                 // SUT
-                await env.Runner.RunAsync(projectSFID, userID, false);
+                await env.Runner.RunAsync(projectSFID, userID, false, CancellationToken.None);
 
                 project = env.GetProject(projectSFID);
                 // We should get into UpdateParatextBook() and fetch and perhaps put books.
@@ -702,14 +702,60 @@ namespace SIL.XForge.Scripture.Services
                 env.DeltaUsxMapper.Received().ToUsx(Arg.Any<XDocument>(), Arg.Any<IEnumerable<ChapterDelta>>());
                 // We should get into UpdateParatextNotesAsync() and fetch and perhaps put notes.
                 env.ParatextService.Received().GetNotes(Arg.Any<UserSecret>(), projectPTID, Arg.Any<int>());
-                env.NotesMapper.Received().GetNotesChangelistAsync(Arg.Any<XElement>(),
+                await env.NotesMapper.Received().GetNotesChangelistAsync(Arg.Any<XElement>(),
                     Arg.Any<IEnumerable<IDocument<Question>>>());
                 // We should have then called SR
-                env.ParatextService.Received(1).SendReceiveAsync(Arg.Any<UserSecret>(), projectPTID,
+                await env.ParatextService.Received(1).SendReceiveAsync(Arg.Any<UserSecret>(), projectPTID,
                     Arg.Any<IProgress<ProgressState>>());
 
                 // The expected repository version can still be past the original project version, even if there were
                 // no local changes, since there may be incoming changes.
+                string expectedRepositoryVersion = "2";
+                env.VerifyProjectSync(true, expectedRepositoryVersion, projectSFID);
+            }
+        }
+
+        [Test]
+        public async Task RunAsync_NoRecordOfSyncedToRepositoryVersionYetOutOfSyncRecord_NotWriteToPT()
+        {
+            foreach (bool isChanged in new bool[] { true, false })
+            {
+                var env = new TestEnvironment();
+                string projectSFID = "project05";
+                string userID = "user01";
+
+                Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+                bool translationSuggestionsEnabled = false;
+                bool checkingEnabled = true;
+                bool changed = isChanged;
+                env.SetupSFData(projectSFID, "project04", translationSuggestionsEnabled, checkingEnabled, changed,
+                    books);
+                SFProject project = env.GetProject(projectSFID);
+                string projectPTID = project.ParatextId;
+                // env.SetupPTData(projectPTID, env.GetProject("project04").ParatextId, books);
+                Assert.That(project.Sync.SyncedToRepositoryVersion, Is.Null,
+                    "setup. Should be testing what happens when this is not set.");
+                Assert.That(project.Sync.DataInSync, Is.False,
+                    "setup. Should be testing what happens for this.");
+                env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), projectPTID)
+                    .Returns("1", "2");
+
+                // SUT
+                await env.Runner.RunAsync(projectSFID, userID, false, CancellationToken.None);
+
+                project = env.GetProject(projectSFID);
+                // We are in an out-of-sync situation and so should not be writing to PT.
+
+                env.ParatextService.DidNotReceiveWithAnyArgs().GetBookText(default, default, default);
+                env.DeltaUsxMapper.DidNotReceiveWithAnyArgs().ToUsx(Arg.Any<XDocument>(),
+                    Arg.Any<IEnumerable<ChapterDelta>>());
+                env.ParatextService.DidNotReceiveWithAnyArgs().GetNotes(default, default, default);
+                await env.NotesMapper.DidNotReceiveWithAnyArgs().GetNotesChangelistAsync(Arg.Any<XElement>(),
+                    Arg.Any<IEnumerable<IDocument<Question>>>());
+                // We should have then called SR
+                await env.ParatextService.Received(1).SendReceiveAsync(Arg.Any<UserSecret>(), projectPTID,
+                    Arg.Any<IProgress<ProgressState>>());
+
                 string expectedRepositoryVersion = "2";
                 env.VerifyProjectSync(true, expectedRepositoryVersion, projectSFID);
             }
@@ -760,175 +806,108 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task RunAsync_NoRecordOfSyncedToRepositoryVersionYetOutOfSyncRecord_NotWriteToPT()
+        public async Task SyncAsync_TaskCancelledPrematurely()
         {
-            foreach (bool isChanged in new bool[] { true, false })
-            {
-                var env = new TestEnvironment();
-                string projectSFID = "project05";
-                string userID = "user01";
+            // Set up the environment
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, false);
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+            var cancellationTokenSource = new CancellationTokenSource();
 
-                Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-                bool translationSuggestionsEnabled = false;
-                bool checkingEnabled = true;
-                bool changed = isChanged;
-                env.SetupSFData(projectSFID, "project04", translationSuggestionsEnabled, checkingEnabled, changed,
-                    books);
-                SFProject project = env.GetProject(projectSFID);
-                string projectPTID = project.ParatextId;
-                // env.SetupPTData(projectPTID, env.GetProject("project04").ParatextId, books);
-                Assert.That(project.Sync.SyncedToRepositoryVersion, Is.Null,
-                    "setup. Should be testing what happens when this is not set.");
-                Assert.That(project.Sync.DataInSync, Is.False,
-                    "setup. Should be testing what happens for this.");
-                env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), projectPTID)
-                    .Returns("1", "2");
+            // Cancel the token before awaiting the task
+            cancellationTokenSource.Cancel();
 
-                // SUT
-                await env.Runner.RunAsync(projectSFID, userID, false);
+            // Run the task
+            await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
 
-                project = env.GetProject(projectSFID);
-                // We are in an out-of-sync situation and so should not be writing to PT.
+            // Check that the task was cancelled after awaiting the check above
+            SFProject project = env.VerifyProjectSync(false);
+            Assert.That(project.Sync.DataInSync, Is.False);
+        }
 
-                env.ParatextService.DidNotReceiveWithAnyArgs().GetBookText(default, default, default);
-                env.DeltaUsxMapper.DidNotReceiveWithAnyArgs().ToUsx(Arg.Any<XDocument>(),
-                    Arg.Any<IEnumerable<ChapterDelta>>());
-                env.ParatextService.DidNotReceiveWithAnyArgs().GetNotes(default, default, default);
-                env.NotesMapper.DidNotReceiveWithAnyArgs().GetNotesChangelistAsync(Arg.Any<XElement>(),
-                    Arg.Any<IEnumerable<IDocument<Question>>>());
-                // We should have then called SR
-                env.ParatextService.Received(1).SendReceiveAsync(Arg.Any<UserSecret>(), projectPTID,
-                    Arg.Any<IProgress<ProgressState>>());
+        [Test]
+        public async Task SyncAsync_TaskCancelledTooLate()
+        {
+            // Set up the environment
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, false);
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+            var cancellationTokenSource = new CancellationTokenSource();
 
-                string expectedRepositoryVersion = "2";
-                env.VerifyProjectSync(true, expectedRepositoryVersion, projectSFID);
-            }
+            // Run the task
+            await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
 
-            [Test]
-            public async Task SyncAsync_TaskCancelledByException()
-            {
-                // Set up the environment
-                var env = new TestEnvironment();
-                env.SetupSFData(true, true, false);
-                env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
-                var cancellationTokenSource = new CancellationTokenSource();
+            // Cancel the token after awaiting the task
+            cancellationTokenSource.Cancel();
 
-                // Setup a trap to cancel the task
-                env.NotesMapper.When(x => x.InitAsync(Arg.Any<UserSecret>(), Arg.Any<SFProjectSecret>(),
-                    Arg.Any<List<User>>(), Arg.Any<string>(), Arg.Any<CancellationToken>()))
-                    .Do(_ => throw new TaskCanceledException());
+            // Check that the sync was successful
+            SFProject project = env.VerifyProjectSync(true);
+            Assert.That(project.Sync.DataInSync, Is.True);
+        }
 
-                // Run the task
-                await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+        [Test]
+        public async Task FetchTextDocsAsync_FetchesExistingChapters()
+        {
+            var env = new TestEnvironment();
+            var numberChapters = 3;
+            var book = new Book("MAT", numberChapters, true);
+            env.SetupSFData(true, true, false, book);
 
-                // Check that the task cancelled correctly
-                SFProject project = env.VerifyProjectSync(false);
-                Assert.That(project.Sync.DataInSync, Is.True);  // Nothing was synced as this was cancelled OnInit()
-            }
+            // SUT
+            await env.Runner.InitAsync("project01", "user01", CancellationToken.None);
+            SortedList<int, IDocument<TextData>> targetFetch =
+                await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
+            await env.Runner.InitAsync("project02", "user01", CancellationToken.None);
+            SortedList<int, IDocument<TextData>> sourceFetch =
+                await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
+            env.Runner.CloseConnection();
 
-            [Test]
-            public async Task SyncAsync_TaskCancelledPrematurely()
-            {
-                // Set up the environment
-                var env = new TestEnvironment();
-                env.SetupSFData(true, true, false);
-                env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
-                var cancellationTokenSource = new CancellationTokenSource();
+            // Fetched numberChapters chapters, none of which are missing their chapter content.
+            Assert.That(targetFetch.Count, Is.EqualTo(numberChapters));
+            Assert.That(sourceFetch.Count, Is.EqualTo(numberChapters));
+            Assert.That(targetFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
+            Assert.That(sourceFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
+        }
 
-                // Cancel the token before awaiting the task
-                cancellationTokenSource.Cancel();
+        [Test]
+        public async Task FetchTextDocsAsync_MissingRequestedChapters()
+        {
+            // In production, the expected chapters list, used to specify
+            // what FetchTextDocsAsync() should fetch, comes from the
+            // SF DB project doc texts.chapters array. This array
+            // specifies what Target chapter text docs the SF DB should
+            // ave. Re-using the Target chapter list when fetching Source
+            // chapter text docs from the SF DB can lead to problems if
+            // FetchTextDocsAsync() does not omit ones that aren't
+            // actually in the DB.
 
-                // Run the task
-                await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+            var env = new TestEnvironment();
+            var highestChapter = 20;
+            var missingSourceChapters = new HashSet<int>() { 2, 3, 10, 12 };
+            var existingTargetChapters = Enumerable.Range(1, highestChapter);
+            var existingSourceChapters = Enumerable.Range(1, highestChapter).Except(missingSourceChapters);
+            Assert.That(existingSourceChapters.Count(),
+                Is.EqualTo(highestChapter - missingSourceChapters.Count()), "setup");
+            Assert.That(existingTargetChapters.Count(),
+                Is.GreaterThan(existingSourceChapters.Count()), "setup");
+            var book = new Book("MAT", highestChapter, true) { MissingSourceChapters = missingSourceChapters };
+            env.SetupSFData(true, true, false, book);
 
-                // Check that the task was cancelled after awaiting the check above
-                SFProject project = env.VerifyProjectSync(false);
-                Assert.That(project.Sync.DataInSync, Is.False);
-            }
+            // SUT
+            await env.Runner.InitAsync("project01", "user01", CancellationToken.None);
+            var targetFetch = await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
 
-            [Test]
-            public async Task SyncAsync_TaskCancelledTooLate()
-            {
-                // Set up the environment
-                var env = new TestEnvironment();
-                env.SetupSFData(true, true, false);
-                env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
-                var cancellationTokenSource = new CancellationTokenSource();
+            await env.Runner.InitAsync("project02", "user01", CancellationToken.None);
+            var sourceFetch = await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
 
-                // Run the task
-                await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+            env.Runner.CloseConnection();
 
-                // Cancel the token after awaiting the task
-                cancellationTokenSource.Cancel();
-
-                // Check that the sync was successful
-                SFProject project = env.VerifyProjectSync(true);
-                Assert.That(project.Sync.DataInSync, Is.True);
-            }
-
-            [Test]
-            public async Task FetchTextDocsAsync_FetchesExistingChapters()
-            {
-                var env = new TestEnvironment();
-                var numberChapters = 3;
-                var book = new Book("MAT", numberChapters, true);
-                env.SetupSFData(true, true, false, book);
-
-                // SUT
-                await env.Runner.InitAsync("project01", "user01", CancellationToken.None);
-                SortedList<int, IDocument<TextData>> targetFetch =
-                    await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
-                await env.Runner.InitAsync("project02", "user01", CancellationToken.None);
-                SortedList<int, IDocument<TextData>> sourceFetch =
-                    await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
-                env.Runner.CloseConnection();
-
-                // Fetched numberChapters chapters, none of which are missing their chapter content.
-                Assert.That(targetFetch.Count, Is.EqualTo(numberChapters));
-                Assert.That(sourceFetch.Count, Is.EqualTo(numberChapters));
-                Assert.That(targetFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
-                Assert.That(sourceFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
-            }
-
-            [Test]
-            public async Task FetchTextDocsAsync_MissingRequestedChapters()
-            {
-                // In production, the expected chapters list, used to specify
-                // what FetchTextDocsAsync() should fetch, comes from the
-                // SF DB project doc texts.chapters array. This array
-                // specifies what Target chapter text docs the SF DB should
-                // ave. Re-using the Target chapter list when fetching Source
-                // chapter text docs from the SF DB can lead to problems if
-                // FetchTextDocsAsync() does not omit ones that aren't
-                // actually in the DB.
-
-                var env = new TestEnvironment();
-                var highestChapter = 20;
-                var missingSourceChapters = new HashSet<int>() { 2, 3, 10, 12 };
-                var existingTargetChapters = Enumerable.Range(1, highestChapter);
-                var existingSourceChapters = Enumerable.Range(1, highestChapter).Except(missingSourceChapters);
-                Assert.That(existingSourceChapters.Count(),
-                    Is.EqualTo(highestChapter - missingSourceChapters.Count()), "setup");
-                Assert.That(existingTargetChapters.Count(),
-                    Is.GreaterThan(existingSourceChapters.Count()), "setup");
-                var book = new Book("MAT", highestChapter, true) { MissingSourceChapters = missingSourceChapters };
-                env.SetupSFData(true, true, false, book);
-
-                // SUT
-                await env.Runner.InitAsync("project01", "user01", CancellationToken.None);
-                var targetFetch = await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
-
-                await env.Runner.InitAsync("project02", "user01", CancellationToken.None);
-                var sourceFetch = await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
-
-                env.Runner.CloseConnection();
-
-                // Fetched only non-missing chapters. None have null Data.
-                Assert.That(targetFetch.Keys.SequenceEqual(existingTargetChapters));
-                Assert.That(sourceFetch.Keys.SequenceEqual(existingSourceChapters));
-                Assert.That(targetFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
-                Assert.That(sourceFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
-            }
+            // Fetched only non-missing chapters. None have null Data.
+            Assert.That(targetFetch.Keys.SequenceEqual(existingTargetChapters));
+            Assert.That(sourceFetch.Keys.SequenceEqual(existingSourceChapters));
+            Assert.That(targetFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
+            Assert.That(sourceFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
+        }
 
         private class Book
         {
@@ -1010,17 +989,16 @@ namespace SIL.XForge.Scripture.Services
             public IParatextService ParatextService { get; }
             public SFMemoryRealtimeService RealtimeService { get; }
             public IDeltaUsxMapper DeltaUsxMapper { get; }
-            public IParatextNotesMapper NotesMapper;
             public ILogger<ParatextSyncRunner> Logger { get; }
 
-            public SFProject GetProject(string sfProjectID = "project01")
+            public SFProject GetProject(string projectId = "project01")
             {
-                return RealtimeService.GetRepository<SFProject>().Get(sfProjectID);
+                return RealtimeService.GetRepository<SFProject>().Get(projectId);
             }
 
-            public SFProjectSecret GetProjectSecret()
+            public SFProjectSecret GetProjectSecret(string projectId = "project01")
             {
-                return _projectSecrets.Get("project01");
+                return _projectSecrets.Get(projectId);
             }
 
             public bool ContainsText(string projectId, string bookId, int chapter)
@@ -1046,11 +1024,11 @@ namespace SIL.XForge.Scripture.Services
             }
 
             public SFProject VerifyProjectSync(bool successful, string expectedRepoVersion = null,
-                string projectSFID = "project01")
+                string projectId = "project01")
             {
-                SFProjectSecret projectSecret = GetProjectSecret();
+                SFProjectSecret projectSecret = GetProjectSecret(projectId);
                 Assert.That(projectSecret.JobIds.Count, Is.EqualTo(0));
-                SFProject project = GetProject(projectSFID);
+                SFProject project = GetProject(projectId);
                 Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
                 Assert.That(project.Sync.LastSyncSuccessful, Is.EqualTo(successful));
                 string repoVersion = expectedRepoVersion ?? (successful ? "afterSR" : "beforeSR");
@@ -1064,7 +1042,7 @@ namespace SIL.XForge.Scripture.Services
                 SetupSFData("project01", "project02", translationSuggestionsEnabled, checkingEnabled, changed, books);
             }
 
-            public void SetupSFData(string targetProjectSFID, string sourceProjectSFID,
+            public void SetupSFData(string targetProjectId, string sourceProjectId,
                 bool translationSuggestionsEnabled, bool checkingEnabled, bool changed,
                 params Book[] books)
             {
@@ -1271,11 +1249,11 @@ namespace SIL.XForge.Scripture.Services
                 RealtimeService.AddRepository("questions", OTType.Json0, new MemoryRepository<Question>());
                 foreach (Book book in books)
                 {
-                    AddSFBook(targetProjectSFID, GetProject(targetProjectSFID).ParatextId, book.Id,
+                    AddSFBook(targetProjectId, GetProject(targetProjectId).ParatextId, book.Id,
                         book.HighestTargetChapter, changed, book.MissingTargetChapters);
                     if (book.HighestSourceChapter > 0)
                     {
-                        AddSFBook(sourceProjectSFID, GetProject(sourceProjectSFID).ParatextId, book.Id,
+                        AddSFBook(sourceProjectId, GetProject(sourceProjectId).ParatextId, book.Id,
                             book.HighestSourceChapter, changed, book.MissingSourceChapters);
                     }
                 }
