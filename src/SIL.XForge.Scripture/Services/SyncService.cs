@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Hangfire;
 using SIL.XForge.Realtime;
@@ -14,6 +16,8 @@ namespace SIL.XForge.Scripture.Services
     {
         private readonly IBackgroundJobClient _backgroundJobClient;
         private readonly IRealtimeService _realtimeService;
+        private readonly Dictionary<string, string> _jobIdsByProjectId = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> _sourceJobIdsByProjectId = new Dictionary<string, string>();
 
         public SyncService(
             IBackgroundJobClient backgroundJobClient,
@@ -55,14 +59,40 @@ namespace SIL.XForge.Scripture.Services
             if (!string.IsNullOrWhiteSpace(sourceProjectId))
             {
                 // We need to sync the source first so that we can link the source texts and train the engine
-                string parentId = _backgroundJobClient.Enqueue<ParatextSyncRunner>(
-                    r => r.RunAsync(sourceProjectId, curUserId, false));
-                _backgroundJobClient.ContinueJobWith<ParatextSyncRunner>(parentId,
-                    r => r.RunAsync(projectId, curUserId, trainEngine));
+                string sourceJobId = _backgroundJobClient.Enqueue<ParatextSyncRunner>(
+                    r => r.RunAsync(sourceProjectId, curUserId, false, CancellationToken.None));
+                _sourceJobIdsByProjectId[projectId] = sourceJobId;
+                _jobIdsByProjectId[projectId] = _backgroundJobClient.ContinueJobWith<ParatextSyncRunner>(sourceJobId,
+                    r => r.RunAsync(projectId, curUserId, trainEngine, CancellationToken.None));
             }
             else
             {
-                _backgroundJobClient.Enqueue<ParatextSyncRunner>(r => r.RunAsync(projectId, curUserId, trainEngine));
+                _jobIdsByProjectId[projectId] = _backgroundJobClient.Enqueue<ParatextSyncRunner>(
+                    r => r.RunAsync(projectId, curUserId, trainEngine, CancellationToken.None));
+            }
+        }
+
+        public async Task CancelSyncAsync(string curUserId, string projectId)
+        {
+            if (_sourceJobIdsByProjectId.TryGetValue(projectId, out string sourceJobId))
+                _backgroundJobClient.Delete(sourceJobId);
+            if (_jobIdsByProjectId.TryGetValue(projectId, out string jobId))
+                _backgroundJobClient.Delete(jobId);
+
+            using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
+            {
+                IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
+                if (projectDoc.Data.SyncDisabled)
+                {
+                    throw new ForbiddenException();
+                }
+                if (projectDoc.Data.Sync.QueuedCount > 0)
+                    await projectDoc.SubmitJson0OpAsync(op =>
+                    {
+                        op.Inc(pd => pd.Sync.QueuedCount, -1);
+                        op.Unset(pd => pd.Sync.PercentCompleted);
+                        op.Set(pd => pd.Sync.LastSyncSuccessful, false);
+                    });
             }
         }
     }
