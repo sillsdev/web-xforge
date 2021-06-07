@@ -178,6 +178,9 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task DeleteProjectAsync(string curUserId, string projectId)
         {
+            // Cancel any jobs before we delete
+            await _syncService.CancelSyncAsync(curUserId, projectId);
+
             string ptProjectId;
             using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {

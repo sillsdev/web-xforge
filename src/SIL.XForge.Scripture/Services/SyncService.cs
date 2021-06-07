@@ -45,7 +45,7 @@ namespace SIL.XForge.Scripture.Services
                 // Load the target project secrets, so we can store the job id
                 if (!(await _projectSecrets.TryGetAsync(projectId)).TryResult(out SFProjectSecret projectSecret))
                 {
-                    projectSecret = null;
+                    throw new ArgumentException("The target project secret cannot be found.");
                 }
 
                 // See if we can sync the source project
@@ -62,7 +62,7 @@ namespace SIL.XForge.Scripture.Services
                         // Load the source project secrets, so we can store the job id
                         if (!(await _projectSecrets.TryGetAsync(sourceProjectId)).TryResult(out SFProjectSecret sourceProjectSecret))
                         {
-                            sourceProjectSecret = null;
+                            throw new ArgumentException("The source project secret cannot be found.");
                         }
 
                         // Schedule the sync for 5 minutes to give us enough time to update the project's sync object
@@ -88,22 +88,16 @@ namespace SIL.XForge.Scripture.Services
                             });
 
                             // Store the source job id so we can cancel the job later if needed
-                            if (sourceProjectSecret != null)
+                            await _projectSecrets.UpdateAsync(sourceProjectSecret.Id, u =>
                             {
-                                await _projectSecrets.UpdateAsync(sourceProjectSecret.Id, u =>
-                                {
-                                    u.Add(p => p.JobIds, sourceJobId);
-                                });
-                            }
+                                u.Add(p => p.JobIds, sourceJobId);
+                            });
 
                             // Store the target job id so we can cancel the job later if needed
-                            if (projectSecret != null)
+                            await _projectSecrets.UpdateAsync(projectSecret.Id, u =>
                             {
-                                await _projectSecrets.UpdateAsync(projectSecret.Id, u =>
-                                {
-                                    u.Add(p => p.JobIds, targetJobId);
-                                });
-                            }
+                                u.Add(p => p.JobIds, targetJobId);
+                            });
 
                             _backgroundJobClient.ChangeState(sourceJobId, new EnqueuedState());
                         }
@@ -133,13 +127,10 @@ namespace SIL.XForge.Scripture.Services
                     });
 
                     // Store the job id so we can cancel the job later if needed
-                    if (projectSecret != null)
+                    await _projectSecrets.UpdateAsync(projectSecret.Id, u =>
                     {
-                        await _projectSecrets.UpdateAsync(projectSecret.Id, u =>
-                        {
-                            u.Add(p => p.JobIds, jobId);
-                        });
-                    }
+                        u.Add(p => p.JobIds, jobId);
+                    });
 
                     _backgroundJobClient.ChangeState(jobId, new EnqueuedState());
                 }
@@ -157,11 +148,6 @@ namespace SIL.XForge.Scripture.Services
             using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
             {
                 IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
-                if (projectDoc.Data.SyncDisabled)
-                {
-                    throw new ForbiddenException();
-                }
-
                 if (projectDoc.Data.Sync.QueuedCount > 0)
                 {
                     await CancelProjectDocumentSyncAsync(projectDoc);

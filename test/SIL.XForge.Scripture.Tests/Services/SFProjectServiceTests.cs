@@ -1411,6 +1411,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.GetProject(Project03).TranslateConfig.Source, Is.Not.Null);
             await env.Service.DeleteProjectAsync(User01, DisabledSource);
 
+            await env.SyncService.Received().CancelSyncAsync(User01, DisabledSource);
             await env.EngineService.Received().RemoveProjectAsync(DisabledSource);
             env.FileSystemService.Received().DeleteDirectory(ptProjectDir);
             Assert.That(env.ContainsProject(DisabledSource), Is.False);
