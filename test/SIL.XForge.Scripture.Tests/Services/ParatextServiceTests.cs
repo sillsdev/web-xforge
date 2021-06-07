@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.AspNetCore.Hosting;
@@ -708,12 +707,12 @@ namespace SIL.XForge.Scripture.Services
             var associatedPtUser = new SFParatextUser(env.Username01);
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
 
-            string resourcePTID = "1234567890123456";
-            Assert.That(resourcePTID, Has.Length.EqualTo(SFInstallableDblResource.ResourceIdentifierLength),
+            string resourcePTId = "1234567890123456";
+            Assert.That(resourcePTId, Has.Length.EqualTo(SFInstallableDblResource.ResourceIdentifierLength),
                 "setup. Should be using a project ID that is a resource ID");
 
             // SUT
-            string latestSharedVersion = env.Service.GetLatestSharedVersion(user01Secret, resourcePTID);
+            string latestSharedVersion = env.Service.GetLatestSharedVersion(user01Secret, resourcePTId);
 
             Assert.That(latestSharedVersion, Is.Null,
                 "DBL resources do not have hg repositories to have a last pushed or pulled hg commit id.");

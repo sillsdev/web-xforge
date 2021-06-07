@@ -564,6 +564,14 @@ namespace SIL.XForge.Scripture.Services
             // Listeners can now assume the ProjectUserConfig is ready when the user is added.
             await base.AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, removeShareKeys);
 
+            // Update book and chapter permissions on SF project/resource, but only if user
+            // has a role on the PT project or permissions to the DBL resource. These permissions are needed
+            // in order to query the PT roles and DBL permissions of other SF project/resource users.
+            if ((await TryGetProjectRoleAsync(projectDoc.Data, userDoc.Id)).Success)
+            {
+                await UpdatePermissionsAsync(userDoc.Id, projectDoc);
+            }
+
             // Add to the source project, if required
             bool translationSuggestionsEnabled = projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled;
             string sourceProjectId = projectDoc.Data.TranslateConfig.Source?.ProjectRef;
@@ -590,6 +598,111 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
+        private bool projectPTIdIsResourceId(string projectPDId)
+        {
+            return projectPDId?.Length == SFInstallableDblResource.ResourceIdentifierLength;
+        }
+
+        /// <summary>
+        /// Update all user permissions on books and chapters in an SF project, from PT project permissions. For Paratext
+        /// projects, permissions are acquired from ScrText objects, and so presumably only what was received from
+        /// Paratext in the last synchronize. For Resources, permissions are fetched from a DBL server, and so permissions
+        /// may be ahead of the last sync.
+        /// Note that this method is not necessarily applying permissions for user `curUserId`, but rather using that
+        /// user to perform PT queries and set values in the SF DB.
+        /// </summary>
+        public async Task UpdatePermissionsAsync(string curUserId, IDocument<SFProject> projectDoc)
+        {
+            Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
+            if (!userSecretAttempt.TryResult(out UserSecret userSecret))
+            {
+                throw new DataNotFoundException("No matching user secrets found.");
+            }
+
+            string targetParatextId = projectDoc.Data.ParatextId;
+            HashSet<int> targetBooks = new HashSet<int>(_paratextService.GetBookList(userSecret, targetParatextId));
+
+            // Get Paratext username mapping
+            IReadOnlyDictionary<string, string> ptUsernameMapping =
+                await _paratextService.GetParatextUsernameMappingAsync(userSecret, targetParatextId);
+
+            bool targetIsResource = projectPTIdIsResourceId(targetParatextId);
+
+            var chapterPermissionOperations =
+                new List<(int bookIndex, int chapterIndex, Dictionary<string, string> chapterPermissions)>();
+
+            // Get the permissions if this is a resource
+            // Resources do not have per-book permissions
+            Dictionary<string, string> permissions;
+            if (targetIsResource)
+            {
+                permissions =
+                    await _paratextService.GetPermissionsAsync(userSecret, projectDoc.Data, ptUsernameMapping);
+            }
+            else
+            {
+                permissions = null;
+            }
+
+            foreach (int bookNum in targetBooks)
+            {
+                int textIndex = projectDoc.Data.Texts.FindIndex(t => t.BookNum == bookNum);
+                if (textIndex == -1)
+                {
+                    // Project does not contain specified book.
+                    // This is expected if a user is connecting a project for the first time, as the project may not have been synchronized yet.
+                    continue;
+                }
+                Models.TextInfo text = projectDoc.Data.Texts[textIndex];
+                List<Chapter> chapters = text.Chapters;
+
+                // Get the permissions for the book and chapters
+                if (targetIsResource)
+                {
+                    // Add chapter permissions for the resource
+                    foreach (Chapter chapter in chapters)
+                    {
+                        int chapterIndex = chapters.FindIndex(c => c.Number == chapter.Number);
+                        if (chapterIndex >= 0)
+                        {
+                            chapterPermissionOperations.Add((textIndex, chapterIndex, permissions));
+                        }
+                    }
+                }
+                else
+                {
+                    // Get the project permissions for the book
+                    permissions = await _paratextService.GetPermissionsAsync(userSecret, projectDoc.Data,
+                        ptUsernameMapping, bookNum);
+                    foreach (Chapter chapter in chapters)
+                    {
+                        // Get the project permissions for the chapter
+                        Dictionary<string, string> chapterPermissions = await _paratextService.GetPermissionsAsync(
+                            userSecret, projectDoc.Data, ptUsernameMapping, bookNum, chapter.Number);
+
+                        int chapterIndex = chapters.FindIndex(c => c.Number == chapter.Number);
+                        if (chapterIndex >= 0)
+                        {
+                            chapterPermissionOperations.Add((textIndex, chapterIndex, chapterPermissions));
+                        }
+                    }
+                }
+
+                // Update project metadata
+                await projectDoc.SubmitJson0OpAsync(op =>
+                {
+                    foreach ((int bookIndex, int chapterIndex, Dictionary<string, string> chapterPermissions)
+                        in chapterPermissionOperations)
+                    {
+                        op.Set(pd => pd.Texts[bookIndex].Chapters[chapterIndex].Permissions, chapterPermissions);
+                    }
+
+                    op.Set(pd => pd.Texts[textIndex].Permissions, permissions,
+                        ParatextSyncRunner.PermissionDictionaryEqualityComparer);
+                });
+            }
+        }
+
         protected override async Task RemoveUserFromProjectAsync(IConnection conn, IDocument<SFProject> projectDoc,
             IDocument<User> userDoc)
         {
@@ -599,12 +712,17 @@ namespace SIL.XForge.Scripture.Services
             await projectUserConfigDoc.DeleteAsync();
         }
 
+        /// <summary>
+        /// Returns `userId`'s role on project or resource `project`.
+        /// The role may be the PT role from PT Registry, or a SF role.
+        /// The returned Attempt will be Success if they have a non-None role, or otherwise Failure.
+        /// </summary>
         protected async override Task<Attempt<string>> TryGetProjectRoleAsync(SFProject project, string userId)
         {
             Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(userId);
             if (userSecretAttempt.TryResult(out UserSecret userSecret))
             {
-                if (project.ParatextId?.Length == SFInstallableDblResource.ResourceIdentifierLength)
+                if (projectPTIdIsResourceId(project.ParatextId))
                 {
                     // If the project is a resource, get the permission from the DBL
                     string permission = await _paratextService.GetResourcePermissionAsync(project.ParatextId, userId);
@@ -612,7 +730,8 @@ namespace SIL.XForge.Scripture.Services
                     {
                         TextInfoPermission.None => Attempt.Failure(ProjectRole.None),
                         TextInfoPermission.Read => Attempt.Success(SFProjectRole.Observer),
-                        _ => throw new ArgumentException("Unknown resource permission", nameof(permission)),
+                        _ => throw new ArgumentException($"Unknown resource permission: '{permission}'",
+                            nameof(permission)),
                     };
                 }
                 else
