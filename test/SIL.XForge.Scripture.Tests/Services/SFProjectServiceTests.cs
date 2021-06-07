@@ -1917,10 +1917,10 @@ namespace SIL.XForge.Scripture.Services
                 var currentTime = DateTime.Now;
                 ProjectSecrets = new MemoryRepository<SFProjectSecret>(new[]
                 {
-                    new SFProjectSecret { Id = Project01,
+                    new SFProjectSecret {
+                        Id = Project01,
                         ShareKeys = new List<ShareKey>
                         {
-
                         }
                     },
                     new SFProjectSecret

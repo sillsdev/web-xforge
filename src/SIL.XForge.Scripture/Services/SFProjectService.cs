@@ -598,9 +598,9 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        private bool paratextProjectIDIsResourceID(string paratextProjectID)
+        private bool projectPTIdIsResourceId(string projectPDId)
         {
-            return paratextProjectID?.Length == SFInstallableDblResource.ResourceIdentifierLength;
+            return projectPDId?.Length == SFInstallableDblResource.ResourceIdentifierLength;
         }
 
         /// <summary>
@@ -626,7 +626,7 @@ namespace SIL.XForge.Scripture.Services
             IReadOnlyDictionary<string, string> ptUsernameMapping =
                 await _paratextService.GetParatextUsernameMappingAsync(userSecret, targetParatextId);
 
-            bool targetIsResource = paratextProjectIDIsResourceID(targetParatextId);
+            bool targetIsResource = projectPTIdIsResourceId(targetParatextId);
 
             var chapterPermissionOperations =
                 new List<(int bookIndex, int chapterIndex, Dictionary<string, string> chapterPermissions)>();
@@ -722,7 +722,7 @@ namespace SIL.XForge.Scripture.Services
             Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(userId);
             if (userSecretAttempt.TryResult(out UserSecret userSecret))
             {
-                if (paratextProjectIDIsResourceID(project.ParatextId))
+                if (projectPTIdIsResourceId(project.ParatextId))
                 {
                     // If the project is a resource, get the permission from the DBL
                     string permission = await _paratextService.GetResourcePermissionAsync(project.ParatextId, userId);
@@ -730,7 +730,7 @@ namespace SIL.XForge.Scripture.Services
                     {
                         TextInfoPermission.None => Attempt.Failure(ProjectRole.None),
                         TextInfoPermission.Read => Attempt.Success(SFProjectRole.Observer),
-                        _ => throw new ArgumentException($"Unknown resource permission: {permission}",
+                        _ => throw new ArgumentException($"Unknown resource permission: '{permission}'",
                             nameof(permission)),
                     };
                 }
