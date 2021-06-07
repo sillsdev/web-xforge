@@ -29,6 +29,16 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>
+        /// Backups the repository.
+        /// </summary>
+        /// <param name="repository">The repository.</param>
+        /// <param name="backupFile">The backup file to create. This string must be encoded correctly.</param>
+        public void BackupRepository(string repository, string backupFile)
+        {
+            RunCommand(repository, $"bundle -a --type v2 \"{backupFile}\"");
+        }
+
+        /// <summary>
         /// Get the most recent revision id of the commit from the last push or pull with the PT send/receive server.
         /// </summary>
         public string GetLastPublicRevision(string repository)

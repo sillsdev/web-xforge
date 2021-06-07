@@ -34,6 +34,9 @@ namespace SIL.XForge.Scripture.Services
         string GetNotes(UserSecret userSecret, string paratextId, int bookNum);
         void PutNotes(UserSecret userSecret, string paratextId, string notesText);
         string GetLatestSharedVersion(UserSecret userSecret, string paratextId);
+        bool BackupExists(UserSecret userSecret, string paratextId);
+        bool BackupRepository(UserSecret userSecret, string paratextId);
+        bool RestoreRepository(UserSecret userSecret, string paratextId);
 
         Task SendReceiveAsync(UserSecret userSecret, string paratextId, IProgress<ProgressState> progress = null,
             CancellationToken token = default);
