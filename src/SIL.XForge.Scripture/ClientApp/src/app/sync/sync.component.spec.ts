@@ -103,7 +103,7 @@ describe('SyncComponent', () => {
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).not.toBeNull();
     // Simulate sync in progress
-    env.emitSyncProgress(0, 'testProject01');
+    env.emitSyncProgress(0.25, 'testProject01');
     // Simulate sync error
     env.emitSyncComplete(false, 'testProject01');
     expect(env.component.syncActive).toBe(false);
@@ -128,6 +128,21 @@ describe('SyncComponent', () => {
     const env = new TestEnvironment(true, false, true, false);
     expect(env.syncButton.nativeElement.disabled).toBe(false);
     expect(env.syncDisabledMessage).toBeNull();
+  }));
+
+  it('should report cancelled if sync was cancelled', fakeAsync(() => {
+    const env = new TestEnvironment(true);
+    verify(mockedProjectService.get('testProject01')).once();
+    env.clickElement(env.syncButton);
+    verify(mockedProjectService.onlineSync('testProject01')).once();
+    expect(env.component.syncActive).toBe(true);
+    expect(env.progressBar).not.toBeNull();
+
+    env.clickElement(env.cancelButton);
+    env.emitSyncComplete(false, 'testProject01');
+
+    expect(env.component.syncActive).toBe(false);
+    verify(mockedNoticeService.show('Synchronize for Sync Test Project was cancelled.')).once();
   }));
 });
 
@@ -205,6 +220,10 @@ class TestEnvironment {
 
   get syncButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('#btn-sync'));
+  }
+
+  get cancelButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#btn-cancel-sync'));
   }
 
   get progressBar(): DebugElement {
