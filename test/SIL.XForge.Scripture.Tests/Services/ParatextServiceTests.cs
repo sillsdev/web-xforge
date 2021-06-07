@@ -754,6 +754,49 @@ namespace SIL.XForge.Scripture.Services
             env.MockHgWrapper.DidNotReceiveWithAnyArgs().GetLastPublicRevision(default);
         }
 
+        [Test]
+        public void BackupRepository_Failure()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            env.MockFileSystemService.FileExists(Arg.Any<string>()).Throws(new UnauthorizedAccessException());
+
+            // SUT
+            bool result = env.Service.BackupRepository(user01Secret, ptProjectId);
+            Assert.IsFalse(result);
+        }
+
+        [Test]
+        public void BackupRepository_InvalidProject()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            string ptProjectId = "invalid_project";
+
+            // SUT
+            bool result = env.Service.BackupRepository(user01Secret, ptProjectId);
+            Assert.IsFalse(result);
+        }
+
+        [Test]
+        public void BackupRepository_Success()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+
+            // SUT
+            bool result = env.Service.BackupRepository(user01Secret, ptProjectId);
+            Assert.IsTrue(result);
+        }
 
         private class TestEnvironment
         {
@@ -1104,7 +1147,11 @@ namespace SIL.XForge.Scripture.Services
                     Arg.Any<SharedRepositorySource>(), Arg.Any<IEnumerable<SharedRepository>>())
                     .Returns(callInfo => new SharedProject()
                     {
-                        SendReceiveId = HexId.FromStr(callInfo.ArgAt<string>(0))
+                        SendReceiveId = HexId.FromStr(callInfo.ArgAt<string>(0)),
+                        Repository = new SharedRepository
+                        {
+                            SendReceiveId = HexId.FromStr(callInfo.ArgAt<string>(0)),
+                        },
                     });
                 MockSharingLogicWrapper.ShareChanges(Arg.Any<List<SharedProject>>(), Arg.Any<SharedRepositorySource>(),
                     out Arg.Any<List<SendReceiveResult>>(), Arg.Any<List<SharedProject>>()).Returns(true);

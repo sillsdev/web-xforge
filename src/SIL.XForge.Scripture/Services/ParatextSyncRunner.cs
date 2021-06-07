@@ -100,6 +100,14 @@ namespace SIL.XForge.Scripture.Services
                 string sourceParatextId = _projectDoc.Data.TranslateConfig.Source?.ParatextId;
                 string sourceProjectRef = _projectDoc.Data.TranslateConfig.Source?.ProjectRef;
 
+                // Determine if we can rollback
+                bool canRollback = _paratextService.BackupExists(_userSecret, targetParatextId);
+                if (!canRollback)
+                {
+                    // Attempt to create a backup if we cannot rollback
+                    canRollback = _paratextService.BackupRepository(_userSecret, targetParatextId);
+                }
+
                 var targetTextDocsByBook = new Dictionary<int, SortedList<int, IDocument<TextData>>>();
                 var questionDocsByBook = new Dictionary<int, IReadOnlyList<IDocument<Question>>>();
                 string lastSharedVersion = _paratextService.GetLatestSharedVersion(_userSecret, targetParatextId);
@@ -699,6 +707,12 @@ namespace SIL.XForge.Scripture.Services
                         u.Remove(p => p.JobIds, _projectSecret.JobIds.First());
                     });
                 }
+            }
+
+            // If successful, create a backup
+            if (successful && _projectDoc.Data.ParatextId.Length != SFInstallableDblResource.ResourceIdentifierLength)
+            {
+                _paratextService.BackupRepository(_userSecret, _projectDoc.Data.ParatextId);
             }
         }
 
