@@ -6,9 +6,9 @@ import { AbstractControl } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
-import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
-import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
+import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { BehaviorSubject } from 'rxjs';
 import { anything, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
@@ -399,7 +399,8 @@ class TestEnvironment {
         texts: [],
         userRoles: {
           user01: SFProjectRole.ParatextAdministrator
-        }
+        },
+        userPermissions: {}
       };
       this.realtimeService.create(SFProjectDoc.COLLECTION, 'project01', newProject);
       return Promise.resolve('project01');

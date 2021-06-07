@@ -4,7 +4,7 @@
       <button *ngIf="!isPlaying" mdc-icon-button icon="play_arrow" type="button" (click)="play()" class="play"></button>
       <button *ngIf="isPlaying" mdc-icon-button icon="pause" type="button" (click)="pause()" class="pause"></button>
       <div class="current-time">{{ currentTime | audioTime }}</div>
-      <mdc-slider class="slider" min="0" max="100" step="1" [value]="seek" (input)="seeking($event)"></mdc-slider>
+      <mdc-slider class="slider" [min]="0" [max]="100" [step]="1" [value]="seek" (input)="seeking($event)"></mdc-slider>
 
       <div class="duration">{{ duration | audioTime }}</div>
     </div>

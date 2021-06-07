@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.build.json",
+  "compilerOptions": {
+    "module": "ES2020",
+    "outDir": "../lib/esm/common"
+  },
+  "exclude": ["index.ts", "**/*.spec.ts", "**/test-*.ts"]
+
+}

@@ -12,7 +12,7 @@
           <app-text
             #scriptureText
             [id]="textDocId"
-            multiSegmentSelection="true"
+            [multiSegmentSelection]="true"
             [isRightToLeft]="isTextRightToLeft"
           ></app-text>
           <p class="selection-preview">
@@ -23,7 +23,9 @@
         </mdc-dialog-content>
         <mdc-dialog-actions>
           <button mdcDialogButton mdcDialogAction="close" type="button">{{ t("cancel") }}</button>
-          <button mdcDialogButton type="submit" unelevated default (click)="submit()">{{ t("save") }}</button>
+          <button mdcDialogButton type="submit" [unelevated]="true" [default]="true" (click)="submit()">
+            {{ t("save") }}
+          </button>
         </mdc-dialog-actions>
       </mdc-dialog-surface>
     </mdc-dialog-container>

@@ -4,7 +4,7 @@
       <mdc-dialog-title>Delete Confirmation</mdc-dialog-title>
       <mdc-dialog-content>
         <div fxLayout="row" fxLayoutAlign="center center" fxLayoutGap="10px">
-          <app-avatar [user]="data.user" size="32" [round]="false"> </app-avatar>
+          <app-avatar [user]="data.user" [size]="32" [round]="false"> </app-avatar>
           <div>
             <strong>{{ data.user.name }}</strong> <br />
             {{ data.user.email }}
@@ -13,7 +13,7 @@
       </mdc-dialog-content>
       <mdc-dialog-actions>
         <button mdcDialogButton type="button" mdcDialogAction="close" id="confirm-button-no">Cancel</button>
-        <button mdcDialogButton default type="button" mdcDialogAction="confirmed" id="confirm-button-yes">
+        <button mdcDialogButton [default]="true" type="button" mdcDialogAction="confirmed" id="confirm-button-yes">
           Delete
         </button>
       </mdc-dialog-actions>

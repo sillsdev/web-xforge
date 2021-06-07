@@ -16,13 +16,14 @@ import {
 } from '@sillsdev/machine';
 import isEqual from 'lodash-es/isEqual';
 import Quill, { DeltaStatic, RangeStatic } from 'quill';
-import { Operation } from 'realtime-server/lib/common/models/project-rights';
-import { User } from 'realtime-server/lib/common/models/user';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
-import { TextType } from 'realtime-server/lib/scriptureforge/models/text-data';
-import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
-import { TextInfoPermission } from 'realtime-server/lib/scriptureforge/models/text-info-permission';
-import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { User } from 'realtime-server/lib/esm/common/models/user';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
+import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { fromEvent, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, delayWhen, filter, repeat, retryWhen, tap } from 'rxjs/operators';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
@@ -193,7 +194,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.currentUserDoc == null ? undefined : this.currentUserDoc.data;
   }
 
-  get defaultShareRole(): string {
+  get defaultShareRole(): SFProjectRole {
     return SF_DEFAULT_TRANSLATE_SHARE_ROLE;
   }
 
@@ -202,12 +203,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get hasEditRight(): boolean {
-    if (this.projectDoc == null || this.projectDoc.data == null) {
+    const project = this.projectDoc?.data;
+    if (project == null) {
       return false;
     }
 
-    const projectRole = this.projectDoc.data.userRoles[this.userService.currentUserId];
-    if (SF_PROJECT_RIGHTS.hasRight(projectRole, { projectDomain: SFProjectDomain.Texts, operation: Operation.Edit })) {
+    if (SF_PROJECT_RIGHTS.hasRight(project, this.userService.currentUserId, SFProjectDomain.Texts, Operation.Edit)) {
       // Check for chapter rights
       const chapter = this.text?.chapters.find(c => c.number === this._chapter);
       // Even though permissions is guaranteed to be there in the model, its not in IndexedDB the first time the project
@@ -221,12 +222,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get hasSourceViewRight(): boolean {
-    if (this.sourceProjectDoc == null || this.sourceProjectDoc.data == null) {
+    const sourceProject = this.sourceProjectDoc?.data;
+    if (sourceProject == null) {
       return false;
     }
 
-    const projectRole = this.sourceProjectDoc.data.userRoles[this.userService.currentUserId];
-    if (SF_PROJECT_RIGHTS.hasRight(projectRole, { projectDomain: SFProjectDomain.Texts, operation: Operation.View })) {
+    if (
+      SF_PROJECT_RIGHTS.hasRight(sourceProject, this.userService.currentUserId, SFProjectDomain.Texts, Operation.View)
+    ) {
       // Check for chapter rights
       const chapter = this.sourceText?.chapters.find(c => c.number === this._chapter);
       // Even though permissions is guaranteed to be there in the model, its not in IndexedDB the first time the project
@@ -241,7 +244,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get canEdit(): boolean {
-    return this.isValid && this.hasEditRight;
+    return this.isValid && this.hasEditRight && this.dataInSync;
   }
 
   get canShare(): boolean {
@@ -269,6 +272,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     const chapter = this.text.chapters.find(c => c.number === this._chapter);
     return chapter != null && chapter.isValid;
+  }
+
+  get dataInSync(): boolean {
+    return this.projectDoc?.data?.sync?.dataInSync !== false;
   }
 
   private get hasSource(): boolean {

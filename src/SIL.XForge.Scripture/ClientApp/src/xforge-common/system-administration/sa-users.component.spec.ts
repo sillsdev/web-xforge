@@ -6,10 +6,10 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import merge from 'lodash-es/merge';
-import { Project } from 'realtime-server/lib/common/models/project';
-import { SystemRole } from 'realtime-server/lib/common/models/system-role';
-import { User } from 'realtime-server/lib/common/models/user';
-import { obj } from 'realtime-server/lib/common/utils/obj-path';
+import { Project } from 'realtime-server/lib/esm/common/models/project';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
+import { User } from 'realtime-server/lib/esm/common/models/user';
+import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { combineLatest, from, Observable, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
@@ -83,9 +83,8 @@ describe('SaUsersComponent', () => {
 
     expect(env.noUsersLabel).toBeNull();
 
-    const numUsersOnProject = 3;
-    expect(env.component.totalRecordCount).toEqual(numUsersOnProject);
-    expect(env.userRows.length).toEqual(numUsersOnProject);
+    expect(env.component.totalRecordCount).toEqual(env.numUsersOnProject);
+    expect(env.userRows.length).toEqual(env.numUsersOnProject);
 
     expect(env.cellDisplayName(0, 1).innerText).toEqual('User01');
     expect(env.cellName(0, 1).innerText).toEqual('User 01');
@@ -141,8 +140,7 @@ describe('SaUsersComponent', () => {
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
-    const numUsersOnProject = 3;
-    expect(env.component.totalRecordCount).toEqual(numUsersOnProject);
+    expect(env.component.totalRecordCount).toEqual(env.numUsersOnProject);
 
     // First page
     expect(env.userRows.length).toEqual(2);
@@ -170,6 +168,7 @@ class TestEnvironment {
   readonly component: SaUsersComponent;
   readonly fixture: ComponentFixture<SaUsersComponent>;
 
+  readonly numUsersOnProject = 3;
   readonly mockedDeleteUserDialogRef: MdcDialogRef<SaDeleteDialogComponent> = mock(MdcDialogRef);
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
@@ -205,6 +204,9 @@ class TestEnvironment {
   }
 
   get userRows(): DebugElement[] {
+    if (this.table == null) {
+      return [];
+    }
     // querying the debug table element doesn't seem to work, so we query the native element instead and convert back
     // to debug elements
     return Array.from(this.table.nativeElement.querySelectorAll('tr')).map(r => getDebugNode(r) as DebugElement);
@@ -303,7 +305,8 @@ class TestEnvironment {
         id: 'project01',
         data: {
           name: 'Project 01',
-          userRoles: { user01: 'admin', user03: 'user' }
+          userRoles: { user01: 'admin', user03: 'user' },
+          userPermissions: {}
         }
       }
     ]);

@@ -1,12 +1,16 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { TestBed } from '@angular/core/testing';
-import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
-import { getQuestionDocId, Question, QUESTIONS_COLLECTION } from 'realtime-server/lib/scriptureforge/models/question';
-import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
-import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
-import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
+import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import {
+  getQuestionDocId,
+  Question,
+  QUESTIONS_COLLECTION
+} from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { FileService } from 'xforge-common/file.service';
@@ -185,7 +189,8 @@ class TestEnvironment {
     sync: { queuedCount: 0 },
     userRoles: {
       [this.adminUser.id]: this.adminUser.role
-    }
+    },
+    userPermissions: {}
   };
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 

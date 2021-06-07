@@ -12,7 +12,7 @@
   >
     <div class="question-title">
       <mdc-icon *ngIf="questionDoc.data?.audioUrl">headset</mdc-icon>
-      <span class="question-text" *ngIf="questionDoc.data?.text">{{ questionDoc.data.text }}</span>
+      <span class="question-text" *ngIf="questionDoc.data?.text">{{ questionDoc.data?.text }}</span>
     </div>
     <a class="view-answers" mdcListItemMeta title="{{ 'checking.view_questions' | transloco }}">
       <i mdcIcon>forum</i> <span>{{ getUnreadAnswers(questionDoc) }}</span>

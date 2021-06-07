@@ -63,7 +63,8 @@ namespace UpdateHelp
             var searchEngineIDs = new Dictionary<string, string>()
             {
                 { "es", "9f727aa1dd179dd6d" },
-                { "fr", "7da597faaebed6cc7" }
+                { "fr", "7da597faaebed6cc7" },
+                { "pt_BR", "40bf11d4080246d99" }
             };
 
             Console.WriteLine("Update Help files.\n");

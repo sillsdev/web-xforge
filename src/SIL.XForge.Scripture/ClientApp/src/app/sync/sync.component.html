@@ -4,7 +4,7 @@
     <span *ngIf="!isAppOnline" class="offline-text"> {{ t("connect_network_to_synchronize") }} </span>
     <span *ngIf="syncDisabled" id="syncDisabled-message" class="syncDisabled-text" [innerHTML]="syncDisabledMessage">
     </span>
-    <mdc-card outlined class="sync-card">
+    <mdc-card [outlined]="true" class="sync-card">
       <div fxLayout="column" class="card-content">
         <button
           *ngIf="showParatextLogin && isAppOnline"
@@ -21,7 +21,7 @@
             *ngIf="!syncActive"
             class="action-button"
             mdc-button
-            unelevated
+            [unelevated]="true"
             type="button"
             (click)="syncProject()"
             [disabled]="isLoading || !isAppOnline || syncDisabled"

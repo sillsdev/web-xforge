@@ -15,15 +15,23 @@
                   label="{{ t('scripture_reference') }}"
                   type="text"
                   formControlName="scriptureStart"
-                  outlined
+                  [outlined]="true"
                   id="scripture-start"
                   (input)="updateScriptureEndEnabled()"
                 >
-                  <mdc-icon mdcTextFieldIcon trailing clickable (click)="openScriptureChooser(scriptureStart)"
+                  <mdc-icon
+                    mdcTextFieldIcon
+                    [trailing]="true"
+                    [clickable]="true"
+                    (click)="openScriptureChooser(scriptureStart)"
                     >expand_more</mdc-icon
                   >
                 </mdc-text-field>
-                <mdc-helper-text validation id="question-scripture-start-helper-text" class="scripture-helper-text">
+                <mdc-helper-text
+                  [validation]="true"
+                  id="question-scripture-start-helper-text"
+                  class="scripture-helper-text"
+                >
                   {{ scriptureInputErrorMessages.startError }}
                 </mdc-helper-text>
               </mdc-form-field>
@@ -32,15 +40,19 @@
                   label="{{ t('end_reference') }}"
                   type="text"
                   formControlName="scriptureEnd"
-                  outlined
+                  [outlined]="true"
                   [errorStateMatcher]="parentAndStartMatcher"
                   id="scripture-end"
                 >
-                  <mdc-icon mdcTextFieldIcon trailing clickable (click)="openScriptureChooser(scriptureEnd)"
+                  <mdc-icon
+                    mdcTextFieldIcon
+                    [trailing]="true"
+                    [clickable]="true"
+                    (click)="openScriptureChooser(scriptureEnd)"
                     >expand_more</mdc-icon
                   >
                 </mdc-text-field>
-                <mdc-helper-text id="question-scripture-end-helper-text" validation>
+                <mdc-helper-text id="question-scripture-end-helper-text" [validation]="true">
                   {{ scriptureInputErrorMessages.endError }}
                   <span
                     *ngIf="questionForm.hasError('verseBeforeStart')"
@@ -62,12 +74,12 @@
                 label="{{ t('question') }}"
                 type="text"
                 formControlName="questionText"
-                rows="2"
-                fullwidth
+                [rows]="2"
+                [fullwidth]="true"
                 [helperText]="questionHelper"
                 id="question-text"
               ></mdc-textarea>
-              <mdc-helper-text #questionHelper validation>{{ t("required_with_asterisk") }}</mdc-helper-text>
+              <mdc-helper-text #questionHelper [validation]="true">{{ t("required_with_asterisk") }}</mdc-helper-text>
             </mdc-form-field>
             <app-checking-audio-combined
               [source]="audioSource"
@@ -81,7 +93,7 @@
           </button>
           <button
             mdcDialogButton
-            unelevated
+            [unelevated]="true"
             form="question-form"
             type="submit"
             id="question-save-btn"

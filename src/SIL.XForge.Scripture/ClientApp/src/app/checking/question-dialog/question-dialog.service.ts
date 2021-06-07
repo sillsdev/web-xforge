@@ -1,10 +1,10 @@
 import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Injectable } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
-import { Operation } from 'realtime-server/lib/common/models/project-rights';
-import { Question } from 'realtime-server/lib/scriptureforge/models/question';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
-import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
@@ -101,14 +101,12 @@ export class QuestionDialogService {
   }
 
   private async canCreateAndEditQuestions(projectId: string): Promise<boolean> {
-    const project = await this.projectService.get(projectId);
-    if (project != null && project.data != null && this.userService.currentUserId in project.data.userRoles) {
-      const role = project.data.userRoles[this.userService.currentUserId];
-      return (
-        SF_PROJECT_RIGHTS.hasRight(role, { projectDomain: SFProjectDomain.Questions, operation: Operation.Create }) &&
-        SF_PROJECT_RIGHTS.hasRight(role, { projectDomain: SFProjectDomain.Questions, operation: Operation.Edit })
-      );
-    }
-    return false;
+    const userId = this.userService.currentUserId;
+    const project = (await this.projectService.get(projectId)).data;
+    return (
+      project != null &&
+      SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.Questions, Operation.Create) &&
+      SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.Questions, Operation.Edit)
+    );
   }
 }

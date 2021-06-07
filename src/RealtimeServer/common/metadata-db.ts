@@ -1,4 +1,4 @@
-import ShareDB = require('sharedb');
+import ShareDB from 'sharedb';
 
 export type DBConstructor<T extends ShareDB.DB = ShareDB.DB> = new (...args: any[]) => T;
 

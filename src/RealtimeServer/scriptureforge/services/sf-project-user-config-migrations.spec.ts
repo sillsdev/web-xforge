@@ -1,5 +1,5 @@
-import ShareDB = require('sharedb');
-import ShareDBMingo = require('sharedb-mingo-memory');
+import ShareDB from 'sharedb';
+import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock, when } from 'ts-mockito';
 import { MetadataDB } from '../../common/metadata-db';
 import { RealtimeServer } from '../../common/realtime-server';

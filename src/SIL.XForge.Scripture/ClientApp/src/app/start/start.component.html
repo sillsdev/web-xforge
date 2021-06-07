@@ -2,7 +2,7 @@
   <div fxLayout="column" fxLayoutAlign="center center" *ngIf="!isAppLoading">
     <p mdcBody1>{{ t("not_connected_to_any_projects") }}</p>
     <p>
-      <button mdc-button unelevated type="button" [appRouterLink]="['/connect-project']">
+      <button mdc-button [unelevated]="true" type="button" [appRouterLink]="['/connect-project']">
         <mdc-icon>add</mdc-icon>{{ t("connect_project") }}
       </button>
     </p>

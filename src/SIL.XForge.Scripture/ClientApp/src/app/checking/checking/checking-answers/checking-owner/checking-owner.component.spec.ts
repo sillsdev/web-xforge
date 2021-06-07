@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { TranslocoService } from '@ngneat/transloco';
 import { AvatarService } from 'ngx-avatar';
 import { CookieService } from 'ngx-cookie-service';
-import { UserProfile } from 'realtime-server/lib/common/models/user';
+import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';

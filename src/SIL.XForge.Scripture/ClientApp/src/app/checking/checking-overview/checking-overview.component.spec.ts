@@ -8,17 +8,23 @@ import { ActivatedRoute, Route } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ngfModule } from 'angular-file';
 import { CookieService } from 'ngx-cookie-service';
-import { SystemRole } from 'realtime-server/lib/common/models/system-role';
-import { User } from 'realtime-server/lib/common/models/user';
-import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
-import { getQuestionDocId, Question, QUESTIONS_COLLECTION } from 'realtime-server/lib/scriptureforge/models/question';
-import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
+import { User } from 'realtime-server/lib/esm/common/models/user';
+import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import {
+  getQuestionDocId,
+  Question,
+  QUESTIONS_COLLECTION
+} from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
-} from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
-import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
+} from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
@@ -84,16 +90,23 @@ describe('CheckingOverviewComponent', () => {
       expect(env.noQuestionsLabel).toBeNull();
     }));
 
-    it('should not display "Add question" button for Reviewer', fakeAsync(() => {
+    it('should not display "Add question" button for community checker', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setCurrentUser(env.checkerUser);
       env.waitForQuestions();
       expect(env.addQuestionButton).toBeNull();
     }));
 
-    it('should only display "Add question" button for project admin', fakeAsync(() => {
+    it('should display "Add question" button for project admin', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setCurrentUser(env.adminUser);
+      env.waitForQuestions();
+      expect(env.addQuestionButton).not.toBeNull();
+    }));
+
+    it('should display "Add question" button for translator with questions permission', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setCurrentUser(env.translatorUser);
       env.waitForQuestions();
       expect(env.addQuestionButton).not.toBeNull();
     }));
@@ -506,6 +519,12 @@ class TestEnvironment {
       [this.adminUser.id]: this.adminUser.role,
       [this.checkerUser.id]: this.checkerUser.role,
       [this.translatorUser.id]: this.translatorUser.role
+    },
+    userPermissions: {
+      [this.translatorUser.id]: [
+        SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create),
+        SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Edit)
+      ]
     }
   };
 

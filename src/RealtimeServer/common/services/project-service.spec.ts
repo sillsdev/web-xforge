@@ -1,5 +1,5 @@
-import ShareDB = require('sharedb');
-import ShareDBMingo = require('sharedb-mingo-memory');
+import ShareDB from 'sharedb';
+import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock } from 'ts-mockito';
 import { Project } from '../models/project';
 import { SystemRole } from '../models/system-role';
@@ -164,7 +164,8 @@ class TestEnvironment {
       userRoles: {
         projectAdmin: 'admin',
         user: 'user'
-      }
+      },
+      userPermissions: {}
     });
   }
 }

@@ -3,12 +3,12 @@ import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { CookieService } from 'ngx-cookie-service';
-import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
-import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
-import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
-import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
+import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, instance, mock, spy, when } from 'ts-mockito';
@@ -385,7 +385,8 @@ class TestEnvironment {
     sync: { queuedCount: 0 },
     userRoles: {
       user01: SFProjectRole.ParatextAdministrator
-    }
+    },
+    userPermissions: {}
   };
 
   static defaultDialogData = {

@@ -1,8 +1,8 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Injectable } from '@angular/core';
 import merge from 'lodash-es/merge';
-import { User } from 'realtime-server/lib/common/models/user';
-import { obj } from 'realtime-server/lib/common/utils/obj-path';
+import { User } from 'realtime-server/lib/esm/common/models/user';
+import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { combineLatest, from, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import XRegExp from 'xregexp';

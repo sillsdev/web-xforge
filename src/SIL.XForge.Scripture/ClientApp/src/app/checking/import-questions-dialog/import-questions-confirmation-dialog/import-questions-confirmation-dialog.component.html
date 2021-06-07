@@ -31,7 +31,7 @@
           </mdc-data-table>
         </mdc-dialog-content>
         <mdc-dialog-actions>
-          <button mdcDialogButton mdcDialogAction="close" unelevated type="submit" (click)="submit()">
+          <button mdcDialogButton mdcDialogAction="close" [unelevated]="true" type="submit" (click)="submit()">
             {{ t("done") }}
           </button>
         </mdc-dialog-actions>

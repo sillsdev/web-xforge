@@ -210,6 +210,27 @@ namespace SIL.XForge.Services
             }
         }
 
+        public async Task SetUserProjectPermissions(string curUserId, string projectId, string userId, string[] permissions)
+        {
+            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+            {
+                IDocument<TModel> projectDoc = await GetProjectDocAsync(projectId, conn);
+                if (!projectDoc.IsLoaded)
+                    throw new DataNotFoundException("The project does not exist.");
+                if (!IsProjectAdmin(projectDoc.Data, curUserId))
+                    throw new ForbiddenException();
+
+                if (permissions.Length == 0)
+                {
+                    await projectDoc.SubmitJson0OpAsync(op => op.Unset(p => p.UserPermissions[userId]));
+                }
+                else
+                {
+                    await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.UserPermissions[userId], permissions));
+                }
+            }
+        }
+
         protected virtual async Task AddUserToProjectAsync(IConnection conn, IDocument<TModel> projectDoc,
             IDocument<User> userDoc, string projectRole, bool removeShareKeys = true)
         {
@@ -231,7 +252,10 @@ namespace SIL.XForge.Services
                 throw new ArgumentNullException();
             }
             if (projectDoc.IsLoaded)
+            {
                 await projectDoc.SubmitJson0OpAsync(op => op.Unset(p => p.UserRoles[userDoc.Id]));
+                await projectDoc.SubmitJson0OpAsync(op => op.Unset(p => p.UserPermissions[userDoc.Id]));
+            }
             string siteId = SiteOptions.Value.Id;
             await userDoc.SubmitJson0OpAsync(op =>
             {

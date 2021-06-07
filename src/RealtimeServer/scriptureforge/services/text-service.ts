@@ -1,8 +1,9 @@
 import { ConnectSession } from '../../common/connect-session';
+import { Project } from '../../common/models/project';
 import { Operation } from '../../common/models/project-rights';
 import { DocService } from '../../common/services/doc-service';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from '../models/sf-project-rights';
-import { TEXT_INDEX_PATHS, TextData, TEXTS_COLLECTION } from '../models/text-data';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from '../models/sf-project-rights';
+import { TextData, TEXTS_COLLECTION, TEXT_INDEX_PATHS } from '../models/text-data';
 import { TEXT_MIGRATIONS } from './text-migrations';
 
 /**
@@ -22,12 +23,8 @@ export class TextService extends DocService<TextData> {
       return true;
     }
 
-    const role = await this.getUserProjectRole(session, docId);
-    if (role == null) {
-      return false;
-    }
-
-    return this.hasRight(role, Operation.View);
+    const project = await this.getProject(docId);
+    return project != null && this.hasRight(project, Operation.View, session.userId);
   }
 
   async allowUpdate(
@@ -41,24 +38,19 @@ export class TextService extends DocService<TextData> {
       return true;
     }
 
-    const role = await this.getUserProjectRole(session, docId);
-    if (role == null) {
-      return false;
-    }
-
-    return this.hasRight(role, Operation.Edit);
+    const project = await this.getProject(docId);
+    return project != null && this.hasRight(project, Operation.Edit, session.userId);
   }
 
-  private hasRight(role: string, operation: Operation): boolean {
-    return SF_PROJECT_RIGHTS.hasRight(role, { projectDomain: SFProjectDomain.Texts, operation });
+  private hasRight(project: Project, operation: Operation, userId: string): boolean {
+    return SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.Texts, operation);
   }
 
-  private getUserProjectRole(session: ConnectSession, docId: string): Promise<string | undefined> {
-    const parts = docId.split(':');
-    const projectId = parts[0];
+  private getProject(docId: string): Promise<Project | undefined> {
     if (this.server == null) {
       throw new Error('The doc service has not been initialized.');
     }
-    return this.server.getUserProjectRole(session, projectId);
+    const projectId = docId.split(':')[0];
+    return this.server.getProject(projectId);
   }
 }

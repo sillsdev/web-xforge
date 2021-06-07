@@ -1,7 +1,7 @@
 import { HttpClientTestingModule, HttpTestingController, RequestMatch } from '@angular/common/http/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { ProjectData } from 'realtime-server/lib/common/models/project-data';
-import { obj, PathItem } from 'realtime-server/lib/common/utils/obj-path';
+import { ProjectData } from 'realtime-server/lib/esm/common/models/project-data';
+import { obj, PathItem } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { BehaviorSubject } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';

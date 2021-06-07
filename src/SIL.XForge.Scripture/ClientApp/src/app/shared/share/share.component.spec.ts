@@ -4,9 +4,9 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
-import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
-import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
+import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -161,7 +161,8 @@ class TestEnvironment {
         texts: [],
         userRoles: {
           user01: role
-        }
+        },
+        userPermissions: {}
       }
     });
   }

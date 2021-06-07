@@ -1,6 +1,6 @@
 declare module 'sharedb-mongo' {
   import { MongoClient } from 'mongodb';
-  import ShareDB = require('sharedb');
+  import ShareDB from 'sharedb';
 
   type Callback = (err: any, client: MongoClient) => void;
 

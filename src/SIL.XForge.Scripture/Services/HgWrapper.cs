@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Paratext.Data.Repository;
 
 namespace SIL.XForge.Scripture.Services
@@ -25,6 +26,15 @@ namespace SIL.XForge.Scripture.Services
             if (Hg.Default == null)
                 throw new InvalidOperationException("Hg default has not been set.");
             return Hg.Default.Pull(repository, bundle, true);
+        }
+
+        /// <summary>
+        /// Get the most recent revision id of the commit from the last push or pull with the PT send/receive server.
+        /// </summary>
+        public static string GetLastPublicRevision(string repository)
+        {
+            string ids = RunCommand(repository, "log --rev \"public()\" --template \"{node}\n\"");
+            return ids.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault();
         }
 
         /// <summary> Set the default Mercurial installation. Must be called for all other methods to work. </summary>

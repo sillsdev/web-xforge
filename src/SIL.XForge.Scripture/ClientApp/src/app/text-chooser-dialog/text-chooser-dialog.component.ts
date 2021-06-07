@@ -1,7 +1,7 @@
 import { MdcDialog, MdcDialogConfig, MdcDialogRef, MDC_DIALOG_DATA } from '@angular-mdc/web';
 import { Component, ElementRef, Inject, Optional, ViewChild } from '@angular/core';
-import { toVerseRef, VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
-import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
+import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { fromEvent } from 'rxjs';
 import { auditTime } from 'rxjs/operators';
 import { DOCUMENT } from 'xforge-common/browser-globals';

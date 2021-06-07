@@ -150,8 +150,7 @@ namespace SIL.XForge.Scripture.Services
         /// <summary> Get the latest public revision. </summary>
         private string GetBaseRevision(string repository)
         {
-            string ids = HgWrapper.RunCommand(repository, "log --rev \"public()\" --template \"{node}\n\"");
-            return ids.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault();
+            return HgWrapper.GetLastPublicRevision(repository);
         }
 
         /// <summary> Mark all changesets available on the PT server public. </summary>

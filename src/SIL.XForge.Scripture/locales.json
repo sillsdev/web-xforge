@@ -36,7 +36,8 @@
     "localName": "Português",
     "englishName": "Portuguese",
     "tags": ["pt-BR"],
-    "production": true
+    "production": true,
+    "helps": "pt_BR"
   },
   {
     "localName": "français",
