@@ -31,6 +31,7 @@
     "time_archived_stamp": "Archivé le {{ timeStamp }}"
   },
   "collaborators": {
+    "allow_add_edit_questions": "Peut ajouter & modifier des questions",
     "awaiting_response_from": "En attente d'une réponse de{{ newLine }}{{ email }}",
     "cancel_invite": "Annuler l'invitation",
     "change_roles_and_permissions": "Les rôles et les autorisations des utilisateurs peuvent {{ boldStart }}uniquement{{ boldEnd }} être modifiés dans {{ boldStart }}Paratext{{ boldEnd }}. Ouvrez le projet dans {{ boldStart }}Paratext{{ boldEnd }}, dans la fenêtre du projet, cliquez sur {{ templateTagBoundary }}{{ templateTagBoundary }}, puis sur {{ boldStart }}Paramètres du projet{{ boldEnd }}, puis sur {{ boldStart }}Utilisateurs, rôles et autorisations{{ boldEnd }}. Après un {{ italicsStart }}Envoyer/Recevoir{{ italicsEnd }} dans {{ boldStart }}Paratext{{ boldEnd }} et, ensuite, un {{ italicsStart }}Synchroniser{{ italicsEnd }} dans {{ boldStart }}Scripture Forge{{ boldEnd }}, leur rôle sera effectif ici, une fois que cet utilisateur se connectera avec son compte {{ boldStart }}Paratext{{ boldEnd }}.",
@@ -79,6 +80,7 @@
     "cannot_edit_chapter_formatting_invalid": "Ce chapitre ne peut pas être modifié car le formatage n'est pas valide. Veuillez corriger le formatage dans Paratext.",
     "completed_successfully": "Terminé avec succès",
     "configure_translation_suggestions": "Configurer les suggestions de traduction",
+    "project_data_out_of_sync": "Les données de votre projet ne sont pas synchronisées. Veuillez synchroniser votre projet pour modifier ce texte.",
     "swap_source_and_target": "Intervertir la source et la cible",
     "training": "Formation",
     "training_completed_successfully": "Formation terminée avec succès",
