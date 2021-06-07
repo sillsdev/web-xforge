@@ -2,9 +2,11 @@
   "app": {
     "action_not_available_offline": "This action isn't available while you are offline.",
     "all_questions": "All Questions",
+    "announcements": "Announcements",
     "cannot_change_password": "Can't change password at this time. Try again later or report an issue in the Help menu.",
     "change_password": "Change password",
     "community_checking": "Community Checking",
+    "community_support": "Community Support",
     "connect_project": "Connect project",
     "help": "Help",
     "language": "Language",
