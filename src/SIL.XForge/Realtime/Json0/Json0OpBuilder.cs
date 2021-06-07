@@ -6,6 +6,10 @@ using SIL.XForge.Utils;
 
 namespace SIL.XForge.Realtime.Json0
 {
+    /// <summary>
+    /// Helps build up operations to manipulate RealtimeServer data.
+    /// Note: When setting or replacing data, if the request is already true in the `_data` object, then an op may not be created.
+    /// </summary>
     public class Json0OpBuilder<T>
     {
         private readonly T _data;
