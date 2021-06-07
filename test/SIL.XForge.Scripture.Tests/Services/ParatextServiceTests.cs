@@ -683,6 +683,46 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(mapping.Count, Is.EqualTo(0));
         }
 
+        [Test]
+        public async Task GetLatestSharedVersion_ForPTProject()
+        {
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            ScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
+            string lastPublicRevision = "abc123";
+            env.MockHgWrapper.GetLastPublicRevision(scrText.Directory).Returns(lastPublicRevision);
+
+            // SUT
+            string latestSharedVersion = env.Service.GetLatestSharedVersion(user01Secret, ptProjectId);
+
+            Assert.That(latestSharedVersion, Is.EqualTo(lastPublicRevision));
+        }
+
+        [Test]
+        public async Task GetLatestSharedVersion_ForDBLResource()
+        {
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+
+            string resourcePTID = "1234567890123456";
+            Assert.That(resourcePTID, Has.Length.EqualTo(SFInstallableDblResource.ResourceIdentifierLength),
+                "setup. Should be using a project ID that is a resource ID");
+
+            // SUT
+            string latestSharedVersion = env.Service.GetLatestSharedVersion(user01Secret, resourcePTID);
+
+            Assert.That(latestSharedVersion, Is.Null,
+                "DBL resources do not have hg repositories to have a last pushed or pulled hg commit id.");
+            // Wouldn't have ended up trying to find a ScrText or querying hg.
+            env.MockScrTextCollection.DidNotReceiveWithAnyArgs().FindById(default, default);
+            env.MockHgWrapper.DidNotReceiveWithAnyArgs().GetLastPublicRevision(default);
+        }
+
+
         private class TestEnvironment
         {
             public readonly string Project01 = "project01";
@@ -749,10 +789,9 @@ namespace SIL.XForge.Scripture.Services
                 Service = new ParatextService(MockWebHostEnvironment, MockParatextOptions, MockRepository,
                     RealtimeService, MockExceptionHandler, MockSiteOptions, MockFileSystemService,
                     MockLogger, MockJwtTokenHelper, MockParatextDataHelper, MockInternetSharedRepositorySourceProvider,
-                    MockRestClientFactory);
+                    MockRestClientFactory, MockHgWrapper);
                 Service.ScrTextCollection = MockScrTextCollection;
                 Service.SharingLogicWrapper = MockSharingLogicWrapper;
-                Service.HgHelper = MockHgWrapper;
                 Service.SyncDir = SyncDir;
 
                 PTProjectIds.Add(Project01, HexId.CreateNew());

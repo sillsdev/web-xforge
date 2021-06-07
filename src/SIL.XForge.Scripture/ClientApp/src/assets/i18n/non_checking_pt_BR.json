@@ -31,6 +31,7 @@
     "time_archived_stamp": "Arquivado em {{ timeStamp }}"
   },
   "collaborators": {
+    "allow_add_edit_questions": "Can add & edit questions",
     "awaiting_response_from": "Aguardando resposta de{{ newLine }}{{ email }}",
     "cancel_invite": "Cancelar convite",
     "change_roles_and_permissions": "Usuários, Funções e Permissões pode {{ boldStart }}apenas{{ boldEnd }} ser alterado no{{ boldStart }}Paratext{{ boldEnd }}. Abra o projeto no {{ boldStart }}Paratext{{ boldEnd }}, na janela do projeto, clique em {{ templateTagBoundary }}{{ templateTagBoundary }}, depois{{ boldStart }}Propriedades e Configurações do Projeto{{ boldEnd }}, em seguida {{ boldStart }}Usuários, Funções e Permissões{{ boldEnd }}. Depois de um {{ italicsStart }}Enviar/Receber{{ italicsEnd }} no {{ boldStart }}Paratext{{ boldEnd }} e em seguida uma {{ italicsStart }}Sincronização{{ italicsEnd }} no {{ boldStart }}Scripture Forge{{ boldEnd }}, a função do usuário entrará em vigor aqui, assim que fizer o login com sua {{ boldStart }}Paratext{{ boldEnd }} conta.",
@@ -79,6 +80,7 @@
     "cannot_edit_chapter_formatting_invalid": "Este capítulo não pode ser editado porque a formatação é inválida. Por favor, corrija a formatação no Paratext.",
     "completed_successfully": "Concluído com sucesso",
     "configure_translation_suggestions": "Configurar sugestões de tradução",
+    "project_data_out_of_sync": "Your project data is out of sync. Please synchronize your project to edit this text.",
     "swap_source_and_target": "Trocar origem e destino",
     "training": "Treinamento",
     "training_completed_successfully": "Treinamento concluído com sucesso",

@@ -102,9 +102,35 @@ namespace SIL.XForge.Scripture.Services
                 var targetTextDocsByBook = new Dictionary<int, SortedList<int, IDocument<TextData>>>();
                 var questionDocsByBook = new Dictionary<int, IReadOnlyList<IDocument<Question>>>();
                 string lastSharedVersion = _paratextService.GetLatestSharedVersion(_userSecret, targetParatextId);
-                bool isDataInSync = lastSharedVersion == null
-                    ? true
-                    : lastSharedVersion == _projectDoc.Data.Sync.SyncedToRepositoryVersion;
+
+                bool isDataInSync = false;
+                if (lastSharedVersion == null)
+                {
+                    // The hg repository has no pushed or pulled commit. Maybe we are only just getting set up with a
+                    // project. Maybe it is a resource and not a project and has no hg repo directory.
+                    isDataInSync = true;
+                }
+                if (lastSharedVersion == _projectDoc.Data.Sync.SyncedToRepositoryVersion)
+                {
+                    // The recent hg repository pushed or pulled commit id matches what we recorded as being the last
+                    // place where SF and PT last synced.
+                    isDataInSync = true;
+                }
+                if (_projectDoc.Data.Sync.SyncedToRepositoryVersion == null && _projectDoc.Data.Sync.DataInSync == null)
+                {
+                    // We have no record of where SF and PT last synced. So it was probably before we started tracking
+                    // this. Or this is a resource that we won't have this information for. Assume the data is
+                    // 'in sync'.
+                    // Note that there is a special case where SyncedToRepositoryVersion may be absent, but DataInSync
+                    // may be present (and false), which may indicate a situation where a project only had unsuccessful
+                    // syncs since we started tracking SyncedToRepositoryVersion. Note that this could happen if the
+                    // _first_ sync, from Connecting, had a failure. In this case, isDataInSync should
+                    // be false.
+                    // There is also a special case where SyncedToRepositoryVersion may be absent, but DataInSync may
+                    // be present (and true), which may indicate that the initial Connect project failed to hg clone.
+                    isDataInSync = true;
+                }
+
                 // update target Paratext books and notes
                 foreach (TextInfo text in _projectDoc.Data.Texts)
                 {

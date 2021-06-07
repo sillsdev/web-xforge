@@ -31,6 +31,7 @@
     "time_archived_stamp": "Diarsipkan pada{{ timeStamp }}"
   },
   "collaborators": {
+    "allow_add_edit_questions": "Can add & edit questions",
     "awaiting_response_from": "Menunggu respon dari{{ newLine }}{{ email }}",
     "cancel_invite": "Batal mengundang",
     "change_roles_and_permissions": "Peran dan izin pengguna {{ boldStart }}hanya dapat{{ boldEnd }} diubah di {{ boldStart }}Paratext{{ boldEnd }}. Buka proyek di {{ boldStart }}Paratext{{ boldEnd }}, pada jendela proyek klik {{ templateTagBoundary }}{{ templateTagBoundary }}, kemudian {{ boldStart }} Pengaturan proyek{{ boldEnd }}, kemudian {{ boldStart }}Izin pengguna{{ boldEnd }}. Setelah melakukan {{ italicsStart }}Kirim/Terima{{ italicsEnd }} di {{ boldStart }}Paratext{{ boldEnd }} dan kemudian melakukan {{ italicsStart }}Sinkronisasi{{ italicsEnd }} di {{ boldStart }}Scripture Forge{{ boldEnd }}, peran mereka akan mulai berlaku di sini, begitu pengguna masuk dengan akun {{ boldStart }}Paratext{{ boldEnd }} mereka.",
@@ -79,6 +80,7 @@
     "cannot_edit_chapter_formatting_invalid": "Pasal ini tidak dapat disunting karena pemformatan tidak valid. Harap perbaiki pemformatan di Paratext.",
     "completed_successfully": "Berhasil diselesaikan",
     "configure_translation_suggestions": "Konfigurasikan saran terjemahan",
+    "project_data_out_of_sync": "Your project data is out of sync. Please synchronize your project to edit this text.",
     "swap_source_and_target": "Tukar sumber dan target",
     "training": "Pelatihan",
     "training_completed_successfully": "Pelatihan berhasil diselesaikan",

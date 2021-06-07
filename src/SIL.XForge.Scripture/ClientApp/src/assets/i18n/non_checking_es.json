@@ -31,6 +31,7 @@
     "time_archived_stamp": "Archivado en {{ timeStamp }}"
   },
   "collaborators": {
+    "allow_add_edit_questions": "Can add & edit questions",
     "awaiting_response_from": "Esperando respuesta de{{ newLine }}{{ email }}",
     "cancel_invite": "Cancelar la invitación",
     "change_roles_and_permissions": "Los roles y permisos de los usuarios {{ boldStart }}sólo{{ boldEnd }} pueden ser cambiados en {{ boldStart }}Paratext{{ boldEnd }}. Abra el proyecto en {{ boldStart }}Paratext{{ boldEnd }}, en la ventana del proyecto haga clic en {{ templateTagBoundary }}{{ templateTagBoundary }}, luego {{ boldStart }}Configuración del proyecto{{ boldEnd }}, luego {{ boldStart }}Permisos de usuario{{ boldEnd }}. Después un {{ italicsStart }}Enviar/Recibir{{ italicsEnd }} en {{ boldStart }}Paratext{{ boldEnd }} y luego un {{ italicsStart }}Sincronizar{{ italicsEnd }} en {{ boldStart }}Scripture Forge{{ boldEnd }}, su rol entrará en vigor aquí, una vez que el usuario inicie la sesión con su cuenta de {{ boldStart }}Paratext{{ boldEnd }} .",
@@ -79,6 +80,7 @@
     "cannot_edit_chapter_formatting_invalid": "Este capítulo no puede ser editado porque el formato no es válido. Por favor, arregle el formato en Paratext.",
     "completed_successfully": "Completado con éxito",
     "configure_translation_suggestions": "Configurar sugerencias de traducción",
+    "project_data_out_of_sync": "Your project data is out of sync. Please synchronize your project to edit this text.",
     "swap_source_and_target": "Intercambio de origen y destino",
     "training": "Entrenamiento",
     "training_completed_successfully": "Entrenamiento completado con éxito",

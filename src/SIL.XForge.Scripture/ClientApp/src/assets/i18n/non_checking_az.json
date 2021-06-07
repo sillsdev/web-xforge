@@ -31,6 +31,7 @@
     "time_archived_stamp": "{{ timeStamp }}-da arxivləşdirilib"
   },
   "collaborators": {
+    "allow_add_edit_questions": "Can add & edit questions",
     "awaiting_response_from": "{{ newLine }}{{ email }}-dan cavab gözlənilir",
     "cancel_invite": "Dəvəti ləğv etmək",
     "change_roles_and_permissions": "İstifadəçilərin rolları və icazələri {{ boldStart }}yalnız{{ boldEnd }} {{ boldStart }}Paratextdə{{ boldEnd }} dəyişilə bilər. Layihəni {{ boldStart }}Paratextdə{{ boldEnd }} açın, layihənin pəncərəsində {{ templateTagBoundary }}{{ templateTagBoundary }}, sonra {{ boldStart }}Layihə parametrləri{{ boldEnd }}, sonra{{ boldStart }}İstifadəçinin izacələri{{ boldEnd }} tıklayın. {{ boldStart }}Paratextdə{{ boldEnd }} {{ italicsStart }}Göndərmək/Qəbul etmək{{ italicsEnd }}-dən sonra {{ boldStart }} Kəlamın Kürəsində {{ boldEnd }}{{ italicsStart }}Sinxronlaşdırmaq{{ italicsEnd }} edildikdə həmin istifadəçi öz {{ boldStart }}Paratext{{ boldEnd }} hesabı ilə daxil olduqda onların rolu aktivləşəcək.",
@@ -79,6 +80,7 @@
     "cannot_edit_chapter_formatting_invalid": "Bu fəsil redaktə oluna bilməz, çünki formatlaşdırma yanlışdır. Zəhmət olmazsa, formatlaşdırmanı Paratextdə düzəldin.",
     "completed_successfully": "Uğurla tamamlandı",
     "configure_translation_suggestions": "Tərcümə təkliflərini irəli sürün",
+    "project_data_out_of_sync": "Your project data is out of sync. Please synchronize your project to edit this text.",
     "swap_source_and_target": "Mənbə və hədəfi dəyişdirmək",
     "training": "Təlim",
     "training_completed_successfully": "Təlim uğurla başa çatdı",

@@ -60,7 +60,8 @@ namespace SIL.XForge.Scripture.Services
                     Origin = new Uri("http://localhost"),
                     SiteDir = "xforge"
                 });
-                Provider = new InternetSharedRepositorySourceProvider(MockJwtTokenHelper, siteOptions);
+                Provider = new InternetSharedRepositorySourceProvider(MockJwtTokenHelper, siteOptions,
+                    Substitute.For<IHgWrapper>());
             }
         }
     }

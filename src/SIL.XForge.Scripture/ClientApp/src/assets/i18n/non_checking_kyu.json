@@ -31,6 +31,7 @@
     "time_archived_stamp": "ꤙꤢꤩ꤬ꤕꤜꤢꤪꤓꤛꤢ꤬ {{ timeStamp }}"
   },
   "collaborators": {
+    "allow_add_edit_questions": "Can add & edit questions",
     "awaiting_response_from": "ꤥ꤬ꤕꤟꤢꤪ ꤒꤟꤢꤧ꤬ꤟꤢꤩꤊꤟꤢ꤬ꤋꤛꤢꤩ꤭ꤏꤢꤦ꤬ ꤘꤣ{{ newLine }}{{ email }}",
     "cancel_invite": "ꤗꤟꤢꤩ꤬ꤕꤜꤤ꤭ꤊꤛꤢ꤭ ꤒꤟꤢꤧ꤬ꤢꤧꤗꤟꤥ꤬",
     "change_roles_and_permissions": "Users' roles and permissions can {{ boldStart }}only{{ boldEnd }} be changed in {{ boldStart }}Paratext{{ boldEnd }}. Open the project in {{ boldStart }}Paratext{{ boldEnd }}, on the project window click {{ templateTagBoundary }}{{ templateTagBoundary }}, then {{ boldStart }}Project settings{{ boldEnd }}, then {{ boldStart }}User permissions{{ boldEnd }}. After a {{ italicsStart }}Send/Receive{{ italicsEnd }} in {{ boldStart }}Paratext{{ boldEnd }} and then a {{ italicsStart }}Synchronize{{ italicsEnd }} in {{ boldStart }}Scripture Forge{{ boldEnd }}, their role will come into effect here, once that user logs in with their {{ boldStart }}Paratext{{ boldEnd }} account.",
@@ -79,6 +80,7 @@
     "cannot_edit_chapter_formatting_invalid": "ꤢ꤬ꤗꤟꤢ꤭ꤘꤢꤨ꤬ ꤛꤢꤩ꤭ꤒꤣ꤬ꤗꤟꤢ꤭ ꤗꤢ꤬ ꤗꤟꤢꤩ꤬ꤚꤛꤢꤓꤛꤢ꤬ ꤕꤟꤥ ꤜꤢꤨ꤭ ꤗꤢ꤬ ꤢ꤬ꤔꤟꤤ ꤒꤥ꤬, ꤗꤟꤢꤩ꤬ꤒꤢꤩ꤭ꤟꤢꤩꤚꤢꤪ ꤒꤟꤢꤧ꤬ꤢꤩ꤬ꤊꤜꤟꤢꤪ꤬ꤗꤢ꤬ ꤔꤌꤣ꤬ꤗꤢ꤬ ꤔꤢꤪ꤭ꤢꤩ꤬ꤔꤟꤤ ꤒꤥ꤬꤯ ꤋꤛꤢꤞꤢꤧꤘꤥ꤭ ꤗꤟꤢꤩ꤬ꤚꤛꤢꤚꤟꤢꤩ ꤒꤟꤢꤧ꤬ꤢꤩ꤬ꤊꤜꤟꤢꤪ꤬ꤗꤢ꤬ ꤘꤣ Paratext ꤊꤢꤨ꤭ꤔꤌꤣ꤬ ꤔꤤ꤯ ",
     "completed_successfully": "ꤢ꤬ꤓꤌꤣ꤭ꤢ꤬ꤕꤜꤥ꤭ ꤜꤟꤢꤪ꤭ꤕꤜꤤ꤭ ꤟꤢꤪ",
     "configure_translation_suggestions": "ꤘꤛꤢꤩꤜꤟꤌꤣ꤭ꤓꤛꤢ꤬ ꤒꤟꤢꤧ꤬ꤚꤢ꤭ꤕꤟꤥ꤬ꤓꤢꤩ꤬ ꤢ꤬ꤒꤟꤢꤧ꤬ꤘꤛꤢꤩꤞꤢꤧꤑꤢꤩ꤭ꤡꤝꤟꤥ ꤒꤢ꤬ꤟꤢꤩ꤬",
+    "project_data_out_of_sync": "Your project data is out of sync. Please synchronize your project to edit this text.",
     "swap_source_and_target": "ꤜꤟꤢꤩꤗꤟꤢꤩ꤬ꤒꤟꤢꤧ꤬ ꤒꤟꤢ꤭ꤤ꤭ꤒꤟꤢꤧ꤬ ꤔꤢ ꤊꤟꤢꤦꤚꤟꤢꤩꤗꤟꤢꤩ꤬ꤒꤟꤢꤧ꤬",
     "training": "ꤒꤟꤢꤧ꤬ꤤ꤬ꤞꤛꤥ",
     "training_completed_successfully": "ꤒꤟꤢꤧ꤬ꤤ꤬ꤞꤛꤥ ꤢ꤬ꤓꤌꤣ꤭ꤢ꤬ꤕꤜꤥ꤭ ꤚꤛꤢ ꤊꤛꤢ꤭ ꤟꤢꤪ",

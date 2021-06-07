@@ -31,6 +31,7 @@
     "time_archived_stamp": "Архивировано на {{ timeStamp }}"
   },
   "collaborators": {
+    "allow_add_edit_questions": "Can add & edit questions",
     "awaiting_response_from": "Ожидание ответа от{{ newLine }}{{ email }}",
     "cancel_invite": "Отменить приглашение",
     "change_roles_and_permissions": "Роли и права пользователей могут быть изменены {{ boldStart }}только{{ boldEnd }} в программе {{ boldStart }}Paratext{{ boldEnd }}. Откройте проект в {{ boldStart }}Paratext{{ boldEnd }}, в окне проекта нажмите {{ templateTagBoundary }}{{ templateTagBoundary }}, затем {{ boldStart }}Настройки проекта{{ boldEnd }}, затем {{ boldStart }}Права доступа пользователей{{ boldEnd }}. После выполнения {{ italicsStart }}Обмена данными проекта{{ italicsEnd }} в {{ boldStart }}Paratext{{ boldEnd }} , а затем {{ italicsStart }}Синхронизации{{ italicsEnd }} в {{ boldStart }}Scripture Forge{{ boldEnd }}, новые настройки прав пользователей вступят в силу здесь, как только соответствующий пользователь войдёт при помощи своего аккаунта {{ boldStart }}Paratext{{ boldEnd }}.",
@@ -79,6 +80,7 @@
     "cannot_edit_chapter_formatting_invalid": "Эта глава не может быть изменена, так как форматирование неверно. Пожалуйста, исправьте форматирование в Paratext.",
     "completed_successfully": "Успешно завершено",
     "configure_translation_suggestions": "Настройка предложений по переводу",
+    "project_data_out_of_sync": "Your project data is out of sync. Please synchronize your project to edit this text.",
     "swap_source_and_target": "Поменять местами источник и цель",
     "training": "Обучение",
     "training_completed_successfully": "Обучение успешно завершено",
