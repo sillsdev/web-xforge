@@ -88,11 +88,13 @@ namespace SIL.XForge.Scripture.Services
         [Mutex("{0}")]
         public async Task RunAsync(string projectId, string userId, bool trainEngine, CancellationToken token)
         {
+            // Whether or not we can rollback Paratext
+            bool canRollbackParatext = false;
             try
             {
                 if (!await InitAsync(projectId, userId, token))
                 {
-                    await CompleteSync(false, token);
+                    await CompleteSync(false, canRollbackParatext, token);
                     return;
                 }
 
@@ -100,12 +102,12 @@ namespace SIL.XForge.Scripture.Services
                 string sourceParatextId = _projectDoc.Data.TranslateConfig.Source?.ParatextId;
                 string sourceProjectRef = _projectDoc.Data.TranslateConfig.Source?.ProjectRef;
 
-                // Determine if we can rollback
-                bool canRollback = _paratextService.BackupExists(_userSecret, targetParatextId);
-                if (!canRollback)
+                // Determine if we can rollback Paratext
+                canRollbackParatext = _paratextService.BackupExists(_userSecret, targetParatextId);
+                if (!canRollbackParatext)
                 {
                     // Attempt to create a backup if we cannot rollback
-                    canRollback = _paratextService.BackupRepository(_userSecret, targetParatextId);
+                    canRollbackParatext = _paratextService.BackupRepository(_userSecret, targetParatextId);
                 }
 
                 var targetTextDocsByBook = new Dictionary<int, SortedList<int, IDocument<TextData>>>();
@@ -157,7 +159,7 @@ namespace SIL.XForge.Scripture.Services
                 // Check for cancellation
                 if (token.IsCancellationRequested)
                 {
-                    await CompleteSync(false, token);
+                    await CompleteSync(false, canRollbackParatext, token);
                     return;
                 }
 
@@ -180,7 +182,7 @@ namespace SIL.XForge.Scripture.Services
                 // Check for cancellation
                 if (token.IsCancellationRequested)
                 {
-                    await CompleteSync(false, token);
+                    await CompleteSync(false, canRollbackParatext, token);
                     return;
                 }
 
@@ -196,7 +198,7 @@ namespace SIL.XForge.Scripture.Services
                 // Check for cancellation
                 if (token.IsCancellationRequested)
                 {
-                    await CompleteSync(false, token);
+                    await CompleteSync(false, canRollbackParatext, token);
                     return;
                 }
 
@@ -218,7 +220,7 @@ namespace SIL.XForge.Scripture.Services
                 // Check for cancellation
                 if (token.IsCancellationRequested)
                 {
-                    await CompleteSync(false, token);
+                    await CompleteSync(false, canRollbackParatext, token);
                     return;
                 }
 
@@ -233,6 +235,8 @@ namespace SIL.XForge.Scripture.Services
                     IDocument<SFProject> sourceProject = await _conn.FetchAsync<SFProject>(sourceProjectRef);
                     if (sourceProject.IsLoaded)
                     {
+                        // NOTE: The following additions/removals not included in the transaction
+
                         // Add new users who are in the target project, but not the source project
                         List<string> usersToAdd =
                             _projectDoc.Data.UserRoles.Keys.Except(sourceProject.Data.UserRoles.Keys).ToList();
@@ -270,7 +274,7 @@ namespace SIL.XForge.Scripture.Services
                 // Check for cancellation
                 if (token.IsCancellationRequested)
                 {
-                    await CompleteSync(false, token);
+                    await CompleteSync(false, canRollbackParatext, token);
                     return;
                 }
 
@@ -280,12 +284,12 @@ namespace SIL.XForge.Scripture.Services
                     await _engineService.StartBuildByProjectIdAsync(projectId);
                 }
 
-                await CompleteSync(true, token);
+                await CompleteSync(true, canRollbackParatext, token);
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "Error occurred while executing Paratext sync for project '{Project}'", projectId);
-                await CompleteSync(false, token);
+                await CompleteSync(false, canRollbackParatext, token);
             }
             finally
             {
@@ -347,6 +351,8 @@ namespace SIL.XForge.Scripture.Services
         internal async Task<bool> InitAsync(string projectId, string userId, CancellationToken token)
         {
             _conn = await _realtimeService.ConnectAsync();
+            _conn.BeginTransaction();
+            _conn.ExcludePropertyFromTransaction<SFProject>(op => op.Sync.PercentCompleted);
             _projectDoc = await _conn.FetchAsync<SFProject>(projectId);
             if (!_projectDoc.IsLoaded)
                 return false;
@@ -585,10 +591,13 @@ namespace SIL.XForge.Scripture.Services
             await Task.WhenAll(tasks);
         }
 
-        private async Task CompleteSync(bool successful, CancellationToken token)
+        private async Task CompleteSync(bool successful, bool canRollbackParatext, CancellationToken token)
         {
             if (_projectDoc == null || _projectSecret == null)
+            {
+                await _conn.RollbackTransactionAsync();
                 return;
+            }
 
             bool updateRoles = true;
             IReadOnlyDictionary<string, string> ptUserRoles;
@@ -629,6 +638,13 @@ namespace SIL.XForge.Scripture.Services
                     .Select(u => new { UserId = u.Id, ParatextId = u.ParatextId })
                     .ToListAsync();
 
+            // If we have failed, restore the repository, if we can
+            if (!successful && canRollbackParatext)
+            {
+                _paratextService.RestoreRepository(_userSecret, _projectDoc.Data.ParatextId);
+            }
+
+            // NOTE: This is executed outside of the transaction because it modifies "Sync.PercentCompleted"
             await _projectDoc.SubmitJson0OpAsync(op =>
             {
                 op.Unset(pd => pd.Sync.PercentCompleted);
@@ -709,10 +725,22 @@ namespace SIL.XForge.Scripture.Services
                 }
             }
 
-            // If successful, create a backup
-            if (successful && _projectDoc.Data.ParatextId.Length != SFInstallableDblResource.ResourceIdentifierLength)
+            // Commit or rollback the transaction, depending on success
+            if (successful)
             {
-                _paratextService.BackupRepository(_userSecret, _projectDoc.Data.ParatextId);
+                // Write the operations to the database
+                await _conn.CommitTransactionAsync();
+
+                // Backup the repository
+                if (_projectDoc.Data.ParatextId.Length != SFInstallableDblResource.ResourceIdentifierLength)
+                {
+                    _paratextService.BackupRepository(_userSecret, _projectDoc.Data.ParatextId);
+                }
+            }
+            else
+            {
+                // Rollback the operations (the repository was restored above)
+                await _conn.RollbackTransactionAsync();
             }
         }
 
