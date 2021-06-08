@@ -249,6 +249,7 @@ namespace SIL.XForge.Scripture.Services
                             },
                             TranslateConfig = new TranslateConfig
                             {
+                                TranslationSuggestionsEnabled = true,
                                 Source = new TranslateSource
                                 {
                                     ProjectRef = Project01

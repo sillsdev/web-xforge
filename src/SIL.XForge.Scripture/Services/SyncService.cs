@@ -50,7 +50,8 @@ namespace SIL.XForge.Scripture.Services
 
                 // See if we can sync the source project
                 string sourceProjectId = projectDoc.Data.TranslateConfig.Source?.ProjectRef;
-                if (!string.IsNullOrWhiteSpace(sourceProjectId))
+                if (projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled
+                    && !string.IsNullOrWhiteSpace(sourceProjectId))
                 {
                     IDocument<SFProject> sourceProjectDoc = await conn.FetchAsync<SFProject>(sourceProjectId);
                     if (!sourceProjectDoc.IsLoaded || sourceProjectDoc.Data.SyncDisabled)
