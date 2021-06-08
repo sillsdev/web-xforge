@@ -43,8 +43,17 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         public string GetLastPublicRevision(string repository)
         {
-            string ids = HgWrapper.RunCommand(repository, "log --rev \"public()\" --template \"{node}\n\"");
-            return ids.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault();
+            string ids = RunCommand(repository, "log --rev \"public()\" --template \"{node}\n\"");
+            string revision = ids.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?.Trim();
+
+            // If the revision is empty (likely due to restoring a backup), just get the top revision
+            if (string.IsNullOrWhiteSpace(revision))
+            {
+                ids = RunCommand(repository, "log --template \"{node}\n\"");
+                revision = ids.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.Trim();
+            }
+
+            return revision;
         }
 
         /// <summary> Set the default Mercurial installation. Must be called for all other methods to work. </summary>
