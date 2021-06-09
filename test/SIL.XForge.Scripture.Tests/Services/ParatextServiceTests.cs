@@ -755,6 +755,54 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void BackupExists_Failure()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            env.MockFileSystemService.FileExists(Arg.Any<string>()).Throws(new UnauthorizedAccessException());
+
+            // SUT
+            bool result = env.Service.BackupExists(user01Secret, ptProjectId);
+            Assert.IsFalse(result);
+        }
+
+        [Test]
+        public void BackupExists_Missing()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            env.MockFileSystemService.FileExists(Arg.Any<string>()).Returns(false);
+
+            // SUT
+            bool result = env.Service.BackupExists(user01Secret, ptProjectId);
+            Assert.IsFalse(result);
+        }
+
+        [Test]
+        public void BackupExists_Success()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            env.MockFileSystemService.FileExists(Arg.Any<string>()).Returns(true);
+
+            // SUT
+            bool result = env.Service.BackupExists(user01Secret, ptProjectId);
+            Assert.IsTrue(result);
+        }
+
+        [Test]
         public void BackupRepository_Failure()
         {
             // Setup test environment
@@ -795,6 +843,54 @@ namespace SIL.XForge.Scripture.Services
 
             // SUT
             bool result = env.Service.BackupRepository(user01Secret, ptProjectId);
+            Assert.IsTrue(result);
+        }
+
+        [Test]
+        public void RestoreRepository_Failure()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            env.MockFileSystemService.FileExists(Arg.Any<string>()).Throws(new UnauthorizedAccessException());
+
+            // SUT
+            bool result = env.Service.RestoreRepository(user01Secret, ptProjectId);
+            Assert.IsFalse(result);
+        }
+
+        [Test]
+        public void RestoreRepository_Missing()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            env.MockFileSystemService.FileExists(Arg.Any<string>()).Returns(false);
+
+            // SUT
+            bool result = env.Service.RestoreRepository(user01Secret, ptProjectId);
+            Assert.IsFalse(result);
+        }
+
+        [Test]
+        public void RestoreRepository_Success()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            env.MockFileSystemService.FileExists(Arg.Any<string>()).Returns(true);
+
+            // SUT
+            bool result = env.Service.RestoreRepository(user01Secret, ptProjectId);
             Assert.IsTrue(result);
         }
 

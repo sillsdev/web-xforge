@@ -56,6 +56,21 @@ namespace SIL.XForge.Scripture.Services
             return revision;
         }
 
+        /// <summary>
+        /// Restores the repository.
+        /// </summary>
+        /// <param name="destination">The destination to restore to.</param>
+        /// <param name="backupFile">The backup file to restore from. This string must be encoded correctly.</param>
+        public void RestoreRepository(string destination, string backupFile)
+        {
+            if (Hg.Default == null)
+                throw new InvalidOperationException("Hg default has not been set.");
+
+            Hg.Default.Init(destination);
+            Hg.Default.Unbundle(destination, backupFile);
+            Hg.Default.Update(destination);
+        }
+
         /// <summary> Set the default Mercurial installation. Must be called for all other methods to work. </summary>
         public void SetDefault(Hg hgDefault)
         {
