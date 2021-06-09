@@ -120,7 +120,7 @@ namespace SIL.XForge.Realtime
             if (this._realtimeServer is QueuedRealtimeServer realtimeServer)
             {
                 // Exclude the property
-                realtimeServer.ExcludePropertyFromTransaction<T>(field);
+                realtimeServer.ExcludePropertyFromTransaction(field);
             }
             else
             {
