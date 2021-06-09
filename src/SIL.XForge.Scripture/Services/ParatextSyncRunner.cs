@@ -690,7 +690,10 @@ namespace SIL.XForge.Scripture.Services
                 bool isRtl = _paratextService
                     .IsProjectLanguageRightToLeft(_userSecret, _projectDoc.Data.ParatextId);
                 op.Set(pd => pd.IsRightToLeft, isRtl);
-                if (TranslationSuggestionsEnabled)
+
+                // The source can be null if there was an error getting a resource from the DBL
+                if (TranslationSuggestionsEnabled
+                    && _projectDoc.Data.TranslateConfig.Source != null)
                 {
                     bool sourceIsRtl = _paratextService
                         .IsProjectLanguageRightToLeft(_userSecret, _projectDoc.Data.TranslateConfig.Source.ParatextId);
