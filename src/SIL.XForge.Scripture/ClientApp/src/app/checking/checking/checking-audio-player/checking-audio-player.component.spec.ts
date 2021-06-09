@@ -1,4 +1,4 @@
-import { Component, DebugElement, ViewChild } from '@angular/core';
+import { Component, DebugElement, NgZone, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
@@ -11,12 +11,13 @@ import { AudioStatus, AudioTimePipe, CheckingAudioPlayerComponent } from './chec
 describe('CheckingAudioPlayerComponent', () => {
   const audioFile = 'test-audio-player.webm';
   const audioFileB = 'test-audio-player-b.webm';
+  const playerLoadTimeMs = 1000;
 
   it('should be created', async () => {
     const template =
       '<app-checking-audio-player #player1 id="player1" source="' + audioFile + '"></app-checking-audio-player>';
     const env = new TestEnvironment(template);
-    await env.waitForPlayer(1000);
+    await env.waitForPlayer(playerLoadTimeMs);
     expect(env.component.player1.enabled).toBe(true);
     expect(env.duration).toBe('0:05');
     expect(env.currentTime).toBe('0:00');
@@ -26,7 +27,7 @@ describe('CheckingAudioPlayerComponent', () => {
     const template =
       '<app-checking-audio-player #player1 id="player1" source="' + audioFile + '"></app-checking-audio-player>';
     const env = new TestEnvironment(template);
-    await env.waitForPlayer(1000);
+    await env.waitForPlayer(playerLoadTimeMs);
     env.clickButton(env.playButton(1));
     await env.waitForPlayer(1500);
     env.fixture.detectChanges();
@@ -43,7 +44,7 @@ describe('CheckingAudioPlayerComponent', () => {
       audioFileB +
       '"></app-checking-audio-player>';
     const env = new TestEnvironment(template);
-    await env.waitForPlayer(1000);
+    await env.waitForPlayer(playerLoadTimeMs);
     env.clickButton(env.playButton(1));
     await env.waitForPlayer(500);
     expect(env.component.player1.isPlaying).toBe(true);
@@ -58,7 +59,7 @@ describe('CheckingAudioPlayerComponent', () => {
     const template =
       '<app-checking-audio-player #player1 id="player1" source="' + audioFile + '"></app-checking-audio-player>';
     const env = new TestEnvironment(template);
-    await env.waitForPlayer(1000);
+    await env.waitForPlayer(playerLoadTimeMs);
     expect(env.component.player1.hasSource).toBe(true);
     env.component.player1.source = '';
     expect(env.component.player1.hasSource).toBe(false);
@@ -67,7 +68,7 @@ describe('CheckingAudioPlayerComponent', () => {
   it('it notifies the user when audio is unavailable offline', async () => {
     const template = `<app-checking-audio-player #player1 source="https://"></app-checking-audio-player>`;
     const env = new TestEnvironment(template, false);
-    await env.waitForPlayer(1000);
+    await env.waitForPlayer(playerLoadTimeMs);
     expect(env.component.player1.hasSource).toBe(true);
     expect(env.audioNotAvailableMessage).not.toBeNull();
   });
@@ -75,7 +76,7 @@ describe('CheckingAudioPlayerComponent', () => {
   it('it can play blobs even when offline', async () => {
     const template = `<app-checking-audio-player #player1 source="${audioFile}"></app-checking-audio-player>`;
     const env = new TestEnvironment(template, false);
-    await env.waitForPlayer(1000);
+    await env.waitForPlayer(playerLoadTimeMs);
     expect(env.component.player1.hasSource).toBe(true);
     expect(env.audioNotAvailableMessage).toBeNull();
   });
@@ -83,7 +84,7 @@ describe('CheckingAudioPlayerComponent', () => {
   it('it can play preloaded audio when offline', async () => {
     const template = `<app-checking-audio-player #player1 source="${audioFile}"></app-checking-audio-player>`;
     const env = new TestEnvironment(template, false);
-    await env.waitForPlayer(1000);
+    await env.waitForPlayer(playerLoadTimeMs);
     expect(env.component.player1.hasSource).toBe(true);
     // The browser is online, but the component thinks it is offline. This simulates the scenario where audio data is
     // already loaded, but the browser is offline.
@@ -93,7 +94,7 @@ describe('CheckingAudioPlayerComponent', () => {
   it('show error tooltip if error loading audio while online and the file does not exist', async () => {
     const template = `<app-checking-audio-player #player1 source="audio-file-not-exists.webm"></app-checking-audio-player>`;
     const env = new TestEnvironment(template, true);
-    await env.waitForPlayer(1000);
+    await env.waitForPlayer(playerLoadTimeMs);
     expect(env.audioNotAvailableMessage).not.toBeNull();
     expect(env.audioNotAvailableMessage.query(By.css('#error-load'))).not.toBeNull();
     expect(env.component.player1.audioStatus).toEqual(AudioStatus.Unavailable);
@@ -103,7 +104,7 @@ describe('CheckingAudioPlayerComponent', () => {
   it('show error tooltip if error loading audio while offline and the file does not exist', async () => {
     const template = `<app-checking-audio-player #player1 source="audio-file-not-exists.webm"></app-checking-audio-player>`;
     const env = new TestEnvironment(template, false);
-    await env.waitForPlayer(1000);
+    await env.waitForPlayer(playerLoadTimeMs);
     expect(env.audioNotAvailableMessage).not.toBeNull();
     expect(env.audioNotAvailableMessage.query(By.css('#error-load'))).not.toBeNull();
     expect(env.component.player1.audioStatus).toEqual(AudioStatus.Offline);
@@ -113,7 +114,7 @@ describe('CheckingAudioPlayerComponent', () => {
   it('show error tooltip if error loading audio is unsupported', async () => {
     const template = `<app-checking-audio-player #player1 source="blob://unsupported"></app-checking-audio-player>`;
     const env = new TestEnvironment(template, true);
-    await env.waitForPlayer(1000);
+    await env.waitForPlayer(playerLoadTimeMs);
     expect(env.audioNotAvailableMessage).not.toBeNull();
     expect(env.audioNotAvailableMessage.query(By.css('#error-load'))).not.toBeNull();
     expect(env.component.player1.audioStatus).toEqual(AudioStatus.LocalNotAvailable);
@@ -129,6 +130,7 @@ class HostComponent {
 
 class TestEnvironment {
   readonly mockedPwaService = mock(PwaService);
+  readonly ngZone: NgZone;
 
   fixture: ComponentFixture<HostComponent>;
   component: HostComponent;
@@ -143,6 +145,7 @@ class TestEnvironment {
     when(this.mockedPwaService.onlineStatus).thenReturn(of(isOnline));
 
     TestBed.overrideComponent(HostComponent, { set: { template: template } });
+    this.ngZone = TestBed.inject(NgZone);
     this.fixture = TestBed.createComponent(HostComponent);
     this.component = this.fixture.componentInstance;
     this.fixture.detectChanges();
@@ -184,7 +187,7 @@ class TestEnvironment {
   }
 
   async waitForPlayer(ms: number) {
-    await new Promise(resolve => setTimeout(resolve, ms));
+    await new Promise(resolve => this.ngZone.runOutsideAngular(() => setTimeout(resolve, ms)));
     this.fixture.detectChanges();
   }
 }

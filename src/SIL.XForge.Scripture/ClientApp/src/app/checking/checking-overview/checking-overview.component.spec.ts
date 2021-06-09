@@ -1,6 +1,6 @@
 import { MdcDialog, MdcDialogModule, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Location } from '@angular/common';
-import { DebugElement, NgModule } from '@angular/core';
+import { DebugElement, NgModule, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -28,6 +28,7 @@ import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/ca
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
+import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -55,6 +56,7 @@ const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedAuthService = mock(AuthService);
 const mockedQuestionDialogService = mock(QuestionDialogService);
+const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
 
@@ -76,6 +78,7 @@ describe('CheckingOverviewComponent', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: AuthService, useMock: mockedAuthService },
       { provide: QuestionDialogService, useMock: mockedQuestionDialogService },
+      { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: PwaService, useMock: mockedPwaService }
     ]
@@ -438,6 +441,7 @@ class TestEnvironment {
   fixture: ComponentFixture<CheckingOverviewComponent>;
   location: Location;
 
+  readonly ngZone: NgZone = TestBed.inject(NgZone);
   readonly mockedAnsweredDialogRef: MdcDialogRef<QuestionAnsweredDialogComponent> = mock(MdcDialogRef);
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
@@ -861,8 +865,10 @@ class TestEnvironment {
   }
 
   setCheckingEnabled(isEnabled: boolean): void {
-    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01');
-    projectDoc.submitJson0Op(op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, isEnabled), false);
+    this.ngZone.run(() => {
+      const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01');
+      projectDoc.submitJson0Op(op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, isEnabled), false);
+    });
     tick();
     this.fixture.detectChanges();
   }
