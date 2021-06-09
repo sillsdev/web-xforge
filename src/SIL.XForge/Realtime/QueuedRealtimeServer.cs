@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -45,6 +46,28 @@ namespace SIL.XForge.Realtime
         {
             _realtimeServer = realtimeServer;
         }
+
+        /// <summary>
+        /// Gets the excluded properties.
+        /// </summary>
+        /// <value>
+        /// The excluded properties.
+        /// </value>
+        /// <remarks>
+        /// This is for unit test verification or debugging.
+        /// </remarks>
+        internal IReadOnlyCollection<string> ExcludedProperties => _excludedProperties;
+
+        /// <summary>
+        /// Gets the number of queued operations.
+        /// </summary>
+        /// <value>
+        /// The number of operations in the queue.
+        /// </value>
+        /// <remarks>
+        /// This is for unit test verification or debugging.
+        /// </remarks>
+        internal IReadOnlyCollection<QueuedOperation> QueuedOperations => _queuedOperations;
 
         public async Task<T> ApplyOpAsync<T>(string otTypeName, T data, object op)
         {
@@ -162,11 +185,12 @@ namespace SIL.XForge.Realtime
             Snapshot<T> snapshot = await FetchDocAsync<T>(handle, collection, id);
             string otTypeName = op is IEnumerable<Json0Op> || op is Json0Op ? OTType.Json0 : OTType.RichText;
             snapshot.Data = await ApplyOpAsync(otTypeName, snapshot.Data, op);
+            snapshot.Version++;
             return snapshot;
         }
 
         /// <summary>
-        /// Cleats the operations.
+        /// Clears the operations.
         /// </summary>
         /// <remarks>
         /// This should only be called by the appropriate connection.
@@ -196,7 +220,7 @@ namespace SIL.XForge.Realtime
         /// Any operations lists that contain an excluded property will all be committed immediately.
         /// This only applies to JSON0 operations.
         /// </remarks>
-        internal void ExcludePropertyFromTransaction<T>(LambdaExpression field)
+        internal void ExcludePropertyFromTransaction<T>(Expression<Func<T, object>> field)
         {
             string excluded = (typeof(T).Name + "." + string.Join('.', new ObjectPath(field).Items)).ToLowerInvariant();
             _excludedProperties.Add(excluded);
