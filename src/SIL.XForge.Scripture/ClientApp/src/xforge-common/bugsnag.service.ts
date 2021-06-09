@@ -5,7 +5,9 @@ import { NodeConfig } from '@bugsnag/node';
 /**
  * Wrapper around Bugsnag. This injectable service can be mocked to make dependencies of it testable.
  */
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class BugsnagService {
   start(apiKeyOrOpts: string | BrowserConfig | NodeConfig): Client {
     return Bugsnag.start(apiKeyOrOpts);
