@@ -665,7 +665,7 @@ namespace SIL.XForge.Scripture.Services
             }
 
             // Use the Paratext implementation
-            return VersionedText.BackupExists(scrText);
+            return this.BackupExistsInternal(scrText);
         }
 
         public bool BackupRepository(UserSecret userSecret, string paratextId)
@@ -687,7 +687,7 @@ namespace SIL.XForge.Scripture.Services
 
             // VersionedText.BackupDirectories skips backup on error, and runs in a background thread.
             // We would rather be notified of the error, and not have this run in a background thread.
-            // The following is a reimplementation of VersionedText.BackupDirectories with error trapping,
+            // The following is a re-implementation of VersionedText.BackupDirectories with error trapping,
             // and file system and Mercurial dependency injection so this method can be unit tested.
             // Note that SharedProject.Repository.SendReceiveId is equivalent to ScrText.Guid - compare the
             // BackupProject and RestoreProject implementations in Paratext.Data.Repository.VersionedText.
@@ -709,7 +709,7 @@ namespace SIL.XForge.Scripture.Services
             }
             catch (Exception)
             {
-                // An error has occured, so the backup was not created
+                // An error has occurred, so the backup was not created
                 return false;
             }
         }
@@ -731,21 +731,81 @@ namespace SIL.XForge.Scripture.Services
                 return false;
             }
 
-            // Use the Paratext implementation
-            if (VersionedText.BackupExists(scrText))
+            // VersionedText.RestoreProject copies files from the repository to the restored backup.
+            // We would rather not do this, as there can be files trapped in the directory, particularly
+            // if the incoming change included new books and the sync was cancelled. In addition,
+            // Mongo is the source of truth for a project's state in Scripture Forge.
+            // The following is a re-implementation of VersionedText.RestoreProject with error trapping,
+            // and file system and Mercurial dependency injection so this method can be unit tested.
+            if (this.BackupExistsInternal(scrText))
             {
-                return VersionedText.RestoreProject(scrText);
+                string source = scrText.Directory;
+                string destination =
+                    Path.Combine(Paratext.Data.ScrTextCollection.SettingsDirectory, "_Backups\\", scrText.Guid.ToString());
+                string restoredDestination = destination + "_Restored";
+                string backupPath = destination + ".bndl";
+
+                try
+                {
+                    // Remove the backup destination, if it exists
+                    if (_fileSystemService.DirectoryExists(destination))
+                    {
+                        _fileSystemService.DeleteDirectory(destination);
+                    }
+
+                    // Move the current repository to the backup destination
+                    if (source != destination)
+                    {
+                        _fileSystemService.MoveDirectory(source, destination);
+                    }
+
+                    // Restore the Mercurial database, and move it to the repository
+                    _hgHelper.RestoreRepository(restoredDestination, backupPath);
+                    _fileSystemService.MoveDirectory(restoredDestination, source);
+                    return true;
+                }
+                catch (Exception)
+                {
+                    // On error, move the backup destination back to the repository folder
+                    if (!_fileSystemService.DirectoryExists(source))
+                    {
+                        _fileSystemService.MoveDirectory(destination, source);
+                    }
+                }
             }
-            else
-            {
-                return false;
-            }
+
+            // An error occurred, or the backup does not exist
+            return false;
         }
 
         protected override void DisposeManagedResources()
         {
             _registryClient.Dispose();
             _httpClientHandler.Dispose();
+        }
+
+        /// <summary>
+        /// Checks whether a backup exists
+        /// </summary>
+        /// <param name="scrText">The scripture text.</param>
+        /// <returns><c>true</c> if the backup exists; otherwise, <c>false</c>.</returns>
+        /// <remarks>
+        /// This is a re-implementation of <see cref="VersionedText.BackupExists(ScrText)"/>
+        /// that uses file system dependency injection so this method can be unit tested.
+        /// </remarks>
+        private bool BackupExistsInternal(ScrText scrText)
+        {
+            try
+            {
+                string path =
+                    Path.Combine(Paratext.Data.ScrTextCollection.SettingsDirectory, "_Backups\\", $"{scrText.Guid}.bndl");
+                return _fileSystemService.FileExists(path);
+            }
+            catch (Exception)
+            {
+                // An error occurred
+                return false;
+            }
         }
 
         private IReadOnlyList<ParatextProject> GetProjects(UserSecret userSecret,
