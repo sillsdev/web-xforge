@@ -382,6 +382,20 @@ describe('SettingsComponent', () => {
       expect(env.deleteProjectButton.disabled).toBe(false);
     }));
 
+    it('should disabled settings while loading', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject();
+      env.fixture.detectChanges();
+      expect(env.translationSuggestionsCheckbox).not.toBeNull();
+      expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(true);
+      expect(env.checkingCheckbox).not.toBeNull();
+      expect(env.inputElement(env.checkingCheckbox).disabled).toBe(true);
+
+      env.wait();
+      expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(false);
+      expect(env.inputElement(env.checkingCheckbox).disabled).toBe(false);
+    }));
+
     it('should disable Delete button if project is a source project', fakeAsync(() => {
       const env = new TestEnvironment(true, true);
       env.setupProject();
