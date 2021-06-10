@@ -14,7 +14,9 @@
           (click)="logInWithParatext()"
           id="btn-log-in"
         >
-          <img src="/assets/paratext_logo.png" alt="Paratext Logo" class="paratext-logo" />{{ t("log_in_to_paratext") }}
+          <img src="/assets/images/logo-pt9.png" alt="Paratext Logo" class="paratext-logo" />{{
+            t("log_in_to_paratext")
+          }}
         </button>
         <ng-container *ngIf="isLoggedIntoParatext || isLoading || !isAppOnline">
           <button
