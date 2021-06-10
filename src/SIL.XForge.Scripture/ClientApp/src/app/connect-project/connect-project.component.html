@@ -5,7 +5,9 @@
     <div *ngSwitchCase="'login'" class="paratext-login-container">
       <div mdcBody1>{{ t("you_must_be_logged_in_to_paratext") }}</div>
       <button mdc-button id="paratext-login-button" type="button" (click)="logInWithParatext()">
-        <img src="/assets/paratext_logo.png" alt="Paratext Logo" class="paratext-logo" />{{ t("log_in_with_paratext") }}
+        <img src="/assets/images/logo-pt9.png" alt="Paratext Logo" class="paratext-logo" />{{
+          t("log_in_with_paratext")
+        }}
       </button>
     </div>
     <mdc-card [outlined]="true" *ngSwitchCase="'connecting'" class="progress-container">
