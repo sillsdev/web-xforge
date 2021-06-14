@@ -726,7 +726,7 @@ namespace SIL.XForge.Scripture.Services
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             ScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
             string lastPublicRevision = "abc123";
-            env.MockHgWrapper.GetLastPublicRevision(scrText.Directory).Returns(lastPublicRevision);
+            env.MockHgWrapper.GetLastPublicRevision(scrText.Directory, false).Returns(lastPublicRevision);
 
             // SUT
             string latestSharedVersion = env.Service.GetLatestSharedVersion(user01Secret, ptProjectId);
@@ -751,7 +751,7 @@ namespace SIL.XForge.Scripture.Services
                 "DBL resources do not have hg repositories to have a last pushed or pulled hg commit id.");
             // Wouldn't have ended up trying to find a ScrText or querying hg.
             env.MockScrTextCollection.DidNotReceiveWithAnyArgs().FindById(default, default);
-            env.MockHgWrapper.DidNotReceiveWithAnyArgs().GetLastPublicRevision(default);
+            env.MockHgWrapper.DidNotReceiveWithAnyArgs().GetLastPublicRevision(default, default);
         }
 
         [Test]

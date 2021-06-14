@@ -369,62 +369,66 @@ namespace SIL.XForge.Scripture.Services
             {
                 // Get the scripture text so we can retrieve the permissions from the XML
                 ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), project.ParatextId);
+                GetPermissionsInternalAsync(project, ptUsernameMapping, book, chapter, permissions, scrText);
+            }
 
-                // Calculate the project and resource permissions
-                foreach (string uid in project.UserRoles.Keys)
+            return permissions;
+        }
+
+        internal static void GetPermissionsInternalAsync(SFProject project, IReadOnlyDictionary<string, string> ptUsernameMapping, int book, int chapter, Dictionary<string, string> permissions, ScrText scrText)
+        {
+            // Calculate the project and resource permissions
+            foreach (string uid in project.UserRoles.Keys)
+            {
+                // See if the user is in the project members list
+                if (!ptUsernameMapping.TryGetValue(uid, out string userName) || string.IsNullOrWhiteSpace(userName)
+                    || scrText.Permissions.GetRole(userName) == Paratext.Data.Users.UserRoles.None)
                 {
-                    // See if the user is in the project members list
-                    if (!ptUsernameMapping.TryGetValue(uid, out string userName) || string.IsNullOrWhiteSpace(userName)
-                        || scrText.Permissions.GetRole(userName) == Paratext.Data.Users.UserRoles.None)
+                    permissions.Add(uid, TextInfoPermission.None);
+                }
+                else
+                {
+                    string textInfoPermission = TextInfoPermission.Read;
+                    if (book == 0)
                     {
-                        permissions.Add(uid, TextInfoPermission.None);
-                    }
-                    else
-                    {
-                        string textInfoPermission = TextInfoPermission.Read;
-                        if (book == 0)
+                        // Project level
+                        if (scrText.Permissions.CanEditAllBooks(userName))
                         {
-                            // Project level
+                            textInfoPermission = TextInfoPermission.Write;
+                        }
+                    }
+                    else if (chapter == 0)
+                    {
+                        // Book level
+                        IEnumerable<int> editable = scrText.Permissions.GetEditableBooks(
+                            Paratext.Data.Users.PermissionSet.Merged, userName);
+                        if (editable == null || !editable.Any())
+                        {
+                            // If there are no editable book permissions, check if they can edit all books
                             if (scrText.Permissions.CanEditAllBooks(userName))
                             {
                                 textInfoPermission = TextInfoPermission.Write;
                             }
                         }
-                        else if (chapter == 0)
+                        else if (editable.Contains(book))
                         {
-                            // Book level
-                            IEnumerable<int> editable = scrText.Permissions.GetEditableBooks(
-                                Paratext.Data.Users.PermissionSet.Merged, userName);
-                            if (editable == null || !editable.Any())
-                            {
-                                // If there are no editable book permissions, check if they can edit all books
-                                if (scrText.Permissions.CanEditAllBooks(userName))
-                                {
-                                    textInfoPermission = TextInfoPermission.Write;
-                                }
-                            }
-                            else if (editable.Contains(book))
-                            {
-                                textInfoPermission = TextInfoPermission.Write;
-                            }
+                            textInfoPermission = TextInfoPermission.Write;
                         }
-                        else
-                        {
-                            // Chapter level
-                            IEnumerable<int> editable = scrText.Permissions.GetEditableChapters(book,
-                                scrText.Settings.Versification, userName, Paratext.Data.Users.PermissionSet.Merged);
-                            if (editable?.Contains(chapter) ?? false)
-                            {
-                                textInfoPermission = TextInfoPermission.Write;
-                            }
-                        }
-
-                        permissions.Add(uid, textInfoPermission);
                     }
+                    else
+                    {
+                        // Chapter level
+                        IEnumerable<int> editable = scrText.Permissions.GetEditableChapters(book,
+                            scrText.Settings.Versification, userName, Paratext.Data.Users.PermissionSet.Merged);
+                        if (editable?.Contains(chapter) ?? false)
+                        {
+                            textInfoPermission = TextInfoPermission.Write;
+                        }
+                    }
+
+                    permissions.Add(uid, textInfoPermission);
                 }
             }
-
-            return permissions;
         }
 
         public async Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(UserSecret userSecret,
@@ -636,7 +640,7 @@ namespace SIL.XForge.Scripture.Services
                 return null;
             }
             ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
-            return scrText == null ? null : _hgHelper.GetLastPublicRevision(scrText.Directory);
+            return scrText == null ? null : _hgHelper.GetLastPublicRevision(scrText.Directory, false);
         }
 
         /// <summary>
