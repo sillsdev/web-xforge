@@ -23,7 +23,7 @@ namespace SIL.XForge.Scripture.Services
             string paratextId);
         Task<Dictionary<string, string>> GetPermissionsAsync(UserSecret userSecret, SFProject project,
             IReadOnlyDictionary<string, string> ptUsernameMapping, int book = 0, int chapter = 0);
-
+        // Task<ProjectPermissions> GetAllPermissionsAsync(UserSecret userSecret, string paratextId);
         IReadOnlyList<int> GetBookList(UserSecret userSecret, string paratextId);
         string GetBookText(UserSecret userSecret, string paratextId, int bookNum);
         Task PutBookText(UserSecret userSecret, string paratextId, int bookNum, string usx,

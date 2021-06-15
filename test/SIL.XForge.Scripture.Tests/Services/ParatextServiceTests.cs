@@ -341,6 +341,167 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void ProjectPermissions_GoodData()
+        {
+            string projectPermission = "a";
+
+            BookPermissions bookPermissions = new BookPermissions();
+            bookPermissions.Add(1, "b");
+            bookPermissions.Add(2, "c");
+
+            ChapterPermissions book1chapterPerms = new ChapterPermissions();
+            book1chapterPerms.Add(1, "d");
+            book1chapterPerms.Add(2, "e");
+            ChapterPermissions book2chapterPerms = new ChapterPermissions();
+            book2chapterPerms.Add(1, "f");
+            book2chapterPerms.Add(2, "g");
+            book2chapterPerms.Add(3, "h");
+            AllBookChapterPermissions allBookChapterPermissions = new AllBookChapterPermissions();
+            allBookChapterPermissions.Add(1, book1chapterPerms);
+            allBookChapterPermissions.Add(2, book2chapterPerms);
+
+            // SUT
+            ProjectPermissions perms = new ProjectPermissions(projectPermission, bookPermissions, allBookChapterPermissions);
+
+            Assert.That(perms.Books.Count(), Is.EqualTo(2));
+            Assert.That(perms.PermissionForProject, Is.EqualTo("a"));
+            Assert.That(perms.PermissionForBook(1), Is.EqualTo("b"));
+            Assert.That(perms.PermissionForBook(2), Is.EqualTo("c"));
+            Assert.That(perms.PermissionForChapterInBook(1, 1), Is.EqualTo("d"));
+            Assert.That(perms.PermissionForChapterInBook(1, 2), Is.EqualTo("e"));
+            Assert.That(perms.PermissionForChapterInBook(2, 1), Is.EqualTo("f"));
+            Assert.That(perms.PermissionForChapterInBook(2, 2), Is.EqualTo("g"));
+            Assert.That(perms.PermissionForChapterInBook(2, 3), Is.EqualTo("h"));
+        }
+
+        [Test]
+        public void ProjectPermissions_OrderedData()
+        {
+            string projectPermission = "a";
+
+            BookPermissions bookPermissions = new BookPermissions();
+            bookPermissions.Add(2, "c");
+            bookPermissions.Add(1, "b");
+
+            ChapterPermissions book1chapterPerms = new ChapterPermissions();
+            book1chapterPerms.Add(2, "e");
+            book1chapterPerms.Add(1, "d");
+            ChapterPermissions book2chapterPerms = new ChapterPermissions();
+            book2chapterPerms.Add(1, "f");
+            book2chapterPerms.Add(3, "h");
+            book2chapterPerms.Add(2, "g");
+            AllBookChapterPermissions allBookChapterPermissions = new AllBookChapterPermissions();
+            allBookChapterPermissions.Add(2, book2chapterPerms);
+            allBookChapterPermissions.Add(1, book1chapterPerms);
+
+            ProjectPermissions perms = new ProjectPermissions(projectPermission, bookPermissions, allBookChapterPermissions);
+
+            Assert.That(perms.Books, Is.Ordered);
+            Assert.That(perms.ChaptersInBook(1), Is.Ordered);
+            Assert.That(perms.ChaptersInBook(2), Is.Ordered);
+        }
+
+        [Test]
+        public void ProjectPermissions_BadData()
+        {
+            Assert.Throws<ArgumentNullException>(() => new ProjectPermissions(null, null, null));
+            Assert.Throws<ArgumentNullException>(() => new ProjectPermissions(null, new BookPermissions(), new AllBookChapterPermissions()));
+            Assert.Throws<ArgumentNullException>(() => new ProjectPermissions("a", null, new AllBookChapterPermissions()));
+            Assert.Throws<ArgumentNullException>(() => new ProjectPermissions("a", new BookPermissions(), null));
+
+            // Inconsistent data. Books must match:
+
+            BookPermissions bookPermissions = new BookPermissions();
+            bookPermissions.Add(1, "a");
+            bookPermissions.Add(2, "a");
+            AllBookChapterPermissions allBookChapterPerms = new AllBookChapterPermissions();
+            allBookChapterPerms.Add(2, new ChapterPermissions());
+            allBookChapterPerms.Add(3, new ChapterPermissions());
+            Assert.Throws<ArgumentException>(() => new ProjectPermissions("a", bookPermissions, allBookChapterPerms), "Disallow case of same number of books but mismatched sets of books.");
+
+            allBookChapterPerms.Add(1, new ChapterPermissions());
+            Assert.Throws<ArgumentException>(() => new ProjectPermissions("a", bookPermissions, allBookChapterPerms), "Disallow case of different number of books.");
+
+            // Disallowed bad data
+
+            bookPermissions.Add(3, "a");
+            Assert.Throws<ArgumentException>(() => new ProjectPermissions("", bookPermissions, allBookChapterPerms), "no empty project permission string");
+            bookPermissions[1] = string.Empty;
+            Assert.Throws<ArgumentException>(() => new ProjectPermissions("a", bookPermissions, allBookChapterPerms), "no empty book permission string");
+            bookPermissions[1] = "a";
+            allBookChapterPerms[1][2] = string.Empty;
+            allBookChapterPerms[2][3] = string.Empty;
+            Assert.Throws<ArgumentException>(() => new ProjectPermissions("a", bookPermissions, allBookChapterPerms), "no empty chapter permission string");//<<<
+            allBookChapterPerms[1][2] = "a";
+            allBookChapterPerms[2][3] = "a";
+        }
+
+        // [Test]
+        // public async Task GetAllPermissionsAsync__()
+        // {
+        //     // Set up environment
+        //     var env = new TestEnvironment();
+        //     UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+        //     UserSecret userSecret = user01Secret;
+        //     string paratextId = "a";
+        //     // SUT
+        //     ProjectPermissions perms = await env.Service.GetAllPermissionsAsync(userSecret, paratextId);
+        //     Assert.That(perms.Books.Count(), Is.EqualTo(2), "should have correct book count");
+        //     Assert.That(perms.ChaptersInBook(1), Is.EqualTo(3), "should have correct chapter count");
+        //     Assert.That(perms.ChaptersInBook(2), Is.EqualTo(4), "should have correct chapter count");
+        //     Assert.That(perms.PermissionForProject, Is.EqualTo(TextInfoPermission.Write));
+        //     Assert.That(perms.PermissionForBook(1), Is.EqualTo(TextInfoPermission.Read));
+        //     Assert.That(perms.PermissionForBook(2), Is.EqualTo(TextInfoPermission.None));
+        //     Assert.That(perms.PermissionForChapterInBook(1, 1), Is.EqualTo(TextInfoPermission.None));
+        //     Assert.That(perms.PermissionForChapterInBook(1, 2), Is.EqualTo(TextInfoPermission.Write));
+        //     Assert.That(perms.PermissionForChapterInBook(1, 3), Is.EqualTo(TextInfoPermission.Read));
+        //     Assert.That(perms.PermissionForChapterInBook(1, 4), Is.EqualTo(TextInfoPermission.None));
+        //     Assert.That(perms.PermissionForChapterInBook(2, 1), Is.EqualTo(TextInfoPermission.Write));
+
+
+
+        //     // // Set up mock REST client to return a successful HEAD request
+        //     // ISFRestClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
+        //     // ISFRestClient successMockClient = Substitute.For<ISFRestClient>();
+        //     // successMockClient.Head(Arg.Any<string>()).Returns(string.Empty);
+        //     // mockRestClientFactory
+        //     //     .Create(Arg.Any<string>(), Arg.Is<UserSecret>(s => s.Id == env.User01))
+        //     //     .Returns(successMockClient);
+
+        //     // // Set up mock REST client to return an unsuccessful HEAD request
+        //     // ISFRestClient failureMockClient = Substitute.For<ISFRestClient>();
+        //     // failureMockClient.Head(Arg.Any<string>()).Throws<WebException>();
+        //     // mockRestClientFactory
+        //     //     .Create(Arg.Any<string>(), Arg.Is<UserSecret>(s => s.Id == env.User02))
+        //     //     .Returns(failureMockClient);
+
+        //     // // Set up mock project
+        //     // var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
+        //     // var project = projects.First();
+        //     // project.ParatextId = "resid_is_16_char";
+        //     // var ptUsernameMapping = new Dictionary<string, string>()
+        //     //     {
+        //     //         { env.User01, env.Username01 },
+        //     //         { env.User02, env.Username02 },
+        //     //     };
+
+        //     // var permissions = await env.Service.GetPermissionsAsync(user01Secret, project, ptUsernameMapping);
+        //     // Assert.That(permissions.Count(), Is.EqualTo(2));
+        //     // Assert.That(permissions.First().Value, Is.EqualTo(TextInfoPermission.Read));
+        //     // Assert.That(permissions.Last().Value, Is.EqualTo(TextInfoPermission.None));
+
+        //     // write,read,none
+        //     // assert that project perm is write
+        //     // assert that book 1 perm is read
+        //     // assert that 1:1 prem is none
+        //     // assert that 1:2 perm is write
+        //     // assert. that 1:3 perm is read
+        //     // assert. that 1:4 perm is none
+        //     // assert that book 2 perm is none
+
+        // }
+
+        [Test]
         public async Task GetResourcePermissionAsync_UserNoResourcePermission()
         {
             // Set up environment

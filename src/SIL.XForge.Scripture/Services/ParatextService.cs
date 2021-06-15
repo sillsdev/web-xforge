@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
@@ -39,6 +40,89 @@ using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Services
 {
+    public class BookPermissions : Dictionary<int /*bookNum*/, string /*book-level permission*/> { }
+    public class ChapterPermissions : Dictionary<int /*chapterNum*/, string /*chapter-level permission*/> { }
+    public class AllBookChapterPermissions : Dictionary<int /*bookNum*/, Dictionary<int /*chapterNum*/, string /*chapter-level permission*/>> { }
+
+
+    /// <summary>
+    /// Permissions that a user has to a Paratext project. This class was made to hold structures of data to pass between methods.
+    /// </summary>
+    public class ProjectPermissions
+    {
+        private AllBookChapterPermissions _chapterPerms;
+        private BookPermissions _bookPerms;
+        private string _projectPermission = "None";
+
+        public ProjectPermissions(string projectPermission, BookPermissions bookPermissions, AllBookChapterPermissions allBookChapterPermissions)
+        {
+            // Crash early.
+            if (projectPermission == null || bookPermissions == null || allBookChapterPermissions == null)
+            {
+                throw new ArgumentNullException();
+            }
+            if (!bookPermissions.Keys.KeyedSetsEqual(allBookChapterPermissions.Keys))
+            {
+                throw new ArgumentException($"Will not create ProjectPermissions object with mis-matched book sets. bookPermissions specifies books {string.Join(",", bookPermissions.Keys)} but chapterPermissions specifies books {string.Join(",", allBookChapterPermissions.Keys)}.");
+            }
+            if (projectPermission == string.Empty)
+            {
+                throw new ArgumentException("projectPermission can not be empty");
+            }
+            if (bookPermissions.ContainsValue(string.Empty))
+            {
+                int bookNum = bookPermissions.Where(perm => perm.Value == string.Empty).First().Key;
+                throw new ArgumentException($"unacceptable empty book permission for book number {bookNum}");
+            }
+            if (allBookChapterPermissions.Any(x => x.Value.ContainsValue(string.Empty)))
+            {
+                var booksWithABadChapPerm = allBookChapterPermissions.Where(x => x.Value.ContainsValue(string.Empty)).Select(x => x.Key);
+                throw new ArgumentException($"unacceptable empty chapter permission in chapter permission set for book number(s) {string.Join(",", booksWithABadChapPerm)}");
+            }
+            _projectPermission = projectPermission;
+            _bookPerms = bookPermissions;
+            _chapterPerms = allBookChapterPermissions;
+        }
+
+        /// <summary>
+        /// Ordered sequence of books that have defined permissions in this object.
+        /// </summary>
+        public IEnumerable<int> Books
+        {
+            get
+            {
+                Debug.Assert(_chapterPerms.Keys.SequenceEqual(_bookPerms.Keys));
+                return _chapterPerms.Keys.OrderBy(x => x);
+            }
+        }
+
+        /// <summary>
+        /// Ordered sequence of chapters that have defined permissions in this object, for a specified book.
+        /// </summary>
+        public IEnumerable<int> ChaptersInBook(int bookNum)
+        {
+            return _chapterPerms[bookNum].Keys.OrderBy(x => x);
+        }
+
+        public string PermissionForProject
+        {
+            get
+            {
+                return _projectPermission;
+            }
+        }
+
+        public string PermissionForBook(int bookNum)
+        {
+            return _bookPerms[bookNum];
+        }
+
+        public string PermissionForChapterInBook(int bookNum, int chapterNum)
+        {
+            return _chapterPerms[bookNum][chapterNum];
+        }
+    }
+
     /// <summary>
     /// Provides interaction with Paratext libraries for data processing and exchanging data with Paratext servers.
     /// Also contains methods for interacting with the Paratext Registry web service API.
@@ -421,6 +505,20 @@ namespace SIL.XForge.Scripture.Services
 
             return permissions;
         }
+
+
+
+
+
+        // public async Task<ProjectPermissions> GetAllPermissionsAsync(UserSecret userSecret, string paratextId)
+        // {
+        //     string projectPermission = null;
+        //     BookPermissions bookPermissions = null;
+        //     AllBookChapterPermissions chapterPermissions = null;
+        //     ProjectPermissions perms = new ProjectPermissions(projectPermission, bookPermissions, chapterPermissions);
+        //     return perms;
+        //     //            throw new NotImplementedException();
+        // }
 
         public async Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(UserSecret userSecret,
             string paratextId)
