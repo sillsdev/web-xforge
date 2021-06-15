@@ -373,6 +373,7 @@ namespace SIL.XForge.Scripture.Services
                 await ProjectSecrets.UpdateAsync(
                     p => p.Id == projectId && p.ShareKeys.Any(sk => sk.Email == email),
                     update => update.Set(p => p.ShareKeys[index].ExpirationTime, expTime)
+                                    .Set(p => p.ShareKeys[index].ProjectRole, role)
                 );
             }
             string key = projectSecret.ShareKeys.Single(sk => sk.Email == email).Key;
