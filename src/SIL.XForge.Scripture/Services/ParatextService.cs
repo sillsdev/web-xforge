@@ -369,66 +369,62 @@ namespace SIL.XForge.Scripture.Services
             {
                 // Get the scripture text so we can retrieve the permissions from the XML
                 ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), project.ParatextId);
-                GetPermissionsInternalAsync(project, ptUsernameMapping, book, chapter, permissions, scrText);
-            }
 
-            return permissions;
-        }
-
-        internal static void GetPermissionsInternalAsync(SFProject project, IReadOnlyDictionary<string, string> ptUsernameMapping, int book, int chapter, Dictionary<string, string> permissions, ScrText scrText)
-        {
-            // Calculate the project and resource permissions
-            foreach (string uid in project.UserRoles.Keys)
-            {
-                // See if the user is in the project members list
-                if (!ptUsernameMapping.TryGetValue(uid, out string userName) || string.IsNullOrWhiteSpace(userName)
-                    || scrText.Permissions.GetRole(userName) == Paratext.Data.Users.UserRoles.None)
+                // Calculate the project and resource permissions
+                foreach (string uid in project.UserRoles.Keys)
                 {
-                    permissions.Add(uid, TextInfoPermission.None);
-                }
-                else
-                {
-                    string textInfoPermission = TextInfoPermission.Read;
-                    if (book == 0)
+                    // See if the user is in the project members list
+                    if (!ptUsernameMapping.TryGetValue(uid, out string userName) || string.IsNullOrWhiteSpace(userName)
+                        || scrText.Permissions.GetRole(userName) == Paratext.Data.Users.UserRoles.None)
                     {
-                        // Project level
-                        if (scrText.Permissions.CanEditAllBooks(userName))
-                        {
-                            textInfoPermission = TextInfoPermission.Write;
-                        }
+                        permissions.Add(uid, TextInfoPermission.None);
                     }
-                    else if (chapter == 0)
+                    else
                     {
-                        // Book level
-                        IEnumerable<int> editable = scrText.Permissions.GetEditableBooks(
-                            Paratext.Data.Users.PermissionSet.Merged, userName);
-                        if (editable == null || !editable.Any())
+                        string textInfoPermission = TextInfoPermission.Read;
+                        if (book == 0)
                         {
-                            // If there are no editable book permissions, check if they can edit all books
+                            // Project level
                             if (scrText.Permissions.CanEditAllBooks(userName))
                             {
                                 textInfoPermission = TextInfoPermission.Write;
                             }
                         }
-                        else if (editable.Contains(book))
+                        else if (chapter == 0)
                         {
-                            textInfoPermission = TextInfoPermission.Write;
+                            // Book level
+                            IEnumerable<int> editable = scrText.Permissions.GetEditableBooks(
+                                Paratext.Data.Users.PermissionSet.Merged, userName);
+                            if (editable == null || !editable.Any())
+                            {
+                                // If there are no editable book permissions, check if they can edit all books
+                                if (scrText.Permissions.CanEditAllBooks(userName))
+                                {
+                                    textInfoPermission = TextInfoPermission.Write;
+                                }
+                            }
+                            else if (editable.Contains(book))
+                            {
+                                textInfoPermission = TextInfoPermission.Write;
+                            }
                         }
-                    }
-                    else
-                    {
-                        // Chapter level
-                        IEnumerable<int> editable = scrText.Permissions.GetEditableChapters(book,
-                            scrText.Settings.Versification, userName, Paratext.Data.Users.PermissionSet.Merged);
-                        if (editable?.Contains(chapter) ?? false)
+                        else
                         {
-                            textInfoPermission = TextInfoPermission.Write;
+                            // Chapter level
+                            IEnumerable<int> editable = scrText.Permissions.GetEditableChapters(book,
+                                scrText.Settings.Versification, userName, Paratext.Data.Users.PermissionSet.Merged);
+                            if (editable?.Contains(chapter) ?? false)
+                            {
+                                textInfoPermission = TextInfoPermission.Write;
+                            }
                         }
-                    }
 
-                    permissions.Add(uid, textInfoPermission);
+                        permissions.Add(uid, textInfoPermission);
+                    }
                 }
             }
+
+            return permissions;
         }
 
         public async Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(UserSecret userSecret,
