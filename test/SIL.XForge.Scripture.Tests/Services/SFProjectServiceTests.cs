@@ -81,7 +81,8 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             const string email = "bob@example.com";
-            const string role = SFProjectRole.CommunityChecker;
+            const string initialRole = SFProjectRole.CommunityChecker;
+            const string endingRole = SFProjectRole.Observer;
 
             SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
             Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).ExpirationTime,
@@ -89,8 +90,9 @@ namespace SIL.XForge.Scripture.Services
             var invitees = await env.Service.InvitedUsersAsync(User01, Project03);
             Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(
                 new[] { "bob@example.com", "expired@example.com", "user03@example.com", "bill@example.com" }), "setup");
+            Assert.That(invitees[0].Role == initialRole);
 
-            await env.Service.InviteAsync(User01, Project03, email, "en", role);
+            await env.Service.InviteAsync(User01, Project03, email, "en", endingRole);
             // Invitation email was resent but with original code and updated time
             await env.EmailService.Received(1).SendEmailAsync(Arg.Is(email), Arg.Any<string>(),
                 Arg.Is<string>(body =>
@@ -101,7 +103,7 @@ namespace SIL.XForge.Scripture.Services
                 "Code should not have been changed");
             Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).ExpirationTime,
                 Is.GreaterThan(DateTime.UtcNow.AddDays(13)));
-            Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).ProjectRole, Is.EqualTo(role));
+            Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).ProjectRole, Is.EqualTo(endingRole));
 
             invitees = await env.Service.InvitedUsersAsync(User01, Project03);
             Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(
