@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.AspNetCore.Hosting;
@@ -269,6 +268,38 @@ namespace SIL.XForge.Scripture.Services
             Assert.AreEqual(0, resources.Count(), "An empty set of resources should have been returned");
             env.MockExceptionHandler.Received().ReportException(Arg.Is<Exception>((Exception e) =>
                 e.Message.Contains("inquire about resources and is ignoring error")));
+        }
+
+        [Test]
+        public void IsResource_JunkInput_No()
+        {
+            var env = new TestEnvironment();
+            // SUTs
+            Assert.That(env.Service.IsResource(null), Is.False);
+            Assert.That(env.Service.IsResource(""), Is.False);
+            Assert.That(env.Service.IsResource("junk"), Is.False);
+        }
+
+        [Test]
+        public void IsResource_NonResourceProjectId_No()
+        {
+            var env = new TestEnvironment();
+            const int lengthOfParatextProjectIds = 40;
+            string id = "1234567890abcdef1234567890abcdef12345678";
+            Assert.That(id.Length, Is.EqualTo(lengthOfParatextProjectIds), "setup. Use an ID of Paratext-ID-length.");
+            // SUT
+            Assert.That(env.Service.IsResource(id), Is.False);
+        }
+
+        [Test]
+        public void IsResource_ResourceProjectId_Yes()
+        {
+            var env = new TestEnvironment();
+            const int lengthOfDblResourceId = 16;
+            string id = "1234567890abcdef";
+            Assert.That(id.Length, Is.EqualTo(lengthOfDblResourceId), "setup. Use an ID of DBL-Resource-ID-length.");
+            // SUT
+            Assert.That(env.Service.IsResource(id), Is.True);
         }
 
         [Test]
@@ -708,12 +739,12 @@ namespace SIL.XForge.Scripture.Services
             var associatedPtUser = new SFParatextUser(env.Username01);
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
 
-            string resourcePTID = "1234567890123456";
-            Assert.That(resourcePTID, Has.Length.EqualTo(SFInstallableDblResource.ResourceIdentifierLength),
+            string resourcePTId = "1234567890123456";
+            Assert.That(resourcePTId, Has.Length.EqualTo(SFInstallableDblResource.ResourceIdentifierLength),
                 "setup. Should be using a project ID that is a resource ID");
 
             // SUT
-            string latestSharedVersion = env.Service.GetLatestSharedVersion(user01Secret, resourcePTID);
+            string latestSharedVersion = env.Service.GetLatestSharedVersion(user01Secret, resourcePTId);
 
             Assert.That(latestSharedVersion, Is.Null,
                 "DBL resources do not have hg repositories to have a last pushed or pulled hg commit id.");

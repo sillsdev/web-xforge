@@ -151,12 +151,14 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>
-        /// Synchronizes the text and notes data on the SF server with the data on the Paratext server.
+        /// Synchronizes the text and notes data on the SF server with the data on the Paratext server, for the PT
+        /// project referred to by paratextId. Or if paratextId refers to a DBL Resource, update the local copy of the
+        /// resource if needed.
         /// </summary>
-        public async Task SendReceiveAsync(UserSecret userSecret, string ptTargetId,
+        public async Task SendReceiveAsync(UserSecret userSecret, string paratextId,
             IProgress<ProgressState> progress = null)
         {
-            if (userSecret == null || ptTargetId == null) { throw new ArgumentNullException(); }
+            if (userSecret == null || paratextId == null) { throw new ArgumentNullException(); }
 
             IInternetSharedRepositorySource source = await GetInternetSharedRepositorySource(userSecret.Id);
             IEnumerable<SharedRepository> repositories = source.GetRepositories();
@@ -164,37 +166,37 @@ namespace SIL.XForge.Scripture.Services
             IEnumerable<string> projectGuids = projectsMetadata.Select(pmd => pmd.ProjectGuid.Id);
             Dictionary<string, ParatextProject> ptProjectsAvailable =
                 GetProjects(userSecret, repositories, projectsMetadata).ToDictionary(ptProject => ptProject.ParatextId);
-            if (!projectGuids.Contains(ptTargetId))
+            if (!projectGuids.Contains(paratextId))
             {
                 // See if this is a resource
                 IReadOnlyList<ParatextResource> resources = await this.GetResourcesInternalAsync(userSecret.Id, true);
-                ParatextResource resource = resources.SingleOrDefault(r => r.ParatextId == ptTargetId);
+                ParatextResource resource = resources.SingleOrDefault(r => r.ParatextId == paratextId);
                 if (resource != null)
                 {
                     ptProjectsAvailable.Add(resource.ParatextId, resource);
                 }
                 else
                 {
-                    _logger.LogWarning($"The target project did not have a full name available {ptTargetId}");
+                    _logger.LogWarning($"The project with PT ID {paratextId} did not have a full name available.");
                 }
             }
-            if (!ptProjectsAvailable.TryGetValue(ptTargetId, out ParatextProject targetPtProject))
+            if (!ptProjectsAvailable.TryGetValue(paratextId, out ParatextProject ptProject))
             {
                 throw new ArgumentException(
-                    $"PT projects with the following PT ids were requested but without access or they don't exist: {ptTargetId}");
+                    $"PT projects with the following PT ids were requested but without access or they don't exist: {paratextId}");
             }
 
-            EnsureProjectReposExists(userSecret, targetPtProject, source);
+            EnsureProjectReposExists(userSecret, ptProject, source);
             StartProgressReporting(progress);
-            if (!(targetPtProject is ParatextResource))
+            if (!(ptProject is ParatextResource))
             {
-                SharedProject targetSharedProj = SharingLogicWrapper.CreateSharedProject(ptTargetId,
-                    targetPtProject.ShortName, source.AsInternetSharedRepositorySource(), repositories);
+                SharedProject sharedProj = SharingLogicWrapper.CreateSharedProject(paratextId,
+                    ptProject.ShortName, source.AsInternetSharedRepositorySource(), repositories);
                 string username = GetParatextUsername(userSecret);
                 // Specifically set the ScrText property of the SharedProject to indicate the project is available locally
-                targetSharedProj.ScrText = ScrTextCollection.FindById(username, ptTargetId);
-                targetSharedProj.Permissions = targetSharedProj.ScrText.Permissions;
-                List<SharedProject> sharedPtProjectsToSr = new List<SharedProject> { targetSharedProj };
+                sharedProj.ScrText = ScrTextCollection.FindById(username, paratextId);
+                sharedProj.Permissions = sharedProj.ScrText.Permissions;
+                List<SharedProject> sharedPtProjectsToSr = new List<SharedProject> { sharedProj };
 
                 // TODO report results
                 List<SendReceiveResult> results = Enumerable.Empty<SendReceiveResult>().ToList();
@@ -227,6 +229,17 @@ namespace SIL.XForge.Scripture.Services
             return await this.GetResourcesInternalAsync(userId, false);
         }
 
+        /// <summary>
+        /// Is the PT project referred to by `paratextId` a DBL resource?
+        /// </summary>
+        public bool IsResource(string paratextId)
+        {
+            return paratextId?.Length == SFInstallableDblResource.ResourceIdentifierLength;
+        }
+
+        /// <summary>
+        /// Returns `userSecret`'s role on a PT project according to the PT Registry.
+        /// </summary>
         public async Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId)
         {
             if (userSecret.ParatextTokens == null)
@@ -255,20 +268,20 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>
-        /// Gets the permission a user has to access a resource.
+        /// Gets the permission a user has to access a resource, according to a DBL server.
         /// </summary>
         /// <param name="paratextId">The paratext resource identifier.</param>
         /// <param name="userId">The user identifier.</param>
         /// <returns>
-        /// A dictionary of permissions where the key is the user ID and the value is the permission
+        /// Read or None.
         /// </returns>
         /// <remarks>
         /// See <see cref="TextInfoPermission" /> for permission values.
         /// </remarks>
         public async Task<string> GetResourcePermissionAsync(string paratextId, string userId)
         {
-            // See if the source is a resource
-            if (paratextId.Length != SFInstallableDblResource.ResourceIdentifierLength)
+            // See if the source is even a resource
+            if (!IsResource(paratextId))
             {
                 // Default to no permissions for projects used as sources
                 return TextInfoPermission.None;
@@ -301,7 +314,7 @@ namespace SIL.XForge.Scripture.Services
             string paratextId)
         {
             // Skip all the work if the project is a resource. Resources don't have project members
-            if (paratextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+            if (IsResource(paratextId))
             {
                 return new Dictionary<string, string>();
             }
@@ -340,8 +353,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var permissions = new Dictionary<string, string>();
 
-            // See if the source is a resource
-            if (project.ParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+            if (IsResource(project.ParatextId))
             {
                 foreach (string uid in project.UserRoles.Keys)
                 {
@@ -411,9 +423,9 @@ namespace SIL.XForge.Scripture.Services
         }
 
         public async Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(UserSecret userSecret,
-            string projectId)
+            string paratextId)
         {
-            if (projectId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+            if (IsResource(paratextId))
             {
                 // Resources do not have roles
                 return new Dictionary<string, string>();
@@ -423,7 +435,7 @@ namespace SIL.XForge.Scripture.Services
                 // Paratext RegistryServer has methods to do this, but it is unreliable to use it in a multi-user
                 // environment so instead we call the registry API.
                 string response = await CallApiAsync(userSecret, HttpMethod.Get,
-                    $"projects/{projectId}/members");
+                    $"projects/{paratextId}/members");
                 var members = JArray.Parse(response);
                 return members.OfType<JObject>()
                     .Where(m => !string.IsNullOrEmpty((string)m["userId"]) && !string.IsNullOrEmpty((string)m["role"]))
@@ -432,25 +444,25 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary> Determine if a specific project is in a right to left language. </summary>
-        public bool IsProjectLanguageRightToLeft(UserSecret userSecret, string ptProjectId)
+        public bool IsProjectLanguageRightToLeft(UserSecret userSecret, string paratextId)
         {
-            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), ptProjectId);
+            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
             return scrText == null ? false : scrText.RightToLeft;
         }
 
         /// <summary> Get list of book numbers in PT project. </summary>
-        public IReadOnlyList<int> GetBookList(UserSecret userSecret, string ptProjectId)
+        public IReadOnlyList<int> GetBookList(UserSecret userSecret, string paratextId)
         {
-            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), ptProjectId);
+            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
             if (scrText == null)
                 return Array.Empty<int>();
             return scrText.Settings.BooksPresentSet.SelectedBookNumbers.ToArray();
         }
 
         /// <summary> Get PT book text in USX, or throw if can't. </summary>
-        public string GetBookText(UserSecret userSecret, string ptProjectId, int bookNum)
+        public string GetBookText(UserSecret userSecret, string paratextId, int bookNum)
         {
-            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), ptProjectId);
+            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
             if (scrText == null)
                 throw new DataNotFoundException("Can't get access to cloned project.");
             string usfm = scrText.GetText(bookNum);
@@ -611,14 +623,14 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>
         /// Get the most recent revision id of a commit from the last push or pull with the PT send/receive server.
         /// </summary>
-        public string GetLatestSharedVersion(UserSecret userSecret, string ptProjectId)
+        public string GetLatestSharedVersion(UserSecret userSecret, string paratextId)
         {
-            if (ptProjectId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+            if (IsResource(paratextId))
             {
                 // Not meaningful for DBL resources, which do not have a local hg repo.
                 return null;
             }
-            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), ptProjectId);
+            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
             return scrText == null ? null : _hgHelper.GetLastPublicRevision(scrText.Directory);
         }
 

@@ -43,9 +43,9 @@ namespace SIL.XForge.Scripture.Services
     /// </summary>
     public class ParatextSyncRunner : IParatextSyncRunner
     {
-        private static readonly IEqualityComparer<List<Chapter>> ChapterListEqualityComparer =
+        internal static readonly IEqualityComparer<List<Chapter>> ChapterListEqualityComparer =
             SequenceEqualityComparer.Create(new ChapterEqualityComparer());
-        private static readonly IEqualityComparer<Dictionary<string, string>> PermissionDictionaryEqualityComparer =
+        internal static readonly IEqualityComparer<Dictionary<string, string>> PermissionDictionaryEqualityComparer =
             new DictionaryComparer<string, string>();
 
         private readonly IRepository<UserSecret> _userSecrets;
@@ -177,7 +177,7 @@ namespace SIL.XForge.Scripture.Services
                 if (TranslationSuggestionsEnabled
                     && !string.IsNullOrWhiteSpace(sourceParatextId)
                     && !string.IsNullOrWhiteSpace(sourceProjectRef)
-                    && sourceParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+                    && _paratextService.IsResource(sourceParatextId))
                 {
                     // Get the resource project
                     IDocument<SFProject> sourceProject = await _conn.FetchAsync<SFProject>(sourceProjectRef);
@@ -214,93 +214,8 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
 
-                // Get Paratext username mapping
-                IReadOnlyDictionary<string, string> ptUsernameMapping =
-                    await _paratextService.GetParatextUsernameMappingAsync(_userSecret, targetParatextId);
-
-                // Get the permissions if this is a resource
-                // Resources do not have per-book permissions
-                Dictionary<string, string> permissions;
-                if (targetParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
-                {
-                    permissions = await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data,
-                        ptUsernameMapping);
-                }
-                else
-                {
-                    permissions = null;
-                }
-
-                // update source and target real-time docs
-                foreach (int bookNum in targetBooks)
-                {
-                    bool hasSource = sourceBooks.Contains(bookNum);
-                    int textIndex = _projectDoc.Data.Texts.FindIndex(t => t.BookNum == bookNum);
-                    TextInfo text;
-                    if (textIndex == -1)
-                        text = new TextInfo { BookNum = bookNum, HasSource = hasSource };
-                    else
-                        text = _projectDoc.Data.Texts[textIndex];
-
-                    // update target text docs
-                    if (!targetTextDocsByBook.TryGetValue(text.BookNum,
-                        out SortedList<int, IDocument<TextData>> targetTextDocs))
-                    {
-                        targetTextDocs = new SortedList<int, IDocument<TextData>>();
-                    }
-
-                    List<Chapter> newChapters = await UpdateTextDocsAsync(text, targetParatextId, targetTextDocs);
-
-                    // update question docs
-                    if (questionDocsByBook.TryGetValue(text.BookNum,
-                        out IReadOnlyList<IDocument<Question>> questionDocs))
-                    {
-                        await UpdateQuestionDocsAsync(questionDocs, newChapters);
-                    }
-
-                    // Get the permissions for the book and chapters if this is not a resource
-                    if (targetParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
-                    {
-                        // Add chapter permissions for the resource
-                        foreach (Chapter chapter in newChapters)
-                        {
-                            chapter.Permissions = permissions;
-                        }
-                    }
-                    else
-                    {
-                        // Get the project permissions for the book
-                        permissions = await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data,
-                            ptUsernameMapping, bookNum);
-                        foreach (Chapter chapter in newChapters)
-                        {
-                            // Get and set the project permissions for the chapter
-                            Dictionary<string, string> chapterPermissions = await _paratextService.GetPermissionsAsync(
-                                _userSecret, _projectDoc.Data, ptUsernameMapping, bookNum, chapter.Number);
-                            chapter.Permissions = chapterPermissions;
-                        }
-                    }
-
-                    // update project metadata
-                    await _projectDoc.SubmitJson0OpAsync(op =>
-                    {
-                        if (textIndex == -1)
-                        {
-                            // insert text info for new text
-                            text.Chapters = newChapters;
-                            text.Permissions = permissions;
-                            op.Add(pd => pd.Texts, text);
-                        }
-                        else
-                        {
-                            // update text info
-                            op.Set(pd => pd.Texts[textIndex].Chapters, newChapters, ChapterListEqualityComparer);
-                            op.Set(pd => pd.Texts[textIndex].HasSource, hasSource);
-                            op.Set(pd => pd.Texts[textIndex].Permissions, permissions,
-                                PermissionDictionaryEqualityComparer);
-                        }
-                    });
-                }
+                await UpdateDocsAsync(targetParatextId, targetTextDocsByBook, questionDocsByBook, targetBooks, sourceBooks);
+                await _projectService.UpdatePermissionsAsync(userId, _projectDoc);
 
                 if (TranslationSuggestionsEnabled && trainEngine)
                 {
@@ -318,6 +233,57 @@ namespace SIL.XForge.Scripture.Services
             finally
             {
                 CloseConnection();
+            }
+        }
+
+        private async Task UpdateDocsAsync(string targetParatextId,
+            Dictionary<int, SortedList<int, IDocument<TextData>>> targetTextDocsByBook,
+            Dictionary<int, IReadOnlyList<IDocument<Question>>> questionDocsByBook, HashSet<int> targetBooks,
+            HashSet<int> sourceBooks)
+        {
+            // update source and target real-time docs
+            foreach (int bookNum in targetBooks)
+            {
+                bool hasSource = sourceBooks.Contains(bookNum);
+                int textIndex = _projectDoc.Data.Texts.FindIndex(t => t.BookNum == bookNum);
+                TextInfo text;
+                if (textIndex == -1)
+                    text = new TextInfo { BookNum = bookNum, HasSource = hasSource };
+                else
+                    text = _projectDoc.Data.Texts[textIndex];
+
+                // update target text docs
+                if (!targetTextDocsByBook.TryGetValue(text.BookNum,
+                    out SortedList<int, IDocument<TextData>> targetTextDocs))
+                {
+                    targetTextDocs = new SortedList<int, IDocument<TextData>>();
+                }
+
+                List<Chapter> newSetOfChapters = await UpdateTextDocsAsync(text, targetParatextId, targetTextDocs);
+
+                // update question docs
+                if (questionDocsByBook.TryGetValue(text.BookNum,
+                    out IReadOnlyList<IDocument<Question>> questionDocs))
+                {
+                    await UpdateQuestionDocsAsync(questionDocs, newSetOfChapters);
+                }
+
+                // update project metadata
+                await _projectDoc.SubmitJson0OpAsync(op =>
+                {
+                    if (textIndex == -1)
+                    {
+                        // insert text info for new text
+                        text.Chapters = newSetOfChapters;
+                        op.Add(pd => pd.Texts, text);
+                    }
+                    else
+                    {
+                        // update text info
+                        op.Set(pd => pd.Texts[textIndex].Chapters, newSetOfChapters, ChapterListEqualityComparer);
+                        op.Set(pd => pd.Texts[textIndex].HasSource, hasSource);
+                    }
+                });
             }
         }
 
@@ -569,7 +535,7 @@ namespace SIL.XForge.Scripture.Services
 
             bool updateRoles = true;
             IReadOnlyDictionary<string, string> ptUserRoles;
-            if (_projectDoc.Data.ParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+            if (_paratextService.IsResource(_projectDoc.Data.ParatextId))
             {
                 // Do not update permissions on sync, if this is a resource project
                 // Permission updates will be performed when a target project is synchronized

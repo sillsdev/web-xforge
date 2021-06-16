@@ -185,7 +185,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>
-        /// Checks the resource permission.
+        /// Checks the resource permission, according to a DBL server.
         /// </summary>
         /// <param name="id">The identifier.</param>
         /// <param name="userSecret">The user secret.</param>

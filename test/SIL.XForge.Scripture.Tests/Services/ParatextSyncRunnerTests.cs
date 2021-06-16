@@ -369,7 +369,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task SyncAsync_UserHasNoResourcePermission()
+        public async Task SyncAsync_SetsUserPermissions()
         {
             var env = new TestEnvironment();
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
@@ -381,103 +381,13 @@ namespace SIL.XForge.Scripture.Services
             };
             env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
-            var ptSourcePermissions = new Dictionary<string, string>()
-            {
-                { "user01", TextInfoPermission.Read },
-                { "user02", TextInfoPermission.None },
-            };
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>())
-                .Returns(Task.FromResult(ptSourcePermissions));
 
+            // SUT
             await env.Runner.RunAsync("project01", "user01", false);
 
-            SFProject project = env.VerifyProjectSync(true);
-            Assert.That(project.Texts.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.None));
-        }
-
-        [Test]
-        public async Task SyncAsync_UserHasNoChapterPermission()
-        {
-            var env = new TestEnvironment();
-            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-            env.SetupSFData(true, true, false, books);
-            env.SetupPTData(books);
-            var ptUserRoles = new Dictionary<string, string>
-            {
-                { "pt01", SFProjectRole.Translator }
-            };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
-                .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
-            var ptChapterPermissions = new Dictionary<string, string>()
-            {
-                { "user01", TextInfoPermission.Read },
-                { "user02", TextInfoPermission.None },
-            };
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>())
-                .Returns(Task.FromResult(ptChapterPermissions));
-
-            await env.Runner.RunAsync("project01", "user01", false);
-
-            SFProject project = env.VerifyProjectSync(true);
-            Assert.That(project.Texts.First().Chapters.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.None));
-        }
-
-        [Test]
-        public async Task SyncAsync_UserHasResourcePermission()
-        {
-            var env = new TestEnvironment();
-            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-            env.SetupSFData(true, true, false, books);
-            env.SetupPTData(books);
-            var ptUserRoles = new Dictionary<string, string>
-            {
-                { "pt01", SFProjectRole.Translator }
-            };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
-                .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
-            var ptSourcePermissions = new Dictionary<string, string>()
-            {
-                { "user01", TextInfoPermission.Read },
-                { "user02", TextInfoPermission.Read },
-            };
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>())
-                .Returns(Task.FromResult(ptSourcePermissions));
-
-            await env.Runner.RunAsync("project01", "user01", false);
-
-            SFProject project = env.VerifyProjectSync(true);
-            Assert.That(project.Texts.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.Read));
-        }
-
-        [Test]
-        public async Task SyncAsync_UserHasChapterPermission()
-        {
-            var env = new TestEnvironment();
-            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-            env.SetupSFData(true, true, false, books);
-            env.SetupPTData(books);
-            var ptUserRoles = new Dictionary<string, string>
-            {
-                { "pt01", SFProjectRole.Translator }
-            };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
-                .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
-            var ptChapterPermissions = new Dictionary<string, string>()
-            {
-                { "user01", TextInfoPermission.Read },
-                { "user02", TextInfoPermission.Read },
-            };
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>())
-                .Returns(Task.FromResult(ptChapterPermissions));
-
-            await env.Runner.RunAsync("project01", "user01", false);
-
-            SFProject project = env.VerifyProjectSync(true);
-            Assert.That(project.Texts.First().Chapters.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.Read));
+            env.SFProjectService.Received().UpdatePermissionsAsync("user01",
+                Arg.Is<IDocument<SFProject>>((IDocument<SFProject> sfProjDoc) =>
+                    sfProjDoc.Data.Id == "project01" && sfProjDoc.Data.ParatextId == "target"));
         }
 
         [Test]
@@ -667,44 +577,44 @@ namespace SIL.XForge.Scripture.Services
             foreach (bool isChanged in new bool[] { true, false })
             {
                 var env = new TestEnvironment();
-                string projectSFID = "project03";
-                string userID = "user01";
+                string projectSFId = "project03";
+                string userId = "user01";
 
                 Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
                 bool translationSuggestionsEnabled = true;
                 bool checkingEnabled = true;
                 bool changed = isChanged;
-                env.SetupSFData(projectSFID, "project04", translationSuggestionsEnabled, checkingEnabled, changed,
+                env.SetupSFData(projectSFId, "project04", translationSuggestionsEnabled, checkingEnabled, changed,
                     books);
-                SFProject project = env.GetProject(projectSFID);
-                string projectPTID = project.ParatextId;
-                env.SetupPTData(projectPTID, env.GetProject("project04").ParatextId, books);
+                SFProject project = env.GetProject(projectSFId);
+                string projectPTId = project.ParatextId;
+                env.SetupPTDataForProjectIds(projectPTId, env.GetProject("project04").ParatextId, books);
                 Assert.That(project.Sync.SyncedToRepositoryVersion, Is.Null,
                     "setup. Should be testing what happens when this is not set.");
                 Assert.That(project.Sync.DataInSync, Is.Null,
                     "setup. Should be testing what happens when this is not set.");
-                env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), projectPTID)
+                env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), projectPTId)
                     .Returns("1", "2");
 
                 // SUT
-                await env.Runner.RunAsync(projectSFID, userID, false);
+                await env.Runner.RunAsync(projectSFId, userId, false);
 
-                project = env.GetProject(projectSFID);
+                project = env.GetProject(projectSFId);
                 // We should get into UpdateParatextBook() and fetch and perhaps put books.
-                env.ParatextService.Received().GetBookText(Arg.Any<UserSecret>(), projectPTID, Arg.Any<int>());
+                env.ParatextService.Received().GetBookText(Arg.Any<UserSecret>(), projectPTId, Arg.Any<int>());
                 env.DeltaUsxMapper.Received().ToUsx(Arg.Any<XDocument>(), Arg.Any<IEnumerable<ChapterDelta>>());
                 // We should get into UpdateParatextNotesAsync() and fetch and perhaps put notes.
-                env.ParatextService.Received().GetNotes(Arg.Any<UserSecret>(), projectPTID, Arg.Any<int>());
+                env.ParatextService.Received().GetNotes(Arg.Any<UserSecret>(), projectPTId, Arg.Any<int>());
                 env.NotesMapper.Received().GetNotesChangelistAsync(Arg.Any<XElement>(),
                     Arg.Any<IEnumerable<IDocument<Question>>>());
                 // We should have then called SR
-                env.ParatextService.Received(1).SendReceiveAsync(Arg.Any<UserSecret>(), projectPTID,
+                env.ParatextService.Received(1).SendReceiveAsync(Arg.Any<UserSecret>(), projectPTId,
                     Arg.Any<IProgress<ProgressState>>());
 
                 // The expected repository version can still be past the original project version, even if there were
                 // no local changes, since there may be incoming changes.
                 string expectedRepositoryVersion = "2";
-                env.VerifyProjectSync(true, expectedRepositoryVersion, projectSFID);
+                env.VerifyProjectSync(true, expectedRepositoryVersion, projectSFId);
             }
         }
 
@@ -714,29 +624,29 @@ namespace SIL.XForge.Scripture.Services
             foreach (bool isChanged in new bool[] { true, false })
             {
                 var env = new TestEnvironment();
-                string projectSFID = "project05";
-                string userID = "user01";
+                string projectSFId = "project05";
+                string userId = "user01";
 
                 Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
                 bool translationSuggestionsEnabled = false;
                 bool checkingEnabled = true;
                 bool changed = isChanged;
-                env.SetupSFData(projectSFID, "project04", translationSuggestionsEnabled, checkingEnabled, changed,
+                env.SetupSFData(projectSFId, "project04", translationSuggestionsEnabled, checkingEnabled, changed,
                     books);
-                SFProject project = env.GetProject(projectSFID);
-                string projectPTID = project.ParatextId;
-                // env.SetupPTData(projectPTID, env.GetProject("project04").ParatextId, books);
+                SFProject project = env.GetProject(projectSFId);
+                string projectPTId = project.ParatextId;
+                // env.SetupPTData(projectPTId, env.GetProject("project04").ParatextId, books);
                 Assert.That(project.Sync.SyncedToRepositoryVersion, Is.Null,
                     "setup. Should be testing what happens when this is not set.");
                 Assert.That(project.Sync.DataInSync, Is.False,
                     "setup. Should be testing what happens for this.");
-                env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), projectPTID)
+                env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), projectPTId)
                     .Returns("1", "2");
 
                 // SUT
-                await env.Runner.RunAsync(projectSFID, userID, false);
+                await env.Runner.RunAsync(projectSFId, userId, false);
 
-                project = env.GetProject(projectSFID);
+                project = env.GetProject(projectSFId);
                 // We are in an out-of-sync situation and so should not be writing to PT.
 
                 env.ParatextService.DidNotReceiveWithAnyArgs().GetBookText(default, default, default);
@@ -746,11 +656,11 @@ namespace SIL.XForge.Scripture.Services
                 env.NotesMapper.DidNotReceiveWithAnyArgs().GetNotesChangelistAsync(Arg.Any<XElement>(),
                     Arg.Any<IEnumerable<IDocument<Question>>>());
                 // We should have then called SR
-                env.ParatextService.Received(1).SendReceiveAsync(Arg.Any<UserSecret>(), projectPTID,
+                env.ParatextService.Received(1).SendReceiveAsync(Arg.Any<UserSecret>(), projectPTId,
                     Arg.Any<IProgress<ProgressState>>());
 
                 string expectedRepositoryVersion = "2";
-                env.VerifyProjectSync(true, expectedRepositoryVersion, projectSFID);
+                env.VerifyProjectSync(true, expectedRepositoryVersion, projectSFId);
             }
         }
 
@@ -899,9 +809,9 @@ namespace SIL.XForge.Scripture.Services
             public IParatextNotesMapper NotesMapper;
             public ILogger<ParatextSyncRunner> Logger { get; }
 
-            public SFProject GetProject(string sfProjectID = "project01")
+            public SFProject GetProject(string projectSFId = "project01")
             {
-                return RealtimeService.GetRepository<SFProject>().Get(sfProjectID);
+                return RealtimeService.GetRepository<SFProject>().Get(projectSFId);
             }
 
             public SFProjectSecret GetProjectSecret()
@@ -932,9 +842,9 @@ namespace SIL.XForge.Scripture.Services
             }
 
             public SFProject VerifyProjectSync(bool successful, string expectedRepoVersion = null,
-                string projectSFID = "project01")
+                string projectSFId = "project01")
             {
-                SFProject project = GetProject(projectSFID);
+                SFProject project = GetProject(projectSFId);
                 Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
                 Assert.That(project.Sync.LastSyncSuccessful, Is.EqualTo(successful));
                 string repoVersion = expectedRepoVersion ?? (successful ? "afterSR" : "beforeSR");
@@ -948,7 +858,7 @@ namespace SIL.XForge.Scripture.Services
                 SetupSFData("project01", "project02", translationSuggestionsEnabled, checkingEnabled, changed, books);
             }
 
-            public void SetupSFData(string targetProjectSFID, string sourceProjectSFID,
+            public void SetupSFData(string targetProjectSFId, string sourceProjectSFId,
                 bool translationSuggestionsEnabled, bool checkingEnabled, bool changed,
                 params Book[] books)
             {
@@ -1155,11 +1065,11 @@ namespace SIL.XForge.Scripture.Services
                 RealtimeService.AddRepository("questions", OTType.Json0, new MemoryRepository<Question>());
                 foreach (Book book in books)
                 {
-                    AddSFBook(targetProjectSFID, GetProject(targetProjectSFID).ParatextId, book.Id,
+                    AddSFBook(targetProjectSFId, GetProject(targetProjectSFId).ParatextId, book.Id,
                         book.HighestTargetChapter, changed, book.MissingTargetChapters);
                     if (book.HighestSourceChapter > 0)
                     {
-                        AddSFBook(sourceProjectSFID, GetProject(sourceProjectSFID).ParatextId, book.Id,
+                        AddSFBook(sourceProjectSFId, GetProject(sourceProjectSFId).ParatextId, book.Id,
                             book.HighestSourceChapter, changed, book.MissingSourceChapters);
                     }
                 }
@@ -1196,10 +1106,15 @@ namespace SIL.XForge.Scripture.Services
 
             public void SetupPTData(params Book[] books)
             {
-                SetupPTData("target", "source", books);
+                SetupPTDataForProjectIds("target", "source", books);
             }
 
-            public void SetupPTData(string targetProjectPTId, string sourceProjectPTId, params Book[] books)
+            public void SetupPTData(string targetProjectPTId, params Book[] books)
+            {
+                SetupPTDataForProjectIds(targetProjectPTId, "sourceProjectPTId", books);
+            }
+
+            public void SetupPTDataForProjectIds(string targetProjectPTId, string sourceProjectPTId, params Book[] books)
             {
                 ParatextService.GetBookList(Arg.Any<UserSecret>(), targetProjectPTId)
                     .Returns(books.Select(b => Canon.BookIdToNumber(b.Id)).ToArray());
