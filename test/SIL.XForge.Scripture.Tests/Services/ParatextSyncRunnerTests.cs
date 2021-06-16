@@ -385,107 +385,14 @@ namespace SIL.XForge.Scripture.Services
             };
             env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
-            var ptSourcePermissions = new Dictionary<string, string>()
-            {
-                { "user01", TextInfoPermission.Read },
-                { "user02", TextInfoPermission.None },
-            };
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>(),
-                Arg.Any<CancellationToken>())
-                .Returns(Task.FromResult(ptSourcePermissions));
 
+            // SUT
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
-            SFProject project = env.VerifyProjectSync(true);
-            Assert.That(project.Texts.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.None));
-        }
-
-        [Test]
-        public async Task SyncAsync_UserHasNoChapterPermission()
-        {
-            var env = new TestEnvironment();
-            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-            env.SetupSFData(true, true, false, books);
-            env.SetupPTData(books);
-            var ptUserRoles = new Dictionary<string, string>
-            {
-                { "pt01", SFProjectRole.Translator }
-            };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<CancellationToken>())
-                .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
-            var ptChapterPermissions = new Dictionary<string, string>()
-            {
-                { "user01", TextInfoPermission.Read },
-                { "user02", TextInfoPermission.None },
-            };
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>())
-                .Returns(Task.FromResult(ptChapterPermissions));
-
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
-
-            SFProject project = env.VerifyProjectSync(true);
-            Assert.That(project.Texts.First().Chapters.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.None));
-        }
-
-        [Test]
-        public async Task SyncAsync_UserHasResourcePermission()
-        {
-            var env = new TestEnvironment();
-            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-            env.SetupSFData(true, true, false, books);
-            env.SetupPTData(books);
-            var ptUserRoles = new Dictionary<string, string>
-            {
-                { "pt01", SFProjectRole.Translator }
-            };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<CancellationToken>())
-                .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
-            var ptSourcePermissions = new Dictionary<string, string>()
-            {
-                { "user01", TextInfoPermission.Read },
-                { "user02", TextInfoPermission.Read },
-            };
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>(),
-                Arg.Any<CancellationToken>())
-                .Returns(Task.FromResult(ptSourcePermissions));
-
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
-
-            SFProject project = env.VerifyProjectSync(true);
-            Assert.That(project.Texts.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.Read));
-        }
-
-        [Test]
-        public async Task SyncAsync_UserHasChapterPermission()
-        {
-            var env = new TestEnvironment();
-            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-            env.SetupSFData(true, true, false, books);
-            env.SetupPTData(books);
-            var ptUserRoles = new Dictionary<string, string>
-            {
-                { "pt01", SFProjectRole.Translator }
-            };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<CancellationToken>())
-                .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
-            var ptChapterPermissions = new Dictionary<string, string>()
-            {
-                { "user01", TextInfoPermission.Read },
-                { "user02", TextInfoPermission.Read },
-            };
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>(),
-                Arg.Any<CancellationToken>())
-                .Returns(Task.FromResult(ptChapterPermissions));
-
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
-
-            env.SFProjectService.Received().UpdatePermissionsAsync("user01",
+            await env.SFProjectService.Received().UpdatePermissionsAsync("user01",
                 Arg.Is<IDocument<SFProject>>((IDocument<SFProject> sfProjDoc) =>
-                    sfProjDoc.Data.Id == "project01" && sfProjDoc.Data.ParatextId == "target"));
+                    sfProjDoc.Data.Id == "project01" && sfProjDoc.Data.ParatextId == "target"),
+                Arg.Any<CancellationToken>());
         }
 
         [Test]

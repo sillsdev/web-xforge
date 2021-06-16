@@ -1,8 +1,9 @@
-using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
-using SIL.XForge.Realtime;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -24,6 +25,6 @@ namespace SIL.XForge.Scripture.Services
         bool IsSourceProject(string projectId);
         Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestions(string curUserId, string projectId);
         Task<bool> HasTransceleratorQuestions(string curUserId, string projectId);
-        Task UpdatePermissionsAsync(string curUserId, IDocument<SFProject> projectDoc);
+        Task UpdatePermissionsAsync(string curUserId, IDocument<SFProject> projectDoc, CancellationToken token);
     }
 }

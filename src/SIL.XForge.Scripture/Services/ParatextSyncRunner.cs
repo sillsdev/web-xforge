@@ -244,7 +244,7 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 await UpdateDocsAsync(targetParatextId, targetTextDocsByBook, questionDocsByBook, targetBooks, sourceBooks);
-                await _projectService.UpdatePermissionsAsync(userId, _projectDoc);
+                await _projectService.UpdatePermissionsAsync(userId, _projectDoc, token);
 
                 // Check for cancellation
                 if (token.IsCancellationRequested)
