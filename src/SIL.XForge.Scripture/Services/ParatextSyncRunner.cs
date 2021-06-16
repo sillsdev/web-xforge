@@ -90,9 +90,9 @@ namespace SIL.XForge.Scripture.Services
         {
             try
             {
-                if (!await InitAsync(projectId, userId))
+                if (!await InitAsync(projectId, userId, token))
                 {
-                    await CompleteSync(false);
+                    await CompleteSync(false, token);
                     return;
                 }
 
@@ -146,6 +146,13 @@ namespace SIL.XForge.Scripture.Services
                         await UpdateParatextNotesAsync(text, questionDocs);
                 }
 
+                // Check for cancellation
+                if (token.IsCancellationRequested)
+                {
+                    await CompleteSync(false, token);
+                    return;
+                }
+
                 // Use the new progress bar
                 var progress = new SyncProgress();
                 try
@@ -154,12 +161,19 @@ namespace SIL.XForge.Scripture.Services
                     progress.ProgressUpdated += SyncProgress_ProgressUpdated;
 
                     // perform Paratext send/receive
-                    await _paratextService.SendReceiveAsync(_userSecret, targetParatextId, progress);
+                    await _paratextService.SendReceiveAsync(_userSecret, targetParatextId, progress, token);
                 }
                 finally
                 {
                     // Deregister the handler
                     progress.ProgressUpdated -= SyncProgress_ProgressUpdated;
+                }
+
+                // Check for cancellation
+                if (token.IsCancellationRequested)
+                {
+                    await CompleteSync(false, token);
+                    return;
                 }
 
                 var targetBooks = new HashSet<int>(_paratextService.GetBookList(_userSecret, targetParatextId));
@@ -170,6 +184,13 @@ namespace SIL.XForge.Scripture.Services
 
                 var targetBooksToDelete = new HashSet<int>(_projectDoc.Data.Texts.Select(t => t.BookNum)
                     .Except(targetBooks));
+
+                // Check for cancellation
+                if (token.IsCancellationRequested)
+                {
+                    await CompleteSync(false, token);
+                    return;
+                }
 
                 // delete all data for removed books
                 if (targetBooksToDelete.Count > 0)
@@ -184,6 +205,13 @@ namespace SIL.XForge.Scripture.Services
                         await DeleteAllTextDocsForBookAsync(text);
                         await DeleteAllQuestionsDocsForBookAsync(text);
                     }
+                }
+
+                // Check for cancellation
+                if (token.IsCancellationRequested)
+                {
+                    await CompleteSync(false, token);
+                    return;
                 }
 
                 // Update user resource access, if this project has a source resource
@@ -218,7 +246,7 @@ namespace SIL.XForge.Scripture.Services
                         foreach (string uid in usersToCheck)
                         {
                             string permission =
-                                await _paratextService.GetResourcePermissionAsync(sourceParatextId, uid);
+                                await _paratextService.GetResourcePermissionAsync(sourceParatextId, uid, token);
                             if (permission == TextInfoPermission.None)
                             {
                                 // As resource projects don't have administrators, connect as the user we are to remove
@@ -229,7 +257,14 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 await UpdateDocsAsync(targetParatextId, targetTextDocsByBook, questionDocsByBook, targetBooks, sourceBooks);
-                await _projectService.UpdatePermissionsAsync(userId, _projectDoc);
+                await _projectService.UpdatePermissionsAsync(userId, _projectDoc, token);
+
+                // Check for cancellation
+                if (token.IsCancellationRequested)
+                {
+                    await CompleteSync(false, token);
+                    return;
+                }
 
                 if (TranslationSuggestionsEnabled && trainEngine)
                 {
@@ -237,12 +272,12 @@ namespace SIL.XForge.Scripture.Services
                     await _engineService.StartBuildByProjectIdAsync(projectId);
                 }
 
-                await CompleteSync(true);
+                await CompleteSync(true, token);
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "Error occurred while executing Paratext sync for project '{Project}'", projectId);
-                await CompleteSync(false);
+                await CompleteSync(false, token);
             }
             finally
             {
@@ -301,7 +336,7 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        internal async Task<bool> InitAsync(string projectId, string userId)
+        internal async Task<bool> InitAsync(string projectId, string userId, CancellationToken token)
         {
             _conn = await _realtimeService.ConnectAsync();
             _projectDoc = await _conn.FetchAsync<SFProject>(projectId);
@@ -317,7 +352,7 @@ namespace SIL.XForge.Scripture.Services
             List<User> paratextUsers = await _realtimeService.QuerySnapshots<User>()
                 .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
                 .ToListAsync();
-            await _notesMapper.InitAsync(_userSecret, _projectSecret, paratextUsers, _projectDoc.Data.ParatextId);
+            await _notesMapper.InitAsync(_userSecret, _projectSecret, paratextUsers, _projectDoc.Data.ParatextId, token);
 
             await _projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.Sync.PercentCompleted, 0));
             return true;
@@ -542,7 +577,7 @@ namespace SIL.XForge.Scripture.Services
             await Task.WhenAll(tasks);
         }
 
-        private async Task CompleteSync(bool successful)
+        private async Task CompleteSync(bool successful, CancellationToken token)
         {
             if (_projectDoc == null || _projectSecret == null)
                 return;
@@ -561,13 +596,22 @@ namespace SIL.XForge.Scripture.Services
                 try
                 {
                     ptUserRoles = await _paratextService.GetProjectRolesAsync(_userSecret,
-                        _projectDoc.Data.ParatextId);
+                        _projectDoc.Data.ParatextId, token);
                 }
-                catch (HttpRequestException)
+                catch (Exception ex)
                 {
-                    // This throws a 404 if the user does not have access to the project
-                    ptUserRoles = new Dictionary<string, string>();
-                    updateRoles = false;
+                    if (ex is HttpRequestException || ex is OperationCanceledException)
+                    {
+                        // This throws a 404 if the user does not have access to the project
+                        // A task cancelled exception will be thrown if the user cancels the task
+                        // Note: OperationCanceledException includes TaskCanceledException
+                        ptUserRoles = new Dictionary<string, string>();
+                        updateRoles = false;
+                    }
+                    else
+                    {
+                        throw;
+                    }
                 }
             }
 
@@ -581,6 +625,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 op.Unset(pd => pd.Sync.PercentCompleted);
                 op.Set(pd => pd.Sync.LastSyncSuccessful, successful);
+
                 // Get the latest shared revision of the local hg repo. On a failed synchronize attempt, the data
                 // is known to be out of sync if the revision does not match the corresponding revision stored
                 // on the project doc.
@@ -598,7 +643,14 @@ namespace SIL.XForge.Scripture.Services
                 // an event for each individual op even if they are applied as a batch, so this needs to be set last,
                 // otherwise the info about the sync won't be set yet when the frontend determines that the sync is
                 // complete.
-                op.Inc(pd => pd.Sync.QueuedCount, -1);
+                if (_projectDoc.Data.Sync.QueuedCount > 0)
+                {
+                    op.Inc(pd => pd.Sync.QueuedCount, -1);
+                }
+                else
+                {
+                    op.Set(pd => pd.Sync.QueuedCount, 0);
+                }
 
                 if (updateRoles)
                 {
@@ -629,7 +681,24 @@ namespace SIL.XForge.Scripture.Services
                 {
                     foreach (SyncUser syncUser in _notesMapper.NewSyncUsers)
                         u.Add(p => p.SyncUsers, syncUser);
+
+                    // If we have an id in the job ids collection, remove the first one
+                    if (_projectSecret.JobIds.Any())
+                    {
+                        u.Remove(p => p.JobIds, _projectSecret.JobIds.First());
+                    }
                 });
+            }
+            else
+            {
+                // If we have an id in the job ids collection, remove the first one
+                if (_projectSecret.JobIds.Any())
+                {
+                    await _projectSecrets.UpdateAsync(_projectSecret.Id, u =>
+                    {
+                        u.Remove(p => p.JobIds, _projectSecret.JobIds.First());
+                    });
+                }
             }
         }
 

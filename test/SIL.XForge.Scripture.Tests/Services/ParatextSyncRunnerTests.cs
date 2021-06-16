@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -361,7 +362,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 { "pt01", SFProjectRole.Translator }
             };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
 
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
@@ -382,106 +383,16 @@ namespace SIL.XForge.Scripture.Services
             {
                 { "pt01", SFProjectRole.Translator }
             };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
-            var ptSourcePermissions = new Dictionary<string, string>()
-            {
-                { "user01", TextInfoPermission.Read },
-                { "user02", TextInfoPermission.None },
-            };
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>())
-                .Returns(Task.FromResult(ptSourcePermissions));
 
+            // SUT
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
-            SFProject project = env.VerifyProjectSync(true);
-            Assert.That(project.Texts.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.None));
-        }
-
-        [Test]
-        public async Task SyncAsync_UserHasNoChapterPermission()
-        {
-            var env = new TestEnvironment();
-            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-            env.SetupSFData(true, true, false, books);
-            env.SetupPTData(books);
-            var ptUserRoles = new Dictionary<string, string>
-            {
-                { "pt01", SFProjectRole.Translator }
-            };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
-                .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
-            var ptChapterPermissions = new Dictionary<string, string>()
-            {
-                { "user01", TextInfoPermission.Read },
-                { "user02", TextInfoPermission.None },
-            };
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>())
-                .Returns(Task.FromResult(ptChapterPermissions));
-
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
-
-            SFProject project = env.VerifyProjectSync(true);
-            Assert.That(project.Texts.First().Chapters.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.None));
-        }
-
-        [Test]
-        public async Task SyncAsync_UserHasResourcePermission()
-        {
-            var env = new TestEnvironment();
-            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-            env.SetupSFData(true, true, false, books);
-            env.SetupPTData(books);
-            var ptUserRoles = new Dictionary<string, string>
-            {
-                { "pt01", SFProjectRole.Translator }
-            };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
-                .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
-            var ptSourcePermissions = new Dictionary<string, string>()
-            {
-                { "user01", TextInfoPermission.Read },
-                { "user02", TextInfoPermission.Read },
-            };
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>())
-                .Returns(Task.FromResult(ptSourcePermissions));
-
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
-
-            SFProject project = env.VerifyProjectSync(true);
-            Assert.That(project.Texts.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.Read));
-        }
-
-        [Test]
-        public async Task SyncAsync_UserHasChapterPermission()
-        {
-            var env = new TestEnvironment();
-            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-            env.SetupSFData(true, true, false, books);
-            env.SetupPTData(books);
-            var ptUserRoles = new Dictionary<string, string>
-            {
-                { "pt01", SFProjectRole.Translator }
-            };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
-                .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
-            var ptChapterPermissions = new Dictionary<string, string>()
-            {
-                { "user01", TextInfoPermission.Read },
-                { "user02", TextInfoPermission.Read },
-            };
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>())
-                .Returns(Task.FromResult(ptChapterPermissions));
-
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
-
-            env.SFProjectService.Received().UpdatePermissionsAsync("user01",
+            await env.SFProjectService.Received().UpdatePermissionsAsync("user01",
                 Arg.Is<IDocument<SFProject>>((IDocument<SFProject> sfProjDoc) =>
-                    sfProjDoc.Data.Id == "project01" && sfProjDoc.Data.ParatextId == "target"));
+                    sfProjDoc.Data.Id == "project01" && sfProjDoc.Data.ParatextId == "target"),
+                Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -495,7 +406,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 { "pt01", SFProjectRole.Administrator }
             };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
 
             await env.SetUserRole("user02", SFProjectRole.CommunityChecker);
@@ -699,10 +610,10 @@ namespace SIL.XForge.Scripture.Services
                 env.DeltaUsxMapper.Received().ToUsx(Arg.Any<XDocument>(), Arg.Any<IEnumerable<ChapterDelta>>());
                 // We should get into UpdateParatextNotesAsync() and fetch and perhaps put notes.
                 env.ParatextService.Received().GetNotes(Arg.Any<UserSecret>(), projectPTId, Arg.Any<int>());
-                env.NotesMapper.Received().GetNotesChangelistAsync(Arg.Any<XElement>(),
+                await env.NotesMapper.Received().GetNotesChangelistAsync(Arg.Any<XElement>(),
                     Arg.Any<IEnumerable<IDocument<Question>>>());
                 // We should have then called SR
-                env.ParatextService.Received(1).SendReceiveAsync(Arg.Any<UserSecret>(), projectPTId,
+                await env.ParatextService.Received(1).SendReceiveAsync(Arg.Any<UserSecret>(), projectPTId,
                     Arg.Any<IProgress<ProgressState>>());
 
                 // The expected repository version can still be past the original project version, even if there were
@@ -747,15 +658,99 @@ namespace SIL.XForge.Scripture.Services
                 env.DeltaUsxMapper.DidNotReceiveWithAnyArgs().ToUsx(Arg.Any<XDocument>(),
                     Arg.Any<IEnumerable<ChapterDelta>>());
                 env.ParatextService.DidNotReceiveWithAnyArgs().GetNotes(default, default, default);
-                env.NotesMapper.DidNotReceiveWithAnyArgs().GetNotesChangelistAsync(Arg.Any<XElement>(),
+                await env.NotesMapper.DidNotReceiveWithAnyArgs().GetNotesChangelistAsync(Arg.Any<XElement>(),
                     Arg.Any<IEnumerable<IDocument<Question>>>());
                 // We should have then called SR
-                env.ParatextService.Received(1).SendReceiveAsync(Arg.Any<UserSecret>(), projectPTId,
+                await env.ParatextService.Received(1).SendReceiveAsync(Arg.Any<UserSecret>(), projectPTId,
                     Arg.Any<IProgress<ProgressState>>());
 
                 string expectedRepositoryVersion = "2";
                 env.VerifyProjectSync(true, expectedRepositoryVersion, projectSFId);
             }
+        }
+
+        [Test]
+        public async Task SyncAsync_TaskCancelledByException()
+        {
+            // Set up the environment
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, false);
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+            var cancellationTokenSource = new CancellationTokenSource();
+
+            // Setup a trap to cancel the task
+            env.NotesMapper.When(x => x.InitAsync(Arg.Any<UserSecret>(), Arg.Any<SFProjectSecret>(),
+                Arg.Any<List<User>>(), Arg.Any<string>(), Arg.Any<CancellationToken>()))
+                .Do(_ => throw new TaskCanceledException());
+
+            // Run the task
+            await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+
+            // Check that the task cancelled correctly
+            SFProject project = env.VerifyProjectSync(false);
+            Assert.That(project.Sync.DataInSync, Is.True);  // Nothing was synced as this was cancelled OnInit()
+        }
+
+        [Test]
+        public async Task SyncAsync_TaskCancelledMidway()
+        {
+            // Set up the environment
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, false);
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+            var cancellationTokenSource = new CancellationTokenSource();
+
+            // Setup a trap to cancel the task
+            env.ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
+                Arg.Any<IProgress<ProgressState>>(), Arg.Any<CancellationToken>()))
+                .Do(_ => cancellationTokenSource.Cancel());
+
+            // Run the task
+            await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+
+            // Check that the task cancelled correctly
+            SFProject project = env.VerifyProjectSync(false);
+            Assert.That(project.Sync.DataInSync, Is.False);
+        }
+
+        [Test]
+        public async Task SyncAsync_TaskCancelledPrematurely()
+        {
+            // Set up the environment
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, false);
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+            var cancellationTokenSource = new CancellationTokenSource();
+
+            // Cancel the token before awaiting the task
+            cancellationTokenSource.Cancel();
+
+            // Run the task
+            await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+
+            // Check that the task was cancelled after awaiting the check above
+            SFProject project = env.VerifyProjectSync(false);
+            Assert.That(project.Sync.DataInSync, Is.False);
+        }
+
+        [Test]
+        public async Task SyncAsync_TaskCancelledTooLate()
+        {
+            // Set up the environment
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, false);
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+            var cancellationTokenSource = new CancellationTokenSource();
+
+            // Run the task
+            await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+
+            // Cancel the token after awaiting the task
+            cancellationTokenSource.Cancel();
+
+            // Check that the sync was successful
+            SFProject project = env.VerifyProjectSync(true);
+            Assert.That(project.Sync.DataInSync, Is.True);
         }
 
         [Test]
@@ -767,10 +762,10 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, false, book);
 
             // SUT
-            await env.Runner.InitAsync("project01", "user01");
+            await env.Runner.InitAsync("project01", "user01", CancellationToken.None);
             SortedList<int, IDocument<TextData>> targetFetch =
                 await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
-            await env.Runner.InitAsync("project02", "user01");
+            await env.Runner.InitAsync("project02", "user01", CancellationToken.None);
             SortedList<int, IDocument<TextData>> sourceFetch =
                 await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
             env.Runner.CloseConnection();
@@ -807,10 +802,10 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, false, book);
 
             // SUT
-            await env.Runner.InitAsync("project01", "user01");
+            await env.Runner.InitAsync("project01", "user01", CancellationToken.None);
             var targetFetch = await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
 
-            await env.Runner.InitAsync("project02", "user01");
+            await env.Runner.InitAsync("project02", "user01", CancellationToken.None);
             var sourceFetch = await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
 
             env.Runner.CloseConnection();
@@ -860,7 +855,7 @@ namespace SIL.XForge.Scripture.Services
                 });
                 _projectSecrets = new MemoryRepository<SFProjectSecret>(new[]
                 {
-                    new SFProjectSecret { Id = "project01" },
+                    new SFProjectSecret { Id = "project01", JobIds = new List<string>{ "test_jobid" } },
                     new SFProjectSecret { Id = "project02" },
                     new SFProjectSecret { Id = "project03" },
                     new SFProjectSecret { Id = "project04" },
@@ -875,9 +870,10 @@ namespace SIL.XForge.Scripture.Services
                     { "pt01", SFProjectRole.Administrator },
                     { "pt02", SFProjectRole.Translator }
                 };
-                ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
+                ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<CancellationToken>())
                     .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
-                ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>()))
+                ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
+                    Arg.Any<IProgress<ProgressState>>(), Arg.Any<CancellationToken>()))
                     .Do(x => _sendReceivedCalled = true);
                 ParatextService.IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), Arg.Any<string>())
                     .Returns(false);
@@ -897,10 +893,10 @@ namespace SIL.XForge.Scripture.Services
             public ParatextSyncRunner Runner { get; }
             public ISFProjectService SFProjectService { get; }
             public IEngineService EngineService { get; }
+            public IParatextNotesMapper NotesMapper { get; }
             public IParatextService ParatextService { get; }
             public SFMemoryRealtimeService RealtimeService { get; }
             public IDeltaUsxMapper DeltaUsxMapper { get; }
-            public IParatextNotesMapper NotesMapper;
             public ILogger<ParatextSyncRunner> Logger { get; }
 
             public SFProject GetProject(string projectSFId = "project01")
@@ -908,9 +904,9 @@ namespace SIL.XForge.Scripture.Services
                 return RealtimeService.GetRepository<SFProject>().Get(projectSFId);
             }
 
-            public SFProjectSecret GetProjectSecret()
+            public SFProjectSecret GetProjectSecret(string projectId = "project01")
             {
-                return _projectSecrets.Get("project01");
+                return _projectSecrets.Get(projectId);
             }
 
             public bool ContainsText(string projectId, string bookId, int chapter)
@@ -938,6 +934,8 @@ namespace SIL.XForge.Scripture.Services
             public SFProject VerifyProjectSync(bool successful, string expectedRepoVersion = null,
                 string projectSFId = "project01")
             {
+                SFProjectSecret projectSecret = GetProjectSecret(projectSFId);
+                Assert.That(projectSecret.JobIds.Count, Is.EqualTo(0));
                 SFProject project = GetProject(projectSFId);
                 Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
                 Assert.That(project.Sync.LastSyncSuccessful, Is.EqualTo(successful));

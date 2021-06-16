@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -406,10 +407,11 @@ namespace SIL.XForge.Scripture.Services
                 (ShareKey shareKey) => shareKey.Key == shareKeyCode);
             Assert.That(shareKeyForUserInvitation.ProjectRole, Is.EqualTo(SFProjectRole.CommunityChecker),
                 "setup. the user should be being invited as a community checker.");
-            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
+            env.ParatextService
+                .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(Attempt.Success(userRoleOnPTProject)));
             string userDBLPermissionForResource = TextInfoPermission.Read;
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03)
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
                 .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
             Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
@@ -513,15 +515,16 @@ namespace SIL.XForge.Scripture.Services
                 "no permissions should have been specified for user");
 
             // The get permission methods shouldn't have even been called.
-            env.ParatextService.DidNotReceiveWithAnyArgs().GetPermissionsAsync(
+            await env.ParatextService.DidNotReceiveWithAnyArgs().GetPermissionsAsync(
                 Arg.Any<UserSecret>(),
                 Arg.Any<SFProject>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(),
                 Arg.Any<int>(),
                 Arg.Any<int>());
-            env.ParatextService.DidNotReceiveWithAnyArgs().GetResourcePermissionAsync(
+            await env.ParatextService.DidNotReceiveWithAnyArgs().GetResourcePermissionAsync(
                 Arg.Any<string>(),
-                Arg.Any<string>());
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -558,14 +561,16 @@ namespace SIL.XForge.Scripture.Services
             // exception.
             env.ParatextService.GetParatextUsernameMappingAsync(
                 Arg.Is<UserSecret>((UserSecret userSecret) => userSecret.Id == User03),
-                Arg.Is<string>((string paratextId) => paratextId == project05PTId))
-                .Returns(async x => throw new System.Net.Http.HttpRequestException());
+                Arg.Is<string>((string paratextId) => paratextId == project05PTId),
+                Arg.Any<CancellationToken>())
+                .Returns(Task.FromException<IReadOnlyDictionary<string, string>>(new System.Net.Http.HttpRequestException()));
 
             string userRoleOnPTProject = (string)null;
-            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
+            env.ParatextService
+                .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(Attempt.Failure(userRoleOnPTProject)));
             string userDBLPermissionForResource = TextInfoPermission.None;
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03)
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
                 .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
             env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>())
@@ -636,10 +641,10 @@ namespace SIL.XForge.Scripture.Services
             // getting called is a helpful indication of expected operation.
             // The mocks above regarding env.ParatextService.GetPermissionsAsync(for the target project) are left in
             // place in case they begin to be used.
-            env.ParatextService.DidNotReceive().GetPermissionsAsync(
+            await env.ParatextService.DidNotReceive().GetPermissionsAsync(
                 Arg.Any<UserSecret>(), Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Project05),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>());
-            env.ParatextService.DidNotReceive().GetPermissionsAsync(Arg.Any<UserSecret>(),
+            await env.ParatextService.DidNotReceive().GetPermissionsAsync(Arg.Any<UserSecret>(),
                 Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Resource01),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>());
 
@@ -679,14 +684,16 @@ namespace SIL.XForge.Scripture.Services
 
             env.ParatextService.GetParatextUsernameMappingAsync(
                 Arg.Is<UserSecret>((UserSecret userSecret) => userSecret.Id == User03),
-                Arg.Is<string>((string paratextId) => paratextId == project05PTId))
-                .Returns(async x => throw new System.Net.Http.HttpRequestException());
+                Arg.Is<string>((string paratextId) => paratextId == project05PTId),
+                Arg.Any<CancellationToken>())
+                .Returns(Task.FromException<IReadOnlyDictionary<string, string>>(new System.Net.Http.HttpRequestException()));
 
             string userRoleOnPTProject = (string)null;
-            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
+            env.ParatextService
+                .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(Attempt.Failure(userRoleOnPTProject)));
             string userDBLPermissionForResource = TextInfoPermission.Read;
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03)
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
                 .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
             var bookList = new List<int>() { 40, 41 };
@@ -743,7 +750,8 @@ namespace SIL.XForge.Scripture.Services
 
             // User03 is not on project project05PTId, but they have access to the source resource. So
             // UpdatePermissionsAsync() should be inquiring about this and setting permissions as appropriate.
-            env.ParatextService.Received().GetResourcePermissionAsync(Resource01PTId, User03);
+            await env.ParatextService.Received()
+                .GetResourcePermissionAsync(Resource01PTId, User03, Arg.Any<CancellationToken>());
             resource = env.GetProject(Resource01);
             Assert.That(resource.Texts.First().Permissions[User03], Is.EqualTo(userDBLPermissionForResource),
                 "resource permissions should have been set for joining project user");
@@ -763,10 +771,10 @@ namespace SIL.XForge.Scripture.Services
             // don't get applied. But for now, not getting called is a helpful indication of expected operation.
             // The mocks above regarding env.ParatextService.GetPermissionsAsync(for the target project) are left in
             // place in case they begin to be used.
-            env.ParatextService.DidNotReceive().GetPermissionsAsync(Arg.Any<UserSecret>(),
+            await env.ParatextService.DidNotReceive().GetPermissionsAsync(Arg.Any<UserSecret>(),
                 Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Project05),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>());
-            env.ParatextService.Received(1).GetPermissionsAsync(Arg.Any<UserSecret>(),
+            await env.ParatextService.Received(1).GetPermissionsAsync(Arg.Any<UserSecret>(),
                 Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Resource01),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>());
 
@@ -949,7 +957,8 @@ namespace SIL.XForge.Scripture.Services
 
             Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
             Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.True, "setup");
-            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
+            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
+                Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Translator)));
 
             await env.Service.AddUserAsync(User03, Project03, null);
@@ -996,10 +1005,11 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(resource.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
 
             string userRoleOnPTProject = SFProjectRole.Translator;
-            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
+            env.ParatextService
+                .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(Attempt.Success(userRoleOnPTProject)));
             string userDBLPermissionForResource = TextInfoPermission.Read;
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03)
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
                 .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
             var bookList = new List<int>() { 40, 41 };
@@ -1113,7 +1123,7 @@ namespace SIL.XForge.Scripture.Services
             IDocument<SFProject> project01Doc = await conn.FetchAsync<SFProject>(Project01);
 
             // SUT
-            await env.Service.UpdatePermissionsAsync(User01, project01Doc);
+            await env.Service.UpdatePermissionsAsync(User01, project01Doc, CancellationToken.None);
 
             // Permissions were set for the books and chapters that we were able to handle.
             sfProject = env.GetProject(Project01);
@@ -1139,7 +1149,7 @@ namespace SIL.XForge.Scripture.Services
             IDocument<SFProject> project01Doc = await conn.FetchAsync<SFProject>(Project01);
 
             // SUT
-            Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.UpdatePermissionsAsync(User04, project01Doc));
+            Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.UpdatePermissionsAsync(User04, project01Doc, CancellationToken.None));
         }
 
         [Test]
@@ -1180,7 +1190,7 @@ namespace SIL.XForge.Scripture.Services
             IDocument<SFProject> project01Doc = await conn.FetchAsync<SFProject>(Project01);
 
             // SUT
-            await env.Service.UpdatePermissionsAsync(User01, project01Doc);
+            await env.Service.UpdatePermissionsAsync(User01, project01Doc, CancellationToken.None);
 
             sfProject = env.GetProject(Project01);
             Assert.That(sfProject.Texts.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Read));
@@ -1228,7 +1238,7 @@ namespace SIL.XForge.Scripture.Services
             IDocument<SFProject> project01Doc = await conn.FetchAsync<SFProject>(Project01);
 
             // SUT
-            await env.Service.UpdatePermissionsAsync(User01, project01Doc);
+            await env.Service.UpdatePermissionsAsync(User01, project01Doc, CancellationToken.None);
 
             sfProject = env.GetProject(Project01);
             Assert.That(sfProject.Texts.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Read));
@@ -1291,9 +1301,9 @@ namespace SIL.XForge.Scripture.Services
             IDocument<SFProject> resource01Doc = await conn.FetchAsync<SFProject>(Resource01);
 
             // SUT 1 - Setting target project permissions continues to work as expected.
-            await env.Service.UpdatePermissionsAsync(User01, project01Doc);
+            await env.Service.UpdatePermissionsAsync(User01, project01Doc, CancellationToken.None);
             // SUT 2 - Resource permissions are set.
-            await env.Service.UpdatePermissionsAsync(User01, resource01Doc);
+            await env.Service.UpdatePermissionsAsync(User01, resource01Doc, CancellationToken.None);
 
             sfProject = env.GetProject(Project01);
             resource = env.GetProject(Resource01);
@@ -1409,6 +1419,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.GetProject(Project03).TranslateConfig.Source, Is.Not.Null);
             await env.Service.DeleteProjectAsync(User01, DisabledSource);
 
+            await env.SyncService.Received().CancelSyncAsync(User01, DisabledSource);
             await env.EngineService.Received().RemoveProjectAsync(DisabledSource);
             env.FileSystemService.Received().DeleteDirectory(ptProjectDir);
             Assert.That(env.ContainsProject(DisabledSource), Is.False);
@@ -1421,7 +1432,8 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
-            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
+            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
+                Arg.Any<CancellationToken>())
                .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
             // SUT
             string sfProjectId = await env.Service.CreateProjectAsync(User01, new SFProjectCreateSettings()
@@ -1440,9 +1452,10 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
-            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
+            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
+                Arg.Any<CancellationToken>())
                .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User01)
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User01, Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(TextInfoPermission.Read));
             // SUT
             string sfProjectId = await env.Service.CreateProjectAsync(User01, new SFProjectCreateSettings()
@@ -1474,7 +1487,8 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
-            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
+            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
+                Arg.Any<CancellationToken>())
                .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
             SFProject existingSfProject = env.GetProject(Project01);
             // SUT
@@ -1510,10 +1524,11 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(resource.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
 
             string userRoleOnPTProject = SFProjectRole.Administrator;
-            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
+            env.ParatextService
+                .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(Attempt.Success(userRoleOnPTProject)));
             string userDBLPermissionForResource = TextInfoPermission.Read;
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03)
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
                 .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
             var bookList = new List<int>() { 40, 41 };
@@ -1575,7 +1590,7 @@ namespace SIL.XForge.Scripture.Services
 
             // Initially connecting a project should have called Sync, or SF is not going to fetch books and set
             // permissions on them.
-            env.SyncService.Received().SyncAsync(User03, sfProjectId, Arg.Any<bool>());
+            await env.SyncService.Received().SyncAsync(User03, sfProjectId, Arg.Any<bool>());
 
             // Don't check that permissions were added to the target project, because we mock the Sync functionality.
             // But we can show that source resource permissions were set:
@@ -1621,7 +1636,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task AddUserToResourceProjectAsync_UserResourcePermission()
         {
             var env = new TestEnvironment();
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User01)
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User01, Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(TextInfoPermission.Read));
 
             User user = env.GetUser(User01);
@@ -1637,7 +1652,7 @@ namespace SIL.XForge.Scripture.Services
         public void AddUserToResourceProjectAsync_UserResourceNoPermission()
         {
             var env = new TestEnvironment();
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User01)
+            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User01, Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(TextInfoPermission.None));
 
             User user = env.GetUser(User01);

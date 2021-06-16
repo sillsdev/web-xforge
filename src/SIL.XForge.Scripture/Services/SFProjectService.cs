@@ -1,10 +1,11 @@
-using System.Linq;
-using System.Collections.Generic;
 using System;
-using System.IO;
-using System.Linq.Expressions;
-using System.Threading.Tasks;
+using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
@@ -177,6 +178,9 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task DeleteProjectAsync(string curUserId, string projectId)
         {
+            // Cancel any jobs before we delete
+            await _syncService.CancelSyncAsync(curUserId, projectId);
+
             string ptProjectId;
             using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
@@ -582,7 +586,7 @@ namespace SIL.XForge.Scripture.Services
             // in order to query the PT roles and DBL permissions of other SF project/resource users.
             if ((await TryGetProjectRoleAsync(projectDoc.Data, userDoc.Id)).Success)
             {
-                await UpdatePermissionsAsync(userDoc.Id, projectDoc);
+                await UpdatePermissionsAsync(userDoc.Id, projectDoc, CancellationToken.None);
             }
 
             // Add to the source project, if required
@@ -619,7 +623,7 @@ namespace SIL.XForge.Scripture.Services
         /// Note that this method is not necessarily applying permissions for user `curUserId`, but rather using that
         /// user to perform PT queries and set values in the SF DB.
         /// </summary>
-        public async Task UpdatePermissionsAsync(string curUserId, IDocument<SFProject> projectDoc)
+        public async Task UpdatePermissionsAsync(string curUserId, IDocument<SFProject> projectDoc, CancellationToken token)
         {
             Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
             if (!userSecretAttempt.TryResult(out UserSecret userSecret))
@@ -630,7 +634,7 @@ namespace SIL.XForge.Scripture.Services
             string paratextId = projectDoc.Data.ParatextId;
             HashSet<int> booksInProject = new HashSet<int>(_paratextService.GetBookList(userSecret, paratextId));
             IReadOnlyDictionary<string, string> ptUsernameMapping =
-                await _paratextService.GetParatextUsernameMappingAsync(userSecret, paratextId);
+                await _paratextService.GetParatextUsernameMappingAsync(userSecret, paratextId, token);
             bool isResource = _paratextService.IsResource(paratextId);
             // Place to collect all chapter permissions to record in the project.
             var projectChapterPermissions =
@@ -644,7 +648,7 @@ namespace SIL.XForge.Scripture.Services
                 // Note that DBL specifies permission for a resource with granularity of the whole resource. We will
                 // write in the SF DB that whole-resource permission but on each book and chapter.
                 resourcePermissions =
-                    await _paratextService.GetPermissionsAsync(userSecret, projectDoc.Data, ptUsernameMapping);
+                    await _paratextService.GetPermissionsAsync(userSecret, projectDoc.Data, ptUsernameMapping, 0, 0, token);
             }
 
             foreach (int bookNum in booksInProject)
@@ -673,14 +677,14 @@ namespace SIL.XForge.Scripture.Services
                 else
                 {
                     bookPermissions = await _paratextService.GetPermissionsAsync(userSecret, projectDoc.Data,
-                        ptUsernameMapping, bookNum);
+                        ptUsernameMapping, bookNum, 0, token);
 
                     // Get the project permissions for the chapters
                     chapterPermissionsInBook = await Task.WhenAll(chapters.Select(
                         async (Chapter chapter, int chapterIndex) =>
                         {
                             Dictionary<string, string> chapterPermissions = await _paratextService.GetPermissionsAsync(
-                                userSecret, projectDoc.Data, ptUsernameMapping, bookNum, chapter.Number);
+                                userSecret, projectDoc.Data, ptUsernameMapping, bookNum, chapter.Number, token);
                             return (textIndex, chapterIndex, chapterPermissions);
                         }
                     ));
@@ -727,7 +731,8 @@ namespace SIL.XForge.Scripture.Services
                 if (_paratextService.IsResource(project.ParatextId))
                 {
                     // If the project is a resource, get the permission from the DBL
-                    string permission = await _paratextService.GetResourcePermissionAsync(project.ParatextId, userId);
+                    string permission = await _paratextService.GetResourcePermissionAsync(project.ParatextId, userId,
+                        CancellationToken.None);
                     return permission switch
                     {
                         TextInfoPermission.None => Attempt.Failure(ProjectRole.None),
@@ -739,7 +744,7 @@ namespace SIL.XForge.Scripture.Services
                 else
                 {
                     Attempt<string> roleAttempt = await _paratextService.TryGetProjectRoleAsync(userSecret,
-                        project.ParatextId);
+                        project.ParatextId, CancellationToken.None);
                     if (roleAttempt.TryResult(out string role))
                     {
                         return Attempt.Success(role);
