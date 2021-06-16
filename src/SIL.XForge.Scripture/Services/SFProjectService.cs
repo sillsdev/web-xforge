@@ -609,6 +609,9 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         public async Task UpdatePermissionsAsync(string curUserId, IDocument<SFProject> projectDoc)
         {
+            // As this method is only called once from the ParatextSyncRunner or this class, we can afford
+            // to instantiate another scoped ScrTextCollection - the overhead will be minimal.
+            using ScopedScrTextCollection scrTextCollection = new ScopedScrTextCollection(FileSystemService);
             Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
             if (!userSecretAttempt.TryResult(out UserSecret userSecret))
             {
@@ -616,7 +619,8 @@ namespace SIL.XForge.Scripture.Services
             }
 
             string paratextId = projectDoc.Data.ParatextId;
-            HashSet<int> booksInProject = new HashSet<int>(_paratextService.GetBookList(userSecret, paratextId));
+            HashSet<int> booksInProject =
+                new HashSet<int>(_paratextService.GetBookList(userSecret, paratextId, scrTextCollection));
             IReadOnlyDictionary<string, string> ptUsernameMapping =
                 await _paratextService.GetParatextUsernameMappingAsync(userSecret, paratextId);
             bool isResource = _paratextService.IsResource(paratextId);
@@ -631,8 +635,8 @@ namespace SIL.XForge.Scripture.Services
             {
                 // Note that DBL specifies permission for a resource with granularity of the whole resource. We will
                 // write in the SF DB that whole-resource permission but on each book and chapter.
-                resourcePermissions =
-                    await _paratextService.GetPermissionsAsync(userSecret, projectDoc.Data, ptUsernameMapping);
+                resourcePermissions = await _paratextService.GetPermissionsAsync(userSecret, projectDoc.Data,
+                    scrTextCollection, ptUsernameMapping);
             }
 
             foreach (int bookNum in booksInProject)
@@ -661,14 +665,14 @@ namespace SIL.XForge.Scripture.Services
                 else
                 {
                     bookPermissions = await _paratextService.GetPermissionsAsync(userSecret, projectDoc.Data,
-                        ptUsernameMapping, bookNum);
+                        scrTextCollection, ptUsernameMapping, bookNum);
 
                     // Get the project permissions for the chapters
                     chapterPermissionsInBook = await Task.WhenAll(chapters.Select(
                         async (Chapter chapter, int chapterIndex) =>
                         {
                             Dictionary<string, string> chapterPermissions = await _paratextService.GetPermissionsAsync(
-                                userSecret, projectDoc.Data, ptUsernameMapping, bookNum, chapter.Number);
+                                userSecret, projectDoc.Data, scrTextCollection, ptUsernameMapping, bookNum, chapter.Number);
                             return (textIndex, chapterIndex, chapterPermissions);
                         }
                     ));

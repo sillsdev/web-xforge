@@ -14,6 +14,7 @@ using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
+using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -33,7 +34,8 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             env.SetupSFData(true, true, true);
-            env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target").Returns("beforeSR");
+            env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target", Arg.Any<IScrTextCollection>())
+                .Returns("beforeSR");
 
             await env.Runner.RunAsync("project01", "user03", false);
             SFProject project = env.VerifyProjectSync(false);
@@ -177,11 +179,15 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            await env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>());
-            await env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<string>());
+            await env.ParatextService.DidNotReceive()
+                .PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>(), Arg.Any<IScrTextCollection>());
+            await env.ParatextService.DidNotReceive()
+                .PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<string>(), Arg.Any<IScrTextCollection>());
 
-            await env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<string>());
-            await env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<string>());
+            await env.ParatextService.DidNotReceive()
+                .PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<string>(), Arg.Any<IScrTextCollection>());
+            await env.ParatextService.DidNotReceive()
+                .PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<string>(), Arg.Any<IScrTextCollection>());
 
             var delta = Delta.New().InsertText("text");
             Assert.That(env.GetText("project01", "MAT", 1).DeepEquals(delta), Is.True);
@@ -194,7 +200,8 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.GetText("project02", "MRK", 1).DeepEquals(delta), Is.True);
             Assert.That(env.GetText("project02", "MRK", 2).DeepEquals(delta), Is.True);
 
-            env.ParatextService.DidNotReceive().PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
+            env.ParatextService.DidNotReceive()
+                .PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>(), Arg.Any<IScrTextCollection>());
 
             SFProjectSecret projectSecret = env.GetProjectSecret();
             Assert.That(projectSecret.SyncUsers.Count, Is.EqualTo(0));
@@ -216,14 +223,18 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project01", "user01", false);
 
             await env.ParatextService.Received()
-                .PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>(), Arg.Any<Dictionary<int, string>>());
+                .PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>(), Arg.Any<IScrTextCollection>(),
+                Arg.Any<Dictionary<int, string>>());
             await env.ParatextService.Received()
-                .PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<string>(), Arg.Any<Dictionary<int, string>>());
+                .PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<string>(), Arg.Any<IScrTextCollection>(),
+                Arg.Any<Dictionary<int, string>>());
 
             await env.ParatextService.Received()
-                .PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<string>(), Arg.Any<Dictionary<int, string>>());
+                .PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<string>(), Arg.Any<IScrTextCollection>(),
+                Arg.Any<Dictionary<int, string>>());
             await env.ParatextService.Received()
-                .PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<string>(), Arg.Any<Dictionary<int, string>>());
+                .PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<string>(), Arg.Any<IScrTextCollection>(),
+                Arg.Any<Dictionary<int, string>>());
 
             var delta = Delta.New().InsertText("text");
             Assert.That(env.GetText("project01", "MAT", 1).DeepEquals(delta), Is.True);
@@ -236,7 +247,8 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.GetText("project02", "MRK", 1).DeepEquals(delta), Is.True);
             Assert.That(env.GetText("project02", "MRK", 2).DeepEquals(delta), Is.True);
 
-            env.ParatextService.Received(2).PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
+            env.ParatextService.Received(2)
+                .PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>(), Arg.Any<IScrTextCollection>());
 
             SFProjectSecret projectSecret = env.GetProjectSecret();
             Assert.That(projectSecret.SyncUsers.Count, Is.EqualTo(1));
@@ -255,16 +267,21 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project01", "user01", false);
 
             await env.ParatextService.Received()
-                .PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>(), Arg.Any<Dictionary<int, string>>());
+                .PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>(), Arg.Any<IScrTextCollection>(),
+                Arg.Any<Dictionary<int, string>>());
             await env.ParatextService.Received()
-                .PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<string>(), Arg.Any<Dictionary<int, string>>());
+                .PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<string>(), Arg.Any<IScrTextCollection>(),
+                Arg.Any<Dictionary<int, string>>());
 
             await env.ParatextService.Received()
-                .PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<string>(), Arg.Any<Dictionary<int, string>>());
+                .PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<string>(), Arg.Any<IScrTextCollection>(),
+                Arg.Any<Dictionary<int, string>>());
             await env.ParatextService.Received()
-                .PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<string>(), Arg.Any<Dictionary<int, string>>());
+                .PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<string>(), Arg.Any<IScrTextCollection>(),
+                Arg.Any<Dictionary<int, string>>());
 
-            env.ParatextService.DidNotReceive().PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
+            env.ParatextService.DidNotReceive()
+                .PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>(), Arg.Any<IScrTextCollection>());
 
             var delta = Delta.New().InsertText("text");
             Assert.That(env.GetText("project01", "MAT", 1).DeepEquals(delta), Is.True);
@@ -385,7 +402,7 @@ namespace SIL.XForge.Scripture.Services
             // SUT
             await env.Runner.RunAsync("project01", "user01", false);
 
-            env.SFProjectService.Received().UpdatePermissionsAsync("user01",
+            await env.SFProjectService.Received().UpdatePermissionsAsync("user01",
                 Arg.Is<IDocument<SFProject>>((IDocument<SFProject> sfProjDoc) =>
                     sfProjDoc.Data.Id == "project01" && sfProjDoc.Data.ParatextId == "target"));
         }
@@ -421,13 +438,16 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, false, false, books);
             env.SetupPTData(books);
 
-            env.ParatextService.IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), "target")
+            env.ParatextService
+                .IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), "target", Arg.Any<IScrTextCollection>())
                 .Returns(true);
             await env.Runner.RunAsync("project01", "user01", false);
 
             SFProject project = env.GetProject();
-            env.ParatextService.Received().IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), "target");
-            env.ParatextService.Received().IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), "source");
+            env.ParatextService.Received()
+                .IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), "target", Arg.Any<IScrTextCollection>());
+            env.ParatextService.Received()
+                .IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), "source", Arg.Any<IScrTextCollection>());
             Assert.That(project.IsRightToLeft, Is.True);
             Assert.That(project.TranslateConfig.Source.IsRightToLeft, Is.False);
         }
@@ -593,7 +613,8 @@ namespace SIL.XForge.Scripture.Services
                     "setup. Should be testing what happens when this is not set.");
                 Assert.That(project.Sync.DataInSync, Is.Null,
                     "setup. Should be testing what happens when this is not set.");
-                env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), projectPTId)
+                env.ParatextService
+                    .GetLatestSharedVersion(Arg.Any<UserSecret>(), projectPTId, Arg.Any<IScrTextCollection>())
                     .Returns("1", "2");
 
                 // SUT
@@ -601,14 +622,18 @@ namespace SIL.XForge.Scripture.Services
 
                 project = env.GetProject(projectSFId);
                 // We should get into UpdateParatextBook() and fetch and perhaps put books.
-                env.ParatextService.Received().GetBookText(Arg.Any<UserSecret>(), projectPTId, Arg.Any<int>());
-                env.DeltaUsxMapper.Received().ToUsx(Arg.Any<XDocument>(), Arg.Any<IEnumerable<ChapterDelta>>());
+                env.ParatextService.Received()
+                    .GetBookText(Arg.Any<UserSecret>(), projectPTId, Arg.Any<int>(), Arg.Any<IScrTextCollection>());
+                env.DeltaUsxMapper.Received()
+                    .ToUsx(Arg.Any<XDocument>(), Arg.Any<IEnumerable<ChapterDelta>>());
                 // We should get into UpdateParatextNotesAsync() and fetch and perhaps put notes.
-                env.ParatextService.Received().GetNotes(Arg.Any<UserSecret>(), projectPTId, Arg.Any<int>());
-                env.NotesMapper.Received().GetNotesChangelistAsync(Arg.Any<XElement>(),
+                env.ParatextService.Received()
+                    .GetNotes(Arg.Any<UserSecret>(), projectPTId, Arg.Any<int>(), Arg.Any<IScrTextCollection>());
+                await env.NotesMapper.Received().GetNotesChangelistAsync(Arg.Any<XElement>(),
                     Arg.Any<IEnumerable<IDocument<Question>>>());
                 // We should have then called SR
-                env.ParatextService.Received(1).SendReceiveAsync(Arg.Any<UserSecret>(), projectPTId,
+                await env.ParatextService.Received(1)
+                    .SendReceiveAsync(Arg.Any<UserSecret>(), projectPTId, Arg.Any<IScrTextCollection>(),
                     Arg.Any<IProgress<ProgressState>>());
 
                 // The expected repository version can still be past the original project version, even if there were
@@ -640,23 +665,27 @@ namespace SIL.XForge.Scripture.Services
                     "setup. Should be testing what happens when this is not set.");
                 Assert.That(project.Sync.DataInSync, Is.False,
                     "setup. Should be testing what happens for this.");
-                env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), projectPTId)
+                env.ParatextService
+                    .GetLatestSharedVersion(Arg.Any<UserSecret>(), projectPTId, Arg.Any<IScrTextCollection>())
                     .Returns("1", "2");
 
                 // SUT
                 await env.Runner.RunAsync(projectSFId, userId, false);
 
-                project = env.GetProject(projectSFId);
+                _ = env.GetProject(projectSFId);
                 // We are in an out-of-sync situation and so should not be writing to PT.
 
-                env.ParatextService.DidNotReceiveWithAnyArgs().GetBookText(default, default, default);
-                env.DeltaUsxMapper.DidNotReceiveWithAnyArgs().ToUsx(Arg.Any<XDocument>(),
-                    Arg.Any<IEnumerable<ChapterDelta>>());
-                env.ParatextService.DidNotReceiveWithAnyArgs().GetNotes(default, default, default);
-                env.NotesMapper.DidNotReceiveWithAnyArgs().GetNotesChangelistAsync(Arg.Any<XElement>(),
+                env.ParatextService.DidNotReceiveWithAnyArgs()
+                    .GetBookText(default, default, default, Arg.Any<IScrTextCollection>());
+                env.DeltaUsxMapper.DidNotReceiveWithAnyArgs()
+                    .ToUsx(Arg.Any<XDocument>(), Arg.Any<IEnumerable<ChapterDelta>>());
+                env.ParatextService.DidNotReceiveWithAnyArgs()
+                    .GetNotes(default, default, default, Arg.Any<IScrTextCollection>());
+                await env.NotesMapper.DidNotReceiveWithAnyArgs().GetNotesChangelistAsync(Arg.Any<XElement>(),
                     Arg.Any<IEnumerable<IDocument<Question>>>());
                 // We should have then called SR
-                env.ParatextService.Received(1).SendReceiveAsync(Arg.Any<UserSecret>(), projectPTId,
+                await env.ParatextService.Received(1)
+                    .SendReceiveAsync(Arg.Any<UserSecret>(), projectPTId, Arg.Any<IScrTextCollection>(),
                     Arg.Any<IProgress<ProgressState>>());
 
                 string expectedRepositoryVersion = "2";
@@ -783,21 +812,24 @@ namespace SIL.XForge.Scripture.Services
                 };
                 ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
                     .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
-                ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>()))
+                ParatextService
+                    .When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<IScrTextCollection>()))
                     .Do(x => _sendReceivedCalled = true);
-                ParatextService.IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), Arg.Any<string>())
+                ParatextService
+                    .IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<IScrTextCollection>())
                     .Returns(false);
-                ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target")
+                ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target", Arg.Any<IScrTextCollection>())
                     .Returns("beforeSR", "afterSR");
-                ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "source")
+                ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "source", Arg.Any<IScrTextCollection>())
                     .Returns("beforeSR", "afterSR");
                 RealtimeService = new SFMemoryRealtimeService();
                 DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
                 NotesMapper = Substitute.For<IParatextNotesMapper>();
+                FileSystemService = Substitute.For<IFileSystemService>();
                 Logger = Substitute.For<ILogger<ParatextSyncRunner>>();
 
                 Runner = new ParatextSyncRunner(userSecrets, _projectSecrets, SFProjectService, EngineService,
-                    ParatextService, RealtimeService, DeltaUsxMapper, NotesMapper, Logger);
+                    ParatextService, RealtimeService, DeltaUsxMapper, NotesMapper, FileSystemService, Logger);
             }
 
             public ParatextSyncRunner Runner { get; }
@@ -806,7 +838,8 @@ namespace SIL.XForge.Scripture.Services
             public IParatextService ParatextService { get; }
             public SFMemoryRealtimeService RealtimeService { get; }
             public IDeltaUsxMapper DeltaUsxMapper { get; }
-            public IParatextNotesMapper NotesMapper;
+            public IParatextNotesMapper NotesMapper { get; }
+            public IFileSystemService FileSystemService { get; }
             public ILogger<ParatextSyncRunner> Logger { get; }
 
             public SFProject GetProject(string projectSFId = "project01")
@@ -1116,12 +1149,12 @@ namespace SIL.XForge.Scripture.Services
 
             public void SetupPTDataForProjectIds(string targetProjectPTId, string sourceProjectPTId, params Book[] books)
             {
-                ParatextService.GetBookList(Arg.Any<UserSecret>(), targetProjectPTId)
+                ParatextService.GetBookList(Arg.Any<UserSecret>(), targetProjectPTId, Arg.Any<IScrTextCollection>())
                     .Returns(books.Select(b => Canon.BookIdToNumber(b.Id)).ToArray());
                 // Include book with Source even if there are no chapters, if there are also no chapters in Target. PT
                 // can actually have or not have books which do or do not have chapters more flexibly than this. But in
                 // this way, allow tests to request a Source book exist even with zero chapters.
-                ParatextService.GetBookList(Arg.Any<UserSecret>(), sourceProjectPTId)
+                ParatextService.GetBookList(Arg.Any<UserSecret>(), sourceProjectPTId, Arg.Any<IScrTextCollection>())
                     .Returns(books
                         .Where(b => b.HighestSourceChapter > 0 || b.HighestSourceChapter == b.HighestTargetChapter)
                         .Select(b => Canon.BookIdToNumber(b.Id)).ToArray());
@@ -1194,7 +1227,8 @@ namespace SIL.XForge.Scripture.Services
             {
                 string oldBookText = GetBookText(paratextId, bookId, 1);
                 string remoteBookText = GetBookText(paratextId, bookId, 3);
-                ParatextService.GetBookText(Arg.Any<UserSecret>(), paratextId, Canon.BookIdToNumber(bookId))
+                ParatextService.GetBookText(Arg.Any<UserSecret>(), paratextId, Canon.BookIdToNumber(bookId),
+                    Arg.Any<IScrTextCollection>())
                     .Returns(x => _sendReceivedCalled ? remoteBookText : oldBookText);
             }
 

@@ -420,7 +420,8 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
 
             var bookList = new List<int>() { 40, 41 };
-            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(bookList);
+            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<IScrTextCollection>())
+                .Returns(bookList);
 
             // PT will answer with these permissions.
             var ptBookPermissions = new Dictionary<string, string>()
@@ -441,15 +442,16 @@ namespace SIL.XForge.Scripture.Services
             const int bookValueToIndicateWholeResource = 0;
             const int chapterValueToIndicateWholeBook = 0;
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId), Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
                 .Returns(Task.FromResult(ptBookPermissions));
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId), Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
                 .Returns(Task.FromResult(ptChapterPermissions));
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
                 Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId),
+                Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(),
                 bookValueToIndicateWholeResource,
                 chapterValueToIndicateWholeBook)
@@ -513,13 +515,14 @@ namespace SIL.XForge.Scripture.Services
                 "no permissions should have been specified for user");
 
             // The get permission methods shouldn't have even been called.
-            env.ParatextService.DidNotReceiveWithAnyArgs().GetPermissionsAsync(
+            await env.ParatextService.DidNotReceiveWithAnyArgs().GetPermissionsAsync(
                 Arg.Any<UserSecret>(),
                 Arg.Any<SFProject>(),
+                Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(),
                 Arg.Any<int>(),
                 Arg.Any<int>());
-            env.ParatextService.DidNotReceiveWithAnyArgs().GetResourcePermissionAsync(
+            await env.ParatextService.DidNotReceiveWithAnyArgs().GetResourcePermissionAsync(
                 Arg.Any<string>(),
                 Arg.Any<string>());
         }
@@ -559,7 +562,7 @@ namespace SIL.XForge.Scripture.Services
             env.ParatextService.GetParatextUsernameMappingAsync(
                 Arg.Is<UserSecret>((UserSecret userSecret) => userSecret.Id == User03),
                 Arg.Is<string>((string paratextId) => paratextId == project05PTId))
-                .Returns(async x => throw new System.Net.Http.HttpRequestException());
+                .Returns(Task.FromException<IReadOnlyDictionary<string, string>>(new System.Net.Http.HttpRequestException()));
 
             string userRoleOnPTProject = (string)null;
             env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
@@ -568,7 +571,7 @@ namespace SIL.XForge.Scripture.Services
             env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03)
                 .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
-            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>())
+            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<IScrTextCollection>())
                 .Returns(x => throw new Exception("Probably can not do this."));
 
             // PT could answer with these permissions.
@@ -591,14 +594,17 @@ namespace SIL.XForge.Scripture.Services
             const int chapterValueToIndicateWholeBook = 0;
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
                 Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
+                Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
                 .Returns(Task.FromResult(ptBookPermissions));
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
                 Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
+                Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
                 .Returns(Task.FromResult(ptChapterPermissions));
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
                 Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId),
+                Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(),
                 bookValueToIndicateWholeResource,
                 chapterValueToIndicateWholeBook)
@@ -636,17 +642,21 @@ namespace SIL.XForge.Scripture.Services
             // getting called is a helpful indication of expected operation.
             // The mocks above regarding env.ParatextService.GetPermissionsAsync(for the target project) are left in
             // place in case they begin to be used.
-            env.ParatextService.DidNotReceive().GetPermissionsAsync(
+            await env.ParatextService.DidNotReceive().GetPermissionsAsync(
                 Arg.Any<UserSecret>(), Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Project05),
+                 Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>());
-            env.ParatextService.DidNotReceive().GetPermissionsAsync(Arg.Any<UserSecret>(),
+            await env.ParatextService.DidNotReceive().GetPermissionsAsync(Arg.Any<UserSecret>(),
                 Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Resource01),
+                 Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>());
 
             // We may not be able to query a book list for the target project without the user having a PT project role,
             // or of the DBL resource, without the user having read permission.
-            env.ParatextService.DidNotReceive().GetBookList(Arg.Any<UserSecret>(), project05PTId);
-            env.ParatextService.DidNotReceive().GetBookList(Arg.Any<UserSecret>(), Resource01PTId);
+            env.ParatextService.DidNotReceive()
+                .GetBookList(Arg.Any<UserSecret>(), project05PTId, Arg.Any<IScrTextCollection>());
+            env.ParatextService.DidNotReceive()
+                .GetBookList(Arg.Any<UserSecret>(), Resource01PTId, Arg.Any<IScrTextCollection>());
         }
 
         [Test]
@@ -680,7 +690,7 @@ namespace SIL.XForge.Scripture.Services
             env.ParatextService.GetParatextUsernameMappingAsync(
                 Arg.Is<UserSecret>((UserSecret userSecret) => userSecret.Id == User03),
                 Arg.Is<string>((string paratextId) => paratextId == project05PTId))
-                .Returns(async x => throw new System.Net.Http.HttpRequestException());
+                .Returns(Task.FromException<IReadOnlyDictionary<string, string>>(new System.Net.Http.HttpRequestException()));
 
             string userRoleOnPTProject = (string)null;
             env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
@@ -690,7 +700,8 @@ namespace SIL.XForge.Scripture.Services
                 .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
             var bookList = new List<int>() { 40, 41 };
-            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(bookList);
+            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<IScrTextCollection>())
+                .Returns(bookList);
 
             // PT could answer with these permissions.
             var ptBookPermissions = new Dictionary<string, string>()
@@ -713,14 +724,17 @@ namespace SIL.XForge.Scripture.Services
             const int chapterValueToIndicateWholeBook = 0;
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
                 Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
+                Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
                 .Returns(Task.FromResult(ptBookPermissions));
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
                 Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
+                Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
                 .Returns(Task.FromResult(ptChapterPermissions));
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
                 Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId),
+                Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(),
                 bookValueToIndicateWholeResource,
                 chapterValueToIndicateWholeBook)
@@ -743,7 +757,7 @@ namespace SIL.XForge.Scripture.Services
 
             // User03 is not on project project05PTId, but they have access to the source resource. So
             // UpdatePermissionsAsync() should be inquiring about this and setting permissions as appropriate.
-            env.ParatextService.Received().GetResourcePermissionAsync(Resource01PTId, User03);
+            await env.ParatextService.Received().GetResourcePermissionAsync(Resource01PTId, User03);
             resource = env.GetProject(Resource01);
             Assert.That(resource.Texts.First().Permissions[User03], Is.EqualTo(userDBLPermissionForResource),
                 "resource permissions should have been set for joining project user");
@@ -763,16 +777,18 @@ namespace SIL.XForge.Scripture.Services
             // don't get applied. But for now, not getting called is a helpful indication of expected operation.
             // The mocks above regarding env.ParatextService.GetPermissionsAsync(for the target project) are left in
             // place in case they begin to be used.
-            env.ParatextService.DidNotReceive().GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Project05),
+            await env.ParatextService.DidNotReceive().GetPermissionsAsync(Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Project05), Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>());
-            env.ParatextService.Received(1).GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Resource01),
+            await env.ParatextService.Received(1).GetPermissionsAsync(Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Resource01), Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>());
 
             // We may not be able to query a book list for the target project without the user having a PT project role.
-            env.ParatextService.DidNotReceive().GetBookList(Arg.Any<UserSecret>(), project05PTId);
-            env.ParatextService.Received(1).GetBookList(Arg.Any<UserSecret>(), Resource01PTId);
+            env.ParatextService.DidNotReceive()
+                .GetBookList(Arg.Any<UserSecret>(), project05PTId, Arg.Any<IScrTextCollection>());
+            env.ParatextService.Received(1)
+                .GetBookList(Arg.Any<UserSecret>(), Resource01PTId, Arg.Any<IScrTextCollection>());
         }
 
         [Test]
@@ -1003,7 +1019,7 @@ namespace SIL.XForge.Scripture.Services
                 .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
             var bookList = new List<int>() { 40, 41 };
-            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(bookList);
+            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<IScrTextCollection>()).Returns(bookList);
 
             // PT will answer with these permissions.
             var ptBookPermissions = new Dictionary<string, string>()
@@ -1024,15 +1040,16 @@ namespace SIL.XForge.Scripture.Services
             const int bookValueToIndicateWholeResource = 0;
             const int chapterValueToIndicateWholeBook = 0;
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId), Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
                 .Returns(Task.FromResult(ptBookPermissions));
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId), Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
                 .Returns(Task.FromResult(ptChapterPermissions));
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
                 Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId),
+                Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(),
                 bookValueToIndicateWholeResource,
                 chapterValueToIndicateWholeBook)
@@ -1083,7 +1100,8 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(sfProject.Texts.Count, Is.LessThan(3), "setup");
 
             // But PT reports that there are 3 books.
-            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), project01PTId).Returns(new List<int>() { 40, 41, 42 });
+            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), project01PTId, Arg.Any<IScrTextCollection>())
+                .Returns(new List<int>() { 40, 41, 42 });
 
             var ptBookPermissions = new Dictionary<string, string>()
             {
@@ -1097,11 +1115,11 @@ namespace SIL.XForge.Scripture.Services
             };
             const int chapterValueToIndicateWholeBook = 0;
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId), Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
                 .Returns(Task.FromResult(ptBookPermissions));
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId), Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
                 .Returns(Task.FromResult(ptChapterPermissions));
 
@@ -1132,7 +1150,8 @@ namespace SIL.XForge.Scripture.Services
             string project01PTId = "paratext_" + Project01;
             var env = new TestEnvironment();
             SFProject sfProject = env.GetProject(Project01);
-            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), project01PTId).Returns(new List<int>() { 40, 41 });
+            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), project01PTId, Arg.Any<IScrTextCollection>())
+                .Returns(new List<int>() { 40, 41 });
             Assert.That(env.ProjectSecrets.Contains(User04), Is.False, "setup");
 
             IConnection conn = await env.RealtimeService.ConnectAsync(User04);
@@ -1150,7 +1169,8 @@ namespace SIL.XForge.Scripture.Services
 
             SFProject sfProject = env.GetProject(Project01);
 
-            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), project01PTId).Returns(new List<int>() { 40, 41 });
+            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), project01PTId, Arg.Any<IScrTextCollection>())
+                .Returns(new List<int>() { 40, 41 });
 
             var ptBookPermissions = new Dictionary<string, string>()
             {
@@ -1164,11 +1184,11 @@ namespace SIL.XForge.Scripture.Services
             };
             const int chapterValueToIndicateWholeBook = 0;
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId), Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
                 .Returns(Task.FromResult(ptBookPermissions));
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId), Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
                 .Returns(Task.FromResult(ptChapterPermissions));
 
@@ -1198,7 +1218,8 @@ namespace SIL.XForge.Scripture.Services
 
             SFProject sfProject = env.GetProject(Project01);
 
-            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), project01PTId).Returns(new List<int>() { 40, 41 });
+            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), project01PTId, Arg.Any<IScrTextCollection>())
+                .Returns(new List<int>() { 40, 41 });
 
             var ptBookPermissions = new Dictionary<string, string>()
             {
@@ -1212,11 +1233,11 @@ namespace SIL.XForge.Scripture.Services
             };
             const int chapterValueToIndicateWholeBook = 0;
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId), Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
                 .Returns(Task.FromResult(ptBookPermissions));
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId), Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
                 .Returns(Task.FromResult(ptChapterPermissions));
 
@@ -1246,7 +1267,8 @@ namespace SIL.XForge.Scripture.Services
             SFProject sfProject = env.GetProject(Project01);
 
             var bookList = new List<int>() { 40, 41 };
-            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(bookList);
+            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<IScrTextCollection>())
+                .Returns(bookList);
 
             var ptBookPermissions = new Dictionary<string, string>()
             {
@@ -1266,15 +1288,15 @@ namespace SIL.XForge.Scripture.Services
             const int bookValueToIndicateWholeResource = 0;
             const int chapterValueToIndicateWholeBook = 0;
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId), Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
                 .Returns(Task.FromResult(ptBookPermissions));
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId), Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
                 .Returns(Task.FromResult(ptChapterPermissions));
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId), Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), bookValueToIndicateWholeResource, chapterValueToIndicateWholeBook)
                 .Returns(Task.FromResult(ptSourcePermissions));
 
@@ -1517,7 +1539,8 @@ namespace SIL.XForge.Scripture.Services
                 .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
             var bookList = new List<int>() { 40, 41 };
-            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(bookList);
+            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<IScrTextCollection>())
+                .Returns(bookList);
 
             // PT will answer with these permissions.
             // Note that in the case of checking permissions for the target project, SF won't actually get to the
@@ -1541,15 +1564,15 @@ namespace SIL.XForge.Scripture.Services
             const int bookValueToIndicateWholeResource = 0;
             const int chapterValueToIndicateWholeBook = 0;
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == targetProjectPTId),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == targetProjectPTId), Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
                 .Returns(Task.FromResult(ptBookPermissions));
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == targetProjectPTId),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == targetProjectPTId), Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
                 .Returns(Task.FromResult(ptChapterPermissions));
             env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == sourceProjectPTId),
+                Arg.Is<SFProject>((SFProject project) => project.ParatextId == sourceProjectPTId), Arg.Any<IScrTextCollection>(),
                 Arg.Any<IReadOnlyDictionary<string, string>>(), bookValueToIndicateWholeResource, chapterValueToIndicateWholeBook)
                 .Returns(Task.FromResult(ptSourcePermissions));
 
@@ -1575,7 +1598,7 @@ namespace SIL.XForge.Scripture.Services
 
             // Initially connecting a project should have called Sync, or SF is not going to fetch books and set
             // permissions on them.
-            env.SyncService.Received().SyncAsync(User03, sfProjectId, Arg.Any<bool>());
+            await env.SyncService.Received().SyncAsync(User03, sfProjectId, Arg.Any<bool>());
 
             // Don't check that permissions were added to the target project, because we mock the Sync functionality.
             // But we can show that source resource permissions were set:

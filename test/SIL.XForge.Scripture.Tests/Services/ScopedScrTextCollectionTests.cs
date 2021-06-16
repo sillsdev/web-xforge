@@ -7,10 +7,10 @@ using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services
 {
-    public class LazyScrTextCollectionTests
+    public class ScopedScrTextCollectionTests
     {
         private string _testDirectory;
-        private LazyScrTextCollection _lazyScrTextCollection;
+        private ScopedScrTextCollection _lazyScrTextCollection;
         private IFileSystemService _fileSystemService;
 
 
@@ -22,9 +22,7 @@ namespace SIL.XForge.Scripture.Services
             _fileSystemService.DirectoryExists(Arg.Any<string>()).Returns(true);
             _fileSystemService.FileExists(Arg.Any<string>()).Returns(false);
 
-            _lazyScrTextCollection = new MockLazyScrTextCollection();
-            _lazyScrTextCollection.Initialize(_testDirectory);
-            _lazyScrTextCollection.FileSystemService = _fileSystemService;
+            _lazyScrTextCollection = new MockScopedScrTextCollection(_fileSystemService, _testDirectory);
         }
 
         [Test]

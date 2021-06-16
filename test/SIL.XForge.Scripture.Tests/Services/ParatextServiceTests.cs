@@ -334,7 +334,8 @@ namespace SIL.XForge.Scripture.Services
                     { env.User02, env.Username02 },
                 };
 
-            var permissions = await env.Service.GetPermissionsAsync(user01Secret, project, ptUsernameMapping);
+            var permissions = await env.Service.GetPermissionsAsync(user01Secret, project, env.MockScrTextCollection,
+                ptUsernameMapping);
             Assert.That(permissions.Count(), Is.EqualTo(2));
             Assert.That(permissions.First().Value, Is.EqualTo(TextInfoPermission.Read));
             Assert.That(permissions.Last().Value, Is.EqualTo(TextInfoPermission.None));
@@ -392,7 +393,7 @@ namespace SIL.XForge.Scripture.Services
             // Books 1 thru 3.
             env.ProjectScrText.Settings.BooksPresentSet = new BookSet(1, 3);
 
-            IReadOnlyList<int> result = env.Service.GetBookList(userSecret, ptProjectId);
+            IReadOnlyList<int> result = env.Service.GetBookList(userSecret, ptProjectId, env.MockScrTextCollection);
             Assert.That(result.Count(), Is.EqualTo(3));
             Assert.That(result, Is.EquivalentTo(new[] { 1, 2, 3 }));
         }
@@ -410,7 +411,7 @@ namespace SIL.XForge.Scripture.Services
             env.MakeUserSecret(env.User01, env.Username01);
 
             // SUT
-            string result = env.Service.GetBookText(null, ptProjectId, 8);
+            string result = env.Service.GetBookText(null, ptProjectId, 8, env.MockScrTextCollection);
             Assert.That(result, Is.EqualTo(ruthBookUsx));
         }
 
@@ -425,7 +426,8 @@ namespace SIL.XForge.Scripture.Services
             env.MockScrTextCollection.FindById(env.Username01, ptProjectId).Returns(i => null);
 
             // SUT
-            Assert.Throws<DataNotFoundException>(() => env.Service.GetBookText(user01Secret, ptProjectId, 8));
+            Assert.Throws<DataNotFoundException>(() => env.Service.GetBookText(user01Secret, ptProjectId, 8,
+                env.MockScrTextCollection));
             env.MockScrTextCollection.Received(1).FindById(env.Username01, ptProjectId);
         }
 
@@ -457,7 +459,8 @@ namespace SIL.XForge.Scripture.Services
             DeltaUsxMapper mapper = new DeltaUsxMapper(new TestGuidService(), Substitute.For<ILogger<DeltaUsxMapper>>(),
                 Substitute.For<IExceptionHandler>());
             var newDocUsx = mapper.ToUsx(oldDocUsx, new List<ChapterDelta> { new ChapterDelta(1, 2, true, data) });
-            await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, newDocUsx.Root.ToString());
+            await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, newDocUsx.Root.ToString(),
+                env.MockScrTextCollection);
             env.ProjectScrText.FileManager.Received(1)
                 .WriteFileCreatingBackup(Arg.Any<string>(), Arg.Any<Action<string>>());
 
@@ -475,7 +478,7 @@ namespace SIL.XForge.Scripture.Services
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01);
             env.ProjectCommentManager.AddComment(
                 new Paratext.Data.ProjectComments.Comment(associatedPtUser) { Thread = "Answer_dataId0123", VerseRefStr = "RUT 1:1" });
-            string notes = env.Service.GetNotes(userSecret, ptProjectId, ruthBookNum);
+            string notes = env.Service.GetNotes(userSecret, ptProjectId, ruthBookNum, env.MockScrTextCollection);
             string expected = $"<notes version=\"1.1\">{Environment.NewLine}  <thread id=\"Answer_dataId0123\">";
             Assert.True(notes.StartsWith(expected));
         }
@@ -494,7 +497,7 @@ namespace SIL.XForge.Scripture.Services
             string content = "Content for comment to update.";
             string verseRef = "RUT 1:1";
             string updateNotesString = env.GetUpdateNotesString(threadId, env.User01, date, content, verseRef);
-            env.Service.PutNotes(userSecret, ptProjectId, updateNotesString);
+            env.Service.PutNotes(userSecret, ptProjectId, updateNotesString, env.MockScrTextCollection);
 
             CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
             Assert.That(thread.Comments.Count, Is.EqualTo(1));
@@ -506,7 +509,7 @@ namespace SIL.XForge.Scripture.Services
             // Edit a comment
             content = "Edited: Content for comment to update.";
             updateNotesString = env.GetUpdateNotesString(threadId, env.User01, date, content, verseRef);
-            env.Service.PutNotes(userSecret, ptProjectId, updateNotesString);
+            env.Service.PutNotes(userSecret, ptProjectId, updateNotesString, env.MockScrTextCollection);
 
             Assert.That(thread.Comments.Count, Is.EqualTo(1));
             comment = thread.Comments.First();
@@ -514,7 +517,7 @@ namespace SIL.XForge.Scripture.Services
 
             // Delete a comment
             updateNotesString = env.GetUpdateNotesString(threadId, env.User01, date, content, verseRef, true);
-            env.Service.PutNotes(userSecret, ptProjectId, updateNotesString);
+            env.Service.PutNotes(userSecret, ptProjectId, updateNotesString, env.MockScrTextCollection);
 
             Assert.That(thread.Comments.Count, Is.EqualTo(1));
             comment = thread.Comments.First();
@@ -529,10 +532,10 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
-            Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.SendReceiveAsync(null, null, null));
+            Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.SendReceiveAsync(null, null, null, null));
             Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.SendReceiveAsync(null,
-                env.PTProjectIds[env.Project01].Id, null));
-            Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.SendReceiveAsync(user01Secret, null, null));
+                env.PTProjectIds[env.Project01].Id, null, null));
+            Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.SendReceiveAsync(user01Secret, null, null, null));
         }
 
         [Test]
@@ -551,13 +554,13 @@ namespace SIL.XForge.Scripture.Services
                 out Arg.Any<List<SendReceiveResult>>(), Arg.Any<List<SharedProject>>()).Returns(false);
 
             InvalidOperationException ex = Assert.ThrowsAsync<InvalidOperationException>(() =>
-                env.Service.SendReceiveAsync(user01Secret, projectId, null));
+                env.Service.SendReceiveAsync(user01Secret, projectId, env.MockScrTextCollection, null));
             Assert.That(ex.Message, Does.Contain("Failed: Errors occurred"));
 
             // Check exception is thrown if errors occurred, even if share changes succeeded
             env.MockSharingLogicWrapper.HandleErrors(Arg.Any<Action>()).Returns(false);
             ex = Assert.ThrowsAsync<InvalidOperationException>(() =>
-                env.Service.SendReceiveAsync(user01Secret, projectId, null));
+                env.Service.SendReceiveAsync(user01Secret, projectId, env.MockScrTextCollection, null));
             Assert.That(ex.Message, Does.Contain("Failed: Errors occurred"));
         }
 
@@ -573,7 +576,7 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSuccessfulSendReceive();
 
             // SUT 1
-            await env.Service.SendReceiveAsync(user01Secret, ptProjectId, null);
+            await env.Service.SendReceiveAsync(user01Secret, ptProjectId, env.MockScrTextCollection, null);
             env.MockSharingLogicWrapper.Received(1).ShareChanges(Arg.Is<List<SharedProject>>(list =>
                 list.Count == 1 && list[0].SendReceiveId.Id == ptProjectId), Arg.Any<SharedRepositorySource>(),
                 out Arg.Any<List<SendReceiveResult>>(),
@@ -584,7 +587,7 @@ namespace SIL.XForge.Scripture.Services
             // Passing a PT project Id for a project the user does not have access to fails early without doing S/R
             // SUT 2
             ArgumentException resultingException = Assert.ThrowsAsync<ArgumentException>(() =>
-                env.Service.SendReceiveAsync(user01Secret, "unknownPtProjectId8"));
+                env.Service.SendReceiveAsync(user01Secret, "unknownPtProjectId8", env.MockScrTextCollection));
             Assert.That(resultingException.Message, Does.Contain("unknownPtProjectId8"));
             env.MockSharingLogicWrapper.DidNotReceive().ShareChanges(default, Arg.Any<SharedRepositorySource>(),
                 out Arg.Any<List<SendReceiveResult>>(), default);
@@ -608,7 +611,7 @@ namespace SIL.XForge.Scripture.Services
             env.MockFileSystemService.DirectoryExists(clonePath).Returns(false);
 
             // SUT
-            await env.Service.SendReceiveAsync(user01Secret, ptProjectId, null);
+            await env.Service.SendReceiveAsync(user01Secret, ptProjectId, env.MockScrTextCollection, null);
             // Should have tried to clone the needed repo.
             env.MockFileSystemService.Received(1).CreateDirectory(clonePath);
             mockSource.Received(1).Pull(clonePath, Arg.Any<SharedRepository>());
@@ -631,8 +634,8 @@ namespace SIL.XForge.Scripture.Services
             env.MockScrTextCollection.FindById(env.Username01, sourceProjectId)
                 .Returns(sourceScrText);
 
-            await env.Service.SendReceiveAsync(user01Secret, targetProjectId);
-            await env.Service.SendReceiveAsync(user01Secret, sourceProjectId);
+            await env.Service.SendReceiveAsync(user01Secret, targetProjectId, env.MockScrTextCollection);
+            await env.Service.SendReceiveAsync(user01Secret, sourceProjectId, env.MockScrTextCollection);
             // Below, we are checking also that the SharedProject has a
             // Permissions that is set from the SharedProject's ScrText.Permissions.
             // Better may be to assert that each SharedProject.Permissions.GetUser()
@@ -660,8 +663,8 @@ namespace SIL.XForge.Scripture.Services
                     .Returns(newSourceScrText);
             });
 
-            await env.Service.SendReceiveAsync(user01Secret, targetProjectId);
-            await env.Service.SendReceiveAsync(user01Secret, newSourceProjectId);
+            await env.Service.SendReceiveAsync(user01Secret, targetProjectId, env.MockScrTextCollection);
+            await env.Service.SendReceiveAsync(user01Secret, newSourceProjectId, env.MockScrTextCollection);
             env.MockFileSystemService.DidNotReceive().DeleteDirectory(Arg.Any<string>());
             env.MockFileSystemService.Received(1).CreateDirectory(sourcePath);
             mockSource.Received(1).Pull(sourcePath, Arg.Is<SharedRepository>(repo =>
@@ -682,8 +685,9 @@ namespace SIL.XForge.Scripture.Services
             env.SetRestClientFactory(user01Secret);
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
             string resourceId = "test_resource_id"; // A missing or invalid resource or project
-            await env.Service.SendReceiveAsync(user01Secret, ptProjectId);
-            Assert.ThrowsAsync<ArgumentException>(() => env.Service.SendReceiveAsync(user01Secret, resourceId));
+            await env.Service.SendReceiveAsync(user01Secret, ptProjectId, env.MockScrTextCollection);
+            Assert.ThrowsAsync<ArgumentException>(() => env.Service.SendReceiveAsync(user01Secret, resourceId,
+                env.MockScrTextCollection));
         }
 
         [Test]
@@ -699,8 +703,8 @@ namespace SIL.XForge.Scripture.Services
             env.SetRestClientFactory(user01Secret);
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
             string resourceId = "9bb76cd3e5a7f9b4"; // See the XML in SetRestClientFactory for this
-            await env.Service.SendReceiveAsync(user01Secret, ptProjectId);
-            await env.Service.SendReceiveAsync(user01Secret, resourceId);
+            await env.Service.SendReceiveAsync(user01Secret, ptProjectId, env.MockScrTextCollection);
+            await env.Service.SendReceiveAsync(user01Secret, resourceId, env.MockScrTextCollection);
         }
 
 
@@ -715,7 +719,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetLatestSharedVersion_ForPTProject()
+        public void GetLatestSharedVersion_ForPTProject()
         {
             var env = new TestEnvironment();
             var associatedPtUser = new SFParatextUser(env.Username01);
@@ -727,13 +731,14 @@ namespace SIL.XForge.Scripture.Services
             env.MockHgWrapper.GetLastPublicRevision(scrText.Directory).Returns(lastPublicRevision);
 
             // SUT
-            string latestSharedVersion = env.Service.GetLatestSharedVersion(user01Secret, ptProjectId);
+            string latestSharedVersion = env.Service.GetLatestSharedVersion(user01Secret, ptProjectId,
+                env.MockScrTextCollection);
 
             Assert.That(latestSharedVersion, Is.EqualTo(lastPublicRevision));
         }
 
         [Test]
-        public async Task GetLatestSharedVersion_ForDBLResource()
+        public void GetLatestSharedVersion_ForDBLResource()
         {
             var env = new TestEnvironment();
             var associatedPtUser = new SFParatextUser(env.Username01);
@@ -744,7 +749,7 @@ namespace SIL.XForge.Scripture.Services
                 "setup. Should be using a project ID that is a resource ID");
 
             // SUT
-            string latestSharedVersion = env.Service.GetLatestSharedVersion(user01Secret, resourcePTId);
+            string latestSharedVersion = env.Service.GetLatestSharedVersion(user01Secret, resourcePTId, env.MockScrTextCollection);
 
             Assert.That(latestSharedVersion, Is.Null,
                 "DBL resources do not have hg repositories to have a last pushed or pulled hg commit id.");
@@ -821,7 +826,6 @@ namespace SIL.XForge.Scripture.Services
                     RealtimeService, MockExceptionHandler, MockSiteOptions, MockFileSystemService,
                     MockLogger, MockJwtTokenHelper, MockParatextDataHelper, MockInternetSharedRepositorySourceProvider,
                     MockRestClientFactory, MockHgWrapper);
-                Service.ScrTextCollection = MockScrTextCollection;
                 Service.SharingLogicWrapper = MockSharingLogicWrapper;
                 Service.SyncDir = SyncDir;
 

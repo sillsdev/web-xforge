@@ -56,6 +56,7 @@ namespace SIL.XForge.Scripture.Services
         private readonly IRealtimeService _realtimeService;
         private readonly IDeltaUsxMapper _deltaUsxMapper;
         private readonly IParatextNotesMapper _notesMapper;
+        private readonly IFileSystemService _fileSystemService;
         private readonly ILogger<ParatextSyncRunner> _logger;
 
         private IConnection _conn;
@@ -66,7 +67,7 @@ namespace SIL.XForge.Scripture.Services
         public ParatextSyncRunner(IRepository<UserSecret> userSecrets, IRepository<SFProjectSecret> projectSecrets,
             ISFProjectService projectService, IEngineService engineService, IParatextService paratextService,
             IRealtimeService realtimeService, IDeltaUsxMapper deltaUsxMapper, IParatextNotesMapper notesMapper,
-            ILogger<ParatextSyncRunner> logger)
+            IFileSystemService fileSystemService, ILogger<ParatextSyncRunner> logger)
         {
             _userSecrets = userSecrets;
             _projectSecrets = projectSecrets;
@@ -76,6 +77,7 @@ namespace SIL.XForge.Scripture.Services
             _realtimeService = realtimeService;
             _logger = logger;
             _deltaUsxMapper = deltaUsxMapper;
+            _fileSystemService = fileSystemService;
             _notesMapper = notesMapper;
         }
 
@@ -87,11 +89,12 @@ namespace SIL.XForge.Scripture.Services
         [Mutex("{0}")]
         public async Task RunAsync(string projectId, string userId, bool trainEngine)
         {
+            using ScopedScrTextCollection scrTextCollection = new ScopedScrTextCollection(_fileSystemService);
             try
             {
                 if (!await InitAsync(projectId, userId))
                 {
-                    await CompleteSync(false);
+                    await CompleteSync(false, scrTextCollection);
                     return;
                 }
 
@@ -101,7 +104,8 @@ namespace SIL.XForge.Scripture.Services
 
                 var targetTextDocsByBook = new Dictionary<int, SortedList<int, IDocument<TextData>>>();
                 var questionDocsByBook = new Dictionary<int, IReadOnlyList<IDocument<Question>>>();
-                string lastSharedVersion = _paratextService.GetLatestSharedVersion(_userSecret, targetParatextId);
+                string lastSharedVersion =
+                    _paratextService.GetLatestSharedVersion(_userSecret, targetParatextId, scrTextCollection);
 
                 bool isDataInSync = false;
                 if (lastSharedVersion == null)
@@ -137,20 +141,21 @@ namespace SIL.XForge.Scripture.Services
                     SortedList<int, IDocument<TextData>> targetTextDocs = await FetchTextDocsAsync(text);
                     targetTextDocsByBook[text.BookNum] = targetTextDocs;
                     if (isDataInSync)
-                        await UpdateParatextBook(text, targetParatextId, targetTextDocs);
+                        await UpdateParatextBook(text, targetParatextId, targetTextDocs, scrTextCollection);
 
                     IReadOnlyList<IDocument<Question>> questionDocs = await FetchQuestionDocsAsync(text);
                     questionDocsByBook[text.BookNum] = questionDocs;
                     if (isDataInSync)
-                        await UpdateParatextNotesAsync(text, questionDocs);
+                        await UpdateParatextNotesAsync(text, questionDocs, scrTextCollection);
                 }
 
                 // perform Paratext send/receive
-                await _paratextService.SendReceiveAsync(_userSecret, targetParatextId, UseNewProgress());
+                await _paratextService.SendReceiveAsync(_userSecret, targetParatextId, scrTextCollection, UseNewProgress());
 
-                var targetBooks = new HashSet<int>(_paratextService.GetBookList(_userSecret, targetParatextId));
+                var targetBooks =
+                    new HashSet<int>(_paratextService.GetBookList(_userSecret, targetParatextId, scrTextCollection));
                 var sourceBooks = new HashSet<int>(TranslationSuggestionsEnabled
-                    ? _paratextService.GetBookList(_userSecret, sourceParatextId)
+                    ? _paratextService.GetBookList(_userSecret, sourceParatextId, scrTextCollection)
                     : Enumerable.Empty<int>());
                 sourceBooks.IntersectWith(targetBooks);
 
@@ -214,7 +219,8 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
 
-                await UpdateDocsAsync(targetParatextId, targetTextDocsByBook, questionDocsByBook, targetBooks, sourceBooks);
+                await UpdateDocsAsync(targetParatextId, targetTextDocsByBook, questionDocsByBook, targetBooks,
+                    sourceBooks, scrTextCollection);
                 await _projectService.UpdatePermissionsAsync(userId, _projectDoc);
 
                 if (TranslationSuggestionsEnabled && trainEngine)
@@ -223,12 +229,12 @@ namespace SIL.XForge.Scripture.Services
                     await _engineService.StartBuildByProjectIdAsync(projectId);
                 }
 
-                await CompleteSync(true);
+                await CompleteSync(true, scrTextCollection);
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "Error occurred while executing Paratext sync for project '{Project}'", projectId);
-                await CompleteSync(false);
+                await CompleteSync(false, scrTextCollection);
             }
             finally
             {
@@ -239,7 +245,7 @@ namespace SIL.XForge.Scripture.Services
         private async Task UpdateDocsAsync(string targetParatextId,
             Dictionary<int, SortedList<int, IDocument<TextData>>> targetTextDocsByBook,
             Dictionary<int, IReadOnlyList<IDocument<Question>>> questionDocsByBook, HashSet<int> targetBooks,
-            HashSet<int> sourceBooks)
+            HashSet<int> sourceBooks, IScrTextCollection scrTextCollection)
         {
             // update source and target real-time docs
             foreach (int bookNum in targetBooks)
@@ -259,7 +265,8 @@ namespace SIL.XForge.Scripture.Services
                     targetTextDocs = new SortedList<int, IDocument<TextData>>();
                 }
 
-                List<Chapter> newSetOfChapters = await UpdateTextDocsAsync(text, targetParatextId, targetTextDocs);
+                List<Chapter> newSetOfChapters =
+                    await UpdateTextDocsAsync(text, targetParatextId, targetTextDocs, scrTextCollection);
 
                 // update question docs
                 if (questionDocsByBook.TryGetValue(text.BookNum,
@@ -314,30 +321,34 @@ namespace SIL.XForge.Scripture.Services
             _conn?.Dispose();
         }
 
-        private async Task UpdateParatextBook(TextInfo text, string paratextId, SortedList<int, IDocument<TextData>> textDocs)
+        private async Task UpdateParatextBook(TextInfo text, string paratextId, SortedList<int,
+            IDocument<TextData>> textDocs, IScrTextCollection scrTextCollection)
         {
-            string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
+            string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum, scrTextCollection);
             var oldUsxDoc = XDocument.Parse(bookText);
             XDocument newUsxDoc = _deltaUsxMapper.ToUsx(oldUsxDoc, text.Chapters.OrderBy(c => c.Number)
                 .Select(c => new ChapterDelta(c.Number, c.LastVerse, c.IsValid, textDocs[c.Number].Data)));
 
             if (!XNode.DeepEquals(oldUsxDoc, newUsxDoc))
             {
-                await _paratextService.PutBookText(_userSecret, paratextId, text.BookNum, newUsxDoc.Root.ToString());
+                await _paratextService.PutBookText(_userSecret, paratextId, text.BookNum, newUsxDoc.Root.ToString(),
+                    scrTextCollection);
             }
         }
 
         /// <summary>
         /// Send answer-notes to Paratext. Don't send questions that have no answers.
         /// </summary>
-        private async Task UpdateParatextNotesAsync(TextInfo text, IReadOnlyList<IDocument<Question>> questionDocs)
+        private async Task UpdateParatextNotesAsync(TextInfo text, IReadOnlyList<IDocument<Question>> questionDocs,
+            IScrTextCollection scrTextCollection)
         {
             if (!CheckingEnabled)
                 return;
 
             // TODO: need to define a data structure for notes instead of XML
             XElement oldNotesElem;
-            string oldNotesText = _paratextService.GetNotes(_userSecret, _projectDoc.Data.ParatextId, text.BookNum);
+            string oldNotesText = _paratextService.GetNotes(_userSecret, _projectDoc.Data.ParatextId, text.BookNum,
+                scrTextCollection);
             if (oldNotesText != "")
                 oldNotesElem = ParseText(oldNotesText);
             else
@@ -346,13 +357,15 @@ namespace SIL.XForge.Scripture.Services
             XElement notesElem = await _notesMapper.GetNotesChangelistAsync(oldNotesElem, questionDocs);
 
             if (notesElem.Elements("thread").Any())
-                _paratextService.PutNotes(_userSecret, _projectDoc.Data.ParatextId, notesElem.ToString());
+                _paratextService.PutNotes(_userSecret, _projectDoc.Data.ParatextId, notesElem.ToString(),
+                    scrTextCollection);
         }
 
         private async Task<List<Chapter>> UpdateTextDocsAsync(TextInfo text, string paratextId,
-            SortedList<int, IDocument<TextData>> textDocs, ISet<int> chaptersToInclude = null)
+            SortedList<int, IDocument<TextData>> textDocs, IScrTextCollection scrTextCollection,
+                ISet<int> chaptersToInclude = null)
         {
-            string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
+            string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum, scrTextCollection);
             var usxDoc = XDocument.Parse(bookText);
             var tasks = new List<Task>();
             Dictionary<int, ChapterDelta> deltas = _deltaUsxMapper.ToChapterDeltas(usxDoc)
@@ -528,7 +541,7 @@ namespace SIL.XForge.Scripture.Services
             await Task.WhenAll(tasks);
         }
 
-        private async Task CompleteSync(bool successful)
+        private async Task CompleteSync(bool successful, IScrTextCollection scrTextCollection)
         {
             if (_projectDoc == null || _projectSecret == null)
                 return;
@@ -570,7 +583,8 @@ namespace SIL.XForge.Scripture.Services
                 // Get the latest shared revision of the local hg repo. On a failed synchronize attempt, the data
                 // is known to be out of sync if the revision does not match the corresponding revision stored
                 // on the project doc.
-                string repoVersion = _paratextService.GetLatestSharedVersion(_userSecret, _projectDoc.Data.ParatextId);
+                string repoVersion =
+                    _paratextService.GetLatestSharedVersion(_userSecret, _projectDoc.Data.ParatextId, scrTextCollection);
 
                 if (successful)
                 {
@@ -598,12 +612,12 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
                 bool isRtl = _paratextService
-                    .IsProjectLanguageRightToLeft(_userSecret, _projectDoc.Data.ParatextId);
+                    .IsProjectLanguageRightToLeft(_userSecret, _projectDoc.Data.ParatextId, scrTextCollection);
                 op.Set(pd => pd.IsRightToLeft, isRtl);
                 if (TranslationSuggestionsEnabled)
                 {
-                    bool sourceIsRtl = _paratextService
-                        .IsProjectLanguageRightToLeft(_userSecret, _projectDoc.Data.TranslateConfig.Source.ParatextId);
+                    bool sourceIsRtl = _paratextService.IsProjectLanguageRightToLeft(_userSecret,
+                        _projectDoc.Data.TranslateConfig.Source.ParatextId, scrTextCollection);
                     op.Set(pd => pd.TranslateConfig.Source.IsRightToLeft, sourceIsRtl);
                 }
             });
@@ -635,13 +649,13 @@ namespace SIL.XForge.Scripture.Services
         private SyncProgress UseNewProgress()
         {
             var progress = new SyncProgress();
-            progress.ProgressUpdated += (object sender, EventArgs e) =>
+            progress.ProgressUpdated += async (object sender, EventArgs e) =>
             {
                 if (_projectDoc == null)
                     return;
                 double percentCompleted = progress.ProgressValue;
                 if (percentCompleted >= 0)
-                    _projectDoc.SubmitJson0OpAsync(op => op.Set(pd => pd.Sync.PercentCompleted, percentCompleted));
+                    await _projectDoc.SubmitJson0OpAsync(op => op.Set(pd => pd.Sync.PercentCompleted, percentCompleted));
             };
 
             return progress;
