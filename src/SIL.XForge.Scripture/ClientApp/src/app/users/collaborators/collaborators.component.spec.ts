@@ -116,9 +116,9 @@ describe('CollaboratorsComponent', () => {
   it('displays invited users', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
-      { email: 'alice@a.aa', expired: false },
-      { email: 'bob@b.bb', expired: false },
-      { email: 'charles@c.cc', expired: true }
+      { email: 'alice@a.aa', role: 'sf_community_checker', expired: false },
+      { email: 'bob@b.bb', role: 'sf_community_checker', expired: false },
+      { email: 'charles@c.cc', role: 'sf_community_checker', expired: true }
     ]);
 
     env.setupProjectData();
@@ -184,7 +184,7 @@ describe('CollaboratorsComponent', () => {
   it('should refresh user list after inviting a new user', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
-      { email: 'alice@a.aa', expired: false }
+      { email: 'alice@a.aa', role: 'sf_community_checker', expired: false }
     ]);
     env.setupProjectData();
     env.fixture.detectChanges();
@@ -198,8 +198,8 @@ describe('CollaboratorsComponent', () => {
 
     // Simulate invitation event
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
-      { email: 'alice@a.aa', expired: false },
-      { email: 'new-invitee@example.com', expired: false }
+      { email: 'alice@a.aa', role: 'sf_community_checker', expired: false },
+      { email: 'new-invitee@example.com', role: 'sf_community_checker', expired: false }
     ]);
     numInvitees++;
     env.component.onInvitationSent();
@@ -214,7 +214,7 @@ describe('CollaboratorsComponent', () => {
     const env = new TestEnvironment();
     when(mockedProjectService.onlineUninviteUser(anything(), anything())).thenResolve();
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
-      { email: 'alice@a.aa', expired: false }
+      { email: 'alice@a.aa', role: 'sf_community_checker', expired: false }
     ]);
     env.setupProjectData();
     env.fixture.detectChanges();
@@ -263,7 +263,7 @@ describe('CollaboratorsComponent', () => {
     const env = new TestEnvironment();
     env.setupProjectData();
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
-      { email: 'bob@example.com', expired: false }
+      { email: 'bob@example.com', role: 'sf_community_checker', expired: false }
     ]);
     env.fixture.detectChanges();
     tick();
@@ -282,7 +282,7 @@ describe('CollaboratorsComponent', () => {
     expect(env.userRows.length).toEqual(1);
 
     env.setInputValue(env.filterInput, 'Community Checker');
-    expect(env.userRows.length).toEqual(1);
+    expect(env.userRows.length).toEqual(2);
   }));
 
   it('should page', fakeAsync(() => {
@@ -405,7 +405,7 @@ describe('CollaboratorsComponent', () => {
     const env = new TestEnvironment(false);
     env.setupProjectData();
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
-      { email: 'alice@a.aa', expired: false }
+      { email: 'alice@a.aa', role: 'sf_community_checker', expired: false }
     ]);
     env.fixture.detectChanges();
     tick();

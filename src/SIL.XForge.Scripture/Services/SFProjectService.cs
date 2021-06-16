@@ -464,7 +464,7 @@ namespace SIL.XForge.Scripture.Services
 
             DateTime now = DateTime.UtcNow;
             return projectSecret.ShareKeys.Where(s => s.Email != null).Select(sk =>
-                new InviteeStatus { Email = sk.Email, Expired = sk.ExpirationTime < now }).ToArray();
+                new InviteeStatus { Email = sk.Email, Role = sk.ProjectRole, Expired = sk.ExpirationTime < now }).ToArray();
         }
 
         /// <summary> Check that a share link is valid for a project and add the user to the project. </summary>

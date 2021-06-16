@@ -35,6 +35,7 @@ interface Row {
 
 export interface InviteeStatus {
   email: string;
+  role: string;
   expired: boolean;
 }
 
@@ -271,7 +272,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
         return {
           id: '',
           user: { email: invitee.email },
-          role: '',
+          role: invitee.role,
           inviteeStatus: invitee
         } as Row;
       });
