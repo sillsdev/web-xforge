@@ -3,8 +3,7 @@
 
 Vagrant.configure("2") do |config|
   # sfdev uses Ubuntu 20.04.
-  config.vm.box = "sfdev"
-  config.vm.box_url = "http://linux.lsdev.sil.org/vagrant/sfdev/sfdev.json"
+  config.vm.box = "marksvc/sfdev"
   config.vm.hostname = "sfdev"
 
   config.vm.provider "virtualbox" do |vb|
