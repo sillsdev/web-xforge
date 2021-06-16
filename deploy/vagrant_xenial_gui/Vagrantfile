@@ -2,8 +2,7 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
-  config.vm.box = "xforge-u1604"
-  config.vm.box_url = "http://linux.lsdev.sil.org/vagrant/xforge/xforge-u1604.json"
+  config.vm.box = "marksvc/xforge-u1604"
   config.vm.hostname = "vag-u1604-xf"
 
   config.vm.provider "virtualbox" do |vb|
