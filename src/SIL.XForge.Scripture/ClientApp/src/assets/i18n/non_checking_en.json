@@ -130,7 +130,7 @@
     "question_has_answer": "Question already has an answer"
   },
   "question_dialog": {
-    "add_question_denied": "You don't have permission to add questions.",
+    "add_question_denied": "You don't have permission to add or edit questions.",
     "cancel": "Cancel",
     "edit_question": "Edit Question",
     "end_reference": "End reference",
