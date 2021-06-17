@@ -112,16 +112,16 @@ export class ParentAndStartErrorStateMatcher implements ErrorStateMatcher {
       return false;
     }
 
-    const invalidCtrl = control.invalid && control.parent.dirty;
+    const invalidCtrl = control.invalid && control.parent!.dirty;
     const invalidStart =
-      !control.parent.controls['scriptureStart'].hasError('verseFormat') &&
-      !control.parent.controls['scriptureStart'].hasError('verseRange') &&
-      (control.parent.controls['scriptureStart'].invalid ||
-        control.parent.hasError('verseDifferentBookOrChapter') ||
-        control.parent.hasError('verseBeforeStart'));
+      !control.parent!.controls['scriptureStart'].hasError('verseFormat') &&
+      !control.parent!.controls['scriptureStart'].hasError('verseRange') &&
+      (control.parent!.controls['scriptureStart'].invalid ||
+        control.parent!.hasError('verseDifferentBookOrChapter') ||
+        control.parent!.hasError('verseBeforeStart'));
     return (
       (control.touched && invalidCtrl) ||
-      ((control.touched || control.parent.controls['scriptureStart'].touched) && invalidStart)
+      ((control.touched || control.parent!.controls['scriptureStart'].touched) && invalidStart)
     );
   }
 }
@@ -137,9 +137,9 @@ export class StartReferenceRequiredErrorStateMatcher implements ErrorStateMatche
 
     const invalidCtrl = control.invalid;
     const endReferenceExists =
-      control.parent.controls['scriptureEnd'].value &&
-      control.parent.controls['scriptureEnd'].dirty &&
-      control.parent.controls['scriptureEnd'].touched;
+      control.parent!.controls['scriptureEnd'].value &&
+      control.parent!.controls['scriptureEnd'].dirty &&
+      control.parent!.controls['scriptureEnd'].touched;
     return (control.touched && invalidCtrl) || (endReferenceExists && !control.value);
   }
 }
