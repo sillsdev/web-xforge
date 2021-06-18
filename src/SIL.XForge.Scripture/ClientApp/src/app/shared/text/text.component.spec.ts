@@ -83,7 +83,7 @@ describe('TextComponent', () => {
     tick();
     env.fixture.detectChanges();
     expect(env.component.editor?.getText()).toContain('chapter 1, verse 6.', 'setup');
-    expect(env.component.editor?.getContents().ops?.length).toEqual(19, 'setup');
+    expect(env.component.editor?.getContents().ops?.length).toEqual(21, 'setup');
 
     env.component.editor?.updateContents(new Delta().retain(109).retain(31, { para: null }));
 
@@ -95,13 +95,35 @@ describe('TextComponent', () => {
       fail('should not get here if test is working properly!');
     }
   }));
+
+  it('adds data attributes for usfm labels', fakeAsync(() => {
+    const env: TestEnvironment = new TestEnvironment();
+    env.fixture.detectChanges();
+    env.id = new TextDocId('project01', 40, 1);
+    tick();
+    env.fixture.detectChanges();
+
+    const titleSegment = env.component.editor!.container.querySelector('usx-para[data-style="s"] usx-segment')!;
+    expect(titleSegment.getAttribute('data-style-description')).toBeNull();
+
+    env.component.highlight(['s_1']);
+    tick();
+
+    expect(titleSegment.getAttribute('data-style-description')).toEqual('s - Heading - Section Level 1');
+    expect(window.getComputedStyle(titleSegment, '::before').content).toEqual('"s - Heading - Section Level 1"');
+  }));
 });
 
 class MockQuill extends Quill {}
 
 @Component({
   selector: 'app-host',
-  template: `<app-text [placeholder]="initialPlaceHolder" [id]="id" [isRightToLeft]="isTextRightToLeft"></app-text>`
+  template: `<app-text
+    [placeholder]="initialPlaceHolder"
+    [id]="id"
+    [isRightToLeft]="isTextRightToLeft"
+    [isReadOnly]="false"
+  ></app-text>`
 })
 class HostComponent {
   @ViewChild(TextComponent) textComponent!: TextComponent;
