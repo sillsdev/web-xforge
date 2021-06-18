@@ -1,11 +1,17 @@
 import cloneDeep from 'lodash-es/cloneDeep';
 import Parchment from 'parchment';
 import Quill, { Clipboard, DeltaOperation, DeltaStatic, History, HistoryStackType } from 'quill';
+import { USFM_STYLE_DESCRIPTIONS } from './usfm-style-descriptions';
 
 const Delta: new () => DeltaStatic = Quill.import('delta');
 
 function customAttributeName(key: string): string {
   return 'data-' + key;
+}
+
+function getUsxDescription(value: string): string | null {
+  const usxTag = value.split('_')[0];
+  return usxTag === 'p' ? null : USFM_STYLE_DESCRIPTIONS[usxTag] || null;
 }
 
 const USX_VALUE = '__usx_value';
@@ -426,6 +432,10 @@ export function registerScripture(): string[] {
     static create(value: string): Node {
       const node = super.create(value) as HTMLElement;
       node.setAttribute(customAttributeName('segment'), value);
+      // const styleDescription = getUsxDescription(value);
+      // if (styleDescription != null) {
+      //   node.setAttribute(customAttributeName('style-description'), styleDescription);
+      // }
       return node;
     }
 

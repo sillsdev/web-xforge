@@ -2,6 +2,7 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
 import { Subscription } from 'rxjs';
 import { Delta, TextDoc } from '../../core/models/text-doc';
+import { USFM_STYLE_DESCRIPTIONS } from './usfm-style-descriptions';
 
 const PARA_STYLES: Set<string> = new Set<string>([
   // Paragraphs
@@ -207,6 +208,18 @@ export class TextViewModel {
       }
     }
     editor.updateContents(clearDelta, 'silent');
+    this.addUsfmDescription(Array.from(refs)[0]);
+  }
+
+  addUsfmDescription(segmentRef: string): void {
+    let element = this.editor?.container.querySelector(`[data-segment="${segmentRef}"]`);
+    while (element != null && element !== this.editor?.container && element?.getAttribute('data-style') == null) {
+      element = element.parentElement;
+    }
+    const style = element?.getAttribute('data-style');
+    if (element != null && typeof style === 'string' && style !== 'p') {
+      element.querySelector('usx-segment')?.setAttribute('data-style-description', USFM_STYLE_DESCRIPTIONS[style]);
+    }
   }
 
   hasSegmentRange(ref: string): boolean {
