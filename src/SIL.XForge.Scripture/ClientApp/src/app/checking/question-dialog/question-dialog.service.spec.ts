@@ -159,7 +159,7 @@ interface UserInfo {
 
 class TestEnvironment {
   readonly service: QuestionDialogService;
-  readonly mockedDialogRef: MdcDialogRef<QuestionDialogComponent, QuestionDialogResult | 'close'> = mock(MdcDialogRef);
+  readonly mockedDialogRef = mock<MdcDialogRef<QuestionDialogComponent, QuestionDialogResult | 'close'>>(MdcDialogRef);
   textsByBookId: TextsByBookId;
   matthewText: TextInfo = {
     bookNum: 40,
