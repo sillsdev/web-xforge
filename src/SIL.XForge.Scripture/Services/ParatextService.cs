@@ -635,8 +635,16 @@ namespace SIL.XForge.Scripture.Services
                 // Not meaningful for DBL resources, which do not have a local hg repo.
                 return null;
             }
+
             ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
-            return scrText == null ? null : _hgHelper.GetLastPublicRevision(scrText.Directory, false);
+            if (scrText != null)
+            {
+                return _hgHelper.GetLastPublicRevision(scrText.Directory, allowEmptyIfRestoredFromBackup: false);
+            }
+            else
+            {
+                return null;
+            }
         }
 
         /// <summary>

@@ -726,7 +726,8 @@ namespace SIL.XForge.Scripture.Services
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             ScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
             string lastPublicRevision = "abc123";
-            env.MockHgWrapper.GetLastPublicRevision(scrText.Directory, false).Returns(lastPublicRevision);
+            env.MockHgWrapper.GetLastPublicRevision(scrText.Directory, allowEmptyIfRestoredFromBackup: false)
+                .Returns(lastPublicRevision);
 
             // SUT
             string latestSharedVersion = env.Service.GetLatestSharedVersion(user01Secret, ptProjectId);
