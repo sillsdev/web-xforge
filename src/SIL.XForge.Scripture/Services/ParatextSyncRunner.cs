@@ -149,8 +149,27 @@ namespace SIL.XForge.Scripture.Services
                         await UpdateParatextNotesAsync(text, questionDocs, scrTextCollection);
                 }
 
+                // Use the new progress bar
+                var progress = new SyncProgress();
+                async void handler(object sender, EventArgs e)
+                {
+                    if (_projectDoc == null)
+                        return;
+                    double percentCompleted = progress.ProgressValue;
+                    if (percentCompleted >= 0)
+                    {
+                        await _projectDoc.SubmitJson0OpAsync(op => op.Set(pd => pd.Sync.PercentCompleted, percentCompleted));
+                    }
+                }
+
+                // Create the handler
+                progress.ProgressUpdated += handler;
+
                 // perform Paratext send/receive
-                await _paratextService.SendReceiveAsync(_userSecret, targetParatextId, scrTextCollection, UseNewProgress());
+                await _paratextService.SendReceiveAsync(_userSecret, targetParatextId, scrTextCollection, progress);
+
+                // Deregister the handler
+                progress.ProgressUpdated -= handler;
 
                 var targetBooks =
                     new HashSet<int>(_paratextService.GetBookList(_userSecret, targetParatextId, scrTextCollection));
@@ -644,21 +663,6 @@ namespace SIL.XForge.Scripture.Services
             await textDoc.FetchAsync();
             if (textDoc.IsLoaded)
                 await textDoc.DeleteAsync();
-        }
-
-        private SyncProgress UseNewProgress()
-        {
-            var progress = new SyncProgress();
-            progress.ProgressUpdated += async (object sender, EventArgs e) =>
-            {
-                if (_projectDoc == null)
-                    return;
-                double percentCompleted = progress.ProgressValue;
-                if (percentCompleted >= 0)
-                    await _projectDoc.SubmitJson0OpAsync(op => op.Set(pd => pd.Sync.PercentCompleted, percentCompleted));
-            };
-
-            return progress;
         }
 
         private class ChapterEqualityComparer : IEqualityComparer<Chapter>
