@@ -27,10 +27,10 @@ namespace SIL.XForge.Realtime
         /// </returns>
         /// <remarks>
         /// The <see cref="MemoryConnection" /> does not support transactions.
+        /// No exception is thrown for compatibility reasons.
         /// </remarks>
-        public IRealtimeServer BeginTransaction()
+        public void BeginTransaction()
         {
-            return null;
         }
 
         /// <summary>
@@ -38,10 +38,33 @@ namespace SIL.XForge.Realtime
         /// </summary>
         /// <remarks>
         /// The <see cref="MemoryConnection" /> does not support transactions.
+        /// No exception is thrown for compatibility reasons.
         /// </remarks>
         public Task CommitTransactionAsync()
         {
             return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Creates a document asynchronously.
+        /// </summary>
+        /// <exception cref="NotImplementedException">
+        /// This is not supported by a <see cref="MemoryConnection" />.
+        /// </exception>
+        public Task<Snapshot<T>> CreateDocAsync<T>(string collection, string id, T data, string otTypeName)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Deletes a document asynchronously.
+        /// </summary>
+        /// <exception cref="NotImplementedException">
+        /// This is not supported by a <see cref="MemoryConnection" />.
+        /// </exception>
+        public Task DeleteDocAsync(string collection, string id)
+        {
+            throw new NotImplementedException();
         }
 
         public void Dispose()
@@ -58,6 +81,17 @@ namespace SIL.XForge.Realtime
         /// </remarks>
         public void ExcludePropertyFromTransaction<T>(Expression<Func<T, object>> field)
         {
+        }
+
+        /// <summary>
+        /// Fetches a document asynchronously.
+        /// </summary>
+        /// <exception cref="NotImplementedException">
+        /// This is not supported by a <see cref="MemoryConnection" />.
+        /// </exception>
+        public Task<Snapshot<T>> FetchDocAsync<T>(string collection, string id)
+        {
+            throw new NotImplementedException();
         }
 
         public IDocument<T> Get<T>(string id) where T : IIdentifiable
@@ -81,6 +115,17 @@ namespace SIL.XForge.Realtime
         public Task RollbackTransactionAsync()
         {
             return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Submits an operation asynchronously.
+        /// </summary>
+        /// <exception cref="NotImplementedException">
+        /// This is not supported by a <see cref="MemoryConnection" />.
+        /// </exception>
+        public Task<Snapshot<T>> SubmitOpAsync<T>(string collection, string id, object op)
+        {
+            throw new NotImplementedException();
         }
     }
 }
