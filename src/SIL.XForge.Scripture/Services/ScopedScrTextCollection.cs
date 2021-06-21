@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,9 +11,12 @@ using SIL.XForge.Services;
 namespace SIL.XForge.Scripture.Services
 {
     /// <summary>
-    /// A class that can be used to get a ScrText using a simple cache. This class is not
-    /// related by inheritance or type to ScrTextCollection, and should be disposed of when
-    /// the <see cref="ScrText"/> objects retrieved by it are no longer in use.
+    /// A class providing a multi-user-capable replacement for some of ParatextData.ScrTextCollection,
+    /// specifically FindById(), which does not allow specifying which user to associate with the ScrText,
+    /// and is not for use in a multi-user system.
+    /// This class provides a cache and should be disposed of when the objects retrieved by it are no longer in use.
+    /// The ScrText objects are cached to the particular users, and are scoped to the lifetime of this object.
+    /// This class is not related by type to <see cref="ScrTextCollection"/>.
     /// </summary>
     public class ScopedScrTextCollection : DisposableBase, IScrTextCollection
     {
@@ -29,9 +31,9 @@ namespace SIL.XForge.Scripture.Services
         private readonly string _projectsPath;
 
         /// <summary>
-        /// The ScrText objects dictionary, with the project id and Paratext user id as the key.
+        /// The ScrText objects dictionary, with the Paratext project id and Paratext user id as the key.
         /// </summary>
-        private readonly Dictionary<string, ScrText> _scrTextsByProjectIdAndUserId = new Dictionary<string, ScrText>();
+        private readonly Dictionary<string, ScrText> _scrTextsByParatextIdAndUserId = new Dictionary<string, ScrText>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ScopedScrTextCollection" /> class.
@@ -50,20 +52,20 @@ namespace SIL.XForge.Scripture.Services
         /// Get a ScrText for a given user from the data for a paratext project with the target project ID and type.
         /// </summary>
         /// <param name="ptUsername"> The username of the user retrieving the ScrText. </param>
-        /// <param name="projectId"> The ID of the target project. </param>
-        public ScrText FindById(string ptUsername, string projectId)
+        /// <param name="paratextId"> The ID of the target Paratext project. </param>
+        public ScrText FindById(string ptUsername, string paratextId)
         {
-            lock (_scrTextsByProjectIdAndUserId)
+            lock (_scrTextsByParatextIdAndUserId)
             {
-                if (_scrTextsByProjectIdAndUserId.TryGetValue(GetScrTextKey(ptUsername, projectId), out ScrText scrText))
+                if (_scrTextsByParatextIdAndUserId.TryGetValue(GetScrTextKey(ptUsername, paratextId), out ScrText scrText))
                 {
                     return scrText;
                 }
 
-                if (projectId == null)
+                if (paratextId == null)
                     return null;
                 string projectsPath = _projectsPath ?? ScrTextCollection.SettingsDirectory;
-                string baseProjectPath = Path.Combine(projectsPath, projectId);
+                string baseProjectPath = Path.Combine(projectsPath, paratextId);
                 if (!_fileSystemService.DirectoryExists(baseProjectPath))
                     return null;
 
@@ -91,7 +93,7 @@ namespace SIL.XForge.Scripture.Services
                     });
 
                     // Cache this object
-                    _scrTextsByProjectIdAndUserId.TryAdd(GetScrTextKey(ptUsername, projectId), newScrText);
+                    _scrTextsByParatextIdAndUserId.Add(GetScrTextKey(ptUsername, paratextId), newScrText);
 
                     // return the object
                     return newScrText;
@@ -111,14 +113,14 @@ namespace SIL.XForge.Scripture.Services
         protected override void DisposeManagedResources()
         {
             base.DisposeManagedResources();
-            lock (_scrTextsByProjectIdAndUserId)
+            lock (_scrTextsByParatextIdAndUserId)
             {
-                foreach (string key in _scrTextsByProjectIdAndUserId.Keys)
+                foreach (string key in _scrTextsByParatextIdAndUserId.Keys)
                 {
-                    if (_scrTextsByProjectIdAndUserId.TryGetValue(key, out ScrText scrText))
+                    if (_scrTextsByParatextIdAndUserId.TryGetValue(key, out ScrText scrText))
                     {
-                        scrText.Dispose();
-                        _scrTextsByProjectIdAndUserId.Remove(key);
+                        scrText?.Dispose();
+                        _scrTextsByParatextIdAndUserId.Remove(key);
                     }
                 }
             }
@@ -128,12 +130,12 @@ namespace SIL.XForge.Scripture.Services
         /// Gets the key for the <see cref="ScrText" /> dictionary.
         /// </summary>
         /// <param name="ptUsername">The Paratext username.</param>
-        /// <param name="projectId">The project identifier.</param>
+        /// <param name="paratextId">The Paratext project identifier.</param>
         /// <returns>
         /// The key for the dictionary.
         /// </returns>
-        private string GetScrTextKey(string ptUsername, string projectId)
-            => $"{projectId}_{ptUsername}";
+        private string GetScrTextKey(string ptUsername, string paratextId)
+            => $"{paratextId}_{ptUsername}";
 
         private string GetNameFromSettings(string settingsFilePath)
         {
