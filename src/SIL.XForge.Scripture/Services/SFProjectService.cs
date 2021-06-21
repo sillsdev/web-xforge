@@ -27,6 +27,8 @@ namespace SIL.XForge.Scripture.Services
     /// </summary>
     public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFProjectService
     {
+        private static readonly IEqualityComparer<Dictionary<string, string>> _permissionDictionaryEqualityComparer =
+            new DictionaryComparer<string, string>();
         public static readonly string ErrorAlreadyConnectedKey = "error-already-connected";
         private readonly IEngineService _engineService;
         private readonly ISyncService _syncService;
@@ -699,12 +701,13 @@ namespace SIL.XForge.Scripture.Services
                 foreach ((int bookIndex, Dictionary<string, string> bookPermissions) in projectBookPermissions)
                 {
                     op.Set(pd => pd.Texts[bookIndex].Permissions, bookPermissions,
-                        ParatextSyncRunner.PermissionDictionaryEqualityComparer);
+                        _permissionDictionaryEqualityComparer);
                 }
                 foreach ((int bookIndex, int chapterIndex, Dictionary<string, string> chapterPermissions)
                     in projectChapterPermissions)
                 {
-                    op.Set(pd => pd.Texts[bookIndex].Chapters[chapterIndex].Permissions, chapterPermissions);
+                    op.Set(pd => pd.Texts[bookIndex].Chapters[chapterIndex].Permissions, chapterPermissions,
+                        _permissionDictionaryEqualityComparer);
                 }
             });
         }

@@ -44,10 +44,8 @@ namespace SIL.XForge.Scripture.Services
     /// </summary>
     public class ParatextSyncRunner : IParatextSyncRunner
     {
-        internal static readonly IEqualityComparer<List<Chapter>> ChapterListEqualityComparer =
+        private static readonly IEqualityComparer<List<Chapter>> _chapterListEqualityComparer =
             SequenceEqualityComparer.Create(new ChapterEqualityComparer());
-        internal static readonly IEqualityComparer<Dictionary<string, string>> PermissionDictionaryEqualityComparer =
-            new DictionaryComparer<string, string>();
 
         private readonly IRepository<UserSecret> _userSecrets;
         private readonly IRepository<SFProjectSecret> _projectSecrets;
@@ -341,7 +339,7 @@ namespace SIL.XForge.Scripture.Services
                     else
                     {
                         // update text info
-                        op.Set(pd => pd.Texts[textIndex].Chapters, newSetOfChapters, ChapterListEqualityComparer);
+                        op.Set(pd => pd.Texts[textIndex].Chapters, newSetOfChapters, _chapterListEqualityComparer);
                         op.Set(pd => pd.Texts[textIndex].HasSource, hasSource);
                     }
                 });
@@ -780,8 +778,8 @@ namespace SIL.XForge.Scripture.Services
         {
             public bool Equals(Chapter x, Chapter y)
             {
-                return x.Number == y.Number && x.LastVerse == y.LastVerse && x.IsValid == y.IsValid
-                    && PermissionDictionaryEqualityComparer.Equals(x.Permissions, y.Permissions);
+                // We do not compare permissions, as these are modified in SFProjectService
+                return x.Number == y.Number && x.LastVerse == y.LastVerse && x.IsValid == y.IsValid;
             }
 
             public int GetHashCode(Chapter obj)
@@ -791,30 +789,6 @@ namespace SIL.XForge.Scripture.Services
                 code = code * 31 + obj.LastVerse.GetHashCode();
                 code = code * 31 + obj.IsValid.GetHashCode();
                 return code;
-            }
-        }
-
-        private class DictionaryComparer<TKey, TValue> : IEqualityComparer<Dictionary<TKey, TValue>>
-        {
-            public bool Equals(Dictionary<TKey, TValue> x, Dictionary<TKey, TValue> y)
-            {
-                return (x ?? new Dictionary<TKey, TValue>()).OrderBy(p => p.Key)
-                    .SequenceEqual((y ?? new Dictionary<TKey, TValue>()).OrderBy(p => p.Key));
-            }
-
-            public int GetHashCode(Dictionary<TKey, TValue> obj)
-            {
-                int hash = 0;
-                if (obj != null)
-                {
-                    foreach (KeyValuePair<TKey, TValue> element in obj)
-                    {
-                        hash ^= element.Key.GetHashCode();
-                        hash ^= element.Value.GetHashCode();
-                    }
-                }
-
-                return hash;
             }
         }
     }
