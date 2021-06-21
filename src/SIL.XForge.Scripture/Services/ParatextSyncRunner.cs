@@ -149,8 +149,21 @@ namespace SIL.XForge.Scripture.Services
                         await UpdateParatextNotesAsync(text, questionDocs, scrTextCollection);
                 }
 
-                // perform Paratext send/receive
-                await _paratextService.SendReceiveAsync(_userSecret, targetParatextId, scrTextCollection, UseNewProgress());
+                // Use the new progress bar
+                var progress = new SyncProgress();
+                try
+                {
+                    // Create the handler
+                    progress.ProgressUpdated += SyncProgress_ProgressUpdated;
+
+                    // perform Paratext send/receive
+                    await _paratextService.SendReceiveAsync(_userSecret, targetParatextId, scrTextCollection, progress);
+                }
+                finally
+                {
+                    // Deregister the handler
+                    progress.ProgressUpdated -= SyncProgress_ProgressUpdated;
+                }
 
                 var targetBooks =
                     new HashSet<int>(_paratextService.GetBookList(_userSecret, targetParatextId, scrTextCollection));
@@ -646,19 +659,20 @@ namespace SIL.XForge.Scripture.Services
                 await textDoc.DeleteAsync();
         }
 
-        private SyncProgress UseNewProgress()
+        private async void SyncProgress_ProgressUpdated(object sender, EventArgs e)
         {
-            var progress = new SyncProgress();
-            progress.ProgressUpdated += async (object sender, EventArgs e) =>
+            if (_projectDoc == null)
             {
-                if (_projectDoc == null)
-                    return;
+                return;
+            }
+            else if (sender is SyncProgress progress)
+            {
                 double percentCompleted = progress.ProgressValue;
                 if (percentCompleted >= 0)
+                {
                     await _projectDoc.SubmitJson0OpAsync(op => op.Set(pd => pd.Sync.PercentCompleted, percentCompleted));
-            };
-
-            return progress;
+                }
+            }
         }
 
         private class ChapterEqualityComparer : IEqualityComparer<Chapter>
