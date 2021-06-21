@@ -7,10 +7,14 @@ namespace SIL.XForge.Realtime
 {
     public interface IConnection : IDisposable
     {
-        IRealtimeServer BeginTransaction();
+        void BeginTransaction();
         Task CommitTransactionAsync();
+        Task<Snapshot<T>> CreateDocAsync<T>(string collection, string id, T data, string otTypeName);
+        Task DeleteDocAsync(string collection, string id);
         void ExcludePropertyFromTransaction<T>(Expression<Func<T, object>> field);
+        Task<Snapshot<T>> FetchDocAsync<T>(string collection, string id);
         IDocument<T> Get<T>(string id) where T : IIdentifiable;
         Task RollbackTransactionAsync();
+        Task<Snapshot<T>> SubmitOpAsync<T>(string collection, string id, object op);
     }
 }

@@ -34,74 +34,104 @@ namespace SIL.XForge.Realtime
         private IRealtimeServer _realtimeServer;
 
         /// <summary>
+        /// The queued realtime server to handle transactions.
+        /// </summary>
+        private QueuedRealtimeServer _queuedRealtimeServer;
+
+        /// <summary>
         /// The realtime service to use for this connection.
         /// </summary>
         private readonly RealtimeService _realtimeService;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Connection"/> class.
+        /// </summary>
+        /// <param name="realtimeService">The realtime service.</param>
         internal Connection(RealtimeService realtimeService)
         {
             _realtimeService = realtimeService;
             _realtimeServer = realtimeService.Server;
+            _queuedRealtimeServer = new QueuedRealtimeServer(_realtimeService.Server);
             _documents = new ConcurrentDictionary<(string, string), object>();
         }
 
         /// <summary>
         /// Begins the transaction.
         /// </summary>
-        /// <returns>
-        /// The realtime server that will queue the operations for the transaction.
-        /// </returns>
-        /// <exception cref="ArgumentException">
-        /// The connection is in a transaction state but cannot queue operations.
-        /// </exception>
-        /// <remarks>
-        /// You should <see cref="Get{T}(string)" /> documents after calling this method,
-        /// if you want to use them in the transaction.
-        /// </remarks>
-        public IRealtimeServer BeginTransaction()
+        /// <exception cref="ArgumentException">The connection is already in a transaction state.</exception>
+        public void BeginTransaction()
         {
-            // Create the transaction state, if we are not in a transaction state
+            // Start the transaction state, if we are not in a transaction state
             if (!_isTransaction)
             {
-                // Create a queued realtime server to queue operations for committing later
-                // We must clear the documents cache so each document has the correct server
-                _documents.Clear();
-                _realtimeServer = new QueuedRealtimeServer(_realtimeService.Server);
                 _isTransaction = true;
-                return _realtimeServer;
-            }
-            else if (_realtimeServer is QueuedRealtimeServer realtimeServer)
-            {
-                // Return the queued realtime server
-                return realtimeServer;
             }
             else
             {
-                // We are in a mixed state
-                throw new ArgumentException("The connection is in a transaction state but cannot queue operations");
+                // We are already in a transaction state
+                throw new ArgumentException("The connection is already in a transaction state.");
             }
         }
 
         /// <summary>
         /// Commits the transaction.
         /// </summary>
-        /// <exception cref="ArgumentException">The connection is not in a transaction state</exception>
+        /// <exception cref="ArgumentException">The connection is not in a transaction state.</exception>
         public async Task CommitTransactionAsync()
         {
-            if (_realtimeServer is QueuedRealtimeServer realtimeServer)
+            if (_isTransaction)
             {
                 // Submit the operations
-                await realtimeServer.SubmitOperationsAsync();
+                await _queuedRealtimeServer.SubmitOperationsAsync();
 
-                // Clear the documents cache and reset the transaction state
-                _documents.Clear();
+                // Reset the transaction state
                 _isTransaction = false;
-                _realtimeServer = _realtimeService.Server;
             }
             else
             {
                 // We are not in a transaction state
-                throw new ArgumentException("The connection is not in a transaction state");
+                throw new ArgumentException("The connection is not in a transaction state.");
+            }
+        }
+
+        /// <summary>
+        /// Creates a document asynchronously.
+        /// </summary>
+        /// <typeparam name="T">The document type.</typeparam>
+        /// <param name="collection">The collection.</param>
+        /// <param name="id">The identifier.</param>
+        /// <param name="data">The data.</param>
+        /// <param name="otTypeName">Name of the OT type.</param>
+        /// <returns>
+        /// A snapshot of the created document from the realtime server.
+        /// </returns>
+        public async Task<Snapshot<T>> CreateDocAsync<T>(string collection, string id, T data, string otTypeName)
+        {
+            if (_isTransaction)
+            {
+                return await _queuedRealtimeServer.CreateDocAsync(_handle, collection, id, data, otTypeName);
+            }
+            else
+            {
+                return await _realtimeServer.CreateDocAsync(_handle, collection, id, data, otTypeName);
+            }
+        }
+
+        /// <summary>
+        /// Deletes a document asynchronously.
+        /// </summary>
+        /// <param name="collection">The collection.</param>
+        /// <param name="id">The identifier.</param>
+        /// <returns>The task.</returns>
+        public async Task DeleteDocAsync(string collection, string id)
+        {
+            if (_isTransaction)
+            {
+                await _queuedRealtimeServer.DeleteDocAsync(_handle, collection, id);
+            }
+            else
+            {
+                await _realtimeServer.DeleteDocAsync(_handle, collection, id);
             }
         }
 
@@ -109,47 +139,41 @@ namespace SIL.XForge.Realtime
         /// Excludes a property from the transaction.
         /// </summary>
         /// <typeparam name="T">The type the field belongs to.</typeparam>
-        /// <param name="op">The property field.</param>
+        /// <param name="field">The property field.</param>
+        /// <exception cref="ArgumentException">The connection is not in a transaction state.</exception>
         /// <remarks>
-        /// When a field is excluded from a transaction, operations to it are committed immediately.
-        /// Any operations lists that contain an excluded property will all be committed immediately.
-        /// This only applies to JSON0 operations.
+        /// Notes:
+        ///  - When a field is excluded from a transaction, operations to it are committed immediately.
+        ///  - Any operations lists that contain an excluded property will all be committed immediately.
+        ///  - You will need to call this again if you begin a new transaction.
+        ///  - This only applies to JSON0 operations.
         /// </remarks>
         public void ExcludePropertyFromTransaction<T>(Expression<Func<T, object>> field)
         {
-            if (_realtimeServer is QueuedRealtimeServer realtimeServer)
+            if (_isTransaction)
             {
-                // Exclude the property
-                realtimeServer.ExcludePropertyFromTransaction(field);
+                // Exclude the property, if we are in a transaction state
+                _queuedRealtimeServer.ExcludePropertyFromTransaction(field);
             }
             else
             {
                 // We are not in a transaction state
-                throw new ArgumentException("The connection is not in a transaction state");
+                throw new ArgumentException("The connection is not in a transaction state.");
             }
         }
 
         /// <summary>
-        /// Rolls back the transaction.
+        /// Fetches a document asynchronously.
         /// </summary>
-        /// <exception cref="ArgumentException">The connection is not in a transaction state</exception>
-        public async Task RollbackTransactionAsync()
+        /// <typeparam name="T">The document type.</typeparam>
+        /// <param name="collection">The collection.</param>
+        /// <param name="id">The identifier.</param>
+        /// <returns>
+        /// A snapshot of the fetched document from the realtime server.
+        /// </returns>
+        public async Task<Snapshot<T>> FetchDocAsync<T>(string collection, string id)
         {
-            if (_realtimeServer is QueuedRealtimeServer realtimeServer)
-            {
-                // Clear the operations
-                await realtimeServer.ClearOperationsAsync();
-
-                // Clear the documents cache and reset the transaction state
-                _documents.Clear();
-                _isTransaction = false;
-                _realtimeServer = _realtimeService.Server;
-            }
-            else
-            {
-                // We are not in a transaction state
-                throw new ArgumentException("The connection is not in a transaction state");
-            }
+            return await _realtimeServer.FetchDocAsync<T>(_handle, collection, id);
         }
 
         /// <summary>
@@ -166,9 +190,52 @@ namespace SIL.XForge.Realtime
             object doc = _documents.GetOrAdd((docConfig.CollectionName, id), key =>
             {
                 string otTypeName = docConfig.OTTypeName;
-                return new Document<T>(_realtimeServer, _handle, otTypeName, docConfig.CollectionName, id);
+                return new Document<T>(this, otTypeName, docConfig.CollectionName, id);
             });
             return (Document<T>)doc;
+        }
+
+        /// <summary>
+        /// Rolls back the transaction.
+        /// </summary>
+        /// <exception cref="ArgumentException">The connection is not in a transaction state.</exception>
+        public async Task RollbackTransactionAsync()
+        {
+            if (_isTransaction)
+            {
+                // Clear the operations
+                await _queuedRealtimeServer.ClearOperationsAsync();
+
+                // Reset the transaction state
+                _isTransaction = false;
+            }
+            else
+            {
+                // We are not in a transaction state
+                throw new ArgumentException("The connection is not in a transaction state.");
+            }
+        }
+
+        /// <summary>
+        /// Submits an operation asynchronously.
+        /// </summary>
+        /// <typeparam name="T">The document type.</typeparam>
+        /// <param name="collection">The collection.</param>
+        /// <param name="id">The identifier.</param>
+        /// <param name="op">The operation.</param>
+        /// <returns>
+        /// A snapshot of the document with the submitted operation from the realtime server.
+        /// </returns>
+        public async Task<Snapshot<T>> SubmitOpAsync<T>(string collection, string id, object op)
+        {
+            if (_isTransaction)
+            {
+                return await _queuedRealtimeServer.SubmitOpAsync<T>(_handle, collection, id, op);
+            }
+            else
+            {
+                return await _realtimeServer.SubmitOpAsync<T>(_handle, collection, id, op);
+            }
         }
 
         /// <summary>
