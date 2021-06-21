@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Jering.Javascript.NodeJS;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Utils;
@@ -184,8 +185,16 @@ namespace SIL.XForge.Realtime
             // Return the operation applied to the object
             Snapshot<T> snapshot = await FetchDocAsync<T>(handle, collection, id);
             string otTypeName = op is IEnumerable<Json0Op> || op is Json0Op ? OTType.Json0 : OTType.RichText;
-            snapshot.Data = await ApplyOpAsync(otTypeName, snapshot.Data, op);
-            snapshot.Version++;
+            try
+            {
+                snapshot.Data = await ApplyOpAsync(otTypeName, snapshot.Data, op);
+                snapshot.Version++;
+            }
+            catch (InvocationException)
+            {
+                // This will fail if the document is not yet in the database
+            }
+
             return snapshot;
         }
 
@@ -216,9 +225,11 @@ namespace SIL.XForge.Realtime
         /// <typeparam name="T">The type the field belongs to.</typeparam>
         /// <param name="op">The property field.</param>
         /// <remarks>
-        /// When a field is excluded from a transaction, operations to it are committed immediately.
-        /// Any operations lists that contain an excluded property will all be committed immediately.
-        /// This only applies to JSON0 operations.
+        /// Notes:
+        ///  - When a field is excluded from a transaction, operations to it are committed immediately.
+        ///  - Any operations lists that contain an excluded property will all be committed immediately.
+        ///  - You will need to call this again if you submit the operations to the actual RealtimeServer
+        ///  - This only applies to JSON0 operations.
         /// </remarks>
         internal void ExcludePropertyFromTransaction<T>(Expression<Func<T, object>> field)
         {
@@ -257,8 +268,9 @@ namespace SIL.XForge.Realtime
                     }
                 }
 
-                // Clear the queued operations
+                // Clear the queued operations and excluded operations
                 _queuedOperations.Clear();
+                _excludedProperties.Clear();
             }
             finally
             {

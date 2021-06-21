@@ -290,7 +290,7 @@ namespace SIL.XForge.Realtime
         }
 
         [Test]
-        public async Task SubmitOperationsAsync_DoesntClearExcludedProperties()
+        public async Task SubmitOperationsAsync_ClearsExcludedProperties()
         {
             // Setup
             var env = new TestEnvironment();
@@ -310,7 +310,7 @@ namespace SIL.XForge.Realtime
             await env.Service.SubmitOperationsAsync();
 
             // Verify the clear
-            Assert.AreEqual(env.Service.ExcludedProperties.Count, 1);
+            Assert.AreEqual(env.Service.ExcludedProperties.Count, 0);
             Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
 
             // Verify that the call was passed to the underlying realtime server
