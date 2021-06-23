@@ -112,9 +112,8 @@ namespace SIL.XForge.Realtime
         /// <remarks>
         /// The <see cref="MemoryConnection" /> does not support transactions.
         /// </remarks>
-        public Task RollbackTransactionAsync()
+        public void RollbackTransaction()
         {
-            return Task.CompletedTask;
         }
 
         /// <summary>

@@ -14,7 +14,7 @@ namespace SIL.XForge.Realtime
         void ExcludePropertyFromTransaction<T>(Expression<Func<T, object>> field);
         Task<Snapshot<T>> FetchDocAsync<T>(string collection, string id);
         IDocument<T> Get<T>(string id) where T : IIdentifiable;
-        Task RollbackTransactionAsync();
+        void RollbackTransaction();
         Task<Snapshot<T>> SubmitOpAsync<T>(string collection, string id, object op);
     }
 }

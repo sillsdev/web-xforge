@@ -43,14 +43,9 @@ namespace SIL.XForge.Realtime
         private bool _isTransaction;
 
         /// <summary>
-        /// The lock to ensure that the queue is not modified during commit or out of sequence.
-        /// </summary>
-        private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
-
-        /// <summary>
         /// The queued operations.
         /// </summary>
-        private List<QueuedOperation> _queuedOperations = new List<QueuedOperation>();
+        private ConcurrentQueue<QueuedOperation> _queuedOperations = new ConcurrentQueue<QueuedOperation>();
 
         /// <summary>
         /// The realtime server to create/modify documents with.
@@ -121,40 +116,29 @@ namespace SIL.XForge.Realtime
         {
             if (_isTransaction)
             {
-                await _lock.WaitAsync();
-                try
+                // Execute the queued operations
+                while (_queuedOperations.TryDequeue(out QueuedOperation queuedOperation))
                 {
-                    // Execute the queued operations
-                    foreach (QueuedOperation queuedOperation in _queuedOperations)
+                    switch (queuedOperation.Action)
                     {
-                        switch (queuedOperation.Action)
-                        {
-                            case QueuedAction.Create:
-                                await _realtimeServer.CreateDocAsync(queuedOperation.Handle, queuedOperation.Collection,
-                                    queuedOperation.Id, queuedOperation.Data, queuedOperation.OtTypeName);
-                                break;
-                            case QueuedAction.Delete:
-                                await _realtimeServer.DeleteDocAsync(queuedOperation.Handle, queuedOperation.Collection,
-                                    queuedOperation.Id);
-                                break;
-                            case QueuedAction.Submit:
-                                await _realtimeServer.SubmitOpAsync<object>(queuedOperation.Handle,
-                                    queuedOperation.Collection, queuedOperation.Id, queuedOperation.Op);
-                                break;
-                        }
+                        case QueuedAction.Create:
+                            await _realtimeServer.CreateDocAsync(queuedOperation.Handle, queuedOperation.Collection,
+                                queuedOperation.Id, queuedOperation.Data, queuedOperation.OtTypeName);
+                            break;
+                        case QueuedAction.Delete:
+                            await _realtimeServer.DeleteDocAsync(queuedOperation.Handle, queuedOperation.Collection,
+                                queuedOperation.Id);
+                            break;
+                        case QueuedAction.Submit:
+                            await _realtimeServer.SubmitOpAsync<object>(queuedOperation.Handle,
+                                queuedOperation.Collection, queuedOperation.Id, queuedOperation.Op);
+                            break;
                     }
-
-                    // Clear the queued operations and excluded operations
-                    _queuedOperations.Clear();
-                    _excludedProperties.Clear();
                 }
-                finally
-                {
-                    _lock.Release();
 
-                    // Reset the transaction state
-                    _isTransaction = false;
-                }
+                // Clear the excluded operations, and reset the transaction state
+                _excludedProperties.Clear();
+                _isTransaction = false;
             }
             else
             {
@@ -178,24 +162,16 @@ namespace SIL.XForge.Realtime
         {
             if (_isTransaction)
             {
-                await _lock.WaitAsync();
-                try
+                // Queue this operation
+                _queuedOperations.Enqueue(new QueuedOperation
                 {
-                    // Queue this operation
-                    _queuedOperations.Add(new QueuedOperation
-                    {
-                        Action = QueuedAction.Create,
-                        Collection = collection,
-                        Data = data,
-                        Handle = _handle,
-                        Id = id,
-                        OtTypeName = otTypeName,
-                    });
-                }
-                finally
-                {
-                    _lock.Release();
-                }
+                    Action = QueuedAction.Create,
+                    Collection = collection,
+                    Data = data,
+                    Handle = _handle,
+                    Id = id,
+                    OtTypeName = otTypeName,
+                });
 
                 // Return a snapshot
                 return new Snapshot<T>
@@ -220,22 +196,14 @@ namespace SIL.XForge.Realtime
         {
             if (_isTransaction)
             {
-                await _lock.WaitAsync();
-                try
+                // Queue this operation
+                _queuedOperations.Enqueue(new QueuedOperation
                 {
-                    // Queue this operation
-                    _queuedOperations.Add(new QueuedOperation
-                    {
-                        Action = QueuedAction.Delete,
-                        Collection = collection,
-                        Handle = _handle,
-                        Id = id,
-                    });
-                }
-                finally
-                {
-                    _lock.Release();
-                }
+                    Action = QueuedAction.Delete,
+                    Collection = collection,
+                    Handle = _handle,
+                    Id = id,
+                });
             }
             else
             {
@@ -309,21 +277,13 @@ namespace SIL.XForge.Realtime
         /// Rolls back the transaction.
         /// </summary>
         /// <exception cref="ArgumentException">The connection is not in a transaction state.</exception>
-        public async Task RollbackTransactionAsync()
+        public void RollbackTransaction()
         {
             if (_isTransaction)
             {
                 // Clear the operations
-                await _lock.WaitAsync();
-                try
-                {
-                    _excludedProperties.Clear();
-                    _queuedOperations.Clear();
-                }
-                finally
-                {
-                    _lock.Release();
-                }
+                _excludedProperties.Clear();
+                _queuedOperations.Clear();
 
                 // Reset the transaction state
                 _isTransaction = false;
@@ -349,36 +309,28 @@ namespace SIL.XForge.Realtime
         {
             if (_isTransaction)
             {
-                await _lock.WaitAsync();
-                try
+                // If we have a collection of JSON0 operations, see if any are to be committed immediately
+                if (_excludedProperties.Any() && op is IEnumerable<Json0Op> jsonOps)
                 {
-                    // If we have a collection of JSON0 operations, see if any are to be committed immediately
-                    if (_excludedProperties.Any() && op is IEnumerable<Json0Op> jsonOps)
+                    foreach (Json0Op jsonOp in jsonOps)
                     {
-                        foreach (Json0Op jsonOp in jsonOps)
+                        string path = (typeof(T).Name + "." + string.Join('.', jsonOp.Path)).ToLowerInvariant();
+                        if (_excludedProperties.Contains(path))
                         {
-                            string path = (typeof(T).Name + "." + string.Join('.', jsonOp.Path)).ToLowerInvariant();
-                            if (_excludedProperties.Contains(path))
-                            {
-                                return await _realtimeServer.SubmitOpAsync<T>(_handle, collection, id, op);
-                            }
+                            return await _realtimeServer.SubmitOpAsync<T>(_handle, collection, id, op);
                         }
                     }
+                }
 
-                    // Queue this operation
-                    _queuedOperations.Add(new QueuedOperation
-                    {
-                        Action = QueuedAction.Submit,
-                        Collection = collection,
-                        Handle = _handle,
-                        Id = id,
-                        Op = op,
-                    });
-                }
-                finally
+                // Queue this operation
+                _queuedOperations.Enqueue(new QueuedOperation
                 {
-                    _lock.Release();
-                }
+                    Action = QueuedAction.Submit,
+                    Collection = collection,
+                    Handle = _handle,
+                    Id = id,
+                    Op = op,
+                });
 
                 // Return the operation applied to the object
                 Snapshot<T> snapshot = await _realtimeServer.FetchDocAsync<T>(_handle, collection, id);

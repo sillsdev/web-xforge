@@ -593,7 +593,7 @@ namespace SIL.XForge.Scripture.Services
         {
             if (_projectDoc == null || _projectSecret == null)
             {
-                await _conn.RollbackTransactionAsync();
+                _conn.RollbackTransaction();
                 return;
             }
 
@@ -741,7 +741,7 @@ namespace SIL.XForge.Scripture.Services
             else
             {
                 // Rollback the operations (the repository was restored above)
-                await _conn.RollbackTransactionAsync();
+                _conn.RollbackTransaction();
             }
         }
 

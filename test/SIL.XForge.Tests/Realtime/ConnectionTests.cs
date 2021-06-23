@@ -255,7 +255,7 @@ namespace SIL.XForge.Realtime
         }
 
         [Test]
-        public async Task RollbackTransactionAsync_ClearsQueuedOperationsAndExcludedProperties()
+        public async Task RollbackTransaction_ClearsQueuedOperationsAndExcludedProperties()
         {
             // Setup
             var env = new TestEnvironment();
@@ -272,7 +272,7 @@ namespace SIL.XForge.Realtime
             Assert.AreEqual(env.Service.QueuedOperations.Count, 1);
 
             // SUT
-            await env.Service.RollbackTransactionAsync();
+            env.Service.RollbackTransaction();
 
             // Verify the clear
             Assert.AreEqual(env.Service.ExcludedProperties.Count, 0);
@@ -284,13 +284,13 @@ namespace SIL.XForge.Realtime
         }
 
         [Test]
-        public void RollbackTransactionAsync_RequiresBeginTransaction()
+        public void RollbackTransaction_RequiresBeginTransaction()
         {
             // Setup
             var env = new TestEnvironment();
 
             // SUT
-            Assert.ThrowsAsync<ArgumentException>(() => env.Service.RollbackTransactionAsync());
+            Assert.Throws<ArgumentException>(() => env.Service.RollbackTransaction());
         }
 
         [Test]
