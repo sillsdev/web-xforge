@@ -17,7 +17,7 @@ const routes: Routes = [
   { path: 'login', redirectTo: 'projects', pathMatch: 'full' },
   { path: 'migration', component: BetaMigrationComponent, canActivate: [AuthGuard] },
   { path: 'projects/:projectId/settings', component: SettingsComponent, canActivate: [SFAdminAuthGuard] },
-  { path: 'projects/:projectId/sync', component: SyncComponent, canActivate: [SFAdminAuthGuard] },
+  { path: 'projects/:projectId/sync', component: SyncComponent, canActivate: [AuthGuard] },
   { path: 'projects/:projectId', component: ProjectComponent, canActivate: [AuthGuard] },
   { path: 'projects', component: StartComponent, canActivate: [AuthGuard] },
   { path: 'system-administration', component: SystemAdministrationComponent, canActivate: [SystemAdminAuthGuard] },
