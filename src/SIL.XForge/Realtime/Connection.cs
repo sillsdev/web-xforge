@@ -1,10 +1,16 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
+using System.Threading;
 using System.Threading.Tasks;
+using Jering.Javascript.NodeJS;
 using SIL.ObjectModel;
 using SIL.XForge.Configuration;
 using SIL.XForge.Models;
+using SIL.XForge.Realtime.Json0;
+using SIL.XForge.Utils;
 
 namespace SIL.XForge.Realtime
 {
@@ -19,6 +25,14 @@ namespace SIL.XForge.Realtime
         private readonly ConcurrentDictionary<(string, string), object> _documents;
 
         /// <summary>
+        /// The properties to excluded from the transaction (i.e. to commit immediately).
+        /// </summary>
+        /// <remarks>
+        /// These are in the form "Type.Property.Property", in lower case.
+        /// </remarks>
+        private List<string> _excludedProperties = new List<string>();
+
+        /// <summary>
         /// The connection handle.
         /// </summary>
         private int _handle;
@@ -29,14 +43,19 @@ namespace SIL.XForge.Realtime
         private bool _isTransaction;
 
         /// <summary>
+        /// The lock to ensure that the queue is not modified during commit or out of sequence.
+        /// </summary>
+        private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
+
+        /// <summary>
+        /// The queued operations.
+        /// </summary>
+        private List<QueuedOperation> _queuedOperations = new List<QueuedOperation>();
+
+        /// <summary>
         /// The realtime server to create/modify documents with.
         /// </summary>
         private IRealtimeServer _realtimeServer;
-
-        /// <summary>
-        /// The queued realtime server to handle transactions.
-        /// </summary>
-        private QueuedRealtimeServer _queuedRealtimeServer;
 
         /// <summary>
         /// The realtime service to use for this connection.
@@ -51,9 +70,30 @@ namespace SIL.XForge.Realtime
         {
             _realtimeService = realtimeService;
             _realtimeServer = realtimeService.Server;
-            _queuedRealtimeServer = new QueuedRealtimeServer(_realtimeService.Server);
             _documents = new ConcurrentDictionary<(string, string), object>();
         }
+
+        /// <summary>
+        /// Gets the excluded properties.
+        /// </summary>
+        /// <value>
+        /// The excluded properties.
+        /// </value>
+        /// <remarks>
+        /// This is for unit test verification or debugging.
+        /// </remarks>
+        internal IReadOnlyCollection<string> ExcludedProperties => _excludedProperties;
+
+        /// <summary>
+        /// Gets the number of queued operations.
+        /// </summary>
+        /// <value>
+        /// The number of operations in the queue.
+        /// </value>
+        /// <remarks>
+        /// This is for unit test verification or debugging.
+        /// </remarks>
+        internal IReadOnlyCollection<QueuedOperation> QueuedOperations => _queuedOperations;
 
         /// <summary>
         /// Begins the transaction.
@@ -81,11 +121,40 @@ namespace SIL.XForge.Realtime
         {
             if (_isTransaction)
             {
-                // Submit the operations
-                await _queuedRealtimeServer.SubmitOperationsAsync();
+                await _lock.WaitAsync();
+                try
+                {
+                    // Execute the queued operations
+                    foreach (QueuedOperation queuedOperation in _queuedOperations)
+                    {
+                        switch (queuedOperation.Action)
+                        {
+                            case QueuedAction.Create:
+                                await _realtimeServer.CreateDocAsync(queuedOperation.Handle, queuedOperation.Collection,
+                                    queuedOperation.Id, queuedOperation.Data, queuedOperation.OtTypeName);
+                                break;
+                            case QueuedAction.Delete:
+                                await _realtimeServer.DeleteDocAsync(queuedOperation.Handle, queuedOperation.Collection,
+                                    queuedOperation.Id);
+                                break;
+                            case QueuedAction.Submit:
+                                await _realtimeServer.SubmitOpAsync<object>(queuedOperation.Handle,
+                                    queuedOperation.Collection, queuedOperation.Id, queuedOperation.Op);
+                                break;
+                        }
+                    }
 
-                // Reset the transaction state
-                _isTransaction = false;
+                    // Clear the queued operations and excluded operations
+                    _queuedOperations.Clear();
+                    _excludedProperties.Clear();
+                }
+                finally
+                {
+                    _lock.Release();
+
+                    // Reset the transaction state
+                    _isTransaction = false;
+                }
             }
             else
             {
@@ -109,7 +178,31 @@ namespace SIL.XForge.Realtime
         {
             if (_isTransaction)
             {
-                return await _queuedRealtimeServer.CreateDocAsync(_handle, collection, id, data, otTypeName);
+                await _lock.WaitAsync();
+                try
+                {
+                    // Queue this operation
+                    _queuedOperations.Add(new QueuedOperation
+                    {
+                        Action = QueuedAction.Create,
+                        Collection = collection,
+                        Data = data,
+                        Handle = _handle,
+                        Id = id,
+                        OtTypeName = otTypeName,
+                    });
+                }
+                finally
+                {
+                    _lock.Release();
+                }
+
+                // Return a snapshot
+                return new Snapshot<T>
+                {
+                    Data = data,
+                    Version = 1,
+                };
             }
             else
             {
@@ -127,7 +220,22 @@ namespace SIL.XForge.Realtime
         {
             if (_isTransaction)
             {
-                await _queuedRealtimeServer.DeleteDocAsync(_handle, collection, id);
+                await _lock.WaitAsync();
+                try
+                {
+                    // Queue this operation
+                    _queuedOperations.Add(new QueuedOperation
+                    {
+                        Action = QueuedAction.Delete,
+                        Collection = collection,
+                        Handle = _handle,
+                        Id = id,
+                    });
+                }
+                finally
+                {
+                    _lock.Release();
+                }
             }
             else
             {
@@ -153,7 +261,9 @@ namespace SIL.XForge.Realtime
             if (_isTransaction)
             {
                 // Exclude the property, if we are in a transaction state
-                _queuedRealtimeServer.ExcludePropertyFromTransaction(field);
+                string excluded =
+                    (typeof(T).Name + "." + string.Join('.', new ObjectPath(field).Items)).ToLowerInvariant();
+                _excludedProperties.Add(excluded);
             }
             else
             {
@@ -204,7 +314,16 @@ namespace SIL.XForge.Realtime
             if (_isTransaction)
             {
                 // Clear the operations
-                await _queuedRealtimeServer.ClearOperationsAsync();
+                await _lock.WaitAsync();
+                try
+                {
+                    _excludedProperties.Clear();
+                    _queuedOperations.Clear();
+                }
+                finally
+                {
+                    _lock.Release();
+                }
 
                 // Reset the transaction state
                 _isTransaction = false;
@@ -230,7 +349,51 @@ namespace SIL.XForge.Realtime
         {
             if (_isTransaction)
             {
-                return await _queuedRealtimeServer.SubmitOpAsync<T>(_handle, collection, id, op);
+                await _lock.WaitAsync();
+                try
+                {
+                    // If we have a collection of JSON0 operations, see if any are to be committed immediately
+                    if (_excludedProperties.Any() && op is IEnumerable<Json0Op> jsonOps)
+                    {
+                        foreach (Json0Op jsonOp in jsonOps)
+                        {
+                            string path = (typeof(T).Name + "." + string.Join('.', jsonOp.Path)).ToLowerInvariant();
+                            if (_excludedProperties.Contains(path))
+                            {
+                                return await _realtimeServer.SubmitOpAsync<T>(_handle, collection, id, op);
+                            }
+                        }
+                    }
+
+                    // Queue this operation
+                    _queuedOperations.Add(new QueuedOperation
+                    {
+                        Action = QueuedAction.Submit,
+                        Collection = collection,
+                        Handle = _handle,
+                        Id = id,
+                        Op = op,
+                    });
+                }
+                finally
+                {
+                    _lock.Release();
+                }
+
+                // Return the operation applied to the object
+                Snapshot<T> snapshot = await _realtimeServer.FetchDocAsync<T>(_handle, collection, id);
+                string otTypeName = op is IEnumerable<Json0Op> || op is Json0Op ? OTType.Json0 : OTType.RichText;
+                try
+                {
+                    snapshot.Data = await _realtimeServer.ApplyOpAsync(otTypeName, snapshot.Data, op);
+                    snapshot.Version++;
+                }
+                catch (InvocationException)
+                {
+                    // This will fail if the document is not yet in the database
+                }
+
+                return snapshot;
             }
             else
             {
