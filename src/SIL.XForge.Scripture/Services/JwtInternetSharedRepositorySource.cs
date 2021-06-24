@@ -153,7 +153,7 @@ namespace SIL.XForge.Scripture.Services
         /// <summary> Get the latest public revision. </summary>
         private string GetBaseRevision(string repository)
         {
-            return _hgWrapper.GetLastPublicRevision(repository);
+            return _hgWrapper.GetLastPublicRevision(repository, allowEmptyIfRestoredFromBackup: true);
         }
 
         /// <summary> Mark all changesets available on the PT server public. </summary>

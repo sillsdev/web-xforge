@@ -29,12 +29,56 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>
+        /// Backups the repository.
+        /// </summary>
+        /// <param name="repository">The repository.</param>
+        /// <param name="backupFile">The backup file to create. This string must be encoded correctly.</param>
+        public void BackupRepository(string repository, string backupFile)
+        {
+            RunCommand(repository, $"bundle -a --type v2 \"{backupFile}\"");
+        }
+
+        /// <summary>
         /// Get the most recent revision id of the commit from the last push or pull with the PT send/receive server.
         /// </summary>
-        public string GetLastPublicRevision(string repository)
+        /// <param name="repository">The full path to the repository directory.</param>
+        /// <param name="allowEmptyIfRestoredFromBackup">
+        /// If set to <c>true</c>, allow an empty revision if this is a restored backup.
+        /// </param>
+        /// <returns>
+        /// The Mercurial revision identifier.
+        /// </returns>
+        public string GetLastPublicRevision(string repository, bool allowEmptyIfRestoredFromBackup)
         {
-            string ids = HgWrapper.RunCommand(repository, "log --rev \"public()\" --template \"{node}\n\"");
-            return ids.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault();
+            string ids = RunCommand(repository, "log --rev \"public()\" --template \"{node}\n\"");
+            string revision = ids.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?.Trim();
+
+            // If the revision is empty (likely due to restoring a backup), just get the top revision
+            // However, if we are calling this from JwtInternetSharedRepository, we do not want the very latest if
+            // we have restored from a backup - the very latest will be the changeset created by ParatextSyncRunner,
+            // which will not be on the server, and throw a 500 error when "pullbundle" is called on the PT server.
+            if (!allowEmptyIfRestoredFromBackup && string.IsNullOrWhiteSpace(revision))
+            {
+                ids = RunCommand(repository, "log --template \"{node}\n\"");
+                revision = ids.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.Trim();
+            }
+
+            return revision;
+        }
+
+        /// <summary>
+        /// Restores the repository.
+        /// </summary>
+        /// <param name="destination">The destination to restore to.</param>
+        /// <param name="backupFile">The backup file to restore from. This string must be encoded correctly.</param>
+        public void RestoreRepository(string destination, string backupFile)
+        {
+            if (Hg.Default == null)
+                throw new InvalidOperationException("Hg default has not been set.");
+
+            Hg.Default.Init(destination);
+            Hg.Default.Unbundle(destination, backupFile);
+            Hg.Default.Update(destination);
         }
 
         /// <summary> Set the default Mercurial installation. Must be called for all other methods to work. </summary>

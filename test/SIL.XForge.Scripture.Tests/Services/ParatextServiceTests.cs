@@ -726,7 +726,8 @@ namespace SIL.XForge.Scripture.Services
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             ScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
             string lastPublicRevision = "abc123";
-            env.MockHgWrapper.GetLastPublicRevision(scrText.Directory).Returns(lastPublicRevision);
+            env.MockHgWrapper.GetLastPublicRevision(scrText.Directory, allowEmptyIfRestoredFromBackup: false)
+                .Returns(lastPublicRevision);
 
             // SUT
             string latestSharedVersion = env.Service.GetLatestSharedVersion(user01Secret, ptProjectId);
@@ -751,9 +752,148 @@ namespace SIL.XForge.Scripture.Services
                 "DBL resources do not have hg repositories to have a last pushed or pulled hg commit id.");
             // Wouldn't have ended up trying to find a ScrText or querying hg.
             env.MockScrTextCollection.DidNotReceiveWithAnyArgs().FindById(default, default);
-            env.MockHgWrapper.DidNotReceiveWithAnyArgs().GetLastPublicRevision(default);
+            env.MockHgWrapper.DidNotReceiveWithAnyArgs().GetLastPublicRevision(default, default);
         }
 
+        [Test]
+        public void BackupExists_Failure()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            env.MockFileSystemService.FileExists(Arg.Any<string>()).Throws(new UnauthorizedAccessException());
+
+            // SUT
+            bool result = env.Service.BackupExists(user01Secret, ptProjectId);
+            Assert.IsFalse(result);
+        }
+
+        [Test]
+        public void BackupExists_Missing()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            env.MockFileSystemService.FileExists(Arg.Any<string>()).Returns(false);
+
+            // SUT
+            bool result = env.Service.BackupExists(user01Secret, ptProjectId);
+            Assert.IsFalse(result);
+        }
+
+        [Test]
+        public void BackupExists_Success()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            env.MockFileSystemService.FileExists(Arg.Any<string>()).Returns(true);
+
+            // SUT
+            bool result = env.Service.BackupExists(user01Secret, ptProjectId);
+            Assert.IsTrue(result);
+        }
+
+        [Test]
+        public void BackupRepository_Failure()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            env.MockFileSystemService.FileExists(Arg.Any<string>()).Throws(new UnauthorizedAccessException());
+
+            // SUT
+            bool result = env.Service.BackupRepository(user01Secret, ptProjectId);
+            Assert.IsFalse(result);
+        }
+
+        [Test]
+        public void BackupRepository_InvalidProject()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            string ptProjectId = "invalid_project";
+
+            // SUT
+            bool result = env.Service.BackupRepository(user01Secret, ptProjectId);
+            Assert.IsFalse(result);
+        }
+
+        [Test]
+        public void BackupRepository_Success()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+
+            // SUT
+            bool result = env.Service.BackupRepository(user01Secret, ptProjectId);
+            Assert.IsTrue(result);
+        }
+
+        [Test]
+        public void RestoreRepository_Failure()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            env.MockFileSystemService.FileExists(Arg.Any<string>()).Throws(new UnauthorizedAccessException());
+
+            // SUT
+            bool result = env.Service.RestoreRepository(user01Secret, ptProjectId);
+            Assert.IsFalse(result);
+        }
+
+        [Test]
+        public void RestoreRepository_Missing()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            env.MockFileSystemService.FileExists(Arg.Any<string>()).Returns(false);
+
+            // SUT
+            bool result = env.Service.RestoreRepository(user01Secret, ptProjectId);
+            Assert.IsFalse(result);
+        }
+
+        [Test]
+        public void RestoreRepository_Success()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            env.MockFileSystemService.FileExists(Arg.Any<string>()).Returns(true);
+
+            // SUT
+            bool result = env.Service.RestoreRepository(user01Secret, ptProjectId);
+            Assert.IsTrue(result);
+        }
 
         private class TestEnvironment
         {
@@ -1104,7 +1244,11 @@ namespace SIL.XForge.Scripture.Services
                     Arg.Any<SharedRepositorySource>(), Arg.Any<IEnumerable<SharedRepository>>())
                     .Returns(callInfo => new SharedProject()
                     {
-                        SendReceiveId = HexId.FromStr(callInfo.ArgAt<string>(0))
+                        SendReceiveId = HexId.FromStr(callInfo.ArgAt<string>(0)),
+                        Repository = new SharedRepository
+                        {
+                            SendReceiveId = HexId.FromStr(callInfo.ArgAt<string>(0)),
+                        },
                     });
                 MockSharingLogicWrapper.ShareChanges(Arg.Any<List<SharedProject>>(), Arg.Any<SharedRepositorySource>(),
                     out Arg.Any<List<SendReceiveResult>>(), Arg.Any<List<SharedProject>>()).Returns(true);
