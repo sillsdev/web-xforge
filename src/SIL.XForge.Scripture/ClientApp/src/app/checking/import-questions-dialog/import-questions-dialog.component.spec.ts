@@ -234,8 +234,8 @@ describe('ImportQuestionsDialogComponent', () => {
 });
 
 @Directive({
-  // ts lint complains that a directive should be used as an attribute
-  // tslint:disable-next-line:directive-selector
+  // es lint complains that a directive should be used as an attribute
+  // eslint-disable-next-line @angular-eslint/directive-selector
   selector: 'viewContainerDirective'
 })
 class ViewContainerDirective {
