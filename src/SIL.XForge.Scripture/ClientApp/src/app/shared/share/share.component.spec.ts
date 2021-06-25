@@ -25,7 +25,7 @@ import { ShareControlComponent } from './share-control.component';
 import { ShareDialogComponent } from './share-dialog.component';
 import { ShareComponent } from './share.component';
 
-const mockedMdcDialogRef: MdcDialogRef<ShareDialogComponent> = mock(MdcDialogRef);
+const mockedMdcDialogRef = mock<MdcDialogRef<ShareDialogComponent>>(MdcDialogRef);
 const mockedProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
 const mockedActivatedRoute = mock(ActivatedRoute);
