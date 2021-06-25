@@ -56,12 +56,12 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
     }
   }
 
-  async ngOnInit() {
+  async ngOnInit(): Promise<void> {
     this.user = await this.userService.getCurrentUser();
     this.mediaDevicesUnsupported = this.navigator.mediaDevices?.getUserMedia == null;
   }
 
-  processAudio(audioVideoWebMURL: string) {
+  processAudio(audioVideoWebMURL: string): void {
     if (this.recordRTC == null) {
       return;
     }
@@ -81,7 +81,7 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
     this.status.emit({ status: 'reset' });
   }
 
-  startRecording() {
+  startRecording(): void {
     const mediaConstraints: MediaStreamConstraints = { audio: true };
     if (this.mediaDevicesUnsupported) {
       this.status.emit({ status: 'denied' });
@@ -93,7 +93,7 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
       .then(this.successCallback.bind(this), this.errorCallback.bind(this));
   }
 
-  async stopRecording() {
+  async stopRecording(): Promise<void> {
     if (this.recordRTC == null || this.stream == null) {
       return;
     }
@@ -102,7 +102,7 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
     this.stream.getAudioTracks().forEach(track => track.stop());
     this.status.emit({ status: 'stopped' });
     // Additional promise for when the audio has been processed and is available
-    await new Promise(resolve => {
+    await new Promise<void>(resolve => {
       const statusPromise = this.status.subscribe((status: AudioAttachment) => {
         if (status.status === 'processed') {
           resolve();
@@ -112,12 +112,12 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
     });
   }
 
-  private errorCallback() {
+  private errorCallback(): void {
     this.status.emit({ status: 'denied' });
     this.noticeService.show(translate('checking_audio_recorder.mic_access_denied'));
   }
 
-  private successCallback(stream: MediaStream) {
+  private successCallback(stream: MediaStream): void {
     const options = {
       disableLogs: true,
       type: 'audio',

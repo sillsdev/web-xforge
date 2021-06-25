@@ -442,7 +442,7 @@ class TestEnvironment {
   location: Location;
 
   readonly ngZone: NgZone = TestBed.inject(NgZone);
-  readonly mockedAnsweredDialogRef: MdcDialogRef<QuestionAnsweredDialogComponent> = mock(MdcDialogRef);
+  readonly mockedAnsweredDialogRef = mock<MdcDialogRef<QuestionAnsweredDialogComponent>>(MdcDialogRef);
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   adminUser = this.createUser('01', SFProjectRole.ParatextAdministrator);
