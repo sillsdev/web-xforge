@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
@@ -43,10 +44,8 @@ namespace SIL.XForge.Scripture.Services
     /// </summary>
     public class ParatextSyncRunner : IParatextSyncRunner
     {
-        internal static readonly IEqualityComparer<List<Chapter>> ChapterListEqualityComparer =
+        private static readonly IEqualityComparer<List<Chapter>> _chapterListEqualityComparer =
             SequenceEqualityComparer.Create(new ChapterEqualityComparer());
-        internal static readonly IEqualityComparer<Dictionary<string, string>> PermissionDictionaryEqualityComparer =
-            new DictionaryComparer<string, string>();
 
         private readonly IRepository<UserSecret> _userSecrets;
         private readonly IRepository<SFProjectSecret> _projectSecrets;
@@ -85,19 +84,29 @@ namespace SIL.XForge.Scripture.Services
         // Do not allow multiple sync jobs to run in parallel on the same project by creating a mutex on the projectId
         // parameter, i.e. "{0}"
         [Mutex("{0}")]
-        public async Task RunAsync(string projectId, string userId, bool trainEngine)
+        public async Task RunAsync(string projectId, string userId, bool trainEngine, CancellationToken token)
         {
+            // Whether or not we can rollback Paratext
+            bool canRollbackParatext = false;
             try
             {
-                if (!await InitAsync(projectId, userId))
+                if (!await InitAsync(projectId, userId, token))
                 {
-                    await CompleteSync(false);
+                    await CompleteSync(false, canRollbackParatext, token);
                     return;
                 }
 
                 string targetParatextId = _projectDoc.Data.ParatextId;
                 string sourceParatextId = _projectDoc.Data.TranslateConfig.Source?.ParatextId;
                 string sourceProjectRef = _projectDoc.Data.TranslateConfig.Source?.ProjectRef;
+
+                // Determine if we can rollback Paratext
+                canRollbackParatext = _paratextService.BackupExists(_userSecret, targetParatextId);
+                if (!canRollbackParatext)
+                {
+                    // Attempt to create a backup if we cannot rollback
+                    canRollbackParatext = _paratextService.BackupRepository(_userSecret, targetParatextId);
+                }
 
                 var targetTextDocsByBook = new Dictionary<int, SortedList<int, IDocument<TextData>>>();
                 var questionDocsByBook = new Dictionary<int, IReadOnlyList<IDocument<Question>>>();
@@ -145,6 +154,13 @@ namespace SIL.XForge.Scripture.Services
                         await UpdateParatextNotesAsync(text, questionDocs);
                 }
 
+                // Check for cancellation
+                if (token.IsCancellationRequested)
+                {
+                    await CompleteSync(false, canRollbackParatext, token);
+                    return;
+                }
+
                 // Use the new progress bar
                 var progress = new SyncProgress();
                 try
@@ -153,12 +169,19 @@ namespace SIL.XForge.Scripture.Services
                     progress.ProgressUpdated += SyncProgress_ProgressUpdated;
 
                     // perform Paratext send/receive
-                    await _paratextService.SendReceiveAsync(_userSecret, targetParatextId, progress);
+                    await _paratextService.SendReceiveAsync(_userSecret, targetParatextId, progress, token);
                 }
                 finally
                 {
                     // Deregister the handler
                     progress.ProgressUpdated -= SyncProgress_ProgressUpdated;
+                }
+
+                // Check for cancellation
+                if (token.IsCancellationRequested)
+                {
+                    await CompleteSync(false, canRollbackParatext, token);
+                    return;
                 }
 
                 var targetBooks = new HashSet<int>(_paratextService.GetBookList(_userSecret, targetParatextId));
@@ -169,6 +192,13 @@ namespace SIL.XForge.Scripture.Services
 
                 var targetBooksToDelete = new HashSet<int>(_projectDoc.Data.Texts.Select(t => t.BookNum)
                     .Except(targetBooks));
+
+                // Check for cancellation
+                if (token.IsCancellationRequested)
+                {
+                    await CompleteSync(false, canRollbackParatext, token);
+                    return;
+                }
 
                 // delete all data for removed books
                 if (targetBooksToDelete.Count > 0)
@@ -185,6 +215,13 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
 
+                // Check for cancellation
+                if (token.IsCancellationRequested)
+                {
+                    await CompleteSync(false, canRollbackParatext, token);
+                    return;
+                }
+
                 // Update user resource access, if this project has a source resource
                 // The updating of a source project's permissions is done when that project is synced.
                 if (TranslationSuggestionsEnabled
@@ -196,6 +233,8 @@ namespace SIL.XForge.Scripture.Services
                     IDocument<SFProject> sourceProject = await _conn.FetchAsync<SFProject>(sourceProjectRef);
                     if (sourceProject.IsLoaded)
                     {
+                        // NOTE: The following additions/removals not included in the transaction
+
                         // Add new users who are in the target project, but not the source project
                         List<string> usersToAdd =
                             _projectDoc.Data.UserRoles.Keys.Except(sourceProject.Data.UserRoles.Keys).ToList();
@@ -217,7 +256,7 @@ namespace SIL.XForge.Scripture.Services
                         foreach (string uid in usersToCheck)
                         {
                             string permission =
-                                await _paratextService.GetResourcePermissionAsync(sourceParatextId, uid);
+                                await _paratextService.GetResourcePermissionAsync(sourceParatextId, uid, token);
                             if (permission == TextInfoPermission.None)
                             {
                                 // As resource projects don't have administrators, connect as the user we are to remove
@@ -228,7 +267,14 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 await UpdateDocsAsync(targetParatextId, targetTextDocsByBook, questionDocsByBook, targetBooks, sourceBooks);
-                await _projectService.UpdatePermissionsAsync(userId, _projectDoc);
+                await _projectService.UpdatePermissionsAsync(userId, _projectDoc, token);
+
+                // Check for cancellation
+                if (token.IsCancellationRequested)
+                {
+                    await CompleteSync(false, canRollbackParatext, token);
+                    return;
+                }
 
                 if (TranslationSuggestionsEnabled && trainEngine)
                 {
@@ -236,12 +282,12 @@ namespace SIL.XForge.Scripture.Services
                     await _engineService.StartBuildByProjectIdAsync(projectId);
                 }
 
-                await CompleteSync(true);
+                await CompleteSync(true, canRollbackParatext, token);
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "Error occurred while executing Paratext sync for project '{Project}'", projectId);
-                await CompleteSync(false);
+                await CompleteSync(false, canRollbackParatext, token);
             }
             finally
             {
@@ -293,16 +339,18 @@ namespace SIL.XForge.Scripture.Services
                     else
                     {
                         // update text info
-                        op.Set(pd => pd.Texts[textIndex].Chapters, newSetOfChapters, ChapterListEqualityComparer);
+                        op.Set(pd => pd.Texts[textIndex].Chapters, newSetOfChapters, _chapterListEqualityComparer);
                         op.Set(pd => pd.Texts[textIndex].HasSource, hasSource);
                     }
                 });
             }
         }
 
-        internal async Task<bool> InitAsync(string projectId, string userId)
+        internal async Task<bool> InitAsync(string projectId, string userId, CancellationToken token)
         {
             _conn = await _realtimeService.ConnectAsync();
+            _conn.BeginTransaction();
+            _conn.ExcludePropertyFromTransaction<SFProject>(op => op.Sync.PercentCompleted);
             _projectDoc = await _conn.FetchAsync<SFProject>(projectId);
             if (!_projectDoc.IsLoaded)
                 return false;
@@ -316,7 +364,7 @@ namespace SIL.XForge.Scripture.Services
             List<User> paratextUsers = await _realtimeService.QuerySnapshots<User>()
                 .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
                 .ToListAsync();
-            await _notesMapper.InitAsync(_userSecret, _projectSecret, paratextUsers, _projectDoc.Data.ParatextId);
+            await _notesMapper.InitAsync(_userSecret, _projectSecret, paratextUsers, _projectDoc.Data.ParatextId, token);
 
             await _projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.Sync.PercentCompleted, 0));
             return true;
@@ -541,10 +589,13 @@ namespace SIL.XForge.Scripture.Services
             await Task.WhenAll(tasks);
         }
 
-        private async Task CompleteSync(bool successful)
+        private async Task CompleteSync(bool successful, bool canRollbackParatext, CancellationToken token)
         {
             if (_projectDoc == null || _projectSecret == null)
+            {
+                _conn.RollbackTransaction();
                 return;
+            }
 
             bool updateRoles = true;
             IReadOnlyDictionary<string, string> ptUserRoles;
@@ -560,13 +611,22 @@ namespace SIL.XForge.Scripture.Services
                 try
                 {
                     ptUserRoles = await _paratextService.GetProjectRolesAsync(_userSecret,
-                        _projectDoc.Data.ParatextId);
+                        _projectDoc.Data.ParatextId, token);
                 }
-                catch (HttpRequestException)
+                catch (Exception ex)
                 {
-                    // This throws a 404 if the user does not have access to the project
-                    ptUserRoles = new Dictionary<string, string>();
-                    updateRoles = false;
+                    if (ex is HttpRequestException || ex is OperationCanceledException)
+                    {
+                        // This throws a 404 if the user does not have access to the project
+                        // A task cancelled exception will be thrown if the user cancels the task
+                        // Note: OperationCanceledException includes TaskCanceledException
+                        ptUserRoles = new Dictionary<string, string>();
+                        updateRoles = false;
+                    }
+                    else
+                    {
+                        throw;
+                    }
                 }
             }
 
@@ -576,10 +636,18 @@ namespace SIL.XForge.Scripture.Services
                     .Select(u => new { UserId = u.Id, ParatextId = u.ParatextId })
                     .ToListAsync();
 
+            // If we have failed, restore the repository, if we can
+            if (!successful && canRollbackParatext)
+            {
+                _paratextService.RestoreRepository(_userSecret, _projectDoc.Data.ParatextId);
+            }
+
+            // NOTE: This is executed outside of the transaction because it modifies "Sync.PercentCompleted"
             await _projectDoc.SubmitJson0OpAsync(op =>
             {
                 op.Unset(pd => pd.Sync.PercentCompleted);
                 op.Set(pd => pd.Sync.LastSyncSuccessful, successful);
+
                 // Get the latest shared revision of the local hg repo. On a failed synchronize attempt, the data
                 // is known to be out of sync if the revision does not match the corresponding revision stored
                 // on the project doc.
@@ -597,7 +665,14 @@ namespace SIL.XForge.Scripture.Services
                 // an event for each individual op even if they are applied as a batch, so this needs to be set last,
                 // otherwise the info about the sync won't be set yet when the frontend determines that the sync is
                 // complete.
-                op.Inc(pd => pd.Sync.QueuedCount, -1);
+                if (_projectDoc.Data.Sync.QueuedCount > 0)
+                {
+                    op.Inc(pd => pd.Sync.QueuedCount, -1);
+                }
+                else
+                {
+                    op.Set(pd => pd.Sync.QueuedCount, 0);
+                }
 
                 if (updateRoles)
                 {
@@ -613,7 +688,10 @@ namespace SIL.XForge.Scripture.Services
                 bool isRtl = _paratextService
                     .IsProjectLanguageRightToLeft(_userSecret, _projectDoc.Data.ParatextId);
                 op.Set(pd => pd.IsRightToLeft, isRtl);
-                if (TranslationSuggestionsEnabled)
+
+                // The source can be null if there was an error getting a resource from the DBL
+                if (TranslationSuggestionsEnabled
+                    && _projectDoc.Data.TranslateConfig.Source != null)
                 {
                     bool sourceIsRtl = _paratextService
                         .IsProjectLanguageRightToLeft(_userSecret, _projectDoc.Data.TranslateConfig.Source.ParatextId);
@@ -628,7 +706,42 @@ namespace SIL.XForge.Scripture.Services
                 {
                     foreach (SyncUser syncUser in _notesMapper.NewSyncUsers)
                         u.Add(p => p.SyncUsers, syncUser);
+
+                    // If we have an id in the job ids collection, remove the first one
+                    if (_projectSecret.JobIds.Any())
+                    {
+                        u.Remove(p => p.JobIds, _projectSecret.JobIds.First());
+                    }
                 });
+            }
+            else
+            {
+                // If we have an id in the job ids collection, remove the first one
+                if (_projectSecret.JobIds.Any())
+                {
+                    await _projectSecrets.UpdateAsync(_projectSecret.Id, u =>
+                    {
+                        u.Remove(p => p.JobIds, _projectSecret.JobIds.First());
+                    });
+                }
+            }
+
+            // Commit or rollback the transaction, depending on success
+            if (successful)
+            {
+                // Write the operations to the database
+                await _conn.CommitTransactionAsync();
+
+                // Backup the repository
+                if (_projectDoc.Data.ParatextId.Length != SFInstallableDblResource.ResourceIdentifierLength)
+                {
+                    _paratextService.BackupRepository(_userSecret, _projectDoc.Data.ParatextId);
+                }
+            }
+            else
+            {
+                // Rollback the operations (the repository was restored above)
+                _conn.RollbackTransaction();
             }
         }
 
@@ -665,8 +778,8 @@ namespace SIL.XForge.Scripture.Services
         {
             public bool Equals(Chapter x, Chapter y)
             {
-                return x.Number == y.Number && x.LastVerse == y.LastVerse && x.IsValid == y.IsValid
-                    && PermissionDictionaryEqualityComparer.Equals(x.Permissions, y.Permissions);
+                // We do not compare permissions, as these are modified in SFProjectService
+                return x.Number == y.Number && x.LastVerse == y.LastVerse && x.IsValid == y.IsValid;
             }
 
             public int GetHashCode(Chapter obj)
@@ -676,30 +789,6 @@ namespace SIL.XForge.Scripture.Services
                 code = code * 31 + obj.LastVerse.GetHashCode();
                 code = code * 31 + obj.IsValid.GetHashCode();
                 return code;
-            }
-        }
-
-        private class DictionaryComparer<TKey, TValue> : IEqualityComparer<Dictionary<TKey, TValue>>
-        {
-            public bool Equals(Dictionary<TKey, TValue> x, Dictionary<TKey, TValue> y)
-            {
-                return (x ?? new Dictionary<TKey, TValue>()).OrderBy(p => p.Key)
-                    .SequenceEqual((y ?? new Dictionary<TKey, TValue>()).OrderBy(p => p.Key));
-            }
-
-            public int GetHashCode(Dictionary<TKey, TValue> obj)
-            {
-                int hash = 0;
-                if (obj != null)
-                {
-                    foreach (KeyValuePair<TKey, TValue> element in obj)
-                    {
-                        hash ^= element.Key.GetHashCode();
-                        hash ^= element.Value.GetHashCode();
-                    }
-                }
-
-                return hash;
             }
         }
     }

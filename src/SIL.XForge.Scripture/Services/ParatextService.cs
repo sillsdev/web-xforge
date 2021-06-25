@@ -156,11 +156,11 @@ namespace SIL.XForge.Scripture.Services
         /// resource if needed.
         /// </summary>
         public async Task SendReceiveAsync(UserSecret userSecret, string paratextId,
-            IProgress<ProgressState> progress = null)
+            IProgress<ProgressState> progress = null, CancellationToken token = default)
         {
             if (userSecret == null || paratextId == null) { throw new ArgumentNullException(); }
 
-            IInternetSharedRepositorySource source = await GetInternetSharedRepositorySource(userSecret.Id);
+            IInternetSharedRepositorySource source = await GetInternetSharedRepositorySource(userSecret.Id, token);
             IEnumerable<SharedRepository> repositories = source.GetRepositories();
             IEnumerable<ProjectMetadata> projectsMetadata = source.GetProjectsMetaData();
             IEnumerable<string> projectGuids = projectsMetadata.Select(pmd => pmd.ProjectGuid.Id);
@@ -169,7 +169,8 @@ namespace SIL.XForge.Scripture.Services
             if (!projectGuids.Contains(paratextId))
             {
                 // See if this is a resource
-                IReadOnlyList<ParatextResource> resources = await this.GetResourcesInternalAsync(userSecret.Id, true);
+                IReadOnlyList<ParatextResource> resources =
+                    await this.GetResourcesInternalAsync(userSecret.Id, true, token);
                 ParatextResource resource = resources.SingleOrDefault(r => r.ParatextId == paratextId);
                 if (resource != null)
                 {
@@ -213,7 +214,8 @@ namespace SIL.XForge.Scripture.Services
         /// <summary> Get Paratext projects that a user has access to. </summary>
         public async Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret)
         {
-            IInternetSharedRepositorySource ptRepoSource = await GetInternetSharedRepositorySource(userSecret.Id);
+            IInternetSharedRepositorySource ptRepoSource = await GetInternetSharedRepositorySource(userSecret.Id,
+                CancellationToken.None);
             List<SharedRepository> remotePtProjects = ptRepoSource.GetRepositories().ToList();
             List<ProjectMetadata> projectMetadata = ptRepoSource.GetProjectsMetaData().ToList();
 
@@ -226,7 +228,7 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>Get Paratext resources that a user has access to. </summary>
         public async Task<IReadOnlyList<ParatextResource>> GetResourcesAsync(string userId)
         {
-            return await this.GetResourcesInternalAsync(userId, false);
+            return await this.GetResourcesInternalAsync(userId, false, CancellationToken.None);
         }
 
         /// <summary>
@@ -240,7 +242,8 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>
         /// Returns `userSecret`'s role on a PT project according to the PT Registry.
         /// </summary>
-        public async Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId)
+        public async Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId,
+            CancellationToken token)
         {
             if (userSecret.ParatextTokens == null)
                 return Attempt.Failure((string)null);
@@ -251,7 +254,7 @@ namespace SIL.XForge.Scripture.Services
                 // Paratext RegistryServer has methods to do this, but it is unreliable to use it in a multi-user
                 // environment so instead we call the registry API.
                 string response = await CallApiAsync(userSecret, HttpMethod.Get,
-                    $"projects/{paratextId}/members/{subClaim.Value}");
+                    $"projects/{paratextId}/members/{subClaim.Value}", null, token);
                 var memberObj = JObject.Parse(response);
                 return Attempt.Success((string)memberObj["role"]);
             }
@@ -278,7 +281,8 @@ namespace SIL.XForge.Scripture.Services
         /// <remarks>
         /// See <see cref="TextInfoPermission" /> for permission values.
         /// </remarks>
-        public async Task<string> GetResourcePermissionAsync(string paratextId, string userId)
+        public async Task<string> GetResourcePermissionAsync(string paratextId, string userId,
+            CancellationToken token)
         {
             // See if the source is even a resource
             if (!IsResource(paratextId))
@@ -286,7 +290,7 @@ namespace SIL.XForge.Scripture.Services
                 // Default to no permissions for projects used as sources
                 return TextInfoPermission.None;
             }
-            using (ParatextAccessLock accessLock = await GetParatextAccessLock(userId))
+            using (ParatextAccessLock accessLock = await GetParatextAccessLock(userId, token))
             {
                 bool canRead = SFInstallableDblResource.CheckResourcePermission(
                         paratextId,
@@ -311,7 +315,7 @@ namespace SIL.XForge.Scripture.Services
         /// A dictionary where the key is the SF user ID and the value is Paratext username. (May be empty)
         /// </returns>
         public async Task<IReadOnlyDictionary<string, string>> GetParatextUsernameMappingAsync(UserSecret userSecret,
-            string paratextId)
+            string paratextId, CancellationToken token)
         {
             // Skip all the work if the project is a resource. Resources don't have project members
             if (IsResource(paratextId))
@@ -321,7 +325,7 @@ namespace SIL.XForge.Scripture.Services
 
             // Get the mapping for paratext users ids to usernames from the registry
             string response = await CallApiAsync(userSecret, HttpMethod.Get,
-                $"projects/{paratextId}/members");
+                $"projects/{paratextId}/members", null, token);
             Dictionary<string, string> paratextMapping = JArray.Parse(response).OfType<JObject>()
                 .Where(m => !string.IsNullOrEmpty((string)m["userId"])
                     && !string.IsNullOrEmpty((string)m["username"]))
@@ -349,7 +353,8 @@ namespace SIL.XForge.Scripture.Services
         /// A dictionary is returned, as permissions can be updated.
         /// </remarks>
         public async Task<Dictionary<string, string>> GetPermissionsAsync(UserSecret userSecret, SFProject project,
-            IReadOnlyDictionary<string, string> ptUsernameMapping, int book = 0, int chapter = 0)
+            IReadOnlyDictionary<string, string> ptUsernameMapping, int book = 0, int chapter = 0,
+            CancellationToken token = default)
         {
             var permissions = new Dictionary<string, string>();
 
@@ -357,7 +362,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 foreach (string uid in project.UserRoles.Keys)
                 {
-                    permissions.Add(uid, await this.GetResourcePermissionAsync(project.ParatextId, uid));
+                    permissions.Add(uid, await this.GetResourcePermissionAsync(project.ParatextId, uid, token));
                 }
             }
             else
@@ -423,7 +428,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         public async Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(UserSecret userSecret,
-            string paratextId)
+            string paratextId, CancellationToken token)
         {
             if (IsResource(paratextId))
             {
@@ -435,7 +440,7 @@ namespace SIL.XForge.Scripture.Services
                 // Paratext RegistryServer has methods to do this, but it is unreliable to use it in a multi-user
                 // environment so instead we call the registry API.
                 string response = await CallApiAsync(userSecret, HttpMethod.Get,
-                    $"projects/{paratextId}/members");
+                    $"projects/{paratextId}/members", null, token);
                 var members = JArray.Parse(response);
                 return members.OfType<JObject>()
                     .Where(m => !string.IsNullOrEmpty((string)m["userId"]) && !string.IsNullOrEmpty((string)m["role"]))
@@ -630,14 +635,185 @@ namespace SIL.XForge.Scripture.Services
                 // Not meaningful for DBL resources, which do not have a local hg repo.
                 return null;
             }
+
             ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
-            return scrText == null ? null : _hgHelper.GetLastPublicRevision(scrText.Directory);
+            if (scrText != null)
+            {
+                return _hgHelper.GetLastPublicRevision(scrText.Directory, allowEmptyIfRestoredFromBackup: false);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Checks whether a backup exists for the Paratext project repository.
+        /// </summary>
+        /// <param name="userSecret">The user secret.</param>
+        /// <param name="paratextId">The Paratext project identifier.</param>
+        /// <returns>
+        ///   <c>true</c> if the backup exists; otherwise, <c>false</c>.
+        /// </returns>
+        public bool BackupExists(UserSecret userSecret, string paratextId)
+        {
+            // We do not back up resources
+            if (paratextId == null || paratextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+            {
+                return false;
+            }
+
+            // Get the scripture text
+            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
+
+            // If we do not have a scripture text, do not back up
+            if (scrText == null)
+            {
+                return false;
+            }
+
+            // Use the Paratext implementation
+            return this.BackupExistsInternal(scrText);
+        }
+
+        public bool BackupRepository(UserSecret userSecret, string paratextId)
+        {
+            // We do not back up resources
+            if (paratextId == null || paratextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+            {
+                return false;
+            }
+
+            // Get the scripture text
+            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
+
+            // If we do not have a scripture text, do not back up
+            if (scrText == null)
+            {
+                return false;
+            }
+
+            // VersionedText.BackupDirectories skips backup on error, and runs in a background thread.
+            // We would rather be notified of the error, and not have this run in a background thread.
+            // The following is a re-implementation of VersionedText.BackupDirectories with error trapping,
+            // and file system and Mercurial dependency injection so this method can be unit tested.
+            // Note that SharedProject.Repository.SendReceiveId is equivalent to ScrText.Guid - compare the
+            // BackupProject and RestoreProject implementations in Paratext.Data.Repository.VersionedText.
+            try
+            {
+                string directory = Path.Combine(Paratext.Data.ScrTextCollection.SettingsDirectory, "_Backups");
+                string path = Path.Combine(directory, scrText.Guid + ".bndl");
+                string tempPath = path + "_temp";
+                _fileSystemService.CreateDirectory(directory);
+
+                _hgHelper.BackupRepository(scrText.Directory, tempPath);
+                if (_fileSystemService.FileExists(path))
+                {
+                    _fileSystemService.DeleteFile(path);
+                }
+
+                _fileSystemService.MoveFile(tempPath, path);
+                return true;
+            }
+            catch (Exception)
+            {
+                // An error has occurred, so the backup was not created
+                return false;
+            }
+        }
+
+        public bool RestoreRepository(UserSecret userSecret, string paratextId)
+        {
+            // We do not back up resources
+            if (paratextId == null || paratextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+            {
+                return false;
+            }
+
+            // Get the scripture text
+            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
+
+            // If we do not have a scripture text, do not back up
+            if (scrText == null)
+            {
+                return false;
+            }
+
+            // VersionedText.RestoreProject copies files from the repository to the restored backup.
+            // We would rather not do this, as there can be files trapped in the directory, particularly
+            // if the incoming change included new books and the sync was cancelled. In addition,
+            // Mongo is the source of truth for a project's state in Scripture Forge.
+            // The following is a re-implementation of VersionedText.RestoreProject with error trapping,
+            // and file system and Mercurial dependency injection so this method can be unit tested.
+            if (this.BackupExistsInternal(scrText))
+            {
+                string source = scrText.Directory;
+                string destination =
+                    Path.Combine(Paratext.Data.ScrTextCollection.SettingsDirectory, "_Backups\\", scrText.Guid.ToString());
+                string restoredDestination = destination + "_Restored";
+                string backupPath = destination + ".bndl";
+
+                try
+                {
+                    // Remove the backup destination, if it exists
+                    if (_fileSystemService.DirectoryExists(destination))
+                    {
+                        _fileSystemService.DeleteDirectory(destination);
+                    }
+
+                    // Move the current repository to the backup destination
+                    if (source != destination)
+                    {
+                        _fileSystemService.MoveDirectory(source, destination);
+                    }
+
+                    // Restore the Mercurial database, and move it to the repository
+                    _hgHelper.RestoreRepository(restoredDestination, backupPath);
+                    _fileSystemService.MoveDirectory(restoredDestination, source);
+                    return true;
+                }
+                catch (Exception)
+                {
+                    // On error, move the backup destination back to the repository folder
+                    if (!_fileSystemService.DirectoryExists(source))
+                    {
+                        _fileSystemService.MoveDirectory(destination, source);
+                    }
+                }
+            }
+
+            // An error occurred, or the backup does not exist
+            return false;
         }
 
         protected override void DisposeManagedResources()
         {
             _registryClient.Dispose();
             _httpClientHandler.Dispose();
+        }
+
+        /// <summary>
+        /// Checks whether a backup exists
+        /// </summary>
+        /// <param name="scrText">The scripture text.</param>
+        /// <returns><c>true</c> if the backup exists; otherwise, <c>false</c>.</returns>
+        /// <remarks>
+        /// This is a re-implementation of <see cref="VersionedText.BackupExists(ScrText)"/>
+        /// that uses file system dependency injection so this method can be unit tested.
+        /// </remarks>
+        private bool BackupExistsInternal(ScrText scrText)
+        {
+            try
+            {
+                string path =
+                    Path.Combine(Paratext.Data.ScrTextCollection.SettingsDirectory, "_Backups\\", $"{scrText.Guid}.bndl");
+                return _fileSystemService.FileExists(path);
+            }
+            catch (Exception)
+            {
+                // An error occurred
+                return false;
+            }
         }
 
         private IReadOnlyList<ParatextProject> GetProjects(UserSecret userSecret,
@@ -784,9 +960,9 @@ namespace SIL.XForge.Scripture.Services
         }
 
         private async Task<string> CallApiAsync(UserSecret userSecret, HttpMethod method,
-            string url, string content = null)
+            string url, string content = null, CancellationToken token = default)
         {
-            using (ParatextAccessLock accessLock = await GetParatextAccessLock(userSecret.Id))
+            using (ParatextAccessLock accessLock = await GetParatextAccessLock(userSecret.Id, token))
             using (var request = new HttpRequestMessage(method, $"api8/{url}"))
             {
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
@@ -795,7 +971,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     request.Content = new StringContent(content);
                 }
-                HttpResponseMessage response = await _registryClient.SendAsync(request);
+                HttpResponseMessage response = await _registryClient.SendAsync(request, token);
                 if (response.IsSuccessStatusCode)
                 {
                     return await response.Content.ReadAsStringAsync();
@@ -810,9 +986,10 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>
         /// Get access to a source for PT project repositories, based on user secret.
         ///</summary>
-        private async Task<IInternetSharedRepositorySource> GetInternetSharedRepositorySource(string userId)
+        private async Task<IInternetSharedRepositorySource> GetInternetSharedRepositorySource(string userId,
+            CancellationToken token)
         {
-            using (ParatextAccessLock accessLock = await GetParatextAccessLock(userId))
+            using (ParatextAccessLock accessLock = await GetParatextAccessLock(userId, token))
             {
                 return _internetSharedRepositorySourceProvider.GetSource(accessLock.UserSecret,
                         _sendReceiveServerUri, _registryServerUri);
@@ -827,10 +1004,11 @@ namespace SIL.XForge.Scripture.Services
         /// <returns>
         /// The available resources.
         /// </returns>
-        private async Task<IReadOnlyList<ParatextResource>> GetResourcesInternalAsync(string userId, bool includeInstallableResource)
+        private async Task<IReadOnlyList<ParatextResource>> GetResourcesInternalAsync(string userId,
+            bool includeInstallableResource, CancellationToken token)
         {
             IEnumerable<SFInstallableDblResource> resources;
-            using (ParatextAccessLock accessLock = await GetParatextAccessLock(userId))
+            using (ParatextAccessLock accessLock = await GetParatextAccessLock(userId, token))
             {
                 resources = SFInstallableDblResource.GetInstallableDblResources(
                     accessLock.UserSecret,
@@ -869,7 +1047,7 @@ namespace SIL.XForge.Scripture.Services
             PtxUtils.Progress.Progress.Mgr.SetDisplay(progressDisplay);
         }
 
-        private async Task<ParatextAccessLock> GetParatextAccessLock(string userId)
+        private async Task<ParatextAccessLock> GetParatextAccessLock(string userId, CancellationToken token)
         {
             SemaphoreSlim semaphore = _tokenRefreshSemaphores.GetOrAdd(userId, (string key) => new SemaphoreSlim(1, 1));
             await semaphore.WaitAsync();
@@ -884,7 +1062,9 @@ namespace SIL.XForge.Scripture.Services
 
                 if (!userSecret.ParatextTokens.ValidateLifetime())
                 {
-                    Tokens refreshedUserTokens = await _jwtTokenHelper.RefreshAccessTokenAsync(_paratextOptions.Value, userSecret.ParatextTokens, _registryClient);
+                    Tokens refreshedUserTokens =
+                        await _jwtTokenHelper.RefreshAccessTokenAsync(_paratextOptions.Value, userSecret.ParatextTokens,
+                            _registryClient, token);
                     userSecret = await _userSecretRepository.UpdateAsync(userId, b => b.Set(u => u.ParatextTokens, refreshedUserTokens));
                 }
                 return new ParatextAccessLock(semaphore, userSecret);

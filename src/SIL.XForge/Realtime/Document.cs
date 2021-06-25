@@ -10,14 +10,12 @@ namespace SIL.XForge.Realtime
     /// </summary>
     public class Document<T> : IDocument<T> where T : IIdentifiable
     {
-        private readonly IRealtimeServer _server;
-        private readonly int _connHandle;
+        private readonly IConnection _connection;
         private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
 
-        internal Document(IRealtimeServer server, int connHandle, string otTypeName, string collection, string id)
+        internal Document(IConnection connection, string otTypeName, string collection, string id)
         {
-            _server = server;
-            _connHandle = connHandle;
+            _connection = connection;
             OTTypeName = otTypeName;
             Collection = collection;
             Id = id;
@@ -40,7 +38,7 @@ namespace SIL.XForge.Realtime
             await _lock.WaitAsync();
             try
             {
-                Snapshot<T> snapshot = await _server.CreateDocAsync(_connHandle, Collection, Id, data, OTTypeName);
+                Snapshot<T> snapshot = await _connection.CreateDocAsync(Collection, Id, data, OTTypeName);
                 UpdateFromSnapshot(snapshot);
             }
             finally
@@ -54,7 +52,7 @@ namespace SIL.XForge.Realtime
             await _lock.WaitAsync();
             try
             {
-                Snapshot<T> snapshot = await _server.FetchDocAsync<T>(_connHandle, Collection, Id);
+                Snapshot<T> snapshot = await _connection.FetchDocAsync<T>(Collection, Id);
                 UpdateFromSnapshot(snapshot);
             }
             finally
@@ -68,9 +66,9 @@ namespace SIL.XForge.Realtime
             await _lock.WaitAsync();
             try
             {
-                Snapshot<T> snapshot = await _server.FetchDocAsync<T>(_connHandle, Collection, Id);
+                Snapshot<T> snapshot = await _connection.FetchDocAsync<T>(Collection, Id);
                 if (snapshot.Data == null)
-                    snapshot = await _server.CreateDocAsync(_connHandle, Collection, Id, createData(), OTTypeName);
+                    snapshot = await _connection.CreateDocAsync(Collection, Id, createData(), OTTypeName);
                 UpdateFromSnapshot(snapshot);
             }
             finally
@@ -84,7 +82,7 @@ namespace SIL.XForge.Realtime
             await _lock.WaitAsync();
             try
             {
-                Snapshot<T> snapshot = await _server.SubmitOpAsync<T>(_connHandle, Collection, Id, op);
+                Snapshot<T> snapshot = await _connection.SubmitOpAsync<T>(Collection, Id, op, Data, Version);
                 UpdateFromSnapshot(snapshot);
             }
             finally
@@ -98,7 +96,7 @@ namespace SIL.XForge.Realtime
             await _lock.WaitAsync();
             try
             {
-                await _server.DeleteDocAsync(_connHandle, Collection, Id);
+                await _connection.DeleteDocAsync(Collection, Id);
                 Version = -1;
                 Data = default(T);
             }

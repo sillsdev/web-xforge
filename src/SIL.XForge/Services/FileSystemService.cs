@@ -45,6 +45,11 @@ namespace SIL.XForge.Services
             Directory.Move(sourceDirPath, targetDirPath);
         }
 
+        public void MoveFile(string sourceFilePath, string targetFilePath)
+        {
+            File.Move(sourceFilePath, targetFilePath);
+        }
+
         public void DeleteDirectory(string path)
         {
             Directory.Delete(path, true);

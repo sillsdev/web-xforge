@@ -291,6 +291,23 @@ namespace SIL.XForge.Scripture.Controllers
             }
         }
 
+        public async Task<IRpcMethodResult> CancelSync(string projectId)
+        {
+            try
+            {
+                await _projectService.CancelSyncAsync(UserId, projectId);
+                return Ok();
+            }
+            catch (ForbiddenException)
+            {
+                return ForbiddenError();
+            }
+            catch (DataNotFoundException dnfe)
+            {
+                return NotFoundError(dnfe.Message);
+            }
+        }
+
         public async Task<IRpcMethodResult> DeleteAudio(string projectId, string ownerId, string dataId)
         {
             try

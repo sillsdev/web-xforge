@@ -40,6 +40,17 @@
             [projectDoc]="projectDoc"
             (inProgress)="syncActive = $event"
           ></app-sync-progress>
+          <button
+            *ngIf="syncActive"
+            class="action-button"
+            mdc-button
+            type="button"
+            (click)="cancelSync()"
+            [disabled]="isLoading || !isAppOnline || syncDisabled"
+            id="btn-cancel-sync"
+          >
+            {{ t("cancel") }}
+          </button>
           <span *ngIf="!syncActive" [title]="lastSyncDate" id="date-last-sync" class="sync-info">
             {{ lastSyncNotice }}
           </span>

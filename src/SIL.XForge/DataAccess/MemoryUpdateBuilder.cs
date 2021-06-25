@@ -87,6 +87,15 @@ namespace SIL.XForge.DataAccess
             return this;
         }
 
+        public IUpdateBuilder<T> Remove<TItem>(Expression<Func<T, IEnumerable<TItem>>> field, TItem value)
+        {
+            Func<T, IEnumerable<TItem>> getCollection = field.Compile();
+            IEnumerable<TItem> collection = getCollection(_entity);
+            MethodInfo addMethod = collection.GetType().GetMethod("Remove");
+            addMethod.Invoke(collection, new object[] { value });
+            return this;
+        }
+
         public IUpdateBuilder<T> Add<TItem>(Expression<Func<T, IEnumerable<TItem>>> field, TItem value)
         {
             Func<T, IEnumerable<TItem>> getCollection = field.Compile();
