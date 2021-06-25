@@ -10,7 +10,7 @@ import { SubscriptionDisposable } from './subscription-disposable';
  */
 // Decorator required by Angular compiler
 @Directive()
-// tslint:disable-next-line: directive-class-suffix
+// eslint-disable-next-line @angular-eslint/directive-class-suffix
 export abstract class DataLoadingComponent extends SubscriptionDisposable implements OnDestroy {
   private _isLoading: boolean = false;
 
