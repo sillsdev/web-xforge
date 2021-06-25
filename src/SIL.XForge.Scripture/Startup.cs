@@ -33,6 +33,7 @@ namespace SIL.XForge.Scripture
         {
             "runtime.js", "runtime.js.map",
             "polyfills.js", "polyfills.js.map",
+            "styles.css", "styles.css.map",
             "styles.js", "styles.js.map",
             "vendor.js", "vendor.js.map",
             "main.js", "main.js.map",

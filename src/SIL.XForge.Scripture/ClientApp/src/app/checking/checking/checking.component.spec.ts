@@ -1452,8 +1452,8 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<CheckingComponent>;
   readonly ngZone: NgZone = TestBed.inject(NgZone);
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
-  readonly mockedAnsweredDialogRef: MdcDialogRef<QuestionAnsweredDialogComponent> = mock(MdcDialogRef);
-  readonly mockedTextChooserDialogComponent: MdcDialogRef<TextChooserDialogComponent> = mock(MdcDialogRef);
+  readonly mockedAnsweredDialogRef = mock<MdcDialogRef<QuestionAnsweredDialogComponent>>(MdcDialogRef);
+  readonly mockedTextChooserDialogComponent = mock<MdcDialogRef<TextChooserDialogComponent>>(MdcDialogRef);
   readonly location: Location;
 
   questionReadTimer: number = 2000;
