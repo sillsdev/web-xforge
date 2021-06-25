@@ -2,9 +2,11 @@
   "app": {
     "action_not_available_offline": "Cette action n'est pas disponible lorsque vous êtes hors connexion.",
     "all_questions": "Toutes les questions",
+    "announcements": "Annonces",
     "cannot_change_password": "Impossible de changer le mot de passe pour l'instant. Essayez de nouveau plus tard ou signalez un problème dans le menu Aide.",
     "change_password": "Changer de mot de passe",
     "community_checking": "Vérification par la communauté",
+    "community_support": "Support de la communauté",
     "connect_project": "Connecter un projet",
     "help": "Aide",
     "language": "Langue",

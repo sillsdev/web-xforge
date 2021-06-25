@@ -2,9 +2,11 @@
   "app": {
     "action_not_available_offline": "This action isn't available while you are offline.",
     "all_questions": "ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭ ꤜꤟꤢꤪ꤭꤮ ꤕꤜꤤ꤭",
+    "announcements": "Announcements",
     "cannot_change_password": "ꤋꤥ꤭ꤑꤟꤢꤗꤢ꤬ ꤔꤟꤢꤧ꤬ꤓꤢꤨ꤬ꤜꤟꤛꤢ꤬ꤒꤢ꤬ꤕꤜꤢꤩ꤬ password ꤗꤢ꤬ ꤢ꤬ꤔꤟꤤ ꤟꤤ ꤒꤥ꤬꤯ ꤓꤢꤨ꤬ꤜꤟꤛꤢ꤬ ꤔꤥ꤬ ꤋꤛꤢꤩ꤭ꤞꤛꤢ ꤢꤧ꤬ꤕꤢ꤭ ꤔꤤ, ꤊꤤ꤬ꤗꤟꤢꤒꤥ꤬ꤚꤢꤪ ꤊꤝꤤ꤭ꤊꤟꤌꤣ꤭ ꤒꤟꤢꤧ꤬ꤗꤟꤢꤩ꤬ꤡꤝꤟꤥ ꤘꤣ menu ꤔꤌꤣ꤬꤯",
     "change_password": "ꤓꤢꤨ꤬ꤜꤟꤛꤢ꤬ password",
     "community_checking": "ꤊꤢ꤬ꤛꤢ꤭ꤢꤧꤕꤚꤟꤢꤧ꤬ ꤒꤟꤢꤧ꤬ꤓꤢꤦꤡꤢꤩ꤭",
+    "community_support": "Community Support",
     "connect_project": "ꤕꤜꤝꤥ꤭ꤓꤢꤦ꤭ ꤔꤢ project",
     "help": "ꤗꤟꤢꤩ꤬ꤡꤝꤟꤥ",
     "language": "ꤍꤟꤥ",

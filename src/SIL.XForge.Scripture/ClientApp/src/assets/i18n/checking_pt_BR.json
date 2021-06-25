@@ -2,9 +2,11 @@
   "app": {
     "action_not_available_offline": "Esta ação não está disponível enquanto você estiver offline.",
     "all_questions": "Todas as Perguntas",
+    "announcements": "Announcements",
     "cannot_change_password": "Não é possível alterar a senha neste momento. Tente novamente mais tarde ou relate um problema no menu de Ajuda.",
     "change_password": "Alterar senha",
     "community_checking": "Verificação da Comunidade",
+    "community_support": "Community Support",
     "connect_project": "Conectar projeto",
     "help": "Ajuda",
     "language": "Idioma",

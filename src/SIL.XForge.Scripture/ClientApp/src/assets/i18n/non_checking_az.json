@@ -194,6 +194,7 @@
     "translation_suggestions_settings": "Tərcümə təkliflərinin parametrləri"
   },
   "sync": {
+    "cancel": "Ləğv etmək",
     "connect_network_to_synchronize": "Zəhmət olmazsa, layihə sinxronlaşdırmaq üçün, internetə qoşulun",
     "last_synced_time_stamp": "Axırıncı dəfə {{ timeStamp }} sinxronlaşdırılıb ",
     "log_in_to_paratext": "Paratextə daxil olun",
@@ -201,6 +202,7 @@
     "something_went_wrong_synchronizing_this_project": "{{ projectName }} Paratext ilə sinxronlaşdırarkən bir səhv baş verdi. Zəhmət olmazsa, yenidən cəhd edin.",
     "successfully_synchronized_with_paratext": "{{ projectName }} Paratext ilə uğurla sinxronlaşdırıldı. ",
     "synchronize": "Sinxronlaşdırmaq",
+    "synchronize_was_cancelled": "Synchronize for {{ projectName }} was cancelled.",
     "synchronize_project": "{{ projectName }} Paratext ilə sinxronlaşdırıldı",
     "your_project_is_being_synchronized": "Sizin layihəniz sinxronlaşdırılır...",
     "sync_is_disabled": "Bu layihə üçün sinxronizasiyanın ləğv edilməsi lazım idi, buna görə də hazırda mövcud deyil. Layihə sinxronizasiyasının yenidən aktivləşdirilməsi üçün nələrin edilməsi lazım olduğunu müzakirə etmək üçün {{email}} ilə əlaqə saxlayın."

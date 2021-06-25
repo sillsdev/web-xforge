@@ -2,9 +2,11 @@
   "app": {
     "action_not_available_offline": "This action isn't available while you are offline.",
     "all_questions": "ທຸກຄຳຖາມ",
+    "announcements": "Announcements",
     "cannot_change_password": "Can't change password at this time. Try again later or report an issue in the Help menu.",
     "change_password": "ປ່ຽນ password",
     "community_checking": "ກວດກັບຊຸມຊົນ",
+    "community_support": "Community Support",
     "connect_project": "Connect project",
     "help": "ຊ່ວຍເຫຼືອ",
     "language": "ພາສາ",

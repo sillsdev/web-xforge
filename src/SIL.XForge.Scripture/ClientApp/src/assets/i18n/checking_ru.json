@@ -2,9 +2,11 @@
   "app": {
     "action_not_available_offline": "This action isn't available while you are offline.",
     "all_questions": "Все вопросы",
+    "announcements": "Announcements",
     "cannot_change_password": "В настоящее время сменить пароль невозможно. Попробуйте позже или сообщите о проблеме в меню \"Справка\".",
     "change_password": "Сменить пароль",
     "community_checking": "Проверка сообщества",
+    "community_support": "Community Support",
     "connect_project": "Подключить проект",
     "help": "Справка",
     "language": "Язык",
