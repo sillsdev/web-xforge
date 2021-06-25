@@ -150,7 +150,7 @@ describe('EditorComponent', () => {
     it('source retrieved after target', fakeAsync(() => {
       const env = new TestEnvironment();
       const sourceId = new TextDocId('project02', 40, 1);
-      let resolve: ((value?: TextDoc) => void) | undefined;
+      let resolve: (value: TextDoc | PromiseLike<TextDoc>) => void;
       when(mockedSFProjectService.getText(deepEqual(sourceId))).thenReturn(new Promise(r => (resolve = r)));
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_2' });
       env.wait();
