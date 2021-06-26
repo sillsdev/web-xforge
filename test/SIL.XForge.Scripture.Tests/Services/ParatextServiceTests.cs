@@ -16,6 +16,7 @@ using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using Paratext.Data;
 using Paratext.Data.ProjectComments;
+using Paratext.Data.ProjectFileAccess;
 using Paratext.Data.RegistryServerAccess;
 using Paratext.Data.Repository;
 using Paratext.Data.Users;
@@ -459,7 +460,7 @@ namespace SIL.XForge.Scripture.Services
                 Substitute.For<IExceptionHandler>());
             var newDocUsx = mapper.ToUsx(oldDocUsx, new List<ChapterDelta> { new ChapterDelta(1, 2, true, data) });
             await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, newDocUsx.Root.ToString());
-            env.ProjectScrText.FileManager.Received(1)
+            env.ProjectFileManager.Received(1)
                 .WriteFileCreatingBackup(Arg.Any<string>(), Arg.Any<Action<string>>());
 
             // PT username is not written to server logs
@@ -632,6 +633,12 @@ namespace SIL.XForge.Scripture.Services
             env.MockScrTextCollection.FindById(env.Username01, sourceProjectId)
                 .Returns(sourceScrText);
 
+            // Get the permissions, as the ScrText will be disposed in ShareChanges()
+            ComparableProjectPermissionManager sourceScrTextPermissions
+                = (ComparableProjectPermissionManager)sourceScrText.Permissions;
+            ComparableProjectPermissionManager targetScrTextPermissions
+                = (ComparableProjectPermissionManager)env.ProjectScrText.Permissions;
+
             await env.Service.SendReceiveAsync(user01Secret, targetProjectId);
             await env.Service.SendReceiveAsync(user01Secret, sourceProjectId);
             // Below, we are checking also that the SharedProject has a
@@ -644,7 +651,8 @@ namespace SIL.XForge.Scripture.Services
                     list =>
                     list.Count().Equals(1) &&
                         (list[0].SendReceiveId.Id == targetProjectId || list[0].SendReceiveId.Id == sourceProjectId) &&
-                        Object.ReferenceEquals(list[0].Permissions, list[0].ScrText.Permissions)),
+                        (sourceScrTextPermissions.Equals((ComparableProjectPermissionManager)list[0].Permissions)
+                        || targetScrTextPermissions.Equals((ComparableProjectPermissionManager)list[0].Permissions))),
                     Arg.Any<SharedRepositorySource>(), out Arg.Any<List<SendReceiveResult>>(),
                     Arg.Any<List<SharedProject>>());
             env.MockFileSystemService.DidNotReceive().DeleteDirectory(Arg.Any<string>());
@@ -988,6 +996,7 @@ namespace SIL.XForge.Scripture.Services
 
             public MockScrText ProjectScrText { get; set; }
             public CommentManager ProjectCommentManager { get; set; }
+            public ProjectFileManager ProjectFileManager { get; set; }
 
             public UserSecret MakeUserSecret(string userSecretId, string username)
             {
@@ -1217,6 +1226,12 @@ namespace SIL.XForge.Scripture.Services
             {
                 string ptProjectId = PTProjectIds[baseId].Id;
                 ProjectScrText = GetScrText(associatedPtUser, ptProjectId, hasEditPermission);
+
+                // We set the file manager her so we can track file manager operations after
+                // the ScrText object has been disposed in ParatextService.
+                ProjectFileManager = Substitute.For<ProjectFileManager>(ProjectScrText, null);
+                ProjectFileManager.IsWritable.Returns(true);
+                ProjectScrText.SetFileManager(ProjectFileManager);
                 ProjectCommentManager = CommentManager.Get(ProjectScrText);
                 MockScrTextCollection.FindById(Arg.Any<string>(), ptProjectId)
                     .Returns(ProjectScrText);
