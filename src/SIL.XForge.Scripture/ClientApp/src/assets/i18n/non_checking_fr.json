@@ -194,6 +194,7 @@
     "translation_suggestions_settings": "Paramètres des suggestions de traduction"
   },
   "sync": {
+    "cancel": "Annuler",
     "connect_network_to_synchronize": "Veuillez vous connecter à Internet pour synchroniser ce projet",
     "last_synced_time_stamp": "Dernière synchronisation le {{ timeStamp }}",
     "log_in_to_paratext": "Connectez-vous à Paratext",
@@ -201,6 +202,7 @@
     "something_went_wrong_synchronizing_this_project": "Une erreur s'est produite lors de la synchronisation de {{ projectName }} avec Paratext. Veuillez réessayer.",
     "successfully_synchronized_with_paratext": "Synchronisation réussie de {{ projectName }} avec Paratext.",
     "synchronize": "Synchroniser",
+    "synchronize_was_cancelled": "Synchronize for {{ projectName }} was cancelled.",
     "synchronize_project": "Synchroniser {{ projectName }} avec Paratext",
     "your_project_is_being_synchronized": "Votre projet est en cours de synchronisation...",
     "sync_is_disabled": "La synchronisation pour ce projet a dû être désactivée, elle n'est donc pas disponible pour le moment. Veuillez contacter {{ email }} pour discuter de ce qui doit être fait pour que la synchronisation du projet puisse être à nouveau activée."

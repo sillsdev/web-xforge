@@ -2,9 +2,11 @@
   "app": {
     "action_not_available_offline": "This action isn't available while you are offline.",
     "all_questions": "所有问题",
+    "announcements": "Announcements",
     "cannot_change_password": "目前无法更改密码。",
     "change_password": "请稍后再试或在“帮助”菜单中报告问题",
     "community_checking": "语言社区中的查看",
+    "community_support": "Community Support",
     "connect_project": "连接项目",
     "help": "帮助",
     "language": "Language",

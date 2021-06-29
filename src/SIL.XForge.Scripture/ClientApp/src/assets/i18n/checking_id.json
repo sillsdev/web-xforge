@@ -2,9 +2,11 @@
   "app": {
     "action_not_available_offline": "This action isn't available while you are offline.",
     "all_questions": "Semua Pertanyaan",
+    "announcements": "Announcements",
     "cannot_change_password": "Tidak dapat mengganti kata kunci saat ini. Coba lagi nanti atau laporkan masalah dalam menu Bantuan.",
     "change_password": "Ganti kata kunci",
     "community_checking": "Pemeriksaan Komunitas",
+    "community_support": "Community Support",
     "connect_project": "Menghubungkan proyek",
     "help": "Bantuan",
     "language": "Bahasa",
