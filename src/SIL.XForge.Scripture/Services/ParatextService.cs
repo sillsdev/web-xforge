@@ -558,7 +558,7 @@ namespace SIL.XForge.Scripture.Services
                 // Dispose the ScrText objects
                 foreach (ScrText scrText in scrTexts.Values)
                 {
-                    scrText.Dispose();
+                    scrText?.Dispose();
                 }
 
                 // Clear the collection to release the references to the ScrTexts for GC
