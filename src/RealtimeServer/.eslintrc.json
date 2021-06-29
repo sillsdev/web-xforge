@@ -1,11 +1,12 @@
 {
   "root": true,
-  "ignorePatterns": ["projects/**/*"],
+  "ignorePatterns": ["./lib/**/*"],
   "overrides": [
     {
       "files": ["*.ts"],
       "parserOptions": {
         "project": ["tsconfig.json"],
+        "tsconfigRootDir": "src/RealtimeServer/",
         "createDefaultProgram": true
       },
       "extends": [
