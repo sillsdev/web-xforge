@@ -20,7 +20,7 @@ import { NoticeService } from './notice.service';
 import { OfflineStore } from './offline-store';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
 import { USERS_URL } from './url-constants';
-import { ASP_CULTURE_COOKIE_NAME, getAspCultureCookieLanguage, getI18nLocales } from './utils';
+import { ASP_CULTURE_COOKIE_NAME, getAspCultureCookieLanguage } from './utils';
 
 const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
 const XF_ROLE_CLAIM = 'http://xforge.org/role';
@@ -162,21 +162,14 @@ export class AuthService {
     return true;
   }
 
-  logIn(returnUrl: string, signUp?: boolean): void {
+  logIn(returnUrl: string, signUp?: boolean, locale?: string): void {
     const state: AuthState = { returnUrl };
-    const tag = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME));
-    const i18nLocales = getI18nLocales();
-    const locales = environment.production ? i18nLocales.filter(locale => locale.production) : i18nLocales;
-    const options: LanguageOption[] = locales.map(locale => {
-      const result = { value: locale.canonicalTag, label: locale.localName };
-      if (!environment.production && !locale.production) {
-        result.label += ' *';
-      }
-      return result;
-    });
-    const authOptions: AuthorizeOptions = { state: JSON.stringify(state), language: JSON.stringify({ tag, options }) };
+    const language: string = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME));
+    const ui_locales: string = language;
+    const authOptions: AuthorizeOptions = { state: JSON.stringify(state), language, login_hint: ui_locales };
     if (signUp) {
-      authOptions.login_hint = 'signUp';
+      authOptions.mode = 'signUp';
+      authOptions.login_hint = locale ?? ui_locales;
     }
     if (environment.beta) {
       window.parent.postMessage(<BetaMigrationMessage>{ message: 'login_required' }, environment.masterUrl);
