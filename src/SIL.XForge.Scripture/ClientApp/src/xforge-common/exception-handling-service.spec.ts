@@ -204,7 +204,7 @@ class TestEnvironment {
   } as UserDoc;
 
   constructor() {
-    this.service = TestBed.get(ExceptionHandlingService);
+    this.service = TestBed.inject(ExceptionHandlingService);
     this.fixture = TestBed.createComponent(HostComponent);
     this.fixture.detectChanges();
 
