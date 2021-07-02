@@ -104,6 +104,95 @@ namespace SIL.XForge.Realtime
             env.MongoDatabase.Received(collectionNames.Length).GetCollection<BsonDocument>(Arg.Any<string>());
         }
 
+        [Test]
+        public async Task GetLastModifiedUserIdAsync_NoMetadata()
+        {
+            // Setup environment
+            var env = new TestEnvironment();
+            string id = "123456";
+            var doc = BsonDocument.Parse("{}");
+
+            // Setup MongoDB mock
+            var cursorMock = Substitute.For<IAsyncCursor<BsonDocument>>();
+            cursorMock.MoveNextAsync().Returns(Task.FromResult(true), Task.FromResult(false));
+            cursorMock.Current.Returns(new[] { doc });
+            env.MongoDatabase.GetCollection<BsonDocument>("o_users")
+                .FindAsync(Arg.Any<FilterDefinition<BsonDocument>>(),
+                    Arg.Any<FindOptions<BsonDocument, BsonDocument>>())
+                .Returns(Task.FromResult(cursorMock));
+
+            // SUT
+            string userId = await env.Service.GetLastModifiedUserIdAsync<User>(id);
+            Assert.IsNull(userId);
+        }
+
+        [Test]
+        public async Task GetLastModifiedUserIdAsync_NoUserId()
+        {
+            // Setup environment
+            var env = new TestEnvironment();
+            string id = "123456";
+            var doc = BsonDocument.Parse("{ m: {} }");
+
+            // Setup MongoDB mock
+            var cursorMock = Substitute.For<IAsyncCursor<BsonDocument>>();
+            cursorMock.MoveNextAsync().Returns(Task.FromResult(true), Task.FromResult(false));
+            cursorMock.Current.Returns(new[] { doc });
+            env.MongoDatabase.GetCollection<BsonDocument>("o_users")
+                .FindAsync(Arg.Any<FilterDefinition<BsonDocument>>(),
+                    Arg.Any<FindOptions<BsonDocument, BsonDocument>>())
+                .Returns(Task.FromResult(cursorMock));
+
+            // SUT
+            string userId = await env.Service.GetLastModifiedUserIdAsync<User>(id);
+            Assert.IsNull(userId);
+        }
+
+        [Test]
+        public async Task GetLastModifiedUserIdAsync_UserIdPresent()
+        {
+            // Setup environment
+            var env = new TestEnvironment();
+            string id = "123456";
+            var doc = BsonDocument.Parse("{ m: { uId: 'abcdef' } }");
+
+            // Setup MongoDB mock
+            var cursorMock = Substitute.For<IAsyncCursor<BsonDocument>>();
+            cursorMock.MoveNextAsync().Returns(Task.FromResult(true), Task.FromResult(false));
+            cursorMock.Current.Returns(new[] { doc });
+            env.MongoDatabase.GetCollection<BsonDocument>("o_users")
+                .FindAsync(Arg.Any<FilterDefinition<BsonDocument>>(),
+                    Arg.Any<FindOptions<BsonDocument, BsonDocument>>())
+                .Returns(Task.FromResult(cursorMock));
+
+            // SUT
+            string userId = await env.Service.GetLastModifiedUserIdAsync<User>(id);
+            Assert.AreEqual("abcdef", userId);
+        }
+
+        [Test]
+        public async Task GetLastModifiedUserIdAsync_ChecksMostRecentVersion()
+        {
+            // Setup environment
+            var env = new TestEnvironment();
+            string id = "123456";
+            var doc1 = BsonDocument.Parse("{ v: 1, m: { uId: 'abcdef' } }");
+            var doc2 = BsonDocument.Parse("{ v: 2, m: { uId: 'ghijkl' } }");
+
+            // Setup MongoDB mock
+            var cursorMock = Substitute.For<IAsyncCursor<BsonDocument>>();
+            cursorMock.MoveNextAsync().Returns(Task.FromResult(true), Task.FromResult(false));
+            cursorMock.Current.Returns(new[] { doc2, doc1 });
+            env.MongoDatabase.GetCollection<BsonDocument>("o_users")
+                .FindAsync(Arg.Any<FilterDefinition<BsonDocument>>(),
+                    Arg.Any<FindOptions<BsonDocument, BsonDocument>>())
+                .Returns(Task.FromResult(cursorMock));
+
+            // SUT
+            string userId = await env.Service.GetLastModifiedUserIdAsync<User>(id);
+            Assert.AreEqual("ghijkl", userId);
+        }
+
         private class TestEnvironment
         {
             public RealtimeService Service = null;
