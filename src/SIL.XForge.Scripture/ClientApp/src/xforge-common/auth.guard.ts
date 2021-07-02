@@ -11,12 +11,12 @@ import { LocationService } from './location.service';
 export class AuthGuard implements CanActivate {
   constructor(private readonly authService: AuthService, private readonly locationService: LocationService) {}
 
-  canActivate(next: ActivatedRouteSnapshot, _state: RouterStateSnapshot): Observable<boolean> {
+  canActivate(route: ActivatedRouteSnapshot, _state: RouterStateSnapshot): Observable<boolean> {
     return this.allowTransition().pipe(
       tap(isLoggedIn => {
         if (!isLoggedIn) {
-          const signUp = next.queryParams['sharing'] === 'true' || next.queryParams['sign-up'] === 'true';
-          const locale = next.queryParams['locale'];
+          const signUp = route.queryParams['sharing'] === 'true' || route.queryParams['sign-up'] === 'true';
+          const locale: string = route.queryParams['locale'];
           this.authService.logIn(this.locationService.pathname + this.locationService.search, signUp, locale);
         }
       })
