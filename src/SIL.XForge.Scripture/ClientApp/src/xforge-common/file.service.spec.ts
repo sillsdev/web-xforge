@@ -13,7 +13,6 @@ import { createDeletionFileData, createStorageFileData, FileOfflineData, FileTyp
 import { ProjectDataDoc } from './models/project-data-doc';
 import { NoticeService } from './notice.service';
 import { PwaService } from './pwa.service';
-import { RealtimeService } from './realtime.service';
 import { TestRealtimeModule } from './test-realtime.module';
 import { TestRealtimeService } from './test-realtime.service';
 import { TypeRegistry } from './type-registry';

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
-import { Auth0DecodedHash, AuthorizeOptions, WebAuth } from 'auth0-js';
+import { Auth0DecodedHash, AuthorizeOptions } from 'auth0-js';
 import jwtDecode from 'jwt-decode';
 import { clone } from 'lodash-es';
 import { CookieService } from 'ngx-cookie-service';
@@ -11,6 +11,7 @@ import { filter, mergeMap } from 'rxjs/operators';
 import { BetaMigrationMessage } from 'xforge-common/beta-migration/beta-migration.component';
 import { PwaService } from 'xforge-common/pwa.service';
 import { environment } from '../environments/environment';
+import { Auth0Service } from './auth0.service';
 import { BugsnagService } from './bugsnag.service';
 import { CommandError, CommandService } from './command.service';
 import { ErrorReportingService } from './error-reporting.service';
@@ -36,11 +37,6 @@ interface AuthState {
   linking?: boolean;
 }
 
-interface LanguageOption {
-  value: string;
-  label?: string;
-}
-
 interface LoginResult {
   loggedIn: boolean;
   newlyLoggedIn: boolean;
@@ -56,7 +52,7 @@ export class AuthService {
   private renewTokenPromise?: Promise<void>;
   private checkSessionPromise?: Promise<Auth0DecodedHash | null>;
 
-  private readonly auth0 = new WebAuth({
+  private readonly auth0 = this.auth0Service.init({
     clientID: environment.authClientId,
     domain: environment.authDomain,
     responseType: 'token id_token',
@@ -70,6 +66,7 @@ export class AuthService {
   );
 
   constructor(
+    private readonly auth0Service: Auth0Service,
     private readonly remoteStore: SharedbRealtimeRemoteStore,
     private readonly offlineStore: OfflineStore,
     private readonly locationService: LocationService,
