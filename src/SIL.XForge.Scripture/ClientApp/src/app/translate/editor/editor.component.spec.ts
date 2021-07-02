@@ -904,7 +904,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('adds note thread segment attribute to element', fakeAsync(() => {
+    it('adds display-note tag to element', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
@@ -921,6 +921,15 @@ describe('EditorComponent', () => {
       expect(note.hasAttribute('title')).toBe(true);
       expect(note.getAttribute('title')).toEqual('Note from user01\n--- 2 more note(s) ---');
       expect(note.innerText).toEqual('chapter 1');
+
+      const blankSegmentNote = env.targetTextEditor.nativeElement.querySelector(
+        'usx-segment[data-segment="verse_1_4/p_1"] display-note'
+      )! as HTMLElement;
+      expect(blankSegmentNote).not.toBeNull();
+      expect(blankSegmentNote.hasAttribute('style')).toBe(true);
+      expect(blankSegmentNote.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
+      expect(blankSegmentNote.hasAttribute('title')).toBe(true);
+      expect(blankSegmentNote.getAttribute('title')).toEqual('Note from user01');
       env.dispose();
     }));
   });
@@ -1226,7 +1235,8 @@ class TestEnvironment {
       instance(this.mockedRemoteTranslationEngine)
     );
     this.setupProject();
-    this.addParatextNoteThread(['user01', 'user02', 'user03']);
+    this.addParatextNoteThread(1, 'chapter 1', ['user01', 'user02', 'user03']);
+    this.addParatextNoteThread(4, '', ['user01']);
     when(this.mockedRemoteTranslationEngine.getWordGraph(anything())).thenCall(segment =>
       Promise.resolve(this.createWordGraph(segment))
     );
@@ -1619,35 +1629,36 @@ class TestEnvironment {
     });
   }
 
-  private addParatextNoteThread(userIds: string[]): void {
+  private addParatextNoteThread(threadNum: number, selectedText: string, userIds: string[]): void {
+    const threadId: string = `thread0${threadNum}`;
     const notes: Note[] = [];
     for (let i = 0; i < userIds.length; i++) {
       const id = userIds[i];
       const date = new Date('2021-03-01T12:00:00');
       date.setHours(date.getHours() + i);
       const note: Note = {
-        threadId: 'thread01',
+        threadId: threadId,
         ownerRef: id,
         dataId: `thread01_note${id}`,
         dateCreated: date.toJSON(),
         dateModified: date.toJSON(),
         content: `<p><bold>Note from ${id}</bold></p>`,
-        extUserId: 'ext_user_01',
+        extUserId: id,
         deleted: false,
         tagIcon: `01flag${i + 1}`
       };
       notes.push(note);
     }
 
-    const vrd: VerseRefData = { bookNum: 40, chapterNum: 1, verseNum: 1 };
+    const vrd: VerseRefData = { bookNum: 40, chapterNum: 1, verseNum: threadNum };
     this.realtimeService.addSnapshot<ParatextNoteThread>(ParatextNoteThreadDoc.COLLECTION, {
-      id: 'project01:thread01',
+      id: `project01:${threadId}`,
       data: {
         projectRef: 'project01',
-        dataId: 'thread01',
+        dataId: threadId,
         verseRef: vrd,
         ownerRef: 'user01',
-        selectedText: 'chapter 1',
+        selectedText,
         notes,
         tagIcon: '01flag1',
         contextBefore: '\\v 1 target: ',

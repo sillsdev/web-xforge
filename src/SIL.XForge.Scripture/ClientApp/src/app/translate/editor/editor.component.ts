@@ -478,7 +478,30 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.insertSuggestionEnd = -1;
           this.target.editor.setSelection(selectIndex, 0, 'user');
         }
+
+        // Filter for note thread docs that match the current book and the edited segment
+        const threadDocs: ParatextNoteThreadDoc[] | undefined = this.noteThreadQuery?.docs.filter(
+          td =>
+            td.data != null &&
+            this.bookNum === td.data.verseRef.bookNum &&
+            segment?.ref.startsWith(verseSlug(toVerseRef(td.data.verseRef)))
+        );
+        const segmentHasNote = threadDocs == null || threadDocs.length > 0;
+        if (segmentHasNote) {
+          // Check whether an edit operation occurs at the beginning of an empty segment with a note
+          if (
+            segment?.range.length === 1 &&
+            delta.ops[0].retain === segment?.range.index &&
+            (delta.ops[1].insert != null || delta.ops[1].delete != null)
+          ) {
+            // Recalculate the note icon positioning when editing a blank segment or blanking out a segment
+            // This can be optimize later when we are satisfied with how notes are anchored to text
+            this.toggleNoteThreadVerses(false);
+            this.toggleNoteThreadVerses(true);
+          }
+        }
       }
+
       if (this.insertSuggestionEnd !== -1) {
         const selection = this.target.editor.getSelection();
         if (selection == null || selection.length > 0 || selection.index !== this.insertSuggestionEnd) {
@@ -617,13 +640,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       const iconName: string = featured.iconName ?? '01flag1';
       const nodeProp: string = iconSourceProp(iconName);
       const format = value ? { iconsrc: nodeProp, preview: featured.preview } : {};
-      this.target.toggleInlineFormat(
-        verseSegments[0],
-        featured.startPos ?? 0,
-        featured.selectionLength ?? 1,
-        'note-thread',
-        format
-      );
+      this.target.toggleInlineFormat(featured.verseRef, featured.selectedText ?? '', 'note-thread', format);
     }
 
     if (value) {
@@ -961,15 +978,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       preview += '\n' + translate('editor.more_notes', { count: notes.length - 1 });
     }
     const iconDefinedNotes = notes.filter(n => n.tagIcon != null);
-    const segment: string = verseSlug(toVerseRef(thread.verseRef));
-    const segmentText: string = this.target!.getSegmentText(segment);
-    const contentStartPos: number = segmentText.indexOf(thread.selectedText);
     return {
       verseRef: toVerseRef(thread.verseRef),
       preview,
       iconName: iconDefinedNotes.length === 0 ? thread.tagIcon : iconDefinedNotes[iconDefinedNotes.length - 1].tagIcon,
-      startPos: contentStartPos >= 0 ? contentStartPos : 0,
-      selectionLength: thread.selectedText.length
+      selectedText: thread.selectedText
     };
   }
 
