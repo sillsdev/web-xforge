@@ -479,13 +479,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.target.editor.setSelection(selectIndex, 0, 'user');
         }
 
+        // Filter for note thread docs that match the current book and the edited segment
         const threadDocs: ParatextNoteThreadDoc[] | undefined = this.noteThreadQuery?.docs.filter(
-          n =>
-            n.data != null &&
-            this.bookNum === n.data.verseRef.bookNum &&
-            segment?.ref.startsWith(verseSlug(toVerseRef(n.data.verseRef)))
+          td =>
+            td.data != null &&
+            this.bookNum === td.data.verseRef.bookNum &&
+            segment?.ref.startsWith(verseSlug(toVerseRef(td.data.verseRef)))
         );
-        const segmentHasNote = threadDocs == null || threadDocs.length < 1 ? null : threadDocs[0].data != null;
+        const segmentHasNote = threadDocs == null || threadDocs.length > 0;
         if (segmentHasNote) {
           // Check whether an edit operation occurs at the beginning of an empty segment with a note
           if (
