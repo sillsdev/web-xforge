@@ -76,6 +76,11 @@ namespace SIL.XForge.Realtime
             return docConfig.CollectionName;
         }
 
+        public Task<string> GetLastModifiedUserIdAsync<T>(string id) where T : IIdentifiable
+        {
+            return Task.FromResult<string>(null);
+        }
+
         public IQueryable<T> QuerySnapshots<T>() where T : IIdentifiable
         {
             return GetRepository<T>().Query();
