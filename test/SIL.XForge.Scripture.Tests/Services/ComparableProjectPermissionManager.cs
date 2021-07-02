@@ -24,7 +24,7 @@ namespace SIL.XForge.Scripture.Services
         /// <remarks>
         /// This is based on the code for <see cref="PermissionManager.Clone" />.
         /// </remarks>
-        public string XmlData => Memento.ToXmlString(Data, false, true);
+        private string XmlData => Memento.ToXmlString(Data, false, true);
 
         public bool Equals(ComparableProjectPermissionManager other)
             => this.XmlData == other?.XmlData;
