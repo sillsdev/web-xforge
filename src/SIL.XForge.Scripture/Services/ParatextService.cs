@@ -494,24 +494,13 @@ namespace SIL.XForge.Scripture.Services
                 doc.LoadXml(usx);
                 UsxFragmenter.FindFragments(scrText.ScrStylesheet(bookNum), doc.CreateNavigator(),
                     XPathExpression.Compile("*[false()]"), out string usfm);
-                usfm = UsfmToken.NormalizeUsfm(scrText.ScrStylesheet(bookNum), usfm, false, scrText.RightToLeft, scrText);
+                usfm = UsfmToken.NormalizeUsfm(scrText.ScrStylesheet(bookNum), usfm, false,
+                    scrText.RightToLeft, scrText);
 
                 if (chapterAuthors == null || chapterAuthors.Count == 0)
                 {
                     // If we don't have chapter authors, update book as current user
-                    if (scrText.Permissions.AmAdministrator)
-                    {
-                        // if the current user is an administrator, then always allow editing the book text even if the user
-                        // doesn't have permission. This will ensure that a sync by an administrator never fails.
-                        scrText.Permissions.RunWithEditPermision(bookNum,
-                            () => scrText.PutText(bookNum, 0, false, usfm, null));
-                    }
-                    else
-                    {
-                        scrText.PutText(bookNum, 0, false, usfm, null);
-                    }
-                    _logger.LogInformation("{0} updated {1} in {2}.", userSecret.Id,
-                        Canon.BookNumberToEnglishName(bookNum), scrText.Name);
+                    WriteChapterToScrText(scrText, userSecret.Id, bookNum, 0, usfm);
                 }
                 else
                 {
@@ -530,9 +519,15 @@ namespace SIL.XForge.Scripture.Services
                     // If there is only one author, just write the book
                     if (scrTexts.Count == 1)
                     {
-                        scrTexts.Values.First().PutText(bookNum, 0, false, usfm, null);
-                        _logger.LogInformation("{0} updated {1} in {2}.", scrTexts.Keys.First(),
-                            Canon.BookNumberToEnglishName(bookNum), scrText.Name);
+                        try
+                        {
+                            WriteChapterToScrText(scrTexts.Values.First(), scrTexts.Keys.First(), bookNum, 0, usfm);
+                        }
+                        catch (SafetyCheckException)
+                        {
+                            // If the author does not have permission, attempt to run as the current user
+                            WriteChapterToScrText(scrText, userSecret.Id, bookNum, 0, usfm);
+                        }
                     }
                     else
                     {
@@ -544,10 +539,17 @@ namespace SIL.XForge.Scripture.Services
                         {
                             if ((chapterNum - 1) < chapters.Count)
                             {
-                                // The ScrText permissions will be the same as the last sync's permissions, so no need to check
-                                scrTexts[authorUserId].PutText(bookNum, chapterNum, false, chapters[chapterNum - 1], null);
-                                _logger.LogInformation("{0} updated chapter {1} of {2} in {3}.", authorUserId,
-                                    chapterNum, Canon.BookNumberToEnglishName(bookNum), scrText.Name);
+                                try
+                                {
+                                    // The ScrText permissions will be the same as the last sync's permissions
+                                    WriteChapterToScrText(scrTexts[authorUserId], authorUserId, bookNum, chapterNum,
+                                        chapters[chapterNum - 1]);
+                                }
+                                catch (SafetyCheckException)
+                                {
+                                    // If the author does not have permission, attempt to run as the current user
+                                    WriteChapterToScrText(scrText, userSecret.Id, bookNum, 0, usfm);
+                                }
                             }
                         }
                     }
@@ -1089,6 +1091,41 @@ namespace SIL.XForge.Scripture.Services
                 // caller of the method will not get a reference to a ParatextAccessLock and can't release the semaphore.
                 semaphore.Release();
                 throw;
+            }
+        }
+
+        /// <summary>
+        /// Writes the chapter to the <see cref="ScrText" />.
+        /// </summary>
+        /// <param name="scrText">The Scripture Text from Paratext.</param>
+        /// <param name="authorId">The user identifier for the author.</param>
+        /// <param name="bookNum">The book number.</param>
+        /// <param name="chapterNum">The chapter number. Set to 0 to write the entire book.</param>
+        /// <param name="usfm">The USFM to write.</param>
+        private void WriteChapterToScrText(ScrText scrText, string userId, int bookNum, int chapterNum, string usfm)
+        {
+            // If we don't have chapter authors, update book as current user
+            if (scrText.Permissions.AmAdministrator)
+            {
+                // if the current user is an administrator, then always allow editing the book text even if the user
+                // doesn't have permission. This will ensure that a sync by an administrator never fails.
+                scrText.Permissions.RunWithEditPermision(bookNum,
+                    () => scrText.PutText(bookNum, chapterNum, false, usfm, null));
+            }
+            else
+            {
+                scrText.PutText(bookNum, chapterNum, false, usfm, null);
+            }
+
+            if (chapterNum == 0)
+            {
+                _logger.LogInformation("{0} updated {1} in {2}.", userId,
+                    Canon.BookNumberToEnglishName(bookNum), scrText.Name);
+            }
+            else
+            {
+                _logger.LogInformation("{0} updated chapter {1} of {2} in {3}.", userId,
+                    chapterNum, Canon.BookNumberToEnglishName(bookNum), scrText.Name);
             }
         }
     }

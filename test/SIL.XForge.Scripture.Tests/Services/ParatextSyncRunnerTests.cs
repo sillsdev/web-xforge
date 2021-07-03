@@ -871,6 +871,75 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(sourceFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
         }
 
+        [Test]
+        public async Task GetChapterAuthors_FromMongoDB()
+        {
+            // Setup
+            // Note that the last modified userId is set to user05
+            // So the user id will be retrieved from GetLastModifiedUserIdAsync()
+            var env = new TestEnvironment();
+            TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: false);
+            await env.Runner.InitAsync("project01", "user01", CancellationToken.None);
+            var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
+            env.RealtimeService.LastModifiedUserId = "user05";
+
+            // SUT
+            Dictionary<int, string> chapterAuthors = await env.Runner.GetChapterAuthorsAsync(textInfo, textDocs);
+            Assert.AreEqual(1, chapterAuthors.Count);
+            Assert.AreEqual(new KeyValuePair<int, string>(1, "user05"), chapterAuthors.First());
+        }
+
+        [Test]
+        public async Task GetChapterAuthors_FromUserSecret()
+        {
+            // Setup
+            // Note that the InitAsync() userId is user01, and setChapterPermissions is true,
+            // So the user id will be retrieved from the user secret
+            var env = new TestEnvironment();
+            TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: true);
+            await env.Runner.InitAsync("project01", "user01", CancellationToken.None);
+            var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
+
+            // SUT
+            Dictionary<int, string> chapterAuthors = await env.Runner.GetChapterAuthorsAsync(textInfo, textDocs);
+            Assert.AreEqual(1, chapterAuthors.Count);
+            Assert.AreEqual(new KeyValuePair<int, string>(1, "user01"), chapterAuthors.First());
+        }
+
+        [Test]
+        public async Task GetChapterAuthors_FromChapterPermissions()
+        {
+            // Setup
+            // Note that the InitAsync() userId is user02, and setChapterPermissions is true,
+            // So the user id will be retrieved from the chapter permissions
+            var env = new TestEnvironment();
+            TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: true);
+            await env.Runner.InitAsync("project01", "user02", CancellationToken.None);
+            var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
+
+            // SUT
+            Dictionary<int, string> chapterAuthors = await env.Runner.GetChapterAuthorsAsync(textInfo, textDocs);
+            Assert.AreEqual(1, chapterAuthors.Count);
+            Assert.AreEqual(new KeyValuePair<int, string>(1, "user01"), chapterAuthors.First());
+        }
+
+        [Test]
+        public async Task GetChapterAuthors_FromProjectDoc()
+        {
+            // Setup
+            // Note that the InitAsync() userId is user02, and setChapterPermissions is false,
+            // So the user id will be retrieved from the project doc
+            var env = new TestEnvironment();
+            TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: false);
+            await env.Runner.InitAsync("project01", "user02", CancellationToken.None);
+            var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
+
+            // SUT
+            Dictionary<int, string> chapterAuthors = await env.Runner.GetChapterAuthorsAsync(textInfo, textDocs);
+            Assert.AreEqual(1, chapterAuthors.Count);
+            Assert.AreEqual(new KeyValuePair<int, string>(1, "user03"), chapterAuthors.First());
+        }
+
         private class Book
         {
             public Book(string bookId, int highestChapter, bool hasSource = true)
@@ -1011,6 +1080,56 @@ namespace SIL.XForge.Scripture.Services
                 string repoVersion = expectedRepoVersion ?? (successful ? "afterSR" : "beforeSR");
                 Assert.That(project.Sync.SyncedToRepositoryVersion, Is.EqualTo(repoVersion));
                 return project;
+            }
+
+            public TextInfo SetupChapterAuthorsAndGetTextInfo(bool setChapterPermissions)
+            {
+                string projectId = "project01";
+                int bookNum = 70;
+                int chapterNum = 1;
+                string id = TextData.GetTextDocId(projectId, bookNum, chapterNum);
+                Dictionary<string, string> chapterPermissions = new Dictionary<string, string>();
+                if (setChapterPermissions)
+                {
+                    chapterPermissions.Add("user01", TextInfoPermission.Write);
+                    chapterPermissions.Add("user02", TextInfoPermission.Read);
+                }
+                var textInfo = new TextInfo
+                {
+                    BookNum = bookNum,
+                    Chapters = new List<Chapter>
+                    {
+                        new Chapter
+                        {
+                            Number = chapterNum,
+                            Permissions = chapterPermissions,
+                        },
+                    },
+                };
+                RealtimeService.AddRepository("users", OTType.Json0, new MemoryRepository<User>(new[]
+                {
+                    new User
+                    {
+                        Id = "user01"
+                    },
+                }));
+                RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>(new[]
+                {
+                    new TextData(Delta.New()) { Id = id },
+                }));
+                RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(new[]
+                {
+                    new SFProject
+                    {
+                        Id = projectId,
+                        UserRoles = new Dictionary<string, string>
+                        {
+                            { "user03", SFProjectRole.Administrator },
+                            { "user04", SFProjectRole.Translator },
+                        },
+                    },
+                }));
+                return textInfo;
             }
 
             public void SetupSFData(bool translationSuggestionsEnabled, bool checkingEnabled, bool changed,
