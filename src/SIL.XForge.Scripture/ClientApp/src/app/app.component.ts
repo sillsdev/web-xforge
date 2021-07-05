@@ -39,7 +39,7 @@ import { SFProjectDoc } from './core/models/sf-project-doc';
 import { canAccessTranslateApp } from './core/models/sf-project-role-info';
 import { SFProjectService } from './core/sf-project.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
-import { SFAdminAuthGuard } from './shared/project-router.guard';
+import { SFAdminAuthGuard, SFTranslatorAuthGuard } from './shared/project-router.guard';
 
 declare function gtag(...args: any): void;
 
@@ -65,6 +65,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   projectDocs?: SFProjectDoc[];
   isProjectAdmin$?: Observable<boolean>;
+  isProjectTranslator$?: Observable<boolean>;
   hasUpdate: boolean = false;
 
   private currentUserDoc?: UserDoc;
@@ -85,6 +86,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly projectService: SFProjectService,
     private readonly route: ActivatedRoute,
     private readonly adminAuthGuard: SFAdminAuthGuard,
+    private readonly translatorAuthGuard: SFTranslatorAuthGuard,
     private readonly dialog: MdcDialog,
     private readonly fileService: FileService,
     private readonly reportingService: ErrorReportingService,
@@ -358,6 +360,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         distinctUntilChanged(),
         tap(projectId => {
           this.isProjectAdmin$ = this.adminAuthGuard.allowTransition(projectId);
+          this.isProjectTranslator$ = this.translatorAuthGuard.allowTransition(projectId);
           // the project deleted dialog should be closed by now, so we can reset its ref to null
           if (projectId == null) {
             this.projectDeletedDialogRef = null;
