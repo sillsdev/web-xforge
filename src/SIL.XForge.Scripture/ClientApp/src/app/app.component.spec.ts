@@ -42,11 +42,12 @@ import { SFProjectDoc } from './core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from './core/models/sf-type-registry';
 import { SFProjectService } from './core/sf-project.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
-import { SFAdminAuthGuard } from './shared/project-router.guard';
+import { SFAdminAuthGuard, SFTranslatorAuthGuard } from './shared/project-router.guard';
 
 const mockedAuthService = mock(AuthService);
 const mockedUserService = mock(UserService);
 const mockedSFAdminAuthGuard = mock(SFAdminAuthGuard);
+const mockedSFTranslatorAuthGuard = mock(SFTranslatorAuthGuard);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
@@ -91,6 +92,7 @@ describe('AppComponent', () => {
       { provide: AuthService, useMock: mockedAuthService },
       { provide: UserService, useMock: mockedUserService },
       { provide: SFAdminAuthGuard, useMock: mockedSFAdminAuthGuard },
+      { provide: SFTranslatorAuthGuard, useMock: mockedSFTranslatorAuthGuard },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
@@ -289,14 +291,34 @@ describe('AppComponent', () => {
     env.init();
     // SUT 1
     env.makeUserAProjectAdmin(false);
+    env.makeUserAProjectTranslator(false);
     expect(env.someMenuItemContains('Synchronize')).toBeFalse();
     expect(env.someMenuItemContains('Settings')).toBeFalse();
     expect(env.someMenuItemContains('Users')).toBeFalse();
     // SUT 2
     env.makeUserAProjectAdmin();
+    env.makeUserAProjectTranslator();
     expect(env.someMenuItemContains('Synchronize')).toBeTrue();
     expect(env.someMenuItemContains('Settings')).toBeTrue();
     expect(env.someMenuItemContains('Users')).toBeTrue();
+  }));
+
+  it('should only display Sync for translator', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.navigate(['/projects', 'project02']);
+    env.init();
+    // SUT 1
+    env.makeUserAProjectAdmin(false);
+    env.makeUserAProjectTranslator(false);
+    expect(env.someMenuItemContains('Synchronize')).toBeFalse();
+    expect(env.someMenuItemContains('Settings')).toBeFalse();
+    expect(env.someMenuItemContains('Users')).toBeFalse();
+    // SUT 2
+    env.makeUserAProjectAdmin(false);
+    env.makeUserAProjectTranslator(true);
+    expect(env.someMenuItemContains('Synchronize')).toBeTrue();
+    expect(env.someMenuItemContains('Settings')).toBeFalse();
+    expect(env.someMenuItemContains('Users')).toBeFalse();
   }));
 
   it('user data is set for Bugsnag', fakeAsync(() => {
@@ -555,6 +577,7 @@ class TestEnvironment {
   readonly questions: Question[];
   readonly ngZone: NgZone;
   readonly isProjectAdmin$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
+  readonly isProjectTranslator$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
   readonly hasUpdate$: Subject<any> = new Subject<any>();
   readonly mockedProjectDeletedDialogRef: MdcDialogRef<ProjectDeletedDialogComponent> = mock(MdcDialogRef);
   readonly projectDeletedDialogRefAfterClosed$: Subject<string> = new Subject<string>();
@@ -618,6 +641,7 @@ class TestEnvironment {
     );
     when(mockedUserService.currentProjectId).thenReturn('project01');
     when(mockedSFAdminAuthGuard.allowTransition(anything())).thenReturn(this.isProjectAdmin$);
+    when(mockedSFTranslatorAuthGuard.allowTransition(anything())).thenReturn(this.isProjectTranslator$);
     when(mockedCookieService.get(anything())).thenReturn('en');
     const comesOnline = new Promise<void>(resolve => {
       this.comesOnline$.subscribe(() => resolve());
@@ -780,6 +804,12 @@ class TestEnvironment {
 
   makeUserAProjectAdmin(isProjectAdmin: boolean = true) {
     this.isProjectAdmin$.next(isProjectAdmin);
+    this.fixture.detectChanges();
+    tick();
+  }
+
+  makeUserAProjectTranslator(isProjectTranslator: boolean = true) {
+    this.isProjectTranslator$.next(isProjectTranslator);
     this.fixture.detectChanges();
     tick();
   }
