@@ -468,6 +468,94 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task PutBookText_DoesNotRequireChapterAuthors()
+        {
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            // should be able to edit the book text even if the admin user does not have permission
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser, hasEditPermission: false);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01);
+
+            int ruthBookNum = 8;
+            string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere" +
+                "</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />" +
+                "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
+
+            // SUT
+            await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, ruthBookUsx);
+
+            // Make sure only one ScrText was loaded
+            env.MockScrTextCollection.Received(1).FindById(env.Username01, ptProjectId);
+
+            // See if there is a message for the user updating the book
+            string logMessage = string.Format("{0} updated {1} in {2}.", env.User01,
+                    Canon.BookNumberToEnglishName(ruthBookNum), env.ProjectScrText.Name);
+            Assert.That(env.MockLogger.Messages.Any((string message) => message == logMessage), Is.True);
+        }
+
+        [Test]
+        public async Task PutBookText_UpdatesTheBookIfAllSameAuthor()
+        {
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            // should be able to edit the book text even if the admin user does not have permission
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser, hasEditPermission: false);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01);
+
+            int ruthBookNum = 8;
+            string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere" +
+                "</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />" +
+                "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
+            var chapterAuthors = new Dictionary<int, string>
+            {
+                { 1, env.User01 },
+                { 2, env.User01 },
+            };
+
+            // SUT
+            await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, ruthBookUsx, chapterAuthors);
+
+            // Make sure only one ScrText was loaded
+            env.MockScrTextCollection.Received(1).FindById(env.Username01, ptProjectId);
+
+            // See if there is a message for the user updating the book
+            string logMessage = string.Format("{0} updated {1} in {2}.", env.User01,
+                    Canon.BookNumberToEnglishName(ruthBookNum), env.ProjectScrText.Name);
+            Assert.That(env.MockLogger.Messages.Any((string message) => message == logMessage), Is.True);
+        }
+
+        [Test]
+        public async Task PutBookText_UpdatesTheChapterIfDifferentAuthors()
+        {
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            // should be able to edit the book text even if the admin user does not have permission
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser, hasEditPermission: false);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01);
+
+            int ruthBookNum = 8;
+            string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere" +
+                "</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />" +
+                "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
+            var chapterAuthors = new Dictionary<int, string>
+            {
+                { 1, env.User01 },
+                { 2, env.User02 },
+            };
+
+            // SUT
+            await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, ruthBookUsx, chapterAuthors);
+
+            // Make sure two ScrTexts were loaded
+            env.MockScrTextCollection.Received(2).FindById(env.Username01, ptProjectId);
+
+            // See if there is a message for the user updating the chapter
+            string logMessage = string.Format("{0} updated chapter {1} of {2} in {3}.", env.User01, 1,
+                    Canon.BookNumberToEnglishName(ruthBookNum), env.ProjectScrText.Name);
+            Assert.That(env.MockLogger.Messages.Any((string message) => message == logMessage), Is.True);
+        }
+
+        [Test]
         public void GetNotes_RetrievesNotes()
         {
             int ruthBookNum = 8;
