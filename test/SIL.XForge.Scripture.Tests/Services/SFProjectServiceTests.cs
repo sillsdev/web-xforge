@@ -1705,6 +1705,36 @@ namespace SIL.XForge.Scripture.Services
             Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CancelSyncAsync(User03, Project01));
         }
 
+        [Test]
+        public void SyncAsync_AdministratorsCanSync()
+        {
+            // Setup
+            var env = new TestEnvironment();
+
+            // SUT
+            Assert.DoesNotThrowAsync(() => env.Service.SyncAsync(User01, Project01));
+        }
+
+        [Test]
+        public void SyncAsync_TranslatorsCanSync()
+        {
+            // Setup
+            var env = new TestEnvironment();
+
+            // SUT
+            Assert.DoesNotThrowAsync(() => env.Service.SyncAsync(User05, Project01));
+        }
+
+        [Test]
+        public void SyncAsync_ObserversCannotSync()
+        {
+            // Setup
+            var env = new TestEnvironment();
+
+            // SUT
+            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.SyncAsync(User02, Project01));
+        }
+
         private class TestEnvironment
         {
             public TestEnvironment()
