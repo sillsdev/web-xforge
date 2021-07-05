@@ -38,6 +38,7 @@ namespace SIL.XForge.Scripture.Services
         private const string User02 = "user02";
         private const string User03 = "user03";
         private const string User04 = "user04";
+        private const string User05 = "user05";
         private const string LinkExpiredUser = "linkexpireduser";
         private const string SiteId = "xf";
         private const string PTProjectIdNotYetInSF = "paratext_notYetInSF";
@@ -1664,6 +1665,46 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(user.Sites[SiteId].Projects.Contains(Resource01), Is.False, "user cannot access resource");
         }
 
+        [Test]
+        public void CancelSyncAsync_AdministratorsCanCancelSync()
+        {
+            // Setup
+            var env = new TestEnvironment();
+
+            // SUT
+            Assert.DoesNotThrowAsync(() => env.Service.CancelSyncAsync(User01, Project01));
+        }
+
+        [Test]
+        public void CancelSyncAsync_TranslatorsCanCancelSync()
+        {
+            // Setup
+            var env = new TestEnvironment();
+
+            // SUT
+            Assert.DoesNotThrowAsync(() => env.Service.CancelSyncAsync(User05, Project01));
+        }
+
+        [Test]
+        public void CancelSyncAsync_ObserversCannotCancelSync()
+        {
+            // Setup
+            var env = new TestEnvironment();
+
+            // SUT
+            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CancelSyncAsync(User02, Project01));
+        }
+
+        [Test]
+        public void CancelSyncAsync_UsersNotInProjectCannotCancelSync()
+        {
+            // Setup
+            var env = new TestEnvironment();
+
+            // SUT
+            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CancelSyncAsync(User03, Project01));
+        }
+
         private class TestEnvironment
         {
             public TestEnvironment()
@@ -1710,7 +1751,17 @@ namespace SIL.XForge.Scripture.Services
                         Id = LinkExpiredUser,
                         Email = "expired@example.com",
                         Sites = new Dictionary<string, Site> { { SiteId, new Site() }}
-                    }
+                    },
+                    new User
+                    {
+                        Id = User05,
+                        Email = "user05@example.com",
+                        ParatextId = "pt-user05",
+                        Sites = new Dictionary<string, Site>
+                        {
+                            { SiteId, new Site { Projects = { Project01 } } }
+                        }
+                    },
                 }));
                 RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(
                     new[]
@@ -1743,7 +1794,8 @@ namespace SIL.XForge.Scripture.Services
                             UserRoles = new Dictionary<string, string>
                             {
                                 { User01, SFProjectRole.Administrator },
-                                { User02, SFProjectRole.CommunityChecker }
+                                { User02, SFProjectRole.CommunityChecker },
+                                { User05, SFProjectRole.Translator },
                             },
                             Texts =
                             {
@@ -1914,6 +1966,7 @@ namespace SIL.XForge.Scripture.Services
                     {
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User01) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User02) },
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User05) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project02, User02) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project03, User01) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project03, User02) },

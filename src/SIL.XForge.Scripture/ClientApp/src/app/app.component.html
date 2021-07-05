@@ -235,15 +235,17 @@
             </mdc-list-item>
           </ng-container>
         </div>
-        <mdc-list-divider *ngIf="isCheckingEnabled"></mdc-list-divider>
-        <mdc-list-item
-          [appRouterLink]="getRouterLink('sync')"
-          [class.list-item-disabled]="!isAppOnline"
-          (selectionChange)="itemSelected()"
-        >
-          <mdc-icon mdcListItemGraphic>sync</mdc-icon>
-          {{ t("synchronize") }}
-        </mdc-list-item>
+        <div *ngIf="isProjectTranslator$ | async">
+          <mdc-list-divider *ngIf="isCheckingEnabled"></mdc-list-divider>
+          <mdc-list-item
+            [appRouterLink]="getRouterLink('sync')"
+            [class.list-item-disabled]="!isAppOnline"
+            (selectionChange)="itemSelected()"
+          >
+            <mdc-icon mdcListItemGraphic>sync</mdc-icon>
+            {{ t("synchronize") }}
+          </mdc-list-item>
+        </div>
         <div *ngIf="isProjectAdmin$ | async">
           <mdc-list-item
             [appRouterLink]="getRouterLink('settings')"
