@@ -286,7 +286,11 @@ namespace SIL.XForge.Scripture.Services
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Error occurred while executing Paratext sync for project '{Project}'", projectId);
+                if (!(e is TaskCanceledException))
+                {
+                    _logger.LogError(e, "Error occurred while executing Paratext sync for project '{Project}'", projectId);
+                }
+
                 await CompleteSync(false, canRollbackParatext, token);
             }
             finally
