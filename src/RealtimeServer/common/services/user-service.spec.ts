@@ -1,8 +1,8 @@
-import ShareDB = require('sharedb');
-import ShareDBMingo = require('sharedb-mingo-memory');
+import ShareDB from 'sharedb';
+import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock } from 'ts-mockito';
 import { SystemRole } from '../models/system-role';
-import { User, USER_PROFILES_COLLECTION, USERS_COLLECTION } from '../models/user';
+import { User, USERS_COLLECTION, USER_PROFILES_COLLECTION } from '../models/user';
 import { RealtimeServer } from '../realtime-server';
 import { SchemaVersionRepository } from '../schema-version-repository';
 import { clientConnect, createDoc, fetchDoc, submitJson0Op, submitOp } from '../utils/test-utils';

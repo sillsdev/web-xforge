@@ -23,6 +23,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<IInternetSharedRepositorySourceProvider, InternetSharedRepositorySourceProvider>();
             services.AddSingleton<ITransceleratorService, TransceleratorService>();
             services.AddSingleton<ISFRestClientFactory, SFDblRestClientFactory>();
+            services.AddSingleton<IHgWrapper, HgWrapper>();
             return services;
         }
     }

@@ -15,7 +15,7 @@
             <app-checking-audio-player [source]="getFileSource(questionDoc?.data?.audioUrl)">
             </app-checking-audio-player>
           </div>
-          <div class="question-footer" *ngIf="isProjectAdmin">
+          <div class="question-footer" *ngIf="canEditQuestion">
             <div class="actions">
               <button mdc-button type="button" (click)="questionDialog()" class="edit-question-button">
                 {{ t("edit") }}
@@ -30,7 +30,7 @@
           <button
             *ngIf="currentUserTotalAnswers === 0 && canAddAnswer"
             mdc-button
-            unelevated
+            [unelevated]="true"
             (click)="showAnswerForm()"
             id="add-answer"
           >
@@ -40,7 +40,7 @@
       </div>
       <div *ngIf="answerFormVisible">
         <form [formGroup]="answerForm" autocomplete="off" id="answer-form" appScrollIntoView>
-          <mdc-tab-bar #answerTabs fixed>
+          <mdc-tab-bar #answerTabs [fixed]="true">
             <mdc-tab-scroller>
               <mdc-tab icon="title" label="{{ t('answer') }}"></mdc-tab>
               <mdc-tab
@@ -60,8 +60,8 @@
                 label="{{ t('your_answer') }}"
                 type="text"
                 formControlName="answerText"
-                outlined
-                fullwidth
+                [outlined]="true"
+                [fullwidth]="true"
               ></mdc-textarea>
             </mdc-form-field>
           </div>
@@ -90,7 +90,9 @@
                 icon="clear"
                 class="clear-selection"
               ></button>
-              <button type="button" (click)="selectScripture()" mdc-button unelevated>{{ t("select_verses") }}</button>
+              <button type="button" (click)="selectScripture()" mdc-button [unelevated]="true" id="select-scripture">
+                {{ t("select_verses") }}
+              </button>
             </div>
           </div>
           <div class="form-helper-text" [ngClass]="{ visible: answerFormSubmitAttempted && answerText.invalid }">
@@ -100,7 +102,7 @@
             <button mdc-button type="button" (click)="hideAnswerForm()" id="cancel-answer">{{ t("cancel") }}</button>
             <button
               mdc-button
-              unelevated
+              [unelevated]="true"
               form="answer-form"
               id="save-answer"
               type="submit"

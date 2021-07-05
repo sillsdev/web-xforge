@@ -1,9 +1,9 @@
 import { Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
-import { Question } from 'realtime-server/lib/scriptureforge/models/question';
-import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { SFProjectUserConfig } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
+import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { NoticeService } from 'xforge-common/notice.service';
 import { canAccessTranslateApp } from '../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';

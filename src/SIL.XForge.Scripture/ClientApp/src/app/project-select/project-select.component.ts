@@ -105,13 +105,16 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
     return this.paratextIdControl.disabled;
   }
 
-  @Input() set hideProjectId(value: string) {
+  @Input() set hideProjectId(value: string | undefined) {
+    if (value == null) {
+      return;
+    }
     if (this.paratextIdControl.value?.paratextId === value) {
       this.paratextIdControl.setValue('');
     }
     this.hideProjectId$.next(value);
   }
-  get hideProjectId(): string {
+  get hideProjectId(): string | undefined {
     return this.hideProjectId$.getValue();
   }
 
@@ -152,6 +155,13 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
 
   inputClicked() {
     this.autocompleteTrigger.openPanel();
+  }
+
+  nullableLength(project: SelectableProject[] | null): number {
+    if (project == null) {
+      return NaN;
+    }
+    return project.length;
   }
 
   private filterGroup(

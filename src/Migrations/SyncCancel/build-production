@@ -1,0 +1,27 @@
+#!/bin/bash
+# Build for running on another computer.
+# This is turning into a bit of a kludge, in order for the product filename to contain the date,
+# the contents to be contained within a top-level folder, and not leave old intermediate production
+# files laying around. But it works.
+#
+# Usage: ./build-production
+#
+# To run product on another computer:
+# Set ASPNETCORE_ENVIRONMENT to Development on a workstation, Staging for QA, or omit it for Live.
+# Set CANCEL_PROJECT_IDS to "<project_1_ID> <project_2_ID> ... <project_N_ID>" to limit projects
+# Extract program:
+#   tar xf sync-cancel-*.tar.xz
+# Run:
+#   ASPNETCORE_ENVIRONMENT=Development SF_APP_DIR="/path/to/sf/app" sync-cancel-*/SyncCancel
+
+set -ue -o pipefail
+
+outputProductName="sync-cancel-$(date '+%Y%m%d%H%M%S')"
+outputDir="bin/${outputProductName}"
+dotnet publish --runtime "linux-x64" -o "${outputDir}"
+package="$(mktemp -d)/${outputProductName}.tar.xz"
+cd "${outputDir}/.."
+tar cfJ "${package}" ${outputProductName}
+cd -
+rm -rf "${outputDir}"
+echo Product: ${package}

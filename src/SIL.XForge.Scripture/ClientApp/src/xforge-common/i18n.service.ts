@@ -1,12 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import Bugsnag from '@bugsnag/js';
 import { Translation, TranslocoLoader } from '@ngneat/transloco';
 import { TranslocoConfig, TranslocoService } from '@ngneat/transloco';
 import merge from 'lodash-es/merge';
 import { CookieService } from 'ngx-cookie-service';
-import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
-import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
+import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { of, zip } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -14,6 +13,7 @@ import enChecking from '../assets/i18n/checking_en.json';
 import enNonChecking from '../assets/i18n/non_checking_en.json';
 import { environment } from '../environments/environment';
 import { AuthService } from './auth.service';
+import { BugsnagService } from './bugsnag.service';
 import { LocationService } from './location.service';
 import { Locale } from './models/i18n-locale';
 import { aspCultureCookieValue, ASP_CULTURE_COOKIE_NAME, getAspCultureCookieLanguage, getI18nLocales } from './utils';
@@ -87,6 +87,7 @@ export class I18nService {
 
   constructor(
     locationService: LocationService,
+    private readonly bugsnagService: BugsnagService,
     private readonly authService: AuthService,
     private readonly transloco: TranslocoService,
     private readonly cookieService: CookieService,
@@ -148,7 +149,7 @@ export class I18nService {
     if (doAuthUpdate) {
       this.authService.updateInterfaceLanguage(locale.canonicalTag);
     }
-    Bugsnag.leaveBreadcrumb(
+    this.bugsnagService.leaveBreadcrumb(
       'Set Locale',
       {
         localeId: this.localeCode

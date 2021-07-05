@@ -194,7 +194,7 @@ namespace SIL.XForge.Scripture
                 app.UseExceptionHandler(errorApp => exceptionHandler.ReportExceptions(errorApp));
             }
 
-            app.UseStatusCodePagesWithReExecute("/Status/Status{0}");
+            app.UseStatusCodePagesWithReExecute("/Status/Error", "?code={0}");
 
             app.UseForwardedHeaders(new ForwardedHeadersOptions
             {
@@ -267,24 +267,24 @@ namespace SIL.XForge.Scripture
                     switch (SpaDevServerStartup)
                     {
                         case SpaDevServerStartup.Start:
-                        string npmScript = "start";
-                        if (Environment.IsEnvironment("DevelopmentBeta"))
-                        {
-                            npmScript = "startBeta";
-                        }
-                        Console.WriteLine($"Info: SF is serving angular using script {npmScript}.");
-                        spa.UseAngularCliServer(npmScript);
+                            string npmScript = "start";
+                            if (Environment.IsEnvironment("DevelopmentBeta"))
+                            {
+                                npmScript = "startBeta";
+                            }
+                            Console.WriteLine($"Info: SF is serving angular using script {npmScript}.");
+                            spa.UseAngularCliServer(npmScript);
                             break;
 
                         case SpaDevServerStartup.Listen:
-                        int port = 4200;
-                        if (Environment.IsEnvironment("DevelopmentBeta"))
-                        {
-                            port = 9200;
-                        }
-                        string ngServeUri = $"http://localhost:{port}";
-                        Console.WriteLine($"Info: SF will use an existing angular serve at {ngServeUri}.");
-                        spa.UseProxyToSpaDevelopmentServer(ngServeUri);
+                            int port = 4200;
+                            if (Environment.IsEnvironment("DevelopmentBeta"))
+                            {
+                                port = 9200;
+                            }
+                            string ngServeUri = $"http://localhost:{port}";
+                            Console.WriteLine($"Info: SF will use an existing angular serve at {ngServeUri}.");
+                            spa.UseProxyToSpaDevelopmentServer(ngServeUri);
                             break;
                     }
                 });

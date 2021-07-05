@@ -4,13 +4,12 @@ import { MediaObserver } from '@angular/flex-layout';
 import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { Operation } from 'realtime-server/lib/common/models/project-rights';
-import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
-import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
-import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
-import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { Subscription } from 'rxjs';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -216,15 +215,21 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       : false;
   }
 
-  get isProjectAdmin(): boolean {
-    return this.projectRole === SFProjectRole.ParatextAdministrator;
+  get canEditQuestion(): boolean {
+    const userId = this.userService.currentUserId;
+    const data = this.questionDoc?.data;
+    return (
+      this.project != null &&
+      SF_PROJECT_RIGHTS.hasRight(this.project, userId, SFProjectDomain.Questions, Operation.Edit, data)
+    );
   }
 
   get canAddAnswer(): boolean {
-    return SF_PROJECT_RIGHTS.hasRight(this.projectRole, {
-      projectDomain: SFProjectDomain.Answers,
-      operation: Operation.Create
-    });
+    const userId = this.userService.currentUserId;
+    return (
+      this.project != null &&
+      SF_PROJECT_RIGHTS.hasRight(this.project, userId, SFProjectDomain.Answers, Operation.Create)
+    );
   }
 
   get questionDoc(): QuestionDoc | undefined {
@@ -241,13 +246,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
 
   get totalAnswers(): number {
     return this.allAnswers.length;
-  }
-
-  private get projectRole(): SFProjectRole {
-    if (this.project == null) {
-      return SFProjectRole.None;
-    }
-    return this.project.userRoles[this.userService.currentUserId] as SFProjectRole;
   }
 
   ngOnInit(): void {
@@ -355,20 +353,18 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   canEditAnswer(answer: Answer): boolean {
-    return SF_PROJECT_RIGHTS.hasRight(
-      this.projectRole,
-      { projectDomain: SFProjectDomain.Answers, operation: Operation.Edit },
-      this.userService.currentUserId,
-      answer
+    const userId = this.userService.currentUserId;
+    return (
+      this.project != null &&
+      SF_PROJECT_RIGHTS.hasRight(this.project, userId, SFProjectDomain.Answers, Operation.Edit, answer)
     );
   }
 
   canDeleteAnswer(answer: Answer): boolean {
-    return SF_PROJECT_RIGHTS.hasRight(
-      this.projectRole,
-      { projectDomain: SFProjectDomain.Answers, operation: Operation.Delete },
-      this.userService.currentUserId,
-      answer
+    const userId = this.userService.currentUserId;
+    return (
+      this.project != null &&
+      SF_PROJECT_RIGHTS.hasRight(this.project, userId, SFProjectDomain.Answers, Operation.Delete, answer)
     );
   }
 
@@ -412,7 +408,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     this.applyTextAudioValidators();
   }
 
-  scriptureTextVerseRef(verse: VerseRef | VerseRefData): string {
+  scriptureTextVerseRef(verse: VerseRef | VerseRefData | undefined): string {
     if (verse == null) {
       return '';
     }
@@ -482,21 +478,15 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   private canLikeAnswer(answer: Answer): LikeAnswerResponse {
+    const userId = this.userService.currentUserId;
     let result: LikeAnswerResponse = LikeAnswerResponse.granted;
-    if (this.userService.currentUserId === answer.ownerRef) {
+    if (userId === answer.ownerRef) {
       result = LikeAnswerResponse.deniedOwnAnswer;
     } else if (
+      this.project == null ||
       !(
-        SF_PROJECT_RIGHTS.hasRight(
-          this.projectRole,
-          { projectDomain: SFProjectDomain.Answers, operation: Operation.DeleteOwn },
-          this.userService.currentUserId,
-          answer
-        ) &&
-        SF_PROJECT_RIGHTS.hasRight(this.projectRole, {
-          projectDomain: SFProjectDomain.Answers,
-          operation: Operation.Create
-        })
+        SF_PROJECT_RIGHTS.hasRight(this.project, userId, SFProjectDomain.Answers, Operation.DeleteOwn, answer) &&
+        SF_PROJECT_RIGHTS.hasRight(this.project, userId, SFProjectDomain.Answers, Operation.Create)
       )
     ) {
       result = LikeAnswerResponse.deniedNonCommunityChecker;

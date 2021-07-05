@@ -1,5 +1,5 @@
-import ShareDB = require('sharedb');
-import ShareDBMingo = require('sharedb-mingo-memory');
+import ShareDB from 'sharedb';
+import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock } from 'ts-mockito';
 import { SystemRole } from '../../common/models/system-role';
 import { User, USERS_COLLECTION } from '../../common/models/user';
@@ -8,12 +8,12 @@ import { SchemaVersionRepository } from '../../common/schema-version-repository'
 import { allowAll, clientConnect, createDoc, flushPromises, submitJson0Op } from '../../common/utils/test-utils';
 import { CheckingShareLevel } from '../models/checking-config';
 import { getQuestionDocId, Question, QUESTIONS_COLLECTION } from '../models/question';
-import { SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
+import { SFProject, SF_PROJECTS_COLLECTION } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
 import {
   getSFProjectUserConfigDocId,
-  SF_PROJECT_USER_CONFIGS_COLLECTION,
-  SFProjectUserConfig
+  SFProjectUserConfig,
+  SF_PROJECT_USER_CONFIGS_COLLECTION
 } from '../models/sf-project-user-config';
 import { QuestionService } from './question-service';
 
@@ -163,7 +163,8 @@ class TestEnvironment {
       userRoles: {
         projectAdmin: SFProjectRole.ParatextAdministrator,
         checker: SFProjectRole.CommunityChecker
-      }
+      },
+      userPermissions: {}
     });
 
     await createDoc<Question>(conn, QUESTIONS_COLLECTION, getQuestionDocId('project01', 'question01'), {

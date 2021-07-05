@@ -25,6 +25,10 @@ namespace PTDDCloneAll
         public const string CLONE = "clone";
         public const string CLONE_AND_MOVE_OLD = "cloneandmoveold";
         public const string CLONE_SILENT = "clonesilent";
+        // Discard un-synchronize SF data. S/R the project directory with PT servers. Import project directory data into SF.
+        public const string SYNCHRONIZE_SF = "synchronizesf";
+        // Write SF data to project directory. S/R the project directory with PT servers. Import project directory data into SF.
+        public const string SYNCHRONIZE_PT_SF = "synchronizeptsf";
         public const string INSPECT = "inspect";
 
         private readonly Func<IPTDDSyncRunner> _syncRunnerFactory;
@@ -36,7 +40,9 @@ namespace PTDDCloneAll
 
         public static string GetMode(string mode)
         {
-            return mode == CLONE || mode == CLONE_AND_MOVE_OLD || mode == CLONE_SILENT ? mode : INSPECT;
+            bool cloneProject = mode == CLONE || mode == CLONE_AND_MOVE_OLD || mode == CLONE_SILENT;
+            bool synchronizeProject = mode == SYNCHRONIZE_SF || mode == SYNCHRONIZE_PT_SF;
+            return cloneProject || synchronizeProject ? mode : INSPECT;
         }
 
         public CloneAllService(Func<IPTDDSyncRunner> syncRunnerFactory, IRealtimeService realtimeService,
@@ -60,7 +66,6 @@ namespace PTDDCloneAll
         public async Task CloneSFProjects(string mode, IEnumerable<SFProject> projectsToClone)
         {
             string syncDir = Path.Combine(_siteOptions.Value.SiteDir, "sync");
-            bool doClone = mode == CLONE || mode == CLONE_AND_MOVE_OLD || mode == CLONE_SILENT;
 
             string syncDirOld = Path.Combine(_siteOptions.Value.SiteDir, "sync_old");
             if (mode == CLONE_AND_MOVE_OLD)
@@ -82,7 +87,7 @@ namespace PTDDCloneAll
                         UserSecret userSecret = _userSecretRepo.Query().FirstOrDefault((UserSecret us) => us.Id == userId);
                         string ptUsername = _paratextService.GetParatextUsername(userSecret);
                         Log($"Project administrator identified on {proj.Name}: {ptUsername} ({userId})");
-                        if (!doClone)
+                        if (mode == INSPECT)
                             break;
                         try
                         {
@@ -92,9 +97,8 @@ namespace PTDDCloneAll
                                 // Increment the queued count such as in SyncService
                                 op.Inc(pd => pd.Sync.QueuedCount);
                             });
-                            bool silent = mode == CLONE_SILENT;
                             // Clone the paratext project and update the SF database with the project data
-                            await CloneAndSyncFromParatext(proj, userId, syncDir, silent);
+                            await CloneAndSyncFromParatext(proj, userId, syncDir, mode);
 
                             if (mode == CLONE_AND_MOVE_OLD)
                             {
@@ -120,19 +124,22 @@ namespace PTDDCloneAll
         /// Clone Paratext project data into the SF projects sync folder. Then synchronize existing books
         /// and notes in project.
         /// </summary>
-        public async Task CloneAndSyncFromParatext(SFProject proj, string userId, string syncDir, bool silent)
+        public async Task CloneAndSyncFromParatext(SFProject proj, string userId, string syncDir, string mode)
         {
+            bool silent = mode == CLONE_SILENT;
+            bool pushLocal = mode == SYNCHRONIZE_PT_SF;
+            bool syncMode = mode == SYNCHRONIZE_SF || mode == SYNCHRONIZE_PT_SF;
             Log($"Cloning {proj.Name} ({proj.Id}) as SF user {userId}");
             string existingCloneDir = Path.Combine(syncDir, proj.ParatextId);
             // If the project directory already exists, no need to sync the project
-            if (_fileSystemService.DirectoryExists(existingCloneDir))
+            if (_fileSystemService.DirectoryExists(existingCloneDir) && !syncMode)
             {
                 Log("The project has already been cloned. Skipping...");
                 return;
             }
             try
             {
-                await CloneProject(proj.Id, userId, silent);
+                await CloneProject(proj.Id, userId, silent, pushLocal);
                 Log($"{proj.Name} - Succeeded");
                 if (silent)
                 {
@@ -143,16 +150,16 @@ namespace PTDDCloneAll
             catch (Exception e)
             {
                 Log($"There was a problem cloning the project.{Environment.NewLine}Exception is: {e}");
-                if (_fileSystemService.DirectoryExists(existingCloneDir))
+                if (_fileSystemService.DirectoryExists(existingCloneDir) && !syncMode)
                     _fileSystemService.DeleteDirectory(existingCloneDir);
                 throw;
             }
         }
 
-        public Task CloneProject(string sfProjectId, string sfUserId, bool isSilent)
+        public Task CloneProject(string sfProjectId, string sfUserId, bool isSilent, bool pushLocal)
         {
             IPTDDSyncRunner syncRunner = _syncRunnerFactory();
-            return syncRunner.RunAsync(sfProjectId, sfUserId, false, isSilent);
+            return syncRunner.RunAsync(sfProjectId, sfUserId, false, isSilent, pushLocal);
         }
 
         public void Log(string message)

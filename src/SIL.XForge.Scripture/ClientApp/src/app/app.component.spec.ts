@@ -8,19 +8,20 @@ import { By } from '@angular/platform-browser';
 import { Route, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CookieService } from 'ngx-cookie-service';
-import { SystemRole } from 'realtime-server/lib/common/models/system-role';
-import { User } from 'realtime-server/lib/common/models/user';
-import { obj } from 'realtime-server/lib/common/utils/obj-path';
-import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
-import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/models/question';
-import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
+import { User } from 'realtime-server/lib/esm/common/models/user';
+import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
+import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import { anyString, anything, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { BetaMigrationDialogComponent } from 'xforge-common/beta-migration/beta-migration-dialog/beta-migration-dialog.component';
+import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FileService } from 'xforge-common/file.service';
 import { LocationService } from 'xforge-common/location.service';
@@ -47,6 +48,7 @@ const mockedAuthService = mock(AuthService);
 const mockedUserService = mock(UserService);
 const mockedSFAdminAuthGuard = mock(SFAdminAuthGuard);
 const mockedSFProjectService = mock(SFProjectService);
+const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedLocationService = mock(LocationService);
 const mockedNoticeService = mock(NoticeService);
@@ -90,6 +92,7 @@ describe('AppComponent', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: SFAdminAuthGuard, useMock: mockedSFAdminAuthGuard },
       { provide: SFProjectService, useMock: mockedSFProjectService },
+      { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: LocationService, useMock: mockedLocationService },
       { provide: NoticeService, useMock: mockedNoticeService },
@@ -829,7 +832,7 @@ class TestEnvironment {
   }
 
   confirmProjectDeletedDialog() {
-    this.projectDeletedDialogRefAfterClosed$.next('close');
+    this.ngZone.run(() => this.projectDeletedDialogRefAfterClosed$.next('close'));
   }
 
   private addProject(projectId: string, userRoles: { [userRef: string]: string }, texts: TextInfo[]): void {
@@ -853,6 +856,7 @@ class TestEnvironment {
         },
         sync: { queuedCount: 0 },
         userRoles,
+        userPermissions: {},
         texts
       }
     });

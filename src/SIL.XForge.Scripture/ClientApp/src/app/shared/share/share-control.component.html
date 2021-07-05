@@ -5,7 +5,7 @@
       <mdc-text-field
         id="share-link"
         #shareLinkField
-        outlined
+        [outlined]="true"
         [value]="shareLink"
         [disabled]="!shareLink"
         [readonly]="true"
@@ -13,8 +13,8 @@
         <mdc-icon
           id="share-link-copy-icon"
           mdcTextFieldIcon
-          trailing
-          clickable
+          [trailing]="true"
+          [clickable]="true"
           (click)="copyShareLink()"
           title="{{ t('copy_link') }}"
           >file_copy
@@ -36,9 +36,7 @@
           <mat-form-field *ngIf="canSelectRole" id="invitation-role">
             <mat-label>{{ t("invitation_role") }}</mat-label>
             <mat-select formControlName="role">
-              <mat-option *ngFor="let role of roles" [value]="role.role">
-                {{ role.displayName }}
-              </mat-option>
+              <mat-option *ngFor="let role of roles" [value]="role.role">{{ role.displayName }}</mat-option>
             </mat-select>
             <mat-error *ngIf="roleControl.hasError('required')">{{ t("select_invitation_role") }}</mat-error>
           </mat-form-field>

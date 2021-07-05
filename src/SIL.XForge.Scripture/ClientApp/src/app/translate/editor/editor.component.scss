@@ -111,7 +111,8 @@ app-text {
   overflow: hidden;
 }
 
-.invalid-warning {
+.invalid-warning,
+.out-of-sync-warning {
   color: #ff4118;
   margin-bottom: 3px;
 

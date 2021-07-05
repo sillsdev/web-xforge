@@ -98,6 +98,20 @@
       }
     },
     {
+      "name": "Migration SyncCancel",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-migrator-ptdaSyncCancelAll",
+      "program": "${workspaceRoot}/src/Migrations/SyncCancel/bin/Debug/netcoreapp3.1/SyncCancel.dll",
+      "cwd": "${workspaceRoot}/src/Migrations/SyncCancel",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "args": ["--start-ng-serve=listen"],
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
       "type": "node",
       "request": "launch",
       "name": "vscode-jest-tests",

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
@@ -273,6 +274,38 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void IsResource_JunkInput_No()
+        {
+            var env = new TestEnvironment();
+            // SUTs
+            Assert.That(env.Service.IsResource(null), Is.False);
+            Assert.That(env.Service.IsResource(""), Is.False);
+            Assert.That(env.Service.IsResource("junk"), Is.False);
+        }
+
+        [Test]
+        public void IsResource_NonResourceProjectId_No()
+        {
+            var env = new TestEnvironment();
+            const int lengthOfParatextProjectIds = 40;
+            string id = "1234567890abcdef1234567890abcdef12345678";
+            Assert.That(id.Length, Is.EqualTo(lengthOfParatextProjectIds), "setup. Use an ID of Paratext-ID-length.");
+            // SUT
+            Assert.That(env.Service.IsResource(id), Is.False);
+        }
+
+        [Test]
+        public void IsResource_ResourceProjectId_Yes()
+        {
+            var env = new TestEnvironment();
+            const int lengthOfDblResourceId = 16;
+            string id = "1234567890abcdef";
+            Assert.That(id.Length, Is.EqualTo(lengthOfDblResourceId), "setup. Use an ID of DBL-Resource-ID-length.");
+            // SUT
+            Assert.That(env.Service.IsResource(id), Is.True);
+        }
+
+        [Test]
         public async Task GetPermissionsAsync_UserResourcePermission()
         {
             // Set up environment
@@ -326,7 +359,7 @@ namespace SIL.XForge.Scripture.Services
                 .Returns(mockClient);
 
             var paratextId = "resid_is_16_char";
-            var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01);
+            var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01, CancellationToken.None);
             Assert.That(permission, Is.EqualTo(TextInfoPermission.None));
         }
 
@@ -347,7 +380,7 @@ namespace SIL.XForge.Scripture.Services
 
             var paratextId = "resid_is_16_char";
 
-            var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01);
+            var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01, CancellationToken.None);
             Assert.That(permission, Is.EqualTo(TextInfoPermission.Read));
         }
 
@@ -865,7 +898,8 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             const string resourceId = "1234567890abcdef";
             Assert.That(resourceId.Length, Is.EqualTo(SFInstallableDblResource.ResourceIdentifierLength));
-            var mapping = await env.Service.GetParatextUsernameMappingAsync(env.MakeUserSecret(env.User01, env.Username01), resourceId);
+            var mapping = await env.Service.GetParatextUsernameMappingAsync(env.MakeUserSecret(env.User01, env.Username01),
+                resourceId, CancellationToken.None);
             Assert.That(mapping.Count, Is.EqualTo(0));
         }
 
@@ -877,6 +911,185 @@ namespace SIL.XForge.Scripture.Services
             public bool isEdited;
             public bool isDeleted;
             public bool isConflict;
+        }
+
+        [Test]
+        public void GetLatestSharedVersion_ForPTProject()
+        {
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            ScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
+            string lastPublicRevision = "abc123";
+            env.MockHgWrapper.GetLastPublicRevision(scrText.Directory, allowEmptyIfRestoredFromBackup: false)
+                .Returns(lastPublicRevision);
+
+            // SUT
+            string latestSharedVersion = env.Service.GetLatestSharedVersion(user01Secret, ptProjectId);
+
+            Assert.That(latestSharedVersion, Is.EqualTo(lastPublicRevision));
+        }
+
+        [Test]
+        public void GetLatestSharedVersion_ForDBLResource()
+        {
+            var env = new TestEnvironment();
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+
+            string resourcePTId = "1234567890123456";
+            Assert.That(resourcePTId, Has.Length.EqualTo(SFInstallableDblResource.ResourceIdentifierLength),
+                "setup. Should be using a project ID that is a resource ID");
+
+            // SUT
+            string latestSharedVersion = env.Service.GetLatestSharedVersion(user01Secret, resourcePTId);
+
+            Assert.That(latestSharedVersion, Is.Null,
+                "DBL resources do not have hg repositories to have a last pushed or pulled hg commit id.");
+            // Wouldn't have ended up trying to find a ScrText or querying hg.
+            env.MockScrTextCollection.DidNotReceiveWithAnyArgs().FindById(default, default);
+            env.MockHgWrapper.DidNotReceiveWithAnyArgs().GetLastPublicRevision(default, default);
+        }
+
+        [Test]
+        public void BackupExists_Failure()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            env.MockFileSystemService.FileExists(Arg.Any<string>()).Throws(new UnauthorizedAccessException());
+
+            // SUT
+            bool result = env.Service.BackupExists(user01Secret, ptProjectId);
+            Assert.IsFalse(result);
+        }
+
+        [Test]
+        public void BackupExists_Missing()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            env.MockFileSystemService.FileExists(Arg.Any<string>()).Returns(false);
+
+            // SUT
+            bool result = env.Service.BackupExists(user01Secret, ptProjectId);
+            Assert.IsFalse(result);
+        }
+
+        [Test]
+        public void BackupExists_Success()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            env.MockFileSystemService.FileExists(Arg.Any<string>()).Returns(true);
+
+            // SUT
+            bool result = env.Service.BackupExists(user01Secret, ptProjectId);
+            Assert.IsTrue(result);
+        }
+
+        [Test]
+        public void BackupRepository_Failure()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            env.MockFileSystemService.FileExists(Arg.Any<string>()).Throws(new UnauthorizedAccessException());
+
+            // SUT
+            bool result = env.Service.BackupRepository(user01Secret, ptProjectId);
+            Assert.IsFalse(result);
+        }
+
+        [Test]
+        public void BackupRepository_InvalidProject()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            string ptProjectId = "invalid_project";
+
+            // SUT
+            bool result = env.Service.BackupRepository(user01Secret, ptProjectId);
+            Assert.IsFalse(result);
+        }
+
+        [Test]
+        public void BackupRepository_Success()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+
+            // SUT
+            bool result = env.Service.BackupRepository(user01Secret, ptProjectId);
+            Assert.IsTrue(result);
+        }
+
+        [Test]
+        public void RestoreRepository_Failure()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            env.MockFileSystemService.FileExists(Arg.Any<string>()).Throws(new UnauthorizedAccessException());
+
+            // SUT
+            bool result = env.Service.RestoreRepository(user01Secret, ptProjectId);
+            Assert.IsFalse(result);
+        }
+
+        [Test]
+        public void RestoreRepository_Missing()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            env.MockFileSystemService.FileExists(Arg.Any<string>()).Returns(false);
+
+            // SUT
+            bool result = env.Service.RestoreRepository(user01Secret, ptProjectId);
+            Assert.IsFalse(result);
+        }
+
+        [Test]
+        public void RestoreRepository_Success()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            env.MockFileSystemService.FileExists(Arg.Any<string>()).Returns(true);
+
+            // SUT
+            bool result = env.Service.RestoreRepository(user01Secret, ptProjectId);
+            Assert.IsTrue(result);
         }
 
         private class TestEnvironment
@@ -945,10 +1158,9 @@ namespace SIL.XForge.Scripture.Services
                 Service = new ParatextService(MockWebHostEnvironment, MockParatextOptions, MockRepository,
                     RealtimeService, MockExceptionHandler, MockSiteOptions, MockFileSystemService,
                     MockLogger, MockJwtTokenHelper, MockParatextDataHelper, MockInternetSharedRepositorySourceProvider,
-                    new TestGuidService(), MockRestClientFactory);
+                    new TestGuidService(), MockRestClientFactory, MockHgWrapper);
                 Service.ScrTextCollection = MockScrTextCollection;
                 Service.SharingLogicWrapper = MockSharingLogicWrapper;
-                Service.HgWrapper = MockHgWrapper;
                 Service.SyncDir = SyncDir;
 
                 PTProjectIds.Add(Project01, HexId.CreateNew());
@@ -959,7 +1171,7 @@ namespace SIL.XForge.Scripture.Services
                 MockJwtTokenHelper.GetParatextUsername(Arg.Any<UserSecret>()).Returns(User01);
                 MockJwtTokenHelper.GetJwtTokenFromUserSecret(Arg.Any<UserSecret>()).Returns(accessToken);
                 MockJwtTokenHelper.RefreshAccessTokenAsync(Arg.Any<ParatextOptions>(), Arg.Any<Tokens>(),
-                    Arg.Any<HttpClient>())
+                    Arg.Any<HttpClient>(), Arg.Any<CancellationToken>())
                     .Returns(Task.FromResult(new Tokens
                     {
                         AccessToken = accessToken,
@@ -1328,7 +1540,11 @@ namespace SIL.XForge.Scripture.Services
                     Arg.Any<SharedRepositorySource>(), Arg.Any<IEnumerable<SharedRepository>>())
                     .Returns(callInfo => new SharedProject()
                     {
-                        SendReceiveId = HexId.FromStr(callInfo.ArgAt<string>(0))
+                        SendReceiveId = HexId.FromStr(callInfo.ArgAt<string>(0)),
+                        Repository = new SharedRepository
+                        {
+                            SendReceiveId = HexId.FromStr(callInfo.ArgAt<string>(0)),
+                        },
                     });
                 MockSharingLogicWrapper.ShareChanges(Arg.Any<List<SharedProject>>(), Arg.Any<SharedRepositorySource>(),
                     out Arg.Any<List<SendReceiveResult>>(), Arg.Any<List<SharedProject>>()).Returns(true);

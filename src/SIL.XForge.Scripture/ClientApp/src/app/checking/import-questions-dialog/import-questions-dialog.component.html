@@ -7,20 +7,31 @@
           <form [formGroup]="filterForm" autocomplete="off">
             <div class="filter-references">
               <mdc-form-field>
-                <mdc-text-field formControlName="from" label="{{ t('reference_from') }}" outlined>
-                  <mdc-icon #fromRef mdcTextFieldIcon trailing clickable (click)="openScriptureChooser(fromControl)">
+                <mdc-text-field formControlName="from" label="{{ t('reference_from') }}" [outlined]="true">
+                  <mdc-icon
+                    #fromRef
+                    mdcTextFieldIcon
+                    [trailing]="true"
+                    [clickable]="true"
+                    (click)="openScriptureChooser(fromControl)"
+                  >
                     expand_more
                   </mdc-icon>
                 </mdc-text-field>
-                <mdc-helper-text validation>{{ t("must_be_valid_reference") }}</mdc-helper-text>
+                <mdc-helper-text [validation]="true">{{ t("must_be_valid_reference") }}</mdc-helper-text>
               </mdc-form-field>
               <mdc-form-field>
-                <mdc-text-field formControlName="to" label="{{ t('reference_to') }}" outlined>
-                  <mdc-icon mdcTextFieldIcon trailing clickable (click)="openScriptureChooser(toControl)">
+                <mdc-text-field formControlName="to" label="{{ t('reference_to') }}" [outlined]="true">
+                  <mdc-icon
+                    mdcTextFieldIcon
+                    [trailing]="true"
+                    [clickable]="true"
+                    (click)="openScriptureChooser(toControl)"
+                  >
                     expand_more
                   </mdc-icon>
                 </mdc-text-field>
-                <mdc-helper-text validation>{{ t("must_be_valid_reference") }}</mdc-helper-text>
+                <mdc-helper-text [validation]="true">{{ t("must_be_valid_reference") }}</mdc-helper-text>
               </mdc-form-field>
             </div>
             <div colspan="2" class="filter-text">
@@ -64,7 +75,7 @@
         </mdc-dialog-content>
         <mdc-dialog-actions>
           <button mdcDialogButton mdcDialogAction="close" type="button">{{ t("cancel") }}</button>
-          <button mdcDialogButton unelevated type="submit" (click)="importQuestions()">
+          <button mdcDialogButton [unelevated]="true" type="submit" (click)="importQuestions()">
             <span fxShow fxHide.xs>{{ t("import_count_questions", { count: selectedCount }) }}</span>
             <span fxHide fxShow.xs>{{ t("import") }}</span>
           </button>

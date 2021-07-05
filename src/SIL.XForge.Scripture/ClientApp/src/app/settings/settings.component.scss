@@ -100,8 +100,13 @@
   }
 }
 
-#delete-btn {
+// Use enabled class to work around changing styles while loading
+#delete-btn.enabled {
   @include button.container-fill-color(red);
+}
+#delete-btn:not(.enabled) {
+  background-color: rgba(0, 0, 0, 0.12);
+  color: rgba(0, 0, 0, 0.38);
 }
 
 #based-on-select {

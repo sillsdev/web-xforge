@@ -4,10 +4,11 @@ import { By } from '@angular/platform-browser';
 import { TranslocoService } from '@ngneat/transloco';
 import { AvatarService } from 'ngx-avatar';
 import { CookieService } from 'ngx-cookie-service';
-import { UserProfile } from 'realtime-server/lib/common/models/user';
+import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
+import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -85,6 +86,7 @@ class TestEnvironment {
 
   readonly mockedAuthService = mock(AuthService);
   readonly mockedAvatarService = mock(AvatarService);
+  readonly mockedBugsnagService = mock(BugsnagService);
   readonly mockedCookieService = mock(CookieService);
   readonly mockedTranslocoService = mock(TranslocoService);
   readonly mockedUserService = mock(UserService);
@@ -98,6 +100,7 @@ class TestEnvironment {
       providers: [
         { provide: AuthService, useFactory: () => instance(this.mockedAuthService) },
         { provide: AvatarService, useFactory: () => instance(this.mockedAvatarService) },
+        { provide: BugsnagService, useFactory: () => instance(this.mockedBugsnagService) },
         { provide: CookieService, useFactory: () => instance(this.mockedCookieService) },
         { provide: TranslocoService, useFactory: () => instance(this.mockedTranslocoService) },
         { provide: UserService, useFactory: () => instance(this.mockedUserService) }

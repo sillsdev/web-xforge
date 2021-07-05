@@ -19,7 +19,7 @@ function setUsxValue(node: HTMLElement, value: any): void {
 }
 
 interface UsxStyle {
-  style: string;
+  style?: string;
 }
 
 interface Para extends UsxStyle {
@@ -184,8 +184,10 @@ export function registerScripture(): string[] {
 
     static create(value: UsxStyle): Node {
       const node = super.create(value) as HTMLElement;
-      node.setAttribute(customAttributeName('style'), value.style);
-      setUsxValue(node, value);
+      if (value != null && value.style != null) {
+        node.setAttribute(customAttributeName('style'), value.style);
+        setUsxValue(node, value);
+      }
       return node;
     }
 
@@ -198,8 +200,8 @@ export function registerScripture(): string[] {
     }
 
     format(name: string, value: any): void {
-      if (name === CharInline.blotName && value != null) {
-        const usxStyle = value as UsxStyle;
+      const usxStyle = value as UsxStyle;
+      if (name === CharInline.blotName && value != null && usxStyle.style != null) {
         const elem = this.domNode as HTMLElement;
         elem.setAttribute(customAttributeName('style'), usxStyle.style);
         setUsxValue(elem, usxStyle);
@@ -248,7 +250,9 @@ export function registerScripture(): string[] {
 
     static create(value: Note): Node {
       const node = super.create(value) as HTMLElement;
-      node.setAttribute(customAttributeName('style'), value.style);
+      if (value != null && value.style != null) {
+        node.setAttribute(customAttributeName('style'), value.style);
+      }
       node.setAttribute(customAttributeName('caller'), value.caller);
       if (value.caller !== '+' && value.caller !== '-') {
         node.innerText = value.caller;
@@ -353,8 +357,10 @@ export function registerScripture(): string[] {
 
     static create(value: Para): Node {
       const node = super.create(value) as HTMLElement;
-      node.setAttribute(customAttributeName('style'), value.style);
-      setUsxValue(node, value);
+      if (value != null && value.style != null) {
+        node.setAttribute(customAttributeName('style'), value.style);
+        setUsxValue(node, value);
+      }
       return node;
     }
 
@@ -367,8 +373,8 @@ export function registerScripture(): string[] {
     }
 
     format(name: string, value: any): void {
-      if (name === ParaBlock.blotName) {
-        const para = value as Para;
+      const para = value as Para;
+      if (name === ParaBlock.blotName && value != null && para.style != null) {
         const elem = this.domNode as HTMLElement;
         elem.setAttribute(customAttributeName('style'), para.style);
         setUsxValue(elem, para);

@@ -6,13 +6,14 @@ import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SplitComponent } from 'angular-split';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
-import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
-import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
-import { toVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
-import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
-import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
+import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { merge, Subscription } from 'rxjs';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -53,14 +54,11 @@ interface Summary {
   styleUrls: ['./checking.component.scss']
 })
 export class CheckingComponent extends DataLoadingComponent implements OnInit, OnDestroy {
-  userDoc?: UserDoc;
-  scriptureFontSize?: string;
   @ViewChild('answerPanelContainer') set answersPanelElement(answersPanelContainerElement: ElementRef) {
     // Need to trigger the calculation for the slider after DOM has been updated
     this.answersPanelContainerElement = answersPanelContainerElement;
     this.calculateScriptureSliderPosition(true);
   }
-
   @HostBinding('class') classes = 'flex-max';
   @ViewChild(CheckingAnswersComponent) answersPanel?: CheckingAnswersComponent;
   @ViewChild(CheckingTextComponent) scripturePanel?: CheckingTextComponent;
@@ -72,6 +70,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   chapters: number[] = [];
   isExpanded: boolean = false;
+  scriptureFontSize: string = '';
   showAllBooks: boolean = false;
   summary: Summary = {
     read: 0,
@@ -83,6 +82,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   projectDoc?: SFProjectDoc;
   projectUserConfigDoc?: SFProjectUserConfigDoc;
   textDocId?: TextDocId;
+  userDoc?: UserDoc;
 
   private _book?: number;
   private _isDrawerPermanent: boolean = true;
@@ -108,41 +108,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     private readonly pwaService: PwaService
   ) {
     super(noticeService);
-  }
-
-  private get book(): number | undefined {
-    return this._book;
-  }
-
-  private set book(book: number | undefined) {
-    if (book === this.book) {
-      return;
-    }
-    const questionDocs = this.questionDocs;
-    if (this.projectDoc == null || this.projectDoc.data == null || questionDocs.length === 0) {
-      return;
-    }
-    /** Get the book from the first question if showing all the questions
-     *  - Note that this only happens on first load as the book will be changed
-     *    later on via other methods
-     */
-    if (book === 0) {
-      book = undefined;
-      if (this.questionsPanel != null) {
-        const question = this.questionsPanel.activateStoredQuestion(questionDocs);
-        if (question.data != null) {
-          book = question.data.verseRef.bookNum;
-        }
-      }
-    }
-    this._book = book;
-    this.text = this.projectDoc.data.texts.find(t => t.bookNum === book);
-    this.chapters = this.text == null ? [] : this.text.chapters.map(c => c.number);
-    this._chapter = undefined;
-    if (this.questionsPanel != null) {
-      this.chapter = this.questionsPanel.activeQuestionChapter;
-    }
-    this.triggerUpdate();
   }
 
   get activeQuestionVerseRef(): VerseRef | undefined {
@@ -187,11 +152,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
   }
 
-  get isProjectAdmin(): boolean {
+  get canCreateQuestions(): boolean {
+    const project = this.projectDoc?.data;
     return (
-      this.projectDoc != null &&
-      this.projectDoc.data != null &&
-      this.projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator
+      project != null &&
+      SF_PROJECT_RIGHTS.hasRight(project, this.userService.currentUserId, SFProjectDomain.Questions, Operation.Create)
     );
   }
 
@@ -203,7 +168,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   get questionDocs(): Readonly<QuestionDoc[]> {
-    return this.questionsQuery != null ? this.questionsQuery.docs.filter(qd => !qd.data!.isArchived) : [];
+    return this.questionsQuery?.docs.filter(qd => qd.data?.isArchived === false) || [];
   }
 
   get textsByBookId(): TextsByBookId {
@@ -214,6 +179,48 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       }
     }
     return textsByBook;
+  }
+
+  get routerLink(): string[] {
+    if (this.projectDoc == null) {
+      return [];
+    }
+    return ['/projects', this.projectDoc.id, 'checking'];
+  }
+
+  private get book(): number | undefined {
+    return this._book;
+  }
+
+  private set book(book: number | undefined) {
+    if (book === this.book) {
+      return;
+    }
+    const questionDocs = this.questionDocs;
+    if (this.projectDoc == null || this.projectDoc.data == null || questionDocs.length === 0) {
+      return;
+    }
+    /** Get the book from the first question if showing all the questions
+     *  - Note that this only happens on first load as the book will be changed
+     *    later on via other methods
+     */
+    if (book === 0) {
+      book = undefined;
+      if (this.questionsPanel != null) {
+        const question = this.questionsPanel.activateStoredQuestion(questionDocs);
+        if (question.data != null) {
+          book = question.data.verseRef.bookNum;
+        }
+      }
+    }
+    this._book = book;
+    this.text = this.projectDoc.data.texts.find(t => t.bookNum === book);
+    this.chapters = this.text == null ? [] : this.text.chapters.map(c => c.number);
+    this._chapter = undefined;
+    if (this.questionsPanel != null) {
+      this.chapter = this.questionsPanel.activeQuestionChapter;
+    }
+    this.triggerUpdate();
   }
 
   /** Height in px needed to show all elements in the bottom

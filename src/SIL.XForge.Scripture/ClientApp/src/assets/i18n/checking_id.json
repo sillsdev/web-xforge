@@ -2,9 +2,11 @@
   "app": {
     "action_not_available_offline": "This action isn't available while you are offline.",
     "all_questions": "Semua Pertanyaan",
+    "announcements": "Announcements",
     "cannot_change_password": "Tidak dapat mengganti kata kunci saat ini. Coba lagi nanti atau laporkan masalah dalam menu Bantuan.",
     "change_password": "Ganti kata kunci",
     "community_checking": "Pemeriksaan Komunitas",
+    "community_support": "Community Support",
     "connect_project": "Menghubungkan proyek",
     "help": "Bantuan",
     "language": "Bahasa",
@@ -34,7 +36,8 @@
     "loading": "Loading",
     "loading_retry": "Loading - retrying ({{ attempt }})",
     "login_required": "Login required",
-    "please_wait": "Scripture Forge is now out of Beta — yay! Hold tight while we quickly migrate your account to the new full release version."
+    "please_wait": "Scripture Forge is now out of Beta — yay! Hold tight while we quickly migrate your account to the new full release version.",
+    "recourse": "Make sure you aren't using an incognito/private web browser window, and are connected to the Internet. If you continue to have trouble, please {{ templateTagBoundary }}ask for help{{ templateTagBoundary }}."
   },
   "canon": {
     "book_names": {
@@ -276,6 +279,7 @@
     "dismiss": "Hentikan"
   },
   "project": {
+    "please_connect_to_use_link": "Please connect to the internet to join a project using a link.",
     "project_link_is_invalid": "Tautan proyek tidak valid.",
     "problem_finding_project": "There was a problem finding a project ({{ projectID }}) or user specific information for the project. There may be a typo in the URL you specified. You may have tried to access a project that is no longer available."
   },
@@ -297,13 +301,16 @@
     "email_invalid": "Alamat surel tidak valid",
     "email": "Surel",
     "invitation_language": "Invitation language",
+    "invitation_role": "Role",
     "invitation_sent": "Surel Undangan sudah dikirim ke {{ email }}",
     "invite_people": "Undang orang",
     "link_copied": "Tautan telah disalin ke Papan-klip",
+    "link_sharing_not_available_offline": "Inviting users by link sharing is unavailable while offline.",
     "link_sharing": "Berbagi tautan",
     "not_inviting_already_member": "Tidak mengundang: Pengguna sudah menjadi anggota proyek ini",
     "resend": "Kirim ulang",
     "select_invitation_language": "Select a language for the invitation email",
+    "select_invitation_role": "Select a role for the invited user",
     "send": "Kirim",
     "share_by_email_not_available_offline": "Inviting users by email is unavailable while offline."
   },

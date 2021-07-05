@@ -2,9 +2,11 @@
   "app": {
     "action_not_available_offline": "Şəbəkədə olmayan vaxtınızda bu hərəkət mümkün deyil.",
     "all_questions": "Bütün Suallar",
+    "announcements": "Elanlar",
     "cannot_change_password": "Hal hazırda gizli şifrə dəyişilmir. Az sonra yenidən çalışın və ya bu problemi Kömək menyusuna bildirin. ",
     "change_password": "Gizli şifrəni dəyişin. ",
     "community_checking": "Dil daşıyıcıları tərəfindən yoxlanma",
+    "community_support": "İcmai dəstəyi",
     "connect_project": "Layihəni qoşmaq",
     "help": "Kömək",
     "language": "Dil",
@@ -17,24 +19,25 @@
     "password_reset_email_sent": "Şifrənizi yenidən qurmaq üçün sizə bir e-məktub göndərmişik.",
     "product_version": "Yekun variant: {{ version }}",
     "project_home": "Layihənin ana səhifəsi",
-    "redirecting_in_moments": "Redirecting in a few moments...",
-    "refresh": "Refresh",
+    "redirecting_in_moments": "Bir neçə anda yenidən istiqamət verir...",
+    "refresh": "Təzələmək",
     "report_issue_email": "e-poçt {{ email }}",
     "report_issue": "Problemi bildirin.",
     "scripture_checking_not_available": "Bu layihədə Kəlamın yoxlanması mövcud deyil. ",
-    "update_is_available": "An update is available. Please refresh the page."
+    "update_is_available": "Yeniləmə mümkündür Xahiş edirəm səhifəni yeniləyin."
   },
   "beta_migration": {
-    "checking_for_data": "Checking for offline data",
-    "cleaning_up": "Cleaning up",
+    "checking_for_data": "Oflayn məlumatların yoxlanılması",
+    "cleaning_up": "Təmizləmə",
     "close": "Bağla",
-    "completed": "Migration complete — this dialog will now close",
-    "data_migration": "Data migration",
-    "fetching_data": "Fetching data",
-    "loading": "Loading",
-    "loading_retry": "Loading - retrying ({{ attempt }})",
-    "login_required": "Login required",
-    "please_wait": "Scripture Forge is now out of Beta — yay! Hold tight while we quickly migrate your account to the new full release version."
+    "completed": "Miqrasiya tamamlandı - bu informasiya qutusu artıq bağlanacaq",
+    "data_migration": "Məlumat köçü",
+    "fetching_data": "Məlumat götürülür",
+    "loading": "Yükləməkdədir...",
+    "loading_retry": "Yüklənir - yenidən cəhd edilir ({{attempt}})",
+    "login_required": "Giriş tələb olunur",
+    "please_wait": "Scripture Forge artıq Beta - dan çıxdı! Ura Hesabınızı yeni tam buraxılış versiyasına sürətlə köçürdükdə gözləyin.",
+    "recourse": "Gizli/xüsusi veb brauzer pəncərəsindən istifadə etmədiyinizə və İnternetə qoşulduğunuzdan əmin olun. Əgər problem ilə rastlaşmağa davam etsəniz, {{ templateTagBoundary }}kömək üçün müraciət edin {{ templateTagBoundary }}."
   },
   "canon": {
     "book_names": {
@@ -139,33 +142,33 @@
       "XXG": "Extra G",
       "FRT": "Front Matter",
       "BAK": "Back Matter",
-      "OTH": "Other Matter",
+      "OTH": "Digər maddələri",
       "3ES": "3 Ezra *obsolete*",
-      "EZA": "Apocalypse of Ezra",
-      "5EZ": "5 Ezra (Latin Prologue)",
-      "6EZ": "6 Ezra (Latin Epilogue)",
-      "INT": "Introduction",
-      "CNC": "Concordance ",
-      "GLO": "Glossary ",
-      "TDX": "Topical Index",
-      "NDX": "Names Index",
-      "DAG": "Daniel Greek",
-      "PS3": "Psalms 152-155",
-      "2BA": "2 Baruch (Apocalypse)",
-      "LBA": "Letter of Baruch",
-      "JUB": "Jubilees",
+      "EZA": "Ezranın vəhyi",
+      "5EZ": "5-cw Ezra (Latin Önsözü)",
+      "6EZ": "6-cı Ezra (Latin Sözardı)",
+      "INT": "Giriş",
+      "CNC": "Söz göstəricisi ",
+      "GLO": "Lüğət ",
+      "TDX": "Mövzu göstəricisi",
+      "NDX": "Adlar göstəricisi",
+      "DAG": "Daniel Yunan dili",
+      "PS3": "Məzmurlar 152-155",
+      "2BA": "2-ci Barux (Vəhyisi)",
+      "LBA": "Baruxun Məktubu",
+      "JUB": "Yubileylər",
       "ENO": "Enoch",
       "1MQ": "1 Meqabyan",
       "2MQ": "2 Meqabyan",
       "3MQ": "3 Meqabyan",
-      "REP": "Reproof (Proverbs 25-31)",
-      "4BA": "4 Baruch (Rest of Baruch)",
-      "LAO": "Laodiceans"
+      "REP": "Məzəmmət (Misallar 25-31)",
+      "4BA": "4-cü Barux (Baruxun qalanları)",
+      "LAO": "Laodikeyalılar"
     }
   },
   "checking": {
     "me": "Mən",
-    "unknown_author": "Unknown author",
+    "unknown_author": "Naməlum müəllif",
     "next": "Növbəti",
     "previous": "Əvvəlki",
     "questions": "Suallar ({{ count }})",
@@ -188,7 +191,7 @@
     "select_text": "Mətni seçmək",
     "select_verses": "Ayələri seçmək",
     "select": "Seçmək",
-    "show_more_unread": "oxunmamış başqa cavabları {{ count }} göstərmək",
+    "show_more_unread": "Oxunmamış başqa cavabları {{ count }} göstərmək",
     "your_answer": "Sizin cavabınız"
   },
   "checking_audio_combined": {
@@ -198,12 +201,12 @@
   },
   "checking_audio_player": {
     "audio_unavailable": "Səs faylı mövcud deyil.",
-    "audio_cannot_be_accessed": "There was an error trying to access the audio file. If this persists, please upload a new file.",
+    "audio_cannot_be_accessed": "Səs faylına daxil olmaq istəyərkən xəta oldu. Bu davam edərsə, xahiş edirik yeni fayl yükləyin.",
     "audio_cannot_be_played": "Bu səs faylı İnternetə qoşulmayan vaxtınızda səslənmir, çünki yüklənməyib. İfadə etmək üçün İnternetə qoşulun.",
-    "audio_cannot_be_previewed": "The audio is in a format that cannot be previewed. Save any changes and connect to the internet to play."
+    "audio_cannot_be_previewed": "Səs faylı önbaxış edilə bilməyən formatdadır. Hər hansı bir dəyişikliyi saxlayın və səsi çalmaq üçün internetə qoşulun."
   },
   "checking_audio_recorder": {
-    "not_available": "Your browser currently does not support audio recording. Please try using another supported browser.",
+    "not_available": "Hal-hazırda brauzeriniz səs yazıları dəstəkləmir. Zəhmət olmasa, digər dəstəklənən brauzerdən istifadə etməyə çalışın.",
     "mic_access_denied": "Mikrofonunuza giriş rədd edildi. Zəhmət olmasa, brauzerinizdən mikrofonu işə salın.",
     "record": "Səs yazmaq",
     "stop_recording": "Səs yazmanı dayandırmaq",
@@ -246,7 +249,7 @@
     "error_occurred": "Bir səhv baş verib",
     "firefox": "Firefox",
     "hide_details": "Detalları gizlət",
-    "safari": "Safari",
+    "safari": "Safari (brauzer)",
     "show_details": "Detalları göstər",
     "to_report_issue_email": "Problemi bildirmək üçün {{ issueEmailLink }}-a e-poçt göndərin.",
     "unsupported_browser": "Bu xətaya səbəb dəstəklənməyən brauzerdən istifadə etməyiniz ola bilər. Məsləhət görürük ki, onu {{ chromeLink }}-un və ya {{ firefoxLink }}-un ən son versiyası ilə yeniləyəsiniz."
@@ -256,13 +259,13 @@
     "try_again": "Yenidən çalışın"
   },
   "exception_handling_service": {
-    "firefox_private_browsing_or_no_space": "Something went wrong. Please check that you are not using Firefox in the unsupported private browsing mode and that your device has the recommended 500 MB of free space.",
+    "firefox_private_browsing_or_no_space": "Bir xəta baş verdi. Zəhmət olmasa, dəstəklənməyən şəxsi baxmaq rejimində Firefox istifadə etmədiyinizi və cihazınızın tövsiyə olunan 500 MB boş yerə malik olduğunu yoxlayın.",
     "network_request_failed": "Şəbəkə sorğusu baş tutmadı. Bəzi funksionallıq mövcud olmaya bilər.",
     "out_of_space": "Sizin cihazınızın boş saxlama yeri yoxa görə səhvi baş verdi. Zəhmət olmazsa, biraz yeri yeri boşaldın.",
     "unknown_error": "Naməlum səhv"
   },
   "file_service": {
-    "failed_to_save": "Failed to save your changes. Please check that you have the recommended 500 MB of free space on your device.",
+    "failed_to_save": "Dəyişiklikləri saxlaya bilmədi. Zəhmət olmasa cihazınızda tövsiyə olunan 500 MB boş yerin olduğunu yoxlayın.",
     "i_understand": "Başa düşürəm",
     "storage_space_is_limited": "Bu cihazdakı saxlama sahəsi məhduddur. Bütün xüsusiyyətlərin mövcudluğunu təmin etmək üçün ən azı 500 MB boş yerə malik olmağa təklif olunur. Zəhmət olmasa saxlama yerini boşaltın."
   },
@@ -276,8 +279,9 @@
     "dismiss": "İmtina et"
   },
   "project": {
+    "please_connect_to_use_link": "Zəhmət olmasa, layihəyə istirak etmək üçün linkdən istifadə etməyə İnternetə qoşmalısınız.",
     "project_link_is_invalid": "Layihə keçidi yanlışdır.",
-    "problem_finding_project": "There was a problem finding a project ({{ projectID }}) or user specific information for the project. There may be a typo in the URL you specified. You may have tried to access a project that is no longer available."
+    "problem_finding_project": "Layihə tapmaq üçün ({{ projectID }}) yaxud lahiyə üçün istifadəçiyə məxsus olan məlumat tapmağa əngəl baş verdi. Ola bilər ki, URL-da hərflər edərkən səhv olub. Ola bilər ki, siz artıq mövcud olmayan bir lahiyəyə girməyə cəhd etdiniz."
   },
   "project_deleted_dialog": {
     "ok": "Tamam",
@@ -296,14 +300,17 @@
     "copy_link": "Keçidi yaddaşa nüsxələyin. ",
     "email_invalid": "E-poçt ünvanı yanlışdır.",
     "email": "E-poçt",
-    "invitation_language": "Invitation language",
+    "invitation_language": "Dəvət dili",
+    "invitation_role": "Rol",
     "invitation_sent": "Dəvət e-məktubu bu ünvana {{ email }} göndərildi. ",
     "invite_people": "Başqalarını dəvət edin.",
     "link_copied": "Keçid mübadilə buferinə nüsxələndi. ",
+    "link_sharing_not_available_offline": "Şəbəkədə olmayan vaxtınızda istifadəçini link vasitilə dəvət etmək mümkün deyil.",
     "link_sharing": "Keçid paylaşımı",
     "not_inviting_already_member": "Dəvət olunmur: İstifadəçi artıq bu layihənin üzvüdür. ",
     "resend": "Yenidən göndərmək",
-    "select_invitation_language": "Select a language for the invitation email",
+    "select_invitation_language": "Dəvət e-poçtu üçün dili seçin",
+    "select_invitation_role": "Dəvət edən istifadəçi üçün rol seçin",
     "send": "Göndərmək",
     "share_by_email_not_available_offline": "Şəbəkədə olmayan vaxtınızda istifadəçini dəvət etmək mümkün deyil."
   },
@@ -316,13 +323,13 @@
     "not_connected_to_any_projects": "Elə görünür ki, siz hələ heç bir layihəyə qoşulmamısınız."
   },
   "supported_browsers_dialog": {
-    "audio_recording_not_supported": "Audio recording is not supported in this browser.",
+    "audio_recording_not_supported": "Bu brauzerdə səs yazısı dəstəklənmir.",
     "dismiss": "İmtina et",
     "browser_unsupported": "Bu brauzerə dəstək göstərilmir",
-    "safari_for_audio_on_ios": "Audio recording on iPhone and iPad only works in Safari.",
-    "some_features_may_not_work": "Some of the features of this website may not work correctly with your browser.",
-    "upgrade_chrome_firefox": "{{ newLine }}We recommend upgrading to the latest {{ chromeLink }} or {{ firefoxLink }}.",
-    "upgrade_safari": "{{ newLine }}We recommend upgrading to the latest {{ safariLink }}."
+    "safari_for_audio_on_ios": "İPhone və iPad-də səs qeydləri yalnız Safari-də işləyir.",
+    "some_features_may_not_work": "Bu veb saytın bəzi xüsusiyyətləri brauzerinizlə düzgün işləməyə bilər.",
+    "upgrade_chrome_firefox": "{{newLine}} Ən son {{chromeLink}} və ya {{firefoxLink}} səviyyəsinə keçməyi məsləhət görürük.",
+    "upgrade_safari": "{{newLine}} Ən son {{safariLink}} səviyyəsinə keçməyi məsləhət görürük."
   },
   "text_chooser_dialog": {
     "cancel": "Ləğv etmək",

@@ -8,12 +8,13 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Route } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CookieService } from 'ngx-cookie-service';
-import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
-import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { TranslateConfig } from 'realtime-server/lib/scriptureforge/models/translate-config';
+import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { TranslateConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
+import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -36,6 +37,7 @@ const mockedNoticeService = mock(NoticeService);
 const mockedParatextService = mock(ParatextService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
+const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
 const mockedDialog = mock(MdcDialog);
@@ -65,6 +67,7 @@ describe('SettingsComponent', () => {
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
+      { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: PwaService, useMock: mockedPwaService },
       { provide: MdcDialog, useMock: mockedDialog }
@@ -379,6 +382,20 @@ describe('SettingsComponent', () => {
       expect(env.deleteProjectButton.disabled).toBe(false);
     }));
 
+    it('should disabled settings while loading', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject();
+      env.fixture.detectChanges();
+      expect(env.translationSuggestionsCheckbox).not.toBeNull();
+      expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(true);
+      expect(env.checkingCheckbox).not.toBeNull();
+      expect(env.inputElement(env.checkingCheckbox).disabled).toBe(true);
+
+      env.wait();
+      expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(false);
+      expect(env.inputElement(env.checkingCheckbox).disabled).toBe(false);
+    }));
+
     it('should disable Delete button if project is a source project', fakeAsync(() => {
       const env = new TestEnvironment(true, true);
       env.setupProject();
@@ -636,7 +653,8 @@ class TestEnvironment {
         checkingConfig,
         sync: { queuedCount: 0 },
         texts: [],
-        userRoles: {}
+        userRoles: {},
+        userPermissions: {}
       }
     });
   }

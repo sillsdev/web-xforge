@@ -5,8 +5,8 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import merge from 'lodash-es/merge';
-import { Project } from 'realtime-server/lib/common/models/project';
-import { obj } from 'realtime-server/lib/common/utils/obj-path';
+import { Project } from 'realtime-server/lib/esm/common/models/project';
+import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { combineLatest, from, Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { anything, mock, verify, when } from 'ts-mockito';
@@ -305,7 +305,8 @@ class TestEnvironment {
         id: 'project01',
         data: {
           name: 'Project 01',
-          userRoles: { user01: 'admin' }
+          userRoles: { user01: 'admin' },
+          userPermissions: {}
         }
       },
       {
@@ -313,6 +314,7 @@ class TestEnvironment {
         data: {
           name: 'Project 02',
           userRoles: {},
+          userPermissions: {},
           syncDisabled: true
         }
       },
@@ -320,7 +322,8 @@ class TestEnvironment {
         id: 'project03',
         data: {
           name: 'Project 03',
-          userRoles: { user01: 'user' }
+          userRoles: { user01: 'user' },
+          userPermissions: {}
         }
       }
     ]);

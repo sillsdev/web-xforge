@@ -291,6 +291,23 @@ namespace SIL.XForge.Scripture.Controllers
             }
         }
 
+        public async Task<IRpcMethodResult> CancelSync(string projectId)
+        {
+            try
+            {
+                await _projectService.CancelSyncAsync(UserId, projectId);
+                return Ok();
+            }
+            catch (ForbiddenException)
+            {
+                return ForbiddenError();
+            }
+            catch (DataNotFoundException dnfe)
+            {
+                return NotFoundError(dnfe.Message);
+            }
+        }
+
         public async Task<IRpcMethodResult> DeleteAudio(string projectId, string ownerId, string dataId)
         {
             try
@@ -350,6 +367,23 @@ namespace SIL.XForge.Scripture.Controllers
             try
             {
                 return Ok(await _projectService.HasTransceleratorQuestions(UserId, projectId));
+            }
+            catch (ForbiddenException)
+            {
+                return ForbiddenError();
+            }
+            catch (DataNotFoundException dnfe)
+            {
+                return NotFoundError(dnfe.Message);
+            }
+        }
+
+        public async Task<IRpcMethodResult> SetUserProjectPermissions(string projectId, string userId, string[] permissions)
+        {
+            try
+            {
+                await _projectService.SetUserProjectPermissions(UserId, projectId, userId, permissions);
+                return Ok();
             }
             catch (ForbiddenException)
             {

@@ -26,7 +26,9 @@ import { BREAKPOINT, FlexLayoutModule } from '@angular/flex-layout';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatOptionModule } from '@angular/material/core';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginator';
@@ -58,6 +60,8 @@ const modules = [
   MatSelectModule,
   MatTableModule,
   MatTooltipModule,
+  MatCheckboxModule,
+  MatDividerModule,
   MdcButtonModule,
   MdcCardModule,
   MdcCheckboxModule,

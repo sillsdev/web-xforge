@@ -1,5 +1,5 @@
-import ShareDB = require('sharedb');
-import ShareDBMingo = require('sharedb-mingo-memory');
+import ShareDB from 'sharedb';
+import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock, when } from 'ts-mockito';
 import { MetadataDB } from '../../common/metadata-db';
 import { RealtimeServer } from '../../common/realtime-server';
@@ -100,6 +100,20 @@ describe('SFProjectMigrations', () => {
       expect(projectDoc.data.texts[1].chapters[1].permissions['user03']).toBe(TextInfoPermission.Read);
       expect(projectDoc.data.texts[1].chapters[1].permissions['user04']).toBe(TextInfoPermission.Read);
       expect(Object.keys(projectDoc.data.texts[1].chapters[1].permissions).length).toBe(4);
+    });
+  });
+  describe('version 4', () => {
+    it('adds userPermissions property to project docs', async () => {
+      const env = new TestEnvironment(3);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {});
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.userPermissions).not.toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.userPermissions).toBeDefined();
     });
   });
 });

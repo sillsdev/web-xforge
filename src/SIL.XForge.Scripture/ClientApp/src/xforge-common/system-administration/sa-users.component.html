@@ -1,10 +1,6 @@
 <div fxLayout="row" fxLayoutAlign="start center" class="users-controls">
   <mdc-form-field>
-    <mdc-text-field
-      label="Filter users..."
-      (keyup)="updateSearchTerm($event.target.value)"
-      id="user-filter"
-    ></mdc-text-field>
+    <mdc-text-field label="Filter users..." (keyup)="updateSearchTerm($event.target)" id="user-filter"></mdc-text-field>
   </mdc-form-field>
 </div>
 <div *ngIf="!isLoading">
@@ -12,7 +8,7 @@
     <table mat-table fxFill id="users-table" [dataSource]="userRows">
       <ng-container matColumnDef="avatar">
         <td mat-cell *matCellDef="let userRow; let i = index">
-          <app-avatar [user]="userRow.user" size="32" [round]="false"> </app-avatar>
+          <app-avatar [user]="userRow.user" [size]="32" [round]="false"> </app-avatar>
         </td>
       </ng-container>
       <ng-container matColumnDef="name">

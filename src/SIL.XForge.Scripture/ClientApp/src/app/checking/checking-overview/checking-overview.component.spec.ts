@@ -1,6 +1,6 @@
 import { MdcDialog, MdcDialogModule, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Location } from '@angular/common';
-import { DebugElement, NgModule } from '@angular/core';
+import { DebugElement, NgModule, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -8,20 +8,27 @@ import { ActivatedRoute, Route } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ngfModule } from 'angular-file';
 import { CookieService } from 'ngx-cookie-service';
-import { SystemRole } from 'realtime-server/lib/common/models/system-role';
-import { User } from 'realtime-server/lib/common/models/user';
-import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
-import { getQuestionDocId, Question, QUESTIONS_COLLECTION } from 'realtime-server/lib/scriptureforge/models/question';
-import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
+import { User } from 'realtime-server/lib/esm/common/models/user';
+import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import {
+  getQuestionDocId,
+  Question,
+  QUESTIONS_COLLECTION
+} from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
-} from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
-import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
+} from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
+import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -49,6 +56,7 @@ const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedAuthService = mock(AuthService);
 const mockedQuestionDialogService = mock(QuestionDialogService);
+const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
 
@@ -70,6 +78,7 @@ describe('CheckingOverviewComponent', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: AuthService, useMock: mockedAuthService },
       { provide: QuestionDialogService, useMock: mockedQuestionDialogService },
+      { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: PwaService, useMock: mockedPwaService }
     ]
@@ -84,16 +93,23 @@ describe('CheckingOverviewComponent', () => {
       expect(env.noQuestionsLabel).toBeNull();
     }));
 
-    it('should not display "Add question" button for Reviewer', fakeAsync(() => {
+    it('should not display "Add question" button for community checker', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setCurrentUser(env.checkerUser);
       env.waitForQuestions();
       expect(env.addQuestionButton).toBeNull();
     }));
 
-    it('should only display "Add question" button for project admin', fakeAsync(() => {
+    it('should display "Add question" button for project admin', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setCurrentUser(env.adminUser);
+      env.waitForQuestions();
+      expect(env.addQuestionButton).not.toBeNull();
+    }));
+
+    it('should display "Add question" button for translator with questions permission', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setCurrentUser(env.translatorUser);
       env.waitForQuestions();
       expect(env.addQuestionButton).not.toBeNull();
     }));
@@ -425,6 +441,7 @@ class TestEnvironment {
   fixture: ComponentFixture<CheckingOverviewComponent>;
   location: Location;
 
+  readonly ngZone: NgZone = TestBed.inject(NgZone);
   readonly mockedAnsweredDialogRef: MdcDialogRef<QuestionAnsweredDialogComponent> = mock(MdcDialogRef);
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
@@ -506,6 +523,12 @@ class TestEnvironment {
       [this.adminUser.id]: this.adminUser.role,
       [this.checkerUser.id]: this.checkerUser.role,
       [this.translatorUser.id]: this.translatorUser.role
+    },
+    userPermissions: {
+      [this.translatorUser.id]: [
+        SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create),
+        SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Edit)
+      ]
     }
   };
 
@@ -842,8 +865,10 @@ class TestEnvironment {
   }
 
   setCheckingEnabled(isEnabled: boolean): void {
-    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01');
-    projectDoc.submitJson0Op(op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, isEnabled), false);
+    this.ngZone.run(() => {
+      const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01');
+      projectDoc.submitJson0Op(op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, isEnabled), false);
+    });
     tick();
     this.fixture.detectChanges();
   }

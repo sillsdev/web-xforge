@@ -1,6 +1,6 @@
 import { Db } from 'mongodb';
-import ShareDB = require('sharedb');
-import shareDBAccess = require('sharedb-access');
+import ShareDB from 'sharedb';
+import shareDBAccess from 'sharedb-access';
 import { Connection, Doc, RawOp } from 'sharedb/lib/client';
 import { ConnectSession } from './connect-session';
 import { Project } from './models/project';
@@ -53,10 +53,10 @@ class MigrationConnection extends Connection {
  */
 class MigrationAgent extends ShareDB.Agent {
   _handleMessage(request: any, callback: any): void {
-    if (request.a === "op") {
+    if (request.a === 'op') {
       const errMessage = this._checkRequest(request);
       if (errMessage != null) {
-        callback({code: 4000, message: errMessage});
+        callback({ code: 4000, message: errMessage });
         return;
       }
 
@@ -72,7 +72,7 @@ class MigrationAgent extends ShareDB.Agent {
       } else if (request.del != null) {
         op.del = request.del;
       } else {
-        callback({code: 4000, message: 'Invalid op message'});
+        callback({ code: 4000, message: 'Invalid op message' });
         return;
       }
       this._submit(request.c, request.d, op, callback);
@@ -201,15 +201,11 @@ export class RealtimeServer extends ShareDB {
     return agent;
   }
 
-  async getUserProjectRole(session: ConnectSession, projectId: string): Promise<string | undefined> {
+  async getProject(projectId: string): Promise<Project | undefined> {
     const conn = this.connect();
     const projectDoc = conn.get(this.projectsCollection, projectId);
     await docFetch(projectDoc);
-    if (projectDoc.data != null) {
-      const project: Project = projectDoc.data;
-      return project.userRoles[session.userId];
-    }
-    return undefined;
+    return projectDoc.data as Project | undefined;
   }
 
   async migrateIfNecessary(): Promise<void> {

@@ -1,15 +1,15 @@
 <ng-container *transloco="let t; read: 'checking_overview'">
-  <div fxLayout="row" fxLayoutAlign="start center" [ngClass]="{ 'reviewer-panels': !isProjectAdmin }">
+  <div fxLayout="row" fxLayoutAlign="start center" [ngClass]="{ 'reviewer-panels': !canCreateQuestion }">
     <mdc-icon fxFlex="32px">library_books</mdc-icon>
     <h2 fxFlex>{{ t("texts_with_questions") }}</h2>
-    <div fxFlexAlign="center" *ngIf="isProjectAdmin; else overallProgressChart" class="primary-actions">
+    <div fxFlexAlign="center" *ngIf="canCreateQuestion; else overallProgressChart" class="primary-actions">
       <button mdc-button type="button" *ngIf="showImportButton" (click)="importDialog()" id="import-btn">
         {{ t("import_questions") }}
       </button>
       <button
         *ngIf="!isLoading"
         mdc-button
-        unelevated
+        [unelevated]="true"
         type="button"
         (click)="questionDialog()"
         id="add-question-button"
@@ -24,8 +24,8 @@
     </ng-template>
   </div>
 
-  <div fxLayout="column" fxLayoutAlign="space-around" *ngIf="isProjectAdmin; else reviewerQuestionPanel">
-    <mdc-list dense id="text-with-questions-list">
+  <div fxLayout="column" fxLayoutAlign="space-around" *ngIf="canEditQuestion; else reviewerQuestionPanel">
+    <mdc-list [dense]="true" id="text-with-questions-list">
       <ng-container *ngFor="let text of texts">
         <mdc-list-item
           *ngIf="bookQuestionCount(text) > 0"
@@ -71,19 +71,21 @@
               </div>
             </mdc-list-item>
             <ng-container *ngIf="itemVisible[getTextDocId(text.bookNum, chapter.number)]">
-              <mdc-list-item *ngFor="let questionDoc of getQuestionDocs(getTextDocId(text.bookNum, chapter.number))">
+              <mdc-list-item
+                *ngFor="let questionDoc of getQuestionDocs(getTextDocIdType(text.bookNum, chapter.number))"
+              >
                 <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
                   <span fxFlex="16px" class="indent"></span>
                   <button fxFlex="64px" mdc-button type="button" (click)="questionDialog(questionDoc)" class="edit-btn">
                     <mdc-icon>edit</mdc-icon>
                   </button>
-                  v{{ questionDoc.data?.verseRef.verseNum }} -&nbsp;
+                  v{{ questionDoc.data?.verseRef?.verseNum }} -&nbsp;
                   <mdc-icon class="audio-icon" *ngIf="questionDoc.data?.audioUrl">headset</mdc-icon>
                   <span fxFlex class="no-overflow-ellipsis">
                     <span *ngIf="questionDoc.data?.text">{{ questionDoc.data?.text }}</span>
                   </span>
                   <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center">
-                    {{ answerCountLabel(questionDoc.data?.answers.length) }}
+                    {{ answerCountLabel(questionDoc.data?.answers?.length) }}
                   </span>
                   <span fxFlex="64px" fxLayoutAlign="end center">
                     <button
@@ -115,7 +117,7 @@
     <p>
       {{ t("no_questions") }}
       <span
-        *ngIf="isProjectAdmin"
+        *ngIf="canCreateQuestion"
         [innerHtml]="i18n.translateAndInsertTags('checking_overview.click_add_question')"
       ></span>
     </p>
@@ -123,12 +125,9 @@
 
   <ng-template #reviewerQuestionPanel>
     <div fxLayout="column" fxLayoutAlign="space-around" class="reviewer-panels" id="reviewer-question-panel">
-      <mdc-list dense id="reviewer-questions-list">
+      <mdc-list [dense]="true" id="reviewer-questions-list">
         <ng-container *ngFor="let text of texts">
-          <mdc-list-item
-            *ngIf="bookQuestionCount(text) > 0"
-            [appRouterLink]="['/projects', projectId, 'checking', getBookId(text)]"
-          >
+          <mdc-list-item *ngIf="bookQuestionCount(text) > 0" [appRouterLink]="getRouterLink(getBookId(text))">
             <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
               <span fxFlex>{{ getBookName(text) }}</span>
               <span>
@@ -145,7 +144,7 @@
   </ng-template>
 
   <div fxLayout="row wrap" fxLayoutAlign="space-between" class="reviewer-panels stat-panels">
-    <mdc-card class="card" outlined>
+    <mdc-card class="card" [outlined]="true">
       <div class="card-content-question">
         <span fxFlex>
           <div class="stat-total">{{ allQuestionsCount }}</div>
@@ -154,7 +153,7 @@
         <span fxLayoutAlign="start center"> <mdc-icon>help</mdc-icon> </span>
       </div>
     </mdc-card>
-    <mdc-card class="card" outlined>
+    <mdc-card class="card" [outlined]="true">
       <div class="card-content-answer">
         <span fxFlex>
           <div class="stat-total">{{ myAnswerCount }}</div>
@@ -163,7 +162,7 @@
         <span fxLayoutAlign="start center"> <mdc-icon>question_answer</mdc-icon> </span>
       </div>
     </mdc-card>
-    <mdc-card class="card" outlined>
+    <mdc-card class="card" [outlined]="true">
       <div class="card-content-comment">
         <span fxFlex>
           <div class="stat-total">{{ myCommentCount }}</div>
@@ -172,7 +171,7 @@
         <span fxLayoutAlign="start center"> <mdc-icon>comment</mdc-icon> </span>
       </div>
     </mdc-card>
-    <mdc-card *ngIf="canSeeOtherUserResponses" class="card" outlined>
+    <mdc-card *ngIf="canSeeOtherUserResponses" class="card" [outlined]="true">
       <div class="card-content-like">
         <span fxFlex>
           <div class="stat-total">{{ myLikeCount }}</div>
@@ -183,13 +182,13 @@
     </mdc-card>
   </div>
 
-  <div fxLayout="row" fxLayoutAlign="start center" *ngIf="isProjectAdmin">
+  <div fxLayout="row" fxLayoutAlign="start center" *ngIf="canEditQuestion">
     <mdc-icon fxFlex="32px">archive</mdc-icon>
     <h2 fxFlex>{{ t("archived_questions") }}</h2>
   </div>
 
-  <div fxLayout="column" *ngIf="isProjectAdmin">
-    <mdc-list dense id="text-with-archived-questions">
+  <div fxLayout="column" *ngIf="canEditQuestion">
+    <mdc-list [dense]="true" id="text-with-archived-questions">
       <ng-container *ngFor="let text of texts">
         <mdc-list-item
           *ngIf="bookQuestionCount(text, true) > 0"
@@ -226,10 +225,10 @@
             </mdc-list-item>
             <ng-container *ngIf="itemVisibleArchived[getTextDocId(text.bookNum, chapter.number)]">
               <mdc-list-item
-                *ngFor="let questionDoc of getQuestionDocs(getTextDocId(text.bookNum, chapter.number), true)"
+                *ngFor="let questionDoc of getQuestionDocs(getTextDocIdType(text.bookNum, chapter.number), true)"
               >
                 <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
-                  <span fxFlex="40px" class="indent"></span> v{{ questionDoc.data?.verseRef.verseNum }} -&nbsp;
+                  <span fxFlex="40px" class="indent"></span> v{{ questionDoc.data?.verseRef?.verseNum }} -&nbsp;
                   <mdc-icon class="audio-icon" *ngIf="questionDoc.data?.audioUrl">headset</mdc-icon>
                   <span fxFlex class="no-overflow-ellipsis">
                     <span *ngIf="questionDoc.data?.text">{{ questionDoc.data?.text }}</span>

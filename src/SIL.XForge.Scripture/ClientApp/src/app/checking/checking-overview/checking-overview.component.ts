@@ -2,10 +2,11 @@ import { MdcDialog } from '@angular-mdc/web/dialog';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
-import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
-import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
-import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { combineLatest, merge, Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -70,7 +71,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     let count: number = 0;
     for (const questionDoc of this.allPublishedQuestions) {
       if (questionDoc.data != null) {
-        if (this.isProjectAdmin) {
+        if (this.canCreateQuestion) {
           count += questionDoc.data.answers.length;
         } else {
           count += questionDoc.data.answers.filter(a => a.ownerRef === this.userService.currentUserId).length;
@@ -86,7 +87,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     for (const questionDoc of this.allPublishedQuestions) {
       if (questionDoc.data != null) {
         for (const answer of questionDoc.data.answers) {
-          if (this.isProjectAdmin) {
+          if (this.canCreateQuestion) {
             count += answer.likes.length;
           } else {
             count += answer.likes.filter(l => l.ownerRef === this.userService.currentUserId).length;
@@ -103,7 +104,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     for (const questionDoc of this.allPublishedQuestions) {
       if (questionDoc.data != null) {
         for (const answer of questionDoc.data.answers) {
-          if (this.isProjectAdmin) {
+          if (this.canCreateQuestion) {
             count += answer.comments.length;
           } else {
             count += answer.comments.filter(c => c.ownerRef === this.userService.currentUserId).length;
@@ -116,23 +117,23 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   get canSeeOtherUserResponses(): boolean {
-    return (
-      this.projectDoc != null &&
-      this.projectDoc.data != null &&
-      this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses
-    );
+    return this.projectDoc?.data?.checkingConfig.usersSeeEachOthersResponses === true;
   }
 
   get showImportButton(): boolean {
     return this._hasTransceleratorQuestions && this.pwaService.isOnline;
   }
 
-  get isProjectAdmin(): boolean {
-    return (
-      this.projectDoc != null &&
-      this.projectDoc.data != null &&
-      this.projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator
-    );
+  get canCreateQuestion(): boolean {
+    const project = this.projectDoc?.data;
+    const userId = this.userService.currentUserId;
+    return project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.Questions, Operation.Create);
+  }
+
+  get canEditQuestion(): boolean {
+    const project = this.projectDoc?.data;
+    const userId = this.userService.currentUserId;
+    return project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.Questions, Operation.Edit);
   }
 
   get allArchivedQuestionsCount(): number {
@@ -199,7 +200,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       async ([projectId, _]) => {
         await projectDocPromise;
         this._hasTransceleratorQuestions =
-          this.isProjectAdmin && (await this.projectService.hasTransceleratorQuestions(projectId));
+          this.canCreateQuestion && (await this.projectService.hasTransceleratorQuestions(projectId));
       }
     );
   }
@@ -214,6 +215,13 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     }
   }
 
+  getRouterLink(bookId: string): string[] {
+    if (this.projectId == null) {
+      return [];
+    }
+    return ['/projects', this.projectId, 'checking', bookId];
+  }
+
   getTextDocId(bookNum: number, chapter: number): string {
     if (this.projectDoc == null) {
       return '';
@@ -221,7 +229,17 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return getTextDocId(this.projectDoc.id, bookNum, chapter);
   }
 
-  getQuestionDocs(textDocId: TextDocId, fromArchive = false): QuestionDoc[] {
+  getTextDocIdType(bookNum: number, chapter: number): TextDocId | undefined {
+    if (this.projectDoc == null) {
+      return undefined;
+    }
+    return new TextDocId(this.projectDoc.id, bookNum, chapter);
+  }
+
+  getQuestionDocs(textDocId: TextDocId | undefined, fromArchive = false): QuestionDoc[] {
+    if (textDocId == null) {
+      return [];
+    }
     const textQuestionDocs = this.questionDocs.get(textDocId.toString());
     if (textQuestionDocs == null) {
       return [];
@@ -254,7 +272,10 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return count > 0 ? translate('checking_overview.question_count_label', { count: count }) : '';
   }
 
-  timeArchivedStamp(date: string): string {
+  timeArchivedStamp(date: string | undefined): string {
+    if (date == null) {
+      return '';
+    }
     return translate('checking_overview.time_archived_stamp', { timeStamp: this.i18n.formatDate(new Date(date)) });
   }
 

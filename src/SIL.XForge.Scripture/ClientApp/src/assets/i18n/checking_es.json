@@ -2,9 +2,11 @@
   "app": {
     "action_not_available_offline": "Esta acción no está disponible mientras esté desconectado.",
     "all_questions": "Todas las preguntas",
+    "announcements": "Anuncios",
     "cannot_change_password": "No se puede cambiar la contraseña en este momento. Inténtalo de nuevo más tarde o informe de un problema en el menú Ayuda.",
     "change_password": "Cambiar la contraseña",
     "community_checking": "Comprobación por la comunidad",
+    "community_support": "Comunidad de soporte",
     "connect_project": "Conectar el proyecto",
     "help": "Ayuda",
     "language": "Idioma",
@@ -18,23 +20,24 @@
     "product_version": "Versión del producto: v{{ version }}",
     "project_home": "Página de inicio del proyecto",
     "redirecting_in_moments": "Redirigiendo en unos momentos...",
-    "refresh": "Refresh",
+    "refresh": "Actualizar",
     "report_issue_email": "correo electrónico {{ email }}",
     "report_issue": "Informar de un problema",
     "scripture_checking_not_available": "La verificación de las Escrituras no está disponible en este proyecto.",
-    "update_is_available": "An update is available. Please refresh the page."
+    "update_is_available": "Hay una actualización disponible. Por favor, actualice la página."
   },
   "beta_migration": {
-    "checking_for_data": "Checking for offline data",
-    "cleaning_up": "Cleaning up",
+    "checking_for_data": "Comprobación de los datos fuera de línea",
+    "cleaning_up": "Limpiando",
     "close": "Cerrar",
-    "completed": "Migration complete — this dialog will now close",
-    "data_migration": "Data migration",
-    "fetching_data": "Fetching data",
-    "loading": "Loading",
-    "loading_retry": "Loading - retrying ({{ attempt }})",
-    "login_required": "Login required",
-    "please_wait": "Scripture Forge is now out of Beta — yay! Hold tight while we quickly migrate your account to the new full release version."
+    "completed": "Migración completada - este diálogo se cerrará",
+    "data_migration": "Migración de datos",
+    "fetching_data": "Obteniendo datos",
+    "loading": "Cargando",
+    "loading_retry": "Cargando - reintentando ({{ attempt }})",
+    "login_required": "Es necesario iniciar sesión",
+    "please_wait": "Scripture Forge ahora está fuera de la Beta: ¡aún! espere mientras migramos su cuenta a la nueva versión completa.",
+    "recourse": "Asegúrese de que no está utilizando una ventana de navegador de incógnito/privado y de que está conectado a Internet. Si sigues teniendo problemas, por favor {{ templateTagBoundary }}pide ayuda{{ templateTagBoundary }}."
   },
   "canon": {
     "book_names": {
@@ -276,8 +279,9 @@
     "dismiss": "Descartar"
   },
   "project": {
+    "please_connect_to_use_link": "Conéctese a Internet para unirse a un proyecto mediante un enlace.",
     "project_link_is_invalid": "El enlace del proyecto no es válido.",
-    "problem_finding_project": "There was a problem finding a project ({{ projectID }}) or user specific information for the project. There may be a typo in the URL you specified. You may have tried to access a project that is no longer available."
+    "problem_finding_project": "Hubo un problema al encontrar un proyecto ({{ projectID }}) o información específica del usuario para el proyecto. Es posible que haya un error tipográfico en la URL que ha especificado. Es posible que haya intentado acceder a un proyecto que ya no está disponible."
   },
   "project_deleted_dialog": {
     "ok": "OK",
@@ -296,14 +300,17 @@
     "copy_link": "Copiar enlace",
     "email_invalid": "La dirección de correo electrónico no es válida",
     "email": "Correo electrónico",
-    "invitation_language": "Invitation language",
+    "invitation_language": "Idioma de la invitación",
+    "invitation_role": "Rol",
     "invitation_sent": "Se ha enviado un correo electrónico de invitación a {{ email }}",
     "invite_people": "Invitar a otras personas",
     "link_copied": "Enlace copiado al portapapeles",
+    "link_sharing_not_available_offline": "Invitar a los usuarios mediante el compartimiento de enlaces no está disponible mientras se está fuera de línea.",
     "link_sharing": "Compartir enlaces",
     "not_inviting_already_member": "No se invitó: El usuario ya es miembro de este proyecto",
     "resend": "Reenviar",
-    "select_invitation_language": "Select a language for the invitation email",
+    "select_invitation_language": "Seleccione un idioma para el correo electrónico de invitación",
+    "select_invitation_role": "Seleccione un rol para el usuario invitado",
     "send": "Enviar",
     "share_by_email_not_available_offline": "Invitar usuarios por correo electrónico no está disponible cuando no se está en línea."
   },

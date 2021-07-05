@@ -5,7 +5,7 @@ import {
   TEXTS_COLLECTION,
   TextType,
   TEXT_INDEX_PATHS
-} from 'realtime-server/lib/scriptureforge/models/text-data';
+} from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { RealtimeDoc } from 'xforge-common/models/realtime-doc';
 
 export const Delta: new (ops?: DeltaOperation[] | { ops: DeltaOperation[] }) => DeltaStatic = Quill.import('delta');

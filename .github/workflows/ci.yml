@@ -1,0 +1,33 @@
+# This workflow will do a clean install of node dependencies, do an Angular production build across different
+# versions of node and OSes.
+# See: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: Angular Production Build
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+    branches: [master, develop]
+
+jobs:
+  build:
+    name: node ${{ matrix.node_version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+        node_version: [12.x, 16.x]
+        os: [ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node_version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node_version }}
+      - name: Build Realtime server dependencies for Angular
+        run: cd src/RealtimeServer && npm ci
+      - name: Angular Frontend Production Build
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm ci && npx ng build --prod

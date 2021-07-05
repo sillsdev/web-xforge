@@ -2,9 +2,11 @@
   "app": {
     "action_not_available_offline": "Cette action n'est pas disponible lorsque vous êtes hors connexion.",
     "all_questions": "Toutes les questions",
+    "announcements": "Annonces",
     "cannot_change_password": "Impossible de changer le mot de passe pour l'instant. Essayez de nouveau plus tard ou signalez un problème dans le menu Aide.",
     "change_password": "Changer de mot de passe",
     "community_checking": "Vérification par la communauté",
+    "community_support": "Support de la communauté",
     "connect_project": "Connecter un projet",
     "help": "Aide",
     "language": "Langue",
@@ -34,7 +36,8 @@
     "loading": "Chargement en cours",
     "loading_retry": "Chargement - nouvelle tentative en cours ({{ attempt }})",
     "login_required": "Connexion requise",
-    "please_wait": "Scripture Forge n'est plus en version bêta - génial ! Tenez bon pendant que nous migrons rapidement votre compte vers la nouvelle version complète."
+    "please_wait": "Scripture Forge n'est plus en version bêta - génial ! Tenez bon pendant que nous migrons rapidement votre compte vers la nouvelle version complète.",
+    "recourse": "Assurez-vous que vous n'utilisez pas une fenêtre de navigateur web en mode incognito/privé, et que vous êtes connecté à Internet. Si vous continuez à rencontrer des difficultés, veuillez {{ templateTagBoundary }}demander de l'aide{{ templateTagBoundary }}."
   },
   "canon": {
     "book_names": {
@@ -276,6 +279,7 @@
     "dismiss": "Ignorer"
   },
   "project": {
+    "please_connect_to_use_link": "Veuillez vous connecter à Internet pour rejoindre un projet en utilisant un lien.",
     "project_link_is_invalid": "Le lien du projet n'est pas valide.",
     "problem_finding_project": "Il y a eu un problème pour trouver un projet ({{ projectID }}) ou des informations spécifiques à l'utilisateur pour le projet. Il se peut qu'il y ait une faute de frappe dans l'URL que vous avez spécifiée. Vous avez peut-être essayé d'accéder à un projet qui n'est plus disponible."
   },
@@ -297,13 +301,16 @@
     "email_invalid": "L'adresse e-mail n'est pas valide",
     "email": "E-mail",
     "invitation_language": "Langue d'invitation",
+    "invitation_role": "Rôle",
     "invitation_sent": "Un e-mail d'invitation a été envoyé à {{ email }}",
     "invite_people": "Inviter des personnes",
     "link_copied": "Lien copié dans le presse-papiers",
+    "link_sharing_not_available_offline": "L'invitation d'utilisateurs par le partage de liens n'est pas disponible hors-connexion.",
     "link_sharing": "Partage de lien",
     "not_inviting_already_member": "Pas d'invitation : L'utilisateur est déjà membre de ce projet",
     "resend": "Renvoyer",
     "select_invitation_language": "Sélectionnez une langue pour l'e-mail d'invitation",
+    "select_invitation_role": "Sélectionnez un rôle pour l'utilisateur invité",
     "send": "Envoyer",
     "share_by_email_not_available_offline": "L'invitation d'utilisateurs par e-mail n'est pas disponible hors-connexion."
   },

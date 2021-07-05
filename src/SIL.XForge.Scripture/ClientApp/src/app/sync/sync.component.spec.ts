@@ -4,11 +4,12 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
-import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
-import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
+import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -27,6 +28,7 @@ const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedNoticeService = mock(NoticeService);
 const mockedParatextService = mock(ParatextService);
 const mockedProjectService = mock(SFProjectService);
+const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
 
@@ -40,6 +42,7 @@ describe('SyncComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: SFProjectService, useMock: mockedProjectService },
+      { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: PwaService, useMock: mockedPwaService }
     ]
@@ -103,7 +106,7 @@ describe('SyncComponent', () => {
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).not.toBeNull();
     // Simulate sync in progress
-    env.emitSyncProgress(0, 'testProject01');
+    env.emitSyncProgress(0.25, 'testProject01');
     // Simulate sync error
     env.emitSyncComplete(false, 'testProject01');
     expect(env.component.syncActive).toBe(false);
@@ -128,6 +131,21 @@ describe('SyncComponent', () => {
     const env = new TestEnvironment(true, false, true, false);
     expect(env.syncButton.nativeElement.disabled).toBe(false);
     expect(env.syncDisabledMessage).toBeNull();
+  }));
+
+  it('should report cancelled if sync was cancelled', fakeAsync(() => {
+    const env = new TestEnvironment(true);
+    verify(mockedProjectService.get('testProject01')).once();
+    env.clickElement(env.syncButton);
+    verify(mockedProjectService.onlineSync('testProject01')).once();
+    expect(env.component.syncActive).toBe(true);
+    expect(env.progressBar).not.toBeNull();
+
+    env.clickElement(env.cancelButton);
+    env.emitSyncComplete(false, 'testProject01');
+
+    expect(env.component.syncActive).toBe(false);
+    verify(mockedNoticeService.show('Synchronize for Sync Test Project was cancelled.')).once();
   }));
 });
 
@@ -183,7 +201,8 @@ class TestEnvironment {
         },
         syncDisabled: isSyncDisabled,
         texts: [],
-        userRoles: {}
+        userRoles: {},
+        userPermissions: {}
       }
     });
 
@@ -204,6 +223,10 @@ class TestEnvironment {
 
   get syncButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('#btn-sync'));
+  }
+
+  get cancelButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#btn-cancel-sync'));
   }
 
   get progressBar(): DebugElement {

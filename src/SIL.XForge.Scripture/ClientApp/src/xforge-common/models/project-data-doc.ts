@@ -1,5 +1,5 @@
-import { ProjectData } from 'realtime-server/lib/common/models/project-data';
-import { getValue, PathItem } from 'realtime-server/lib/common/utils/obj-path';
+import { ProjectData } from 'realtime-server/lib/esm/common/models/project-data';
+import { getValue, PathItem } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { FileType } from './file-offline-data';
 import { JsonRealtimeDoc } from './json-realtime-doc';
 

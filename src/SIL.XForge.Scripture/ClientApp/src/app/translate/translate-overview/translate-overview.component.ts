@@ -1,12 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { RemoteTranslationEngine } from '@sillsdev/machine';
-import { Operation } from 'realtime-server/lib/common/models/project-rights';
-import { ANY_INDEX, obj } from 'realtime-server/lib/common/utils/obj-path';
-import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
-import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
-import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { ANY_INDEX, obj } from 'realtime-server/lib/esm/common/utils/obj-path';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { Subscription, timer } from 'rxjs';
 import { delayWhen, filter, map, repeat, retryWhen, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -84,11 +84,11 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   }
 
   get canEditTexts(): boolean {
-    if (this.projectDoc == null || this.projectDoc.data == null) {
-      return false;
-    }
-    const projectRole = this.projectDoc.data.userRoles[this.userService.currentUserId];
-    return SF_PROJECT_RIGHTS.hasRight(projectRole, { projectDomain: SFProjectDomain.Texts, operation: Operation.Edit });
+    const project = this.projectDoc?.data;
+    return (
+      project != null &&
+      SF_PROJECT_RIGHTS.hasRight(project, this.userService.currentUserId, SFProjectDomain.Texts, Operation.Edit)
+    );
   }
 
   ngOnInit(): void {

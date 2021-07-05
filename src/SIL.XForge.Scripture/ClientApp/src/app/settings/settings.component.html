@@ -5,7 +5,7 @@
     <div>
       <div mdcHeadline6>{{ t("tools") }}</div>
       <p mdcBody2>{{ t("select_additional_tools_and_features") }}</p>
-      <mdc-card class="card" outlined>
+      <mdc-card class="card" [outlined]="true">
         <form [formGroup]="form">
           <div class="card-content">
             <div class="tool-setting">
@@ -42,7 +42,7 @@
                   (click)="logInWithParatext()"
                   id="btn-log-in-settings"
                 >
-                  <img src="/assets/paratext_logo.png" alt="Paratext Logo" class="paratext-logo" />{{
+                  <img src="/assets/images/logo-pt9.png" alt="Paratext Logo" class="paratext-logo" />{{
                     t("log_in_with_paratext")
                   }}
                 </button>
@@ -170,9 +170,10 @@
           <button
             id="delete-btn"
             mdc-button
-            unelevated
+            [unelevated]="true"
             type="button"
             (click)="openDeleteProjectDialog()"
+            [class.enabled]="!deleteButtonDisabled"
             [disabled]="deleteButtonDisabled"
           >
             {{ t("delete_this_project") }}

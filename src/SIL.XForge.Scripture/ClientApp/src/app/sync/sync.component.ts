@@ -22,8 +22,10 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
   syncDisabled: boolean = false;
   projectDoc?: SFProjectDoc;
 
-  private paratextUsername?: string;
   private _syncActive: boolean = false;
+  private isSyncCancelled = false;
+  private paratextUsername?: string;
+  private previousLastSyncDate?: Date;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -53,7 +55,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     }
   }
 
-  get lastSyncDate() {
+  get lastSyncDate(): string {
     if (
       this.projectDoc == null ||
       this.projectDoc.data == null ||
@@ -66,7 +68,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
   }
 
   get projectName(): string {
-    return this.projectDoc == null || this.projectDoc.data == null ? '' : this.projectDoc.data.name;
+    return this.projectDoc?.data == null ? '' : this.projectDoc.data.name;
   }
 
   get syncActive(): boolean {
@@ -75,17 +77,21 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
 
   set syncActive(isActive: boolean) {
     if (this._syncActive && !isActive && this.projectDoc?.data != null) {
-      if (this.projectDoc.data.sync.lastSyncSuccessful) {
-        this.noticeService.show(
-          translate('sync.successfully_synchronized_with_paratext', { projectName: this.projectDoc.data.name })
-        );
+      const projectName: string = this.projectDoc.data.name;
+      if (this.isSyncCancelled && new Date(this.lastSyncDate) <= this.previousLastSyncDate!) {
+        this.noticeService.show(translate('sync.synchronize_was_cancelled', { projectName }));
       } else {
-        const name: string = this.projectDoc.data.name;
-        this.noticeService.showMessageDialog(() =>
-          translate('sync.something_went_wrong_synchronizing_this_project', { projectName: name })
-        );
+        if (this.projectDoc.data.sync.lastSyncSuccessful) {
+          this.noticeService.show(translate('sync.successfully_synchronized_with_paratext', { projectName }));
+          this.previousLastSyncDate = new Date(this.lastSyncDate);
+        } else {
+          this.noticeService.showMessageDialog(() =>
+            translate('sync.something_went_wrong_synchronizing_this_project', { projectName })
+          );
+        }
       }
     }
+    this.isSyncCancelled = false;
     this._syncActive = isActive;
   }
 
@@ -140,6 +146,14 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     this.projectService.onlineSync(this.projectDoc.id);
   }
 
+  cancelSync(): void {
+    if (this.projectDoc == null) {
+      return;
+    }
+    this.projectService.onlineCancelSync(this.projectDoc.id);
+    this.isSyncCancelled = true;
+  }
+
   private checkSyncStatus(): void {
     if (this.projectDoc?.data == null) {
       return;
@@ -148,5 +162,6 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
       this.syncDisabled = this.projectDoc.data.syncDisabled;
     }
     this._syncActive = this.projectDoc.data.sync.queuedCount > 0;
+    this.previousLastSyncDate = new Date(this.lastSyncDate);
   }
 }

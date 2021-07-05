@@ -32,6 +32,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     shareEnabled: new FormControl(false),
     shareLevel: new FormControl(undefined)
   });
+  isActiveSourceProject: boolean = false;
   projects?: ParatextProject[];
   resources?: SelectableProject[];
   nonSelectableProjects?: SelectableProject[];
@@ -41,7 +42,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   private controlStates = new Map<Extract<keyof SFProjectSettings, string>, ElementState>();
   private previousFormValues: SFProjectSettings = {};
   private _isAppOnline: boolean = false;
-  private isActiveSourceProject: boolean = false;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -55,6 +55,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     readonly i18n: I18nService
   ) {
     super(noticeService);
+    this.loading = true;
   }
 
   get synchronizeWarning(): TextAroundTemplate | undefined {
@@ -86,8 +87,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   set isAppOnline(isOnline: boolean) {
-    isOnline ? this.form.enable() : this.form.disable();
     this._isAppOnline = isOnline;
+    this.updateFormEnabled();
   }
 
   get isAppOnline(): boolean {
@@ -104,18 +105,13 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.setAllControlsToInSync();
     this.isAppOnline = this.pwaService.isOnline;
     const projectId$ = this.route.params.pipe(
-      tap(() => {
-        this.loadingStarted();
-        if (!this.isAppOnline) {
-          this.loadingFinished();
-        }
-      }),
+      tap(() => (this.loading = this.isAppOnline)),
       map(params => params['projectId'] as string)
     );
     this.subscribe(combineLatest([this.pwaService.onlineStatus, projectId$]), async ([isOnline, projectId]) => {
       this.isAppOnline = isOnline;
       if (isOnline && this.projects == null) {
-        this.loadingStarted();
+        this.loading = true;
         const projectDocPromise = this.projectService.get(projectId);
         [this.projects, this.resources] = await this.paratextService.getProjectsAndResources();
         this.projectDoc = await projectDocPromise;
@@ -125,7 +121,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
           this.subscribe(this.projectDoc.remoteChanges$, () => this.updateNonSelectableProjects());
         }
         this.isActiveSourceProject = await this.projectService.onlineIsSourceProject(projectId);
-        this.loadingFinished();
+        this.loading = false;
       }
     });
   }
@@ -161,6 +157,20 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   getControlState(setting: Extract<keyof SFProjectSettings, string>): ElementState | undefined {
     return this.controlStates.get(setting);
+  }
+
+  updateFormEnabled(): void {
+    if (this._isAppOnline && !this.isLoading) {
+      this.form.enable();
+      this.setIndividualControlDisabledStates();
+    } else {
+      this.form.disable();
+    }
+  }
+
+  set loading(loading: boolean) {
+    loading ? this.loadingStarted() : this.loadingFinished();
+    this.updateFormEnabled();
   }
 
   private onFormValueChanges(newValue: SFProjectSettings): void {
@@ -262,13 +272,17 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       shareLevel: this.projectDoc.data.checkingConfig.shareLevel
     };
     this.form.reset(this.previousFormValues);
+    this.setIndividualControlDisabledStates();
+    this.setAllControlsToInSync();
+  }
+
+  private setIndividualControlDisabledStates() {
     if (!this.isLoggedInToParatext) {
       this.form.controls.translationSuggestionsEnabled.disable();
     }
-    if (!this.projectDoc.data.checkingConfig.shareEnabled) {
+    if (!this.projectDoc?.data?.checkingConfig.shareEnabled) {
       this.form.controls.shareLevel.disable();
     }
-    this.setAllControlsToInSync();
   }
 
   private setAllControlsToInSync(): void {

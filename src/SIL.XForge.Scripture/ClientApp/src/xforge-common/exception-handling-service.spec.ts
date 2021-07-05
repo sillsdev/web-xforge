@@ -4,7 +4,7 @@ import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testi
 import { NotifiableError } from '@bugsnag/js';
 import { Breadcrumb } from '@bugsnag/js';
 import { CookieService } from 'ngx-cookie-service';
-import { User } from 'realtime-server/lib/common/models/user';
+import { User } from 'realtime-server/lib/esm/common/models/user';
 import { Observable } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from './auth.service';
@@ -204,7 +204,7 @@ class TestEnvironment {
   } as UserDoc;
 
   constructor() {
-    this.service = TestBed.get(ExceptionHandlingService);
+    this.service = TestBed.inject(ExceptionHandlingService);
     this.fixture = TestBed.createComponent(HostComponent);
     this.fixture.detectChanges();
 

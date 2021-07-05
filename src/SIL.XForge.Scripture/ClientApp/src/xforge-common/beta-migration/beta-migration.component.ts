@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { USERS_COLLECTION, USER_PROFILES_COLLECTION } from 'realtime-server/lib/common/models/user';
-import { QUESTIONS_COLLECTION } from 'realtime-server/lib/scriptureforge/models/question';
-import { SF_PROJECTS_COLLECTION } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { SF_PROJECT_USER_CONFIGS_COLLECTION } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
-import { TEXTS_COLLECTION } from 'realtime-server/lib/scriptureforge/models/text-data';
+import { USERS_COLLECTION, USER_PROFILES_COLLECTION } from 'realtime-server/lib/esm/common/models/user';
+import { QUESTIONS_COLLECTION } from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { SF_PROJECTS_COLLECTION } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SF_PROJECT_USER_CONFIGS_COLLECTION } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { TEXTS_COLLECTION } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { LocalSettingsService } from 'xforge-common/local-settings.service';
 import { LocationService } from 'xforge-common/location.service';
 import { RealtimeDoc } from 'xforge-common/models/realtime-doc';

@@ -3,17 +3,18 @@ import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { CookieService } from 'ngx-cookie-service';
-import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
-import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
-import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
-import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
+import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, instance, mock, spy, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { DOCUMENT } from 'xforge-common/browser-globals';
+import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -28,6 +29,7 @@ import { TextChooserDialogComponent, TextChooserDialogData, TextSelection } from
 
 const mockedProjectService = mock(SFProjectService);
 const mockedDocument = mock(Document);
+const mockedBugsnagService = mock(BugsnagService);
 const mockedPwaService = mock(PwaService);
 
 describe('TextChooserDialogComponent', () => {
@@ -37,6 +39,7 @@ describe('TextChooserDialogComponent', () => {
       { provide: AuthService, useMock: mock(AuthService) },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: DOCUMENT, useMock: mockedDocument },
+      { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mock(CookieService) },
       { provide: PwaService, useMock: mockedPwaService }
     ]
@@ -385,7 +388,8 @@ class TestEnvironment {
     sync: { queuedCount: 0 },
     userRoles: {
       user01: SFProjectRole.ParatextAdministrator
-    }
+    },
+    userPermissions: {}
   };
 
   static defaultDialogData = {

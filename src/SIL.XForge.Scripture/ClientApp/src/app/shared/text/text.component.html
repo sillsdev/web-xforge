@@ -1,5 +1,7 @@
 <quill-editor
   #quillEditor
+  ondragstart="return false;"
+  ondrop="return false;"
   spellcheck="false"
   [placeholder]="placeholder"
   [readOnly]="readOnlyEnabled"
@@ -16,7 +18,7 @@
     rtl: isRtl,
     'mark-invalid': markInvalid
   }"
-  [dir]="textDirection"
+  [dir]="$any(textDirection)"
   [lang]="lang"
   [attr.data-browser-engine]="browserEngine"
 >

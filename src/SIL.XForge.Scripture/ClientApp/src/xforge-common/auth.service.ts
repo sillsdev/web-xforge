@@ -1,17 +1,18 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import Bugsnag from '@bugsnag/js';
 import { translate } from '@ngneat/transloco';
-import { Auth0DecodedHash, AuthorizeOptions, WebAuth } from 'auth0-js';
+import { Auth0DecodedHash, AuthorizeOptions } from 'auth0-js';
 import jwtDecode from 'jwt-decode';
 import { clone } from 'lodash-es';
 import { CookieService } from 'ngx-cookie-service';
-import { SystemRole } from 'realtime-server/lib/common/models/system-role';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { of, Subscription, timer } from 'rxjs';
 import { filter, mergeMap } from 'rxjs/operators';
 import { BetaMigrationMessage } from 'xforge-common/beta-migration/beta-migration.component';
 import { PwaService } from 'xforge-common/pwa.service';
 import { environment } from '../environments/environment';
+import { Auth0Service } from './auth0.service';
+import { BugsnagService } from './bugsnag.service';
 import { CommandError, CommandService } from './command.service';
 import { ErrorReportingService } from './error-reporting.service';
 import { LocalSettingsService } from './local-settings.service';
@@ -20,7 +21,7 @@ import { NoticeService } from './notice.service';
 import { OfflineStore } from './offline-store';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
 import { USERS_URL } from './url-constants';
-import { ASP_CULTURE_COOKIE_NAME, getAspCultureCookieLanguage, getI18nLocales } from './utils';
+import { ASP_CULTURE_COOKIE_NAME, getAspCultureCookieLanguage } from './utils';
 
 const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
 const XF_ROLE_CLAIM = 'http://xforge.org/role';
@@ -34,11 +35,6 @@ const EXPIRES_AT_SETTING = 'expires_at';
 interface AuthState {
   returnUrl?: string;
   linking?: boolean;
-}
-
-interface LanguageOption {
-  value: string;
-  label?: string;
 }
 
 interface LoginResult {
@@ -56,7 +52,7 @@ export class AuthService {
   private renewTokenPromise?: Promise<void>;
   private checkSessionPromise?: Promise<Auth0DecodedHash | null>;
 
-  private readonly auth0 = new WebAuth({
+  private readonly auth0 = this.auth0Service.init({
     clientID: environment.authClientId,
     domain: environment.authDomain,
     responseType: 'token id_token',
@@ -70,10 +66,12 @@ export class AuthService {
   );
 
   constructor(
+    private readonly auth0Service: Auth0Service,
     private readonly remoteStore: SharedbRealtimeRemoteStore,
     private readonly offlineStore: OfflineStore,
     private readonly locationService: LocationService,
     private readonly commandService: CommandService,
+    private readonly bugsnagService: BugsnagService,
     private readonly cookieService: CookieService,
     private readonly router: Router,
     private readonly localSettings: LocalSettingsService,
@@ -127,10 +125,6 @@ export class AuthService {
     return this.tryLogInPromise.then(result => result.newlyLoggedIn);
   }
 
-  private get hasExpired(): boolean {
-    return this.expiresAt != null && Date.now() < this.expiresAt && this.renewTokenPromise == null;
-  }
-
   changePassword(email: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       this.auth0.changePassword({ connection: 'Username-Password-Authentication', email }, (error, result) => {
@@ -154,28 +148,25 @@ export class AuthService {
     }
   }
 
+  async expireToken(): Promise<void> {
+    this.localSettings.set(EXPIRES_AT_SETTING, 0);
+  }
+
   async isAuthenticated(): Promise<boolean> {
-    if (!this.hasExpired) {
+    if (await this.hasExpired()) {
       await this.renewTokens();
     }
     return true;
   }
 
-  logIn(returnUrl: string, signUp?: boolean): void {
+  logIn(returnUrl: string, signUp?: boolean, locale?: string): void {
     const state: AuthState = { returnUrl };
-    const tag = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME));
-    const i18nLocales = getI18nLocales();
-    const locales = environment.production ? i18nLocales.filter(locale => locale.production) : i18nLocales;
-    const options: LanguageOption[] = locales.map(locale => {
-      const result = { value: locale.canonicalTag, label: locale.localName };
-      if (!environment.production && !locale.production) {
-        result.label += ' *';
-      }
-      return result;
-    });
-    const authOptions: AuthorizeOptions = { state: JSON.stringify(state), language: JSON.stringify({ tag, options }) };
+    const language: string = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME));
+    const ui_locales: string = language;
+    const authOptions: AuthorizeOptions = { state: JSON.stringify(state), language, login_hint: ui_locales };
     if (signUp) {
-      authOptions.login_hint = 'signUp';
+      authOptions.mode = 'signUp';
+      authOptions.login_hint = locale ?? ui_locales;
     }
     if (environment.beta) {
       window.parent.postMessage(<BetaMigrationMessage>{ message: 'login_required' }, environment.masterUrl);
@@ -199,6 +190,13 @@ export class AuthService {
     if (await this.isLoggedIn) {
       await this.commandService.onlineInvoke(USERS_URL, 'updateInterfaceLanguage', { language });
     }
+  }
+
+  private async hasExpired(): Promise<boolean> {
+    if (this.renewTokenPromise != null) {
+      await this.renewTokenPromise;
+    }
+    return this.expiresAt == null || Date.now() > this.expiresAt;
   }
 
   private async tryLogIn(): Promise<LoginResult> {
@@ -416,7 +414,7 @@ export class AuthService {
     this.localSettings.set(USER_ID_SETTING, userId);
     this.localSettings.set(ROLE_SETTING, claims[XF_ROLE_CLAIM]);
     this.scheduleRenewal();
-    Bugsnag.leaveBreadcrumb(
+    this.bugsnagService.leaveBreadcrumb(
       'Local Login',
       {
         userId: userId,
@@ -425,7 +423,7 @@ export class AuthService {
       },
       'log'
     );
-    Bugsnag.setUser(this.currentUserId);
+    this.bugsnagService.setUser(this.currentUserId);
   }
 
   private clearState(): void {

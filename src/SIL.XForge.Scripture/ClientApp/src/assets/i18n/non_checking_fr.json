@@ -31,6 +31,7 @@
     "time_archived_stamp": "Archivé le {{ timeStamp }}"
   },
   "collaborators": {
+    "allow_add_edit_questions": "Peut ajouter & modifier des questions",
     "awaiting_response_from": "En attente d'une réponse de{{ newLine }}{{ email }}",
     "cancel_invite": "Annuler l'invitation",
     "change_roles_and_permissions": "Les rôles et les autorisations des utilisateurs peuvent {{ boldStart }}uniquement{{ boldEnd }} être modifiés dans {{ boldStart }}Paratext{{ boldEnd }}. Ouvrez le projet dans {{ boldStart }}Paratext{{ boldEnd }}, dans la fenêtre du projet, cliquez sur {{ templateTagBoundary }}{{ templateTagBoundary }}, puis sur {{ boldStart }}Paramètres du projet{{ boldEnd }}, puis sur {{ boldStart }}Utilisateurs, rôles et autorisations{{ boldEnd }}. Après un {{ italicsStart }}Envoyer/Recevoir{{ italicsEnd }} dans {{ boldStart }}Paratext{{ boldEnd }} et, ensuite, un {{ italicsStart }}Synchroniser{{ italicsEnd }} dans {{ boldStart }}Scripture Forge{{ boldEnd }}, leur rôle sera effectif ici, une fois que cet utilisateur se connectera avec son compte {{ boldStart }}Paratext{{ boldEnd }}.",
@@ -79,6 +80,7 @@
     "cannot_edit_chapter_formatting_invalid": "Ce chapitre ne peut pas être modifié car le formatage n'est pas valide. Veuillez corriger le formatage dans Paratext.",
     "completed_successfully": "Terminé avec succès",
     "configure_translation_suggestions": "Configurer les suggestions de traduction",
+    "project_data_out_of_sync": "Les données de votre projet ne sont pas synchronisées. Veuillez synchroniser votre projet pour modifier ce texte.",
     "swap_source_and_target": "Intervertir la source et la cible",
     "training": "Formation",
     "training_completed_successfully": "Formation terminée avec succès",
@@ -151,7 +153,8 @@
     "pt_observer": "Observateur",
     "pt_translator": "Traducteur",
     "sf_community_checker": "Vérificateur de la communauté",
-    "sf_reviewer": "Réviseur"
+    "sf_reviewer": "Réviseur",
+    "sf_observer": "Afficher la traduction"
   },
   "settings": {
     "anyone_with_a_link": "Toute personne ayant le lien",
@@ -191,6 +194,7 @@
     "translation_suggestions_settings": "Paramètres des suggestions de traduction"
   },
   "sync": {
+    "cancel": "Annuler",
     "connect_network_to_synchronize": "Veuillez vous connecter à Internet pour synchroniser ce projet",
     "last_synced_time_stamp": "Dernière synchronisation le {{ timeStamp }}",
     "log_in_to_paratext": "Connectez-vous à Paratext",
@@ -198,6 +202,7 @@
     "something_went_wrong_synchronizing_this_project": "Une erreur s'est produite lors de la synchronisation de {{ projectName }} avec Paratext. Veuillez réessayer.",
     "successfully_synchronized_with_paratext": "Synchronisation réussie de {{ projectName }} avec Paratext.",
     "synchronize": "Synchroniser",
+    "synchronize_was_cancelled": "Synchronize for {{ projectName }} was cancelled.",
     "synchronize_project": "Synchroniser {{ projectName }} avec Paratext",
     "your_project_is_being_synchronized": "Votre projet est en cours de synchronisation...",
     "sync_is_disabled": "La synchronisation pour ce projet a dû être désactivée, elle n'est donc pas disponible pour le moment. Veuillez contacter {{ email }} pour discuter de ce qui doit être fait pour que la synchronisation du projet puisse être à nouveau activée."

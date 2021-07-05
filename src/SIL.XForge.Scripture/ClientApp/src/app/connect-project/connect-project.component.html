@@ -5,15 +5,17 @@
     <div *ngSwitchCase="'login'" class="paratext-login-container">
       <div mdcBody1>{{ t("you_must_be_logged_in_to_paratext") }}</div>
       <button mdc-button id="paratext-login-button" type="button" (click)="logInWithParatext()">
-        <img src="/assets/paratext_logo.png" alt="Paratext Logo" class="paratext-logo" />{{ t("log_in_with_paratext") }}
+        <img src="/assets/images/logo-pt9.png" alt="Paratext Logo" class="paratext-logo" />{{
+          t("log_in_with_paratext")
+        }}
       </button>
     </div>
-    <mdc-card outlined *ngSwitchCase="'connecting'" class="progress-container">
+    <mdc-card [outlined]="true" *ngSwitchCase="'connecting'" class="progress-container">
       <div class="progress-label" mdcBody1>{{ t("connecting_to_project", { projectName: connectProjectName }) }}</div>
       <app-sync-progress [projectDoc]="projectDoc" (inProgress)="updateStatus($event)"></app-sync-progress>
     </mdc-card>
     <form *ngSwitchDefault [formGroup]="connectProjectForm" (ngSubmit)="submit()">
-      <ng-container *ngIf="projects?.length > 0 || state === 'offline'; else noProjectMsg">
+      <ng-container *ngIf="projects.length > 0 || state === 'offline'; else noProjectMsg">
         <p *ngIf="hasNonAdministratorProject && !showSettings && isAppOnline" id="connect-non-admin-msg">
           {{ t("only_paratext_admins_can_start") }}
         </p>
@@ -23,7 +25,7 @@
             id="project-select"
             placeholder="{{ t('paratext_project') }}"
             formControlName="paratextId"
-            outlined
+            [outlined]="true"
           >
             <mdc-menu id="projects-menu">
               <mdc-list>
@@ -50,7 +52,7 @@
           [innerHtml]="i18n.translateAndInsertTags('connect_project.no_connectable_projects')"
         ></p>
       </ng-template>
-      <mdc-card id="settings-card" *ngIf="showSettings" outlined formGroupName="settings">
+      <mdc-card id="settings-card" *ngIf="showSettings" [outlined]="true" formGroupName="settings">
         <div class="card-title">
           <div mdcHeadline6>{{ t("additional_settings") }}</div>
           <div mdcBody2>{{ t("you_can_change_later") }}</div>
@@ -106,7 +108,7 @@
           </div>
         </div>
       </mdc-card>
-      <button mdc-button unelevated type="submit" id="connect-submit-button" [disabled]="submitDisabled">
+      <button mdc-button [unelevated]="true" type="submit" id="connect-submit-button" [disabled]="submitDisabled">
         {{ t("connect") }}
       </button>
     </form>

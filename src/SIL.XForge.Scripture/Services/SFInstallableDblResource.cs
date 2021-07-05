@@ -11,7 +11,6 @@ using Paratext.Data;
 using Paratext.Data.Archiving;
 using Paratext.Data.Languages;
 using Paratext.Data.ProjectFileAccess;
-using Paratext.Data.RegistryServerAccess;
 using PtxUtils;
 using PtxUtils.Http;
 using SIL.Extensions;
@@ -185,7 +184,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>
-        /// Checks the resource permission.
+        /// Checks the resource permission, according to a DBL server.
         /// </summary>
         /// <param name="id">The identifier.</param>
         /// <param name="userSecret">The user secret.</param>
@@ -230,37 +229,51 @@ namespace SIL.XForge.Scripture.Services
             }
             catch (Exception ex)
             {
-                // Normally we would catch the specific WebException,
-                // but something in ParatextData is interfering with it.
-                if (ex.InnerException?.Message.StartsWith("401: ", StringComparison.OrdinalIgnoreCase) ?? false)
+                // Paratext throws an HttpException instead of a WebException
+                // If you need it, the WebException is the InnerException
+                if (ex is HttpException httpException)
                 {
-                    // A 401 error means unauthorized (probably a bad token)
-                    return false;
-                }
-                else if (ex.InnerException?.Message.StartsWith("403: ", StringComparison.OrdinalIgnoreCase) ?? false)
-                {
-                    // A 403 error means no access.
-                    return false;
-                }
-                else if (ex.InnerException?.Message.StartsWith("404: ", StringComparison.OrdinalIgnoreCase) ?? false)
-                {
-                    // A 404 error means that the resource is not on the server
-                    return false;
-                }
-                else if (ex.InnerException?.Message.StartsWith("405: ", StringComparison.OrdinalIgnoreCase) ?? false)
-                {
-                    // A 405 means that HEAD request does not work on the server, so we will use the resource list
-                    // This is slower (although faster than a GET request on the resource), but more reliable
-                    IEnumerable<SFInstallableDblResource> resources =
-                        GetInstallableDblResources(
-                        userSecret,
-                        paratextOptions,
-                        restClientFactory,
-                        fileSystemService,
-                        jwtTokenHelper,
-                        exceptionHandler,
-                        baseUrl);
-                    return resources.Any(r => r.DBLEntryUid.Id == id);
+                    if (httpException.Response.StatusCode == HttpStatusCode.Unauthorized)
+                    {
+                        // A 401 error means unauthorized (probably a bad token)
+                        return false;
+                    }
+                    else if (httpException.Response.StatusCode == HttpStatusCode.Forbidden)
+                    {
+                        // A 403 error means no access.
+                        return false;
+                    }
+                    else if (httpException.Response.StatusCode == HttpStatusCode.NotFound)
+                    {
+                        // A 404 error means that the resource is not on the server
+                        return false;
+                    }
+                    else if (httpException.Response.StatusCode == HttpStatusCode.MethodNotAllowed)
+                    {
+                        // A 405 means that HEAD request does not work on the server, so we will use the resource list
+                        // This is slower (although faster than a GET request on the resource), but more reliable
+                        IEnumerable<SFInstallableDblResource> resources =
+                            GetInstallableDblResources(
+                            userSecret,
+                            paratextOptions,
+                            restClientFactory,
+                            fileSystemService,
+                            jwtTokenHelper,
+                            exceptionHandler,
+                            baseUrl);
+                        return resources.Any(r => r.DBLEntryUid.Id == id);
+                    }
+                    else if (httpException.Response.StatusCode == HttpStatusCode.OK)
+                    {
+                        // A 200 status is success - this should not have triggered an error
+                        // This is only a just in case
+                        return true;
+                    }
+                    else
+                    {
+                        // Unknown status code
+                        throw;
+                    }
                 }
                 else if (ex.Source == "NSubstitute")
                 {

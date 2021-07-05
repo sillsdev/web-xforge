@@ -147,7 +147,7 @@
     <value>Si aún no es usuario de {0}, después de hacer clic en el enlace, haga clic en {1}Registrarse{2} y realice una de las siguientes acciones:</value>
   </data>
   <data name="InviteLinkExpires" xml:space="preserve">
-    <value>The project invitation link expires in 14 days.</value>
+    <value>Esta invitación al proyecto se vence en 14 días.</value>
   </data>
   <data name="InvitePTOption" xml:space="preserve">
     <value>Haga clic en {0}Regístrese con Paratext{1} y siga las instrucciones para acceder a {2} utilizando una cuenta de Paratext existente, o bien</value>

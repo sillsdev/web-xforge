@@ -2,9 +2,11 @@
   "app": {
     "action_not_available_offline": "This action isn't available while you are offline.",
     "all_questions": "ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭ ꤜꤟꤢꤪ꤭꤮ ꤕꤜꤤ꤭",
+    "announcements": "Announcements",
     "cannot_change_password": "ꤋꤥ꤭ꤑꤟꤢꤗꤢ꤬ ꤔꤟꤢꤧ꤬ꤓꤢꤨ꤬ꤜꤟꤛꤢ꤬ꤒꤢ꤬ꤕꤜꤢꤩ꤬ password ꤗꤢ꤬ ꤢ꤬ꤔꤟꤤ ꤟꤤ ꤒꤥ꤬꤯ ꤓꤢꤨ꤬ꤜꤟꤛꤢ꤬ ꤔꤥ꤬ ꤋꤛꤢꤩ꤭ꤞꤛꤢ ꤢꤧ꤬ꤕꤢ꤭ ꤔꤤ, ꤊꤤ꤬ꤗꤟꤢꤒꤥ꤬ꤚꤢꤪ ꤊꤝꤤ꤭ꤊꤟꤌꤣ꤭ ꤒꤟꤢꤧ꤬ꤗꤟꤢꤩ꤬ꤡꤝꤟꤥ ꤘꤣ menu ꤔꤌꤣ꤬꤯",
     "change_password": "ꤓꤢꤨ꤬ꤜꤟꤛꤢ꤬ password",
     "community_checking": "ꤊꤢ꤬ꤛꤢ꤭ꤢꤧꤕꤚꤟꤢꤧ꤬ ꤒꤟꤢꤧ꤬ꤓꤢꤦꤡꤢꤩ꤭",
+    "community_support": "Community Support",
     "connect_project": "ꤕꤜꤝꤥ꤭ꤓꤢꤦ꤭ ꤔꤢ project",
     "help": "ꤗꤟꤢꤩ꤬ꤡꤝꤟꤥ",
     "language": "ꤍꤟꤥ",
@@ -34,7 +36,8 @@
     "loading": "Loading",
     "loading_retry": "Loading - retrying ({{ attempt }})",
     "login_required": "Login required",
-    "please_wait": "Scripture Forge is now out of Beta — yay! Hold tight while we quickly migrate your account to the new full release version."
+    "please_wait": "Scripture Forge is now out of Beta — yay! Hold tight while we quickly migrate your account to the new full release version.",
+    "recourse": "Make sure you aren't using an incognito/private web browser window, and are connected to the Internet. If you continue to have trouble, please {{ templateTagBoundary }}ask for help{{ templateTagBoundary }}."
   },
   "canon": {
     "book_names": {
@@ -276,6 +279,7 @@
     "dismiss": "ꤏꤥ꤭ꤒꤢ꤬ꤕꤟꤢ꤬ꤊꤛꤢ꤭"
   },
   "project": {
+    "please_connect_to_use_link": "Please connect to the internet to join a project using a link.",
     "project_link_is_invalid": "Project link ꤛꤢꤩ꤭ ꤢ꤬ ꤒꤥ꤭ꤒꤥ꤬꤯ ",
     "problem_finding_project": "There was a problem finding a project ({{ projectID }}) or user specific information for the project. There may be a typo in the URL you specified. You may have tried to access a project that is no longer available."
   },
@@ -297,13 +301,16 @@
     "email_invalid": "Email ꤛꤢꤩ꤭ ꤔꤟꤌꤣ꤭ꤔꤟꤤ ꤒꤥ꤬꤯ ",
     "email": "Email",
     "invitation_language": "Invitation language",
+    "invitation_role": "Role",
     "invitation_sent": "ꤞꤢꤨ꤭ꤡꤛꤣ ꤓꤌꤣ꤭ꤟꤢꤪ ꤒꤟꤢꤧ꤬ꤢꤧꤗꤟꤥ꤬ꤏꤢꤦ꤬ Email ꤒꤣ꤬ꤊꤟꤌꤣ꤬ ꤘꤣ {{ email }}",
     "invite_people": "ꤢꤧꤗꤟꤥ꤬ ꤊꤢ꤬ꤛꤢ꤭",
     "link_copied": "ꤖꤛꤢꤩꤡꤛꤣ ꤙꤢꤩ꤬ Link ꤘꤣ clipboard",
+    "link_sharing_not_available_offline": "Inviting users by link sharing is unavailable while offline.",
     "link_sharing": "ꤘꤛꤢꤩ ꤕꤢꤩ ꤢꤨ꤭ Link",
     "not_inviting_already_member": "ꤢꤧꤗꤟꤥ꤬ ꤒꤥ꤬: ꤕꤚꤟꤢꤧ꤬ꤔꤢꤪ꤭ꤢꤩ꤬ ꤛꤢꤩ꤭ꤗꤢ꤬ ꤢ꤬ ꤕꤢ꤬ ꤓꤌꤣ꤭ꤟꤢꤪ ꤘꤣ project ꤢ꤬ꤊꤢꤨ꤭ ꤟꤢꤪ",
     "resend": "ꤞꤢꤨ꤭ ꤒꤢ꤬ꤕꤜꤢꤩ꤬ ꤋꤛꤢꤩ꤭",
     "select_invitation_language": "Select a language for the invitation email",
+    "select_invitation_role": "Select a role for the invited user",
     "send": "ꤞꤢꤨ꤭",
     "share_by_email_not_available_offline": "Inviting users by email is unavailable while offline."
   },

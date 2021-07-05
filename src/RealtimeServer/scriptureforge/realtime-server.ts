@@ -1,4 +1,4 @@
-import ShareDB = require('sharedb');
+import ShareDB from 'sharedb';
 import { RealtimeServer } from '../common/realtime-server';
 import { SchemaVersionRepository } from '../common/schema-version-repository';
 import { DocService } from '../common/services/doc-service';

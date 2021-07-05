@@ -8,7 +8,7 @@
           <form id="name-form">
             <p *ngIf="data.isConfirmation">{{ t("confirm_name") }}</p>
             <p *ngIf="!data.isConfirmation">{{ t("enter_name") }}</p>
-            <mdc-form-field fluid>
+            <mdc-form-field [fluid]="true">
               <mdc-text-field [formControl]="name" id="name-input" label="{{ t('your_name') }}"></mdc-text-field>
             </mdc-form-field>
           </form>
@@ -24,7 +24,14 @@
           >
             {{ t("cancel") }}
           </button>
-          <button mdcDialogButton form="name-form" unelevated type="submit" (click)="submitDialog()" id="submit-button">
+          <button
+            mdcDialogButton
+            form="name-form"
+            [unelevated]="true"
+            type="submit"
+            (click)="submitDialog()"
+            id="submit-button"
+          >
             {{ data.isConfirmation ? t("confirm") : t("update") }}
           </button>
         </mdc-dialog-actions>

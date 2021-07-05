@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.Extensions.Localization;
@@ -421,7 +422,7 @@ namespace SIL.XForge.Scripture.Services
                 SFProjectSecret projectSecret = ProjectSecret(includeSyncUsers);
                 SyncUsers = projectSecret.SyncUsers;
                 await Mapper.InitAsync(UserSecrets.Get("user01"), projectSecret,
-                    ParatextUsersOnProject(twoPtUsersOnProject), "paratextId");
+                    ParatextUsersOnProject(twoPtUsersOnProject), "paratextId", CancellationToken.None);
             }
 
             public void AddData(string answerSyncUserId1, string answerSyncUserId2, string commentSyncUserId1,
@@ -511,7 +512,8 @@ namespace SIL.XForge.Scripture.Services
                 ptUserRoles["ptuser01"] = "pt_administrator";
                 if (twoPtUserOnProject)
                     ptUserRoles["ptuser03"] = "pt_translator";
-                ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(ptUserRoles);
+                ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
+                    Arg.Any<CancellationToken>()).Returns(ptUserRoles);
             }
 
             private static SFProjectSecret ProjectSecret(bool includeSyncUsers)

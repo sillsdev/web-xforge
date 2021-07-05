@@ -17,27 +17,28 @@ import {
 import cloneDeep from 'lodash-es/cloneDeep';
 import { CookieService } from 'ngx-cookie-service';
 import Quill from 'quill';
-import { SystemRole } from 'realtime-server/lib/common/models/system-role';
-import { User } from 'realtime-server/lib/common/models/user';
-import { obj } from 'realtime-server/lib/common/utils/obj-path';
-import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
-import { Note } from 'realtime-server/lib/scriptureforge/models/note';
-import { ParatextNoteThread } from 'realtime-server/lib/scriptureforge/models/paratext-note-thread';
-import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
+import { User } from 'realtime-server/lib/esm/common/models/user';
+import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
+import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
+import { ParatextNoteThread } from 'realtime-server/lib/esm/scriptureforge/models/paratext-note-thread';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
-} from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
-import { TextType } from 'realtime-server/lib/scriptureforge/models/text-data';
-import { TextInfoPermission } from 'realtime-server/lib/scriptureforge/models/text-info-permission';
-import { VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
-import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
+} from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
+import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, of, Subject } from 'rxjs';
 import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { CONSOLE } from 'xforge-common/browser-globals';
+import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -62,6 +63,7 @@ const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
 const mockedActivatedRoute = mock(ActivatedRoute);
+const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
 const mockedTranslationEngineService = mock(TranslationEngineService);
@@ -96,6 +98,7 @@ describe('EditorComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: CONSOLE, useValue: new MockConsole() },
+      { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: PwaService, useMock: mockedPwaService },
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService }
@@ -748,7 +751,12 @@ describe('EditorComponent', () => {
       const selection = env.targetEditor.getSelection();
       expect(selection).toBeNull();
       expect(env.component.canEdit).toBe(true);
+      expect(env.outOfSyncWarning).toBeNull();
       expect(env.isSourceAreaHidden).toBe(true);
+
+      env.setDataInSync('project01', false);
+      expect(env.component.canEdit).toBe(false);
+      expect(env.outOfSyncWarning).not.toBeNull();
       env.dispose();
     }));
 
@@ -1108,6 +1116,7 @@ class TestEnvironment {
     shortName: 'TRG',
     isRightToLeft: false,
     userRoles: this.userRolesOnProject,
+    userPermissions: {},
     writingSystem: { tag: 'qaa' },
     translateConfig: {
       translationSuggestionsEnabled: true,
@@ -1127,7 +1136,7 @@ class TestEnvironment {
       shareEnabled: true,
       shareLevel: CheckingShareLevel.Specific
     },
-    sync: { queuedCount: 0 },
+    sync: { queuedCount: 0, dataInSync: true },
     texts: [
       {
         bookNum: 40,
@@ -1317,6 +1326,10 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('.invalid-warning'));
   }
 
+  get outOfSyncWarning(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.out-of-sync-warning'));
+  }
+
   get isSourceAreaHidden(): boolean {
     return this.sourceTextArea.nativeElement.style.display === 'none';
   }
@@ -1474,6 +1487,13 @@ class TestEnvironment {
 
   getTextDoc(textId: TextDocId): TextDoc {
     return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, textId.toString());
+  }
+
+  setDataInSync(projectId: string, isInSync: boolean): void {
+    const projectDoc: SFProjectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, projectId);
+    projectDoc.submitJson0Op(op => op.set(p => p.sync.dataInSync!, isInSync));
+    tick();
+    this.fixture.detectChanges();
   }
 
   wait(): void {

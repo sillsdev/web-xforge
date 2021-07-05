@@ -2,8 +2,8 @@ import {
   SFProject,
   SF_PROJECTS_COLLECTION,
   SF_PROJECT_INDEX_PATHS
-} from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { TEXTS_COLLECTION } from 'realtime-server/lib/scriptureforge/models/text-data';
+} from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { TEXTS_COLLECTION } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { ProjectDoc } from 'xforge-common/models/project-doc';
 import { RealtimeDoc } from 'xforge-common/models/realtime-doc';
 import { QuestionDoc } from './question-doc';

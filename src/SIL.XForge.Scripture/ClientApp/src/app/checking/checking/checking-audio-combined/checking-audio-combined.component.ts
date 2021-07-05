@@ -1,13 +1,11 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { InvalidFileItem } from 'angular-file/file-upload/fileTools';
 import {
   AudioAttachment,
   CheckingAudioRecorderComponent
 } from '../checking-audio-recorder/checking-audio-recorder.component';
 
-interface FileMetadata {
-  file: File;
-  type: string;
-}
+const NOT_A_FILE = {} as File;
 
 @Component({
   selector: 'app-checking-audio-combined',
@@ -16,10 +14,10 @@ interface FileMetadata {
 })
 export class CheckingAudioCombinedComponent {
   @ViewChild(CheckingAudioRecorderComponent) audioRecorderComponent?: CheckingAudioRecorderComponent;
-  @Input() source = '';
+  @Input() source?: string = '';
   @Output() update = new EventEmitter<AudioAttachment>();
 
-  uploadAudioFile?: File;
+  uploadAudioFile: File = NOT_A_FILE;
 
   private audio: AudioAttachment = {};
 
@@ -39,7 +37,7 @@ export class CheckingAudioCombinedComponent {
     );
   }
 
-  set lastInvalids(value: FileMetadata[] | undefined) {
+  set lastInvalids(value: InvalidFileItem[]) {
     if (value == null) {
       return;
     }
@@ -51,7 +49,7 @@ export class CheckingAudioCombinedComponent {
   }
 
   prepareAudioFileUpload() {
-    if (this.uploadAudioFile) {
+    if (this.uploadAudioFile.name != null) {
       this.audio.url = URL.createObjectURL(this.uploadAudioFile);
       this.audio.blob = this.uploadAudioFile;
       this.audio.fileName = this.uploadAudioFile.name;
@@ -78,7 +76,7 @@ export class CheckingAudioCombinedComponent {
   }
 
   resetAudioAttachment() {
-    this.uploadAudioFile = undefined;
+    this.uploadAudioFile = NOT_A_FILE;
     this.source = '';
     this.audio = { status: 'reset' };
     this.update.emit(this.audio);

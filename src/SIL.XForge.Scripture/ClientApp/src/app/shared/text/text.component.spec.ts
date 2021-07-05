@@ -4,12 +4,13 @@ import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslocoService } from '@ngneat/transloco';
 import Quill from 'quill';
-import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { TextData } from 'realtime-server/lib/scriptureforge/models/text-data';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import * as RichText from 'rich-text';
 import { BehaviorSubject } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
+import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -18,12 +19,13 @@ import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
-import { TextDoc, TextDocId } from '../../core/models/text-doc';
+import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../../shared/shared.module';
 import { getSFProject, getTextDoc } from '../test-utils';
 import { TextComponent } from './text.component';
 
+const mockedBugsnagService = mock(BugsnagService);
 const mockedTranslocoService = mock(TranslocoService);
 const mockedPwaService = mock(PwaService);
 const mockedProjectService = mock(SFProjectService);
@@ -41,6 +43,7 @@ describe('TextComponent', () => {
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
     ],
     providers: [
+      { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: TranslocoService, useMock: mockedTranslocoService },
       { provide: PwaService, useMock: mockedPwaService }
     ]
@@ -69,6 +72,28 @@ describe('TextComponent', () => {
     expect(env.component.placeholder).toEqual('initial placeholder text');
     expect(env.component.isRtl).toBe(false);
     expect(env.fixture.nativeElement.querySelector('quill-editor[dir="auto"]')).not.toBeNull();
+  }));
+
+  it('handles a null style on a paragraph', fakeAsync(() => {
+    const env: TestEnvironment = new TestEnvironment();
+    const mockedQuill = new MockQuill('quill-editor');
+    env.fixture.detectChanges();
+    env.component.onEditorCreated(mockedQuill);
+    env.id = new TextDocId('project01', 40, 1);
+    tick();
+    env.fixture.detectChanges();
+    expect(env.component.editor?.getText()).toContain('chapter 1, verse 6.', 'setup');
+    expect(env.component.editor?.getContents().ops?.length).toEqual(19, 'setup');
+
+    env.component.editor?.updateContents(new Delta().retain(109).retain(31, { para: null }));
+
+    const ops = env.component.editor?.getContents().ops;
+    if (ops != null) {
+      const lastPara = ops[18];
+      expect(lastPara.attributes).not.toBeNull();
+    } else {
+      fail('should not get here if test is working properly!');
+    }
   }));
 });
 

@@ -31,12 +31,13 @@
     "time_archived_stamp": "Archivado en {{ timeStamp }}"
   },
   "collaborators": {
+    "allow_add_edit_questions": "Puede añadir y editar preguntas",
     "awaiting_response_from": "Esperando respuesta de{{ newLine }}{{ email }}",
     "cancel_invite": "Cancelar la invitación",
     "change_roles_and_permissions": "Los roles y permisos de los usuarios {{ boldStart }}sólo{{ boldEnd }} pueden ser cambiados en {{ boldStart }}Paratext{{ boldEnd }}. Abra el proyecto en {{ boldStart }}Paratext{{ boldEnd }}, en la ventana del proyecto haga clic en {{ templateTagBoundary }}{{ templateTagBoundary }}, luego {{ boldStart }}Configuración del proyecto{{ boldEnd }}, luego {{ boldStart }}Permisos de usuario{{ boldEnd }}. Después un {{ italicsStart }}Enviar/Recibir{{ italicsEnd }} en {{ boldStart }}Paratext{{ boldEnd }} y luego un {{ italicsStart }}Sincronizar{{ italicsEnd }} en {{ boldStart }}Scripture Forge{{ boldEnd }}, su rol entrará en vigor aquí, una vez que el usuario inicie la sesión con su cuenta de {{ boldStart }}Paratext{{ boldEnd }} .",
     "connect_network_to_manage_users": "La administración de usuarios está desactivada cuando no está en línea. Por favor, conéctese a Internet para gestionar los usuarios.",
     "filter_users": "Filtrar usuarios...",
-    "invitation_expired": "Invitation has expired for{{ newLine }}{{ email }}",
+    "invitation_expired": "La invitación para este correo se ha vencido:{{ newLine }}{{ email }}",
     "me": "yo",
     "no_users_found": "Usuarios no encontrados",
     "problem_loading_invited_users": "Hubo un problema al cargar la lista de usuarios invitados.",
@@ -60,7 +61,7 @@
     "paratext_account_linked_to_another_user": "You have logged into a Paratext account that is already linked to a user with the email {{ email }}. You will be logged out of your current account and proceed as the Paratext user.",
     "paratext_project": "Proyecto de Paratext",
     "problem_already_connected": "El proyecto ya está conectado. Tal vez otro administrador del proyecto conectó el proyecto al mismo tiempo. Por favor, inténtelo de nuevo. Si sigue siendo un problema, por favor informe del problema para que podamos arreglarlo.",
-    "proceed": "Proceed",
+    "proceed": "Continuar",
     "translation_suggestions": "Sugerencias de traducción",
     "translations_will_be_suggested_as_you_edit": "Se sugerirán traducciones de palabras y frases a medida que edite la Escritura. Se recomienda que su proyecto se configure como {{ boldStart }}Traducción hija{{ boldEnd }} en Paratext.",
     "you_can_change_later": "Puede cambiarlo más tarde.",
@@ -79,6 +80,7 @@
     "cannot_edit_chapter_formatting_invalid": "Este capítulo no puede ser editado porque el formato no es válido. Por favor, arregle el formato en Paratext.",
     "completed_successfully": "Completado con éxito",
     "configure_translation_suggestions": "Configurar sugerencias de traducción",
+    "project_data_out_of_sync": "Your project data is out of sync. Please synchronize your project to edit this text.",
     "swap_source_and_target": "Intercambio de origen y destino",
     "training": "Entrenamiento",
     "training_completed_successfully": "Entrenamiento completado con éxito",
@@ -151,7 +153,8 @@
     "pt_observer": "Observador",
     "pt_translator": "Traductor",
     "sf_community_checker": "Revisor de la comunidad",
-    "sf_reviewer": "Revisor"
+    "sf_reviewer": "Revisor",
+    "sf_observer": "View Translation"
   },
   "settings": {
     "anyone_with_a_link": "Cualquiera con un enlace",
@@ -191,6 +194,7 @@
     "translation_suggestions_settings": "Configuración de las sugerencias de traducción"
   },
   "sync": {
+    "cancel": "Cancelar",
     "connect_network_to_synchronize": "Por favor, conéctese a Internet para sincronizar este proyecto",
     "last_synced_time_stamp": "Última sincronización en {{ timeStamp }}",
     "log_in_to_paratext": "Iniciar sesión en Paratext",
@@ -198,6 +202,7 @@
     "something_went_wrong_synchronizing_this_project": "Algo salió mal al sincronizar {{ projectName }} con Paratext. Inténtalo de nuevo.",
     "successfully_synchronized_with_paratext": "{{ projectName }} fue sincronizado con éxito con Paratext.",
     "synchronize": "Sincronizar",
+    "synchronize_was_cancelled": "Synchronize for {{ projectName }} was cancelled.",
     "synchronize_project": "Sincronizar {{ projectName }} con Paratext",
     "your_project_is_being_synchronized": "Su proyecto está siendo sincronizado...",
     "sync_is_disabled": "La sincronización para este proyecto tenía que ser desactivada, por lo que no está disponible en este momento. Por favor, contacte con {{ email }} para discutir lo que hay que hacer para que la sincronización del proyecto pueda ser activada de nuevo."

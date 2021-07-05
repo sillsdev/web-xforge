@@ -23,7 +23,7 @@
     "archive": "Arxiv",
     "archived_questions": "Arxivdə saxlanmış suallar",
     "click_add_question": "Yuxarıdakı {{ boldStart }}Sual əlavə etmək{{ boldEnd }} tıklayın.",
-    "import_questions": "Import",
+    "import_questions": "İdxal",
     "no_archived_questions": "Arxivləşdirilmiş suallar yoxdur.",
     "no_questions": "Nəşr edilmiş suallar yoxdur. ",
     "question_count_label": "{{ count }} suallar",
@@ -31,6 +31,7 @@
     "time_archived_stamp": "{{ timeStamp }}-da arxivləşdirilib"
   },
   "collaborators": {
+    "allow_add_edit_questions": "Can add & edit questions",
     "awaiting_response_from": "{{ newLine }}{{ email }}-dan cavab gözlənilir",
     "cancel_invite": "Dəvəti ləğv etmək",
     "change_roles_and_permissions": "İstifadəçilərin rolları və icazələri {{ boldStart }}yalnız{{ boldEnd }} {{ boldStart }}Paratextdə{{ boldEnd }} dəyişilə bilər. Layihəni {{ boldStart }}Paratextdə{{ boldEnd }} açın, layihənin pəncərəsində {{ templateTagBoundary }}{{ templateTagBoundary }}, sonra {{ boldStart }}Layihə parametrləri{{ boldEnd }}, sonra{{ boldStart }}İstifadəçinin izacələri{{ boldEnd }} tıklayın. {{ boldStart }}Paratextdə{{ boldEnd }} {{ italicsStart }}Göndərmək/Qəbul etmək{{ italicsEnd }}-dən sonra {{ boldStart }} Kəlamın Kürəsində {{ boldEnd }}{{ italicsStart }}Sinxronlaşdırmaq{{ italicsEnd }} edildikdə həmin istifadəçi öz {{ boldStart }}Paratext{{ boldEnd }} hesabı ilə daxil olduqda onların rolu aktivləşəcək.",
@@ -57,10 +58,10 @@
     "log_in_with_paratext": "Paratekst vasitəsilə daxil olmaq",
     "no_connectable_projects": "Görünür ki, sizin üçün qoşula bilən layihələr yoxdur. {{ newLine }} Zəhmət olmazsa, layihəyə qoşulmaq məqsədilə qeydiyyatdan keçmək üçün Paratekst proqramına daxil olun.",
     "only_paratext_admins_can_start": "Burada lahiyə başlamaq üçün, onun Paratekst Administratoru olmalısınız. Sizin Administratorunuzdan lahiyənizə qoşmağa xahiş ediniz, sonra siz də burada qoşula bilərsiniz.",
-    "paratext_account_linked_to_another_user": "You have logged into a Paratext account that is already linked to a user with the email {{ email }}. You will be logged out of your current account and proceed as the Paratext user.",
+    "paratext_account_linked_to_another_user": "Artıq {{email}} e-poçtu ilə bir istifadəçiyə bağlanan bir Paratext hesabına daxil olmusunuz. Cari hesabınızdan çıxacaq və Paratext istifadəçisi olaraq davam edəcəksiniz.",
     "paratext_project": "Paratekst layihəsi",
-    "problem_already_connected": "The project is already connected. Maybe another project administrator connected the project at the same time. Please try again. If it continues to be a problem, please report the issue so we can get it fixed.",
-    "proceed": "Proceed",
+    "problem_already_connected": "Layihə artıq bağlıdır. Bəlkə başqa bir layihə administratoru eyni zamanda layihəni bağladı. Zəhmət olmasa bir daha cəhd edin. Bir problem olmağa davam edərsə, xahiş edirik problemi bildirin ki, düzəldək.",
+    "proceed": "Davam edin",
     "translation_suggestions": "Tərcümə təklifləri",
     "translations_will_be_suggested_as_you_edit": "Siz Kəlamı redaktə etdikcə sözlər və ifadələr üçün tərcümələr təklif olunacaq. Məsləhət görülür ki, layihəniz Paratextdə {{ boldStart }} Filial Tərcümə kimi {{ boldEnd }}quraşdırılsın.",
     "you_can_change_later": "Bunları sonra dəyişdirə bilərsiniz.",
@@ -79,6 +80,7 @@
     "cannot_edit_chapter_formatting_invalid": "Bu fəsil redaktə oluna bilməz, çünki formatlaşdırma yanlışdır. Zəhmət olmazsa, formatlaşdırmanı Paratextdə düzəldin.",
     "completed_successfully": "Uğurla tamamlandı",
     "configure_translation_suggestions": "Tərcümə təkliflərini irəli sürün",
+    "project_data_out_of_sync": "Your project data is out of sync. Please synchronize your project to edit this text.",
     "swap_source_and_target": "Mənbə və hədəfi dəyişdirmək",
     "training": "Təlim",
     "training_completed_successfully": "Təlim uğurla başa çatdı",
@@ -86,29 +88,29 @@
   },
   "import_questions_confirmation_dialog": {
     "done": "Yerinə yetirildi",
-    "edited_questions_explanation": "Some of the questions you have selected have been edited. Are you sure you want to update the questions? Select the questions you want to update.",
-    "number_answers": "Number of Answers",
-    "scripture_forge": "Scripture Forge",
-    "some_questions_edited": "Some questions have been edited",
+    "edited_questions_explanation": "Seçdiyiniz suallardan bəziləri redaktə edilmişdir. Sualları yeniləmək istədiyinizə əminsiniz? Yeniləmək istədiyiniz sualları seçin.",
+    "number_answers": "Cavabların sayı",
+    "scripture_forge": "Müqəddəs Yazılarln misgarı",
+    "some_questions_edited": "Bəzi suallar redaktə edilmişdir",
     "transcelerator": "Transcelerator"
   },
   "import_questions_dialog": {
-    "all": "All",
+    "all": "Hamısı",
     "cancel": "Ləğv etmək",
-    "filter_questions": "Filter questions",
-    "import": "Import",
-    "import_count_questions": "Import {{ count }} Selected Questions",
-    "import_from_transcelerator": "Import Questions from Transcelerator",
-    "importing_questions": "Importing {{ count }} questions...",
+    "filter_questions": "Sualları süzgəcdən keçirmək",
+    "import": "İdxal",
+    "import_count_questions": "{{Count}} Seçilmiş sualları idxal edin",
+    "import_from_transcelerator": "Sualları Transcelerator-dan idxal et",
+    "importing_questions": "{{Count}} sual idxal edilir ...",
     "loading": "Yüklənir...",
-    "must_be_valid_reference": "Must be a valid reference",
-    "no_questions_available": "There are no questions for the books in this project.",
+    "must_be_valid_reference": "Etibarlı bir istinad olmalıdır",
+    "no_questions_available": "Bu layihədəki kitablara sual yoxdur.",
     "question": "Sual",
-    "reference_from": "Reference from",
-    "reference_to": "Reference to",
-    "select_all": "Select All",
-    "show_all": "Show All",
-    "update_transcelerator": "The version of Transcelerator used in this project is not supported. Please update to at least Transcelerator version 1.5.3."
+    "reference_from": "-dan İstinaddır",
+    "reference_to": "-ya İstinaddır",
+    "select_all": "Hamısını seç",
+    "show_all": "Hamısını göstər",
+    "update_transcelerator": "Bu layihədə istifadə olunan Transcelerator versiyası dəstəklənmir. Xahiş edirəm ən azı Transcelerator 1.5.3 versiyasına yeniləyin."
   },
   "paginator": {
     "items_per_page": "Hər səhifə üçün bəndlər",
@@ -117,9 +119,9 @@
     "range_label": "{{ length }}-in {{ startIndex }} - {{ endIndex }}"
   },
   "project_select": {
-    "please_select_valid_project_or_resource": "Please select a valid project or resource",
-    "projects": "Projects",
-    "resources": "Resources"
+    "please_select_valid_project_or_resource": "Xahiş edirəm etibarlı bir layihə və ya mənbə seçin",
+    "projects": "Layihələr",
+    "resources": "Qaynaqlar"
   },
   "question_answered_dialog": {
     "cancel": "Ləğv etmək",
@@ -151,13 +153,14 @@
     "pt_observer": "Müşahidəçi",
     "pt_translator": "Tərcüməçi",
     "sf_community_checker": "Dil daşıyıcıları ilə yoxlayan şəxs",
-    "sf_reviewer": "Rəyçi"
+    "sf_reviewer": "Rəyçi",
+    "sf_observer": "View Translation"
   },
   "settings": {
     "anyone_with_a_link": "Keçid ilə hər bir kəs",
     "based_on": "Əsasında",
     "connect_network_to_change_settings": "Şəbəkədə olmayan zaman layihə parametrləri deyişdirmək mümkün deyil. Xahiş edirik, deyişliklər etmək üçün internetə qoşulun.",
-    "choose_the_paratext_project": "Layihənizin əsaslandığı Paratext layihəsini seçin.",
+    "choose_the_paratext_project": "Layihənizin əsas götürdüyü Paratext layihəsini və ya Rəqəmsal İncil Kitabxanası mənbəyini seçin.",
     "danger_zone": "Təhlükə Zonası",
     "delete_this_project": "Bu layihəni silmək",
     "delete_project_cannot_be_undone": "Siz layihəni sildikdən sonra geriyə qaytarmaq mümkün deyil. Xahiş edirik, buna əmin olun.",
@@ -170,12 +173,12 @@
     "settings": "Parametrlər",
     "share": "Paylaş",
     "specific_people": "Xüsusi insanlar",
-    "source_projects_cannot_be_deleted": "Another project is based on this project and so it cannot be deleted.",
+    "source_projects_cannot_be_deleted": "Başqa bir layihə bu layihəyə əsaslanır və buna görə silinə bilməz.",
     "tools": "Alətlər",
     "translate": "Tərcümə etmək",
     "translate_tool_is_always_available": "Tərcümə aləti eyni mətn üzərində çalışan başqa tərcüməçilər ilə əməkdaşlıq etmək üçün həmişə mövcuddur.",
     "translation_suggestions": "Tərcümə təklifləri",
-    "translations_will_be_suggested": "Siz Kəlamı redaktə etdikcə sözlər və ifadələr üçün tərcümələr təklif olunacaq. Məsləhət görülür ki, layihəniz Paratextdə {{ boldStart }} Filial Tərcümə kimi {{ boldEnd }}quraşdırılsın.",
+    "translations_will_be_suggested": "Yazıları redaktə edərkən sözlər və ifadələr üçün tərcümə təklif ediləcəkdir. Layihənizin Paratextdə bir {{boldStart}} Qız Tərcümə {{boldEnd}} olaraq qurulması yalnız layihəniz başqa bir Paratext layihəsinə əsaslandığı təqdirdə tövsiyə olunur. Layihəniz bir mənbəyə əsaslanırsa tətbiq olunmur.",
     "users_can_interact_with_each_other": "İstifadəçilər öz aralarında əlaqə saxlamaq üçün bir-birilərinin cavablarını və şərhlərini görə bilər.",
     "users_can_share_the_project": "İstifadəçilər dostu layihəyə qoşulmağa dəvət etməklə paylaşa bilərlər.{ newLine }}{{ italicsStart }}-da menecerlər{{ italicsEnd }} həmişə {{ templateTagBoundary }}-da layihəyə başqalarını{{ templateTagBoundary }}-da İstifadəçiləri dəvət edə bilərlər. ",
     "will_not_delete_paratext_project": "Bu sizin {{ boldStart }} Paratext layihənizi {{ boldEnd }} silməyəcək, amma Kəlamın Kürəsində saxlanılmış sinxronlaşdırılmamış hər bir məlumatı siləcək. Məsləhət görülür ki, {{ templateTagBoundary }} silməzdən qabaq əvvəlcə {{ templateTagBoundary }} sinxronlaşdırasınız."
@@ -191,6 +194,7 @@
     "translation_suggestions_settings": "Tərcümə təkliflərinin parametrləri"
   },
   "sync": {
+    "cancel": "Ləğv etmək",
     "connect_network_to_synchronize": "Zəhmət olmazsa, layihə sinxronlaşdırmaq üçün, internetə qoşulun",
     "last_synced_time_stamp": "Axırıncı dəfə {{ timeStamp }} sinxronlaşdırılıb ",
     "log_in_to_paratext": "Paratextə daxil olun",
@@ -198,15 +202,16 @@
     "something_went_wrong_synchronizing_this_project": "{{ projectName }} Paratext ilə sinxronlaşdırarkən bir səhv baş verdi. Zəhmət olmazsa, yenidən cəhd edin.",
     "successfully_synchronized_with_paratext": "{{ projectName }} Paratext ilə uğurla sinxronlaşdırıldı. ",
     "synchronize": "Sinxronlaşdırmaq",
+    "synchronize_was_cancelled": "Synchronize for {{ projectName }} was cancelled.",
     "synchronize_project": "{{ projectName }} Paratext ilə sinxronlaşdırıldı",
     "your_project_is_being_synchronized": "Sizin layihəniz sinxronlaşdırılır...",
-    "sync_is_disabled": "Synchronization for this project needed to be disabled, so it is not available at this time. Please contact {{ email }} to discuss what needs to be done so project synchronization can be enabled again."
+    "sync_is_disabled": "Bu layihə üçün sinxronizasiyanın ləğv edilməsi lazım idi, buna görə də hazırda mövcud deyil. Layihə sinxronizasiyasının yenidən aktivləşdirilməsi üçün nələrin edilməsi lazım olduğunu müzakirə etmək üçün {{email}} ilə əlaqə saxlayın."
   },
   "text": {
     "book_does_not_exist": "Bu kitab mövcud deyil.",
     "book_is_empty": "Bu kitab boşdur. Paratext proqramın köməyi ilə fəsillər əlavə edin.",
     "loading": "Yüklənir...",
-    "not_available_offline": "This text is not available offline. Connect to the Internet to see the text."
+    "not_available_offline": "Bu mətn oflayn olaraq mövcud deyil. Mətni görmək üçün İnternetə qoşulun."
   },
   "translate_overview": {
     "progress": "Tərəqqi",

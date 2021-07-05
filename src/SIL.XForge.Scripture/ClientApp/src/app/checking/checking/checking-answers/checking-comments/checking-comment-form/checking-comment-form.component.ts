@@ -8,12 +8,14 @@ import { XFValidators } from 'xforge-common/xfvalidators';
   styleUrls: ['./checking-comment-form.component.scss']
 })
 export class CheckingCommentFormComponent {
-  @Input() set text(value: string) {
-    this.commentText.setValue(value);
+  @Input() set text(value: string | undefined) {
+    if (value != null) {
+      this.commentText.setValue(value);
+    }
   }
 
-  @Output() save: EventEmitter<String> = new EventEmitter<String>();
-  @Output() cancel: EventEmitter<Boolean> = new EventEmitter<Boolean>();
+  @Output() save: EventEmitter<string> = new EventEmitter<string>();
+  @Output() cancel: EventEmitter<boolean> = new EventEmitter<boolean>();
 
   commentForm: FormGroup = new FormGroup({
     commentText: new FormControl('', [Validators.required, XFValidators.someNonWhitespace])

@@ -4,14 +4,17 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
-import { UserProfile } from 'realtime-server/lib/common/models/user';
-import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
-import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
+import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { BehaviorSubject, of } from 'rxjs';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { anything, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
+import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { CommandError } from 'xforge-common/command.service';
 import { LocationService } from 'xforge-common/location.service';
 import { NONE_ROLE, ProjectRoleInfo } from 'xforge-common/models/project-role-info';
@@ -36,6 +39,7 @@ const mockedLocationService = mock(LocationService);
 const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
+const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
 
@@ -56,6 +60,7 @@ describe('CollaboratorsComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
+      { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: PwaService, useMock: mockedPwaService },
       emptyHammerLoader
@@ -64,6 +69,7 @@ describe('CollaboratorsComponent', () => {
 
   it('should not display no-users label while loading', fakeAsync(() => {
     const env = new TestEnvironment();
+    env.setupProjectData();
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
@@ -110,9 +116,9 @@ describe('CollaboratorsComponent', () => {
   it('displays invited users', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
-      { email: 'alice@a.aa', expired: false },
-      { email: 'bob@b.bb', expired: false },
-      { email: 'charles@c.cc', expired: true }
+      { email: 'alice@a.aa', role: 'sf_community_checker', expired: false },
+      { email: 'bob@b.bb', role: 'sf_community_checker', expired: false },
+      { email: 'charles@c.cc', role: 'sf_community_checker', expired: true }
     ]);
 
     env.setupProjectData();
@@ -178,7 +184,7 @@ describe('CollaboratorsComponent', () => {
   it('should refresh user list after inviting a new user', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
-      { email: 'alice@a.aa', expired: false }
+      { email: 'alice@a.aa', role: 'sf_community_checker', expired: false }
     ]);
     env.setupProjectData();
     env.fixture.detectChanges();
@@ -192,8 +198,8 @@ describe('CollaboratorsComponent', () => {
 
     // Simulate invitation event
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
-      { email: 'alice@a.aa', expired: false },
-      { email: 'new-invitee@example.com', expired: false }
+      { email: 'alice@a.aa', role: 'sf_community_checker', expired: false },
+      { email: 'new-invitee@example.com', role: 'sf_community_checker', expired: false }
     ]);
     numInvitees++;
     env.component.onInvitationSent();
@@ -208,7 +214,7 @@ describe('CollaboratorsComponent', () => {
     const env = new TestEnvironment();
     when(mockedProjectService.onlineUninviteUser(anything(), anything())).thenResolve();
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
-      { email: 'alice@a.aa', expired: false }
+      { email: 'alice@a.aa', role: 'sf_community_checker', expired: false }
     ]);
     env.setupProjectData();
     env.fixture.detectChanges();
@@ -257,7 +263,7 @@ describe('CollaboratorsComponent', () => {
     const env = new TestEnvironment();
     env.setupProjectData();
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
-      { email: 'bob@example.com', expired: false }
+      { email: 'bob@example.com', role: 'sf_community_checker', expired: false }
     ]);
     env.fixture.detectChanges();
     tick();
@@ -276,7 +282,7 @@ describe('CollaboratorsComponent', () => {
     expect(env.userRows.length).toEqual(1);
 
     env.setInputValue(env.filterInput, 'Community Checker');
-    expect(env.userRows.length).toEqual(1);
+    expect(env.userRows.length).toEqual(2);
   }));
 
   it('should page', fakeAsync(() => {
@@ -399,7 +405,7 @@ describe('CollaboratorsComponent', () => {
     const env = new TestEnvironment(false);
     env.setupProjectData();
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
-      { email: 'alice@a.aa', expired: false }
+      { email: 'alice@a.aa', role: 'sf_community_checker', expired: false }
     ]);
     env.fixture.detectChanges();
     tick();
@@ -419,6 +425,60 @@ describe('CollaboratorsComponent', () => {
     expect(env.isFilterDisabled).toBe(true);
     expect(env.removeUserButtonOnRow(0).nativeElement.disabled).toBe(true);
     expect(env.cancelInviteButtonOnRow(3).nativeElement.disabled).toBe(true);
+  }));
+
+  it('should allow granting question permission to non admins', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProjectData();
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+
+    // With checking disabled, the checkboxes should not exist
+    expect(env.userPermissionCheckbox(0)).toBeUndefined();
+
+    // Enable checking
+    const checkingConfig: CheckingConfig = {
+      checkingEnabled: true,
+      shareEnabled: true,
+      shareLevel: CheckingShareLevel.Anyone,
+      usersSeeEachOthersResponses: false
+    };
+    env.updateCheckingProperties(checkingConfig);
+    tick();
+    env.fixture.detectChanges();
+
+    // project admins always have permission, so the checkbox should be checked, disabled, and do nothing when clicked
+    expect(env.userPermissionCheckbox(0).classList).toContain('mat-checkbox-disabled');
+    expect(env.userPermissionCheckbox(0).classList).toContain('mat-checkbox-checked');
+    env.clickElement(env.userPermissionCheckbox(0));
+    verify(mockedProjectService.onlineSetUserProjectPermissions(anything(), anything(), anything())).never();
+
+    // translators can be given permission, or not have permission
+    expect(env.userPermissionCheckbox(1).classList).not.toContain('mat-checkbox-disabled');
+    expect(env.userPermissionCheckbox(1).classList).not.toContain('mat-checkbox-checked');
+    env.clickElement(env.userPermissionCheckbox(1));
+    expect(env.userPermissionCheckbox(1).classList).toContain('mat-checkbox-checked');
+    const permissions = [
+      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create),
+      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Edit)
+    ];
+    verify(
+      mockedProjectService.onlineSetUserProjectPermissions(env.project01Id, 'user02', deepEqual(permissions))
+    ).once();
+
+    // community checkers cannot be given permission to manage questions
+    expect(env.userPermissionCheckbox(2)).toBeUndefined();
+
+    resetCalls(mockedProjectService);
+
+    // clicking a translator's checkbox should do nothing when offline
+    env.onlineStatus = false;
+    expect(env.userPermissionCheckbox(1).classList).toContain('mat-checkbox-disabled');
+    expect(env.userPermissionCheckbox(1).classList).toContain('mat-checkbox-checked');
+    env.clickElement(env.userPermissionCheckbox(1));
+    expect(env.userPermissionCheckbox(1).classList).toContain('mat-checkbox-checked');
+    verify(mockedProjectService.onlineSetUserProjectPermissions(anything(), anything(), anything())).never();
   }));
 });
 
@@ -449,6 +509,12 @@ class TestEnvironment {
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId)
     );
     when(mockedProjectService.onlineGetLinkSharingKey(this.project01Id, anything())).thenResolve('linkSharingKey01');
+    when(mockedProjectService.onlineSetUserProjectPermissions(this.project01Id, 'user02', anything())).thenCall(
+      (projectId: string, userId: string, permissions: string[]) => {
+        const projectDoc: SFProjectDoc = this.realtimeService.get(SFProjectDoc.COLLECTION, projectId);
+        return projectDoc.submitJson0Op(op => op.set(p => p.userPermissions[userId], permissions));
+      }
+    );
     this.realtimeService.addSnapshots<UserProfile>(UserProfileDoc.COLLECTION, [
       {
         id: 'user01',
@@ -550,6 +616,10 @@ class TestEnvironment {
     return this.userRows[row].query(By.css('button.cancel-invite'));
   }
 
+  userPermissionCheckbox(index: number): HTMLElement {
+    return this.table.nativeElement.querySelectorAll('td.mat-column-questions_permission .mat-checkbox')[index];
+  }
+
   clickElement(element: HTMLElement | DebugElement): void {
     if (element instanceof DebugElement) {
       element = (element as DebugElement).nativeElement as HTMLElement;
@@ -620,7 +690,8 @@ class TestEnvironment {
         shareEnabled: false,
         shareLevel: CheckingShareLevel.Specific
       },
-      userRoles
+      userRoles,
+      userPermissions: {}
     };
   }
 

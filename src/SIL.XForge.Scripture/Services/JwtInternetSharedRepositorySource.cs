@@ -13,11 +13,14 @@ namespace SIL.XForge.Scripture.Services
     class JwtInternetSharedRepositorySource : InternetSharedRepositorySource, IInternetSharedRepositorySource
     {
         private readonly JwtRestClient _registryClient;
+        private readonly IHgWrapper _hgWrapper;
 
-        public JwtInternetSharedRepositorySource(string accessToken, JwtRestClient registryClient, ParatextUser authenticationPtUser, string srServerUri)
+        public JwtInternetSharedRepositorySource(string accessToken, JwtRestClient registryClient, IHgWrapper hgWrapper,
+            ParatextUser authenticationPtUser, string srServerUri)
             : base(authenticationPtUser, srServerUri)
         {
             _registryClient = registryClient;
+            _hgWrapper = hgWrapper;
             SetToken(accessToken);
         }
 
@@ -150,8 +153,7 @@ namespace SIL.XForge.Scripture.Services
         /// <summary> Get the latest public revision. </summary>
         private string GetBaseRevision(string repository)
         {
-            string ids = HgWrapper.RunCommand(repository, "log --rev \"public()\" --template \"{node}\n\"");
-            return ids.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault();
+            return _hgWrapper.GetLastPublicRevision(repository, allowEmptyIfRestoredFromBackup: true);
         }
 
         /// <summary> Mark all changesets available on the PT server public. </summary>

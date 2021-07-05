@@ -24,7 +24,7 @@
         <mdc-text-field
           label="{{ t('filter_users') }}"
           formControlName="filter"
-          (keyup)="updateSearchTerm($event.target.value)"
+          (keyup)="updateSearchTerm($event.target)"
           id="project-user-filter"
         ></mdc-text-field>
       </mdc-form-field>
@@ -35,7 +35,7 @@
           <ng-container matColumnDef="avatar">
             <td mat-cell *matCellDef="let userRow; let i = index">
               <div *ngIf="!userRow.isInvitee">
-                <app-avatar [user]="userRow.user" size="32" [round]="false"></app-avatar>
+                <app-avatar [user]="userRow.user" [size]="32" [round]="false"></app-avatar>
               </div>
             </td>
           </ng-container>
@@ -57,9 +57,21 @@
               ></div>
             </td>
           </ng-container>
-          <ng-container matColumnDef="projects">
+          <ng-container matColumnDef="role">
             <td fxHide.xs mat-cell *matCellDef="let userRow">
               <em>{{ userRow.role ? i18n.localizeRole(userRow.role) : "" }}</em>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="questions_permission">
+            <td fxHide.xs mat-cell *matCellDef="let userRow">
+              <mat-checkbox
+                *ngIf="userRow.userEligibleForQuestionPermission"
+                [disabled]="!userRow.canHaveQuestionPermissionRevoked || !isAppOnline"
+                [checked]="userRow.allowCreatingQuestions"
+                (click)="toggleQuestionPermission(userRow)"
+              >
+                {{ t("allow_add_edit_questions") }}
+              </mat-checkbox>
             </td>
           </ng-container>
           <ng-container matColumnDef="remove">
@@ -81,7 +93,7 @@
                 fxHide.lt-sm
                 fxShow
                 mdc-button
-                outlined
+                [outlined]="true"
                 color="warn"
                 class="cancel-invite"
                 type="button"
@@ -106,7 +118,7 @@
             </td>
           </ng-container>
 
-          <tr mat-row *matRowDef="let userRow; columns: ['avatar', 'name', 'projects', 'remove']"></tr>
+          <tr mat-row *matRowDef="let userRow; columns: tableColumns"></tr>
         </table>
 
         <mat-paginator

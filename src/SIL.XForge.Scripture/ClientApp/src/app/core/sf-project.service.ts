@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-import { obj } from 'realtime-server/lib/common/utils/obj-path';
-import { ParatextNoteThread } from 'realtime-server/lib/scriptureforge/models/paratext-note-thread';
-import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/models/question';
-import { SFProject, SF_PROJECTS_COLLECTION } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { getSFProjectUserConfigDocId } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
+import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
+import { ParatextNoteThread } from 'realtime-server/lib/esm/scriptureforge/models/paratext-note-thread';
+import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { SFProject, SF_PROJECTS_COLLECTION } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { getSFProjectUserConfigDocId } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { CommandService } from 'xforge-common/command.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
@@ -123,6 +123,10 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.onlineInvoke('sync', { projectId: id });
   }
 
+  onlineCancelSync(id: string): Promise<void> {
+    return this.onlineInvoke('cancelSync', { projectId: id });
+  }
+
   onlineUpdateSettings(id: string, settings: SFProjectSettings): Promise<void> {
     return this.onlineInvoke('updateSettings', { projectId: id, settings });
   }
@@ -164,5 +168,9 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
 
   async hasTransceleratorQuestions(projectId: string): Promise<boolean> {
     return (await this.onlineInvoke<boolean>('hasTransceleratorQuestions', { projectId }))!;
+  }
+
+  async onlineSetUserProjectPermissions(projectId: string, userId: string, permissions: string[]): Promise<void> {
+    return (await this.onlineInvoke<void>('setUserProjectPermissions', { projectId, userId, permissions }))!;
   }
 }

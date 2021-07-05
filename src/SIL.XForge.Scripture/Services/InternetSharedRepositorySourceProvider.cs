@@ -13,11 +13,14 @@ namespace SIL.XForge.Scripture.Services
     {
         private readonly IJwtTokenHelper _jwtTokenHelper;
         private readonly IOptions<SiteOptions> _siteOptions;
+        private readonly IHgWrapper _hgWrapper;
 
-        public InternetSharedRepositorySourceProvider(IJwtTokenHelper jwtTokenHelper, IOptions<SiteOptions> siteOptions)
+        public InternetSharedRepositorySourceProvider(IJwtTokenHelper jwtTokenHelper, IOptions<SiteOptions> siteOptions,
+            IHgWrapper hgWrapper)
         {
             _jwtTokenHelper = jwtTokenHelper;
             _siteOptions = siteOptions;
+            _hgWrapper = hgWrapper;
         }
 
         public IInternetSharedRepositorySource GetSource(UserSecret userSecret, string sendReceiveServerUri,
@@ -34,7 +37,7 @@ namespace SIL.XForge.Scripture.Services
             JwtRestClient jwtClient = GenerateParatextRegistryJwtClient(userSecret, registryServerUri);
             IInternetSharedRepositorySource source =
                 new JwtInternetSharedRepositorySource(userSecret.ParatextTokens.AccessToken,
-                    jwtClient, ptUser, sendReceiveServerUri);
+                    jwtClient, _hgWrapper, ptUser, sendReceiveServerUri);
             source.RefreshToken(userSecret.ParatextTokens.AccessToken);
             return source;
         }

@@ -1,7 +1,7 @@
 import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Component, HostBinding, OnInit } from '@angular/core';
-import { User } from 'realtime-server/lib/common/models/user';
-import { obj } from 'realtime-server/lib/common/utils/obj-path';
+import { User } from 'realtime-server/lib/esm/common/models/user';
+import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { BehaviorSubject } from 'rxjs';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -37,7 +37,7 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
   pageIndex: number = 0;
   pageSize: number = 50;
 
-  userRows?: Row[];
+  userRows: Row[] = [];
 
   private readonly searchTerm$: BehaviorSubject<string>;
   private readonly queryParameters$: BehaviorSubject<QueryParameters>;
@@ -53,10 +53,6 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
     this.searchTerm$ = new BehaviorSubject<string>('');
     this.queryParameters$ = new BehaviorSubject<QueryParameters>(this.getQueryParameters());
     this.reload$ = new BehaviorSubject<void>(undefined);
-  }
-
-  get isLoading(): boolean {
-    return this.userRows == null;
   }
 
   ngOnInit() {
@@ -93,8 +89,11 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
     );
   }
 
-  updateSearchTerm(term: string): void {
-    this.searchTerm$.next(term);
+  updateSearchTerm(target: EventTarget | null): void {
+    const termTarget = target as HTMLInputElement;
+    if (termTarget?.value != null) {
+      this.searchTerm$.next(termTarget.value);
+    }
   }
 
   updatePage(pageIndex: number, pageSize: number): void {

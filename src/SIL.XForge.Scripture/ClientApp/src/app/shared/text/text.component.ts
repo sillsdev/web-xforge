@@ -13,7 +13,7 @@ import { TranslocoService } from '@ngneat/transloco';
 import isEqual from 'lodash-es/isEqual';
 import merge from 'lodash-es/merge';
 import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
-import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { fromEvent } from 'rxjs';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -320,7 +320,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return this.isReadOnly || (this.viewModel != null && this.viewModel.isEmpty);
   }
 
-  get textDirection(): string {
+  get textDirection(): 'ltr' | 'rtl' | 'auto' {
     if (this.contentShowing) {
       return this.isRtl ? 'rtl' : 'ltr';
     }
@@ -520,8 +520,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     this.editor.formatText(noteRange.index + startPosition, selectionLength, formatName, format, 'silent');
   }
 
-  onContentChanged(delta: DeltaStatic, source: Sources): void {
-    this.viewModel.update(delta, source);
+  onContentChanged(delta: DeltaStatic, source: string): void {
+    this.viewModel.update(delta, source as Sources);
     this.updatePlaceholderText();
     // skip updating when only formatting changes occurred
     if (delta.ops != null && delta.ops.some(op => op.insert != null || op.delete != null)) {

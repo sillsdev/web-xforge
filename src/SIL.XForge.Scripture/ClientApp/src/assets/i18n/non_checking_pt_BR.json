@@ -31,6 +31,7 @@
     "time_archived_stamp": "Arquivado em {{ timeStamp }}"
   },
   "collaborators": {
+    "allow_add_edit_questions": "Can add & edit questions",
     "awaiting_response_from": "Aguardando resposta de{{ newLine }}{{ email }}",
     "cancel_invite": "Cancelar convite",
     "change_roles_and_permissions": "Usuários, Funções e Permissões pode {{ boldStart }}apenas{{ boldEnd }} ser alterado no{{ boldStart }}Paratext{{ boldEnd }}. Abra o projeto no {{ boldStart }}Paratext{{ boldEnd }}, na janela do projeto, clique em {{ templateTagBoundary }}{{ templateTagBoundary }}, depois{{ boldStart }}Propriedades e Configurações do Projeto{{ boldEnd }}, em seguida {{ boldStart }}Usuários, Funções e Permissões{{ boldEnd }}. Depois de um {{ italicsStart }}Enviar/Receber{{ italicsEnd }} no {{ boldStart }}Paratext{{ boldEnd }} e em seguida uma {{ italicsStart }}Sincronização{{ italicsEnd }} no {{ boldStart }}Scripture Forge{{ boldEnd }}, a função do usuário entrará em vigor aqui, assim que fizer o login com sua {{ boldStart }}Paratext{{ boldEnd }} conta.",
@@ -79,6 +80,7 @@
     "cannot_edit_chapter_formatting_invalid": "Este capítulo não pode ser editado porque a formatação é inválida. Por favor, corrija a formatação no Paratext.",
     "completed_successfully": "Concluído com sucesso",
     "configure_translation_suggestions": "Configurar sugestões de tradução",
+    "project_data_out_of_sync": "Your project data is out of sync. Please synchronize your project to edit this text.",
     "swap_source_and_target": "Trocar origem e destino",
     "training": "Treinamento",
     "training_completed_successfully": "Treinamento concluído com sucesso",
@@ -151,7 +153,8 @@
     "pt_observer": "Observador",
     "pt_translator": "Membro da Equipe",
     "sf_community_checker": "Verificador da Comunidade",
-    "sf_reviewer": "Revisor"
+    "sf_reviewer": "Revisor",
+    "sf_observer": "View Translation"
   },
   "settings": {
     "anyone_with_a_link": "Qualquer pessoa com um link",
@@ -191,6 +194,7 @@
     "translation_suggestions_settings": "Configurações de sugestões de tradução"
   },
   "sync": {
+    "cancel": "Cancelar",
     "connect_network_to_synchronize": "Por favor, conecte-se à internet para sincronizar este projeto",
     "last_synced_time_stamp": "Última sincronização em {{ timeStamp }}",
     "log_in_to_paratext": "Entrar no Paratext",
@@ -198,6 +202,7 @@
     "something_went_wrong_synchronizing_this_project": "Algo deu errado ao sincronizar {{ projectName }} com o Paratext. Por favor, tente novamente.",
     "successfully_synchronized_with_paratext": "Sincronizado {{ projectName }} com o Paratext com sucesso.",
     "synchronize": "Sincronizar",
+    "synchronize_was_cancelled": "Synchronize for {{ projectName }} was cancelled.",
     "synchronize_project": "Sincronizar {{ projectName }} com o Paratext",
     "your_project_is_being_synchronized": "Seu projeto está sendo sincronizado...",
     "sync_is_disabled": "A sincronização para este projeto deveria ter sido desativada, por isso não está disponível no momento. Por favor, entre em contato com {{ email }} para discutir o que precisa ser feito para que a sincronização do projeto possa ser ativada novamente."

@@ -31,6 +31,7 @@
     "time_archived_stamp": "Diarsipkan pada{{ timeStamp }}"
   },
   "collaborators": {
+    "allow_add_edit_questions": "Can add & edit questions",
     "awaiting_response_from": "Menunggu respon dari{{ newLine }}{{ email }}",
     "cancel_invite": "Batal mengundang",
     "change_roles_and_permissions": "Peran dan izin pengguna {{ boldStart }}hanya dapat{{ boldEnd }} diubah di {{ boldStart }}Paratext{{ boldEnd }}. Buka proyek di {{ boldStart }}Paratext{{ boldEnd }}, pada jendela proyek klik {{ templateTagBoundary }}{{ templateTagBoundary }}, kemudian {{ boldStart }} Pengaturan proyek{{ boldEnd }}, kemudian {{ boldStart }}Izin pengguna{{ boldEnd }}. Setelah melakukan {{ italicsStart }}Kirim/Terima{{ italicsEnd }} di {{ boldStart }}Paratext{{ boldEnd }} dan kemudian melakukan {{ italicsStart }}Sinkronisasi{{ italicsEnd }} di {{ boldStart }}Scripture Forge{{ boldEnd }}, peran mereka akan mulai berlaku di sini, begitu pengguna masuk dengan akun {{ boldStart }}Paratext{{ boldEnd }} mereka.",
@@ -79,6 +80,7 @@
     "cannot_edit_chapter_formatting_invalid": "Pasal ini tidak dapat disunting karena pemformatan tidak valid. Harap perbaiki pemformatan di Paratext.",
     "completed_successfully": "Berhasil diselesaikan",
     "configure_translation_suggestions": "Konfigurasikan saran terjemahan",
+    "project_data_out_of_sync": "Your project data is out of sync. Please synchronize your project to edit this text.",
     "swap_source_and_target": "Tukar sumber dan target",
     "training": "Pelatihan",
     "training_completed_successfully": "Pelatihan berhasil diselesaikan",
@@ -151,7 +153,8 @@
     "pt_observer": "Pengamat",
     "pt_translator": "Penerjemah",
     "sf_community_checker": "Pemeriksa Komunitas",
-    "sf_reviewer": "Pengulas"
+    "sf_reviewer": "Pengulas",
+    "sf_observer": "View Translation"
   },
   "settings": {
     "anyone_with_a_link": "Siapapun yang punya tautan",
@@ -191,6 +194,7 @@
     "translation_suggestions_settings": "Pengaturan Saran Terjemahan"
   },
   "sync": {
+    "cancel": "Batal",
     "connect_network_to_synchronize": "Please connect to the internet to synchronize this project",
     "last_synced_time_stamp": "Terakhir disinkronkan pada{{ timeStamp }}",
     "log_in_to_paratext": "Masuk ke Paratext",
@@ -198,6 +202,7 @@
     "something_went_wrong_synchronizing_this_project": "Terjadi kesalahan saat menyinkronkan {{ projectName }} dengan Paratext. Silakan coba lagi.",
     "successfully_synchronized_with_paratext": "Berhasil mensinkronkan {{ projectName }} dengan Paratext.",
     "synchronize": "Sinkronkan",
+    "synchronize_was_cancelled": "Synchronize for {{ projectName }} was cancelled.",
     "synchronize_project": "Mensinkronkan {{ projectName }} dengan Paratext",
     "your_project_is_being_synchronized": "Proyek Anda sedang disinkronkan...",
     "sync_is_disabled": "Synchronization for this project needed to be disabled, so it is not available at this time. Please contact {{ email }} to discuss what needs to be done so project synchronization can be enabled again."

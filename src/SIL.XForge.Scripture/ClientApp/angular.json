@@ -43,6 +43,7 @@
             "stylePreprocessorOptions": {
               "includePaths": ["node_modules"]
             },
+            "allowedCommonJsDependencies": ["@bugsnag/js"],
             "scripts": []
           },
           "configurations": {

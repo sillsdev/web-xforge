@@ -51,6 +51,9 @@
         <div *ngIf="!isValid && hasEditRight" class="invalid-warning">
           {{ t("cannot_edit_chapter_formatting_invalid") }}
         </div>
+        <div *ngIf="!dataInSync && hasEditRight" class="out-of-sync-warning">
+          {{ t("project_data_out_of_sync") }}
+        </div>
         <div #targetContainer class="text-container" [style.height]="textHeight">
           <app-text
             #target
@@ -72,7 +75,7 @@
         </div>
       </div>
     </div>
-    <div *ngIf="showTrainingProgress" class="training-progress" mdcElevation="2">
+    <div *ngIf="showTrainingProgress" class="training-progress" [mdcElevation]="2">
       <div class="training-title" fxLayout="row" fxLayoutAlign="space-between center">
         <div mdcSubtitle1>{{ t("training") }}</div>
         <button
@@ -93,8 +96,8 @@
             [colors]="['#b8d332', 'transparent']"
             [data]="[trainingPercentage, 100 - trainingPercentage]"
             backgroundColor="#ececec"
-            innerThicknessDelta="0"
-            thickness="22"
+            [innerThicknessDelta]="0"
+            [thickness]="22"
           ></app-donut-chart>
           <mdc-icon id="training-complete-icon" *ngIf="trainingPercentage === 100">check_circle_outline</mdc-icon>
         </div>
