@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -16,6 +16,7 @@ using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
+using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -670,6 +671,31 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task SyncAsync_TaskAbortedByExceptionWritesToLog()
+        {
+            // Set up the environment
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, false);
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+            var cancellationTokenSource = new CancellationTokenSource();
+
+            // Setup a trap to crash the task
+            env.NotesMapper.When(x => x.InitAsync(Arg.Any<UserSecret>(), Arg.Any<SFProjectSecret>(),
+                Arg.Any<List<User>>(), Arg.Any<string>(), Arg.Any<CancellationToken>()))
+                .Do(_ => throw new ArgumentException());
+
+            // Run the task
+            await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+
+            // Check that the Exception was logged
+            env.Logger.ReceivedWithAnyArgs(1).LogError(Arg.Any<Exception>(), default, default);
+
+            // Check that the task cancelled correctly
+            SFProject project = env.VerifyProjectSync(false);
+            Assert.That(project.Sync.DataInSync, Is.True);  // Nothing was synced as this was cancelled OnInit()
+        }
+
+        [Test]
         public async Task SyncAsync_TaskCancelledByException()
         {
             // Set up the environment
@@ -685,6 +711,9 @@ namespace SIL.XForge.Scripture.Services
 
             // Run the task
             await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+
+            // Check that the TaskCancelledException was not logged
+            env.Logger.DidNotReceiveWithAnyArgs().LogError(Arg.Any<Exception>(), default, default);
 
             // Check that the task cancelled correctly
             SFProject project = env.VerifyProjectSync(false);
@@ -731,6 +760,31 @@ namespace SIL.XForge.Scripture.Services
             // Check that the task was cancelled after awaiting the check above
             SFProject project = env.VerifyProjectSync(false);
             Assert.That(project.Sync.DataInSync, Is.False);
+        }
+
+        [Test]
+        public async Task SyncAsync_ExcludesPropertiesFromTransactions()
+        {
+            // Set up the environment
+            var env = new TestEnvironment(substituteRealtimeService: true);
+            env.SetupSFData(true, true, false);
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+            var cancellationTokenSource = new CancellationTokenSource();
+
+            // Throw an TaskCanceledException in InitAsync after the exclusions have been called
+            env.Connection.FetchAsync<SFProject>("project01")
+                .Returns(Task.FromException<IDocument<SFProject>>(new TaskCanceledException()));
+
+            // Run the task
+            await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+
+            // Only check for ExcludePropertyFromTransaction being executed,
+            // as the substitute RealtimeService will not update documents.
+            env.Connection.Received(1).ExcludePropertyFromTransaction(Arg.Is<Expression<Func<SFProject, object>>>(
+                ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.PercentCompleted"));
+            env.Connection.Received(1).ExcludePropertyFromTransaction(Arg.Is<Expression<Func<SFProject, object>>>(
+                ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.QueuedCount"));
+            env.Connection.Received(2).ExcludePropertyFromTransaction(Arg.Any<Expression<Func<SFProject, object>>>());
         }
 
         [Test]
@@ -846,7 +900,12 @@ namespace SIL.XForge.Scripture.Services
             private readonly MemoryRepository<SFProjectSecret> _projectSecrets;
             private bool _sendReceivedCalled = false;
 
-            public TestEnvironment()
+            /// <summary>
+            /// Initializes a new instance of the <see cref="TestEnvironment" /> class.
+            /// </summary>
+            /// <param name="substituteRealtimeService">If set to <c>true</c> use a substitute realtime service rather
+            /// than the <see cref="SFMemoryRealtimeService" />.</param>
+            public TestEnvironment(bool substituteRealtimeService = false)
             {
                 var userSecrets = new MemoryRepository<UserSecret>(new[]
                 {
@@ -882,12 +941,16 @@ namespace SIL.XForge.Scripture.Services
                 ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "source")
                     .Returns("beforeSR", "afterSR");
                 RealtimeService = new SFMemoryRealtimeService();
+                Connection = Substitute.For<IConnection>();
+                SubstituteRealtimeService = Substitute.For<IRealtimeService>();
+                SubstituteRealtimeService.ConnectAsync().Returns(Task.FromResult(Connection));
                 DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
                 NotesMapper = Substitute.For<IParatextNotesMapper>();
                 Logger = Substitute.For<ILogger<ParatextSyncRunner>>();
 
                 Runner = new ParatextSyncRunner(userSecrets, _projectSecrets, SFProjectService, EngineService,
-                    ParatextService, RealtimeService, DeltaUsxMapper, NotesMapper, Logger);
+                    ParatextService, substituteRealtimeService ? SubstituteRealtimeService : RealtimeService,
+                    DeltaUsxMapper, NotesMapper, Logger);
             }
 
             public ParatextSyncRunner Runner { get; }
@@ -896,8 +959,14 @@ namespace SIL.XForge.Scripture.Services
             public IParatextNotesMapper NotesMapper { get; }
             public IParatextService ParatextService { get; }
             public SFMemoryRealtimeService RealtimeService { get; }
+            public IRealtimeService SubstituteRealtimeService { get; }
             public IDeltaUsxMapper DeltaUsxMapper { get; }
             public ILogger<ParatextSyncRunner> Logger { get; }
+
+            /// <summary>
+            /// Gets the connection to be used with <see cref="SubstituteRealtimeService"/>.
+            /// </summary>
+            public IConnection Connection { get; }
 
             public SFProject GetProject(string projectSFId = "project01")
             {
