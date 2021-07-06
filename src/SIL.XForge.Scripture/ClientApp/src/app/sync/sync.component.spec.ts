@@ -146,6 +146,25 @@ describe('SyncComponent', () => {
 
   it('should not report if sync was cancelled', fakeAsync(() => {
     const env = new TestEnvironment();
+    const previousLastSyncDate = new Date(env.component.lastSyncDate);
+    verify(mockedProjectService.get(env.projectId)).once();
+    env.clickElement(env.syncButton);
+    verify(mockedProjectService.onlineSync(env.projectId)).once();
+    expect(env.component.syncActive).toBe(true);
+    expect(env.progressBar).not.toBeNull();
+    env.emitSyncProgress(0.25, env.projectId);
+
+    env.clickElement(env.cancelButton);
+    env.emitSyncComplete(false, env.projectId);
+
+    expect(env.component.syncActive).toBe(false);
+    expect(new Date(env.component.lastSyncDate)).toEqual(previousLastSyncDate);
+    verify(mockedNoticeService.show(anything())).never();
+    verify(mockedNoticeService.showMessageDialog(anything())).never();
+  }));
+
+  it('should report success if sync was cancelled but had finished', fakeAsync(() => {
+    const env = new TestEnvironment();
     verify(mockedProjectService.get(env.projectId)).once();
     env.clickElement(env.syncButton);
     verify(mockedProjectService.onlineSync(env.projectId)).once();
@@ -153,10 +172,10 @@ describe('SyncComponent', () => {
     expect(env.progressBar).not.toBeNull();
 
     env.clickElement(env.cancelButton);
-    env.emitSyncComplete(false, env.projectId);
+    env.emitSyncComplete(true, env.projectId);
 
-    expect(env.component.syncActive).toBe(false);
-    verify(mockedNoticeService.show(anything())).never();
+    verify(mockedNoticeService.show('Successfully synchronized Sync Test Project with Paratext.')).once();
+    verify(mockedNoticeService.showMessageDialog(anything())).never();
   }));
 });
 
