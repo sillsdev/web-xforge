@@ -79,11 +79,9 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     if (this._syncActive && !isActive && this.projectDoc?.data != null) {
       const projectName: string = this.projectDoc.data.name;
       if (
-        this.isSyncCancelled &&
-        (this.previousLastSyncDate == null || new Date(this.lastSyncDate) <= this.previousLastSyncDate)
+        !this.isSyncCancelled ||
+        !(this.previousLastSyncDate == null || new Date(this.lastSyncDate) <= this.previousLastSyncDate)
       ) {
-        this.noticeService.show(translate('sync.synchronize_was_cancelled', { projectName }));
-      } else {
         if (this.projectDoc.data.sync.lastSyncSuccessful) {
           this.noticeService.show(translate('sync.successfully_synchronized_with_paratext', { projectName }));
           this.previousLastSyncDate = new Date(this.lastSyncDate);
