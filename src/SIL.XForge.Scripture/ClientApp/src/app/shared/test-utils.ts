@@ -6,6 +6,8 @@ import { Delta, TextDocId } from '../core/models/text-doc';
 
 export function getTextDoc(id: TextDocId): TextData {
   const delta = new Delta();
+  delta.insert(`Title for chapter ${id.chapterNum}`, { segment: 's_1' });
+  delta.insert('\n', { para: { style: 's' } });
   delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
   delta.insert({ blank: true }, { segment: 'p_1' });
   delta.insert({ verse: { number: '1', style: 'v' } });
