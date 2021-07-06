@@ -48,7 +48,7 @@ describe('SyncComponent', () => {
     ]
   }));
 
-  it('should display log in to paratext', fakeAsync(() => {
+  it('should display Log In to Paratext', fakeAsync(() => {
     const env = new TestEnvironment();
     expect(env.title.textContent).toContain('Synchronize Sync Test Project with Paratext');
     expect(env.logInButton.nativeElement.textContent).toContain('Log in to Paratext');
@@ -59,9 +59,11 @@ describe('SyncComponent', () => {
     expect(env.logInButton).toBeNull();
   }));
 
-  it('should redirect the user to log in to paratext', fakeAsync(() => {
+  it('should redirect the user to Log In to Paratext', fakeAsync(() => {
     const env = new TestEnvironment();
+
     env.clickElement(env.logInButton);
+
     verify(mockedParatextService.linkParatext(anything())).once();
     expect().nothing();
   }));
@@ -80,21 +82,28 @@ describe('SyncComponent', () => {
     expect(env.syncButton.nativeElement.disabled).toBe(true);
     expect(env.lastSyncDate.textContent).toContain('Last synced on');
     expect(env.offlineMessage).not.toBeNull();
+
     env.onlineStatus = true;
+
     expect(env.syncButton.nativeElement.disabled).toBe(false);
     expect(env.offlineMessage).toBeNull();
   }));
 
   it('should sync project when the button is clicked', fakeAsync(() => {
     const env = new TestEnvironment(true);
+    const previousLastSyncDate = new Date(env.component.lastSyncDate);
     verify(mockedProjectService.get('testProject01')).once();
+
     env.clickElement(env.syncButton);
+
     verify(mockedProjectService.onlineSync('testProject01')).once();
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).not.toBeNull();
+    expect(env.cancelButton).not.toBeNull();
     expect(env.logInButton).toBeNull();
     expect(env.syncButton).toBeNull();
     env.emitSyncComplete(true, 'testProject01');
+    expect(new Date(env.component.lastSyncDate).getTime()).toBeGreaterThan(previousLastSyncDate.getTime());
     verify(mockedNoticeService.show('Successfully synchronized Sync Test Project with Paratext.')).once();
   }));
 
@@ -107,8 +116,10 @@ describe('SyncComponent', () => {
     expect(env.progressBar).not.toBeNull();
     // Simulate sync in progress
     env.emitSyncProgress(0.25, 'testProject01');
+
     // Simulate sync error
     env.emitSyncComplete(false, 'testProject01');
+
     expect(env.component.syncActive).toBe(false);
     verify(mockedNoticeService.showMessageDialog(anything())).once();
   }));
