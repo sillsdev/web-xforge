@@ -342,7 +342,7 @@ export class AuthService {
 
   private async renewTokens(): Promise<void> {
     if (this.renewTokenPromise == null) {
-      this.renewTokenPromise = new Promise(async (resolve, reject) => {
+      this.renewTokenPromise = new Promise<void>(async (resolve, reject) => {
         let success = false;
         try {
           const authResult = await this.checkSession();
