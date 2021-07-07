@@ -423,6 +423,15 @@ namespace SIL.XForge.Scripture.Services
                     // The Id is the value from TextData.GetTextDocId()
                     string textId = textDoc.Id;
                     userId = await _realtimeService.GetLastModifiedUserIdAsync<TextData>(textId);
+
+                    // Check that this user still has write permissions
+                    if (string.IsNullOrEmpty(userId)
+                        || !chapter.Permissions.TryGetValue(userId, out string permission)
+                        || permission != TextInfoPermission.Write)
+                    {
+                        // They no longer have write access, so reset the user id, and find it below
+                        userId = null;
+                    }
                 }
 
                 // If we do not have a record of the last user to modify this chapter
