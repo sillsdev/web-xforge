@@ -27,6 +27,8 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node_version }}
+      - name: Upgrade npm
+        run: npm install -g npm@7
       - name: Build Realtime server dependencies for Angular
         run: cd src/RealtimeServer && npm ci
       - name: Angular Frontend Production Build
