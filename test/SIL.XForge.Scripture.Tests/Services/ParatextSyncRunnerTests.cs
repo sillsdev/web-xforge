@@ -877,10 +877,12 @@ namespace SIL.XForge.Scripture.Services
             // Setup
             // Note that the last modified userId is set to user05
             // So the user id will be retrieved from GetLastModifiedUserIdAsync()
+            // But note that user05 must also be in the chapter permissions to be used
             var env = new TestEnvironment();
             TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: false);
             await env.Runner.InitAsync("project01", "user01", CancellationToken.None);
             var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
+            textInfo.Chapters.First().Permissions.Add("user05", TextInfoPermission.Write);
             env.RealtimeService.LastModifiedUserId = "user05";
 
             // SUT
@@ -933,6 +935,47 @@ namespace SIL.XForge.Scripture.Services
             TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: false);
             await env.Runner.InitAsync("project01", "user02", CancellationToken.None);
             var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
+
+            // SUT
+            Dictionary<int, string> chapterAuthors = await env.Runner.GetChapterAuthorsAsync(textInfo, textDocs);
+            Assert.AreEqual(1, chapterAuthors.Count);
+            Assert.AreEqual(new KeyValuePair<int, string>(1, "user03"), chapterAuthors.First());
+        }
+
+        [Test]
+        public async Task GetChapterAuthors_ChecksLastModifiedUserPermission()
+        {
+            // Setup
+            // Note that the last modified userId is set to user06
+            // So the user id will be retrieved from GetLastModifiedUserIdAsync()
+            // But will not pass the chapter permissions test (only user05 has permission)
+            var env = new TestEnvironment();
+            TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: false);
+            await env.Runner.InitAsync("project01", "user01", CancellationToken.None);
+            var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
+            textInfo.Chapters.First().Permissions.Add("user05", TextInfoPermission.Write);
+            env.RealtimeService.LastModifiedUserId = "user06";
+
+            // SUT
+            Dictionary<int, string> chapterAuthors = await env.Runner.GetChapterAuthorsAsync(textInfo, textDocs);
+            Assert.AreEqual(1, chapterAuthors.Count);
+            Assert.AreEqual(new KeyValuePair<int, string>(1, "user05"), chapterAuthors.First());
+        }
+
+        [Test]
+        public async Task GetChapterAuthors_ChecksLastModifiedUserWritePermission()
+        {
+            // Setup
+            // Note that the last modified userId is set to user05
+            // So the user id will be retrieved from GetLastModifiedUserIdAsync()
+            // But will not pass the chapter permissions test (user05 can only read)
+            // However, user03 will be used because they are the project administrator
+            var env = new TestEnvironment();
+            TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: false);
+            await env.Runner.InitAsync("project01", "user01", CancellationToken.None);
+            var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
+            textInfo.Chapters.First().Permissions.Add("user05", TextInfoPermission.Read);
+            env.RealtimeService.LastModifiedUserId = "user05";
 
             // SUT
             Dictionary<int, string> chapterAuthors = await env.Runner.GetChapterAuthorsAsync(textInfo, textDocs);
