@@ -626,7 +626,7 @@ class TestEnvironment {
   readonly canSeeSettings$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
   readonly canSeeUsers$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
   readonly hasUpdate$: Subject<any> = new Subject<any>();
-  readonly mockedProjectDeletedDialogRef: MdcDialogRef<ProjectDeletedDialogComponent> = mock(MdcDialogRef);
+  readonly mockedProjectDeletedDialogRef = mock<MdcDialogRef<ProjectDeletedDialogComponent>>(MdcDialogRef);
   readonly projectDeletedDialogRefAfterClosed$: Subject<string> = new Subject<string>();
   readonly comesOnline$: Subject<void> = new Subject<void>();
 
@@ -709,7 +709,7 @@ class TestEnvironment {
     when(mockedPwaService.hasUpdate).thenReturn(this.hasUpdate$);
     when(mockedMdcDialog.open(ProjectDeletedDialogComponent)).thenReturn(instance(this.mockedProjectDeletedDialogRef));
     when(this.mockedProjectDeletedDialogRef.afterClosed()).thenReturn(this.projectDeletedDialogRefAfterClosed$);
-    const mockedBetaMigrationDialogRef: MdcDialogRef<BetaMigrationDialogComponent> = mock(MdcDialogRef);
+    const mockedBetaMigrationDialogRef = mock<MdcDialogRef<BetaMigrationDialogComponent>>(MdcDialogRef);
     when(mockedMdcDialog.open(BetaMigrationDialogComponent, anything())).thenReturn(
       instance(mockedBetaMigrationDialogRef)
     );

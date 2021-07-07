@@ -6,6 +6,7 @@ extraction:
       - curl -L https://raw.githubusercontent.com/tj/n/master/bin/n -o n
       - bash n 12
       - node --version
+      - npm i -g npm@7
       - npm --version
     index:
       dotnet:

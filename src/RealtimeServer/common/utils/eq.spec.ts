@@ -34,7 +34,7 @@ describe('eq', () => {
     ).toBe(false);
     expect(
       eq(new String('Curly'), {
-        toString: function() {
+        toString: function () {
           return 'Curly';
         }
       }),
@@ -54,7 +54,7 @@ describe('eq', () => {
     );
     expect(
       eq(new Number(63), {
-        valueOf: function() {
+        valueOf: function () {
           return 63;
         }
       }),
@@ -106,7 +106,7 @@ describe('eq', () => {
     ).toBe(false);
     expect(
       eq(new Date(2009, 11, 13), {
-        getTime: function() {
+        getTime: function () {
           return 12606876e5;
         }
       }),

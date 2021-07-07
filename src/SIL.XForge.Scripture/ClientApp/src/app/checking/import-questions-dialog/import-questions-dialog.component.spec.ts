@@ -261,8 +261,9 @@ class TestEnvironment {
   component: ImportQuestionsDialogComponent;
   dialogRef: MdcDialogRef<ImportQuestionsDialogComponent>;
   dialogSpy: MdcDialog;
-  mockedScriptureChooserMdcDialogRef = mock(MdcDialogRef);
-  mockedImportQuestionsConfirmationMdcDialogRef = mock(MdcDialogRef);
+  mockedScriptureChooserMdcDialogRef = mock<MdcDialogRef<ScriptureChooserDialogComponent>>(MdcDialogRef);
+  mockedImportQuestionsConfirmationMdcDialogRef =
+    mock<MdcDialogRef<ImportQuestionsConfirmationDialogComponent>>(MdcDialogRef);
   editedTransceleratorQuestionIds: string[] = [];
 
   constructor(includeAllBooks = false, private errorOnFetchQuestions = false) {
@@ -298,10 +299,12 @@ class TestEnvironment {
     // Set up MdcDialog mocking after it's already used above in creating the component.
     this.dialogSpy = spy(this.component.dialog);
     when(this.dialogSpy.open(ScriptureChooserDialogComponent, anything())).thenReturn(
-      instance(this.mockedScriptureChooserMdcDialogRef)
+      instance<MdcDialogRef<ScriptureChooserDialogComponent>>(this.mockedScriptureChooserMdcDialogRef)
     );
     when(this.dialogSpy.open(ImportQuestionsConfirmationDialogComponent, anything())).thenReturn(
-      instance(this.mockedImportQuestionsConfirmationMdcDialogRef)
+      instance<MdcDialogRef<ImportQuestionsConfirmationDialogComponent>>(
+        this.mockedImportQuestionsConfirmationMdcDialogRef
+      )
     );
     this.fixture.detectChanges();
     tick();
