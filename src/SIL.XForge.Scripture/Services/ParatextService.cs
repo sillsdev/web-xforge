@@ -195,7 +195,8 @@ namespace SIL.XForge.Scripture.Services
                     ptProject.ShortName, source.AsInternetSharedRepositorySource(), repositories);
                 string username = GetParatextUsername(userSecret);
                 // Specifically set the ScrText property of the SharedProject to indicate the project is available locally
-                sharedProj.ScrText = ScrTextCollection.FindById(username, paratextId);
+                using ScrText scrText = ScrTextCollection.FindById(username, paratextId);
+                sharedProj.ScrText = scrText;
                 sharedProj.Permissions = sharedProj.ScrText.Permissions;
                 List<SharedProject> sharedPtProjectsToSr = new List<SharedProject> { sharedProj };
 
@@ -368,7 +369,7 @@ namespace SIL.XForge.Scripture.Services
             else
             {
                 // Get the scripture text so we can retrieve the permissions from the XML
-                ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), project.ParatextId);
+                using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), project.ParatextId);
 
                 // Calculate the project and resource permissions
                 foreach (string uid in project.UserRoles.Keys)
@@ -451,14 +452,14 @@ namespace SIL.XForge.Scripture.Services
         /// <summary> Determine if a specific project is in a right to left language. </summary>
         public bool IsProjectLanguageRightToLeft(UserSecret userSecret, string paratextId)
         {
-            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
+            using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
             return scrText == null ? false : scrText.RightToLeft;
         }
 
         /// <summary> Get list of book numbers in PT project. </summary>
         public IReadOnlyList<int> GetBookList(UserSecret userSecret, string paratextId)
         {
-            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
+            using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
             if (scrText == null)
                 return Array.Empty<int>();
             return scrText.Settings.BooksPresentSet.SelectedBookNumbers.ToArray();
@@ -467,7 +468,7 @@ namespace SIL.XForge.Scripture.Services
         /// <summary> Get PT book text in USX, or throw if can't. </summary>
         public string GetBookText(UserSecret userSecret, string paratextId, int bookNum)
         {
-            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
+            using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
             if (scrText == null)
                 throw new DataNotFoundException("Can't get access to cloned project.");
             string usfm = scrText.GetText(bookNum);
@@ -478,77 +479,90 @@ namespace SIL.XForge.Scripture.Services
         public async Task PutBookText(UserSecret userSecret, string projectId, int bookNum, string usx,
             Dictionary<int, string> chapterAuthors = null)
         {
-            string username = GetParatextUsername(userSecret);
-            ScrText scrText = ScrTextCollection.FindById(username, projectId);
-            var doc = new XmlDocument
+            Dictionary<string, ScrText> scrTexts = new Dictionary<string, ScrText>();
+            try
             {
-                PreserveWhitespace = true
-            };
-            doc.LoadXml(usx);
-            UsxFragmenter.FindFragments(scrText.ScrStylesheet(bookNum), doc.CreateNavigator(),
-                XPathExpression.Compile("*[false()]"), out string usfm);
-            usfm = UsfmToken.NormalizeUsfm(scrText.ScrStylesheet(bookNum), usfm, false, scrText.RightToLeft, scrText);
+                string username = GetParatextUsername(userSecret);
+                ScrText scrText = ScrTextCollection.FindById(username, projectId);
 
-            if (chapterAuthors == null || chapterAuthors.Count == 0)
-            {
-                // If we don't have chapter authors, update book as current user
-                if (scrText.Permissions.AmAdministrator)
+                // We add this here so we can dispose in the finally
+                scrTexts.Add(userSecret.Id, scrText);
+                var doc = new XmlDocument
                 {
-                    // if the current user is an administrator, then always allow editing the book text even if the user
-                    // doesn't have permission. This will ensure that a sync by an administrator never fails.
-                    scrText.Permissions.RunWithEditPermision(bookNum,
-                        () => scrText.PutText(bookNum, 0, false, usfm, null));
-                }
-                else
+                    PreserveWhitespace = true
+                };
+                doc.LoadXml(usx);
+                UsxFragmenter.FindFragments(scrText.ScrStylesheet(bookNum), doc.CreateNavigator(),
+                    XPathExpression.Compile("*[false()]"), out string usfm);
+                usfm = UsfmToken.NormalizeUsfm(scrText.ScrStylesheet(bookNum), usfm, false, scrText.RightToLeft, scrText);
+
+                if (chapterAuthors == null || chapterAuthors.Count == 0)
                 {
-                    scrText.PutText(bookNum, 0, false, usfm, null);
-                }
-                _logger.LogInformation("{0} updated {1} in {2}.", userSecret.Id,
-                    Canon.BookNumberToEnglishName(bookNum), scrText.Name);
-            }
-            else
-            {
-                // As we have a list of chapter authors, build a dictionary of ScrTexts for each of them
-                Dictionary<string, ScrText> scrTexts = new Dictionary<string, ScrText>();
-                foreach (string userId in chapterAuthors.Values.Distinct())
-                {
-                    if (userId == userSecret.Id)
+                    // If we don't have chapter authors, update book as current user
+                    if (scrText.Permissions.AmAdministrator)
                     {
-                        scrTexts.Add(userId, scrText);
+                        // if the current user is an administrator, then always allow editing the book text even if the user
+                        // doesn't have permission. This will ensure that a sync by an administrator never fails.
+                        scrText.Permissions.RunWithEditPermision(bookNum,
+                            () => scrText.PutText(bookNum, 0, false, usfm, null));
                     }
                     else
                     {
-                        // Get their user secret, so we can get their username, and create their ScrText
-                        UserSecret authorUserSecret = await _userSecretRepository.GetAsync(userId);
-                        string authorUserName = GetParatextUsername(authorUserSecret);
-                        scrTexts.Add(userId, ScrTextCollection.FindById(authorUserName, projectId));
+                        scrText.PutText(bookNum, 0, false, usfm, null);
                     }
-                }
-
-                // If there is only one author, just write the book
-                if (scrTexts.Count == 1)
-                {
-                    scrTexts.Values.First().PutText(bookNum, 0, false, usfm, null);
-                    _logger.LogInformation("{0} updated {1} in {2}.", scrTexts.Keys.First(),
+                    _logger.LogInformation("{0} updated {1} in {2}.", userSecret.Id,
                         Canon.BookNumberToEnglishName(bookNum), scrText.Name);
                 }
                 else
                 {
-                    // Split the usfm into chapters
-                    List<string> chapters = ScrText.SplitIntoChapters(scrText.Name, bookNum, usfm);
-
-                    // Put the individual chapters
-                    foreach ((int chapterNum, string authorUserId) in chapterAuthors)
+                    // As we have a list of chapter authors, build a dictionary of ScrTexts for each of them
+                    foreach (string userId in chapterAuthors.Values.Distinct())
                     {
-                        if ((chapterNum - 1) < chapters.Count)
+                        if (userId != userSecret.Id)
                         {
-                            // The ScrText permissions will be the same as the last sync's permissions, so no need to check
-                            scrTexts[authorUserId].PutText(bookNum, chapterNum, false, chapters[chapterNum - 1], null);
-                            _logger.LogInformation("{0} updated chapter {1} of {2} in {3}.", authorUserId,
-                                chapterNum, Canon.BookNumberToEnglishName(bookNum), scrText.Name);
+                            // Get their user secret, so we can get their username, and create their ScrText
+                            UserSecret authorUserSecret = await _userSecretRepository.GetAsync(userId);
+                            string authorUserName = GetParatextUsername(authorUserSecret);
+                            scrTexts.Add(userId, ScrTextCollection.FindById(authorUserName, projectId));
+                        }
+                    }
+
+                    // If there is only one author, just write the book
+                    if (scrTexts.Count == 1)
+                    {
+                        scrTexts.Values.First().PutText(bookNum, 0, false, usfm, null);
+                        _logger.LogInformation("{0} updated {1} in {2}.", scrTexts.Keys.First(),
+                            Canon.BookNumberToEnglishName(bookNum), scrText.Name);
+                    }
+                    else
+                    {
+                        // Split the usfm into chapters
+                        List<string> chapters = ScrText.SplitIntoChapters(scrText.Name, bookNum, usfm);
+
+                        // Put the individual chapters
+                        foreach ((int chapterNum, string authorUserId) in chapterAuthors)
+                        {
+                            if ((chapterNum - 1) < chapters.Count)
+                            {
+                                // The ScrText permissions will be the same as the last sync's permissions, so no need to check
+                                scrTexts[authorUserId].PutText(bookNum, chapterNum, false, chapters[chapterNum - 1], null);
+                                _logger.LogInformation("{0} updated chapter {1} of {2} in {3}.", authorUserId,
+                                    chapterNum, Canon.BookNumberToEnglishName(bookNum), scrText.Name);
+                            }
                         }
                     }
                 }
+            }
+            finally
+            {
+                // Dispose the ScrText objects
+                foreach (ScrText scrText in scrTexts.Values)
+                {
+                    scrText?.Dispose();
+                }
+
+                // Clear the collection to release the references to the ScrTexts for GC
+                scrTexts.Clear();
             }
         }
 
@@ -556,7 +570,7 @@ namespace SIL.XForge.Scripture.Services
         public string GetNotes(UserSecret userSecret, string projectId, int bookNum)
         {
             // TODO: should return some data structure instead of XML
-            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), projectId);
+            using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), projectId);
             if (scrText == null)
                 return null;
 
@@ -573,7 +587,7 @@ namespace SIL.XForge.Scripture.Services
             string username = GetParatextUsername(userSecret);
             List<string> users = new List<string>();
             int nbrAddedComments = 0, nbrDeletedComments = 0, nbrUpdatedComments = 0;
-            ScrText scrText = ScrTextCollection.FindById(username, projectId);
+            using ScrText scrText = ScrTextCollection.FindById(username, projectId);
             if (scrText == null)
                 throw new DataNotFoundException("Can't get access to cloned project.");
             CommentManager manager = CommentManager.Get(scrText);
@@ -636,7 +650,7 @@ namespace SIL.XForge.Scripture.Services
                 return null;
             }
 
-            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
+            using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
             if (scrText != null)
             {
                 return _hgHelper.GetLastPublicRevision(scrText.Directory, allowEmptyIfRestoredFromBackup: false);
@@ -664,7 +678,7 @@ namespace SIL.XForge.Scripture.Services
             }
 
             // Get the scripture text
-            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
+            using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
 
             // If we do not have a scripture text, do not back up
             if (scrText == null)
@@ -685,7 +699,7 @@ namespace SIL.XForge.Scripture.Services
             }
 
             // Get the scripture text
-            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
+            using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
 
             // If we do not have a scripture text, do not back up
             if (scrText == null)
@@ -731,7 +745,7 @@ namespace SIL.XForge.Scripture.Services
             }
 
             // Get the scripture text
-            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
+            using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
 
             // If we do not have a scripture text, do not back up
             if (scrText == null)
@@ -896,8 +910,8 @@ namespace SIL.XForge.Scripture.Services
             IInternetSharedRepositorySource repositorySource)
         {
             string username = GetParatextUsername(userSecret);
-            bool targetNeedsCloned =
-                ScrTextCollection.FindById(username, target.ParatextId) == null;
+            using ScrText scrText = ScrTextCollection.FindById(username, target.ParatextId);
+            bool targetNeedsCloned = scrText == null;
             if (target is ParatextResource resource)
             {
                 // If the target is a resource, install it
