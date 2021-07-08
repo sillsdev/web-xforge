@@ -42,12 +42,13 @@ import { SFProjectDoc } from './core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from './core/models/sf-type-registry';
 import { SFProjectService } from './core/sf-project.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
-import { SFAdminAuthGuard, SFTranslatorAuthGuard } from './shared/project-router.guard';
+import { SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
 
 const mockedAuthService = mock(AuthService);
 const mockedUserService = mock(UserService);
-const mockedSFAdminAuthGuard = mock(SFAdminAuthGuard);
-const mockedSFTranslatorAuthGuard = mock(SFTranslatorAuthGuard);
+const mockedSettingsAuthGuard = mock(SettingsAuthGuard);
+const mockedSyncAuthGuard = mock(SyncAuthGuard);
+const mockedUsersAuthGuard = mock(UsersAuthGuard);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
@@ -91,8 +92,9 @@ describe('AppComponent', () => {
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
       { provide: UserService, useMock: mockedUserService },
-      { provide: SFAdminAuthGuard, useMock: mockedSFAdminAuthGuard },
-      { provide: SFTranslatorAuthGuard, useMock: mockedSFTranslatorAuthGuard },
+      { provide: SettingsAuthGuard, useMock: mockedSettingsAuthGuard },
+      { provide: SyncAuthGuard, useMock: mockedSyncAuthGuard },
+      { provide: UsersAuthGuard, useMock: mockedUsersAuthGuard },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
@@ -290,35 +292,79 @@ describe('AppComponent', () => {
     env.navigate(['/projects', 'project02']);
     env.init();
     // SUT 1
-    env.makeUserAProjectAdmin(false);
-    env.makeUserAProjectTranslator(false);
+    env.allowUserToSeeSettings(false);
+    env.allowUserToSeeUsers(false);
+    env.allowUserToSync(false);
     expect(env.someMenuItemContains('Synchronize')).toBeFalse();
     expect(env.someMenuItemContains('Settings')).toBeFalse();
     expect(env.someMenuItemContains('Users')).toBeFalse();
     // SUT 2
-    env.makeUserAProjectAdmin();
-    env.makeUserAProjectTranslator();
+    env.allowUserToSeeSettings();
+    env.allowUserToSeeUsers();
+    env.allowUserToSync();
     expect(env.someMenuItemContains('Synchronize')).toBeTrue();
     expect(env.someMenuItemContains('Settings')).toBeTrue();
     expect(env.someMenuItemContains('Users')).toBeTrue();
   }));
 
-  it('should only display Sync for translator', fakeAsync(() => {
+  it('should only display Settings if this is the only one specified', fakeAsync(() => {
     const env = new TestEnvironment();
     env.navigate(['/projects', 'project02']);
     env.init();
     // SUT 1
-    env.makeUserAProjectAdmin(false);
-    env.makeUserAProjectTranslator(false);
+    env.allowUserToSeeSettings(false);
+    env.allowUserToSeeUsers(false);
+    env.allowUserToSync(false);
     expect(env.someMenuItemContains('Synchronize')).toBeFalse();
     expect(env.someMenuItemContains('Settings')).toBeFalse();
     expect(env.someMenuItemContains('Users')).toBeFalse();
     // SUT 2
-    env.makeUserAProjectAdmin(false);
-    env.makeUserAProjectTranslator(true);
+    env.allowUserToSeeSettings(true);
+    env.allowUserToSeeUsers(false);
+    env.allowUserToSync(false);
+    expect(env.someMenuItemContains('Synchronize')).toBeFalse();
+    expect(env.someMenuItemContains('Settings')).toBeTrue();
+    expect(env.someMenuItemContains('Users')).toBeFalse();
+  }));
+
+  it('should only display Sync if this is the only one specified', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.navigate(['/projects', 'project02']);
+    env.init();
+    // SUT 1
+    env.allowUserToSeeSettings(false);
+    env.allowUserToSeeUsers(false);
+    env.allowUserToSync(false);
+    expect(env.someMenuItemContains('Synchronize')).toBeFalse();
+    expect(env.someMenuItemContains('Settings')).toBeFalse();
+    expect(env.someMenuItemContains('Users')).toBeFalse();
+    // SUT 2
+    env.allowUserToSeeSettings(false);
+    env.allowUserToSeeUsers(false);
+    env.allowUserToSync(true);
     expect(env.someMenuItemContains('Synchronize')).toBeTrue();
     expect(env.someMenuItemContains('Settings')).toBeFalse();
     expect(env.someMenuItemContains('Users')).toBeFalse();
+  }));
+
+  it('should only display Users if this is the only one specified', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.navigate(['/projects', 'project02']);
+    env.init();
+    // SUT 1
+    env.allowUserToSeeSettings(false);
+    env.allowUserToSeeUsers(false);
+    env.allowUserToSync(false);
+    expect(env.someMenuItemContains('Synchronize')).toBeFalse();
+    expect(env.someMenuItemContains('Settings')).toBeFalse();
+    expect(env.someMenuItemContains('Users')).toBeFalse();
+    // SUT 2
+    env.allowUserToSeeSettings(false);
+    env.allowUserToSeeUsers(true);
+    env.allowUserToSync(false);
+    expect(env.someMenuItemContains('Synchronize')).toBeFalse();
+    expect(env.someMenuItemContains('Settings')).toBeFalse();
+    expect(env.someMenuItemContains('Users')).toBeTrue();
   }));
 
   it('user data is set for Bugsnag', fakeAsync(() => {
@@ -576,8 +622,9 @@ class TestEnvironment {
   readonly location: Location;
   readonly questions: Question[];
   readonly ngZone: NgZone;
-  readonly isProjectAdmin$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
-  readonly isProjectTranslator$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
+  readonly canSync$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
+  readonly canSeeSettings$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
+  readonly canSeeUsers$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
   readonly hasUpdate$: Subject<any> = new Subject<any>();
   readonly mockedProjectDeletedDialogRef: MdcDialogRef<ProjectDeletedDialogComponent> = mock(MdcDialogRef);
   readonly projectDeletedDialogRefAfterClosed$: Subject<string> = new Subject<string>();
@@ -640,8 +687,9 @@ class TestEnvironment {
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );
     when(mockedUserService.currentProjectId).thenReturn('project01');
-    when(mockedSFAdminAuthGuard.allowTransition(anything())).thenReturn(this.isProjectAdmin$);
-    when(mockedSFTranslatorAuthGuard.allowTransition(anything())).thenReturn(this.isProjectTranslator$);
+    when(mockedSettingsAuthGuard.allowTransition(anything())).thenReturn(this.canSeeSettings$);
+    when(mockedSyncAuthGuard.allowTransition(anything())).thenReturn(this.canSync$);
+    when(mockedUsersAuthGuard.allowTransition(anything())).thenReturn(this.canSeeUsers$);
     when(mockedCookieService.get(anything())).thenReturn('en');
     const comesOnline = new Promise<void>(resolve => {
       this.comesOnline$.subscribe(() => resolve());
@@ -802,14 +850,20 @@ class TestEnvironment {
     this.wait();
   }
 
-  makeUserAProjectAdmin(isProjectAdmin: boolean = true) {
-    this.isProjectAdmin$.next(isProjectAdmin);
+  allowUserToSeeSettings(canSeeSettings: boolean = true) {
+    this.canSeeSettings$.next(canSeeSettings);
     this.fixture.detectChanges();
     tick();
   }
 
-  makeUserAProjectTranslator(isProjectTranslator: boolean = true) {
-    this.isProjectTranslator$.next(isProjectTranslator);
+  allowUserToSeeUsers(canSeeUsers: boolean = true) {
+    this.canSeeUsers$.next(canSeeUsers);
+    this.fixture.detectChanges();
+    tick();
+  }
+
+  allowUserToSync(canSync: boolean = true) {
+    this.canSync$.next(canSync);
     this.fixture.detectChanges();
     tick();
   }

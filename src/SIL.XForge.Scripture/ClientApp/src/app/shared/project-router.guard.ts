@@ -34,7 +34,7 @@ abstract class RouterGuard implements CanActivate {
 @Injectable({
   providedIn: 'root'
 })
-export class SFAdminAuthGuard extends RouterGuard {
+export class SettingsAuthGuard extends RouterGuard {
   constructor(authGuard: AuthGuard, projectService: SFProjectService, private userService: UserService) {
     super(authGuard, projectService);
   }
@@ -50,7 +50,23 @@ export class SFAdminAuthGuard extends RouterGuard {
 @Injectable({
   providedIn: 'root'
 })
-export class SFTranslatorAuthGuard extends RouterGuard {
+export class UsersAuthGuard extends RouterGuard {
+  constructor(authGuard: AuthGuard, projectService: SFProjectService, private userService: UserService) {
+    super(authGuard, projectService);
+  }
+
+  check(projectDoc: SFProjectDoc): boolean {
+    return (
+      projectDoc.data != null &&
+      projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator
+    );
+  }
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class SyncAuthGuard extends RouterGuard {
   constructor(authGuard: AuthGuard, projectService: SFProjectService, private userService: UserService) {
     super(authGuard, projectService);
   }
