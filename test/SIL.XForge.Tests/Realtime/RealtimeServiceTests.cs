@@ -110,6 +110,7 @@ namespace SIL.XForge.Realtime
             // Setup environment
             var env = new TestEnvironment();
             string id = "123456";
+            int version = -1;
             var doc = BsonDocument.Parse("{}");
 
             // Setup MongoDB mock
@@ -122,7 +123,7 @@ namespace SIL.XForge.Realtime
                 .Returns(Task.FromResult(cursorMock));
 
             // SUT
-            string userId = await env.Service.GetLastModifiedUserIdAsync<User>(id);
+            string userId = await env.Service.GetLastModifiedUserIdAsync<User>(id, version);
             Assert.IsNull(userId);
         }
 
@@ -132,6 +133,7 @@ namespace SIL.XForge.Realtime
             // Setup environment
             var env = new TestEnvironment();
             string id = "123456";
+            int version = -1;
             var doc = BsonDocument.Parse("{ m: {} }");
 
             // Setup MongoDB mock
@@ -144,7 +146,7 @@ namespace SIL.XForge.Realtime
                 .Returns(Task.FromResult(cursorMock));
 
             // SUT
-            string userId = await env.Service.GetLastModifiedUserIdAsync<User>(id);
+            string userId = await env.Service.GetLastModifiedUserIdAsync<User>(id, version);
             Assert.IsNull(userId);
         }
 
@@ -154,6 +156,7 @@ namespace SIL.XForge.Realtime
             // Setup environment
             var env = new TestEnvironment();
             string id = "123456";
+            int version = -1;
             var doc = BsonDocument.Parse("{ m: { uId: 'abcdef' } }");
 
             // Setup MongoDB mock
@@ -166,7 +169,7 @@ namespace SIL.XForge.Realtime
                 .Returns(Task.FromResult(cursorMock));
 
             // SUT
-            string userId = await env.Service.GetLastModifiedUserIdAsync<User>(id);
+            string userId = await env.Service.GetLastModifiedUserIdAsync<User>(id, version);
             Assert.AreEqual("abcdef", userId);
         }
 
@@ -176,6 +179,7 @@ namespace SIL.XForge.Realtime
             // Setup environment
             var env = new TestEnvironment();
             string id = "123456";
+            int version = 3;
             var doc1 = BsonDocument.Parse("{ v: 1, m: { uId: 'abcdef' } }");
             var doc2 = BsonDocument.Parse("{ v: 2, m: { uId: 'ghijkl' } }");
 
@@ -189,7 +193,7 @@ namespace SIL.XForge.Realtime
                 .Returns(Task.FromResult(cursorMock));
 
             // SUT
-            string userId = await env.Service.GetLastModifiedUserIdAsync<User>(id);
+            string userId = await env.Service.GetLastModifiedUserIdAsync<User>(id, version);
             Assert.AreEqual("ghijkl", userId);
         }
 

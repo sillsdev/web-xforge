@@ -96,9 +96,9 @@ namespace SIL.XForge.Realtime
         /// <remarks>
         /// This is overridable for unit tests.
         /// </remarks>
-        public Task<string> GetLastModifiedUserIdAsync<T>(string id) where T : IIdentifiable
+        public Task<string> GetLastModifiedUserIdAsync<T>(string id, int version) where T : IIdentifiable
         {
-            return Task.FromResult<string>(LastModifiedUserId);
+            return Task.FromResult(LastModifiedUserId);
         }
 
         public IQueryable<T> QuerySnapshots<T>() where T : IIdentifiable

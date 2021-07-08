@@ -422,7 +422,8 @@ namespace SIL.XForge.Scripture.Services
                 {
                     // The Id is the value from TextData.GetTextDocId()
                     string textId = textDoc.Id;
-                    userId = await _realtimeService.GetLastModifiedUserIdAsync<TextData>(textId);
+                    int version = textDoc.Version;
+                    userId = await _realtimeService.GetLastModifiedUserIdAsync<TextData>(textId, version);
 
                     // Check that this user still has write permissions
                     if (string.IsNullOrEmpty(userId)

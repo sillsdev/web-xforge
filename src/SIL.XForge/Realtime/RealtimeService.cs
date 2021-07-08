@@ -151,15 +151,23 @@ namespace SIL.XForge.Realtime
         /// </summary>
         /// <typeparam name="T">The type in MongoDB</typeparam>
         /// <param name="id">The identifier.</param>
+        /// <param name="version">The version. If 0 or lower, the version is ignored.</param>
         /// <returns>
         /// The user id, or null if unknown.
         /// </returns>
-        public async Task<string> GetLastModifiedUserIdAsync<T>(string id) where T : IIdentifiable
+        public async Task<string> GetLastModifiedUserIdAsync<T>(string id, int version) where T : IIdentifiable
         {
             // Get the collection and definitions
             string collectionName = GetCollectionName<T>();
             IMongoCollection<BsonDocument> opsCollection = _database.GetCollection<BsonDocument>($"o_{collectionName}");
-            FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Eq("d", id);
+            FilterDefinitionBuilder<BsonDocument> builder = Builders<BsonDocument>.Filter;
+            FilterDefinition<BsonDocument> filter = builder.Eq("d", id);
+            if (version > 0)
+            {
+                // The version in the Document is always one more than the version in the operations table
+                filter &= builder.Lt("v", version);
+            }
+
             FieldDefinition<BsonDocument> field = "v";
             SortDefinition<BsonDocument> sort = Builders<BsonDocument>.Sort.Descending(field);
 

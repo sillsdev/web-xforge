@@ -18,6 +18,6 @@ namespace SIL.XForge.Realtime
         Task DeleteProjectAsync(string projectId);
         Task DeleteUserAsync(string userId);
 
-        Task<string> GetLastModifiedUserIdAsync<T>(string id) where T : IIdentifiable;
+        Task<string> GetLastModifiedUserIdAsync<T>(string id, int version) where T : IIdentifiable;
     }
 }
