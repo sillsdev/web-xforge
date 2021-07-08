@@ -107,7 +107,14 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         'move next, tab': {
           key: 'tab',
           shiftKey: false,
-          handler: () => this.moveNextSegment()
+          handler: () => {
+            if (this.isRtl && this.isSelectionAtSegmentEnd) {
+              this.moveNextSegment(false);
+              return false;
+            }
+            this.moveNextSegment();
+            return false;
+          }
         },
         'move prev, tab': {
           key: 'tab',
@@ -120,6 +127,9 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
             if (this.isLtr && this.isSelectionAtSegmentEnd) {
               this.moveNextSegment(false);
               return false;
+            } else if (this.isRtl && this.isSelectionAtSegmentStart) {
+              this.movePrevSegment(true);
+              return false;
             }
             return true;
           }
@@ -130,6 +140,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
             if (this.isRtl && this.isSelectionAtSegmentEnd) {
               this.moveNextSegment(false);
               return false;
+            } else if (this.isLtr && this.isSelectionAtSegmentStart) {
+              this.movePrevSegment(true);
             }
             return true;
           }
@@ -290,22 +302,11 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   get isSelectionAtSegmentEnd(): boolean {
-    if (this.editor == null || this.segment == null) {
-      return false;
-    }
-    const selection = this.editor.getSelection();
-    if (selection == null) {
-      return false;
-    }
+    return this.getSelectionAtSegmentPosition(true);
+  }
 
-    // if the segment is blank, then we are always at the end
-    if (this.segment.text === '') {
-      return true;
-    }
-
-    const selectionEndIndex = selection.index + selection.length;
-    const segmentEndIndex = this.segment.range.index + this.segment.range.length;
-    return selectionEndIndex === segmentEndIndex;
+  get isSelectionAtSegmentStart(): boolean {
+    return this.getSelectionAtSegmentPosition(false);
   }
 
   get readOnlyEnabled(): boolean {
@@ -468,6 +469,25 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
     this.loaded.emit();
     this.applyEditorStyles();
+  }
+
+  private getSelectionAtSegmentPosition(end: boolean) {
+    if (this.editor == null || this.segment == null) {
+      return false;
+    }
+    const selection = this.editor.getSelection();
+    if (selection == null) {
+      return false;
+    }
+
+    // if the segment is blank, then we are always at the end
+    if (this.segment.text === '') {
+      return true;
+    }
+
+    const selectionEndIndex = selection.index + (end ? selection.length : 0);
+    const segmentEndIndex = this.segment.range.index + (end ? this.segment.range.length : 0);
+    return selectionEndIndex === segmentEndIndex;
   }
 
   private isBackspaceAllowed(range: RangeStatic): boolean {
@@ -633,8 +653,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
     let newSel: RangeStatic | undefined;
     if (this._segment.text === '') {
-      // always select at the beginning if blank
-      newSel = { index: this._segment.range.index, length: 0 };
+      // always select at the end of blank so the cursor is inside the segment and not between the segment and verse
+      newSel = { index: this._segment.range.index + 1, length: 0 };
     } else if (!this.multiSegmentSelection) {
       // selections outside of the text chooser dialog are not permitted to extend across segments
       const newStart = Math.max(sel.index, this._segment.range.index);
