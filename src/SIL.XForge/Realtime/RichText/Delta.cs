@@ -183,7 +183,7 @@ namespace SIL.XForge.Realtime.RichText
                             opLength = Math.Min(Math.Min(thisIter.PeekLength(), otherIter.PeekLength()), length);
                             JToken thisOp = thisIter.Next(opLength);
                             JToken otherOp = otherIter.Next(opLength);
-                            if (JToken.DeepEquals(thisOp[InsertType], otherOp[InsertType]))
+                            if (JTokenDeepEqualsIgnoreCid(thisOp[InsertType], otherOp[InsertType]))
                             {
                                 delta.Retain(opLength, DiffAttributes(thisOp[Attributes], otherOp[Attributes]));
                             }
@@ -312,18 +312,71 @@ namespace SIL.XForge.Realtime.RichText
             return true;
         }
 
+        /// <summary>
+        /// Test for value equality of two JTokens while ignoring the cid object property in char nodes.
+        /// </summary>
+        private bool JTokenDeepEqualsIgnoreCid(JToken a, JToken b)
+        {
+            // If the token is not an object, it will not have a char property
+            if (a.Type != JTokenType.Object || b.Type != JTokenType.Object)
+                return JToken.DeepEquals(a, b);
+            JObject aClone = (JObject)a.DeepClone();
+            JObject bClone = (JObject)b.DeepClone();
+            StripCid(aClone);
+            StripCid(bClone);
+            return JToken.DeepEquals(aClone, bClone);
+        }
+
         private static JToken DiffAttributes(JToken a, JToken b)
         {
             JObject aObj = a?.Type == JTokenType.Object ? (JObject)a : new JObject();
             JObject bObj = b?.Type == JTokenType.Object ? (JObject)b : new JObject();
-            JObject attributes = aObj.Properties().Select(p => p.Name).Concat(bObj.Properties().Select(p => p.Name))
+            // Clone the objects so that if there is a real difference in the attributes we can update the cid
+            // on the original object
+            JObject aClone = (JObject)aObj.DeepClone();
+            JObject bClone = (JObject)bObj.DeepClone();
+            StripCid(aClone);
+            StripCid(bClone);
+            JObject attributes = aClone.Properties().Select(p => p.Name).Concat(bClone.Properties().Select(p => p.Name))
                 .Aggregate(new JObject(), (attrs, key) =>
                 {
-                    if (!JToken.DeepEquals(aObj[key], bObj[key]))
+                    if (!JToken.DeepEquals(aClone[key], bClone[key]))
                         attrs[key] = bObj[key] == null ? JValue.CreateNull() : bObj[key];
                     return attrs;
                 });
             return attributes.HasValues ? attributes : null;
+        }
+
+        /// <summary> Does a deep search and strips the cid object property from all char nodes. </summary>
+        private static void StripCid(JObject obj)
+        {
+            if (obj.ContainsKey("char"))
+            {
+                JObject charObj = obj["char"].Type == JTokenType.Object ? (JObject)obj["char"] : null;
+                charObj?.Property("cid")?.Remove();
+            }
+            IEnumerable<string> properties = obj.Properties().Select(p => p.Name);
+            foreach (string prop in properties)
+            {
+                JToken token = obj[prop];
+                if (token.Type == JTokenType.Object)
+                {
+                    // Strip the cid property off descendant nodes
+                    StripCid((JObject)token);
+                }
+                else if (token.Type == JTokenType.Array)
+                {
+                    // This JArray represents something similar to insert.note.contents.ops[]
+                    for (int i = 0; i < token.Count(); i++)
+                    {
+                        if (token[i].Type == JTokenType.Object)
+                        {
+                            // Strip the cid property off descendant nodes
+                            StripCid((JObject)token[i]);
+                        }
+                    }
+                }
+            }
         }
 
         private class OpIterator
