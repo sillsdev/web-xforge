@@ -1,10 +1,11 @@
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { WebAuth } from 'auth0-js';
 import { CookieService } from 'ngx-cookie-service';
 import { of } from 'rxjs';
 import { anyString, anything, capture, instance, mock, resetCalls, verify, when } from 'ts-mockito';
+import { SF_TYPE_REGISTRY } from '../app/core/models/sf-type-registry';
 import { AuthService } from './auth.service';
 import { Auth0Service } from './auth0.service';
 import { BugsnagService } from './bugsnag.service';
@@ -13,15 +14,14 @@ import { ErrorReportingService } from './error-reporting.service';
 import { LocalSettingsService } from './local-settings.service';
 import { LocationService } from './location.service';
 import { NoticeService } from './notice.service';
-import { OfflineStore } from './offline-store';
 import { PwaService } from './pwa.service';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
+import { TestRealtimeModule } from './test-realtime.module';
 import { configureTestingModule } from './test-utils';
 import { aspCultureCookieValue } from './utils';
 
 const mockedAuth0Service = mock(Auth0Service);
 const mockedSharedbRealtimeRemoteStore = mock(SharedbRealtimeRemoteStore);
-const mockedOfflineStore = mock(OfflineStore);
 const mockedLocationService = mock(LocationService);
 const mockedCommandService = mock(CommandService);
 const mockedBugsnagService = mock(BugsnagService);
@@ -35,12 +35,11 @@ const mockedWebAuth = mock(WebAuth);
 
 describe('AuthService', () => {
   configureTestingModule(() => ({
-    imports: [RouterTestingModule],
+    imports: [RouterTestingModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       AuthService,
       { provide: Auth0Service, useMock: mockedAuth0Service },
       { provide: SharedbRealtimeRemoteStore, useMock: mockedSharedbRealtimeRemoteStore },
-      { provide: OfflineStore, useMock: mockedOfflineStore },
       { provide: LocationService, useMock: mockedLocationService },
       { provide: CommandService, useMock: mockedCommandService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
@@ -122,6 +121,40 @@ describe('AuthService', () => {
       expect(authOptions.mode).toEqual('signUp');
     }
   });
+
+  it('should link with Paratext', () => {
+    const env = new TestEnvironment();
+    const returnUrl = 'test-returnUrl';
+
+    env.service.linkParatext(returnUrl);
+
+    verify(mockedWebAuth.authorize(anything())).once();
+    const [authOptions] = capture(mockedWebAuth.authorize).last();
+    expect(authOptions).toBeDefined();
+    if (authOptions != null) {
+      expect(authOptions.state).toBeDefined();
+      const state = JSON.parse(authOptions.state!);
+      expect(state.returnUrl).toEqual(returnUrl);
+      expect(state.linking).toBe(true);
+      expect(authOptions.language).toEqual(env.language);
+      expect(authOptions.login_hint).toEqual(env.language);
+    }
+  });
+
+  it('should log out', fakeAsync(() => {
+    const env = new TestEnvironment();
+
+    env.service.logOut();
+
+    tick();
+    verify(mockedLocalSettingsService.clear()).once();
+    verify(mockedWebAuth.logout(anything())).once();
+    const [logoutOptions] = capture(mockedWebAuth.logout).last();
+    expect(logoutOptions).toBeDefined();
+    if (logoutOptions != null) {
+      expect(logoutOptions.returnTo).toBeDefined();
+    }
+  }));
 });
 
 class TestEnvironment {

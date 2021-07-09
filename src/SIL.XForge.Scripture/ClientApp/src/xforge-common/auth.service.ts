@@ -176,7 +176,14 @@ export class AuthService {
 
   linkParatext(returnUrl: string): void {
     const state: AuthState = { returnUrl, linking: true };
-    const options: AuthorizeOptions = { connection: 'paratext', state: JSON.stringify(state) };
+    const language: string = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME));
+    const ui_locales: string = language;
+    const options: AuthorizeOptions = {
+      connection: 'paratext',
+      state: JSON.stringify(state),
+      language,
+      login_hint: ui_locales
+    };
     this.auth0.authorize(options);
   }
 
