@@ -125,7 +125,9 @@ export function registerScripture(): string[] {
     static tagName = 'usx-blank';
 
     static create(value: boolean): Node {
-      return super.create(value) as HTMLElement;
+      const node = super.create(value) as HTMLElement;
+      node.innerText = NBSP.repeat(8);
+      return node;
     }
 
     static value(_node: HTMLElement): boolean {
