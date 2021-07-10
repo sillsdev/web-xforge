@@ -20,7 +20,8 @@
   "dependencies": {
     "@bugsnag/js": "^7.10.5",
     "express": "^4.17.1",
-    "jwks-rsa": "^1.12.3",
+    "jsonwebtoken": "^8.5.1",
+    "jwks-rsa": "^2.0.3",
     "mongodb": "^3.3.5",
     "ot-json0": "^1.1.0",
     "rich-text": "^3.1.0",
@@ -34,7 +35,7 @@
   "devDependencies": {
     "@types/jest": "^26.0.23",
     "@types/jest-expect-message": "^1.0.3",
-    "@types/jsonwebtoken": "^8.3.3",
+    "@types/jsonwebtoken": "^8.5.4",
     "@types/mongodb": "^3.3.11",
     "@types/ws": "^7.4.5",
     "jest": "^27.0.4",
