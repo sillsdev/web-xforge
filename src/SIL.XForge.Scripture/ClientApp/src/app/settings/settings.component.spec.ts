@@ -437,7 +437,7 @@ class TestEnvironment {
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private isOnline: BehaviorSubject<boolean>;
-  private mockedDialogRef: MdcDialogRef<DeleteProjectDialogComponent> = mock(MdcDialogRef);
+  private mockedDialogRef = mock<MdcDialogRef<DeleteProjectDialogComponent>>(MdcDialogRef);
 
   constructor(hasConnection: boolean = true, isSource: boolean = false) {
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));

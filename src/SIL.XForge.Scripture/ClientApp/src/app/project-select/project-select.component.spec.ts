@@ -219,7 +219,7 @@ class TestEnvironment {
   }
 
   get groupLabels(): string[] {
-    return Array.from(this.panel.querySelectorAll('mat-optgroup label')).map(e => e.textContent?.trim() || '');
+    return Array.from(this.panel.querySelectorAll('.mat-optgroup-label')).map(e => e.textContent?.trim() || '');
   }
 
   get autoCompleteShowing(): boolean {

@@ -1,12 +1,4 @@
-import Quill, {
-  BoundsStatic,
-  ClipboardStatic,
-  DeltaOperation,
-  DeltaStatic,
-  QuillOptionsStatic,
-  RangeStatic,
-  Sources
-} from 'quill';
+import Quill, { ClipboardStatic, DeltaStatic, QuillOptionsStatic, RangeStatic, Sources } from 'quill';
 
 /* SystemJS module definition */
 declare var module: NodeModule;

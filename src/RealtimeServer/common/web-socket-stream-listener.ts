@@ -112,15 +112,10 @@ export class WebSocketStreamListener {
       done('No key ID.');
       return;
     }
-    this.jwksClient.getSigningKey(header.kid, (err, key) => {
-      if (err) {
-        done(err);
-      } else {
-        const certKey = key as jwks.CertSigningKey;
-        const rsaKey = key as jwks.RsaSigningKey;
-        const signingKey = certKey.publicKey || rsaKey.rsaPublicKey;
-        done(null, signingKey);
-      }
-    });
+
+    this.jwksClient
+      .getSigningKey(header.kid)
+      .then(key => done(null, key.getPublicKey()))
+      .catch(done);
   }
 }
