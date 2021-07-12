@@ -652,6 +652,43 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void SendReceiveAsync_ShareChangesErrors_InResultsOnly()
+        {
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string projectId = env.SetupProject(env.Project01, associatedPtUser);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+
+            IInternetSharedRepositorySource mockSource =
+                env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+            env.SetupSuccessfulSendReceive();
+            // Setup share changes to be unsuccessful, but return true
+            // This scenario occurs if a project is locked on the PT server
+            env.MockSharingLogicWrapper.ShareChanges(Arg.Any<List<SharedProject>>(), Arg.Any<SharedRepositorySource>(),
+                out Arg.Any<List<SendReceiveResult>>(), Arg.Any<List<SharedProject>>()).Returns(x =>
+                {
+                    x[2] = new List<SendReceiveResult>
+                    {
+                        new SendReceiveResult(new SharedProject())
+                        {
+                            Result = SendReceiveResultEnum.Failed,
+                        },
+                    };
+                    return true;
+                });
+
+            InvalidOperationException ex = Assert.ThrowsAsync<InvalidOperationException>(() =>
+                env.Service.SendReceiveAsync(user01Secret, projectId, null));
+            Assert.That(ex.Message, Does.Contain("Failed: Errors occurred"));
+
+            // Check exception is thrown if errors occurred, even if share changes succeeded
+            env.MockSharingLogicWrapper.HandleErrors(Arg.Any<Action>()).Returns(false);
+            ex = Assert.ThrowsAsync<InvalidOperationException>(() =>
+                env.Service.SendReceiveAsync(user01Secret, projectId, null));
+            Assert.That(ex.Message, Does.Contain("Failed: Errors occurred"));
+        }
+
+        [Test]
         public async Task SendReceiveAsync_UserIsAdministrator_Succeeds()
         {
             var env = new TestEnvironment();
@@ -1218,6 +1255,10 @@ namespace SIL.XForge.Scripture.Services
                 }
                 mockSource.GetRepositories().Returns(sharedRepositories);
                 mockSource.GetProjectsMetaData().Returns(new[] { projMeta1, projMeta2, projMeta3 });
+
+                // An HttpException means that the repo is already unlocked, so any code should be OK with this
+                mockSource.When(s => s.UnlockRemoteRepository(Arg.Any<SharedRepository>()))
+                    .Do(x => throw HttpException.Create(new WebException(), GenericRequest.Create(new Uri("http://localhost/"))));
                 MockInternetSharedRepositorySourceProvider.GetSource(Arg.Is<UserSecret>(s => s.Id == userSecret.Id),
                         Arg.Any<string>(), Arg.Any<string>()).Returns(mockSource);
                 return mockSource;

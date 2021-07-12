@@ -200,13 +200,23 @@ namespace SIL.XForge.Scripture.Services
                 sharedProj.Permissions = sharedProj.ScrText.Permissions;
                 List<SharedProject> sharedPtProjectsToSr = new List<SharedProject> { sharedProj };
 
+                // Unlock the repo before we begin
+                try
+                {
+                    source.UnlockRemoteRepository(sharedProj.Repository);
+                }
+                catch (HttpException)
+                {
+                    // A 403 error will be thrown if the repo is not locked
+                }
+
                 // TODO report results
                 List<SendReceiveResult> results = Enumerable.Empty<SendReceiveResult>().ToList();
                 bool success = false;
                 bool noErrors = SharingLogicWrapper.HandleErrors(() => success = SharingLogicWrapper
                     .ShareChanges(sharedPtProjectsToSr, source.AsInternetSharedRepositorySource(),
                     out results, sharedPtProjectsToSr));
-                if (!noErrors || !success)
+                if (!noErrors || !success || results.Any(r => r.Result == SendReceiveResultEnum.Failed))
                     throw new InvalidOperationException(
                         "Failed: Errors occurred while performing the sync with the Paratext Server.");
             }
