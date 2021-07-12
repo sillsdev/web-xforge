@@ -613,6 +613,37 @@ namespace SIL.XForge.Realtime.RichText
             Assert.That(JToken.DeepEquals(resultToken[0], expectedObj));
         }
 
+        [Test]
+        public void GetLength_ReturnsOpLength()
+        {
+            var del = Delta.New();
+            Assert.That(del.GetLength(), Is.EqualTo(0));
+            del.Insert("A");
+            Assert.That(del.GetLength(), Is.EqualTo(1));
+        }
+
+        [Test]
+        public void DeepEquals_ExaminesEquality()
+        {
+            var a = Delta.New().Insert("A");
+            var b = Delta.New().Insert("A").Insert("B");
+            Assert.That(a.DeepEquals(b), Is.False);
+            a.Insert("B", new { color = "red" });
+            Assert.That(a.DeepEquals(b), Is.False);
+            Delta c = b.Compose(Delta.New().Retain(1).Retain(1, new { color = "red" }));
+            Assert.That(a.DeepEquals(c), Is.True);
+        }
+
+        [Test]
+        public void ToString_ReturnsString()
+        {
+            var del = Delta.New().Insert("A").Insert("B", new { color = "red" });
+            string str = del.ToString();
+            Assert.That(str.Contains("\"insert\": \"A\""));
+            Assert.That(str.Contains("\"insert\": \"B\""));
+            Assert.That(str.Contains("\"color\": \"red\""));
+        }
+
         private static IEnumerable<JObject> Objs(params object[] objs)
         {
             return objs.Select(Obj);
