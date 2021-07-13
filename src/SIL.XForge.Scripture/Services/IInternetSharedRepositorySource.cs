@@ -10,6 +10,7 @@ namespace SIL.XForge.Scripture.Services
         IEnumerable<ProjectMetadata> GetProjectsMetaData();
         string[] Pull(string repository, SharedRepository pullRepo);
         void RefreshToken(string jwtToken);
+        void UnlockRemoteRepository(SharedRepository sharedRepo);
         /// <summary> Access as a particular class. </summary>
         InternetSharedRepositorySource AsInternetSharedRepositorySource();
     }
