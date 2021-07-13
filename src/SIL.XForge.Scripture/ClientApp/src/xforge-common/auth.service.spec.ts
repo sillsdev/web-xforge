@@ -1,11 +1,10 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, flushMicrotasks, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { WebAuth } from 'auth0-js';
 import { CookieService } from 'ngx-cookie-service';
 import { of } from 'rxjs';
 import { anyString, anything, capture, instance, mock, resetCalls, verify, when } from 'ts-mockito';
-import { SF_TYPE_REGISTRY } from '../app/core/models/sf-type-registry';
 import { AuthService } from './auth.service';
 import { Auth0Service } from './auth0.service';
 import { BugsnagService } from './bugsnag.service';
@@ -13,15 +12,16 @@ import { CommandService } from './command.service';
 import { ErrorReportingService } from './error-reporting.service';
 import { LocalSettingsService } from './local-settings.service';
 import { LocationService } from './location.service';
+import { MemoryOfflineStore } from './memory-offline-store';
+import { MemoryRealtimeRemoteStore } from './memory-realtime-remote-store';
 import { NoticeService } from './notice.service';
+import { OfflineStore } from './offline-store';
 import { PwaService } from './pwa.service';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
-import { TestRealtimeModule } from './test-realtime.module';
 import { configureTestingModule } from './test-utils';
 import { aspCultureCookieValue } from './utils';
 
 const mockedAuth0Service = mock(Auth0Service);
-const mockedSharedbRealtimeRemoteStore = mock(SharedbRealtimeRemoteStore);
 const mockedLocationService = mock(LocationService);
 const mockedCommandService = mock(CommandService);
 const mockedBugsnagService = mock(BugsnagService);
@@ -35,11 +35,12 @@ const mockedWebAuth = mock(WebAuth);
 
 describe('AuthService', () => {
   configureTestingModule(() => ({
-    imports: [RouterTestingModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [RouterTestingModule],
     providers: [
       AuthService,
       { provide: Auth0Service, useMock: mockedAuth0Service },
-      { provide: SharedbRealtimeRemoteStore, useMock: mockedSharedbRealtimeRemoteStore },
+      { provide: SharedbRealtimeRemoteStore, useClass: MemoryRealtimeRemoteStore },
+      { provide: OfflineStore, useClass: MemoryOfflineStore },
       { provide: LocationService, useMock: mockedLocationService },
       { provide: CommandService, useMock: mockedCommandService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
@@ -51,6 +52,21 @@ describe('AuthService', () => {
       { provide: ErrorReportingService, useMock: mockedErrorReportingService }
     ]
   }));
+
+  it('should change password', () => {
+    const env = new TestEnvironment();
+    const email = 'test@example.com';
+
+    env.service.changePassword(email);
+
+    verify(mockedWebAuth.changePassword(anything(), anything())).once();
+    const [changePasswordOptions] = capture(mockedWebAuth.changePassword).last();
+    expect(changePasswordOptions).toBeDefined();
+    if (changePasswordOptions != null) {
+      expect(changePasswordOptions.connection).not.toBeNull();
+      expect(changePasswordOptions.email).toEqual(email);
+    }
+  });
 
   it('should login', () => {
     const env = new TestEnvironment();
@@ -146,7 +162,7 @@ describe('AuthService', () => {
 
     env.service.logOut();
 
-    tick();
+    flushMicrotasks();
     verify(mockedLocalSettingsService.clear()).once();
     verify(mockedWebAuth.logout(anything())).once();
     const [logoutOptions] = capture(mockedWebAuth.logout).last();
@@ -155,17 +171,61 @@ describe('AuthService', () => {
       expect(logoutOptions.returnTo).toBeDefined();
     }
   }));
+
+  it('should update interface language only if logged in', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const interfaceLanguage = 'es';
+    expect(interfaceLanguage).not.toEqual(env.language, 'setup');
+    let isLoggedIn: boolean = false;
+    env.service.isLoggedIn.then(result => (isLoggedIn = result));
+    flushMicrotasks();
+    expect(isLoggedIn).toBe(true, 'setup');
+
+    env.service.updateInterfaceLanguage(interfaceLanguage);
+
+    flushMicrotasks();
+    verify(mockedCommandService.onlineInvoke(anyString(), anyString(), anything())).once();
+  }));
+
+  it('should not update interface language if logged out', fakeAsync(() => {
+    const env = new TestEnvironment({ isOnline: false });
+    const interfaceLanguage = 'es';
+    expect(interfaceLanguage).not.toEqual(env.language, 'setup');
+    let isLoggedIn: boolean = true;
+    env.service.isLoggedIn.then(result => (isLoggedIn = result));
+    flushMicrotasks();
+    expect(env.service.accessToken).toBeNull();
+    expect(env.service.idToken).toBeNull();
+    expect(env.service.expiresAt).toBeNull();
+    expect(isLoggedIn).toBe(false, 'setup');
+
+    env.service.updateInterfaceLanguage(interfaceLanguage);
+
+    flushMicrotasks();
+    verify(mockedCommandService.onlineInvoke(anything(), anything(), anything())).never();
+  }));
 });
 
 class TestEnvironment {
   readonly service: AuthService;
   readonly language = 'fr';
 
-  constructor() {
+  constructor({ isOnline = true }: { isOnline?: boolean } = {}) {
     resetCalls(mockedWebAuth);
-    when(mockedAuth0Service.init(anything())).thenReturn(instance(mockedWebAuth));
+    this.setOnline(isOnline);
     when(mockedLocalSettingsService.remoteChanges$).thenReturn(of());
     when(mockedCookieService.get(anyString())).thenReturn(aspCultureCookieValue(this.language));
+    when(mockedAuth0Service.init(anything())).thenReturn(instance(mockedWebAuth));
     this.service = TestBed.inject(AuthService);
+  }
+
+  private setOnline(isOnline: boolean = true) {
+    when(mockedPwaService.checkOnline()).thenResolve(!isOnline);
+    if (isOnline) {
+      when(mockedWebAuth.parseHash(anything())).thenResolve();
+    } else {
+      when(mockedWebAuth.parseHash(anything())).thenCall(callback => callback({}));
+      when(mockedWebAuth.checkSession(anything(), anything())).thenCall(callback => callback({}));
+    }
   }
 }
