@@ -64,6 +64,7 @@ namespace SIL.XForge.Scripture.Services
         /// <summary> Map user IDs to semaphores </summary>
         private readonly ConcurrentDictionary<string, SemaphoreSlim> _tokenRefreshSemaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
         private readonly IHgWrapper _hgHelper;
+        private readonly IWebHostEnvironment _env;
 
         public ParatextService(IWebHostEnvironment env, IOptions<ParatextOptions> paratextOptions,
             IRepository<UserSecret> userSecretRepository, IRealtimeService realtimeService,
@@ -84,6 +85,7 @@ namespace SIL.XForge.Scripture.Services
             _internetSharedRepositorySourceProvider = internetSharedRepositorySourceProvider;
             _restClientFactory = restClientFactory;
             _hgHelper = hgWrapper;
+            _env = env;
 
             _httpClientHandler = new HttpClientHandler();
             _registryClient = new HttpClient(_httpClientHandler);
@@ -200,14 +202,18 @@ namespace SIL.XForge.Scripture.Services
                 sharedProj.Permissions = sharedProj.ScrText.Permissions;
                 List<SharedProject> sharedPtProjectsToSr = new List<SharedProject> { sharedProj };
 
-                // Unlock the repo before we begin
-                try
+                // If we are in development, unlock the repo before we begin,
+                // just in case the repo is locked.
+                if (_env.IsDevelopment())
                 {
-                    source.UnlockRemoteRepository(sharedProj.Repository);
-                }
-                catch (HttpException)
-                {
-                    // A 403 error will be thrown if the repo is not locked
+                    try
+                    {
+                        source.UnlockRemoteRepository(sharedProj.Repository);
+                    }
+                    catch (HttpException)
+                    {
+                        // A 403 error will be thrown if the repo is not locked
+                    }
                 }
 
                 // TODO report results
