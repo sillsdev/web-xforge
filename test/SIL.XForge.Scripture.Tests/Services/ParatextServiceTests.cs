@@ -86,11 +86,9 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetProjectsAsync_OmitsNotRegisteredProjects()
+        public async Task GetProjectsAsync_IncludesNotRegisteredProjects()
         {
-            // Until we implement support to connect to projects that are not in the PT Registry (like can be so for
-            // back translation projects), don't include in the projects list those projects that are not in the
-            // PT Registry.
+            // We should include projects that are not in the registry, like back translation projects
             var env = new TestEnvironment();
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
             bool extraSharedRepository = true;
@@ -100,16 +98,13 @@ namespace SIL.XForge.Scripture.Services
             IEnumerable<ParatextProject> repos = await env.Service.GetProjectsAsync(user01Secret);
 
             // Right number of repos returned.
-            Assert.That(repos.Count(), Is.EqualTo(3), "Not including 4th which does not have metadata");
+            Assert.That(repos.Count(), Is.EqualTo(4), "Including the 4th which does not have metadata");
 
             // Repos returned are the ones we expect.
-            foreach (string projectName in new string[] { env.Project01, env.Project03, env.Project02 })
+            foreach (string projectName in new string[] { env.Project01, env.Project02, env.Project03, env.Project04 })
             {
                 Assert.That(repos.Single(project => project.ParatextId == env.PTProjectIds[projectName].Id), Is.Not.Null);
             }
-            // Not the ones we don't.
-            Assert.That(repos.Any<ParatextProject>(Project => Project.ParatextId == env.PTProjectIds[env.Project04].Id),
-                Is.False, "Should not have had project 4");
         }
 
         [Test]

@@ -233,13 +233,8 @@ namespace SIL.XForge.Scripture.Services
         {
             IInternetSharedRepositorySource ptRepoSource = await GetInternetSharedRepositorySource(userSecret.Id,
                 CancellationToken.None);
-            List<SharedRepository> remotePtProjects = ptRepoSource.GetRepositories().ToList();
-            List<ProjectMetadata> projectMetadata = ptRepoSource.GetProjectsMetaData().ToList();
-
-            // Omit projects that are not in the PT Registry until we support connecting to such projects.
-            remotePtProjects.RemoveAll((SharedRepository project) =>
-                !projectMetadata.Any((ProjectMetadata metadata) => metadata.ProjectGuid == project.SendReceiveId));
-            return GetProjects(userSecret, remotePtProjects, projectMetadata);
+            IEnumerable<SharedRepository> remotePtProjects = ptRepoSource.GetRepositories();
+            return GetProjects(userSecret, remotePtProjects, ptRepoSource.GetProjectsMetaData());
         }
 
         /// <summary>Get Paratext resources that a user has access to. </summary>
