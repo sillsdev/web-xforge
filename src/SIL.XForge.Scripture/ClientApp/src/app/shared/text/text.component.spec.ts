@@ -3,12 +3,12 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslocoService } from '@ngneat/transloco';
-import Quill from 'quill';
+import Quill, { RangeStatic } from 'quill';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import * as RichText from 'rich-text';
 import { BehaviorSubject } from 'rxjs';
-import { anything, mock, when } from 'ts-mockito';
+import { anything, instance, mock, when } from 'ts-mockito';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -23,6 +23,7 @@ import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../../shared/shared.module';
 import { getSFProject, getTextDoc } from '../test-utils';
+import { DragAndDrop } from './drag-and-drop';
 import { TextComponent } from './text.component';
 
 const mockedBugsnagService = mock(BugsnagService);
@@ -126,7 +127,350 @@ describe('TextComponent', () => {
     expect(titleSegment.getAttribute('data-style-description')).toEqual('s - Heading - Section Level 1');
     expect(window.getComputedStyle(titleSegment, '::before').content).toEqual('none');
   }));
+
+  describe('drag-and-drop', () => {
+    it('inserts externally introduced data in the right place, without formatting or linebreaks', fakeAsync(() => {
+      // In this situation, 'external' includes text from another application, another browser window, or text in the
+      // same SF web page but outside of the text area.
+      const env = new TestEnvironment();
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+      const initialTextInDoc = 'target: chapter 1, verse 4.';
+      const textToDropIn = 'Hello\nHello\r\nHello';
+      const expectedFinalText = 'target: chapterHello Hello Hello 1, verse 4.';
+      expect(env.component.getSegmentText('verse_1_4')).toEqual(initialTextInDoc, 'setup');
+      expect(env.component.editor!.getText()).toContain(initialTextInDoc, 'setup');
+
+      // When the user drops text into their browser, a DropEvent gives details on the data being dropped, as well as
+      // the element that it was dropped onto.
+      const dataTransfer = new DataTransfer();
+      // The browser may receive multiple formats of the data, such as text/plain as well as text/html, in the same
+      // drop event.
+      dataTransfer.setData('text/plain', textToDropIn);
+      dataTransfer.setData('text/html', `<span background="white">${textToDropIn}</span>`);
+      const targetElement: HTMLElement = document.createElement('usx-segment');
+      targetElement.setAttribute('data-segment', 'verse_1_4');
+      const dragEvent: MockDragEvent = new MockDragEvent('drop', {
+        dataTransfer,
+        cancelable: true
+      });
+      dragEvent.setTarget(targetElement);
+
+      // How far into the initialTextInDoc the user is trying to drop the new text
+      const desiredIndexInSegment = 'target: chapter'.length;
+      // Override the Chromium point-to-index method behaviour, since the unit test isn't really dragging the mouse
+      // to an element.
+      document.caretRangeFromPoint = (x: number, y: number) => ({ startOffset: desiredIndexInSegment } as Range);
+
+      // SUT
+      const cancelled = !env.component.editor?.container.dispatchEvent(dragEvent);
+      tick();
+
+      expect(env.component.getSegmentText('verse_1_4')).toEqual(expectedFinalText);
+      expect(env.component.editor?.getText()).toContain(expectedFinalText);
+      // event.preventDefault() should have been called to prevent the browser from also causing a drag-and-drop to
+      // happen, carrying in formatting.
+      expect(cancelled).toBeTrue();
+
+      const sourceSegmentRange: RangeStatic | undefined = env.component.getSegmentRange('verse_1_4');
+      if (sourceSegmentRange == null) {
+        throw Error();
+      }
+      const desiredSelectionStart = sourceSegmentRange.index + 'target: chapter'.length;
+      const desiredSelectionLength = 'Hello Hello Hello'.length;
+      const resultingSelection: RangeStatic | null = env.component.editor!.getSelection();
+      if (resultingSelection == null) {
+        throw Error();
+      }
+      // After text is dragged into the document, set the selection to the inserted text.
+      expect(resultingSelection.index).toEqual(desiredSelectionStart);
+      expect(resultingSelection.length).toEqual(desiredSelectionLength);
+    }));
+
+    it('also works in Firefox', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+      const initialTextInDoc = 'target: chapter 1, verse 4.';
+      const textToDropIn = 'Hello\nHello\r\nHello';
+      const expectedFinalText = 'target: chapterHello Hello Hello 1, verse 4.';
+      expect(env.component.getSegmentText('verse_1_4')).toEqual(initialTextInDoc, 'setup');
+      expect(env.component.editor!.getText()).toContain(initialTextInDoc, 'setup');
+
+      const dataTransfer = new DataTransfer();
+      dataTransfer.setData('text/plain', textToDropIn);
+      dataTransfer.setData('text/html', `<span background="white">${textToDropIn}</span>`);
+      const targetElement: HTMLElement = document.createElement('usx-segment');
+      targetElement.setAttribute('data-segment', 'verse_1_4');
+      const dragEvent: MockDragEvent = new MockDragEvent('drop', {
+        dataTransfer,
+        cancelable: true
+      });
+      dragEvent.setTarget(targetElement);
+
+      const desiredIndexInSegment = 'target: chapter'.length;
+      // Override the Firefox point-to-index method behaviour to simulate actually pointing to a location
+      // when dropping.
+      document.caretPositionFromPoint = (x: number, y: number) => ({ offset: desiredIndexInSegment } as CaretPosition);
+      // Remove the Chromium point-to-index method so the Firefox one will be used (in our Chromium test runner).
+      (document as any).caretRangeFromPoint = undefined;
+
+      // SUT
+      const cancelled = !env.component.editor?.container.dispatchEvent(dragEvent);
+      tick();
+
+      expect(env.component.getSegmentText('verse_1_4')).toEqual(expectedFinalText);
+      expect(env.component.editor?.getText()).toContain(expectedFinalText);
+      expect(cancelled).toBeTrue();
+
+      const sourceSegmentRange: RangeStatic | undefined = env.component.getSegmentRange('verse_1_4');
+      if (sourceSegmentRange == null) {
+        throw Error();
+      }
+      const desiredSelectionStart = sourceSegmentRange.index + 'target: chapter'.length;
+      const desiredSelectionLength = 'Hello Hello Hello'.length;
+      const resultingSelection: RangeStatic | null = env.component.editor!.getSelection();
+      if (resultingSelection == null) {
+        throw Error();
+      }
+      expect(resultingSelection.index).toEqual(desiredSelectionStart);
+      expect(resultingSelection.length).toEqual(desiredSelectionLength);
+    }));
+
+    it('moves drag-and-drop selection in doc', fakeAsync(() => {
+      // If the user selects text in the text editing area and drags it, remove it from its current location and insert
+      // it into the new location.
+      const env = new TestEnvironment();
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+      const initialTextInDoc = 'target: chapter 1, verse 4.';
+      //                                ---------     ^
+      const textToMove = 'chapter 1';
+      const expectedFinalText = 'target: , verchapter 1se 4.';
+      //                                      ---------
+      expect(env.component.getSegmentText('verse_1_4')).toEqual(initialTextInDoc, 'setup');
+      expect(env.component.editor!.getText()).toContain(initialTextInDoc, 'setup');
+
+      const sourceSegmentRange: RangeStatic | undefined = env.component.getSegmentRange('verse_1_4');
+      if (sourceSegmentRange == null) {
+        throw Error();
+      }
+      // Location of textToMove in the editor's complete text.
+      const selectionStart: number = sourceSegmentRange.index + 'target: '.length;
+      const selectionLength: number = textToMove.length;
+      env.component.editor?.setSelection(selectionStart, selectionLength);
+
+      const dataTransfer = new DataTransfer();
+      dataTransfer.setData('text/plain', textToMove);
+      dataTransfer.setData('text/html', `<span background="white">${textToMove}</span>`);
+      const targetElement: HTMLElement = document.createElement('usx-segment');
+      targetElement.setAttribute('data-segment', 'verse_1_4');
+      const dropEvent: MockDragEvent = new MockDragEvent('drop', {
+        dataTransfer,
+        cancelable: true
+      });
+      dropEvent.setTarget(targetElement);
+
+      // How far into the initialTextInDoc the user is trying to drop the text
+      const desiredIndexInSegment = 'target: chapter 1, ver'.length;
+      // Override the point-to-index method behaviour, since the unit test isn't really dragging the mouse to an
+      // element.
+      document.caretRangeFromPoint = (x: number, y: number) => ({ startOffset: desiredIndexInSegment } as Range);
+
+      const dragstartEvent: MockDragEvent = new MockDragEvent('dragstart', {
+        dataTransfer,
+        cancelable: true
+      });
+
+      // Setup. The drag-and-drop activity should not start out with the custom note on the event objects.
+      expect(dragstartEvent.dataTransfer?.types.includes(DragAndDrop.quillIsSourceToken)).toBeFalse();
+      expect(DragAndDrop.quillIsSourceToken.length).toBeGreaterThan(0, 'setup');
+
+      // SUT 1
+      env.component.editor?.container.dispatchEvent(dragstartEvent);
+      tick();
+
+      // A custom note should have been inserted that the drag-and-drop activity in question was started from quill,
+      // and thus not from outside the text doc or from another window. This will help us know what to do with an
+      // existing selection later.
+      expect(dragstartEvent.dataTransfer?.types.includes(DragAndDrop.quillIsSourceToken)).toBeTrue();
+      // Be prepared for the next steps, where this custom indication should be present on the drop event as well.
+      expect(dropEvent.dataTransfer?.types.includes(DragAndDrop.quillIsSourceToken)).toBeTrue();
+
+      // SUT 2
+      env.component.editor?.container.dispatchEvent(dropEvent);
+      tick();
+
+      expect(env.component.getSegmentText('verse_1_4')).toEqual(expectedFinalText);
+      expect(env.component.editor?.getText()).toContain(expectedFinalText);
+
+      const desiredSelectionStart = sourceSegmentRange.index + 'target: , ver'.length;
+      const desiredSelectionLength = textToMove.length;
+      const resultingSelection: RangeStatic | null = env.component.editor!.getSelection();
+      if (resultingSelection == null) {
+        throw Error();
+      }
+      // After text is dragged from one place in the document to another place, the selection should be on the moved
+      // text.
+      expect(resultingSelection.index).toEqual(desiredSelectionStart);
+      expect(resultingSelection.length).toEqual(desiredSelectionLength);
+    }));
+
+    it('does not remove selected text if it is not the text being dragged', fakeAsync(() => {
+      // If a user selects text in the editing area, then selects text in another application and drags it into the SF
+      // text area, SF should not remove the text that was selected in SF but rather leave it be.
+      // Further, the text that is inserted into the document as a result of a drag operation from another application
+      // should be the data that is being dragged, not necessarily the text that was selected in the text doc.
+      const env = new TestEnvironment();
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+      const initialTextInDoc = 'target: chapter 1, verse 4.';
+      //                                ---------     ^
+      const initialSelection = 'chapter 1';
+      expect(initialTextInDoc).toContain(initialSelection, 'setup');
+      const textToIntroduce = 'FromAnotherWindow';
+      const expectedFinalText = 'target: chapter 1, verFromAnotherWindowse 4.';
+      //                                 ---------     -----------------
+      expect(env.component.getSegmentText('verse_1_4')).toEqual(initialTextInDoc, 'setup');
+      expect(env.component.editor!.getText()).toContain(initialTextInDoc, 'setup');
+
+      const rangeOfSegmentWithSelection: RangeStatic | undefined = env.component.getSegmentRange('verse_1_4');
+      if (rangeOfSegmentWithSelection == null) {
+        throw Error();
+      }
+      // Location of initialSelection in the editor's complete text.
+      const selectionStart: number = rangeOfSegmentWithSelection.index + 'target: '.length;
+      const selectionLength: number = initialSelection.length;
+      env.component.editor?.setSelection(selectionStart, selectionLength);
+
+      const dataTransfer = new DataTransfer();
+      dataTransfer.setData('text/plain', textToIntroduce);
+      dataTransfer.setData('text/html', `<span background="white">${textToIntroduce}</span>`);
+      const targetElement: HTMLElement = document.createElement('usx-segment');
+      targetElement.setAttribute('data-segment', 'verse_1_4');
+      const dragEvent: MockDragEvent = new MockDragEvent('drop', {
+        dataTransfer,
+        cancelable: true
+      });
+      dragEvent.setTarget(targetElement);
+
+      // How far into the initialTextInDoc the user is trying to drop the new text
+      const desiredIndexInSegment = 'target: chapter 1, ver'.length;
+      // Override the point-to-index method behaviour, since the unit test isn't really dragging the mouse to an
+      // element.
+      document.caretRangeFromPoint = (x: number, y: number) => ({ startOffset: desiredIndexInSegment } as Range);
+
+      // SUT
+      env.component.editor?.container.dispatchEvent(dragEvent);
+      tick();
+
+      expect(env.component.getSegmentText('verse_1_4')).toEqual(expectedFinalText);
+      expect(env.component.editor?.getText()).toContain(expectedFinalText);
+
+      const desiredSelectionStart = rangeOfSegmentWithSelection.index + 'target: chapter 1, ver'.length;
+      const desiredSelectionLength = textToIntroduce.length;
+      const resultingSelection: RangeStatic | null = env.component.editor!.getSelection();
+      if (resultingSelection == null) {
+        throw Error();
+      }
+      // After text is dragged into the document, the selection should be on the inserted text. The selection should
+      // not necessarily be the text that was previously selected.
+      expect(resultingSelection.index).toEqual(desiredSelectionStart);
+      expect(resultingSelection.length).toEqual(desiredSelectionLength);
+    }));
+
+    it('only support drag-and-drop to a usx-segment target', fakeAsync(() => {
+      // If you drag text to near the top or bottom of a paragraph or segment, it looks like it's going to be dropped
+      // where you are pointing, and in fact the browser point-to-index function appears to determine a location in the
+      // segment we want to drop the text into, but the event.target is not the usx-segment: it can be something like
+      // a usx-para-contents instead. A usx-para-contents might contain multiple usx-segment elements, and there is no
+      // indication about which we are dropping into. We could make guesses about which segment is being dropped into
+      // based on the point-to-index function, since its value would need to be less than or equal to the length of any
+      // given segment. We could make guesses based on whether the text was dropped near the top of a paragraph or the
+      // bottom of a paragraph. But the current approach does not have enough information to just identify the target
+      // segment and insert the new content. So when this happens, just reject the drop. Don't insert, and don't remove
+      // from the source location.
+      // As a helpful side effect, only dropping into a usx-segment also prevents inserting text where it doesn't
+      // belong, like right before the verse of a paragraph, in a `usx-para` or right before the chapter number, in a
+      // `div`.
+      const env = new TestEnvironment();
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+
+      const initialTextInDoc = 'target: chapter 1, verse 4.';
+      //                                ---------     ^
+      const textToMove = 'chapter 1';
+      const originalAllText: string = env.component.editor!.getText();
+      expect(env.component.getSegmentText('verse_1_4')).toEqual(initialTextInDoc, 'setup');
+      expect(env.component.editor!.getText()).toContain(initialTextInDoc, 'setup');
+      expect(env.component.editor!.getText()).toEqual(originalAllText, 'setup');
+
+      const sourceSegmentRange: RangeStatic | undefined = env.component.getSegmentRange('verse_1_4');
+      if (sourceSegmentRange == null) {
+        throw Error();
+      }
+      const selectionStart: number = sourceSegmentRange.index + 'target: '.length;
+      const selectionLength: number = textToMove.length;
+      env.component.editor?.setSelection(selectionStart, selectionLength);
+
+      // Set up a usx-para-contents with a structure of child elements that mimics production.
+      const usxParaContents: HTMLElement = document.createElement('usx-para-contents');
+      usxParaContents.appendChild(document.createElement('usx-segment'));
+      usxParaContents.appendChild(document.createElement('usx-verse'));
+      usxParaContents.appendChild(document.createElement('usx-segment'));
+      usxParaContents.appendChild(document.createElement('usx-verse'));
+      const usxSegment: HTMLElement = document.createElement('usx-segment');
+      usxSegment.setAttribute('data-segment', 'verse_1_4');
+      // This is the segment we would want to paste into.
+      usxParaContents.appendChild(usxSegment);
+
+      const dataTransfer = new DataTransfer();
+      dataTransfer.setData('text/plain', textToMove);
+      dataTransfer.setData('text/html', `<span background="white">${textToMove}</span>`);
+      const dragEvent: MockDragEvent = new MockDragEvent('drop', {
+        dataTransfer,
+        cancelable: true
+      });
+      // The target in this situation is the containing usx-para-contents element.
+      dragEvent.setTarget(usxParaContents);
+
+      // How far into the initialTextInDoc the user is trying to drop the new text
+      const desiredIndexInSegment = 'target: chapter 1, ver'.length;
+      // Override the point-to-index method behaviour, since the unit test isn't really dragging the mouse to an
+      // element.
+      document.caretRangeFromPoint = (x: number, y: number) => ({ startOffset: desiredIndexInSegment } as Range);
+
+      // SUT
+      const cancelled: boolean = !env.component.editor?.container.dispatchEvent(dragEvent);
+      tick();
+
+      // No change to text. No insert or delete.
+      expect(env.component.getSegmentText('verse_1_4')).toEqual(initialTextInDoc);
+      expect(env.component.editor?.getText()).toContain(initialTextInDoc);
+      expect(env.component.editor!.getText()).toEqual(originalAllText, 'should be unchanged');
+      // event.preventDefault() should have been called as normal to prevent the browser from doing its own
+      // drag-and-drop, possibly carrying in formatting.
+      expect(cancelled).toBeTrue();
+    }));
+    // End drap-and-drop section of tests.
+  });
 });
+
+class MockDragEvent extends DragEvent {
+  private _target: EventTarget | null = null;
+  get target(): EventTarget | null {
+    return this._target;
+  }
+
+  public setTarget(newTarget: EventTarget | null) {
+    this._target = newTarget;
+  }
+}
 
 class MockQuill extends Quill {}
 
