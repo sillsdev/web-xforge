@@ -264,6 +264,11 @@ namespace SIL.XForge.Services
             });
         }
 
+        protected bool IsOnProject(TModel project, string userId)
+        {
+            return project.UserRoles.ContainsKey(userId);
+        }
+
         protected bool IsProjectAdmin(TModel project, string userId)
         {
             return project.UserRoles.TryGetValue(userId, out string role) && role == ProjectAdminRole;

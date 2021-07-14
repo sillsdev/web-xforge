@@ -10,6 +10,7 @@ import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/esm/scri
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
@@ -97,17 +98,17 @@ describe('CollaboratorsComponent', () => {
     expect(env.noUsersLabel).toBeNull();
     expect(env.userRows.length).toEqual(3);
 
-    expect(env.cellDisplayName(0, 1).innerText).toEqual('User 01');
+    expect(env.cellDisplayName(0, 1)).toEqual('User 01');
     expect(env.cellRole(0, 2).innerText).toEqual('Administrator');
-    expect(env.removeUserButtonOnRow(0)).toBeTruthy();
-    expect(env.cancelInviteButtonOnRow(0)).toBeFalsy();
+    expect(env.removeUserButtonOnRow(0)).toBeNull();
+    expect(env.cancelInviteButtonOnRow(0)).toBeNull();
 
-    expect(env.cellDisplayName(1, 1).innerText).toEqual('User 02');
+    expect(env.cellDisplayName(1, 1)).toEqual('User 02');
     expect(env.cellRole(1, 2).innerText).toEqual('Translator');
     expect(env.removeUserButtonOnRow(1)).toBeTruthy();
     expect(env.cancelInviteButtonOnRow(1)).toBeFalsy();
 
-    expect(env.cellDisplayName(2, 1).innerText).toEqual('User 03');
+    expect(env.cellDisplayName(2, 1)).toEqual('User 03');
     expect(env.cellRole(2, 2).innerText).toEqual('Community Checker');
     expect(env.removeUserButtonOnRow(2)).toBeTruthy();
     expect(env.cancelInviteButtonOnRow(2)).toBeFalsy();
@@ -370,37 +371,6 @@ describe('CollaboratorsComponent', () => {
     expect(env.elementTextContent(env.paginatorLabel).trim()).toEqual('1 - 1 of 1');
   }));
 
-  it('should hide link sharing if checking is unavailable', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupProjectData();
-    env.fixture.detectChanges();
-    tick();
-    env.fixture.detectChanges();
-    // Disable checking
-    const checkingConfig: CheckingConfig = {
-      checkingEnabled: false,
-      shareEnabled: true,
-      shareLevel: CheckingShareLevel.Anyone,
-      usersSeeEachOthersResponses: false
-    };
-    env.updateCheckingProperties(checkingConfig);
-    tick();
-    env.fixture.detectChanges();
-    expect(env.linkSharingTextbox).toBeNull();
-    // Enable checking
-    checkingConfig.checkingEnabled = true;
-    env.updateCheckingProperties(checkingConfig);
-    tick();
-    env.fixture.detectChanges();
-    expect(env.linkSharingTextbox).not.toBeNull();
-    // Disable link sharing
-    checkingConfig.shareLevel = CheckingShareLevel.Specific;
-    env.updateCheckingProperties(checkingConfig);
-    tick();
-    env.fixture.detectChanges();
-    expect(env.linkSharingTextbox).toBeNull();
-  }));
-
   it('should disable collaborators if not connected', fakeAsync(() => {
     const env = new TestEnvironment(false);
     env.setupProjectData();
@@ -423,7 +393,7 @@ describe('CollaboratorsComponent', () => {
     expect(env.userRows.length).toEqual(numUsersOnProject + 1);
     expect(env.offlineMessage).not.toBeNull();
     expect(env.isFilterDisabled).toBe(true);
-    expect(env.removeUserButtonOnRow(0).nativeElement.disabled).toBe(true);
+    expect(env.removeUserButtonOnRow(0)).toBeNull();
     expect(env.cancelInviteButtonOnRow(3).nativeElement.disabled).toBe(true);
   }));
 
@@ -505,6 +475,7 @@ class TestEnvironment {
     when(mockedUserService.getProfile(anything())).thenCall(userId =>
       this.realtimeService.subscribe(UserProfileDoc.COLLECTION, userId)
     );
+    when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedProjectService.get(anything())).thenCall(projectId =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId)
     );
@@ -532,6 +503,7 @@ class TestEnvironment {
 
     this.isOnline = new BehaviorSubject<boolean>(hasConnection);
     when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
+    when(mockedPwaService.isOnline).thenReturn(this.isOnline.value);
     this.fixture = TestBed.createComponent(CollaboratorsComponent);
     this.component = this.fixture.componentInstance;
   }
@@ -542,10 +514,6 @@ class TestEnvironment {
 
   get inviteButton(): HTMLElement {
     return this.fixture.nativeElement.querySelector('#btn-invite');
-  }
-
-  get linkSharingTextbox(): HTMLElement {
-    return this.fixture.nativeElement.querySelector('#share-link');
   }
 
   get offlineMessage(): DebugElement {
@@ -600,8 +568,8 @@ class TestEnvironment {
     return this.userRows[row].children[column];
   }
 
-  cellDisplayName(row: number, column: number): HTMLElement {
-    return this.cell(row, column).query(By.css('.display-name-label')).nativeElement;
+  cellDisplayName(row: number, column: number): string {
+    return this.cell(row, column).query(By.css('.display-name-label')).nativeElement.childNodes[0].textContent.trim();
   }
 
   cellRole(row: number, column: number): HTMLElement {
@@ -683,7 +651,11 @@ class TestEnvironment {
       texts: [],
       writingSystem: { tag: 'en' },
       sync: { queuedCount: 0 },
-      translateConfig: { translationSuggestionsEnabled: false },
+      translateConfig: {
+        translationSuggestionsEnabled: false,
+        shareEnabled: false,
+        shareLevel: TranslateShareLevel.Specific
+      },
       checkingConfig: {
         checkingEnabled: false,
         usersSeeEachOthersResponses: false,

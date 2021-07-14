@@ -10,6 +10,7 @@ import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
@@ -327,7 +328,9 @@ class TestEnvironment {
             tag: 'qaa'
           },
           translateConfig: {
-            translationSuggestionsEnabled: false
+            translationSuggestionsEnabled: false,
+            shareEnabled: false,
+            shareLevel: TranslateShareLevel.Specific
           },
           checkingConfig: {
             checkingEnabled: args.checkingEnabled == null ? true : args.checkingEnabled,

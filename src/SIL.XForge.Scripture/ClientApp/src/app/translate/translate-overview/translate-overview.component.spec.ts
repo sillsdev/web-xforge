@@ -11,6 +11,7 @@ import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/model
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import * as RichText from 'rich-text';
 import { defer, of, Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
@@ -265,7 +266,9 @@ class TestEnvironment {
           tag: 'qaa'
         },
         translateConfig: {
-          translationSuggestionsEnabled
+          translationSuggestionsEnabled,
+          shareEnabled: false,
+          shareLevel: TranslateShareLevel.Specific
         },
         checkingConfig: {
           checkingEnabled: false,

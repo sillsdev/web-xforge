@@ -24,14 +24,26 @@ import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-pro
   styleUrls: ['./settings.component.scss']
 })
 export class SettingsComponent extends DataLoadingComponent implements OnInit {
+  translationSuggestionsEnabled = new FormControl(false);
+  sourceParatextId = new FormControl(undefined);
+  translateShareEnabled = new FormControl(false);
+  translateShareLevel = new FormControl(undefined);
+  checkingEnabled = new FormControl(false);
+  usersSeeEachOthersResponses = new FormControl(false);
+  checkingShareEnabled = new FormControl(false);
+  checkingShareLevel = new FormControl(undefined);
+
   form = new FormGroup({
-    translationSuggestionsEnabled: new FormControl(false),
-    sourceParatextId: new FormControl(undefined),
-    checkingEnabled: new FormControl(false),
-    usersSeeEachOthersResponses: new FormControl(false),
-    shareEnabled: new FormControl(false),
-    shareLevel: new FormControl(undefined)
+    translationSuggestionsEnabled: this.translationSuggestionsEnabled,
+    sourceParatextId: this.sourceParatextId,
+    translateShareEnabled: this.translateShareEnabled,
+    translateShareLevel: this.translateShareLevel,
+    checkingEnabled: this.checkingEnabled,
+    usersSeeEachOthersResponses: this.usersSeeEachOthersResponses,
+    checkingShareEnabled: this.checkingShareEnabled,
+    checkingShareLevel: this.checkingShareLevel
   });
+
   isActiveSourceProject: boolean = false;
   projects?: ParatextProject[];
   resources?: SelectableProject[];
@@ -70,12 +82,12 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     return this.projects != null;
   }
 
-  get translationSuggestionsEnabled(): boolean {
-    return this.form.controls.translationSuggestionsEnabled.value;
+  get isTranslationSuggestionsEnabled(): boolean {
+    return this.translationSuggestionsEnabled.value;
   }
 
-  get checkingEnabled(): boolean {
-    return this.form.controls.checkingEnabled.value;
+  get isCheckingEnabled(): boolean {
+    return this.checkingEnabled.value;
   }
 
   get projectId(): string {
@@ -181,7 +193,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     const sourceProjectChanged: boolean = newValue.sourceParatextId !== this.previousFormValues.sourceParatextId;
     if (
       newValue.translationSuggestionsEnabled !== this.previousFormValues.translationSuggestionsEnabled &&
-      this.form.controls.translationSuggestionsEnabled.enabled
+      this.translationSuggestionsEnabled.enabled
     ) {
       if (!newValue.translationSuggestionsEnabled || (newValue.sourceParatextId != null && !sourceProjectChanged)) {
         // Translation suggestions is set to false or is re-enabled
@@ -230,23 +242,39 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     if (newValue.usersSeeEachOthersResponses !== this.previousFormValues.usersSeeEachOthersResponses) {
       this.updateSetting(newValue, 'usersSeeEachOthersResponses');
     }
-    if (newValue.shareEnabled !== this.previousFormValues.shareEnabled) {
-      this.updateSetting(newValue, 'shareEnabled');
-      const shareLevelControl = this.form.controls.shareLevel;
-      if (newValue.shareEnabled) {
+    if (newValue.translateShareEnabled !== this.previousFormValues.translateShareEnabled) {
+      this.updateSetting(newValue, 'translateShareEnabled');
+      if (newValue.translateShareEnabled) {
         // when a control is disabled the value is undefined, so reset back to previous value
-        this.previousFormValues.shareLevel = this.projectDoc.data.checkingConfig.shareLevel;
-        shareLevelControl.enable();
+        this.previousFormValues.translateShareLevel = this.projectDoc.data.translateConfig.shareLevel;
+        this.translateShareLevel.enable();
       } else {
-        shareLevelControl.disable();
+        this.translateShareLevel.disable();
+      }
+    }
+    if (newValue.checkingShareEnabled !== this.previousFormValues.checkingShareEnabled) {
+      this.updateSetting(newValue, 'checkingShareEnabled');
+      if (newValue.checkingShareEnabled) {
+        // when a control is disabled the value is undefined, so reset back to previous value
+        this.previousFormValues.checkingShareLevel = this.projectDoc.data.checkingConfig.shareLevel;
+        this.checkingShareLevel.enable();
+      } else {
+        this.checkingShareLevel.disable();
       }
     }
     if (
-      newValue.shareLevel != null &&
-      newValue.shareLevel !== this.previousFormValues.shareLevel &&
-      this.form.controls.shareLevel.enabled
+      newValue.checkingShareLevel != null &&
+      newValue.checkingShareLevel !== this.previousFormValues.checkingShareLevel &&
+      this.checkingShareLevel.enabled
     ) {
-      this.updateSetting(newValue, 'shareLevel');
+      this.updateSetting(newValue, 'checkingShareLevel');
+    }
+    if (
+      newValue.translateShareLevel != null &&
+      newValue.translateShareLevel !== this.previousFormValues.translateShareLevel &&
+      this.translateShareLevel.enabled
+    ) {
+      this.updateSetting(newValue, 'translateShareLevel');
     }
   }
 
@@ -266,10 +294,12 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.previousFormValues = {
       translationSuggestionsEnabled: this.projectDoc.data.translateConfig.translationSuggestionsEnabled,
       sourceParatextId: curSource != null ? curSource.paratextId : undefined,
+      translateShareEnabled: !!this.projectDoc.data.translateConfig.shareEnabled,
+      translateShareLevel: this.projectDoc.data.translateConfig.shareLevel,
       checkingEnabled: this.projectDoc.data.checkingConfig.checkingEnabled,
       usersSeeEachOthersResponses: this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses,
-      shareEnabled: this.projectDoc.data.checkingConfig.shareEnabled,
-      shareLevel: this.projectDoc.data.checkingConfig.shareLevel
+      checkingShareEnabled: this.projectDoc.data.checkingConfig.shareEnabled,
+      checkingShareLevel: this.projectDoc.data.checkingConfig.shareLevel
     };
     this.form.reset(this.previousFormValues);
     this.setIndividualControlDisabledStates();
@@ -278,20 +308,25 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   private setIndividualControlDisabledStates() {
     if (!this.isLoggedInToParatext) {
-      this.form.controls.translationSuggestionsEnabled.disable();
+      this.translationSuggestionsEnabled.disable();
+    }
+    if (!this.projectDoc?.data?.translateConfig.shareEnabled) {
+      this.translateShareLevel.disable();
     }
     if (!this.projectDoc?.data?.checkingConfig.shareEnabled) {
-      this.form.controls.shareLevel.disable();
+      this.checkingShareLevel.disable();
     }
   }
 
   private setAllControlsToInSync(): void {
     this.controlStates.set('translationSuggestionsEnabled', ElementState.InSync);
     this.controlStates.set('sourceParatextId', ElementState.InSync);
+    this.controlStates.set('translateShareEnabled', ElementState.InSync);
+    this.controlStates.set('translateShareLevel', ElementState.InSync);
     this.controlStates.set('checkingEnabled', ElementState.InSync);
     this.controlStates.set('usersSeeEachOthersResponses', ElementState.InSync);
-    this.controlStates.set('shareEnabled', ElementState.InSync);
-    this.controlStates.set('shareLevel', ElementState.InSync);
+    this.controlStates.set('checkingShareEnabled', ElementState.InSync);
+    this.controlStates.set('checkingShareLevel', ElementState.InSync);
   }
 
   private updateNonSelectableProjects(): void {
