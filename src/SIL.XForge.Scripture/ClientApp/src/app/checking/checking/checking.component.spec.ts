@@ -24,6 +24,7 @@ import {
   SFProjectUserConfig
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { getTextDocId, TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
@@ -1535,6 +1536,8 @@ class TestEnvironment {
     },
     translateConfig: {
       translationSuggestionsEnabled: true,
+      shareEnabled: false,
+      shareLevel: TranslateShareLevel.Specific,
       source: {
         paratextId: 'project02',
         projectRef: 'project02',

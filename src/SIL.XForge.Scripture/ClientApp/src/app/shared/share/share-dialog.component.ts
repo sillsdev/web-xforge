@@ -4,7 +4,6 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 
 export interface ShareDialogData {
   projectId: string;
-  isLinkSharingEnabled: boolean;
   defaultRole: SFProjectRole;
 }
 
