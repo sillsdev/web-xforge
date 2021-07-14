@@ -961,7 +961,7 @@ namespace SIL.XForge.Scripture.Services
             UserRoles.Administrator => SFProjectRole.Administrator,
             UserRoles.Consultant => SFProjectRole.Consultant,
             UserRoles.TeamMember => SFProjectRole.Translator,
-            UserRoles.Observer => SFProjectRole.Observer,
+            UserRoles.Observer => SFProjectRole.SFObserver,
             _ => string.Empty,
         };
 

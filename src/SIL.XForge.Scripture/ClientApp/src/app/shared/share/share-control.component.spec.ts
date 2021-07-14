@@ -5,7 +5,9 @@ import { flush } from '@angular/core/testing';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
+import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject } from 'rxjs';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -177,7 +179,9 @@ describe('ShareControlComponent', () => {
   it('share link should be hidden if link sharing is turned off', fakeAsync(() => {
     const env = new TestEnvironment();
     expect(env.shareLink).toBeNull();
-    env.hostComponent.isLinkSharingEnabled = true;
+    env.realtimeService
+      .get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01')
+      .submitJson0Op(op => op.set<CheckingShareLevel>(p => p.checkingConfig.shareLevel, CheckingShareLevel.Anyone));
     env.wait();
     expect(env.shareLink).not.toBeNull();
   }));
@@ -185,7 +189,9 @@ describe('ShareControlComponent', () => {
   it('share link should not be shown when offline', fakeAsync(() => {
     const env = new TestEnvironment();
     env.onlineStatus = false;
-    env.hostComponent.isLinkSharingEnabled = true;
+    env.realtimeService
+      .get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01')
+      .submitJson0Op(op => op.set<CheckingShareLevel>(p => p.checkingConfig.shareLevel, CheckingShareLevel.Anyone));
     env.wait();
     expect(env.shareLink.nativeElement.value).toEqual('');
     expect(env.linkSharingOfflineMessage).not.toBeNull();
@@ -231,14 +237,8 @@ describe('ShareControlComponent', () => {
     expect(env.roleField).toBeTruthy();
   }));
 
-  it('role should be hidden for non-administrators', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.wait();
-    expect(env.roleField).toBeFalsy();
-  }));
-
   it('default role can be set', fakeAsync(() => {
-    const env = new TestEnvironment({ defaultRole: SF_DEFAULT_TRANSLATE_SHARE_ROLE });
+    const env = new TestEnvironment({ defaultRole: SF_DEFAULT_TRANSLATE_SHARE_ROLE, userId: 'user03' });
     env.wait();
     expect(env.hostComponent.component.roleControl.value).toEqual(SF_DEFAULT_TRANSLATE_SHARE_ROLE);
   }));
@@ -257,6 +257,31 @@ describe('ShareControlComponent', () => {
     expect(env.hostComponent.component.roles.length).toBe(1);
     expect(env.hostComponent.component.roles[0].role).toBe(SF_DEFAULT_TRANSLATE_SHARE_ROLE);
   }));
+
+  it('should hide link sharing if checking is unavailable', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.wait();
+    // Disable checking
+    const checkingConfig: CheckingConfig = {
+      checkingEnabled: false,
+      shareEnabled: true,
+      shareLevel: CheckingShareLevel.Anyone,
+      usersSeeEachOthersResponses: false
+    };
+    env.updateCheckingProperties(checkingConfig);
+    env.wait();
+    expect(env.shareLink).toBeNull();
+    // Enable checking
+    checkingConfig.checkingEnabled = true;
+    env.updateCheckingProperties(checkingConfig);
+    env.wait();
+    expect(env.shareLink).not.toBeNull(); // broken
+    // Disable link sharing
+    checkingConfig.shareLevel = CheckingShareLevel.Specific;
+    env.updateCheckingProperties(checkingConfig);
+    env.wait();
+    expect(env.shareLink).toBeNull();
+  }));
 });
 
 @NgModule({
@@ -268,18 +293,12 @@ class TestModule {}
 
 @Component({
   template: `
-    <app-share-control
-      [projectId]="projectId"
-      [isLinkSharingEnabled]="isLinkSharingEnabled"
-      [defaultRole]="defaultRole"
-      (invited)="onInvited()"
-    ></app-share-control>
+    <app-share-control [projectId]="projectId" [defaultRole]="defaultRole" (invited)="onInvited()"></app-share-control>
   `
 })
 class TestHostComponent {
   @ViewChild(ShareControlComponent) component!: ShareControlComponent;
   projectId = 'project01';
-  isLinkSharingEnabled = false;
   invitedCount = 0;
   defaultRole?: SFProjectRole | undefined;
 
@@ -300,9 +319,9 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<TestHostComponent>;
   readonly hostComponent: TestHostComponent;
   readonly component: ShareControlComponent;
-  private _onlineStatus = new BehaviorSubject<boolean>(true);
+  readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
+  private _onlineStatus = new BehaviorSubject<boolean>(true);
 
   constructor(args: Partial<TestEnvironmentArgs> = {}) {
     const defaultArgs: Partial<TestEnvironmentArgs> = {
@@ -311,14 +330,17 @@ class TestEnvironment {
       checkingEnabled: true
     };
     args = { ...defaultArgs, ...args };
+    const shareLevel = args.isLinkSharingEnabled ? TranslateShareLevel.Anyone : TranslateShareLevel.Specific;
     this.realtimeService.addSnapshot(SFProjectDoc.COLLECTION, {
       id: args.projectId,
       data: {
         userRoles: {
           user01: SFProjectRole.CommunityChecker,
-          user02: SFProjectRole.ParatextAdministrator
+          user02: SFProjectRole.ParatextAdministrator,
+          user03: SFProjectRole.Observer
         },
-        checkingConfig: { checkingEnabled: args.checkingEnabled }
+        translateConfig: { shareEnabled: true, shareLevel },
+        checkingConfig: { checkingEnabled: args.checkingEnabled, shareEnabled: true, shareLevel }
       }
     });
     when(mockedProjectService.get(anything())).thenCall(projectId =>
@@ -333,8 +355,6 @@ class TestEnvironment {
     when(mockedProjectService.isProjectAdmin('project01', 'user02')).thenResolve(true);
     this.fixture = TestBed.createComponent(TestHostComponent);
     this.fixture.componentInstance.projectId = args.projectId!;
-    this.fixture.componentInstance.isLinkSharingEnabled =
-      args.isLinkSharingEnabled === undefined ? false : args.isLinkSharingEnabled;
     this.fixture.componentInstance.defaultRole = args.defaultRole;
     this.fixture.detectChanges();
     this.component = this.fixture.componentInstance.component;
@@ -429,6 +449,11 @@ class TestEnvironment {
   setInvitationLanguage(language: string) {
     this.component.localeControl.setValue(language);
     this.wait();
+  }
+
+  updateCheckingProperties(config: CheckingConfig): Promise<boolean> {
+    const projectDoc: SFProjectDoc = this.realtimeService.get(SFProjectDoc.COLLECTION, 'project01');
+    return projectDoc.submitJson0Op(op => op.set(p => p.checkingConfig, config));
   }
 
   wait(): void {
