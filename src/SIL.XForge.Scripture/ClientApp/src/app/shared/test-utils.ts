@@ -2,6 +2,7 @@ import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/model
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { Delta, TextDocId } from '../core/models/text-doc';
 
 export function getTextDoc(id: TextDocId): TextData {
@@ -39,7 +40,9 @@ export function getSFProject(id: string): SFProject {
     userPermissions: {},
     writingSystem: { tag: 'qaa' },
     translateConfig: {
-      translationSuggestionsEnabled: false
+      translationSuggestionsEnabled: false,
+      shareEnabled: false,
+      shareLevel: TranslateShareLevel.Specific
     },
     checkingConfig: {
       checkingEnabled: false,
