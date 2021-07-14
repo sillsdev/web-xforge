@@ -1,11 +1,7 @@
 <ng-container *transloco="let t; read: 'collaborators'">
   <div class="invite-user">
     <h3>{{ t("share_with_others") }}</h3>
-    <app-share-control
-      [projectId]="projectId"
-      [isLinkSharingEnabled]="isLinkSharingEnabled"
-      (invited)="onInvitationSent()"
-    ></app-share-control>
+    <app-share-control [projectId]="projectId" (invited)="onInvitationSent()"></app-share-control>
 
     <mdc-list-divider></mdc-list-divider>
 

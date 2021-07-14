@@ -16,6 +16,7 @@ import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scripturefor
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import { anyString, anything, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
@@ -930,7 +931,9 @@ class TestEnvironment {
           tag: 'en'
         },
         translateConfig: {
-          translationSuggestionsEnabled: false
+          translationSuggestionsEnabled: false,
+          shareEnabled: false,
+          shareLevel: TranslateShareLevel.Specific
         },
         checkingConfig: {
           checkingEnabled: true,
