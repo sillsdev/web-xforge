@@ -4,7 +4,6 @@ import { PageEvent } from '@angular/material/paginator';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { hasParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
@@ -75,16 +74,6 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
 
   get hasEmailError(): boolean {
     return this.userInviteForm.controls.email.hasError('email');
-  }
-
-  get isLinkSharingEnabled(): boolean {
-    return (
-      this.projectDoc != null &&
-      this.projectDoc.data != null &&
-      this.projectDoc.data.checkingConfig.checkingEnabled &&
-      this.projectDoc.data.checkingConfig.shareEnabled &&
-      this.projectDoc.data.checkingConfig.shareLevel === CheckingShareLevel.Anyone
-    );
   }
 
   get isLoading(): boolean {
