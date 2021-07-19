@@ -369,7 +369,7 @@ namespace SIL.XForge.Scripture.Services
             List<User> paratextUsers = await _realtimeService.QuerySnapshots<User>()
                 .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
                 .ToListAsync();
-            await _notesMapper.InitAsync(_userSecret, _projectSecret, paratextUsers, _projectDoc.Data.ParatextId, token);
+            await _notesMapper.InitAsync(_userSecret, _projectSecret, paratextUsers, _projectDoc.Data, token);
 
             await _projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.Sync.PercentCompleted, 0));
             return true;
@@ -689,7 +689,7 @@ namespace SIL.XForge.Scripture.Services
                 try
                 {
                     ptUserRoles = await _paratextService.GetProjectRolesAsync(_userSecret,
-                        _projectDoc.Data.ParatextId, token);
+                        _projectDoc.Data, token);
                 }
                 catch (Exception ex)
                 {
@@ -763,8 +763,16 @@ namespace SIL.XForge.Scripture.Services
                             userIdsToRemove.Add(projectUser.UserId);
                     }
                 }
-                bool isRtl = _paratextService
-                    .IsProjectLanguageRightToLeft(_userSecret, _projectDoc.Data.ParatextId);
+
+                // See if the full name of the project needs updating
+                string fullName = _paratextService.GetProjectFullName(_userSecret, _projectDoc.Data.ParatextId);
+                if (!string.IsNullOrEmpty(fullName))
+                {
+                    op.Set(pd => pd.Name, fullName);
+                }
+
+                // Set the right-to-left language flag
+                bool isRtl = _paratextService.IsProjectLanguageRightToLeft(_userSecret, _projectDoc.Data.ParatextId);
                 op.Set(pd => pd.IsRightToLeft, isRtl);
 
                 // The source can be null if there was an error getting a resource from the DBL
