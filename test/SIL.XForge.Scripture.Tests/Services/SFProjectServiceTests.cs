@@ -562,7 +562,7 @@ namespace SIL.XForge.Scripture.Services
             // exception.
             env.ParatextService.GetParatextUsernameMappingAsync(
                 Arg.Is<UserSecret>((UserSecret userSecret) => userSecret.Id == User03),
-                Arg.Is<string>((string paratextId) => paratextId == project05PTId),
+                Arg.Is((SFProject project) => project.ParatextId == project05PTId),
                 Arg.Any<CancellationToken>())
                 .Returns(Task.FromException<IReadOnlyDictionary<string, string>>(new System.Net.Http.HttpRequestException()));
 
@@ -685,7 +685,7 @@ namespace SIL.XForge.Scripture.Services
 
             env.ParatextService.GetParatextUsernameMappingAsync(
                 Arg.Is<UserSecret>((UserSecret userSecret) => userSecret.Id == User03),
-                Arg.Is<string>((string paratextId) => paratextId == project05PTId),
+                Arg.Is((SFProject project) => project.ParatextId == project05PTId),
                 Arg.Any<CancellationToken>())
                 .Returns(Task.FromException<IReadOnlyDictionary<string, string>>(new System.Net.Http.HttpRequestException()));
 
