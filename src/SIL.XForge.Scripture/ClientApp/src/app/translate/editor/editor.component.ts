@@ -485,28 +485,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.insertSuggestionEnd = -1;
           this.target.editor.setSelection(selectIndex, 0, 'user');
         }
-
-        // Filter for note thread docs that match the current book and the edited segment
-        const threadDocs: ParatextNoteThreadDoc[] | undefined = this.noteThreadQuery?.docs.filter(
-          td =>
-            td.data != null &&
-            this.bookNum === td.data.verseRef.bookNum &&
-            segment?.ref.startsWith(verseSlug(toVerseRef(td.data.verseRef)))
-        );
-        const segmentHasNote = threadDocs == null || threadDocs.length > 0;
-        if (segmentHasNote) {
-          // Check whether an edit operation occurs at the beginning of an empty segment with a note
-          if (
-            segment?.range.length === 1 &&
-            delta.ops[0].retain === segment?.range.index &&
-            (delta.ops[1].insert != null || delta.ops[1].delete != null)
-          ) {
-            // Recalculate the note icon positioning when editing a blank segment or blanking out a segment
-            // This can be optimize later when we are satisfied with how notes are anchored to text
-            this.toggleNoteThreadVerses(false);
-            this.toggleNoteThreadVerses(true);
-          }
-        }
       }
 
       if (this.insertSuggestionEnd !== -1) {
@@ -637,18 +615,27 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.getFeaturedVerseRefInfo(nt.data!)
     );
 
-    const segments: string[] = this.target.toggleFeaturedVerseRefs(value, noteThreadVerseRefs, 'note-thread');
-
-    for (const featured of featureVerseRefInfo) {
-      const verseSegments = this.target.getVerseSegments(featured.verseRef);
-      if (verseSegments.length === 0) {
-        continue;
+    if (value) {
+      for (const featured of featureVerseRefInfo) {
+        const verseSegments = this.target.getVerseSegments(featured.verseRef);
+        if (verseSegments.length === 0) {
+          continue;
+        }
+        const iconName: string = featured.iconName ?? '01flag1';
+        const nodeProp: string = iconSourceProp(iconName);
+        const format = value ? { iconsrc: nodeProp, preview: featured.preview, embedid: featured.id } : {};
+        this.target.embedElementInline(
+          featured.verseRef,
+          featured.id,
+          featured.selectedText ?? '',
+          'note-thread-embed',
+          format
+        );
       }
-      const iconName: string = featured.iconName ?? '01flag1';
-      const nodeProp: string = iconSourceProp(iconName);
-      const format = value ? { iconsrc: nodeProp, preview: featured.preview } : {};
-      this.target.toggleInlineFormat(featured.verseRef, featured.selectedText ?? '', 'note-thread', format);
+    } else {
+      this.target.removeEmbeddedElements();
     }
+    const segments: string[] = this.target.toggleFeaturedVerseRefs(value, noteThreadVerseRefs, 'note-thread');
 
     if (value) {
       this.subscribeClickEvents(segments);
@@ -987,6 +974,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const iconDefinedNotes = notes.filter(n => n.tagIcon != null);
     return {
       verseRef: toVerseRef(thread.verseRef),
+      id: thread.dataId,
       preview,
       iconName: iconDefinedNotes.length === 0 ? thread.tagIcon : iconDefinedNotes[iconDefinedNotes.length - 1].tagIcon,
       selectedText: thread.selectedText

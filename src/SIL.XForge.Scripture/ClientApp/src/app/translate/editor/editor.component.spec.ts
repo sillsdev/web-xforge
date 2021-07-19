@@ -186,7 +186,7 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_3');
       const selection = env.targetEditor.getSelection();
-      expect(selection!.index).toBe(33);
+      expect(selection!.index).toBe(34);
       expect(selection!.length).toBe(0);
       expect(env.getProjectUserConfigDoc().data!.selectedSegment).toBe('verse_1_3');
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
@@ -207,7 +207,7 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_2');
       const selection = env.targetEditor.getSelection();
-      expect(selection!.index).toBe(32);
+      expect(selection!.index).toBe(33);
       expect(selection!.length).toBe(0);
       expect(env.getProjectUserConfigDoc().data!.selectedSegment).toBe('verse_1_2');
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
@@ -252,13 +252,31 @@ describe('EditorComponent', () => {
       let segmentRange = env.component.target!.segment!.range;
       let segmentContents = env.targetEditor.getContents(segmentRange.index, segmentRange.length);
       let op = segmentContents.ops![0];
+      expect(op.insert).toEqual({
+        'note-thread-embed': {
+          iconsrc: '--icon-file: url(/assets/icons/TagIcons/01flag1.png);',
+          preview: 'Note from user01',
+          embedid: 'thread04'
+        }
+      });
+      op = segmentContents.ops![1];
       expect(op.insert.blank).toBe(true);
       expect(op.attributes!.segment).toEqual('verse_1_4/p_1');
 
       const index = env.typeCharacters('t');
       segmentRange = env.component.target!.segment!.range;
       segmentContents = env.targetEditor.getContents(segmentRange.index, segmentRange.length);
+
+      // The note remains, the blank is removed
       op = segmentContents.ops![0];
+      expect(op.insert).toEqual({
+        'note-thread-embed': {
+          iconsrc: '--icon-file: url(/assets/icons/TagIcons/01flag1.png);',
+          preview: 'Note from user01',
+          embedid: 'thread04'
+        }
+      });
+      op = segmentContents.ops![1];
       expect(op.insert.blank).toBeUndefined();
       expect(op.attributes!.segment).toEqual('verse_1_4/p_1');
 
@@ -266,7 +284,17 @@ describe('EditorComponent', () => {
       env.deleteCharacters();
       segmentRange = env.component.target!.segment!.range;
       segmentContents = env.targetEditor.getContents(segmentRange.index, segmentRange.length);
+
+      // The note remains, the blank returns
       op = segmentContents.ops![0];
+      expect(op.insert).toEqual({
+        'note-thread-embed': {
+          iconsrc: '--icon-file: url(/assets/icons/TagIcons/01flag1.png);',
+          preview: 'Note from user01',
+          embedid: 'thread04'
+        }
+      });
+      op = segmentContents.ops![1];
       expect(op.insert.blank).toBe(true);
       expect(op.attributes!.segment).toEqual('verse_1_4/p_1');
 
@@ -546,6 +574,7 @@ describe('EditorComponent', () => {
       expect(env.bookName).toEqual('Matthew');
       expect(env.component.target!.segmentRef).toEqual('verse_1_1');
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
+      console.log(env.targetEditor.getSelection());
 
       resetCalls(env.mockedRemoteTranslationEngine);
       env.updateParams({ projectId: 'project01', bookId: 'MRK' });
@@ -895,7 +924,7 @@ describe('EditorComponent', () => {
       expect(contents.ops![8].insert).toEqual({ verse: { number: '3', style: 'v' } });
       expect(contents.ops![8].attributes).toEqual({ 'para-contents': true });
       const selection = env.targetEditor.getSelection();
-      expect(selection!.index).toBe(32);
+      expect(selection!.index).toBe(33);
       expect(selection!.length).toBe(0);
 
       env.triggerRedo();
@@ -909,35 +938,6 @@ describe('EditorComponent', () => {
       expect(contents.ops![8].insert).toEqual({ verse: { number: '3', style: 'v' } });
       expect(contents.ops![8].attributes).toEqual({ 'para-contents': true });
 
-      env.dispose();
-    }));
-
-    it('adds display-note tag to element', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig();
-      env.wait();
-      const segment: HTMLElement = env.targetTextEditor.nativeElement.querySelector(
-        'usx-segment[data-segment=verse_1_1]'
-      )!;
-      expect(segment).not.toBeNull();
-      expect(segment.hasAttribute('data-note-thread-count')).toBe(true);
-      expect(segment.getAttribute('data-note-thread-count')).toBe('1');
-      const note = segment.querySelector('display-note')! as HTMLElement;
-      expect(note).not.toBeNull();
-      expect(note.hasAttribute('style')).toBe(true);
-      expect(note.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag3.png);');
-      expect(note.hasAttribute('title')).toBe(true);
-      expect(note.getAttribute('title')).toEqual('Note from user01\n--- 2 more note(s) ---');
-      expect(note.innerText).toEqual('chapter 1');
-
-      const blankSegmentNote = env.targetTextEditor.nativeElement.querySelector(
-        'usx-segment[data-segment="verse_1_4/p_1"] display-note'
-      )! as HTMLElement;
-      expect(blankSegmentNote).not.toBeNull();
-      expect(blankSegmentNote.hasAttribute('style')).toBe(true);
-      expect(blankSegmentNote.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
-      expect(blankSegmentNote.hasAttribute('title')).toBe(true);
-      expect(blankSegmentNote.getAttribute('title')).toEqual('Note from user01');
       env.dispose();
     }));
 
@@ -971,16 +971,79 @@ describe('EditorComponent', () => {
       contents = env.targetEditor.getContents();
       expect(contents.ops![7].insert).toEqual('t');
       const expectedOps = [
-        { retain: 32 },
+        { retain: 33 },
         { insert: 't' },
-        { retain: 31 },
+        { retain: 32 },
         { delete: 1 },
         { retain: 1 },
-        { retain: 31 },
+        { retain: 32 },
         { retain: 1 }
       ];
       expect(textChangeOps).toEqual(expectedOps);
 
+      env.dispose();
+    }));
+
+    it('embeds note on verse segments', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+      const segment: HTMLElement = env.targetTextEditor.nativeElement.querySelector(
+        'usx-segment[data-segment=verse_1_1]'
+      )!;
+      expect(segment).not.toBeNull();
+
+      const note = segment.querySelector('display-note')! as HTMLElement;
+      expect(note).not.toBeNull();
+      expect(note.hasAttribute('style')).toBe(true);
+      expect(note.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag3.png);');
+      expect(note.hasAttribute('title')).toBe(true);
+      expect(note.getAttribute('title')).toEqual('Note from user01\n--- 2 more note(s) ---');
+      const contents = env.targetEditor.getContents();
+      expect(contents.ops![3].insert).toEqual('target: ');
+      expect(contents.ops![4].attributes!['iconsrc']).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag3.png);');
+
+      // Two notes in the segment on verse 3
+      const noteVerse3: HTMLElement[] = env.targetTextEditor.nativeElement.querySelectorAll(
+        'usx-segment[data-segment="verse_1_3"] display-note'
+      )!;
+      expect(noteVerse3.length).toEqual(2);
+
+      const blankSegmentNote = env.targetTextEditor.nativeElement.querySelector(
+        'usx-segment[data-segment="verse_1_4/p_1"] display-note'
+      )! as HTMLElement;
+      expect(blankSegmentNote).not.toBeNull();
+      expect(blankSegmentNote.hasAttribute('style')).toBe(true);
+      expect(blankSegmentNote.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
+      expect(blankSegmentNote.hasAttribute('title')).toBe(true);
+      expect(blankSegmentNote.getAttribute('title')).toEqual('Note from user01');
+      env.dispose();
+    }));
+
+    it('handles text doc updates with note embed offset', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_2' });
+      env.wait();
+      expect(env.component.target!.segmentRef).toBe('verse_1_2');
+
+      env.typeCharacters('t');
+      const contents = env.targetEditor.getContents();
+      expect(contents.ops![7].insert).toEqual('t');
+      expect(contents.ops![7].attributes).toEqual({
+        'para-contents': true,
+        segment: 'verse_1_2',
+        'highlight-segment': true
+      });
+      const textDoc: TextDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
+      const textOps = textDoc.data!.ops!;
+      expect(textOps[2].insert['verse']['number']).toBe('1');
+      expect(textOps[3].insert).toBe('target: chapter 1, verse 1.');
+      expect(textOps[5].insert).toBe('t');
+      expect(contents.ops![2]!.insert['verse']['number']).toBe('1');
+      expect(contents.ops![3].insert).toBe('target: ');
+      expect(contents.ops![4]!.attributes!['iconsrc']).toBe('--icon-file: url(/assets/icons/TagIcons/01flag3.png);');
+      expect(contents.ops![5]!.insert).toBe('chapter 1, verse 1.');
+      expect(contents.ops![7]!.insert).toBe('t');
       env.dispose();
     }));
   });
@@ -1287,8 +1350,10 @@ class TestEnvironment {
       instance(this.mockedRemoteTranslationEngine)
     );
     this.setupProject();
-    this.addParatextNoteThread(1, 'chapter 1', ['user01', 'user02', 'user03']);
-    this.addParatextNoteThread(4, '', ['user01']);
+    this.addParatextNoteThread(1, 1, 'chapter 1', ['user01', 'user02', 'user03']);
+    this.addParatextNoteThread(2, 3, 'target: chapter 1, verse 3.', ['user01']);
+    this.addParatextNoteThread(3, 3, 'verse 3', ['user01']);
+    this.addParatextNoteThread(4, 4, '', ['user01']);
     when(this.mockedRemoteTranslationEngine.getWordGraph(anything())).thenCall(segment =>
       Promise.resolve(this.createWordGraph(segment))
     );
@@ -1693,7 +1758,7 @@ class TestEnvironment {
     });
   }
 
-  private addParatextNoteThread(threadNum: number, selectedText: string, userIds: string[]): void {
+  private addParatextNoteThread(threadNum: number, verseNum: number, selectedText: string, userIds: string[]): void {
     const threadId: string = `thread0${threadNum}`;
     const notes: Note[] = [];
     for (let i = 0; i < userIds.length; i++) {
@@ -1714,7 +1779,7 @@ class TestEnvironment {
       notes.push(note);
     }
 
-    const vrd: VerseRefData = { bookNum: 40, chapterNum: 1, verseNum: threadNum };
+    const vrd: VerseRefData = { bookNum: 40, chapterNum: 1, verseNum };
     this.realtimeService.addSnapshot<ParatextNoteThread>(ParatextNoteThreadDoc.COLLECTION, {
       id: `project01:${threadId}`,
       data: {

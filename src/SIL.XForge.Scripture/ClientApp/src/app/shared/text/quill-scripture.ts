@@ -38,6 +38,7 @@ interface Chapter extends UsxStyle {
 interface NoteThread {
   iconsrc: string;
   preview: string;
+  embedid: string;
 }
 
 interface Verse extends UsxStyle {
@@ -274,6 +275,44 @@ export function registerScripture(): string[] {
   }
   formats.push(NoteEmbed);
 
+  class NoteThreadEmbed extends Embed {
+    static blotName = 'note-thread-embed';
+    static tagName = 'display-note';
+
+    static create(value: NoteThread) {
+      const node = super.create(value) as HTMLElement;
+      node.setAttribute('style', value.iconsrc);
+      node.setAttribute('title', value.preview);
+      node.setAttribute('embed-id', value.embedid);
+      return node;
+    }
+
+    static formats(node: HTMLElement): NoteThread {
+      return NoteThreadEmbed.value(node);
+    }
+
+    static value(node: HTMLElement): NoteThread {
+      return {
+        iconsrc: node.getAttribute('style')!,
+        preview: node.getAttribute('title')!,
+        embedid: node.getAttribute('embed-id')!
+      };
+    }
+
+    format(name: string, value: any): void {
+      if (name === NoteThreadEmbed.blotName && value != null) {
+        const ref = value as NoteThread;
+        const elem = this.domNode as HTMLElement;
+        elem.setAttribute('style', ref.iconsrc);
+        elem.setAttribute('title', ref.preview);
+        elem.setAttribute('embed-id', ref.embedid);
+      } else {
+        super.format(name, value);
+      }
+    }
+  }
+  formats.push(NoteThreadEmbed);
+
   class OptBreakEmbed extends Embed {
     static blotName = 'optbreak';
     static tagName = 'usx-optbreak';
@@ -474,42 +513,6 @@ export function registerScripture(): string[] {
     }
   }
   formats.push(ChapterEmbed);
-
-  class NoteThreadInline extends Inline {
-    static blotName = 'note-thread';
-    static tagName = 'display-note';
-
-    static create(value: NoteThread) {
-      const node = super.create(value) as HTMLElement;
-      node.setAttribute('style', value.iconsrc);
-      node.setAttribute('title', value.preview);
-      return node;
-    }
-
-    static formats(node: HTMLElement): NoteThread {
-      return NoteThreadInline.value(node);
-    }
-
-    static value(node: HTMLElement): NoteThread {
-      return {
-        iconsrc: node.getAttribute('style')!,
-        preview: node.getAttribute('title')!
-      };
-    }
-
-    format(name: string, value: any): void {
-      if (name === NoteThreadInline.blotName && value != null) {
-        const ref = value as NoteThread;
-        const elem = this.domNode as HTMLElement;
-        elem.setAttribute('style', ref.iconsrc);
-        elem.setAttribute('title', ref.preview);
-      } else {
-        super.format(name, value);
-      }
-    }
-  }
-  formats.push(NoteThreadInline);
-
   Scroll.allowedChildren.push(ParaBlock);
   Scroll.allowedChildren.push(ChapterEmbed);
 

@@ -73,6 +73,7 @@ class SegmentInfo {
   length: number = 0;
   origRef?: string;
   containsBlank: boolean = false;
+  notesCount: number = 0;
   isVerseNext: boolean = false;
   hasInitialFormat: boolean = false;
 
@@ -95,11 +96,16 @@ export class TextViewModel {
   private remoteChangesSub?: Subscription;
   private onCreateSub?: Subscription;
   private textDoc?: TextDoc;
-
+  /** The elements embedded into the quill editor that are in addition to the text data i.e. Paratext notes */
+  private _embeddedElements: Map<string, number> = new Map<string, number>();
   constructor() {}
 
   get segments(): IterableIterator<[string, RangeStatic]> {
     return this._segments.entries();
+  }
+
+  get embeddedElements(): Map<string, number> {
+    return this._embeddedElements;
   }
 
   get isLoaded(): boolean {
@@ -146,6 +152,7 @@ export class TextViewModel {
       this.editor.setText('', 'silent');
     }
     this._segments.clear();
+    this._embeddedElements.clear();
   }
 
   /**
@@ -163,6 +170,8 @@ export class TextViewModel {
     if (source === 'user' && editor.isEnabled()) {
       const modelDelta = this.viewToData(delta);
       if (modelDelta.ops != null && modelDelta.ops.length > 0) {
+        console.log('ops submitted');
+        console.log(modelDelta);
         this.textDoc.submit(modelDelta, this.editor);
       }
     }
@@ -320,7 +329,7 @@ export class TextViewModel {
   }
 
   private viewToData(delta: DeltaStatic): DeltaStatic {
-    const modelDelta = new Delta();
+    let modelDelta = new Delta();
     if (delta.ops != null) {
       for (const op of delta.ops) {
         const modelOp: DeltaOperation = cloneDeep(op);
@@ -344,6 +353,8 @@ export class TextViewModel {
         }
         (modelDelta as any).push(modelOp);
       }
+      // Remove Paratext notes from model delta
+      modelDelta = this.adjustDeltaForEmbeddedElements(modelDelta);
     }
     return modelDelta.chop();
   }
@@ -354,6 +365,7 @@ export class TextViewModel {
     let fixOffset = 0;
     const delta = editor.getContents();
     this._segments.clear();
+    this._embeddedElements.clear();
     const nextIds = new Map<string, number>();
     let paraSegments: SegmentInfo[] = [];
     let chapter = '';
@@ -449,10 +461,17 @@ export class TextViewModel {
             curSegment.origRef = '';
           }
           curSegment.length += len;
-          if (op.insert != null && op.insert.blank != null) {
-            curSegment.containsBlank = true;
-            if (op.attributes != null && op.attributes['initial'] === true) {
-              curSegment.hasInitialFormat = true;
+          if (op.insert != null) {
+            if (op.insert.blank != null) {
+              curSegment.containsBlank = true;
+              if (op.attributes != null && op.attributes['initial'] === true) {
+                curSegment.hasInitialFormat = true;
+              }
+            } else if (op.insert['note-thread-embed'] != null) {
+              // record the presence of an embedded note in the segment
+              const id = op.attributes != null && op.attributes['embedid'];
+              this._embeddedElements.set(id, curIndex + curSegment.length);
+              curSegment.notesCount = curSegment.notesCount + 1;
             }
           }
         }
@@ -468,10 +487,11 @@ export class TextViewModel {
     fixDelta: DeltaStatic,
     fixOffset: number
   ): [DeltaStatic, number] {
-    if (segment.length === 0) {
+    if (segment.length - segment.notesCount === 0) {
       // insert blank
       const delta = new Delta();
-      delta.retain(segment.index + fixOffset);
+      // insert blank after any existing notes
+      delta.retain(segment.index + segment.notesCount + fixOffset);
       const attrs: any = { segment: segment.ref, 'para-contents': true, 'direction-segment': 'auto' };
       if (segment.isInitial) {
         attrs.initial = true;
@@ -479,9 +499,10 @@ export class TextViewModel {
       delta.insert({ blank: true }, attrs);
       fixDelta = fixDelta.compose(delta);
       fixOffset++;
-    } else if (segment.containsBlank && segment.length > 1) {
+    } else if (segment.containsBlank && segment.length - segment.notesCount > 1) {
+      // The segment contains a blank and there is text other than translation notes
       // delete blank
-      const delta = new Delta().retain(segment.index + fixOffset).delete(1);
+      const delta = new Delta().retain(segment.index + fixOffset + segment.notesCount).delete(1);
       fixDelta = fixDelta.compose(delta);
       fixOffset--;
       const sel = editor.getSelection();
@@ -511,5 +532,32 @@ export class TextViewModel {
       throw new Error('The editor has not been assigned.');
     }
     return this.editor;
+  }
+
+  private adjustDeltaForEmbeddedElements(modelDelta: DeltaStatic): DeltaStatic {
+    if (modelDelta.ops == null || modelDelta.ops.length < 1) {
+      return new Delta();
+    }
+    const adjustedDelta = new Delta();
+    const indices: number[] = Array.from(this._embeddedElements.values());
+    let embedTracker: number = 0;
+    let curIndex: number = 0;
+    for (const op of modelDelta.ops) {
+      const cloneOp = cloneDeep(op);
+      if (cloneOp.retain != null) {
+        curIndex += cloneOp.retain;
+        let curNoteIndex = indices[embedTracker];
+        while (curNoteIndex <= curIndex) {
+          // remove this note from the retain op
+          cloneOp.retain -= 1;
+          embedTracker++;
+          curNoteIndex = indices[embedTracker];
+        }
+      } else if (cloneOp.delete != null) {
+        curIndex += cloneOp.delete;
+      }
+      (adjustedDelta as any).push(cloneOp);
+    }
+    return adjustedDelta;
   }
 }

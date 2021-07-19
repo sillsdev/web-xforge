@@ -18,7 +18,7 @@ import { fromEvent } from 'rxjs';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { getBrowserEngine, verseSlug } from 'xforge-common/utils';
-import { TextDocId } from '../../core/models/text-doc';
+import { Delta, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { registerScripture } from './quill-scripture';
 import { Segment } from './segment';
@@ -57,6 +57,7 @@ export interface TextUpdatedEvent {
 
 export interface FeaturedVerseRefInfo {
   verseRef: VerseRef;
+  id: string;
   iconName?: string;
   selectedText?: string;
   preview?: string;
@@ -185,6 +186,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private highlightMarkerHeight: number = 0;
   private _placeholder?: string;
   private displayMessage: string = '';
+  private _toggleVerseElement: boolean = false;
 
   constructor(
     private readonly projectService: SFProjectService,
@@ -328,6 +330,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return 'auto';
   }
 
+  get embeddedNotes(): Map<string, number> {
+    return this.viewModel.embeddedElements;
+  }
+
   private get contentShowing(): boolean {
     return this.id != null && this.viewModel.isLoaded && !this.viewModel.isEmpty;
   }
@@ -383,6 +389,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       this.initialSegmentFocus = focus;
       return true;
     }
+
     const prevSegment = this.segment;
     if (this.tryChangeSegment(segmentRef, checksum, focus, end)) {
       this.updated.emit({ prevSegment, segment: this._segment });
@@ -474,11 +481,11 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       }
       this.editor.formatText(range.index, range.length, formats, 'silent');
     }
-
+    this._toggleVerseElement = value;
     return segments;
   }
 
-  toggleInlineFormat(verseRef: VerseRef, selectedText: string, formatName: string, format: any): void {
+  embedElementInline(verseRef: VerseRef, id: string, selectedText: string, formatName: string, format: any): void {
     if (this.editor == null) {
       return;
     }
@@ -487,7 +494,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     const verseSegments: string[] = this.getVerseSegments(verseRef);
     let noteRange: RangeStatic | undefined = this.getSegmentRange(verseSegments[0]);
     let startPosition = 0;
-    let selectionLength = 0;
+    if (Array.from(this.viewModel.embeddedElements.keys()).includes(id)) {
+      return;
+    }
+
     for (const vs of verseSegments) {
       const text: string = this.getSegmentText(vs);
       const range: RangeStatic | undefined = this.getSegmentRange(vs);
@@ -506,7 +516,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
           // TODO: Find a better way to match a note to its selected text
           startPosition = start;
           noteRange = range;
-          selectionLength = selectedText.length;
           break;
         }
       }
@@ -515,10 +524,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (noteRange == null) {
       return;
     }
-    if (selectionLength === 0) {
-      selectionLength = noteRange.length;
-    }
-    this.editor.formatText(noteRange.index + startPosition, selectionLength, formatName, format, 'silent');
+
+    const noteInsertIndex: number = noteRange.index + startPosition;
+    this.editor.insertEmbed(noteInsertIndex, formatName, format, 'api');
+    this.updateSegment();
   }
 
   onContentChanged(delta: DeltaStatic, source: string): void {
@@ -564,6 +573,26 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
   }
 
+  removeEmbeddedElements(): void {
+    if (this.editor == null) {
+      return;
+    }
+    let previousEmbedIndex = 0;
+    const deleteDelta = new Delta();
+    for (const [_, embedIndex] of this.viewModel.embeddedElements.entries()) {
+      // check that there are elements other than notes between the previous and current embed
+      if (embedIndex > previousEmbedIndex + 1) {
+        deleteDelta.retain(embedIndex - (previousEmbedIndex + 1));
+      }
+      deleteDelta.delete(1);
+      previousEmbedIndex = embedIndex;
+    }
+    deleteDelta.chop();
+    if (deleteDelta.ops != null && deleteDelta.ops.length > 0) {
+      this.editor.updateContents(deleteDelta, 'api');
+    }
+  }
+
   private applyEditorStyles() {
     if (this._editor != null) {
       const container = this._editor.container as HTMLElement;
@@ -577,6 +606,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   private async bindQuill(): Promise<void> {
     this.viewModel.unbind();
+    this._toggleVerseElement = false;
     if (this._id == null) {
       return;
     }
@@ -676,7 +706,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (this._editor != null && segmentRef == null) {
       // get currently selected segment ref
       const selection = this._editor.getSelection();
-      if (selection != null) {
+      if (this._toggleVerseElement && selection != null) {
         segmentRef = this.viewModel.getSegmentRef(selection);
       }
     }
@@ -776,7 +806,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     let newSel: RangeStatic | undefined;
     if (this._segment.text === '') {
       // always select at the end of blank so the cursor is inside the segment and not between the segment and verse
-      newSel = { index: this._segment.range.index + 1, length: 0 };
+      const notesCount = this._segment.range.length - 1;
+      newSel = { index: this._segment.range.index + notesCount + 1, length: 0 };
     } else if (!this.multiSegmentSelection) {
       // selections outside of the text chooser dialog are not permitted to extend across segments
       const newStart = Math.max(sel.index, this._segment.range.index);
