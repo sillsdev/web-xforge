@@ -302,11 +302,11 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   get isSelectionAtSegmentEnd(): boolean {
-    return this.getSelectionAtSegmentPosition(true);
+    return this.isSelectionAtSegmentPosition(true);
   }
 
   get isSelectionAtSegmentStart(): boolean {
-    return this.getSelectionAtSegmentPosition(false);
+    return this.isSelectionAtSegmentPosition(false);
   }
 
   get readOnlyEnabled(): boolean {
@@ -471,7 +471,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     this.applyEditorStyles();
   }
 
-  private getSelectionAtSegmentPosition(end: boolean) {
+  private isSelectionAtSegmentPosition(end: boolean): boolean {
     if (this.editor == null || this.segment == null) {
       return false;
     }
