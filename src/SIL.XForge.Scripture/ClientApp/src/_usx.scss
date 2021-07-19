@@ -318,8 +318,10 @@ quill-editor.rtl {
 
 usx-blank {
   width: 35px;
-  font-size: 0;
   display: inline-block;
+  span {
+    font-size: 0;
+  }
 }
 
 usx-char {
