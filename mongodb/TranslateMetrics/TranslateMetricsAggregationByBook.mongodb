@@ -12,7 +12,7 @@ const { Canon } = require(path.resolve('./src/RealtimeServer/lib/cjs/scripturefo
 use('xforge');
 
 const projectRef = '60e57ea17e9c4e37643a57de';
-const bookId = 'JHN';
+const bookId = 'LUK';
 
 const bookNum = Canon.bookIdToNumber(bookId);
 const project = db.sf_projects.findOne({ _id: projectRef });
@@ -23,8 +23,8 @@ db.translate_metrics.aggregate([
   { $match: { projectRef, bookNum } },
   { $group: {
     _id: '$chapterNum',
-    agSourceWordCount: { $sum: '$sourceWordCount' },
-    agTargetWordCount: { $sum: '$targetWordCount' },
+    maxSourceWordCount: { $max: '$sourceWordCount' },
+    maxTargetWordCount: { $max: '$targetWordCount' },
     agKeyBackspaceCount: { $sum: '$keyBackspaceCount' },
     agKeyDeleteCount: { $sum: '$keyDeleteCount' },
     agKeyCharacterCount: { $sum: '$keyCharacterCount' },
