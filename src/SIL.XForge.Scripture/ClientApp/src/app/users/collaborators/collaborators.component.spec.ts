@@ -10,6 +10,7 @@ import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/esm/scri
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
@@ -532,6 +533,7 @@ class TestEnvironment {
 
     this.isOnline = new BehaviorSubject<boolean>(hasConnection);
     when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
+    when(mockedPwaService.isOnline).thenReturn(this.isOnline.value);
     this.fixture = TestBed.createComponent(CollaboratorsComponent);
     this.component = this.fixture.componentInstance;
   }
@@ -683,7 +685,11 @@ class TestEnvironment {
       texts: [],
       writingSystem: { tag: 'en' },
       sync: { queuedCount: 0 },
-      translateConfig: { translationSuggestionsEnabled: false },
+      translateConfig: {
+        translationSuggestionsEnabled: false,
+        shareEnabled: false,
+        shareLevel: TranslateShareLevel.Specific
+      },
       checkingConfig: {
         checkingEnabled: false,
         usersSeeEachOthersResponses: false,

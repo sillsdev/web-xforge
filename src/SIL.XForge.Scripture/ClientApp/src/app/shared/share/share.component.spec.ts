@@ -7,6 +7,7 @@ import { ActivatedRoute } from '@angular/router';
 import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -150,7 +151,11 @@ class TestEnvironment {
         paratextId: 'pt01',
         shortName: 'P01',
         writingSystem: { tag: 'qaa' },
-        translateConfig: { translationSuggestionsEnabled: false },
+        translateConfig: {
+          translationSuggestionsEnabled: false,
+          shareEnabled,
+          shareLevel: shareLevel as string as TranslateShareLevel
+        },
         checkingConfig: {
           checkingEnabled: true,
           usersSeeEachOthersResponses: true,

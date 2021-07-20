@@ -1,3 +1,4 @@
+import { TranslateShareLevel } from '../models/translate-config';
 import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock } from 'ts-mockito';
@@ -151,7 +152,11 @@ class TestEnvironment {
       shortName: 'PT01',
       paratextId: 'pt01',
       writingSystem: { tag: 'qaa' },
-      translateConfig: { translationSuggestionsEnabled: false },
+      translateConfig: {
+        translationSuggestionsEnabled: false,
+        shareEnabled: true,
+        shareLevel: TranslateShareLevel.Specific
+      },
       checkingConfig: {
         checkingEnabled: false,
         usersSeeEachOthersResponses: true,
