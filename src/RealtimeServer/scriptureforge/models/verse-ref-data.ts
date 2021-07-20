@@ -17,9 +17,10 @@ export function fromVerseRef(input: VerseRef): VerseRefData {
   };
 }
 
-export function toStartAndEndVerseRefs(
-  verseRefOrVerseRefData: VerseRefData | VerseRef
-): { startVerseRef: VerseRef; endVerseRef?: VerseRef } {
+export function toStartAndEndVerseRefs(verseRefOrVerseRefData: VerseRefData | VerseRef): {
+  startVerseRef: VerseRef;
+  endVerseRef?: VerseRef;
+} {
   const verseRef =
     verseRefOrVerseRefData instanceof VerseRef ? verseRefOrVerseRefData : toVerseRef(verseRefOrVerseRefData);
   let startVerseRef = verseRef;

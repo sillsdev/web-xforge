@@ -5,5 +5,4 @@
     "outDir": "../lib/esm/common"
   },
   "exclude": ["index.ts", "**/*.spec.ts", "**/test-*.ts"]
-
 }

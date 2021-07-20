@@ -202,7 +202,6 @@
     "something_went_wrong_synchronizing_this_project": "Terjadi kesalahan saat menyinkronkan {{ projectName }} dengan Paratext. Silakan coba lagi.",
     "successfully_synchronized_with_paratext": "Berhasil mensinkronkan {{ projectName }} dengan Paratext.",
     "synchronize": "Sinkronkan",
-    "synchronize_was_cancelled": "Synchronize for {{ projectName }} was cancelled.",
     "synchronize_project": "Mensinkronkan {{ projectName }} dengan Paratext",
     "your_project_is_being_synchronized": "Proyek Anda sedang disinkronkan...",
     "sync_is_disabled": "Synchronization for this project needed to be disabled, so it is not available at this time. Please contact {{ email }} to discuss what needs to be done so project synchronization can be enabled again."

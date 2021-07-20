@@ -11,7 +11,7 @@ quill-editor {
       line-height: 1.6;
       width: 100%;
       word-break: break-word;
-      padding: 15px;
+      padding: 2em 15px 15px 15px;
       text-align: start;
     }
   }
@@ -189,4 +189,31 @@ quill-editor.rtl {
       repeat-x scroll 0 100% transparent;
     padding-bottom: 3px;
   }
+}
+
+.highlight-para usx-segment[data-style-description]:first-child:before {
+  content: attr(data-style-description);
+  background-color: $greyDark;
+  color: white;
+  position: absolute;
+  white-space: nowrap;
+  border-radius: 4px;
+  padding: 1px 5px;
+  z-index: 1;
+  top: -2em;
+  font-size: 0.75rem;
+  font-style: normal;
+  font-weight: normal;
+  text-indent: 0;
+}
+
+usx-segment {
+  position: relative;
+}
+
+quill-editor.ltr .highlight-para usx-segment:first-child:before {
+  left: -1em;
+}
+quill-editor.rtl .highlight-para usx-segment:first-child:before {
+  right: -1em;
 }

@@ -544,6 +544,106 @@ namespace SIL.XForge.Realtime.RichText
             Assert.That(attr1, Is.EqualTo(attr2));
         }
 
+        [Test]
+        public void Diff_CharAttributeObject()
+        {
+            JObject charObjA = new JObject(new JProperty("char", new JObject(new JProperty("cid", "123"))));
+            JObject charObjB = new JObject(new JProperty("char", new JObject(new JProperty("cid", "456"))));
+            var a = Delta.New().Insert("A", charObjA);
+            var b = Delta.New().Insert("A", charObjB);
+            var expected = Delta.New();
+            Assert.That(a.Diff(b), Is.EqualTo(expected).Using(Delta.EqualityComparer));
+        }
+
+        [Test]
+        public void Diff_CharAttributeObjectChanged()
+        {
+            JObject charObjA = new JObject(new JProperty("char",
+                new JObject(new JProperty("style", "it"), new JProperty("cid", "123"))));
+            JObject charObjB = new JObject(new JProperty("char",
+                new JObject(new JProperty("style", "fr"), new JProperty("cid", "456"))));
+            var a = Delta.New().Insert("A", charObjA);
+            var b = Delta.New().Insert("A", charObjB);
+            var expected = Delta.New().Retain(1, charObjB);
+            Assert.That(a.Diff(b), Is.EqualTo(expected).Using(Delta.EqualityComparer));
+        }
+
+        [Test]
+        public void Diff_ArrayOfCharAttributeObjects()
+        {
+            // The path to the cid can look like insert.note.contents.ops[i].attributes.char.cid
+            JObject a1 = new JObject(new JProperty("insert", "text1"), new JProperty("attributes",
+                new JObject(new JProperty("char", new JObject(new JProperty("cid", "123"))))));
+            JObject b1 = new JObject(new JProperty("attributes",
+                new JObject(new JProperty("char", new JObject(new JProperty("cid", "456"))))));
+            JObject a2 = new JObject(new JProperty("insert", "text1"), new JProperty("attributes",
+                new JObject(new JProperty("char", new JObject(new JProperty("cid", "234"))))));
+            JObject b2 = new JObject(new JProperty("attributes",
+                new JObject(new JProperty("char", new JObject(new JProperty("cid", "567"))))));
+
+            JObject obj1 = new JObject(new JProperty("ops", new JArray(a1, b1)));
+            JObject obj2 = new JObject(new JProperty("ops", new JArray(a2, b2)));
+            var del1 = Delta.New().Insert(obj1);
+            var del2 = Delta.New().Insert(obj2);
+            var expected = Delta.New();
+            Assert.That(del1.Diff(del2), Is.EqualTo(expected).Using(Delta.EqualityComparer));
+        }
+
+        [Test]
+        public void Diff_ArrayOfCharAttributeObjectsChanged()
+        {
+            // The path to the cid can look like insert.note.contents.ops[i].attributes.char.cid
+            JObject a1 = new JObject(new JProperty("insert", "text1"), new JProperty("attributes",
+                new JObject(new JProperty("char", new JObject(new JProperty("cid", "123"))))));
+            JObject b1 = new JObject(new JProperty("attributes",
+                new JObject(new JProperty("char", new JObject(new JProperty("cid", "456"))))));
+            JObject a2 = new JObject(new JProperty("insert", "text2"), new JProperty("attributes",
+                new JObject(new JProperty("char", new JObject(new JProperty("cid", "234"))))));
+            JObject b2 = new JObject(new JProperty("attributes",
+                new JObject(new JProperty("char", new JObject(new JProperty("cid", "567"))))));
+
+            JObject obj1 = new JObject(new JProperty("ops", new JArray(a1, b1)));
+            JObject obj2 = new JObject(new JProperty("ops", new JArray(a2, b2)));
+            var del1 = Delta.New().Insert(obj1);
+            var del2 = Delta.New().Insert(obj2);
+            JObject expectedObj = new JObject(new JProperty("insert", "text2"), new JProperty("attributes",
+                new JObject(new JProperty("char", new JObject(new JProperty("cid", "234"))))));
+            Delta result = del1.Diff(del2);
+            JToken resultToken = ((JObject)result.Ops.First(o => o.Type == JTokenType.Object))["insert"]["ops"];
+            Assert.That(JToken.DeepEquals(resultToken[0], expectedObj));
+        }
+
+        [Test]
+        public void GetLength_ReturnsOpLength()
+        {
+            var del = Delta.New();
+            Assert.That(del.GetLength(), Is.EqualTo(0));
+            del.Insert("A");
+            Assert.That(del.GetLength(), Is.EqualTo(1));
+        }
+
+        [Test]
+        public void DeepEquals_ExaminesEquality()
+        {
+            var a = Delta.New().Insert("A");
+            var b = Delta.New().Insert("A").Insert("B");
+            Assert.That(a.DeepEquals(b), Is.False);
+            a.Insert("B", new { color = "red" });
+            Assert.That(a.DeepEquals(b), Is.False);
+            Delta c = b.Compose(Delta.New().Retain(1).Retain(1, new { color = "red" }));
+            Assert.That(a.DeepEquals(c), Is.True);
+        }
+
+        [Test]
+        public void ToString_ReturnsString()
+        {
+            var del = Delta.New().Insert("A").Insert("B", new { color = "red" });
+            string str = del.ToString();
+            Assert.That(str.Contains("\"insert\": \"A\""));
+            Assert.That(str.Contains("\"insert\": \"B\""));
+            Assert.That(str.Contains("\"color\": \"red\""));
+        }
+
         private static IEnumerable<JObject> Objs(params object[] objs)
         {
             return objs.Select(Obj);

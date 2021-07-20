@@ -7,7 +7,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { BehaviorSubject, of } from 'rxjs';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { anyString, anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -48,8 +48,8 @@ describe('SyncComponent', () => {
     ]
   }));
 
-  it('should display log in to paratext', fakeAsync(() => {
-    const env = new TestEnvironment();
+  it('should display Log In to Paratext', fakeAsync(() => {
+    const env = new TestEnvironment(false);
     expect(env.title.textContent).toContain('Synchronize Sync Test Project with Paratext');
     expect(env.logInButton.nativeElement.textContent).toContain('Log in to Paratext');
     expect(env.syncButton).toBeNull();
@@ -59,15 +59,17 @@ describe('SyncComponent', () => {
     expect(env.logInButton).toBeNull();
   }));
 
-  it('should redirect the user to log in to paratext', fakeAsync(() => {
-    const env = new TestEnvironment();
+  it('should redirect the user to Log In to Paratext', fakeAsync(() => {
+    const env = new TestEnvironment(false);
+
     env.clickElement(env.logInButton);
+
     verify(mockedParatextService.linkParatext(anything())).once();
     expect().nothing();
   }));
 
   it('should display sync project', fakeAsync(() => {
-    const env = new TestEnvironment(true);
+    const env = new TestEnvironment();
     expect(env.title.textContent).toContain('Synchronize Sync Test Project with Paratext');
     expect(env.logInButton).toBeNull();
     expect(env.syncButton.nativeElement.textContent).toContain('Synchronize');
@@ -80,35 +82,44 @@ describe('SyncComponent', () => {
     expect(env.syncButton.nativeElement.disabled).toBe(true);
     expect(env.lastSyncDate.textContent).toContain('Last synced on');
     expect(env.offlineMessage).not.toBeNull();
+
     env.onlineStatus = true;
+
     expect(env.syncButton.nativeElement.disabled).toBe(false);
     expect(env.offlineMessage).toBeNull();
   }));
 
   it('should sync project when the button is clicked', fakeAsync(() => {
-    const env = new TestEnvironment(true);
-    verify(mockedProjectService.get('testProject01')).once();
+    const env = new TestEnvironment();
+    const previousLastSyncDate = new Date(env.component.lastSyncDate);
+    verify(mockedProjectService.get(env.projectId)).once();
+
     env.clickElement(env.syncButton);
-    verify(mockedProjectService.onlineSync('testProject01')).once();
+
+    verify(mockedProjectService.onlineSync(env.projectId)).once();
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).not.toBeNull();
+    expect(env.cancelButton).not.toBeNull();
     expect(env.logInButton).toBeNull();
     expect(env.syncButton).toBeNull();
-    env.emitSyncComplete(true, 'testProject01');
+    env.emitSyncComplete(true, env.projectId);
+    expect(new Date(env.component.lastSyncDate).getTime()).toBeGreaterThan(previousLastSyncDate.getTime());
     verify(mockedNoticeService.show('Successfully synchronized Sync Test Project with Paratext.')).once();
   }));
 
   it('should report error if sync has a problem', fakeAsync(() => {
-    const env = new TestEnvironment(true);
-    verify(mockedProjectService.get('testProject01')).once();
+    const env = new TestEnvironment();
+    verify(mockedProjectService.get(env.projectId)).once();
     env.clickElement(env.syncButton);
-    verify(mockedProjectService.onlineSync('testProject01')).once();
+    verify(mockedProjectService.onlineSync(env.projectId)).once();
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).not.toBeNull();
     // Simulate sync in progress
-    env.emitSyncProgress(0.25, 'testProject01');
+    env.emitSyncProgress(0.25, env.projectId);
+
     // Simulate sync error
-    env.emitSyncComplete(false, 'testProject01');
+    env.emitSyncComplete(false, env.projectId);
+
     expect(env.component.syncActive).toBe(false);
     verify(mockedNoticeService.showMessageDialog(anything())).once();
   }));
@@ -133,37 +144,57 @@ describe('SyncComponent', () => {
     expect(env.syncDisabledMessage).toBeNull();
   }));
 
-  it('should report cancelled if sync was cancelled', fakeAsync(() => {
-    const env = new TestEnvironment(true);
-    verify(mockedProjectService.get('testProject01')).once();
+  it('should not report if sync was cancelled', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const previousLastSyncDate = new Date(env.component.lastSyncDate);
+    verify(mockedProjectService.get(env.projectId)).once();
     env.clickElement(env.syncButton);
-    verify(mockedProjectService.onlineSync('testProject01')).once();
+    verify(mockedProjectService.onlineSync(env.projectId)).once();
+    expect(env.component.syncActive).toBe(true);
+    expect(env.progressBar).not.toBeNull();
+    env.emitSyncProgress(0.25, env.projectId);
+
+    env.clickElement(env.cancelButton);
+    env.emitSyncComplete(false, env.projectId);
+
+    expect(env.component.syncActive).toBe(false);
+    expect(new Date(env.component.lastSyncDate)).toEqual(previousLastSyncDate);
+    verify(mockedNoticeService.show(anything())).never();
+    verify(mockedNoticeService.showMessageDialog(anything())).never();
+  }));
+
+  it('should report success if sync was cancelled but had finished', fakeAsync(() => {
+    const env = new TestEnvironment();
+    verify(mockedProjectService.get(env.projectId)).once();
+    env.clickElement(env.syncButton);
+    verify(mockedProjectService.onlineSync(env.projectId)).once();
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).not.toBeNull();
 
     env.clickElement(env.cancelButton);
-    env.emitSyncComplete(false, 'testProject01');
+    env.emitSyncComplete(true, env.projectId);
 
-    expect(env.component.syncActive).toBe(false);
-    verify(mockedNoticeService.show('Synchronize for Sync Test Project was cancelled.')).once();
+    verify(mockedNoticeService.show('Successfully synchronized Sync Test Project with Paratext.')).once();
+    verify(mockedNoticeService.showMessageDialog(anything())).never();
   }));
 });
 
 class TestEnvironment {
   readonly fixture: ComponentFixture<SyncComponent>;
   readonly component: SyncComponent;
+  readonly projectId = 'testProject01';
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private isLoading: boolean = false;
   private isOnline: BehaviorSubject<boolean>;
 
   constructor(
-    isParatextAccountConnected: boolean = false,
+    isParatextAccountConnected: boolean = true,
     isInProgress: boolean = false,
     isOnline: boolean = true,
     isSyncDisabled: boolean = false
   ) {
-    when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'testProject01' }));
+    when(mockedActivatedRoute.params).thenReturn(of({ projectId: this.projectId }));
     const ptUsername = isParatextAccountConnected ? 'Paratext User01' : '';
     when(mockedParatextService.getParatextUsername()).thenReturn(of(ptUsername));
     when(mockedProjectService.onlineSync(anything()))
@@ -178,7 +209,7 @@ class TestEnvironment {
     const date = new Date();
     date.setMonth(date.getMonth() - 2);
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
-      id: 'testProject01',
+      id: this.projectId,
       data: {
         name: 'Sync Test Project',
         paratextId: 'pt01',
@@ -206,8 +237,8 @@ class TestEnvironment {
       }
     });
 
-    when(mockedProjectService.get('testProject01')).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'testProject01')
+    when(mockedProjectService.get(anyString())).thenCall(projectId =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId)
     );
 
     this.fixture = TestBed.createComponent(SyncComponent);

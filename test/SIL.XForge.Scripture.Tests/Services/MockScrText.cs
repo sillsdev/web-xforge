@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Paratext.Data;
 using Paratext.Data.ProjectFileAccess;
 using Paratext.Data.ProjectSettingsAccess;
@@ -57,6 +57,11 @@ namespace SIL.XForge.Scripture.Services
             _fileManager = Substitute.For<ProjectFileManager>(this, null);
             _fileManager.IsWritable.Returns(true);
             return _fileManager;
+        }
+
+        protected override PermissionManager CreatePermissionManager()
+        {
+            return new ComparableProjectPermissionManager(this);
         }
 
         public override ProjectSettings Settings { get; }
