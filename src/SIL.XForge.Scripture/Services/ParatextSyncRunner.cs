@@ -297,7 +297,11 @@ namespace SIL.XForge.Scripture.Services
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Error occurred while executing Paratext sync for project '{Project}'", projectId);
+                if (!(e is TaskCanceledException))
+                {
+                    _logger.LogError(e, "Error occurred while executing Paratext sync for project '{Project}'", projectId);
+                }
+
                 await CompleteSync(false, canRollbackParatext, token);
             }
             finally
@@ -367,6 +371,7 @@ namespace SIL.XForge.Scripture.Services
             _conn = await _realtimeService.ConnectAsync();
             _conn.BeginTransaction();
             _conn.ExcludePropertyFromTransaction<SFProject>(op => op.Sync.PercentCompleted);
+            _conn.ExcludePropertyFromTransaction<SFProject>(op => op.Sync.QueuedCount);
             _projectDoc = await _conn.FetchAsync<SFProject>(projectId);
             if (!_projectDoc.IsLoaded)
                 return false;
@@ -401,8 +406,81 @@ namespace SIL.XForge.Scripture.Services
 
             if (!XNode.DeepEquals(oldUsxDoc, newUsxDoc))
             {
-                await _paratextService.PutBookText(_userSecret, paratextId, text.BookNum, newUsxDoc.Root.ToString());
+                string usx = newUsxDoc.Root.ToString();
+                var chapterAuthors = await GetChapterAuthorsAsync(text, textDocs);
+                await _paratextService.PutBookText(_userSecret, paratextId, text.BookNum, usx, chapterAuthors);
             }
+        }
+
+        /// <summary>
+        /// Gets the authors for each chapter asynchronously.
+        /// </summary>
+        /// <param name="text">The text info.</param>
+        /// <param name="textDocs">The text data, as a sorted list where the key is the chapter number.</param>
+        /// <returns>
+        /// A dictionary where the key is the chapter number, and the value is the user identifier of the author.
+        /// </returns>
+        /// <remarks>
+        /// This is internal so it can be unit tested.
+        /// </remarks>
+        internal async Task<Dictionary<int, string>> GetChapterAuthorsAsync(TextInfo text,
+            SortedList<int, IDocument<TextData>> textDocs)
+        {
+            // Get all of the last editors for the chapters.
+            var chapterAuthors = new Dictionary<int, string>();
+            foreach (Chapter chapter in text.Chapters)
+            {
+                // This will be from 1 to number of chapters in the book
+                int chapterNum = chapter.Number;
+
+                // Attempt to find the last user who modified this chapter
+                string userId = null;
+                if (textDocs.TryGetValue(chapterNum, out IDocument<TextData> textDoc))
+                {
+                    // The Id is the value from TextData.GetTextDocId()
+                    string textId = textDoc.Id;
+                    int version = textDoc.Version;
+                    userId = await _realtimeService.GetLastModifiedUserIdAsync<TextData>(textId, version);
+
+                    // Check that this user still has write permissions
+                    if (string.IsNullOrEmpty(userId)
+                        || !chapter.Permissions.TryGetValue(userId, out string permission)
+                        || permission != TextInfoPermission.Write)
+                    {
+                        // They no longer have write access, so reset the user id, and find it below
+                        userId = null;
+                    }
+                }
+
+                // If we do not have a record of the last user to modify this chapter
+                if (string.IsNullOrEmpty(userId))
+                {
+                    // See if the current user has permissions
+                    if (chapter.Permissions.TryGetValue(_userSecret.Id, out string permission)
+                        && permission == TextInfoPermission.Write)
+                    {
+                        userId = _userSecret.Id;
+                    }
+                    else
+                    {
+                        // Get the first user with write permission
+                        // NOTE: As a KeyValuePair is a struct, we do not need a null-conditional (key will be null)
+                        userId = chapter.Permissions.FirstOrDefault(p => p.Value == TextInfoPermission.Write).Key;
+
+                        // If the userId is still null, find a project administrator, as they can escalate privilege
+                        if (string.IsNullOrEmpty(userId))
+                        {
+                            userId = _projectDoc.Data.UserRoles
+                                .FirstOrDefault(p => p.Value == SFProjectRole.Administrator).Key;
+                        }
+                    }
+                }
+
+                // Set the author for the chapter
+                chapterAuthors.Add(chapterNum, userId);
+            }
+
+            return chapterAuthors;
         }
 
         /// <summary>

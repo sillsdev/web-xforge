@@ -146,6 +146,55 @@ namespace SIL.XForge.Realtime
             return collection.AsQueryable();
         }
 
+        /// <summary>
+        /// Gets the id of the user who last modified the object asynchronously.
+        /// </summary>
+        /// <typeparam name="T">The type in MongoDB</typeparam>
+        /// <param name="id">The identifier.</param>
+        /// <param name="version">The version. If 0 or lower, the version is ignored.</param>
+        /// <returns>
+        /// The user id, or null if unknown.
+        /// </returns>
+        public async Task<string> GetLastModifiedUserIdAsync<T>(string id, int version) where T : IIdentifiable
+        {
+            // Get the collection and definitions
+            string collectionName = GetCollectionName<T>();
+            IMongoCollection<BsonDocument> opsCollection = _database.GetCollection<BsonDocument>($"o_{collectionName}");
+            FilterDefinitionBuilder<BsonDocument> builder = Builders<BsonDocument>.Filter;
+            FilterDefinition<BsonDocument> filter = builder.Eq("d", id);
+            if (version > 0)
+            {
+                // The version in the Document is always one more than the version in the operations table
+                filter &= builder.Lt("v", version);
+            }
+
+            FieldDefinition<BsonDocument> field = "v";
+            SortDefinition<BsonDocument> sort = Builders<BsonDocument>.Sort.Descending(field);
+
+            // Use FindAsync(), as opposed to Find(), so that we can mock it
+            using IAsyncCursor<BsonDocument> cursor = await opsCollection.FindAsync(filter,
+                new FindOptions<BsonDocument, BsonDocument>()
+                {
+                    Limit = 1,
+                    Sort = sort,
+                });
+            BsonDocument doc = await cursor.FirstOrDefaultAsync();
+
+            // Retrieve uId from the metadata, if present
+            // uId is set by sharedb-access, and will be missing if this op was created by a sync
+            if (doc != null
+                && doc.TryGetValue("m", out BsonValue mValue)
+                && mValue is BsonDocument mDoc
+                && mDoc.TryGetValue("uId", out BsonValue uidValue)
+                && uidValue is BsonString uidString)
+            {
+                return uidString.Value;
+            }
+
+            // Default to null
+            return null;
+        }
+
         internal DocConfig GetDocConfig<T>() where T : IIdentifiable
         {
             return _docConfigs[typeof(T)];

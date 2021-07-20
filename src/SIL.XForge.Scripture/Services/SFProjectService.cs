@@ -327,7 +327,7 @@ namespace SIL.XForge.Scripture.Services
             if (!attempt.TryResult(out SFProject project))
                 throw new DataNotFoundException("The project does not exist.");
 
-            if (!IsProjectAdmin(project, curUserId))
+            if (!(IsProjectAdmin(project, curUserId) || IsProjectTranslator(project, curUserId)))
                 throw new ForbiddenException();
 
             await _syncService.SyncAsync(curUserId, projectId, false);
@@ -339,7 +339,7 @@ namespace SIL.XForge.Scripture.Services
             if (!attempt.TryResult(out SFProject project))
                 throw new DataNotFoundException("The project does not exist.");
 
-            if (!IsProjectAdmin(project, curUserId))
+            if (!(IsProjectAdmin(project, curUserId) || IsProjectTranslator(project, curUserId)))
                 throw new ForbiddenException();
 
             await _syncService.CancelSyncAsync(curUserId, projectId);
@@ -769,6 +769,22 @@ namespace SIL.XForge.Scripture.Services
             {
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Determines whether the user is a project translator for the specified project.
+        /// </summary>
+        /// <param name="project">The project.</param>
+        /// <param name="userId">The user identifier.</param>
+        /// <returns>
+        ///   <c>true</c> if a project translator; otherwise, <c>false</c>.
+        /// </returns>
+        /// <remarks>
+        /// This only checks the local project, and is based on <see cref="ProjectService.IsProjectAdmin" />.
+        /// </remarks>
+        private static bool IsProjectTranslator(SFProject project, string userId)
+        {
+            return project.UserRoles.TryGetValue(userId, out string role) && role == SFProjectRole.Translator;
         }
 
         private static void UpdateSetting<T>(Json0OpBuilder<SFProject> builder, Expression<Func<SFProject, T>> field,

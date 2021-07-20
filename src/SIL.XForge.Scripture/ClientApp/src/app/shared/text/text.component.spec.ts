@@ -83,7 +83,7 @@ describe('TextComponent', () => {
     tick();
     env.fixture.detectChanges();
     expect(env.component.editor?.getText()).toContain('chapter 1, verse 6.', 'setup');
-    expect(env.component.editor?.getContents().ops?.length).toEqual(19, 'setup');
+    expect(env.component.editor?.getContents().ops?.length).toEqual(21, 'setup');
 
     env.component.editor?.updateContents(new Delta().retain(109).retain(31, { para: null }));
 
@@ -95,13 +95,49 @@ describe('TextComponent', () => {
       fail('should not get here if test is working properly!');
     }
   }));
+
+  it('adds data attributes for usfm labels', fakeAsync(() => {
+    const env: TestEnvironment = new TestEnvironment();
+    env.fixture.detectChanges();
+    env.id = new TextDocId('project01', 40, 1);
+    tick();
+    env.fixture.detectChanges();
+
+    // document starts with no description on title
+    const titleSegment = env.component.editor!.container.querySelector('usx-para[data-style="s"] usx-segment')!;
+    expect(titleSegment.getAttribute('data-style-description')).toBeNull();
+
+    // highlighting title causes style description to be shown
+    env.component.highlight(['s_1']);
+    tick();
+
+    expect(titleSegment.getAttribute('data-style-description')).toEqual('s - Heading - Section Level 1');
+    // This is a CSS computed value, and it's a string, so it needs quotes around it
+    expect(window.getComputedStyle(titleSegment, '::before').content).toEqual('"s - Heading - Section Level 1"');
+
+    // highlighting verse 1 does not cause a description to be shown because it's in a paragraph with style p
+    env.component.highlight(['verse_1_1']);
+    tick();
+
+    const verse1 = env.component.editor!.container.querySelector('usx-segment[data-segment="verse_1_1"]')!;
+    expect(verse1.getAttribute('data-style-description')).toBeNull();
+
+    // The title segment should still have its data attribute, but no pseudo element
+    expect(titleSegment.getAttribute('data-style-description')).toEqual('s - Heading - Section Level 1');
+    expect(window.getComputedStyle(titleSegment, '::before').content).toEqual('none');
+  }));
 });
 
 class MockQuill extends Quill {}
 
 @Component({
   selector: 'app-host',
-  template: `<app-text [placeholder]="initialPlaceHolder" [id]="id" [isRightToLeft]="isTextRightToLeft"></app-text>`
+  template: `<app-text
+    [placeholder]="initialPlaceHolder"
+    [id]="id"
+    [isRightToLeft]="isTextRightToLeft"
+    [isReadOnly]="false"
+  ></app-text>`
 })
 class HostComponent {
   @ViewChild(TextComponent) textComponent!: TextComponent;

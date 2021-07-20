@@ -39,7 +39,7 @@ import { SFProjectDoc } from './core/models/sf-project-doc';
 import { canAccessTranslateApp } from './core/models/sf-project-role-info';
 import { SFProjectService } from './core/sf-project.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
-import { SFAdminAuthGuard } from './shared/project-router.guard';
+import { SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
 
 declare function gtag(...args: any): void;
 
@@ -64,7 +64,9 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   checkingVisible: boolean = false;
 
   projectDocs?: SFProjectDoc[];
-  isProjectAdmin$?: Observable<boolean>;
+  canSeeSettings$?: Observable<boolean>;
+  canSeeUsers$?: Observable<boolean>;
+  canSync$?: Observable<boolean>;
   hasUpdate: boolean = false;
 
   private currentUserDoc?: UserDoc;
@@ -84,7 +86,9 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
     private readonly route: ActivatedRoute,
-    private readonly adminAuthGuard: SFAdminAuthGuard,
+    private readonly settingsAuthGuard: SettingsAuthGuard,
+    private readonly syncAuthGuard: SyncAuthGuard,
+    private readonly usersAuthGuard: UsersAuthGuard,
     private readonly dialog: MdcDialog,
     private readonly fileService: FileService,
     private readonly reportingService: ErrorReportingService,
@@ -357,7 +361,9 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         map(r => r.params['projectId'] as string),
         distinctUntilChanged(),
         tap(projectId => {
-          this.isProjectAdmin$ = this.adminAuthGuard.allowTransition(projectId);
+          this.canSeeSettings$ = this.settingsAuthGuard.allowTransition(projectId);
+          this.canSeeUsers$ = this.usersAuthGuard.allowTransition(projectId);
+          this.canSync$ = this.syncAuthGuard.allowTransition(projectId);
           // the project deleted dialog should be closed by now, so we can reset its ref to null
           if (projectId == null) {
             this.projectDeletedDialogRef = null;

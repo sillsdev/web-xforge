@@ -3,7 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Jering.Javascript.NodeJS;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 
 namespace SIL.XForge.Realtime
@@ -22,25 +21,23 @@ namespace SIL.XForge.Realtime
         };
 
         /// <inheritdoc />
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         public async ValueTask<T> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default)
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
-            using (StreamReader sr = new StreamReader(stream, System.Text.Encoding.Default, true, 1024, true))
-            using (JsonTextReader reader = new JsonTextReader(sr))
-            {
-                JToken json = await JToken.LoadAsync(reader, cancellationToken);
-                return json.ToObject<T>(_serializer);
-            }
+            using StreamReader sr = new StreamReader(stream, System.Text.Encoding.Default, true, 1024, true);
+            using JsonTextReader reader = new JsonTextReader(sr);
+            return _serializer.Deserialize<T>(reader);
         }
 
         /// <inheritdoc />
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         public async Task SerializeAsync<T>(Stream stream, T value, CancellationToken cancellationToken = default)
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
-            using (StreamWriter sw = new StreamWriter(stream, System.Text.Encoding.Default, 1024, true))
-            using (JsonWriter writer = new JsonTextWriter(sw))
-            {
-                JToken json = JToken.FromObject(value, _serializer);
-                await json.WriteToAsync(writer, cancellationToken);
-            }
+            using StreamWriter sw = new StreamWriter(stream, System.Text.Encoding.Default, 1024, true);
+            using JsonWriter writer = new JsonTextWriter(sw);
+            _serializer.Serialize(writer, value);
         }
     }
 }

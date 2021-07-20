@@ -1,0 +1,31 @@
+// MongoDB Playground
+// To disable this template go to Settings | MongoDB | Use Default Template For Playground.
+// Make sure you are connected to enable completions and to be able to run a playground.
+// Use Ctrl+Space inside a snippet or a string literal to trigger completions.
+
+// Select the database to use.
+use('xforge');
+
+const projectRef = '6043134b2b2680028c7f3f58'; // Bajjika
+const bookNum = 41 // MRK - check canon.ts
+
+db.translate_metrics.aggregate([
+  { $match: { projectRef, bookNum } },
+  { $group: {
+    _id: '$chapterNum',
+    agSourceWordCount: { $sum: '$sourceWordCount' },
+    agTargetWordCount: { $sum: '$targetWordCount' },
+    agKeyBackspaceCount: { $sum: '$keyBackspaceCount' },
+    agKeyDeleteCount: { $sum: '$keyDeleteCount' },
+    agKeyCharacterCount: { $sum: '$keyCharacterCount' },
+    agProductiveCharacterCount: { $sum: '$productiveCharacterCount' },
+    agSuggestionAcceptedCount: { $sum: '$suggestionAcceptedCount' },
+    agSuggestionTotalCount: { $sum: '$suggestionTotalCount' },
+    agTimeEditActive: { $sum: '$timeEditActive' },
+    agKeyNavigationCount: { $sum: '$keyNavigationCount' },
+    agMouseClickCount: { $sum: '$mouseClickCount' },
+  } },
+  { $sort: { _id: 1 } }
+]);
+
+// db.sf_projects.find({ _id: projectRef });

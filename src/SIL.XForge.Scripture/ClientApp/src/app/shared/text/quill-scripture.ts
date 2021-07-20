@@ -560,29 +560,14 @@ export function registerScripture(): string[] {
   );
   formats.push(CheckingQuestionCountAttribute);
 
-  const NoteThreadSegmentClass = new ClassAttributor('note-thread-segment', 'note-thread-segment', {
-    scope: Parchment.Scope.INLINE
-  });
-  formats.push(NoteThreadSegmentClass);
-
-  const NoteThreadCountAttribute = new QuillParchment.Attributor.Attribute(
-    'note-thread-count',
-    'data-note-thread-count',
+  const ParaStyleDescriptionAttribute = new QuillParchment.Attributor.Attribute(
+    'style-description',
+    'data-style-description',
     {
       scope: Parchment.Scope.INLINE
     }
   );
-  formats.push(NoteThreadCountAttribute);
-
-  const IconSourceAttribute = new QuillParchment.Attributor.Attribute('note-icon-source', 'style', {
-    scope: Parchment.Scope.INLINE
-  });
-  formats.push(IconSourceAttribute);
-
-  const NotePreviewAttribute = new QuillParchment.Attributor.Attribute('note-preview', 'title', {
-    scope: Parchment.Scope.INLINE
-  });
-  formats.push(NotePreviewAttribute);
+  formats.push(ParaStyleDescriptionAttribute);
 
   const InvalidBlockClass = new ClassAttributor('invalid-block', 'invalid-block', {
     scope: Parchment.Scope.BLOCK
