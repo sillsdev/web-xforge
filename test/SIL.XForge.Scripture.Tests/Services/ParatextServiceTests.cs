@@ -17,6 +17,7 @@ using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using Paratext.Data;
 using Paratext.Data.ProjectComments;
+using Paratext.Data.ProjectFileAccess;
 using Paratext.Data.RegistryServerAccess;
 using Paratext.Data.Repository;
 using Paratext.Data.Users;
@@ -461,11 +462,99 @@ namespace SIL.XForge.Scripture.Services
                 Substitute.For<IExceptionHandler>());
             var newDocUsx = mapper.ToUsx(oldDocUsx, new List<ChapterDelta> { new ChapterDelta(1, 2, true, data) });
             await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, newDocUsx.Root.ToString());
-            env.ProjectScrText.FileManager.Received(1)
+            env.ProjectFileManager.Received(1)
                 .WriteFileCreatingBackup(Arg.Any<string>(), Arg.Any<Action<string>>());
 
             // PT username is not written to server logs
             Assert.That(env.MockLogger.Messages.Any((string message) => message.Contains(env.Username01)), Is.False);
+        }
+
+        [Test]
+        public async Task PutBookText_DoesNotRequireChapterAuthors()
+        {
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            // should be able to edit the book text even if the admin user does not have permission
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser, hasEditPermission: false);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01);
+
+            int ruthBookNum = 8;
+            string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere" +
+                "</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />" +
+                "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
+
+            // SUT
+            await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, ruthBookUsx);
+
+            // Make sure only one ScrText was loaded
+            env.MockScrTextCollection.Received(1).FindById(env.Username01, ptProjectId);
+
+            // See if there is a message for the user updating the book
+            string logMessage = string.Format("{0} updated {1} in {2}.", env.User01,
+                    Canon.BookNumberToEnglishName(ruthBookNum), env.ProjectScrText.Name);
+            Assert.That(env.MockLogger.Messages.Any((string message) => message == logMessage), Is.True);
+        }
+
+        [Test]
+        public async Task PutBookText_UpdatesTheBookIfAllSameAuthor()
+        {
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            // should be able to edit the book text even if the admin user does not have permission
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser, hasEditPermission: false);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01);
+
+            int ruthBookNum = 8;
+            string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere" +
+                "</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />" +
+                "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
+            var chapterAuthors = new Dictionary<int, string>
+            {
+                { 1, env.User01 },
+                { 2, env.User01 },
+            };
+
+            // SUT
+            await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, ruthBookUsx, chapterAuthors);
+
+            // Make sure only one ScrText was loaded
+            env.MockScrTextCollection.Received(1).FindById(env.Username01, ptProjectId);
+
+            // See if there is a message for the user updating the book
+            string logMessage = string.Format("{0} updated {1} in {2}.", env.User01,
+                    Canon.BookNumberToEnglishName(ruthBookNum), env.ProjectScrText.Name);
+            Assert.That(env.MockLogger.Messages.Any((string message) => message == logMessage), Is.True);
+        }
+
+        [Test]
+        public async Task PutBookText_UpdatesTheChapterIfDifferentAuthors()
+        {
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            // should be able to edit the book text even if the admin user does not have permission
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser, hasEditPermission: false);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01);
+
+            int ruthBookNum = 8;
+            string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere" +
+                "</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />" +
+                "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
+            var chapterAuthors = new Dictionary<int, string>
+            {
+                { 1, env.User01 },
+                { 2, env.User02 },
+            };
+
+            // SUT
+            await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, ruthBookUsx, chapterAuthors);
+
+            // Make sure two ScrTexts were loaded
+            env.MockScrTextCollection.Received(2).FindById(env.Username01, ptProjectId);
+
+            // See if there is a message for the user updating the chapter
+            string logMessage = string.Format("{0} updated chapter {1} of {2} in {3}.", env.User01, 1,
+                    Canon.BookNumberToEnglishName(ruthBookNum), env.ProjectScrText.Name);
+            Assert.That(env.MockLogger.Messages.Any((string message) => message == logMessage), Is.True);
         }
 
         [Test]
@@ -576,15 +665,15 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(change02.ThreadChangeToString(),
                     Is.EqualTo("Context before Text selected thread02 context after-Start:15-MAT 1:2"));
                 Assert.That(change02.NotesDeleted.Count, Is.EqualTo(1));
-                string expected2 = "thread02-syncuser01-user02-<p>thread02 note 1.</p>-deleted-01flag2";
+                string expected2 = "thread02-syncuser01-user02-<p>thread02 note 1.</p>-deleted-01flag1";
                 Assert.That(change02.NotesDeleted[0].NoteToString(), Is.EqualTo(expected2));
 
                 // Added comment
                 ParatextNoteThreadChange change03 = changes.Where(c => c.ThreadId == "thread03").Single();
                 Assert.That(change03.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread03 context after-Start:15-MAT 1:3-01flag3"));
+                    Is.EqualTo("Context before Text selected thread03 context after-Start:15-MAT 1:3-01flag1"));
                 Assert.That(change03.NotesAdded.Count, Is.EqualTo(1));
-                string expected3 = "thread03-syncuser02-user02-<p>thread03 note 1.</p>-01flag3";
+                string expected3 = "thread03-syncuser02-user02-<p>thread03 note 1.</p>-01flag1";
                 Assert.That(change03.NotesAdded[0].NoteToString(), Is.EqualTo(expected3));
                 Assert.That(syncUsers.Keys, Is.EquivalentTo(new[] { env.Username01, env.Username02 }));
 
@@ -750,6 +839,43 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void SendReceiveAsync_ShareChangesErrors_InResultsOnly()
+        {
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string projectId = env.SetupProject(env.Project01, associatedPtUser);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+
+            IInternetSharedRepositorySource mockSource =
+                env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+            env.SetupSuccessfulSendReceive();
+            // Setup share changes to be unsuccessful, but return true
+            // This scenario occurs if a project is locked on the PT server
+            env.MockSharingLogicWrapper.ShareChanges(Arg.Any<List<SharedProject>>(), Arg.Any<SharedRepositorySource>(),
+                out Arg.Any<List<SendReceiveResult>>(), Arg.Any<List<SharedProject>>()).Returns(x =>
+                {
+                    x[2] = new List<SendReceiveResult>
+                    {
+                        new SendReceiveResult(new SharedProject())
+                        {
+                            Result = SendReceiveResultEnum.Failed,
+                        },
+                    };
+                    return true;
+                });
+
+            InvalidOperationException ex = Assert.ThrowsAsync<InvalidOperationException>(() =>
+                env.Service.SendReceiveAsync(user01Secret, projectId, null));
+            Assert.That(ex.Message, Does.Contain("Failed: Errors occurred"));
+
+            // Check exception is thrown if errors occurred, even if share changes succeeded
+            env.MockSharingLogicWrapper.HandleErrors(Arg.Any<Action>()).Returns(false);
+            ex = Assert.ThrowsAsync<InvalidOperationException>(() =>
+                env.Service.SendReceiveAsync(user01Secret, projectId, null));
+            Assert.That(ex.Message, Does.Contain("Failed: Errors occurred"));
+        }
+
+        [Test]
         public async Task SendReceiveAsync_UserIsAdministrator_Succeeds()
         {
             var env = new TestEnvironment();
@@ -819,6 +945,12 @@ namespace SIL.XForge.Scripture.Services
             env.MockScrTextCollection.FindById(env.Username01, sourceProjectId)
                 .Returns(sourceScrText);
 
+            // Get the permissions, as the ScrText will be disposed in ShareChanges()
+            ComparableProjectPermissionManager sourceScrTextPermissions
+                = (ComparableProjectPermissionManager)sourceScrText.Permissions;
+            ComparableProjectPermissionManager targetScrTextPermissions
+                = (ComparableProjectPermissionManager)env.ProjectScrText.Permissions;
+
             await env.Service.SendReceiveAsync(user01Secret, targetProjectId);
             await env.Service.SendReceiveAsync(user01Secret, sourceProjectId);
             // Below, we are checking also that the SharedProject has a
@@ -831,7 +963,8 @@ namespace SIL.XForge.Scripture.Services
                     list =>
                     list.Count().Equals(1) &&
                         (list[0].SendReceiveId.Id == targetProjectId || list[0].SendReceiveId.Id == sourceProjectId) &&
-                        Object.ReferenceEquals(list[0].Permissions, list[0].ScrText.Permissions)),
+                        (sourceScrTextPermissions.Equals((ComparableProjectPermissionManager)list[0].Permissions)
+                        || targetScrTextPermissions.Equals((ComparableProjectPermissionManager)list[0].Permissions))),
                     Arg.Any<SharedRepositorySource>(), out Arg.Any<List<SendReceiveResult>>(),
                     Arg.Any<List<SharedProject>>());
             env.MockFileSystemService.DidNotReceive().DeleteDirectory(Arg.Any<string>());
@@ -1185,6 +1318,7 @@ namespace SIL.XForge.Scripture.Services
 
             public MockScrText ProjectScrText { get; set; }
             public CommentManager ProjectCommentManager { get; set; }
+            public ProjectFileManager ProjectFileManager { get; set; }
 
             public UserSecret MakeUserSecret(string userSecretId, string username)
             {
@@ -1318,6 +1452,10 @@ namespace SIL.XForge.Scripture.Services
                 }
                 mockSource.GetRepositories().Returns(sharedRepositories);
                 mockSource.GetProjectsMetaData().Returns(new[] { projMeta1, projMeta2, projMeta3 });
+
+                // An HttpException means that the repo is already unlocked, so any code should be OK with this
+                mockSource.When(s => s.UnlockRemoteRepository(Arg.Any<SharedRepository>()))
+                    .Do(x => throw HttpException.Create(new WebException(), GenericRequest.Create(new Uri("http://localhost/"))));
                 MockInternetSharedRepositorySourceProvider.GetSource(Arg.Is<UserSecret>(s => s.Id == userSecret.Id),
                         Arg.Any<string>(), Arg.Any<string>()).Returns(mockSource);
                 return mockSource;
@@ -1471,6 +1609,12 @@ namespace SIL.XForge.Scripture.Services
             {
                 string ptProjectId = PTProjectIds[baseId].Id;
                 ProjectScrText = GetScrText(associatedPtUser, ptProjectId, hasEditPermission);
+
+                // We set the file manager her so we can track file manager operations after
+                // the ScrText object has been disposed in ParatextService.
+                ProjectFileManager = Substitute.For<ProjectFileManager>(ProjectScrText, null);
+                ProjectFileManager.IsWritable.Returns(true);
+                ProjectScrText.SetFileManager(ProjectFileManager);
                 ProjectCommentManager = CommentManager.Get(ProjectScrText);
                 MockScrTextCollection.FindById(Arg.Any<string>(), ptProjectId)
                     .Returns(ProjectScrText);

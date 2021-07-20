@@ -202,7 +202,6 @@
     "something_went_wrong_synchronizing_this_project": "Algo salió mal al sincronizar {{ projectName }} con Paratext. Inténtalo de nuevo.",
     "successfully_synchronized_with_paratext": "{{ projectName }} fue sincronizado con éxito con Paratext.",
     "synchronize": "Sincronizar",
-    "synchronize_was_cancelled": "Synchronize for {{ projectName }} was cancelled.",
     "synchronize_project": "Sincronizar {{ projectName }} con Paratext",
     "your_project_is_being_synchronized": "Su proyecto está siendo sincronizado...",
     "sync_is_disabled": "La sincronización para este proyecto tenía que ser desactivada, por lo que no está disponible en este momento. Por favor, contacte con {{ email }} para discutir lo que hay que hacer para que la sincronización del proyecto pueda ser activada de nuevo."

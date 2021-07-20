@@ -108,7 +108,7 @@ export class SFValidators {
  */
 export class ParentAndStartErrorStateMatcher implements ErrorStateMatcher {
   isErrorState(control: FormControl | null, _form: FormGroupDirective | NgForm | null): boolean {
-    if (control == null) {
+    if (control == null || control.parent == null) {
       return false;
     }
 
@@ -131,7 +131,7 @@ export class ParentAndStartErrorStateMatcher implements ErrorStateMatcher {
  */
 export class StartReferenceRequiredErrorStateMatcher implements ErrorStateMatcher {
   isErrorState(control: FormControl | null, _form: FormGroupDirective | NgForm | null): boolean {
-    if (control == null) {
+    if (control == null || control.parent == null) {
       return false;
     }
 

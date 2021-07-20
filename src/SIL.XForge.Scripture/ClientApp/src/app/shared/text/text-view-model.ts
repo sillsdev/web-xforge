@@ -2,6 +2,7 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
 import { Subscription } from 'rxjs';
 import { Delta, TextDoc } from '../../core/models/text-doc';
+import { USFM_STYLE_DESCRIPTIONS } from './usfm-style-descriptions';
 
 const PARA_STYLES: Set<string> = new Set<string>([
   // Paragraphs
@@ -209,6 +210,52 @@ export class TextViewModel {
     editor.updateContents(clearDelta, 'silent');
   }
 
+  /**
+   * Sets USFM descriptions on a segment in the document so CSS can read the data attribute and show a pseudo element
+   * with the description. In order to properly place the pseudo element, the description needs to go on the first
+   * segment of the paragraph, rather than the paragraph itself.
+   * The strategy to accomplish this is as follows:
+   * - Find the index of the op that inserts the currently highlighted segment.
+   * - Find the style of the paragraph by finding the first style-setting op that comes after the segment's op (the
+   * style comes after the paragraph it applies to).
+   * - Find the start of the paragraph by finding the last style-setting op that comes before the highlighted segment's
+   * op (this won't exist when the highlighted segment is in the first paragraph).
+   * - Find the the first segment-creating op that comes after the end of the preceding paragraph, or the firs
+   * segment-creating if there is no preceding paragraph).
+   * - Apply the style description to that segment.
+   */
+  updateUsfmDescription(): void {
+    const editor = this.checkEditor();
+    const delta = editor.getContents();
+    const clearDelta = new Delta();
+    if (delta.ops == null) {
+      return;
+    }
+
+    const highlightedSegmentIndex = delta.ops.findIndex(op => op.attributes?.['highlight-segment'] === true);
+    const styleOpIndexes = delta.ops.map((op, i) => (op.attributes?.para?.style ? i : -1)).filter(i => i !== -1);
+
+    // This may be -1 if there is no style specified
+    const indexOfParagraphStyle = Math.min(...styleOpIndexes.filter(i => i > highlightedSegmentIndex));
+    const style = delta.ops[indexOfParagraphStyle]?.attributes?.para?.style;
+    const description = USFM_STYLE_DESCRIPTIONS[style];
+    if (typeof description !== 'string' || style === 'p') {
+      return;
+    }
+
+    // Math.max will return -Infinity when there is no preceding paragraph
+    const precedingParagraphIndex = Math.max(...styleOpIndexes.filter(i => i < highlightedSegmentIndex));
+    const indexOfFirstSegmentInParagraph = delta.ops.findIndex(
+      (op, i) => i > precedingParagraphIndex && op.attributes?.segment != null
+    );
+
+    for (const [i, op] of delta.ops.entries()) {
+      const len = typeof op.insert === 'string' ? op.insert.length : 1;
+      clearDelta.retain(len, indexOfFirstSegmentInParagraph === i ? { 'style-description': description } : {});
+    }
+    editor.updateContents(clearDelta, 'silent');
+  }
+
   hasSegmentRange(ref: string): boolean {
     return this._segments.has(ref);
   }
@@ -290,7 +337,8 @@ export class TextViewModel {
           'note-preview',
           'initial',
           'direction-segment',
-          'direction-block'
+          'direction-block',
+          'style-description'
         ]) {
           removeAttribute(modelOp, attr);
         }

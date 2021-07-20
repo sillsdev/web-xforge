@@ -169,7 +169,7 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<SaUsersComponent>;
 
   readonly numUsersOnProject = 3;
-  readonly mockedDeleteUserDialogRef: MdcDialogRef<SaDeleteDialogComponent> = mock(MdcDialogRef);
+  readonly mockedDeleteUserDialogRef = mock<MdcDialogRef<SaDeleteDialogComponent>>(MdcDialogRef);
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 

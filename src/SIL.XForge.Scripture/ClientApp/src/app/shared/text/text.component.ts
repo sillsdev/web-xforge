@@ -317,7 +317,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   get readOnlyEnabled(): boolean {
-    return this.isReadOnly || (this.viewModel != null && this.viewModel.isEmpty);
+    return this.isReadOnly || this.viewModel.isEmpty;
   }
 
   get textDirection(): 'ltr' | 'rtl' | 'auto' {
@@ -546,7 +546,12 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
     if (segmentRefs != null) {
       // this changes the underlying HTML, which can mess up some Quill events, so defer this call
-      Promise.resolve().then(() => this.viewModel.highlight(segmentRefs!));
+      Promise.resolve(segmentRefs).then(refs => {
+        this.viewModel.highlight(refs);
+        if (!this.readOnlyEnabled) {
+          this.viewModel.updateUsfmDescription();
+        }
+      });
     }
 
     if (!this.isReadOnly && this._id.textType === 'target' && this.highlightMarker != null) {

@@ -50,9 +50,8 @@
             <mdc-list-item
               *ngIf="questionCount(text.bookNum, chapter.number) > 0"
               (selectionChange)="
-                itemVisible[getTextDocId(text.bookNum, chapter.number)] = !itemVisible[
-                  getTextDocId(text.bookNum, chapter.number)
-                ]
+                itemVisible[getTextDocId(text.bookNum, chapter.number)] =
+                  !itemVisible[getTextDocId(text.bookNum, chapter.number)]
               "
             >
               <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
@@ -209,9 +208,8 @@
             <mdc-list-item
               *ngIf="questionCount(text.bookNum, chapter.number, true) > 0"
               (selectionChange)="
-                itemVisibleArchived[getTextDocId(text.bookNum, chapter.number)] = !itemVisibleArchived[
-                  getTextDocId(text.bookNum, chapter.number)
-                ]
+                itemVisibleArchived[getTextDocId(text.bookNum, chapter.number)] =
+                  !itemVisibleArchived[getTextDocId(text.bookNum, chapter.number)]
               "
               ><div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
                 <span fxFlex="16px" class="indent"></span>

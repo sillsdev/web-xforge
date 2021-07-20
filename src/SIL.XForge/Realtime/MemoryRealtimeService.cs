@@ -42,6 +42,17 @@ namespace SIL.XForge.Realtime
         }
 
         /// <summary>
+        /// Gets or sets the last modified user identifier.
+        /// </summary>
+        /// <value>
+        /// The last modified user identifier.
+        /// </value>
+        /// <remarks>
+        /// This is only for unit test use.
+        /// </remarks>
+        public string LastModifiedUserId { get; set; }
+
+        /// <summary>
         /// Count of calls to DeleteUserAsync(), for tests.
         /// </summary>
         internal int CallCountDeleteUserAsync { get; set; } = 0;
@@ -74,6 +85,20 @@ namespace SIL.XForge.Realtime
         {
             DocConfig docConfig = GetDocConfig<T>();
             return docConfig.CollectionName;
+        }
+
+        /// <summary>
+        /// Gets the last modified user's identifier asynchronously.
+        /// </summary>
+        /// <returns>
+        /// Null.
+        /// </returns>
+        /// <remarks>
+        /// This is overridable for unit tests.
+        /// </remarks>
+        public Task<string> GetLastModifiedUserIdAsync<T>(string id, int version) where T : IIdentifiable
+        {
+            return Task.FromResult(LastModifiedUserId);
         }
 
         public IQueryable<T> QuerySnapshots<T>() where T : IIdentifiable

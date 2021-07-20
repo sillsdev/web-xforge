@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -16,6 +16,7 @@ using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
+using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -677,6 +678,31 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task SyncAsync_TaskAbortedByExceptionWritesToLog()
+        {
+            // Set up the environment
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, false, false);
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+            var cancellationTokenSource = new CancellationTokenSource();
+
+            // Setup a trap to crash the task
+            env.NotesMapper.When(x => x.InitAsync(Arg.Any<UserSecret>(), Arg.Any<SFProjectSecret>(),
+                Arg.Any<List<User>>(), Arg.Any<string>(), Arg.Any<CancellationToken>()))
+                .Do(_ => throw new ArgumentException());
+
+            // Run the task
+            await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+
+            // Check that the Exception was logged
+            env.Logger.ReceivedWithAnyArgs(1).LogError(Arg.Any<Exception>(), default, default);
+
+            // Check that the task cancelled correctly
+            SFProject project = env.VerifyProjectSync(false);
+            Assert.That(project.Sync.DataInSync, Is.True);  // Nothing was synced as this was cancelled OnInit()
+        }
+
+        [Test]
         public async Task SyncAsync_TaskCancelledByException()
         {
             // Set up the environment
@@ -692,6 +718,9 @@ namespace SIL.XForge.Scripture.Services
 
             // Run the task
             await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+
+            // Check that the TaskCancelledException was not logged
+            env.Logger.DidNotReceiveWithAnyArgs().LogError(Arg.Any<Exception>(), default, default);
 
             // Check that the task cancelled correctly
             SFProject project = env.VerifyProjectSync(false);
@@ -738,6 +767,31 @@ namespace SIL.XForge.Scripture.Services
             // Check that the task was cancelled after awaiting the check above
             SFProject project = env.VerifyProjectSync(false);
             Assert.That(project.Sync.DataInSync, Is.False);
+        }
+
+        [Test]
+        public async Task SyncAsync_ExcludesPropertiesFromTransactions()
+        {
+            // Set up the environment
+            var env = new TestEnvironment(substituteRealtimeService: true);
+            env.SetupSFData(true, true, false, false);
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+            var cancellationTokenSource = new CancellationTokenSource();
+
+            // Throw an TaskCanceledException in InitAsync after the exclusions have been called
+            env.Connection.FetchAsync<SFProject>("project01")
+                .Returns(Task.FromException<IDocument<SFProject>>(new TaskCanceledException()));
+
+            // Run the task
+            await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+
+            // Only check for ExcludePropertyFromTransaction being executed,
+            // as the substitute RealtimeService will not update documents.
+            env.Connection.Received(1).ExcludePropertyFromTransaction(Arg.Is<Expression<Func<SFProject, object>>>(
+                ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.PercentCompleted"));
+            env.Connection.Received(1).ExcludePropertyFromTransaction(Arg.Is<Expression<Func<SFProject, object>>>(
+                ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.QueuedCount"));
+            env.Connection.Received(2).ExcludePropertyFromTransaction(Arg.Any<Expression<Func<SFProject, object>>>());
         }
 
         [Test]
@@ -822,6 +876,118 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(sourceFetch.Keys.SequenceEqual(existingSourceChapters));
             Assert.That(targetFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
             Assert.That(sourceFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
+        }
+
+        [Test]
+        public async Task GetChapterAuthors_FromMongoDB()
+        {
+            // Setup
+            // Note that the last modified userId is set to user05
+            // So the user id will be retrieved from GetLastModifiedUserIdAsync()
+            // But note that user05 must also be in the chapter permissions to be used
+            var env = new TestEnvironment();
+            TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: false);
+            await env.Runner.InitAsync("project01", "user01", CancellationToken.None);
+            var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
+            textInfo.Chapters.First().Permissions.Add("user05", TextInfoPermission.Write);
+            env.RealtimeService.LastModifiedUserId = "user05";
+
+            // SUT
+            Dictionary<int, string> chapterAuthors = await env.Runner.GetChapterAuthorsAsync(textInfo, textDocs);
+            Assert.AreEqual(1, chapterAuthors.Count);
+            Assert.AreEqual(new KeyValuePair<int, string>(1, "user05"), chapterAuthors.First());
+        }
+
+        [Test]
+        public async Task GetChapterAuthors_FromUserSecret()
+        {
+            // Setup
+            // Note that the InitAsync() userId is user01, and setChapterPermissions is true,
+            // So the user id will be retrieved from the user secret
+            var env = new TestEnvironment();
+            TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: true);
+            await env.Runner.InitAsync("project01", "user01", CancellationToken.None);
+            var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
+
+            // SUT
+            Dictionary<int, string> chapterAuthors = await env.Runner.GetChapterAuthorsAsync(textInfo, textDocs);
+            Assert.AreEqual(1, chapterAuthors.Count);
+            Assert.AreEqual(new KeyValuePair<int, string>(1, "user01"), chapterAuthors.First());
+        }
+
+        [Test]
+        public async Task GetChapterAuthors_FromChapterPermissions()
+        {
+            // Setup
+            // Note that the InitAsync() userId is user02, and setChapterPermissions is true,
+            // So the user id will be retrieved from the chapter permissions
+            var env = new TestEnvironment();
+            TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: true);
+            await env.Runner.InitAsync("project01", "user02", CancellationToken.None);
+            var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
+
+            // SUT
+            Dictionary<int, string> chapterAuthors = await env.Runner.GetChapterAuthorsAsync(textInfo, textDocs);
+            Assert.AreEqual(1, chapterAuthors.Count);
+            Assert.AreEqual(new KeyValuePair<int, string>(1, "user01"), chapterAuthors.First());
+        }
+
+        [Test]
+        public async Task GetChapterAuthors_FromProjectDoc()
+        {
+            // Setup
+            // Note that the InitAsync() userId is user02, and setChapterPermissions is false,
+            // So the user id will be retrieved from the project doc
+            var env = new TestEnvironment();
+            TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: false);
+            await env.Runner.InitAsync("project01", "user02", CancellationToken.None);
+            var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
+
+            // SUT
+            Dictionary<int, string> chapterAuthors = await env.Runner.GetChapterAuthorsAsync(textInfo, textDocs);
+            Assert.AreEqual(1, chapterAuthors.Count);
+            Assert.AreEqual(new KeyValuePair<int, string>(1, "user03"), chapterAuthors.First());
+        }
+
+        [Test]
+        public async Task GetChapterAuthors_ChecksLastModifiedUserPermission()
+        {
+            // Setup
+            // Note that the last modified userId is set to user06
+            // So the user id will be retrieved from GetLastModifiedUserIdAsync()
+            // But will not pass the chapter permissions test (only user05 has permission)
+            var env = new TestEnvironment();
+            TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: false);
+            await env.Runner.InitAsync("project01", "user01", CancellationToken.None);
+            var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
+            textInfo.Chapters.First().Permissions.Add("user05", TextInfoPermission.Write);
+            env.RealtimeService.LastModifiedUserId = "user06";
+
+            // SUT
+            Dictionary<int, string> chapterAuthors = await env.Runner.GetChapterAuthorsAsync(textInfo, textDocs);
+            Assert.AreEqual(1, chapterAuthors.Count);
+            Assert.AreEqual(new KeyValuePair<int, string>(1, "user05"), chapterAuthors.First());
+        }
+
+        [Test]
+        public async Task GetChapterAuthors_ChecksLastModifiedUserWritePermission()
+        {
+            // Setup
+            // Note that the last modified userId is set to user05
+            // So the user id will be retrieved from GetLastModifiedUserIdAsync()
+            // But will not pass the chapter permissions test (user05 can only read)
+            // However, user03 will be used because they are the project administrator
+            var env = new TestEnvironment();
+            TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: false);
+            await env.Runner.InitAsync("project01", "user01", CancellationToken.None);
+            var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
+            textInfo.Chapters.First().Permissions.Add("user05", TextInfoPermission.Read);
+            env.RealtimeService.LastModifiedUserId = "user05";
+
+            // SUT
+            Dictionary<int, string> chapterAuthors = await env.Runner.GetChapterAuthorsAsync(textInfo, textDocs);
+            Assert.AreEqual(1, chapterAuthors.Count);
+            Assert.AreEqual(new KeyValuePair<int, string>(1, "user03"), chapterAuthors.First());
         }
 
         [Test]
@@ -958,7 +1124,12 @@ namespace SIL.XForge.Scripture.Services
             private readonly MemoryRepository<SFProjectSecret> _projectSecrets;
             private bool _sendReceivedCalled = false;
 
-            public TestEnvironment()
+            /// <summary>
+            /// Initializes a new instance of the <see cref="TestEnvironment" /> class.
+            /// </summary>
+            /// <param name="substituteRealtimeService">If set to <c>true</c> use a substitute realtime service rather
+            /// than the <see cref="SFMemoryRealtimeService" />.</param>
+            public TestEnvironment(bool substituteRealtimeService = false)
             {
                 var userSecrets = new MemoryRepository<UserSecret>(new[]
                 {
@@ -1004,12 +1175,16 @@ namespace SIL.XForge.Scripture.Services
                 ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "source")
                     .Returns("beforeSR", "afterSR");
                 RealtimeService = new SFMemoryRealtimeService();
+                Connection = Substitute.For<IConnection>();
+                SubstituteRealtimeService = Substitute.For<IRealtimeService>();
+                SubstituteRealtimeService.ConnectAsync().Returns(Task.FromResult(Connection));
                 DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
                 NotesMapper = Substitute.For<IParatextNotesMapper>();
                 Logger = Substitute.For<ILogger<ParatextSyncRunner>>();
 
                 Runner = new ParatextSyncRunner(userSecrets, _projectSecrets, SFProjectService, EngineService,
-                    ParatextService, RealtimeService, DeltaUsxMapper, NotesMapper, Logger);
+                    ParatextService, substituteRealtimeService ? SubstituteRealtimeService : RealtimeService,
+                    DeltaUsxMapper, NotesMapper, Logger);
             }
 
             public ParatextSyncRunner Runner { get; }
@@ -1018,8 +1193,14 @@ namespace SIL.XForge.Scripture.Services
             public IParatextNotesMapper NotesMapper { get; }
             public IParatextService ParatextService { get; }
             public SFMemoryRealtimeService RealtimeService { get; }
+            public IRealtimeService SubstituteRealtimeService { get; }
             public IDeltaUsxMapper DeltaUsxMapper { get; }
             public ILogger<ParatextSyncRunner> Logger { get; }
+
+            /// <summary>
+            /// Gets the connection to be used with <see cref="SubstituteRealtimeService"/>.
+            /// </summary>
+            public IConnection Connection { get; }
 
             public SFProject GetProject(string projectSFId = "project01")
             {
@@ -1082,6 +1263,56 @@ namespace SIL.XForge.Scripture.Services
                 string repoVersion = expectedRepoVersion ?? (successful ? "afterSR" : "beforeSR");
                 Assert.That(project.Sync.SyncedToRepositoryVersion, Is.EqualTo(repoVersion));
                 return project;
+            }
+
+            public TextInfo SetupChapterAuthorsAndGetTextInfo(bool setChapterPermissions)
+            {
+                string projectId = "project01";
+                int bookNum = 70;
+                int chapterNum = 1;
+                string id = TextData.GetTextDocId(projectId, bookNum, chapterNum);
+                Dictionary<string, string> chapterPermissions = new Dictionary<string, string>();
+                if (setChapterPermissions)
+                {
+                    chapterPermissions.Add("user01", TextInfoPermission.Write);
+                    chapterPermissions.Add("user02", TextInfoPermission.Read);
+                }
+                var textInfo = new TextInfo
+                {
+                    BookNum = bookNum,
+                    Chapters = new List<Chapter>
+                    {
+                        new Chapter
+                        {
+                            Number = chapterNum,
+                            Permissions = chapterPermissions,
+                        },
+                    },
+                };
+                RealtimeService.AddRepository("users", OTType.Json0, new MemoryRepository<User>(new[]
+                {
+                    new User
+                    {
+                        Id = "user01"
+                    },
+                }));
+                RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>(new[]
+                {
+                    new TextData(Delta.New()) { Id = id },
+                }));
+                RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(new[]
+                {
+                    new SFProject
+                    {
+                        Id = projectId,
+                        UserRoles = new Dictionary<string, string>
+                        {
+                            { "user03", SFProjectRole.Administrator },
+                            { "user04", SFProjectRole.Translator },
+                        },
+                    },
+                }));
+                return textInfo;
             }
 
             public void SetupSFData(bool translationSuggestionsEnabled, bool checkingEnabled, bool changed,

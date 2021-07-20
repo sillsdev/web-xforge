@@ -560,6 +560,15 @@ export function registerScripture(): string[] {
   );
   formats.push(CheckingQuestionCountAttribute);
 
+  const ParaStyleDescriptionAttribute = new QuillParchment.Attributor.Attribute(
+    'style-description',
+    'data-style-description',
+    {
+      scope: Parchment.Scope.INLINE
+    }
+  );
+  formats.push(ParaStyleDescriptionAttribute);
+
   const NoteThreadSegmentClass = new ClassAttributor('note-thread-segment', 'note-thread-segment', {
     scope: Parchment.Scope.INLINE
   });

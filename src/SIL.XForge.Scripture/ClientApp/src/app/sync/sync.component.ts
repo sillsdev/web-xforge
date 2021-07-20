@@ -78,9 +78,12 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
   set syncActive(isActive: boolean) {
     if (this._syncActive && !isActive && this.projectDoc?.data != null) {
       const projectName: string = this.projectDoc.data.name;
-      if (this.isSyncCancelled && new Date(this.lastSyncDate) <= this.previousLastSyncDate!) {
-        this.noticeService.show(translate('sync.synchronize_was_cancelled', { projectName }));
-      } else {
+      if (
+        !(
+          this.isSyncCancelled &&
+          (this.previousLastSyncDate == null || new Date(this.lastSyncDate) <= this.previousLastSyncDate)
+        )
+      ) {
         if (this.projectDoc.data.sync.lastSyncSuccessful) {
           this.noticeService.show(translate('sync.successfully_synchronized_with_paratext', { projectName }));
           this.previousLastSyncDate = new Date(this.lastSyncDate);
@@ -162,6 +165,8 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
       this.syncDisabled = this.projectDoc.data.syncDisabled;
     }
     this._syncActive = this.projectDoc.data.sync.queuedCount > 0;
-    this.previousLastSyncDate = new Date(this.lastSyncDate);
+    if (this.projectDoc.data.sync.lastSyncSuccessful) {
+      this.previousLastSyncDate = new Date(this.lastSyncDate);
+    }
   }
 }
