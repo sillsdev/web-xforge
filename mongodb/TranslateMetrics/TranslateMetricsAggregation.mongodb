@@ -1,13 +1,23 @@
 // MongoDB Playground
-// To disable this template go to Settings | MongoDB | Use Default Template For Playground.
 // Make sure you are connected to enable completions and to be able to run a playground.
 // Use Ctrl+Space inside a snippet or a string literal to trigger completions.
+
+// Aggregates the translate metrics for the given project and book.
+// Check in the VSCode Output panel to confirm the correct project and book.
+
+const path = require('path');
+const { Canon } = require(path.resolve('./src/RealtimeServer/lib/cjs/scriptureforge/scripture-utils/canon.js'));
 
 // Select the database to use.
 use('xforge');
 
-const projectRef = '6043134b2b2680028c7f3f58'; // Bajjika
-const bookNum = 41 // MRK - check canon.ts
+const projectRef = '60e57ea17e9c4e37643a57de';
+const bookId = 'JHN';
+
+const bookNum = Canon.bookIdToNumber(bookId);
+const project = db.sf_projects.findOne({ _id: projectRef });
+console.log(`project: ${project.shortName} - ${project.name}`);
+console.log('book: ' + Canon.bookNumberToEnglishName(bookNum));
 
 db.translate_metrics.aggregate([
   { $match: { projectRef, bookNum } },
@@ -27,5 +37,3 @@ db.translate_metrics.aggregate([
   } },
   { $sort: { _id: 1 } }
 ]);
-
-// db.sf_projects.find({ _id: projectRef });
