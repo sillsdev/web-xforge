@@ -665,15 +665,15 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(change02.ThreadChangeToString(),
                     Is.EqualTo("Context before Text selected thread02 context after-Start:15-MAT 1:2"));
                 Assert.That(change02.NotesDeleted.Count, Is.EqualTo(1));
-                string expected2 = "thread02-syncuser01-user02-<p>thread02 note 1.</p>-deleted-01flag2";
+                string expected2 = "thread02-syncuser01-user02-<p>thread02 note 1.</p>-deleted-01flag1";
                 Assert.That(change02.NotesDeleted[0].NoteToString(), Is.EqualTo(expected2));
 
                 // Added comment
                 ParatextNoteThreadChange change03 = changes.Where(c => c.ThreadId == "thread03").Single();
                 Assert.That(change03.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread03 context after-Start:15-MAT 1:3-01flag3"));
+                    Is.EqualTo("Context before Text selected thread03 context after-Start:15-MAT 1:3-01flag1"));
                 Assert.That(change03.NotesAdded.Count, Is.EqualTo(1));
-                string expected3 = "thread03-syncuser02-user02-<p>thread03 note 1.</p>-01flag3";
+                string expected3 = "thread03-syncuser02-user02-<p>thread03 note 1.</p>-01flag1";
                 Assert.That(change03.NotesAdded[0].NoteToString(), Is.EqualTo(expected3));
                 Assert.That(syncUsers.Keys, Is.EquivalentTo(new[] { env.Username01, env.Username02 }));
 

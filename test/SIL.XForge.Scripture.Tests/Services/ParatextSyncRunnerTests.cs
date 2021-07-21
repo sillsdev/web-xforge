@@ -682,7 +682,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // Set up the environment
             var env = new TestEnvironment();
-            env.SetupSFData(true, true, false);
+            env.SetupSFData(true, true, false, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
             var cancellationTokenSource = new CancellationTokenSource();
 
@@ -774,7 +774,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // Set up the environment
             var env = new TestEnvironment(substituteRealtimeService: true);
-            env.SetupSFData(true, true, false);
+            env.SetupSFData(true, true, false, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
             var cancellationTokenSource = new CancellationTokenSource();
 
