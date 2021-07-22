@@ -51,6 +51,7 @@ The rest of this document discusses the development of the underlying software.
 - [Debugging](#debugging)
 - [Database](#database)
 - [USX Validation](#usx-validation)
+- [Architecture and design](#architecture-and-design)
 
 ## Sites
 
@@ -523,3 +524,8 @@ Convert the schema to XML Schema format by running
 cd src/SIL.XForge.Scripture
 trang usx-sf.rnc usx-sf.xsd
 ```
+
+## Architecture and design
+
+<img src="https://docs.google.com/drawings/d/e/2PACX-1vQjPZcXN0p9cZRf6cV8SRmjPMlQhwlFIH9GvSrYmbMcdK93NXVHFUhkm0LEEXcQKsSwdO6eRHbUpPtB/pub?w=959&amp;h=651" alt="SF and PT synchronization process">
+
