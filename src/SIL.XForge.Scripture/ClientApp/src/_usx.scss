@@ -316,6 +316,14 @@ quill-editor.rtl {
   }
 }
 
+usx-blank {
+  width: 35px;
+  display: inline-block;
+  span {
+    font-size: 0;
+  }
+}
+
 usx-char {
   &[data-style='it'] {
     font-style: italic;

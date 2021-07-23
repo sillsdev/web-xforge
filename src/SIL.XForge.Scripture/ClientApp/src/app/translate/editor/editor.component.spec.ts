@@ -16,7 +16,7 @@ import {
 } from '@sillsdev/machine';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { CookieService } from 'ngx-cookie-service';
-import Quill from 'quill';
+import Quill, { DeltaStatic, Sources } from 'quill';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
@@ -202,7 +202,7 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_2');
       const selection = env.targetEditor.getSelection();
-      expect(selection!.index).toBe(31);
+      expect(selection!.index).toBe(32);
       expect(selection!.length).toBe(0);
       expect(env.getProjectUserConfigDoc().data!.selectedSegment).toBe('verse_1_2');
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
@@ -229,7 +229,7 @@ describe('EditorComponent', () => {
       expect(op.insert.blank).toBeUndefined();
       expect(op.attributes!.segment).toEqual('p_1');
 
-      env.targetEditor.setSelection(index - 1, 1, 'user');
+      env.targetEditor.setSelection(index - 2, 1, 'user');
       env.deleteCharacters();
       segmentRange = env.component.target!.segment!.range;
       segmentContents = env.targetEditor.getContents(segmentRange.index, segmentRange.length);
@@ -257,7 +257,7 @@ describe('EditorComponent', () => {
       expect(op.insert.blank).toBeUndefined();
       expect(op.attributes!.segment).toEqual('verse_1_4/p_1');
 
-      env.targetEditor.setSelection(index - 1, 1, 'user');
+      env.targetEditor.setSelection(index - 2, 1, 'user');
       env.deleteCharacters();
       segmentRange = env.component.target!.segment!.range;
       segmentContents = env.targetEditor.getContents(segmentRange.index, segmentRange.length);
@@ -889,7 +889,7 @@ describe('EditorComponent', () => {
       expect(contents.ops![6].insert).toEqual({ verse: { number: '3', style: 'v' } });
       expect(contents.ops![6].attributes).toEqual({ 'para-contents': true });
       const selection = env.targetEditor.getSelection();
-      expect(selection!.index).toBe(31);
+      expect(selection!.index).toBe(32);
       expect(selection!.length).toBe(0);
 
       env.triggerRedo();
@@ -902,6 +902,49 @@ describe('EditorComponent', () => {
       });
       expect(contents.ops![6].insert).toEqual({ verse: { number: '3', style: 'v' } });
       expect(contents.ops![6].attributes).toEqual({ 'para-contents': true });
+
+      env.dispose();
+    }));
+
+    it('ensure inserting in a blank segment only produces required delta ops', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.wait();
+
+      const range = env.component.target!.getSegmentRange('verse_1_2');
+      env.targetEditor.setSelection(range!.index + 1, 0, 'user');
+      env.wait();
+      expect(env.component.target!.segmentRef).toBe('verse_1_2');
+
+      let contents = env.targetEditor.getContents();
+      expect(contents.ops![5].insert).toEqual({ blank: true });
+
+      // Keep track of operations triggered in Quill
+      let textChangeOps: RichText.DeltaOperation[] = [];
+      env.targetEditor.on('text-change', (delta: DeltaStatic, oldContents: DeltaStatic, source: Sources) => {
+        if (delta.ops != null) {
+          textChangeOps = textChangeOps.concat(
+            delta.ops.map(op => {
+              delete op.attributes;
+              return op;
+            })
+          );
+        }
+      });
+
+      // Type a character and observe the correct operations are returned
+      env.typeCharacters('t');
+      contents = env.targetEditor.getContents();
+      expect(contents.ops![5].insert).toEqual('t');
+      const expectedOps = [
+        { retain: 32 },
+        { insert: 't' },
+        { retain: 31 },
+        { delete: 1 },
+        { retain: 1 },
+        { retain: 31 },
+        { retain: 1 }
+      ];
+      expect(textChangeOps).toEqual(expectedOps);
 
       env.dispose();
     }));
@@ -1530,6 +1573,7 @@ class TestEnvironment {
   deleteCharacters(): number {
     const selection = this.targetEditor.getSelection()!;
     this.targetEditor.deleteText(selection.index, selection.length, 'user');
+    this.wait();
     this.targetEditor.setSelection(selection.index, 'user');
     this.wait();
     return selection.index;
