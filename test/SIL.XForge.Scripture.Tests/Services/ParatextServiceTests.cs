@@ -459,7 +459,7 @@ namespace SIL.XForge.Scripture.Services
                 .WriteFileCreatingBackup(Arg.Any<string>(), Arg.Any<Action<string>>());
 
             // PT username is not written to server logs
-            Assert.That(env.MockLogger.Messages.Any((string message) => message.Contains(env.Username01)), Is.False);
+            env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.Message.Contains(env.Username01));
         }
 
         [Test]
@@ -485,7 +485,7 @@ namespace SIL.XForge.Scripture.Services
             // See if there is a message for the user updating the book
             string logMessage = string.Format("{0} updated {1} in {2}.", env.User01,
                     Canon.BookNumberToEnglishName(ruthBookNum), env.ProjectScrText.Name);
-            Assert.That(env.MockLogger.Messages.Any((string message) => message == logMessage), Is.True);
+            env.MockLogger.AssertHasEvent((LogEvent logEvent) => logEvent.Message == logMessage);
         }
 
         [Test]
@@ -516,7 +516,7 @@ namespace SIL.XForge.Scripture.Services
             // See if there is a message for the user updating the book
             string logMessage = string.Format("{0} updated {1} in {2}.", env.User01,
                     Canon.BookNumberToEnglishName(ruthBookNum), env.ProjectScrText.Name);
-            Assert.That(env.MockLogger.Messages.Any((string message) => message == logMessage), Is.True);
+            env.MockLogger.AssertHasEvent((LogEvent logEvent) => logEvent.Message == logMessage);
         }
 
         [Test]
@@ -549,7 +549,7 @@ namespace SIL.XForge.Scripture.Services
             // See if there is a message for the user updating the chapter
             string logMessage = string.Format("{0} updated chapter {1} of {2} in {3}.", env.User01, 1,
                     Canon.BookNumberToEnglishName(ruthBookNum), env.ProjectScrText.Name);
-            Assert.That(env.MockLogger.Messages.Any((string message) => message == logMessage), Is.True);
+            env.MockLogger.AssertHasEvent((LogEvent logEvent) => logEvent.Message == logMessage);
         }
 
         [Test]
@@ -608,7 +608,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(comment.Deleted, Is.True, "Comment should be marked deleted");
 
             // PT username is not written to server logs
-            Assert.That(env.MockLogger.Messages.Any((string message) => message.Contains(env.Username01)), Is.False);
+            env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.Message.Contains(env.Username01));
         }
 
         [Test]
