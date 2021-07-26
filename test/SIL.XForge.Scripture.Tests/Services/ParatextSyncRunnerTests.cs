@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -28,6 +29,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
 
+            // SUT
             await env.Runner.RunAsync("project03", "user01", false, CancellationToken.None);
         }
 
@@ -180,7 +182,11 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, false, books);
             env.SetupPTData(books);
 
+            // SUT
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+
+            env.MockLogger.AssertEventCount((LogEvent logEvent) => logEvent.LogLevel == LogLevel.Information &&
+                Regex.IsMatch(logEvent.Message, "Starting"), 1);
 
             await env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>());
             await env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<string>());
@@ -520,7 +526,8 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
-            env.Logger.DidNotReceiveWithAnyArgs().LogError(Arg.Any<Exception>(), default, default);
+            // No errors or exceptions were logged
+            env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.LogLevel == LogLevel.Error || logEvent.Exception != null);
 
             var chapterContent = Delta.New().InsertText("text");
             // DB should contain Source chapter 2 now from Paratext.
@@ -553,7 +560,8 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
-            env.Logger.DidNotReceiveWithAnyArgs().LogError(Arg.Any<Exception>(), default, default);
+            // No errors or exceptions were logged
+            env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.LogLevel == LogLevel.Error || logEvent.Exception != null);
 
             // DB should now be missing chapter 2, but retain chapters 1 and 3.
             Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
@@ -579,7 +587,8 @@ namespace SIL.XForge.Scripture.Services
             // SUT
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
-            env.Logger.DidNotReceiveWithAnyArgs().LogError(Arg.Any<Exception>(), default, default);
+            // No errors or exceptions were logged
+            env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.LogLevel == LogLevel.Error || logEvent.Exception != null);
 
             // DB should still be missing Source chapter 2.
             Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
@@ -608,7 +617,8 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
-            env.Logger.DidNotReceiveWithAnyArgs().LogError(Arg.Any<Exception>(), default, default);
+            // No errors or exceptions were logged
+            env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.LogLevel == LogLevel.Error || logEvent.Exception != null);
 
             // DB should now be missing all chapters except for the first, implicit chapter.
             Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
@@ -730,7 +740,7 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
 
             // Check that the Exception was logged
-            env.Logger.ReceivedWithAnyArgs(1).LogError(Arg.Any<Exception>(), default, default);
+            env.MockLogger.AssertHasEvent((LogEvent logEvent) => logEvent.Exception != null);
 
             // Check that the task cancelled correctly
             SFProject project = env.VerifyProjectSync(false);
@@ -754,8 +764,9 @@ namespace SIL.XForge.Scripture.Services
             // Run the task
             await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
 
-            // Check that the TaskCancelledException was not logged
-            env.Logger.DidNotReceiveWithAnyArgs().LogError(Arg.Any<Exception>(), default, default);
+            // The TaskCancelledException was not logged
+            Assert.That(env.MockLogger.LogEvents.Count((LogEvent logEvent) => logEvent.LogLevel == LogLevel.Error || logEvent.Exception != null), Is.EqualTo(0));
+
 
             // Check that the task cancelled correctly
             SFProject project = env.VerifyProjectSync(false);
@@ -1101,11 +1112,11 @@ namespace SIL.XForge.Scripture.Services
                 SubstituteRealtimeService.ConnectAsync().Returns(Task.FromResult(Connection));
                 DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
                 NotesMapper = Substitute.For<IParatextNotesMapper>();
-                Logger = Substitute.For<ILogger<ParatextSyncRunner>>();
+                MockLogger = new MockLogger<ParatextSyncRunner>();
 
                 Runner = new ParatextSyncRunner(userSecrets, _projectSecrets, SFProjectService, EngineService,
                     ParatextService, substituteRealtimeService ? SubstituteRealtimeService : RealtimeService,
-                    DeltaUsxMapper, NotesMapper, Logger);
+                    DeltaUsxMapper, NotesMapper, MockLogger);
             }
 
             public ParatextSyncRunner Runner { get; }
@@ -1116,7 +1127,7 @@ namespace SIL.XForge.Scripture.Services
             public SFMemoryRealtimeService RealtimeService { get; }
             public IRealtimeService SubstituteRealtimeService { get; }
             public IDeltaUsxMapper DeltaUsxMapper { get; }
-            public ILogger<ParatextSyncRunner> Logger { get; }
+            public MockLogger<ParatextSyncRunner> MockLogger { get; }
 
             /// <summary>
             /// Gets the connection to be used with <see cref="SubstituteRealtimeService"/>.
