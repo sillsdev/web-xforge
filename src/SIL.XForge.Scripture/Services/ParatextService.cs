@@ -781,7 +781,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 string source = scrText.Directory;
                 string destination =
-                    Path.Combine(Paratext.Data.ScrTextCollection.SettingsDirectory, "_Backups\\", scrText.Guid.ToString());
+                    Path.Combine(Paratext.Data.ScrTextCollection.SettingsDirectory, "_Backups", scrText.Guid.ToString());
                 string restoredDestination = destination + "_Restored";
                 string backupPath = destination + ".bndl";
 
@@ -838,7 +838,7 @@ namespace SIL.XForge.Scripture.Services
             try
             {
                 string path =
-                    Path.Combine(Paratext.Data.ScrTextCollection.SettingsDirectory, "_Backups\\", $"{scrText.Guid}.bndl");
+                    Path.Combine(Paratext.Data.ScrTextCollection.SettingsDirectory, "_Backups", $"{scrText.Guid}.bndl");
                 return _fileSystemService.FileExists(path);
             }
             catch (Exception)
