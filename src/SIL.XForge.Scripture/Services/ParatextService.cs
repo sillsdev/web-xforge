@@ -835,6 +835,10 @@ namespace SIL.XForge.Scripture.Services
             // We do not back up resources
             if (paratextId == null || paratextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
             {
+                if (paratextId == null)
+                {
+                    _logger.LogInformation("Not backing up local PT repo for null paratextId.");
+                }
                 return false;
             }
 
@@ -844,6 +848,7 @@ namespace SIL.XForge.Scripture.Services
             // If we do not have a scripture text, do not back up
             if (scrText == null)
             {
+                _logger.LogInformation($"Not backing up local PT repo since no scrText for PTId '{paratextId}'.");
                 return false;
             }
 
@@ -869,8 +874,9 @@ namespace SIL.XForge.Scripture.Services
                 _fileSystemService.MoveFile(tempPath, path);
                 return true;
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                _logger.LogError(e, $"Problem backing up local PT repo for PTId '{paratextId}'.");
                 // An error has occurred, so the backup was not created
                 return false;
             }
@@ -881,6 +887,15 @@ namespace SIL.XForge.Scripture.Services
             // We do not back up resources
             if (paratextId == null || paratextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
             {
+                if (paratextId == null)
+                {
+                    _logger.LogInformation("Not restoring local PT repo for null paratextId.");
+                }
+                else if (paratextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+                {
+                    _logger.LogInformation("Not restoring a DBL resource.");
+                }
+
                 return false;
             }
 
@@ -890,6 +905,7 @@ namespace SIL.XForge.Scripture.Services
             // If we do not have a scripture text, do not back up
             if (scrText == null)
             {
+                _logger.LogInformation($"Not restoring local PT repo since no scrText for PTId '{paratextId}'.");
                 return false;
             }
 
@@ -926,14 +942,19 @@ namespace SIL.XForge.Scripture.Services
                     _fileSystemService.MoveDirectory(restoredDestination, source);
                     return true;
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
+                    _logger.LogError(e, $"Problem restoring local PT repo for PTId '{paratextId}'.");
                     // On error, move the backup destination back to the repository folder
                     if (!_fileSystemService.DirectoryExists(source))
                     {
                         _fileSystemService.MoveDirectory(destination, source);
                     }
                 }
+            }
+            else
+            {
+                _logger.LogInformation($"Not restoring local PT repo for PTId '{paratextId}' since no backup exists.");
             }
 
             // An error occurred, or the backup does not exist
@@ -982,9 +1003,10 @@ namespace SIL.XForge.Scripture.Services
                     Path.Combine(Paratext.Data.ScrTextCollection.SettingsDirectory, "_Backups", $"{scrText.Guid}.bndl");
                 return _fileSystemService.FileExists(path);
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 // An error occurred
+                _logger.LogError(e, $"Problem when checking if a local PT repo backup exists for scrText id '{scrText.Guid}'.");
                 return false;
             }
         }
