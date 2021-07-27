@@ -382,6 +382,7 @@ namespace SIL.XForge.Scripture.Services
             _conn.BeginTransaction();
             _conn.ExcludePropertyFromTransaction<SFProject>(op => op.Sync.PercentCompleted);
             _conn.ExcludePropertyFromTransaction<SFProject>(op => op.Sync.QueuedCount);
+            _conn.ExcludePropertyFromTransaction<SFProject>(op => op.Sync.DataInSync);
             _projectDoc = await _conn.FetchAsync<SFProject>(projectSFId);
             if (!_projectDoc.IsLoaded)
             {

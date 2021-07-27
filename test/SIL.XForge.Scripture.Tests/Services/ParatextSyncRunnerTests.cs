@@ -796,6 +796,26 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task SyncAsync_TaskCancelledAndRestoreFails_DataNotInSync()
+        {
+            var env = new TestEnvironment();
+            env.SetupSFData(true, false, true);
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+            var cancellationTokenSource = new CancellationTokenSource();
+            env.ParatextService.BackupExists(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(true);
+            env.ParatextService.RestoreRepository(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(false);
+
+            env.ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
+                Arg.Any<IProgress<ProgressState>>(), Arg.Any<CancellationToken>()))
+                .Do(_ => cancellationTokenSource.Cancel());
+            await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+            env.ParatextService.Received(1).RestoreRepository(Arg.Any<UserSecret>(), Arg.Any<string>());
+            SFProject project = env.VerifyProjectSync(false);
+            // Data is out of sync due to the failed restore
+            Assert.That(project.Sync.DataInSync, Is.False);
+        }
+
+        [Test]
         public async Task SyncAsync_TaskCancelledPrematurely()
         {
             // Set up the environment
@@ -812,7 +832,7 @@ namespace SIL.XForge.Scripture.Services
 
             // Check that the task was cancelled after awaiting the check above
             SFProject project = env.VerifyProjectSync(false);
-            Assert.That(project.Sync.DataInSync, Is.False);
+            Assert.That(project.Sync.DataInSync, Is.True);
         }
 
         [Test]
@@ -837,7 +857,9 @@ namespace SIL.XForge.Scripture.Services
                 ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.PercentCompleted"));
             env.Connection.Received(1).ExcludePropertyFromTransaction(Arg.Is<Expression<Func<SFProject, object>>>(
                 ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.QueuedCount"));
-            env.Connection.Received(2).ExcludePropertyFromTransaction(Arg.Any<Expression<Func<SFProject, object>>>());
+            env.Connection.Received(1).ExcludePropertyFromTransaction(Arg.Is<Expression<Func<SFProject, object>>>(
+                ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.DataInSync"));
+            env.Connection.Received(3).ExcludePropertyFromTransaction(Arg.Any<Expression<Func<SFProject, object>>>());
         }
 
         [Test]
@@ -1097,13 +1119,19 @@ namespace SIL.XForge.Scripture.Services
                 ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(),
                     Arg.Is((SFProject project) => project.ParatextId == "target"), Arg.Any<CancellationToken>())
                     .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
-                ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
+                ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), "target",
                     Arg.Any<IProgress<ProgressState>>(), Arg.Any<CancellationToken>()))
-                    .Do(x => _sendReceivedCalled = true);
+                    .Do(x =>
+                        {
+                            _sendReceivedCalled = true;
+                            ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), Arg.Any<string>())
+                                .Returns("afterSR");
+                        }
+                    );
                 ParatextService.IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), Arg.Any<string>())
                     .Returns(false);
                 ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target")
-                    .Returns("beforeSR", "afterSR");
+                    .Returns("beforeSR");
                 ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "source")
                     .Returns("beforeSR", "afterSR");
                 RealtimeService = new SFMemoryRealtimeService();
