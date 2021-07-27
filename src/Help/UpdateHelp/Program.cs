@@ -429,7 +429,8 @@ namespace UpdateHelp
                 {
                     if (savedAttr2 == attr2)
                         return;
-                    throw new Exception($"Same {elementName} {attr1Name} but different {att2Name}");
+                    throw new Exception($"Same {elementName} '{attr1Name}' ({attr1}) but different '{att2Name}' " +
+                        $"({savedAttr2} {attr2})");
                 }
                 attr2ByAttr1.Add(attr1, attr2);
             }
