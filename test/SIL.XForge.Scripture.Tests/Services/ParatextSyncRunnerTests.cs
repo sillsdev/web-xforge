@@ -363,7 +363,8 @@ namespace SIL.XForge.Scripture.Services
             {
                 { "pt01", SFProjectRole.Translator }
             };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<CancellationToken>())
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(),
+                Arg.Is((SFProject project) => project.ParatextId == "target"), Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
 
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
@@ -384,7 +385,8 @@ namespace SIL.XForge.Scripture.Services
             {
                 { "pt01", SFProjectRole.Translator }
             };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<CancellationToken>())
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(),
+                Arg.Is((SFProject project) => project.ParatextId == "target"), Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
 
             // SUT
@@ -407,7 +409,8 @@ namespace SIL.XForge.Scripture.Services
             {
                 { "pt01", SFProjectRole.Administrator }
             };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<CancellationToken>())
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(),
+                Arg.Is((SFProject project) => project.ParatextId == "target"), Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
 
             await env.SetUserRole("user02", SFProjectRole.CommunityChecker);
@@ -436,6 +439,45 @@ namespace SIL.XForge.Scripture.Services
             env.ParatextService.Received().IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), "source");
             Assert.That(project.IsRightToLeft, Is.True);
             Assert.That(project.TranslateConfig.Source.IsRightToLeft, Is.False);
+        }
+
+        [Test]
+        public async Task SyncAsync_FullName_ProjectPropertyNotSetIfNull()
+        {
+            var env = new TestEnvironment();
+            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+            env.SetupSFData(true, false, false, books);
+            env.SetupPTData(books);
+
+            env.ParatextService.GetProjectFullName(Arg.Any<UserSecret>(), "target")
+                .Returns((string)null);
+
+            // SUT
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+
+            SFProject project = env.GetProject();
+            env.ParatextService.Received().GetProjectFullName(Arg.Any<UserSecret>(), "target");
+            Assert.That(project.Name, Is.EqualTo("project01"));
+        }
+
+        [Test]
+        public async Task SyncAsync_FullName_ProjectPropertySet()
+        {
+            var env = new TestEnvironment();
+            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+            env.SetupSFData(true, false, false, books);
+            env.SetupPTData(books);
+
+            string newFullName = "New Full Name";
+            env.ParatextService.GetProjectFullName(Arg.Any<UserSecret>(), "target")
+                .Returns(newFullName);
+
+            // SUT
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+
+            SFProject project = env.GetProject();
+            env.ParatextService.Received().GetProjectFullName(Arg.Any<UserSecret>(), "target");
+            Assert.That(project.Name, Is.EqualTo(newFullName));
         }
 
         [Test]
@@ -681,7 +723,7 @@ namespace SIL.XForge.Scripture.Services
 
             // Setup a trap to crash the task
             env.NotesMapper.When(x => x.InitAsync(Arg.Any<UserSecret>(), Arg.Any<SFProjectSecret>(),
-                Arg.Any<List<User>>(), Arg.Any<string>(), Arg.Any<CancellationToken>()))
+                Arg.Any<List<User>>(), Arg.Any<SFProject>(), Arg.Any<CancellationToken>()))
                 .Do(_ => throw new ArgumentException());
 
             // Run the task
@@ -706,7 +748,7 @@ namespace SIL.XForge.Scripture.Services
 
             // Setup a trap to cancel the task
             env.NotesMapper.When(x => x.InitAsync(Arg.Any<UserSecret>(), Arg.Any<SFProjectSecret>(),
-                Arg.Any<List<User>>(), Arg.Any<string>(), Arg.Any<CancellationToken>()))
+                Arg.Any<List<User>>(), Arg.Any<SFProject>(), Arg.Any<CancellationToken>()))
                 .Do(_ => throw new TaskCanceledException());
 
             // Run the task
@@ -1041,7 +1083,8 @@ namespace SIL.XForge.Scripture.Services
                     { "pt01", SFProjectRole.Administrator },
                     { "pt02", SFProjectRole.Translator }
                 };
-                ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<CancellationToken>())
+                ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(),
+                    Arg.Is((SFProject project) => project.ParatextId == "target"), Arg.Any<CancellationToken>())
                     .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
                 ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
                     Arg.Any<IProgress<ProgressState>>(), Arg.Any<CancellationToken>()))

@@ -11,12 +11,12 @@ namespace SIL.XForge.Services
     /// </summary>
     public class TokenHelper
     {
-        public static string CreateAccessToken(DateTime issuedAt, DateTime expiration)
+        public static string CreateAccessToken(DateTime issuedAt, DateTime expiration, string paratextUserId)
         {
             var token = new JwtSecurityToken("ptreg_rsa", "pt-api",
                 new[]
                 {
-                    new Claim(JwtClaimTypes.Subject, "paratext01"),
+                    new Claim(JwtClaimTypes.Subject, paratextUserId),
                     new Claim(JwtClaimTypes.IssuedAt, EpochTime.GetIntDate(issuedAt).ToString())
                 },
                 expires: expiration);
@@ -26,7 +26,7 @@ namespace SIL.XForge.Services
 
         public static string CreateAccessToken(DateTime issuedAt)
         {
-            return TokenHelper.CreateAccessToken(issuedAt, issuedAt + TimeSpan.FromMinutes(5));
+            return CreateAccessToken(issuedAt, issuedAt + TimeSpan.FromMinutes(5), "paratext01");
         }
 
         public static string CreateNewAccessToken()

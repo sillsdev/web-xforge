@@ -419,7 +419,7 @@ namespace SIL.XForge.Scripture.Services
             public async Task InitMapperAsync(bool includeSyncUsers, bool twoPtUsersOnProject)
             {
                 await Mapper.InitAsync(UserSecrets.Get("user01"), ProjectSecret(includeSyncUsers),
-                    ParatextUsersOnProject(twoPtUsersOnProject), "paratextId", CancellationToken.None);
+                    ParatextUsersOnProject(twoPtUsersOnProject), Project(), CancellationToken.None);
             }
 
             public void AddData(string answerSyncUserId1, string answerSyncUserId2, string commentSyncUserId1,
@@ -489,11 +489,20 @@ namespace SIL.XForge.Scripture.Services
             public void SetParatextProjectRoles(bool twoPtUserOnProject)
             {
                 Dictionary<string, string> ptUserRoles = new Dictionary<string, string>();
-                ptUserRoles["ptuser01"] = "pt_administrator";
+                ptUserRoles["ptuser01"] = SFProjectRole.Administrator;
                 if (twoPtUserOnProject)
-                    ptUserRoles["ptuser03"] = "pt_translator";
-                ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
+                    ptUserRoles["ptuser03"] = SFProjectRole.Translator;
+                ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
                     Arg.Any<CancellationToken>()).Returns(ptUserRoles);
+            }
+
+            private static SFProject Project()
+            {
+                return new SFProject
+                {
+                    Id = "project01",
+                    ParatextId = "paratextId",
+                };
             }
 
             private static SFProjectSecret ProjectSecret(bool includeSyncUsers)

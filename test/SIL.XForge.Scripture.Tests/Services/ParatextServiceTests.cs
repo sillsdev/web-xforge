@@ -47,7 +47,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task GetProjectsAsync_ReturnCorrectRepos()
         {
             var env = new TestEnvironment();
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
 
             // SUT
@@ -86,13 +86,11 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetProjectsAsync_OmitsNotRegisteredProjects()
+        public async Task GetProjectsAsync_IncludesNotRegisteredProjects()
         {
-            // Until we implement support to connect to projects that are not in the PT Registry (like can be so for
-            // back translation projects), don't include in the projects list those projects that are not in the
-            // PT Registry.
+            // We should include projects that are not in the registry, like back translation projects
             var env = new TestEnvironment();
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             bool extraSharedRepository = true;
             env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator, extraSharedRepository);
 
@@ -100,23 +98,20 @@ namespace SIL.XForge.Scripture.Services
             IEnumerable<ParatextProject> repos = await env.Service.GetProjectsAsync(user01Secret);
 
             // Right number of repos returned.
-            Assert.That(repos.Count(), Is.EqualTo(3), "Not including 4th which does not have metadata");
+            Assert.That(repos.Count(), Is.EqualTo(4), "Including the 4th which does not have metadata");
 
             // Repos returned are the ones we expect.
-            foreach (string projectName in new string[] { env.Project01, env.Project03, env.Project02 })
+            foreach (string projectName in new string[] { env.Project01, env.Project02, env.Project03, env.Project04 })
             {
                 Assert.That(repos.Single(project => project.ParatextId == env.PTProjectIds[projectName].Id), Is.Not.Null);
             }
-            // Not the ones we don't.
-            Assert.That(repos.Any<ParatextProject>(Project => Project.ParatextId == env.PTProjectIds[env.Project04].Id),
-                Is.False, "Should not have had project 4");
         }
 
         [Test]
         public async Task GetProjectsAsync_ProjectNotOnSF_RetrievesProjectFullName()
         {
             var env = new TestEnvironment();
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
             IEnumerable<ParatextProject> projects = await env.Service.GetProjectsAsync(user01Secret);
 
@@ -128,9 +123,9 @@ namespace SIL.XForge.Scripture.Services
         public async Task GetProjectsAsync_ConnectedConnectable()
         {
             var env = new TestEnvironment();
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
-            UserSecret user03Secret = env.MakeUserSecret(env.User03, "User 03");
+            UserSecret user03Secret = env.MakeUserSecret(env.User03, env.Username03, env.ParatextUserId03);
             env.SetSharedRepositorySource(user03Secret, UserRoles.TeamMember);
 
             // Check resulting IsConnectable and IsConnected values across various scenarios of SF project existing,
@@ -142,7 +137,7 @@ namespace SIL.XForge.Scripture.Services
                     // Data
                     paratextProjectId = env.PTProjectIds[env.Project01].Id,
                     sfUserId = env.User01,
-                    ptUsername = "user 01",
+                    ptUsername = "User 01",
                     userSecret = user01Secret,
                     // Environmental assumptions
                     sfProjectExists = true,
@@ -158,7 +153,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     paratextProjectId = env.PTProjectIds[env.Project01].Id,
                     sfUserId = env.User03,
-                    ptUsername = "user 01",
+                    ptUsername = "User 01",
                     userSecret = user03Secret,
 
                     sfProjectExists = true,
@@ -174,7 +169,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     paratextProjectId = env.PTProjectIds[env.Project02].Id,
                     sfUserId = env.User01,
-                    ptUsername = "user 01",
+                    ptUsername = "User 01",
                     userSecret = user01Secret,
 
                     sfProjectExists = false,
@@ -190,7 +185,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     paratextProjectId = env.PTProjectIds[env.Project02].Id,
                     sfUserId = env.User03,
-                    ptUsername = "user 03",
+                    ptUsername = "User 03",
                     userSecret = user03Secret,
 
                     sfProjectExists = false,
@@ -239,7 +234,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task GetResourcesAsync_ReturnResources()
         {
             var env = new TestEnvironment();
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             env.SetRestClientFactory(user01Secret);
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
             IEnumerable<ParatextResource> resources = await env.Service.GetResourcesAsync(env.User01);
@@ -251,7 +246,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // Set up environment
             var env = new TestEnvironment();
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
             // Set up mock REST client to return unsuccessfully.
             ISFRestClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
@@ -309,7 +304,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // Set up environment
             var env = new TestEnvironment();
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
             // Set up mock REST client to return a successful HEAD request
             ISFRestClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
@@ -347,7 +342,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // Set up environment
             var env = new TestEnvironment();
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
             // Set up mock REST client to return a successful HEAD request
             ISFRestClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
@@ -367,7 +362,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // Set up environment
             var env = new TestEnvironment();
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
             // Set up mock REST client to return a successful HEAD request
             ISFRestClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
@@ -389,7 +384,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
-            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
             // Books 1 thru 3.
             env.ProjectScrText.Settings.BooksPresentSet = new BookSet(1, 3);
@@ -409,7 +404,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
-            env.MakeUserSecret(env.User01, env.Username01);
+            env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
             // SUT
             string result = env.Service.GetBookText(null, ptProjectId, 8);
@@ -421,7 +416,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             string ptProjectId = env.PTProjectIds[env.Project01].Id;
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             IInternetSharedRepositorySource mockSource =
                 env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
             env.MockScrTextCollection.FindById(env.Username01, ptProjectId).Returns(i => null);
@@ -438,7 +433,7 @@ namespace SIL.XForge.Scripture.Services
             var associatedPtUser = new SFParatextUser(env.Username01);
             // should be able to edit the book text even if the admin user does not have permission
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser, hasEditPermission: false);
-            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
             int ruthBookNum = 8;
             string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere" +
@@ -474,7 +469,7 @@ namespace SIL.XForge.Scripture.Services
             var associatedPtUser = new SFParatextUser(env.Username01);
             // should be able to edit the book text even if the admin user does not have permission
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser, hasEditPermission: false);
-            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
             int ruthBookNum = 8;
             string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere" +
@@ -500,7 +495,7 @@ namespace SIL.XForge.Scripture.Services
             var associatedPtUser = new SFParatextUser(env.Username01);
             // should be able to edit the book text even if the admin user does not have permission
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser, hasEditPermission: false);
-            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
             int ruthBookNum = 8;
             string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere" +
@@ -531,7 +526,8 @@ namespace SIL.XForge.Scripture.Services
             var associatedPtUser = new SFParatextUser(env.Username01);
             // should be able to edit the book text even if the admin user does not have permission
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser, hasEditPermission: false);
-            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+            env.MakeUserSecret(env.User02, env.Username02, env.ParatextUserId02);
 
             int ruthBookNum = 8;
             string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere" +
@@ -547,7 +543,8 @@ namespace SIL.XForge.Scripture.Services
             await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, ruthBookUsx, chapterAuthors);
 
             // Make sure two ScrTexts were loaded
-            env.MockScrTextCollection.Received(2).FindById(env.Username01, ptProjectId);
+            env.MockScrTextCollection.Received(1).FindById(env.Username01, ptProjectId);
+            env.MockScrTextCollection.Received(1).FindById(env.Username02, ptProjectId);
 
             // See if there is a message for the user updating the chapter
             string logMessage = string.Format("{0} updated chapter {1} of {2} in {3}.", env.User01, 1,
@@ -562,7 +559,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
-            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             env.ProjectCommentManager.AddComment(
                 new Paratext.Data.ProjectComments.Comment(associatedPtUser) { Thread = "Answer_dataId0123", VerseRefStr = "RUT 1:1" });
             string notes = env.Service.GetNotes(userSecret, ptProjectId, ruthBookNum);
@@ -576,7 +573,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
-            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             DateTime date = DateTime.Now; // This must be consistent as it is a part of the comment id
 
             // Add new comment
@@ -618,7 +615,7 @@ namespace SIL.XForge.Scripture.Services
         public void SendReceiveAsync_BadArguments()
         {
             var env = new TestEnvironment();
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.SendReceiveAsync(null, null, null));
             Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.SendReceiveAsync(null,
                 env.PTProjectIds[env.Project01].Id, null));
@@ -631,7 +628,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             var associatedPtUser = new SFParatextUser(env.Username01);
             string projectId = env.SetupProject(env.Project01, associatedPtUser);
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
             IInternetSharedRepositorySource mockSource =
                 env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
@@ -657,7 +654,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             var associatedPtUser = new SFParatextUser(env.Username01);
             string projectId = env.SetupProject(env.Project01, associatedPtUser);
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
             IInternetSharedRepositorySource mockSource =
                 env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
@@ -694,7 +691,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             IInternetSharedRepositorySource mockSource =
                 env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
             env.SetupSuccessfulSendReceive();
@@ -722,7 +719,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             string ptProjectId = env.PTProjectIds[env.Project02].Id;
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             IInternetSharedRepositorySource mockSource =
                 env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
             env.SetupSuccessfulSendReceive();
@@ -749,7 +746,7 @@ namespace SIL.XForge.Scripture.Services
             var associatedPtUser = new SFParatextUser(env.Username01);
             string targetProjectId = env.SetupProject(env.Project01, associatedPtUser);
             string sourceProjectId = env.PTProjectIds[env.Project02].Id;
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             IInternetSharedRepositorySource mockSource =
                 env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
             env.SetupSuccessfulSendReceive();
@@ -809,7 +806,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             IInternetSharedRepositorySource mockSource =
                 env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
             env.SetupSuccessfulSendReceive();
@@ -826,7 +823,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             IInternetSharedRepositorySource mockSource =
                 env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
             env.SetupSuccessfulSendReceive();
@@ -837,6 +834,69 @@ namespace SIL.XForge.Scripture.Services
             await env.Service.SendReceiveAsync(user01Secret, resourceId);
         }
 
+        [Test]
+        public async Task TryGetProjectRoleAsync_UsesTheRepositoryForUnregisteredProjects()
+        {
+            var env = new TestEnvironment();
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+            env.AddProjectRepository();
+            env.SetSharedRepositorySource(userSecret, UserRoles.Administrator);
+            var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
+            var project = projects.First();
+            var attempt =
+                await env.Service.TryGetProjectRoleAsync(userSecret, project.ParatextId, CancellationToken.None);
+            Assert.That(attempt.Success, Is.True);
+            Assert.That(attempt.Result, Is.EqualTo(SFProjectRole.Administrator));
+        }
+
+        [Test]
+        public async Task TryGetProjectRoleAsync_UsesTheRepositoryForUnregisteredProjectsAndFailsIfUserDoesntExist()
+        {
+            var env = new TestEnvironment();
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+            env.AddProjectRepository();
+            // Notice that SetSharedRepositorySource is not called here
+            var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
+            var project = projects.First();
+            var attempt =
+                await env.Service.TryGetProjectRoleAsync(userSecret, project.ParatextId, CancellationToken.None);
+            Assert.That(attempt.Success, Is.False);
+            Assert.That(attempt.Result, Is.Empty);
+        }
+
+        [Test]
+        public async Task GetProjectRolesAsync_UsesTheRepositoryForUnregisteredProjects()
+        {
+            var env = new TestEnvironment();
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+            env.MakeUserSecret(env.User02, env.Username02, env.ParatextUserId02);
+            env.AddProjectRepository();
+            env.SetSharedRepositorySource(userSecret, UserRoles.Administrator);
+            var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
+            var project = projects.First();
+            var roles = await env.Service.GetProjectRolesAsync(userSecret, project, CancellationToken.None);
+            Assert.That(roles.Count, Is.EqualTo(2));
+            var firstRole = new KeyValuePair<string, string>(env.ParatextUserId01, SFProjectRole.Administrator);
+            Assert.That(roles.First(), Is.EqualTo(firstRole));
+            var secondRole = new KeyValuePair<string, string>(env.ParatextUserId02, SFProjectRole.Administrator);
+            Assert.That(roles.Last(), Is.EqualTo(secondRole));
+        }
+
+        [Test]
+        public async Task GetParatextUsernameMappingAsync_UsesTheRepositoryForUnregisteredProjects()
+        {
+            var env = new TestEnvironment();
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+            env.MakeUserSecret(env.User02, env.Username02, env.ParatextUserId02);
+            env.AddProjectRepository();
+            env.SetSharedRepositorySource(userSecret, UserRoles.Administrator);
+            var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
+            var project = projects.First();
+            var mapping = await env.Service.GetParatextUsernameMappingAsync(userSecret, project, CancellationToken.None);
+            Assert.That(mapping.Count, Is.EqualTo(2));
+            Assert.That(mapping.First(), Is.EqualTo(new KeyValuePair<string, string>(env.User01, env.Username01)));
+            Assert.That(mapping.Last(), Is.EqualTo(new KeyValuePair<string, string>(env.User02, env.Username02)));
+        }
 
         [Test]
         public async Task GetParatextUsernameMappingAsync_ReturnsEmptyMappingForResourceProject()
@@ -844,8 +904,9 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             const string resourceId = "1234567890abcdef";
             Assert.That(resourceId.Length, Is.EqualTo(SFInstallableDblResource.ResourceIdentifierLength));
-            var mapping = await env.Service.GetParatextUsernameMappingAsync(env.MakeUserSecret(env.User01, env.Username01),
-                resourceId, CancellationToken.None);
+            var userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+            var mapping = await env.Service.GetParatextUsernameMappingAsync(userSecret,
+                new SFProject { ParatextId = resourceId }, CancellationToken.None);
             Assert.That(mapping.Count, Is.EqualTo(0));
         }
 
@@ -854,7 +915,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             var associatedPtUser = new SFParatextUser(env.Username01);
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             ScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
@@ -872,7 +933,7 @@ namespace SIL.XForge.Scripture.Services
         public void GetLatestSharedVersion_ForDBLResource()
         {
             var env = new TestEnvironment();
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
             string resourcePTId = "1234567890123456";
             Assert.That(resourcePTId, Has.Length.EqualTo(SFInstallableDblResource.ResourceIdentifierLength),
@@ -894,7 +955,7 @@ namespace SIL.XForge.Scripture.Services
             // Setup test environment
             var env = new TestEnvironment();
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             env.MockFileSystemService.FileExists(Arg.Any<string>()).Throws(new UnauthorizedAccessException());
@@ -910,7 +971,7 @@ namespace SIL.XForge.Scripture.Services
             // Setup test environment
             var env = new TestEnvironment();
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             env.MockFileSystemService.FileExists(Arg.Any<string>()).Returns(false);
@@ -926,7 +987,7 @@ namespace SIL.XForge.Scripture.Services
             // Setup test environment
             var env = new TestEnvironment();
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             env.MockFileSystemService.FileExists(Arg.Any<string>()).Returns(true);
@@ -942,7 +1003,7 @@ namespace SIL.XForge.Scripture.Services
             // Setup test environment
             var env = new TestEnvironment();
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             env.MockFileSystemService.FileExists(Arg.Any<string>()).Throws(new UnauthorizedAccessException());
@@ -957,7 +1018,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // Setup test environment
             var env = new TestEnvironment();
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             string ptProjectId = "invalid_project";
 
             // SUT
@@ -971,7 +1032,7 @@ namespace SIL.XForge.Scripture.Services
             // Setup test environment
             var env = new TestEnvironment();
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
 
@@ -986,7 +1047,7 @@ namespace SIL.XForge.Scripture.Services
             // Setup test environment
             var env = new TestEnvironment();
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             env.MockFileSystemService.FileExists(Arg.Any<string>()).Throws(new UnauthorizedAccessException());
@@ -1002,7 +1063,7 @@ namespace SIL.XForge.Scripture.Services
             // Setup test environment
             var env = new TestEnvironment();
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             env.MockFileSystemService.FileExists(Arg.Any<string>()).Returns(false);
@@ -1018,7 +1079,7 @@ namespace SIL.XForge.Scripture.Services
             // Setup test environment
             var env = new TestEnvironment();
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             env.MockFileSystemService.FileExists(Arg.Any<string>()).Returns(true);
@@ -1030,6 +1091,9 @@ namespace SIL.XForge.Scripture.Services
 
         private class TestEnvironment
         {
+            public readonly string ParatextUserId01 = "paratext01";
+            public readonly string ParatextUserId02 = "paratext02";
+            public readonly string ParatextUserId03 = "paratext03";
             public readonly string Project01 = "project01";
             public readonly string Project02 = "project02";
             public readonly string Project03 = "project03";
@@ -1040,6 +1104,7 @@ namespace SIL.XForge.Scripture.Services
             public readonly string User03 = "user03";
             public readonly string Username01 = "User 01";
             public readonly string Username02 = "User 02";
+            public readonly string Username03 = "User 03";
             public readonly string SyncDir = Path.GetTempPath();
 
             private string ruthBookUsfm = "\\id RUT - ProjectNameHere\n" +
@@ -1081,12 +1146,28 @@ namespace SIL.XForge.Scripture.Services
                 MockRestClientFactory = Substitute.For<ISFRestClientFactory>();
 
                 DateTime aSecondAgo = DateTime.Now - TimeSpan.FromSeconds(1);
-                string accessToken = TokenHelper.CreateAccessToken(aSecondAgo - TimeSpan.FromMinutes(20), aSecondAgo);
-                Tokens tokens = new Tokens { AccessToken = accessToken, RefreshToken = "refresh_token_1234" };
+                string accessToken1 =
+                    TokenHelper.CreateAccessToken(aSecondAgo - TimeSpan.FromMinutes(20), aSecondAgo, ParatextUserId01);
+                string accessToken2 =
+                    TokenHelper.CreateAccessToken(aSecondAgo - TimeSpan.FromMinutes(20), aSecondAgo, ParatextUserId02);
+                string accessToken3 =
+                    TokenHelper.CreateAccessToken(aSecondAgo - TimeSpan.FromMinutes(20), aSecondAgo, ParatextUserId03);
                 MockRepository = new MemoryRepository<UserSecret>(new[] {
-                    new UserSecret { Id = User01, ParatextTokens = tokens },
-                    new UserSecret { Id = User02, ParatextTokens = tokens },
-                    new UserSecret { Id = User03, ParatextTokens = tokens },
+                    new UserSecret
+                    {
+                        Id = User01,
+                        ParatextTokens = new Tokens { AccessToken = accessToken1, RefreshToken = "refresh_token_1234" },
+                    },
+                    new UserSecret
+                    {
+                        Id = User02,
+                        ParatextTokens = new Tokens { AccessToken = accessToken2, RefreshToken = "refresh_token_1234" },
+                    },
+                    new UserSecret
+                    {
+                        Id = User03,
+                        ParatextTokens = new Tokens { AccessToken = accessToken3, RefreshToken = "refresh_token_1234" },
+                    },
                 });
 
                 RealtimeService = new SFMemoryRealtimeService();
@@ -1105,12 +1186,12 @@ namespace SIL.XForge.Scripture.Services
                 PTProjectIds.Add(Project04, HexId.CreateNew());
 
                 MockJwtTokenHelper.GetParatextUsername(Arg.Any<UserSecret>()).Returns(User01);
-                MockJwtTokenHelper.GetJwtTokenFromUserSecret(Arg.Any<UserSecret>()).Returns(accessToken);
+                MockJwtTokenHelper.GetJwtTokenFromUserSecret(Arg.Any<UserSecret>()).Returns(accessToken1);
                 MockJwtTokenHelper.RefreshAccessTokenAsync(Arg.Any<ParatextOptions>(), Arg.Any<Tokens>(),
                     Arg.Any<HttpClient>(), Arg.Any<CancellationToken>())
                     .Returns(Task.FromResult(new Tokens
                     {
-                        AccessToken = accessToken,
+                        AccessToken = accessToken1,
                         RefreshToken = "refresh_token_1234"
                     }));
                 MockFileSystemService.DirectoryExists(SyncDir).Returns(true);
@@ -1123,16 +1204,17 @@ namespace SIL.XForge.Scripture.Services
             public CommentManager ProjectCommentManager { get; set; }
             public ProjectFileManager ProjectFileManager { get; set; }
 
-            public UserSecret MakeUserSecret(string userSecretId, string username)
+            public UserSecret MakeUserSecret(string userSecretId, string username, string paratextUserId)
             {
                 DateTime aSecondAgo = DateTime.Now - TimeSpan.FromSeconds(1);
-                string accessToken = TokenHelper.CreateAccessToken(aSecondAgo - TimeSpan.FromMinutes(20), aSecondAgo);
+                string accessToken =
+                    TokenHelper.CreateAccessToken(aSecondAgo - TimeSpan.FromMinutes(20), aSecondAgo, paratextUserId);
                 UserSecret userSecret = new UserSecret
                 {
                     Id = userSecretId,
                     ParatextTokens = new Tokens { AccessToken = accessToken, RefreshToken = "refresh_token_1234" }
                 };
-                MockJwtTokenHelper.GetParatextUsername(Arg.Any<UserSecret>()).Returns(username);
+                MockJwtTokenHelper.GetParatextUsername(Arg.Is<UserSecret>(s => s.Id == userSecretId)).Returns(username);
                 return userSecret;
             }
 
@@ -1216,8 +1298,24 @@ namespace SIL.XForge.Scripture.Services
             public IInternetSharedRepositorySource SetSharedRepositorySource(UserSecret userSecret,
                 UserRoles userRoleOnAllThePtProjects, bool extraSharedRepository = false)
             {
-                PermissionManager sourceUsers = Substitute.For<PermissionManager>();
-                sourceUsers.GetRole(Arg.Any<string>()).Returns(userRoleOnAllThePtProjects);
+                // Set up the XML for the user roles - we could use an XML Document, but this is simpler
+                // The schema is from ParatextData.InternalProjectUserAccessData
+                // As the logic in PermissionManager is self-contained, this is better than a substitute
+                string xml = "<ProjectUserAccess PeerSharing=\"true\">" +
+                    $"<User UserName=\"{Username01}\" FirstUser=\"true\" UnregisteredUser=\"false\">" +
+                        $"<Role>{userRoleOnAllThePtProjects}</Role><AllBooks>true</AllBooks>" +
+                        "<Books /><Permissions /><AutomaticBooks /><AutomaticPermissions />" +
+                    "</User>" +
+                    $"<User UserName=\"{Username02}\" FirstUser=\"false\" UnregisteredUser=\"false\">" +
+                        $"<Role>{userRoleOnAllThePtProjects}</Role><AllBooks>true</AllBooks>" +
+                        "<Books /><Permissions /><AutomaticBooks /><AutomaticPermissions />" +
+                    "</User>" +
+                    $"<User UserName=\"{Username03}\" FirstUser=\"false\" UnregisteredUser=\"false\">" +
+                        $"<Role>{userRoleOnAllThePtProjects}</Role><AllBooks>true</AllBooks>" +
+                        "<Books /><Permissions /><AutomaticBooks /><AutomaticPermissions />" +
+                    "</User>" +
+                    "</ProjectUserAccess>";
+                PermissionManager sourceUsers = new PermissionManager(xml);
                 IInternetSharedRepositorySource mockSource = Substitute.For<IInternetSharedRepositorySource>();
                 SharedRepository repo1 = new SharedRepository
                 {
