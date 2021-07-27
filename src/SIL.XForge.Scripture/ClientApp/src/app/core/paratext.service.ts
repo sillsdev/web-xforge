@@ -7,6 +7,7 @@ import { ParatextProject } from './models/paratext-project';
 
 export interface SelectableProject {
   name: string;
+  shortName?: string;
   paratextId: string;
 }
 
