@@ -1,4 +1,5 @@
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { SelectableProject } from '../core/paratext.service';
 
 export function combineVerseRefStrs(startStr?: string, endStr?: string): VerseRef | undefined {
   if (!startStr) {
@@ -35,4 +36,19 @@ export function combineVerseRefStrs(startStr?: string, endStr?: string): VerseRe
     return undefined;
   }
   return range.verseRef;
+}
+
+export type ProjectLabelFn = (project: SelectableProject) => string;
+export function projectLabel(project: SelectableProject): string {
+  if (project == null || (!project.shortName && !project.name)) {
+    return '';
+  }
+
+  if (!project.shortName) {
+    return project.name;
+  }
+  if (!project.name) {
+    return project.shortName;
+  }
+  return project.shortName + ' - ' + project.name;
 }
