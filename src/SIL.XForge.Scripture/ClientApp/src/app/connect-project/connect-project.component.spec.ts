@@ -100,7 +100,7 @@ describe('ConnectProjectComponent', () => {
     // NOTE: The source projects list excludes pt01 (as it is our selected project above)
     expect(env.selectableSourceProjectsAndResources.projects.length).toEqual(3);
     expect(env.selectableSourceProjectsAndResources.resources.length).toEqual(3);
-    expect(env.selectableSourceProjectsAndResources.projects[2]).toBe('Thai');
+    expect(env.selectableSourceProjectsAndResources.projects[2]).toBe('THA - Thai');
     expect(env.selectableSourceProjectsAndResources.resources[0]).toBe('Sob Jonah and Luke');
     expect(env.component.connectProjectForm.valid).toBe(true);
     env.clickElement(env.submitButton);

@@ -34,7 +34,7 @@
                   [value]="project.paratextId"
                   [disabled]="!project.isConnectable"
                 >
-                  {{ project.name }}
+                  {{ projectLabel(project) }}
                   <ng-container *ngIf="!project.isConnectable && project.isConnected">
                     &nbsp;{{ t("already_connected") }}
                   </ng-container>
