@@ -284,7 +284,7 @@ namespace SIL.XForge.Scripture
                                 port = 9200;
                             }
                             string ngServeUri = $"http://localhost:{port}";
-                            Console.WriteLine($"Info: SF will use an existing angular serve at {ngServeUri}.");
+                            Console.WriteLine($"Info: SF will use an existing angular server at {ngServeUri}.");
                             spa.UseProxyToSpaDevelopmentServer(ngServeUri);
                             break;
                     }

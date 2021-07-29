@@ -1,4 +1,6 @@
 #!/bin/bash
+#
+# Build SF for Live or QA. Upload to server to deploy.
 
 set -ueo pipefail
 
