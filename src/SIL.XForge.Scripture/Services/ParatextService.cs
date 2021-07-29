@@ -131,9 +131,13 @@ namespace SIL.XForge.Scripture.Services
         /// <summary> Prepare access to Paratext.Data library, authenticate, and prepare Mercurial. </summary>
         public void Init()
         {
-            // Uncomment to output more info from ParatextData.dll for investigating.
-            // Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
-            // Trace.AutoFlush = true;
+            // Uncomment to output more info to the Terminal from ParatextData.dll for investigating. Note that without Clear()ing, the output would show in Debug Console while debugging.
+            // The output is using System.Diagnostics.Trace and so is not managed by the ILogging LogLevel filtering settings.
+            // System.Diagnostics.Trace.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(Console.Out));
+            // System.Diagnostics.Trace.AutoFlush = true;
+
+            // Stop ParatextData.dll Trace output from appearing on the server.
+            System.Diagnostics.Trace.Listeners.Clear();
 
             SyncDir = Path.Combine(_siteOptions.Value.SiteDir, "sync");
             if (!_fileSystemService.DirectoryExists(SyncDir))
