@@ -282,8 +282,8 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
       this.metrics.editEndEvent = editEndEvent;
       this.sendMetrics(segment);
       this.createMetrics('navigate');
+      this.navigateSuggestionShown = false;
     }
-    this.navigateSuggestionShown = false;
   }
 
   private createMetrics(type: TranslateMetricsType): void {
