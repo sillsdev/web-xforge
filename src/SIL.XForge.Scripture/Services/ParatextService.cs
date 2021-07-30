@@ -122,7 +122,7 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        ///< summary> Path to cloned PT project Mercurial repos. </summary>
+        /// <summary> Path to cloned PT project Mercurial repos. </summary>
         public string SyncDir { get; set; }
 
         internal IScrTextCollection ScrTextCollection { get; set; }
@@ -1208,7 +1208,7 @@ namespace SIL.XForge.Scripture.Services
 
         /// <summary>
         /// Get access to a source for PT project repositories, based on user secret.
-        ///</summary>
+        /// </summary>
         private async Task<IInternetSharedRepositorySource> GetInternetSharedRepositorySource(string userId,
             CancellationToken token)
         {
