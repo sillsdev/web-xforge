@@ -33,6 +33,7 @@ The rest of this document discusses the development of the underlying software.
     - [Local Linux Development Setup](#local-linux-development-setup)
     - [Manual Setup](#manual-setup)
   - [Development Process](#development-process)
+  - [Production build](#production-build)
   - [Reference](#reference)
 - [Testing](#testing)
   - [.NET Unit Testing](#net-unit-testing)
@@ -248,6 +249,25 @@ If you have minor changes to request on a PR you can say 'Make change X and then
 People merging PRs can and should rebase the completed PR change (default to squash and rebase unless commits have good reason to stay separate).
 
 Delete the PR branch after merge.
+
+### Production build
+
+You can do a production build of the backend and frontend locally by running the following in the repository root:
+
+```bash
+dotnet publish src/SIL.XForge.Scripture/SIL.XForge.Scripture.csproj -c Release \
+  -r linux-x64 /p:Version=9.9.9 /p:AngularConfig=production
+```
+
+Then you can attempt to run it with:
+
+```bash
+cd src/SIL.XForge.Scripture/bin/Release/netcoreapp3.1/linux-x64/publish
+./SIL.XForge.Scripture
+```
+
+Note that the production build won't really run without changing what remote servers it
+connects to. But it may still prove useful for testing certain things.
 
 ### Reference
 
