@@ -329,6 +329,34 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it("should not increment accepted suggestion if the content doesn't change", fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+      expect(env.component.target!.segmentRef).toBe('');
+      const range = env.component.target!.getSegmentRange('verse_1_5');
+      env.targetEditor.setSelection(range!.index + range!.length, 0, 'user');
+      env.wait();
+      env.typeCharacters('verse 5');
+      expect(env.component.target!.segmentRef).toBe('verse_1_5');
+      expect(env.component.target!.segmentText).toBe('target: chapter 1, verse 5');
+      expect(env.component.showSuggestions).toBe(true);
+      expect(env.component.suggestions[0].words).toEqual(['5']);
+      expect(env.component.metricsSession?.metrics.type).toEqual('edit');
+      expect(env.component.metricsSession?.metrics.suggestionTotalCount).toBe(1);
+      expect(env.component.metricsSession?.metrics.suggestionAcceptedCount).toBeUndefined();
+
+      env.insertSuggestion();
+
+      expect(env.component.target!.segmentText).toBe('target: chapter 1, verse 5');
+      expect(env.component.showSuggestions).toBe(false);
+      tick(ACTIVE_EDIT_TIMEOUT);
+      expect(env.component.metricsSession?.metrics.type).toEqual('edit');
+      expect(env.component.metricsSession?.metrics.suggestionTotalCount).toBe(1);
+      expect(env.component.metricsSession?.metrics.suggestionAcceptedCount).toBeUndefined();
+      env.dispose();
+    }));
+
     it('insert suggestion in non-blank segment', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
