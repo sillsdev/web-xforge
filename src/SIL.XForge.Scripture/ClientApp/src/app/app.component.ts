@@ -40,7 +40,7 @@ import { canAccessTranslateApp } from './core/models/sf-project-role-info';
 import { SFProjectService } from './core/sf-project.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
 import { SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
-import { projectLabel, ProjectLabelFn } from './shared/utils';
+import { projectLabel } from './shared/utils';
 
 declare function gtag(...args: any): void;
 
@@ -70,7 +70,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   canSync$?: Observable<boolean>;
   hasUpdate: boolean = false;
 
-  projectLabel: ProjectLabelFn = projectLabel;
+  projectLabel = projectLabel;
 
   private currentUserDoc?: UserDoc;
   private _projectSelect?: MdcSelect;
