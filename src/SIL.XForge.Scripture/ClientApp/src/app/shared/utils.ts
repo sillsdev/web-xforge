@@ -38,8 +38,7 @@ export function combineVerseRefStrs(startStr?: string, endStr?: string): VerseRe
   return range.verseRef;
 }
 
-export type ProjectLabelFn = (project: SelectableProject) => string;
-export function projectLabel(project: SelectableProject): string {
+export function projectLabel(project: SelectableProject | undefined): string {
   if (project == null || (!project.shortName && !project.name)) {
     return '';
   }

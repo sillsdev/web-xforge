@@ -11,7 +11,7 @@ import { SFProjectCreateSettings } from '../core/models/sf-project-create-settin
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { ParatextService, SelectableProject } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
-import { projectLabel, ProjectLabelFn } from '../shared/utils';
+import { projectLabel } from '../shared/utils';
 
 interface ConnectProjectFormValues {
   paratextId: string;
@@ -42,7 +42,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   connectProjectName?: string;
   projectDoc?: SFProjectDoc;
 
-  projectLabel: ProjectLabelFn = projectLabel;
+  projectLabel = projectLabel;
 
   private _isAppOnline: boolean = false;
   private _projects?: ParatextProject[];
