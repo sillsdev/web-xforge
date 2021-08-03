@@ -748,6 +748,53 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task SyncAsync_BackupRestoredPreviouslyRevNotMatching_WritesToPT()
+        {
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, true, new Book("MAT", 2), new Book("MRK", 2));
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+
+            // Setup to simulate that a backup was restored at a revision not matching the recorded
+            // version in the project doc
+            env.ParatextService.BackupExists(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(true);
+            env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target")
+                .Returns("revNotMatchingVersion");
+
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+
+            // Check that text edits were pushed even if the current hg repo was not at the version recorded in
+            // the project docs.
+            await env.ParatextService.Received(2).PutBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<int>(),
+                Arg.Any<string>(), Arg.Any<Dictionary<int, string>>());
+            SFProject project = env.VerifyProjectSync(true);
+            Assert.That(project.Sync.DataInSync, Is.True);
+        }
+
+        [Test]
+        public async Task SyncAsync_DataInSyncTrueAfterRestore()
+        {
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, false);
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+            // Simulate a successful backup to a hg repo at a revision not matching our project doc
+            // after a failed send/receive
+            env.ParatextService.BackupExists(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(true);
+            env.ParatextService.RestoreRepository(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(true);
+            env.ParatextService.When(p => p.GetBookText(Arg.Any<UserSecret>(), "target", Arg.Any<int>()))
+                .Do(_ => throw new ArgumentException());
+
+            env.ParatextService.When(p => p.RestoreRepository(Arg.Any<UserSecret>(), "target"))
+                .Do(_ => env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target")
+                    .Returns("revNotMatchingVersion"));
+
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+
+            env.ParatextService.Received(1).RestoreRepository(Arg.Any<UserSecret>(), "target");
+            SFProject project = env.VerifyProjectSync(false);
+            Assert.That(project.Sync.DataInSync, Is.True);
+        }
+
+        [Test]
         public async Task SyncAsync_TaskCancelledByException()
         {
             // Set up the environment
@@ -796,6 +843,26 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task SyncAsync_TaskCancelledAndRestoreFails_DataNotInSync()
+        {
+            var env = new TestEnvironment();
+            env.SetupSFData(true, false, true);
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+            var cancellationTokenSource = new CancellationTokenSource();
+            env.ParatextService.BackupExists(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(true);
+            env.ParatextService.RestoreRepository(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(false);
+
+            env.ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
+                Arg.Any<IProgress<ProgressState>>(), Arg.Any<CancellationToken>()))
+                .Do(_ => cancellationTokenSource.Cancel());
+            await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+            env.ParatextService.Received(1).RestoreRepository(Arg.Any<UserSecret>(), Arg.Any<string>());
+            SFProject project = env.VerifyProjectSync(false);
+            // Data is out of sync due to the failed restore
+            Assert.That(project.Sync.DataInSync, Is.False);
+        }
+
+        [Test]
         public async Task SyncAsync_TaskCancelledPrematurely()
         {
             // Set up the environment
@@ -812,7 +879,7 @@ namespace SIL.XForge.Scripture.Services
 
             // Check that the task was cancelled after awaiting the check above
             SFProject project = env.VerifyProjectSync(false);
-            Assert.That(project.Sync.DataInSync, Is.False);
+            Assert.That(project.Sync.DataInSync, Is.True);
         }
 
         [Test]
@@ -837,7 +904,9 @@ namespace SIL.XForge.Scripture.Services
                 ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.PercentCompleted"));
             env.Connection.Received(1).ExcludePropertyFromTransaction(Arg.Is<Expression<Func<SFProject, object>>>(
                 ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.QueuedCount"));
-            env.Connection.Received(2).ExcludePropertyFromTransaction(Arg.Any<Expression<Func<SFProject, object>>>());
+            env.Connection.Received(1).ExcludePropertyFromTransaction(Arg.Is<Expression<Func<SFProject, object>>>(
+                ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.DataInSync"));
+            env.Connection.Received(3).ExcludePropertyFromTransaction(Arg.Any<Expression<Func<SFProject, object>>>());
         }
 
         [Test]
@@ -1097,13 +1166,19 @@ namespace SIL.XForge.Scripture.Services
                 ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(),
                     Arg.Is((SFProject project) => project.ParatextId == "target"), Arg.Any<CancellationToken>())
                     .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
-                ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
+                ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), "target",
                     Arg.Any<IProgress<ProgressState>>(), Arg.Any<CancellationToken>()))
-                    .Do(x => _sendReceivedCalled = true);
+                    .Do(x =>
+                        {
+                            _sendReceivedCalled = true;
+                            ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), Arg.Any<string>())
+                                .Returns("afterSR");
+                        }
+                    );
                 ParatextService.IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), Arg.Any<string>())
                     .Returns(false);
                 ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target")
-                    .Returns("beforeSR", "afterSR");
+                    .Returns("beforeSR");
                 ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "source")
                     .Returns("beforeSR", "afterSR");
                 RealtimeService = new SFMemoryRealtimeService();
@@ -1293,7 +1368,8 @@ namespace SIL.XForge.Scripture.Services
                                 // QueuedCount is incremented before RunAsync() by SyncService.SyncAsync(). So set
                                 // it to 1 to simulate it being incremented.
                                 QueuedCount = 1,
-                                SyncedToRepositoryVersion = "beforeSR"
+                                SyncedToRepositoryVersion = "beforeSR",
+                                DataInSync = true
                             }
                         },
                         new SFProject

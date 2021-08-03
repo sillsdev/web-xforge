@@ -127,7 +127,7 @@ namespace SIL.XForge.Scripture.Services
                 var questionDocsByBook = new Dictionary<int, IReadOnlyList<IDocument<Question>>>();
                 string lastSharedVersion = _paratextService.GetLatestSharedVersion(_userSecret, targetParatextId);
 
-                bool isDataInSync = false;
+                bool isDataInSync = _projectDoc.Data.Sync.DataInSync ?? false;
                 if (lastSharedVersion == null)
                 {
                     // The hg repository has no pushed or pulled commit. Maybe we are only just getting set up with a
@@ -382,6 +382,7 @@ namespace SIL.XForge.Scripture.Services
             _conn.BeginTransaction();
             _conn.ExcludePropertyFromTransaction<SFProject>(op => op.Sync.PercentCompleted);
             _conn.ExcludePropertyFromTransaction<SFProject>(op => op.Sync.QueuedCount);
+            _conn.ExcludePropertyFromTransaction<SFProject>(op => op.Sync.DataInSync);
             _projectDoc = await _conn.FetchAsync<SFProject>(projectSFId);
             if (!_projectDoc.IsLoaded)
             {
@@ -756,11 +757,24 @@ namespace SIL.XForge.Scripture.Services
                     .Select(u => new { UserId = u.Id, ParatextId = u.ParatextId })
                     .ToListAsync();
 
-            // If we have failed, restore the repository, if we can
-            if (!successful && canRollbackParatext)
+            bool dataInSync = true;
+            if (!successful)
             {
-                bool rollbackOutcome = _paratextService.RestoreRepository(_userSecret, _projectDoc.Data.ParatextId);
-                Log($"CompleteSync: Sync was not successful. {(rollbackOutcome ? "Rolled back" : "Failed to roll back")} local PT repo.");
+                bool restoreSucceeded = false;
+                // If we have failed, restore the repository, if we can
+                if (canRollbackParatext)
+                {
+                    // If the restore is successful, then dataInSync will always be set to true because
+                    // the restored repo can be assumed to be at the revision recorded in the project doc.
+                    restoreSucceeded = _paratextService.RestoreRepository(_userSecret, _projectDoc.Data.ParatextId);
+                }
+                Log($"CompleteSync: Sync was not successful. {(restoreSucceeded ? "Rolled back" : "Failed to roll back")} local PT repo.");
+                if (!restoreSucceeded)
+                {
+                    string repoVersion =
+                        _paratextService.GetLatestSharedVersion(_userSecret, _projectDoc.Data.ParatextId);
+                    dataInSync = repoVersion == _projectDoc.Data.Sync.SyncedToRepositoryVersion;
+                }
             }
 
             // NOTE: This is executed outside of the transaction because it modifies "Sync.PercentCompleted"
@@ -784,7 +798,7 @@ namespace SIL.XForge.Scripture.Services
                 else
                 {
                     Log($"CompleteSync: Failed to synchronize. PT repo latest shared version is '{repoVersion}'. SF DB project SyncedToRepositoryVersion is '{_projectDoc.Data.Sync.SyncedToRepositoryVersion}'.");
-                    op.Set(pd => pd.Sync.DataInSync, repoVersion == _projectDoc.Data.Sync.SyncedToRepositoryVersion);
+                    op.Set(pd => pd.Sync.DataInSync, dataInSync);
                 }
                 // the frontend checks the queued count to determine if the sync is complete. The ShareDB client emits
                 // an event for each individual op even if they are applied as a batch, so this needs to be set last,
