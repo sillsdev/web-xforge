@@ -7,6 +7,7 @@ import { filter, map, startWith, takeUntil, tap } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SelectableProject } from '../core/paratext.service';
 import { SFValidators } from '../shared/sfvalidators';
+import { projectLabel } from '../shared/utils';
 
 // A value accessor is necessary in order to create a custom form control
 export const PROJECT_SELECT_VALUE_ACCESSOR: any = {
@@ -51,6 +52,8 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
     this.resourceCountLimit$,
     this.hideProjectId$
   ]).pipe(map(value => this.filterGroup(value[0], this.resources || [], value[1])));
+
+  projectLabel = projectLabel;
 
   constructor() {
     super();

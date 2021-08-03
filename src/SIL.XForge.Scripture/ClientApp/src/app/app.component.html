@@ -161,7 +161,7 @@
         <mdc-menu>
           <mdc-list>
             <mdc-list-item *ngFor="let projectDoc of projectDocs" [value]="projectDoc.id">{{
-              projectDoc.data?.name
+              projectLabel(projectDoc.data)
             }}</mdc-list-item>
             <mdc-list-divider></mdc-list-divider>
             <mdc-list-item value="*connect-project*" [class.list-item-disabled]="!isAppOnline">
