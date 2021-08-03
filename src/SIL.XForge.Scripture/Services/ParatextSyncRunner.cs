@@ -765,9 +765,7 @@ namespace SIL.XForge.Scripture.Services
                 if (canRollbackParatext)
                 {
                     // If the restore is successful, then dataInSync will always be set to true because
-                    // the restored repo is not guaranteed to be at the version that is recorded in the project doc.
-                    // In these cases, the backup is expected to be ahead of what is recorded in the project doc
-                    // and future synchronizations can be performed safely.
+                    // the restored repo can be assumed to be at the revision recorded in the project doc.
                     restoreSucceeded = _paratextService.RestoreRepository(_userSecret, _projectDoc.Data.ParatextId);
                 }
                 Log($"CompleteSync: Sync was not successful. {(restoreSucceeded ? "Rolled back" : "Failed to roll back")} local PT repo.");
