@@ -8,9 +8,8 @@ describe('NoteDialogComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ NoteDialogComponent ]
-    })
-    .compileComponents();
+      declarations: [NoteDialogComponent]
+    }).compileComponents();
   });
 
   beforeEach(() => {
@@ -19,7 +18,7 @@ describe('NoteDialogComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
+  it('should highlight selected word', () => {});
+
+  it('should show words either side of selected word', () => {});
 });

@@ -288,8 +288,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       .reduce((a, b) => a + b, 0);
 
     const expectedFooterHeight = 38;
-    // app-checking-owner is the element that ends up determining the height of the footer
-    const footerOffsetHeight = Array.from(answerPanel.querySelectorAll('.answer-footer app-checking-owner'))
+    // app-owner is the element that ends up determining the height of the footer
+    const footerOffsetHeight = Array.from(answerPanel.querySelectorAll('.answer-footer app-owner'))
       .map(footer => footer as HTMLElement)
       .map(footer => (footer.offsetHeight < expectedFooterHeight ? expectedFooterHeight - footer.offsetHeight : 0))
       .reduce((a, b) => a + b, 0);

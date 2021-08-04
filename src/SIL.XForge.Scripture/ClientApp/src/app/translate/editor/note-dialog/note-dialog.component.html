@@ -1,9 +1,15 @@
 <mdc-dialog>
   <mdc-dialog-container>
     <mdc-dialog-surface>
-      <mdc-dialog-title>TItle</mdc-dialog-title>
-      <mdc-dialog-content class="content-padding">
-        <p>note-dialog works!</p>
+      <mdc-dialog-title><img [src]="flagIcon" /> Note - {{ verseRef }}</mdc-dialog-title>
+      <mdc-dialog-content class="content-padding" [ngClass]="{ rtl: isRtl, ltr: !isRtl }">
+        <div class="segment-text" [innerHTML]="segmentText"></div>
+        <div class="notes">
+          <div *ngFor="let note of notes" class="note">
+            <div [innerHTML]="note.content"></div>
+            <app-owner [ownerRef]="note.ownerRef" [dateTime]="note.dateCreated"></app-owner>
+          </div>
+        </div>
       </mdc-dialog-content>
     </mdc-dialog-surface>
   </mdc-dialog-container>

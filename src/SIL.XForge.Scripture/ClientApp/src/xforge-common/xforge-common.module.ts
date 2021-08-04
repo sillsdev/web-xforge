@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { TranslocoModule, TRANSLOCO_CONFIG, TRANSLOCO_LOADER } from '@ngneat/transloco';
 import { ngfModule } from 'angular-file';
 import { AvatarModule } from 'ngx-avatar';
+import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { PageNotFoundComponent } from '../app/shared/page-not-found/page-not-found.component';
 import { AuthHttpInterceptor } from './auth-http-interceptor';
 import { AvatarComponent } from './avatar/avatar.component';
@@ -29,7 +30,8 @@ const componentExports = [
   SaUsersComponent,
   SystemAdministrationComponent,
   PageNotFoundComponent,
-  WriteStatusComponent
+  WriteStatusComponent,
+  OwnerComponent
 ];
 
 @NgModule({
