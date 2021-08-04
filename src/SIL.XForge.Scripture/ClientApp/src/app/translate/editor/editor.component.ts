@@ -51,7 +51,7 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { Segment } from '../../shared/text/segment';
 import { FeaturedVerseRefInfo, TextComponent } from '../../shared/text/text.component';
-import { verseRefFromMouseEvent } from '../../shared/utils';
+import { threadIdFromMouseEvent } from '../../shared/utils';
 import { NoteDialogComponent, NoteDialogData } from './note-dialog/note-dialog.component';
 import {
   SuggestionsSettingsDialogComponent,
@@ -65,7 +65,11 @@ export const UPDATE_SUGGESTIONS_TIMEOUT = 100;
 const PUNCT_SPACE_REGEX = XRegExp('^(\\p{P}|\\p{S}|\\p{Cc}|\\p{Z})+$');
 
 function iconSourceProp(name: string): string {
-  return `--icon-file: url(/assets/icons/TagIcons/${name}.png);`;
+  return '--icon-file: url(' + iconSourceUrl(name) + ');';
+}
+
+function iconSourceUrl(name: string): string {
+  return `/assets/icons/TagIcons/${name}.png`;
 }
 
 /** Scripture editing area. Used for Translate task. */
@@ -654,16 +658,35 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  private showNoteThread(verseRef: VerseRef): void {
+  private showNoteThread(threadId: string): void {
+    const featuredVerseRefInfo = this.getFeaturedVerseRefInfo(
+      this.noteThreadQuery!.docs!.find(nt => nt.data!.dataId === threadId)!.data!
+    );
+    let noteRange: RangeStatic | undefined;
+    let startPosition: number = 0;
+    let selectionLength: number = 0;
+    // TODO: Needs to be updated once the start position is determined correctly
+    [noteRange, startPosition, selectionLength] = this.target!.getSelectedTextPosition(
+      featuredVerseRefInfo.verseRef,
+      featuredVerseRefInfo.selectedText!
+    );
+    if (noteRange == null) {
+      return;
+    }
     this.dialog.open(NoteDialogComponent, {
       clickOutsideToClose: true,
       escapeToClose: true,
       autoFocus: false,
       data: {
-        id: '659baff4'
+        noteThreadQuery: this.noteThreadQuery,
+        threadId: threadId,
+        icon: iconSourceUrl(featuredVerseRefInfo.iconName),
+        segmentText: this.target!.segment!.text,
+        selectedText: featuredVerseRefInfo.selectedText!,
+        startPosition: startPosition,
+        rtl: this.target!.isRtl
       } as NoteDialogData
     });
-    console.log(verseRef);
   }
 
   private setupTranslationEngine(): void {
@@ -947,9 +970,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           if (this.bookNum == null) {
             return;
           }
-          const verseRef = verseRefFromMouseEvent(event, this.bookNum);
-          if (verseRef != null) {
-            this.showNoteThread(verseRef);
+          const threadId = threadIdFromMouseEvent(event);
+          if (threadId != null) {
+            this.showNoteThread(threadId);
           }
         })
       );
@@ -987,12 +1010,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       preview += '\n' + translate('editor.more_notes', { count: notes.length - 1 });
     }
     const iconDefinedNotes = notes.filter(n => n.tagIcon != null);
+    const iconName: string =
+      iconDefinedNotes.length === 0 ? thread.tagIcon : iconDefinedNotes[iconDefinedNotes.length - 1].tagIcon!;
     return {
       verseRef: toVerseRef(thread.verseRef),
       id: thread.dataId,
       preview,
-      iconName: iconDefinedNotes.length === 0 ? thread.tagIcon : iconDefinedNotes[iconDefinedNotes.length - 1].tagIcon,
-      textAnchor: thread.position
+      iconName: iconName ?? '01flag1',
+      selectedText: thread.selectedText
     };
   }
 

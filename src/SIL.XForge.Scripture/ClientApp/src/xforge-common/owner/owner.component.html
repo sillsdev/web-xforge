@@ -6,7 +6,7 @@
   }"
 >
   <div class="avatar" *ngIf="includeAvatar"><app-avatar [user]="owner" [size]="32" [round]="false"></app-avatar></div>
-  <div>
+  <div class="owner-text">
     <div class="name">{{ name }}</div>
     <small class="date-time" *ngIf="dateTime">{{ i18n.formatDate(date) }}</small>
   </div>
