@@ -14,18 +14,18 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { SF_TYPE_REGISTRY } from '../../../../core/models/sf-type-registry';
-import { CheckingOwnerComponent } from './checking-owner.component';
+import { SF_TYPE_REGISTRY } from '../../app/core/models/sf-type-registry';
+import { OwnerComponent } from './owner.component';
 
-describe('CheckingOwnerComponent', () => {
+describe('OwnerComponent', () => {
   it('should create', () => {
-    const template = '<app-checking-owner ownerRef="user01"></app-checking-owner>';
+    const template = '<app-owner ownerRef="user01"></app-owner>';
     const env = new TestEnvironment(template);
     expect(env.fixture.componentInstance).toBeTruthy();
   });
 
   it('displays owner name', fakeAsync(() => {
-    const template = '<app-checking-owner ownerRef="user01"></app-checking-owner>';
+    const template = '<app-owner ownerRef="user01"></app-owner>';
     const env = new TestEnvironment(template);
     tick();
     env.fixture.detectChanges();
@@ -34,7 +34,7 @@ describe('CheckingOwnerComponent', () => {
 
   it('displays Unknown owner name', fakeAsync(() => {
     // A user may be removed from the database, and so an ownerRef may refer to a user we can't find.
-    const template = '<app-checking-owner ownerRef="no-longer-known-user-id"></app-checking-owner>';
+    const template = '<app-owner ownerRef="no-longer-known-user-id"></app-owner>';
     const env = new TestEnvironment(template);
     tick();
     env.fixture.detectChanges();
@@ -42,8 +42,7 @@ describe('CheckingOwnerComponent', () => {
   }));
 
   it('displays avatar', () => {
-    const template =
-      '<app-checking-owner #checkingOwner ownerRef="user01" [includeAvatar]="true"></app-checking-owner>';
+    const template = '<app-owner #checkingOwner ownerRef="user01" [includeAvatar]="true"></app-owner>';
     const env = new TestEnvironment(template);
     expect(env.avatar).toBeTruthy();
     expect(env.avatar.query(By.css('app-avatar'))).toBeTruthy();
@@ -53,7 +52,7 @@ describe('CheckingOwnerComponent', () => {
   });
 
   it('displays date/time ', () => {
-    const template = '<app-checking-owner #checkingOwner ownerRef="user01"></app-checking-owner>';
+    const template = '<app-owner #checkingOwner ownerRef="user01"></app-owner>';
     const env = new TestEnvironment(template);
     env.fixture.componentInstance.checkingOwner.dateTime = '';
     env.fixture.detectChanges();
@@ -64,8 +63,7 @@ describe('CheckingOwnerComponent', () => {
   });
 
   it('layout set correctly', () => {
-    const template =
-      '<app-checking-owner #checkingOwner ownerRef="user01" [layoutStacked]="true"></app-checking-owner>';
+    const template = '<app-owner #checkingOwner ownerRef="user01" [layoutStacked]="true"></app-owner>';
     const env = new TestEnvironment(template);
     expect(env.layout.classes['layout-stacked']).toBe(true);
     expect(env.layout.classes['layout-inline']).toBeUndefined();
@@ -78,7 +76,7 @@ describe('CheckingOwnerComponent', () => {
 
 @Component({ selector: 'app-host', template: '' })
 class HostComponent {
-  @ViewChild(CheckingOwnerComponent) checkingOwner!: CheckingOwnerComponent;
+  @ViewChild(OwnerComponent) checkingOwner!: OwnerComponent;
 }
 
 class TestEnvironment {
@@ -95,7 +93,7 @@ class TestEnvironment {
 
   constructor(template: string) {
     TestBed.configureTestingModule({
-      declarations: [HostComponent, CheckingOwnerComponent],
+      declarations: [HostComponent, OwnerComponent],
       imports: [AvatarTestingModule, UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
       providers: [
         { provide: AuthService, useFactory: () => instance(this.mockedAuthService) },

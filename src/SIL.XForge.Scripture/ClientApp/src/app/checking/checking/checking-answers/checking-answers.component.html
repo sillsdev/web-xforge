@@ -172,12 +172,12 @@
                     {{ t("delete") }}
                   </button>
                 </div>
-                <app-checking-owner
+                <app-owner
                   [ownerRef]="answer.ownerRef"
                   [includeAvatar]="true"
                   [layoutStacked]="true"
                   [dateTime]="answer.dateCreated"
-                ></app-checking-owner>
+                ></app-owner>
               </div>
               <app-checking-comments
                 [project]="project"
