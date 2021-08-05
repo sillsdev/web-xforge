@@ -159,7 +159,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     },
     history: {
       userOnly: true
-    }
+    },
+    dragAndDrop: { textComponent: this }
   };
   private _id?: TextDocId;
   private _isRightToLeft: boolean = false;
