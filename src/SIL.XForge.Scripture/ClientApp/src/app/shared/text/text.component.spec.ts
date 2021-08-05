@@ -319,6 +319,89 @@ describe('TextComponent', () => {
       expect(resultingSelection.length).toEqual(desiredSelectionLength);
     }));
 
+    it('copies drag-and-drop if user holds ctrl key', fakeAsync(() => {
+      // If the user selects text in the text editing area, holds the ctrl key, and drags the text selection, keep it
+      // in its current location and insert it into the new location.
+      const env = new TestEnvironment();
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+      const initialTextInDoc = 'target: chapter 1, verse 4.';
+      //                                ---------     ^
+      const textToMove = 'chapter 1';
+      const expectedFinalText = 'target: chapter 1, verchapter 1se 4.';
+      //                                               ---------
+      expect(env.component.getSegmentText('verse_1_4')).toEqual(initialTextInDoc, 'setup');
+      expect(env.component.editor!.getText()).toContain(initialTextInDoc, 'setup');
+
+      const sourceSegmentRange: RangeStatic | undefined = env.component.getSegmentRange('verse_1_4');
+      if (sourceSegmentRange == null) {
+        throw Error();
+      }
+      // Location of textToMove in the editor's complete text.
+      const selectionStart: number = sourceSegmentRange.index + 'target: '.length;
+      const selectionLength: number = textToMove.length;
+      env.component.editor?.setSelection(selectionStart, selectionLength);
+
+      const dataTransfer = new DataTransfer();
+      dataTransfer.setData('text/plain', textToMove);
+      dataTransfer.setData('text/html', `<span background="white">${textToMove}</span>`);
+      const targetElement: HTMLElement = document.createElement('usx-segment');
+      targetElement.setAttribute('data-segment', 'verse_1_4');
+      const dropEvent: MockDragEvent = new MockDragEvent('drop', {
+        dataTransfer,
+        cancelable: true,
+        // User is holding ctrl key to copy.
+        ctrlKey: true
+      });
+      dropEvent.setTarget(targetElement);
+
+      // How far into the initialTextInDoc the user is trying to drop the text
+      const desiredIndexInSegment = 'target: chapter 1, ver'.length;
+      // Override the point-to-index method behaviour, since the unit test isn't really dragging the mouse to an
+      // element.
+      document.caretRangeFromPoint = (x: number, y: number) => ({ startOffset: desiredIndexInSegment } as Range);
+
+      const dragstartEvent: MockDragEvent = new MockDragEvent('dragstart', {
+        dataTransfer,
+        cancelable: true
+      });
+
+      // Setup. The drag-and-drop activity should not start out with the custom note on the event objects.
+      expect(dragstartEvent.dataTransfer?.types.includes(DragAndDrop.quillIsSourceToken)).toBeFalse();
+      expect(DragAndDrop.quillIsSourceToken.length).toBeGreaterThan(0, 'setup');
+
+      // SUT 1
+      env.component.editor?.container.dispatchEvent(dragstartEvent);
+      tick();
+
+      // A custom note should have been inserted that the drag-and-drop activity in question was started from quill,
+      // and thus not from outside the text doc or from another window. This can help us know what to do with an
+      // existing selection later.
+      expect(dragstartEvent.dataTransfer?.types.includes(DragAndDrop.quillIsSourceToken)).toBeTrue();
+      // Be prepared for the next steps, where this custom indication should be present on the drop event as well.
+      expect(dropEvent.dataTransfer?.types.includes(DragAndDrop.quillIsSourceToken)).toBeTrue();
+
+      // SUT 2
+      env.component.editor?.container.dispatchEvent(dropEvent);
+      tick();
+
+      expect(env.component.getSegmentText('verse_1_4')).toEqual(expectedFinalText);
+      expect(env.component.editor?.getText()).toContain(expectedFinalText);
+
+      const textLeadingUpToInsertionPosition = 'target: chapter 1, ver';
+      const desiredSelectionStart = sourceSegmentRange.index + textLeadingUpToInsertionPosition.length;
+      const desiredSelectionLength = textToMove.length;
+      const resultingSelection: RangeStatic | null = env.component.editor!.getSelection();
+      if (resultingSelection == null) {
+        throw Error();
+      }
+      // After text is ctrl-dragged from one place in the document to another place, the selection should be on the
+      // copied text.
+      expect(resultingSelection.index).toEqual(desiredSelectionStart);
+      expect(resultingSelection.length).toEqual(desiredSelectionLength);
+    }));
+
     it('does not remove selected text if it is not the text being dragged', fakeAsync(() => {
       // If a user selects text in the editing area, then selects text in another application and drags it into the SF
       // text area, SF should not remove the text that was selected in SF but rather leave it be.

@@ -88,13 +88,14 @@ export class DragAndDrop {
         // There was a selection before the drop occurred.
         const removalDelta = new Delta();
         removalDelta.retain(originalSelection.index);
-        if (dragEvent.dataTransfer.types.includes(DragAndDrop.quillIsSourceToken)) {
+        if (dragEvent.dataTransfer.types.includes(DragAndDrop.quillIsSourceToken) && !dragEvent.ctrlKey) {
           // If the drag was started from within quill, then treat the selection as the source data of the drag, and
-          // delete the selection.
+          // delete the selection. Unless the user was holding the ctrl key to copy text instead of move it.
           removalDelta.delete(originalSelection.length);
           quill.updateContents(removalDelta, 'user');
         }
-        // Or if the drag was not started from within quill, then don't delete the selection.
+        // Or if the drag was not started from within quill, or the user was holding the ctrl key, then don't delete
+        // the selection.
       }
     });
   }
