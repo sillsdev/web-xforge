@@ -1,0 +1,8 @@
+// This script searches for projects that are in the sync state. It is intended to be used for finding projects that
+// are stuck in a perpetual state of syncing. Keep in mind that when things go wrong the project's state may not fully
+// reflect whether a Hangfire job is currently in the queue for this project, so checking the Hangfire dashboard at the
+// same time may be useful.
+
+use('xforge')
+
+db.sf_projects.find({'sync.queuedCount': {$ne: 0}})

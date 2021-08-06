@@ -42,16 +42,16 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         public override string[] Pull(string repository, SharedRepository pullRepo)
         {
-            string tip = GetBaseRevision(repository);
+            string baseRev = GetBaseRevision(repository);
 
             // Get bundle
             string guid = Guid.NewGuid().ToString();
             List<string> query = new List<string> { "guid", guid, "proj", pullRepo.ScrTextName, "projid",
                         pullRepo.SendReceiveId.Id, "type", "zstd-v2" };
-            if (tip != null)
+            if (baseRev != null)
             {
                 query.Add("base1");
-                query.Add(tip);
+                query.Add(baseRev);
             }
 
             byte[] bundle = client.GetStreaming("pullbundle", query.ToArray());
@@ -73,10 +73,12 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         public override void Push(string repository, SharedRepository pushRepo)
         {
-            string tip = GetBaseRevision(repository);
+            // TODO: Because of how restoring a backup works, if no changes were made in Paratext that were merged
+            // into scripture forge, this push will silently fail to push SF changes to PT.
+            string baseRev = GetBaseRevision(repository);
 
             // Create bundle
-            byte[] bundle = HgWrapper.Bundle(repository, tip);
+            byte[] bundle = HgWrapper.Bundle(repository, baseRev);
             if (bundle.Length == 0)
                 return;
 

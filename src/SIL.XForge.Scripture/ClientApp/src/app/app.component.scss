@@ -37,7 +37,8 @@
           margin: 0;
           border-radius: 0;
           padding: 0 16px;
-          height: 48px;
+          height: unset;
+          min-height: 48px;
         }
         .mdc-list-divider {
           margin: 8px 0;

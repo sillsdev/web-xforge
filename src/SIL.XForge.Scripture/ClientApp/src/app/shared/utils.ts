@@ -1,4 +1,5 @@
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { SelectableProject } from '../core/paratext.service';
 
 export function combineVerseRefStrs(startStr?: string, endStr?: string): VerseRef | undefined {
   if (!startStr) {
@@ -51,4 +52,18 @@ export function verseRefFromMouseEvent(event: MouseEvent, bookNum: number): Vers
     return new VerseRef(bookNum, segmentParts[1], segmentParts[2]);
   }
   return;
+}
+
+export function projectLabel(project: SelectableProject | undefined): string {
+  if (project == null || (!project.shortName && !project.name)) {
+    return '';
+  }
+
+  if (!project.shortName) {
+    return project.name;
+  }
+  if (!project.name) {
+    return project.shortName;
+  }
+  return project.shortName + ' - ' + project.name;
 }

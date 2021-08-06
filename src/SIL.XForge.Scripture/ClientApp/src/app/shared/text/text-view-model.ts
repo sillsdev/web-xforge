@@ -481,10 +481,7 @@ export class TextViewModel {
       fixOffset++;
     } else if (segment.containsBlank && segment.length > 1) {
       // delete blank
-      const delta = new Delta()
-        .retain(segment.index + fixOffset)
-        .retain(segment.length - 1, { segment: segment.ref, 'para-contents': true, 'direction-segment': 'auto' })
-        .delete(1);
+      const delta = new Delta().retain(segment.index + fixOffset).delete(1);
       fixDelta = fixDelta.compose(delta);
       fixOffset--;
       const sel = editor.getSelection();

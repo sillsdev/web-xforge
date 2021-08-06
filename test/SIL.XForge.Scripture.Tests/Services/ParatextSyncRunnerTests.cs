@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -28,6 +29,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
 
+            // SUT
             await env.Runner.RunAsync("project03", "user01", false, CancellationToken.None);
         }
 
@@ -180,7 +182,11 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, false, false, books);
             env.SetupPTData(books);
 
+            // SUT
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+
+            env.MockLogger.AssertEventCount((LogEvent logEvent) => logEvent.LogLevel == LogLevel.Information &&
+                Regex.IsMatch(logEvent.Message, "Starting"), 1);
 
             await env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>());
             await env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<string>());
@@ -368,7 +374,8 @@ namespace SIL.XForge.Scripture.Services
             {
                 { "pt01", SFProjectRole.Translator }
             };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<CancellationToken>())
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(),
+                Arg.Is((SFProject project) => project.ParatextId == "target"), Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
 
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
@@ -389,7 +396,8 @@ namespace SIL.XForge.Scripture.Services
             {
                 { "pt01", SFProjectRole.Translator }
             };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<CancellationToken>())
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(),
+                Arg.Is((SFProject project) => project.ParatextId == "target"), Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
 
             // SUT
@@ -412,7 +420,8 @@ namespace SIL.XForge.Scripture.Services
             {
                 { "pt01", SFProjectRole.Administrator }
             };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<CancellationToken>())
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(),
+                Arg.Is((SFProject project) => project.ParatextId == "target"), Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
 
             await env.SetUserRole("user02", SFProjectRole.CommunityChecker);
@@ -441,6 +450,45 @@ namespace SIL.XForge.Scripture.Services
             env.ParatextService.Received().IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), "source");
             Assert.That(project.IsRightToLeft, Is.True);
             Assert.That(project.TranslateConfig.Source.IsRightToLeft, Is.False);
+        }
+
+        [Test]
+        public async Task SyncAsync_FullName_ProjectPropertyNotSetIfNull()
+        {
+            var env = new TestEnvironment();
+            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+            env.SetupSFData(true, false, false, false, books);
+            env.SetupPTData(books);
+
+            env.ParatextService.GetProjectFullName(Arg.Any<UserSecret>(), "target")
+                .Returns((string)null);
+
+            // SUT
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+
+            SFProject project = env.GetProject();
+            env.ParatextService.Received().GetProjectFullName(Arg.Any<UserSecret>(), "target");
+            Assert.That(project.Name, Is.EqualTo("project01"));
+        }
+
+        [Test]
+        public async Task SyncAsync_FullName_ProjectPropertySet()
+        {
+            var env = new TestEnvironment();
+            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+            env.SetupSFData(true, false, false, false, books);
+            env.SetupPTData(books);
+
+            string newFullName = "New Full Name";
+            env.ParatextService.GetProjectFullName(Arg.Any<UserSecret>(), "target")
+                .Returns(newFullName);
+
+            // SUT
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+
+            SFProject project = env.GetProject();
+            env.ParatextService.Received().GetProjectFullName(Arg.Any<UserSecret>(), "target");
+            Assert.That(project.Name, Is.EqualTo(newFullName));
         }
 
         [Test]
@@ -483,7 +531,8 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
-            env.Logger.DidNotReceiveWithAnyArgs().LogError(Arg.Any<Exception>(), default, default);
+            // No errors or exceptions were logged
+            env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.LogLevel == LogLevel.Error || logEvent.Exception != null);
 
             var chapterContent = Delta.New().InsertText("text");
             // DB should contain Source chapter 2 now from Paratext.
@@ -516,7 +565,8 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
-            env.Logger.DidNotReceiveWithAnyArgs().LogError(Arg.Any<Exception>(), default, default);
+            // No errors or exceptions were logged
+            env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.LogLevel == LogLevel.Error || logEvent.Exception != null);
 
             // DB should now be missing chapter 2, but retain chapters 1 and 3.
             Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
@@ -542,7 +592,8 @@ namespace SIL.XForge.Scripture.Services
             // SUT
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
-            env.Logger.DidNotReceiveWithAnyArgs().LogError(Arg.Any<Exception>(), default, default);
+            // No errors or exceptions were logged
+            env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.LogLevel == LogLevel.Error || logEvent.Exception != null);
 
             // DB should still be missing Source chapter 2.
             Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
@@ -571,7 +622,8 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
-            env.Logger.DidNotReceiveWithAnyArgs().LogError(Arg.Any<Exception>(), default, default);
+            // No errors or exceptions were logged
+            env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.LogLevel == LogLevel.Error || logEvent.Exception != null);
 
             // DB should now be missing all chapters except for the first, implicit chapter.
             Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
@@ -688,18 +740,65 @@ namespace SIL.XForge.Scripture.Services
 
             // Setup a trap to crash the task
             env.NotesMapper.When(x => x.InitAsync(Arg.Any<UserSecret>(), Arg.Any<SFProjectSecret>(),
-                Arg.Any<List<User>>(), Arg.Any<string>(), Arg.Any<CancellationToken>()))
+                Arg.Any<List<User>>(), Arg.Any<SFProject>(), Arg.Any<CancellationToken>()))
                 .Do(_ => throw new ArgumentException());
 
             // Run the task
             await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
 
             // Check that the Exception was logged
-            env.Logger.ReceivedWithAnyArgs(1).LogError(Arg.Any<Exception>(), default, default);
+            env.MockLogger.AssertHasEvent((LogEvent logEvent) => logEvent.Exception != null);
 
             // Check that the task cancelled correctly
             SFProject project = env.VerifyProjectSync(false);
             Assert.That(project.Sync.DataInSync, Is.True);  // Nothing was synced as this was cancelled OnInit()
+        }
+
+        [Test]
+        public async Task SyncAsync_BackupRestoredPreviouslyRevNotMatching_WritesToPT()
+        {
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, true, false, new Book("MAT", 2), new Book("MRK", 2));
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+
+            // Setup to simulate that a backup was restored at a revision not matching the recorded
+            // version in the project doc
+            env.ParatextService.BackupExists(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(true);
+            env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target")
+                .Returns("revNotMatchingVersion");
+
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+
+            // Check that text edits were pushed even if the current hg repo was not at the version recorded in
+            // the project docs.
+            await env.ParatextService.Received(2).PutBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<int>(),
+                Arg.Any<string>(), Arg.Any<Dictionary<int, string>>());
+            SFProject project = env.VerifyProjectSync(true);
+            Assert.That(project.Sync.DataInSync, Is.True);
+        }
+
+        [Test]
+        public async Task SyncAsync_DataInSyncTrueAfterRestore()
+        {
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, false, false);
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+            // Simulate a successful backup to a hg repo at a revision not matching our project doc
+            // after a failed send/receive
+            env.ParatextService.BackupExists(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(true);
+            env.ParatextService.RestoreRepository(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(true);
+            env.ParatextService.When(p => p.GetBookText(Arg.Any<UserSecret>(), "target", Arg.Any<int>()))
+                .Do(_ => throw new ArgumentException());
+
+            env.ParatextService.When(p => p.RestoreRepository(Arg.Any<UserSecret>(), "target"))
+                .Do(_ => env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target")
+                    .Returns("revNotMatchingVersion"));
+
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+
+            env.ParatextService.Received(1).RestoreRepository(Arg.Any<UserSecret>(), "target");
+            SFProject project = env.VerifyProjectSync(false);
+            Assert.That(project.Sync.DataInSync, Is.True);
         }
 
         [Test]
@@ -713,14 +812,15 @@ namespace SIL.XForge.Scripture.Services
 
             // Setup a trap to cancel the task
             env.NotesMapper.When(x => x.InitAsync(Arg.Any<UserSecret>(), Arg.Any<SFProjectSecret>(),
-                Arg.Any<List<User>>(), Arg.Any<string>(), Arg.Any<CancellationToken>()))
+                Arg.Any<List<User>>(), Arg.Any<SFProject>(), Arg.Any<CancellationToken>()))
                 .Do(_ => throw new TaskCanceledException());
 
             // Run the task
             await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
 
-            // Check that the TaskCancelledException was not logged
-            env.Logger.DidNotReceiveWithAnyArgs().LogError(Arg.Any<Exception>(), default, default);
+            // The TaskCancelledException was not logged
+            Assert.That(env.MockLogger.LogEvents.Count((LogEvent logEvent) => logEvent.LogLevel == LogLevel.Error || logEvent.Exception != null), Is.EqualTo(0));
+
 
             // Check that the task cancelled correctly
             SFProject project = env.VerifyProjectSync(false);
@@ -750,6 +850,26 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task SyncAsync_TaskCancelledAndRestoreFails_DataNotInSync()
+        {
+            var env = new TestEnvironment();
+            env.SetupSFData(true, false, true, false);
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+            var cancellationTokenSource = new CancellationTokenSource();
+            env.ParatextService.BackupExists(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(true);
+            env.ParatextService.RestoreRepository(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(false);
+
+            env.ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
+                Arg.Any<IProgress<ProgressState>>(), Arg.Any<CancellationToken>()))
+                .Do(_ => cancellationTokenSource.Cancel());
+            await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+            env.ParatextService.Received(1).RestoreRepository(Arg.Any<UserSecret>(), Arg.Any<string>());
+            SFProject project = env.VerifyProjectSync(false);
+            // Data is out of sync due to the failed restore
+            Assert.That(project.Sync.DataInSync, Is.False);
+        }
+
+        [Test]
         public async Task SyncAsync_TaskCancelledPrematurely()
         {
             // Set up the environment
@@ -766,7 +886,7 @@ namespace SIL.XForge.Scripture.Services
 
             // Check that the task was cancelled after awaiting the check above
             SFProject project = env.VerifyProjectSync(false);
-            Assert.That(project.Sync.DataInSync, Is.False);
+            Assert.That(project.Sync.DataInSync, Is.True);
         }
 
         [Test]
@@ -791,7 +911,9 @@ namespace SIL.XForge.Scripture.Services
                 ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.PercentCompleted"));
             env.Connection.Received(1).ExcludePropertyFromTransaction(Arg.Is<Expression<Func<SFProject, object>>>(
                 ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.QueuedCount"));
-            env.Connection.Received(2).ExcludePropertyFromTransaction(Arg.Any<Expression<Func<SFProject, object>>>());
+            env.Connection.Received(1).ExcludePropertyFromTransaction(Arg.Is<Expression<Func<SFProject, object>>>(
+                ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.DataInSync"));
+            env.Connection.Received(3).ExcludePropertyFromTransaction(Arg.Any<Expression<Func<SFProject, object>>>());
         }
 
         [Test]
@@ -1161,17 +1283,24 @@ namespace SIL.XForge.Scripture.Services
                     { "pt01", SFProjectRole.Administrator },
                     { "pt02", SFProjectRole.Translator }
                 };
-                ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<CancellationToken>())
+                ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(),
+                    Arg.Is((SFProject project) => project.ParatextId == "target"), Arg.Any<CancellationToken>())
                     .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
-                ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
+                ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), "target",
                     Arg.Any<IProgress<ProgressState>>(), Arg.Any<CancellationToken>()))
-                    .Do(x => _sendReceivedCalled = true);
+                    .Do(x =>
+                        {
+                            _sendReceivedCalled = true;
+                            ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), Arg.Any<string>())
+                                .Returns("afterSR");
+                        }
+                    );
                 ParatextService.IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), Arg.Any<string>())
                     .Returns(false);
                 ParatextService.GetNotes(Arg.Any<UserSecret>(), "target", Arg.Any<int>()).Returns("<notes/>");
                 ParatextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user01")).Returns("User 1");
                 ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target")
-                    .Returns("beforeSR", "afterSR");
+                    .Returns("beforeSR");
                 ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "source")
                     .Returns("beforeSR", "afterSR");
                 RealtimeService = new SFMemoryRealtimeService();
@@ -1180,11 +1309,11 @@ namespace SIL.XForge.Scripture.Services
                 SubstituteRealtimeService.ConnectAsync().Returns(Task.FromResult(Connection));
                 DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
                 NotesMapper = Substitute.For<IParatextNotesMapper>();
-                Logger = Substitute.For<ILogger<ParatextSyncRunner>>();
+                MockLogger = new MockLogger<ParatextSyncRunner>();
 
                 Runner = new ParatextSyncRunner(userSecrets, _projectSecrets, SFProjectService, EngineService,
                     ParatextService, substituteRealtimeService ? SubstituteRealtimeService : RealtimeService,
-                    DeltaUsxMapper, NotesMapper, Logger);
+                    DeltaUsxMapper, NotesMapper, MockLogger);
             }
 
             public ParatextSyncRunner Runner { get; }
@@ -1195,7 +1324,7 @@ namespace SIL.XForge.Scripture.Services
             public SFMemoryRealtimeService RealtimeService { get; }
             public IRealtimeService SubstituteRealtimeService { get; }
             public IDeltaUsxMapper DeltaUsxMapper { get; }
-            public ILogger<ParatextSyncRunner> Logger { get; }
+            public MockLogger<ParatextSyncRunner> MockLogger { get; }
 
             /// <summary>
             /// Gets the connection to be used with <see cref="SubstituteRealtimeService"/>.
@@ -1380,7 +1509,8 @@ namespace SIL.XForge.Scripture.Services
                                 // QueuedCount is incremented before RunAsync() by SyncService.SyncAsync(). So set
                                 // it to 1 to simulate it being incremented.
                                 QueuedCount = 1,
-                                SyncedToRepositoryVersion = "beforeSR"
+                                SyncedToRepositoryVersion = "beforeSR",
+                                DataInSync = true
                             }
                         },
                         new SFProject
@@ -1630,8 +1760,8 @@ namespace SIL.XForge.Scripture.Services
                     {
                         { "user01", "User 1" }, { "user02", "User 2" }, { "user03", "User 3" }
                     };
-                    ParatextService.GetParatextUsernameMappingAsync(Arg.Any<UserSecret>(), "target", CancellationToken.None)
-                        .Returns(userIdsToUsernames);
+                    ParatextService.GetParatextUsernameMappingAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
+                        CancellationToken.None).Returns(userIdsToUsernames);
                 }
                 else
                 {

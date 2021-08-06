@@ -126,7 +126,7 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        ///< summary> Path to cloned PT project Mercurial repos. </summary>
+        /// <summary> Path to cloned PT project Mercurial repos. </summary>
         public string SyncDir { get; set; }
 
         internal IScrTextCollection ScrTextCollection { get; set; }
@@ -135,9 +135,13 @@ namespace SIL.XForge.Scripture.Services
         /// <summary> Prepare access to Paratext.Data library, authenticate, and prepare Mercurial. </summary>
         public void Init()
         {
-            // Uncomment to output more info from ParatextData.dll for investigating.
-            // Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
-            // Trace.AutoFlush = true;
+            // Uncomment to output more info to the Terminal from ParatextData.dll for investigating. Note that without Clear()ing, the output would show in Debug Console while debugging.
+            // The output is using System.Diagnostics.Trace and so is not managed by the ILogging LogLevel filtering settings.
+            // System.Diagnostics.Trace.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(Console.Out));
+            // System.Diagnostics.Trace.AutoFlush = true;
+
+            // Stop ParatextData.dll Trace output from appearing on the server.
+            System.Diagnostics.Trace.Listeners.Clear();
 
             SyncDir = Path.Combine(_siteOptions.Value.SiteDir, "sync");
             if (!_fileSystemService.DirectoryExists(SyncDir))
@@ -237,13 +241,8 @@ namespace SIL.XForge.Scripture.Services
         {
             IInternetSharedRepositorySource ptRepoSource = await GetInternetSharedRepositorySource(userSecret.Id,
                 CancellationToken.None);
-            List<SharedRepository> remotePtProjects = ptRepoSource.GetRepositories().ToList();
-            List<ProjectMetadata> projectMetadata = ptRepoSource.GetProjectsMetaData().ToList();
-
-            // Omit projects that are not in the PT Registry until we support connecting to such projects.
-            remotePtProjects.RemoveAll((SharedRepository project) =>
-                !projectMetadata.Any((ProjectMetadata metadata) => metadata.ProjectGuid == project.SendReceiveId));
-            return GetProjects(userSecret, remotePtProjects, projectMetadata);
+            IEnumerable<SharedRepository> remotePtProjects = ptRepoSource.GetRepositories();
+            return GetProjects(userSecret, remotePtProjects, ptRepoSource.GetProjectsMetaData());
         }
 
         /// <summary>Get Paratext resources that a user has access to. </summary>
@@ -266,22 +265,49 @@ namespace SIL.XForge.Scripture.Services
         public async Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId,
             CancellationToken token)
         {
-            if (userSecret.ParatextTokens == null)
-                return Attempt.Failure((string)null);
-            try
+            // Ensure the user has the paratext access tokens, and this is not a resource
+            if (userSecret.ParatextTokens == null || IsResource(paratextId))
             {
-                var accessToken = new JwtSecurityToken(userSecret.ParatextTokens.AccessToken);
-                Claim subClaim = accessToken.Claims.FirstOrDefault(c => c.Type == JwtClaimTypes.Subject);
-                // Paratext RegistryServer has methods to do this, but it is unreliable to use it in a multi-user
-                // environment so instead we call the registry API.
-                string response = await CallApiAsync(userSecret, HttpMethod.Get,
-                    $"projects/{paratextId}/members/{subClaim.Value}", null, token);
-                var memberObj = JObject.Parse(response);
-                return Attempt.Success((string)memberObj["role"]);
+                return Attempt.Failure((string)null);
             }
-            catch (HttpRequestException)
+            else if (await IsRegisteredAsync(userSecret, paratextId, token))
             {
-                return Attempt.Failure((string)null);
+                // Use the registry server
+                try
+                {
+                    var accessToken = new JwtSecurityToken(userSecret.ParatextTokens.AccessToken);
+                    Claim subClaim = accessToken.Claims.FirstOrDefault(c => c.Type == JwtClaimTypes.Subject);
+                    // Paratext RegistryServer has methods to do this, but it is unreliable to use it in a multi-user
+                    // environment so instead we call the registry API.
+                    string response = await CallApiAsync(userSecret, HttpMethod.Get,
+                        $"projects/{paratextId}/members/{subClaim.Value}", null, token);
+                    var memberObj = JObject.Parse(response);
+                    return Attempt.Success((string)memberObj["role"]);
+                }
+                catch (HttpRequestException)
+                {
+                    return Attempt.Failure((string)null);
+                }
+            }
+            else
+            {
+                // We will use the repository to get the project role for this user, as back translations inherit the
+                // base project registration, so are not in the registry.
+                IInternetSharedRepositorySource ptRepoSource = await GetInternetSharedRepositorySource(userSecret.Id,
+                    CancellationToken.None);
+                IEnumerable<SharedRepository> remotePtProjects = ptRepoSource.GetRepositories();
+                string username = GetParatextUsername(userSecret);
+                string role =
+                    ConvertFromUserRole(remotePtProjects.SingleOrDefault(p => p.SendReceiveId.Id == paratextId)
+                    ?.SourceUsers.Users.FirstOrDefault(u => u.UserName == username)?.Role);
+                if (string.IsNullOrEmpty(role))
+                {
+                    return Attempt.Failure(role);
+                }
+                else
+                {
+                    return Attempt.Success(role);
+                }
             }
         }
 
@@ -331,31 +357,66 @@ namespace SIL.XForge.Scripture.Services
         /// to paratext user names for members of the project.
         /// </summary>
         /// <param name="userSecret">The user secret.</param>
-        /// <param name="paratextId">The project ParatextId.</param>
+        /// <param name="project">The project - the UserRoles and ParatextId are used.</param>
+        /// <param name="token">The cancellation token.</param>
         /// <returns>
         /// A dictionary where the key is the SF user ID and the value is Paratext username. (May be empty)
         /// </returns>
         public async Task<IReadOnlyDictionary<string, string>> GetParatextUsernameMappingAsync(UserSecret userSecret,
-            string paratextId, CancellationToken token)
+            SFProject project, CancellationToken token)
         {
             // Skip all the work if the project is a resource. Resources don't have project members
-            if (IsResource(paratextId))
+            if (IsResource(project.ParatextId))
             {
                 return new Dictionary<string, string>();
             }
+            else if (await IsRegisteredAsync(userSecret, project.ParatextId, token))
+            {
+                // Get the mapping for paratext users ids to usernames from the registry
+                string response = await CallApiAsync(userSecret, HttpMethod.Get,
+                $"projects/{project.ParatextId}/members", null, token);
+                Dictionary<string, string> paratextMapping = JArray.Parse(response).OfType<JObject>()
+                    .Where(m => !string.IsNullOrEmpty((string)m["userId"])
+                        && !string.IsNullOrEmpty((string)m["username"]))
+                    .ToDictionary(m => (string)m["userId"], m => (string)m["username"]);
 
-            // Get the mapping for paratext users ids to usernames from the registry
-            string response = await CallApiAsync(userSecret, HttpMethod.Get,
-                $"projects/{paratextId}/members", null, token);
-            Dictionary<string, string> paratextMapping = JArray.Parse(response).OfType<JObject>()
-                .Where(m => !string.IsNullOrEmpty((string)m["userId"])
-                    && !string.IsNullOrEmpty((string)m["username"]))
-                .ToDictionary(m => (string)m["userId"], m => (string)m["username"]);
+                // Get the mapping of Scripture Forge user IDs to Paratext usernames
+                return await this._realtimeService.QuerySnapshots<User>()
+                        .Where(u => paratextMapping.Keys.Contains(u.ParatextId))
+                        .ToDictionaryAsync(u => u.Id, u => paratextMapping[u.ParatextId]);
+            }
+            else
+            {
+                // Get the list of users from the repository
+                IInternetSharedRepositorySource ptRepoSource = await GetInternetSharedRepositorySource(userSecret.Id,
+                    CancellationToken.None);
+                IEnumerable<SharedRepository> remotePtProjects = ptRepoSource.GetRepositories();
+                SharedRepository remotePtProject =
+                    remotePtProjects.Single(p => p.SendReceiveId.Id == project.ParatextId);
 
-            // Get the mapping of Scripture Forge user IDs to Paratext usernames
-            return await this._realtimeService.QuerySnapshots<User>()
-                    .Where(u => paratextMapping.Keys.Contains(u.ParatextId))
-                    .ToDictionaryAsync(u => u.Id, u => paratextMapping[u.ParatextId]);
+                // Build a dictionary of user IDs mapped to usernames using the user secrets
+                var userMapping = new Dictionary<string, string>();
+                foreach (string userId in project.UserRoles.Keys)
+                {
+                    UserSecret projectUserSecret;
+                    if (userId == userSecret.Id)
+                    {
+                        projectUserSecret = userSecret;
+                    }
+                    else
+                    {
+                        projectUserSecret = await _userSecretRepository.GetAsync(userId);
+                    }
+
+                    string projectUserName = GetParatextUsername(projectUserSecret);
+                    if (remotePtProject.SourceUsers.UserNames.Contains(projectUserName))
+                    {
+                        userMapping.Add(userId, projectUserName);
+                    }
+                }
+
+                return userMapping;
+            }
         }
 
         /// <summary>
@@ -448,24 +509,75 @@ namespace SIL.XForge.Scripture.Services
             return permissions;
         }
 
+        /// <summary>
+        /// Gets the project roles asynchronously.
+        /// </summary>
+        /// <param name="userSecret">The user secret.</param>
+        /// <param name="project">The project - the UserRoles and ParatextId are used.</param>
+        /// <param name="token">The cancellation token.</param>
+        /// <returns>
+        /// A dictionary where the key is the PT user ID and the value is the PT role.
+        /// </returns>
         public async Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(UserSecret userSecret,
-            string paratextId, CancellationToken token)
+            SFProject project, CancellationToken token)
         {
-            if (IsResource(paratextId))
+            if (IsResource(project.ParatextId))
             {
                 // Resources do not have roles
                 return new Dictionary<string, string>();
             }
-            else
+            else if (await IsRegisteredAsync(userSecret, project.ParatextId, token))
             {
                 // Paratext RegistryServer has methods to do this, but it is unreliable to use it in a multi-user
                 // environment so instead we call the registry API.
                 string response = await CallApiAsync(userSecret, HttpMethod.Get,
-                    $"projects/{paratextId}/members", null, token);
+                    $"projects/{project.ParatextId}/members", null, token);
                 var members = JArray.Parse(response);
                 return members.OfType<JObject>()
                     .Where(m => !string.IsNullOrEmpty((string)m["userId"]) && !string.IsNullOrEmpty((string)m["role"]))
                     .ToDictionary(m => (string)m["userId"], m => (string)m["role"]);
+            }
+            else
+            {
+                // Get the list of users from the repository
+                IInternetSharedRepositorySource ptRepoSource = await GetInternetSharedRepositorySource(userSecret.Id,
+                    CancellationToken.None);
+                IEnumerable<SharedRepository> remotePtProjects = ptRepoSource.GetRepositories();
+                SharedRepository remotePtProject =
+                    remotePtProjects.Single(p => p.SendReceiveId.Id == project.ParatextId);
+
+                // Build a dictionary of user IDs mapped to roles using the user secrets
+                var userMapping = new Dictionary<string, string>();
+                foreach (string userId in project.UserRoles.Keys)
+                {
+                    // Reuse the userSecret if this is for the current user
+                    UserSecret projectUserSecret;
+                    if (userId == userSecret.Id)
+                    {
+                        projectUserSecret = userSecret;
+                    }
+                    else
+                    {
+                        projectUserSecret = await _userSecretRepository.GetAsync(userId);
+                    }
+
+                    // Get the PT role
+                    string projectUserName = GetParatextUsername(projectUserSecret);
+                    string role = ConvertFromUserRole(remotePtProject.SourceUsers.Users
+                        .SingleOrDefault(u => u.UserName == projectUserName)?.Role);
+
+                    // Get the PT user ID
+                    var accessToken = new JwtSecurityToken(projectUserSecret.ParatextTokens.AccessToken);
+                    string ptUserId = accessToken.Claims.FirstOrDefault(c => c.Type == JwtClaimTypes.Subject)?.Value;
+
+                    // Only add if we have a user ID and role
+                    if (!string.IsNullOrEmpty(ptUserId) && !string.IsNullOrEmpty(role))
+                    {
+                        userMapping.Add(ptUserId, role);
+                    }
+                }
+
+                return userMapping;
             }
         }
 
@@ -474,6 +586,20 @@ namespace SIL.XForge.Scripture.Services
         {
             using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
             return scrText == null ? false : scrText.RightToLeft;
+        }
+
+        /// <summary>
+        /// Gets the full name of the project from the local repository.
+        /// </summary>
+        /// <param name="userSecret">The user secret.</param>
+        /// <param name="paratextId">The paratext identifier.</param>
+        /// <returns>
+        /// The full name of the project.
+        /// </returns>
+        public string GetProjectFullName(UserSecret userSecret, string paratextId)
+        {
+            using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
+            return scrText?.FullName;
         }
 
         /// <summary> Get list of book numbers in PT project. </summary>
@@ -760,6 +886,10 @@ namespace SIL.XForge.Scripture.Services
             // We do not back up resources
             if (paratextId == null || paratextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
             {
+                if (paratextId == null)
+                {
+                    _logger.LogInformation("Not backing up local PT repo for null paratextId.");
+                }
                 return false;
             }
 
@@ -769,6 +899,7 @@ namespace SIL.XForge.Scripture.Services
             // If we do not have a scripture text, do not back up
             if (scrText == null)
             {
+                _logger.LogInformation($"Not backing up local PT repo since no scrText for PTId '{paratextId}'.");
                 return false;
             }
 
@@ -794,8 +925,9 @@ namespace SIL.XForge.Scripture.Services
                 _fileSystemService.MoveFile(tempPath, path);
                 return true;
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                _logger.LogError(e, $"Problem backing up local PT repo for PTId '{paratextId}'.");
                 // An error has occurred, so the backup was not created
                 return false;
             }
@@ -806,6 +938,15 @@ namespace SIL.XForge.Scripture.Services
             // We do not back up resources
             if (paratextId == null || paratextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
             {
+                if (paratextId == null)
+                {
+                    _logger.LogInformation("Not restoring local PT repo for null paratextId.");
+                }
+                else if (paratextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+                {
+                    _logger.LogInformation("Not restoring a DBL resource.");
+                }
+
                 return false;
             }
 
@@ -815,6 +956,7 @@ namespace SIL.XForge.Scripture.Services
             // If we do not have a scripture text, do not back up
             if (scrText == null)
             {
+                _logger.LogInformation($"Not restoring local PT repo since no scrText for PTId '{paratextId}'.");
                 return false;
             }
 
@@ -828,7 +970,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 string source = scrText.Directory;
                 string destination =
-                    Path.Combine(Paratext.Data.ScrTextCollection.SettingsDirectory, "_Backups\\", scrText.Guid.ToString());
+                    Path.Combine(Paratext.Data.ScrTextCollection.SettingsDirectory, "_Backups", scrText.Guid.ToString());
                 string restoredDestination = destination + "_Restored";
                 string backupPath = destination + ".bndl";
 
@@ -851,14 +993,19 @@ namespace SIL.XForge.Scripture.Services
                     _fileSystemService.MoveDirectory(restoredDestination, source);
                     return true;
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
+                    _logger.LogError(e, $"Problem restoring local PT repo for PTId '{paratextId}'.");
                     // On error, move the backup destination back to the repository folder
                     if (!_fileSystemService.DirectoryExists(source))
                     {
                         _fileSystemService.MoveDirectory(destination, source);
                     }
                 }
+            }
+            else
+            {
+                _logger.LogInformation($"Not restoring local PT repo for PTId '{paratextId}' since no backup exists.");
             }
 
             // An error occurred, or the backup does not exist
@@ -870,6 +1017,25 @@ namespace SIL.XForge.Scripture.Services
             _registryClient.Dispose();
             _httpClientHandler.Dispose();
         }
+
+        /// <summary>
+        /// Converts from a user role to a Paratext registry user role.
+        /// </summary>
+        /// <param name="role">The role.</param>
+        /// <returns>
+        /// The Paratext Registry user role.
+        /// </returns>
+        /// <remarks>
+        /// Sourced from <see cref="RegistryServer" />.
+        /// </remarks>
+        private static string ConvertFromUserRole(UserRoles? role) => role switch
+        {
+            UserRoles.Administrator => SFProjectRole.Administrator,
+            UserRoles.Consultant => SFProjectRole.Consultant,
+            UserRoles.TeamMember => SFProjectRole.Translator,
+            UserRoles.Observer => SFProjectRole.Observer,
+            _ => string.Empty,
+        };
 
         /// <summary>
         /// Checks whether a backup exists
@@ -885,12 +1051,13 @@ namespace SIL.XForge.Scripture.Services
             try
             {
                 string path =
-                    Path.Combine(Paratext.Data.ScrTextCollection.SettingsDirectory, "_Backups\\", $"{scrText.Guid}.bndl");
+                    Path.Combine(Paratext.Data.ScrTextCollection.SettingsDirectory, "_Backups", $"{scrText.Guid}.bndl");
                 return _fileSystemService.FileExists(path);
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 // An error occurred
+                _logger.LogError(e, $"Problem when checking if a local PT repo backup exists for scrText id '{scrText.Guid}'.");
                 return false;
             }
         }
@@ -933,6 +1100,30 @@ namespace SIL.XForge.Scripture.Services
                 });
             }
             return paratextProjects.OrderBy(project => project.Name, StringComparer.InvariantCulture).ToArray();
+        }
+
+        /// <summary>
+        /// Determines whether the specified project is registered with the Registry.
+        /// </summary>
+        /// <param name="userSecret">The user secret.</param>
+        /// <param name="paratextId">The paratext identifier for the project.</param>
+        /// <param name="token">The cancellation token.</param>
+        /// <returns>
+        ///   <c>true</c> if the specified project is registered; otherwise, <c>false</c>.
+        /// </returns>
+        private async Task<bool> IsRegisteredAsync(UserSecret userSecret, string paratextId, CancellationToken token)
+        {
+            try
+            {
+                string registeredParatextId = await CallApiAsync(userSecret, HttpMethod.Get,
+                    $"projects/{paratextId}/identification_systemId/paratext/text", null, token);
+                return registeredParatextId.Trim('"') == paratextId;
+            }
+            catch (HttpRequestException)
+            {
+                // A 404 error means the project is not registered.
+                return false;
+            }
         }
 
         private void SetupMercurial()
@@ -1141,7 +1332,7 @@ namespace SIL.XForge.Scripture.Services
 
         /// <summary>
         /// Get access to a source for PT project repositories, based on user secret.
-        ///</summary>
+        /// </summary>
         private async Task<IInternetSharedRepositorySource> GetInternetSharedRepositorySource(string userId,
             CancellationToken token)
         {

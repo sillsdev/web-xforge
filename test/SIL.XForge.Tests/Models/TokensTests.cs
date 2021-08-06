@@ -40,7 +40,7 @@ namespace SIL.XForge.Models
             var expiration = issuedAt + TimeSpan.FromSeconds(50);
             var tokens = new Tokens()
             {
-                AccessToken = TokenHelper.CreateAccessToken(issuedAt, expiration),
+                AccessToken = TokenHelper.CreateAccessToken(issuedAt, expiration, "paratext01"),
                 RefreshToken = null
             };
 
@@ -55,7 +55,7 @@ namespace SIL.XForge.Models
             var expiration = issuedAt + TimeSpan.FromSeconds(70);
             var tokens = new Tokens()
             {
-                AccessToken = TokenHelper.CreateAccessToken(issuedAt, expiration),
+                AccessToken = TokenHelper.CreateAccessToken(issuedAt, expiration, "paratext01"),
                 RefreshToken = null
             };
 

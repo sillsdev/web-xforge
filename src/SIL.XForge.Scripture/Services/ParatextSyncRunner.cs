@@ -84,8 +84,14 @@ namespace SIL.XForge.Scripture.Services
         private bool TranslationSuggestionsEnabled => _projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled;
         private bool CheckingEnabled => _projectDoc.Data.CheckingConfig.CheckingEnabled;
 
-        // Do not allow multiple sync jobs to run in parallel on the same project by creating a mutex on the projectId
-        // parameter, i.e. "{0}"
+        /// <summary>
+        /// Synchronize content and user permissions in SF DB with Paratext SendReceive servers and PT Registry, for
+        /// a project.
+        /// </summary>
+        /// <remarks>
+        /// Do not allow multiple sync jobs to run in parallel on the same project by creating a hangfire mutex on the
+        /// <param name="projectId"/> parameter, i.e. "{0}".
+        /// </remarks>
         [Mutex("{0}")]
         public async Task RunAsync(string projectId, string userId, bool trainEngine, CancellationToken token)
         {
@@ -102,6 +108,7 @@ namespace SIL.XForge.Scripture.Services
                 string targetParatextId = _projectDoc.Data.ParatextId;
                 string sourceParatextId = _projectDoc.Data.TranslateConfig.Source?.ParatextId;
                 string sourceProjectRef = _projectDoc.Data.TranslateConfig.Source?.ProjectRef;
+                Log($"RunAsync: Starting. Target PTID '{targetParatextId}', source PTID '{sourceParatextId}'.");
 
                 // Determine if we can rollback Paratext
                 canRollbackParatext = _paratextService.BackupExists(_userSecret, targetParatextId);
@@ -109,24 +116,34 @@ namespace SIL.XForge.Scripture.Services
                 {
                     // Attempt to create a backup if we cannot rollback
                     canRollbackParatext = _paratextService.BackupRepository(_userSecret, targetParatextId);
+                    if (canRollbackParatext)
+                    {
+                        Log($"RunAsync: There wasn't already a local PT repo backup, so we made one.");
+                    }
+                    else
+                    {
+                        Log($"RunAsync: There wasn't already a local PT repo backup, so we tried to make one but failed.");
+                    }
                 }
 
                 var targetTextDocsByBook = new Dictionary<int, SortedList<int, IDocument<TextData>>>();
                 var questionDocsByBook = new Dictionary<int, IReadOnlyList<IDocument<Question>>>();
                 string lastSharedVersion = _paratextService.GetLatestSharedVersion(_userSecret, targetParatextId);
 
-                bool isDataInSync = false;
+                bool isDataInSync = _projectDoc.Data.Sync.DataInSync ?? false;
                 if (lastSharedVersion == null)
                 {
                     // The hg repository has no pushed or pulled commit. Maybe we are only just getting set up with a
                     // project. Maybe it is a resource and not a project and has no hg repo directory.
                     isDataInSync = true;
+                    Log($"RunAsync: The local PT repo has no last shared revision. Considering that data is in sync.");
                 }
                 if (lastSharedVersion == _projectDoc.Data.Sync.SyncedToRepositoryVersion)
                 {
                     // The recent hg repository pushed or pulled commit id matches what we recorded as being the last
                     // place where SF and PT last synced.
                     isDataInSync = true;
+                    Log($"RunAsync: The local PT repo last shared rev matches the SF DB SyncedToRepositoryVersion of '{lastSharedVersion}'. Is in sync.");
                 }
                 if (_projectDoc.Data.Sync.SyncedToRepositoryVersion == null && _projectDoc.Data.Sync.DataInSync == null)
                 {
@@ -141,6 +158,11 @@ namespace SIL.XForge.Scripture.Services
                     // There is also a special case where SyncedToRepositoryVersion may be absent, but DataInSync may
                     // be present (and true), which may indicate that the initial Connect project failed to hg clone.
                     isDataInSync = true;
+                    Log($"RunAsync: The SF DB project has no settings for Sync.SyncedToRepositoryVersion or Sync.DataInSync. Considering that data is in sync.");
+                }
+                if (!isDataInSync)
+                {
+                    Log($"RunAsync: Considering that data is not in sync. The local PT repo last shared revision is '{lastSharedVersion}'. The SF DB project Sync.SyncedToRepositoryVersion is '{_projectDoc.Data.Sync.SyncedToRepositoryVersion}'. canRollbackParatext is '{canRollbackParatext}'.");
                 }
 
                 // update target Paratext books and notes
@@ -177,8 +199,10 @@ namespace SIL.XForge.Scripture.Services
                     // Create the handler
                     progress.ProgressUpdated += SyncProgress_ProgressUpdated;
 
+                    Log($"RunAsync: Going to do ParatextData SendReceive.");
                     // perform Paratext send/receive
                     await _paratextService.SendReceiveAsync(_userSecret, targetParatextId, progress, token);
+                    Log($"RunAsync: ParatextData SendReceive finished without throwing.");
                 }
                 finally
                 {
@@ -212,6 +236,7 @@ namespace SIL.XForge.Scripture.Services
                 // delete all data for removed books
                 if (targetBooksToDelete.Count > 0)
                 {
+                    Log($"RunAsync: Going to delete texts and questions,comments,answers for {targetBooksToDelete.Count} books.");
                     // delete target books
                     foreach (int bookNum in targetBooksToDelete)
                     {
@@ -255,9 +280,10 @@ namespace SIL.XForge.Scripture.Services
                             {
                                 await _projectService.AddUserAsync(uid, sourceProjectRef);
                             }
-                            catch (ForbiddenException)
+                            catch (ForbiddenException e)
                             {
                                 // The user does not have Paratext access
+                                Log($"RunAsync: Error attempting to add a user to the resource access list: {e}");
                             }
                         }
 
@@ -366,27 +392,37 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        internal async Task<bool> InitAsync(string projectId, string userId, CancellationToken token)
+        internal async Task<bool> InitAsync(string projectSFId, string userId, CancellationToken token)
         {
             _conn = await _realtimeService.ConnectAsync();
             _conn.BeginTransaction();
             _conn.ExcludePropertyFromTransaction<SFProject>(op => op.Sync.PercentCompleted);
             _conn.ExcludePropertyFromTransaction<SFProject>(op => op.Sync.QueuedCount);
-            _projectDoc = await _conn.FetchAsync<SFProject>(projectId);
+            _conn.ExcludePropertyFromTransaction<SFProject>(op => op.Sync.DataInSync);
+            _projectDoc = await _conn.FetchAsync<SFProject>(projectSFId);
             if (!_projectDoc.IsLoaded)
+            {
+                Log($"Project doc was not loaded.", projectSFId, userId);
                 return false;
+            }
 
-            if (!(await _projectSecrets.TryGetAsync(projectId)).TryResult(out _projectSecret))
+            if (!(await _projectSecrets.TryGetAsync(projectSFId)).TryResult(out _projectSecret))
+            {
+                Log($"Could not find project secret.", projectSFId, userId);
                 return false;
+            }
             _currentSyncUsers = _projectSecret.SyncUsers.ToDictionary(u => u.ParatextUsername);
 
             if (!(await _userSecrets.TryGetAsync(userId)).TryResult(out _userSecret))
+            {
+                Log($"Could not find user secret.", projectSFId, userId);
                 return false;
+            }
 
             List<User> paratextUsers = await _realtimeService.QuerySnapshots<User>()
                 .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
                 .ToListAsync();
-            await _notesMapper.InitAsync(_userSecret, _projectSecret, paratextUsers, _projectDoc.Data.ParatextId, token);
+            await _notesMapper.InitAsync(_userSecret, _projectSecret, paratextUsers, _projectDoc.Data, token);
 
             await _projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.Sync.PercentCompleted, 0));
             return true;
@@ -604,7 +640,7 @@ namespace SIL.XForge.Scripture.Services
                 _projectDoc.Data.ParatextId, text.BookNum, noteThreadDocs.Values, _currentSyncUsers);
             var tasks = new List<Task>();
             IReadOnlyDictionary<string, string> idsToUsernames =
-                await _paratextService.GetParatextUsernameMappingAsync(_userSecret, _projectDoc.Data.ParatextId, token);
+                await _paratextService.GetParatextUsernameMappingAsync(_userSecret, _projectDoc.Data, token);
             Dictionary<string, string> usernamesToUserIds = new Dictionary<string, string>();
             // Swap the keys and values
             foreach (KeyValuePair<string, string> kvp in idsToUsernames)
@@ -838,8 +874,13 @@ namespace SIL.XForge.Scripture.Services
 
         private async Task CompleteSync(bool successful, bool canRollbackParatext, CancellationToken token)
         {
+            if (token.IsCancellationRequested)
+            {
+                Log($"CompleteSync: There was a cancellation request.");
+            }
             if (_projectDoc == null || _projectSecret == null)
             {
+                Log("CompleteSync: _projectDoc or _projectSecret are null. Rolling back SF DB transaction.");
                 _conn.RollbackTransaction();
                 return;
             }
@@ -858,12 +899,13 @@ namespace SIL.XForge.Scripture.Services
                 try
                 {
                     ptUserRoles = await _paratextService.GetProjectRolesAsync(_userSecret,
-                        _projectDoc.Data.ParatextId, token);
+                        _projectDoc.Data, token);
                 }
                 catch (Exception ex)
                 {
                     if (ex is HttpRequestException || ex is OperationCanceledException)
                     {
+                        Log($"CompleteSync: Problem fetching project roles. Maybe the user does not have access to the project or cancelled the sync. ({ex})");
                         // This throws a 404 if the user does not have access to the project
                         // A task cancelled exception will be thrown if the user cancels the task
                         // Note: OperationCanceledException includes TaskCanceledException
@@ -872,6 +914,7 @@ namespace SIL.XForge.Scripture.Services
                     }
                     else
                     {
+                        Log($"CompleteSync: Problem fetching project roles. Rethrowing: ({ex})");
                         throw;
                     }
                 }
@@ -883,10 +926,24 @@ namespace SIL.XForge.Scripture.Services
                     .Select(u => new { UserId = u.Id, ParatextId = u.ParatextId })
                     .ToListAsync();
 
-            // If we have failed, restore the repository, if we can
-            if (!successful && canRollbackParatext)
+            bool dataInSync = true;
+            if (!successful)
             {
-                _paratextService.RestoreRepository(_userSecret, _projectDoc.Data.ParatextId);
+                bool restoreSucceeded = false;
+                // If we have failed, restore the repository, if we can
+                if (canRollbackParatext)
+                {
+                    // If the restore is successful, then dataInSync will always be set to true because
+                    // the restored repo can be assumed to be at the revision recorded in the project doc.
+                    restoreSucceeded = _paratextService.RestoreRepository(_userSecret, _projectDoc.Data.ParatextId);
+                }
+                Log($"CompleteSync: Sync was not successful. {(restoreSucceeded ? "Rolled back" : "Failed to roll back")} local PT repo.");
+                if (!restoreSucceeded)
+                {
+                    string repoVersion =
+                        _paratextService.GetLatestSharedVersion(_userSecret, _projectDoc.Data.ParatextId);
+                    dataInSync = repoVersion == _projectDoc.Data.Sync.SyncedToRepositoryVersion;
+                }
             }
 
             // NOTE: This is executed outside of the transaction because it modifies "Sync.PercentCompleted"
@@ -902,12 +959,16 @@ namespace SIL.XForge.Scripture.Services
 
                 if (successful)
                 {
+                    Log($"CompleteSync: Successfully synchronized to PT repo commit id '{repoVersion}'.");
                     op.Set(pd => pd.Sync.DateLastSuccessfulSync, DateTime.UtcNow);
                     op.Set(pd => pd.Sync.SyncedToRepositoryVersion, repoVersion);
                     op.Set(pd => pd.Sync.DataInSync, true);
                 }
                 else
-                    op.Set(pd => pd.Sync.DataInSync, repoVersion == _projectDoc.Data.Sync.SyncedToRepositoryVersion);
+                {
+                    Log($"CompleteSync: Failed to synchronize. PT repo latest shared version is '{repoVersion}'. SF DB project SyncedToRepositoryVersion is '{_projectDoc.Data.Sync.SyncedToRepositoryVersion}'.");
+                    op.Set(pd => pd.Sync.DataInSync, dataInSync);
+                }
                 // the frontend checks the queued count to determine if the sync is complete. The ShareDB client emits
                 // an event for each individual op even if they are applied as a batch, so this needs to be set last,
                 // otherwise the info about the sync won't be set yet when the frontend determines that the sync is
@@ -932,8 +993,16 @@ namespace SIL.XForge.Scripture.Services
                             userIdsToRemove.Add(projectUser.UserId);
                     }
                 }
-                bool isRtl = _paratextService
-                    .IsProjectLanguageRightToLeft(_userSecret, _projectDoc.Data.ParatextId);
+
+                // See if the full name of the project needs updating
+                string fullName = _paratextService.GetProjectFullName(_userSecret, _projectDoc.Data.ParatextId);
+                if (!string.IsNullOrEmpty(fullName))
+                {
+                    op.Set(pd => pd.Name, fullName);
+                }
+
+                // Set the right-to-left language flag
+                bool isRtl = _paratextService.IsProjectLanguageRightToLeft(_userSecret, _projectDoc.Data.ParatextId);
                 op.Set(pd => pd.IsRightToLeft, isRtl);
 
                 // The source can be null if there was an error getting a resource from the DBL
@@ -985,7 +1054,11 @@ namespace SIL.XForge.Scripture.Services
                 // Backup the repository
                 if (_projectDoc.Data.ParatextId.Length != SFInstallableDblResource.ResourceIdentifierLength)
                 {
-                    _paratextService.BackupRepository(_userSecret, _projectDoc.Data.ParatextId);
+                    bool backupOutcome = _paratextService.BackupRepository(_userSecret, _projectDoc.Data.ParatextId);
+                    if (!backupOutcome)
+                    {
+                        Log($"CompleteSync: Failure backing up local PT repo.");
+                    }
                 }
             }
             else
@@ -993,6 +1066,7 @@ namespace SIL.XForge.Scripture.Services
                 // Rollback the operations (the repository was restored above)
                 _conn.RollbackTransaction();
             }
+            Log($"CompleteSync: Finished. Sync was {(successful ? "successful" : "unsuccessful")}.");
         }
 
         private IDocument<TextData> GetTextDoc(TextInfo text, int chapter)
@@ -1045,6 +1119,13 @@ namespace SIL.XForge.Scripture.Services
                 code = code * 31 + obj.IsValid.GetHashCode();
                 return code;
             }
+        }
+
+        private void Log(string message, string projectSFId = null, string userId = null)
+        {
+            projectSFId = projectSFId ?? _projectDoc?.Id ?? "unknown";
+            userId = userId ?? _userSecret?.Id ?? "unknown";
+            _logger.LogInformation($"SyncLog ({projectSFId},{userId}): {message}");
         }
     }
 }

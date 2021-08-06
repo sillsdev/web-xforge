@@ -636,7 +636,7 @@ namespace SIL.XForge.Scripture.Services
             string paratextId = projectDoc.Data.ParatextId;
             HashSet<int> booksInProject = new HashSet<int>(_paratextService.GetBookList(userSecret, paratextId));
             IReadOnlyDictionary<string, string> ptUsernameMapping =
-                await _paratextService.GetParatextUsernameMappingAsync(userSecret, paratextId, token);
+                await _paratextService.GetParatextUsernameMappingAsync(userSecret, projectDoc.Data, token);
             bool isResource = _paratextService.IsResource(paratextId);
             // Place to collect all chapter permissions to record in the project.
             var projectChapterPermissions =
