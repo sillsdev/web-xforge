@@ -52,17 +52,6 @@ namespace SIL.XForge.Scripture.Services
         {
             string ids = RunCommand(repository, "log --rev \"public()\" --template \"{node}\n\"");
             string revision = ids.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?.Trim();
-
-            // If the revision is empty (likely due to restoring a backup), just get the top revision
-            // However, if we are calling this from JwtInternetSharedRepository, we do not want the very latest if
-            // we have restored from a backup - the very latest will be the changeset created by ParatextSyncRunner,
-            // which will not be on the server, and throw a 500 error when "pullbundle" is called on the PT server.
-            if (!allowEmptyIfRestoredFromBackup && string.IsNullOrWhiteSpace(revision))
-            {
-                ids = RunCommand(repository, "log --template \"{node}\n\"");
-                revision = ids.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.Trim();
-            }
-
             return revision;
         }
 
@@ -79,6 +68,15 @@ namespace SIL.XForge.Scripture.Services
             Hg.Default.Init(destination);
             Hg.Default.Unbundle(destination, backupFile);
             Hg.Default.Update(destination);
+        }
+
+        /// <summary>
+        /// Mark all changesets available on the PT server public.
+        /// </summary>
+        /// <param name="repository">The repository.</param>
+        public void MarkSharedChangeSetsPublic(string repository)
+        {
+            RunCommand(repository, "phase -p -r 'tip'");
         }
 
         /// <summary> Set the default Mercurial installation. Must be called for all other methods to work. </summary>
