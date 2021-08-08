@@ -10,5 +10,6 @@ namespace SIL.XForge.Scripture.Services
         void BackupRepository(string repository, string backupFile);
         void RestoreRepository(string destination, string backupFile);
         string GetLastPublicRevision(string repository, bool allowEmptyIfRestoredFromBackup);
+        void MarkSharedChangeSetsPublic(string repository);
     }
 }

@@ -1055,6 +1055,8 @@ namespace SIL.XForge.Scripture.Services
             // SUT
             bool result = env.Service.RestoreRepository(user01Secret, ptProjectId);
             Assert.IsFalse(result);
+            env.MockHgWrapper.DidNotReceiveWithAnyArgs().RestoreRepository(default, default);
+            env.MockHgWrapper.DidNotReceiveWithAnyArgs().MarkSharedChangeSetsPublic(default);
         }
 
         [Test]
@@ -1071,6 +1073,8 @@ namespace SIL.XForge.Scripture.Services
             // SUT
             bool result = env.Service.RestoreRepository(user01Secret, ptProjectId);
             Assert.IsFalse(result);
+            env.MockHgWrapper.DidNotReceiveWithAnyArgs().RestoreRepository(default, default);
+            env.MockHgWrapper.DidNotReceiveWithAnyArgs().MarkSharedChangeSetsPublic(default);
         }
 
         [Test]
@@ -1087,6 +1091,8 @@ namespace SIL.XForge.Scripture.Services
             // SUT
             bool result = env.Service.RestoreRepository(user01Secret, ptProjectId);
             Assert.IsTrue(result);
+            env.MockHgWrapper.ReceivedWithAnyArgs().RestoreRepository(default, default);
+            env.MockHgWrapper.ReceivedWithAnyArgs().MarkSharedChangeSetsPublic(default);
         }
 
         private class TestEnvironment
