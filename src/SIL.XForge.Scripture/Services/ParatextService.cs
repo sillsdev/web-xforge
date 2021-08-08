@@ -941,9 +941,18 @@ namespace SIL.XForge.Scripture.Services
                         _fileSystemService.MoveDirectory(source, destination);
                     }
 
-                    // Restore the Mercurial database, and move it to the repository
+                    // Restore the Mercurial repository to a temporary destination
                     _hgHelper.RestoreRepository(restoredDestination, backupPath);
+
+                    // Although the bundle stores phase information, this is compared against the repo the bundle is
+                    // restored to. As the repo is new, the changesets from the bundle will be marked draft. Because
+                    // the bundle contains changesets from the Paratext server, we can just mark the changesets public,
+                    // as we do when pulling from the repo.
+                    _hgHelper.MarkSharedChangeSetsPublic(restoredDestination);
+
+                    // Now that it is ready, move it to the repository location
                     _fileSystemService.MoveDirectory(restoredDestination, source);
+
                     return true;
                 }
                 catch (Exception e)
