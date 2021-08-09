@@ -52,6 +52,7 @@ import { TranslationEngineService } from '../../core/translation-engine.service'
 import { SharedModule } from '../../shared/shared.module';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
 import { SuggestionsComponent } from './suggestions.component';
+import { ACTIVE_EDIT_TIMEOUT } from './translate-metrics-session';
 
 const mockedAuthService = mock(AuthService);
 const mockedSFProjectService = mock(SFProjectService);
@@ -298,6 +299,61 @@ describe('EditorComponent', () => {
       expect(env.component.showSuggestions).toBe(true);
       expect(env.component.suggestions[0].words).toEqual(['verse', '5']);
 
+      env.dispose();
+    }));
+
+    it('should increment offered suggestion count when inserting suggestion', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+      expect(env.component.target!.segmentRef).toBe('');
+      const range = env.component.target!.getSegmentRange('verse_1_5');
+      env.targetEditor.setSelection(range!.index + range!.length, 0, 'user');
+      env.wait();
+      expect(env.component.target!.segmentRef).toBe('verse_1_5');
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
+      expect(env.component.showSuggestions).toBe(true);
+      expect(env.component.suggestions[0].words).toEqual(['verse', '5']);
+      expect(env.component.metricsSession?.metrics.type).toEqual('navigate');
+
+      env.insertSuggestion();
+
+      expect(env.component.target!.segmentText).toBe('target: chapter 1, verse 5');
+      expect(env.component.showSuggestions).toBe(false);
+      expect(env.component.metricsSession?.metrics.type).toEqual('edit');
+      expect(env.component.metricsSession?.metrics.suggestionTotalCount).toBe(1);
+      tick(ACTIVE_EDIT_TIMEOUT);
+      expect(env.component.metricsSession?.metrics.type).toEqual('edit');
+      expect(env.component.metricsSession?.metrics.suggestionAcceptedCount).toBe(1);
+      expect(env.component.metricsSession?.metrics.suggestionTotalCount).toBe(1);
+      env.dispose();
+    }));
+
+    it("should not increment accepted suggestion if the content doesn't change", fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+      expect(env.component.target!.segmentRef).toBe('');
+      const range = env.component.target!.getSegmentRange('verse_1_5');
+      env.targetEditor.setSelection(range!.index + range!.length, 0, 'user');
+      env.wait();
+      env.typeCharacters('verse 5');
+      expect(env.component.target!.segmentRef).toBe('verse_1_5');
+      expect(env.component.target!.segmentText).toBe('target: chapter 1, verse 5');
+      expect(env.component.showSuggestions).toBe(true);
+      expect(env.component.suggestions[0].words).toEqual(['5']);
+      expect(env.component.metricsSession?.metrics.type).toEqual('edit');
+      expect(env.component.metricsSession?.metrics.suggestionTotalCount).toBe(1);
+      expect(env.component.metricsSession?.metrics.suggestionAcceptedCount).toBeUndefined();
+
+      env.insertSuggestion();
+
+      expect(env.component.target!.segmentText).toBe('target: chapter 1, verse 5');
+      expect(env.component.showSuggestions).toBe(false);
+      tick(ACTIVE_EDIT_TIMEOUT);
+      expect(env.component.metricsSession?.metrics.type).toEqual('edit');
+      expect(env.component.metricsSession?.metrics.suggestionTotalCount).toBe(1);
+      expect(env.component.metricsSession?.metrics.suggestionAcceptedCount).toBeUndefined();
       env.dispose();
     }));
 

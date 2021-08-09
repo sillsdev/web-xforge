@@ -1,7 +1,7 @@
 /**
  * Canon information. Also, contains static information on complete list of books and localization.
  *
- * Partially conveted from https://github.com/sillsdev/libpalaso/blob/master/SIL.Scripture/Canon.cs
+ * Partially converted from https://github.com/sillsdev/libpalaso/blob/master/SIL.Scripture/Canon.cs
  */
 export class Canon {
   /**
