@@ -42,13 +42,10 @@ namespace SIL.XForge.Scripture.Services
         /// Get the most recent revision id of the commit from the last push or pull with the PT send/receive server.
         /// </summary>
         /// <param name="repository">The full path to the repository directory.</param>
-        /// <param name="allowEmptyIfRestoredFromBackup">
-        /// If set to <c>true</c>, allow an empty revision if this is a restored backup.
-        /// </param>
         /// <returns>
         /// The Mercurial revision identifier.
         /// </returns>
-        public string GetLastPublicRevision(string repository, bool allowEmptyIfRestoredFromBackup)
+        public string GetLastPublicRevision(string repository)
         {
             string ids = RunCommand(repository, "log --rev \"public()\" --template \"{node}\n\"");
             string revision = ids.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?.Trim();

@@ -42,7 +42,7 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         public override string[] Pull(string repository, SharedRepository pullRepo)
         {
-            string baseRev = GetBaseRevision(repository);
+            string baseRev = _hgWrapper.GetLastPublicRevision(repository);
 
             // Get bundle
             string guid = Guid.NewGuid().ToString();
@@ -73,7 +73,7 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         public override void Push(string repository, SharedRepository pushRepo)
         {
-            string baseRev = GetBaseRevision(repository);
+            string baseRev = _hgWrapper.GetLastPublicRevision(repository);
 
             // Create bundle
             byte[] bundle = HgWrapper.Bundle(repository, baseRev);
@@ -148,12 +148,6 @@ namespace SIL.XForge.Scripture.Services
             // RestClient only uses the jwtToken if authentication is null;
             ReflectionHelperLite.SetField(client, "authentication", null);
             _registryClient.JwtToken = jwtToken;
-        }
-
-        /// <summary> Get the latest public revision. </summary>
-        private string GetBaseRevision(string repository)
-        {
-            return _hgWrapper.GetLastPublicRevision(repository, allowEmptyIfRestoredFromBackup: true);
         }
     }
 }

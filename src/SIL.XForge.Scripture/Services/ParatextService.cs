@@ -797,7 +797,7 @@ namespace SIL.XForge.Scripture.Services
             using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
             if (scrText != null)
             {
-                return _hgHelper.GetLastPublicRevision(scrText.Directory, allowEmptyIfRestoredFromBackup: false);
+                return _hgHelper.GetLastPublicRevision(scrText.Directory);
             }
             else
             {
