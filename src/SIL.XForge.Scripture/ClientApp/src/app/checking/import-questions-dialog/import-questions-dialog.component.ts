@@ -105,7 +105,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
   }
 
   get selectedCount() {
-    return this.questionList.filter(question => question.checked).length;
+    return this.filteredList.filter(question => question.checked).length;
   }
 
   async setUpQuestionList() {
@@ -221,7 +221,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
   }
 
   async importQuestions(): Promise<void> {
-    const listItems = this.questionList.filter(listItem => listItem.checked);
+    const listItems = this.filteredList.filter(listItem => listItem.checked);
     const dialogData: ImportQuestionsProgressDialogData = { count: listItems.length, completed: 0 };
     const config: MdcDialogConfig<ImportQuestionsProgressDialogData> = {
       clickOutsideToClose: false,
