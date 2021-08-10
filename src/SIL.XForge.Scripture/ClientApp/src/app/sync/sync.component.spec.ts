@@ -6,6 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, of } from 'rxjs';
 import { anyString, anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
@@ -217,7 +218,11 @@ class TestEnvironment {
         writingSystem: {
           tag: 'en'
         },
-        translateConfig: { translationSuggestionsEnabled: false },
+        translateConfig: {
+          translationSuggestionsEnabled: false,
+          shareEnabled: false,
+          shareLevel: TranslateShareLevel.Specific
+        },
         checkingConfig: {
           checkingEnabled: false,
           usersSeeEachOthersResponses: true,

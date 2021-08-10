@@ -28,6 +28,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
+import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, of, Subject } from 'rxjs';
@@ -845,6 +846,8 @@ describe('EditorComponent', () => {
       env.setupProject({
         translateConfig: {
           translationSuggestionsEnabled: true,
+          shareEnabled: false,
+          shareLevel: TranslateShareLevel.Specific,
           source: {
             paratextId: 'resource01',
             name: 'Resource 1',
@@ -1009,7 +1012,7 @@ describe('EditorComponent', () => {
   describe('Translation Suggestions disabled', () => {
     it('start with no previous selection', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setupProject({ translateConfig: { translationSuggestionsEnabled: false } });
+      env.setupProject({ translateConfig: defaultTranslateConfig });
       env.setProjectUserConfig();
       env.updateParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
@@ -1026,7 +1029,7 @@ describe('EditorComponent', () => {
 
     it('start with previously selected segment', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setupProject({ translateConfig: { translationSuggestionsEnabled: false } });
+      env.setupProject({ translateConfig: defaultTranslateConfig });
       env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2, selectedSegment: 'verse_2_1' });
       env.updateParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
@@ -1044,7 +1047,7 @@ describe('EditorComponent', () => {
 
     it('user cannot edit', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setupProject({ translateConfig: { translationSuggestionsEnabled: false } });
+      env.setupProject({ translateConfig: defaultTranslateConfig });
       env.setCurrentUser('user02');
       env.setProjectUserConfig();
       env.updateParams({ projectId: 'project01', bookId: 'LUK' });
@@ -1063,7 +1066,7 @@ describe('EditorComponent', () => {
 
     it('user can edit a chapter with permission', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setupProject({ translateConfig: { translationSuggestionsEnabled: false } });
+      env.setupProject({ translateConfig: defaultTranslateConfig });
       env.setCurrentUser('user03');
       env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2 });
       env.updateParams({ projectId: 'project01', bookId: 'LUK' });
@@ -1082,7 +1085,7 @@ describe('EditorComponent', () => {
 
     it('user cannot edit a chapter with permission', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setupProject({ translateConfig: { translationSuggestionsEnabled: false } });
+      env.setupProject({ translateConfig: defaultTranslateConfig });
       env.setCurrentUser('user03');
       env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 1 });
       env.updateParams({ projectId: 'project01', bookId: 'LUK' });
@@ -1104,6 +1107,8 @@ describe('EditorComponent', () => {
       env.setupProject({
         translateConfig: {
           translationSuggestionsEnabled: false,
+          shareEnabled: false,
+          shareLevel: TranslateShareLevel.Specific,
           source: {
             paratextId: 'resource01',
             name: 'Resource 1',
@@ -1134,7 +1139,7 @@ describe('EditorComponent', () => {
 
     it('chapter is invalid', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setupProject({ translateConfig: { translationSuggestionsEnabled: false } });
+      env.setupProject({ translateConfig: defaultTranslateConfig });
       env.setProjectUserConfig();
       env.updateParams({ projectId: 'project01', bookId: 'MRK' });
       env.wait();
@@ -1152,6 +1157,12 @@ describe('EditorComponent', () => {
     }));
   });
 });
+
+const defaultTranslateConfig = {
+  translationSuggestionsEnabled: false,
+  shareEnabled: false,
+  shareLevel: TranslateShareLevel.Specific
+};
 
 class TestEnvironment {
   readonly component: EditorComponent;
@@ -1184,6 +1195,8 @@ class TestEnvironment {
     writingSystem: { tag: 'qaa' },
     translateConfig: {
       translationSuggestionsEnabled: true,
+      shareEnabled: false,
+      shareLevel: TranslateShareLevel.Specific,
       source: {
         paratextId: 'source01',
         projectRef: 'project02',

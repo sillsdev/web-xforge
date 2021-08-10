@@ -249,7 +249,7 @@ namespace SIL.XForge.Scripture.Controllers
         {
             try
             {
-                return Ok(await _projectService.GetLinkSharingKeyAsync(projectId, role));
+                return Ok(await _projectService.GetLinkSharingKeyAsync(UserId, projectId, role));
             }
             catch (DataNotFoundException dnfe)
             {

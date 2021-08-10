@@ -3,6 +3,7 @@ import { Migration, MigrationConstructor } from '../../common/migration';
 import { submitMigrationOp } from '../../common/realtime-server';
 import { SFProjectRole } from '../models/sf-project-role';
 import { TextInfoPermission } from '../models/text-info-permission';
+import { TranslateShareLevel } from '../models/translate-config';
 
 class SFProjectMigration1 implements Migration {
   static readonly VERSION = 1;
@@ -110,9 +111,28 @@ class SFProjectMigration4 implements Migration {
   }
 }
 
+class SFProjectMigration5 implements Migration {
+  static readonly VERSION = 5;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    const ops = [];
+    if (doc.data.translateConfig == null) {
+      ops.push({ p: ['translateConfig'], oi: {} });
+    }
+    ops.push({ p: ['translateConfig', 'shareEnabled'], oi: false });
+    ops.push({ p: ['translateConfig', 'shareLevel'], oi: TranslateShareLevel.Specific });
+    await submitMigrationOp(SFProjectMigration5.VERSION, doc, ops);
+  }
+
+  migrateOp(_op: RawOp): void {
+    // do nothing
+  }
+}
+
 export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration1,
   SFProjectMigration2,
   SFProjectMigration3,
-  SFProjectMigration4
+  SFProjectMigration4,
+  SFProjectMigration5
 ];

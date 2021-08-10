@@ -24,6 +24,7 @@ import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
@@ -499,7 +500,9 @@ class TestEnvironment {
       shareLevel: CheckingShareLevel.Anyone
     },
     translateConfig: {
-      translationSuggestionsEnabled: false
+      translationSuggestionsEnabled: false,
+      shareEnabled: false,
+      shareLevel: TranslateShareLevel.Specific
     },
     sync: { queuedCount: 0 },
     texts: [

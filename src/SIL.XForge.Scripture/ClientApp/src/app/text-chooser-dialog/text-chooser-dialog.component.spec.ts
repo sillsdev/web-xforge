@@ -8,6 +8,7 @@ import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-proj
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
@@ -377,7 +378,11 @@ class TestEnvironment {
     shortName: 'P01',
     name: 'Project 01',
     writingSystem: { tag: 'en' },
-    translateConfig: { translationSuggestionsEnabled: false },
+    translateConfig: {
+      translationSuggestionsEnabled: false,
+      shareEnabled: false,
+      shareLevel: TranslateShareLevel.Specific
+    },
     checkingConfig: {
       usersSeeEachOthersResponses: true,
       checkingEnabled: true,

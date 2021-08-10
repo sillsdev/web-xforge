@@ -9,6 +9,7 @@ import { Router } from '@angular/router';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject } from 'rxjs';
 import { anything, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
@@ -378,6 +379,8 @@ class TestEnvironment {
         writingSystem: { tag: 'qaa' },
         translateConfig: {
           translationSuggestionsEnabled: settings.translationSuggestionsEnabled,
+          shareEnabled: false,
+          shareLevel: TranslateShareLevel.Specific,
           source:
             settings.sourceParatextId == null
               ? undefined
