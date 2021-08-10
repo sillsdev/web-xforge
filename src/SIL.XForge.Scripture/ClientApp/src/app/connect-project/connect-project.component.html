@@ -90,7 +90,8 @@
                 [resources]="resources"
                 [hideProjectId]="paratextIdControl.value"
               ></app-project-select>
-              <div class="helper-text">{{ t("choose_the_mother_project") }}</div>
+              <mat-error *ngIf="showResourcesLoadingFailedMessage">{{ t("error_fetching_resources") }}</mat-error>
+              <div class="helper-text select-helper-text">{{ t("choose_the_mother_project") }}</div>
             </div>
           </div>
         </div>
