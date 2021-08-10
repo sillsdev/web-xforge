@@ -59,12 +59,12 @@ namespace SIL.XForge.Scripture.Controllers
         /// so we just return the base class <see cref="ParatextProject" />.
         /// </remarks>
         [HttpGet("resources")]
-        public async Task<ActionResult<Dictionary<string, string>>> ResourcesAsync()
+        public async Task<ActionResult<Dictionary<string, string[]>>> ResourcesAsync()
         {
             try
             {
                 var resources = await _paratextService.GetResourcesAsync(_userAccessor.UserId);
-                return Ok(resources.ToDictionary(r => r.ParatextId, r => r.Name));
+                return Ok(resources.ToDictionary(r => r.ParatextId, r => new string[] { r.ShortName, r.Name }));
             }
             catch (DataNotFoundException)
             {

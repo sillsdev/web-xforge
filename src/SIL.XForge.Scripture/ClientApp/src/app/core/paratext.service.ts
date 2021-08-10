@@ -7,7 +7,7 @@ import { ParatextProject } from './models/paratext-project';
 
 export interface SelectableProject {
   name: string;
-  shortName?: string;
+  shortName: string;
   paratextId: string;
 }
 
@@ -43,8 +43,18 @@ export class ParatextService {
 
   private getResources(): Promise<SelectableProject[] | undefined> {
     return this.http
-      .get<{ [key: string]: string }[]>('paratext-api/resources', { headers: this.getHeaders() })
-      .pipe(map(r => (r ? Object.keys(r).map(key => ({ paratextId: key, name: r[key] })) : undefined)))
+      .get<any[]>('paratext-api/resources', { headers: this.getHeaders() })
+      .pipe(
+        map(result => {
+          return result == null
+            ? undefined
+            : Object.entries(result).map(entry => ({
+                paratextId: entry[0],
+                shortName: entry[1][0],
+                name: entry[1][1]
+              }));
+        })
+      )
       .toPromise();
   }
 

@@ -133,10 +133,6 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
     this.subscribe(this.valueChange, fn);
   }
 
-  projectDisplayText(project?: SelectableProject): string {
-    return project?.name || '';
-  }
-
   autocompleteOpened() {
     setTimeout(() => {
       if (this.autocomplete && this.autocomplete.panel && this.autocompleteTrigger) {
@@ -172,10 +168,18 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
     collection: SelectableProject[],
     limit?: number
   ): SelectableProject[] {
-    const valueLower = typeof value === 'string' ? value.toLowerCase() : '';
+    const valueLower = typeof value === 'string' ? value.trim().toLowerCase() : '';
     return collection
-      .filter(project => project.name.toLowerCase().includes(valueLower) && project.paratextId !== this.hideProjectId)
-      .sort((a, b) => a.name.toLowerCase().indexOf(valueLower) - b.name.toLowerCase().indexOf(valueLower))
+      .filter(p => p.paratextId !== this.hideProjectId && this.projectIndexOf(p, valueLower) < Infinity)
+      .sort((a, b) => this.projectIndexOf(a, valueLower) - this.projectIndexOf(b, valueLower))
       .slice(0, limit);
+  }
+
+  /** valueLower is assumed to already be converted to lower case */
+  private projectIndexOf(project: SelectableProject, valueLower: string): number {
+    const a = project.shortName.toLowerCase().indexOf(valueLower);
+    const b = project.name.toLowerCase().indexOf(valueLower);
+    const i = a === -1 || b === -1 ? Math.max(a, b) : Math.min(a, b);
+    return i === -1 ? Infinity : i;
   }
 }
