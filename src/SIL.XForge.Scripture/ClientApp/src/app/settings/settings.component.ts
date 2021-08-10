@@ -48,6 +48,10 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   projects?: ParatextProject[];
   resources?: SelectableProject[];
   nonSelectableProjects?: SelectableProject[];
+  projectLoadingFailed = false;
+  resourceLoadingFailed = false;
+
+  mainSettingsLoaded = false;
 
   private projectDoc?: SFProjectDoc;
   /** Elements in this component and their states. */
@@ -108,7 +112,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   get deleteButtonDisabled(): boolean {
-    return !this.isAppOnline || this.isLoading || this.isActiveSourceProject;
+    return !this.isAppOnline || !this.mainSettingsLoaded || this.isActiveSourceProject;
   }
 
   ngOnInit(): void {
@@ -124,16 +128,45 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       this.isAppOnline = isOnline;
       if (isOnline && this.projects == null) {
         this.loading = true;
-        const projectDocPromise = this.projectService.get(projectId);
-        [this.projects, this.resources] = await this.paratextService.getProjectsAndResources();
-        this.projectDoc = await projectDocPromise;
-        if (this.projectDoc != null) {
-          this.updateSettingsInfo();
-          this.updateNonSelectableProjects();
-          this.subscribe(this.projectDoc.remoteChanges$, () => this.updateNonSelectableProjects());
-        }
-        this.isActiveSourceProject = await this.projectService.onlineIsSourceProject(projectId);
+
+        const mainSettingsPromise = Promise.all([
+          this.projectService
+            .onlineIsSourceProject(projectId)
+            .then(isActiveSourceProject => (this.isActiveSourceProject = isActiveSourceProject)),
+          this.projectService.get(projectId).then(projectDoc => (this.projectDoc = projectDoc))
+        ]).then(() => {
+          if (this.projectDoc != null) {
+            this.updateSettingsInfo();
+            this.updateNonSelectableProjects();
+            this.subscribe(this.projectDoc.remoteChanges$, () => this.updateNonSelectableProjects());
+            this.mainSettingsLoaded = true;
+            this.updateFormEnabled();
+          }
+        });
+
+        const projectsAndResourcesPromise = Promise.all([
+          this.paratextService
+            .getProjects()
+            .then(projects => {
+              this.projectLoadingFailed = false;
+              this.projects = projects;
+              this.updateNonSelectableProjects();
+            })
+            .catch(() => (this.projectLoadingFailed = true)),
+          this.paratextService
+            .getResources()
+            .then(resources => {
+              this.resourceLoadingFailed = false;
+              this.resources = resources;
+              this.updateNonSelectableProjects();
+            })
+            .catch(() => (this.resourceLoadingFailed = true))
+        ]);
+
+        await Promise.all([mainSettingsPromise, projectsAndResourcesPromise]);
         this.loading = false;
+
+        this.updateFormEnabled();
       }
     });
   }
@@ -172,7 +205,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   updateFormEnabled(): void {
-    if (this._isAppOnline && !this.isLoading) {
+    if (this._isAppOnline && this.mainSettingsLoaded) {
       this.form.enable();
       this.setIndividualControlDisabledStates();
     } else {
@@ -307,7 +340,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   private setIndividualControlDisabledStates() {
-    if (!this.isLoggedInToParatext) {
+    if (!this.isLoggedInToParatext && !this.isTranslationSuggestionsEnabled) {
       this.translationSuggestionsEnabled.disable();
     }
     if (!this.projectDoc?.data?.translateConfig.shareEnabled) {
