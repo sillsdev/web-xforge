@@ -95,6 +95,12 @@
       font-size: 14px;
     }
 
+    .select-helper-text,
+    mat-error {
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
     .invalid-feedback {
       color: var(--mdc-theme-error);
       font-size: 12px;
