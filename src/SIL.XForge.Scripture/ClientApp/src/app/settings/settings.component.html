@@ -51,7 +51,7 @@
                   [innerHTML]="i18n.translateAndInsertTags('settings.enable_translation_suggestions')"
                 ></span>
               </div>
-              <ng-container *ngIf="isTranslationSuggestionsEnabled && isLoggedInToParatext">
+              <ng-container *ngIf="isTranslationSuggestionsEnabled">
                 <div class="tool-setting select-indent">
                   <div class="tool-setting-field">
                     <app-project-select
@@ -61,7 +61,7 @@
                       [resources]="resources"
                       [nonSelectableProjects]="nonSelectableProjects"
                       [hideProjectId]="projectParatextId"
-                      [isDisabled]="!isAppOnline"
+                      [isDisabled]="!isAppOnline || isLoading || (projectLoadingFailed && resourceLoadingFailed)"
                     ></app-project-select>
                     <app-write-status
                       [state]="getControlState('sourceParatextId')"
@@ -69,6 +69,15 @@
                       id="based-on-status"
                     ></app-write-status>
                   </div>
+                  <mat-error *ngIf="projectLoadingFailed && resourceLoadingFailed">
+                    {{ t("error_fetching_projects_resources") }}
+                  </mat-error>
+                  <mat-error *ngIf="projectLoadingFailed && !resourceLoadingFailed">
+                    {{ t("error_fetching_projects") }}
+                  </mat-error>
+                  <mat-error *ngIf="resourceLoadingFailed && !projectLoadingFailed">
+                    {{ t("error_fetching_resources") }}
+                  </mat-error>
                   <div class="helper-text select-helper-text">{{ t("choose_the_paratext_project") }}</div>
                 </div>
               </ng-container>

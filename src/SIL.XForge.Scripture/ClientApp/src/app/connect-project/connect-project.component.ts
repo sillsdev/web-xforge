@@ -38,6 +38,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     })
   });
   resources?: SelectableProject[];
+  showResourcesLoadingFailedMessage = false;
   state: 'connecting' | 'loading' | 'input' | 'login' | 'offline' = 'loading';
   connectProjectName?: string;
   projectDoc?: SFProjectDoc;
@@ -214,13 +215,25 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   private async populateProjectList() {
     this.state = 'loading';
     this.loadingStarted();
-    [this._projects, this.resources] = await this.paratextService.getProjectsAndResources();
-    if (this._projects != null) {
+    const resourceFetchPromise = this.fetchResources();
+    this._projects = await this.paratextService.getProjects();
+
+    if (this._projects == null) {
+      this.state = 'login';
+    } else {
       this.targetProjects = this._projects.filter(p => p.isConnectable);
       this.state = 'input';
-    } else {
-      this.state = 'login';
+      await resourceFetchPromise;
     }
     this.loadingFinished();
+  }
+
+  private async fetchResources() {
+    try {
+      this.resources = await this.paratextService.getResources();
+      this.showResourcesLoadingFailedMessage = false;
+    } catch {
+      this.showResourcesLoadingFailedMessage = true;
+    }
   }
 }

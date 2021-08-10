@@ -63,7 +63,7 @@ describe('ConnectProjectComponent', () => {
 
   it('should display login button when PT projects is null', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedParatextService.getProjectsAndResources()).thenReturn(Promise.resolve([undefined, undefined]));
+    env.setupProjectsResources(undefined, undefined);
     env.waitForProjectsResponse();
 
     expect(env.component.state).toEqual('login');
@@ -75,7 +75,7 @@ describe('ConnectProjectComponent', () => {
 
   it('should display form when PT projects is empty', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedParatextService.getProjectsAndResources()).thenReturn(Promise.resolve([[], []]));
+    env.setupProjectsResources([], []);
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
     expect(env.connectProjectForm).not.toBeNull();
@@ -109,7 +109,7 @@ describe('ConnectProjectComponent', () => {
 
   it('should do nothing when form is invalid', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedParatextService.getProjectsAndResources()).thenReturn(Promise.resolve([[], []]));
+    env.setupProjectsResources([], []);
     env.waitForProjectsResponse();
 
     expect(env.submitButton.nativeElement.disabled).toBe(true);
@@ -122,7 +122,7 @@ describe('ConnectProjectComponent', () => {
 
   it('should display loading when getting PT projects', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedParatextService.getProjectsAndResources()).thenReturn(Promise.resolve([[], []]));
+    env.setupProjectsResources([], []);
     env.fixture.detectChanges();
 
     expect(env.component.state).toEqual('loading');
@@ -175,38 +175,36 @@ describe('ConnectProjectComponent', () => {
 
   it('should not display non-administrator message', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedParatextService.getProjectsAndResources()).thenReturn(
-      Promise.resolve([
-        [
-          {
-            paratextId: 'pt01',
-            name: 'Target1',
-            shortName: 'TA1',
-            languageTag: 'en',
-            isConnectable: true,
-            isConnected: false
-          },
-          {
-            paratextId: 'pt02',
-            projectId: 'project02',
-            name: 'Target2',
-            shortName: 'TA2',
-            languageTag: 'mri',
-            isConnectable: false,
-            isConnected: true
-          },
-          {
-            paratextId: 'pt03',
-            projectId: 'project03',
-            name: 'Target3',
-            shortName: 'TA3',
-            languageTag: 'th',
-            isConnectable: true,
-            isConnected: true
-          }
-        ],
-        []
-      ])
+    env.setupProjectsResources(
+      [
+        {
+          paratextId: 'pt01',
+          name: 'Target1',
+          shortName: 'TA1',
+          languageTag: 'en',
+          isConnectable: true,
+          isConnected: false
+        },
+        {
+          paratextId: 'pt02',
+          projectId: 'project02',
+          name: 'Target2',
+          shortName: 'TA2',
+          languageTag: 'mri',
+          isConnectable: false,
+          isConnected: true
+        },
+        {
+          paratextId: 'pt03',
+          projectId: 'project03',
+          name: 'Target3',
+          shortName: 'TA3',
+          languageTag: 'th',
+          isConnectable: true,
+          isConnected: true
+        }
+      ],
+      []
     );
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
@@ -353,7 +351,8 @@ describe('ConnectProjectComponent', () => {
     tick();
     env.fixture.detectChanges();
 
-    verify(mockedParatextService.getProjectsAndResources()).once();
+    verify(mockedParatextService.getProjects()).once();
+    verify(mockedParatextService.getResources()).once();
     verify(mockedErrorHandler.handleError(anything())).once();
     expect(env.component.state).toEqual('input');
     expect(env.progressBar).toBeNull();
@@ -559,55 +558,58 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
+  setupProjectsResources(projects?: ParatextProject[], resources?: SelectableProject[]) {
+    when(mockedParatextService.getProjects()).thenResolve(projects);
+    when(mockedParatextService.getResources()).thenResolve(resources);
+  }
+
   setupDefaultProjectData(): void {
-    when(mockedParatextService.getProjectsAndResources()).thenReturn(
-      Promise.resolve<[ParatextProject[], SelectableProject[]]>([
-        [
-          {
-            paratextId: 'pt01',
-            name: 'English',
-            shortName: 'ENG',
-            languageTag: 'en',
-            isConnectable: true,
-            isConnected: false
-          },
-          {
-            paratextId: 'pt02',
-            projectId: 'project02',
-            name: 'Maori',
-            shortName: 'MRI',
-            languageTag: 'mri',
-            isConnectable: false,
-            isConnected: true
-          },
-          {
-            paratextId: 'pt04',
-            name: 'Spanish',
-            shortName: 'ESP',
-            languageTag: 'es',
-            isConnectable: false,
-            isConnected: false
-          },
-          {
-            paratextId: 'pt03',
-            projectId: 'project03',
-            name: 'Thai',
-            shortName: 'THA',
-            languageTag: 'th',
-            isConnectable: true,
-            isConnected: true
-          }
-        ],
-        [
-          { paratextId: 'e01f11e9b4b8e338', name: 'Sob Jonah and Luke', shortName: 'SJL' },
-          {
-            paratextId: '5e51f89e89947acb',
-            name: 'Aruamu New Testament [msy] Papua New Guinea 2004 DBL',
-            shortName: 'ANT'
-          },
-          { paratextId: '9bb76cd3e5a7f9b4', name: 'Revised Version with Apocrypha 1885, 1895', shortName: 'RVA' }
-        ]
-      ])
+    this.setupProjectsResources(
+      [
+        {
+          paratextId: 'pt01',
+          name: 'English',
+          shortName: 'ENG',
+          languageTag: 'en',
+          isConnectable: true,
+          isConnected: false
+        },
+        {
+          paratextId: 'pt02',
+          projectId: 'project02',
+          name: 'Maori',
+          shortName: 'MRI',
+          languageTag: 'mri',
+          isConnectable: false,
+          isConnected: true
+        },
+        {
+          paratextId: 'pt04',
+          name: 'Spanish',
+          shortName: 'ESP',
+          languageTag: 'es',
+          isConnectable: false,
+          isConnected: false
+        },
+        {
+          paratextId: 'pt03',
+          projectId: 'project03',
+          name: 'Thai',
+          shortName: 'THA',
+          languageTag: 'th',
+          isConnectable: true,
+          isConnected: true
+        }
+      ],
+      [
+        { paratextId: 'e01f11e9b4b8e338', name: 'Sob Jonah and Luke', shortName: 'SJL' },
+        {
+          paratextId: '5e51f89e89947acb',
+          name: 'Aruamu New Testament [msy] Papua New Guinea 2004 DBL',
+          shortName: 'ANT'
+        },
+        { paratextId: '9bb76cd3e5a7f9b4', name: 'Revised Version with Apocrypha 1885, 1895', shortName: 'RVA' }
+      ]
     );
   }
 

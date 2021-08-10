@@ -143,11 +143,12 @@ describe('SettingsComponent', () => {
       it('should see login button when Paratext account not connected', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject();
-        when(mockedParatextService.getProjectsAndResources()).thenReturn(Promise.resolve([undefined, undefined]));
+        when(mockedParatextService.getProjects()).thenResolve(undefined);
+        when(mockedParatextService.getResources()).thenResolve(undefined);
         env.wait();
         expect(env.loginButton).not.toBeNull();
-        expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(true);
-        expect(env.basedOnSelect).toBeNull();
+        expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(false);
+        expect(env.basedOnSelect).not.toBeNull();
       }));
 
       it('should hide Based On when Translation Suggestions is disabled', fakeAsync(() => {
@@ -211,21 +212,18 @@ describe('SettingsComponent', () => {
       it('should display Based On project even if user is not a member', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject();
-        when(mockedParatextService.getProjectsAndResources()).thenReturn(
-          Promise.resolve([
-            [
-              {
-                paratextId: 'paratextId02',
-                name: 'ParatextP2',
-                shortName: 'PT2',
-                languageTag: 'qaa',
-                isConnectable: true,
-                isConnected: false
-              }
-            ],
-            []
-          ])
-        );
+        when(mockedParatextService.getProjects()).thenResolve([
+          {
+            paratextId: 'paratextId02',
+            name: 'ParatextP2',
+            shortName: 'PT2',
+            languageTag: 'qaa',
+            isConnectable: true,
+            isConnected: false
+          }
+        ]);
+        when(mockedParatextService.getResources()).thenResolve([]);
+
         env.wait();
         env.wait();
         expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
@@ -497,37 +495,34 @@ class TestEnvironment {
     this.isOnline = new BehaviorSubject<boolean>(hasConnection);
     when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
     when(mockedPwaService.isOnline).thenReturn(this.isOnline.getValue());
-    when(mockedParatextService.getProjectsAndResources()).thenReturn(
-      Promise.resolve([
-        [
-          {
-            paratextId: 'paratextId01',
-            name: 'ParatextP1',
-            shortName: 'PT1',
-            languageTag: 'qaa',
-            isConnectable: true,
-            isConnected: false
-          },
-          {
-            paratextId: 'paratextId02',
-            name: 'ParatextP2',
-            shortName: 'PT2',
-            languageTag: 'qaa',
-            isConnectable: true,
-            isConnected: false
-          }
-        ],
-        [
-          { paratextId: 'e01f11e9b4b8e338', name: 'Sob Jonah and Luke', shortName: 'SJL' },
-          {
-            paratextId: '5e51f89e89947acb',
-            name: 'Aruamu New Testament [msy] Papua New Guinea 2004 DBL',
-            shortName: 'ANT'
-          },
-          { paratextId: '9bb76cd3e5a7f9b4', name: 'Revised Version with Apocrypha 1885, 1895', shortName: 'RVA' }
-        ]
-      ])
-    );
+
+    when(mockedParatextService.getProjects()).thenResolve([
+      {
+        paratextId: 'paratextId01',
+        name: 'ParatextP1',
+        shortName: 'PT1',
+        languageTag: 'qaa',
+        isConnectable: true,
+        isConnected: false
+      },
+      {
+        paratextId: 'paratextId02',
+        name: 'ParatextP2',
+        shortName: 'PT2',
+        languageTag: 'qaa',
+        isConnectable: true,
+        isConnected: false
+      }
+    ]);
+    when(mockedParatextService.getResources()).thenResolve([
+      { paratextId: 'e01f11e9b4b8e338', name: 'Sob Jonah and Luke', shortName: 'SJL' },
+      {
+        paratextId: '5e51f89e89947acb',
+        name: 'Aruamu New Testament [msy] Papua New Guinea 2004 DBL',
+        shortName: 'ANT'
+      },
+      { paratextId: '9bb76cd3e5a7f9b4', name: 'Revised Version with Apocrypha 1885, 1895', shortName: 'RVA' }
+    ]);
 
     this.fixture = TestBed.createComponent(SettingsComponent);
     this.component = this.fixture.componentInstance;
