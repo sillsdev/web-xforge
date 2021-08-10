@@ -336,7 +336,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       (this.projects?.find(p => p.paratextId === source.paratextId) ||
         this.resources?.find(r => r.paratextId === source.paratextId)) == null
     ) {
-      this.nonSelectableProjects = [{ paratextId: source.paratextId, name: source.name }];
+      this.nonSelectableProjects = [{ paratextId: source.paratextId, shortName: source.shortName, name: source.name }];
     } else {
       this.nonSelectableProjects = [];
     }
