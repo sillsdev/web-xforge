@@ -1012,6 +1012,77 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('adds display-note tag to element', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+      const segment: HTMLElement = env.targetTextEditor.nativeElement.querySelector(
+        'usx-segment[data-segment=verse_1_1]'
+      )!;
+      expect(segment).not.toBeNull();
+      expect(segment.hasAttribute('data-note-thread-count')).toBe(true);
+      expect(segment.getAttribute('data-note-thread-count')).toBe('1');
+      const note = segment.querySelector('display-note')! as HTMLElement;
+      expect(note).not.toBeNull();
+      expect(note.hasAttribute('style')).toBe(true);
+      expect(note.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag3.png);');
+      expect(note.hasAttribute('title')).toBe(true);
+      expect(note.getAttribute('title')).toEqual('Note from user01\n--- 2 more note(s) ---');
+      expect(note.innerText).toEqual('chapter 1');
+
+      const blankSegmentNote = env.targetTextEditor.nativeElement.querySelector(
+        'usx-segment[data-segment="verse_1_4/p_1"] display-note'
+      )! as HTMLElement;
+      expect(blankSegmentNote).not.toBeNull();
+      expect(blankSegmentNote.hasAttribute('style')).toBe(true);
+      expect(blankSegmentNote.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
+      expect(blankSegmentNote.hasAttribute('title')).toBe(true);
+      expect(blankSegmentNote.getAttribute('title')).toEqual('Note from user01');
+      env.dispose();
+    }));
+
+    it('adds display-note tag to element', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+      const segment: HTMLElement = env.targetTextEditor.nativeElement.querySelector(
+        'usx-segment[data-segment=verse_1_1]'
+      )!;
+      expect(segment).not.toBeNull();
+      expect(segment.hasAttribute('data-note-thread-count')).toBe(true);
+      expect(segment.getAttribute('data-note-thread-count')).toBe('1');
+      const note = segment.querySelector('display-note')! as HTMLElement;
+      expect(note).not.toBeNull();
+      expect(note.hasAttribute('style')).toBe(true);
+      expect(note.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag3.png);');
+      expect(note.hasAttribute('title')).toBe(true);
+      expect(note.getAttribute('title')).toEqual('Note from user01\n--- 2 more note(s) ---');
+      expect(note.innerText).toEqual('chapter 1');
+
+      const blankSegmentNote = env.targetTextEditor.nativeElement.querySelector(
+        'usx-segment[data-segment="verse_1_4/p_1"] display-note'
+      )! as HTMLElement;
+      expect(blankSegmentNote).not.toBeNull();
+      expect(blankSegmentNote.hasAttribute('style')).toBe(true);
+      expect(blankSegmentNote.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
+      expect(blankSegmentNote.hasAttribute('title')).toBe(true);
+      expect(blankSegmentNote.getAttribute('title')).toEqual('Note from user01');
+      env.dispose();
+    }));
+
+    it('ensure resolved notes do not appear', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+      const segment: HTMLElement = env.targetTextEditor.nativeElement.querySelector(
+        'usx-segment[data-segment=verse_1_5]'
+      )!;
+      expect(segment).not.toBeNull();
+      const note = segment.querySelector('display-note')! as HTMLElement;
+      expect(note).toBeNull();
+      env.dispose();
+    }));
+
     it('ensure inserting in a blank segment only produces required delta ops', fakeAsync(() => {
       const env = new TestEnvironment();
       env.wait();
@@ -1982,6 +2053,7 @@ class TestEnvironment {
     this.addParatextNoteThread(3, 'MAT 1:3', 'verse 3', { start: 19, length: 7 }, ['user01']);
     this.addParatextNoteThread(4, 'MAT 1:3', 'verse', { start: 19, length: 5 }, ['user01']);
     this.addParatextNoteThread(5, 'MAT 1:4', 'Paragraph', { start: 27, length: 9 }, ['user01']);
+    this.addParatextNoteThread(5, 'resolved note', ['user01'], true);
     when(this.mockedRemoteTranslationEngine.getWordGraph(anything())).thenCall(segment =>
       Promise.resolve(this.createWordGraph(segment))
     );
@@ -2012,7 +2084,8 @@ class TestEnvironment {
     when(mockedSFProjectService.isProjectAdmin('project01', 'user04')).thenResolve(true);
     when(mockedSFProjectService.queryNoteThreads('project01')).thenCall(id =>
       this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, {
-        [obj<NoteThread>().pathStr(t => t.projectRef)]: id
+        [obj<NoteThread>().pathStr(t => t.projectRef)]: id,
+        [obj<ParatextNoteThread>().pathStr(t => t.resolved)]: false
       })
     );
     when(mockedPwaService.isOnline).thenReturn(true);
@@ -2391,7 +2464,9 @@ class TestEnvironment {
     verseStr: string,
     selectedText: string,
     position: TextAnchor,
-    userIds: string[]
+
+    userIds: string[],
+    resolved: boolean = false
   ): void {
     const threadId: string = `thread0${threadNum}`;
     const notes: Note[] = [];
@@ -2426,7 +2501,8 @@ class TestEnvironment {
         tagIcon: '01flag1',
         originalContextBefore: '\\v 1 target: ',
         originalContextAfter: ', verse 1.',
-        position
+        position,
+        resolved: resolved
       }
     });
   }

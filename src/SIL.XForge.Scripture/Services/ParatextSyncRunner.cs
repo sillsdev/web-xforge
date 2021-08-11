@@ -670,7 +670,8 @@ namespace SIL.XForge.Scripture.Services
                             OriginalContextBefore = change.ContextBefore,
                             OriginalContextAfter = change.ContextAfter,
                             TagIcon = change.TagIcon,
-                            Position = change.Position
+                            Position = change.Position,
+                            Resolved = change.Resolved
                         });
                         await SubmitChangesOnNoteThreadDocAsync(doc, change, usernamesToUserIds);
                     }
@@ -777,6 +778,14 @@ namespace SIL.XForge.Scripture.Services
 
             await threadDoc.SubmitJson0OpAsync(op =>
             {
+                // Update thread details
+                if (change.ThreadUpdated)
+                {
+                    if (threadDoc.Data.Resolved != change.Resolved)
+                    {
+                        op.Set(td => td.Resolved, change.Resolved);
+                    }
+                }
                 // Update content for updated notes
                 foreach (Note updated in change.NotesUpdated)
                 {

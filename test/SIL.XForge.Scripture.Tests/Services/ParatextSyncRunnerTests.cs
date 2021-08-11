@@ -1194,6 +1194,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(thread02.Notes.Count, Is.EqualTo(1));
             Assert.That(thread02.Notes[0].Content, Is.EqualTo("New thread02 added."));
             Assert.That(thread02.Notes[0].OwnerRef, Is.EqualTo("user01"));
+            Assert.That(thread02.Resolved, Is.EqualTo(false));
             SFProject project = env.GetProject();
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
         }
@@ -1223,6 +1224,39 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsNoteThread("project01", "thread01"), Is.False);
             project = env.GetProject();
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+        }
+
+        [Test]
+        public async Task SyncAsync_NoteThreadsGetResolved()
+        {
+            var env = new TestEnvironment();
+            var book = new Book("MAT", 3, true);
+            env.SetupSFData(true, false, false, true, book);
+            env.SetupPTData(book);
+            env.SetupNewNoteThreadChange("thread02", "syncuser01");
+
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+
+            // Default resolved status is false
+            ParatextNoteThread thread02 = env.GetNoteThread("project01", "thread02");
+            Assert.That(thread02.VerseRef.ToString(), Is.EqualTo("MAT 1:1"));
+            Assert.That(thread02.Resolved, Is.EqualTo(false));
+
+            // Change resolve status to true
+            env.SetupNoteStatusChange("thread02", true);
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+
+            thread02 = env.GetNoteThread("project01", "thread02");
+            Assert.That(thread02.VerseRef.ToString(), Is.EqualTo("MAT 1:1"));
+            Assert.That(thread02.Resolved, Is.EqualTo(true));
+
+            // Change status back to false - happens if the note becomes unresolved again in Paratext
+            env.SetupNoteStatusChange("thread02", true);
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+
+            thread02 = env.GetNoteThread("project01", "thread02");
+            Assert.That(thread02.VerseRef.ToString(), Is.EqualTo("MAT 1:1"));
+            Assert.That(thread02.Resolved, Is.EqualTo(true));
         }
 
         private class Book
@@ -1779,6 +1813,16 @@ namespace SIL.XForge.Scripture.Services
                     };
                     var changeList = (new[] { (new[] { noteChange }).ToList() }).ToList();
                 }
+            }
+
+            public void SetupNoteStatusChange(string threadId, bool resolved, string verseRef = "MAT 1:1")
+            {
+                var noteThreadChange = new ParatextNoteThreadChange(threadId, verseRef, $"{threadId} selected text.",
+                    "Context before ", " context after", 17, "icon1", resolved);
+                noteThreadChange.ThreadUpdated = true;
+                ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
+                    Arg.Any<IEnumerable<IDocument<ParatextNoteThread>>>(), Arg.Any<Dictionary<string, SyncUser>>())
+                    .Returns(new[] { noteThreadChange });
             }
 
             public void SetupNewNoteThreadChange(string threadId, string syncUserId, string verseRef = "MAT 1:1")
