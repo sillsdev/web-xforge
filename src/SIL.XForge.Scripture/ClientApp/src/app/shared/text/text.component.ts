@@ -186,7 +186,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private highlightMarkerHeight: number = 0;
   private _placeholder?: string;
   private displayMessage: string = '';
-  private _toggleVerseElement: boolean = false;
 
   constructor(
     private readonly projectService: SFProjectService,
@@ -481,7 +480,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       }
       this.editor.formatText(range.index, range.length, formats, 'silent');
     }
-    this._toggleVerseElement = value;
     return segments;
   }
 
@@ -606,7 +604,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   private async bindQuill(): Promise<void> {
     this.viewModel.unbind();
-    this._toggleVerseElement = false;
     if (this._id == null) {
       return;
     }
@@ -704,9 +701,28 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     if (this._editor != null && segmentRef == null) {
+      if (
+        this.segment != null &&
+        this.segment.text === '' &&
+        delta?.ops != null &&
+        delta.ops.length > 2 &&
+        delta.ops[0].retain != null
+      ) {
+        if (delta.ops[1].insert['note-thread-embed'] != null) {
+          // Embedding notes into quill makes quill emit deltas when it registers that content has changed
+          // but quill incorrectly interprets the change when the selection is within the updated segment.
+          // Content coming after the selection gets moved before the selection. This moves the selection back.
+          const curSegmentRange = this.segment.range;
+          const insertionPoint = delta.ops[0].retain;
+          const segmentEndPoint = curSegmentRange.index + curSegmentRange.length - 1;
+          if (insertionPoint >= curSegmentRange.index && insertionPoint <= segmentEndPoint) {
+            this._editor.setSelection(segmentEndPoint);
+          }
+        }
+      }
       // get currently selected segment ref
       const selection = this._editor.getSelection();
-      if (this._toggleVerseElement && selection != null) {
+      if (selection != null) {
         segmentRef = this.viewModel.getSegmentRef(selection);
       }
     }

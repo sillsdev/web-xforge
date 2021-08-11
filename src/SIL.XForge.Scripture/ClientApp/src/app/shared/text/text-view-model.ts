@@ -170,8 +170,6 @@ export class TextViewModel {
     if (source === 'user' && editor.isEnabled()) {
       const modelDelta = this.viewToData(delta);
       if (modelDelta.ops != null && modelDelta.ops.length > 0) {
-        console.log('ops submitted');
-        console.log(modelDelta);
         this.textDoc.submit(modelDelta, this.editor);
       }
     }
@@ -341,9 +339,6 @@ export class TextViewModel {
           'question-count',
           'note-thread-segment',
           'note-thread-count',
-          'note-thread',
-          'note-icon-source',
-          'note-preview',
           'initial',
           'direction-segment',
           'direction-block',
