@@ -785,6 +785,17 @@ namespace SIL.XForge.Scripture.Services
                     else
                         threadChange.NoteIdsRemoved.Add(note.DataId);
                 }
+                // Make thread resolved if status has changed to deleted
+                if (existingThread.Status == NoteStatus.Deleted && threadDoc.Data.Resolved == false)
+                {
+                    threadChange.Resolved = true;
+                    threadChange.ThreadUpdated = true;
+                }
+                else if (existingThread.Status == NoteStatus.Todo && threadDoc.Data.Resolved == true)
+                {
+                    threadChange.Resolved = false;
+                    threadChange.ThreadUpdated = true;
+                }
                 // Add new Comments to note thread change
                 IEnumerable<string> ptCommentIds = existingThread.Comments.Select(c => c.Id);
                 IEnumerable<string> newCommentIds = ptCommentIds.Except(matchedCommentIds);
@@ -818,11 +829,12 @@ namespace SIL.XForge.Scripture.Services
                 int tagId = info.TagsAdded != null && info.TagsAdded.Length > 0
                     ? int.Parse(info.TagsAdded[0])
                     : defaultTagId;
+                // Make thread resolved if status has changed to deleted
+                bool resolved = (thread.Status == NoteStatus.Deleted);
                 CommentTag initialTag = info.Type == NoteType.Conflict ? CommentTag.ConflictTag : commentTags.Get(tagId);
                 NoteThreadChange newThread = new NoteThreadChange(threadId, info.VerseRefStr,
-                    info.SelectedText, info.ContextBefore, info.ContextAfter, initialTag.Icon);
+                    info.SelectedText, info.ContextBefore, info.ContextAfter, initialTag.Icon, resolved);
                 newThread.Position = GetCommentTextAnchor(info, chapterDeltas);
-
                 foreach (var comm in thread.Comments)
                 {
                     SyncUser syncUser = FindOrCreateSyncUser(comm.User, syncUsers);

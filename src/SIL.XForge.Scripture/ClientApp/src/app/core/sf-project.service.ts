@@ -119,7 +119,10 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   queryNoteThreads(id: string): Promise<RealtimeQuery<NoteThreadDoc>> {
-    const queryParams: QueryParameters = { [obj<NoteThread>().pathStr(t => t.projectRef)]: id };
+    const queryParams: QueryParameters = {
+      [obj<NoteThread>().pathStr(t => t.projectRef)]: id,
+      [obj<ParatextNoteThread>().pathStr(t => t.resolved)]: false
+    };
     return this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, queryParams);
   }
 
