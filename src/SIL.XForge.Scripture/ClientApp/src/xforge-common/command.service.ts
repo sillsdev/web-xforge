@@ -81,7 +81,7 @@ export class CommandService {
       return response.result;
     } catch (error) {
       const message = `Error invoking ${method}: ${error.message}`;
-      throw new CommandError(error.code, message, error.data);
+      throw new CommandError(error.code || error.status, message, error.data);
     }
   }
 }

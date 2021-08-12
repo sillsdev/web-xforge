@@ -64,7 +64,7 @@ describe('TranslateMetricsSession', () => {
       expect(env.session.metrics.keyBackspaceCount).toBe(1);
       expect(env.session.metrics.keyDeleteCount).toBe(1);
 
-      env.session.dispose();
+      env.sessionDispose();
     }));
 
     it('start with accepted suggestion', fakeAsync(() => {
@@ -99,7 +99,7 @@ describe('TranslateMetricsSession', () => {
       expect(env.session.metrics.suggestionTotalCount).toBe(1);
       expect(env.session.metrics.suggestionAcceptedCount).toBe(1);
 
-      env.session.dispose();
+      env.sessionDispose();
     }));
 
     it('navigate keystroke', fakeAsync(() => {
@@ -117,7 +117,7 @@ describe('TranslateMetricsSession', () => {
       expect(env.session.metrics.type).toBe('edit');
       expect(env.session.metrics.keyNavigationCount).toBe(1);
 
-      env.session.dispose();
+      env.sessionDispose();
     }));
 
     it('mouse click', fakeAsync(() => {
@@ -134,7 +134,7 @@ describe('TranslateMetricsSession', () => {
       verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
       expect(env.session.metrics.type).toBe('edit');
       expect(env.session.metrics.mouseClickCount).toBe(1);
-      env.session.dispose();
+      env.sessionDispose();
     }));
 
     it('editing increases activity timespan', fakeAsync(() => {
@@ -151,7 +151,7 @@ describe('TranslateMetricsSession', () => {
       env.keyPress('b', momentaryDelay);
       tick(ACTIVE_EDIT_TIMEOUT);
       expect(env.session.metrics.timeEditActive).toEqual(2 * momentaryDelay);
-      env.session.dispose();
+      env.sessionDispose();
     }));
 
     it('timeout', fakeAsync(() => {
@@ -187,7 +187,7 @@ describe('TranslateMetricsSession', () => {
       expect(env.session.metrics.timeEditActive).toBeDefined();
       expect(env.session.metrics.keyCharacterCount).toBe(1);
 
-      env.session.dispose();
+      env.sessionDispose();
     }));
 
     it('segment change', fakeAsync(() => {
@@ -218,7 +218,7 @@ describe('TranslateMetricsSession', () => {
       verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', objectContaining(expectedMetrics))).once();
       expect(env.session.metrics.type).toBe('navigate');
 
-      env.session.dispose();
+      env.sessionDispose();
     }));
   });
 
@@ -231,7 +231,7 @@ describe('TranslateMetricsSession', () => {
       expect(env.session.metrics.type).toBe('navigate');
       expect(env.session.metrics.keyNavigationCount).toBe(2);
 
-      env.session.dispose();
+      env.sessionDispose();
     }));
 
     it('mouse click', fakeAsync(() => {
@@ -242,7 +242,7 @@ describe('TranslateMetricsSession', () => {
       expect(env.session.metrics.type).toBe('navigate');
       expect(env.session.metrics.mouseClickCount).toBe(2);
 
-      env.session.dispose();
+      env.sessionDispose();
     }));
 
     it('segment change', fakeAsync(() => {
@@ -266,7 +266,7 @@ describe('TranslateMetricsSession', () => {
       expect(env.session.metrics.keyNavigationCount).toBe(2);
       expect(env.session.metrics.mouseClickCount).toBe(2);
 
-      env.session.dispose();
+      env.sessionDispose();
     }));
   });
 
@@ -280,7 +280,7 @@ describe('TranslateMetricsSession', () => {
 
     const sessionId = env.session.id;
     const metricsId = env.session.metrics.id;
-    env.session.dispose();
+    env.sessionDispose();
     const expectedMetrics: TranslateMetrics = {
       id: metricsId,
       type: 'edit',
@@ -334,7 +334,7 @@ describe('TranslateMetricsSession', () => {
     };
     verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', deepEqual(expectedMetrics))).once();
 
-    env.session.dispose();
+    env.sessionDispose();
   }));
 
   it('ignore not found error', fakeAsync(() => {
@@ -344,7 +344,7 @@ describe('TranslateMetricsSession', () => {
     );
 
     env.keyPress('a');
-    expect(() => env.session.dispose()).not.toThrow();
+    expect(() => env.sessionDispose()).not.toThrow();
   }));
 
   it('ignore forbidden error', fakeAsync(() => {
@@ -354,7 +354,15 @@ describe('TranslateMetricsSession', () => {
     );
 
     env.keyPress('a');
-    expect(() => env.session.dispose()).not.toThrow();
+    expect(() => env.sessionDispose()).not.toThrow();
+  }));
+
+  it('should throw on other errors', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(new Error('Other'));
+
+    env.keyPress('a');
+    expect(() => env.sessionDispose()).toThrow();
   }));
 });
 
@@ -441,6 +449,11 @@ class TestEnvironment {
     clickEvent.initEvent('click', true, true);
     this.target.editor!.root.dispatchEvent(clickEvent);
     this.session.onSuggestionAccepted(clickEvent);
+  }
+
+  sessionDispose(): void {
+    this.session.dispose();
+    tick();
   }
 
   private addTextDoc(id: TextDocId): void {
