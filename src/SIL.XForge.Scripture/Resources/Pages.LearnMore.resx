@@ -169,7 +169,7 @@
     <value>{0}Connecting to a Paratext project{1} in Scripture Forge.</value>
   </data>
   <data name="LearnSliderCheckingSetupDescription" xml:space="preserve">
-    <value>Paratext project {0}Administrators{1} can {2}watch this video{3} to learn about setting up {0}Community Checking{1}. It covers:</value>
+    <value>{4}Paratext{5} project {0}Administrators{1} can {2}watch this video{3} to learn about setting up {0}Community Checking{1}. It covers:</value>
   </data>
   <data name="LearnSliderCheckingSetupHeader" xml:space="preserve">
     <value>Setting Up Community Checking</value>
@@ -208,7 +208,7 @@
     <value>Setting Up Translation Suggestions</value>
   </data>
   <data name="LearnSliderTranslateEditDescription" xml:space="preserve">
-    <value>{0}Administrators{1} can connect a Paratext project to Scripture Forge to edit Scripture as they would in Paratext, while {2}benefiting from increased collaboration{3} options.</value>
+    <value>{0}Administrators{1} can connect a {4}Paratext{5} project to Scripture Forge to edit Scripture as they would in Paratext, while {2}benefiting from increased collaboration{3} options.</value>
   </data>
   <data name="LearnSliderTranslateEditHeader" xml:space="preserve">
     <value>Editing Scripture</value>

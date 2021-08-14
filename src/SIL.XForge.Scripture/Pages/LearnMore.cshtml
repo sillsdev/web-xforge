@@ -22,7 +22,11 @@
                 <div class="feature">
                     <div class="text">
                         <h3>@Localizer["LearnSliderCheckingSetupHeader"]</h3>
-                        <p><i class="material-icons">computer</i>@(Html.Raw(Model.Localizer["LearnSliderCheckingSetupDescription", "<i>", "</i>", "<span class=\"highlight\">", "</span>"]))</p>
+                        <p><i class="material-icons">computer</i>@(Html.Raw(Model.Localizer[
+                            "LearnSliderCheckingSetupDescription", "<i>", "</i>", "<span class=\"highlight\">",
+                            "</span>",
+                            "<a href=\"https://paratext.org/\" rel=\"noopener noreferrer\" target=\"_blank\">", "</a>"
+                            ]))</p>
                         <ol>
                             <li>@(Html.Raw(Model.Localizer["LearnSliderCheckingSetupConnect", "<span class=\"highlight\">", "</span>"]))</li>
                             <li>@(Html.Raw(Model.Localizer["LearnSliderCheckingSetupAddQuestions", "<span class=\"highlight\">", "</span>"]))</li>
@@ -76,7 +80,11 @@
                 <div class="feature right">
                     <div class="text">
                         <h3>@Localizer["LearnSliderTranslateEditHeader"]</h3>
-                        <p><i class="material-icons">edit</i>@(Html.Raw(Model.Localizer["LearnSliderTranslateEditDescription", "<i>", "</i>", "<span class=\"highlight\">", "</span>"]))</p>
+                        <p><i class="material-icons">edit</i>@(Html.Raw(Model.Localizer[
+                            "LearnSliderTranslateEditDescription", "<i>", "</i>", "<span class=\"highlight\">",
+                            "</span>",
+                            "<a href=\"https://paratext.org/\" rel=\"noopener noreferrer\" target=\"_blank\">", "</a>"
+                            ]))</p>
                         <ol>
                             <li>@(Html.Raw(Model.Localizer["LearnSliderTranslateEditScripture", "<span class=\"highlight\">", "</span>", "<i>", "</i>"]))</li>
                             <li>@(Html.Raw(Model.Localizer["LearnSliderTranslateEditSync", "<span class=\"highlight\">", "</span>"]))</li>

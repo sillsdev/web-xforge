@@ -40,15 +40,15 @@
                 <div class="title align-center">@Localizer["EngageTitle"]</div>
                 <div class="engage-features">
                     <div class="engage-feature">
-                        <img src="~/images/logo-paratext.svg" loading="lazy" alt="Paratext">
+                        <img src="~/images/logo-paratext.svg" loading="lazy" alt="Paratext" />
                         <span>@Localizer["EngageCollaborate"]</span>
                     </div>
                     <div class="engage-feature">
-                        <img src="~/images/community-checking.svg" loading="lazy" alt="Community Checking">
+                        <img src="~/images/community-checking.svg" loading="lazy" alt="Community Checking" />
                         <span>@Localizer["EngageChecking"]</span>
                     </div>
                     <div class="engage-feature">
-                        <img src="~/images/translate2.svg" loading="lazy" alt="Translate">
+                        <img src="~/images/translate2.svg" loading="lazy" alt="Translate" />
                         <span>@Localizer["EngageSuggestions"]</span>
                     </div>
                 </div>
@@ -74,10 +74,16 @@
             <div class="mdl-cell mdl-cell--12-col">
                 <div class="about-features">
                     <div class="about-feature">
-                        <img src="~/images/logo-paratext.svg" loading="lazy" alt="Paratext">
+                        <a href="https://paratext.org/" rel="noopener noreferrer" target="_blank">
+                            <img src="~/images/logo-paratext.svg" loading="lazy" alt="Paratext" />
+                        </a>
                         <span>@Localizer["AboutParatext"]</span>
                         <p>@(Html.Raw(Model.Localizer["AboutParatextDescription", "<span class=\"highlight\">",
-                            "</span>"]))</p>
+                            "</span>",
+                            "<a href=\"https://paratext.org/\" rel=\"noopener noreferrer\" target=\"_blank\">", "</a>",
+                            "<a href=\"https://paratext.org/features/translation-notes-and-comments/\" " +
+                                "rel=\"noopener noreferrer\" target=\"_blank\">"
+                            ]))</p>
                     </div>
                     <div class="about-feature">
                         <i class="material-icons">shuffle</i>
