@@ -216,6 +216,21 @@ describe('ImportQuestionsDialogComponent', () => {
       verseNum: 2
     });
   }));
+
+  it('does not import questions that were selected if they no longer match the filter', fakeAsync(() => {
+    const env = new TestEnvironment();
+    expect(env.questionRows.length).toBe(2);
+    expect(env.submitButton.textContent).toContain('0');
+    env.clickSelectAll();
+    expect(env.submitButton.textContent).toContain('2');
+
+    env.setControlValue(env.component.fromControl, 'MAT 1:2');
+    expect(env.questionRows.length).toBe(1);
+    expect(env.submitButton.textContent).toContain('1');
+
+    env.click(env.submitButton);
+    verify(mockedProjectService.createQuestion('project01', anything(), undefined, undefined)).once();
+  }));
 });
 
 @Directive({
