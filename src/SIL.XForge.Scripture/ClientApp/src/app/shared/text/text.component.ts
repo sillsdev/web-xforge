@@ -706,18 +706,17 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         this.segment.text === '' &&
         delta?.ops != null &&
         delta.ops.length > 2 &&
-        delta.ops[0].retain != null
+        delta.ops[0].retain != null &&
+        delta.ops[1].insert['note-thread-embed'] != null
       ) {
-        if (delta.ops[1].insert['note-thread-embed'] != null) {
-          // Embedding notes into quill makes quill emit deltas when it registers that content has changed
-          // but quill incorrectly interprets the change when the selection is within the updated segment.
-          // Content coming after the selection gets moved before the selection. This moves the selection back.
-          const curSegmentRange = this.segment.range;
-          const insertionPoint = delta.ops[0].retain;
-          const segmentEndPoint = curSegmentRange.index + curSegmentRange.length - 1;
-          if (insertionPoint >= curSegmentRange.index && insertionPoint <= segmentEndPoint) {
-            this._editor.setSelection(segmentEndPoint);
-          }
+        // Embedding notes into quill makes quill emit deltas when it registers that content has changed
+        // but quill incorrectly interprets the change when the selection is within the updated segment.
+        // Content coming after the selection gets moved before the selection. This moves the selection back.
+        const curSegmentRange: RangeStatic = this.segment.range;
+        const insertionPoint: number = delta.ops[0].retain;
+        const segmentEndPoint: number = curSegmentRange.index + curSegmentRange.length - 1;
+        if (insertionPoint >= curSegmentRange.index && insertionPoint <= segmentEndPoint) {
+          this._editor.setSelection(segmentEndPoint);
         }
       }
       // get currently selected segment ref
@@ -822,8 +821,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     let newSel: RangeStatic | undefined;
     if (this._segment.text === '') {
       // always select at the end of blank so the cursor is inside the segment and not between the segment and verse
-      const notesCount = this._segment.range.length - 1;
-      newSel = { index: this._segment.range.index + notesCount + 1, length: 0 };
+      newSel = { index: this._segment.range.index + this._segment.range.length, length: 0 };
     } else if (!this.multiSegmentSelection) {
       // selections outside of the text chooser dialog are not permitted to extend across segments
       const newStart = Math.max(sel.index, this._segment.range.index);

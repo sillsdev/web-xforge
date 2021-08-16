@@ -256,7 +256,7 @@ describe('EditorComponent', () => {
         'note-thread-embed': {
           iconsrc: '--icon-file: url(/assets/icons/TagIcons/01flag1.png);',
           preview: 'Note from user01',
-          embedid: 'thread04'
+          threadid: 'thread04'
         }
       });
       op = segmentContents.ops![1];
@@ -273,7 +273,7 @@ describe('EditorComponent', () => {
         'note-thread-embed': {
           iconsrc: '--icon-file: url(/assets/icons/TagIcons/01flag1.png);',
           preview: 'Note from user01',
-          embedid: 'thread04'
+          threadid: 'thread04'
         }
       });
       op = segmentContents.ops![1];
@@ -291,7 +291,7 @@ describe('EditorComponent', () => {
         'note-thread-embed': {
           iconsrc: '--icon-file: url(/assets/icons/TagIcons/01flag1.png);',
           preview: 'Note from user01',
-          embedid: 'thread04'
+          threadid: 'thread04'
         }
       });
       op = segmentContents.ops![1];
@@ -574,7 +574,6 @@ describe('EditorComponent', () => {
       expect(env.bookName).toEqual('Matthew');
       expect(env.component.target!.segmentRef).toEqual('verse_1_1');
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
-      console.log(env.targetEditor.getSelection());
 
       resetCalls(env.mockedRemoteTranslationEngine);
       env.updateParams({ projectId: 'project01', bookId: 'MRK' });
@@ -995,9 +994,7 @@ describe('EditorComponent', () => {
 
       const note = segment.querySelector('display-note')! as HTMLElement;
       expect(note).not.toBeNull();
-      expect(note.hasAttribute('style')).toBe(true);
       expect(note.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag3.png);');
-      expect(note.hasAttribute('title')).toBe(true);
       expect(note.getAttribute('title')).toEqual('Note from user01\n--- 2 more note(s) ---');
       const contents = env.targetEditor.getContents();
       expect(contents.ops![3].insert).toEqual('target: ');
@@ -1013,9 +1010,7 @@ describe('EditorComponent', () => {
         'usx-segment[data-segment="verse_1_4/p_1"] display-note'
       )! as HTMLElement;
       expect(blankSegmentNote).not.toBeNull();
-      expect(blankSegmentNote.hasAttribute('style')).toBe(true);
       expect(blankSegmentNote.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
-      expect(blankSegmentNote.hasAttribute('title')).toBe(true);
       expect(blankSegmentNote.getAttribute('title')).toEqual('Note from user01');
       env.dispose();
     }));

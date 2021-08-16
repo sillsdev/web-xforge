@@ -38,7 +38,6 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
-import { verseSlug } from 'xforge-common/utils';
 import XRegExp from 'xregexp';
 import { environment } from '../../../environments/environment';
 import { ParatextNoteThreadDoc } from '../../core/models/paratext-note-thread-doc';
@@ -623,7 +622,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         }
         const iconName: string = featured.iconName ?? '01flag1';
         const nodeProp: string = iconSourceProp(iconName);
-        const format = value ? { iconsrc: nodeProp, preview: featured.preview, embedid: featured.id } : {};
+        const format = { iconsrc: nodeProp, preview: featured.preview, threadid: featured.id };
         this.target.embedElementInline(
           featured.verseRef,
           featured.id,
@@ -632,14 +631,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           format
         );
       }
-    } else {
-      this.target.removeEmbeddedElements();
-    }
-    const segments: string[] = this.target.toggleFeaturedVerseRefs(value, noteThreadVerseRefs, 'note-thread');
-
-    if (value) {
+      const segments: string[] = this.target.toggleFeaturedVerseRefs(value, noteThreadVerseRefs, 'note-thread');
       this.subscribeClickEvents(segments);
     } else {
+      this.target.removeEmbeddedElements();
       // Un-subscribe from all segment click events as these all get setup again
       for (const event of this.clickSubs) {
         event.unsubscribe();

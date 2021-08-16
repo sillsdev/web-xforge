@@ -464,9 +464,9 @@ export class TextViewModel {
               }
             } else if (op.insert['note-thread-embed'] != null) {
               // record the presence of an embedded note in the segment
-              const id = op.attributes != null && op.attributes['embedid'];
+              const id = op.attributes != null && op.attributes['threadid'];
               this._embeddedElements.set(id, curIndex + curSegment.length);
-              curSegment.notesCount = curSegment.notesCount + 1;
+              curSegment.notesCount++;
             }
           }
         }
@@ -529,26 +529,34 @@ export class TextViewModel {
     return this.editor;
   }
 
+  /** Adjust the delta that is applied to the text doc by stripping off the embedded elements displayed in quill. */
   private adjustDeltaForEmbeddedElements(modelDelta: DeltaStatic): DeltaStatic {
     if (modelDelta.ops == null || modelDelta.ops.length < 1) {
       return new Delta();
     }
     const adjustedDelta = new Delta();
     const indices: number[] = Array.from(this._embeddedElements.values());
-    let embedTracker: number = 0;
     let curIndex: number = 0;
     for (const op of modelDelta.ops) {
       const cloneOp = cloneDeep(op);
       if (cloneOp.retain != null) {
-        curIndex += cloneOp.retain;
-        let curNoteIndex = indices[embedTracker];
-        while (curNoteIndex <= curIndex) {
-          // remove this note from the retain op
-          cloneOp.retain -= 1;
-          embedTracker++;
-          curNoteIndex = indices[embedTracker];
+        // The range of content that this retain applies to
+        const opEndIndex: number = curIndex + cloneOp.retain - 1;
+        let embeddedElementsCount: number = 0;
+        for (const embedIndex of indices) {
+          if (embedIndex < curIndex) {
+            continue;
+          } else if (embedIndex >= curIndex && embedIndex <= opEndIndex) {
+            embeddedElementsCount++;
+          } else {
+            break;
+          }
         }
+        curIndex += cloneOp.retain;
+        // remove from the retain op the number of embedded elements contained in its content
+        cloneOp.retain -= embeddedElementsCount;
       } else if (cloneOp.delete != null) {
+        // account for the length that the delete applies to
         curIndex += cloneOp.delete;
       }
       (adjustedDelta as any).push(cloneOp);
