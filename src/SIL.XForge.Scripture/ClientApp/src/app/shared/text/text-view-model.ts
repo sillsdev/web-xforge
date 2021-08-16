@@ -465,7 +465,7 @@ export class TextViewModel {
             } else if (op.insert['note-thread-embed'] != null) {
               // record the presence of an embedded note in the segment
               const id = op.attributes != null && op.attributes['threadid'];
-              this._embeddedElements.set(id, curIndex + curSegment.length);
+              this._embeddedElements.set(id, curIndex + curSegment.length - 1);
               curSegment.notesCount++;
             }
           }

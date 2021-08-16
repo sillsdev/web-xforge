@@ -329,10 +329,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return 'auto';
   }
 
-  get embeddedNotes(): Map<string, number> {
-    return this.viewModel.embeddedElements;
-  }
-
   private get contentShowing(): boolean {
     return this.id != null && this.viewModel.isLoaded && !this.viewModel.isEmpty;
   }
@@ -575,10 +571,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (this.editor == null) {
       return;
     }
-    let previousEmbedIndex = 0;
+    let previousEmbedIndex = -1;
     const deleteDelta = new Delta();
     for (const [_, embedIndex] of this.viewModel.embeddedElements.entries()) {
-      // check that there are elements other than notes between the previous and current embed
+      // retain elements other than notes between the previous and current embed
       if (embedIndex > previousEmbedIndex + 1) {
         deleteDelta.retain(embedIndex - (previousEmbedIndex + 1));
       }
@@ -707,6 +703,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         delta?.ops != null &&
         delta.ops.length > 2 &&
         delta.ops[0].retain != null &&
+        delta.ops[1].insert != null &&
         delta.ops[1].insert['note-thread-embed'] != null
       ) {
         // Embedding notes into quill makes quill emit deltas when it registers that content has changed

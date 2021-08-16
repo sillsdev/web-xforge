@@ -1041,6 +1041,29 @@ describe('EditorComponent', () => {
       expect(contents.ops![7]!.insert).toBe('t');
       env.dispose();
     }));
+
+    it('correctly removes embedded elements', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      let contents = env.targetEditor.getContents();
+      expect(contents.ops![3].insert).toBe('target: ');
+      expect(contents.ops![4].insert['note-thread-embed']).not.toBeNull();
+      expect(contents.ops![5].insert).toBe('chapter 1, verse 1.');
+      expect(contents.ops![9].insert['note-thread-embed']).not.toBeNull();
+      expect(contents.ops![10].insert).toBe('target: chapter 1,');
+      expect(contents.ops![11].insert['note-thread-embed']).not.toBeNull();
+      expect(contents.ops![12].insert).toBe(' verse 3.');
+
+      env.component.target!.removeEmbeddedElements();
+      contents = env.targetEditor.getContents();
+      expect(contents.ops![3].insert).toBe('target: chapter 1, verse 1.');
+      expect(contents.ops![7].insert).toBe('target: chapter 1, verse 3.');
+
+      env.wait();
+      env.dispose();
+    }));
   });
 
   describe('Translation Suggestions disabled', () => {
