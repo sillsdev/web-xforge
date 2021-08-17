@@ -31,6 +31,7 @@ namespace SIL.XForge.Scripture.Services
         private const string Project03 = "project03";
         private const string Project04 = "project04";
         private const string Project05 = "project05";
+        private const string Project06 = "project06";
         private const string Resource01 = "resource_project";
         private const string DisabledSource = "disabled_source";
         private const string Resource01PTId = "resid_is_16_char";
@@ -816,7 +817,7 @@ namespace SIL.XForge.Scripture.Services
 
             Assert.That(await env.Service.IsAlreadyInvitedAsync(User01, Project03, "junk"), Is.False);
 
-            Assert.That(await env.Service.IsAlreadyInvitedAsync(User03, Project02, "nothing"), Is.False);
+            Assert.That(await env.Service.IsAlreadyInvitedAsync(User02, Project02, "nothing"), Is.False);
         }
 
         [Test]
@@ -831,9 +832,10 @@ namespace SIL.XForge.Scripture.Services
         public async Task IsAlreadyInvitedAsync_NotInvitedButOnProject_False()
         {
             var env = new TestEnvironment();
-
+            Assert.That(env.GetProject(Project03).UserRoles.GetValueOrDefault(User01, null), Is.EqualTo(SFProjectRole.Administrator));
             Assert.That(await env.Service.IsAlreadyInvitedAsync(User01, Project03, "user01@example.com"), Is.False);
-            Assert.That(await env.Service.IsAlreadyInvitedAsync(User03, Project02, "user01@example.com"), Is.False);
+            Assert.That(env.GetProject(Project02).UserRoles.GetValueOrDefault(User04, null), Is.EqualTo(SFProjectRole.CommunityChecker));
+            Assert.That(await env.Service.IsAlreadyInvitedAsync(User04, Project02, "user01@example.com"), Is.False);
         }
 
         [Test]
@@ -842,7 +844,38 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
 
             Assert.That(await env.Service.IsAlreadyInvitedAsync(User01, Project03, "unheardof@example.com"), Is.False);
-            Assert.That(await env.Service.IsAlreadyInvitedAsync(User03, Project02, "nobody@example.com"), Is.False);
+            Assert.That(await env.Service.IsAlreadyInvitedAsync(User04, Project02, "nobody@example.com"), Is.False);
+        }
+
+        [Test]
+        public void IsAlreadyInvitedAsync_CheckingDisabledButCheckingSharingEnabled_Forbidden()
+        {
+            var env = new TestEnvironment();
+            Assert.That(env.GetProject(Project06).CheckingConfig.CheckingEnabled, Is.False);
+            Assert.That(env.GetProject(Project06).CheckingConfig.ShareEnabled, Is.True);
+            Assert.That(env.GetProject(Project06).UserRoles.GetValueOrDefault(User01, null), Is.EqualTo(SFProjectRole.CommunityChecker));
+
+            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.IsAlreadyInvitedAsync(User01, Project06, "user@example.com"));
+        }
+
+        [Test]
+        public async Task IsAlreadyInvitedAsync_CheckingSharingDisabledTranslateSharingEnabled_False()
+        {
+            var env = new TestEnvironment();
+            Assert.That(env.GetProject(Project04).CheckingConfig.ShareEnabled, Is.False);
+            Assert.That(env.GetProject(Project04).TranslateConfig.ShareEnabled, Is.True);
+            Assert.That(await env.Service.IsAlreadyInvitedAsync(User01, Project04, "user@example.com"), Is.False);
+        }
+
+        [Test]
+        public void IsAlreadyInvitedAsync_InvitingUserNotOnProject_Forbidden()
+        {
+            var env = new TestEnvironment();
+            Assert.That(env.GetProject(Project02).CheckingConfig.CheckingEnabled, Is.True);
+            Assert.That(env.GetProject(Project02).CheckingConfig.ShareEnabled, Is.True);
+            Assert.That(env.GetProject(Project02).UserRoles.GetValueOrDefault(User01, null), Is.Null);
+
+            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.IsAlreadyInvitedAsync(User01, Project02, "user@example.com"));
         }
 
         [Test]
@@ -1884,7 +1917,8 @@ namespace SIL.XForge.Scripture.Services
                             },
                             UserRoles =
                             {
-                                { User02, SFProjectRole.Administrator }
+                                { User02, SFProjectRole.Administrator },
+                                { User04, SFProjectRole.CommunityChecker }
                             },
                         },
                         new SFProject
@@ -1928,6 +1962,10 @@ namespace SIL.XForge.Scripture.Services
                                 },
                                 ShareEnabled = true,
                                 ShareLevel = TranslateShareLevel.Anyone
+                            },
+                            UserRoles =
+                            {
+                                { User01, SFProjectRole.CommunityChecker }
                             }
                         },
                         new SFProject
@@ -1980,6 +2018,22 @@ namespace SIL.XForge.Scripture.Services
                                         new Chapter { Number = 2, LastVerse = 3, IsValid = true, Permissions = { } }
                                     }
                                 }
+                            }
+                        },
+                        new SFProject
+                        {
+                            Id = Project06,
+                            Name = "project06",
+                            ParatextId = "paratext_" + Project06,
+                            CheckingConfig = new CheckingConfig
+                            {
+                                CheckingEnabled = false,
+                                ShareEnabled = true,
+                                ShareLevel = TranslateShareLevel.Anyone
+                            },
+                            UserRoles =
+                            {
+                                { User01, SFProjectRole.CommunityChecker }
                             }
                         },
                         new SFProject
