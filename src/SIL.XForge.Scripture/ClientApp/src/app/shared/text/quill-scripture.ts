@@ -283,7 +283,7 @@ export function registerScripture(): string[] {
       const node = super.create(value) as HTMLElement;
       node.setAttribute('style', value.iconsrc);
       node.setAttribute('title', value.preview);
-      node.setAttribute('thread-id', value.threadid);
+      node.setAttribute(customAttributeName('thread-id'), value.threadid);
       return node;
     }
 
@@ -295,7 +295,7 @@ export function registerScripture(): string[] {
       return {
         iconsrc: node.getAttribute('style')!,
         preview: node.getAttribute('title')!,
-        threadid: node.getAttribute('thread-id')!
+        threadid: node.getAttribute(customAttributeName('thread-id'))!
       };
     }
 
@@ -305,7 +305,7 @@ export function registerScripture(): string[] {
         const elem = this.domNode as HTMLElement;
         elem.setAttribute('style', ref.iconsrc);
         elem.setAttribute('title', ref.preview);
-        elem.setAttribute('thread-id', ref.threadid);
+        elem.setAttribute(customAttributeName('thread-id'), ref.threadid);
       } else {
         super.format(name, value);
       }
