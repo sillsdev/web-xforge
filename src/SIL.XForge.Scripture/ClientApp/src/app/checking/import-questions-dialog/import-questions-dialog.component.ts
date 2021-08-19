@@ -13,6 +13,7 @@ import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { first } from 'rxjs/operators';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
@@ -54,7 +55,6 @@ interface DialogListItem {
   question: TransceleratorQuestion;
   checked: boolean;
   matchesFilter: boolean;
-  sfVersionOfQuestion: QuestionDoc | null;
 }
 
 @Component({
@@ -68,6 +68,8 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
 
   @ViewChild('selectAllCheckbox') selectAllCheckbox!: MdcCheckbox;
   @ViewChild(MDCDataTable) dataTable?: MDCDataTable;
+
+  questionQuery?: RealtimeQuery<QuestionDoc>;
 
   fromControl = new FormControl('', [SFValidators.verseStr()]);
   toControl = new FormControl('', [SFValidators.verseStr()]);
@@ -127,34 +129,18 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
       this.projectService.transceleratorQuestions(this.data.projectId),
       this.projectService.queryQuestions(this.data.projectId)
     ]);
+    this.questionQuery = questionQuery;
 
     if (!questionQuery.ready) {
       await questionQuery.ready$.pipe(first()).toPromise();
     }
-    questionQuery.dispose();
 
     transceleratorQuestions.sort(
       (a, b) => this.verseRefFromQuestion(a).BBBCCCVVV - this.verseRefFromQuestion(b).BBBCCCVVV
     );
 
     for (const question of transceleratorQuestions.filter(q => this.data.textsByBookId[q.book] != null)) {
-      const sfVersionOfQuestion =
-        questionQuery.docs.find(
-          doc =>
-            doc.data != null &&
-            doc.data.transceleratorQuestionId != null &&
-            doc.data.transceleratorQuestionId === question.id &&
-            // The id should be unique for a given verse, but not across different verses
-            // Transcelerator does not allow changing the reference for a question, as of 2021-03-09
-            !this.verseRefDataDiffers(doc.data.verseRef, this.verseRefData(question))
-        ) || null;
-
-      this.questionList.push({
-        question,
-        checked: false,
-        matchesFilter: true,
-        sfVersionOfQuestion
-      });
+      this.questionList.push({ question, checked: false, matchesFilter: true });
     }
     this.updateListOfFilteredQuestions();
   }
@@ -236,7 +222,8 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
     for (const listItem of listItems) {
       const currentDate = new Date().toJSON();
       const verseRefData = this.verseRefData(listItem.question);
-      if (listItem.sfVersionOfQuestion == null) {
+      const sfVersionOfQuestion = this.sfVersionOfQuestion(listItem.question);
+      if (sfVersionOfQuestion == null) {
         const newQuestion: Question = {
           dataId: objectId(),
           projectRef: this.data.projectId,
@@ -251,8 +238,8 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
           transceleratorQuestionId: listItem.question.id
         };
         await this.projectService.createQuestion(this.data.projectId, newQuestion, undefined, undefined);
-      } else if (this.questionsDiffer(listItem)) {
-        await listItem.sfVersionOfQuestion.submitJson0Op(op =>
+      } else if (this.questionsDiffer(listItem.question, sfVersionOfQuestion.data!)) {
+        await sfVersionOfQuestion.submitJson0Op(op =>
           op
             .set(q => q.text!, listItem.question.text)
             .set(q => q.verseRef, verseRefData)
@@ -290,14 +277,18 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
   }
 
   private async confirmEditsIfNecessary(changes: DialogListItem[]): Promise<void> {
-    const changesToConfirm = changes.filter(change => this.questionsDiffer(change));
-    const edits: EditedQuestion[] = changesToConfirm.map(change => ({
-      before:
-        toVerseRef(change.sfVersionOfQuestion!.data!.verseRef).toString() +
-        ' ' +
-        change.sfVersionOfQuestion!.data!.text,
+    const changesAndSfQuestions = changes
+      .map((change): [DialogListItem, QuestionDoc | undefined] => {
+        return [change, this.sfVersionOfQuestion(change.question)];
+      })
+      .filter(([change, sfQuestion]) => sfQuestion != null && this.questionsDiffer(change.question, sfQuestion.data!));
+
+    const changesToConfirm = changesAndSfQuestions.map(([change]) => change);
+
+    const edits: EditedQuestion[] = changesAndSfQuestions.map(([change, sfQuestion]) => ({
+      before: toVerseRef(sfQuestion!.data!.verseRef).toString() + ' ' + sfQuestion!.data!.text,
       after: this.referenceForDisplay(change.question) + ' ' + change.question.text,
-      answerCount: change.sfVersionOfQuestion?.data?.answers.length || 0,
+      answerCount: sfQuestion!.data!.answers.length || 0,
       checked: true
     }));
 
@@ -321,10 +312,10 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
     this.updateSelectAllCheckbox();
   }
 
-  private questionsDiffer(listItem: DialogListItem) {
-    const doc = listItem.sfVersionOfQuestion?.data;
-    const q = listItem.question;
-    return doc != null && (doc.text !== q.text || this.verseRefDataDiffers(doc.verseRef, this.verseRefData(q)));
+  private questionsDiffer(question: TransceleratorQuestion, sfQuestion: Question) {
+    return (
+      sfQuestion.text !== question.text || this.verseRefDataDiffers(sfQuestion.verseRef, this.verseRefData(question))
+    );
   }
 
   private verseRefDataDiffers(a: VerseRefData, b: VerseRefData): boolean {
@@ -333,5 +324,20 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
 
   private verseRefFromQuestion(question: TransceleratorQuestion): VerseRef {
     return new VerseRef(question.book, question.startChapter, question.startVerse);
+  }
+
+  private areSameQuestions(doc: QuestionDoc, question: TransceleratorQuestion): boolean {
+    return (
+      doc.data != null &&
+      doc.data.transceleratorQuestionId != null &&
+      doc.data.transceleratorQuestionId === question.id &&
+      // The id should be unique for a given verse, but not across different verses
+      // Transcelerator does not allow changing the reference for a question, as of 2021-03-09
+      !this.verseRefDataDiffers(doc.data.verseRef, this.verseRefData(question))
+    );
+  }
+
+  private sfVersionOfQuestion(question: TransceleratorQuestion): QuestionDoc | undefined {
+    return this.questionQuery?.docs.find(doc => this.areSameQuestions(doc, question));
   }
 }
