@@ -1752,10 +1752,11 @@ namespace SIL.XForge.Scripture.Services
                         GetNote(threadId, "n03", "syncuser03", $"{threadId} added.", ChangeType.Added), ChangeType.Added);
 
                     ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
-                        Arg.Any<IEnumerable<IDocument<ParatextNoteThread>>>(), Arg.Any<Dictionary<string, SyncUser>>())
+                        Arg.Any<IEnumerable<IDocument<ParatextNoteThread>>>(),
+                        Arg.Any<SortedList<int, IDocument<TextData>>>(), Arg.Any<Dictionary<string, SyncUser>>())
                         .Returns(x =>
                         {
-                            ((Dictionary<string, SyncUser>)x[4]).Add("User 3", new SyncUser
+                            ((Dictionary<string, SyncUser>)x[5]).Add("User 3", new SyncUser
                             { Id = "syncuser03", ParatextUsername = "User 3" });
                             return new[] { noteThreadChange };
                         });
@@ -1784,7 +1785,8 @@ namespace SIL.XForge.Scripture.Services
                 noteThreadChange.AddChange(
                     GetNote(threadId, "n01", syncUserId, $"New {threadId} added.", ChangeType.Added), ChangeType.Added);
                 ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
-                    Arg.Any<IEnumerable<IDocument<ParatextNoteThread>>>(), Arg.Any<Dictionary<string, SyncUser>>())
+                    Arg.Any<IEnumerable<IDocument<ParatextNoteThread>>>(),
+                    Arg.Any<SortedList<int, IDocument<TextData>>>(), Arg.Any<Dictionary<string, SyncUser>>())
                     .Returns(new[] { noteThreadChange });
             }
 
@@ -1797,7 +1799,8 @@ namespace SIL.XForge.Scripture.Services
                 else
                     noteThreadChange.NoteIdsRemoved.Add(noteId);
                 ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
-                    Arg.Any<IEnumerable<IDocument<ParatextNoteThread>>>(), Arg.Any<Dictionary<string, SyncUser>>())
+                    Arg.Any<IEnumerable<IDocument<ParatextNoteThread>>>(),
+                    Arg.Any<SortedList<int, IDocument<TextData>>>(), Arg.Any<Dictionary<string, SyncUser>>())
                     .Returns(new[] { noteThreadChange });
             }
 

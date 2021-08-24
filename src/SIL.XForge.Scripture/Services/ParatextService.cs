@@ -739,7 +739,7 @@ namespace SIL.XForge.Scripture.Services
 
         public IEnumerable<ParatextNoteThreadChange> GetNoteThreadChanges(UserSecret userSecret, string projectId,
             int bookNum, IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs,
-            Dictionary<string, SyncUser> syncUsers)
+            SortedList<int, IDocument<TextData>> textDocs, Dictionary<string, SyncUser> syncUsers)
         {
             IEnumerable<CommentThread> commentThreads = GetCommentThreads(userSecret, projectId, bookNum);
             CommentTags commentTags = GetCommentTags(userSecret, projectId);
@@ -791,7 +791,15 @@ namespace SIL.XForge.Scripture.Services
                     threadChange.AddChange(CreateNoteFromComment(
                         _guidService.NewObjectId(), comment, commentTags, syncUser), ChangeType.Added);
                 }
-                if (threadChange.HasChange)
+                if (existingThread.Comments.Count > 0)
+                {
+                    // Get the selection that the note applies to
+                    SegmentSelection selection =
+                        GetNoteSelectionInCurrentContext(existingThread.Comments[0], textDocs);
+                    if (!selection.Equals(threadDoc.Data.CurrentContextSelection))
+                        threadChange.CurrentContextSelection = selection;
+                }
+                if (threadChange.HasChange || threadChange.CurrentContextSelection != null)
                     changes.Add(threadChange);
             }
 
@@ -806,6 +814,8 @@ namespace SIL.XForge.Scripture.Services
                 CommentTag initialTag = info.Type == NoteType.Conflict ? CommentTag.ConflictTag : commentTags.Get(tagId);
                 ParatextNoteThreadChange newThread = new ParatextNoteThreadChange(threadId, info.VerseRefStr,
                     info.SelectedText, info.ContextBefore, info.ContextAfter, info.StartPosition, initialTag.Icon);
+                newThread.CurrentContextSelection = GetNoteSelectionInCurrentContext(info, textDocs);
+
                 foreach (var comm in thread.Comments)
                 {
                     SyncUser syncUser = FindOrCreateSyncUser(comm.User, syncUsers);
@@ -1549,6 +1559,38 @@ namespace SIL.XForge.Scripture.Services
                 Deleted = comment.Deleted,
                 TagIcon = tag?.Icon
             };
+        }
+
+        private string GetVerseText(TextData text, VerseRef verseRef)
+        {
+            string segment = $"verse_{verseRef.ChapterNum}_{verseRef.VerseNum}";
+            IEnumerable<JToken> ops = text.Ops.Where(op =>
+                op.Type == JTokenType.Object && op["attributes"] != null && op["attributes"]["segment"] != null &&
+                (string)op["attributes"]["segment"] == segment
+            );
+            string verseText = "";
+            foreach (JObject segmentObj in ops)
+            {
+                if (segmentObj["insert"] != null && segmentObj["insert"].Type == JTokenType.String)
+                {
+                    verseText = verseText + (string)segmentObj["insert"];
+                }
+            }
+            return verseText;
+        }
+
+        private SegmentSelection GetNoteSelectionInCurrentContext(Paratext.Data.ProjectComments.Comment comment,
+            SortedList<int, IDocument<TextData>> textDocs, IDocument<TextData> defaultDoc = null)
+        {
+            if (!textDocs.TryGetValue(comment.VerseRef.ChapterNum, out IDocument<TextData> chapterTextDoc))
+                return new SegmentSelection();
+
+            string verse = GetVerseText(chapterTextDoc.Data, comment.VerseRef);
+            int startPos = 0;
+            PtxUtils.StringUtils.MatchContexts(verse, comment.ContextBefore, comment.SelectedText,
+                comment.ContextAfter, null, ref startPos, out int endPos);
+            Console.WriteLine($"start: {startPos}, end: {endPos}");
+            return new SegmentSelection { Start = startPos, End = endPos };
         }
 
         private SyncUser FindOrCreateSyncUser(string paratextUsername, Dictionary<string, SyncUser> syncUsers)

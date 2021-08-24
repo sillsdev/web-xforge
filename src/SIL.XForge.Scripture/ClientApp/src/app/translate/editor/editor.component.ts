@@ -21,6 +21,7 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { ParatextNoteThread } from 'realtime-server/lib/esm/scriptureforge/models/paratext-note-thread';
+import { SegmentSelection } from 'realtime-server/lib/esm/scriptureforge/models/segment-selection';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
@@ -113,6 +114,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private trainingCompletedTimeout: any;
   private clickSubs: Subscription[] = [];
   private noteThreadQuery?: RealtimeQuery<ParatextNoteThreadDoc>;
+  /** A map of note thread ids by segment */
+  private noteThreadsBySegment: Map<string, string[]> = new Map<string, string[]>();
   private toggleNoteThreadVerseRefs$: BehaviorSubject<void> = new BehaviorSubject<void>(undefined);
   private toggleNoteThreadSub?: Subscription;
 
@@ -484,6 +487,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.insertSuggestionEnd = -1;
           this.target.editor.setSelection(selectIndex, 0, 'user');
         }
+        if (segment != null) {
+          await this.updateSegmentNoteThreadSelections(segment, delta);
+        }
       }
 
       if (this.insertSuggestionEnd !== -1) {
@@ -625,17 +631,30 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         const iconName: string = featured.iconName ?? '01flag1';
         const nodeProp: string = iconSourceProp(iconName);
         const format = { iconsrc: nodeProp, preview: featured.preview, threadid: featured.id };
-        this.target.embedElementInline(
+        const segmentRef: string | undefined = this.target.embedElementInline(
           featured.verseRef,
           featured.id,
-          featured.selectedText ?? '',
+          featured.segmentSelection ?? { start: 0, end: 0 },
           'note-thread-embed',
           format
         );
+
+        // Add the note thread selection to the cache
+        if (segmentRef != null) {
+          let noteThreadIds: string[] | undefined = this.noteThreadsBySegment.get(segmentRef);
+
+          if (noteThreadIds == null) {
+            // The first note in the segment
+            noteThreadIds = [];
+          }
+          noteThreadIds.push(featured.id);
+          this.noteThreadsBySegment.set(segmentRef, noteThreadIds);
+        }
       }
       const segments: string[] = this.target.toggleFeaturedVerseRefs(value, noteThreadVerseRefs, 'note-thread');
       this.subscribeClickEvents(segments);
     } else {
+      this.noteThreadsBySegment.clear();
       this.target.removeEmbeddedElements();
       // Un-subscribe from all segment click events as these all get setup again
       for (const event of this.clickSubs) {
@@ -974,12 +993,58 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       id: thread.dataId,
       preview,
       iconName: iconDefinedNotes.length === 0 ? thread.tagIcon : iconDefinedNotes[iconDefinedNotes.length - 1].tagIcon,
-      selectedText: thread.selectedText
+      segmentSelection: thread.currentContextSelection
     };
   }
 
   private stripXml(xmlContent: string): string {
     return xmlContent.replace(/<[^>]+>/g, '');
+  }
+
+  /** Update the text selections for the note threads in the current segment. */
+  private async updateSegmentNoteThreadSelections(segment: Segment, delta: DeltaStatic): Promise<void> {
+    // update the note
+    if (this.noteThreadQuery != null && this.noteThreadQuery.docs.length > 0) {
+      const updatePromises: Promise<boolean>[] = [];
+      if (delta.ops != null && delta.ops.length >= 2 && delta.ops[0].retain != null) {
+        if (segment != null && this.noteThreadsBySegment.has(segment.ref)) {
+          const noteThreadIds: string[] = this.noteThreadsBySegment.get(segment.ref)!;
+
+          for (const threadId of noteThreadIds) {
+            const noteThreadDoc: ParatextNoteThreadDoc | undefined = this.noteThreadQuery.docs.find(
+              n => n.data?.dataId === threadId
+            );
+            if (noteThreadDoc?.data == null) {
+              continue;
+            }
+            const sel: SegmentSelection = noteThreadDoc.data.currentContextSelection ?? { start: 0, end: 0 };
+            let newSelection: SegmentSelection | undefined;
+            const insertStart = delta.ops[0].retain - segment.range.index;
+            let length = 0;
+            if (delta.ops[1].insert != null && typeof delta.ops[1].insert === 'string') {
+              length = delta.ops[1].insert.length;
+            } else if (delta.ops[1].delete != null) {
+              length = delta.ops[1].delete * -1;
+            }
+            if (length !== 0) {
+              if (insertStart <= sel.start) {
+                // test before
+                newSelection = { start: sel.start + length, end: sel.end + length };
+              } else if (insertStart <= sel.end) {
+                // test within
+                newSelection = { start: sel.start, end: sel.end + length };
+              }
+              if (newSelection != null) {
+                updatePromises.push(
+                  noteThreadDoc.submitJson0Op(op => op.set(n => n.currentContextSelection, newSelection))
+                );
+              }
+            }
+          }
+        }
+        await Promise.all(updatePromises);
+      }
+    }
   }
 
   private syncScroll(): void {

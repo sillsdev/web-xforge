@@ -614,12 +614,93 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task GetNoteThreadChanges_NotePositionUpdated()
+        {
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+            env.AddTextDocs(40, 1, 6, "Context before changed ", "Text selected changed");
+
+            env.AddParatextNoteThreadData(new[]
+            {
+                new ThreadComponents { threadNum = 1, noteCount = 1 }
+            });
+            env.AddParatextComments(new[]
+            {
+                new ThreadComponents { threadNum = 1, noteCount = 1, username = env.Username01 }
+            });
+
+            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            {
+                IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs =
+                    await env.GetNoteThreadDocsAsync(conn, new[] { "thread01" });
+                Dictionary<string, SyncUser> syncUsers = new Dictionary<string, SyncUser>
+                {
+                    { env.Username01, new SyncUser { Id = "syncuser01", ParatextUsername = env.Username01 }}
+                };
+                SortedList<int, IDocument<TextData>> textDocs =
+                    await env.GetTextDocsForBookAsync(conn, env.Project01, 40, 1);
+
+                IEnumerable<ParatextNoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret,
+                    ptProjectId, 40, noteThreadDocs, textDocs, syncUsers);
+                Assert.That(changes.Count, Is.EqualTo(1));
+
+                // Context and selected text have changed
+                ParatextNoteThreadChange change = changes.First(c => c.ThreadId == "thread01");
+                SegmentSelection expected = new SegmentSelection { Start = 23, End = 53 };
+                Assert.That(change.CurrentContextSelection.Equals(expected), Is.True);
+            }
+        }
+
+        [Test]
+        public async Task GetNoteThreadChanges_NotePositionDefaulted()
+        {
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+            env.AddTextDocs(40, 1, 6, "Unrecognizable context ", "unrecognizable selection", false);
+
+            env.AddParatextNoteThreadData(new[]
+            {
+                new ThreadComponents { threadNum = 1, noteCount = 1 }
+            });
+            env.AddParatextComments(new[]
+            {
+                new ThreadComponents { threadNum = 1, noteCount = 1, username = env.Username01 }
+            });
+
+            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            {
+                IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs =
+                    await env.GetNoteThreadDocsAsync(conn, new[] { "thread01" });
+                Dictionary<string, SyncUser> syncUsers = new Dictionary<string, SyncUser>
+                {
+                    { env.Username01, new SyncUser { Id = "syncuser01", ParatextUsername = env.Username01 }}
+                };
+                SortedList<int, IDocument<TextData>> textDocs =
+                    await env.GetTextDocsForBookAsync(conn, env.Project01, 40, 1);
+
+                IEnumerable<ParatextNoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret,
+                    ptProjectId, 40, noteThreadDocs, textDocs, syncUsers);
+                Assert.That(changes.Count, Is.EqualTo(1));
+
+                // Vigorous text changes, the note defaults to the start
+                ParatextNoteThreadChange change = changes.First(c => c.ThreadId == "thread01");
+                SegmentSelection expected = new SegmentSelection { Start = 0, End = 0 };
+                Assert.That(change.CurrentContextSelection.Equals(expected), Is.True);
+            }
+        }
+
+        [Test]
         public async Task GetNoteThreadChanges_RetrievesChanges()
         {
             var env = new TestEnvironment();
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+            env.AddTextDocs(40, 1, 6, "Context before ", "Text selected");
 
             env.AddParatextNoteThreadData(new[]
             {
@@ -644,14 +725,16 @@ namespace SIL.XForge.Scripture.Services
                 Dictionary<string, SyncUser> syncUsers = new[]
                     { new SyncUser { Id = "syncuser01", ParatextUsername = env.Username01 } }
                     .ToDictionary(u => u.ParatextUsername);
+                SortedList<int, IDocument<TextData>> textDocs =
+                    await env.GetTextDocsForBookAsync(conn, env.Project01, 40, 2);
                 IEnumerable<ParatextNoteThreadChange> changes = env.Service.GetNoteThreadChanges(
-                    userSecret, ptProjectId, 40, noteThreadDocs, syncUsers);
+                    userSecret, ptProjectId, 40, noteThreadDocs, textDocs, syncUsers);
                 Assert.That(changes.Count, Is.EqualTo(6));
 
                 // Edited comment
                 ParatextNoteThreadChange change01 = changes.Where(c => c.ThreadId == "thread01").Single();
                 Assert.That(change01.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread01 context after-Start:15-MAT 1:1"));
+                    Is.EqualTo("Context before Text selected thread01 context after-MAT 1:1"));
                 Assert.That(change01.NotesUpdated.Count, Is.EqualTo(1));
                 string date = new DateTimeOffset(change01.NotesUpdated[0].DateCreated).ToString("o");
                 string expected1 = "thread01-syncuser01-user02-<p>thread01 note 1: EDITED.</p>-01flag1";
@@ -660,7 +743,7 @@ namespace SIL.XForge.Scripture.Services
                 // Deleted comment
                 ParatextNoteThreadChange change02 = changes.Where(c => c.ThreadId == "thread02").Single();
                 Assert.That(change02.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread02 context after-Start:15-MAT 1:2"));
+                    Is.EqualTo("Context before Text selected thread02 context after-MAT 1:2"));
                 Assert.That(change02.NotesDeleted.Count, Is.EqualTo(1));
                 string expected2 = "thread02-syncuser01-user02-<p>thread02 note 1.</p>-deleted-01flag1";
                 Assert.That(change02.NotesDeleted[0].NoteToString(), Is.EqualTo(expected2));
@@ -668,7 +751,7 @@ namespace SIL.XForge.Scripture.Services
                 // Added comment
                 ParatextNoteThreadChange change03 = changes.Where(c => c.ThreadId == "thread03").Single();
                 Assert.That(change03.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread03 context after-Start:15-MAT 1:3-01flag1"));
+                    Is.EqualTo("Context before Text selected thread03 context after-Start:15-End:37-MAT 1:3-01flag1"));
                 Assert.That(change03.NotesAdded.Count, Is.EqualTo(1));
                 string expected3 = "thread03-syncuser02-user02-<p>thread03 note 1.</p>-01flag1";
                 Assert.That(change03.NotesAdded[0].NoteToString(), Is.EqualTo(expected3));
@@ -677,19 +760,19 @@ namespace SIL.XForge.Scripture.Services
                 // Permanently removed comment
                 ParatextNoteThreadChange change04 = changes.Where(c => c.ThreadId == "thread04").Single();
                 Assert.That(change04.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread04 context after-Start:15-MAT 1:4"));
+                    Is.EqualTo("Context before Text selected thread04 context after-MAT 1:4"));
                 Assert.That(change04.NoteIdsRemoved, Is.EquivalentTo(new[] { "n2onthread04" }));
 
                 // Permanently removed thread
                 ParatextNoteThreadChange change05 = changes.Where(c => c.ThreadId == "thread05").Single();
                 Assert.That(change05.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread05 context after-Start:15-MAT 1:5"));
+                    Is.EqualTo("Context before Text selected thread05 context after-MAT 1:5"));
                 Assert.That(change05.ThreadRemoved, Is.True);
 
                 // Added conflict comment
                 ParatextNoteThreadChange change06 = changes.Where(c => c.ThreadId == "thread06").Single();
                 Assert.That(change06.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread06 context after-Start:15-MAT 1:6-conflict1"));
+                    Is.EqualTo("Context before Text selected thread06 context after-Start:15-End:37-MAT 1:6-conflict1"));
                 string expected6 = "thread06-syncuser01-user02-<p>thread06 note 1.</p>-conflict1";
                 Assert.That(change06.NotesAdded[0].NoteToString(), Is.EqualTo(expected6));
             }
@@ -1611,7 +1694,7 @@ namespace SIL.XForge.Scripture.Services
                                     BookNum = 40,
                                     Chapters =
                                     {
-                                        new Chapter { Number = 1, LastVerse = 3, IsValid = true, Permissions = { } }
+                                        new Chapter { Number = 1, LastVerse = 6, IsValid = true, Permissions = { } }
                                     }
                                 },
                                 new TextInfo
@@ -1626,6 +1709,26 @@ namespace SIL.XForge.Scripture.Services
                             }
                         },
                     }));
+            }
+
+
+            public void AddTextDocs(int bookNum, int chapterNum, int verses, string contextBefore, string selectedText,
+                bool useThreadSuffix = true)
+            {
+                TextData[] texts = new TextData[1];
+                string chapterText = "[ { \"insert\": { \"chapter\": { \"number\": \"" + chapterNum + "\" } }}";
+                for (int i = 1; i <= verses; i++)
+                {
+                    string noteSelectedText = useThreadSuffix ? selectedText + $" thread0{i}" : selectedText;
+                    chapterText = chapterText + "," +
+                        "{ \"insert\": { \"verse\": { \"number\": \"" + i + "\" } }}, " +
+                        "{ \"insert\": \"" + contextBefore + noteSelectedText + " context after\", " +
+                        "\"attributes\": { \"segment\": \"verse_" + chapterNum + "_" + i + "\" } }";
+                }
+                chapterText = chapterText + "]";
+                JToken token = JToken.Parse(chapterText);
+                texts[0] = new TextData(new Delta(token)) { Id = TextData.GetTextDocId(Project01, bookNum, chapterNum) };
+                RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>(texts));
             }
 
             public void AddParatextNoteThreadData(ThreadComponents[] threadComponents)
@@ -1644,6 +1747,7 @@ namespace SIL.XForge.Scripture.Services
                         SelectedText = "Text selected " + threadId,
                         ContextBefore = "Context before ",
                         StartPosition = 15,
+                        CurrentContextSelection = new SegmentSelection { Start = 15, End = 37 },
                         ContextAfter = " context after"
                     };
                     List<Note> notes = new List<Note>();
@@ -1668,6 +1772,21 @@ namespace SIL.XForge.Scripture.Services
                 }
                 RealtimeService.AddRepository("note_threads", OTType.Json0,
                     new MemoryRepository<ParatextNoteThread>(threads));
+            }
+
+            public async Task<SortedList<int, IDocument<TextData>>> GetTextDocsForBookAsync(IConnection conn, string projectId,
+                int bookNum, int chapters)
+            {
+                SortedList<int, IDocument<TextData>> textDocs = new SortedList<int, IDocument<TextData>>();
+                List<Task> tasks = new List<Task>();
+                for (int i = 1; i <= chapters; i++)
+                {
+                    IDocument<TextData> textDoc = conn.Get<TextData>(TextData.GetTextDocId(projectId, bookNum, i));
+                    textDocs[i] = textDoc;
+                    tasks.Add(textDoc.FetchAsync());
+                }
+                await Task.WhenAll(tasks);
+                return textDocs;
             }
 
             public string GetUpdateNotesString(string threadId, string user, DateTime date, string content,

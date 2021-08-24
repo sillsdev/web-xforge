@@ -373,7 +373,7 @@ namespace SIL.XForge.Scripture.Services
                     await FetchNoteThreadDocsAsync(text.BookNum);
                 IEnumerable<int> chapterNumbers = newSetOfChapters.Select(c => c.Number);
                 IEnumerable<Chapter> deletedChapters = text.Chapters.Where(c => !chapterNumbers.Contains(c.Number));
-                await UpdateNoteThreadDocsAsync(text, noteThreadDocs, token, deletedChapters);
+                await UpdateNoteThreadDocsAsync(text, noteThreadDocs, token, targetTextDocs, deletedChapters);
 
                 // update project metadata
                 await _projectDoc.SubmitJson0OpAsync(op =>
@@ -637,13 +637,13 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         private async Task UpdateNoteThreadDocsAsync(TextInfo text,
             Dictionary<string, IDocument<ParatextNoteThread>> noteThreadDocs, CancellationToken token,
-            IEnumerable<Chapter> chaptersDeleted)
+            SortedList<int, IDocument<TextData>> textDocs, IEnumerable<Chapter> chaptersDeleted)
         {
             List<string> deletedNoteThreadDocIds = await DeleteNoteThreadDocsInChapters(text.BookNum, chaptersDeleted);
             IEnumerable<IDocument<ParatextNoteThread>> remainingDocs = noteThreadDocs.Values
                 .Where(d => !deletedNoteThreadDocIds.Contains(d.Id));
             IEnumerable<ParatextNoteThreadChange> noteThreadChanges = _paratextService.GetNoteThreadChanges(_userSecret,
-                _projectDoc.Data.ParatextId, text.BookNum, remainingDocs, _currentSyncUsers);
+                _projectDoc.Data.ParatextId, text.BookNum, remainingDocs, textDocs, _currentSyncUsers);
             var tasks = new List<Task>();
             IReadOnlyDictionary<string, string> idsToUsernames =
                 await _paratextService.GetParatextUsernameMappingAsync(_userSecret, _projectDoc.Data, token);
@@ -674,7 +674,8 @@ namespace SIL.XForge.Scripture.Services
                             ContextBefore = change.ContextBefore,
                             ContextAfter = change.ContextAfter,
                             StartPosition = change.StartPosition,
-                            TagIcon = change.TagIcon
+                            TagIcon = change.TagIcon,
+                            CurrentContextSelection = change.CurrentContextSelection
                         });
                         await SubmitChangesOnNoteThreadDocAsync(doc, change, usernamesToUserIds);
                     }
@@ -821,6 +822,9 @@ namespace SIL.XForge.Scripture.Services
                     if (index >= 0)
                         op.Remove(td => td.Notes, index);
                 }
+
+                if (change.CurrentContextSelection != null)
+                    op.Set(td => td.CurrentContextSelection, change.CurrentContextSelection);
             });
         }
 

@@ -11,7 +11,9 @@ namespace SIL.XForge.Scripture.Models
         public string SelectedText { get; set; }
         public string ContextBefore { get; set; }
         public string ContextAfter { get; set; }
+        // May be able to remove this altogether
         public int StartPosition { get; set; }
+        public SegmentSelection CurrentContextSelection { get; set; }
         public string ParatextUser { get; set; }
         public string TagIcon { get; set; }
     }
