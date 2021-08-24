@@ -135,6 +135,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       );
       this.subscribe(navEndEvent$, e => {
         if (this.isAppOnline) {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
           gtag('config', 'UA-22170471-15', { page_path: e.urlAfterRedirects });
         }
       });
@@ -302,7 +303,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       const isBrowserSupported = supportedBrowser();
       this.reportingService.addMeta({ isBrowserSupported });
       if (isNewlyLoggedIn && !isBrowserSupported) {
-        this.dialog.open(SupportedBrowsersDialogComponent, { autoFocus: false, data: BrowserIssue.upgrade });
+        this.dialog.open(SupportedBrowsersDialogComponent, { autoFocus: false, data: BrowserIssue.Upgrade });
       }
 
       this.pwaService.online.then(async () => {
@@ -488,7 +489,11 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   async goHome(): Promise<void> {
-    (await this.isLoggedIn) ? this.router.navigateByUrl('/projects') : this.locationService.go('/');
+    if (await this.isLoggedIn) {
+      this.router.navigateByUrl('/projects');
+    } else {
+      this.locationService.go('/');
+    }
   }
 
   projectChanged(value: string): void {

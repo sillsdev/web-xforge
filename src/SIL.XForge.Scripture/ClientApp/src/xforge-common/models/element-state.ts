@@ -1,6 +1,6 @@
 /**
  * Submission state of a setting element in component.
- * e.g. is it being submitted, or was submitted succesfully.
+ * e.g. is it being submitted, or was submitted successfully.
  */
 export enum ElementState {
   /** Identical to what is believed to be in the database. */

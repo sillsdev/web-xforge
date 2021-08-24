@@ -1,5 +1,4 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
-import { OverlayContainer } from '@angular/cdk/overlay';
 import { DebugElement, getDebugNode, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
