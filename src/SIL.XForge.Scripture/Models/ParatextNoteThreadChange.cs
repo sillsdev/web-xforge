@@ -18,6 +18,7 @@ namespace SIL.XForge.Scripture.Models
         public string ContextBefore { get; set; }
         public string ContextAfter { get; set; }
         public int StartPosition { get; set; }
+        public SegmentSelection CurrentContextSelection { get; set; }
         public string TagIcon { get; set; }
         /// <summary> True if the thread has been permanently removed. </summary>
         public bool ThreadRemoved { get; set; }

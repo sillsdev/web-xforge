@@ -18,8 +18,11 @@ namespace SIL.XForge.Scripture.Services
 
         public static string ThreadChangeToString(this ParatextNoteThreadChange thread)
         {
+            string selection = thread.CurrentContextSelection == null
+                ? string.Empty
+                : $"-Start:{thread.CurrentContextSelection.Start}-End:{thread.CurrentContextSelection.End}";
             string result = thread.ContextBefore + thread.SelectedText + thread.ContextAfter +
-                $"-Start:{thread.StartPosition}-{thread.VerseRefStr}";
+                $"{selection}-{thread.VerseRefStr}";
             if (thread.TagIcon != null)
                 result = result + $"-{thread.TagIcon}";
             return result;
