@@ -149,7 +149,8 @@ export class TextViewModel {
   }
 
   /**
-   * Updates the view model and Quill contents when text is changed.
+   * Updates the view model (textDoc), segment ranges, and slightly the Quill contents, such as in response to text
+   * changing in the quill editor.
    *
    * @param {DeltaStatic} delta The view model delta.
    * @param {Sources} source The source of the change.
@@ -160,6 +161,7 @@ export class TextViewModel {
       return;
     }
 
+    // The incoming change already happened in the quill editor. Now apply the change to the view model.
     if (source === 'user' && editor.isEnabled()) {
       const modelDelta = this.viewToData(delta);
       if (modelDelta.ops != null && modelDelta.ops.length > 0) {
@@ -167,11 +169,17 @@ export class TextViewModel {
       }
     }
 
-    const updateDelta = this.updateSegments(editor);
-    if (updateDelta.ops != null && updateDelta.ops.length > 0) {
-      // defer the update, since it might cause the segment ranges to be out-of-sync with the view model
-      Promise.resolve().then(() => editor.updateContents(updateDelta, source));
-    }
+    // Re-compute segment boundaries so the insertion point stays in the right place.
+    this.updateSegments(editor);
+
+    // Defer the update, since it might cause the segment ranges to be out-of-sync with the view model
+    Promise.resolve().then(() => {
+      const updateDelta = this.updateSegments(editor);
+      if (updateDelta.ops != null && updateDelta.ops.length > 0) {
+        // Clean up blanks in quill editor. This may result in re-entering the update() method.
+        editor.updateContents(updateDelta, source);
+      }
+    });
   }
 
   highlight(segmentRefs: string[]): void {
@@ -343,121 +351,128 @@ export class TextViewModel {
     return modelDelta.chop();
   }
 
+  /**
+   * Re-generate segment boundaries from quill editor ops. Return ops to clean up where and whether blanks are
+   * represented.
+   */
   private updateSegments(editor: Quill): DeltaStatic {
     const convertDelta = new Delta();
     let fixDelta = new Delta();
     let fixOffset = 0;
     const delta = editor.getContents();
     this._segments.clear();
+    if (delta.ops == null) {
+      return convertDelta;
+    }
     const nextIds = new Map<string, number>();
     let paraSegments: SegmentInfo[] = [];
     let chapter = '';
     let curIndex = 0;
     let curSegment: SegmentInfo | undefined;
-    if (delta.ops != null) {
-      for (const op of delta.ops) {
-        const attrs: StringMap = {};
-        const len = typeof op.insert === 'string' ? op.insert.length : 1;
-        if (op.insert === '\n' || (op.attributes != null && op.attributes.para != null)) {
-          const style =
-            op.attributes == null || op.attributes.para == null ? null : (op.attributes.para.style as string);
-          if (style == null || canParaContainVerseText(style)) {
-            // paragraph
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            for (const _ch of op.insert) {
-              if (curSegment != null) {
-                paraSegments.push(curSegment);
-                curIndex += curSegment.length;
-                curSegment = new SegmentInfo(curSegment.ref, curIndex + 1);
-              }
-              if (style != null) {
-                // only get the paragraph ref if it is needed, since it updates the nextIds map
-                if (paraSegments.length === 0) {
-                  const paraRef = getParagraphRef(nextIds, style, style);
-                  paraSegments.push(new SegmentInfo(paraRef, curIndex));
-                } else if (paraSegments[0].ref === '') {
-                  const paraRef = getParagraphRef(nextIds, style, style);
-                  paraSegments[0].ref = paraRef;
-                }
-              } else if (paraSegments.length > 0) {
-                // remove blank at the beginning of an implicit paragraph
-                paraSegments.shift();
-              }
-
-              for (const paraSegment of paraSegments) {
-                if (this._segments.has(paraSegment.ref) && paraSegment.ref.startsWith('verse')) {
-                  paraSegment.ref = getParagraphRef(nextIds, paraSegment.ref, paraSegment.ref + '/' + style);
-                }
-
-                [fixDelta, fixOffset] = this.fixSegment(editor, paraSegment, fixDelta, fixOffset);
-                this._segments.set(paraSegment.ref, { index: paraSegment.index, length: paraSegment.length });
-              }
-              paraSegments = [];
-              curIndex++;
-            }
-          } else if (style === 'b') {
-            // blank line
-            paraSegments = [];
+    for (const op of delta.ops) {
+      const attrs: StringMap = {};
+      const len = typeof op.insert === 'string' ? op.insert.length : 1;
+      if (op.insert === '\n' || (op.attributes != null && op.attributes.para != null)) {
+        const style = op.attributes == null || op.attributes.para == null ? null : (op.attributes.para.style as string);
+        if (style == null || canParaContainVerseText(style)) {
+          // paragraph
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          for (const _ch of op.insert) {
             if (curSegment != null) {
+              paraSegments.push(curSegment);
               curIndex += curSegment.length;
+              curSegment = new SegmentInfo(curSegment.ref, curIndex + 1);
             }
-            curIndex += len;
-            curSegment = undefined;
-          } else {
-            // title/header
-            if (curSegment == null) {
-              curSegment = new SegmentInfo('', curIndex);
+            if (style != null) {
+              // only get the paragraph ref if it is needed, since it updates the nextIds map
+              if (paraSegments.length === 0) {
+                const paraRef = getParagraphRef(nextIds, style, style);
+                paraSegments.push(new SegmentInfo(paraRef, curIndex));
+              } else if (paraSegments[0].ref === '') {
+                const paraRef = getParagraphRef(nextIds, style, style);
+                paraSegments[0].ref = paraRef;
+              }
+            } else if (paraSegments.length > 0) {
+              // remove blank at the beginning of an implicit paragraph
+              paraSegments.shift();
             }
-            curSegment.ref = getParagraphRef(nextIds, style, style);
-            [fixDelta, fixOffset] = this.fixSegment(editor, curSegment, fixDelta, fixOffset);
-            this._segments.set(curSegment.ref, { index: curSegment.index, length: curSegment.length });
+
+            for (const paraSegment of paraSegments) {
+              if (this._segments.has(paraSegment.ref) && paraSegment.ref.startsWith('verse')) {
+                paraSegment.ref = getParagraphRef(nextIds, paraSegment.ref, paraSegment.ref + '/' + style);
+              }
+
+              [fixDelta, fixOffset] = this.fixSegment(editor, paraSegment, fixDelta, fixOffset);
+              this._segments.set(paraSegment.ref, { index: paraSegment.index, length: paraSegment.length });
+            }
             paraSegments = [];
-            curIndex += curSegment.length + len;
-            curSegment = undefined;
+            curIndex++;
           }
-        } else if (op.insert.chapter != null) {
-          // chapter
-          chapter = op.insert.chapter.number;
+        } else if (style === 'b') {
+          // blank line
+          paraSegments = [];
+          if (curSegment != null) {
+            curIndex += curSegment.length;
+          }
           curIndex += len;
           curSegment = undefined;
-        } else if (op.insert.verse != null) {
-          // verse
-          if (curSegment != null) {
-            curSegment.isVerseNext = true;
-            paraSegments.push(curSegment);
-            curIndex += curSegment.length;
-          } else if (paraSegments.length === 0) {
-            paraSegments.push(new SegmentInfo('', curIndex));
-          }
-          setAttribute(op, attrs, 'para-contents', true);
-          curIndex += len;
-          curSegment = new SegmentInfo('verse_' + chapter + '_' + op.insert.verse.number, curIndex);
         } else {
-          // segment
-          setAttribute(op, attrs, 'para-contents', true);
+          // title/header
           if (curSegment == null) {
             curSegment = new SegmentInfo('', curIndex);
           }
-          const opSegRef = op.attributes != null && op.attributes['segment'] != null ? op.attributes['segment'] : '';
-          if (curSegment.origRef == null) {
-            curSegment.origRef = opSegRef;
-          } else if (curSegment.origRef !== opSegRef) {
-            curSegment.origRef = '';
-          }
-          curSegment.length += len;
-          if (op.insert != null && op.insert.blank != null) {
-            curSegment.containsBlank = true;
-            if (op.attributes != null && op.attributes['initial'] === true) {
-              curSegment.hasInitialFormat = true;
-            }
+          curSegment.ref = getParagraphRef(nextIds, style, style);
+          [fixDelta, fixOffset] = this.fixSegment(editor, curSegment, fixDelta, fixOffset);
+          this._segments.set(curSegment.ref, { index: curSegment.index, length: curSegment.length });
+          paraSegments = [];
+          curIndex += curSegment.length + len;
+          curSegment = undefined;
+        }
+      } else if (op.insert.chapter != null) {
+        // chapter
+        chapter = op.insert.chapter.number;
+        curIndex += len;
+        curSegment = undefined;
+      } else if (op.insert.verse != null) {
+        // verse
+        if (curSegment != null) {
+          curSegment.isVerseNext = true;
+          paraSegments.push(curSegment);
+          curIndex += curSegment.length;
+        } else if (paraSegments.length === 0) {
+          paraSegments.push(new SegmentInfo('', curIndex));
+        }
+        setAttribute(op, attrs, 'para-contents', true);
+        curIndex += len;
+        curSegment = new SegmentInfo('verse_' + chapter + '_' + op.insert.verse.number, curIndex);
+      } else {
+        // segment
+        setAttribute(op, attrs, 'para-contents', true);
+        if (curSegment == null) {
+          curSegment = new SegmentInfo('', curIndex);
+        }
+        const opSegRef = op.attributes != null && op.attributes['segment'] != null ? op.attributes['segment'] : '';
+        if (curSegment.origRef == null) {
+          curSegment.origRef = opSegRef;
+        } else if (curSegment.origRef !== opSegRef) {
+          curSegment.origRef = '';
+        }
+        curSegment.length += len;
+        if (op.insert != null && op.insert.blank != null) {
+          curSegment.containsBlank = true;
+          if (op.attributes != null && op.attributes['initial'] === true) {
+            curSegment.hasInitialFormat = true;
           }
         }
-        convertDelta.retain(len, attrs);
       }
+      convertDelta.retain(len, attrs);
     }
+
     return convertDelta.compose(fixDelta).chop();
   }
 
+  /** Computes and adds to `fixDelta` a change to add or remove a blank indication as needed on `segment`, and other
+   * fixes. */
   private fixSegment(
     editor: Quill,
     segment: SegmentInfo,
