@@ -13,6 +13,7 @@ import { TranslocoService } from '@ngneat/transloco';
 import isEqual from 'lodash-es/isEqual';
 import merge from 'lodash-es/merge';
 import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
+import { SegmentSelection } from 'realtime-server/lib/esm/scriptureforge/models/segment-selection';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { fromEvent } from 'rxjs';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -59,7 +60,7 @@ export interface FeaturedVerseRefInfo {
   verseRef: VerseRef;
   id: string;
   iconName?: string;
-  selectedText?: string;
+  segmentSelection?: SegmentSelection;
   preview?: string;
 }
 
@@ -330,6 +331,11 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return 'auto';
   }
 
+  // Useful for testing
+  get embeddedElements(): Readonly<Map<string, number>> {
+    return this.viewModel.embeddedElements;
+  }
+
   private get contentShowing(): boolean {
     return this.id != null && this.viewModel.isLoaded && !this.viewModel.isEmpty;
   }
@@ -480,7 +486,13 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return segments;
   }
 
-  embedElementInline(verseRef: VerseRef, id: string, selectedText: string, formatName: string, format: any): void {
+  embedElementInline(
+    verseRef: VerseRef,
+    id: string,
+    segmentSelection: SegmentSelection,
+    formatName: string,
+    format: any
+  ): string | undefined {
     if (this.editor == null) {
       return;
     }
@@ -488,41 +500,35 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     // A single verse can be associated with multiple segments (e.g verse_1_1, verse_1_1/p_1)
     const verseSegments: string[] = this.getVerseSegments(verseRef);
     let noteRange: RangeStatic | undefined = this.getSegmentRange(verseSegments[0]);
-    let startPosition = 0;
+    let noteStart: number = segmentSelection.start;
     if (Array.from(this.viewModel.embeddedElements.keys()).includes(id)) {
       return;
     }
 
+    let segment: string = verseSegments[0];
     for (const vs of verseSegments) {
-      const text: string = this.getSegmentText(vs);
       const range: RangeStatic | undefined = this.getSegmentRange(vs);
-      if (range == null) {
-        continue;
-      } else if (selectedText === '') {
-        if (text === '') {
-          // blank segments matches to blank text
+      if (range != null) {
+        if (range.length > noteStart) {
           noteRange = range;
+          segment = vs;
           break;
-        }
-      } else {
-        const start = text.indexOf(selectedText);
-        if (start >= 0) {
-          // the selected text exists in the verse
-          // TODO: Find a better way to match a note to its selected text
-          startPosition = start;
-          noteRange = range;
-          break;
+        } else {
+          noteStart -= range.length;
+          continue;
         }
       }
+      break;
     }
 
     if (noteRange == null) {
       return;
     }
 
-    const noteInsertIndex: number = noteRange.index + startPosition;
+    const noteInsertIndex: number = noteRange.index + noteStart;
     this.editor.insertEmbed(noteInsertIndex, formatName, format, 'api');
     this.updateSegment();
+    return segment;
   }
 
   /** Respond to text changes in the quill editor. */

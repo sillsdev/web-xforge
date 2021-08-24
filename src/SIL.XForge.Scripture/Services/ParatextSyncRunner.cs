@@ -371,7 +371,7 @@ namespace SIL.XForge.Scripture.Services
                 // update note thread docs
                 Dictionary<string, IDocument<ParatextNoteThread>> noteThreadDocs =
                     await FetchNoteThreadDocsAsync(text.BookNum);
-                await UpdateNoteThreadDocsAsync(text, noteThreadDocs, token);
+                await UpdateNoteThreadDocsAsync(text, noteThreadDocs, targetTextDocs, token);
 
                 // update project metadata
                 await _projectDoc.SubmitJson0OpAsync(op =>
@@ -634,10 +634,11 @@ namespace SIL.XForge.Scripture.Services
         /// Updates ParatextNoteThread docs for a book
         /// </summary>
         private async Task UpdateNoteThreadDocsAsync(TextInfo text,
-            Dictionary<string, IDocument<ParatextNoteThread>> noteThreadDocs, CancellationToken token)
+            Dictionary<string, IDocument<ParatextNoteThread>> noteThreadDocs,
+            SortedList<int, IDocument<TextData>> textDocs, CancellationToken token)
         {
             IEnumerable<ParatextNoteThreadChange> noteThreadChanges = _paratextService.GetNoteThreadChanges(_userSecret,
-                _projectDoc.Data.ParatextId, text.BookNum, noteThreadDocs.Values, _currentSyncUsers);
+                _projectDoc.Data.ParatextId, text.BookNum, noteThreadDocs.Values, textDocs, _currentSyncUsers);
             var tasks = new List<Task>();
             IReadOnlyDictionary<string, string> idsToUsernames =
                 await _paratextService.GetParatextUsernameMappingAsync(_userSecret, _projectDoc.Data, token);
@@ -668,7 +669,8 @@ namespace SIL.XForge.Scripture.Services
                             ContextBefore = change.ContextBefore,
                             ContextAfter = change.ContextAfter,
                             StartPosition = change.StartPosition,
-                            TagIcon = change.TagIcon
+                            TagIcon = change.TagIcon,
+                            CurrentContextSelection = change.CurrentContextSelection
                         });
                         await SubmitChangesOnNoteThreadDocAsync(doc, change, usernamesToUserIds);
                     }
@@ -815,6 +817,9 @@ namespace SIL.XForge.Scripture.Services
                     if (index >= 0)
                         op.Remove(td => td.Notes, index);
                 }
+
+                if (change.CurrentContextSelection != null)
+                    op.Set(td => td.CurrentContextSelection, change.CurrentContextSelection);
             });
         }
 
