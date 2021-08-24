@@ -38,7 +38,7 @@ class SFProjectMigration2 implements Migration {
       if (doc.data.texts[i].permissions === undefined) {
         const permissions: { [userRef: string]: string } = {};
         for (const userId in doc.data.userRoles) {
-          if (doc.data.userRoles.hasOwnProperty(userId)) {
+          if (Object.prototype.hasOwnProperty.call(doc.data.userRoles, userId)) {
             if (
               doc.data.userRoles[userId] === SFProjectRole.ParatextTranslator ||
               doc.data.userRoles[userId] === SFProjectRole.ParatextAdministrator
@@ -73,7 +73,7 @@ class SFProjectMigration3 implements Migration {
         if (doc.data.texts[i].chapters[j].permissions === undefined) {
           const permissions: { [userRef: string]: string } = {};
           for (const userId in doc.data.userRoles) {
-            if (doc.data.userRoles.hasOwnProperty(userId)) {
+            if (Object.prototype.hasOwnProperty.call(doc.data.userRoles, userId)) {
               if (
                 doc.data.userRoles[userId] === SFProjectRole.ParatextTranslator ||
                 doc.data.userRoles[userId] === SFProjectRole.ParatextAdministrator

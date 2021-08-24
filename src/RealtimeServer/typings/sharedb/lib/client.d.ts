@@ -1,4 +1,4 @@
-/// <reference path="common.d.ts" />
+/* eslint-disable import/no-unresolved */
 import { EventEmitter } from 'events';
 import WS from 'ws';
 import { ClientRequest, Op, RawOp, Snapshot } from './common';

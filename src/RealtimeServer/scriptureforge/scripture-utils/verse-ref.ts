@@ -370,7 +370,7 @@ export class VerseRef {
    * @returns {VerseRef[]} All verses in this VerseRef.
    */
   allVerses(
-    specifiedVersesOnly: boolean = false,
+    specifiedVersesOnly = false,
     verseRangeSeparators: string[] = VerseRef.verseRangeSeparators,
     verseSequenceSeparators: string[] = VerseRef.verseSequenceIndicators
   ): VerseRef[] {

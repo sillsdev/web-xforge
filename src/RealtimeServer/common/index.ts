@@ -49,6 +49,7 @@ async function startServer(options: RealtimeServerOptions): Promise<void> {
   ShareDB.logger.setMethods({ warn: reportError, error: reportError });
 
   try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const RealtimeServerType: RealtimeServerConstructor = require(`../${options.appModuleName}/realtime-server`);
     const DBType = MetadataDB(ShareDBMongo);
     const client = await MongoClient.connect(options.connectionString, { useUnifiedTopology: true });

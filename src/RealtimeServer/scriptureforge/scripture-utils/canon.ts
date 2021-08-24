@@ -320,7 +320,7 @@ export class Canon {
    * @param boolean ignoreCase
    * @returns book number, or 0 if id doesn't exist
    */
-  static bookIdToNumber(id: string, ignoreCase: boolean = true): number {
+  static bookIdToNumber(id: string, ignoreCase = true): number {
     if (ignoreCase) {
       id = id.toUpperCase();
     }
@@ -335,7 +335,7 @@ export class Canon {
    * @param number number Book number (this is 1-based, not an index)
    * @param string errorValue The string to return if the book number does not correspond to a valid book
    */
-  static bookNumberToId(number: number, errorValue: string = '***'): string {
+  static bookNumberToId(number: number, errorValue = '***'): string {
     const index: number = number - 1;
 
     if (index < 0 || index >= Canon.allBookIds.length) {
