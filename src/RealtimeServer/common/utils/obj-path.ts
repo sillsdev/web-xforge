@@ -27,7 +27,7 @@ export class ObjPathBuilder<T> {
     return getPath(field).join('.');
   }
 
-  pathTemplate<TField>(field?: ObjProxyArg<T, TField>, inherit: boolean = true): ObjPathTemplate {
+  pathTemplate<TField>(field?: ObjProxyArg<T, TField>, inherit = true): ObjPathTemplate {
     if (field == null) {
       return new ObjPathTemplate();
     }

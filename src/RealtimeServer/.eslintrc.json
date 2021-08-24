@@ -1,19 +1,29 @@
 {
   "root": true,
-  "ignorePatterns": ["./lib/**/*"],
+  "ignorePatterns": ["lib/**/*", "node_modules"],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": ["tsconfig.json"],
+    "createDefaultProgram": true
+  },
+  "plugins": ["@typescript-eslint", "prettier"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:import/recommended",
+    "prettier"
+  ],
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": [".js", ".ts"]
+      }
+    }
+  },
   "overrides": [
     {
       "files": ["*.ts"],
-      "parserOptions": {
-        "project": ["tsconfig.json"],
-        "tsconfigRootDir": "src/RealtimeServer/",
-        "createDefaultProgram": true
-      },
-      "extends": [
-        "plugin:@angular-eslint/ng-cli-compat",
-        "plugin:@angular-eslint/ng-cli-compat--formatting-add-on",
-        "plugin:@angular-eslint/template/process-inline-templates"
-      ],
       "rules": {
         "@typescript-eslint/consistent-type-definitions": "error",
         "@typescript-eslint/dot-notation": "off",
@@ -23,10 +33,18 @@
             "accessibility": "explicit"
           }
         ],
+        "@typescript-eslint/naming-convention": ["error", { "selector": "enumMember", "format": ["PascalCase"] }],
         "@typescript-eslint/no-non-null-assertion": "off",
+        "@typescript-eslint/no-unused-vars": [
+          "error",
+          {
+            "argsIgnorePattern": "_"
+          }
+        ],
         "brace-style": ["error", "1tbs"],
         "id-blacklist": "off",
         "id-match": "off",
+        "import/named": "off",
         "import/order": "error",
         "max-len": [
           "error",
@@ -35,13 +53,9 @@
             "code": 120
           }
         ],
-        "no-underscore-dangle": "off"
+        "no-underscore-dangle": "off",
+        "prettier/prettier": "error"
       }
-    },
-    {
-      "files": ["*.html"],
-      "extends": ["plugin:@angular-eslint/template/recommended"],
-      "rules": {}
     }
   ]
 }

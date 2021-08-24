@@ -5,9 +5,9 @@
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // TypeScript Version: 2.1
 
-/// <reference path="lib/common.d.ts" />
-
+// eslint-disable-next-line import/no-unresolved
 import { Connection, Query } from './lib/client';
+// eslint-disable-next-line import/no-unresolved
 import * as common from './lib/common';
 
 interface PubSubOptions {
@@ -16,6 +16,7 @@ interface PubSubOptions {
 interface Stream {
   id: string;
 }
+type ErrorFunction = (error: any) => void;
 
 export = ShareDB;
 
@@ -25,7 +26,7 @@ declare class ShareDB {
     map: { [key: string]: any };
   };
   static logger: {
-    setMethods: (override: { info?: Function; warn?: Function; error?: Function }) => void;
+    setMethods: (override: { info?: ErrorFunction; warn?: ErrorFunction; error?: ErrorFunction }) => void;
   };
   constructor(options?: {
     db?: any;

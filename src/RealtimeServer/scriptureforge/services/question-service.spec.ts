@@ -1,7 +1,7 @@
-import { TranslateShareLevel } from '../models/translate-config';
 import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock } from 'ts-mockito';
+import { TranslateShareLevel } from '../models/translate-config';
 import { SystemRole } from '../../common/models/system-role';
 import { User, USERS_COLLECTION } from '../../common/models/user';
 import { RealtimeServer } from '../../common/realtime-server';
