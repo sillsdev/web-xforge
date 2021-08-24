@@ -1,5 +1,4 @@
 import Quill, { RangeStatic } from 'quill';
-import { Delta } from 'rich-text';
 import { TextComponent } from './text.component';
 
 export interface DragAndDropOptions {
@@ -26,9 +25,28 @@ export class DragAndDrop {
       // Stop the browser from doing any drag-and-drop behaviour itself, such as inserting text with formatting.
       dragEvent.preventDefault();
 
-      if ((dragEvent.target as Element)?.localName !== 'usx-segment') {
+      let targetElement: Element | null = dragEvent.target as Element | null;
+      if (targetElement == null) {
+        console.warn(`Warning: DragEvent unexpectedly has null target.`);
+        return;
+      }
+      let targetElementName: string = targetElement.localName;
+
+      let droppingInBlankSegment: boolean = false;
+      if (targetElementName === 'usx-blank') {
+        droppingInBlankSegment = true;
+        targetElement = targetElement.parentElement as Element | null;
+        if (targetElement == null) {
+          console.warn(`Warning: DragEvent usx-blank target parent is unexpectedly null. Target:`, targetElement);
+          return;
+        }
+        targetElementName = targetElement.localName;
+      }
+
+      if (targetElementName !== 'usx-segment') {
         // We need to be able to know where to insert the dropped text, such as from the drop target being a usx-segment
-        // element.
+        // element. Give up.
+        console.warn('Warning: DragEvent to invalid target:', targetElement);
         return;
       }
       if (dragEvent.dataTransfer == null) {
@@ -39,17 +57,32 @@ export class DragAndDrop {
       // Determine where we should be placing the dropped text, using the location of the destination segment, and the
       // index within that segment.
 
-      const destinationSegmentRef: string = (dragEvent.target as Element).attributes['data-segment'].value;
+      const dataSegmentAttribute: any = targetElement.attributes['data-segment'];
+      if (dataSegmentAttribute == null) {
+        console.warn('Warning: drag-and-drop to target with no segment ref attribute:', targetElement);
+        return;
+      }
+      const destinationSegmentRef: string = dataSegmentAttribute.value;
       const destinationSegmentRange: RangeStatic | undefined =
         options.textComponent.getSegmentRange(destinationSegmentRef);
       if (destinationSegmentRange == null) {
-        console.warn('Warning: drag-and-drop destination segment had an undefined range.');
+        console.warn(
+          'Warning: No defined range for drag-and-drop destination segment. Invalid segment specification? Destination segment ref:',
+          destinationSegmentRef
+        );
+
         return;
       }
 
       // Determine character index of drop location in destination segment, using a browser-specific method.
       let startPositionInSegment: number = 0;
-      if (document.caretRangeFromPoint !== undefined) {
+      if (droppingInBlankSegment) {
+        // If we are dropping into an empty segment, use the position at the end of the segment rather than using a
+        // browser-determined index into the segment.
+        // Use the position at the end of the segment, rather than at the beginning, so that it is after the blank and
+        // any other embeds.
+        startPositionInSegment = destinationSegmentRange.length;
+      } else if (document.caretRangeFromPoint !== undefined) {
         // Chromium/Chrome, Edge, and Safari browsers
         const range: Range = document.caretRangeFromPoint(dragEvent.clientX, dragEvent.clientY);
         startPositionInSegment = range.startOffset;
@@ -57,24 +90,20 @@ export class DragAndDrop {
         // Firefox browser
         const range: CaretPosition | null = document.caretPositionFromPoint(dragEvent.clientX, dragEvent.clientY);
         if (range == null) {
-          console.warn('Warning: drag-and-drop inferred a null caret position for insertion.');
+          console.warn('Warning: drag-and-drop inferred a null caret position for insertion. Target:', targetElement);
           return;
         }
         startPositionInSegment = range.offset;
       } else {
-        console.warn(`Warning: Could not determine insertion position for drag-and-drop.`);
+        console.warn(`Warning: Could not determine insertion position for drag-and-drop. Target:`, targetElement);
         return;
       }
 
-      const startingPositionInDocument: number = destinationSegmentRange.index + startPositionInSegment;
-
-      const insertionDelta = new Delta();
-      insertionDelta.retain(startingPositionInDocument);
+      const insertionPositionInDocument: number = destinationSegmentRange.index + startPositionInSegment;
       let newText: string = dragEvent.dataTransfer.getData('text/plain');
-      // Omit newline characters
+      // Replace newlines with a space.
       newText = newText.replace(/(?:\r?\n)+/g, ' ');
-      insertionDelta.insert(newText);
-      quill.updateContents(insertionDelta, 'user');
+      quill.insertText(insertionPositionInDocument, newText, 'user');
 
       // Identify the selection range, if any, now that we updated the document with an insert. This will be a
       // selection that was already present before the drop, whether it is the text that was dragged, or a selection
@@ -82,17 +111,14 @@ export class DragAndDrop {
       const originalSelection: RangeStatic | null = quill.getSelection();
 
       // Select the inserted text.
-      quill.setSelection(startingPositionInDocument, newText.length);
+      quill.setSelection(insertionPositionInDocument, newText.length);
 
       if (originalSelection != null) {
         // There was a selection before the drop occurred.
-        const removalDelta = new Delta();
-        removalDelta.retain(originalSelection.index);
         if (dragEvent.dataTransfer.types.includes(DragAndDrop.quillIsSourceToken) && !dragEvent.ctrlKey) {
           // If the drag was started from within quill, then treat the selection as the source data of the drag, and
           // delete the selection. Unless the user was holding the ctrl key to copy text instead of move it.
-          removalDelta.delete(originalSelection.length);
-          quill.updateContents(removalDelta, 'user');
+          quill.deleteText(originalSelection.index, originalSelection.length, 'user');
         }
         // Or if the drag was not started from within quill, or the user was holding the ctrl key, then don't delete
         // the selection.
