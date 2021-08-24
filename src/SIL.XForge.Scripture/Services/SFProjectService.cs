@@ -484,7 +484,9 @@ namespace SIL.XForge.Scripture.Services
         public async Task<bool> IsAlreadyInvitedAsync(string curUserId, string projectId, string email)
         {
             SFProject project = await GetProjectAsync(projectId);
-            if (!IsProjectAdmin(project, curUserId) && !project.CheckingConfig.ShareEnabled)
+            bool sharingEnabled = project.TranslateConfig.ShareEnabled ||
+                (project.CheckingConfig.CheckingEnabled && project.CheckingConfig.ShareEnabled);
+            if (!IsProjectAdmin(project, curUserId) && !(IsOnProject(project, curUserId) && sharingEnabled))
                 throw new ForbiddenException();
 
             if (email == null)
