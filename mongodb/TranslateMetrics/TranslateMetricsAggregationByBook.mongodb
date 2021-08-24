@@ -11,13 +11,13 @@ const { Canon } = require(path.resolve('./src/RealtimeServer/lib/cjs/scripturefo
 // Select the database to use.
 use('xforge');
 
-const projectRef = '60e57ea17e9c4e37643a57de';
+const projectRef = '60fa74b6e167fc53d45030c9';
 const bookId = 'LUK';
 
 const bookNum = Canon.bookIdToNumber(bookId);
 const project = db.sf_projects.findOne({ _id: projectRef });
 console.log(`project: ${project.shortName} - ${project.name}`);
-console.log('book: ' + Canon.bookNumberToEnglishName(bookNum));
+console.log(`book: ${Canon.bookNumberToEnglishName(bookNum)} (${bookNum})`);
 
 db.translate_metrics.aggregate([
   { $match: { projectRef, bookNum } },
