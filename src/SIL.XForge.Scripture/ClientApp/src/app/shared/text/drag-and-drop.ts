@@ -26,9 +26,27 @@ export class DragAndDrop {
       // Stop the browser from doing any drag-and-drop behaviour itself, such as inserting text with formatting.
       dragEvent.preventDefault();
 
-      if ((dragEvent.target as Element)?.localName !== 'usx-segment') {
+      let targetElement: Element | null = dragEvent.target as Element | null;
+      if (targetElement == null) {
+        console.warn(`Warning: DragEvent unexpectedly has null target.`);
+        return;
+      }
+      let targetElementName: string = targetElement.localName;
+
+      let droppingInBlankSegment: boolean = false;
+      if (targetElementName === 'usx-blank') {
+        droppingInBlankSegment = true;
+        targetElement = targetElement.parentElement as Element | null;
+        if (targetElement == null) {
+          console.warn(`Warning: DragEvent target parent is unexpectedly null.`);
+          return;
+        }
+        targetElementName = targetElement.localName;
+      }
+
+      if (targetElementName !== 'usx-segment') {
         // We need to be able to know where to insert the dropped text, such as from the drop target being a usx-segment
-        // element.
+        // element. Give up.
         return;
       }
       if (dragEvent.dataTransfer == null) {
@@ -39,7 +57,7 @@ export class DragAndDrop {
       // Determine where we should be placing the dropped text, using the location of the destination segment, and the
       // index within that segment.
 
-      const destinationSegmentRef: string = (dragEvent.target as Element).attributes['data-segment'].value;
+      const destinationSegmentRef: string = targetElement.attributes['data-segment'].value;
       const destinationSegmentRange: RangeStatic | undefined =
         options.textComponent.getSegmentRange(destinationSegmentRef);
       if (destinationSegmentRange == null) {
@@ -49,7 +67,11 @@ export class DragAndDrop {
 
       // Determine character index of drop location in destination segment, using a browser-specific method.
       let startPositionInSegment: number = 0;
-      if (document.caretRangeFromPoint !== undefined) {
+      if (droppingInBlankSegment) {
+        // If we are dropping into an empty segment, use the position just after the blank rather than using a
+        // browser-determined index into the segment.
+        startPositionInSegment = 1;
+      } else if (document.caretRangeFromPoint !== undefined) {
         // Chromium/Chrome, Edge, and Safari browsers
         const range: Range = document.caretRangeFromPoint(dragEvent.clientX, dragEvent.clientY);
         startPositionInSegment = range.startOffset;
@@ -66,12 +88,12 @@ export class DragAndDrop {
         return;
       }
 
-      const startingPositionInDocument: number = destinationSegmentRange.index + startPositionInSegment;
+      const insertionPositionInDocument: number = destinationSegmentRange.index + startPositionInSegment;
 
       const insertionDelta = new Delta();
-      insertionDelta.retain(startingPositionInDocument);
+      insertionDelta.retain(insertionPositionInDocument);
       let newText: string = dragEvent.dataTransfer.getData('text/plain');
-      // Omit newline characters
+      // Replace newlines with a space.
       newText = newText.replace(/(?:\r?\n)+/g, ' ');
       insertionDelta.insert(newText);
       quill.updateContents(insertionDelta, 'user');
@@ -82,7 +104,7 @@ export class DragAndDrop {
       const originalSelection: RangeStatic | null = quill.getSelection();
 
       // Select the inserted text.
-      quill.setSelection(startingPositionInDocument, newText.length);
+      quill.setSelection(insertionPositionInDocument, newText.length);
 
       if (originalSelection != null) {
         // There was a selection before the drop occurred.

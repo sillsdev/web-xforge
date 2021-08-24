@@ -467,7 +467,7 @@ describe('TextComponent', () => {
       expect(resultingSelection.length).toEqual(desiredSelectionLength);
     }));
 
-    it('only support drag-and-drop to a usx-segment target', fakeAsync(() => {
+    it('dont drag-and-drop to an invalid target element', fakeAsync(() => {
       // If you drag text to near the top or bottom of a paragraph or segment, it looks like it's going to be dropped
       // where you are pointing, and in fact the browser point-to-index function appears to determine a location in the
       // segment we want to drop the text into, but the event.target is not the usx-segment: it can be something like
@@ -541,7 +541,135 @@ describe('TextComponent', () => {
       // drag-and-drop, possibly carrying in formatting.
       expect(cancelled).toBeTrue();
     }));
-    // End drap-and-drop section of tests.
+
+    it('allow drag-and-drop to blank verse', fakeAsync(() => {
+      // User drags to a blank verse. The target will be a usx-blank element rather than a usx-segment element. Insert
+      // the text.
+      const env = new TestEnvironment();
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+
+      // segment 1 1 - user selects text in one segment
+      const textLeadingUpToSelection_1_1 = 'target: ';
+      const initialTextInDoc_1_1 = 'target: chapter 1, verse 1.';
+      //                                    --------- move this
+      const textToMoveFromSegment_1_1 = 'chapter 1';
+      // segment 1 2 - user drags to another segment, which is blank
+      const textLeadingUpToTargetLocation_1_2 = '';
+      const expectedTextInDoc_1_2 = 'chapter 1';
+      const originalAllText: string = env.component.editor!.getText();
+      expect(env.component.getSegmentText('verse_1_1')).toEqual(initialTextInDoc_1_1, 'setup');
+      expect(env.component.editor!.getText()).toContain(initialTextInDoc_1_1, 'setup');
+      expect(env.component.editor!.getText()).toEqual(originalAllText, 'setup');
+      const initialCountBlankElements = (env.component.editor?.root as HTMLDivElement).getElementsByTagName(
+        'usx-blank'
+      ).length;
+      const expectedCountBlankElements = initialCountBlankElements - 1;
+      const initialCountVerseElements = (env.component.editor?.root as HTMLDivElement).getElementsByTagName(
+        'usx-verse'
+      ).length;
+      const initialCountSegmentElements = (env.component.editor?.root as HTMLDivElement).getElementsByTagName(
+        'usx-segment'
+      ).length;
+
+      const sourceSegmentRange: RangeStatic | undefined = env.component.getSegmentRange('verse_1_1');
+      if (sourceSegmentRange == null) {
+        throw Error();
+      }
+      const selectionStart: number = sourceSegmentRange.index + textLeadingUpToSelection_1_1.length;
+      const selectionLength: number = textToMoveFromSegment_1_1.length;
+      env.component.editor?.setSelection(selectionStart, selectionLength);
+
+      // Set up elements with a structure that mimics production.
+      // <usx-para-contents>
+      const usxParaContents: HTMLElement = document.createElement('usx-para-contents');
+      //   <usx-verse>... 1 ...</usx-verse>
+      usxParaContents.appendChild(document.createElement('usx-verse'));
+      //   <usx-segment data-segment="verse_1_1">
+      usxParaContents.appendChild(document.createElement('usx-segment'));
+      //   <usx-verse>... 2 ...</usx-verse>
+      usxParaContents.appendChild(document.createElement('usx-verse'));
+      const segment_1_2: HTMLElement = document.createElement('usx-segment');
+      segment_1_2.setAttribute('data-segment', 'verse_1_2');
+      //   This is the segment we want to paste into.
+      //   <usx-segment data-segment="verse_1_2">
+      usxParaContents.appendChild(segment_1_2);
+      const blankElementTarget = document.createElement('usx-blank');
+      //     <usx-blank>...</usx-blank>
+      segment_1_2.appendChild(blankElementTarget);
+      //   </usx-segment>
+      //   <usx-verse>... 3 ...</usx-verse>
+      segment_1_2.appendChild(document.createElement('usx-verse'));
+      //   <usx-segment data-segment="verse_1_3">
+      usxParaContents.appendChild(document.createElement('usx-segment'));
+      // </usx-para-contents>
+
+      const dataTransfer = new DataTransfer();
+      dataTransfer.setData('text/plain', textToMoveFromSegment_1_1);
+      dataTransfer.setData('text/html', `<span background="white">${textToMoveFromSegment_1_1}</span>`);
+      const dragEvent: MockDragEvent = new MockDragEvent('drop', {
+        dataTransfer,
+        cancelable: true
+      });
+      // The target in this situation is the usx-blank element.
+      dragEvent.setTarget(blankElementTarget);
+
+      // How far into the target segment the user is trying to drop the new text.
+      // Note that or the situation of dropping into a blank segment, the value returned by the browser is not what we
+      // want to use. Instead, we should use 1, to represent the position after the blank. Make the browser return a
+      // value that will stand out if we use it.
+      const valueThatShouldBeIgnored: number = 9876;
+      // Override the point-to-index method behaviour, since the unit test isn't really dragging the mouse to an
+      // element.
+      document.caretRangeFromPoint = (_x: number, _y: number) => ({ startOffset: valueThatShouldBeIgnored } as Range);
+
+      // SUT
+      const cancelled: boolean = !env.component.editor?.container.dispatchEvent(dragEvent);
+      tick();
+
+      expect(env.component.getSegmentText('verse_1_2')).toEqual(expectedTextInDoc_1_2);
+      // (Not that this next expect is particularly meaningful. But for completeness...)
+      expect(env.component.editor?.getText()).toContain(expectedTextInDoc_1_2);
+      // event.preventDefault() should have been called to prevent the browser from also causing a drag-and-drop to
+      // happen, carrying in formatting.
+      expect(cancelled).toBeTrue();
+
+      const targetSegmentRange: RangeStatic | undefined = env.component.getSegmentRange('verse_1_2');
+      if (targetSegmentRange == null) {
+        throw Error();
+      }
+      const desiredSelectionStart = targetSegmentRange.index + textLeadingUpToTargetLocation_1_2.length;
+      const desiredSelectionLength = textToMoveFromSegment_1_1.length;
+      const resultingSelection: RangeStatic | null = env.component.editor!.getSelection();
+      if (resultingSelection == null) {
+        throw Error();
+      }
+      const endingCountBlankElements = (env.component.editor?.root as HTMLDivElement).getElementsByTagName(
+        'usx-blank'
+      ).length;
+      expect(endingCountBlankElements).toEqual(
+        expectedCountBlankElements,
+        'a usx-blank element should have been removed'
+      );
+      const endingCountVerseElements = (env.component.editor?.root as HTMLDivElement).getElementsByTagName(
+        'usx-verse'
+      ).length;
+      expect(endingCountVerseElements).toEqual(initialCountVerseElements, 'no change to count of usx-verse elements');
+      const endingCountSegmentElements = (env.component.editor?.root as HTMLDivElement).getElementsByTagName(
+        'usx-segment'
+      ).length;
+      expect(endingCountSegmentElements).toEqual(
+        initialCountSegmentElements,
+        'no change to count of usx-segment elements'
+      );
+
+      // After text is dragged, the new selection should be the inserted text.
+      expect(resultingSelection.index).toEqual(desiredSelectionStart);
+      expect(resultingSelection.length).toEqual(desiredSelectionLength);
+    }));
+
+    // End drag-and-drop section of tests.
   });
 });
 
