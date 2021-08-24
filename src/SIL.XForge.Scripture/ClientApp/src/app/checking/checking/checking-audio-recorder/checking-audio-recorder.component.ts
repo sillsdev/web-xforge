@@ -85,7 +85,7 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
     const mediaConstraints: MediaStreamConstraints = { audio: true };
     if (this.mediaDevicesUnsupported) {
       this.status.emit({ status: 'denied' });
-      this.dialog.open(SupportedBrowsersDialogComponent, { data: BrowserIssue.audioRecording });
+      this.dialog.open(SupportedBrowsersDialogComponent, { data: BrowserIssue.AudioRecording });
       return;
     }
     this.navigator.mediaDevices

@@ -112,9 +112,8 @@ class TestEnvironment {
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );
     when(mockedNavigator.mediaDevices).thenReturn({
-      getUserMedia: (mediaConstraints: MediaStreamConstraints) => {
-        return this.rejectUserMedia ? Promise.reject() : navigator.mediaDevices.getUserMedia(mediaConstraints);
-      }
+      getUserMedia: (mediaConstraints: MediaStreamConstraints) =>
+        this.rejectUserMedia ? Promise.reject() : navigator.mediaDevices.getUserMedia(mediaConstraints)
     } as MediaDevices);
     when(mockedPwaService.isOnline).thenReturn(true);
     when(mockedPwaService.onlineStatus).thenReturn(of(true));

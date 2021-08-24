@@ -379,7 +379,7 @@ describe('AppComponent', () => {
   it('non-beta site does not navigate to non-beta site', fakeAsync(() => {
     environment.beta = false;
     // SUT is in component constructor()
-    const env = new TestEnvironment('online');
+    new TestEnvironment('online');
     verify(mockedLocationService.go(anyString())).never();
     expect().nothing();
   }));
@@ -387,7 +387,7 @@ describe('AppComponent', () => {
   it('beta site navigates to non-beta site', fakeAsync(() => {
     environment.beta = true;
     // SUT is in component constructor()
-    const env = new TestEnvironment('online');
+    new TestEnvironment('online');
     verify(mockedLocationService.go(anyString())).once();
     environment.beta = false;
     expect().nothing();
@@ -424,15 +424,19 @@ describe('AppComponent', () => {
     verify(mockedMdcDialog.open(BetaMigrationDialogComponent, anything())).never();
   }));
 
-  it('does not show beta migration dialog on non-beta server, if offline, and doesnt do the online-only checkUserNeedsMigrating check', fakeAsync(() => {
-    environment.beta = false;
-    const env = new TestEnvironment('offline');
-    expect(env.component.isAppOnline).toBe(false);
-    // SUT is in ngOnInit()
-    env.init();
-    verify(mockedMdcDialog.open(BetaMigrationDialogComponent, anything())).never();
-    verify(mockedUserService.checkUserNeedsMigrating()).never();
-  }));
+  it(
+    'does not show beta migration dialog on non-beta server, if offline, ' +
+      "and doesn't do the online-only checkUserNeedsMigrating check",
+    fakeAsync(() => {
+      environment.beta = false;
+      const env = new TestEnvironment('offline');
+      expect(env.component.isAppOnline).toBe(false);
+      // SUT is in ngOnInit()
+      env.init();
+      verify(mockedMdcDialog.open(BetaMigrationDialogComponent, anything())).never();
+      verify(mockedUserService.checkUserNeedsMigrating()).never();
+    })
+  );
 
   it('waits for the user to be online and then migrates data', fakeAsync(() => {
     environment.beta = false;

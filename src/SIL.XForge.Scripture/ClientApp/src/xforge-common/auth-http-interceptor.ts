@@ -63,12 +63,8 @@ export class AuthHttpInterceptor implements HttpInterceptor {
       return next.handle(req);
     }
     return from(this.handle(req, next)).pipe(
-      map((evt: HttpEvent<any>) => {
-        return this.handleResponseEvent(evt);
-      }),
-      catchError(error => {
-        return from(this.handleResponseError(error, req, next));
-      })
+      map((evt: HttpEvent<any>) => this.handleResponseEvent(evt)),
+      catchError(error => from(this.handleResponseError(error, req, next)))
     );
   }
 }

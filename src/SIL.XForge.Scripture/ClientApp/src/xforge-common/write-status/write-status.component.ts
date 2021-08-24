@@ -11,5 +11,6 @@ export class WriteStatusComponent {
   @Input() state?: ElementState;
   @Input() formGroup?: FormGroup;
 
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   ElementState = ElementState;
 }

@@ -15,8 +15,7 @@ export class RouterDirective {
     @Inject(WINDOW) private window: Window
   ) {}
 
-  @Input('appRouterLink')
-  set appRouterLink(value: string | string[]) {
+  @Input() set appRouterLink(value: string | string[]) {
     this._route = Array.isArray(value) ? value : [value];
     if (this.isLink) {
       (this.element.nativeElement as HTMLElement).setAttribute('href', this.url);

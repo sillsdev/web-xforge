@@ -180,7 +180,7 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
 
 @Pipe({ name: 'audioTime' })
 export class AudioTimePipe implements PipeTransform {
-  transform(seconds: number, ...args: any[]): string {
+  transform(seconds: number, ..._args: any[]): string {
     const minutesString = Math.floor(seconds / 60);
     seconds = Math.floor(seconds % 60);
     const secondsString = seconds >= 10 ? seconds : '0' + seconds;

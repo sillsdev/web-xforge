@@ -136,7 +136,8 @@ describe('ExceptionHandlingService', () => {
         },
         {
           selector:
-            'BUTTON#activated_button.mdc-ripple-upgraded.mdc-ripple-upgraded--background-focused.mdc-ripple-upgraded--foreground-activation',
+            'BUTTON#activated_button.mdc-ripple-upgraded.mdc-ripple-upgraded--background-focused' +
+            '.mdc-ripple-upgraded--foreground-activation',
           expectedText: 'Button with ID',
           expectedSelector: 'BUTTON#activated_button span'
         },
@@ -174,7 +175,8 @@ interface BreadcrumbTests {
     <button class="mdc-button child-element"><i>icon_name</i><span>Child</span></button>
     <button
       id="activated_button"
-      class="mdc-button mdc-ripple-upgraded mdc-ripple-upgraded--background-focused mdc-ripple-upgraded--foreground-activation"
+      class="mdc-button mdc-ripple-upgraded mdc-ripple-upgraded--background-focused"
+      class="mdc-ripple-upgraded--foreground-activation"
     >
       <span>Button with ID</span>
     </button>
@@ -209,13 +211,12 @@ class TestEnvironment {
     this.fixture.detectChanges();
 
     when(mockedMdcDialog.open(anything(), anything())).thenReturn({
-      afterClosed: () => {
-        return {
+      afterClosed: () =>
+        ({
           subscribe: (callback: () => void) => {
             setTimeout(callback, 0);
           }
-        } as Observable<{}>;
-      }
+        } as Observable<{}>)
     } as MdcDialogRef<ErrorComponent, {}>);
 
     when(mockedErrorReportingService.notify(anything(), anything())).thenCall((error: NotifiableError) =>

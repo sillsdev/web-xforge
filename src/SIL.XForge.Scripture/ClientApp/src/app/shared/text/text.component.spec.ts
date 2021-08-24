@@ -8,7 +8,7 @@ import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-proj
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import * as RichText from 'rich-text';
 import { BehaviorSubject } from 'rxjs';
-import { anything, instance, mock, when } from 'ts-mockito';
+import { anything, mock, when } from 'ts-mockito';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -161,7 +161,7 @@ describe('TextComponent', () => {
       const desiredIndexInSegment = 'target: chapter'.length;
       // Override the Chromium point-to-index method behaviour, since the unit test isn't really dragging the mouse
       // to an element.
-      document.caretRangeFromPoint = (x: number, y: number) => ({ startOffset: desiredIndexInSegment } as Range);
+      document.caretRangeFromPoint = (_x: number, _y: number) => ({ startOffset: desiredIndexInSegment } as Range);
 
       // SUT
       const cancelled = !env.component.editor?.container.dispatchEvent(dragEvent);
@@ -213,7 +213,8 @@ describe('TextComponent', () => {
       const desiredIndexInSegment = 'target: chapter'.length;
       // Override the Firefox point-to-index method behaviour to simulate actually pointing to a location
       // when dropping.
-      document.caretPositionFromPoint = (x: number, y: number) => ({ offset: desiredIndexInSegment } as CaretPosition);
+      document.caretPositionFromPoint = (_x: number, _y: number) =>
+        ({ offset: desiredIndexInSegment } as CaretPosition);
       // Remove the Chromium point-to-index method so the Firefox one will be used (in our Chromium test runner).
       (document as any).caretRangeFromPoint = undefined;
 
@@ -278,7 +279,7 @@ describe('TextComponent', () => {
       const desiredIndexInSegment = 'target: chapter 1, ver'.length;
       // Override the point-to-index method behaviour, since the unit test isn't really dragging the mouse to an
       // element.
-      document.caretRangeFromPoint = (x: number, y: number) => ({ startOffset: desiredIndexInSegment } as Range);
+      document.caretRangeFromPoint = (_x: number, _y: number) => ({ startOffset: desiredIndexInSegment } as Range);
 
       const dragstartEvent: MockDragEvent = new MockDragEvent('dragstart', {
         dataTransfer,
@@ -360,7 +361,7 @@ describe('TextComponent', () => {
       const desiredIndexInSegment = 'target: chapter 1, ver'.length;
       // Override the point-to-index method behaviour, since the unit test isn't really dragging the mouse to an
       // element.
-      document.caretRangeFromPoint = (x: number, y: number) => ({ startOffset: desiredIndexInSegment } as Range);
+      document.caretRangeFromPoint = (_x: number, _y: number) => ({ startOffset: desiredIndexInSegment } as Range);
 
       const dragstartEvent: MockDragEvent = new MockDragEvent('dragstart', {
         dataTransfer,
@@ -445,7 +446,7 @@ describe('TextComponent', () => {
       const desiredIndexInSegment = 'target: chapter 1, ver'.length;
       // Override the point-to-index method behaviour, since the unit test isn't really dragging the mouse to an
       // element.
-      document.caretRangeFromPoint = (x: number, y: number) => ({ startOffset: desiredIndexInSegment } as Range);
+      document.caretRangeFromPoint = (_x: number, _y: number) => ({ startOffset: desiredIndexInSegment } as Range);
 
       // SUT
       env.component.editor?.container.dispatchEvent(dragEvent);
@@ -526,7 +527,7 @@ describe('TextComponent', () => {
       const desiredIndexInSegment = 'target: chapter 1, ver'.length;
       // Override the point-to-index method behaviour, since the unit test isn't really dragging the mouse to an
       // element.
-      document.caretRangeFromPoint = (x: number, y: number) => ({ startOffset: desiredIndexInSegment } as Range);
+      document.caretRangeFromPoint = (_x: number, _y: number) => ({ startOffset: desiredIndexInSegment } as Range);
 
       // SUT
       const cancelled: boolean = !env.component.editor?.container.dispatchEvent(dragEvent);

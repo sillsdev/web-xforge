@@ -83,7 +83,7 @@ export function aspCultureCookieValue(language: string): string {
 }
 
 /**
- * @param {string} cookie expect string of form "c=<tag>|uic=<tag>" where <tag> is a language tag
+ * @param cookie expect string of form "c=<tag>|uic=<tag>" where <tag> is a language tag
  */
 export function getAspCultureCookieLanguage(cookie: string): string {
   const parts = cookie.split('|');
@@ -100,14 +100,12 @@ export function getAspCultureCookieLanguage(cookie: string): string {
 }
 
 export function getI18nLocales(): Locale[] {
-  return locales.map(locale => {
-    return {
-      ...locale,
-      canonicalTag: locale.tags[0],
-      production: !!locale.production,
-      direction: locale['direction'] || 'ltr'
-    };
-  });
+  return locales.map(locale => ({
+    ...locale,
+    canonicalTag: locale.tags[0],
+    production: !!locale.production,
+    direction: locale['direction'] || 'ltr'
+  }));
 }
 
 export function browserLinks() {

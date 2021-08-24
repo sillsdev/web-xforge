@@ -405,9 +405,9 @@ class TestEnvironment {
   };
 
   static segmentLen(verseNumber: number): number {
-    return TestEnvironment.delta.filter(op => {
-      return op.attributes != null && op.attributes.segment === 'verse_1_' + verseNumber;
-    })[0].insert.length;
+    return TestEnvironment.delta.filter(
+      op => op.attributes != null && op.attributes.segment === 'verse_1_' + verseNumber
+    )[0].insert.length;
   }
 
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
@@ -428,36 +428,36 @@ class TestEnvironment {
     dialogData?: TextChooserDialogData
   ) {
     ranges = Array.isArray(ranges) ? ranges : [ranges];
-    when(mockedDocument.getSelection()).thenCall(() => {
-      return {
-        toString: () => this.selection,
-        rangeCount: (ranges as SimpleRange[]).length,
-        getRangeAt: (index: number) => {
-          return {
-            startOffset: ranges[index].start,
-            endOffset: ranges[index].end,
-            startContainer: this.editor.querySelector(`usx-segment[data-segment="${startSegment}"]`)!.firstChild,
-            endContainer: this.editor.querySelector(`usx-segment[data-segment="${endSegment}"]`)!.firstChild
-          } as any;
-        },
-        containsNode: (node: Node): boolean => {
-          const segments = Array.from(this.editor.querySelectorAll('usx-segment[data-segment]'));
-          let startingSegmentReached = false;
-          for (const segment of segments) {
-            if (segment.getAttribute('data-segment') === startSegment) {
-              startingSegmentReached = true;
+    when(mockedDocument.getSelection()).thenCall(
+      () =>
+        ({
+          toString: () => this.selection,
+          rangeCount: (ranges as SimpleRange[]).length,
+          getRangeAt: (index: number) =>
+            ({
+              startOffset: ranges[index].start,
+              endOffset: ranges[index].end,
+              startContainer: this.editor.querySelector(`usx-segment[data-segment="${startSegment}"]`)!.firstChild,
+              endContainer: this.editor.querySelector(`usx-segment[data-segment="${endSegment}"]`)!.firstChild
+            } as any),
+          containsNode: (node: Node): boolean => {
+            const segments = Array.from(this.editor.querySelectorAll('usx-segment[data-segment]'));
+            let startingSegmentReached = false;
+            for (const segment of segments) {
+              if (segment.getAttribute('data-segment') === startSegment) {
+                startingSegmentReached = true;
+              }
+              if (startingSegmentReached && segment.contains(node)) {
+                return true;
+              }
+              if (segment.getAttribute('data-segment') === endSegment) {
+                break;
+              }
             }
-            if (startingSegmentReached && segment.contains(node)) {
-              return true;
-            }
-            if (segment.getAttribute('data-segment') === endSegment) {
-              break;
-            }
+            return false;
           }
-          return false;
-        }
-      } as Selection;
-    });
+        } as Selection)
+    );
 
     when(mockedDocument.addEventListener('selectionchange', anything(), anything())).thenCall(
       (_event: string, callback: () => any) => {

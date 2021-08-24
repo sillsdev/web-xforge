@@ -979,7 +979,7 @@ describe('EditorComponent', () => {
 
       // Keep track of operations triggered in Quill
       let textChangeOps: RichText.DeltaOperation[] = [];
-      env.targetEditor.on('text-change', (delta: DeltaStatic, oldContents: DeltaStatic, source: Sources) => {
+      env.targetEditor.on('text-change', (delta: DeltaStatic, _oldContents: DeltaStatic, _source: Sources) => {
         if (delta.ops != null) {
           textChangeOps = textChangeOps.concat(
             delta.ops.map(op => {

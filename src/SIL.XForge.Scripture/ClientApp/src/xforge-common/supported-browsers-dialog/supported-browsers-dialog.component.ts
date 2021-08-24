@@ -5,8 +5,8 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { browserLinks, isIosDevice } from 'xforge-common/utils';
 
 export enum BrowserIssue {
-  upgrade = 'upgrade_chrome_firefox',
-  audioRecording = 'audio_recording_not_supported'
+  Upgrade = 'upgrade_chrome_firefox',
+  AudioRecording = 'audio_recording_not_supported'
 }
 
 @Component({
@@ -21,7 +21,7 @@ export class SupportedBrowsersDialogComponent {
   }
 
   get dialogMessage(): string {
-    if (this.data === BrowserIssue.audioRecording) {
+    if (this.data === BrowserIssue.AudioRecording) {
       return isIosDevice()
         ? translate('supported_browsers_dialog.safari_for_audio_on_ios') + this.recommendedBrowserText
         : translate('supported_browsers_dialog.audio_recording_not_supported') + this.recommendedBrowserText;

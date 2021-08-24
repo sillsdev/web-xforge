@@ -47,9 +47,9 @@ export interface AnswerAction {
 }
 
 enum LikeAnswerResponse {
-  deniedOwnAnswer,
-  deniedNonCommunityChecker,
-  granted
+  DeniedOwnAnswer,
+  DeniedNonCommunityChecker,
+  Granted
 }
 
 /** The part of the checking area UI that handles user answer adding, editing, and displaying.
@@ -71,7 +71,47 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   @Input() projectId?: string;
   @Input() projectUserConfigDoc?: SFProjectUserConfigDoc;
   @Input() textsByBookId?: TextsByBookId;
+  @Input() checkingTextComponent?: CheckingTextComponent;
+  @Output() action: EventEmitter<AnswerAction> = new EventEmitter<AnswerAction>();
+  @Output() commentAction: EventEmitter<CommentAction> = new EventEmitter<CommentAction>();
+
   questionChangeSubscription?: Subscription = undefined;
+  /** Answer being edited. */
+  activeAnswer?: Answer;
+  answerForm = new FormGroup({
+    answerText: new FormControl(),
+    scriptureText: new FormControl()
+  });
+  answerFormVisible: boolean = false;
+  answerFormSubmitAttempted: boolean = false;
+  selectedText?: string;
+  selectionStartClipped?: boolean;
+  selectionEndClipped?: boolean;
+  verseRef?: VerseRef;
+  answersHighlightStatus: Map<string, boolean> = new Map<string, boolean>();
+  saveAnswerDisabled: boolean = false;
+
+  /** IDs of answers to show to user (so, excluding unshown incoming answers). */
+  private _answersToShow: string[] = [];
+  private _questionDoc?: QuestionDoc;
+  private userAnswerRefsRead: string[] = [];
+  private audio: AudioAttachment = {};
+  private fileSources: Map<string, string | undefined> = new Map<string, string | undefined>();
+  /** If the user has recently added or edited their answer since opening up the question. */
+  private justEditedAnswer: boolean = false;
+
+  constructor(
+    private readonly userService: UserService,
+    private readonly dialog: MdcDialog,
+    private readonly noticeService: NoticeService,
+    private readonly questionDialogService: QuestionDialogService,
+    private readonly i18n: I18nService,
+    private readonly fileService: FileService,
+    public media: MediaObserver
+  ) {
+    super();
+  }
+
   @Input() set questionDoc(questionDoc: QuestionDoc | undefined) {
     if (questionDoc !== this._questionDoc) {
       this.hideAnswerForm();
@@ -112,44 +152,8 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       }
     });
   }
-  @Input() checkingTextComponent?: CheckingTextComponent;
-  @Output() action: EventEmitter<AnswerAction> = new EventEmitter<AnswerAction>();
-  @Output() commentAction: EventEmitter<CommentAction> = new EventEmitter<CommentAction>();
-
-  /** Answer being edited. */
-  activeAnswer?: Answer;
-  answerForm = new FormGroup({
-    answerText: new FormControl(),
-    scriptureText: new FormControl()
-  });
-  answerFormVisible: boolean = false;
-  answerFormSubmitAttempted: boolean = false;
-  selectedText?: string;
-  selectionStartClipped?: boolean;
-  selectionEndClipped?: boolean;
-  verseRef?: VerseRef;
-  answersHighlightStatus: Map<string, boolean> = new Map<string, boolean>();
-  saveAnswerDisabled: boolean = false;
-
-  /** IDs of answers to show to user (so, excluding unshown incoming answers). */
-  private _answersToShow: string[] = [];
-  private _questionDoc?: QuestionDoc;
-  private userAnswerRefsRead: string[] = [];
-  private audio: AudioAttachment = {};
-  private fileSources: Map<string, string | undefined> = new Map<string, string | undefined>();
-  /** If the user has recently added or edited their answer since opening up the question. */
-  private justEditedAnswer: boolean = false;
-
-  constructor(
-    private readonly userService: UserService,
-    private readonly dialog: MdcDialog,
-    private readonly noticeService: NoticeService,
-    private readonly questionDialogService: QuestionDialogService,
-    private readonly i18n: I18nService,
-    private readonly fileService: FileService,
-    public media: MediaObserver
-  ) {
-    super();
+  get questionDoc(): QuestionDoc | undefined {
+    return this._questionDoc;
   }
 
   get answerText(): AbstractControl {
@@ -232,10 +236,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     );
   }
 
-  get questionDoc(): QuestionDoc | undefined {
-    return this._questionDoc;
-  }
-
   get shouldSeeAnswersList(): boolean {
     return this.canSeeOtherUserResponses || !this.canAddAnswer;
   }
@@ -271,7 +271,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   deleteAnswer(answer: Answer) {
     this.action.emit({
       action: 'delete',
-      answer: answer
+      answer
     });
     // All answers should show next time any do.
     this.showRemoteAnswers();
@@ -312,7 +312,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     const data: QuestionDialogData = {
       questionDoc: this._questionDoc,
       textsByBookId: this.textsByBookId!,
-      projectId: projectId,
+      projectId,
       isRightToLeft: this.project?.isRightToLeft
     };
     const dialogResponseDoc: QuestionDoc | undefined = await this.questionDialogService.questionDialog(data);
@@ -387,14 +387,14 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
 
   likeAnswer(answer: Answer) {
     const likeAnswerResponse: LikeAnswerResponse = this.canLikeAnswer(answer);
-    if (likeAnswerResponse === LikeAnswerResponse.granted) {
+    if (likeAnswerResponse === LikeAnswerResponse.Granted) {
       this.action.emit({
         action: 'like',
-        answer: answer
+        answer
       });
-    } else if (likeAnswerResponse === LikeAnswerResponse.deniedOwnAnswer) {
+    } else if (likeAnswerResponse === LikeAnswerResponse.DeniedOwnAnswer) {
       this.noticeService.show(translate('checking_answers.cannot_like_own_answer'));
-    } else if (likeAnswerResponse === LikeAnswerResponse.deniedNonCommunityChecker) {
+    } else if (likeAnswerResponse === LikeAnswerResponse.DeniedNonCommunityChecker) {
       this.noticeService.show(translate('checking_answers.only_community_checkers_can_like'));
     }
   }
@@ -479,9 +479,9 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
 
   private canLikeAnswer(answer: Answer): LikeAnswerResponse {
     const userId = this.userService.currentUserId;
-    let result: LikeAnswerResponse = LikeAnswerResponse.granted;
+    let result: LikeAnswerResponse = LikeAnswerResponse.Granted;
     if (userId === answer.ownerRef) {
-      result = LikeAnswerResponse.deniedOwnAnswer;
+      result = LikeAnswerResponse.DeniedOwnAnswer;
     } else if (
       this.project == null ||
       !(
@@ -489,7 +489,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
         SF_PROJECT_RIGHTS.hasRight(this.project, userId, SFProjectDomain.Answers, Operation.Create)
       )
     ) {
-      result = LikeAnswerResponse.deniedNonCommunityChecker;
+      result = LikeAnswerResponse.DeniedNonCommunityChecker;
     }
     return result;
   }
