@@ -12,8 +12,8 @@ import { CheckingShareLevel } from '../models/checking-config';
 import { SFProject, SF_PROJECTS_COLLECTION } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
 import { getTextDocId, TextData, TEXTS_COLLECTION } from '../models/text-data';
-import { TextService } from './text-service';
 import { TranslateShareLevel } from '../models/translate-config';
+import { TextService } from './text-service';
 
 ShareDB.types.register(RichText.type);
 

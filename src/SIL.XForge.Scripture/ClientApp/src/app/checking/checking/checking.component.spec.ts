@@ -2305,9 +2305,9 @@ class TestEnvironment {
         $sort: { [obj<Question>().pathStr(q => q.dateCreated)]: 1 }
       })
     );
-    when(mockedProjectService.createQuestion('project01', anything())).thenCall((id: string, question: Question) => {
-      return this.realtimeService.create(QuestionDoc.COLLECTION, getQuestionDocId(id, question.dataId), question);
-    });
+    when(mockedProjectService.createQuestion('project01', anything())).thenCall((id: string, question: Question) =>
+      this.realtimeService.create(QuestionDoc.COLLECTION, getQuestionDocId(id, question.dataId), question)
+    );
     when(mockedUserService.currentUserId).thenReturn(user.id);
 
     this.realtimeService.addSnapshots<User>(UserDoc.COLLECTION, [

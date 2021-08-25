@@ -130,7 +130,7 @@ class TestEnvironment {
   readonly mockedSchemaVersionRepository = mock(SchemaVersionRepository);
   readonly server: RealtimeServer;
 
-  constructor(migrationsDisabled: boolean = false) {
+  constructor(migrationsDisabled = false) {
     const ShareDBMingoType = MetadataDB(ShareDBMingo.extendMemoryDB(ShareDB.MemoryDB));
     this.db = new ShareDBMingoType();
     when(this.mockedSchemaVersionRepository.getAll()).thenResolve([

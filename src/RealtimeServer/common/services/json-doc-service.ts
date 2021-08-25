@@ -12,7 +12,7 @@ export abstract class JsonDocService<T> extends DocService<T> {
    */
   protected readonly immutableProps: ObjPathTemplate[] = [];
 
-  protected pathTemplate<TField>(field?: ObjProxyArg<T, TField>, inherit: boolean = true): ObjPathTemplate {
+  protected pathTemplate<TField>(field?: ObjProxyArg<T, TField>, inherit = true): ObjPathTemplate {
     return obj<T>().pathTemplate(field, inherit);
   }
 

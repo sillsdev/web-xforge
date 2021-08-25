@@ -182,7 +182,11 @@ export class RealtimeServer extends ShareDB {
     if (connectionOrUserId instanceof Connection) {
       connection = connectionOrUserId;
     } else {
-      connection = new MigrationConnection({ close: () => {} } as WebSocket);
+      connection = new MigrationConnection({
+        close: () => {
+          // do nothing
+        }
+      } as WebSocket);
       if (connectionOrUserId != null) {
         req = { userId: connectionOrUserId };
       }

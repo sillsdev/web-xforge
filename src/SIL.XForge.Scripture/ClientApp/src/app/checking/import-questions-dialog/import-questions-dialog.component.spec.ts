@@ -182,6 +182,7 @@ describe('ImportQuestionsDialogComponent', () => {
   it('should inform the user when Transcelerator version is unsupported', fakeAsync(() => {
     const env = new TestEnvironment(false, true);
     expect(env.statusMessage).toEqual(
+      // eslint-disable-next-line max-len
       'The version of Transcelerator used in this project is not supported. Please update to at least Transcelerator version 1.5.3.'
     );
     env.click(env.cancelButton);
@@ -234,8 +235,8 @@ describe('ImportQuestionsDialogComponent', () => {
 });
 
 @Directive({
-  // ts lint complains that a directive should be used as an attribute
-  // tslint:disable-next-line:directive-selector
+  // es lint complains that a directive should be used as an attribute
+  // eslint-disable-next-line @angular-eslint/directive-selector
   selector: 'viewContainerDirective'
 })
 class ViewContainerDirective {

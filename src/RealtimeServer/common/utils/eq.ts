@@ -64,14 +64,14 @@ export function eq(a: any, b: any): boolean {
 
   let i;
   for (i in b) {
-    if (b.hasOwnProperty(i)) {
+    if (Object.prototype.hasOwnProperty.call(b, i)) {
       if (!eq(a[i], b[i])) {
         return false;
       }
     }
   }
   for (i in a) {
-    if (a.hasOwnProperty(i)) {
+    if (Object.prototype.hasOwnProperty.call(a, i)) {
       if (!eq(a[i], b[i])) {
         return false;
       }

@@ -100,14 +100,13 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
       return [];
     }
     const term = this.term.trim().toLowerCase();
-    return this._userRows.filter(userRow => {
-      return (
+    return this._userRows.filter(
+      userRow =>
         userRow.user &&
         (userRow.user.displayName?.toLowerCase().includes(term) ||
           (userRow.role != null && this.i18n.localizeRole(userRow.role).toLowerCase().includes(term)) ||
           userRow.user.email?.toLowerCase().includes(term))
-      );
-    });
+    );
   }
 
   get userRows(): Row[] {
@@ -257,14 +256,15 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     }
 
     try {
-      const invitees: Row[] = (await this.projectService.onlineInvitedUsers(this.projectId)).map(invitee => {
-        return {
-          id: '',
-          user: { email: invitee.email },
-          role: invitee.role,
-          inviteeStatus: invitee
-        } as Row;
-      });
+      const invitees: Row[] = (await this.projectService.onlineInvitedUsers(this.projectId)).map(
+        invitee =>
+          ({
+            id: '',
+            user: { email: invitee.email },
+            role: invitee.role,
+            inviteeStatus: invitee
+          } as Row)
+      );
       this._userRows = userRows.concat(invitees);
     } catch {
       this.noticeService.show(translate('collaborators.problem_loading_invited_users'));

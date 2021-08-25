@@ -92,7 +92,8 @@ describe('CheckingAudioPlayerComponent', () => {
   });
 
   it('show error tooltip if error loading audio while online and the file does not exist', async () => {
-    const template = `<app-checking-audio-player #player1 source="audio-file-not-exists.webm"></app-checking-audio-player>`;
+    const template =
+      '<app-checking-audio-player #player1 source="audio-file-not-exists.webm"></app-checking-audio-player>';
     const env = new TestEnvironment(template, true);
     await env.waitForPlayer(playerLoadTimeMs);
     expect(env.audioNotAvailableMessage).not.toBeNull();
@@ -102,7 +103,8 @@ describe('CheckingAudioPlayerComponent', () => {
   });
 
   it('show error tooltip if error loading audio while offline and the file does not exist', async () => {
-    const template = `<app-checking-audio-player #player1 source="audio-file-not-exists.webm"></app-checking-audio-player>`;
+    const template =
+      '<app-checking-audio-player #player1 source="audio-file-not-exists.webm"></app-checking-audio-player>';
     const env = new TestEnvironment(template, false);
     await env.waitForPlayer(playerLoadTimeMs);
     expect(env.audioNotAvailableMessage).not.toBeNull();
