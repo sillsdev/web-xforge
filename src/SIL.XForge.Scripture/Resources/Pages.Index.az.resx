@@ -136,7 +136,7 @@
     <value>Paratext ilə işləyir</value>
   </data>
   <data name="AboutParatextDescription" xml:space="preserve">
-    <value>1 {0} Paratekst ilə birləşdirməsi {1} və {0} davam edən sinxronizasiya {1} layihənizi ən son deyişliklər ilə uyğunlaşdırır və {0} Paratekst Qeydləri {1} vasitəsilə istifadəçi rəy verməyə imkan verir.</value>
+    <value>1 {2}Paratext integration{3} and {0}ongoing synchronization{1} keeps your project up-to-date and allows user feedback via {4}Paratext Notes{3}.</value>
   </data>
   <data name="AboutTitle" xml:space="preserve">
     <value>Müqəddəs Yazıların yoxlanılması ilə genişlənin</value>
