@@ -620,7 +620,7 @@ namespace SIL.XForge.Scripture.Services
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-            env.AddTextDocs(40, 1, 6, "Context before changed ", "Text selected changed");
+            env.AddTextDocs(40, 1, 6, "Context before ", "Text selected");
 
             env.AddParatextNoteThreadData(new[]
             {
@@ -639,11 +639,11 @@ namespace SIL.XForge.Scripture.Services
                 {
                     { env.Username01, new SyncUser { Id = "syncuser01", ParatextUsername = env.Username01 }}
                 };
-                SortedList<int, IDocument<TextData>> textDocs =
-                    await env.GetTextDocsForBookAsync(conn, env.Project01, 40, 1);
+                Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBookAsync(env.Project01, 40, 1,
+                    "Context before changed ", "Text selected changed");
 
                 IEnumerable<ParatextNoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret,
-                    ptProjectId, 40, noteThreadDocs, textDocs, syncUsers);
+                    ptProjectId, 40, noteThreadDocs, chapterDeltas, syncUsers);
                 Assert.That(changes.Count, Is.EqualTo(1));
 
                 // Context and selected text have changed
@@ -660,7 +660,7 @@ namespace SIL.XForge.Scripture.Services
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-            env.AddTextDocs(40, 1, 6, "Unrecognizable context ", "unrecognizable selection", false);
+            env.AddTextDocs(40, 1, 6, "Context before ", "Text selection", false);
 
             env.AddParatextNoteThreadData(new[]
             {
@@ -679,11 +679,11 @@ namespace SIL.XForge.Scripture.Services
                 {
                     { env.Username01, new SyncUser { Id = "syncuser01", ParatextUsername = env.Username01 }}
                 };
-                SortedList<int, IDocument<TextData>> textDocs =
-                    await env.GetTextDocsForBookAsync(conn, env.Project01, 40, 1);
+                Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBookAsync(env.Project01, 40, 1,
+                    "Unrecognizable context ", "unrecognizable selection", false);
 
                 IEnumerable<ParatextNoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret,
-                    ptProjectId, 40, noteThreadDocs, textDocs, syncUsers);
+                    ptProjectId, 40, noteThreadDocs, chapterDeltas, syncUsers);
                 Assert.That(changes.Count, Is.EqualTo(1));
 
                 // Vigorous text changes, the note defaults to the start
@@ -725,10 +725,10 @@ namespace SIL.XForge.Scripture.Services
                 Dictionary<string, SyncUser> syncUsers = new[]
                     { new SyncUser { Id = "syncuser01", ParatextUsername = env.Username01 } }
                     .ToDictionary(u => u.ParatextUsername);
-                SortedList<int, IDocument<TextData>> textDocs =
-                    await env.GetTextDocsForBookAsync(conn, env.Project01, 40, 2);
+                Dictionary<int, ChapterDelta> chapterDeltas =
+                    env.GetChapterDeltasByBookAsync(env.Project01, 40, 1, "Context before ", "Text selected");
                 IEnumerable<ParatextNoteThreadChange> changes = env.Service.GetNoteThreadChanges(
-                    userSecret, ptProjectId, 40, noteThreadDocs, textDocs, syncUsers);
+                    userSecret, ptProjectId, 40, noteThreadDocs, chapterDeltas, syncUsers);
                 Assert.That(changes.Count, Is.EqualTo(6));
 
                 // Edited comment
@@ -1716,18 +1716,8 @@ namespace SIL.XForge.Scripture.Services
                 bool useThreadSuffix = true)
             {
                 TextData[] texts = new TextData[1];
-                string chapterText = "[ { \"insert\": { \"chapter\": { \"number\": \"" + chapterNum + "\" } }}";
-                for (int i = 1; i <= verses; i++)
-                {
-                    string noteSelectedText = useThreadSuffix ? selectedText + $" thread0{i}" : selectedText;
-                    chapterText = chapterText + "," +
-                        "{ \"insert\": { \"verse\": { \"number\": \"" + i + "\" } }}, " +
-                        "{ \"insert\": \"" + contextBefore + noteSelectedText + " context after\", " +
-                        "\"attributes\": { \"segment\": \"verse_" + chapterNum + "_" + i + "\" } }";
-                }
-                chapterText = chapterText + "]";
-                JToken token = JToken.Parse(chapterText);
-                texts[0] = new TextData(new Delta(token)) { Id = TextData.GetTextDocId(Project01, bookNum, chapterNum) };
+                Delta chapterDelta = GetChapterDelta(chapterNum, verses, contextBefore, selectedText, useThreadSuffix);
+                texts[0] = new TextData(chapterDelta) { Id = TextData.GetTextDocId(Project01, bookNum, chapterNum) };
                 RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>(texts));
             }
 
@@ -1774,19 +1764,16 @@ namespace SIL.XForge.Scripture.Services
                     new MemoryRepository<ParatextNoteThread>(threads));
             }
 
-            public async Task<SortedList<int, IDocument<TextData>>> GetTextDocsForBookAsync(IConnection conn, string projectId,
-                int bookNum, int chapters)
+            public Dictionary<int, ChapterDelta> GetChapterDeltasByBookAsync(string projectId, int bookNum,
+                int chapters, string contextBefore, string selectedText, bool useThreadSuffix = true)
             {
-                SortedList<int, IDocument<TextData>> textDocs = new SortedList<int, IDocument<TextData>>();
-                List<Task> tasks = new List<Task>();
+                Dictionary<int, ChapterDelta> chapterDeltas = new Dictionary<int, ChapterDelta>();
                 for (int i = 1; i <= chapters; i++)
                 {
-                    IDocument<TextData> textDoc = conn.Get<TextData>(TextData.GetTextDocId(projectId, bookNum, i));
-                    textDocs[i] = textDoc;
-                    tasks.Add(textDoc.FetchAsync());
+                    Delta delta = GetChapterDelta(i, 6, contextBefore, selectedText, useThreadSuffix);
+                    chapterDeltas.Add(i, new ChapterDelta(i, 10, true, delta));
                 }
-                await Task.WhenAll(tasks);
-                return textDocs;
+                return chapterDeltas;
             }
 
             public string GetUpdateNotesString(string threadId, string user, DateTime date, string content,
@@ -1923,6 +1910,22 @@ namespace SIL.XForge.Scripture.Services
                     callInfo.Arg<Action>()();
                     return true;
                 });
+            }
+
+            private Delta GetChapterDelta(int chapterNum, int verses, string contextBefore, string selectedText,
+                bool useThreadSuffix)
+            {
+                string chapterText = "[ { \"insert\": { \"chapter\": { \"number\": \"" + chapterNum + "\" } }}";
+                for (int i = 1; i <= verses; i++)
+                {
+                    string noteSelectedText = useThreadSuffix ? selectedText + $" thread0{i}" : selectedText;
+                    chapterText = chapterText + "," +
+                        "{ \"insert\": { \"verse\": { \"number\": \"" + i + "\" } }}, " +
+                        "{ \"insert\": \"" + contextBefore + noteSelectedText + " context after\", " +
+                        "\"attributes\": { \"segment\": \"verse_" + chapterNum + "_" + i + "\" } }";
+                }
+                chapterText = chapterText + "]";
+                return new Delta(JToken.Parse(chapterText));
             }
 
             private ProjectMetadata GetMetadata(string projectId, string fullname)

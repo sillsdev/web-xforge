@@ -371,7 +371,8 @@ namespace SIL.XForge.Scripture.Services
                 // update note thread docs
                 Dictionary<string, IDocument<ParatextNoteThread>> noteThreadDocs =
                     await FetchNoteThreadDocsAsync(text.BookNum);
-                await UpdateNoteThreadDocsAsync(text, noteThreadDocs, targetTextDocs, token);
+                Dictionary<int, ChapterDelta> chapterDeltas = GetDeltasByChapter(text, targetParatextId);
+                await UpdateNoteThreadDocsAsync(text, noteThreadDocs, chapterDeltas, token);
 
                 // update project metadata
                 await _projectDoc.SubmitJson0OpAsync(op =>
@@ -635,10 +636,10 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         private async Task UpdateNoteThreadDocsAsync(TextInfo text,
             Dictionary<string, IDocument<ParatextNoteThread>> noteThreadDocs,
-            SortedList<int, IDocument<TextData>> textDocs, CancellationToken token)
+            Dictionary<int, ChapterDelta> chapterDeltas, CancellationToken token)
         {
             IEnumerable<ParatextNoteThreadChange> noteThreadChanges = _paratextService.GetNoteThreadChanges(_userSecret,
-                _projectDoc.Data.ParatextId, text.BookNum, noteThreadDocs.Values, textDocs, _currentSyncUsers);
+                _projectDoc.Data.ParatextId, text.BookNum, noteThreadDocs.Values, chapterDeltas, _currentSyncUsers);
             var tasks = new List<Task>();
             IReadOnlyDictionary<string, string> idsToUsernames =
                 await _paratextService.GetParatextUsernameMappingAsync(_userSecret, _projectDoc.Data, token);
@@ -1090,6 +1091,15 @@ namespace SIL.XForge.Scripture.Services
         private IDocument<ParatextNoteThread> GetNoteThreadDoc(string threadId)
         {
             return _conn.Get<ParatextNoteThread>($"{_projectDoc.Id}:{threadId}");
+        }
+
+        private Dictionary<int, ChapterDelta> GetDeltasByChapter(TextInfo text, string paratextId)
+        {
+            string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
+            XDocument usxDoc = XDocument.Parse(bookText);
+            Dictionary<int, ChapterDelta> chapterDeltas =
+                _deltaUsxMapper.ToChapterDeltas(usxDoc).ToDictionary(cd => cd.Number);
+            return chapterDeltas;
         }
 
         private async void SyncProgress_ProgressUpdated(object sender, EventArgs e)

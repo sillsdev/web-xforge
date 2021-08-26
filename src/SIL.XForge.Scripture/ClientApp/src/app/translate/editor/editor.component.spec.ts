@@ -1112,9 +1112,9 @@ describe('EditorComponent', () => {
       expect(contents.ops![4].insert['note-thread-embed']).not.toBeNull();
       expect(contents.ops![5].insert).toBe('chapter 1, verse 1.');
       expect(contents.ops![9].insert['note-thread-embed']).not.toBeNull();
-      expect(contents.ops![10].insert).toBe('target: chapter 1,');
+      expect(contents.ops![10].insert).toBe('target: chapter 1, ');
       expect(contents.ops![11].insert['note-thread-embed']).not.toBeNull();
-      expect(contents.ops![12].insert).toBe(' verse 3.');
+      expect(contents.ops![12].insert).toBe('verse 3.');
 
       env.component.target!.removeEmbeddedElements();
       env.wait();
@@ -1129,9 +1129,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
-
-      const embeddedNotes = env.component.target!.embeddedElements;
-      expect(Array.from(embeddedNotes.values())).toEqual([11, 34, 53, 92]);
+      expect(Array.from(env.component.target!.embeddedElements.values())).toEqual([11, 34, 54, 92]);
 
       env.dispose();
     }));
@@ -1141,30 +1139,29 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
 
-      const noteThreadDoc: ParatextNoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
-      expect(noteThreadDoc.data!.currentContextSelection).toEqual({ start: 8, end: 17 });
-
+      const noteThreadDoc: ParatextNoteThreadDoc = env.getNoteThreadDoc('project01', 'thread03');
+      expect(noteThreadDoc.data!.currentContextSelection).toEqual({ start: 19, end: 27 });
       // edit before paratext note
-      env.targetEditor.setSelection(11, 0, 'user');
-      const textBeforeNote = ' add text before';
+      env.targetEditor.setSelection(54, 0, 'user');
+      const textBeforeNote = 'add text before ';
       const length1 = textBeforeNote.length;
       env.typeCharacters(textBeforeNote);
       env.wait();
-      expect(noteThreadDoc.data!.currentContextSelection).toEqual({ start: 8 + length1, end: 17 + length1 });
+      expect(noteThreadDoc.data!.currentContextSelection).toEqual({ start: 19 + length1, end: 27 + length1 });
 
       // edit within paratext note selection
-      env.targetEditor.setSelection(32, 0, 'user');
-      const textWithinNote = ' edit within note ';
+      env.targetEditor.setSelection(71, 0, 'user');
+      const textWithinNote = 'edit within note ';
       const length2 = textWithinNote.length;
       env.typeCharacters(textWithinNote);
       env.wait();
-      expect(noteThreadDoc.data!.currentContextSelection).toEqual({ start: 8 + length1, end: 17 + length1 + length2 });
+      expect(noteThreadDoc.data!.currentContextSelection).toEqual({ start: 19 + length1, end: 27 + length1 + length2 });
 
       // delete text within paratext note selection
-      env.targetEditor.setSelection(32, 5, 'user');
+      env.targetEditor.setSelection(71, 5, 'user');
       env.typeCharacters('');
       env.wait();
-      const expected = { start: 8 + length1, end: 17 + length1 + length2 - 5 };
+      const expected = { start: 19 + length1, end: 27 + length1 + length2 - 5 };
       expect(noteThreadDoc.data!.currentContextSelection).toEqual(expected);
 
       env.dispose();

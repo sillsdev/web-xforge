@@ -114,8 +114,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private trainingCompletedTimeout: any;
   private clickSubs: Subscription[] = [];
   private noteThreadQuery?: RealtimeQuery<ParatextNoteThreadDoc>;
-  /** A map of note thread ids by segment */
-  private noteThreadsBySegment: Map<string, string[]> = new Map<string, string[]>();
   private toggleNoteThreadVerseRefs$: BehaviorSubject<void> = new BehaviorSubject<void>(undefined);
   private toggleNoteThreadSub?: Subscription;
 
@@ -638,23 +636,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           'note-thread-embed',
           format
         );
-
-        // Add the note thread selection to the cache
-        if (segmentRef != null) {
-          let noteThreadIds: string[] | undefined = this.noteThreadsBySegment.get(segmentRef);
-
-          if (noteThreadIds == null) {
-            // The first note in the segment
-            noteThreadIds = [];
-          }
-          noteThreadIds.push(featured.id);
-          this.noteThreadsBySegment.set(segmentRef, noteThreadIds);
-        }
       }
       const segments: string[] = this.target.toggleFeaturedVerseRefs(value, noteThreadVerseRefs, 'note-thread');
       this.subscribeClickEvents(segments);
     } else {
-      this.noteThreadsBySegment.clear();
       this.target.removeEmbeddedElements();
       // Un-subscribe from all segment click events as these all get setup again
       for (const event of this.clickSubs) {
@@ -1007,32 +992,40 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (this.noteThreadQuery != null && this.noteThreadQuery.docs.length > 0) {
       const updatePromises: Promise<boolean>[] = [];
       if (delta.ops != null && delta.ops.length >= 2 && delta.ops[0].retain != null) {
-        if (segment != null && this.noteThreadsBySegment.has(segment.ref)) {
-          const noteThreadIds: string[] = this.noteThreadsBySegment.get(segment.ref)!;
-
-          for (const threadId of noteThreadIds) {
+        if (segment != null) {
+          for (const [threadId, _] of segment.embeddedElement.entries()) {
             const noteThreadDoc: ParatextNoteThreadDoc | undefined = this.noteThreadQuery.docs.find(
               n => n.data?.dataId === threadId
             );
             if (noteThreadDoc?.data == null) {
               continue;
             }
-            const sel: SegmentSelection = noteThreadDoc.data.currentContextSelection ?? { start: 0, end: 0 };
+
+            const noteSelection: SegmentSelection = noteThreadDoc.data.currentContextSelection ?? { start: 0, end: 0 };
             let newSelection: SegmentSelection | undefined;
-            const insertStart = delta.ops[0].retain - segment.range.index;
             let length = 0;
+            // get the length that was inserted or deleted to apply to the note selection
             if (delta.ops[1].insert != null && typeof delta.ops[1].insert === 'string') {
               length = delta.ops[1].insert.length;
             } else if (delta.ops[1].delete != null) {
               length = delta.ops[1].delete * -1;
             }
+
             if (length !== 0) {
-              if (insertStart <= sel.start) {
-                // test before
-                newSelection = { start: sel.start + length, end: sel.end + length };
-              } else if (insertStart <= sel.end) {
-                // test within
-                newSelection = { start: sel.start, end: sel.end + length };
+              const editOpIndex: number = delta.ops[0].retain;
+              const noteIndex: number | undefined = segment.embeddedElement.get(threadId);
+              if (noteIndex != null) {
+                if (noteIndex >= editOpIndex) {
+                  // the edit comes before the note
+                  newSelection = { start: noteSelection.start + length, end: noteSelection.end + length };
+                } else {
+                  let selectionLength: number = noteSelection.end - noteSelection.start;
+                  selectionLength += this.getEmbedCountWithinSelection(segment, noteSelection);
+                  if (editOpIndex < noteIndex + selectionLength) {
+                    // the edit comes within the note
+                    newSelection = { start: noteSelection.start, end: noteSelection.end + length };
+                  }
+                }
               }
               if (newSelection != null) {
                 updatePromises.push(
@@ -1045,6 +1038,22 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         await Promise.all(updatePromises);
       }
     }
+  }
+
+  /** Finds the number of embedded elements that fall within the selection of a segment. */
+  private getEmbedCountWithinSelection(segment: Segment, selection: SegmentSelection): number {
+    let embedCount = 0;
+    const startIndex = segment.range.index + selection.start;
+    let endIndex = segment.range.index + selection.end;
+    const embedIndices: number[] = Array.from(segment.embeddedElement.values()).sort();
+    for (const index of embedIndices) {
+      if (index > startIndex && index < endIndex) {
+        embedCount++;
+        // account for the embed that was found
+        endIndex++;
+      }
+    }
+    return embedCount;
   }
 
   private syncScroll(): void {
