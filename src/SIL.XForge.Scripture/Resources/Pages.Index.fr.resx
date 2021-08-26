@@ -136,7 +136,7 @@
     <value>Fonctionne avec Paratext</value>
   </data>
   <data name="AboutParatextDescription" xml:space="preserve">
-    <value>1 {0}intégration de Paratext{1} et {0}synchronisation continue{1} garde votre projet à jour et permet des commentaires des utilisateurs via {0}les remarques Paratext{1}.</value>
+    <value>1 {2}intégration de Paratext{3} et {0}synchronisation continue{1} garde votre projet à jour et permet des commentaires des utilisateurs via {4}les remarques Paratext{3}.</value>
   </data>
   <data name="AboutTitle" xml:space="preserve">
     <value>Augmentez vos possibilités avec la vérification des Écritures</value>
