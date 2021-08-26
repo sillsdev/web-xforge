@@ -373,7 +373,8 @@ namespace SIL.XForge.Scripture.Services
                     await FetchNoteThreadDocsAsync(text.BookNum);
                 IEnumerable<int> chapterNumbers = newSetOfChapters.Select(c => c.Number);
                 IEnumerable<Chapter> deletedChapters = text.Chapters.Where(c => !chapterNumbers.Contains(c.Number));
-                await UpdateNoteThreadDocsAsync(text, noteThreadDocs, token, targetTextDocs, deletedChapters);
+                Dictionary<int, ChapterDelta> chapterDeltas = GetDeltasByChapter(text, targetParatextId);
+                await UpdateNoteThreadDocsAsync(text, noteThreadDocs, token, chapterDeltas, deletedChapters);
 
                 // update project metadata
                 await _projectDoc.SubmitJson0OpAsync(op =>
@@ -637,13 +638,13 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         private async Task UpdateNoteThreadDocsAsync(TextInfo text,
             Dictionary<string, IDocument<ParatextNoteThread>> noteThreadDocs, CancellationToken token,
-            SortedList<int, IDocument<TextData>> textDocs, IEnumerable<Chapter> chaptersDeleted)
+            Dictionary<int, ChapterDelta> chapterDeltas, IEnumerable<Chapter> chaptersDeleted)
         {
             List<string> deletedNoteThreadDocIds = await DeleteNoteThreadDocsInChapters(text.BookNum, chaptersDeleted);
             IEnumerable<IDocument<ParatextNoteThread>> remainingDocs = noteThreadDocs.Values
                 .Where(d => !deletedNoteThreadDocIds.Contains(d.Id));
             IEnumerable<ParatextNoteThreadChange> noteThreadChanges = _paratextService.GetNoteThreadChanges(_userSecret,
-                _projectDoc.Data.ParatextId, text.BookNum, remainingDocs, textDocs, _currentSyncUsers);
+                _projectDoc.Data.ParatextId, text.BookNum, noteThreadDocs.Values, chapterDeltas, _currentSyncUsers);
             var tasks = new List<Task>();
             IReadOnlyDictionary<string, string> idsToUsernames =
                 await _paratextService.GetParatextUsernameMappingAsync(_userSecret, _projectDoc.Data, token);
@@ -1097,6 +1098,15 @@ namespace SIL.XForge.Scripture.Services
         private IDocument<ParatextNoteThread> GetNoteThreadDoc(string threadId)
         {
             return _conn.Get<ParatextNoteThread>($"{_projectDoc.Id}:{threadId}");
+        }
+
+        private Dictionary<int, ChapterDelta> GetDeltasByChapter(TextInfo text, string paratextId)
+        {
+            string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
+            XDocument usxDoc = XDocument.Parse(bookText);
+            Dictionary<int, ChapterDelta> chapterDeltas =
+                _deltaUsxMapper.ToChapterDeltas(usxDoc).ToDictionary(cd => cd.Number);
+            return chapterDeltas;
         }
 
         private async void SyncProgress_ProgressUpdated(object sender, EventArgs e)

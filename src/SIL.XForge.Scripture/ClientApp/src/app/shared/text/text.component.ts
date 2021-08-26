@@ -514,7 +514,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
           segment = vs;
           break;
         } else {
-          noteStart -= range.length;
+          noteStart -= range.length - this.getEmbedCountInSegmentBefore(range.length - 1, range.index);
           continue;
         }
       }
@@ -525,7 +525,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       return;
     }
 
-    const noteInsertIndex: number = noteRange.index + noteStart;
+    const noteInsertIndex: number =
+      noteRange.index + noteStart + this.getEmbedCountInSegmentBefore(noteStart, noteRange.index);
     this.editor.insertEmbed(noteInsertIndex, formatName, format, 'api');
     this.updateSegment();
     return segment;
@@ -808,10 +809,16 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (this._segment == null) {
       return;
     }
-    const range = this.viewModel.getSegmentRange(this._segment.ref);
+    const range: RangeStatic | undefined = this.viewModel.getSegmentRange(this._segment.ref);
     if (range != null) {
       const text = this.viewModel.getSegmentText(this._segment.ref);
-      this._segment.update(text, range);
+      const segmentEmbeddedElements: Map<string, number> = new Map<string, number>();
+      for (const [threadId, index] of this.embeddedElements.entries()) {
+        if (index >= range.index && index < range.index + range.length) {
+          segmentEmbeddedElements.set(threadId, index);
+        }
+      }
+      this._segment.update(text, range, segmentEmbeddedElements);
     }
   }
 
@@ -838,6 +845,16 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (newSel != null && (sel.index !== newSel.index || sel.length !== newSel.length)) {
       this._editor.setSelection(newSel, 'user');
     }
+  }
+
+  /** Get the number of embedded elements before a given position in a segment */
+  private getEmbedCountInSegmentBefore(position: number, segmentIndex: number): number {
+    const segmentNoteIndices: number[] = Array.from(this.embeddedElements.values());
+    let notesCount: number = segmentNoteIndices.filter(n => n >= segmentIndex && n < segmentIndex + position).length;
+    if (notesCount > 0) {
+      notesCount += this.getEmbedCountInSegmentBefore(notesCount, segmentIndex + position);
+    }
+    return notesCount;
   }
 
   private setHighlightMarkerPosition(): void {

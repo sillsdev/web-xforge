@@ -8,6 +8,7 @@ export class Segment {
   private _range: RangeStatic = { index: 0, length: 0 };
   private _checksum?: number;
   private initialTextLen: number = -1;
+  private _embeddedElements: Map<string, number> = new Map<string, number>();
 
   constructor(public readonly bookNum: number, public readonly chapter: number, public readonly ref: string) {}
 
@@ -34,14 +35,19 @@ export class Segment {
     return this._text.length - this.initialTextLen;
   }
 
+  get embeddedElement(): Map<string, number> {
+    return this._embeddedElements;
+  }
+
   acceptChanges(): void {
     this.initialTextLen = this._text.length;
     this.initialChecksum = this.checksum;
   }
 
-  update(text: string, range: RangeStatic): void {
+  update(text: string, range: RangeStatic, embeddedElementIndices: Map<string, number>): void {
     this._text = text;
     this._range = range;
+    this._embeddedElements = embeddedElementIndices;
     this._checksum = undefined;
     if (this.initialTextLen === -1) {
       this.initialTextLen = text.length;

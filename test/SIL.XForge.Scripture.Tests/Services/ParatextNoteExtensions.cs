@@ -28,6 +28,16 @@ namespace SIL.XForge.Scripture.Services
             return result;
         }
 
+        public static string NoteThreadToString(this ParatextNoteThread thread)
+        {
+            string selection = thread.CurrentContextSelection == null
+                ? string.Empty
+                : $"-Start:{thread.CurrentContextSelection.Start}-End:{thread.CurrentContextSelection.End}";
+            string result = thread.ContextBefore + thread.SelectedText + thread.ContextAfter +
+                $"{selection}-{thread.VerseRef.ToString()}-{thread.TagIcon}";
+            return result;
+        }
+
         public static string CommentToString(this Paratext.Data.ProjectComments.Comment comment)
         {
             string result = $"{comment.Id}-{comment.VerseRefStr}-{comment.Contents.InnerXml}" +

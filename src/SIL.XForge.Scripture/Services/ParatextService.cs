@@ -35,6 +35,7 @@ using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
+using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
@@ -739,7 +740,7 @@ namespace SIL.XForge.Scripture.Services
 
         public IEnumerable<ParatextNoteThreadChange> GetNoteThreadChanges(UserSecret userSecret, string projectId,
             int bookNum, IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs,
-            SortedList<int, IDocument<TextData>> textDocs, Dictionary<string, SyncUser> syncUsers)
+            Dictionary<int, ChapterDelta> chapterDeltas, Dictionary<string, SyncUser> syncUsers)
         {
             IEnumerable<CommentThread> commentThreads = GetCommentThreads(userSecret, projectId, bookNum);
             CommentTags commentTags = GetCommentTags(userSecret, projectId);
@@ -795,7 +796,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     // Get the selection that the note applies to
                     SegmentSelection selection =
-                        GetNoteSelectionInCurrentContext(existingThread.Comments[0], textDocs);
+                        GetNoteSelectionInCurrentContext(existingThread.Comments[0], chapterDeltas);
                     if (!selection.Equals(threadDoc.Data.CurrentContextSelection))
                         threadChange.CurrentContextSelection = selection;
                 }
@@ -814,7 +815,7 @@ namespace SIL.XForge.Scripture.Services
                 CommentTag initialTag = info.Type == NoteType.Conflict ? CommentTag.ConflictTag : commentTags.Get(tagId);
                 ParatextNoteThreadChange newThread = new ParatextNoteThreadChange(threadId, info.VerseRefStr,
                     info.SelectedText, info.ContextBefore, info.ContextAfter, info.StartPosition, initialTag.Icon);
-                newThread.CurrentContextSelection = GetNoteSelectionInCurrentContext(info, textDocs);
+                newThread.CurrentContextSelection = GetNoteSelectionInCurrentContext(info, chapterDeltas);
 
                 foreach (var comm in thread.Comments)
                 {
@@ -1561,12 +1562,12 @@ namespace SIL.XForge.Scripture.Services
             };
         }
 
-        private string GetVerseText(TextData text, VerseRef verseRef)
+        private string GetVerseText(Delta delta, VerseRef verseRef)
         {
             string segment = $"verse_{verseRef.ChapterNum}_{verseRef.VerseNum}";
-            IEnumerable<JToken> ops = text.Ops.Where(op =>
+            IEnumerable<JToken> ops = delta.Ops.Where(op =>
                 op.Type == JTokenType.Object && op["attributes"] != null && op["attributes"]["segment"] != null &&
-                (string)op["attributes"]["segment"] == segment
+                ((string)op["attributes"]["segment"]).StartsWith(segment)
             );
             string verseText = "";
             foreach (JObject segmentObj in ops)
@@ -1580,16 +1581,15 @@ namespace SIL.XForge.Scripture.Services
         }
 
         private SegmentSelection GetNoteSelectionInCurrentContext(Paratext.Data.ProjectComments.Comment comment,
-            SortedList<int, IDocument<TextData>> textDocs, IDocument<TextData> defaultDoc = null)
+            Dictionary<int, ChapterDelta> chapterDeltas, IDocument<TextData> defaultDoc = null)
         {
-            if (!textDocs.TryGetValue(comment.VerseRef.ChapterNum, out IDocument<TextData> chapterTextDoc))
+            if (!chapterDeltas.TryGetValue(comment.VerseRef.ChapterNum, out ChapterDelta chapterDelta))
                 return new SegmentSelection();
 
-            string verse = GetVerseText(chapterTextDoc.Data, comment.VerseRef);
+            string verse = GetVerseText(chapterDelta.Delta, comment.VerseRef);
             int startPos = 0;
             PtxUtils.StringUtils.MatchContexts(verse, comment.ContextBefore, comment.SelectedText,
                 comment.ContextAfter, null, ref startPos, out int endPos);
-            Console.WriteLine($"start: {startPos}, end: {endPos}");
             return new SegmentSelection { Start = startPos, End = endPos };
         }
 

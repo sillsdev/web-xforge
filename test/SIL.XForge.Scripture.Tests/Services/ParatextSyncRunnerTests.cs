@@ -1153,8 +1153,10 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             ParatextNoteThread thread01 = env.GetNoteThread("project01", "thread01");
+            string threadExpected = "Context before Scripture text in project context after-Start:0-End:0-MAT 1:1-icon1";
+            Assert.That(thread01.NoteThreadToString(), Is.EqualTo(threadExpected));
+            env.DeltaUsxMapper.ReceivedWithAnyArgs(2).ToChapterDeltas(default);
             Assert.That(thread01.Notes.Count, Is.EqualTo(3));
-            Assert.That(thread01.VerseRef.ToString(), Is.EqualTo("MAT 1:1"));
             Assert.That(thread01.Notes[0].Content, Is.EqualTo("thread01 added."));
             string expected = "thread01-syncuser03--thread01 added.-icon1";
             Assert.That(thread01.Notes[0].NoteToString(), Is.EqualTo(expected));
@@ -1184,14 +1186,12 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             ParatextNoteThread thread02 = env.GetNoteThread("project01", "thread02");
-            Assert.That(thread02.VerseRef.ToString(), Is.EqualTo("MAT 1:1"));
-            Assert.That(thread02.TagIcon, Is.EqualTo("icon1"));
+            string expected = "Context before Scripture text in project context after-" +
+                "Start:0-End:0-MAT 1:1-icon1";
+            Assert.That(thread02.NoteThreadToString(), Is.EqualTo(expected));
             Assert.That(thread02.Notes.Count, Is.EqualTo(1));
             Assert.That(thread02.Notes[0].Content, Is.EqualTo("New thread02 added."));
             Assert.That(thread02.Notes[0].OwnerRef, Is.EqualTo("user01"));
-            Assert.That(thread02.ContextBefore, Is.EqualTo("Context before "));
-            Assert.That(thread02.ContextAfter, Is.EqualTo(" context after"));
-            Assert.That(thread02.StartPosition, Is.EqualTo(17));
             SFProject project = env.GetProject();
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
         }
@@ -1742,8 +1742,9 @@ namespace SIL.XForge.Scripture.Services
             {
                 if (fromParatext)
                 {
-                    var noteThreadChange = new ParatextNoteThreadChange(threadId, verseRef, $"{threadId} selected text.",
+                    var noteThreadChange = new ParatextNoteThreadChange(threadId, verseRef, $"Scripture text in project.",
                         "Context before ", " context after", 17);
+                    noteThreadChange.CurrentContextSelection = new SegmentSelection { Start = 0, End = 0 };
                     noteThreadChange.AddChange(
                         GetNote(threadId, "n01", "syncuser01", $"{threadId} updated.", ChangeType.Updated), ChangeType.Updated);
                     noteThreadChange.AddChange(
@@ -1753,7 +1754,7 @@ namespace SIL.XForge.Scripture.Services
 
                     ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
                         Arg.Any<IEnumerable<IDocument<ParatextNoteThread>>>(),
-                        Arg.Any<SortedList<int, IDocument<TextData>>>(), Arg.Any<Dictionary<string, SyncUser>>())
+                        Arg.Any<Dictionary<int, ChapterDelta>>(), Arg.Any<Dictionary<string, SyncUser>>())
                         .Returns(x =>
                         {
                             ((Dictionary<string, SyncUser>)x[5]).Add("User 3", new SyncUser
@@ -1780,13 +1781,14 @@ namespace SIL.XForge.Scripture.Services
 
             public void SetupNewNoteThreadChange(string threadId, string syncUserId, string verseRef = "MAT 1:1")
             {
-                var noteThreadChange = new ParatextNoteThreadChange(threadId, verseRef, $"{threadId} selected text.",
+                var noteThreadChange = new ParatextNoteThreadChange(threadId, verseRef, $"Scripture text in project",
                     "Context before ", " context after", 17, "icon1");
+                noteThreadChange.CurrentContextSelection = new SegmentSelection { Start = 0, End = 0 };
                 noteThreadChange.AddChange(
                     GetNote(threadId, "n01", syncUserId, $"New {threadId} added.", ChangeType.Added), ChangeType.Added);
                 ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
                     Arg.Any<IEnumerable<IDocument<ParatextNoteThread>>>(),
-                    Arg.Any<SortedList<int, IDocument<TextData>>>(), Arg.Any<Dictionary<string, SyncUser>>())
+                    Arg.Any<Dictionary<int, ChapterDelta>>(), Arg.Any<Dictionary<string, SyncUser>>())
                     .Returns(new[] { noteThreadChange });
             }
 
@@ -1800,7 +1802,7 @@ namespace SIL.XForge.Scripture.Services
                     noteThreadChange.NoteIdsRemoved.Add(noteId);
                 ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
                     Arg.Any<IEnumerable<IDocument<ParatextNoteThread>>>(),
-                    Arg.Any<SortedList<int, IDocument<TextData>>>(), Arg.Any<Dictionary<string, SyncUser>>())
+                    Arg.Any<Dictionary<int, ChapterDelta>>(), Arg.Any<Dictionary<string, SyncUser>>())
                     .Returns(new[] { noteThreadChange });
             }
 
@@ -1818,7 +1820,10 @@ namespace SIL.XForge.Scripture.Services
                             ProjectRef = "project01",
                             OwnerRef = "user01",
                             VerseRef = new VerseRefData(Canon.BookIdToNumber(book.Id), chapter, 1),
-                            SelectedText = "Scripture text in project.",
+                            ContextBefore = "Context before ",
+                            ContextAfter = " context after",
+                            SelectedText = "Scripture text in project",
+                            TagIcon = "icon1",
                             Notes = new List<Note>()
                             {
                                 new Note
