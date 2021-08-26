@@ -38,7 +38,7 @@ namespace SIL.XForge.Scripture.Services
         void UpdateParatextComments(UserSecret userSecret, string projectId, int bookNum,
             IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs, Dictionary<string, SyncUser> syncUsers);
         IEnumerable<ParatextNoteThreadChange> GetNoteThreadChanges(UserSecret userSecret, string projectId, int bookNum,
-            IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs, SortedList<int, IDocument<TextData>> textDocs,
+            IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs, Dictionary<int, ChapterDelta> chapterDeltas,
             Dictionary<string, SyncUser> syncUsers);
         string GetLatestSharedVersion(UserSecret userSecret, string paratextId);
         bool BackupExists(UserSecret userSecret, string paratextId);
