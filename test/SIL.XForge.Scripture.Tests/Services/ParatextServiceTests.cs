@@ -624,11 +624,13 @@ namespace SIL.XForge.Scripture.Services
 
             env.AddParatextNoteThreadData(new[]
             {
+                new ThreadComponents { threadNum = 1, noteCount = 1 },
                 new ThreadComponents { threadNum = 1, noteCount = 1 }
             });
             env.AddParatextComments(new[]
             {
-                new ThreadComponents { threadNum = 1, noteCount = 1, username = env.Username01 }
+                new ThreadComponents { threadNum = 1, noteCount = 1, username = env.Username01 },
+                new ThreadComponents { threadNum = 2, noteCount = 1, username = env.Username01, appliesToVerse = true}
             });
 
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
@@ -644,12 +646,17 @@ namespace SIL.XForge.Scripture.Services
 
                 IEnumerable<ParatextNoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret,
                     ptProjectId, 40, noteThreadDocs, chapterDeltas, syncUsers);
-                Assert.That(changes.Count, Is.EqualTo(1));
+                Assert.That(changes.Count, Is.EqualTo(2));
 
                 // Context and selected text have changed
-                ParatextNoteThreadChange change = changes.First(c => c.ThreadId == "thread01");
-                SegmentSelection expected = new SegmentSelection { Start = 23, End = 53 };
-                Assert.That(change.CurrentContextSelection.Equals(expected), Is.True);
+                ParatextNoteThreadChange change1 = changes.First(c => c.ThreadId == "thread01");
+                SegmentSelection expected1 = new SegmentSelection { Start = 23, End = 53 };
+                Assert.That(change1.CurrentContextSelection.Equals(expected1), Is.True);
+
+                // Note thread applies to the verse
+                ParatextNoteThreadChange change2 = changes.First(c => c.ThreadId == "thread02");
+                SegmentSelection expected2 = new SegmentSelection { Start = 0, End = 0 };
+                Assert.That(change2.CurrentContextSelection.Equals(expected2), Is.True);
             }
         }
 
@@ -1188,6 +1195,7 @@ namespace SIL.XForge.Scripture.Services
             public bool isEdited;
             public bool isDeleted;
             public bool isConflict;
+            public bool appliesToVerse;
         }
 
         [Test]
@@ -1852,7 +1860,7 @@ namespace SIL.XForge.Scripture.Services
                             SelectedText = "Text selected " + threadId,
                             ContextBefore = "Context before ",
                             ContextAfter = " context after",
-                            StartPosition = 15,
+                            StartPosition = comp.appliesToVerse ? 0 : 15,
                             Contents = content,
                             Date = date,
                             Deleted = comp.isDeleted,

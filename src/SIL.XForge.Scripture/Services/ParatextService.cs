@@ -1569,21 +1569,22 @@ namespace SIL.XForge.Scripture.Services
                 op.Type == JTokenType.Object && op["attributes"] != null && op["attributes"]["segment"] != null &&
                 ((string)op["attributes"]["segment"]).StartsWith(segment)
             );
-            string verseText = "";
+            StringBuilder bldr = new StringBuilder();
             foreach (JObject segmentObj in ops)
             {
                 if (segmentObj["insert"] != null && segmentObj["insert"].Type == JTokenType.String)
                 {
-                    verseText = verseText + (string)segmentObj["insert"];
+                    bldr.Append((string)segmentObj["insert"]);
                 }
             }
-            return verseText;
+            return bldr.ToString();
         }
 
         private SegmentSelection GetNoteSelectionInCurrentContext(Paratext.Data.ProjectComments.Comment comment,
             Dictionary<int, ChapterDelta> chapterDeltas, IDocument<TextData> defaultDoc = null)
         {
-            if (!chapterDeltas.TryGetValue(comment.VerseRef.ChapterNum, out ChapterDelta chapterDelta))
+            if (!chapterDeltas.TryGetValue(comment.VerseRef.ChapterNum, out ChapterDelta chapterDelta) ||
+                comment.StartPosition == 0)
                 return new SegmentSelection();
 
             string verse = GetVerseText(chapterDelta.Delta, comment.VerseRef);

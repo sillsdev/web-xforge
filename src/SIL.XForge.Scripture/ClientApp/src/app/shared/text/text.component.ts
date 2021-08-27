@@ -499,8 +499,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
     // A single verse can be associated with multiple segments (e.g verse_1_1, verse_1_1/p_1)
     const verseSegments: string[] = this.getVerseSegments(verseRef);
-    let noteRange: RangeStatic | undefined = this.getSegmentRange(verseSegments[0]);
-    let noteStart: number = segmentSelection.start;
+    let segmentRange: RangeStatic | undefined = this.getSegmentRange(verseSegments[0]);
+    let selectionStart: number = segmentSelection.start;
     if (Array.from(this.viewModel.embeddedElements.keys()).includes(id)) {
       return;
     }
@@ -509,25 +509,25 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     for (const vs of verseSegments) {
       const range: RangeStatic | undefined = this.getSegmentRange(vs);
       if (range != null) {
-        if (range.length > noteStart) {
-          noteRange = range;
+        if (range.length > selectionStart) {
+          segmentRange = range;
           segment = vs;
           break;
         } else {
-          noteStart -= range.length - this.getEmbedCountInSegmentBefore(range.length - 1, range.index);
+          selectionStart -= range.length - this.getEmbedCountInSegmentBefore(range.length - 1, range.index);
           continue;
         }
       }
       break;
     }
 
-    if (noteRange == null) {
+    if (segmentRange == null) {
       return;
     }
 
-    const noteInsertIndex: number =
-      noteRange.index + noteStart + this.getEmbedCountInSegmentBefore(noteStart, noteRange.index);
-    this.editor.insertEmbed(noteInsertIndex, formatName, format, 'api');
+    const embedInsertIndex: number =
+      segmentRange.index + selectionStart + this.getEmbedCountInSegmentBefore(selectionStart, segmentRange.index);
+    this.editor.insertEmbed(embedInsertIndex, formatName, format, 'api');
     this.updateSegment();
     return segment;
   }
