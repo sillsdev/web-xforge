@@ -629,7 +629,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         const iconName: string = featured.iconName ?? '01flag1';
         const nodeProp: string = iconSourceProp(iconName);
         const format = { iconsrc: nodeProp, preview: featured.preview, threadid: featured.id };
-        const segmentRef: string | undefined = this.target.embedElementInline(
+        this.target.embedElementInline(
           featured.verseRef,
           featured.id,
           featured.segmentSelection ?? { start: 0, end: 0 },
