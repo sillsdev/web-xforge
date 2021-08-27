@@ -136,7 +136,7 @@
     <value>Funciona com o Paratext</value>
   </data>
   <data name="AboutParatextDescription" xml:space="preserve">
-    <value>1 {0}Integração do Paratext{1} e {0}sincronização em andamento{1} mantém o seu projeto atualizado e permite feedback dos usuários por meio de {0}Notas do Paratext{1}.</value>
+    <value>1 {2}Integração do Paratext{3} e {0}sincronização em andamento{1} mantém o seu projeto atualizado e permite feedback dos usuários por meio de {4}Notas do Paratext{3}.</value>
   </data>
   <data name="AboutTitle" xml:space="preserve">
     <value>Amplie seu Alcance Com a Verificação do Texto Bíblico</value>
