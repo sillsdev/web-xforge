@@ -30,6 +30,7 @@ import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -272,6 +273,22 @@ describe('CheckingOverviewComponent', () => {
       expect(env.importButton).toBeNull();
       when(mockedProjectService.hasTransceleratorQuestions('project01')).thenResolve(true);
       env.onlineStatus = true;
+      expect(env.importButton).not.toBeNull();
+    }));
+
+    it('should not show import questions button until list of texts have loaded', fakeAsync(() => {
+      const env = new TestEnvironment();
+      when(mockedProjectService.hasTransceleratorQuestions('project01')).thenResolve(true);
+      let setQueryQuestions!: (value: Promise<RealtimeQuery<QuestionDoc>>) => void;
+      when(mockedProjectService.queryQuestions(anything())).thenReturn(
+        new Promise(resolve => (setQueryQuestions = resolve))
+      );
+
+      env.waitForQuestions();
+      expect(env.component.showImportButton).toBe(false);
+      setQueryQuestions(env.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {}));
+      env.waitForQuestions();
+      expect(env.component.showImportButton).toBe(true);
       expect(env.importButton).not.toBeNull();
     }));
   });
