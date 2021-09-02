@@ -6,9 +6,13 @@ import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { PwaService } from 'xforge-common/pwa.service';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
+import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ShareControlComponent } from './share-control.component';
 import { ShareDialogComponent } from './share-dialog.component';
@@ -22,7 +26,7 @@ const mockedI18nService = mock(I18nService);
 
 describe('ShareComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, TestTranslocoModule],
+    imports: [DialogTestModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     declarations: [ShareComponent],
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },
@@ -55,9 +59,14 @@ class DialogTestModule {}
 class TestEnvironment {
   readonly component: ShareComponent;
   readonly fixture: ComponentFixture<ShareComponent>;
+  readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
+    when(mockedPwaService.onlineStatus).thenReturn(of(true));
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
+    when(mockedProjectService.get(anything())).thenCall(id =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id)
+    );
 
     this.fixture = TestBed.createComponent(ShareComponent);
     this.component = this.fixture.componentInstance;
