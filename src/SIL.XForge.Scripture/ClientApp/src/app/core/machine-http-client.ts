@@ -4,7 +4,7 @@ import { HttpClient, HttpResponse } from '@sillsdev/machine';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-const MACHINE_API_BASE_URL = 'machine-api/';
+export const MACHINE_API_BASE_URL = 'machine-api/';
 
 @Injectable({
   providedIn: 'root'
