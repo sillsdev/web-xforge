@@ -1,4 +1,5 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { NotifiableError } from '@bugsnag/js';
@@ -118,6 +119,33 @@ describe('ExceptionHandlingService', () => {
 
     verify(mockedNoticeService.showError(anything())).once();
     expect().nothing();
+  }));
+
+  it('should silently report 504 errors from machine-api or command-api', fakeAsync(() => {
+    const env = new TestEnvironment();
+    spyOn<any>(env.service, 'handleAlert');
+
+    env.handleError(
+      new HttpErrorResponse({
+        status: 504,
+        statusText: 'Gateway Timeout',
+        url: 'http://localhost:5000/machine-api/translation/engines/some-end-point'
+      })
+    );
+    env.handleError(
+      new HttpErrorResponse({
+        status: 504,
+        statusText: 'Gateway Timeout',
+        url: 'http://localhost:5000/command-api/some-end-point'
+      })
+    );
+
+    expect(env.service['handleAlert']).not.toHaveBeenCalled();
+
+    env.handleError(new HttpErrorResponse({ status: 400, statusText: 'Bad Request' }));
+
+    expect(env.service['handleAlert']).toHaveBeenCalled();
+    verify(mockedNoticeService.showError(anything())).never();
   }));
 
   describe('Bugsnag', () => {
