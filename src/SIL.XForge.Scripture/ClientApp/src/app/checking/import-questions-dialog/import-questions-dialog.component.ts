@@ -222,10 +222,16 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
 
   async importQuestions(): Promise<void> {
     const listItems = this.filteredList.filter(listItem => listItem.checked);
-    const dialogData: ImportQuestionsProgressDialogData = { count: listItems.length, completed: 0 };
+    let cancelImport = false;
+    const dialogData: ImportQuestionsProgressDialogData = {
+      count: listItems.length,
+      completed: 0,
+      cancel: () => (cancelImport = true)
+    };
     const config: MdcDialogConfig<ImportQuestionsProgressDialogData> = {
       clickOutsideToClose: false,
       escapeToClose: false,
+      autoFocus: false,
       data: dialogData
     };
     const progressDialog = this.dialog.open(ImportQuestionsProgressDialogComponent, config);
@@ -260,6 +266,9 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
         );
       }
       dialogData.completed++;
+      if (cancelImport) {
+        break;
+      }
     }
 
     progressDialog.close();
