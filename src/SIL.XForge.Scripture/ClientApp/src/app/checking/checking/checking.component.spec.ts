@@ -237,7 +237,7 @@ describe('CheckingComponent', () => {
     it('responds to remote community checking disabled when observer', fakeAsync(() => {
       // User with access to translate app should get redirected there
       const env = new TestEnvironment(OBSERVER_USER, 'ALL');
-      env.selectQuestion(1);
+      env.selectQuestion(2);
       env.setCheckingEnabled(false);
       expect(env.location.path()).toEqual('/projects/project01/translate/JHN');
       expect(env.component.projectDoc).toBeUndefined();
@@ -266,10 +266,10 @@ describe('CheckingComponent', () => {
       expect(env.component.questionsPanel!.activeQuestionDoc!.data!.dataId).toBe('q5Id');
       // A sixteenth question is archived
       expect(env.questions.length).toEqual(16);
-      let question = env.selectQuestion(1);
+      let question = env.selectQuestion(2);
       expect(env.getQuestionText(question)).toBe('Book 1, Q1 text');
       expect(env.currentBookAndChapter).toBe('John 1');
-      question = env.selectQuestion(16);
+      question = env.selectQuestion(1);
       expect(env.getQuestionText(question)).toBe('Matthew question relating to chapter 1');
       expect(env.currentBookAndChapter).toBe('Matthew 1');
     }));
@@ -420,7 +420,7 @@ describe('CheckingComponent', () => {
       expect(env.isSegmentHighlighted(1, 1)).toBe(false);
       expect(env.isSegmentHighlighted(1, 5)).toBe(true);
       expect(env.segmentHasQuestion(1, 5)).toBe(true);
-      expect(env.component.questionVerseRefs[0]).toEqual(VerseRef.parse('JHN 1:5'));
+      expect(env.component.questionVerseRefs[13]).toEqual(VerseRef.parse('JHN 1:5'));
     }));
 
     it('unread answers badge is only visible when the setting is ON to see other answers', fakeAsync(() => {
@@ -459,7 +459,7 @@ describe('CheckingComponent', () => {
       env.waitForSliderUpdate();
       expect(env.component.questionsPanel!.activeQuestionDoc!.id).toBe(questionId);
       expect(env.questions.length).toEqual(16);
-      question = env.selectQuestion(16);
+      question = env.selectQuestion(15);
       expect(env.getQuestionText(question)).toBe('Admin just added a question.');
     }));
 
@@ -503,6 +503,11 @@ describe('CheckingComponent', () => {
       expect(env.location.path()).toEqual('/projects/project01/checking/MAT');
       env.activateQuestion('q1Id');
       expect(env.location.path()).toEqual('/projects/project01/checking/JHN');
+    }));
+
+    it('sorts questions by canonical order', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER, 'ALL');
+      expect(env.component.questionDocs[0].id).toBe('project01:q16Id');
     }));
   });
 
@@ -562,7 +567,7 @@ describe('CheckingComponent', () => {
       const projectUserConfigDoc = env.component.projectUserConfigDoc!.data!;
       verify(mockedTranslationEngineService.trainSelectedSegment(anything(), anything())).once();
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q5Id');
-      env.selectQuestion(4);
+      env.selectQuestion(5);
       expect(projectUserConfigDoc.selectedTask).toBe('checking');
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q4Id');
       expect(projectUserConfigDoc.selectedBookNum).toBeUndefined();
