@@ -41,11 +41,11 @@
           "error",
           {
             "ignorePattern": "^import ",
+            "ignoreStrings": true,
             "code": 120
           }
         ],
-        "no-underscore-dangle": "off",
-        "prettier/prettier": "error"
+        "no-underscore-dangle": "off"
       }
     },
     {
