@@ -5,7 +5,7 @@
       [ngClass]="{ 'comment-unread': !hasUserReadComment(comment) }"
       *ngIf="
         (activeComment == null || (commentFormVisible && activeComment?.dataId !== comment.dataId)) &&
-        (i + 1 < maxCommentsToShow || commentCount == maxCommentsToShow || showAllComments)
+        (i + 1 < maxCommentsToShow || commentCount === maxCommentsToShow || showAllComments)
       "
     >
       <span class="comment-text">{{ comment.text }}</span> <span class="divider">-</span>

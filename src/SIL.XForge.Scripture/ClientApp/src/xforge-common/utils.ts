@@ -3,7 +3,7 @@ import Bowser from 'bowser';
 import ObjectID from 'bson-objectid';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import locales from '../../../locales.json';
-import { version } from '../../../version.json';
+import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
 import { Locale } from './models/i18n-locale';
 
@@ -52,7 +52,7 @@ export function issuesEmailTemplate(errorId?: string): string {
   const subject = translate('issue_email.subject', { siteName: environment.siteName });
   const body = translate('issue_email.body', {
     siteName: environment.siteName,
-    siteVersion: version,
+    siteVersion: versionData.version,
     browserName: bowser.getBrowserName(),
     browserVersion: bowser.getBrowserVersion(),
     operatingSystem: bowser.getOSName(),
