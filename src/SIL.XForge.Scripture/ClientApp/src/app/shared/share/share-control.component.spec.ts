@@ -276,6 +276,21 @@ describe('ShareControlComponent', () => {
     env.wait();
     expect(env.shareLink).toBeNull();
   }));
+
+  it('should not show link sharing to admin when link sharing is enabled but sharing is disabled', fakeAsync(() => {
+    const env = new TestEnvironment({ userId: 'user02', checkingEnabled: true, isLinkSharingEnabled: true });
+    env.wait();
+    expect(env.shareLink).not.toBeNull();
+    const checkingConfig: CheckingConfig = {
+      checkingEnabled: true,
+      shareEnabled: false,
+      shareLevel: CheckingShareLevel.Anyone,
+      usersSeeEachOthersResponses: false
+    };
+    env.updateCheckingProperties(checkingConfig);
+    env.wait();
+    expect(env.shareLink).toBeNull();
+  }));
 });
 
 @NgModule({

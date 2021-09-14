@@ -116,11 +116,13 @@ export class ShareControlComponent extends SubscriptionDisposable {
     if (project == null) {
       return false;
     }
-    const shareLevelSettings = {
-      [SFProjectRole.CommunityChecker]: project.checkingConfig.shareLevel === CheckingShareLevel.Anyone,
-      [SFProjectRole.Observer]: project.translateConfig.shareLevel === TranslateShareLevel.Anyone
+    const linkSharingSettings = {
+      [SFProjectRole.CommunityChecker]:
+        project.checkingConfig.shareEnabled && project.checkingConfig.shareLevel === CheckingShareLevel.Anyone,
+      [SFProjectRole.Observer]:
+        project.translateConfig.shareEnabled && project.translateConfig.shareLevel === TranslateShareLevel.Anyone
     };
-    return this.userShareableRoles.includes(this.shareRole) && shareLevelSettings[this.shareRole] === true;
+    return linkSharingSettings[this.shareRole] === true && this.userShareableRoles.includes(this.shareRole);
   }
 
   get showLinkSharingUnavailable(): boolean {
