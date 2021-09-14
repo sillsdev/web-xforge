@@ -231,6 +231,28 @@ describe('ImportQuestionsDialogComponent', () => {
     env.click(env.submitButton);
     verify(mockedProjectService.createQuestion('project01', anything(), undefined, undefined)).once();
   }));
+
+  it('allows canceling the import of questions', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedProjectService.createQuestion('project01', anything(), undefined, undefined)).thenCall(
+      () => new Promise(resolve => setTimeout(resolve, 5000))
+    );
+    expect(env.questionRows.length).toBe(2);
+    expect(env.submitButton.textContent).toContain('0');
+    env.clickSelectAll();
+    expect(env.submitButton.textContent).toContain('2');
+
+    // not using env.click(element) because it calls flush() which will not work with the timing in this test
+    env.submitButton.click();
+
+    tick(4000);
+    verify(mockedProjectService.createQuestion('project01', anything(), undefined, undefined)).once();
+
+    // cancel while the first question is still being imported
+    env.cancelImportButton.click();
+    tick(12000);
+    verify(mockedProjectService.createQuestion('project01', anything(), undefined, undefined)).once();
+  }));
 });
 
 @Directive({
@@ -358,6 +380,10 @@ class TestEnvironment {
     return this.overlayContainerElement.querySelector(
       'mdc-dialog-actions button[mdcdialogaction="close"]'
     ) as HTMLButtonElement;
+  }
+
+  get cancelImportButton(): HTMLButtonElement {
+    return this.overlayContainerElement.querySelectorAll('mdc-dialog-actions')[1].querySelector('button')!;
   }
 
   clickSelectAll(): void {
