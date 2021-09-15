@@ -66,11 +66,10 @@ export class TextDoc extends RealtimeDoc<TextData, TextData> {
     if (this.data == null || this.data.ops == null) {
       return '';
     }
-
     let text = '';
     let inSegment = false;
     for (const op of this.data.ops) {
-      if (op.attributes != null && op.attributes.segment === ref) {
+      if (op.attributes?.segment != null && op.attributes.segment === ref) {
         if (op.insert != null && typeof op.insert === 'string') {
           text += op.insert;
           inSegment = true;
@@ -80,6 +79,55 @@ export class TextDoc extends RealtimeDoc<TextData, TextData> {
       }
     }
 
+    return text;
+  }
+
+  getSegmentTextIncludingRelated(ref: string): string {
+    if (this.data == null || this.data.ops == null) {
+      return '';
+    }
+    let text = '';
+    let opIndexStart: number | undefined;
+    let opIndexEnd: number | undefined;
+
+    /** Locate range of ops that match the verse segments
+     * This is done to capture important inserts between segments like blank lines
+     */
+    for (const i in this.data.ops) {
+      if (!this.data.ops.hasOwnProperty(i)) {
+        continue;
+      }
+      const index = parseInt(i, 10);
+      const op = this.data.ops[index];
+      if (
+        op.attributes?.segment != null &&
+        (op.attributes.segment === ref || op.attributes.segment.indexOf(ref + '/') === 0)
+      ) {
+        if (op.insert != null && typeof op.insert === 'string') {
+          if (opIndexStart == null) {
+            opIndexStart = index;
+          }
+          opIndexEnd = index;
+        }
+      }
+    }
+    if (opIndexStart == null || opIndexEnd == null) {
+      return text;
+    }
+    // Get all string inserts within the op range
+    for (const i in this.data.ops) {
+      if (!this.data.ops.hasOwnProperty(i)) {
+        continue;
+      }
+      const index = parseInt(i, 10);
+      if (index < opIndexStart || index > opIndexEnd) {
+        continue;
+      }
+      const op = this.data.ops[index];
+      if (op.insert != null && typeof op.insert === 'string') {
+        text += op.insert;
+      }
+    }
     return text;
   }
 

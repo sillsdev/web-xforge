@@ -19,6 +19,7 @@ import { fromEvent } from 'rxjs';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { getBrowserEngine, verseSlug } from 'xforge-common/utils';
+import { ParatextNoteThreadIcon } from '../../core/models/paratext-note-thread-doc';
 import { Delta, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { registerScripture } from './quill-scripture';
@@ -64,8 +65,8 @@ export interface TextUpdatedEvent {
 export interface FeaturedVerseRefInfo {
   verseRef: VerseRef;
   id: string;
-  iconName?: string;
   textAnchor?: TextAnchor;
+  icon: ParatextNoteThreadIcon;
   preview?: string;
 }
 

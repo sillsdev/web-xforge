@@ -64,14 +64,6 @@ export const UPDATE_SUGGESTIONS_TIMEOUT = 100;
 
 const PUNCT_SPACE_REGEX = XRegExp('^(\\p{P}|\\p{S}|\\p{Cc}|\\p{Z})+$');
 
-function iconSourceProp(name: string): string {
-  return '--icon-file: url(' + iconSourceUrl(name) + ');';
-}
-
-function iconSourceUrl(name: string): string {
-  return `/assets/icons/TagIcons/${name}.png`;
-}
-
 /** Scripture editing area. Used for Translate task. */
 @Component({
   selector: 'app-editor',
@@ -636,9 +628,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         if (verseSegments.length === 0) {
           continue;
         }
-        const iconName: string = featured.iconName ?? '01flag1';
-        const nodeProp: string = iconSourceProp(iconName);
-        const format = { iconsrc: nodeProp, preview: featured.preview, threadid: featured.id };
+        const format = { iconsrc: featured.icon.var, preview: featured.preview, threadid: featured.id };
         this.target.embedElementInline(
           featured.verseRef,
           featured.id,
@@ -659,32 +649,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private showNoteThread(threadId: string): void {
-    const featuredVerseRefInfo = this.getFeaturedVerseRefInfo(
-      this.noteThreadQuery!.docs!.find(nt => nt.data!.dataId === threadId)!.data!
-    );
-    let noteRange: RangeStatic | undefined;
-    let startPosition: number = 0;
-    let selectionLength: number = 0;
-    // TODO: Needs to be updated once the start position is determined correctly
-    [noteRange, startPosition, selectionLength] = this.target!.getSelectedTextPosition(
-      featuredVerseRefInfo.verseRef,
-      featuredVerseRefInfo.selectedText!
-    );
-    if (noteRange == null) {
-      return;
-    }
     this.dialog.open(NoteDialogComponent, {
       clickOutsideToClose: true,
       escapeToClose: true,
       autoFocus: false,
       data: {
-        noteThreadQuery: this.noteThreadQuery,
-        threadId: threadId,
-        icon: iconSourceUrl(featuredVerseRefInfo.iconName),
-        segmentText: this.target!.segment!.text,
-        selectedText: featuredVerseRefInfo.selectedText!,
-        startPosition: startPosition,
-        rtl: this.target!.isRtl
+        projectId: this.projectDoc!.id,
+        threadId: threadId
       } as NoteDialogData
     });
   }
@@ -961,21 +932,23 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
     for (const segment of segments) {
-      const element = this.target.getSegmentElement(segment)?.querySelector('display-note');
-      if (element == null) {
+      const elements = this.target.getSegmentElement(segment)?.querySelectorAll('display-note');
+      if (elements == null) {
         continue;
       }
-      this.clickSubs.push(
-        this.subscribe(fromEvent<MouseEvent>(element, 'click'), event => {
-          if (this.bookNum == null) {
-            return;
-          }
-          const threadId = threadIdFromMouseEvent(event);
-          if (threadId != null) {
-            this.showNoteThread(threadId);
-          }
-        })
-      );
+      Array.from(elements).map((element: Element) => {
+        this.clickSubs.push(
+          this.subscribe(fromEvent<MouseEvent>(element, 'click'), event => {
+            if (this.bookNum == null) {
+              return;
+            }
+            const threadId = threadIdFromMouseEvent(event);
+            if (threadId != null) {
+              this.showNoteThread(threadId);
+            }
+          })
+        );
+      });
     }
   }
 
@@ -1009,14 +982,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (notes.length > 1) {
       preview += '\n' + translate('editor.more_notes', { count: notes.length - 1 });
     }
-    const iconDefinedNotes = notes.filter(n => n.tagIcon != null);
-    const iconName: string =
-      iconDefinedNotes.length === 0 ? thread.tagIcon : iconDefinedNotes[iconDefinedNotes.length - 1].tagIcon!;
     return {
       verseRef: toVerseRef(thread.verseRef),
       id: thread.dataId,
       preview,
-      iconName: iconName ?? '01flag1',
+      icon: this.projectService.getNoteThreadIcon(thread),
       selectedText: thread.selectedText
     };
   }

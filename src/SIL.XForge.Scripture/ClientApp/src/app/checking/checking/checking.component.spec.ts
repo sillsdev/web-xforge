@@ -41,6 +41,7 @@ import { Snapshot } from 'xforge-common/models/snapshot';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
+import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -63,7 +64,6 @@ import { QuestionDialogService } from '../question-dialog/question-dialog.servic
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking-answers/checking-comments/checking-comments.component';
-import { CheckingOwnerComponent } from './checking-answers/checking-owner/checking-owner.component';
 import { CheckingAudioCombinedComponent } from './checking-audio-combined/checking-audio-combined.component';
 import { AudioTimePipe, CheckingAudioPlayerComponent } from './checking-audio-player/checking-audio-player.component';
 import {
@@ -134,7 +134,7 @@ describe('CheckingComponent', () => {
       CheckingCommentFormComponent,
       CheckingCommentsComponent,
       CheckingComponent,
-      CheckingOwnerComponent,
+      OwnerComponent,
       CheckingQuestionsComponent,
       CheckingTextComponent,
       FontSizeComponent

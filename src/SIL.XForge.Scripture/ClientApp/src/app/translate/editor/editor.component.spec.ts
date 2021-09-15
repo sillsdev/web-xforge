@@ -1,3 +1,4 @@
+import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
@@ -58,6 +59,7 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { SharedModule } from '../../shared/shared.module';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
+import { NoteDialogComponent } from './note-dialog/note-dialog.component';
 import { SuggestionsComponent } from './suggestions.component';
 import { ACTIVE_EDIT_TIMEOUT } from './translate-metrics-session';
 
@@ -70,6 +72,7 @@ const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
 const mockedTranslationEngineService = mock(TranslationEngineService);
+const mockedMdcDialog = mock(MdcDialog);
 
 class MockConsole {
   log(val: any) {
@@ -104,7 +107,8 @@ describe('EditorComponent', () => {
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: PwaService, useMock: mockedPwaService },
-      { provide: TranslationEngineService, useMock: mockedTranslationEngineService }
+      { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
+      { provide: MdcDialog, useMock: mockedMdcDialog }
     ]
   }));
 
@@ -1057,11 +1061,11 @@ describe('EditorComponent', () => {
 
       const note = segment.querySelector('display-note')! as HTMLElement;
       expect(note).not.toBeNull();
-      expect(note.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag3.png);');
+      expect(note.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
       expect(note.getAttribute('title')).toEqual('Note from user01\n--- 2 more note(s) ---');
       const contents = env.targetEditor.getContents();
       expect(contents.ops![3].insert).toEqual('target: ');
-      expect(contents.ops![4].attributes!['iconsrc']).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag3.png);');
+      expect(contents.ops![4].attributes!['iconsrc']).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
 
       // Two notes in the segment on verse 3
       const noteVerse3: HTMLElement[] = env.targetTextEditor.nativeElement.querySelectorAll(
@@ -1099,7 +1103,7 @@ describe('EditorComponent', () => {
       expect(textOps[5].insert).toBe('t');
       expect(contents.ops![2]!.insert['verse']['number']).toBe('1');
       expect(contents.ops![3].insert).toBe('target: ');
-      expect(contents.ops![4]!.attributes!['iconsrc']).toBe('--icon-file: url(/assets/icons/TagIcons/01flag3.png);');
+      expect(contents.ops![4]!.attributes!['iconsrc']).toBe('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
       expect(contents.ops![5]!.insert).toBe('chapter 1, verse 1.');
       expect(contents.ops![7]!.insert).toBe('t');
       env.dispose();
@@ -1373,6 +1377,20 @@ describe('EditorComponent', () => {
       expect(thread4Doc.data!.position).toEqual(expected);
       // the verse note thread position never changes
       expect(verseNoteThreadDoc.data!.position).toEqual({ start: 0, length: 0 });
+      env.dispose();
+    }));
+
+    it('can display note dialog', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      const note = env.fixture.debugElement.query(By.css('display-note'));
+      expect(note).not.toBeNull();
+      note.nativeElement.click();
+      env.wait();
+
+      verify(mockedMdcDialog.open(NoteDialogComponent, anything())).once();
       env.dispose();
     }));
   });
@@ -1727,8 +1745,17 @@ class TestEnvironment {
         [obj<NoteThread>().pathStr(t => t.projectRef)]: id
       })
     );
+    when(mockedSFProjectService.getNoteThreadIcon(anything())).thenCall((data: ParatextNoteThread) => {
+      const icon = data.tagIcon + '.png';
+      return {
+        url: `/assets/icons/TagIcons/${icon}`,
+        var: `--icon-file: url(/assets/icons/TagIcons/${icon});`
+      };
+    });
     when(mockedPwaService.isOnline).thenReturn(true);
     when(mockedPwaService.onlineStatus).thenReturn(of(true));
+    const mockedNoteDialogRef = mock<MdcDialogRef<NoteDialogComponent>>(MdcDialogRef);
+    when(mockedMdcDialog.open(NoteDialogComponent, anything())).thenReturn(instance(mockedNoteDialogRef));
 
     this.fixture = TestBed.createComponent(EditorComponent);
     this.component = this.fixture.componentInstance;
