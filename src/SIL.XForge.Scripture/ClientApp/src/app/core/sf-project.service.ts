@@ -1,10 +1,12 @@
 import { Injectable } from '@angular/core';
+import { clone } from 'lodash-es';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProject, SF_PROJECTS_COLLECTION } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getSFProjectUserConfigDocId } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { Note } from 'realtime-server/scriptureforge/models/note';
 import { CommandService } from 'xforge-common/command.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
@@ -67,6 +69,22 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
 
   getText(textId: TextDocId | string): Promise<TextDoc> {
     return this.realtimeService.subscribe(TextDoc.COLLECTION, textId instanceof TextDocId ? textId.toString() : textId);
+  }
+
+  getNoteThread(threadId: string): Promise<ParatextNoteThreadDoc> {
+    return this.realtimeService.subscribe(ParatextNoteThreadDoc.COLLECTION, threadId);
+  }
+
+  getNoteThreadIcon(thread: ParatextNoteThread): ParatextNoteThreadIcon {
+    const notes: Note[] = clone(thread.notes).sort((a, b) => Date.parse(a.dateCreated) - Date.parse(b.dateCreated));
+    const iconDefinedNotes = notes.filter(n => n.tagIcon != null);
+    let icon: string =
+      iconDefinedNotes.length === 0 ? thread.tagIcon : iconDefinedNotes[iconDefinedNotes.length - 1].tagIcon!;
+    if (icon === '') {
+      icon = '01flag1';
+    }
+    const iconUrl = `/assets/icons/TagIcons/${icon}.png`;
+    return { var: `--icon-file: url(${iconUrl});`, url: iconUrl };
   }
 
   queryQuestions(

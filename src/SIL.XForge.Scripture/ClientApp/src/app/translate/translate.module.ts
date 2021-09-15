@@ -1,5 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { TranslocoModule } from '@ngneat/transloco';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
@@ -19,6 +21,15 @@ import { TranslateRoutingModule } from './translate-routing.module';
     SuggestionsSettingsDialogComponent,
     NoteDialogComponent
   ],
-  imports: [TranslateRoutingModule, CommonModule, SharedModule, UICommonModule, XForgeCommonModule, TranslocoModule]
+  imports: [
+    TranslateRoutingModule,
+    CommonModule,
+    SharedModule,
+    UICommonModule,
+    XForgeCommonModule,
+    TranslocoModule,
+    MatIconModule,
+    MatMenuModule
+  ]
 })
 export class TranslateModule {}
