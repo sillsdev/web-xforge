@@ -1,16 +1,41 @@
 @import 'src/variables';
 @import 'bootstrap/scss/mixins/breakpoints';
 
-.segment-text {
+mdc-dialog-title {
+  display: flex;
+  align-items: center;
+  padding-top: 10px;
+
+  span {
+    flex: 1;
+    margin-left: 10px;
+  }
+  > button {
+    margin-right: -15px;
+  }
+}
+.text {
   color: $greenDark;
   background: rgba(0, 0, 0, 0.05);
   padding: 6px;
   border-radius: 4px;
   font-size: 0.9em;
+  .segment-text {
+    padding-top: 6px;
+    border-top: 2px solid $greenDark;
+    margin-top: 6px;
+    white-space: pre-wrap;
+  }
 }
 .notes {
   .note {
-    padding: 10px 0;
+    padding: 20px 0;
+    .content {
+      color: #000;
+    }
+    &:first-child {
+      padding-top: 10px;
+    }
     &:not(:last-child) {
       border-bottom: 1px solid $greyLight;
     }
@@ -22,7 +47,7 @@
 }
 .rtl {
   .note,
-  .segment-text {
+  .text {
     text-align: right;
   }
 }
