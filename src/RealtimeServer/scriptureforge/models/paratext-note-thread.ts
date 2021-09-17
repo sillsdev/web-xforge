@@ -1,6 +1,6 @@
 import { ProjectData, PROJECT_DATA_INDEX_PATHS } from '../../common/models/project-data';
 import { Note } from './note';
-import { SegmentSelection } from './segment-selection';
+import { TextAnchor } from './text-anchor';
 import { VerseRefData } from './verse-ref-data';
 
 export const PARATEXT_NOTE_THREAD_COLLECTION = 'note_threads';
@@ -10,10 +10,9 @@ export interface ParatextNoteThread extends ProjectData {
   dataId: string;
   verseRef: VerseRefData;
   notes: Note[];
-  selectedText: string;
-  contextBefore: string;
-  contextAfter: string;
-  startPosition: number;
-  currentContextSelection: SegmentSelection;
+  originalSelectedText: string;
+  originalContextBefore: string;
+  originalContextAfter: string;
+  position: TextAnchor;
   tagIcon: string;
 }
