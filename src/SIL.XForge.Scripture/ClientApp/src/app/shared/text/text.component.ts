@@ -865,13 +865,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   /** Get the number of embedded elements before a given position in a segment */
   private getEmbedCountInSegmentBefore(position: number, segmentStartIndex: number): number {
     const segmentEmbedIndices: number[] = Array.from(this.embeddedElements.values());
-    let embedCount: number = segmentEmbedIndices.filter(
-      n => n >= segmentStartIndex && n < segmentStartIndex + position
-    ).length;
-    if (embedCount > 0) {
-      embedCount += this.getEmbedCountInSegmentBefore(embedCount, segmentStartIndex + position);
-    }
-    return embedCount;
+    return segmentEmbedIndices.filter(n => n >= segmentStartIndex && n < segmentStartIndex + position).length;
   }
 
   private setHighlightMarkerPosition(): void {

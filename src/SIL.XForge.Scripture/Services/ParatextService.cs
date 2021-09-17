@@ -800,7 +800,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     // Get the selection that the note applies to
                     TextAnchor range =
-                        GetCurrentSegmentRangeFromComment(existingThread.Comments[0], chapterDeltas);
+                        GetCommentTextAnchor(existingThread.Comments[0], chapterDeltas);
                     if (!range.Equals(threadDoc.Data.Position))
                         threadChange.Position = range;
                 }
@@ -822,7 +822,7 @@ namespace SIL.XForge.Scripture.Services
                 CommentTag initialTag = info.Type == NoteType.Conflict ? CommentTag.ConflictTag : commentTags.Get(tagId);
                 ParatextNoteThreadChange newThread = new ParatextNoteThreadChange(threadId, info.VerseRefStr,
                     info.SelectedText, info.ContextBefore, info.ContextAfter, initialTag.Icon);
-                newThread.Position = GetCurrentSegmentRangeFromComment(info, chapterDeltas);
+                newThread.Position = GetCommentTextAnchor(info, chapterDeltas);
 
                 foreach (var comm in thread.Comments)
                 {
@@ -1586,8 +1586,8 @@ namespace SIL.XForge.Scripture.Services
             return bldr.ToString();
         }
 
-        private TextAnchor GetCurrentSegmentRangeFromComment(Paratext.Data.ProjectComments.Comment comment,
-            Dictionary<int, ChapterDelta> chapterDeltas, IDocument<TextData> defaultDoc = null)
+        private TextAnchor GetCommentTextAnchor(Paratext.Data.ProjectComments.Comment comment,
+            Dictionary<int, ChapterDelta> chapterDeltas)
         {
             if (!chapterDeltas.TryGetValue(comment.VerseRef.ChapterNum, out ChapterDelta chapterDelta) ||
                 comment.StartPosition == 0)
@@ -1597,6 +1597,7 @@ namespace SIL.XForge.Scripture.Services
             int startPos = 0;
             PtxUtils.StringUtils.MatchContexts(verse, comment.ContextBefore, comment.SelectedText,
                 comment.ContextAfter, null, ref startPos, out int endPos);
+            // The text anchor is relative to the text in the verse
             return new TextAnchor { Start = startPos, Length = endPos - startPos };
         }
 

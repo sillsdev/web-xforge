@@ -971,6 +971,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.toggleNoteThreadVerses(true);
   }
 
+  /** Gets the information needed to format a particular featured verse. */
   private getFeaturedVerseRefInfo(thread: ParatextNoteThread): FeaturedVerseRefInfo {
     const notes: Note[] = clone(thread.notes).sort((a, b) => Date.parse(a.dateCreated) - Date.parse(b.dateCreated));
     let preview: string = this.stripXml(notes[0].content.trim());
@@ -1004,6 +1005,20 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       // If the length is less than two, it can be skipped
       return;
     }
+    const editOpIndex: number | undefined = delta.ops[0].retain;
+    let length = 0;
+    let operation: 'insert' | 'delete' = 'insert';
+    // get the length that was inserted or deleted to apply to the note text anchor
+    if (delta.ops[1].insert != null && typeof delta.ops[1].insert === 'string') {
+      length = delta.ops[1].insert.length;
+    } else if (delta.ops[1].delete != null) {
+      length = delta.ops[1].delete;
+      operation = 'delete';
+    }
+    if (editOpIndex == null || length === 0) {
+      return;
+    }
+
     for (const [threadId, _] of oldSegmentEmbeds.entries()) {
       const noteThreadDoc: ParatextNoteThreadDoc | undefined = this.noteThreadQuery.docs.find(
         n => n.data?.dataId === threadId
@@ -1014,23 +1029,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
       const oldNoteSelection: TextAnchor = noteThreadDoc.data.position ?? { start: 0, end: 0 };
       let newSelection: TextAnchor | undefined;
-      let length = 0;
-      let operation: 'insert' | 'delete' = 'insert';
-      // get the length that was inserted or deleted to apply to the note selection
-      if (delta.ops[1].insert != null && typeof delta.ops[1].insert === 'string') {
-        length = delta.ops[1].insert.length;
-      } else if (delta.ops[1].delete != null) {
-        length = delta.ops[1].delete;
-        operation = 'delete';
-      }
 
-      if (length === 0) {
-        continue;
-      }
-      const editOpIndex: number | undefined = delta.ops[0].retain;
-      if (editOpIndex == null) {
-        continue;
-      }
       newSelection = this.getUpdatedTextAnchor(
         oldNoteSelection,
         oldSegmentEmbeds,
@@ -1077,6 +1076,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (embedIndex == null) {
       return;
     }
+    if (oldTextAnchor.length === 0) {
+      return oldTextAnchor;
+    }
+
     if (operation === 'insert') {
       const embedCount = this.getEmbedCountInAnchorRange(oldSegmentEmbedPositions, embedIndex, oldTextAnchor.length);
       const noteAnchorEndIndex = embedIndex + oldTextAnchor.length + embedCount;

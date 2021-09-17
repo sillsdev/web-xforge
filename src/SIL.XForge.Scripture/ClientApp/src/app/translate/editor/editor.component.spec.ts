@@ -1158,7 +1158,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
 
-      const noteThreadDoc: ParatextNoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      let noteThreadDoc: ParatextNoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
       expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
 
       // edit before start position
@@ -1179,6 +1179,16 @@ describe('EditorComponent', () => {
       env.targetEditor.setSelection(notePosition + 1, 0, 'user');
       env.typeCharacters(text);
       expect(noteThreadDoc.data!.position).toEqual({ start: length * 2 + 8, length: 9 + length });
+
+      // edit immediately after verse note
+      noteThreadDoc = env.getNoteThreadDoc('project01', 'thread02');
+      notePosition = env.getNoteThreadIndex('thread02');
+      expect(noteThreadDoc.data!.position).toEqual({ start: 0, length: 0 });
+      env.targetEditor.setSelection(notePosition, 0, 'user');
+      env.wait();
+      expect(env.targetEditor.getSelection()!.index).toEqual(notePosition + 1);
+      env.typeCharacters(text);
+      expect(noteThreadDoc.data!.position).toEqual({ start: 0, length: 0 });
       env.dispose();
     }));
 
