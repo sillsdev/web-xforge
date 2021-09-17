@@ -17,8 +17,7 @@ namespace SIL.XForge.Scripture.Models
         public string SelectedText { get; set; }
         public string ContextBefore { get; set; }
         public string ContextAfter { get; set; }
-        public int StartPosition { get; set; }
-        public SegmentSelection CurrentContextSelection { get; set; }
+        public TextAnchor Position { get; set; }
         public string TagIcon { get; set; }
         /// <summary> True if the thread has been permanently removed. </summary>
         public bool ThreadRemoved { get; set; }
@@ -33,19 +32,18 @@ namespace SIL.XForge.Scripture.Models
             get
             {
                 return NotesAdded.Count > 0 || NotesUpdated.Count > 0 || NotesDeleted.Count > 0 ||
-                    NoteIdsRemoved.Count > 0 || ThreadRemoved;
+                    NoteIdsRemoved.Count > 0 || ThreadRemoved || Position != null;
             }
         }
 
         public ParatextNoteThreadChange(string threadId, string verseRef, string selectedText, string contextBefore,
-            string contextAfter, int startPos, string tagIcon = null)
+            string contextAfter, string tagIcon = null)
         {
             ThreadId = threadId;
             VerseRefStr = verseRef;
             SelectedText = selectedText;
             ContextBefore = contextBefore;
             ContextAfter = contextAfter;
-            StartPosition = startPos;
             TagIcon = tagIcon;
         }
 

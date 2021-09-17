@@ -624,7 +624,6 @@ namespace SIL.XForge.Scripture.Services
 
             env.AddParatextNoteThreadData(new[]
             {
-                new ThreadComponents { threadNum = 1, noteCount = 1 },
                 new ThreadComponents { threadNum = 1, noteCount = 1 }
             });
             env.AddParatextComments(new[]
@@ -641,22 +640,26 @@ namespace SIL.XForge.Scripture.Services
                 {
                     { env.Username01, new SyncUser { Id = "syncuser01", ParatextUsername = env.Username01 }}
                 };
+
+                string contextBefore = "Context before changed ";
+                string selectionText = "Text selected changed";
                 Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBookAsync(env.Project01, 40, 1,
-                    "Context before changed ", "Text selected changed");
+                    contextBefore, selectionText, false);
 
                 IEnumerable<ParatextNoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret,
                     ptProjectId, 40, noteThreadDocs, chapterDeltas, syncUsers);
                 Assert.That(changes.Count, Is.EqualTo(2));
 
-                // Context and selected text have changed
+                // Context, including the selected text have changed
+                int expectedStartIndex = contextBefore.Length;
                 ParatextNoteThreadChange change1 = changes.First(c => c.ThreadId == "thread01");
-                SegmentSelection expected1 = new SegmentSelection { Start = 23, End = 53 };
-                Assert.That(change1.CurrentContextSelection.Equals(expected1), Is.True);
+                TextAnchor expected1 = new TextAnchor { Start = expectedStartIndex, Length = selectionText.Length };
+                Assert.That(change1.Position, Is.EqualTo(expected1));
 
-                // Note thread applies to the verse
+                // This new SF note thread applies to the verse
                 ParatextNoteThreadChange change2 = changes.First(c => c.ThreadId == "thread02");
-                SegmentSelection expected2 = new SegmentSelection { Start = 0, End = 0 };
-                Assert.That(change2.CurrentContextSelection.Equals(expected2), Is.True);
+                TextAnchor expected2 = new TextAnchor { Start = 0, Length = 0 };
+                Assert.That(change2.Position, Is.EqualTo(expected2));
             }
         }
 
@@ -695,8 +698,8 @@ namespace SIL.XForge.Scripture.Services
 
                 // Vigorous text changes, the note defaults to the start
                 ParatextNoteThreadChange change = changes.First(c => c.ThreadId == "thread01");
-                SegmentSelection expected = new SegmentSelection { Start = 0, End = 0 };
-                Assert.That(change.CurrentContextSelection.Equals(expected), Is.True);
+                TextAnchor expected = new TextAnchor { Start = 0, Length = 0 };
+                Assert.That(change.Position, Is.EqualTo(expected));
             }
         }
 
@@ -758,7 +761,7 @@ namespace SIL.XForge.Scripture.Services
                 // Added comment
                 ParatextNoteThreadChange change03 = changes.Where(c => c.ThreadId == "thread03").Single();
                 Assert.That(change03.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread03 context after-Start:15-End:37-MAT 1:3-01flag1"));
+                    Is.EqualTo("Context before Text selected thread03 context after-Start:15-Length:22-MAT 1:3-01flag1"));
                 Assert.That(change03.NotesAdded.Count, Is.EqualTo(1));
                 string expected3 = "thread03-syncuser02-user02-<p>thread03 note 1.</p>-01flag1";
                 Assert.That(change03.NotesAdded[0].NoteToString(), Is.EqualTo(expected3));
@@ -779,7 +782,7 @@ namespace SIL.XForge.Scripture.Services
                 // Added conflict comment
                 ParatextNoteThreadChange change06 = changes.Where(c => c.ThreadId == "thread06").Single();
                 Assert.That(change06.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread06 context after-Start:15-End:37-MAT 1:6-conflict1"));
+                    Is.EqualTo("Context before Text selected thread06 context after-Start:15-Length:22-MAT 1:6-conflict1"));
                 string expected6 = "thread06-syncuser01-user02-<p>thread06 note 1.</p>-conflict1";
                 Assert.That(change06.NotesAdded[0].NoteToString(), Is.EqualTo(expected6));
             }
@@ -805,7 +808,7 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(thread.Comments.Count, Is.EqualTo(1));
                 var comment = thread.Comments.First();
                 string expected = "thread01/User 02/2019-01-01T08:00:00.0000000+00:00-" + "MAT 1:1-" +
-                    "<p>thread01 note 1.</p>-" + "Start:15-" + "user02-" + "Tag:1";
+                    "<p>thread01 note 1.</p>-" + "Start:0-" + "user02-" + "Tag:1";
                 Assert.That(comment.CommentToString(), Is.EqualTo(expected));
                 Assert.That(syncUsers.Keys, Is.EquivalentTo(new[] { env.Username02 }));
 
@@ -1742,11 +1745,10 @@ namespace SIL.XForge.Scripture.Services
                         ProjectRef = "project01",
                         OwnerRef = "user01",
                         VerseRef = new VerseRefData(40, 1, comp.threadNum),
-                        SelectedText = "Text selected " + threadId,
-                        ContextBefore = "Context before ",
-                        StartPosition = 15,
-                        CurrentContextSelection = new SegmentSelection { Start = 15, End = 37 },
-                        ContextAfter = " context after"
+                        OriginalSelectedText = "Text selected " + threadId,
+                        OriginalContextBefore = "Context before ",
+                        Position = new TextAnchor { Start = 15, Length = 22 },
+                        OriginalContextAfter = " context after"
                     };
                     List<Note> notes = new List<Note>();
                     for (int i = 1; i <= comp.noteCount; i++)

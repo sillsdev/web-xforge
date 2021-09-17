@@ -671,12 +671,11 @@ namespace SIL.XForge.Scripture.Services
                             DataId = change.ThreadId,
                             ProjectRef = _projectDoc.Id,
                             VerseRef = vrd,
-                            SelectedText = change.SelectedText,
-                            ContextBefore = change.ContextBefore,
-                            ContextAfter = change.ContextAfter,
-                            StartPosition = change.StartPosition,
+                            OriginalSelectedText = change.SelectedText,
+                            OriginalContextBefore = change.ContextBefore,
+                            OriginalContextAfter = change.ContextAfter,
                             TagIcon = change.TagIcon,
-                            CurrentContextSelection = change.CurrentContextSelection
+                            Position = change.Position
                         });
                         await SubmitChangesOnNoteThreadDocAsync(doc, change, usernamesToUserIds);
                     }
@@ -824,8 +823,8 @@ namespace SIL.XForge.Scripture.Services
                         op.Remove(td => td.Notes, index);
                 }
 
-                if (change.CurrentContextSelection != null)
-                    op.Set(td => td.CurrentContextSelection, change.CurrentContextSelection);
+                if (change.Position != null)
+                    op.Set(td => td.Position, change.Position);
             });
         }
 

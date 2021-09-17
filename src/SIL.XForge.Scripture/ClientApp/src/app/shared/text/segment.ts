@@ -8,6 +8,7 @@ export class Segment {
   private _range: RangeStatic = { index: 0, length: 0 };
   private _checksum?: number;
   private initialTextLen: number = -1;
+  /** Mapping of embed ids to their position in the editor. */
   private _embeddedElements: Map<string, number> = new Map<string, number>();
 
   constructor(public readonly bookNum: number, public readonly chapter: number, public readonly ref: string) {}

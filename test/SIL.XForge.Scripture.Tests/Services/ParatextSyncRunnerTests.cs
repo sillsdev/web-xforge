@@ -1153,7 +1153,8 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             ParatextNoteThread thread01 = env.GetNoteThread("project01", "thread01");
-            string threadExpected = "Context before Scripture text in project context after-Start:0-End:0-MAT 1:1-icon1";
+            string threadExpected =
+                "Context before Scripture text in project context after-Start:0-Length:0-MAT 1:1-icon1";
             Assert.That(thread01.NoteThreadToString(), Is.EqualTo(threadExpected));
             env.DeltaUsxMapper.ReceivedWithAnyArgs(2).ToChapterDeltas(default);
             Assert.That(thread01.Notes.Count, Is.EqualTo(3));
@@ -1187,7 +1188,7 @@ namespace SIL.XForge.Scripture.Services
 
             ParatextNoteThread thread02 = env.GetNoteThread("project01", "thread02");
             string expected = "Context before Scripture text in project context after-" +
-                "Start:0-End:0-MAT 1:1-icon1";
+                "Start:0-Length:0-MAT 1:1-icon1";
             Assert.That(thread02.NoteThreadToString(), Is.EqualTo(expected));
             Assert.That(thread02.Notes.Count, Is.EqualTo(1));
             Assert.That(thread02.Notes[0].Content, Is.EqualTo("New thread02 added."));
@@ -1743,8 +1744,8 @@ namespace SIL.XForge.Scripture.Services
                 if (fromParatext)
                 {
                     var noteThreadChange = new ParatextNoteThreadChange(threadId, verseRef, $"Scripture text in project.",
-                        "Context before ", " context after", 17);
-                    noteThreadChange.CurrentContextSelection = new SegmentSelection { Start = 0, End = 0 };
+                        "Context before ", " context after");
+                    noteThreadChange.Position = new TextAnchor { Start = 0, Length = 0 };
                     noteThreadChange.AddChange(
                         GetNote(threadId, "n01", "syncuser01", $"{threadId} updated.", ChangeType.Updated), ChangeType.Updated);
                     noteThreadChange.AddChange(
@@ -1782,8 +1783,8 @@ namespace SIL.XForge.Scripture.Services
             public void SetupNewNoteThreadChange(string threadId, string syncUserId, string verseRef = "MAT 1:1")
             {
                 var noteThreadChange = new ParatextNoteThreadChange(threadId, verseRef, $"Scripture text in project",
-                    "Context before ", " context after", 17, "icon1");
-                noteThreadChange.CurrentContextSelection = new SegmentSelection { Start = 0, End = 0 };
+                    "Context before ", " context after", "icon1");
+                noteThreadChange.Position = new TextAnchor { Start = 0, Length = 0 };
                 noteThreadChange.AddChange(
                     GetNote(threadId, "n01", syncUserId, $"New {threadId} added.", ChangeType.Added), ChangeType.Added);
                 ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
@@ -1795,7 +1796,7 @@ namespace SIL.XForge.Scripture.Services
             public void SetupNoteRemovedChange(string threadId, string noteId, string verseRef = "MAT 1:1")
             {
                 var noteThreadChange = new ParatextNoteThreadChange(threadId, verseRef, $"{threadId} selected text.",
-                    "Context before ", " context after", 17, "icon1");
+                    "Context before ", " context after", "icon1");
                 if (noteId == null)
                     noteThreadChange.ThreadRemoved = true;
                 else
@@ -1820,9 +1821,9 @@ namespace SIL.XForge.Scripture.Services
                             ProjectRef = "project01",
                             OwnerRef = "user01",
                             VerseRef = new VerseRefData(Canon.BookIdToNumber(book.Id), chapter, 1),
-                            ContextBefore = "Context before ",
-                            ContextAfter = " context after",
-                            SelectedText = "Scripture text in project",
+                            OriginalContextBefore = "Context before ",
+                            OriginalContextAfter = " context after",
+                            OriginalSelectedText = "Scripture text in project",
                             TagIcon = "icon1",
                             Notes = new List<Note>()
                             {
