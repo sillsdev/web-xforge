@@ -13,7 +13,7 @@ import { TranslocoService } from '@ngneat/transloco';
 import isEqual from 'lodash-es/isEqual';
 import merge from 'lodash-es/merge';
 import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
-import { SegmentSelection } from 'realtime-server/lib/esm/scriptureforge/models/segment-selection';
+import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { fromEvent } from 'rxjs';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -54,13 +54,14 @@ export interface TextUpdatedEvent {
   delta?: DeltaStatic;
   prevSegment?: Segment;
   segment?: Segment;
+  oldSegmentEmbeds?: Map<string, number>;
 }
 
 export interface FeaturedVerseRefInfo {
   verseRef: VerseRef;
   id: string;
   iconName?: string;
-  segmentSelection?: SegmentSelection;
+  textAnchor?: TextAnchor;
   preview?: string;
 }
 
@@ -331,7 +332,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return 'auto';
   }
 
-  // Useful for testing
   get embeddedElements(): Readonly<Map<string, number>> {
     return this.viewModel.embeddedElements;
   }
@@ -486,10 +486,11 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return segments;
   }
 
+  /** Embeds an element, with the specified format, into the quill editor. */
   embedElementInline(
     verseRef: VerseRef,
     id: string,
-    segmentSelection: SegmentSelection,
+    textAnchor: TextAnchor,
     formatName: string,
     format: any
   ): string | undefined {
@@ -500,7 +501,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     // A single verse can be associated with multiple segments (e.g verse_1_1, verse_1_1/p_1)
     const verseSegments: string[] = this.getVerseSegments(verseRef);
     let segmentRange: RangeStatic | undefined = this.getSegmentRange(verseSegments[0]);
-    let selectionStart: number = segmentSelection.start;
+    let startIndexInSegment: number = textAnchor.start;
     if (Array.from(this.viewModel.embeddedElements.keys()).includes(id)) {
       return;
     }
@@ -508,25 +509,28 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     let segment: string = verseSegments[0];
     for (const vs of verseSegments) {
       const range: RangeStatic | undefined = this.getSegmentRange(vs);
-      if (range != null) {
-        if (range.length > selectionStart) {
-          segmentRange = range;
-          segment = vs;
-          break;
-        } else {
-          selectionStart -= range.length - this.getEmbedCountInSegmentBefore(range.length - 1, range.index);
-          continue;
-        }
+      if (range == null) {
+        console.warn(`Warning: Could not find range for verse segment: ${vs}`);
+        break;
       }
-      break;
+      if (range.length > startIndexInSegment) {
+        segmentRange = range;
+        segment = vs;
+        break;
+      } else {
+        // The embed starts in a later segment. Subtract the text only length of this segment from the start index
+        startIndexInSegment -= range.length - this.getEmbedCountInSegmentBefore(range.length - 1, range.index);
+        continue;
+      }
     }
 
     if (segmentRange == null) {
+      console.warn(`Warning: Unexpectedly did not find a suitable segment range to embed in.`);
       return;
     }
 
-    const embedInsertIndex: number =
-      segmentRange.index + selectionStart + this.getEmbedCountInSegmentBefore(selectionStart, segmentRange.index);
+    const embedsInSegmentBefore: number = this.getEmbedCountInSegmentBefore(startIndexInSegment, segmentRange.index);
+    const embedInsertIndex: number = segmentRange.index + startIndexInSegment + embedsInSegmentBefore;
     this.editor.insertEmbed(embedInsertIndex, formatName, format, 'api');
     this.updateSegment();
     return segment;
@@ -733,6 +737,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     const prevSegment = this._segment;
+    const oldSegmentEmbeds: Map<string, number> | undefined =
+      this._segment == null ? undefined : this._segment.embeddedElement;
     if (segmentRef != null) {
       // update/switch current segment
       if (!this.tryChangeSegment(segmentRef, checksum, focus) && this._segment != null) {
@@ -747,7 +753,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     Promise.resolve().then(() => this.adjustSelection());
-    this.updated.emit({ delta, prevSegment, segment: this._segment });
+    this.updated.emit({ delta, prevSegment, segment: this._segment, oldSegmentEmbeds: oldSegmentEmbeds });
   }
 
   private tryChangeSegment(
@@ -836,10 +842,19 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       newSel = { index: this._segment.range.index + this._segment.range.length, length: 0 };
     } else if (!this.multiSegmentSelection) {
       // selections outside of the text chooser dialog are not permitted to extend across segments
-      const newStart = Math.max(sel.index, this._segment.range.index);
+      let newStart = Math.max(sel.index, this._segment.range.index);
       const oldEnd = sel.index + sel.length;
       const segEnd = this._segment.range.index + this._segment.range.length;
       const newEnd = Math.min(oldEnd, segEnd);
+
+      const embedIndices: number[] = Array.from(this._segment.embeddedElement.values()).sort();
+      if (newStart === this._segment.range.index || embedIndices.includes(newStart - 1)) {
+        // if the selection is before an embed at the start of the segment or
+        // the selection is between embeds, move the selection behind it
+        while (embedIndices.includes(newStart)) {
+          newStart++;
+        }
+      }
       newSel = { index: newStart, length: Math.max(0, newEnd - newStart) };
     }
     if (newSel != null && (sel.index !== newSel.index || sel.length !== newSel.length)) {
@@ -848,13 +863,15 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   /** Get the number of embedded elements before a given position in a segment */
-  private getEmbedCountInSegmentBefore(position: number, segmentIndex: number): number {
-    const segmentNoteIndices: number[] = Array.from(this.embeddedElements.values());
-    let notesCount: number = segmentNoteIndices.filter(n => n >= segmentIndex && n < segmentIndex + position).length;
-    if (notesCount > 0) {
-      notesCount += this.getEmbedCountInSegmentBefore(notesCount, segmentIndex + position);
+  private getEmbedCountInSegmentBefore(position: number, segmentStartIndex: number): number {
+    const segmentEmbedIndices: number[] = Array.from(this.embeddedElements.values());
+    let embedCount: number = segmentEmbedIndices.filter(
+      n => n >= segmentStartIndex && n < segmentStartIndex + position
+    ).length;
+    if (embedCount > 0) {
+      embedCount += this.getEmbedCountInSegmentBefore(embedCount, segmentStartIndex + position);
     }
-    return notesCount;
+    return embedCount;
   }
 
   private setHighlightMarkerPosition(): void {

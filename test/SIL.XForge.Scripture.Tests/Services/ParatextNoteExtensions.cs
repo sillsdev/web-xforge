@@ -18,9 +18,9 @@ namespace SIL.XForge.Scripture.Services
 
         public static string ThreadChangeToString(this ParatextNoteThreadChange thread)
         {
-            string selection = thread.CurrentContextSelection == null
+            string selection = thread.Position == null
                 ? string.Empty
-                : $"-Start:{thread.CurrentContextSelection.Start}-End:{thread.CurrentContextSelection.End}";
+                : $"-Start:{thread.Position.Start}-Length:{thread.Position.Length}";
             string result = thread.ContextBefore + thread.SelectedText + thread.ContextAfter +
                 $"{selection}-{thread.VerseRefStr}";
             if (thread.TagIcon != null)
@@ -30,10 +30,10 @@ namespace SIL.XForge.Scripture.Services
 
         public static string NoteThreadToString(this ParatextNoteThread thread)
         {
-            string selection = thread.CurrentContextSelection == null
+            string selection = thread.Position == null
                 ? string.Empty
-                : $"-Start:{thread.CurrentContextSelection.Start}-End:{thread.CurrentContextSelection.End}";
-            string result = thread.ContextBefore + thread.SelectedText + thread.ContextAfter +
+                : $"-Start:{thread.Position.Start}-Length:{thread.Position.Length}";
+            string result = thread.OriginalContextBefore + thread.OriginalSelectedText + thread.OriginalContextAfter +
                 $"{selection}-{thread.VerseRef.ToString()}-{thread.TagIcon}";
             return result;
         }

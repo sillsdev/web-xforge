@@ -21,9 +21,9 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { ParatextNoteThread } from 'realtime-server/lib/esm/scriptureforge/models/paratext-note-thread';
-import { SegmentSelection } from 'realtime-server/lib/esm/scriptureforge/models/segment-selection';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
@@ -425,7 +425,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.trainingProgressClosed = true;
   }
 
-  async onTargetUpdated(segment?: Segment, delta?: DeltaStatic, prevSegment?: Segment): Promise<void> {
+  async onTargetUpdated(
+    segment?: Segment,
+    delta?: DeltaStatic,
+    prevSegment?: Segment,
+    oldSegmentEmbeds?: Map<string, number>
+  ): Promise<void> {
     if (this.target == null || this.target.editor == null) {
       return;
     }
@@ -485,8 +490,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.insertSuggestionEnd = -1;
           this.target.editor.setSelection(selectIndex, 0, 'user');
         }
-        if (segment != null) {
-          await this.updateSegmentNoteThreadSelections(segment, delta);
+        if (segment != null && oldSegmentEmbeds != null) {
+          await this.updateSegmentNoteThreadAnchors(oldSegmentEmbeds, delta);
         }
       }
 
@@ -632,7 +637,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.target.embedElementInline(
           featured.verseRef,
           featured.id,
-          featured.segmentSelection ?? { start: 0, end: 0 },
+          featured.textAnchor ?? { start: 0, length: 0 },
           'note-thread-embed',
           format
         );
@@ -978,7 +983,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       id: thread.dataId,
       preview,
       iconName: iconDefinedNotes.length === 0 ? thread.tagIcon : iconDefinedNotes[iconDefinedNotes.length - 1].tagIcon,
-      segmentSelection: thread.currentContextSelection
+      textAnchor: thread.position
     };
   }
 
@@ -986,74 +991,128 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return xmlContent.replace(/<[^>]+>/g, '');
   }
 
-  /** Update the text selections for the note threads in the current segment. */
-  private async updateSegmentNoteThreadSelections(segment: Segment, delta: DeltaStatic): Promise<void> {
-    // update the note
-    if (this.noteThreadQuery != null && this.noteThreadQuery.docs.length > 0) {
-      const updatePromises: Promise<boolean>[] = [];
-      if (delta.ops != null && delta.ops.length >= 2 && delta.ops[0].retain != null) {
-        if (segment != null) {
-          for (const [threadId, _] of segment.embeddedElement.entries()) {
-            const noteThreadDoc: ParatextNoteThreadDoc | undefined = this.noteThreadQuery.docs.find(
-              n => n.data?.dataId === threadId
-            );
-            if (noteThreadDoc?.data == null) {
-              continue;
-            }
+  /** Update the text anchors for the note threads in the current segment. */
+  private async updateSegmentNoteThreadAnchors(
+    oldSegmentEmbeds: Map<string, number>,
+    delta: DeltaStatic
+  ): Promise<void> {
+    if (this.noteThreadQuery == null || this.noteThreadQuery.docs.length < 1) {
+      return;
+    }
+    const updatePromises: Promise<boolean>[] = [];
+    if (delta.ops == null || delta.ops.length < 2) {
+      // If the length is less than two, it can be skipped
+      return;
+    }
+    for (const [threadId, _] of oldSegmentEmbeds.entries()) {
+      const noteThreadDoc: ParatextNoteThreadDoc | undefined = this.noteThreadQuery.docs.find(
+        n => n.data?.dataId === threadId
+      );
+      if (noteThreadDoc?.data == null) {
+        continue;
+      }
 
-            const noteSelection: SegmentSelection = noteThreadDoc.data.currentContextSelection ?? { start: 0, end: 0 };
-            let newSelection: SegmentSelection | undefined;
-            let length = 0;
-            // get the length that was inserted or deleted to apply to the note selection
-            if (delta.ops[1].insert != null && typeof delta.ops[1].insert === 'string') {
-              length = delta.ops[1].insert.length;
-            } else if (delta.ops[1].delete != null) {
-              length = delta.ops[1].delete * -1;
-            }
+      const oldNoteSelection: TextAnchor = noteThreadDoc.data.position ?? { start: 0, end: 0 };
+      let newSelection: TextAnchor | undefined;
+      let length = 0;
+      let operation: 'insert' | 'delete' = 'insert';
+      // get the length that was inserted or deleted to apply to the note selection
+      if (delta.ops[1].insert != null && typeof delta.ops[1].insert === 'string') {
+        length = delta.ops[1].insert.length;
+      } else if (delta.ops[1].delete != null) {
+        length = delta.ops[1].delete;
+        operation = 'delete';
+      }
 
-            if (length !== 0) {
-              const editOpIndex: number = delta.ops[0].retain;
-              const noteIndex: number | undefined = segment.embeddedElement.get(threadId);
-              if (noteIndex != null) {
-                if (noteIndex >= editOpIndex) {
-                  // the edit comes before the note
-                  newSelection = { start: noteSelection.start + length, end: noteSelection.end + length };
-                } else {
-                  let selectionLength: number = noteSelection.end - noteSelection.start;
-                  selectionLength += this.getEmbedCountWithinSelection(segment, noteSelection);
-                  if (editOpIndex < noteIndex + selectionLength) {
-                    // the edit comes within the note
-                    newSelection = { start: noteSelection.start, end: noteSelection.end + length };
-                  }
-                }
-              }
-              if (newSelection != null) {
-                updatePromises.push(
-                  noteThreadDoc.submitJson0Op(op => op.set(n => n.currentContextSelection, newSelection))
-                );
-              }
-            }
-          }
-        }
-        await Promise.all(updatePromises);
+      if (length === 0) {
+        continue;
+      }
+      const editOpIndex: number | undefined = delta.ops[0].retain;
+      if (editOpIndex == null) {
+        continue;
+      }
+      newSelection = this.getUpdatedTextAnchor(
+        oldNoteSelection,
+        oldSegmentEmbeds,
+        threadId,
+        editOpIndex,
+        length,
+        operation
+      );
+      if (newSelection != null) {
+        updatePromises.push(noteThreadDoc.submitJson0Op(op => op.set(n => n.position, newSelection)));
       }
     }
+    await Promise.all(updatePromises);
   }
 
-  /** Finds the number of embedded elements that fall within the selection of a segment. */
-  private getEmbedCountWithinSelection(segment: Segment, selection: SegmentSelection): number {
+  /** Finds the number of embedded elements included within the text anchor of a segment. */
+  private getEmbedCountInAnchorRange(embeds: Map<string, number>, embedIndex: number, anchorLength: number): number {
     let embedCount = 0;
-    const startIndex = segment.range.index + selection.start;
-    let endIndex = segment.range.index + selection.end;
-    const embedIndices: number[] = Array.from(segment.embeddedElement.values()).sort();
+    let endIndex = embedIndex + anchorLength;
+    // sort the indices so we count the segment embeds in ascending order
+    const embedIndices: number[] = Array.from(embeds.values()).sort();
     for (const index of embedIndices) {
-      if (index > startIndex && index < endIndex) {
+      if (index >= embedIndex && index <= endIndex) {
         embedCount++;
-        // account for the embed that was found
+        // add the embed to the length to search
         endIndex++;
+      } else {
+        break;
       }
     }
     return embedCount;
+  }
+
+  /** Gets the updated text anchor for a note thread given the positions of the old embeds and the text edit applied. */
+  private getUpdatedTextAnchor(
+    oldTextAnchor: TextAnchor,
+    oldSegmentEmbedPositions: Map<string, number>,
+    embedId: string,
+    editIndex: number,
+    editLength: number,
+    operation: 'insert' | 'delete'
+  ): TextAnchor | undefined {
+    const embedIndex: number | undefined = oldSegmentEmbedPositions.get(embedId);
+    if (embedIndex == null) {
+      return;
+    }
+    if (operation === 'insert') {
+      const embedCount = this.getEmbedCountInAnchorRange(oldSegmentEmbedPositions, embedIndex, oldTextAnchor.length);
+      const noteAnchorEndIndex = embedIndex + oldTextAnchor.length + embedCount;
+      if (editIndex <= embedIndex) {
+        return { start: oldTextAnchor.start + editLength, length: oldTextAnchor.length };
+      } else if (editIndex > embedIndex && editIndex <= noteAnchorEndIndex) {
+        return { start: oldTextAnchor.start, length: oldTextAnchor.length + editLength };
+      }
+      return oldTextAnchor;
+    }
+
+    let lengthBefore = 0;
+    let lengthWithin = 0;
+    const embedPositions: Set<number> = new Set(oldSegmentEmbedPositions.values());
+
+    for (let charIndex = editIndex; charIndex < editIndex + editLength; charIndex++) {
+      if (embedPositions.has(charIndex)) {
+        continue;
+      }
+      if (charIndex < embedIndex) {
+        lengthBefore++;
+      } else if (charIndex > embedIndex && charIndex <= embedIndex + oldTextAnchor.length) {
+        lengthWithin++;
+      } else {
+        break;
+      }
+    }
+
+    if (lengthWithin >= oldTextAnchor.length) {
+      return { start: 0, length: 0 };
+    }
+
+    return {
+      start: oldTextAnchor.start - lengthBefore,
+      length: oldTextAnchor.length - lengthWithin
+    };
   }
 
   private syncScroll(): void {

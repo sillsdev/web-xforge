@@ -21,7 +21,7 @@ export class ParatextNoteThreadService extends SFProjectDataService<ParatextNote
     const immutableProps = [
       this.pathTemplate(t => t.dataId),
       this.pathTemplate(t => t.verseRef),
-      this.pathTemplate(t => t.selectedText),
+      this.pathTemplate(t => t.originalSelectedText),
       this.pathTemplate(t => t.notes[ANY_INDEX].dataId),
       this.pathTemplate(t => t.notes[ANY_INDEX].ownerRef),
       this.pathTemplate(t => t.notes[ANY_INDEX].dateCreated)

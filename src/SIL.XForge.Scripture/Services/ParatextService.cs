@@ -738,6 +738,10 @@ namespace SIL.XForge.Scripture.Services
             PutCommentThreads(userSecret, projectId, changeList);
         }
 
+        /// <summary>
+        /// Returns a list of changes to apply to SF note threads to match the corresponding
+        /// PT comment threads for a given book.
+        /// </summary>
         public IEnumerable<ParatextNoteThreadChange> GetNoteThreadChanges(UserSecret userSecret, string projectId,
             int bookNum, IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs,
             Dictionary<int, ChapterDelta> chapterDeltas, Dictionary<string, SyncUser> syncUsers)
@@ -751,8 +755,8 @@ namespace SIL.XForge.Scripture.Services
             {
                 List<string> matchedCommentIds = new List<string>();
                 ParatextNoteThreadChange threadChange = new ParatextNoteThreadChange(threadDoc.Data.DataId,
-                    threadDoc.Data.VerseRef.ToString(), threadDoc.Data.SelectedText, threadDoc.Data.ContextBefore,
-                    threadDoc.Data.ContextAfter, threadDoc.Data.StartPosition);
+                    threadDoc.Data.VerseRef.ToString(), threadDoc.Data.OriginalSelectedText, threadDoc.Data.OriginalContextBefore,
+                    threadDoc.Data.OriginalContextAfter);
                 // Find the corresponding comment thread
                 var existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
                 if (existingThread == null)
@@ -795,12 +799,12 @@ namespace SIL.XForge.Scripture.Services
                 if (existingThread.Comments.Count > 0)
                 {
                     // Get the selection that the note applies to
-                    SegmentSelection selection =
-                        GetNoteSelectionInCurrentContext(existingThread.Comments[0], chapterDeltas);
-                    if (!selection.Equals(threadDoc.Data.CurrentContextSelection))
-                        threadChange.CurrentContextSelection = selection;
+                    TextAnchor range =
+                        GetCurrentSegmentRangeFromComment(existingThread.Comments[0], chapterDeltas);
+                    if (!range.Equals(threadDoc.Data.Position))
+                        threadChange.Position = range;
                 }
-                if (threadChange.HasChange || threadChange.CurrentContextSelection != null)
+                if (threadChange.HasChange)
                     changes.Add(threadChange);
             }
 
@@ -811,11 +815,14 @@ namespace SIL.XForge.Scripture.Services
                 CommentThread thread = commentThreads.Single(ct => ct.Id == threadId);
                 Paratext.Data.ProjectComments.Comment info = thread.Comments[0];
 
-                int tagId = info.TagsAdded != null && info.TagsAdded.Length > 0 ? int.Parse(info.TagsAdded[0]) : 1;
+                int defaultTagId = 1;
+                int tagId = info.TagsAdded != null && info.TagsAdded.Length > 0
+                    ? int.Parse(info.TagsAdded[0])
+                    : defaultTagId;
                 CommentTag initialTag = info.Type == NoteType.Conflict ? CommentTag.ConflictTag : commentTags.Get(tagId);
                 ParatextNoteThreadChange newThread = new ParatextNoteThreadChange(threadId, info.VerseRefStr,
-                    info.SelectedText, info.ContextBefore, info.ContextAfter, info.StartPosition, initialTag.Icon);
-                newThread.CurrentContextSelection = GetNoteSelectionInCurrentContext(info, chapterDeltas);
+                    info.SelectedText, info.ContextBefore, info.ContextAfter, initialTag.Icon);
+                newThread.Position = GetCurrentSegmentRangeFromComment(info, chapterDeltas);
 
                 foreach (var comm in thread.Comments)
                 {
@@ -1486,12 +1493,11 @@ namespace SIL.XForge.Scripture.Services
                         var comment = new Paratext.Data.ProjectComments.Comment(ptUser)
                         {
                             VerseRefStr = threadDoc.Data.VerseRef.ToString(),
-                            SelectedText = threadDoc.Data.SelectedText,
-                            ContextBefore = threadDoc.Data.ContextBefore,
-                            ContextAfter = threadDoc.Data.ContextAfter,
-                            StartPosition = threadDoc.Data.StartPosition
+                            SelectedText = threadDoc.Data.OriginalSelectedText,
+                            ContextBefore = threadDoc.Data.OriginalContextBefore,
+                            ContextAfter = threadDoc.Data.OriginalContextAfter
                         };
-                        ExtractCommentFromNote(note, comment, commentTags);
+                        PopulateCommentFromNote(note, comment, commentTags);
                         thread.Add(comment);
                         if (note.SyncUserRef == null)
                         {
@@ -1521,7 +1527,7 @@ namespace SIL.XForge.Scripture.Services
             return ChangeType.None;
         }
 
-        private void ExtractCommentFromNote(Note note, Paratext.Data.ProjectComments.Comment comment,
+        private void PopulateCommentFromNote(Note note, Paratext.Data.ProjectComments.Comment comment,
             CommentTags commentTags)
         {
 
@@ -1580,18 +1586,18 @@ namespace SIL.XForge.Scripture.Services
             return bldr.ToString();
         }
 
-        private SegmentSelection GetNoteSelectionInCurrentContext(Paratext.Data.ProjectComments.Comment comment,
+        private TextAnchor GetCurrentSegmentRangeFromComment(Paratext.Data.ProjectComments.Comment comment,
             Dictionary<int, ChapterDelta> chapterDeltas, IDocument<TextData> defaultDoc = null)
         {
             if (!chapterDeltas.TryGetValue(comment.VerseRef.ChapterNum, out ChapterDelta chapterDelta) ||
                 comment.StartPosition == 0)
-                return new SegmentSelection();
+                return new TextAnchor();
 
             string verse = GetVerseText(chapterDelta.Delta, comment.VerseRef);
             int startPos = 0;
             PtxUtils.StringUtils.MatchContexts(verse, comment.ContextBefore, comment.SelectedText,
                 comment.ContextAfter, null, ref startPos, out int endPos);
-            return new SegmentSelection { Start = startPos, End = endPos };
+            return new TextAnchor { Start = startPos, Length = endPos - startPos };
         }
 
         private SyncUser FindOrCreateSyncUser(string paratextUsername, Dictionary<string, SyncUser> syncUsers)
