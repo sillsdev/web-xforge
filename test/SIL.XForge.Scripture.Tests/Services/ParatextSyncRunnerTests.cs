@@ -1126,11 +1126,11 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, false, false, true, book);
             env.SetupPTData(book);
             env.SetupNoteChanges("thread01", "MAT 1:1", false);
-            env.ParatextService.UpdateParatextComments(Arg.Any<UserSecret>(), default, default,
+            await env.ParatextService.UpdateParatextCommentsAsync(Arg.Any<UserSecret>(), default, default,
                 Arg.Any<IEnumerable<IDocument<ParatextNoteThread>>>(), Arg.Any<Dictionary<string, SyncUser>>());
 
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
-            env.ParatextService.Received(1).UpdateParatextComments(Arg.Any<UserSecret>(), "target", 40,
+            await env.ParatextService.Received(1).UpdateParatextCommentsAsync(Arg.Any<UserSecret>(), "target", 40,
                 Arg.Is<IEnumerable<IDocument<ParatextNoteThread>>>(t =>
                     t.Count() == 1 && t.First().Id == "project01:thread01"),
                 Arg.Any<Dictionary<string, SyncUser>>()

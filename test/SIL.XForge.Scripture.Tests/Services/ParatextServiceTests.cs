@@ -809,12 +809,13 @@ namespace SIL.XForge.Scripture.Services
 
             string threadId = "thread01";
             env.AddParatextNoteThreadData(new[]
-                { new ThreadComponents { threadNum = 1, noteCount = 1, username = env.Username01 } });
+                { new ThreadComponents { threadNum = 1, noteCount = 1, isNew = true } });
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 IDocument<ParatextNoteThread> noteThreadDoc = await env.GetNoteThreadDocAsync(conn, threadId);
                 Dictionary<string, SyncUser> syncUsers = new Dictionary<string, SyncUser>();
-                env.Service.UpdateParatextComments(userSecret, ptProjectId, 40, new[] { noteThreadDoc }, syncUsers);
+                await env.Service.UpdateParatextCommentsAsync(userSecret, ptProjectId, 40, new[] { noteThreadDoc },
+                    syncUsers);
                 CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
                 Assert.That(thread.Comments.Count, Is.EqualTo(1));
                 var comment = thread.Comments.First();
@@ -822,6 +823,7 @@ namespace SIL.XForge.Scripture.Services
                     "<p>thread01 note 1.</p>-" + "Start:0-" + "user02-" + "Tag:1";
                 Assert.That(comment.CommentToString(), Is.EqualTo(expected));
                 Assert.That(syncUsers.Keys, Is.EquivalentTo(new[] { env.Username02 }));
+                Assert.That(noteThreadDoc.Data.Notes[0].SyncUserRef, Is.EqualTo("syncuser02"));
 
                 // PT username is not written to server logs
                 env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.Message.Contains(env.Username02));
@@ -850,7 +852,8 @@ namespace SIL.XForge.Scripture.Services
                 {
                     new SyncUser { Id =  "syncuser01", ParatextUsername = env.Username01 }
                 }.ToDictionary(u => u.ParatextUsername);
-                env.Service.UpdateParatextComments(userSecret, ptProjectId, 40, new[] { noteThreadDoc }, syncUsers);
+                await env.Service.UpdateParatextCommentsAsync(userSecret, ptProjectId, 40, new[] { noteThreadDoc },
+                    syncUsers);
 
                 CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
                 Assert.That(thread.Comments.Count, Is.EqualTo(1));
@@ -888,7 +891,8 @@ namespace SIL.XForge.Scripture.Services
                 {
                     new SyncUser { Id =  "syncuser01", ParatextUsername = env.Username01 }
                 }.ToDictionary(u => u.ParatextUsername);
-                env.Service.UpdateParatextComments(userSecret, ptProjectId, 40, new[] { noteThreadDoc }, syncUsers);
+                await env.Service.UpdateParatextCommentsAsync(userSecret, ptProjectId, 40, new[] { noteThreadDoc },
+                    syncUsers);
 
                 CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
                 Assert.That(thread.Comments.Count, Is.EqualTo(1));
@@ -1206,6 +1210,7 @@ namespace SIL.XForge.Scripture.Services
             public int threadNum;
             public int noteCount;
             public string username;
+            public bool isNew;
             public bool isEdited;
             public bool isDeleted;
             public bool isConflict;
@@ -1775,7 +1780,7 @@ namespace SIL.XForge.Scripture.Services
                             OwnerRef = "user02",
                             ExtUserId = "user02",
                             Content = comp.isEdited ? $"<p>{threadId} note {i}: EDITED.</p>" : $"<p>{threadId} note {i}.</p>",
-                            SyncUserRef = "syncuser01",
+                            SyncUserRef = comp.isNew ? null : "syncuser01",
                             DateCreated = new DateTime(2019, 1, i, 8, 0, 0, DateTimeKind.Utc),
                             TagIcon = $"icon{comp.threadNum}",
                             Deleted = comp.isDeleted

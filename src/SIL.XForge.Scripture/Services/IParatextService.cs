@@ -35,7 +35,7 @@ namespace SIL.XForge.Scripture.Services
             Dictionary<int, string> chapterAuthors = null);
         string GetNotes(UserSecret userSecret, string ptProjectId, int bookNum);
         void PutNotes(UserSecret userSecret, string ptProjectId, string notesText);
-        void UpdateParatextComments(UserSecret userSecret, string projectId, int bookNum,
+        Task UpdateParatextCommentsAsync(UserSecret userSecret, string projectId, int bookNum,
             IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs, Dictionary<string, SyncUser> syncUsers);
         IEnumerable<ParatextNoteThreadChange> GetNoteThreadChanges(UserSecret userSecret, string projectId, int bookNum,
             IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs, Dictionary<int, ChapterDelta> chapterDeltas,
