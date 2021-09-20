@@ -48,7 +48,7 @@ describe('ScriptureChooserDialog', () => {
     expect(env.dialogText).not.toContain('Matthew');
     expect(env.dialogText).toContain(env.backIconName);
     expect(env.dialogText).toContain('chapter');
-    expect(env.chapter3).not.toBeNull('missing chapter 3 button');
+    expect(env.chapter3).withContext('missing chapter 3 button').not.toBeNull();
   }));
 
   it('clicking chapter goes to verse chooser, shows back button', fakeAsync(() => {
@@ -61,7 +61,7 @@ describe('ScriptureChooserDialog', () => {
     expect(env.dialogText).not.toContain('Matthew');
     expect(env.dialogText).not.toContain('chapter');
     expect(env.dialogText).toContain(env.backIconName);
-    expect(env.verse21).not.toBeNull('missing verse 21 button');
+    expect(env.verse21).withContext('missing verse 21 button').not.toBeNull();
   }));
 
   it('clicking verse closes and reports selection', fakeAsync(() => {
@@ -94,7 +94,7 @@ describe('ScriptureChooserDialog', () => {
     env.click(env.backoutButton);
     expect(env.dialogText).toContain(env.backIconName);
     expect(env.dialogText).toContain('chapter');
-    expect(env.chapter3).not.toBeNull('missing chapter 3 button');
+    expect(env.chapter3).withContext('missing chapter 3 button').not.toBeNull();
   }));
 
   it('book not highlighted, if no (undefined) incoming reference', fakeAsync(() => {

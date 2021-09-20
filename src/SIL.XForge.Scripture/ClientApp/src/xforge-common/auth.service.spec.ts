@@ -108,7 +108,7 @@ describe('AuthService', () => {
     const returnUrl = 'test-returnUrl';
     const signUp = true;
     const locale = 'es';
-    expect(locale).not.toEqual(env.language, 'setup');
+    expect(locale).withContext('setup').not.toEqual(env.language);
 
     env.service.logIn(returnUrl, signUp, locale);
 
