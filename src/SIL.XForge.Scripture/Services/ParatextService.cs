@@ -798,9 +798,8 @@ namespace SIL.XForge.Scripture.Services
                 }
                 if (existingThread.Comments.Count > 0)
                 {
-                    // Get the selection that the note applies to
-                    TextAnchor range =
-                        GetCommentTextAnchor(existingThread.Comments[0], chapterDeltas);
+                    // Get the text anchor to use for the note
+                    TextAnchor range = GetCommentTextAnchor(existingThread.Comments[0], chapterDeltas);
                     if (!range.Equals(threadDoc.Data.Position))
                         threadChange.Position = range;
                 }
