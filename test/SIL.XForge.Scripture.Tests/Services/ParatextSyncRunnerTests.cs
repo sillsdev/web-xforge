@@ -1743,7 +1743,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 if (fromParatext)
                 {
-                    var noteThreadChange = new ParatextNoteThreadChange(threadId, verseRef, $"Scripture text in project.",
+                    var noteThreadChange = new ParatextNoteThreadChange(threadId, verseRef, $"Scripture text in project",
                         "Context before ", " context after");
                     noteThreadChange.Position = new TextAnchor { Start = 0, Length = 0 };
                     noteThreadChange.AddChange(
