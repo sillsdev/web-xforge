@@ -180,7 +180,7 @@ namespace SIL.XForge.Scripture.Services
                         await UpdateParatextNotesAsync(text, questionDocs);
                         IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs =
                             (await FetchNoteThreadDocsAsync(text.BookNum)).Values;
-                        _paratextService.UpdateParatextComments(_userSecret, targetParatextId, text.BookNum,
+                        await _paratextService.UpdateParatextCommentsAsync(_userSecret, targetParatextId, text.BookNum,
                             noteThreadDocs, _currentSyncUsers);
                     }
                 }
