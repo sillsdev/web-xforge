@@ -834,7 +834,7 @@ namespace SIL.XForge.Scripture.Services
             return changes;
         }
 
-        public void UpdateParatextComments(UserSecret userSecret, string projectId, int bookNum,
+        public async Task UpdateParatextCommentsAsync(UserSecret userSecret, string projectId, int bookNum,
             IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs, Dictionary<string, SyncUser> syncUsers)
         {
             CommentTags commentTags = GetCommentTags(userSecret, projectId);
@@ -842,7 +842,7 @@ namespace SIL.XForge.Scripture.Services
             IEnumerable<CommentThread> commentThreads =
                 GetCommentThreads(userSecret, projectId, bookNum);
             List<List<Paratext.Data.ProjectComments.Comment>> noteThreadChangeList =
-                SFNotesToCommentChangeList(noteThreadDocs, commentThreads, username, commentTags, syncUsers);
+                await SFNotesToCommentChangeListAsync(noteThreadDocs, commentThreads, username, commentTags, syncUsers);
 
             PutCommentThreads(userSecret, projectId, noteThreadChangeList);
         }
@@ -1439,7 +1439,7 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>
         /// Get the comment change lists from the up-to-date note thread docs in the Scripture Forge mongo database.
         /// </summary>
-        private List<List<Paratext.Data.ProjectComments.Comment>> SFNotesToCommentChangeList(
+        private async Task<List<List<Paratext.Data.ProjectComments.Comment>>> SFNotesToCommentChangeListAsync(
             IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs, IEnumerable<CommentThread> commentThreads,
             string defaultUsername, CommentTags commentTags, Dictionary<string, SyncUser> syncUsers)
         {
@@ -1505,13 +1505,11 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
                 if (thread.Count() > 0)
-                    changes.Add(thread);
-                // Set the sync user ref on the notes in the SF Mongo DB
-                threadDoc.SubmitJson0OpAsync(op =>
                 {
-                    foreach ((int index, string syncUserId) in threadNoteSyncUserIds)
-                        op.Set(t => t.Notes[index].SyncUserRef, syncUserId);
-                });
+                    changes.Add(thread);
+                    // Set the sync user ref on the notes in the SF Mongo DB
+                    await UpdateNoteSyncUserAsync(threadDoc, threadNoteSyncUserIds);
+                }
             }
             return changes;
         }
@@ -1612,6 +1610,16 @@ namespace SIL.XForge.Scripture.Services
                 syncUsers.Add(paratextUsername, syncUser);
             }
             return syncUser;
+        }
+
+        private async Task UpdateNoteSyncUserAsync(IDocument<ParatextNoteThread> noteThreadDoc,
+            List<(int, string)> syncUserByNoteIndex)
+        {
+            await noteThreadDoc.SubmitJson0OpAsync(op =>
+            {
+                foreach ((int index, string syncuser) in syncUserByNoteIndex)
+                    op.Set(t => t.Notes[index].SyncUserRef, syncuser);
+            });
         }
 
         // Make sure there are no asynchronous methods called after this until the progress is completed.
