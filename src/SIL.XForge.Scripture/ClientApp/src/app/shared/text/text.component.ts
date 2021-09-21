@@ -400,6 +400,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return this.viewModel.hasSegmentRange(ref);
   }
 
+  /** Respond to text changes in the quill editor. */
   onContentChanged(delta: DeltaStatic, source: string): void {
     this.viewModel.update(delta, source as Sources);
     this.updatePlaceholderText();
