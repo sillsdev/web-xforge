@@ -13,8 +13,11 @@ export function nameof<T>(name: Extract<keyof T, string>): string {
   return name;
 }
 
+/**
+ * Returns a valid 24 character `ObjectID` hex string.
+ */
 export function objectId(): string {
-  return ObjectID.generate();
+  return new ObjectID().toHexString();
 }
 
 export function supportedBrowser(): boolean {
