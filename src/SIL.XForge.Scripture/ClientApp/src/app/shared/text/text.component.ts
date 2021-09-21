@@ -402,11 +402,16 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   /** Respond to text changes in the quill editor. */
   onContentChanged(delta: DeltaStatic, source: string): void {
+    console.debug(`TextComponent: Quill content changed: `, delta);
     this.viewModel.update(delta, source as Sources);
     this.updatePlaceholderText();
     // skip updating when only formatting changes occurred
     if (delta.ops != null && delta.ops.some(op => op.insert != null || op.delete != null)) {
       this.update(delta);
+    } else {
+      console.debug(
+        `TextComponent: Quill content changed. Skipping a kind of update since no insert or delete (only formatting changes occurred).`
+      );
     }
   }
 

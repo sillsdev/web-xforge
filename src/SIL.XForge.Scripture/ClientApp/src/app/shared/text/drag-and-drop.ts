@@ -103,6 +103,9 @@ export class DragAndDrop {
       let newText: string = dragEvent.dataTransfer.getData('text/plain');
       // Replace newlines with a space.
       newText = newText.replace(/(?:\r?\n)+/g, ' ');
+      console.debug(
+        `dnd: inserting into quill ${newText.length} chars in segment ${destinationSegmentRef} at ${startPositionInSegment}.`
+      );
       quill.insertText(insertionPositionInDocument, newText, 'user');
 
       // Identify the selection range, if any, now that we updated the document with an insert. This will be a
@@ -118,6 +121,9 @@ export class DragAndDrop {
         if (dragEvent.dataTransfer.types.includes(DragAndDrop.quillIsSourceToken) && !dragEvent.ctrlKey) {
           // If the drag was started from within quill, then treat the selection as the source data of the drag, and
           // delete the selection. Unless the user was holding the ctrl key to copy text instead of move it.
+          console.debug(
+            `dnd: deleting from quill ${originalSelection.length} chars starting at ${originalSelection.index}.`
+          );
           quill.deleteText(originalSelection.index, originalSelection.length, 'user');
         }
         // Or if the drag was not started from within quill, or the user was holding the ctrl key, then don't delete

@@ -158,6 +158,7 @@ export class TextViewModel {
   update(delta: DeltaStatic, source: Sources): void {
     const editor = this.checkEditor();
     if (this.textDoc == null) {
+      console.warn(`text-view-model update(): this.textDoc was unexpectedly null.`);
       return;
     }
 
@@ -167,6 +168,8 @@ export class TextViewModel {
       if (modelDelta.ops != null && modelDelta.ops.length > 0) {
         this.textDoc.submit(modelDelta, this.editor);
       }
+    } else {
+      console.debug(`text-view-model update(): Not passing quill editor change on to doc.`);
     }
 
     // Re-compute segment boundaries so the insertion point stays in the right place.
