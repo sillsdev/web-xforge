@@ -268,10 +268,13 @@ describe('EditorComponent', () => {
         }
       });
       op = segmentContents.ops![1];
-      expect(op.insert.blank).toBe(true);
+      expect(op.insert.blank).toBeUndefined();
       expect(op.attributes!.segment).toEqual('verse_1_4/p_1');
 
-      const index = env.typeCharacters('t');
+      let index = env.targetEditor.getSelection()!.index;
+      const length = 'Paragraph break.'.length;
+      env.targetEditor.setSelection(index - length, length, 'user');
+      index = env.typeCharacters('t');
       segmentRange = env.component.target!.segment!.range;
       segmentContents = env.targetEditor.getContents(segmentRange.index, segmentRange.length);
 
@@ -288,7 +291,7 @@ describe('EditorComponent', () => {
       expect(op.insert.blank).toBeUndefined();
       expect(op.attributes!.segment).toEqual('verse_1_4/p_1');
 
-      env.targetEditor.setSelection(index - 2, 1, 'user');
+      env.targetEditor.setSelection(index - 1, 1, 'user');
       env.deleteCharacters();
       segmentRange = env.component.target!.segment!.range;
       segmentContents = env.targetEditor.getContents(segmentRange.index, segmentRange.length);
@@ -1052,6 +1055,7 @@ describe('EditorComponent', () => {
   describe('Note threads', () => {
     it('embeds note on verse segments', fakeAsync(() => {
       const env = new TestEnvironment();
+      env.addParatextNoteThread(6, 2, '', { start: 0, length: 0 }, ['user01']);
       env.setProjectUserConfig();
       env.wait();
       const segment: HTMLElement = env.targetTextEditor.nativeElement.querySelector(
@@ -1074,7 +1078,7 @@ describe('EditorComponent', () => {
       expect(noteVerse3.length).toEqual(3);
 
       const blankSegmentNote = env.targetTextEditor.nativeElement.querySelector(
-        'usx-segment[data-segment="verse_1_4/p_1"] display-note'
+        'usx-segment[data-segment="verse_1_2"] display-note'
       )! as HTMLElement;
       expect(blankSegmentNote).not.toBeNull();
       expect(blankSegmentNote.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
@@ -1148,8 +1152,8 @@ describe('EditorComponent', () => {
       doc = env.getNoteThreadDoc('project01', 'thread04');
       // Add 2 for the two previous embeds
       const noteStart4 = env.component.target!.getSegmentRange('verse_1_3')!.index + doc.data!.position.start + 2;
-      // Add 1 to the position to account for the new line
       doc = env.getNoteThreadDoc('project01', 'thread05');
+      // Add 1 to the position to account for the new line
       const noteStart5 = env.component.target!.getSegmentRange('verse_1_4')!.index + doc.data!.position.start + 1;
       // positions are 11, 34, 54, 55, 93
       const expected = [noteStart1, noteStart2, noteStart3, noteStart4, noteStart5];
@@ -1237,6 +1241,73 @@ describe('EditorComponent', () => {
       env.targetEditor.setSelection(notePosition + noteEmbedLength + noteLength, length, 'user');
       env.deleteCharacters();
       expect(noteThreadDoc.data!.position).toEqual({ start: 8 - length, length: 9 - length });
+      env.dispose();
+    }));
+
+    it('re-embeds a note icon when a user deletes it', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+      expect(Array.from(env.component.target!.embeddedElements.values())).toEqual([11, 34, 54, 55, 93]);
+
+      // deletes just the note icon
+      env.targetEditor.setSelection(11, 1, 'user');
+      env.deleteCharacters();
+      expect(Array.from(env.component.target!.embeddedElements.values())).toEqual([11, 34, 54, 55, 93]);
+      const textDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
+      expect(textDoc.data!.ops![3].insert).toBe('target: chapter 1, verse 1.');
+
+      // delete the icon with other characters
+      env.targetEditor.setSelection(9, 5, 'user');
+      const noteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
+      env.typeCharacters('t');
+      expect(Array.from(env.component.target!.embeddedElements.values())).toEqual([10, 31, 51, 52, 90]);
+      expect(noteThreadDoc.data!.position).toEqual({ start: 7, length: 7 });
+      expect(textDoc.data!.ops![3].insert).toBe('targettapter 1, verse 1.');
+
+      // switch to a different text
+      env.updateParams({ projectId: 'project01', bookId: 'MRK' });
+      env.wait();
+      expect(noteThreadDoc.data!.position).toEqual({ start: 7, length: 7 });
+
+      env.updateParams({ projectId: 'project01', bookId: 'MAT' });
+      env.wait();
+      expect(Array.from(env.component!.target!.embeddedElements.values())).toEqual([10, 31, 51, 52, 90]);
+      env.dispose();
+    }));
+
+    it('handles deleting parts of two notes text anchors', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.addParatextNoteThread(6, 1, 'verse', { start: 19, length: 5 }, ['user01']);
+      env.setProjectUserConfig();
+      env.wait();
+
+      // 1 target: $chapter|-> 1, $ve<-|rse 1.
+      env.targetEditor.setSelection(19, 7, 'user');
+      env.deleteCharacters();
+      const note1 = env.getNoteThreadDoc('project01', 'thread01');
+      expect(note1.data!.position).toEqual({ start: 8, length: 7 });
+      const note2 = env.getNoteThreadDoc('project01', 'thread06');
+      expect(note2.data!.position).toEqual({ start: 15, length: 3 });
+      const textDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
+      expect(textDoc.data!.ops![3].insert).toEqual('target: chapterrse 1.');
+      env.dispose();
+    }));
+
+    it('updates notes anchors in subsequent verse segments', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.addParatextNoteThread(6, 4, 'chapter 1', { start: 8, length: 9 }, ['user01']);
+      env.setProjectUserConfig();
+      env.wait();
+
+      const noteThreadDoc = env.getNoteThreadDoc('project01', 'thread05');
+      expect(noteThreadDoc.data!.position).toEqual({ start: 27, length: 9 });
+      env.targetEditor.setSelection(85, 0, 'user');
+      const text = ' new text ';
+      const length = text.length;
+      env.typeCharacters(text);
+      expect(noteThreadDoc.data!.position).toEqual({ start: 27 + length, length: 9 });
       env.dispose();
     }));
 
@@ -1389,8 +1460,40 @@ describe('EditorComponent', () => {
       expect(note).not.toBeNull();
       note.nativeElement.click();
       env.wait();
-
       verify(mockedMdcDialog.open(NoteDialogComponent, anything())).once();
+      env.dispose();
+    }));
+
+    it('note belongs to a segment after a blank', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread05');
+      expect(noteThreadDoc.data!.position).toEqual({ start: 27, length: 9 });
+      let verse4p1Index = env.component.target!.getSegmentRange('verse_1_4/p_1')!.index;
+      expect(env.getNoteThreadEditorPosition('thread05')).toEqual(verse4p1Index);
+      // user deletes all of the text in segment before
+      const range = env.component.target!.getSegmentRange('verse_1_4')!;
+      env.targetEditor.setSelection(range.index, range.length, 'user');
+      env.deleteCharacters();
+      expect(noteThreadDoc.data!.position).toEqual({ start: 0, length: 9 });
+
+      // user inserts text in blank segment
+      const index = env.component.target!.getSegmentRange('verse_1_4')!.index;
+      env.targetEditor.setSelection(index + 1, 0, 'user');
+      env.wait();
+      const text = 'abc';
+      env.typeCharacters(text);
+      expect(noteThreadDoc.data!.position).toEqual({ start: text.length, length: 9 });
+
+      // switch to a new book and back
+      env.updateParams({ projectId: 'project01', bookId: 'MRK' });
+      env.wait();
+      env.updateParams({ projectId: 'project01', bookId: 'MAT' });
+      env.wait();
+      expect(noteThreadDoc.data!.position).toEqual({ start: text.length, length: 9 });
+      verse4p1Index = env.component.target!.getSegmentRange('verse_1_4/p_1')!.index;
+      expect(env.getNoteThreadEditorPosition('thread05')).toEqual(verse4p1Index);
       env.dispose();
     }));
   });
@@ -1711,7 +1814,7 @@ class TestEnvironment {
     this.addParatextNoteThread(2, 3, 'target: chapter 1, verse 3.', { start: 0, length: 0 }, ['user01']);
     this.addParatextNoteThread(3, 3, 'verse 3', { start: 19, length: 7 }, ['user01']);
     this.addParatextNoteThread(4, 3, 'verse', { start: 19, length: 5 }, ['user01']);
-    this.addParatextNoteThread(5, 4, '', { start: 27, length: 0 }, ['user01']);
+    this.addParatextNoteThread(5, 4, 'Paragraph', { start: 27, length: 9 }, ['user01']);
     when(this.mockedRemoteTranslationEngine.getWordGraph(anything())).thenCall(segment =>
       Promise.resolve(this.createWordGraph(segment))
     );
@@ -2036,7 +2139,7 @@ class TestEnvironment {
 
   typeCharacters(str: string): number {
     const selection = this.targetEditor.getSelection()!;
-    const delta = new Delta().retain(selection.index).delete(selection.length).insert(str);
+    const delta = new Delta().retain(selection.index).insert(str).delete(selection.length);
     this.targetEditor.updateContents(delta, 'user');
     const selectionIndex = selection.index + str.length;
     this.targetEditor.setSelection(selectionIndex, 'user');
@@ -2094,7 +2197,7 @@ class TestEnvironment {
     delta.insert({ verse: { number: '4', style: 'v' } });
     delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 4.`, { segment: `verse_${id.chapterNum}_4` });
     delta.insert('\n', { para: { style: 'p' } });
-    delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_4/p_1` });
+    delta.insert('Paragraph break.', { segment: `verse_${id.chapterNum}_4/p_1` });
     delta.insert({ verse: { number: '5', style: 'v' } });
     switch (textType) {
       case 'source':

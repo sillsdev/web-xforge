@@ -803,7 +803,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetNoteThreadChanges_OnlySegmentsInVerseIncluded()
+        public async Task GetNoteThreadChanges_MatchNotePositionToVerseText()
         {
             var env = new TestEnvironment();
             var associatedPTUser = new SFParatextUser(env.Username01);

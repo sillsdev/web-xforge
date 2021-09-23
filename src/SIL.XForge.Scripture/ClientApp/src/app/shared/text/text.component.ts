@@ -48,6 +48,8 @@ function onNativeSelectionChanged(): void {
   }
 }
 
+const VERSE_REGEX = /verse_[0-9]+_[0-9]+/;
+
 const USX_FORMATS = registerScripture();
 window.document.addEventListener('selectionchange', onNativeSelectionChanged);
 
@@ -55,7 +57,7 @@ export interface TextUpdatedEvent {
   delta?: DeltaStatic;
   prevSegment?: Segment;
   segment?: Segment;
-  oldSegmentEmbeds?: Map<string, number>;
+  oldVerseEmbeds?: Map<string, number>;
 }
 
 /**
@@ -750,13 +752,14 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     const prevSegment = this._segment;
-    const oldSegmentEmbeds: Map<string, number> | undefined =
-      this._segment == null ? undefined : this._segment.embeddedElements;
+    let oldVerseEmbedsToUpdate: Map<string, number> | undefined;
     if (segmentRef != null) {
       // update/switch current segment
       if (!this.tryChangeSegment(segmentRef, checksum, focus) && this._segment != null) {
         // the selection has not changed to a different segment, so update existing segment
+        const oldVerseEmbeds: Map<string, number> = this._segment.embeddedElements;
         this.updateSegment();
+        oldVerseEmbedsToUpdate = oldVerseEmbeds;
         if (this._highlightSegment) {
           // ensure that the currently selected segment is highlighted
           this.highlight();
@@ -766,8 +769,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     Promise.resolve().then(() => this.adjustSelection());
-    // TODO: could we simply iterate through note threads rather than needing to emit the old embed positions?
-    this.updated.emit({ delta, prevSegment, segment: this._segment, oldSegmentEmbeds: oldSegmentEmbeds });
+    this.updated.emit({ delta, prevSegment, segment: this._segment, oldVerseEmbeds: oldVerseEmbedsToUpdate });
   }
 
   private tryChangeSegment(
@@ -829,17 +831,32 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (this._segment == null) {
       return;
     }
-    const range: RangeStatic | undefined = this.viewModel.getSegmentRange(this._segment.ref);
-    if (range != null) {
-      const text = this.viewModel.getSegmentText(this._segment.ref);
-      const segmentEmbeddedElements: Map<string, number> = new Map<string, number>();
-      for (const [threadId, index] of this.embeddedElements.entries()) {
-        if (index >= range.index && index < range.index + range.length) {
-          segmentEmbeddedElements.set(threadId, index);
-        }
-      }
-      this._segment.update(text, range, segmentEmbeddedElements);
+
+    const matchArray: RegExpExecArray | null = VERSE_REGEX.exec(this._segment.ref);
+    const baseVerse = matchArray == null ? this._segment.ref : matchArray[0];
+    const startSegmentRange: RangeStatic | undefined = this.viewModel.getSegmentRange(baseVerse);
+    const segmentRange: RangeStatic | undefined = this.viewModel.getSegmentRange(this._segment.ref);
+    if (segmentRange == null) {
+      return;
     }
+
+    const endIndex: number = this.getVerseEndIndex(baseVerse) ?? segmentRange.index + segmentRange.length;
+    const startIndex: number = startSegmentRange?.index ?? segmentRange.index;
+    const text = this.viewModel.getSegmentText(this._segment.ref);
+    const verseEmbeddedElements: Map<string, number> = new Map<string, number>();
+    for (const [threadId, index] of this.embeddedElements.entries()) {
+      if (index >= startIndex && index < endIndex) {
+        verseEmbeddedElements.set(threadId, index);
+      }
+    }
+    this._segment.update(text, segmentRange, verseEmbeddedElements);
+  }
+
+  private getVerseEndIndex(baseRef: string): number | undefined {
+    // Look for the related segments of the base verse, and use the final related verse to determine the end index
+    const relatedRefs: string[] = this.viewModel.getRelatedSegmentRefs(baseRef);
+    const rangeLast: RangeStatic | undefined = this.viewModel.getSegmentRange(relatedRefs[relatedRefs.length - 1]);
+    return rangeLast == null ? undefined : rangeLast.index + rangeLast.length;
   }
 
   private adjustSelection(): void {
