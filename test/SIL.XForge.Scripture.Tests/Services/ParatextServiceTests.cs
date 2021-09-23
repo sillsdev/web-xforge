@@ -803,7 +803,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetNoteThreadChanges_OnlySegmentsInVerseIncluded()
+        public async Task GetNoteThreadChanges_MatchNotePositionToVerseText()
         {
             var env = new TestEnvironment();
             var associatedPTUser = new SFParatextUser(env.Username01);
@@ -833,7 +833,9 @@ namespace SIL.XForge.Scripture.Services
 
                 change = changes.Single(c => c.ThreadId == "thread10");
                 string textBefore = "Context before Text selected thread10 context after ";
-                TextAnchor expected2 = new TextAnchor { Start = textBefore.Length, Length = 13 };
+                string anchorText = "related verse";
+                TextAnchor expected2 = new TextAnchor { Start = textBefore.Length, Length = anchorText.Length };
+                Assert.That(change.Position, Is.EqualTo(expected2));
             }
         }
 
