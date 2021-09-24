@@ -4,15 +4,13 @@
 
 // Aggregates the translate metrics for the given project, book and chapter.
 // Check in the VSCode Output panel to confirm the correct project and book.
+const projectRef = '5f75a079c2dab415404e29ca';
+const bookId = 'MAT';
+
+use('xforge');
 
 const path = require('path');
 const { Canon } = require(path.resolve('./src/RealtimeServer/lib/cjs/scriptureforge/scripture-utils/canon.js'));
-
-// Select the database to use.
-use('xforge');
-
-const projectRef = '60e57ea17e9c4e37643a57de';
-const bookId = 'LUK';
 
 const bookNum = Canon.bookIdToNumber(bookId);
 const project = db.sf_projects.findOne({ _id: projectRef });
@@ -22,18 +20,18 @@ console.log('book: ' + Canon.bookNumberToEnglishName(bookNum));
 db.translate_metrics.aggregate([
   { $match: { projectRef, bookNum } },
   { $group: {
-    _id: '$segment',
+    _id: { segment: '$segment', chapterNum: '$chapterNum' },
     maxSourceWordCount: { $max: '$sourceWordCount' },
     maxTargetWordCount: { $max: '$targetWordCount' },
-    agKeyBackspaceCount: { $sum: '$keyBackspaceCount' },
-    agKeyDeleteCount: { $sum: '$keyDeleteCount' },
-    agKeyCharacterCount: { $sum: '$keyCharacterCount' },
-    agProductiveCharacterCount: { $sum: '$productiveCharacterCount' },
-    agSuggestionAcceptedCount: { $sum: '$suggestionAcceptedCount' },
-    agSuggestionTotalCount: { $sum: '$suggestionTotalCount' },
-    agTimeEditActive: { $sum: '$timeEditActive' },
-    agKeyNavigationCount: { $sum: '$keyNavigationCount' },
-    agMouseClickCount: { $sum: '$mouseClickCount' },
+    sumKeyBackspaceCount: { $sum: '$keyBackspaceCount' },
+    sumKeyDeleteCount: { $sum: '$keyDeleteCount' },
+    sumKeyCharacterCount: { $sum: '$keyCharacterCount' },
+    sumProductiveCharacterCount: { $sum: '$productiveCharacterCount' },
+    sumSuggestionAcceptedCount: { $sum: '$suggestionAcceptedCount' },
+    sumSuggestionTotalCount: { $sum: '$suggestionTotalCount' },
+    sumTimeEditActive: { $sum: '$timeEditActive' },
+    sumKeyNavigationCount: { $sum: '$keyNavigationCount' },
+    sumMouseClickCount: { $sum: '$mouseClickCount' },
   } },
   { $sort: { _id: 1 } }
 ]);
