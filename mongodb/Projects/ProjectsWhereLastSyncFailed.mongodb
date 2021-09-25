@@ -1,0 +1,5 @@
+// This script searches for projects that failed the most recent sync
+
+use('xforge')
+
+db.sf_projects.find({'sync.lastSyncSuccessful': false}, {texts: 0})
