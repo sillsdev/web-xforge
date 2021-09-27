@@ -189,14 +189,13 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
 
     this.translationEngine = this.translationEngineService.createTranslationEngine(this.projectDoc.id);
     const trainingStatus$ = this.translationEngine.listenForTrainingStatus().pipe(
-      tap(
-        undefined,
-        () => (this.isTraining = false),
-        () => {
+      tap({
+        error: () => (this.isTraining = false),
+        complete: () => {
           this.isTraining = false;
           this.updateEngineStats();
         }
-      ),
+      }),
       repeat(),
       filter(progress => progress.percentCompleted > 0),
       retryWhen(errors => errors.pipe(delayWhen(() => timer(30000))))

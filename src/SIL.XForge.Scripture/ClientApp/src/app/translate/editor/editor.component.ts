@@ -266,7 +266,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get canShare(): boolean {
-    return this.isProjectAdmin;
+    return this.isProjectAdmin || this.projectDoc?.data?.translateConfig.shareEnabled === true;
   }
 
   get isSourceRightToLeft(): boolean {
@@ -570,10 +570,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     const selectIndex = range.index + insertText.length;
     this.insertSuggestionEnd = selectIndex;
+    const previousContents = this.target.editor.getContents();
     this.target.editor.updateContents(delta, 'user');
+    const updatedContents = this.target.editor.getContents();
     this.target.editor.setSelection(selectIndex, 0, 'user');
 
-    if (this.metricsSession != null) {
+    if (this.metricsSession != null && !isEqual(updatedContents.ops, previousContents.ops)) {
       this.metricsSession.onSuggestionAccepted(event);
     }
   }
@@ -643,6 +645,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private showNoteThread(verseRef: VerseRef): void {
+    console.log('verse clicked ' + verseRef.toString());
     // Show the Paratext note thread
   }
 
@@ -661,15 +664,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.trainingSub = this.translationEngine
       .listenForTrainingStatus()
       .pipe(
-        tap(
-          undefined,
-          () => {
+        tap({
+          error: () => {
             // error while listening
             this.showTrainingProgress = false;
             this.trainingCompletedTimeout = undefined;
             this.trainingProgressClosed = false;
           },
-          async () => {
+          complete: async () => {
             // training completed successfully
             if (this.trainingProgressClosed) {
               this.noticeService.show(translate('editor.training_completed_successfully'));
@@ -694,7 +696,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
               this.onFinishTranslating();
             }
           }
-        ),
+        }),
         repeat(),
         filter(progress => progress.percentCompleted > 0),
         retryWhen(errors => errors.pipe(delayWhen(() => timer(30000))))

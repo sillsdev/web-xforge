@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import Quill, { ClipboardStatic, DeltaStatic, QuillOptionsStatic, RangeStatic, Sources } from 'quill';
 
 /* SystemJS module definition */

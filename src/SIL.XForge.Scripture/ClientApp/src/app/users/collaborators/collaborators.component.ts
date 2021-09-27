@@ -4,7 +4,6 @@ import { PageEvent } from '@angular/material/paginator';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { hasParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
@@ -77,16 +76,6 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     return this.userInviteForm.controls.email.hasError('email');
   }
 
-  get isLinkSharingEnabled(): boolean {
-    return (
-      this.projectDoc != null &&
-      this.projectDoc.data != null &&
-      this.projectDoc.data.checkingConfig.checkingEnabled &&
-      this.projectDoc.data.checkingConfig.shareEnabled &&
-      this.projectDoc.data.checkingConfig.shareLevel === CheckingShareLevel.Anyone
-    );
-  }
-
   get isLoading(): boolean {
     return this._userRows == null;
   }
@@ -111,14 +100,13 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
       return [];
     }
     const term = this.term.trim().toLowerCase();
-    return this._userRows.filter(userRow => {
-      return (
+    return this._userRows.filter(
+      userRow =>
         userRow.user &&
         (userRow.user.displayName?.toLowerCase().includes(term) ||
           (userRow.role != null && this.i18n.localizeRole(userRow.role).toLowerCase().includes(term)) ||
           userRow.user.email?.toLowerCase().includes(term))
-      );
-    });
+    );
   }
 
   get userRows(): Row[] {
@@ -268,14 +256,15 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     }
 
     try {
-      const invitees: Row[] = (await this.projectService.onlineInvitedUsers(this.projectId)).map(invitee => {
-        return {
-          id: '',
-          user: { email: invitee.email },
-          role: invitee.role,
-          inviteeStatus: invitee
-        } as Row;
-      });
+      const invitees: Row[] = (await this.projectService.onlineInvitedUsers(this.projectId)).map(
+        invitee =>
+          ({
+            id: '',
+            user: { email: invitee.email },
+            role: invitee.role,
+            inviteeStatus: invitee
+          } as Row)
+      );
       this._userRows = userRows.concat(invitees);
     } catch {
       this.noticeService.show(translate('collaborators.problem_loading_invited_users'));

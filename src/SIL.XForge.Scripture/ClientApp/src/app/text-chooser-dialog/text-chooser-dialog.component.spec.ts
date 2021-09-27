@@ -8,6 +8,7 @@ import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-proj
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
@@ -328,8 +329,8 @@ describe('TextChooserDialogComponent', () => {
 });
 
 @Directive({
-  // ts lint complains that a directive should be used as an attribute
-  // tslint:disable-next-line:directive-selector
+  // es lint complains that a directive should be used as an attribute
+  // eslint-disable-next-line @angular-eslint/directive-selector
   selector: 'viewContainerDirective'
 })
 class ViewContainerDirective {
@@ -377,7 +378,11 @@ class TestEnvironment {
     shortName: 'P01',
     name: 'Project 01',
     writingSystem: { tag: 'en' },
-    translateConfig: { translationSuggestionsEnabled: false },
+    translateConfig: {
+      translationSuggestionsEnabled: false,
+      shareEnabled: false,
+      shareLevel: TranslateShareLevel.Specific
+    },
     checkingConfig: {
       usersSeeEachOthersResponses: true,
       checkingEnabled: true,
@@ -400,9 +405,9 @@ class TestEnvironment {
   };
 
   static segmentLen(verseNumber: number): number {
-    return TestEnvironment.delta.filter(op => {
-      return op.attributes != null && op.attributes.segment === 'verse_1_' + verseNumber;
-    })[0].insert.length;
+    return TestEnvironment.delta.filter(
+      op => op.attributes != null && op.attributes.segment === 'verse_1_' + verseNumber
+    )[0].insert.length;
   }
 
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
@@ -423,36 +428,36 @@ class TestEnvironment {
     dialogData?: TextChooserDialogData
   ) {
     ranges = Array.isArray(ranges) ? ranges : [ranges];
-    when(mockedDocument.getSelection()).thenCall(() => {
-      return {
-        toString: () => this.selection,
-        rangeCount: (ranges as SimpleRange[]).length,
-        getRangeAt: (index: number) => {
-          return {
-            startOffset: ranges[index].start,
-            endOffset: ranges[index].end,
-            startContainer: this.editor.querySelector(`usx-segment[data-segment="${startSegment}"]`)!.firstChild,
-            endContainer: this.editor.querySelector(`usx-segment[data-segment="${endSegment}"]`)!.firstChild
-          } as any;
-        },
-        containsNode: (node: Node): boolean => {
-          const segments = Array.from(this.editor.querySelectorAll('usx-segment[data-segment]'));
-          let startingSegmentReached = false;
-          for (const segment of segments) {
-            if (segment.getAttribute('data-segment') === startSegment) {
-              startingSegmentReached = true;
+    when(mockedDocument.getSelection()).thenCall(
+      () =>
+        ({
+          toString: () => this.selection,
+          rangeCount: (ranges as SimpleRange[]).length,
+          getRangeAt: (index: number) =>
+            ({
+              startOffset: ranges[index].start,
+              endOffset: ranges[index].end,
+              startContainer: this.editor.querySelector(`usx-segment[data-segment="${startSegment}"]`)!.firstChild,
+              endContainer: this.editor.querySelector(`usx-segment[data-segment="${endSegment}"]`)!.firstChild
+            } as any),
+          containsNode: (node: Node): boolean => {
+            const segments = Array.from(this.editor.querySelectorAll('usx-segment[data-segment]'));
+            let startingSegmentReached = false;
+            for (const segment of segments) {
+              if (segment.getAttribute('data-segment') === startSegment) {
+                startingSegmentReached = true;
+              }
+              if (startingSegmentReached && segment.contains(node)) {
+                return true;
+              }
+              if (segment.getAttribute('data-segment') === endSegment) {
+                break;
+              }
             }
-            if (startingSegmentReached && segment.contains(node)) {
-              return true;
-            }
-            if (segment.getAttribute('data-segment') === endSegment) {
-              break;
-            }
+            return false;
           }
-          return false;
-        }
-      } as Selection;
-    });
+        } as Selection)
+    );
 
     when(mockedDocument.addEventListener('selectionchange', anything(), anything())).thenCall(
       (_event: string, callback: () => any) => {

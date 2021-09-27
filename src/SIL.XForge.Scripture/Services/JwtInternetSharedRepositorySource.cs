@@ -42,7 +42,7 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         public override string[] Pull(string repository, SharedRepository pullRepo)
         {
-            string baseRev = GetBaseRevision(repository);
+            string baseRev = _hgWrapper.GetLastPublicRevision(repository);
 
             // Get bundle
             string guid = Guid.NewGuid().ToString();
@@ -63,7 +63,7 @@ namespace SIL.XForge.Scripture.Services
             // Use bundle
             string[] changeSets = HgWrapper.Pull(repository, bundle);
 
-            MarkSharedChangeSetsPublic(repository);
+            _hgWrapper.MarkSharedChangeSetsPublic(repository);
             return changeSets;
         }
 
@@ -73,9 +73,7 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         public override void Push(string repository, SharedRepository pushRepo)
         {
-            // TODO: Because of how restoring a backup works, if no changes were made in Paratext that were merged
-            // into scripture forge, this push will silently fail to push SF changes to PT.
-            string baseRev = GetBaseRevision(repository);
+            string baseRev = _hgWrapper.GetLastPublicRevision(repository);
 
             // Create bundle
             byte[] bundle = HgWrapper.Bundle(repository, baseRev);
@@ -87,7 +85,7 @@ namespace SIL.XForge.Scripture.Services
             client.PostStreaming(bundle, "pushbundle", "guid", guid, "proj", pushRepo.ScrTextName, "projid",
                 pushRepo.SendReceiveId.Id, "registered", "yes", "userschanged", "no");
 
-            MarkSharedChangeSetsPublic(repository);
+            _hgWrapper.MarkSharedChangeSetsPublic(repository);
         }
 
         /// <summary>
@@ -150,18 +148,6 @@ namespace SIL.XForge.Scripture.Services
             // RestClient only uses the jwtToken if authentication is null;
             ReflectionHelperLite.SetField(client, "authentication", null);
             _registryClient.JwtToken = jwtToken;
-        }
-
-        /// <summary> Get the latest public revision. </summary>
-        private string GetBaseRevision(string repository)
-        {
-            return _hgWrapper.GetLastPublicRevision(repository, allowEmptyIfRestoredFromBackup: true);
-        }
-
-        /// <summary> Mark all changesets available on the PT server public. </summary>
-        private void MarkSharedChangeSetsPublic(string repository)
-        {
-            HgWrapper.RunCommand(repository, "phase -p -r 'tip'");
         }
     }
 }

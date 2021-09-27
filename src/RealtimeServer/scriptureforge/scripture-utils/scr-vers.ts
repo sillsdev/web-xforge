@@ -38,10 +38,15 @@ export class ScrVers {
     }
   }
 
-  get type() {
+  get type(): ScrVersType | undefined {
     return this._type;
   }
 
-  clearExcludedVerses() {}
-  clearVerseSegments() {}
+  clearExcludedVerses(): void {
+    // do nothing
+  }
+
+  clearVerseSegments(): void {
+    // do nothing
+  }
 }

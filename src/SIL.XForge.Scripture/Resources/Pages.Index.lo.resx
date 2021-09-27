@@ -136,7 +136,7 @@
     <value>Works with Paratext</value>
   </data>
   <data name="AboutParatextDescription" xml:space="preserve">
-    <value>1 {0}Paratext integration{1} and {0}ongoing synchronization{1} keeps your project up-to-date and allows user feedback via {0}Paratext Notes{1}.</value>
+    <value>1 {2}Paratext integration{3} and {0}ongoing synchronization{1} keeps your project up-to-date and allows user feedback via {4}Paratext Notes{3}.</value>
   </data>
   <data name="AboutTitle" xml:space="preserve">
     <value>Extend your Reach With Scripture Checking</value>

@@ -5,7 +5,7 @@ import { takeUntil } from 'rxjs/operators';
 /** Handles Observable unsubscribing */
 // Decorator required by Angular compiler
 @Directive()
-// tslint:disable-next-line: directive-class-suffix
+// eslint-disable-next-line @angular-eslint/directive-class-suffix
 export abstract class SubscriptionDisposable implements OnDestroy {
   private ngUnsubscribe: Subject<void> = new Subject<void>();
 

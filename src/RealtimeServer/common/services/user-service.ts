@@ -50,7 +50,7 @@ export class UserService extends JsonDocService<User> {
     }
 
     for (const key of Object.keys(doc)) {
-      if (!USER_PROFILE_FIELDS.hasOwnProperty(key)) {
+      if (!Object.prototype.hasOwnProperty.call(USER_PROFILE_FIELDS, key)) {
         return false;
       }
     }

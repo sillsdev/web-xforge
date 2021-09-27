@@ -49,10 +49,11 @@
     &.checkbox-helper-text {
       margin: 0 0 0 44px;
     }
-
-    &.select-helper-text {
-      margin-top: 16px;
-    }
+  }
+  .select-helper-text,
+  .mat-error {
+    margin-top: 10px;
+    font-size: 14px;
   }
 }
 

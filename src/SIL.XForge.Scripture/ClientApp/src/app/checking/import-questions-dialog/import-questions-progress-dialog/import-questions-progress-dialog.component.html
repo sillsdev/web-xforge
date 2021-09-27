@@ -2,10 +2,16 @@
   <mdc-dialog>
     <mdc-dialog-container>
       <mdc-dialog-surface>
-        <mdc-dialog-title>{{ t("importing_questions", { count: data.count }) }}</mdc-dialog-title>
+        <mdc-dialog-title>
+          {{ t("import_progress", { completed: data.completed, total: data.count }) }}
+        </mdc-dialog-title>
         <mdc-dialog-content>
           <mdc-linear-progress [determinate]="true" [progress]="data.completed / data.count"></mdc-linear-progress>
         </mdc-dialog-content>
+        <mdc-dialog-actions>
+          <div *ngIf="canceled" class="cancel-message">{{ t("canceling_import") }}</div>
+          <button mdcDialogButton [unelevated]="true" *ngIf="!canceled" (click)="cancel()">{{ t("cancel") }}</button>
+        </mdc-dialog-actions>
       </mdc-dialog-surface>
     </mdc-dialog-container>
   </mdc-dialog>

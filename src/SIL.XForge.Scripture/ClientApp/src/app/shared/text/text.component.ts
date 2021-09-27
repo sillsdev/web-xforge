@@ -168,7 +168,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     },
     history: {
       userOnly: true
-    }
+    },
+    dragAndDrop: { textComponent: this }
   };
   private _id?: TextDocId;
   private _isRightToLeft: boolean = false;
@@ -524,6 +525,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     this.updateSegment();
   }
 
+  /** Respond to text changes in the quill editor. */
   onContentChanged(delta: DeltaStatic, source: string): void {
     this.viewModel.update(delta, source as Sources);
     this.updatePlaceholderText();
@@ -573,7 +575,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
     let previousEmbedIndex = -1;
     const deleteDelta = new Delta();
-    for (const [_, embedIndex] of this.viewModel.embeddedElements.entries()) {
+    for (const embedIndex of this.viewModel.embeddedElements.values()) {
       // retain elements other than notes between the previous and current embed
       if (embedIndex > previousEmbedIndex + 1) {
         deleteDelta.retain(embedIndex - (previousEmbedIndex + 1));

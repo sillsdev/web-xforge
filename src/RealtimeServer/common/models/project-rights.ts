@@ -22,7 +22,7 @@ export class ProjectRights {
 
   constructor(rights: { [role: string]: ProjectRight[] } = {}) {
     for (const role in rights) {
-      if (rights.hasOwnProperty(role)) {
+      if (Object.prototype.hasOwnProperty.call(rights, role)) {
         this.addRights(role, rights[role]);
       }
     }
@@ -59,7 +59,7 @@ export class ProjectRights {
     return (this.rights.get(role) || []).includes(this.joinRight(projectDomain, operation));
   }
 
-  joinRight(domain: string, operation: string) {
+  joinRight(domain: string, operation: string): string {
     return domain + '.' + operation;
   }
 

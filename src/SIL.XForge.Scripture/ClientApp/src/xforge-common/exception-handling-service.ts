@@ -1,8 +1,10 @@
 import { MdcDialog } from '@angular-mdc/web/dialog';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, Injector, NgZone } from '@angular/core';
 import Bugsnag, { Breadcrumb, BrowserConfig } from '@bugsnag/js';
 import { BugsnagErrorHandler } from '@bugsnag/plugin-angular';
 import { translate } from '@ngneat/transloco';
+import { MACHINE_API_BASE_URL } from '../app/core/machine-http-client';
 import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
 import { CONSOLE } from './browser-globals';
@@ -10,6 +12,7 @@ import { ErrorReportingService } from './error-reporting.service';
 import { ErrorAlert, ErrorComponent } from './error/error.component';
 import { NoticeService } from './notice.service';
 import { objectId } from './utils';
+import { COMMAND_API_NAMESPACE } from './url-constants';
 
 export interface BreadcrumbSelector {
   element: string;
@@ -173,6 +176,19 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
     if (error instanceof DOMException && (error.name === 'QuotaExceededError' || error.name === 'DataError')) {
       ngZone.run(() => noticeService.showError(translate('exception_handling_service.out_of_space')));
       return;
+    }
+
+    if (
+      error instanceof HttpErrorResponse &&
+      error.status === 504 &&
+      error.statusText === 'Gateway Timeout' &&
+      error.url != null
+    ) {
+      // ignore 504 errors from ngsw-worker.js to machine-api or command-api (these happen when offline)
+      const url = new URL(error.url);
+      if (url.pathname.startsWith('/' + MACHINE_API_BASE_URL) || url.pathname.startsWith('/' + COMMAND_API_NAMESPACE)) {
+        silently = true;
+      }
     }
 
     if (

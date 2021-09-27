@@ -1,0 +1,24 @@
+// Reconstruct invite link for given project and user email.
+// Look in the output terminal for the link. The matching record will show in the Playground Result tab.
+
+use('xforge');
+
+// update these for the project and user
+const projectId = '5f7ffcf0c2dab415404f8bdc';
+const email = 'fb_qrtacam_algbfhcfeaici@tfbnw.net';
+const locale = ''; // e.g. 'fr' or 'en-GB'
+const site = 'https://scriptureforge.org';
+
+const projectSecret = db.sf_project_secrets.findOne(
+  { _id: projectId, shareKeys: { $elemMatch: { email } } },
+  { _id: 0, shareKeys: { $elemMatch: { email } } }
+);
+
+const key = projectSecret.shareKeys[0].key;
+let link = `${site}/projects/${projectId}?sharing=true&shareKey=${key}`;
+if (locale) {
+  link += `&locale=${locale}`
+}
+
+console.log('User invite link:', link);
+projectSecret;

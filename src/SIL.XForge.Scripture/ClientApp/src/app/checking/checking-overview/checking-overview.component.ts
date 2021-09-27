@@ -43,7 +43,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
 
   private _hasTransceleratorQuestions = false;
   private questionDocs = new Map<string, QuestionDoc[]>();
-  private textsByBookId: TextsByBookId = {};
+  private textsByBookId?: TextsByBookId;
   private projectDoc?: SFProjectDoc;
   private dataChangesSub?: Subscription;
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
@@ -121,7 +121,13 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   get showImportButton(): boolean {
-    return this._hasTransceleratorQuestions && this.pwaService.isOnline;
+    return (
+      this._hasTransceleratorQuestions &&
+      this.pwaService.isOnline &&
+      this.projectDoc != null &&
+      this.textsByBookId != null &&
+      Object.keys(this.textsByBookId).length > 0
+    );
   }
 
   get canCreateQuestion(): boolean {
@@ -357,7 +363,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   async questionDialog(questionDoc?: QuestionDoc): Promise<void> {
-    if (this.projectDoc == null) {
+    if (this.projectDoc == null || this.textsByBookId == null) {
       return;
     }
     if (questionDoc != null && questionDoc.data != null) {
@@ -381,7 +387,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   importDialog(): void {
-    if (this.projectDoc == null) {
+    if (this.projectDoc == null || this.textsByBookId == null) {
       return;
     }
     const data: ImportQuestionsDialogData = {

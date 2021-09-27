@@ -216,11 +216,48 @@ describe('ImportQuestionsDialogComponent', () => {
       verseNum: 2
     });
   }));
+
+  it('does not import questions that were selected if they no longer match the filter', fakeAsync(() => {
+    const env = new TestEnvironment();
+    expect(env.questionRows.length).toBe(2);
+    expect(env.submitButton.textContent).toContain('0');
+    env.clickSelectAll();
+    expect(env.submitButton.textContent).toContain('2');
+
+    env.setControlValue(env.component.fromControl, 'MAT 1:2');
+    expect(env.questionRows.length).toBe(1);
+    expect(env.submitButton.textContent).toContain('1');
+
+    env.click(env.submitButton);
+    verify(mockedProjectService.createQuestion('project01', anything(), undefined, undefined)).once();
+  }));
+
+  it('allows canceling the import of questions', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedProjectService.createQuestion('project01', anything(), undefined, undefined)).thenCall(
+      () => new Promise(resolve => setTimeout(resolve, 5000))
+    );
+    expect(env.questionRows.length).toBe(2);
+    expect(env.submitButton.textContent).toContain('0');
+    env.clickSelectAll();
+    expect(env.submitButton.textContent).toContain('2');
+
+    // not using env.click(element) because it calls flush() which will not work with the timing in this test
+    env.submitButton.click();
+
+    tick(4000);
+    verify(mockedProjectService.createQuestion('project01', anything(), undefined, undefined)).once();
+
+    // cancel while the first question is still being imported
+    env.cancelImportButton.click();
+    tick(12000);
+    verify(mockedProjectService.createQuestion('project01', anything(), undefined, undefined)).once();
+  }));
 });
 
 @Directive({
-  // ts lint complains that a directive should be used as an attribute
-  // tslint:disable-next-line:directive-selector
+  // es lint complains that a directive should be used as an attribute
+  // eslint-disable-next-line @angular-eslint/directive-selector
   selector: 'viewContainerDirective'
 })
 class ViewContainerDirective {
@@ -343,6 +380,10 @@ class TestEnvironment {
     return this.overlayContainerElement.querySelector(
       'mdc-dialog-actions button[mdcdialogaction="close"]'
     ) as HTMLButtonElement;
+  }
+
+  get cancelImportButton(): HTMLButtonElement {
+    return this.overlayContainerElement.querySelectorAll('mdc-dialog-actions')[1].querySelector('button')!;
   }
 
   clickSelectAll(): void {

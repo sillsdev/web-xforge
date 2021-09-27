@@ -18,7 +18,7 @@ describe('ProjectSelectComponent', () => {
     expect(env.groupLabels[0]).toBe('Projects');
     expect(env.groupLabels[1]).toBe('Resources');
     expect(env.optionsText(0)).toEqual(['P1 - Project 1', 'P3 - Project 3']);
-    expect(env.optionsText(1)).toEqual(['Resource 1', 'Resource 2']);
+    expect(env.optionsText(1)).toEqual(['R1 - Resource 1', 'R2 - Resource 2']);
   }));
 
   it('it only lists groups with menu items', fakeAsync(() => {
@@ -72,11 +72,15 @@ describe('ProjectSelectComponent', () => {
   }));
 
   it('adds list items as the user scrolls the list', fakeAsync(() => {
-    const resources = [...Array(100).keys()].map(key => ({ paratextId: 'r' + key, name: 'Resource ' + (key + 1) }));
+    const resources = [...Array(100).keys()].map(key => ({
+      paratextId: 'r' + key,
+      name: 'Resource ' + (key + 1),
+      shortName: 'R' + key
+    }));
     const env = new TestEnvironment('p03', undefined, resources);
     env.clickInput();
     expect(env.optGroups.length).toBe(2);
-    expect(env.optionsText(0)).toEqual(['P1 - Project 1', 'Project 2']);
+    expect(env.optionsText(0)).toEqual(['P1 - Project 1', 'P2 - Project 2']);
     expect(env.options(1).length).toBe(25);
     env.scrollMenu(2500);
     expect(env.options(1).length).toBe(50);
@@ -128,12 +132,12 @@ class HostComponent {
 
   projects: SelectableProject[] = [
     { name: 'Project 1', paratextId: 'p01', shortName: 'P1' },
-    { name: 'Project 2', paratextId: 'p02' },
+    { name: 'Project 2', paratextId: 'p02', shortName: 'P2' },
     { name: 'Project 3', paratextId: 'p03', shortName: 'P3' }
   ];
   resources: SelectableProject[] = [
-    { name: 'Resource 1', paratextId: 'r01' },
-    { name: 'Resource 2', paratextId: 'r02' }
+    { name: 'Resource 1', paratextId: 'r01', shortName: 'R1' },
+    { name: 'Resource 2', paratextId: 'r02', shortName: 'R2' }
   ];
   nonSelectableProjects: SelectableProject[] = [{ name: 'Project 1', paratextId: 'p01', shortName: 'P1' }];
   hideProjectId: string = '';

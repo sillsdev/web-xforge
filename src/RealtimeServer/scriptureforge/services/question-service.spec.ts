@@ -1,6 +1,7 @@
 import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock } from 'ts-mockito';
+import { TranslateShareLevel } from '../models/translate-config';
 import { SystemRole } from '../../common/models/system-role';
 import { User, USERS_COLLECTION } from '../../common/models/user';
 import { RealtimeServer } from '../../common/realtime-server';
@@ -151,7 +152,11 @@ class TestEnvironment {
       shortName: 'PT01',
       paratextId: 'pt01',
       writingSystem: { tag: 'qaa' },
-      translateConfig: { translationSuggestionsEnabled: false },
+      translateConfig: {
+        translationSuggestionsEnabled: false,
+        shareEnabled: true,
+        shareLevel: TranslateShareLevel.Specific
+      },
       checkingConfig: {
         checkingEnabled: false,
         usersSeeEachOthersResponses: true,

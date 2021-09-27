@@ -2,7 +2,11 @@ import { MdcTextField } from '@angular-mdc/web/textfield';
 import { ChangeDetectorRef, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
@@ -25,7 +29,6 @@ import { SFProjectService } from '../../core/sf-project.service';
 export class ShareControlComponent extends SubscriptionDisposable {
   /** Fires when an invitation is sent. */
   @Output() invited = new EventEmitter<void>();
-  @Input() isLinkSharingEnabled: boolean = false;
   @Input() defaultRole: SFProjectRole = SF_DEFAULT_SHARE_ROLE;
   @ViewChild('shareLinkField') shareLinkField?: MdcTextField;
 
@@ -64,20 +67,11 @@ export class ShareControlComponent extends SubscriptionDisposable {
         ]);
         this.roleControl.setValue(this.defaultShareRole);
       }
+      this.subscribe(this.projectDoc.remoteChanges$, () => this.updateFormEnabledStateAndLinkSharingKey());
     });
-
-    this.subscribe(combineLatest([this.pwaService.onlineStatus, this.roleControl.valueChanges]), async ([isOnline]) => {
-      if (isOnline) {
-        if (this._projectId != null) {
-          this.linkSharingKey = await this.projectService.onlineGetLinkSharingKey(this._projectId, this.shareRole);
-        }
-        this.sendInviteForm.enable({ emitEvent: false });
-      } else {
-        this.sendInviteForm.disable({ emitEvent: false });
-        // Workaround for angular/angular#17793 (ExpressionChangedAfterItHasBeenCheckedError after form disabled)
-        this.changeDetector.detectChanges();
-      }
-    });
+    this.subscribe(combineLatest([this.pwaService.onlineStatus, this.roleControl.valueChanges]), () =>
+      this.updateFormEnabledStateAndLinkSharingKey()
+    );
   }
 
   @Input() set projectId(id: string | undefined) {
@@ -88,22 +82,16 @@ export class ShareControlComponent extends SubscriptionDisposable {
     this.projectId$.next(id);
   }
 
-  get canSelectRole(): boolean {
-    return this.isProjectAdmin;
-  }
-
-  get defaultShareRole(): string {
-    const roles = this.roles;
-    if (this.defaultRole != null && roles.filter(r => r.role === this.defaultRole).length > 0) {
+  get defaultShareRole(): string | undefined {
+    const roles = this.userShareableRoles;
+    if (this.defaultRole != null && roles.some(role => role === this.defaultRole)) {
       return this.defaultRole;
     }
-    return roles.some(r => r.role === SF_DEFAULT_SHARE_ROLE) ? SF_DEFAULT_SHARE_ROLE : roles[0].role;
+    return roles.some(role => role === SF_DEFAULT_SHARE_ROLE) ? SF_DEFAULT_SHARE_ROLE : roles[0];
   }
 
-  get roles(): ProjectRoleInfo[] {
-    return SF_PROJECT_ROLES.filter(r => r.canBeShared).filter(
-      r => this.projectDoc?.data?.checkingConfig.checkingEnabled || r.role !== SFProjectRole.CommunityChecker
-    );
+  get availableRolesInfo(): ProjectRoleInfo[] {
+    return SF_PROJECT_ROLES.filter(info => info.canBeShared && this.userShareableRoles.includes(info.role));
   }
 
   get shareLink(): string {
@@ -123,8 +111,49 @@ export class ShareControlComponent extends SubscriptionDisposable {
     return this.pwaService.isOnline;
   }
 
+  get isLinkSharingEnabled(): boolean {
+    const project = this.projectDoc?.data;
+    if (project == null) {
+      return false;
+    }
+    const linkSharingSettings = {
+      [SFProjectRole.CommunityChecker]:
+        project.checkingConfig.shareEnabled && project.checkingConfig.shareLevel === CheckingShareLevel.Anyone,
+      [SFProjectRole.Observer]:
+        project.translateConfig.shareEnabled && project.translateConfig.shareLevel === TranslateShareLevel.Anyone
+    };
+    return linkSharingSettings[this.shareRole] === true && this.userShareableRoles.includes(this.shareRole);
+  }
+
   get showLinkSharingUnavailable(): boolean {
     return this.isLinkSharingEnabled && !this.isAppOnline && !this.shareLink;
+  }
+
+  private get userShareableRoles(): string[] {
+    const project = this.projectDoc?.data;
+    if (project == null) {
+      return [];
+    }
+    const userRole = project.userRoles[this.userService.currentUserId];
+    return [
+      {
+        role: SFProjectRole.CommunityChecker,
+        available: project.checkingConfig.checkingEnabled,
+        permission:
+          project.checkingConfig.shareEnabled &&
+          SF_PROJECT_RIGHTS.hasRight(project, this.userService.currentUserId, SFProjectDomain.Questions, Operation.View)
+      },
+      {
+        role: SFProjectRole.Observer,
+        available: true,
+        permission:
+          project.translateConfig.shareEnabled &&
+          SF_PROJECT_RIGHTS.hasRight(project, this.userService.currentUserId, SFProjectDomain.Texts, Operation.View) &&
+          userRole !== SFProjectRole.CommunityChecker
+      }
+    ]
+      .filter(info => info.available && (info.permission || this.isProjectAdmin))
+      .map(info => info.role as string);
   }
 
   copyShareLink(): void {
@@ -168,5 +197,18 @@ export class ShareControlComponent extends SubscriptionDisposable {
 
     this.noticeService.show(message);
     this.email.reset();
+  }
+
+  private async updateFormEnabledStateAndLinkSharingKey() {
+    if (this.pwaService.isOnline) {
+      if (this._projectId != null && this.shareRole != null) {
+        this.linkSharingKey = await this.projectService.onlineGetLinkSharingKey(this._projectId, this.shareRole);
+      }
+      this.sendInviteForm.enable({ emitEvent: false });
+    } else {
+      this.sendInviteForm.disable({ emitEvent: false });
+      // Workaround for angular/angular#17793 (ExpressionChangedAfterItHasBeenCheckedError after form disabled)
+      this.changeDetector.detectChanges();
+    }
   }
 }

@@ -42,7 +42,7 @@ export class SharedbRealtimeRemoteStore extends RealtimeRemoteStore {
         resolve();
       });
       // When the web socket errors a connection is not valid so the app needs to operate offline
-      this.ws.addEventListener('error', e => {
+      this.ws.addEventListener('error', () => {
         this.pwaService.webSocketResponse = false;
         resolve();
       });

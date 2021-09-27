@@ -3,6 +3,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { mock, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -134,6 +135,8 @@ class TestEnvironment {
           sourceProject != null
             ? {
                 translationSuggestionsEnabled: true,
+                shareEnabled: false,
+                shareLevel: TranslateShareLevel.Specific,
                 source: {
                   paratextId: 'pt02',
                   projectRef: sourceProject,
@@ -143,7 +146,7 @@ class TestEnvironment {
                   shortName: 'P02'
                 }
               }
-            : { translationSuggestionsEnabled: false },
+            : { translationSuggestionsEnabled: false, shareEnabled: false, shareLevel: TranslateShareLevel.Specific },
         checkingConfig: {
           checkingEnabled: false,
           usersSeeEachOthersResponses: true,
@@ -173,7 +176,9 @@ class TestEnvironment {
             tag: 'en'
           },
           translateConfig: {
-            translationSuggestionsEnabled: false
+            translationSuggestionsEnabled: false,
+            shareEnabled: false,
+            shareLevel: TranslateShareLevel.Specific
           },
           checkingConfig: {
             checkingEnabled: false,

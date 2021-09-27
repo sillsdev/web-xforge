@@ -10,7 +10,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { CookieService } from 'ngx-cookie-service';
 import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { TranslateConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { TranslateConfig, TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
@@ -139,15 +139,56 @@ describe('SettingsComponent', () => {
       expect(env.component.form.enabled).toBe(true);
     }));
 
+    it('enables form even when projects and resources fail to load', fakeAsync(() => {
+      const env = new TestEnvironment();
+      expect(env.component.form.disabled).toBe(true);
+      env.setupProject();
+      when(mockedParatextService.getProjects()).thenReject(new Error('Project loading failed'));
+      when(mockedParatextService.getResources()).thenReject(new Error('Resource loading failed'));
+      env.wait();
+
+      expect(env.component.form.disabled).toBe(false);
+      expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(false);
+      expect(env.basedOnSelectErrorMessage.textContent).toContain('error fetching projects and resources');
+      expect(env.basedOnSelectComponent.isDisabled).toBe(true);
+    }));
+
+    it('enables form even when projects fail to load', fakeAsync(() => {
+      const env = new TestEnvironment();
+      expect(env.component.form.disabled).toBe(true);
+      env.setupProject();
+      when(mockedParatextService.getProjects()).thenReject(new Error('Project loading failed'));
+      env.wait();
+
+      expect(env.component.form.disabled).toBe(false);
+      expect(env.basedOnSelectErrorMessage.textContent).toContain('error fetching projects.');
+      expect(env.basedOnSelectComponent.isDisabled).toBe(false);
+      expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(false);
+    }));
+
+    it('enables form even when resources fail to load', fakeAsync(() => {
+      const env = new TestEnvironment();
+      expect(env.component.form.disabled).toBe(true);
+      env.setupProject();
+      when(mockedParatextService.getResources()).thenReject(new Error('Resource loading failed'));
+      env.wait();
+
+      expect(env.component.form.disabled).toBe(false);
+      expect(env.basedOnSelectErrorMessage.textContent).toContain('error fetching the Digital Bible Library resources');
+      expect(env.basedOnSelectComponent.isDisabled).toBe(false);
+      expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(false);
+    }));
+
     describe('Translation Suggestions options', () => {
       it('should see login button when Paratext account not connected', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject();
-        when(mockedParatextService.getProjectsAndResources()).thenReturn(Promise.resolve([undefined, undefined]));
+        when(mockedParatextService.getProjects()).thenResolve(undefined);
+        when(mockedParatextService.getResources()).thenResolve(undefined);
         env.wait();
         expect(env.loginButton).not.toBeNull();
-        expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(true);
-        expect(env.basedOnSelect).toBeNull();
+        expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(false);
+        expect(env.basedOnSelect).not.toBeNull();
       }));
 
       it('should hide Based On when Translation Suggestions is disabled', fakeAsync(() => {
@@ -211,21 +252,18 @@ describe('SettingsComponent', () => {
       it('should display Based On project even if user is not a member', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject();
-        when(mockedParatextService.getProjectsAndResources()).thenReturn(
-          Promise.resolve([
-            [
-              {
-                paratextId: 'paratextId02',
-                name: 'ParatextP2',
-                shortName: 'PT2',
-                languageTag: 'qaa',
-                isConnectable: true,
-                isConnected: false
-              }
-            ],
-            []
-          ])
-        );
+        when(mockedParatextService.getProjects()).thenResolve([
+          {
+            paratextId: 'paratextId02',
+            name: 'ParatextP2',
+            shortName: 'PT2',
+            languageTag: 'qaa',
+            isConnectable: true,
+            isConnected: false
+          }
+        ]);
+        when(mockedParatextService.getResources()).thenResolve([]);
+
         env.wait();
         env.wait();
         expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
@@ -250,7 +288,9 @@ describe('SettingsComponent', () => {
       it('should not save Translation Suggestions enable if Based On not set', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          translationSuggestionsEnabled: false
+          translationSuggestionsEnabled: false,
+          shareEnabled: false,
+          shareLevel: TranslateShareLevel.Specific
         });
         tick();
         env.fixture.detectChanges();
@@ -274,7 +314,9 @@ describe('SettingsComponent', () => {
       it('should save Translation Suggestions disable if Based On not set', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          translationSuggestionsEnabled: false
+          translationSuggestionsEnabled: false,
+          shareEnabled: false,
+          shareLevel: TranslateShareLevel.Specific
         });
         env.wait();
         env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
@@ -290,7 +332,9 @@ describe('SettingsComponent', () => {
       it('should save Translation Suggestions and Based On when Based On set', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          translationSuggestionsEnabled: false
+          translationSuggestionsEnabled: false,
+          shareEnabled: false,
+          shareLevel: TranslateShareLevel.Specific
         });
         env.wait();
         env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
@@ -318,11 +362,11 @@ describe('SettingsComponent', () => {
         expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
         expect(env.inputElement(env.checkingCheckbox).checked).toBe(false);
         expect(env.seeOthersResponsesCheckbox).toBeNull();
-        expect(env.shareCheckbox).toBeNull();
+        expect(env.checkingShareCheckbox).toBeNull();
         env.clickElement(env.inputElement(env.checkingCheckbox));
         expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
         expect(env.seeOthersResponsesCheckbox).not.toBeNull();
-        expect(env.shareCheckbox).not.toBeNull();
+        expect(env.checkingShareCheckbox).not.toBeNull();
       }));
 
       it('changing state of checking option results in status icon', fakeAsync(() => {
@@ -338,11 +382,11 @@ describe('SettingsComponent', () => {
         env.fixture.detectChanges();
         expect(env.statusDone(env.seeOthersResponsesStatus)).not.toBeNull();
 
-        expect(env.statusDone(env.shareStatus)).toBeNull();
-        env.clickElement(env.inputElement(env.shareCheckbox));
+        expect(env.statusDone(env.checkingShareStatus)).toBeNull();
+        env.clickElement(env.inputElement(env.checkingShareCheckbox));
         tick();
         env.fixture.detectChanges();
-        expect(env.statusDone(env.shareStatus)).not.toBeNull();
+        expect(env.statusDone(env.checkingShareStatus)).not.toBeNull();
       }));
 
       it('share level should be disabled if share set to false', fakeAsync(() => {
@@ -355,9 +399,49 @@ describe('SettingsComponent', () => {
         });
         env.wait();
 
-        expect(env.component.form.controls.shareLevel.disabled).toEqual(false);
-        env.clickElement(env.inputElement(env.shareCheckbox));
-        expect(env.component.form.controls.shareLevel.disabled).toEqual(true);
+        expect(env.component.checkingShareLevel.disabled).toEqual(false);
+        env.clickElement(env.inputElement(env.checkingShareCheckbox));
+        expect(env.component.checkingShareLevel.disabled).toEqual(true);
+      }));
+
+      it('share level can be changed for both checking and translate tool', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject(
+          {
+            translationSuggestionsEnabled: false,
+            shareEnabled: true,
+            shareLevel: TranslateShareLevel.Specific
+          },
+          {
+            checkingEnabled: true,
+            usersSeeEachOthersResponses: false,
+            shareEnabled: true,
+            shareLevel: CheckingShareLevel.Specific
+          }
+        );
+        env.wait();
+
+        expect(env.component.checkingShareLevel.value).toEqual(CheckingShareLevel.Specific);
+        expect(env.component.translateShareLevel.value).toEqual(TranslateShareLevel.Specific);
+
+        env.clickElement(env.inputElement(env.checkingShareLevelAnyone));
+        env.clickElement(env.inputElement(env.translateShareLevelAnyone));
+
+        expect(env.component.checkingShareLevel.value).toEqual(CheckingShareLevel.Anyone);
+        expect(env.component.translateShareLevel.value).toEqual(TranslateShareLevel.Anyone);
+
+        verify(
+          mockedSFProjectService.onlineUpdateSettings(
+            'project01',
+            deepEqual({ checkingShareLevel: CheckingShareLevel.Anyone })
+          )
+        ).once();
+        verify(
+          mockedSFProjectService.onlineUpdateSettings(
+            'project01',
+            deepEqual({ translateShareLevel: TranslateShareLevel.Anyone })
+          )
+        ).once();
       }));
     });
   });
@@ -451,33 +535,34 @@ class TestEnvironment {
     this.isOnline = new BehaviorSubject<boolean>(hasConnection);
     when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
     when(mockedPwaService.isOnline).thenReturn(this.isOnline.getValue());
-    when(mockedParatextService.getProjectsAndResources()).thenReturn(
-      Promise.resolve([
-        [
-          {
-            paratextId: 'paratextId01',
-            name: 'ParatextP1',
-            shortName: 'PT1',
-            languageTag: 'qaa',
-            isConnectable: true,
-            isConnected: false
-          },
-          {
-            paratextId: 'paratextId02',
-            name: 'ParatextP2',
-            shortName: 'PT2',
-            languageTag: 'qaa',
-            isConnectable: true,
-            isConnected: false
-          }
-        ],
-        [
-          { paratextId: 'e01f11e9b4b8e338', name: 'Sob Jonah and Luke' },
-          { paratextId: '5e51f89e89947acb', name: 'Aruamu New Testament [msy] Papua New Guinea 2004 DBL' },
-          { paratextId: '9bb76cd3e5a7f9b4', name: 'Revised Version with Apocrypha 1885, 1895' }
-        ]
-      ])
-    );
+
+    when(mockedParatextService.getProjects()).thenResolve([
+      {
+        paratextId: 'paratextId01',
+        name: 'ParatextP1',
+        shortName: 'PT1',
+        languageTag: 'qaa',
+        isConnectable: true,
+        isConnected: false
+      },
+      {
+        paratextId: 'paratextId02',
+        name: 'ParatextP2',
+        shortName: 'PT2',
+        languageTag: 'qaa',
+        isConnectable: true,
+        isConnected: false
+      }
+    ]);
+    when(mockedParatextService.getResources()).thenResolve([
+      { paratextId: 'e01f11e9b4b8e338', name: 'Sob Jonah and Luke', shortName: 'SJL' },
+      {
+        paratextId: '5e51f89e89947acb',
+        name: 'Aruamu New Testament [msy] Papua New Guinea 2004 DBL',
+        shortName: 'ANT'
+      },
+      { paratextId: '9bb76cd3e5a7f9b4', name: 'Revised Version with Apocrypha 1885, 1895', shortName: 'RVA' }
+    ]);
 
     this.fixture = TestBed.createComponent(SettingsComponent);
     this.component = this.fixture.componentInstance;
@@ -512,6 +597,10 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#btn-log-in-settings'));
   }
 
+  get translateShareLevelAnyone(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#radio-translateShareLevel-anyone'));
+  }
+
   get checkingCheckbox(): DebugElement {
     return this.fixture.debugElement.query(By.css('#checkbox-community-checking'));
   }
@@ -528,12 +617,16 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#see-others-responses-status'));
   }
 
-  get shareCheckbox(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#checkbox-share'));
+  get checkingShareCheckbox(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#checkbox-checking-share'));
   }
 
-  get shareStatus(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#share-status'));
+  get checkingShareStatus(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#checking-share-status'));
+  }
+
+  get checkingShareLevelAnyone(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#radio-checkingShareLevel-anyone'));
   }
 
   get dangerZoneTitle(): HTMLElement {
@@ -558,6 +651,10 @@ class TestEnvironment {
 
   get offlineMessage(): HTMLElement {
     return this.fixture.nativeElement.querySelector('.offline-text');
+  }
+
+  get basedOnSelectErrorMessage(): HTMLElement {
+    return this.fixture.nativeElement.querySelector('.tool-setting-field + mat-error');
   }
 
   set onlineStatus(hasConnection: boolean) {
@@ -623,6 +720,9 @@ class TestEnvironment {
   setupProject(
     translateConfig: TranslateConfig = {
       translationSuggestionsEnabled: true,
+      shareEnabled: false,
+      shareLevel: TranslateShareLevel.Specific,
+
       source: {
         paratextId: 'paratextId01',
         projectRef: 'paratext01',

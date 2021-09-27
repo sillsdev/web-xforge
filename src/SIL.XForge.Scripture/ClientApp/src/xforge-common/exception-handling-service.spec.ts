@@ -1,4 +1,5 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { NotifiableError } from '@bugsnag/js';
@@ -33,8 +34,15 @@ class MockConsole {
   }
   error(val: any) {
     if (
-      !['', 'Test error', 'Original error'].includes(val.message) &&
-      !(val.message != null && val.message.startsWith('Unknown error'))
+      ![
+        '',
+        'Test error',
+        'Original error',
+        'Http failure response for (unknown url): 400 Bad Request',
+        'Http failure response for http://localhost:5000/command-api/some-end-point: 504 Gateway Timeout',
+        'Http failure response for http://localhost:5000/machine-api/translation/engines/some-end-point: 504 Gateway Timeout'
+      ].includes(val.message) &&
+      !val.message?.startsWith('Unknown error')
     ) {
       console.error(val);
     }
@@ -120,6 +128,33 @@ describe('ExceptionHandlingService', () => {
     expect().nothing();
   }));
 
+  it('should silently report 504 errors from machine-api or command-api', fakeAsync(() => {
+    const env = new TestEnvironment();
+    spyOn<any>(env.service, 'handleAlert');
+
+    env.handleError(
+      new HttpErrorResponse({
+        status: 504,
+        statusText: 'Gateway Timeout',
+        url: 'http://localhost:5000/machine-api/translation/engines/some-end-point'
+      })
+    );
+    env.handleError(
+      new HttpErrorResponse({
+        status: 504,
+        statusText: 'Gateway Timeout',
+        url: 'http://localhost:5000/command-api/some-end-point'
+      })
+    );
+
+    expect(env.service['handleAlert']).not.toHaveBeenCalled();
+
+    env.handleError(new HttpErrorResponse({ status: 400, statusText: 'Bad Request' }));
+
+    expect(env.service['handleAlert']).toHaveBeenCalled();
+    verify(mockedNoticeService.showError(anything())).never();
+  }));
+
   describe('Bugsnag', () => {
     it('should extract text from button', fakeAsync(() => {
       const env = new TestEnvironment();
@@ -136,7 +171,8 @@ describe('ExceptionHandlingService', () => {
         },
         {
           selector:
-            'BUTTON#activated_button.mdc-ripple-upgraded.mdc-ripple-upgraded--background-focused.mdc-ripple-upgraded--foreground-activation',
+            'BUTTON#activated_button.mdc-ripple-upgraded.mdc-ripple-upgraded--background-focused' +
+            '.mdc-ripple-upgraded--foreground-activation',
           expectedText: 'Button with ID',
           expectedSelector: 'BUTTON#activated_button span'
         },
@@ -174,7 +210,8 @@ interface BreadcrumbTests {
     <button class="mdc-button child-element"><i>icon_name</i><span>Child</span></button>
     <button
       id="activated_button"
-      class="mdc-button mdc-ripple-upgraded mdc-ripple-upgraded--background-focused mdc-ripple-upgraded--foreground-activation"
+      class="mdc-button mdc-ripple-upgraded mdc-ripple-upgraded--background-focused"
+      class="mdc-ripple-upgraded--foreground-activation"
     >
       <span>Button with ID</span>
     </button>
@@ -209,13 +246,12 @@ class TestEnvironment {
     this.fixture.detectChanges();
 
     when(mockedMdcDialog.open(anything(), anything())).thenReturn({
-      afterClosed: () => {
-        return {
+      afterClosed: () =>
+        ({
           subscribe: (callback: () => void) => {
             setTimeout(callback, 0);
           }
-        } as Observable<{}>;
-      }
+        } as Observable<{}>)
     } as MdcDialogRef<ErrorComponent, {}>);
 
     when(mockedErrorReportingService.notify(anything(), anything())).thenCall((error: NotifiableError) =>

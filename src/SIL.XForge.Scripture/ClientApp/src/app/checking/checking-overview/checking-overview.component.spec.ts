@@ -24,6 +24,7 @@ import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
@@ -273,6 +274,22 @@ describe('CheckingOverviewComponent', () => {
       env.onlineStatus = true;
       expect(env.importButton).not.toBeNull();
     }));
+
+    it('should not show import questions button until list of texts have loaded', fakeAsync(() => {
+      const env = new TestEnvironment();
+      when(mockedProjectService.hasTransceleratorQuestions('project01')).thenResolve(true);
+      const delayPromise = new Promise<void>(resolve => setTimeout(resolve, 10 * 1000));
+      when(mockedProjectService.queryQuestions(anything())).thenReturn(
+        delayPromise.then(() => env.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {}))
+      );
+
+      env.waitForQuestions();
+      expect(env.component.showImportButton).toBe(false);
+      tick(11 * 1000);
+      env.waitForQuestions();
+      expect(env.component.showImportButton).toBe(true);
+      expect(env.importButton).not.toBeNull();
+    }));
   });
 
   describe('for Reviewer', () => {
@@ -499,7 +516,9 @@ class TestEnvironment {
       shareLevel: CheckingShareLevel.Anyone
     },
     translateConfig: {
-      translationSuggestionsEnabled: false
+      translationSuggestionsEnabled: false,
+      shareEnabled: false,
+      shareLevel: TranslateShareLevel.Specific
     },
     sync: { queuedCount: 0 },
     texts: [

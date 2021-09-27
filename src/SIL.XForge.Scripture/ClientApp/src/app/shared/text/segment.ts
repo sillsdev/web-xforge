@@ -30,6 +30,10 @@ export class Segment {
     return this.initialChecksum !== this.checksum;
   }
 
+  get productiveCharacterCount(): number {
+    return this._text.length - this.initialTextLen;
+  }
+
   acceptChanges(): void {
     this.initialTextLen = this._text.length;
     this.initialChecksum = this.checksum;
@@ -45,9 +49,5 @@ export class Segment {
     if (this.initialChecksum == null) {
       this.initialChecksum = this.checksum;
     }
-  }
-
-  get productiveCharacterCount(): number {
-    return this.text.length - this.initialTextLen;
   }
 }

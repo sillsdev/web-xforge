@@ -8,4 +8,9 @@ use('xforge');
 
 console.log(db.texts.count({ops: {$elemMatch: {'insert.verse': true}}}));
 
-console.log(db.texts.count({ops: {$elemMatch: {'attributes.segment': {$regex: '_undefined'}}}}));
+console.log(db.texts.count({ops: {$elemMatch: {'attributes.segment': {$regex: 'undefined'}}}}));
+
+console.log(db.texts.count({ops: {$elemMatch: {'attributes.segment': {$regex: 'null'}}}}));
+
+// This will match delete and retain ops, which should not exist, but have been found in production
+console.log(db.texts.count({ops: {$elemMatch: {insert: {$exists: false}}}}));

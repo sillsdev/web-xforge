@@ -279,6 +279,8 @@ connects to. But it may still prove useful for testing certain things.
 - JavaScript https://developer.mozilla.org/en-US/docs/Web/JavaScript
 - ts-mockito https://github.com/NagRock/ts-mockito#ts-mockito--
 - Mockito (for Java Mockito, but helps know how to use ts-mockito) http://static.javadoc.io/org.mockito/mockito-core/2.23.0/org/mockito/Mockito.html
+- Quill https://quilljs.com/docs/
+- Delta https://github.com/quilljs/delta/
 
 ## Testing
 

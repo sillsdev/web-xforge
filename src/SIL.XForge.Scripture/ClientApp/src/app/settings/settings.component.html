@@ -51,7 +51,7 @@
                   [innerHTML]="i18n.translateAndInsertTags('settings.enable_translation_suggestions')"
                 ></span>
               </div>
-              <ng-container *ngIf="translationSuggestionsEnabled && isLoggedInToParatext">
+              <ng-container *ngIf="isTranslationSuggestionsEnabled">
                 <div class="tool-setting select-indent">
                   <div class="tool-setting-field">
                     <app-project-select
@@ -61,7 +61,7 @@
                       [resources]="resources"
                       [nonSelectableProjects]="nonSelectableProjects"
                       [hideProjectId]="projectParatextId"
-                      [isDisabled]="!isAppOnline"
+                      [isDisabled]="!isAppOnline || isLoading || (projectLoadingFailed && resourceLoadingFailed)"
                     ></app-project-select>
                     <app-write-status
                       [state]="getControlState('sourceParatextId')"
@@ -69,9 +69,57 @@
                       id="based-on-status"
                     ></app-write-status>
                   </div>
+                  <mat-error *ngIf="projectLoadingFailed && resourceLoadingFailed">
+                    {{ t("error_fetching_projects_resources") }}
+                  </mat-error>
+                  <mat-error *ngIf="projectLoadingFailed && !resourceLoadingFailed">
+                    {{ t("error_fetching_projects") }}
+                  </mat-error>
+                  <mat-error *ngIf="resourceLoadingFailed && !projectLoadingFailed">
+                    {{ t("error_fetching_resources") }}
+                  </mat-error>
                   <div class="helper-text select-helper-text">{{ t("choose_the_paratext_project") }}</div>
                 </div>
               </ng-container>
+              <div class="tool-setting-field checkbox-field">
+                <mdc-form-field>
+                  <mdc-checkbox formControlName="translateShareEnabled" id="checkbox-translate-share"></mdc-checkbox>
+                  <label>{{ t("share") }}</label>
+                </mdc-form-field>
+                <app-write-status
+                  [state]="getControlState('translateShareEnabled')"
+                  [formGroup]="form"
+                  id="translate-share-status"
+                ></app-write-status>
+              </div>
+              <div class="helper-text checkbox-helper-text" fxLayout="row">
+                <span>
+                  <span [innerHTML]="shareDescription?.before"></span>
+                  <a [appRouterLink]="['/projects', projectId, 'users']">{{ shareDescription?.templateTagText }}</a>
+                  <span>{{ shareDescription?.after }}</span>
+                </span>
+              </div>
+              <mdc-radio-group
+                id="translate-share-level-radio-group"
+                formControlName="translateShareLevel"
+                class="tool-setting indent"
+              >
+                <div class="tool-setting-field">
+                  <mdc-form-field id="translate-share-level-anyone-field">
+                    <mdc-radio id="radio-translateShareLevel-anyone" [value]="'anyone'"></mdc-radio>
+                    <label>{{ t("anyone_with_a_link") }}</label>
+                  </mdc-form-field>
+                  <mdc-form-field>
+                    <mdc-radio id="radio-translateShareLevel-specific" [value]="'specific'"></mdc-radio>
+                    <label>{{ t("specific_people") }}</label>
+                  </mdc-form-field>
+                  <app-write-status
+                    [state]="getControlState('translateShareLevel')"
+                    [formGroup]="form"
+                    id="translateShareLevel-status"
+                  ></app-write-status>
+                </div>
+              </mdc-radio-group>
             </div>
           </div>
           <mdc-list-divider></mdc-list-divider>
@@ -90,7 +138,7 @@
               </div>
               <div class="helper-text checkbox-helper-text">{{ t("engage_the_wider_community") }}</div>
             </div>
-            <ng-container *ngIf="checkingEnabled">
+            <ng-container *ngIf="isCheckingEnabled">
               <div class="tool-setting indent">
                 <div class="tool-setting-field checkbox-field">
                   <mdc-form-field>
@@ -111,13 +159,13 @@
               <div class="tool-setting indent">
                 <div class="tool-setting-field checkbox-field">
                   <mdc-form-field>
-                    <mdc-checkbox formControlName="shareEnabled" id="checkbox-share"></mdc-checkbox>
+                    <mdc-checkbox formControlName="checkingShareEnabled" id="checkbox-checking-share"></mdc-checkbox>
                     <label>{{ t("share") }}</label>
                   </mdc-form-field>
                   <app-write-status
-                    [state]="getControlState('shareEnabled')"
+                    [state]="getControlState('checkingShareEnabled')"
                     [formGroup]="form"
-                    id="share-status"
+                    id="checking-share-status"
                   ></app-write-status>
                 </div>
                 <div class="helper-text checkbox-helper-text" fxLayout="row">
@@ -127,20 +175,24 @@
                     <span>{{ shareDescription?.after }}</span>
                   </span>
                 </div>
-                <mdc-radio-group id="share-level-radio-group" formControlName="shareLevel" class="tool-setting indent">
+                <mdc-radio-group
+                  id="checking-share-level-radio-group"
+                  formControlName="checkingShareLevel"
+                  class="tool-setting indent"
+                >
                   <div class="tool-setting-field">
-                    <mdc-form-field id="share-level-anyone-field">
-                      <mdc-radio id="radio-shareLevel-anyone" [value]="'anyone'"></mdc-radio>
+                    <mdc-form-field id="checking-share-level-anyone-field">
+                      <mdc-radio id="radio-checkingShareLevel-anyone" [value]="'anyone'"></mdc-radio>
                       <label>{{ t("anyone_with_a_link") }}</label>
                     </mdc-form-field>
                     <mdc-form-field>
-                      <mdc-radio id="radio-shareLevel-specific" [value]="'specific'"></mdc-radio>
+                      <mdc-radio id="radio-checkingShareLevel-specific" [value]="'specific'"></mdc-radio>
                       <label>{{ t("specific_people") }}</label>
                     </mdc-form-field>
                     <app-write-status
-                      [state]="getControlState('shareLevel')"
+                      [state]="getControlState('checkingShareLevel')"
                       [formGroup]="form"
-                      id="shareLevel-status"
+                      id="checkingShareLevel-status"
                     ></app-write-status>
                   </div>
                 </mdc-radio-group>

@@ -12,6 +12,7 @@ import { CheckingShareLevel } from '../models/checking-config';
 import { SFProject, SF_PROJECTS_COLLECTION } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
 import { getTextDocId, TextData, TEXTS_COLLECTION } from '../models/text-data';
+import { TranslateShareLevel } from '../models/translate-config';
 import { TextService } from './text-service';
 
 ShareDB.types.register(RichText.type);
@@ -114,7 +115,11 @@ class TestEnvironment {
       shortName: 'PT01',
       paratextId: 'pt01',
       writingSystem: { tag: 'qaa' },
-      translateConfig: { translationSuggestionsEnabled: false },
+      translateConfig: {
+        translationSuggestionsEnabled: false,
+        shareEnabled: true,
+        shareLevel: TranslateShareLevel.Specific
+      },
       checkingConfig: {
         checkingEnabled: false,
         usersSeeEachOthersResponses: true,

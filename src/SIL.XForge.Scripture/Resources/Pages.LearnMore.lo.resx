@@ -58,7 +58,7 @@
     value   : The object must be serialized into a byte array
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
-    -->
+  -->
   <xsd:schema xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace"/>
     <xsd:element name="root" msdata:IsDataSet="true">
@@ -126,6 +126,24 @@
   <data name="LearnHeader" xml:space="preserve">
     <value>Learn more on Scripture Forge</value>
   </data>
+  <data name="LearnSliderCheckingOfflineAnwering" xml:space="preserve">
+    <value>{0}Answering questions{1}, including recording an audio answer, offline.</value>
+  </data>
+  <data name="LearnSliderCheckingOfflineDescription" xml:space="preserve">
+    <value>{0}Community Checkers{1} and {0}Administrators{1} should {2}watch this video{3} to see how users can keep working, even when offline. It covers:</value>
+  </data>
+  <data name="LearnSliderCheckingOfflineHeader" xml:space="preserve">
+    <value>Working Offline</value>
+  </data>
+  <data name="LearnSliderCheckingOfflineInstalling" xml:space="preserve">
+    <value>{0}Installing the app{1} on your device by using {2}Add to Home screen{3}.</value>
+  </data>
+  <data name="LearnSliderCheckingOfflineLoading" xml:space="preserve">
+    <value>{0}Loading questions{1} automatically before going offline.</value>
+  </data>
+  <data name="LearnSliderCheckingOfflineSaving" xml:space="preserve">
+    <value>{0}Automatically saving{1} updated answers once you're back online.</value>
+  </data>
   <data name="LearnSliderCheckingSeeAnswer" xml:space="preserve">
     <value>{0}Answering questions{1} in text and audio form.</value>
   </data>
@@ -151,7 +169,7 @@
     <value>{0}Connecting to a Paratext project{1} in Scripture Forge.</value>
   </data>
   <data name="LearnSliderCheckingSetupDescription" xml:space="preserve">
-    <value>Paratext project {0}Administrators{1} can {2}watch this video{3} to learn about setting up {0}Community Checking{1}. It covers:</value>
+    <value>{4}Paratext{5} project {0}Administrators{1} can {2}watch this video{3} to learn about setting up {0}Community Checking{1}. It covers:</value>
   </data>
   <data name="LearnSliderCheckingSetupHeader" xml:space="preserve">
     <value>Setting Up Community Checking</value>
@@ -161,18 +179,6 @@
   </data>
   <data name="LearnSliderCheckingSetupSync" xml:space="preserve">
     <value>{0}Synchronizing{1} the {2}Community Checkers'{3} answers with Paratext.</value>
-  </data>
-  <data name="LearnSliderSuggestionSetupBased" xml:space="preserve">
-    <value>Select a project the translation is {0}Based on{1} and the intelligent suggestion engine can be trained to {2}provide helpful translation suggestions{3}.</value>
-  </data>
-  <data name="LearnSliderSuggestionSetupBest" xml:space="preserve">
-    <value>Most effective on {0}closely related projects{1} with similar grammar and style of translation, such as adaptation projects.</value>
-  </data>
-  <data name="LearnSliderSuggestionSetupDescription" xml:space="preserve">
-    <value>{0}Administrators{1} can enable {2}Translation Suggestions{3} to assist {0}Translators{1}.</value>
-  </data>
-  <data name="LearnSliderSuggestionSetupHeader" xml:space="preserve">
-    <value>Setting Up Translation Suggestions</value>
   </data>
   <data name="LearnSliderSuggestionAcceptDescription" xml:space="preserve">
     <value>With the suggestion engine set up and trained, Scripture Forge may offer {0}Translators{1} suggestions as they type.</value>
@@ -189,8 +195,20 @@
   <data name="LearnSliderSuggestionAcceptReceive" xml:space="preserve">
     <value>{0}Translators{1} can {2}receive suggestions{3} about how to translate the next word or phrase, as they type.</value>
   </data>
+  <data name="LearnSliderSuggestionSetupBased" xml:space="preserve">
+    <value>Select a project the translation is {0}Based on{1} and the intelligent suggestion engine can be trained to {2}provide helpful translation suggestions{3}.</value>
+  </data>
+  <data name="LearnSliderSuggestionSetupBest" xml:space="preserve">
+    <value>Most effective on {0}closely related projects{1} with similar grammar and style of translation, such as adaptation projects.</value>
+  </data>
+  <data name="LearnSliderSuggestionSetupDescription" xml:space="preserve">
+    <value>{0}Administrators{1} can enable {2}Translation Suggestions{3} to assist {0}Translators{1}.</value>
+  </data>
+  <data name="LearnSliderSuggestionSetupHeader" xml:space="preserve">
+    <value>Setting Up Translation Suggestions</value>
+  </data>
   <data name="LearnSliderTranslateEditDescription" xml:space="preserve">
-    <value>{0}Administrators{1} can connect a Paratext project to Scripture Forge to edit Scripture as they would in Paratext, while {2}benefiting from increased collaboration{3} options.</value>
+    <value>{0}Administrators{1} can connect a {4}Paratext{5} project to Scripture Forge to edit Scripture as they would in Paratext, while {2}benefiting from increased collaboration{3} options.</value>
   </data>
   <data name="LearnSliderTranslateEditHeader" xml:space="preserve">
     <value>Editing Scripture</value>

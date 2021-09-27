@@ -324,6 +324,10 @@ usx-blank {
   }
 }
 
+usx-segment:first-child usx-blank {
+  width: 5px;
+}
+
 usx-char {
   &[data-style='it'] {
     font-style: italic;

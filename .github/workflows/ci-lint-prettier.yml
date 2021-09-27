@@ -1,0 +1,36 @@
+# This workflow will do a clean install of node dependencies, and then check lint and prettier formatting.
+# See: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: Lint and Prettier
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+    branches: [master, develop]
+
+jobs:
+  test:
+    name: check on Ubuntu Node.js
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node_version: [12.x]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node_version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node_version }}
+      - name: Upgrade npm
+        run: npm install -g npm@7
+      - name: Realtime Server Lint check
+        run: cd src/RealtimeServer && npm ci && npm run lint
+      - name: Realtime Server Prettier format check
+        run: cd src/RealtimeServer && npm run prettier:tc
+      - name: Angular Frontend Lint check
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm ci && npm run lint
+      - name: Angular Frontend Prettier format check
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run prettier:tc

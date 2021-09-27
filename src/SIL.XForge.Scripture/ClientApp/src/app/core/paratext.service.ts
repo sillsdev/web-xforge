@@ -7,7 +7,7 @@ import { ParatextProject } from './models/paratext-project';
 
 export interface SelectableProject {
   name: string;
-  shortName?: string;
+  shortName: string;
   paratextId: string;
 }
 
@@ -21,34 +21,32 @@ export class ParatextService {
     this.authService.linkParatext(returnUrl);
   }
 
-  /** Fetch projects and resources in parallel */
-  getProjectsAndResources(): Promise<[ParatextProject[] | undefined, SelectableProject[] | undefined]> {
-    return Promise.all<ParatextProject[] | undefined, SelectableProject[] | undefined>([
-      this.getProjects(),
-      this.getResources()
-    ]);
-  }
-
   getParatextUsername(): Observable<string | undefined> {
     return this.http
-      .get<string | null>('paratext-api/username', { headers: this.getHeaders() })
+      .get<string | null>('paratext-api/username', { headers: this.headers })
       .pipe(map(r => r ?? undefined));
   }
 
-  private getProjects(): Promise<ParatextProject[] | undefined> {
-    return this.http
-      .get<ParatextProject[] | undefined>('paratext-api/projects', { headers: this.getHeaders() })
-      .toPromise();
+  getProjects(): Promise<ParatextProject[] | undefined> {
+    return this.http.get<ParatextProject[] | undefined>('paratext-api/projects', { headers: this.headers }).toPromise();
   }
 
-  private getResources(): Promise<SelectableProject[] | undefined> {
+  getResources(): Promise<SelectableProject[] | undefined> {
     return this.http
-      .get<{ [key: string]: string }[]>('paratext-api/resources', { headers: this.getHeaders() })
-      .pipe(map(r => (r ? Object.keys(r).map(key => ({ paratextId: key, name: r[key] })) : undefined)))
-      .toPromise();
+      .get<{ [id: string]: [shortName: string, name: string] }>('paratext-api/resources', { headers: this.headers })
+      .toPromise()
+      .then(result =>
+        result == null
+          ? undefined
+          : Object.entries(result).map(([paratextId, [shortName, projectName]]) => ({
+              paratextId,
+              shortName,
+              name: projectName
+            }))
+      );
   }
 
-  private getHeaders(): HttpHeaders {
+  private get headers(): HttpHeaders {
     return new HttpHeaders({
       Accept: 'application/json',
       'Content-Type': 'application/json'

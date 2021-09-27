@@ -10,6 +10,7 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
@@ -26,6 +27,7 @@ import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SF_DEFAULT_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
@@ -94,6 +96,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   private projectRemoteChangesSub?: Subscription;
   private questionsRemoteChangesSub?: Subscription;
   private text?: TextInfo;
+  private isProjectAdmin: boolean = false;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -168,7 +171,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   get questionDocs(): Readonly<QuestionDoc[]> {
-    return this.questionsQuery?.docs.filter(qd => qd.data?.isArchived === false) || [];
+    return (this.questionsQuery?.docs || [])
+      .filter(qd => qd.data != null && qd.data.isArchived === false)
+      .sort((docA, docB) => {
+        const a = docA.data!;
+        const b = docB.data!;
+        const diff =
+          VerseRef.getBBBCCCVVV(a.verseRef.bookNum, a.verseRef.chapterNum, a.verseRef.verseNum) -
+          VerseRef.getBBBCCCVVV(b.verseRef.bookNum, b.verseRef.chapterNum, b.verseRef.verseNum);
+        return diff !== 0 ? diff : Date.parse(a.dateCreated) - Date.parse(b.dateCreated);
+      });
   }
 
   get textsByBookId(): TextsByBookId {
@@ -186,6 +198,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       return [];
     }
     return ['/projects', this.projectDoc.id, 'checking'];
+  }
+
+  get defaultShareRole(): SFProjectRole {
+    return SF_DEFAULT_SHARE_ROLE;
+  }
+
+  get canShare(): boolean {
+    return this.isProjectAdmin || this.projectDoc?.data?.checkingConfig.shareEnabled === true;
   }
 
   private get book(): number | undefined {
@@ -429,6 +449,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         this.projectDeleteSub.unsubscribe();
       }
       this.projectDeleteSub = this.subscribe(this.projectDoc.delete$, () => this.onRemovedFromProject());
+      this.isProjectAdmin = await this.projectService.isProjectAdmin(projectId, this.userService.currentUserId);
     });
     this.subscribe(this.media.media$, (change: MediaChange) => {
       this.calculateScriptureSliderPosition();

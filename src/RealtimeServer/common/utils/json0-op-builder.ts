@@ -188,7 +188,7 @@ export class Json0OpBuilder<T> {
    * @param {ObjProxyArg<T, number>} field The path to the field.
    * @param {number} [n=1] The amount to increment/decrement the field. Use negative values to decrement.
    */
-  inc(field: ObjProxyArg<T, number>, n: number = 1): Json0OpBuilder<T> {
+  inc(field: ObjProxyArg<T, number>, n = 1): Json0OpBuilder<T> {
     const path = getPath(field);
     return this.pathInc(path, n);
   }
@@ -199,7 +199,7 @@ export class Json0OpBuilder<T> {
    * @param {PathItem[]} path The path to the field.
    * @param {number} [n=1] The amount to increment/decrement the field. Use negative values to decrement.
    */
-  pathInc(path: PathItem[], n: number = 1): Json0OpBuilder<T> {
+  pathInc(path: PathItem[], n = 1): Json0OpBuilder<T> {
     this.op.push({ p: path, na: n });
     return this;
   }

@@ -1,5 +1,5 @@
-import express from 'express';
 import * as http from 'http';
+import express from 'express';
 import { JwtHeader, SigningKeyCallback, verify } from 'jsonwebtoken';
 import jwks from 'jwks-rsa';
 import ShareDB from 'sharedb';
@@ -26,7 +26,7 @@ export class WebSocketStreamListener {
     // Create web servers to serve files and listen to WebSocket connections
     const app = express();
     app.use(express.static('static'));
-    app.use((err: any, req: any, res: any, next: any) => {
+    app.use((err: any, _req: any, res: any, _next: any) => {
       console.error(err);
       res.status(500).send('500 Internal Server Error');
       this.exceptionReporter.report(err);
@@ -46,7 +46,7 @@ export class WebSocketStreamListener {
     });
 
     wss.on('connection', (webSocket: WebSocket, req: http.IncomingMessage) => {
-      this.verifyToken(req, (res: boolean, code: number = 200, message?: string) => {
+      this.verifyToken(req, (res: boolean, code = 200, message?: string) => {
         if (res) {
           const stream = new WebSocketJSONStream(webSocket);
           backend.listen(stream, req);

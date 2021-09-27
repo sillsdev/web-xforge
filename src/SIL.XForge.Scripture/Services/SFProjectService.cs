@@ -260,12 +260,14 @@ namespace SIL.XForge.Scripture.Services
                     UpdateSetting(op, p => p.TranslateConfig.TranslationSuggestionsEnabled,
                         settings.TranslationSuggestionsEnabled);
                     UpdateSetting(op, p => p.TranslateConfig.Source, source);
+                    UpdateSetting(op, p => p.TranslateConfig.ShareEnabled, settings.TranslateShareEnabled);
+                    UpdateSetting(op, p => p.TranslateConfig.ShareLevel, settings.TranslateShareLevel);
 
                     UpdateSetting(op, p => p.CheckingConfig.CheckingEnabled, settings.CheckingEnabled);
                     UpdateSetting(op, p => p.CheckingConfig.UsersSeeEachOthersResponses,
                         settings.UsersSeeEachOthersResponses);
-                    UpdateSetting(op, p => p.CheckingConfig.ShareEnabled, settings.ShareEnabled);
-                    UpdateSetting(op, p => p.CheckingConfig.ShareLevel, settings.ShareLevel);
+                    UpdateSetting(op, p => p.CheckingConfig.ShareEnabled, settings.CheckingShareEnabled);
+                    UpdateSetting(op, p => p.CheckingConfig.ShareLevel, settings.CheckingShareLevel);
                 });
 
                 bool suggestionsEnabledSet = settings.TranslationSuggestionsEnabled != null;
@@ -335,10 +337,7 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task CancelSyncAsync(string curUserId, string projectId)
         {
-            Attempt<SFProject> attempt = await RealtimeService.TryGetSnapshotAsync<SFProject>(projectId);
-            if (!attempt.TryResult(out SFProject project))
-                throw new DataNotFoundException("The project does not exist.");
-
+            SFProject project = await GetProjectAsync(projectId);
             if (!(IsProjectAdmin(project, curUserId) || IsProjectTranslator(project, curUserId)))
                 throw new ForbiddenException();
 
@@ -349,6 +348,9 @@ namespace SIL.XForge.Scripture.Services
             string role)
         {
             SFProject project = await GetProjectAsync(projectId);
+            if (!IsOnProject(project, curUserId))
+                throw new ForbiddenException();
+
             if (await RealtimeService.QuerySnapshots<User>()
                 .AnyAsync(u => project.UserRoles.Keys.Contains(u.Id) && u.Email == email))
             {
@@ -356,10 +358,18 @@ namespace SIL.XForge.Scripture.Services
             }
             SiteOptions siteOptions = SiteOptions.Value;
 
-            if (!project.CheckingConfig.ShareEnabled && !IsProjectAdmin(project, curUserId))
-            {
-                throw new ForbiddenException();
+            bool isAdmin = IsProjectAdmin(project, curUserId);
+            string[] availableRoles = new Dictionary<string, bool> {
+                { SFProjectRole.CommunityChecker, project.CheckingConfig.CheckingEnabled && (isAdmin || project.CheckingConfig.ShareEnabled) },
+                { SFProjectRole.SFObserver, project.TranslateConfig.ShareEnabled || isAdmin }
             }
+                .Where(entry => entry.Value)
+                .Select(entry => entry.Key)
+                .ToArray();
+
+            if (!availableRoles.Contains(role))
+                throw new ForbiddenException();
+
             CultureInfo.CurrentUICulture = new CultureInfo(locale);
             // Remove the user sharekey if expired
             await ProjectSecrets.UpdateAsync(
@@ -413,11 +423,23 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary> Get the link sharing key for a project if it exists, otherwise create a new one. </summary>
-        public async Task<string> GetLinkSharingKeyAsync(string projectId, string role)
+        public async Task<string> GetLinkSharingKeyAsync(string curUserId, string projectId, string role)
         {
             SFProject project = await GetProjectAsync(projectId);
-            if (!(project.CheckingConfig.ShareEnabled && project.CheckingConfig.ShareLevel == CheckingShareLevel.Anyone))
+            if (!IsOnProject(project, curUserId))
+                throw new ForbiddenException();
+
+            string[] availableRoles = new Dictionary<string, bool> {
+                { SFProjectRole.CommunityChecker, project.CheckingConfig.CheckingEnabled && project.CheckingConfig.ShareEnabled && project.CheckingConfig.ShareLevel == CheckingShareLevel.Anyone },
+                { SFProjectRole.SFObserver, project.TranslateConfig.ShareEnabled && project.TranslateConfig.ShareLevel == TranslateShareLevel.Anyone }
+            }
+                .Where(entry => entry.Value)
+                .Select(entry => entry.Key)
+                .ToArray();
+
+            if (!availableRoles.Contains(role))
                 return null;
+
             SFProjectSecret projectSecret = await ProjectSecrets.GetAsync(projectId);
             // Link sharing keys have Email set to null and ExpirationTime set to null.
             string key = projectSecret.ShareKeys.SingleOrDefault(
@@ -462,7 +484,9 @@ namespace SIL.XForge.Scripture.Services
         public async Task<bool> IsAlreadyInvitedAsync(string curUserId, string projectId, string email)
         {
             SFProject project = await GetProjectAsync(projectId);
-            if (!IsProjectAdmin(project, curUserId) && !project.CheckingConfig.ShareEnabled)
+            bool sharingEnabled = project.TranslateConfig.ShareEnabled ||
+                (project.CheckingConfig.CheckingEnabled && project.CheckingConfig.ShareEnabled);
+            if (!IsProjectAdmin(project, curUserId) && !(IsOnProject(project, curUserId) && sharingEnabled))
                 throw new ForbiddenException();
 
             if (email == null)
@@ -492,13 +516,14 @@ namespace SIL.XForge.Scripture.Services
             using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
                 IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
-                if (projectDoc.Data.UserRoles.ContainsKey(curUserId))
+                SFProject project = projectDoc.Data;
+                if (project.UserRoles.ContainsKey(curUserId))
                     return;
 
                 IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
                 string projectRole;
                 // Attempt to get the role for the user from the Paratext registry
-                Attempt<string> attempt = await TryGetProjectRoleAsync(projectDoc.Data, curUserId);
+                Attempt<string> attempt = await TryGetProjectRoleAsync(project, curUserId);
                 if (!attempt.TryResult(out projectRole))
                 {
                     // Get the project role that is specified in the sharekey
@@ -510,9 +535,15 @@ namespace SIL.XForge.Scripture.Services
                 if (projectRole == null)
                     throw new ForbiddenException();
 
-                bool linkSharing = projectDoc.Data.CheckingConfig.ShareEnabled &&
-                    projectDoc.Data.CheckingConfig.ShareLevel == CheckingShareLevel.Anyone;
-                if (linkSharing)
+                string[] availableRoles = new Dictionary<string, bool> {
+                    { SFProjectRole.CommunityChecker, project.CheckingConfig.CheckingEnabled && project.CheckingConfig.ShareEnabled && project.CheckingConfig.ShareLevel == CheckingShareLevel.Anyone },
+                    { SFProjectRole.SFObserver, project.TranslateConfig.ShareEnabled && project.TranslateConfig.ShareLevel == TranslateShareLevel.Anyone }
+                }
+                    .Where(entry => entry.Value)
+                    .Select(entry => entry.Key)
+                    .ToArray();
+
+                if (availableRoles.Contains(projectRole))
                 {
                     // Add the user and remove the specific user share key if it exists. Link sharing keys
                     // have Email set to null and will not be removed.
@@ -739,7 +770,7 @@ namespace SIL.XForge.Scripture.Services
                     return permission switch
                     {
                         TextInfoPermission.None => Attempt.Failure(ProjectRole.None),
-                        TextInfoPermission.Read => Attempt.Success(SFProjectRole.Observer),
+                        TextInfoPermission.Read => Attempt.Success(SFProjectRole.PTObserver),
                         _ => throw new ArgumentException($"Unknown resource permission: '{permission}'",
                             nameof(permission)),
                     };
