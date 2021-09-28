@@ -20,7 +20,7 @@ import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
-import { ParatextNoteThread } from 'realtime-server/lib/esm/scriptureforge/models/paratext-note-thread';
+import { NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
@@ -41,7 +41,7 @@ import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
 import XRegExp from 'xregexp';
 import { environment } from '../../../environments/environment';
-import { ParatextNoteThreadDoc } from '../../core/models/paratext-note-thread-doc';
+import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -113,7 +113,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private trainingProgressClosed: boolean = false;
   private trainingCompletedTimeout: any;
   private clickSubs: Subscription[] = [];
-  private noteThreadQuery?: RealtimeQuery<ParatextNoteThreadDoc>;
+  private noteThreadQuery?: RealtimeQuery<NoteThreadDoc>;
   private toggleNoteThreadVerseRefs$: BehaviorSubject<void> = new BehaviorSubject<void>(undefined);
   private toggleNoteThreadSub?: Subscription;
 
@@ -616,7 +616,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (this.target?.editor == null || this.noteThreadQuery == null || this.bookNum == null || this._chapter == null) {
       return;
     }
-    const chapterNoteThreadDocs: ParatextNoteThreadDoc[] = this.noteThreadQuery.docs.filter(
+    const chapterNoteThreadDocs: NoteThreadDoc[] = this.noteThreadQuery.docs.filter(
       nt =>
         nt.data != null && nt.data.verseRef.bookNum === this.bookNum && nt.data.verseRef.chapterNum === this._chapter
     );
@@ -972,7 +972,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   /** Gets the information needed to format a particular featured verse. */
-  private getFeaturedVerseRefInfo(thread: ParatextNoteThread): FeaturedVerseRefInfo {
+  private getFeaturedVerseRefInfo(thread: NoteThread): FeaturedVerseRefInfo {
     const notes: Note[] = clone(thread.notes).sort((a, b) => Date.parse(a.dateCreated) - Date.parse(b.dateCreated));
     let preview: string = this.stripXml(notes[0].content.trim());
     if (notes.length > 1) {
@@ -1020,9 +1020,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     for (const [threadId, _] of oldSegmentEmbeds.entries()) {
-      const noteThreadDoc: ParatextNoteThreadDoc | undefined = this.noteThreadQuery.docs.find(
-        n => n.data?.dataId === threadId
-      );
+      const noteThreadDoc: NoteThreadDoc | undefined = this.noteThreadQuery.docs.find(n => n.data?.dataId === threadId);
       if (noteThreadDoc?.data == null) {
         continue;
       }

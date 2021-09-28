@@ -2085,16 +2085,16 @@ namespace SIL.XForge.Scripture.Services
                     }));
 
                 RealtimeService.AddRepository("paratext_note_threads", OTType.Json0,
-                    new MemoryRepository<ParatextNoteThread>(new[]
+                    new MemoryRepository<NoteThread>(new[]
                     {
-                        new ParatextNoteThread { Id = "project01:thread01", DataId = "thread01",
+                        new NoteThread { Id = "project01:thread01", DataId = "thread01",
                             Notes = new List<Note>()
                             {
                                 new Note { DataId = "thread01:PT01", SyncUserRef = "PT01" },
                                 new Note { DataId = "thread01:PT01", SyncUserRef = "PT02" }
                             }
                         },
-                        new ParatextNoteThread { Id = "project01:thread02", DataId = "thread02",
+                        new NoteThread { Id = "project01:thread02", DataId = "thread02",
                             Notes = new List<Note>()
                             {
                                 new Note { DataId = "thread02:PT01", SyncUserRef = "PT01" },

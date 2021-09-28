@@ -178,7 +178,7 @@ namespace SIL.XForge.Scripture.Services
                     if (isDataInSync)
                     {
                         await UpdateParatextNotesAsync(text, questionDocs);
-                        IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs =
+                        IEnumerable<IDocument<NoteThread>> noteThreadDocs =
                             (await FetchNoteThreadDocsAsync(text.BookNum)).Values;
                         await _paratextService.UpdateParatextCommentsAsync(_userSecret, targetParatextId, text.BookNum,
                             noteThreadDocs, _currentSyncUsers);
@@ -369,7 +369,7 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 // update note thread docs
-                Dictionary<string, IDocument<ParatextNoteThread>> noteThreadDocs =
+                Dictionary<string, IDocument<NoteThread>> noteThreadDocs =
                     await FetchNoteThreadDocsAsync(text.BookNum);
                 IEnumerable<int> chapterNumbers = newSetOfChapters.Select(c => c.Number);
                 IEnumerable<Chapter> deletedChapters = text.Chapters.Where(c => !chapterNumbers.Contains(c.Number));
@@ -637,14 +637,14 @@ namespace SIL.XForge.Scripture.Services
         /// Updates ParatextNoteThread docs for a book
         /// </summary>
         private async Task UpdateNoteThreadDocsAsync(TextInfo text,
-            Dictionary<string, IDocument<ParatextNoteThread>> noteThreadDocs, CancellationToken token,
+            Dictionary<string, IDocument<NoteThread>> noteThreadDocs, CancellationToken token,
             Dictionary<int, ChapterDelta> chapterDeltas, IEnumerable<Chapter> chaptersDeleted)
         {
             List<string> deletedNoteThreadDocIds = await DeleteNoteThreadDocsInChapters(text.BookNum, chaptersDeleted);
-            IEnumerable<IDocument<ParatextNoteThread>> remainingDocs = noteThreadDocs.Values
+            IEnumerable<IDocument<NoteThread>> remainingDocs = noteThreadDocs.Values
                 .Where(d => !deletedNoteThreadDocIds.Contains(d.Id));
-            IEnumerable<ParatextNoteThreadChange> noteThreadChanges = _paratextService.GetNoteThreadChanges(_userSecret,
-                _projectDoc.Data.ParatextId, text.BookNum, noteThreadDocs.Values, chapterDeltas, _currentSyncUsers);
+            IEnumerable<NoteThreadChange> noteThreadChanges = _paratextService.GetNoteThreadChanges(_userSecret,
+                _projectDoc.Data.ParatextId, text.BookNum, remainingDocs, chapterDeltas, _currentSyncUsers);
             var tasks = new List<Task>();
             IReadOnlyDictionary<string, string> idsToUsernames =
                 await _paratextService.GetParatextUsernameMappingAsync(_userSecret, _projectDoc.Data, token);
@@ -653,20 +653,20 @@ namespace SIL.XForge.Scripture.Services
             foreach (KeyValuePair<string, string> kvp in idsToUsernames)
                 usernamesToUserIds.Add(kvp.Value, kvp.Key);
 
-            foreach (ParatextNoteThreadChange change in noteThreadChanges)
+            foreach (NoteThreadChange change in noteThreadChanges)
             {
                 // Find the thread doc if it exists
-                IDocument<ParatextNoteThread> threadDoc;
+                IDocument<NoteThread> threadDoc;
                 if (!noteThreadDocs.TryGetValue(change.ThreadId, out threadDoc))
                 {
                     // Create a new ParatextNoteThread doc
-                    IDocument<ParatextNoteThread> doc = GetNoteThreadDoc(change.ThreadId);
-                    async Task createThreadDoc(string threadId, string projectId, ParatextNoteThreadChange change)
+                    IDocument<NoteThread> doc = GetNoteThreadDoc(change.ThreadId);
+                    async Task createThreadDoc(string threadId, string projectId, NoteThreadChange change)
                     {
                         VerseRef verseRef = new VerseRef();
                         verseRef.Parse(change.VerseRefStr);
                         VerseRefData vrd = new VerseRefData(verseRef.BookNum, verseRef.ChapterNum, verseRef.Verse);
-                        await doc.CreateAsync(new ParatextNoteThread()
+                        await doc.CreateAsync(new NoteThread()
                         {
                             DataId = change.ThreadId,
                             ProjectRef = _projectDoc.Id,
@@ -747,19 +747,19 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>
         /// Fetch the ParatextNoteThread docs from the database and return it in a dictionary with threadId as the key.
         /// </summary>
-        private async Task<Dictionary<string, IDocument<ParatextNoteThread>>> FetchNoteThreadDocsAsync(int bookNum)
+        private async Task<Dictionary<string, IDocument<NoteThread>>> FetchNoteThreadDocsAsync(int bookNum)
         {
-            List<string> noteThreadDocIds = await _realtimeService.QuerySnapshots<ParatextNoteThread>()
+            List<string> noteThreadDocIds = await _realtimeService.QuerySnapshots<NoteThread>()
                 .Where(pnt => pnt.ProjectRef == _projectDoc.Id && pnt.VerseRef.BookNum == bookNum)
                 .Select(pnt => pnt.Id)
                 .ToListAsync();
-            IDocument<ParatextNoteThread>[] noteThreadDocs = new IDocument<ParatextNoteThread>[noteThreadDocIds.Count];
+            IDocument<NoteThread>[] noteThreadDocs = new IDocument<NoteThread>[noteThreadDocIds.Count];
             var tasks = new List<Task>();
             for (int i = 0; i < noteThreadDocIds.Count; i++)
             {
                 async Task fetchNoteThread(int index)
                 {
-                    noteThreadDocs[index] = await _conn.FetchAsync<ParatextNoteThread>(noteThreadDocIds[index]);
+                    noteThreadDocs[index] = await _conn.FetchAsync<NoteThread>(noteThreadDocIds[index]);
                 }
                 tasks.Add(fetchNoteThread(i));
             }
@@ -771,8 +771,8 @@ namespace SIL.XForge.Scripture.Services
         /// Apply the changes to a ParatextNoteThread doc.
         /// TODO: Handle if verseRef changes
         /// </summary>
-        private async Task SubmitChangesOnNoteThreadDocAsync(IDocument<ParatextNoteThread> threadDoc,
-            ParatextNoteThreadChange change, Dictionary<string, string> usernamesToUserIds)
+        private async Task SubmitChangesOnNoteThreadDocAsync(IDocument<NoteThread> threadDoc,
+            NoteThreadChange change, Dictionary<string, string> usernamesToUserIds)
         {
             if (change.ThreadRemoved)
             {
@@ -863,7 +863,7 @@ namespace SIL.XForge.Scripture.Services
 
         private async Task<List<string>> DeleteNoteThreadDocsInChapters(int bookNum, IEnumerable<Chapter> chapters)
         {
-            List<string> noteThreadDocIds = await _realtimeService.QuerySnapshots<ParatextNoteThread>()
+            List<string> noteThreadDocIds = await _realtimeService.QuerySnapshots<NoteThread>()
                 .Where(n => n.ProjectRef == _projectDoc.Id && n.VerseRef.BookNum == bookNum &&
                     chapters.Select(c => c.Number).Contains(n.VerseRef.ChapterNum))
                 .Select(n => n.Id)
@@ -873,7 +873,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 async Task deleteNoteThread()
                 {
-                    IDocument<ParatextNoteThread> noteThreadDoc = await _conn.FetchAsync<ParatextNoteThread>(noteThreadDocId);
+                    IDocument<NoteThread> noteThreadDoc = await _conn.FetchAsync<NoteThread>(noteThreadDocId);
                     if (noteThreadDoc.IsLoaded)
                         await noteThreadDoc.DeleteAsync();
                 }
@@ -1094,9 +1094,9 @@ namespace SIL.XForge.Scripture.Services
                 await textDoc.DeleteAsync();
         }
 
-        private IDocument<ParatextNoteThread> GetNoteThreadDoc(string threadId)
+        private IDocument<NoteThread> GetNoteThreadDoc(string threadId)
         {
-            return _conn.Get<ParatextNoteThread>($"{_projectDoc.Id}:{threadId}");
+            return _conn.Get<NoteThread>($"{_projectDoc.Id}:{threadId}");
         }
 
         private Dictionary<int, ChapterDelta> GetDeltasByChapter(TextInfo text, string paratextId)

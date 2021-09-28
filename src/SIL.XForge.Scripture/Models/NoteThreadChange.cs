@@ -10,7 +10,7 @@ namespace SIL.XForge.Scripture.Models
         None
     }
 
-    public class ParatextNoteThreadChange
+    public class NoteThreadChange
     {
         public string ThreadId { get; set; }
         public string VerseRefStr { get; set; }
@@ -36,7 +36,7 @@ namespace SIL.XForge.Scripture.Models
             }
         }
 
-        public ParatextNoteThreadChange(string threadId, string verseRef, string selectedText, string contextBefore,
+        public NoteThreadChange(string threadId, string verseRef, string selectedText, string contextBefore,
             string contextAfter, string tagIcon = null)
         {
             ThreadId = threadId;
