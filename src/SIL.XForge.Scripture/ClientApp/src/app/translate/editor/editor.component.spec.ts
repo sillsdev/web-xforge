@@ -22,7 +22,7 @@ import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
-import { ParatextNoteThread } from 'realtime-server/lib/esm/scriptureforge/models/paratext-note-thread';
+import { NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
@@ -49,7 +49,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { ParatextNoteThreadDoc } from '../../core/models/paratext-note-thread-doc';
+import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -1134,7 +1134,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.wait();
 
-      let doc: ParatextNoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      let doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
       const noteStart1 = env.component.target!.getSegmentRange('verse_1_1')!.index + doc.data!.position.start;
       doc = env.getNoteThreadDoc('project01', 'thread02');
       const noteStart2 = env.component.target!.getSegmentRange('verse_1_3')!.index + doc.data!.position.start;
@@ -1158,7 +1158,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
 
-      let noteThreadDoc: ParatextNoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      let noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
       expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
 
       // edit before start position
@@ -1197,7 +1197,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.wait();
 
-      const noteThreadDoc: ParatextNoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
       expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
 
       // delete text before note
@@ -1228,7 +1228,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.wait();
 
-      const noteThreadDoc: ParatextNoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
       expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
       // delete text that spans across the end boundary
       const notePosition = env.getNoteThreadIndex('thread01');
@@ -1246,7 +1246,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.wait();
 
-      const noteThreadDoc: ParatextNoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
       const notePosition = env.getNoteThreadIndex('thread01');
       expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
 
@@ -1268,7 +1268,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.wait();
 
-      let noteThreadDoc: ParatextNoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      let noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
       expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
 
       // delete the entire text anchor
@@ -1294,11 +1294,11 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
 
-      const noteThreadDoc: ParatextNoteThreadDoc = env.getNoteThreadDoc('project01', 'thread04');
+      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread04');
       expect(noteThreadDoc.data!.position).toEqual({ start: 19, length: 5 });
-      const otherNoteThreadDoc: ParatextNoteThreadDoc = env.getNoteThreadDoc('project01', 'thread03');
+      const otherNoteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread03');
       expect(otherNoteThreadDoc.data!.position).toEqual({ start: 19, length: 7 });
-      const verseNoteThreadDoc: ParatextNoteThreadDoc = env.getNoteThreadDoc('project01', 'thread02');
+      const verseNoteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread02');
       expect(verseNoteThreadDoc.data!.position).toEqual({ start: 0, length: 0 });
       // edit before paratext note
       let notePosition = env.getNoteThreadIndex('thread04');
@@ -1682,8 +1682,8 @@ class TestEnvironment {
     );
     when(mockedSFProjectService.isProjectAdmin('project01', 'user04')).thenResolve(true);
     when(mockedSFProjectService.queryNoteThreads('project01')).thenCall(id =>
-      this.realtimeService.subscribeQuery(ParatextNoteThreadDoc.COLLECTION, {
-        [obj<ParatextNoteThread>().pathStr(t => t.projectRef)]: id
+      this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, {
+        [obj<NoteThread>().pathStr(t => t.projectRef)]: id
       })
     );
     when(mockedPwaService.isOnline).thenReturn(true);
@@ -1896,9 +1896,9 @@ class TestEnvironment {
     return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, textId.toString());
   }
 
-  getNoteThreadDoc(projectId: string, threadId: string): ParatextNoteThreadDoc {
+  getNoteThreadDoc(projectId: string, threadId: string): NoteThreadDoc {
     const docId: string = projectId + ':' + threadId;
-    return this.realtimeService.get<ParatextNoteThreadDoc>(ParatextNoteThreadDoc.COLLECTION, docId);
+    return this.realtimeService.get<NoteThreadDoc>(NoteThreadDoc.COLLECTION, docId);
   }
 
   getNoteThreadIndex(threadId: string): number {
@@ -2078,7 +2078,7 @@ class TestEnvironment {
     }
 
     const vrd: VerseRefData = { bookNum: 40, chapterNum: 1, verseNum };
-    this.realtimeService.addSnapshot<ParatextNoteThread>(ParatextNoteThreadDoc.COLLECTION, {
+    this.realtimeService.addSnapshot<NoteThread>(NoteThreadDoc.COLLECTION, {
       id: `project01:${threadId}`,
       data: {
         projectRef: 'project01',

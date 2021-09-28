@@ -14,7 +14,7 @@ import { QueryParameters } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { TransceleratorQuestion } from '../checking/import-questions-dialog/import-questions-dialog.component';
 import { InviteeStatus } from '../users/collaborators/collaborators.component';
-import { ParatextNoteThreadDoc } from './models/paratext-note-thread-doc';
+import { NoteThreadDoc } from './models/note-thread-doc';
 import { QuestionDoc } from './models/question-doc';
 import { SFProjectCreateSettings } from './models/sf-project-create-settings';
 import { SFProjectDoc } from './models/sf-project-doc';
@@ -114,9 +114,9 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.realtimeService.create<QuestionDoc>(QuestionDoc.COLLECTION, docId, question);
   }
 
-  queryNoteThreads(id: string): Promise<RealtimeQuery<ParatextNoteThreadDoc>> {
+  queryNoteThreads(id: string): Promise<RealtimeQuery<NoteThreadDoc>> {
     const queryParams: QueryParameters = { [obj<ParatextNoteThread>().pathStr(t => t.projectRef)]: id };
-    return this.realtimeService.subscribeQuery(ParatextNoteThreadDoc.COLLECTION, queryParams);
+    return this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, queryParams);
   }
 
   onlineSync(id: string): Promise<void> {

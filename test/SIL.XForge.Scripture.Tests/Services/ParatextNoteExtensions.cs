@@ -16,7 +16,7 @@ namespace SIL.XForge.Scripture.Services
             return result;
         }
 
-        public static string ThreadChangeToString(this ParatextNoteThreadChange thread)
+        public static string ThreadChangeToString(this NoteThreadChange thread)
         {
             string selection = thread.Position == null
                 ? string.Empty
@@ -28,7 +28,7 @@ namespace SIL.XForge.Scripture.Services
             return result;
         }
 
-        public static string NoteThreadToString(this ParatextNoteThread thread)
+        public static string NoteThreadToString(this NoteThread thread)
         {
             string selection = thread.Position == null
                 ? string.Empty

@@ -742,19 +742,19 @@ namespace SIL.XForge.Scripture.Services
         /// Returns a list of changes to apply to SF note threads to match the corresponding
         /// PT comment threads for a given book.
         /// </summary>
-        public IEnumerable<ParatextNoteThreadChange> GetNoteThreadChanges(UserSecret userSecret, string projectId,
-            int bookNum, IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs,
+        public IEnumerable<NoteThreadChange> GetNoteThreadChanges(UserSecret userSecret, string projectId,
+            int bookNum, IEnumerable<IDocument<NoteThread>> noteThreadDocs,
             Dictionary<int, ChapterDelta> chapterDeltas, Dictionary<string, SyncUser> syncUsers)
         {
             IEnumerable<CommentThread> commentThreads = GetCommentThreads(userSecret, projectId, bookNum);
             CommentTags commentTags = GetCommentTags(userSecret, projectId);
             List<string> matchedThreadIds = new List<string>();
-            List<ParatextNoteThreadChange> changes = new List<ParatextNoteThreadChange>();
+            List<NoteThreadChange> changes = new List<NoteThreadChange>();
 
             foreach (var threadDoc in noteThreadDocs)
             {
                 List<string> matchedCommentIds = new List<string>();
-                ParatextNoteThreadChange threadChange = new ParatextNoteThreadChange(threadDoc.Data.DataId,
+                NoteThreadChange threadChange = new NoteThreadChange(threadDoc.Data.DataId,
                     threadDoc.Data.VerseRef.ToString(), threadDoc.Data.OriginalSelectedText, threadDoc.Data.OriginalContextBefore,
                     threadDoc.Data.OriginalContextAfter);
                 // Find the corresponding comment thread
@@ -819,7 +819,7 @@ namespace SIL.XForge.Scripture.Services
                     ? int.Parse(info.TagsAdded[0])
                     : defaultTagId;
                 CommentTag initialTag = info.Type == NoteType.Conflict ? CommentTag.ConflictTag : commentTags.Get(tagId);
-                ParatextNoteThreadChange newThread = new ParatextNoteThreadChange(threadId, info.VerseRefStr,
+                NoteThreadChange newThread = new NoteThreadChange(threadId, info.VerseRefStr,
                     info.SelectedText, info.ContextBefore, info.ContextAfter, initialTag.Icon);
                 newThread.Position = GetCommentTextAnchor(info, chapterDeltas);
 
@@ -835,7 +835,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         public async Task UpdateParatextCommentsAsync(UserSecret userSecret, string projectId, int bookNum,
-            IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs, Dictionary<string, SyncUser> syncUsers)
+            IEnumerable<IDocument<NoteThread>> noteThreadDocs, Dictionary<string, SyncUser> syncUsers)
         {
             CommentTags commentTags = GetCommentTags(userSecret, projectId);
             string username = GetParatextUsername(userSecret);
@@ -1440,13 +1440,13 @@ namespace SIL.XForge.Scripture.Services
         /// Get the comment change lists from the up-to-date note thread docs in the Scripture Forge mongo database.
         /// </summary>
         private async Task<List<List<Paratext.Data.ProjectComments.Comment>>> SFNotesToCommentChangeListAsync(
-            IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs, IEnumerable<CommentThread> commentThreads,
+            IEnumerable<IDocument<NoteThread>> noteThreadDocs, IEnumerable<CommentThread> commentThreads,
             string defaultUsername, CommentTags commentTags, Dictionary<string, SyncUser> syncUsers)
         {
             List<List<Paratext.Data.ProjectComments.Comment>> changes =
                 new List<List<Paratext.Data.ProjectComments.Comment>>();
-            IEnumerable<IDocument<ParatextNoteThread>> activeThreadDocs = noteThreadDocs.Where(t => t.Data != null);
-            foreach (IDocument<ParatextNoteThread> threadDoc in activeThreadDocs)
+            IEnumerable<IDocument<NoteThread>> activeThreadDocs = noteThreadDocs.Where(t => t.Data != null);
+            foreach (IDocument<NoteThread> threadDoc in activeThreadDocs)
             {
                 List<Paratext.Data.ProjectComments.Comment> thread = new List<Paratext.Data.ProjectComments.Comment>();
                 CommentThread existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
@@ -1612,7 +1612,7 @@ namespace SIL.XForge.Scripture.Services
             return syncUser;
         }
 
-        private async Task UpdateNoteSyncUserAsync(IDocument<ParatextNoteThread> noteThreadDoc,
+        private async Task UpdateNoteSyncUserAsync(IDocument<NoteThread> noteThreadDoc,
             List<(int, string)> syncUserByNoteIndex)
         {
             await noteThreadDoc.SubmitJson0OpAsync(op =>

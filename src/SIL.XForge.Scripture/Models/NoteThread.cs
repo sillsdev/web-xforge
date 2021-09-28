@@ -3,7 +3,7 @@ using SIL.XForge.Models;
 
 namespace SIL.XForge.Scripture.Models
 {
-    public class ParatextNoteThread : ProjectData
+    public class NoteThread : ProjectData
     {
         public string DataId { get; set; }
         public VerseRefData VerseRef { get; set; }

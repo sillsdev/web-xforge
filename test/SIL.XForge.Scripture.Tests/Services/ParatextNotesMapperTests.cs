@@ -489,16 +489,16 @@ namespace SIL.XForge.Scripture.Services
                 return new[] { questionDoc };
             }
 
-            public async Task<IEnumerable<IDocument<ParatextNoteThread>>> GetNoteThreadDocsAsync(IConnection conn,
+            public async Task<IEnumerable<IDocument<NoteThread>>> GetNoteThreadDocsAsync(IConnection conn,
                 string[] threadIds)
             {
-                IDocument<ParatextNoteThread>[] noteThreadDocs = new IDocument<ParatextNoteThread>[threadIds.Length];
+                IDocument<NoteThread>[] noteThreadDocs = new IDocument<NoteThread>[threadIds.Length];
                 var tasks = new List<Task>();
                 for (int i = 0; i < threadIds.Length; i++)
                 {
                     async Task fetchNoteThread(int index)
                     {
-                        noteThreadDocs[index] = await conn.FetchAsync<ParatextNoteThread>("project01:" + threadIds[index]);
+                        noteThreadDocs[index] = await conn.FetchAsync<NoteThread>("project01:" + threadIds[index]);
                     }
                     tasks.Add(fetchNoteThread(i));
                 }
