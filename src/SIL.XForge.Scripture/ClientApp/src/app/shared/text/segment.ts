@@ -36,7 +36,7 @@ export class Segment {
     return this._text.length - this.initialTextLen;
   }
 
-  get embeddedElement(): Map<string, number> {
+  get embeddedElements(): Map<string, number> {
     return this._embeddedElements;
   }
 
