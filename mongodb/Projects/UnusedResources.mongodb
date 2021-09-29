@@ -4,7 +4,7 @@
 use('xforge');
 
 // Find projects with a Paratext ID that is 16 characters long, indicating a resource
-const resources = db.sf_projects.find({paratextId: {$regex: '^.{16,16}$'}}, {_id: 1, shortName: 1})
+const resources = db.sf_projects.find({paratextId: {$regex: '^.{16,16}$'}}, {_id: 1, shortName: 1, name: 1})
   .toArray();
 
 const projectsBasedOnOthers = db.sf_projects.find(
@@ -12,5 +12,5 @@ const projectsBasedOnOthers = db.sf_projects.find(
 ).toArray();
 
 resources.filter(
-  resource => !projectsBasedOnOthers.some(project => project.translateConfig.source.projectRef === resource)
+  resource => !projectsBasedOnOthers.some(project => project.translateConfig.source.projectRef === resource._id)
 );
