@@ -97,8 +97,8 @@ export class TextViewModel {
   private onCreateSub?: Subscription;
   private textDoc?: TextDoc;
   /**
-   * A mapping of elements embedded into the quill editor to their positions.
-   * These elements are in addition to the text data i.e. Paratext notes
+   * A mapping of IDs of elements embedded into the quill editor to their positions.
+   * These elements are in addition to the text data i.e. Note threads
    */
   private _embeddedElements: Map<string, number> = new Map<string, number>();
   constructor() {}

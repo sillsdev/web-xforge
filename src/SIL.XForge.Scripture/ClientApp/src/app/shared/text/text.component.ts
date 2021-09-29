@@ -510,27 +510,25 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     for (const vs of verseSegments) {
       const range: RangeStatic | undefined = this.getSegmentRange(vs);
       if (range == null) {
-        console.warn(`Warning: Could not find range for verse segment: ${vs}`);
         break;
       }
-      if (range.length > startIndexInSegment) {
+      const segmentTextLength: number = range.length - this.getEmbedCountInSegmentBefore(range.length, range.index);
+      if (segmentTextLength > startIndexInSegment) {
         segmentRange = range;
         segment = vs;
         break;
       } else {
         // The embed starts in a later segment. Subtract the text only length of this segment from the start index
-        startIndexInSegment -= range.length - this.getEmbedCountInSegmentBefore(range.length - 1, range.index);
+        startIndexInSegment -= segmentTextLength;
         continue;
       }
     }
 
     if (segmentRange == null) {
-      console.warn(`Warning: Unexpectedly did not find a suitable segment range to embed in.`);
       return;
     }
 
-    const embedsInSegmentBefore: number = this.getEmbedCountInSegmentBefore(startIndexInSegment, segmentRange.index);
-    const embedInsertIndex: number = segmentRange.index + startIndexInSegment + embedsInSegmentBefore;
+    const embedInsertIndex: number = this.getIndexForTextAnchorPosition(startIndexInSegment, segmentRange.index);
     this.editor.insertEmbed(embedInsertIndex, formatName, format, 'api');
     this.updateSegment();
     return segment;
@@ -738,7 +736,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
     const prevSegment = this._segment;
     const oldSegmentEmbeds: Map<string, number> | undefined =
-      this._segment == null ? undefined : this._segment.embeddedElement;
+      this._segment == null ? undefined : this._segment.embeddedElements;
     if (segmentRef != null) {
       // update/switch current segment
       if (!this.tryChangeSegment(segmentRef, checksum, focus) && this._segment != null) {
@@ -753,6 +751,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     Promise.resolve().then(() => this.adjustSelection());
+    // TODO: could we simply iterate through note threads rather than needing to emit the old embed positions?
     this.updated.emit({ delta, prevSegment, segment: this._segment, oldSegmentEmbeds: oldSegmentEmbeds });
   }
 
@@ -847,7 +846,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       const segEnd = this._segment.range.index + this._segment.range.length;
       const newEnd = Math.min(oldEnd, segEnd);
 
-      const embedIndices: number[] = Array.from(this._segment.embeddedElement.values()).sort();
+      const embedIndices: number[] = Array.from(this._segment.embeddedElements.values()).sort();
       if (newStart === this._segment.range.index || embedIndices.includes(newStart - 1)) {
         // if the selection is before an embed at the start of the segment or
         // the selection is between embeds, move the selection behind it
@@ -862,10 +861,22 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
   }
 
-  /** Get the number of embedded elements before a given position in a segment */
-  private getEmbedCountInSegmentBefore(position: number, segmentStartIndex: number): number {
+  /** Get the number of embedded elements before a given position in a segment. */
+  private getEmbedCountInSegmentBefore(position: number, searchStartIndex: number): number {
     const segmentEmbedIndices: number[] = Array.from(this.embeddedElements.values());
-    return segmentEmbedIndices.filter(n => n >= segmentStartIndex && n < segmentStartIndex + position).length;
+    return segmentEmbedIndices.filter(n => n >= searchStartIndex && n < searchStartIndex + position).length;
+  }
+
+  /** Returns the index in the editor for a given text anchor position with respect to the segment start index. */
+  private getIndexForTextAnchorPosition(position: number, segmentStartIndex: number): number {
+    let textIndex: number = segmentStartIndex + position;
+    let notesInSegmentBefore: number = this.getEmbedCountInSegmentBefore(position, segmentStartIndex);
+    while (notesInSegmentBefore > 0) {
+      textIndex += notesInSegmentBefore;
+      position -= position - notesInSegmentBefore;
+      notesInSegmentBefore = this.getEmbedCountInSegmentBefore(position, segmentStartIndex + notesInSegmentBefore);
+    }
+    return textIndex;
   }
 
   private setHighlightMarkerPosition(): void {

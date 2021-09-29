@@ -1019,43 +1019,45 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
 
-    for (const [threadId, _] of oldSegmentEmbeds.entries()) {
+    for (const [threadId, embedIndex] of oldSegmentEmbeds.entries()) {
       const noteThreadDoc: NoteThreadDoc | undefined = this.noteThreadQuery.docs.find(n => n.data?.dataId === threadId);
       if (noteThreadDoc?.data == null) {
         continue;
       }
 
       const oldNoteSelection: TextAnchor = noteThreadDoc.data.position ?? { start: 0, end: 0 };
-      let newSelection: TextAnchor | undefined;
-
-      newSelection = this.getUpdatedTextAnchor(
+      const newSelection: TextAnchor = this.getUpdatedTextAnchor(
         oldNoteSelection,
         oldSegmentEmbeds,
-        threadId,
+        embedIndex,
         editOpIndex,
         length,
         operation
       );
-      if (newSelection != null) {
-        updatePromises.push(noteThreadDoc.submitJson0Op(op => op.set(n => n.position, newSelection)));
-      }
+      updatePromises.push(noteThreadDoc.submitJson0Op(op => op.set(n => n.position, newSelection)));
     }
     await Promise.all(updatePromises);
   }
 
-  /** Finds the number of embedded elements included within the text anchor of a segment. */
+  /** Determine the number of embeds that are within an anchoring.
+   * @param embeds Positions of embeds to consider.
+   * @param embedIndex The position of an embed at the beginning of the anchoring, included in the resulting count.
+   * @param anchorLength The text character count in the anchoring range, excludes length of embeds.
+   */
   private getEmbedCountInAnchorRange(embeds: Map<string, number>, embedIndex: number, anchorLength: number): number {
     let embedCount = 0;
     let endIndex = embedIndex + anchorLength;
     // sort the indices so we count the segment embeds in ascending order
     const embedIndices: number[] = Array.from(embeds.values()).sort();
     for (const index of embedIndices) {
-      if (index >= embedIndex && index <= endIndex) {
-        embedCount++;
-        // add the embed to the length to search
-        endIndex++;
-      } else {
-        break;
+      if (index >= embedIndex) {
+        if (index < endIndex) {
+          embedCount++;
+          // add the embed to the length to search
+          endIndex++;
+        } else {
+          break;
+        }
       }
     }
     return embedCount;
@@ -1064,26 +1066,28 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   /** Gets the updated text anchor for a note thread given the positions of the old embeds and the text edit applied. */
   private getUpdatedTextAnchor(
     oldTextAnchor: TextAnchor,
-    oldSegmentEmbedPositions: Map<string, number>,
-    embedId: string,
+    oldVerseEmbedPositions: Map<string, number>,
+    embedIndex: number,
     editIndex: number,
     editLength: number,
     operation: 'insert' | 'delete'
-  ): TextAnchor | undefined {
-    const embedIndex: number | undefined = oldSegmentEmbedPositions.get(embedId);
-    if (embedIndex == null) {
-      return;
-    }
+  ): TextAnchor {
     if (oldTextAnchor.length === 0) {
       return oldTextAnchor;
     }
 
     if (operation === 'insert') {
-      const embedCount = this.getEmbedCountInAnchorRange(oldSegmentEmbedPositions, embedIndex, oldTextAnchor.length);
-      const noteAnchorEndIndex = embedIndex + oldTextAnchor.length + embedCount;
+      const embedCount: number = this.getEmbedCountInAnchorRange(
+        oldVerseEmbedPositions,
+        embedIndex,
+        oldTextAnchor.length
+      );
+      const noteAnchorEndIndex: number = embedIndex + oldTextAnchor.length + embedCount;
       if (editIndex <= embedIndex) {
         return { start: oldTextAnchor.start + editLength, length: oldTextAnchor.length };
       } else if (editIndex > embedIndex && editIndex <= noteAnchorEndIndex) {
+        // The user inserted text at the end of this note anchor, we consider this inside the text anchor because
+        // the user could be expanding the last text anchor word.
         return { start: oldTextAnchor.start, length: oldTextAnchor.length + editLength };
       }
       return oldTextAnchor;
@@ -1091,10 +1095,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     let lengthBefore = 0;
     let lengthWithin = 0;
-    const embedPositions: Set<number> = new Set(oldSegmentEmbedPositions.values());
+    const embedPositions: Set<number> = new Set(oldVerseEmbedPositions.values());
 
     for (let charIndex = editIndex; charIndex < editIndex + editLength; charIndex++) {
       if (embedPositions.has(charIndex)) {
+        // The edit involves deleting an embed icon. It neither counts as length within nor before
         continue;
       }
       if (charIndex < embedIndex) {

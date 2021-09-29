@@ -1570,7 +1570,8 @@ namespace SIL.XForge.Scripture.Services
             string segment = $"verse_{verseRef.ChapterNum}_{verseRef.VerseNum}";
             IEnumerable<JToken> ops = delta.Ops.Where(op =>
                 op.Type == JTokenType.Object && op["attributes"] != null && op["attributes"]["segment"] != null &&
-                ((string)op["attributes"]["segment"]).StartsWith(segment)
+                (((string)op["attributes"]["segment"]) == segment ||
+                ((string)op["attributes"]["segment"]).StartsWith(segment + "/"))
             );
             StringBuilder bldr = new StringBuilder();
             foreach (JObject segmentObj in ops)
