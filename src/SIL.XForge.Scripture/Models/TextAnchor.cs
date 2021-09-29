@@ -15,7 +15,9 @@ namespace SIL.XForge.Scripture.Models
 
         public override int GetHashCode()
         {
-            return base.GetHashCode();
+            // Do NOT insert Text Anchor objects into a hash collection since this
+            // hash code is calculated using mutable properties
+            return Start * 31 + Length * 31;
         }
     }
 }
