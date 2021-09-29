@@ -1153,6 +1153,19 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('correctly places note in subsequent segment', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.addParatextNoteThread(6, 4, 'target', { start: 0, length: 6 }, ['user01']);
+      // Note 7 should be at position 0 on segment 1_4/p_1
+      env.addParatextNoteThread(7, 4, '', { start: 27, length: 0 }, ['user01']);
+      env.setProjectUserConfig();
+      env.wait();
+
+      const index = env.getNoteThreadIndex('thread07');
+      expect(index).toEqual(env.component.target!.getSegmentRange('verse_1_4/p_1')!.index);
+      env.dispose();
+    }));
+
     it('should update note position when inserting text', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
@@ -1243,6 +1256,7 @@ describe('EditorComponent', () => {
     it('handles insert at the last character position', fakeAsync(() => {
       const env = new TestEnvironment();
       env.addParatextNoteThread(6, 1, '1', { start: 16, length: 1 }, ['user01']);
+      env.addParatextNoteThread(7, 1, '.', { start: 82, length: 1 }, ['user01']);
       env.setProjectUserConfig();
       env.wait();
 
@@ -1260,6 +1274,15 @@ describe('EditorComponent', () => {
       env.targetEditor.setSelection(lastTextAnchorCharIndex + 1, 0, 'user');
       env.typeCharacters('b');
       expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 10 });
+
+      // insert in an adjacent text anchor should not be included in the previous note
+      const noteThread3Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread03');
+      expect(noteThread3Doc.data!.position).toEqual({ start: 19, length: 7 });
+      const index = env.getNoteThreadIndex('thread07');
+      env.targetEditor.setSelection(index + 1, 0, 'user');
+      env.typeCharacters('c');
+      expect(noteThread3Doc.data!.position).toEqual({ start: 19, length: 7 });
+
       env.dispose();
     }));
 
@@ -1304,15 +1327,13 @@ describe('EditorComponent', () => {
       let notePosition = env.getNoteThreadIndex('thread04');
       env.targetEditor.setSelection(notePosition, 0, 'user');
       env.wait();
-      console.log(`selection set to ${notePosition}`);
       const textBeforeNote = 'add text before ';
       const length1 = textBeforeNote.length;
-      console.log('type characters');
       env.typeCharacters(textBeforeNote);
       expect(noteThreadDoc.data!.position).toEqual({ start: 19 + length1, length: 5 });
       expect(otherNoteThreadDoc.data!.position).toEqual({ start: 19 + length1, length: 7 });
 
-      // edit within paratext note selection
+      // edit within note selection start
       notePosition = env.getNoteThreadIndex('thread04');
       env.targetEditor.setSelection(notePosition + 1, 0, 'user');
       env.wait();
@@ -1323,12 +1344,19 @@ describe('EditorComponent', () => {
       expect(noteThreadDoc.data!.position).toEqual({ start: 19 + length1, length: 5 + length2 });
       expect(otherNoteThreadDoc.data!.position).toEqual({ start: 19 + length1, length: 7 + length2 });
 
-      // delete text within paratext note selection
+      // edit within note selection end
+      const verse3Range = env.component.target!.getSegmentRange('verse_1_3')!;
+      const textAnchorEndPos = verse3Range.index + verse3Range.length - 3;
+      env.targetEditor.setSelection(textAnchorEndPos, 0, 'user');
+      env.typeCharacters(textWithinNote);
+      expect(noteThreadDoc.data!.position).toEqual({ start: 19 + length1, length: 5 + length2 * 2 });
+
+      // delete text within note selection
       notePosition = env.getNoteThreadIndex('thread04');
       env.targetEditor.setSelection(notePosition + 2, 5, 'user');
       env.wait();
       env.typeCharacters('');
-      const expected = { start: 19 + length1, length: 5 + length2 - 5 };
+      const expected = { start: 19 + length1, length: 5 + length2 * 2 - 5 };
       expect(noteThreadDoc.data!.position).toEqual(expected);
       // the verse note thread position never changes
       expect(verseNoteThreadDoc.data!.position).toEqual({ start: 0, length: 0 });
