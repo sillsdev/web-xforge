@@ -56,21 +56,14 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
   }
 
   get lastSyncDate(): Date | undefined {
-    if (
-      this.projectDoc == null ||
-      this.projectDoc.data == null ||
-      this.projectDoc.data.sync.dateLastSuccessfulSync == null
-    ) {
+    if (this.projectDoc?.data?.sync.dateLastSuccessfulSync == null) {
       return undefined;
     }
     return new Date(this.projectDoc.data.sync.dateLastSuccessfulSync);
   }
 
   get lastSyncDisplayDate() {
-    if (this.lastSyncDate == null) {
-      return '';
-    }
-    return this.lastSyncDate.toLocaleString();
+    return this.lastSyncDate?.toLocaleString() || '';
   }
 
   get projectName(): string {
