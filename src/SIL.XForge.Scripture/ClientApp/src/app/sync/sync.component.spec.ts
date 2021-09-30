@@ -92,7 +92,7 @@ describe('SyncComponent', () => {
 
   it('should sync project when the button is clicked', fakeAsync(() => {
     const env = new TestEnvironment();
-    const previousLastSyncDate = new Date(env.component.lastSyncDate);
+    const previousLastSyncDate = env.component.lastSyncDate;
     verify(mockedProjectService.get(env.projectId)).once();
 
     env.clickElement(env.syncButton);
@@ -104,7 +104,7 @@ describe('SyncComponent', () => {
     expect(env.logInButton).toBeNull();
     expect(env.syncButton).toBeNull();
     env.emitSyncComplete(true, env.projectId);
-    expect(new Date(env.component.lastSyncDate).getTime()).toBeGreaterThan(previousLastSyncDate.getTime());
+    expect(env.component.lastSyncDate!.getTime()).toBeGreaterThan(previousLastSyncDate!.getTime());
     verify(mockedNoticeService.show('Successfully synchronized Sync Test Project with Paratext.')).once();
   }));
 
@@ -147,7 +147,7 @@ describe('SyncComponent', () => {
 
   it('should not report if sync was cancelled', fakeAsync(() => {
     const env = new TestEnvironment();
-    const previousLastSyncDate = new Date(env.component.lastSyncDate);
+    const previousLastSyncDate = env.component.lastSyncDate;
     verify(mockedProjectService.get(env.projectId)).once();
     env.clickElement(env.syncButton);
     verify(mockedProjectService.onlineSync(env.projectId)).once();
@@ -159,7 +159,7 @@ describe('SyncComponent', () => {
     env.emitSyncComplete(false, env.projectId);
 
     expect(env.component.syncActive).toBe(false);
-    expect(new Date(env.component.lastSyncDate)).toEqual(previousLastSyncDate);
+    expect(env.component.lastSyncDate).toEqual(previousLastSyncDate);
     verify(mockedNoticeService.show(anything())).never();
     verify(mockedNoticeService.showMessageDialog(anything())).never();
   }));
