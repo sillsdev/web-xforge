@@ -6,7 +6,7 @@
       "files": ["*.ts"],
       "parser": "@typescript-eslint/parser",
       "parserOptions": {
-        "project": ["tsconfig.json"],
+        "project": ["tsconfig.json", "src/tsconfig.app.json", "src/tsconfig.spec.json"],
         "createDefaultProgram": true
       },
       "plugins": ["@typescript-eslint", "eslint-plugin-import", "eslint-plugin-jsdoc", "prettier"],
@@ -17,6 +17,22 @@
         "prettier"
       ],
       "rules": {
+        "@angular-eslint/component-selector": [
+          "error",
+          {
+            "type": "element",
+            "prefix": "app",
+            "style": "kebab-case"
+          }
+        ],
+        "@angular-eslint/directive-selector": [
+          "error",
+          {
+            "type": "attribute",
+            "prefix": "app",
+            "style": "camelCase"
+          }
+        ],
         "@typescript-eslint/consistent-type-definitions": "error",
         "@typescript-eslint/dot-notation": "off",
         "@typescript-eslint/explicit-member-accessibility": [
@@ -26,6 +42,7 @@
           }
         ],
         "@typescript-eslint/naming-convention": ["error", { "selector": "enumMember", "format": ["PascalCase"] }],
+        "@typescript-eslint/no-inferrable-types": "off",
         "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/no-unused-vars": [
           "error",
