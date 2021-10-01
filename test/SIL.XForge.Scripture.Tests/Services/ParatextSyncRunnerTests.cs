@@ -299,9 +299,14 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.SetupSFData(true, true, false, false, new Book("MAT", 2), new Book("MRK", 2));
             env.SetupPTData(new Book("MAT", 3), new Book("MRK", 1));
+            env.AddParatextNoteThreadData(new Book("MRK", 2));
+            Assert.That(env.ContainsNote("MRK", 2), Is.True);
 
             await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            env.ParatextService.DidNotReceive().GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 41,
+                Arg.Is<IEnumerable<IDocument<ParatextNoteThread>>>(d => d.Count() > 0),
+                Arg.Any<Dictionary<string, SyncUser>>());
 
             Assert.That(env.ContainsText("project01", "MAT", 3), Is.True);
             Assert.That(env.ContainsText("project01", "MRK", 2), Is.False);
@@ -311,6 +316,7 @@ namespace SIL.XForge.Scripture.Services
 
             Assert.That(env.ContainsQuestion("MAT", 2), Is.True);
             Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
+            Assert.That(env.ContainsNote("MRK", 2), Is.False);
             env.VerifyProjectSync(true);
         }
 
@@ -335,12 +341,12 @@ namespace SIL.XForge.Scripture.Services
         public async Task SyncAsync_BooksChanged()
         {
             var env = new TestEnvironment();
-            env.SetupSFData(true, true, false, true, new Book("MAT", 2), new Book("MRK", 2));
+            env.SetupSFData(true, true, false, false, new Book("MAT", 2), new Book("MRK", 2));
             env.SetupPTData(new Book("MAT", 2), new Book("LUK", 2));
             // Need to make sure we have notes BEFORE the sync
             env.AddParatextNoteThreadData(new Book("MRK", 2));
 
-            Assert.That(env.ContainsNote("MRK"), Is.True);
+            Assert.That(env.ContainsNote("MRK", 2), Is.True);
             await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
@@ -359,7 +365,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsQuestion("MAT", 1), Is.True);
             Assert.That(env.ContainsQuestion("MAT", 2), Is.True);
 
-            Assert.That(env.ContainsNote("MRK"), Is.False);
+            Assert.That(env.ContainsNote("MRK", 2), Is.False);
             env.VerifyProjectSync(true);
         }
 
@@ -1116,7 +1122,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task SyncAsync_UpdatesParatextComments()
         {
             var env = new TestEnvironment();
-            var book = new Book("MAT", 3, true);
+            var book = new Book("MAT", 1, true);
             env.SetupSFData(true, false, false, true, book);
             env.SetupPTData(book);
             env.SetupNoteChanges("thread01", "MAT 1:1", false);
@@ -1139,7 +1145,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task SyncAsync_UpdatesParatextNoteThreadDoc()
         {
             var env = new TestEnvironment();
-            var book = new Book("MAT", 3, true);
+            var book = new Book("MAT", 1, true);
             env.SetupSFData(true, false, false, true, book);
             env.SetupPTData(book);
             env.SetupNoteChanges("thread01");
@@ -1194,7 +1200,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task SyncAsync_RemovesParatextNoteThreadDoc()
         {
             var env = new TestEnvironment();
-            var book = new Book("MAT", 3, true);
+            var book = new Book("MAT", 1, true);
             env.SetupSFData(true, false, false, true, book);
             env.SetupPTData(book);
             env.SetupNoteRemovedChange("thread01", "n02");
@@ -1358,12 +1364,9 @@ namespace SIL.XForge.Scripture.Services
                 return RealtimeService.GetRepository<Question>().Contains($"project01:question{bookId}{chapter}");
             }
 
-            public bool ContainsNote(string bookId)
+            public bool ContainsNote(string bookId, int chapter)
             {
-                IRepository<ParatextNoteThread> notesRep = RealtimeService.GetRepository<ParatextNoteThread>();
-                return notesRep.Query().Where(note =>
-                        note.VerseRef.BookNum == Canon.BookIdToNumber(bookId, true))
-                    .ToList().Count > 0;
+                return RealtimeService.GetRepository<ParatextNoteThread>().Contains($"project01:thread0{chapter}");
             }
 
             public Question GetQuestion(string bookId, int chapter)
@@ -1445,14 +1448,14 @@ namespace SIL.XForge.Scripture.Services
             }
 
             public void SetupSFData(bool translationSuggestionsEnabled, bool checkingEnabled, bool changed,
-                bool hasNoteThreads, params Book[] books)
+                bool noteOnFirstBook, params Book[] books)
             {
                 SetupSFData("project01", "project02", translationSuggestionsEnabled, checkingEnabled, changed,
-                    hasNoteThreads, books);
+                    noteOnFirstBook, books);
             }
 
             public void SetupSFData(string targetProjectSFId, string sourceProjectSFId,
-                bool translationSuggestionsEnabled, bool checkingEnabled, bool changed, bool hasNoteThreads,
+                bool translationSuggestionsEnabled, bool checkingEnabled, bool changed, bool noteOnFirstBook,
                 params Book[] books)
             {
                 RealtimeService.AddRepository("users", OTType.Json0, new MemoryRepository<User>(new[]
@@ -1657,7 +1660,7 @@ namespace SIL.XForge.Scripture.Services
 
                 RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>());
                 RealtimeService.AddRepository("questions", OTType.Json0, new MemoryRepository<Question>());
-                if (hasNoteThreads && books.Length > 0)
+                if (noteOnFirstBook && books.Length > 0)
                     AddParatextNoteThreadData(books[0]);
                 else
                     SetupEmptyNoteThreads();
@@ -1800,23 +1803,25 @@ namespace SIL.XForge.Scripture.Services
 
             public void AddParatextNoteThreadData(Book book)
             {
+                int chapter = book.HighestTargetChapter;
+                string threadId = $"thread0{chapter}";
                 RealtimeService.AddRepository("note_threads", OTType.Json0,
                     new MemoryRepository<ParatextNoteThread>(new[]
                     {
                         new ParatextNoteThread
                         {
-                            Id = "project01:thread01",
-                            DataId = "thread01",
+                            Id = $"project01:{threadId}",
+                            DataId = threadId,
                             ProjectRef = "project01",
                             OwnerRef = "user01",
-                            VerseRef = new VerseRefData(Canon.BookIdToNumber(book.Id), 1, 1),
+                            VerseRef = new VerseRefData(Canon.BookIdToNumber(book.Id), chapter, 1),
                             SelectedText = "Scripture text in project.",
                             Notes = new List<Note>()
                             {
                                 new Note
                                 {
                                     DataId = "n01",
-                                    ThreadId = "thread01",
+                                    ThreadId = threadId,
                                     SyncUserRef = "syncuser01",
                                     ExtUserId = "user02",
                                     Content = "Paratext note 1.",
@@ -1825,7 +1830,7 @@ namespace SIL.XForge.Scripture.Services
                                 new Note
                                 {
                                     DataId = "n02",
-                                    ThreadId = "thread01",
+                                    ThreadId = threadId,
                                     SyncUserRef = "syncuser02",
                                     ExtUserId = "user03",
                                     Content = "Paratext note 2.",
