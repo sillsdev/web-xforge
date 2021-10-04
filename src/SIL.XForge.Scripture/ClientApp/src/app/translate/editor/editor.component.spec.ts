@@ -1256,7 +1256,7 @@ describe('EditorComponent', () => {
     it('handles insert at the last character position', fakeAsync(() => {
       const env = new TestEnvironment();
       env.addParatextNoteThread(6, 1, '1', { start: 16, length: 1 }, ['user01']);
-      env.addParatextNoteThread(7, 1, '.', { start: 82, length: 1 }, ['user01']);
+      env.addParatextNoteThread(7, 3, '.', { start: 26, length: 1 }, ['user01']);
       env.setProjectUserConfig();
       env.wait();
 

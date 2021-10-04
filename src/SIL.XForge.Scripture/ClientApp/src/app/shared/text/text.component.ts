@@ -868,13 +868,15 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   /** Returns the index in the editor for a given text anchor position with respect to the segment start index. */
-  private getIndexForTextAnchorPosition(position: number, segmentStartIndex: number): number {
-    let textIndex: number = segmentStartIndex + position;
-    let notesInSegmentBefore: number = this.getEmbedCountInSegmentBefore(position, segmentStartIndex);
-    while (notesInSegmentBefore > 0) {
-      textIndex += notesInSegmentBefore;
-      position -= position - notesInSegmentBefore;
-      notesInSegmentBefore = this.getEmbedCountInSegmentBefore(position, segmentStartIndex + notesInSegmentBefore);
+  private getIndexForTextAnchorPosition(startPosition: number, segmentStartIndex: number): number {
+    let textCharactersFound = 0;
+    let textIndex = segmentStartIndex;
+    const embedIndices = Array.from(this.embeddedElements.values());
+    while (textCharactersFound < startPosition) {
+      if (!embedIndices.includes(textIndex)) {
+        textCharactersFound++;
+      }
+      textIndex++;
     }
     return textIndex;
   }

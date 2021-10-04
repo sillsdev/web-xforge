@@ -305,7 +305,8 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
             env.ParatextService.DidNotReceive().GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 41,
-                Arg.Is<IEnumerable<IDocument<ParatextNoteThread>>>(d => d.Count() > 0),
+                Arg.Is<IEnumerable<IDocument<NoteThread>>>(d => d.Count() > 0),
+                Arg.Any<Dictionary<int, ChapterDelta>>(),
                 Arg.Any<Dictionary<string, SyncUser>>());
 
             Assert.That(env.ContainsText("project01", "MAT", 3), Is.True);
