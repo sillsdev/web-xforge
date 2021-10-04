@@ -635,7 +635,7 @@ namespace SIL.XForge.Scripture.Services
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 IEnumerable<IDocument<NoteThread>> noteThreadDocs =
-                    await env.GetNoteThreadDocsAsync(conn, new[] { "thread01" });
+                    await env.GetNoteThreadDocsAsync(conn, new[] { "thread1" });
                 Dictionary<string, SyncUser> syncUsers = new Dictionary<string, SyncUser>
                 {
                     { env.Username01, new SyncUser { Id = "syncuser01", ParatextUsername = env.Username01 }}
@@ -652,12 +652,12 @@ namespace SIL.XForge.Scripture.Services
 
                 // Context, including the selected text have changed
                 int expectedStartIndex = contextBefore.Length;
-                NoteThreadChange change1 = changes.First(c => c.ThreadId == "thread01");
+                NoteThreadChange change1 = changes.First(c => c.ThreadId == "thread1");
                 TextAnchor expected1 = new TextAnchor { Start = expectedStartIndex, Length = selectionText.Length };
                 Assert.That(change1.Position, Is.EqualTo(expected1));
 
                 // This new SF note thread applies to the verse
-                NoteThreadChange change2 = changes.First(c => c.ThreadId == "thread02");
+                NoteThreadChange change2 = changes.First(c => c.ThreadId == "thread2");
                 TextAnchor expected2 = new TextAnchor { Start = 0, Length = 0 };
                 Assert.That(change2.Position, Is.EqualTo(expected2));
             }
@@ -684,7 +684,7 @@ namespace SIL.XForge.Scripture.Services
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 IEnumerable<IDocument<NoteThread>> noteThreadDocs =
-                    await env.GetNoteThreadDocsAsync(conn, new[] { "thread01" });
+                    await env.GetNoteThreadDocsAsync(conn, new[] { "thread1" });
                 Dictionary<string, SyncUser> syncUsers = new Dictionary<string, SyncUser>
                 {
                     { env.Username01, new SyncUser { Id = "syncuser01", ParatextUsername = env.Username01 }}
@@ -697,7 +697,7 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(changes.Count, Is.EqualTo(1));
 
                 // Vigorous text changes, the note defaults to the start
-                NoteThreadChange change = changes.First(c => c.ThreadId == "thread01");
+                NoteThreadChange change = changes.First(c => c.ThreadId == "thread1");
                 TextAnchor expected = new TextAnchor { Start = 0, Length = 0 };
                 Assert.That(change.Position, Is.EqualTo(expected));
             }
@@ -738,7 +738,7 @@ namespace SIL.XForge.Scripture.Services
 
                 IEnumerable<IDocument<NoteThread>> noteThreadDocs =
                     await env.GetNoteThreadDocsAsync(conn,
-                        new[] { "thread01", "thread02", "thread04", "thread05", "thread07", "thread08", "thread09" }
+                        new[] { "thread1", "thread2", "thread4", "thread5", "thread7", "thread8", "thread9" }
                 );
                 Dictionary<string, SyncUser> syncUsers = new[]
                     { new SyncUser { Id = "syncuser01", ParatextUsername = env.Username01 } }
@@ -748,57 +748,92 @@ namespace SIL.XForge.Scripture.Services
                 IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
                     userSecret, ptProjectId, 40, noteThreadDocs, chapterDeltas, syncUsers);
                 Assert.That(changes.Count, Is.EqualTo(7));
-                Assert.That(changes.FirstOrDefault(c => c.ThreadId == "thread08"), Is.Null);
-                Assert.That(changes.FirstOrDefault(c => c.ThreadId == "thread09"), Is.Null);
+                Assert.That(changes.FirstOrDefault(c => c.ThreadId == "thread8"), Is.Null);
+                Assert.That(changes.FirstOrDefault(c => c.ThreadId == "thread9"), Is.Null);
 
                 // Edited comment
-                NoteThreadChange change01 = changes.Where(c => c.ThreadId == "thread01").Single();
+                NoteThreadChange change01 = changes.Where(c => c.ThreadId == "thread1").Single();
                 Assert.That(change01.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread01 context after-MAT 1:1"));
+                    Is.EqualTo("Context before Text selected thread1 context after -MAT 1:1"));
                 Assert.That(change01.NotesUpdated.Count, Is.EqualTo(1));
-                string expected1 = "thread01-syncuser01-user02-<p>thread01 note 1: EDITED.</p>-01flag1";
+                string expected1 = "thread1-syncuser01-user02-<p>thread1 note 1: EDITED.</p>-01flag1";
                 Assert.That(change01.NotesUpdated[0].NoteToString(), Is.EqualTo(expected1));
 
                 // Deleted comment
-                NoteThreadChange change02 = changes.Where(c => c.ThreadId == "thread02").Single();
+                NoteThreadChange change02 = changes.Where(c => c.ThreadId == "thread2").Single();
                 Assert.That(change02.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread02 context after-MAT 1:2"));
+                    Is.EqualTo("Context before Text selected thread2 context after -MAT 1:2"));
                 Assert.That(change02.NotesDeleted.Count, Is.EqualTo(1));
-                string expected2 = "thread02-syncuser01-user02-<p>thread02 note 1.</p>-deleted-01flag1";
+                string expected2 = "thread2-syncuser01-user02-<p>thread2 note 1.</p>-deleted-01flag1";
                 Assert.That(change02.NotesDeleted[0].NoteToString(), Is.EqualTo(expected2));
 
                 // Added comment on new thread
-                NoteThreadChange change03 = changes.Where(c => c.ThreadId == "thread03").Single();
+                NoteThreadChange change03 = changes.Where(c => c.ThreadId == "thread3").Single();
                 Assert.That(change03.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread03 context after-Start:15-Length:22-MAT 1:3-01flag1"));
+                    Is.EqualTo("Context before Text selected thread3 context after -Start:15-Length:21-MAT 1:3-01flag1"));
                 Assert.That(change03.NotesAdded.Count, Is.EqualTo(1));
-                string expected3 = "thread03-syncuser03-user02-<p>thread03 note 1.</p>-01flag1";
+                string expected3 = "thread3-syncuser03-user02-<p>thread3 note 1.</p>-01flag1";
                 Assert.That(change03.NotesAdded[0].NoteToString(), Is.EqualTo(expected3));
                 Assert.That(syncUsers.Keys, Is.EquivalentTo(new[] { env.Username01, env.Username02 }));
 
                 // Permanently removed comment
-                NoteThreadChange change04 = changes.Where(c => c.ThreadId == "thread04").Single();
+                NoteThreadChange change04 = changes.Where(c => c.ThreadId == "thread4").Single();
                 Assert.That(change04.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread04 context after-MAT 1:4"));
-                Assert.That(change04.NoteIdsRemoved, Is.EquivalentTo(new[] { "n2onthread04" }));
+                    Is.EqualTo("Context before Text selected thread4 context after -MAT 1:4"));
+                Assert.That(change04.NoteIdsRemoved, Is.EquivalentTo(new[] { "n2onthread4" }));
 
                 // Permanently removed thread
-                NoteThreadChange change05 = changes.Where(c => c.ThreadId == "thread05").Single();
+                NoteThreadChange change05 = changes.Where(c => c.ThreadId == "thread5").Single();
                 Assert.That(change05.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread05 context after-MAT 1:5"));
+                    Is.EqualTo("Context before Text selected thread5 context after -MAT 1:5"));
                 Assert.That(change05.ThreadRemoved, Is.True);
 
                 // Added conflict comment
-                NoteThreadChange change06 = changes.Where(c => c.ThreadId == "thread06").Single();
+                NoteThreadChange change06 = changes.Where(c => c.ThreadId == "thread6").Single();
                 Assert.That(change06.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread06 context after-Start:15-Length:22-MAT 1:6-conflict1"));
-                string expected6 = "thread06-syncuser01-user02-<p>thread06 note 1.</p>-conflict1";
+                    Is.EqualTo("Context before Text selected thread6 context after -Start:15-Length:21-MAT 1:6-conflict1"));
+                string expected6 = "thread6-syncuser01-user02-<p>thread6 note 1.</p>-conflict1";
                 Assert.That(change06.NotesAdded[0].NoteToString(), Is.EqualTo(expected6));
 
                 // Added comment on existing thread
-                NoteThreadChange change07 = changes.Where(c => c.ThreadId == "thread07").Single();
-                string expected7 = "thread07-syncuser01-user02-<p>thread07 note 2.</p>-01flag1";
+                NoteThreadChange change07 = changes.Where(c => c.ThreadId == "thread7").Single();
+                string expected7 = "thread7-syncuser01-user02-<p>thread7 note 2.</p>-01flag1";
                 Assert.That(change07.NotesAdded[0].NoteToString(), Is.EqualTo(expected7));
+            }
+        }
+
+        [Test]
+        public async Task GetNoteThreadChanges_OnlySegmentsInVerseIncluded()
+        {
+            var env = new TestEnvironment();
+            var associatedPTUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPTUser);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+            env.AddParatextComments(new[]
+            {
+                new ThreadComponents { threadNum = 1, noteCount = 1, username = env.Username01, relatedVerseSelection = true },
+                new ThreadComponents { threadNum = 10, noteCount = 1, username = env.Username01, relatedVerseSelection = true }
+            });
+
+            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            {
+                var deltas = env.GetChapterDeltasByBookAsync(env.Project01, 40, 1, "Context before ", "Text selected",
+                    true, true);
+                Dictionary<string, SyncUser> syncUsers = new Dictionary<string, SyncUser> {
+                    { "syncuser01",  new SyncUser { Id = "syncuser01", ParatextUsername = env.Username01 } }
+                };
+                IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret, ptProjectId, 40,
+                    new IDocument<NoteThread>[0], deltas, syncUsers);
+
+                Assert.That(changes.Count, Is.EqualTo(2));
+                var change = changes.Single(c => c.ThreadId == "thread1");
+                // full matching text is not found. Best match is a substring
+                Assert.That(change.Position.Length, Is.LessThan(5));
+
+                change = changes.Single(c => c.ThreadId == "thread10");
+                string textBefore = "Context before Text selected thread10 context after ";
+                TextAnchor expected2 = new TextAnchor { Start = textBefore.Length, Length = 13 };
             }
         }
 
@@ -810,7 +845,7 @@ namespace SIL.XForge.Scripture.Services
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
-            string threadId = "thread01";
+            string threadId = "thread1";
             env.AddNoteThreadData(new[]
                 { new ThreadComponents { threadNum = 1, noteCount = 1, isNew = true } });
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
@@ -824,8 +859,8 @@ namespace SIL.XForge.Scripture.Services
                 thread = env.ProjectCommentManager.FindThread(threadId);
                 Assert.That(thread.Comments.Count, Is.EqualTo(1));
                 var comment = thread.Comments.First();
-                string expected = "thread01/User 02/2019-01-01T08:00:00.0000000+00:00-" + "MAT 1:1-" +
-                    "<p>thread01 note 1.</p>-" + "Start:0-" + "user02-" + "Tag:1";
+                string expected = "thread1/User 02/2019-01-01T08:00:00.0000000+00:00-" + "MAT 1:1-" +
+                    "<p>thread1 note 1.</p>-" + "Start:0-" + "user02-" + "Tag:1";
                 Assert.That(comment.CommentToString(), Is.EqualTo(expected));
                 Assert.That(syncUsers.Keys, Is.EquivalentTo(new[] { env.Username02 }));
                 Assert.That(noteThreadDoc.Data.Notes[0].SyncUserRef, Is.EqualTo("syncuser02"));
@@ -843,7 +878,7 @@ namespace SIL.XForge.Scripture.Services
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
-            string threadId = "thread01";
+            string threadId = "thread1";
             env.AddNoteThreadData(new[]
                 { new ThreadComponents { threadNum = 1, noteCount = 1, username = env.Username01, isEdited = true } });
             env.AddParatextComments(new[]
@@ -863,8 +898,8 @@ namespace SIL.XForge.Scripture.Services
                 CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
                 Assert.That(thread.Comments.Count, Is.EqualTo(1));
                 var comment = thread.Comments.First();
-                string expected = "thread01/User 01/2019-01-01T08:00:00.0000000+00:00-" + "MAT 1:1-" +
-                    "<p>thread01 note 1: EDITED.</p>-" + "Start:15-" + "user02-" + "Tag:1";
+                string expected = "thread1/User 01/2019-01-01T08:00:00.0000000+00:00-" + "MAT 1:1-" +
+                    "<p>thread1 note 1: EDITED.</p>-" + "Start:15-" + "user02-" + "Tag:1";
                 Assert.That(comment.CommentToString(), Is.EqualTo(expected));
                 Assert.That(syncUsers.Count(), Is.EqualTo(1));
 
@@ -881,7 +916,7 @@ namespace SIL.XForge.Scripture.Services
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
-            string threadId = "thread01";
+            string threadId = "thread1";
             env.AddNoteThreadData(new[]
                 { new ThreadComponents { threadNum = 1, noteCount = 1, username = env.Username01, isDeleted = true } });
             env.AddParatextComments(new[]
@@ -902,8 +937,8 @@ namespace SIL.XForge.Scripture.Services
                 CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
                 Assert.That(thread.Comments.Count, Is.EqualTo(1));
                 var comment = thread.Comments.First();
-                string expected = "thread01/User 01/2019-01-01T08:00:00.0000000+00:00-" + "MAT 1:1-" +
-                    "<p>thread01 note 1.</p>-" + "Start:15-" + "user02-" + "deleted-" + "Tag:1";
+                string expected = "thread1/User 01/2019-01-01T08:00:00.0000000+00:00-" + "MAT 1:1-" +
+                    "<p>thread1 note 1.</p>-" + "Start:15-" + "user02-" + "deleted-" + "Tag:1";
                 Assert.That(comment.CommentToString(), Is.EqualTo(expected));
 
                 // PT username is not written to server logs
@@ -1215,6 +1250,7 @@ namespace SIL.XForge.Scripture.Services
             public int threadNum;
             public int noteCount;
             public string username;
+            public bool relatedVerseSelection;
             public bool isNew;
             public bool isEdited;
             public bool isDeleted;
@@ -1748,7 +1784,8 @@ namespace SIL.XForge.Scripture.Services
                 bool useThreadSuffix = true)
             {
                 TextData[] texts = new TextData[1];
-                Delta chapterDelta = GetChapterDelta(chapterNum, verses, contextBefore, selectedText, useThreadSuffix);
+                Delta chapterDelta =
+                    GetChapterDelta(chapterNum, verses, contextBefore, selectedText, useThreadSuffix, false);
                 texts[0] = new TextData(chapterDelta) { Id = TextData.GetTextDocId(Project01, bookNum, chapterNum) };
                 RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>(texts));
             }
@@ -1756,11 +1793,11 @@ namespace SIL.XForge.Scripture.Services
             public void AddNoteThreadData(ThreadComponents[] threadComponents)
             {
                 IEnumerable<NoteThread> threads = new NoteThread[0];
+                string before = "Context before ";
+                string after = " context after ";
                 foreach (var comp in threadComponents)
                 {
-                    string threadId = "thread0" + comp.threadNum;
-                    string before = "Context before ";
-                    string after = " context after";
+                    string threadId = "thread" + comp.threadNum;
                     string text = "Text selected " + threadId;
                     string selectedText = comp.appliesToVerse ? before + text + after : text;
                     var noteThread = new NoteThread
@@ -1802,12 +1839,14 @@ namespace SIL.XForge.Scripture.Services
             }
 
             public Dictionary<int, ChapterDelta> GetChapterDeltasByBookAsync(string projectId, int bookNum,
-                int chapters, string contextBefore, string selectedText, bool useThreadSuffix = true)
+                int chapters, string contextBefore, string selectedText, bool useThreadSuffix = true,
+                bool includeRelatedVerse = false)
             {
                 Dictionary<int, ChapterDelta> chapterDeltas = new Dictionary<int, ChapterDelta>();
                 for (int i = 1; i <= chapters; i++)
                 {
-                    Delta delta = GetChapterDelta(i, 10, contextBefore, selectedText, useThreadSuffix);
+                    Delta delta =
+                        GetChapterDelta(i, 10, contextBefore, selectedText, useThreadSuffix, includeRelatedVerse);
                     chapterDeltas.Add(i, new ChapterDelta(i, 10, true, delta));
                 }
                 return chapterDeltas;
@@ -1875,10 +1914,10 @@ namespace SIL.XForge.Scripture.Services
                 XmlDocument doc = new XmlDocument();
                 foreach (ThreadComponents comp in components)
                 {
-                    string threadId = "thread0" + comp.threadNum;
+                    string threadId = "thread" + comp.threadNum;
                     var associatedPtUser = new SFParatextUser(comp.username);
                     string before = "Context before ";
-                    string after = " context after";
+                    string after = " context after ";
                     string text = "Text selected " + threadId;
                     string selectedText = comp.appliesToVerse ? before + text + after : text;
                     for (int i = 1; i <= comp.noteCount; i++)
@@ -1886,6 +1925,12 @@ namespace SIL.XForge.Scripture.Services
                         string date = $"2019-01-0{i}T08:00:00.0000000+00:00";
                         XmlElement content = doc.CreateElement("Contents");
                         content.InnerXml = comp.isEdited ? $"<p>{threadId} note {i}: EDITED.</p>" : $"<p>{threadId} note {i}.</p>";
+                        if (comp.relatedVerseSelection)
+                        {
+                            before = before + text + after;
+                            after = "";
+                            selectedText = "related verse";
+                        }
                         ProjectCommentManager.AddComment(new Paratext.Data.ProjectComments.Comment(associatedPtUser)
                         {
                             Thread = threadId,
@@ -1954,16 +1999,22 @@ namespace SIL.XForge.Scripture.Services
             }
 
             private Delta GetChapterDelta(int chapterNum, int verses, string contextBefore, string selectedText,
-                bool useThreadSuffix)
+                bool useThreadSuffix, bool includeRelatedVerse)
             {
                 string chapterText = "[ { \"insert\": { \"chapter\": { \"number\": \"" + chapterNum + "\" } }}";
                 for (int i = 1; i <= verses; i++)
                 {
-                    string noteSelectedText = useThreadSuffix ? selectedText + $" thread0{i}" : selectedText;
+                    string noteSelectedText = useThreadSuffix ? selectedText + $" thread{i}" : selectedText;
                     chapterText = chapterText + "," +
                         "{ \"insert\": { \"verse\": { \"number\": \"" + i + "\" } }}, " +
-                        "{ \"insert\": \"" + contextBefore + noteSelectedText + " context after\", " +
+                        "{ \"insert\": \"" + contextBefore + noteSelectedText + " context after \", " +
                         "\"attributes\": { \"segment\": \"verse_" + chapterNum + "_" + i + "\" } }";
+                }
+                if (includeRelatedVerse)
+                {
+                    chapterText = chapterText + ", { \"insert\": \"\n\" }," +
+                        "{ \"insert\": \"related verse\", " +
+                        "\"attributes\": { \"segment\": \"verse_" + chapterNum + "_" + verses + "/p_1\" } }";
                 }
                 chapterText = chapterText + "]";
                 return new Delta(JToken.Parse(chapterText));

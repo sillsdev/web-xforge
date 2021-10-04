@@ -1086,8 +1086,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       if (editIndex <= embedIndex) {
         return { start: oldTextAnchor.start + editLength, length: oldTextAnchor.length };
       } else if (editIndex > embedIndex && editIndex <= noteAnchorEndIndex) {
-        // The user inserted text at the end of this note anchor, we consider this inside the text anchor because
-        // the user could be expanding the last text anchor word.
+        // Note that if the user inserted text at the end of this note anchor, we consider
+        // this inside the text anchor because the user could be expanding the last text anchor word.
         return { start: oldTextAnchor.start, length: oldTextAnchor.length + editLength };
       }
       return oldTextAnchor;
