@@ -827,13 +827,22 @@ namespace SIL.XForge.Scripture.Services
                     new IDocument<NoteThread>[0], deltas, syncUsers);
 
                 Assert.That(changes.Count, Is.EqualTo(2));
-                var change = changes.Single(c => c.ThreadId == "thread1");
-                // full matching text is not found. Best match is a substring
-                Assert.That(change.Position.Length, Is.LessThan(5));
+                NoteThreadChange thread1Change = changes.Single(c => c.ThreadId == "thread1");
+                // The full matching text of thread1Change.SelectedText is not found. The best match is a substring.
+                // This test also verifies that fetching verse text for verse 1 will fetch text from segment
+                // "verse_1_1" but not segment "verse_1_10/p_1" (even tho the second segment name starts with the first
+                // segment name). Incorrectly also fetching from "verse_1_10/p_1" would result in having a match for
+                // thread1Change.SelectedText.
+                Assert.That(thread1Change.SelectedText, Is.EqualTo("other text in verse"), "setup");
+                Assert.That(thread1Change.Position.Length, Is.LessThan("other text in verse".Length));
 
-                change = changes.Single(c => c.ThreadId == "thread10");
+                NoteThreadChange thread10Change = changes.Single(c => c.ThreadId == "thread10");
                 string textBefore = "Context before Text selected thread10 context after ";
-                TextAnchor expected2 = new TextAnchor { Start = textBefore.Length, Length = 13 };
+                int thread10AnchoringLength = "other text in verse".Length;
+                TextAnchor expected2 = new TextAnchor { Start = textBefore.Length, Length = thread10AnchoringLength };
+                // This test also verifies that fetching verse text for verse 10 will fetch text from both segments
+                // "verse_1_10" and "verse_1_10/p_1".
+                Assert.That(thread10Change.Position, Is.EqualTo(expected2));
             }
         }
 
@@ -1843,11 +1852,12 @@ namespace SIL.XForge.Scripture.Services
                 bool includeRelatedVerse = false)
             {
                 Dictionary<int, ChapterDelta> chapterDeltas = new Dictionary<int, ChapterDelta>();
+                int numVersesInChapter = 10;
                 for (int i = 1; i <= chapters; i++)
                 {
-                    Delta delta =
-                        GetChapterDelta(i, 10, contextBefore, selectedText, useThreadSuffix, includeRelatedVerse);
-                    chapterDeltas.Add(i, new ChapterDelta(i, 10, true, delta));
+                    Delta delta = GetChapterDelta(i, numVersesInChapter, contextBefore, selectedText, useThreadSuffix,
+                        includeRelatedVerse);
+                    chapterDeltas.Add(i, new ChapterDelta(i, numVersesInChapter, true, delta));
                 }
                 return chapterDeltas;
             }
@@ -1929,7 +1939,7 @@ namespace SIL.XForge.Scripture.Services
                         {
                             before = before + text + after;
                             after = "";
-                            selectedText = "related verse";
+                            selectedText = "other text in verse";
                         }
                         ProjectCommentManager.AddComment(new Paratext.Data.ProjectComments.Comment(associatedPtUser)
                         {
@@ -1999,7 +2009,7 @@ namespace SIL.XForge.Scripture.Services
             }
 
             private Delta GetChapterDelta(int chapterNum, int verses, string contextBefore, string selectedText,
-                bool useThreadSuffix, bool includeRelatedVerse)
+                bool useThreadSuffix, bool includeExtraLastVerseSegment)
             {
                 string chapterText = "[ { \"insert\": { \"chapter\": { \"number\": \"" + chapterNum + "\" } }}";
                 for (int i = 1; i <= verses; i++)
@@ -2010,10 +2020,11 @@ namespace SIL.XForge.Scripture.Services
                         "{ \"insert\": \"" + contextBefore + noteSelectedText + " context after \", " +
                         "\"attributes\": { \"segment\": \"verse_" + chapterNum + "_" + i + "\" } }";
                 }
-                if (includeRelatedVerse)
+                if (includeExtraLastVerseSegment)
                 {
+                    // Add a second segment in the last verse (Note the segment name ends with "/p_1").
                     chapterText = chapterText + ", { \"insert\": \"\n\" }," +
-                        "{ \"insert\": \"related verse\", " +
+                        "{ \"insert\": \"other text in verse\", " +
                         "\"attributes\": { \"segment\": \"verse_" + chapterNum + "_" + verses + "/p_1\" } }";
                 }
                 chapterText = chapterText + "]";

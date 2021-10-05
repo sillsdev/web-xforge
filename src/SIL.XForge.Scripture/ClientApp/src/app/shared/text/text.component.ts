@@ -57,6 +57,10 @@ export interface TextUpdatedEvent {
   oldSegmentEmbeds?: Map<string, number>;
 }
 
+/**
+ * Info to annotate and draw attention to a verse using a distinguishing mark, such as a community checking question or
+ * a note.
+ */
 export interface FeaturedVerseRefInfo {
   verseRef: VerseRef;
   id: string;
@@ -486,7 +490,9 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return segments;
   }
 
-  /** Embeds an element, with the specified format, into the quill editor. */
+  /** Embeds an element, with the specified format, into the editor, at the editor position that corresponds to
+   * the beginning of textAnchor.
+   */
   embedElementInline(
     verseRef: VerseRef,
     id: string,
@@ -500,38 +506,46 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
     // A single verse can be associated with multiple segments (e.g verse_1_1, verse_1_1/p_1)
     const verseSegments: string[] = this.getVerseSegments(verseRef);
-    let segmentRange: RangeStatic | undefined = this.getSegmentRange(verseSegments[0]);
-    let startIndexInSegment: number = textAnchor.start;
+    let editorPosOfSegmentToModify: RangeStatic | undefined = this.getSegmentRange(verseSegments[0]);
+    let startTextPosInVerse: number = textAnchor.start;
     if (Array.from(this.viewModel.embeddedElements.keys()).includes(id)) {
       return;
     }
 
-    let segment: string = verseSegments[0];
+    let embedSegmentRef: string = verseSegments[0];
     for (const vs of verseSegments) {
-      const range: RangeStatic | undefined = this.getSegmentRange(vs);
-      if (range == null) {
+      const editorPosOfSomeSegment: RangeStatic | undefined = this.getSegmentRange(vs);
+      if (editorPosOfSomeSegment == null) {
         break;
       }
-      const segmentTextLength: number = range.length - this.getEmbedCountInSegmentBefore(range.length, range.index);
-      if (segmentTextLength > startIndexInSegment) {
-        segmentRange = range;
-        segment = vs;
+
+      const segmentTextLength: number =
+        editorPosOfSomeSegment.length -
+        this.getEmbedCountInRange(editorPosOfSomeSegment.index, editorPosOfSomeSegment.length);
+      // Does the textAnchor begin in this segment?
+      if (segmentTextLength > startTextPosInVerse) {
+        editorPosOfSegmentToModify = editorPosOfSomeSegment;
+        embedSegmentRef = vs;
         break;
       } else {
-        // The embed starts in a later segment. Subtract the text only length of this segment from the start index
-        startIndexInSegment -= segmentTextLength;
+        // The embed starts in a later segment. Subtract the text-only length of this segment from the start index.
+        startTextPosInVerse -= segmentTextLength;
         continue;
       }
     }
 
-    if (segmentRange == null) {
+    if (editorPosOfSegmentToModify == null) {
       return;
     }
 
-    const embedInsertIndex: number = this.getIndexForTextAnchorPosition(startIndexInSegment, segmentRange.index);
-    this.editor.insertEmbed(embedInsertIndex, formatName, format, 'api');
+    const embedInsertPos: number = this.getEditorPositionPlusTextPosition(
+      editorPosOfSegmentToModify.index,
+      startTextPosInVerse
+    );
+
+    this.editor.insertEmbed(embedInsertPos, formatName, format, 'api');
     this.updateSegment();
-    return segment;
+    return embedSegmentRef;
   }
 
   /** Respond to text changes in the quill editor. */
@@ -861,24 +875,28 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
   }
 
-  /** Get the number of embedded elements before a given position in a segment. */
-  private getEmbedCountInSegmentBefore(position: number, searchStartIndex: number): number {
-    const segmentEmbedIndices: number[] = Array.from(this.embeddedElements.values());
-    return segmentEmbedIndices.filter(n => n >= searchStartIndex && n < searchStartIndex + position).length;
+  /** Returns the number of embedded elements that are located at or after editorStartPos, through length of editor
+   * positions to check.
+   */
+  private getEmbedCountInRange(editorStartPos: number, length: number): number {
+    const embedPositions: number[] = Array.from(this.embeddedElements.values());
+    return embedPositions.filter((pos: number) => pos >= editorStartPos && pos < editorStartPos + length).length;
   }
 
-  /** Returns the index in the editor for a given text anchor position with respect to the segment start index. */
-  private getIndexForTextAnchorPosition(startPosition: number, segmentStartIndex: number): number {
+  /**
+   * Returns the editor position that corresponds to a text position past an editor position.
+   */
+  private getEditorPositionPlusTextPosition(startingEditorPos: number, textPosPast: number): number {
     let textCharactersFound = 0;
-    let textIndex = segmentStartIndex;
-    const embedIndices = Array.from(this.embeddedElements.values());
-    while (textCharactersFound < startPosition) {
-      if (!embedIndices.includes(textIndex)) {
+    let resultingEditorPos = startingEditorPos;
+    const embedEditorPositions = Array.from(this.embeddedElements.values());
+    while (textCharactersFound < textPosPast) {
+      if (!embedEditorPositions.includes(resultingEditorPos)) {
         textCharactersFound++;
       }
-      textIndex++;
+      resultingEditorPos++;
     }
-    return textIndex;
+    return resultingEditorPos;
   }
 
   private setHighlightMarkerPosition(): void {

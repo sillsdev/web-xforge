@@ -995,24 +995,24 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   /** Update the text anchors for the note threads in the current segment. */
   private async updateSegmentNoteThreadAnchors(
     oldSegmentEmbeds: Map<string, number>,
-    delta: DeltaStatic
+    editorUpdateDelta: DeltaStatic
   ): Promise<void> {
     if (this.noteThreadQuery == null || this.noteThreadQuery.docs.length < 1) {
       return;
     }
     const updatePromises: Promise<boolean>[] = [];
-    if (delta.ops == null || delta.ops.length < 2) {
-      // If the length is less than two, it can be skipped
+    if (editorUpdateDelta.ops == null || editorUpdateDelta.ops.length < 2) {
+      // All editor changes we want to process will begin with a retain, followed by at least another op.
       return;
     }
-    const editOpIndex: number | undefined = delta.ops[0].retain;
+    const editOpIndex: number | undefined = editorUpdateDelta.ops[0].retain;
     let length = 0;
     let operation: 'insert' | 'delete' = 'insert';
     // get the length that was inserted or deleted to apply to the note text anchor
-    if (delta.ops[1].insert != null && typeof delta.ops[1].insert === 'string') {
-      length = delta.ops[1].insert.length;
-    } else if (delta.ops[1].delete != null) {
-      length = delta.ops[1].delete;
+    if (editorUpdateDelta.ops[1].insert != null && typeof editorUpdateDelta.ops[1].insert === 'string') {
+      length = editorUpdateDelta.ops[1].insert.length;
+    } else if (editorUpdateDelta.ops[1].delete != null) {
+      length = editorUpdateDelta.ops[1].delete;
       operation = 'delete';
     }
     if (editOpIndex == null || length === 0) {
@@ -1025,9 +1025,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         continue;
       }
 
-      const oldNoteSelection: TextAnchor = noteThreadDoc.data.position ?? { start: 0, end: 0 };
+      const oldNotePosition: TextAnchor = noteThreadDoc.data.position ?? { start: 0, end: 0 };
       const newSelection: TextAnchor = this.getUpdatedTextAnchor(
-        oldNoteSelection,
+        oldNotePosition,
         oldSegmentEmbeds,
         embedIndex,
         editOpIndex,
@@ -1082,14 +1082,20 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         embedIndex,
         oldTextAnchor.length
       );
-      const noteAnchorEndIndex: number = embedIndex + oldTextAnchor.length + embedCount;
+      // Editor position just past the anchor span.
+      const afterAnchor: number = embedIndex + oldTextAnchor.length + embedCount;
       if (editIndex <= embedIndex) {
+        // The edit was before the embed.
         return { start: oldTextAnchor.start + editLength, length: oldTextAnchor.length };
-      } else if (editIndex > embedIndex && editIndex <= noteAnchorEndIndex) {
-        // Note that if the user inserted text at the end of this note anchor, we consider
-        // this inside the text anchor because the user could be expanding the last text anchor word.
+      }
+      // Note that if the user inserted text at the end of this note anchor, we consider
+      // this inside the text anchor because the user could be expanding the last text anchor word.
+      if (editIndex > embedIndex && editIndex <= afterAnchor) {
+        // The edit was within, or immediately after, the note anchoring span. (Or just after the embed.)
         return { start: oldTextAnchor.start, length: oldTextAnchor.length + editLength };
       }
+      // The edit was further along than immediately following the anchor span. So there was at least one character
+      // after the anchor span and before the edit.
       return oldTextAnchor;
     }
 
@@ -1097,10 +1103,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     let lengthWithin = 0;
     const embedPositions: Set<number> = new Set(oldVerseEmbedPositions.values());
 
+    // Count non-embeds that were deleted.
     for (let charIndex = editIndex; charIndex < editIndex + editLength; charIndex++) {
       if (embedPositions.has(charIndex)) {
         // The edit involves deleting an embed icon. It neither counts as length within nor before
         continue;
+      }
+      if (charIndex === embedIndex) {
+        console.warn(
+          `Warning: getUpdatedTextAnchor: embedIndex ${embedIndex} unexpectedly was not contained in embedPositions:`,
+          embedPositions
+        );
       }
       if (charIndex < embedIndex) {
         lengthBefore++;
