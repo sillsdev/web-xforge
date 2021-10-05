@@ -75,7 +75,13 @@
         </mdc-dialog-content>
         <mdc-dialog-actions>
           <button mdcDialogButton mdcDialogAction="close" type="button">{{ t("cancel") }}</button>
-          <button mdcDialogButton [unelevated]="true" type="submit" (click)="importQuestions()">
+          <button
+            mdcDialogButton
+            [unelevated]="true"
+            type="submit"
+            [disabled]="selectedCount < 1"
+            (click)="importQuestions()"
+          >
             <span fxShow fxHide.xs>{{ t("import_count_questions", { count: selectedCount }) }}</span>
             <span fxHide fxShow.xs>{{ t("import") }}</span>
           </button>
