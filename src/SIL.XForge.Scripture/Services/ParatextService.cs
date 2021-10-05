@@ -1594,9 +1594,9 @@ namespace SIL.XForge.Scripture.Services
             string verse = GetVerseText(chapterDelta.Delta, comment.VerseRef);
             int startPos = 0;
             PtxUtils.StringUtils.MatchContexts(verse, comment.ContextBefore, comment.SelectedText,
-                comment.ContextAfter, null, ref startPos, out int endPos);
+                comment.ContextAfter, null, ref startPos, out int posJustPastLastCharacter);
             // The text anchor is relative to the text in the verse
-            return new TextAnchor { Start = startPos, Length = endPos - startPos };
+            return new TextAnchor { Start = startPos, Length = posJustPastLastCharacter - startPos };
         }
 
         private SyncUser FindOrCreateSyncUser(string paratextUsername, Dictionary<string, SyncUser> syncUsers)

@@ -300,7 +300,7 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, false, false, new Book("MAT", 2), new Book("MRK", 2));
             env.SetupPTData(new Book("MAT", 3), new Book("MRK", 1));
             env.AddParatextNoteThreadData(new Book("MRK", 2));
-            Assert.That(env.ContainsNote("MRK", 2), Is.True);
+            Assert.That(env.ContainsNote(2), Is.True);
 
             await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
@@ -317,7 +317,7 @@ namespace SIL.XForge.Scripture.Services
 
             Assert.That(env.ContainsQuestion("MAT", 2), Is.True);
             Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
-            Assert.That(env.ContainsNote("MRK", 2), Is.False);
+            Assert.That(env.ContainsNote(2), Is.False);
             env.VerifyProjectSync(true);
         }
 
@@ -347,7 +347,7 @@ namespace SIL.XForge.Scripture.Services
             // Need to make sure we have notes BEFORE the sync
             env.AddParatextNoteThreadData(new Book("MRK", 2));
 
-            Assert.That(env.ContainsNote("MRK", 2), Is.True);
+            Assert.That(env.ContainsNote(2), Is.True);
             await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
@@ -366,7 +366,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsQuestion("MAT", 1), Is.True);
             Assert.That(env.ContainsQuestion("MAT", 2), Is.True);
 
-            Assert.That(env.ContainsNote("MRK", 2), Is.False);
+            Assert.That(env.ContainsNote(2), Is.False);
             env.VerifyProjectSync(true);
         }
 
@@ -1366,7 +1366,7 @@ namespace SIL.XForge.Scripture.Services
                 return RealtimeService.GetRepository<Question>().Contains($"project01:question{bookId}{chapter}");
             }
 
-            public bool ContainsNote(string bookId, int chapter)
+            public bool ContainsNote(int chapter)
             {
                 return RealtimeService.GetRepository<NoteThread>().Contains($"project01:thread0{chapter}");
             }
