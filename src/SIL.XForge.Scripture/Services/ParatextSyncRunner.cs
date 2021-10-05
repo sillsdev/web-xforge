@@ -863,11 +863,13 @@ namespace SIL.XForge.Scripture.Services
 
         private async Task<List<string>> DeleteNoteThreadDocsInChapters(int bookNum, IEnumerable<Chapter> chapters)
         {
-            List<string> noteThreadDocIds = await _realtimeService.QuerySnapshots<NoteThread>()
-                .Where(n => n.ProjectRef == _projectDoc.Id && n.VerseRef.BookNum == bookNum &&
-                    chapters.Select(c => c.Number).Contains(n.VerseRef.ChapterNum))
-                .Select(n => n.Id)
-                .ToListAsync();
+            IEnumerable<int> chaptersToDelete = chapters.Select(c => c.Number);
+            IEnumerable<NoteThread> threadDocs = _realtimeService.QuerySnapshots<NoteThread>()
+                .Where(n => n.ProjectRef == _projectDoc.Id && n.VerseRef.BookNum == bookNum);
+            IEnumerable<string> noteThreadDocIds =
+                threadDocs.Where(nt => chaptersToDelete.Contains(nt.VerseRef.ChapterNum)).Select(n => n.Id);
+            List<string> deletedNoteThreadDocIds = new List<string>(noteThreadDocIds);
+
             var tasks = new List<Task>();
             foreach (string noteThreadDocId in noteThreadDocIds)
             {
@@ -881,7 +883,7 @@ namespace SIL.XForge.Scripture.Services
             }
 
             await Task.WhenAll(tasks);
-            return noteThreadDocIds;
+            return deletedNoteThreadDocIds;
         }
 
         private async Task CompleteSync(bool successful, bool canRollbackParatext, CancellationToken token)
