@@ -10,6 +10,9 @@ namespace SIL.XForge.Scripture.Models
         None
     }
 
+    /// <summary>
+    /// Represents changes in a Paratext CommentThread.
+    /// </summary>
     public class NoteThreadChange
     {
         public string ThreadId { get; set; }
