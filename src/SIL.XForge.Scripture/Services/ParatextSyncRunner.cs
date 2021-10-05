@@ -868,6 +868,8 @@ namespace SIL.XForge.Scripture.Services
                 .Where(n => n.ProjectRef == _projectDoc.Id && n.VerseRef.BookNum == bookNum);
             IEnumerable<string> noteThreadDocIds =
                 threadDocs.Where(nt => chaptersToDelete.Contains(nt.VerseRef.ChapterNum)).Select(n => n.Id);
+            // Make a record of the note thread doc ids to return since they are removed
+            // from noteThreadDocIds after the docs are deleted.
             List<string> deletedNoteThreadDocIds = new List<string>(noteThreadDocIds);
 
             var tasks = new List<Task>();
