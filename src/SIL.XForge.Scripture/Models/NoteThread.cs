@@ -3,15 +3,15 @@ using SIL.XForge.Models;
 
 namespace SIL.XForge.Scripture.Models
 {
-    public class ParatextNoteThread : ProjectData
+    public class NoteThread : ProjectData
     {
         public string DataId { get; set; }
         public VerseRefData VerseRef { get; set; }
         public List<Note> Notes { get; set; } = new List<Note>();
-        public string SelectedText { get; set; }
-        public string ContextBefore { get; set; }
-        public string ContextAfter { get; set; }
-        public int StartPosition { get; set; }
+        public string OriginalSelectedText { get; set; }
+        public string OriginalContextBefore { get; set; }
+        public string OriginalContextAfter { get; set; }
+        public TextAnchor Position { get; set; }
         public string ParatextUser { get; set; }
         public string TagIcon { get; set; }
     }

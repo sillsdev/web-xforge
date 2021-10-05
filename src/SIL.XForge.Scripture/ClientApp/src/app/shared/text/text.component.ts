@@ -13,6 +13,7 @@ import { TranslocoService } from '@ngneat/transloco';
 import isEqual from 'lodash-es/isEqual';
 import merge from 'lodash-es/merge';
 import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
+import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { fromEvent } from 'rxjs';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -53,13 +54,14 @@ export interface TextUpdatedEvent {
   delta?: DeltaStatic;
   prevSegment?: Segment;
   segment?: Segment;
+  oldSegmentEmbeds?: Map<string, number>;
 }
 
 export interface FeaturedVerseRefInfo {
   verseRef: VerseRef;
   id: string;
   iconName?: string;
-  selectedText?: string;
+  textAnchor?: TextAnchor;
   preview?: string;
 }
 
@@ -330,6 +332,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return 'auto';
   }
 
+  get embeddedElements(): Readonly<Map<string, number>> {
+    return this.viewModel.embeddedElements;
+  }
+
   private get contentShowing(): boolean {
     return this.id != null && this.viewModel.isLoaded && !this.viewModel.isEmpty;
   }
@@ -480,49 +486,52 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return segments;
   }
 
-  embedElementInline(verseRef: VerseRef, id: string, selectedText: string, formatName: string, format: any): void {
+  /** Embeds an element, with the specified format, into the quill editor. */
+  embedElementInline(
+    verseRef: VerseRef,
+    id: string,
+    textAnchor: TextAnchor,
+    formatName: string,
+    format: any
+  ): string | undefined {
     if (this.editor == null) {
       return;
     }
 
     // A single verse can be associated with multiple segments (e.g verse_1_1, verse_1_1/p_1)
     const verseSegments: string[] = this.getVerseSegments(verseRef);
-    let noteRange: RangeStatic | undefined = this.getSegmentRange(verseSegments[0]);
-    let startPosition = 0;
+    let segmentRange: RangeStatic | undefined = this.getSegmentRange(verseSegments[0]);
+    let startIndexInSegment: number = textAnchor.start;
     if (Array.from(this.viewModel.embeddedElements.keys()).includes(id)) {
       return;
     }
 
+    let segment: string = verseSegments[0];
     for (const vs of verseSegments) {
-      const text: string = this.getSegmentText(vs);
       const range: RangeStatic | undefined = this.getSegmentRange(vs);
       if (range == null) {
-        continue;
-      } else if (selectedText === '') {
-        if (text === '') {
-          // blank segments matches to blank text
-          noteRange = range;
-          break;
-        }
+        break;
+      }
+      const segmentTextLength: number = range.length - this.getEmbedCountInSegmentBefore(range.length, range.index);
+      if (segmentTextLength > startIndexInSegment) {
+        segmentRange = range;
+        segment = vs;
+        break;
       } else {
-        const start = text.indexOf(selectedText);
-        if (start >= 0) {
-          // the selected text exists in the verse
-          // TODO: Find a better way to match a note to its selected text
-          startPosition = start;
-          noteRange = range;
-          break;
-        }
+        // The embed starts in a later segment. Subtract the text only length of this segment from the start index
+        startIndexInSegment -= segmentTextLength;
+        continue;
       }
     }
 
-    if (noteRange == null) {
+    if (segmentRange == null) {
       return;
     }
 
-    const noteInsertIndex: number = noteRange.index + startPosition;
-    this.editor.insertEmbed(noteInsertIndex, formatName, format, 'api');
+    const embedInsertIndex: number = this.getIndexForTextAnchorPosition(startIndexInSegment, segmentRange.index);
+    this.editor.insertEmbed(embedInsertIndex, formatName, format, 'api');
     this.updateSegment();
+    return segment;
   }
 
   /** Respond to text changes in the quill editor. */
@@ -726,6 +735,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     const prevSegment = this._segment;
+    const oldSegmentEmbeds: Map<string, number> | undefined =
+      this._segment == null ? undefined : this._segment.embeddedElements;
     if (segmentRef != null) {
       // update/switch current segment
       if (!this.tryChangeSegment(segmentRef, checksum, focus) && this._segment != null) {
@@ -740,7 +751,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     Promise.resolve().then(() => this.adjustSelection());
-    this.updated.emit({ delta, prevSegment, segment: this._segment });
+    // TODO: could we simply iterate through note threads rather than needing to emit the old embed positions?
+    this.updated.emit({ delta, prevSegment, segment: this._segment, oldSegmentEmbeds: oldSegmentEmbeds });
   }
 
   private tryChangeSegment(
@@ -802,10 +814,16 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (this._segment == null) {
       return;
     }
-    const range = this.viewModel.getSegmentRange(this._segment.ref);
+    const range: RangeStatic | undefined = this.viewModel.getSegmentRange(this._segment.ref);
     if (range != null) {
       const text = this.viewModel.getSegmentText(this._segment.ref);
-      this._segment.update(text, range);
+      const segmentEmbeddedElements: Map<string, number> = new Map<string, number>();
+      for (const [threadId, index] of this.embeddedElements.entries()) {
+        if (index >= range.index && index < range.index + range.length) {
+          segmentEmbeddedElements.set(threadId, index);
+        }
+      }
+      this._segment.update(text, range, segmentEmbeddedElements);
     }
   }
 
@@ -823,15 +841,44 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       newSel = { index: this._segment.range.index + this._segment.range.length, length: 0 };
     } else if (!this.multiSegmentSelection) {
       // selections outside of the text chooser dialog are not permitted to extend across segments
-      const newStart = Math.max(sel.index, this._segment.range.index);
+      let newStart = Math.max(sel.index, this._segment.range.index);
       const oldEnd = sel.index + sel.length;
       const segEnd = this._segment.range.index + this._segment.range.length;
       const newEnd = Math.min(oldEnd, segEnd);
+
+      const embedIndices: number[] = Array.from(this._segment.embeddedElements.values()).sort();
+      if (newStart === this._segment.range.index || embedIndices.includes(newStart - 1)) {
+        // if the selection is before an embed at the start of the segment or
+        // the selection is between embeds, move the selection behind it
+        while (embedIndices.includes(newStart)) {
+          newStart++;
+        }
+      }
       newSel = { index: newStart, length: Math.max(0, newEnd - newStart) };
     }
     if (newSel != null && (sel.index !== newSel.index || sel.length !== newSel.length)) {
       this._editor.setSelection(newSel, 'user');
     }
+  }
+
+  /** Get the number of embedded elements before a given position in a segment. */
+  private getEmbedCountInSegmentBefore(position: number, searchStartIndex: number): number {
+    const segmentEmbedIndices: number[] = Array.from(this.embeddedElements.values());
+    return segmentEmbedIndices.filter(n => n >= searchStartIndex && n < searchStartIndex + position).length;
+  }
+
+  /** Returns the index in the editor for a given text anchor position with respect to the segment start index. */
+  private getIndexForTextAnchorPosition(startPosition: number, segmentStartIndex: number): number {
+    let textCharactersFound = 0;
+    let textIndex = segmentStartIndex;
+    const embedIndices = Array.from(this.embeddedElements.values());
+    while (textCharactersFound < startPosition) {
+      if (!embedIndices.includes(textIndex)) {
+        textCharactersFound++;
+      }
+      textIndex++;
+    }
+    return textIndex;
   }
 
   private setHighlightMarkerPosition(): void {

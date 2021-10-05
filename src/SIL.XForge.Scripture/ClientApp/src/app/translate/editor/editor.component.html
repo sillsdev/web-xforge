@@ -58,7 +58,7 @@
           <app-text
             #target
             [isReadOnly]="!canEdit"
-            (updated)="onTargetUpdated($event.segment, $event.delta, $event.prevSegment)"
+            (updated)="onTargetUpdated($event.segment, $event.delta, $event.prevSegment, $event.oldSegmentEmbeds)"
             (loaded)="onTextLoaded('target')"
             [highlightSegment]="target.hasFocus"
             [markInvalid]="true"

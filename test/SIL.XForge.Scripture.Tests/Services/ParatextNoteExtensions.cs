@@ -16,12 +16,25 @@ namespace SIL.XForge.Scripture.Services
             return result;
         }
 
-        public static string ThreadChangeToString(this ParatextNoteThreadChange thread)
+        public static string ThreadChangeToString(this NoteThreadChange thread)
         {
+            string selection = thread.Position == null
+                ? string.Empty
+                : $"-Start:{thread.Position.Start}-Length:{thread.Position.Length}";
             string result = thread.ContextBefore + thread.SelectedText + thread.ContextAfter +
-                $"-Start:{thread.StartPosition}-{thread.VerseRefStr}";
+                $"{selection}-{thread.VerseRefStr}";
             if (thread.TagIcon != null)
                 result = result + $"-{thread.TagIcon}";
+            return result;
+        }
+
+        public static string NoteThreadToString(this NoteThread thread)
+        {
+            string selection = thread.Position == null
+                ? string.Empty
+                : $"-Start:{thread.Position.Start}-Length:{thread.Position.Length}";
+            string result = thread.OriginalContextBefore + thread.OriginalSelectedText + thread.OriginalContextAfter +
+                $"{selection}-{thread.VerseRef.ToString()}-{thread.TagIcon}";
             return result;
         }
 

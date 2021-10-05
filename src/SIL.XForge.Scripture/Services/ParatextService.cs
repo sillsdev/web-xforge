@@ -35,6 +35,7 @@ using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
+using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
@@ -737,21 +738,25 @@ namespace SIL.XForge.Scripture.Services
             PutCommentThreads(userSecret, projectId, changeList);
         }
 
-        public IEnumerable<ParatextNoteThreadChange> GetNoteThreadChanges(UserSecret userSecret, string projectId,
-            int bookNum, IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs,
-            Dictionary<string, SyncUser> syncUsers)
+        /// <summary>
+        /// Returns a list of changes to apply to SF note threads to match the corresponding
+        /// PT comment threads for a given book.
+        /// </summary>
+        public IEnumerable<NoteThreadChange> GetNoteThreadChanges(UserSecret userSecret, string projectId,
+            int bookNum, IEnumerable<IDocument<NoteThread>> noteThreadDocs,
+            Dictionary<int, ChapterDelta> chapterDeltas, Dictionary<string, SyncUser> syncUsers)
         {
             IEnumerable<CommentThread> commentThreads = GetCommentThreads(userSecret, projectId, bookNum);
             CommentTags commentTags = GetCommentTags(userSecret, projectId);
             List<string> matchedThreadIds = new List<string>();
-            List<ParatextNoteThreadChange> changes = new List<ParatextNoteThreadChange>();
+            List<NoteThreadChange> changes = new List<NoteThreadChange>();
 
             foreach (var threadDoc in noteThreadDocs)
             {
                 List<string> matchedCommentIds = new List<string>();
-                ParatextNoteThreadChange threadChange = new ParatextNoteThreadChange(threadDoc.Data.DataId,
-                    threadDoc.Data.VerseRef.ToString(), threadDoc.Data.SelectedText, threadDoc.Data.ContextBefore,
-                    threadDoc.Data.ContextAfter, threadDoc.Data.StartPosition);
+                NoteThreadChange threadChange = new NoteThreadChange(threadDoc.Data.DataId,
+                    threadDoc.Data.VerseRef.ToString(), threadDoc.Data.OriginalSelectedText, threadDoc.Data.OriginalContextBefore,
+                    threadDoc.Data.OriginalContextAfter);
                 // Find the corresponding comment thread
                 var existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
                 if (existingThread == null)
@@ -791,6 +796,13 @@ namespace SIL.XForge.Scripture.Services
                     threadChange.AddChange(CreateNoteFromComment(
                         _guidService.NewObjectId(), comment, commentTags, syncUser), ChangeType.Added);
                 }
+                if (existingThread.Comments.Count > 0)
+                {
+                    // Get the text anchor to use for the note
+                    TextAnchor range = GetCommentTextAnchor(existingThread.Comments[0], chapterDeltas);
+                    if (!range.Equals(threadDoc.Data.Position))
+                        threadChange.Position = range;
+                }
                 if (threadChange.HasChange)
                     changes.Add(threadChange);
             }
@@ -802,10 +814,15 @@ namespace SIL.XForge.Scripture.Services
                 CommentThread thread = commentThreads.Single(ct => ct.Id == threadId);
                 Paratext.Data.ProjectComments.Comment info = thread.Comments[0];
 
-                int tagId = info.TagsAdded != null && info.TagsAdded.Length > 0 ? int.Parse(info.TagsAdded[0]) : 1;
+                int defaultTagId = 1;
+                int tagId = info.TagsAdded != null && info.TagsAdded.Length > 0
+                    ? int.Parse(info.TagsAdded[0])
+                    : defaultTagId;
                 CommentTag initialTag = info.Type == NoteType.Conflict ? CommentTag.ConflictTag : commentTags.Get(tagId);
-                ParatextNoteThreadChange newThread = new ParatextNoteThreadChange(threadId, info.VerseRefStr,
-                    info.SelectedText, info.ContextBefore, info.ContextAfter, info.StartPosition, initialTag.Icon);
+                NoteThreadChange newThread = new NoteThreadChange(threadId, info.VerseRefStr,
+                    info.SelectedText, info.ContextBefore, info.ContextAfter, initialTag.Icon);
+                newThread.Position = GetCommentTextAnchor(info, chapterDeltas);
+
                 foreach (var comm in thread.Comments)
                 {
                     SyncUser syncUser = FindOrCreateSyncUser(comm.User, syncUsers);
@@ -817,15 +834,15 @@ namespace SIL.XForge.Scripture.Services
             return changes;
         }
 
-        public void UpdateParatextComments(UserSecret userSecret, string projectId, int bookNum,
-            IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs, Dictionary<string, SyncUser> syncUsers)
+        public async Task UpdateParatextCommentsAsync(UserSecret userSecret, string projectId, int bookNum,
+            IEnumerable<IDocument<NoteThread>> noteThreadDocs, Dictionary<string, SyncUser> syncUsers)
         {
             CommentTags commentTags = GetCommentTags(userSecret, projectId);
             string username = GetParatextUsername(userSecret);
             IEnumerable<CommentThread> commentThreads =
                 GetCommentThreads(userSecret, projectId, bookNum);
             List<List<Paratext.Data.ProjectComments.Comment>> noteThreadChangeList =
-                SFNotesToCommentChangeList(noteThreadDocs, commentThreads, username, commentTags, syncUsers);
+                await SFNotesToCommentChangeListAsync(noteThreadDocs, commentThreads, username, commentTags, syncUsers);
 
             PutCommentThreads(userSecret, projectId, noteThreadChangeList);
         }
@@ -1422,14 +1439,14 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>
         /// Get the comment change lists from the up-to-date note thread docs in the Scripture Forge mongo database.
         /// </summary>
-        private List<List<Paratext.Data.ProjectComments.Comment>> SFNotesToCommentChangeList(
-            IEnumerable<IDocument<ParatextNoteThread>> noteThreadDocs, IEnumerable<CommentThread> commentThreads,
+        private async Task<List<List<Paratext.Data.ProjectComments.Comment>>> SFNotesToCommentChangeListAsync(
+            IEnumerable<IDocument<NoteThread>> noteThreadDocs, IEnumerable<CommentThread> commentThreads,
             string defaultUsername, CommentTags commentTags, Dictionary<string, SyncUser> syncUsers)
         {
             List<List<Paratext.Data.ProjectComments.Comment>> changes =
                 new List<List<Paratext.Data.ProjectComments.Comment>>();
-            IEnumerable<IDocument<ParatextNoteThread>> activeThreadDocs = noteThreadDocs.Where(t => t.Data != null);
-            foreach (IDocument<ParatextNoteThread> threadDoc in activeThreadDocs)
+            IEnumerable<IDocument<NoteThread>> activeThreadDocs = noteThreadDocs.Where(t => t.Data != null);
+            foreach (IDocument<NoteThread> threadDoc in activeThreadDocs)
             {
                 List<Paratext.Data.ProjectComments.Comment> thread = new List<Paratext.Data.ProjectComments.Comment>();
                 CommentThread existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
@@ -1475,12 +1492,11 @@ namespace SIL.XForge.Scripture.Services
                         var comment = new Paratext.Data.ProjectComments.Comment(ptUser)
                         {
                             VerseRefStr = threadDoc.Data.VerseRef.ToString(),
-                            SelectedText = threadDoc.Data.SelectedText,
-                            ContextBefore = threadDoc.Data.ContextBefore,
-                            ContextAfter = threadDoc.Data.ContextAfter,
-                            StartPosition = threadDoc.Data.StartPosition
+                            SelectedText = threadDoc.Data.OriginalSelectedText,
+                            ContextBefore = threadDoc.Data.OriginalContextBefore,
+                            ContextAfter = threadDoc.Data.OriginalContextAfter
                         };
-                        ExtractCommentFromNote(note, comment, commentTags);
+                        PopulateCommentFromNote(note, comment, commentTags);
                         thread.Add(comment);
                         if (note.SyncUserRef == null)
                         {
@@ -1489,13 +1505,11 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
                 if (thread.Count() > 0)
-                    changes.Add(thread);
-                // Set the sync user ref on the notes in the SF Mongo DB
-                threadDoc.SubmitJson0OpAsync(op =>
                 {
-                    foreach ((int index, string syncUserId) in threadNoteSyncUserIds)
-                        op.Set(t => t.Notes[index].SyncUserRef, syncUserId);
-                });
+                    changes.Add(thread);
+                    // Set the sync user ref on the notes in the SF Mongo DB
+                    await UpdateNoteSyncUserAsync(threadDoc, threadNoteSyncUserIds);
+                }
             }
             return changes;
         }
@@ -1510,7 +1524,7 @@ namespace SIL.XForge.Scripture.Services
             return ChangeType.None;
         }
 
-        private void ExtractCommentFromNote(Note note, Paratext.Data.ProjectComments.Comment comment,
+        private void PopulateCommentFromNote(Note note, Paratext.Data.ProjectComments.Comment comment,
             CommentTags commentTags)
         {
 
@@ -1551,6 +1565,40 @@ namespace SIL.XForge.Scripture.Services
             };
         }
 
+        private string GetVerseText(Delta delta, VerseRef verseRef)
+        {
+            string segment = $"verse_{verseRef.ChapterNum}_{verseRef.VerseNum}";
+            IEnumerable<JToken> ops = delta.Ops.Where(op =>
+                op.Type == JTokenType.Object && op["attributes"] != null && op["attributes"]["segment"] != null &&
+                (((string)op["attributes"]["segment"]) == segment ||
+                ((string)op["attributes"]["segment"]).StartsWith(segment + "/"))
+            );
+            StringBuilder bldr = new StringBuilder();
+            foreach (JObject segmentObj in ops)
+            {
+                if (segmentObj["insert"] != null && segmentObj["insert"].Type == JTokenType.String)
+                {
+                    bldr.Append((string)segmentObj["insert"]);
+                }
+            }
+            return bldr.ToString();
+        }
+
+        private TextAnchor GetCommentTextAnchor(Paratext.Data.ProjectComments.Comment comment,
+            Dictionary<int, ChapterDelta> chapterDeltas)
+        {
+            if (!chapterDeltas.TryGetValue(comment.VerseRef.ChapterNum, out ChapterDelta chapterDelta) ||
+                comment.StartPosition == 0)
+                return new TextAnchor();
+
+            string verse = GetVerseText(chapterDelta.Delta, comment.VerseRef);
+            int startPos = 0;
+            PtxUtils.StringUtils.MatchContexts(verse, comment.ContextBefore, comment.SelectedText,
+                comment.ContextAfter, null, ref startPos, out int endPos);
+            // The text anchor is relative to the text in the verse
+            return new TextAnchor { Start = startPos, Length = endPos - startPos };
+        }
+
         private SyncUser FindOrCreateSyncUser(string paratextUsername, Dictionary<string, SyncUser> syncUsers)
         {
             if (!syncUsers.TryGetValue(paratextUsername, out SyncUser syncUser))
@@ -1563,6 +1611,16 @@ namespace SIL.XForge.Scripture.Services
                 syncUsers.Add(paratextUsername, syncUser);
             }
             return syncUser;
+        }
+
+        private async Task UpdateNoteSyncUserAsync(IDocument<NoteThread> noteThreadDoc,
+            List<(int, string)> syncUserByNoteIndex)
+        {
+            await noteThreadDoc.SubmitJson0OpAsync(op =>
+            {
+                foreach ((int index, string syncuser) in syncUserByNoteIndex)
+                    op.Set(t => t.Notes[index].SyncUserRef, syncuser);
+            });
         }
 
         // Make sure there are no asynchronous methods called after this until the progress is completed.
