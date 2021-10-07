@@ -55,16 +55,15 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     }
   }
 
-  get lastSyncDate(): string {
-    if (
-      this.projectDoc == null ||
-      this.projectDoc.data == null ||
-      this.projectDoc.data.sync.dateLastSuccessfulSync == null
-    ) {
-      return '';
+  get lastSyncDate(): Date | undefined {
+    if (this.projectDoc?.data?.sync.dateLastSuccessfulSync == null) {
+      return undefined;
     }
-    const date = new Date(this.projectDoc.data.sync.dateLastSuccessfulSync);
-    return date.toLocaleString();
+    return new Date(this.projectDoc.data.sync.dateLastSuccessfulSync);
+  }
+
+  get lastSyncDisplayDate() {
+    return this.lastSyncDate?.toLocaleString() || '';
   }
 
   get projectName(): string {
@@ -81,12 +80,13 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
       if (
         !(
           this.isSyncCancelled &&
-          (this.previousLastSyncDate == null || new Date(this.lastSyncDate) <= this.previousLastSyncDate)
+          (this.previousLastSyncDate == null ||
+            (this.lastSyncDate != null && this.lastSyncDate <= this.previousLastSyncDate))
         )
       ) {
         if (this.projectDoc.data.sync.lastSyncSuccessful) {
           this.noticeService.show(translate('sync.successfully_synchronized_with_paratext', { projectName }));
-          this.previousLastSyncDate = new Date(this.lastSyncDate);
+          this.previousLastSyncDate = this.lastSyncDate;
         } else {
           this.noticeService.showMessageDialog(() =>
             translate('sync.something_went_wrong_synchronizing_this_project', { projectName })
@@ -166,7 +166,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     }
     this._syncActive = this.projectDoc.data.sync.queuedCount > 0;
     if (this.projectDoc.data.sync.lastSyncSuccessful) {
-      this.previousLastSyncDate = new Date(this.lastSyncDate);
+      this.previousLastSyncDate = this.lastSyncDate;
     }
   }
 }
