@@ -837,7 +837,7 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(thread1Change.Position.Length, Is.LessThan("other text in verse".Length));
 
                 NoteThreadChange thread10Change = changes.Single(c => c.ThreadId == "thread10");
-                string textBefore = "Context before Text selected thread10 context after ";
+                string textBefore = "Context before Text selected thread10 context after *";
                 int thread10AnchoringLength = "other text in verse".Length;
                 TextAnchor expected2 = new TextAnchor { Start = textBefore.Length, Length = thread10AnchoringLength };
                 // This test also verifies that fetching verse text for verse 10 will fetch text from both segments
@@ -2023,9 +2023,12 @@ namespace SIL.XForge.Scripture.Services
                 if (includeExtraLastVerseSegment)
                 {
                     // Add a second segment in the last verse (Note the segment name ends with "/p_1").
+                    string verseRef = $"verse_{chapterNum}_{verses}";
                     chapterText = chapterText + ", { \"insert\": \"\n\" }," +
+                        "{ \"insert\": { \"note\": { \"caller\": \"*\" } }, " +
+                        "\"attributes\": { \"segment\": \"" + verseRef + "\" } }," +
                         "{ \"insert\": \"other text in verse\", " +
-                        "\"attributes\": { \"segment\": \"verse_" + chapterNum + "_" + verses + "/p_1\" } }";
+                        "\"attributes\": { \"segment\": \"" + verseRef + "/p_1\" } }";
                 }
                 chapterText = chapterText + "]";
                 return new Delta(JToken.Parse(chapterText));
