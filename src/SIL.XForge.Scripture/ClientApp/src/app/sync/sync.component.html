@@ -51,7 +51,7 @@
           >
             {{ t("cancel") }}
           </button>
-          <span *ngIf="!syncActive" [title]="lastSyncDate" id="date-last-sync" class="sync-info">
+          <span *ngIf="!syncActive" [title]="lastSyncDisplayDate" id="date-last-sync" class="sync-info">
             {{ lastSyncNotice }}
           </span>
         </ng-container>

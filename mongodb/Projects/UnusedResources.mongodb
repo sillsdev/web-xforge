@@ -1,0 +1,16 @@
+// Find resources that are not being used by any project
+// This is especially useful for QA where testers are constantly connecting more resources for testing purposes
+
+use('xforge');
+
+// Find projects with a Paratext ID that is 16 characters long, indicating a resource
+const resources = db.sf_projects.find({paratextId: {$regex: '^.{16,16}$'}}, {_id: 1, shortName: 1, name: 1})
+  .toArray();
+
+const projectsBasedOnOthers = db.sf_projects.find(
+  {'translateConfig.source.projectRef': {$exists: true}}, {'translateConfig.source': 1}
+).toArray();
+
+resources.filter(
+  resource => !projectsBasedOnOthers.some(project => project.translateConfig.source.projectRef === resource._id)
+);

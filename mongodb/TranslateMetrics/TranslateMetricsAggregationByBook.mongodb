@@ -4,15 +4,13 @@
 
 // Aggregates the translate metrics for the given project and book.
 // Check in the VSCode Output panel to confirm the correct project and book.
+const projectRef = '5f75a079c2dab415404e29ca';
+const bookId = 'MAT';
+
+use('xforge');
 
 const path = require('path');
 const { Canon } = require(path.resolve('./src/RealtimeServer/lib/cjs/scriptureforge/scripture-utils/canon.js'));
-
-// Select the database to use.
-use('xforge');
-
-const projectRef = '60fa74b6e167fc53d45030c9';
-const bookId = 'LUK';
 
 const bookNum = Canon.bookIdToNumber(bookId);
 const project = db.sf_projects.findOne({ _id: projectRef });
@@ -22,18 +20,32 @@ console.log(`book: ${Canon.bookNumberToEnglishName(bookNum)} (${bookNum})`);
 db.translate_metrics.aggregate([
   { $match: { projectRef, bookNum } },
   { $group: {
-    _id: '$chapterNum',
+    _id: { segment: '$segment', chapterNum: '$chapterNum' },
     maxSourceWordCount: { $max: '$sourceWordCount' },
     maxTargetWordCount: { $max: '$targetWordCount' },
-    agKeyBackspaceCount: { $sum: '$keyBackspaceCount' },
-    agKeyDeleteCount: { $sum: '$keyDeleteCount' },
-    agKeyCharacterCount: { $sum: '$keyCharacterCount' },
-    agProductiveCharacterCount: { $sum: '$productiveCharacterCount' },
-    agSuggestionAcceptedCount: { $sum: '$suggestionAcceptedCount' },
-    agSuggestionTotalCount: { $sum: '$suggestionTotalCount' },
-    agTimeEditActive: { $sum: '$timeEditActive' },
-    agKeyNavigationCount: { $sum: '$keyNavigationCount' },
-    agMouseClickCount: { $sum: '$mouseClickCount' },
+    sumKeyBackspaceCount: { $sum: '$keyBackspaceCount' },
+    sumKeyDeleteCount: { $sum: '$keyDeleteCount' },
+    sumKeyCharacterCount: { $sum: '$keyCharacterCount' },
+    sumProductiveCharacterCount: { $sum: '$productiveCharacterCount' },
+    sumSuggestionAcceptedCount: { $sum: '$suggestionAcceptedCount' },
+    sumSuggestionTotalCount: { $sum: '$suggestionTotalCount' },
+    sumTimeEditActive: { $sum: '$timeEditActive' },
+    sumKeyNavigationCount: { $sum: '$keyNavigationCount' },
+    sumMouseClickCount: { $sum: '$mouseClickCount' },
+  } },
+  { $group: {
+    _id: '$_id.chapterNum',
+    amSourceWordCount: { $sum: '$maxSourceWordCount' },
+    amTargetWordCount: { $sum: '$maxTargetWordCount' },
+    agKeyBackspaceCount: { $sum: '$sumKeyBackspaceCount' },
+    agKeyDeleteCount: { $sum: '$sumKeyDeleteCount' },
+    agKeyCharacterCount: { $sum: '$sumKeyCharacterCount' },
+    agProductiveCharacterCount: { $sum: '$sumProductiveCharacterCount' },
+    agSuggestionAcceptedCount: { $sum: '$sumSuggestionAcceptedCount' },
+    agSuggestionTotalCount: { $sum: '$sumSuggestionTotalCount' },
+    agTimeEditActive: { $sum: '$sumTimeEditActive' },
+    agKeyNavigationCount: { $sum: '$sumKeyNavigationCount' },
+    agMouseClickCount: { $sum: '$sumMouseClickCount' },
   } },
   { $sort: { _id: 1 } }
 ]);
