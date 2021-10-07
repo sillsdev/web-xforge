@@ -1582,9 +1582,16 @@ namespace SIL.XForge.Scripture.Services
             StringBuilder bldr = new StringBuilder();
             foreach (JObject segmentObj in ops)
             {
-                if (segmentObj["insert"] != null && segmentObj["insert"].Type == JTokenType.String)
+                if (segmentObj["insert"] != null)
                 {
-                    bldr.Append((string)segmentObj["insert"]);
+                    if (segmentObj["insert"].Type == JTokenType.String)
+                    {
+                        bldr.Append((string)segmentObj["insert"]);
+                    }
+                    else if (segmentObj["insert"].Type == JTokenType.Object && segmentObj["insert"]["note"] != null)
+                    {
+                        bldr.Append("*");
+                    }
                 }
             }
             return bldr.ToString();
