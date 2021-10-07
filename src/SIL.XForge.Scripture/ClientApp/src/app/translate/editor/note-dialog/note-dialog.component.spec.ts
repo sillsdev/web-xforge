@@ -5,7 +5,6 @@ import { Component, DebugElement, Directive, NgModule, ViewChild, ViewContainerR
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { CookieService } from 'ngx-cookie-service';
-import { ParatextNoteThread } from 'realtime-server/lib/esm/scriptureforge/models/paratext-note-thread';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -19,12 +18,13 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { ParatextNoteThreadDoc } from '../../../core/models/paratext-note-thread-doc';
+import { NoteThread } from 'realtime-server/scriptureforge/models/note-thread';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { getTextDoc } from '../../../shared/test-utils';
+import { NoteThreadDoc } from '../../../core/models/note-thread-doc';
 import { NoteDialogComponent, NoteDialogData } from './note-dialog.component';
 
 const mockedAuthService = mock(AuthService);
@@ -59,9 +59,36 @@ describe('NoteDialogComponent', () => {
     env = new TestEnvironment();
     expect(env.notes.length).toBe(2);
   }));
+
+  it('should style notes', fakeAsync(() => {
+    env = new TestEnvironment();
+    const tests: { text: string; expected: string }[] = [
+      {
+        text: 'turn <bold>text bold</bold>',
+        expected: 'turn <b>text bold</b>'
+      },
+      {
+        text: 'turn <italic>text italic</italic>',
+        expected: 'turn <i>text italic</i>'
+      },
+      {
+        text: '<p>this is a paragraph</p>',
+        expected: 'this is a paragraph<br />'
+      },
+      {
+        text: 'check <unknown id="anything">unknown</unknown> <italic>text</italic>',
+        expected: 'check unknown <i>text</i>'
+      }
+    ];
+    tests.forEach(test => {
+      expect(env.component.parseNote(test.text)).toEqual(test.expected);
+    });
+  }));
 });
 
 @Directive({
+  // es lint complains that a directive should be used as an attribute
+  // eslint-disable-next-line @angular-eslint/directive-selector
   selector: 'appViewContainerDirective'
 })
 class ViewContainerDirective {
@@ -112,11 +139,16 @@ class TestEnvironment {
       user01: SFProjectRole.ParatextAdministrator
     }
   };
-  static noteThread: ParatextNoteThread = {
-    contextBefore: 'before selection ',
-    contextAfter: ' after selection',
-    startPosition: 0,
+  static noteThread: NoteThread = {
+    originalContextBefore: 'before selection ',
+    originalContextAfter: ' after selection',
+    originalSelectedText: 'selected text',
     dataId: 'thread01',
+    ownerRef: 'user01',
+    position: { start: 1, length: 1 },
+    projectRef: TestEnvironment.PROJECT01,
+    tagIcon: 'flag02',
+    verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 },
     notes: [
       {
         dataId: 'note01',
@@ -148,12 +180,7 @@ class TestEnvironment {
         dateCreated: '',
         dateModified: ''
       }
-    ],
-    ownerRef: 'user01',
-    projectRef: TestEnvironment.PROJECT01,
-    selectedText: 'selected text',
-    tagIcon: 'flag02',
-    verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 }
+    ]
   };
 
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
@@ -182,13 +209,13 @@ class TestEnvironment {
       data: getTextDoc(textDocId),
       type: RichText.type.name
     });
-    this.realtimeService.addSnapshot<ParatextNoteThread>(ParatextNoteThreadDoc.COLLECTION, {
+    this.realtimeService.addSnapshot<NoteThread>(NoteThreadDoc.COLLECTION, {
       id: [TestEnvironment.PROJECT01, TestEnvironment.noteThread.dataId].join(':'),
       data: TestEnvironment.noteThread
     });
 
     when(mockedProjectService.getNoteThread(anything())).thenCall(id =>
-      this.realtimeService.subscribe(ParatextNoteThreadDoc.COLLECTION, id)
+      this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, id)
     );
 
     when(mockedProjectService.getNoteThreadIcon(anything())).thenResolve();
