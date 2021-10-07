@@ -987,7 +987,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       id: thread.dataId,
       preview,
       icon: this.projectService.getNoteThreadIcon(thread),
-      selectedText: thread.selectedText
+      textAnchor: thread.position
     };
   }
 

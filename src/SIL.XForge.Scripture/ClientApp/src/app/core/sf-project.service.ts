@@ -16,7 +16,7 @@ import { QueryParameters } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { TransceleratorQuestion } from '../checking/import-questions-dialog/import-questions-dialog.component';
 import { InviteeStatus } from '../users/collaborators/collaborators.component';
-import { NoteThreadDoc } from './models/note-thread-doc';
+import { NoteThreadDoc, NoteThreadIcon } from './models/note-thread-doc';
 import { QuestionDoc } from './models/question-doc';
 import { SFProjectCreateSettings } from './models/sf-project-create-settings';
 import { SFProjectDoc } from './models/sf-project-doc';
@@ -71,11 +71,11 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.realtimeService.subscribe(TextDoc.COLLECTION, textId instanceof TextDocId ? textId.toString() : textId);
   }
 
-  getNoteThread(threadId: string): Promise<ParatextNoteThreadDoc> {
-    return this.realtimeService.subscribe(ParatextNoteThreadDoc.COLLECTION, threadId);
+  getNoteThread(threadId: string): Promise<NoteThreadDoc> {
+    return this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, threadId);
   }
 
-  getNoteThreadIcon(thread: ParatextNoteThread): ParatextNoteThreadIcon {
+  getNoteThreadIcon(thread: NoteThread): NoteThreadIcon {
     const notes: Note[] = clone(thread.notes).sort((a, b) => Date.parse(a.dateCreated) - Date.parse(b.dateCreated));
     const iconDefinedNotes = notes.filter(n => n.tagIcon != null);
     let icon: string =

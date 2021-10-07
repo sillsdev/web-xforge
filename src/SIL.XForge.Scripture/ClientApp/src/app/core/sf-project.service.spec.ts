@@ -1,10 +1,10 @@
-import { ParatextNoteThread } from 'realtime-server/lib/esm/scriptureforge/models/paratext-note-thread';
 import { instance, mock } from 'ts-mockito';
 import { CommandService } from 'xforge-common/command.service';
 import { FileService } from 'xforge-common/file.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { ParatextNoteThreadIcon } from './models/paratext-note-thread-doc';
+import { NoteThread } from 'realtime-server/scriptureforge/models/note-thread';
 import { SFProjectService } from './sf-project.service';
+import { NoteThreadIcon } from './models/note-thread-doc';
 
 describe('SFProjectService', () => {
   let env: TestEnvironment;
@@ -14,19 +14,19 @@ describe('SFProjectService', () => {
   });
 
   it('produce valid alternative note icon', () => {
-    const noteThread: ParatextNoteThread = {
-      contextBefore: '',
-      contextAfter: '',
-      startPosition: 0,
+    const noteThread: NoteThread = {
+      originalContextBefore: '',
+      originalContextAfter: '',
+      originalSelectedText: '',
+      position: { start: 0, length: 1 },
       dataId: 'thread01',
       notes: [],
       ownerRef: 'user01',
       projectRef: 'project01',
-      selectedText: '',
       tagIcon: 'flag02',
       verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 }
     };
-    const expectedIcon: ParatextNoteThreadIcon = {
+    const expectedIcon: NoteThreadIcon = {
       var: '--icon-file: url(/assets/icons/TagIcons/flag02.png);',
       url: '/assets/icons/TagIcons/flag02.png'
     };
@@ -34,19 +34,19 @@ describe('SFProjectService', () => {
   });
 
   it('produce correct default note icon', () => {
-    const noteThread: ParatextNoteThread = {
-      contextBefore: '',
-      contextAfter: '',
-      startPosition: 0,
+    const noteThread: NoteThread = {
+      originalContextBefore: '',
+      originalContextAfter: '',
+      originalSelectedText: '',
+      position: { start: 0, length: 1 },
       dataId: 'thread01',
       notes: [],
       ownerRef: 'user01',
       projectRef: 'project01',
-      selectedText: '',
       tagIcon: '',
       verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 }
     };
-    const expectedIcon: ParatextNoteThreadIcon = {
+    const expectedIcon: NoteThreadIcon = {
       var: '--icon-file: url(/assets/icons/TagIcons/01flag1.png);',
       url: '/assets/icons/TagIcons/01flag1.png'
     };
@@ -54,10 +54,15 @@ describe('SFProjectService', () => {
   });
 
   it('produce alternative note icon from latest note', () => {
-    const noteThread: ParatextNoteThread = {
-      contextBefore: '',
-      contextAfter: '',
-      startPosition: 0,
+    const noteThread: NoteThread = {
+      originalContextBefore: '',
+      originalContextAfter: '',
+      originalSelectedText: '',
+      ownerRef: 'user01',
+      projectRef: 'project01',
+      tagIcon: '',
+      verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 },
+      position: { start: 0, length: 1 },
       dataId: 'thread01',
       notes: [
         {
@@ -82,14 +87,9 @@ describe('SFProjectService', () => {
           dateCreated: new Date().toJSON(),
           dateModified: new Date().toJSON()
         }
-      ],
-      ownerRef: 'user01',
-      projectRef: 'project01',
-      selectedText: '',
-      tagIcon: '',
-      verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 }
+      ]
     };
-    const expectedIcon: ParatextNoteThreadIcon = {
+    const expectedIcon: NoteThreadIcon = {
       var: '--icon-file: url(/assets/icons/TagIcons/flag3.png);',
       url: '/assets/icons/TagIcons/flag3.png'
     };
