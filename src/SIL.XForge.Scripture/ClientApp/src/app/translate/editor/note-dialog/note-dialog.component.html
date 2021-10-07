@@ -18,7 +18,7 @@
         </div>
         <div class="notes">
           <div *ngFor="let note of notes" class="note">
-            <div class="content" [innerHTML]="note.content"></div>
+            <div class="content" [innerHTML]="parseNote(note.content)"></div>
             <app-owner [ownerRef]="note.ownerRef" [dateTime]="note.dateCreated"></app-owner>
           </div>
         </div>

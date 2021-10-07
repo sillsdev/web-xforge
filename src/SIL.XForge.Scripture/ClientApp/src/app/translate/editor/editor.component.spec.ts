@@ -1745,7 +1745,7 @@ class TestEnvironment {
         [obj<NoteThread>().pathStr(t => t.projectRef)]: id
       })
     );
-    when(mockedSFProjectService.getNoteThreadIcon(anything())).thenCall((data: ParatextNoteThread) => {
+    when(mockedSFProjectService.getNoteThreadIcon(anything())).thenCall((data: NoteThread) => {
       const icon = data.tagIcon + '.png';
       return {
         url: `/assets/icons/TagIcons/${icon}`,

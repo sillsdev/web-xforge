@@ -4,17 +4,17 @@ import { sortBy } from 'lodash-es';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Note } from 'realtime-server/scriptureforge/models/note';
 import { I18nService } from 'xforge-common/i18n.service';
-import { ParatextNoteThreadDoc } from '../../../core/models/paratext-note-thread-doc';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { NoteThreadDoc } from '../../../core/models/note-thread-doc';
 
 export interface NoteDialogData {
   threadId: string;
   projectId: string;
 }
 
-// TODO: Implement a diff - there is an accepted solution here:
+// TODO: Implement a diff - there is an accepted solution here that might be a good starting point:
 // https://codereview.stackexchange.com/questions/133586/a-string-prototype-diff-implementation-text-diff
 
 @Component({
@@ -23,7 +23,7 @@ export interface NoteDialogData {
 })
 export class NoteDialogComponent implements OnInit {
   showSegmentText: boolean = false;
-  private threadDoc?: ParatextNoteThreadDoc;
+  private threadDoc?: NoteThreadDoc;
   private projectDoc?: SFProjectDoc;
   private textDoc?: TextDoc;
 
@@ -76,11 +76,11 @@ export class NoteDialogComponent implements OnInit {
       return '';
     }
     return (
-      this.threadDoc.data.contextBefore +
+      this.threadDoc.data.originalContextBefore +
       '<b>' +
-      this.threadDoc.data.selectedText +
+      this.threadDoc.data.originalSelectedText +
       '</b>' +
-      this.threadDoc.data.contextAfter
+      this.threadDoc.data.originalContextAfter
     );
   }
 
@@ -111,5 +111,15 @@ export class NoteDialogComponent implements OnInit {
 
   private get threadId(): string {
     return this.data.threadId;
+  }
+
+  parseNote(content: string) {
+    const replace = new Map<RegExp, string>();
+    replace.set(/\<bold\>(.*)\<\/bold\>/gim, '<b>$1</b>'); // Bold
+    replace.set(/\<italic\>(.*)\<\/italic\>/gim, '<i>$1</i>'); // Italics
+    replace.set(/\<p\>(.*)\<\/p\>/gim, '$1<br />'); // Turn paragraphs into line breaks
+    replace.set(/\<(?!i|b|br|\/)(.*?\>)(.*?)\<\/(.*?)\>/gim, '$2'); // Strip out any tags that don't match the above replacements
+    replace.forEach((replacement, regEx) => (content = content.replace(regEx, replacement)));
+    return content;
   }
 }
