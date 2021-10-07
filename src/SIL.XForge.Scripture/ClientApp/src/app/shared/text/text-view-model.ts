@@ -356,6 +356,7 @@ export class TextViewModel {
           'question-count',
           'note-thread-segment',
           'note-thread-count',
+          'text-anchor',
           'initial',
           'direction-segment',
           'direction-block',

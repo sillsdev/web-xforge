@@ -557,6 +557,14 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     );
 
     this.editor.insertEmbed(embedInsertPos, formatName, format, 'api');
+    const anchorEndPosition: number = startTextPosInVerse + textAnchor.length - 1;
+    const endIndex: number = this.getEditorPositionPlusTextPosition(
+      editorPosOfSegmentToModify.index,
+      anchorEndPosition
+    );
+    // add one to include the embed to underline
+    const formatLength: number = endIndex - embedInsertPos + 1;
+    this.editor.formatText(embedInsertPos, formatLength, 'text-anchor', 'true', 'api');
     this.updateSegment();
     return embedSegmentRef;
   }

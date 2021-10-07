@@ -492,6 +492,13 @@ export function registerScripture(): string[] {
   }
   formats.push(SegmentInline);
 
+  class TextAnchorInline extends Inline {
+    static blotName = 'text-anchor';
+    static tagName = 'display-text-anchor';
+  }
+  formats.push(TextAnchorInline);
+
+  (Inline as any).order.push('text-anchor');
   (Inline as any).order.push('segment');
   (Inline as any).order.push('para-contents');
 
@@ -586,16 +593,6 @@ export function registerScripture(): string[] {
     }
   );
   formats.push(NoteThreadCountAttribute);
-
-  const IconSourceAttribute = new QuillParchment.Attributor.Attribute('note-icon-source', 'style', {
-    scope: Parchment.Scope.INLINE
-  });
-  formats.push(IconSourceAttribute);
-
-  const NotePreviewAttribute = new QuillParchment.Attributor.Attribute('note-preview', 'title', {
-    scope: Parchment.Scope.INLINE
-  });
-  formats.push(NotePreviewAttribute);
 
   const InvalidBlockClass = new ClassAttributor('invalid-block', 'invalid-block', {
     scope: Parchment.Scope.BLOCK

@@ -966,44 +966,46 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_2');
 
+      const verse2SegmentIndex = 8;
+      const verse3EmbedIndex = 9;
       env.typeCharacters('test');
       let contents = env.targetEditor.getContents();
-      expect(contents.ops![7].insert).toEqual('test');
-      expect(contents.ops![7].attributes).toEqual({
+      expect(contents.ops![verse2SegmentIndex].insert).toEqual('test');
+      expect(contents.ops![verse2SegmentIndex].attributes).toEqual({
         'para-contents': true,
         segment: 'verse_1_2',
         'highlight-segment': true
       });
 
-      expect(contents.ops![8].insert).toEqual({ verse: { number: '3', style: 'v' } });
-      expect(contents.ops![8].attributes).toEqual({ 'para-contents': true });
+      expect(contents.ops![verse3EmbedIndex].insert).toEqual({ verse: { number: '3', style: 'v' } });
+      expect(contents.ops![verse3EmbedIndex].attributes).toEqual({ 'para-contents': true });
 
       env.triggerUndo();
       contents = env.targetEditor.getContents();
       // check that edit has been undone
-      expect(contents.ops![7].insert).toEqual({ blank: true });
-      expect(contents.ops![7].attributes).toEqual({
+      expect(contents.ops![verse2SegmentIndex].insert).toEqual({ blank: true });
+      expect(contents.ops![verse2SegmentIndex].attributes).toEqual({
         'para-contents': true,
         segment: 'verse_1_2',
         'highlight-segment': true
       });
       // check to make sure that data after the affected segment hasn't gotten corrupted
-      expect(contents.ops![8].insert).toEqual({ verse: { number: '3', style: 'v' } });
-      expect(contents.ops![8].attributes).toEqual({ 'para-contents': true });
+      expect(contents.ops![verse3EmbedIndex].insert).toEqual({ verse: { number: '3', style: 'v' } });
+      expect(contents.ops![verse3EmbedIndex].attributes).toEqual({ 'para-contents': true });
       const selection = env.targetEditor.getSelection();
       expect(selection!.index).toBe(33);
       expect(selection!.length).toBe(0);
 
       env.triggerRedo();
       contents = env.targetEditor.getContents();
-      expect(contents.ops![7].insert).toEqual('test');
-      expect(contents.ops![7].attributes).toEqual({
+      expect(contents.ops![verse2SegmentIndex].insert).toEqual('test');
+      expect(contents.ops![verse2SegmentIndex].attributes).toEqual({
         'para-contents': true,
         segment: 'verse_1_2',
         'highlight-segment': true
       });
-      expect(contents.ops![8].insert).toEqual({ verse: { number: '3', style: 'v' } });
-      expect(contents.ops![8].attributes).toEqual({ 'para-contents': true });
+      expect(contents.ops![verse3EmbedIndex].insert).toEqual({ verse: { number: '3', style: 'v' } });
+      expect(contents.ops![verse3EmbedIndex].attributes).toEqual({ 'para-contents': true });
 
       env.dispose();
     }));
@@ -1018,7 +1020,8 @@ describe('EditorComponent', () => {
       expect(env.component.target!.segmentRef).toBe('verse_1_2');
 
       let contents = env.targetEditor.getContents();
-      expect(contents.ops![7].insert).toEqual({ blank: true });
+      const verse2SegmentIndex = 8;
+      expect(contents.ops![verse2SegmentIndex].insert).toEqual({ blank: true });
 
       // Keep track of operations triggered in Quill
       let textChangeOps: RichText.DeltaOperation[] = [];
@@ -1036,7 +1039,7 @@ describe('EditorComponent', () => {
       // Type a character and observe the correct operations are returned
       env.typeCharacters('t');
       contents = env.targetEditor.getContents();
-      expect(contents.ops![7].insert).toEqual('t');
+      expect(contents.ops![verse2SegmentIndex].insert).toEqual('t');
       const expectedOps = [
         { retain: 33 },
         { insert: 't' },
@@ -1092,10 +1095,15 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_2');
 
+      const verse1EmbedIndex = 2;
+      const verse1SegmentIndex = 3;
+      const verse1NoteIndex = verse1SegmentIndex + 1;
+      const verse1NoteAnchorIndex = verse1SegmentIndex + 2;
+      const verse2SegmentIndex = 8;
       env.typeCharacters('t');
       const contents = env.targetEditor.getContents();
-      expect(contents.ops![7].insert).toEqual('t');
-      expect(contents.ops![7].attributes).toEqual({
+      expect(contents.ops![verse2SegmentIndex].insert).toEqual('t');
+      expect(contents.ops![verse2SegmentIndex].attributes).toEqual({
         'para-contents': true,
         segment: 'verse_1_2',
         'highlight-segment': true
@@ -1105,11 +1113,21 @@ describe('EditorComponent', () => {
       expect(textOps[2].insert['verse']['number']).toBe('1');
       expect(textOps[3].insert).toBe('target: chapter 1, verse 1.');
       expect(textOps[5].insert).toBe('t');
-      expect(contents.ops![2]!.insert['verse']['number']).toBe('1');
-      expect(contents.ops![3].insert).toBe('target: ');
-      expect(contents.ops![4]!.attributes!['iconsrc']).toBe('--icon-file: url(/assets/icons/TagIcons/01flag3.png);');
-      expect(contents.ops![5]!.insert).toBe('chapter 1, verse 1.');
-      expect(contents.ops![7]!.insert).toBe('t');
+      expect(contents.ops![verse1EmbedIndex]!.insert['verse']['number']).toBe('1');
+      expect(contents.ops![verse1SegmentIndex].insert).toBe('target: ');
+      expect(contents.ops![verse1NoteIndex]!.attributes!['iconsrc']).toBe(
+        '--icon-file: url(/assets/icons/TagIcons/01flag3.png);'
+      );
+      // text anchor for thread01
+      expect(contents.ops![verse1NoteAnchorIndex]!.insert).toBe('chapter 1');
+      expect(contents.ops![verse1NoteAnchorIndex]!.attributes).toEqual({
+        'para-contents': true,
+        'text-anchor': true,
+        segment: 'verse_1_1',
+        'note-thread-segment': true,
+        'note-thread-count': '1'
+      });
+      expect(contents.ops![verse2SegmentIndex]!.insert).toBe('t');
       env.dispose();
     }));
 
@@ -1119,21 +1137,13 @@ describe('EditorComponent', () => {
       env.wait();
 
       let contents = env.targetEditor.getContents();
-      expect(contents.ops![3].insert).toBe('target: ');
-      expect(contents.ops![4].insert['note-thread-embed']).not.toBeNull();
-      expect(contents.ops![5].insert).toBe('chapter 1, verse 1.');
-      expect(contents.ops![9].insert['note-thread-embed']).not.toBeNull();
-      expect(contents.ops![10].insert).toBe('target: chapter 1, ');
-      expect(contents.ops![11].insert['note-thread-embed']).not.toBeNull();
-      expect(contents.ops![12].insert['note-thread-embed']).not.toBeNull();
-      expect(contents.ops![13].insert).toBe('verse 3.');
-
+      let noteThreadEmbedCount = env.countNoteThreadEmbeds(contents.ops!);
       env.component.target!.removeEmbeddedElements();
       env.wait();
-      contents = env.targetEditor.getContents();
-      expect(contents.ops![3].insert).toBe('target: chapter 1, verse 1.');
-      expect(contents.ops![7].insert).toBe('target: chapter 1, verse 3.');
 
+      contents = env.targetEditor.getContents();
+      noteThreadEmbedCount = env.countNoteThreadEmbeds(contents.ops!);
+      expect(noteThreadEmbedCount).toEqual(0);
       env.dispose();
     }));
 
@@ -2268,6 +2278,16 @@ class TestEnvironment {
         position
       }
     });
+  }
+
+  countNoteThreadEmbeds(ops: RichText.DeltaOperation[]): number {
+    let noteEmbedCount: number = 0;
+    for (const op of ops) {
+      if (op.insert != null && op.insert['note-thread-embed'] != null) {
+        noteEmbedCount++;
+      }
+    }
+    return noteEmbedCount;
   }
 
   private addProjectUserConfig(userConfig: SFProjectUserConfig): void {
