@@ -1,4 +1,4 @@
-import { Comment } from "./comment";
+import { Comment } from './comment';
 
 export interface ParatextNote extends Comment {
   threadId: string;
