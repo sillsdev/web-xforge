@@ -58,10 +58,8 @@
                   <tr mdcDataTableRow *ngFor="let listItem of filteredList" [selected]="listItem.checked">
                     <td mdcDataTableCell>
                       <mdc-form-field>
-                        <mdc-checkbox
-                          [checked]="listItem.checked"
-                          (change)="checkboxChanged($event, listItem)"
-                        ></mdc-checkbox>
+                        <mdc-checkbox [checked]="listItem.checked" (change)="checkboxChanged($event, listItem)">
+                        </mdc-checkbox>
                         <label>{{ referenceForDisplay(listItem.question) }}</label>
                       </mdc-form-field>
                     </td>
@@ -72,6 +70,7 @@
             </mdc-data-table>
           </form>
           <p *ngIf="statusMessageKey">{{ t(statusMessageKey) }}</p>
+          <mat-error [class.hidden]="!(importClicked && selectedCount < 1)">{{ t("select_questions") }}</mat-error>
         </mdc-dialog-content>
         <mdc-dialog-actions>
           <button mdcDialogButton mdcDialogAction="close" type="button">{{ t("cancel") }}</button>

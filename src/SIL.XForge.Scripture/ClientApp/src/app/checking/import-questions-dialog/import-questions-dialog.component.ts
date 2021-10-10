@@ -65,6 +65,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
   questionList: DialogListItem[] = [];
   filteredList: DialogListItem[] = [];
   statusMessageKey: string | null = 'loading';
+  importClicked: boolean = false;
 
   @ViewChild('selectAllCheckbox') selectAllCheckbox!: MdcCheckbox;
   @ViewChild(MDCDataTable) dataTable?: MDCDataTable;
@@ -221,6 +222,12 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
   }
 
   async importQuestions(): Promise<void> {
+    this.importClicked = true;
+
+    if (this.selectedCount < 1) {
+      return;
+    }
+
     const listItems = this.filteredList.filter(listItem => listItem.checked);
     let cancelImport = false;
     const dialogData: ImportQuestionsProgressDialogData = {
