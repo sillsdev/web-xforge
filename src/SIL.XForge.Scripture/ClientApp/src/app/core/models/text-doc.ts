@@ -87,45 +87,31 @@ export class TextDoc extends RealtimeDoc<TextData, TextData> {
       return '';
     }
     let text = '';
-    let opIndexStart: number | undefined;
-    let opIndexEnd: number | undefined;
+    let trackInsertOp = '';
 
-    /** Locate range of ops that match the verse segments
-     * This is done to capture important inserts between segments like blank lines
-     */
     for (const i in this.data.ops) {
       if (!this.data.ops.hasOwnProperty(i)) {
         continue;
       }
       const index = parseInt(i, 10);
       const op = this.data.ops[index];
+      if (op.insert == null || typeof op.insert !== 'string') {
+        continue;
+      }
+      // Locate range of ops that match the verse segments
       if (
         op.attributes?.segment != null &&
         (op.attributes.segment === ref || op.attributes.segment.indexOf(ref + '/') === 0)
       ) {
-        if (op.insert != null && typeof op.insert === 'string') {
-          if (opIndexStart == null) {
-            opIndexStart = index;
-          }
-          opIndexEnd = index;
+        text += trackInsertOp + op.insert;
+        // Reset tracked insert operations so no double-ups
+        trackInsertOp = '';
+      } else {
+        // Keep track of inserts even if not initially used as some inserts, like blank lines,
+        // can appear between related segments. Only track once an initial segment has been found
+        if (text != '') {
+          trackInsertOp += op.insert;
         }
-      }
-    }
-    if (opIndexStart == null || opIndexEnd == null) {
-      return text;
-    }
-    // Get all string inserts within the op range
-    for (const i in this.data.ops) {
-      if (!this.data.ops.hasOwnProperty(i)) {
-        continue;
-      }
-      const index = parseInt(i, 10);
-      if (index < opIndexStart || index > opIndexEnd) {
-        continue;
-      }
-      const op = this.data.ops[index];
-      if (op.insert != null && typeof op.insert === 'string') {
-        text += op.insert;
       }
     }
     return text;

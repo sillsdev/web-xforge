@@ -1,12 +1,10 @@
 import { Injectable } from '@angular/core';
-import { clone } from 'lodash-es';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProject, SF_PROJECTS_COLLECTION } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getSFProjectUserConfigDocId } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
-import { Note } from 'realtime-server/scriptureforge/models/note';
 import { CommandService } from 'xforge-common/command.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
@@ -16,7 +14,7 @@ import { QueryParameters } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { TransceleratorQuestion } from '../checking/import-questions-dialog/import-questions-dialog.component';
 import { InviteeStatus } from '../users/collaborators/collaborators.component';
-import { NoteThreadDoc, NoteThreadIcon } from './models/note-thread-doc';
+import { NoteThreadDoc } from './models/note-thread-doc';
 import { QuestionDoc } from './models/question-doc';
 import { SFProjectCreateSettings } from './models/sf-project-create-settings';
 import { SFProjectDoc } from './models/sf-project-doc';
@@ -73,18 +71,6 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
 
   getNoteThread(threadId: string): Promise<NoteThreadDoc> {
     return this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, threadId);
-  }
-
-  getNoteThreadIcon(thread: NoteThread): NoteThreadIcon {
-    const notes: Note[] = clone(thread.notes).sort((a, b) => Date.parse(a.dateCreated) - Date.parse(b.dateCreated));
-    const iconDefinedNotes = notes.filter(n => n.tagIcon != null);
-    let icon: string =
-      iconDefinedNotes.length === 0 ? thread.tagIcon : iconDefinedNotes[iconDefinedNotes.length - 1].tagIcon!;
-    if (icon === '') {
-      icon = '01flag1';
-    }
-    const iconUrl = `/assets/icons/TagIcons/${icon}.png`;
-    return { var: `--icon-file: url(${iconUrl});`, url: iconUrl };
   }
 
   queryQuestions(
