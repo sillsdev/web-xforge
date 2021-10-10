@@ -20,7 +20,6 @@ import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
-import { NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
@@ -619,7 +618,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     );
     const noteThreadVerseRefs: VerseRef[] = chapterNoteThreadDocs.map(nt => toVerseRef(nt.data!.verseRef));
     const featureVerseRefInfo: FeaturedVerseRefInfo[] = chapterNoteThreadDocs.map(nt =>
-      this.getFeaturedVerseRefInfo(nt.data!)
+      this.getFeaturedVerseRefInfo(nt)
     );
 
     if (value) {
@@ -976,18 +975,20 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   /** Gets the information needed to format a particular featured verse. */
-  private getFeaturedVerseRefInfo(thread: NoteThread): FeaturedVerseRefInfo {
-    const notes: Note[] = clone(thread.notes).sort((a, b) => Date.parse(a.dateCreated) - Date.parse(b.dateCreated));
+  private getFeaturedVerseRefInfo(threadDoc: NoteThreadDoc): FeaturedVerseRefInfo {
+    const notes: Note[] = clone(threadDoc.data!.notes).sort(
+      (a, b) => Date.parse(a.dateCreated) - Date.parse(b.dateCreated)
+    );
     let preview: string = this.stripXml(notes[0].content.trim());
     if (notes.length > 1) {
       preview += '\n' + translate('editor.more_notes', { count: notes.length - 1 });
     }
     return {
-      verseRef: toVerseRef(thread.verseRef),
-      id: thread.dataId,
+      verseRef: toVerseRef(threadDoc.data!.verseRef),
+      id: threadDoc.data!.dataId,
       preview,
-      icon: this.projectService.getNoteThreadIcon(thread),
-      textAnchor: thread.position
+      icon: threadDoc.icon,
+      textAnchor: threadDoc.data!.position
     };
   }
 
