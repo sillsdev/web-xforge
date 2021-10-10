@@ -111,7 +111,8 @@
     "reference_to": "Referência a",
     "select_all": "Selecionar Tudo",
     "show_all": "Exibir Tudo",
-    "update_transcelerator": "A versão do Transcelerator usada neste projeto não é compatível. Por favor atualize pelo menos para a versão 1.5.3 do Transcelerator."
+    "update_transcelerator": "A versão do Transcelerator usada neste projeto não é compatível. Por favor atualize pelo menos para a versão 1.5.3 do Transcelerator.",
+    "select_questions": "Select questions to import."
   },
   "paginator": {
     "items_per_page": "Itens por página",
