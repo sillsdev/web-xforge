@@ -2,7 +2,7 @@ import { MDC_DIALOG_DATA } from '@angular-mdc/web/dialog';
 import { Component, Inject, OnInit } from '@angular/core';
 import { sortBy } from 'lodash-es';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { Note } from 'realtime-server/scriptureforge/models/note';
+import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { I18nService } from 'xforge-common/i18n.service';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
@@ -43,7 +43,7 @@ export class NoteDialogComponent implements OnInit {
     if (this.threadDoc?.data == null) {
       return '';
     }
-    return this.projectService.getNoteThreadIcon(this.threadDoc.data).url;
+    return this.threadDoc.icon.url;
   }
 
   get isRtl(): boolean {
@@ -92,10 +92,6 @@ export class NoteDialogComponent implements OnInit {
     return this.textDoc.getSegmentTextIncludingRelated(`verse_${verseRef.chapter}_${verseRef.verse}`);
   }
 
-  toggleSegmentText(): void {
-    this.showSegmentText = !this.showSegmentText;
-  }
-
   private get projectId(): string {
     return this.data.projectId;
   }
@@ -114,12 +110,19 @@ export class NoteDialogComponent implements OnInit {
   }
 
   parseNote(content: string) {
+    if (content == null) {
+      return '';
+    }
     const replace = new Map<RegExp, string>();
-    replace.set(/\<bold\>(.*)\<\/bold\>/gim, '<b>$1</b>'); // Bold
-    replace.set(/\<italic\>(.*)\<\/italic\>/gim, '<i>$1</i>'); // Italics
-    replace.set(/\<p\>(.*)\<\/p\>/gim, '$1<br />'); // Turn paragraphs into line breaks
-    replace.set(/\<(?!i|b|br|\/)(.*?\>)(.*?)\<\/(.*?)\>/gim, '$2'); // Strip out any tags that don't match the above replacements
+    replace.set(/<bold>(.*)<\/bold>/gim, '<b>$1</b>'); // Bold style
+    replace.set(/<italic>(.*)<\/italic>/gim, '<i>$1</i>'); // Italic style
+    replace.set(/<p>(.*)<\/p>/gim, '$1<br />'); // Turn paragraphs into line breaks
+    replace.set(/<(?!i|b|br|\/)(.*?>)(.*?)<\/(.*?)>/gim, '$2'); // Strip out any tags that don't match the above replacements
     replace.forEach((replacement, regEx) => (content = content.replace(regEx, replacement)));
     return content;
+  }
+
+  toggleSegmentText(): void {
+    this.showSegmentText = !this.showSegmentText;
   }
 }

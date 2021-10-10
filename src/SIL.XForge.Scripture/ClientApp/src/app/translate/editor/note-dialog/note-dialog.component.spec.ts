@@ -84,6 +84,11 @@ describe('NoteDialogComponent', () => {
       expect(env.component.parseNote(test.text)).toEqual(test.expected);
     });
   }));
+
+  it('produce correct default note icon', fakeAsync(() => {
+    env = new TestEnvironment();
+    expect(env.component.flagIcon).toEqual('/assets/icons/TagIcons/flag02.png');
+  }));
 });
 
 @Directive({
@@ -217,8 +222,6 @@ class TestEnvironment {
     when(mockedProjectService.getNoteThread(anything())).thenCall(id =>
       this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, id)
     );
-
-    when(mockedProjectService.getNoteThreadIcon(anything())).thenResolve();
 
     when(mockedProjectService.get(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id)

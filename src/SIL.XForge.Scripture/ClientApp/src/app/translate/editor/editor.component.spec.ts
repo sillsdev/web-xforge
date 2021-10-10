@@ -1061,11 +1061,11 @@ describe('EditorComponent', () => {
 
       const note = segment.querySelector('display-note')! as HTMLElement;
       expect(note).not.toBeNull();
-      expect(note.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
+      expect(note.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag3.png);');
       expect(note.getAttribute('title')).toEqual('Note from user01\n--- 2 more note(s) ---');
       const contents = env.targetEditor.getContents();
       expect(contents.ops![3].insert).toEqual('target: ');
-      expect(contents.ops![4].attributes!['iconsrc']).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
+      expect(contents.ops![4].attributes!['iconsrc']).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag3.png);');
 
       // Two notes in the segment on verse 3
       const noteVerse3: HTMLElement[] = env.targetTextEditor.nativeElement.querySelectorAll(
@@ -1103,7 +1103,7 @@ describe('EditorComponent', () => {
       expect(textOps[5].insert).toBe('t');
       expect(contents.ops![2]!.insert['verse']['number']).toBe('1');
       expect(contents.ops![3].insert).toBe('target: ');
-      expect(contents.ops![4]!.attributes!['iconsrc']).toBe('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
+      expect(contents.ops![4]!.attributes!['iconsrc']).toBe('--icon-file: url(/assets/icons/TagIcons/01flag3.png);');
       expect(contents.ops![5]!.insert).toBe('chapter 1, verse 1.');
       expect(contents.ops![7]!.insert).toBe('t');
       env.dispose();
@@ -1745,13 +1745,6 @@ class TestEnvironment {
         [obj<NoteThread>().pathStr(t => t.projectRef)]: id
       })
     );
-    when(mockedSFProjectService.getNoteThreadIcon(anything())).thenCall((data: NoteThread) => {
-      const icon = data.tagIcon + '.png';
-      return {
-        url: `/assets/icons/TagIcons/${icon}`,
-        var: `--icon-file: url(/assets/icons/TagIcons/${icon});`
-      };
-    });
     when(mockedPwaService.isOnline).thenReturn(true);
     when(mockedPwaService.onlineStatus).thenReturn(of(true));
     const mockedNoteDialogRef = mock<MdcDialogRef<NoteDialogComponent>>(MdcDialogRef);
