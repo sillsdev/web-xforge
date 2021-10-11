@@ -5,11 +5,11 @@ import { Component, DebugElement, Directive, NgModule, ViewChild, ViewContainerR
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { CookieService } from 'ngx-cookie-service';
-import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
-import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { TextData } from 'realtime-server/lib/scriptureforge/models/text-data';
-import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
+import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import * as RichText from 'rich-text';
 import { anything, mock, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
@@ -18,7 +18,8 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { NoteThread } from 'realtime-server/scriptureforge/models/note-thread';
+import { NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
+import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
@@ -131,7 +132,12 @@ class TestEnvironment {
     shortName: 'P01',
     name: 'Project 01',
     writingSystem: { tag: 'en' },
-    translateConfig: { translationSuggestionsEnabled: false },
+    userPermissions: {},
+    translateConfig: {
+      translationSuggestionsEnabled: false,
+      shareEnabled: false,
+      shareLevel: TranslateShareLevel.Anyone
+    },
     checkingConfig: {
       usersSeeEachOthersResponses: true,
       checkingEnabled: true,
