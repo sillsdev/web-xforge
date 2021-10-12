@@ -11,7 +11,6 @@ import { MdcIconButtonModule } from '@angular-mdc/web/icon-button';
 import { MdcListModule } from '@angular-mdc/web/list';
 import { MdcMenuModule } from '@angular-mdc/web/menu';
 import { MdcMenuSurfaceModule } from '@angular-mdc/web/menu-surface';
-import { MdcRadioModule } from '@angular-mdc/web/radio';
 import { MdcSelectModule } from '@angular-mdc/web/select';
 import { MdcSnackbarModule } from '@angular-mdc/web/snackbar';
 import { MdcSwitchModule } from '@angular-mdc/web/switch';
@@ -36,6 +35,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatTableModule } from '@angular/material/table';
@@ -66,6 +66,7 @@ const modules = [
   MatPaginatorModule,
   MatProgressBarModule,
   MatProgressSpinnerModule,
+  MatRadioModule,
   MatSelectModule,
   MatSliderModule,
   MatTableModule,
@@ -82,7 +83,6 @@ const modules = [
   MdcListModule,
   MdcMenuModule,
   MdcMenuSurfaceModule,
-  MdcRadioModule,
   MdcSelectModule,
   MdcSnackbarModule,
   MdcSwitchModule,
