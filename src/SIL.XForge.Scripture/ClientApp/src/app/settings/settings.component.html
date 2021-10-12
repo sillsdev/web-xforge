@@ -99,27 +99,25 @@
                   <span>{{ shareDescription?.after }}</span>
                 </span>
               </div>
-              <mdc-radio-group
+              <mat-radio-group
                 id="translate-share-level-radio-group"
                 formControlName="translateShareLevel"
                 class="tool-setting indent"
               >
                 <div class="tool-setting-field">
-                  <mdc-form-field id="translate-share-level-anyone-field">
-                    <mdc-radio id="radio-translateShareLevel-anyone" [value]="'anyone'"></mdc-radio>
-                    <label>{{ t("anyone_with_a_link") }}</label>
-                  </mdc-form-field>
-                  <mdc-form-field>
-                    <mdc-radio id="radio-translateShareLevel-specific" [value]="'specific'"></mdc-radio>
-                    <label>{{ t("specific_people") }}</label>
-                  </mdc-form-field>
+                  <mat-radio-button id="radio-translateShareLevel-anyone" [value]="TranslateShareLevel.Anyone">{{
+                    t("anyone_with_a_link")
+                  }}</mat-radio-button>
+                  <mat-radio-button id="radio-translateShareLevel-specific" [value]="TranslateShareLevel.Specific">{{
+                    t("specific_people")
+                  }}</mat-radio-button>
                   <app-write-status
                     [state]="getControlState('translateShareLevel')"
                     [formGroup]="form"
                     id="translateShareLevel-status"
                   ></app-write-status>
                 </div>
-              </mdc-radio-group>
+              </mat-radio-group>
             </div>
           </div>
           <mdc-list-divider></mdc-list-divider>
@@ -175,27 +173,25 @@
                     <span>{{ shareDescription?.after }}</span>
                   </span>
                 </div>
-                <mdc-radio-group
+                <mat-radio-group
                   id="checking-share-level-radio-group"
                   formControlName="checkingShareLevel"
                   class="tool-setting indent"
                 >
                   <div class="tool-setting-field">
-                    <mdc-form-field id="checking-share-level-anyone-field">
-                      <mdc-radio id="radio-checkingShareLevel-anyone" [value]="'anyone'"></mdc-radio>
-                      <label>{{ t("anyone_with_a_link") }}</label>
-                    </mdc-form-field>
-                    <mdc-form-field>
-                      <mdc-radio id="radio-checkingShareLevel-specific" [value]="'specific'"></mdc-radio>
-                      <label>{{ t("specific_people") }}</label>
-                    </mdc-form-field>
+                    <mat-radio-button id="radio-checkingShareLevel-anyone" [value]="CheckingShareLevel.Anyone">{{
+                      t("anyone_with_a_link")
+                    }}</mat-radio-button>
+                    <mat-radio-button id="radio-checkingShareLevel-specific" [value]="CheckingShareLevel.Specific">{{
+                      t("specific_people")
+                    }}</mat-radio-button>
                     <app-write-status
                       [state]="getControlState('checkingShareLevel')"
                       [formGroup]="form"
                       id="checkingShareLevel-status"
                     ></app-write-status>
                   </div>
-                </mdc-radio-group>
+                </mat-radio-group>
               </div>
             </ng-container>
           </div>
