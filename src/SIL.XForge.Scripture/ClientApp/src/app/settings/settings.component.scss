@@ -122,3 +122,10 @@ mdc-list-item {
   height: unset;
   min-height: 48px;
 }
+
+mat-radio-group.tool-setting {
+  display: initial;
+  mat-radio-button {
+    margin: 0.5em;
+  }
+}
