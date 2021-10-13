@@ -218,13 +218,19 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
       try {
         await this.projectService.onlineAddTranslateMetrics(this.projectId, this.metrics);
       } catch (err) {
-        // ignore "not found" and "forbidden" command errors, or errors caused by being offline
-        if (
-          (!(err instanceof CommandError) && this.pwaService.isOnline) ||
-          (err.code !== CommandErrorCode.NotFound && err.code !== CommandErrorCode.Forbidden)
-        ) {
+        // Ignore "not found" and "forbidden" command errors, or errors caused by being offline.
+
+        if (!this.pwaService.isOnline) {
+          return;
+        }
+        if (!(err instanceof CommandError)) {
           throw err;
         }
+        const commandError: CommandError = err;
+        if (commandError.code === CommandErrorCode.NotFound || commandError.code === CommandErrorCode.Forbidden) {
+          return;
+        }
+        throw err;
       }
     }
   }
