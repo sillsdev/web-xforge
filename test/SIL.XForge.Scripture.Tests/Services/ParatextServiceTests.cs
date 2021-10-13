@@ -306,17 +306,12 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
-            // Set up mock REST client to return a successful HEAD request
+            // Set up mock REST client to return a successful GET request
             ISFRestClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
-            ISFRestClient successMockClient = Substitute.For<ISFRestClient>();
-            successMockClient.Head(Arg.Any<string>()).Returns(string.Empty);
-            mockRestClientFactory
-                .Create(Arg.Any<string>(), Arg.Is<UserSecret>(s => s.Id == env.User01))
-                .Returns(successMockClient);
 
-            // Set up mock REST client to return an unsuccessful HEAD request
+            // Set up mock REST client to return an unsuccessful GET request
             ISFRestClient failureMockClient = Substitute.For<ISFRestClient>();
-            failureMockClient.Head(Arg.Any<string>()).Throws<WebException>();
+            failureMockClient.Get(Arg.Any<string>()).Returns(string.Empty);
             mockRestClientFactory
                 .Create(Arg.Any<string>(), Arg.Is<UserSecret>(s => s.Id == env.User02))
                 .Returns(failureMockClient);
@@ -324,7 +319,7 @@ namespace SIL.XForge.Scripture.Services
             // Set up mock project
             var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
             var project = projects.First();
-            project.ParatextId = "resid_is_16_char";
+            project.ParatextId = "5e51f89e89947acb";
             var ptUsernameMapping = new Dictionary<string, string>()
                 {
                     { env.User01, env.Username01 },
@@ -344,13 +339,10 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
-            // Set up mock REST client to return a successful HEAD request
+            // Set up mock REST client to return a successful GET request
             ISFRestClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
             ISFRestClient mockClient = Substitute.For<ISFRestClient>();
-            mockClient.Head(Arg.Any<string>()).Throws<WebException>();
-            mockRestClientFactory
-                .Create(Arg.Any<string>(), Arg.Any<UserSecret>())
-                .Returns(mockClient);
+            mockClient.Get(Arg.Any<string>()).Returns("");
 
             var paratextId = "resid_is_16_char";
             var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01, CancellationToken.None);
@@ -363,17 +355,8 @@ namespace SIL.XForge.Scripture.Services
             // Set up environment
             var env = new TestEnvironment();
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-
-            // Set up mock REST client to return a successful HEAD request
-            ISFRestClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
-            ISFRestClient mockClient = Substitute.For<ISFRestClient>();
-            mockClient.Head(Arg.Any<string>()).Returns(string.Empty);
-            mockRestClientFactory
-                .Create(Arg.Any<string>(), Arg.Any<UserSecret>())
-                .Returns(mockClient);
-
-            var paratextId = "resid_is_16_char";
-
+            env.SetRestClientFactory(user01Secret);
+            var paratextId = "5e51f89e89947acb";
             var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01, CancellationToken.None);
             Assert.That(permission, Is.EqualTo(TextInfoPermission.Read));
         }
