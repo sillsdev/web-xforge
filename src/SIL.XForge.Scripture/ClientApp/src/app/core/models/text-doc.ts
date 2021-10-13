@@ -87,7 +87,9 @@ export class TextDoc extends RealtimeDoc<TextData, TextData> {
       return '';
     }
     let text = '';
-    let trackInsertOp = '';
+    // Keep track of insert text even if not initially used as some inserts, like blank lines,
+    // can appear between related segments.
+    let textBetweenRelatedSegments = '';
 
     for (const i in this.data.ops) {
       if (!this.data.ops.hasOwnProperty(i)) {
@@ -103,14 +105,13 @@ export class TextDoc extends RealtimeDoc<TextData, TextData> {
         op.attributes?.segment != null &&
         (op.attributes.segment === ref || op.attributes.segment.indexOf(ref + '/') === 0)
       ) {
-        text += trackInsertOp + op.insert;
-        // Reset tracked insert operations so no double-ups
-        trackInsertOp = '';
+        text += textBetweenRelatedSegments + op.insert;
+        // Reset text so no double-ups
+        textBetweenRelatedSegments = '';
       } else {
-        // Keep track of inserts even if not initially used as some inserts, like blank lines,
-        // can appear between related segments. Only track once an initial segment has been found
+        // Only track text once an initial segment has been found
         if (text != '') {
-          trackInsertOp += op.insert;
+          textBetweenRelatedSegments += op.insert;
         }
       }
     }
