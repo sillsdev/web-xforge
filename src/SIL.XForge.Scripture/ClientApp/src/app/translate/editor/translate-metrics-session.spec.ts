@@ -1,9 +1,21 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { LatinWordTokenizer } from '@sillsdev/machine';
+import { throws } from 'assert';
 import { QuillModule } from 'ngx-quill';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
-import { anything, deepEqual, instance, mock, objectContaining, resetCalls, verify, when } from 'ts-mockito';
+import {
+  anyString,
+  anything,
+  deepEqual,
+  instance,
+  mock,
+  objectContaining,
+  reset,
+  resetCalls,
+  verify,
+  when
+} from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -357,12 +369,81 @@ describe('TranslateMetricsSession', () => {
     expect(() => env.sessionDispose()).not.toThrow();
   }));
 
-  it('should throw on other errors', fakeAsync(() => {
+  it('handles error in sendMetrics', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(new Error('Other'));
 
+    // No error, no throw.
+    when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
+    env.keyPress('ArrowRight');
     env.keyPress('a');
-    expect(() => env.sessionDispose()).toThrow();
+    tick(SEND_METRICS_INTERVAL);
+    verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).called();
+
+    //  CommandError is re-thrown when online
+    resetCalls(mockedSFProjectService);
+    const commandError: CommandError = new CommandError(CommandErrorCode.InternalError, 'error');
+    when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(commandError);
+    expect(() => {
+      env.keyPress('a');
+      tick(SEND_METRICS_INTERVAL);
+    }).toThrow();
+    verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).once();
+
+    // Non-CommandError error is re-thrown when online
+    resetCalls(mockedSFProjectService);
+    const otherError: Error = new Error('problem');
+    when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(otherError);
+    expect(() => {
+      env.keyPress('a');
+      tick(SEND_METRICS_INTERVAL);
+    }).toThrow();
+    verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).once();
+
+    // CommandError NotFound is swallowed
+    resetCalls(mockedSFProjectService);
+    const notFoundError: CommandError = new CommandError(CommandErrorCode.NotFound, 'error');
+    when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(notFoundError);
+    expect(() => {
+      env.keyPress('a');
+      tick(SEND_METRICS_INTERVAL);
+    }).not.toThrow();
+    verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).once();
+
+    // CommandError Forbidden is swallowed
+    resetCalls(mockedSFProjectService);
+    const forbiddenError: CommandError = new CommandError(CommandErrorCode.Forbidden, 'error');
+    when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(forbiddenError);
+    expect(() => {
+      env.keyPress('a');
+      tick(SEND_METRICS_INTERVAL);
+    }).not.toThrow();
+    verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).once();
+
+    //  CommandError is swallowed when offline
+    resetCalls(mockedSFProjectService);
+    when(mockedPwaService.isOnline).thenReturn(false);
+    when(mockedPwaService.onlineStatus).thenReturn(of(false));
+    when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(commandError);
+    expect(() => {
+      env.keyPress('a');
+      tick(SEND_METRICS_INTERVAL);
+    }).not.toThrow();
+    // Not calling since offline
+    verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
+
+    // Non-CommandError error is swallowed when offline
+    resetCalls(mockedSFProjectService);
+    expect(() => {
+      env.keyPress('a');
+      tick(SEND_METRICS_INTERVAL);
+    }).not.toThrow();
+    // Not calling since offline
+    verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
+
+    when(mockedPwaService.isOnline).thenReturn(true);
+    when(mockedPwaService.onlineStatus).thenReturn(of(true));
+    when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
+    env.sessionDispose();
   }));
 });
 
