@@ -111,8 +111,7 @@
     "reference_to": "-ya İstinaddır",
     "select_all": "Hamısını seç",
     "show_all": "Hamısını göstər",
-    "update_transcelerator": "Bu layihədə istifadə olunan Transcelerator versiyası dəstəklənmir. Xahiş edirəm ən azı Transcelerator 1.5.3 versiyasına yeniləyin.",
-    "select_questions": "Select questions to import."
+    "update_transcelerator": "Bu layihədə istifadə olunan Transcelerator versiyası dəstəklənmir. Xahiş edirəm ən azı Transcelerator 1.5.3 versiyasına yeniləyin."
   },
   "paginator": {
     "items_per_page": "Hər səhifə üçün bəndlər",

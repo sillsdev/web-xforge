@@ -111,8 +111,7 @@
     "reference_to": "Fin de référence",
     "select_all": "Tout sélectionner",
     "show_all": "Tout afficher",
-    "update_transcelerator": "La version de Transcelerator utilisée dans ce projet n'est pas prise en charge. Veuillez mettre à jour Transcelerator, vers au moins la version 1.5.3.",
-    "select_questions": "Select questions to import."
+    "update_transcelerator": "La version de Transcelerator utilisée dans ce projet n'est pas prise en charge. Veuillez mettre à jour Transcelerator, vers au moins la version 1.5.3."
   },
   "paginator": {
     "items_per_page": "Éléments par page",
