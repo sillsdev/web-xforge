@@ -47,13 +47,15 @@ describe('NoteDialogComponent', () => {
   let env: TestEnvironment;
   afterEach(() => env.dialogRef.close());
 
-  it('can display related segment', fakeAsync(() => {
+  it('show selected text and toggle visibility of related segment', fakeAsync(() => {
     env = new TestEnvironment();
 
     expect(env.noteText.nativeElement.textContent).toEqual('before selection selected text after selection');
     expect(env.segmentText).toBeNull();
     env.toggleSegmentButton();
-    expect(env.segmentText.nativeElement.textContent).toEqual('target: chapter 1, verse 1.');
+    expect(env.segmentText.nativeElement.textContent).toEqual(
+      `target: chapter 1, verse 7.\ntarget: chapter 1, verse 7 - 2nd paragraph.`
+    );
   }));
 
   it('should not show deleted notes', fakeAsync(() => {
@@ -159,7 +161,7 @@ class TestEnvironment {
     position: { start: 1, length: 1 },
     projectRef: TestEnvironment.PROJECT01,
     tagIcon: 'flag02',
-    verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 },
+    verseRef: { bookNum: 40, chapterNum: 1, verseNum: 7 },
     notes: [
       {
         dataId: 'note01',
@@ -259,13 +261,13 @@ class TestEnvironment {
     return this.overlayContainerElement.query(By.css('.segment-text'));
   }
 
+  private get overlayContainerElement(): DebugElement {
+    return this.fixture.debugElement.parent!.query(By.css('.cdk-overlay-container'));
+  }
+
   toggleSegmentButton(): void {
     this.component.toggleSegmentText();
     tick();
     this.fixture.detectChanges();
-  }
-
-  private get overlayContainerElement(): DebugElement {
-    return this.fixture.debugElement.parent!.query(By.css('.cdk-overlay-container'));
   }
 }
