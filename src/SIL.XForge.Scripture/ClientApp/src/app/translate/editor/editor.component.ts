@@ -489,7 +489,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         }
         if (segment != null && oldVerseEmbeds != null && this.noteThreadAnchorsNeedUpdate) {
           await this.updateVerseNoteThreadAnchors(oldVerseEmbeds, delta);
-          if (oldVerseEmbeds.size > segment.embeddedElements.size) {
+          if (oldVerseEmbeds.size !== segment.embeddedElements.size) {
             this.recreateDeletedNoteThreadEmbeds(Array.from(oldVerseEmbeds.keys()));
           }
         }
@@ -997,7 +997,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   /** Update the text anchors for the note threads in the current segment. */
   private async updateVerseNoteThreadAnchors(oldVerseEmbeds: Map<string, number>, delta: DeltaStatic): Promise<void> {
-    if (this.noteThreadQuery == null || this.noteThreadQuery.docs.length < 1) {
+    if (this.target == null || this.noteThreadQuery == null || this.noteThreadQuery.docs.length < 1) {
       return;
     }
     if (delta.ops == null || delta.ops.length < 2) {
@@ -1016,8 +1016,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         deleteLength = delta.ops[2].delete;
       }
     } else if (delta.ops[1].delete != null) {
-      const selection = this.target?.editor?.getSelection();
-      const isBlank: boolean = this.target?.segment?.text === '';
+      const selection = this.target.editor?.getSelection();
+      const isBlank: boolean =
+        this.target.segment == null ? false : this.target.isSegmentBlank(this.target.segment.ref);
       if ((editOpIndex != null && selection?.index === editOpIndex) || isBlank) {
         // the user triggered the deletion, not editor logic i.e. blank deleted after user inserts text
         // if the segment is blank, assume that the user triggered the deletion

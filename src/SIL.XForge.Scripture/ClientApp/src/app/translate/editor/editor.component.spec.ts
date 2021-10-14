@@ -1257,11 +1257,12 @@ describe('EditorComponent', () => {
       const textDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
       expect(textDoc.data!.ops![3].insert).toBe('target: chapter 1, verse 1.');
 
-      // delete the icon with other characters
+      // replace icon and characters with new text
       env.targetEditor.setSelection(9, 5, 'user');
       const noteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
       expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
       env.typeCharacters('t');
+      // 4 characters deleted and 1 character inserted
       expect(Array.from(env.component.target!.embeddedElements.values())).toEqual([10, 31, 51, 52, 90]);
       expect(noteThreadDoc.data!.position).toEqual({ start: 7, length: 7 });
       expect(textDoc.data!.ops![3].insert).toBe('targettapter 1, verse 1.');
@@ -1477,6 +1478,15 @@ describe('EditorComponent', () => {
       env.targetEditor.setSelection(range.index, range.length, 'user');
       env.deleteCharacters();
       expect(noteThreadDoc.data!.position).toEqual({ start: 0, length: 9 });
+
+      // switch to a new book and back
+      env.updateParams({ projectId: 'project01', bookId: 'MRK' });
+      env.wait();
+      env.updateParams({ projectId: 'project01', bookId: 'MAT' });
+      env.wait();
+      const note5Index: number = env.getNoteThreadEditorPosition('thread05');
+      verse4p1Index = env.component.target!.getSegmentRange('verse_1_4/p_1')!.index;
+      expect(note5Index).toEqual(verse4p1Index);
 
       // user inserts text in blank segment
       const index = env.component.target!.getSegmentRange('verse_1_4')!.index;
