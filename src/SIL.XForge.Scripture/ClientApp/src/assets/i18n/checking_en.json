@@ -278,11 +278,6 @@
   "message_dialog": {
     "dismiss": "Dismiss"
   },
-  "note_dialog": {
-    "close": "Close",
-    "hide_changes": "Hide changes",
-    "show_changes": "Show changes"
-  },
   "project": {
     "please_connect_to_use_link": "Please connect to the internet to join a project using a link.",
     "project_link_is_invalid": "The project link is invalid.",

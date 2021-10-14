@@ -71,7 +71,7 @@ export class NoteDialogComponent implements OnInit {
     return this.i18n.localizeReference(verseRef);
   }
 
-  get noteText(): string {
+  get noteContextText(): string {
     if (this.threadDoc?.data == null) {
       return '';
     }
