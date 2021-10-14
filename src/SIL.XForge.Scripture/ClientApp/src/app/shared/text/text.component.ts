@@ -10,6 +10,7 @@ import {
   ViewChild
 } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
+import { clone } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import merge from 'lodash-es/merge';
 import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
@@ -47,6 +48,7 @@ function onNativeSelectionChanged(): void {
   }
 }
 
+// Regular expression for the verse segment ref of scripture content
 const VERSE_REGEX = /verse_[0-9]+_[0-9]+/;
 
 const USX_FORMATS = registerScripture();
@@ -414,6 +416,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return this.viewModel.getSegmentText(ref);
   }
 
+  getSegmentContents(ref: string): DeltaStatic | undefined {
+    return this.viewModel.getSegmentContents(ref);
+  }
+
   hasSegmentRange(ref: string): boolean {
     return this.viewModel.hasSegmentRange(ref);
   }
@@ -514,9 +520,9 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       if (range == null) {
         break;
       }
-      const text: string = this.getSegmentText(vs);
-      const isBlankSegment = text === '' && textAnchor.length > 0;
-      if (isBlankSegment) {
+
+      const skipBlankSegment: boolean = this.isSegmentBlank(vs) && textAnchor.length > 0;
+      if (skipBlankSegment) {
         continue;
       }
       const segmentTextLength: number = range.length - this.getEmbedCountInSegmentBefore(range.length, range.index);
@@ -603,6 +609,19 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (deleteDelta.ops != null && deleteDelta.ops.length > 0) {
       this.editor.updateContents(deleteDelta, 'api');
     }
+  }
+
+  isSegmentBlank(ref: string): boolean {
+    const segmentDelta: DeltaStatic | undefined = this.getSegmentContents(ref);
+    if (segmentDelta?.ops == null) {
+      return false;
+    }
+    for (const op of segmentDelta.ops) {
+      if (op.insert != null && op.insert.blank != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private applyEditorStyles() {
@@ -747,7 +766,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       // update/switch current segment
       if (!this.tryChangeSegment(segmentRef, checksum, focus) && this._segment != null) {
         // the selection has not changed to a different segment, so update existing segment
-        const oldVerseEmbeds: Map<string, number> = this._segment.embeddedElements;
+        const oldVerseEmbeds: Map<string, number> = clone(this._segment.embeddedElements);
         this.updateSegment();
         oldVerseEmbedsToUpdate = oldVerseEmbeds;
         if (this._highlightSegment) {

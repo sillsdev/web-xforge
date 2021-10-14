@@ -292,6 +292,12 @@ export class TextViewModel {
     return range == null ? '' : editor.getText(range.index, range.length);
   }
 
+  getSegmentContents(ref: string): DeltaStatic | undefined {
+    const editor: Quill = this.checkEditor();
+    const range: RangeStatic | undefined = this.getSegmentRange(ref);
+    return range == null ? undefined : editor.getContents(range.index, range.length);
+  }
+
   getSegmentRef(range: RangeStatic): string | undefined {
     let segmentRef: string | undefined;
     let maxOverlap = -1;
@@ -581,7 +587,7 @@ export class TextViewModel {
 
   private getEmbeddedElementsWithin(startIndex: number, endIndex: number): number {
     let embeddedElementsCount = 0;
-    for (const embedIndex of this._embeddedElements.values()) {
+    for (const embedIndex of this.embeddedElements.values()) {
       if (embedIndex < startIndex) {
         continue;
       } else if (embedIndex >= startIndex && embedIndex < endIndex) {
