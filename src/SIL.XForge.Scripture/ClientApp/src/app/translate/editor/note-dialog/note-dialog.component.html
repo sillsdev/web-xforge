@@ -13,7 +13,7 @@
       >
       <mdc-dialog-content class="content-padding" [ngClass]="{ rtl: isRtl, ltr: !isRtl }">
         <div class="text">
-          <div class="note-text" [innerHTML]="noteText"></div>
+          <div class="note-text" [innerHTML]="noteContextText"></div>
           <div *ngIf="showSegmentText" class="segment-text" [innerHTML]="segmentText"></div>
         </div>
         <div class="notes">

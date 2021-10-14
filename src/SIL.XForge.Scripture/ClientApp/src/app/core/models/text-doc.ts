@@ -110,7 +110,7 @@ export class TextDoc extends RealtimeDoc<TextData, TextData> {
         textBetweenRelatedSegments = '';
       } else {
         // Only track text once an initial segment has been found
-        if (text != '') {
+        if (text !== '') {
           textBetweenRelatedSegments += op.insert;
         }
       }
