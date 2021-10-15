@@ -5,7 +5,9 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { TranslocoService } from '@ngneat/transloco';
 import Quill, { RangeStatic } from 'quill';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { BehaviorSubject } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
@@ -163,7 +165,9 @@ describe('TextComponent', () => {
       const desiredIndexInSegment = 'target: chapter'.length;
       // Override the Chromium point-to-index method behaviour, since the unit test isn't really dragging the mouse
       // to an element.
-      document.caretRangeFromPoint = (_x: number, _y: number) => ({ startOffset: desiredIndexInSegment } as Range);
+      const startContainer: Node = targetElement!.childNodes[0] as Node;
+      document.caretRangeFromPoint = (_x: number, _y: number) =>
+        ({ startOffset: desiredIndexInSegment, startContainer } as Range);
 
       // SUT
       const cancelled = !env.component.editor?.container.dispatchEvent(dragEvent);
@@ -181,6 +185,61 @@ describe('TextComponent', () => {
       }
       const desiredSelectionStart = sourceSegmentRange.index + 'target: chapter'.length;
       const desiredSelectionLength = 'Hello Hello Hello'.length;
+      const resultingSelection: RangeStatic | null = env.component.editor!.getSelection();
+      if (resultingSelection == null) {
+        throw Error();
+      }
+      // After text is dragged into the document, set the selection to the inserted text.
+      expect(resultingSelection.index).toEqual(desiredSelectionStart);
+      expect(resultingSelection.length).toEqual(desiredSelectionLength);
+    }));
+
+    it('inserts externally introduced data in the right place with embeds minus formatting', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+      env.embeddedElement(4);
+      tick();
+      const initialTextInDoc = 'target: chapter 1, verse 4.';
+      //                                           ^ insert here
+      const textToDropIn = 'Hello';
+      const expectedFinalText = 'target: chapter 1, Helloverse 4.';
+      const targetSegmentRef: string = 'verse_1_4';
+      expect(env.component.getSegmentText(targetSegmentRef)).toEqual(initialTextInDoc, 'setup');
+      expect(env.component.editor!.getText()).toContain(initialTextInDoc, 'setup');
+
+      const dataTransfer = new DataTransfer();
+      dataTransfer.setData('text/plain', textToDropIn);
+      dataTransfer.setData('text/html', `<span background="white">${textToDropIn}</span>`);
+      const targetElement: Element | null = env.component.editor!.container.querySelector(
+        `usx-segment[data-segment="${targetSegmentRef}"]`
+      );
+      const dragEvent: MockDragEvent = new MockDragEvent('drop', {
+        dataTransfer,
+        cancelable: true
+      });
+      dragEvent.setTarget(targetElement);
+
+      const startContainer: Node = targetElement!.childNodes[2] as Node;
+      // The length into this text node that will be returned by caretRangeFromPoint
+      const textNodeIndex: number = 'chapter 1, '.length;
+      document.caretRangeFromPoint = (_x: number, _y: number) =>
+        ({ startOffset: textNodeIndex, startContainer } as Range);
+
+      // SUT
+      env.component.editor?.container.dispatchEvent(dragEvent);
+      tick();
+
+      expect(env.component.getSegmentText(targetSegmentRef)).toEqual(expectedFinalText);
+      expect(env.component.editor?.getText()).toContain(expectedFinalText);
+
+      const sourceSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(targetSegmentRef);
+      if (sourceSegmentRange == null) {
+        throw Error();
+      }
+      const desiredSelectionStart = sourceSegmentRange.index + 'target: $chapter 1, '.length;
+      const desiredSelectionLength = 'Hello'.length;
       const resultingSelection: RangeStatic | null = env.component.editor!.getSelection();
       if (resultingSelection == null) {
         throw Error();
@@ -217,8 +276,9 @@ describe('TextComponent', () => {
       const desiredIndexInSegment = 'target: chapter'.length;
       // Override the Firefox point-to-index method behaviour to simulate actually pointing to a location
       // when dropping.
+      const offsetNode: Node = targetElement!.childNodes[0] as Node;
       document.caretPositionFromPoint = (_x: number, _y: number) =>
-        ({ offset: desiredIndexInSegment } as CaretPosition);
+        ({ offset: desiredIndexInSegment, offsetNode } as CaretPosition);
       // Remove the Chromium point-to-index method so the Firefox one will be used (in our Chromium test runner).
       (document as any).caretRangeFromPoint = undefined;
 
@@ -236,6 +296,63 @@ describe('TextComponent', () => {
       }
       const desiredSelectionStart = sourceSegmentRange.index + 'target: chapter'.length;
       const desiredSelectionLength = 'Hello Hello Hello'.length;
+      const resultingSelection: RangeStatic | null = env.component.editor!.getSelection();
+      if (resultingSelection == null) {
+        throw Error();
+      }
+      expect(resultingSelection.index).toEqual(desiredSelectionStart);
+      expect(resultingSelection.length).toEqual(desiredSelectionLength);
+    }));
+
+    it('also works for segment embeds in Firefox', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+      env.embeddedElement(4);
+      tick();
+      const initialTextInDoc = 'target: chapter 1, verse 4.';
+      const textToDropIn = 'Hello';
+      const expectedFinalText = 'target: chapter 1, Helloverse 4.';
+      const targetSegmentRef: string = 'verse_1_4';
+      expect(env.component.getSegmentText(targetSegmentRef)).toEqual(initialTextInDoc, 'setup');
+      expect(env.component.editor!.getText()).toContain(initialTextInDoc, 'setup');
+
+      const dataTransfer = new DataTransfer();
+      dataTransfer.setData('text/plain', textToDropIn);
+      dataTransfer.setData('text/html', `<span background="white">${textToDropIn}</span>`);
+      const targetElement: Element | null = env.component.editor!.container.querySelector(
+        `usx-segment[data-segment="${targetSegmentRef}"]`
+      );
+      const dragEvent: MockDragEvent = new MockDragEvent('drop', {
+        dataTransfer,
+        cancelable: true
+      });
+      dragEvent.setTarget(targetElement);
+
+      const textNodeIndex = 'chapter 1, '.length;
+      // Override the Firefox point-to-index method behaviour to simulate actually pointing to a location
+      // when dropping.
+      const offsetNode: Node = targetElement!.childNodes[2] as Node;
+      document.caretPositionFromPoint = (_x: number, _y: number) =>
+        ({ offset: textNodeIndex, offsetNode } as CaretPosition);
+      // Remove the Chromium point-to-index method so the Firefox one will be used (in our Chromium test runner).
+      (document as any).caretRangeFromPoint = undefined;
+
+      // SUT
+      const cancelled = !env.component.editor?.container.dispatchEvent(dragEvent);
+      tick();
+
+      expect(env.component.getSegmentText(targetSegmentRef)).toEqual(expectedFinalText);
+      expect(env.component.editor?.getText()).toContain(expectedFinalText);
+      expect(cancelled).toBeTrue();
+
+      const sourceSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(targetSegmentRef);
+      if (sourceSegmentRange == null) {
+        throw Error();
+      }
+      const desiredSelectionStart = sourceSegmentRange.index + 'target: $chapter 1, '.length;
+      const desiredSelectionLength = 'Hello'.length;
       const resultingSelection: RangeStatic | null = env.component.editor!.getSelection();
       if (resultingSelection == null) {
         throw Error();
@@ -285,7 +402,9 @@ describe('TextComponent', () => {
       const desiredIndexInSegment = 'target: chapter 1, ver'.length;
       // Override the point-to-index method behaviour, since the unit test isn't really dragging the mouse to an
       // element.
-      document.caretRangeFromPoint = (_x: number, _y: number) => ({ startOffset: desiredIndexInSegment } as Range);
+      const startContainer: Node = targetElement!.childNodes[0] as Node;
+      document.caretRangeFromPoint = (_x: number, _y: number) =>
+        ({ startOffset: desiredIndexInSegment, startContainer } as Range);
 
       const dragstartEvent: MockDragEvent = new MockDragEvent('dragstart', {
         dataTransfer,
@@ -369,7 +488,9 @@ describe('TextComponent', () => {
       const desiredIndexInSegment = 'target: chapter 1, ver'.length;
       // Override the point-to-index method behaviour, since the unit test isn't really dragging the mouse to an
       // element.
-      document.caretRangeFromPoint = (_x: number, _y: number) => ({ startOffset: desiredIndexInSegment } as Range);
+      const startContainer: Node = targetElement!.childNodes[0] as Node;
+      document.caretRangeFromPoint = (_x: number, _y: number) =>
+        ({ startOffset: desiredIndexInSegment, startContainer } as Range);
 
       const dragstartEvent: MockDragEvent = new MockDragEvent('dragstart', {
         dataTransfer,
@@ -456,7 +577,9 @@ describe('TextComponent', () => {
       const desiredIndexInSegment = 'target: chapter 1, ver'.length;
       // Override the point-to-index method behaviour, since the unit test isn't really dragging the mouse to an
       // element.
-      document.caretRangeFromPoint = (_x: number, _y: number) => ({ startOffset: desiredIndexInSegment } as Range);
+      const startContainer: Node = targetElement!.childNodes[0] as Node;
+      document.caretRangeFromPoint = (_x: number, _y: number) =>
+        ({ startOffset: desiredIndexInSegment, startContainer } as Range);
 
       // SUT
       env.component.editor?.container.dispatchEvent(dragEvent);
@@ -534,7 +657,9 @@ describe('TextComponent', () => {
       const desiredIndexInSegment = 'target: chapter 1, ver'.length;
       // Override the point-to-index method behaviour, since the unit test isn't really dragging the mouse to an
       // element.
-      document.caretRangeFromPoint = (_x: number, _y: number) => ({ startOffset: desiredIndexInSegment } as Range);
+      const startContainer: Node = targetElement!.childNodes[0] as Node;
+      document.caretRangeFromPoint = (_x: number, _y: number) =>
+        ({ startOffset: desiredIndexInSegment, startContainer } as Range);
 
       // SUT
       const cancelled: boolean = !env.component.editor?.container.dispatchEvent(dragEvent);
@@ -609,7 +734,8 @@ describe('TextComponent', () => {
       const valueThatShouldBeIgnored: number = 9876;
       // Override the point-to-index method behaviour, since the unit test isn't really dragging the mouse to an
       // element.
-      document.caretRangeFromPoint = (_x: number, _y: number) => ({ startOffset: valueThatShouldBeIgnored } as Range);
+      document.caretRangeFromPoint = (_x: number, _y: number) =>
+        ({ startOffset: valueThatShouldBeIgnored, startContainer: blankElementTarget as Node } as Range);
 
       // Write custom note on event information that quill is the source of the drag.
       const dragstartEvent: MockDragEvent = new MockDragEvent('dragstart', {
@@ -896,5 +1022,16 @@ class TestEnvironment {
     this._onlineStatus.next(value);
     tick();
     this.fixture.detectChanges();
+  }
+
+  embeddedElement(verse: number): void {
+    const verseRef: VerseRef = VerseRef.parse(`MAT 1:${verse}`);
+    const id: string = `embedid${verse}`;
+    const textAnchor: TextAnchor = { start: 8, length: 9 };
+    const iconSource: string = '--icon-file: url(/assets/icons/TagIcons/01flag1.png)';
+    const text: string = `text message on ${id}`;
+    const format = { iconsrc: iconSource, preview: text, threadid: id };
+    this.component.toggleFeaturedVerseRefs(true, [verseRef], 'note-thread');
+    this.component.embedElementInline(verseRef, id, textAnchor, 'note-thread-embed', format);
   }
 }
