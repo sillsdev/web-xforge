@@ -76,6 +76,8 @@ export class DragAndDrop {
 
       // Determine character index of drop location in destination segment, using a browser-specific method.
       let startPositionInSegment: number = 0;
+      let startPositionInTextNode: number = 0;
+      let droppedIntoNode: Node | undefined;
       if (droppingInBlankSegment) {
         // If we are dropping into an empty segment, use the position at the end of the segment rather than using a
         // browser-determined index into the segment.
@@ -85,7 +87,8 @@ export class DragAndDrop {
       } else if (document.caretRangeFromPoint !== undefined) {
         // Chromium/Chrome, Edge, and Safari browsers
         const range: Range = document.caretRangeFromPoint(dragEvent.clientX, dragEvent.clientY);
-        startPositionInSegment = range.startOffset;
+        startPositionInTextNode = range.startOffset;
+        droppedIntoNode = range.startContainer;
       } else if (document.caretPositionFromPoint !== undefined) {
         // Firefox browser
         const range: CaretPosition | null = document.caretPositionFromPoint(dragEvent.clientX, dragEvent.clientY);
@@ -93,10 +96,31 @@ export class DragAndDrop {
           console.warn('Warning: drag-and-drop inferred a null caret position for insertion. Target:', targetElement);
           return;
         }
-        startPositionInSegment = range.offset;
+        startPositionInTextNode = range.offset;
+        droppedIntoNode = range.offsetNode;
       } else {
         console.warn(`Warning: Could not determine insertion position for drag-and-drop. Target:`, targetElement);
         return;
+      }
+
+      if (!droppingInBlankSegment) {
+        if (droppedIntoNode == null) {
+          console.warn('Warning: Could not get the node that the text was dropped into.');
+          return;
+        }
+
+        let node: Node = droppedIntoNode;
+        const textNodeType = 3;
+        // Add up the length of text and embeds that are previous nodes in the usx-segment
+        while (node.previousSibling != null) {
+          node = node.previousSibling;
+          if (node.nodeType === textNodeType && node.nodeValue != null) {
+            startPositionInSegment += node.nodeValue.length;
+          } else if (node.nodeType !== textNodeType) {
+            startPositionInSegment++;
+          }
+        }
+        startPositionInSegment += startPositionInTextNode;
       }
 
       const insertionPositionInDocument: number = destinationSegmentRange.index + startPositionInSegment;
