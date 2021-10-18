@@ -30,7 +30,7 @@ const ACCESS_TOKEN_SETTING = 'access_token';
 const ID_TOKEN_SETTING = 'id_token';
 const USER_ID_SETTING = 'user_id';
 const ROLE_SETTING = 'role';
-const EXPIRES_AT_SETTING = 'expires_at';
+export const EXPIRES_AT_SETTING = 'expires_at';
 
 interface AuthState {
   returnUrl?: string;
@@ -212,10 +212,7 @@ export class AuthService {
       if (this.accessToken == null || this.idToken == null || this.expiresAt == null) {
         return await this.tryOnlineLogIn();
       }
-      // In offline mode check against the last known access
-      if (!(await this.handleOfflineAuth())) {
-        return { loggedIn: false, newlyLoggedIn: false };
-      }
+      await this.handleOfflineAuth();
       return { loggedIn: true, newlyLoggedIn: false };
     } catch (error) {
       await this.handleLoginError('tryLogIn', error);

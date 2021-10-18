@@ -5,23 +5,23 @@ import { WebAuth } from 'auth0-js';
 import { CookieService } from 'ngx-cookie-service';
 import { of } from 'rxjs';
 import { anyString, anything, capture, instance, mock, resetCalls, verify, when } from 'ts-mockito';
-import { SF_TYPE_REGISTRY } from '../app/core/models/sf-type-registry';
-import { AuthService } from './auth.service';
+import { AuthService, EXPIRES_AT_SETTING } from './auth.service';
 import { Auth0Service } from './auth0.service';
 import { BugsnagService } from './bugsnag.service';
 import { CommandService } from './command.service';
 import { ErrorReportingService } from './error-reporting.service';
 import { LocalSettingsService } from './local-settings.service';
 import { LocationService } from './location.service';
+import { MemoryOfflineStore } from './memory-offline-store';
+import { MemoryRealtimeRemoteStore } from './memory-realtime-remote-store';
 import { NoticeService } from './notice.service';
+import { OfflineStore } from './offline-store';
 import { PwaService } from './pwa.service';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
-import { TestRealtimeModule } from './test-realtime.module';
 import { configureTestingModule } from './test-utils';
 import { aspCultureCookieValue } from './utils';
 
 const mockedAuth0Service = mock(Auth0Service);
-const mockedSharedbRealtimeRemoteStore = mock(SharedbRealtimeRemoteStore);
 const mockedLocationService = mock(LocationService);
 const mockedCommandService = mock(CommandService);
 const mockedBugsnagService = mock(BugsnagService);
@@ -35,11 +35,12 @@ const mockedWebAuth = mock(WebAuth);
 
 describe('AuthService', () => {
   configureTestingModule(() => ({
-    imports: [RouterTestingModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [RouterTestingModule],
     providers: [
       AuthService,
       { provide: Auth0Service, useMock: mockedAuth0Service },
-      { provide: SharedbRealtimeRemoteStore, useMock: mockedSharedbRealtimeRemoteStore },
+      { provide: SharedbRealtimeRemoteStore, useClass: MemoryRealtimeRemoteStore },
+      { provide: OfflineStore, useClass: MemoryOfflineStore },
       { provide: LocationService, useMock: mockedLocationService },
       { provide: CommandService, useMock: mockedCommandService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
@@ -50,6 +51,81 @@ describe('AuthService', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService }
     ]
+  }));
+
+  it('should change password', () => {
+    const env = new TestEnvironment();
+    const email = 'test@example.com';
+
+    env.service.changePassword(email);
+
+    verify(mockedWebAuth.changePassword(anything(), anything())).once();
+    const [changePasswordOptions] = capture(mockedWebAuth.changePassword).last();
+    expect(changePasswordOptions).toBeDefined();
+    if (changePasswordOptions != null) {
+      expect(changePasswordOptions.connection).not.toBeNull();
+      expect(changePasswordOptions.email).toEqual(email);
+    }
+  });
+
+  it('should not check online authentication if not logged in', fakeAsync(() => {
+    const env = new TestEnvironment({ isOnline: true });
+    let isLoggedIn: boolean = true;
+    env.service.isLoggedIn.then(result => (isLoggedIn = result));
+    tick();
+    expect(isLoggedIn).toBe(false, 'setup');
+    resetCalls(mockedPwaService);
+
+    env.service.checkOnlineAuth();
+
+    tick();
+    verify(mockedPwaService.checkOnline()).never();
+  }));
+
+  it('should check online authentication if logged in', fakeAsync(() => {
+    const env = new TestEnvironment();
+    let isLoggedIn: boolean = false;
+    env.service.isLoggedIn.then(result => (isLoggedIn = result));
+    tick();
+    expect(isLoggedIn).toBe(true, 'setup');
+    resetCalls(mockedPwaService);
+
+    env.service.checkOnlineAuth();
+
+    tick();
+    verify(mockedPwaService.checkOnline()).once();
+    verify(mockedWebAuth.authorize(anything())).never();
+  }));
+
+  it('should expire token', fakeAsync(() => {
+    const env = new TestEnvironment();
+
+    env.service.expireToken();
+
+    verify(mockedLocalSettingsService.set(EXPIRES_AT_SETTING, anything())).once();
+    expect().nothing();
+  }));
+
+  it('should authenticate if expired', fakeAsync(() => {
+    const env = new TestEnvironment();
+    let isAuthenticated: boolean = false;
+
+    env.service.isAuthenticated().then((result: boolean) => (isAuthenticated = result));
+
+    tick();
+    expect(isAuthenticated).toBe(true);
+    verify(mockedWebAuth.checkSession(anything(), anything())).once();
+  }));
+
+  it('should authenticate if not expired', fakeAsync(() => {
+    const env = new TestEnvironment({ expiresIn: 10 });
+    let isAuthenticated: boolean = false;
+
+    env.service.isAuthenticated().then((result: boolean) => (isAuthenticated = result));
+
+    tick();
+    expect(isAuthenticated).toBe(true);
+    verify(mockedWebAuth.checkSession(anything(), anything())).never();
   }));
 
   it('should login', () => {
@@ -155,17 +231,71 @@ describe('AuthService', () => {
       expect(logoutOptions.returnTo).toBeDefined();
     }
   }));
+
+  it('should update interface language only if logged in', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const interfaceLanguage = 'es';
+    expect(interfaceLanguage).not.toEqual(env.language, 'setup');
+    let isLoggedIn: boolean = false;
+    env.service.isLoggedIn.then(result => (isLoggedIn = result));
+    tick();
+    expect(isLoggedIn).toBe(true, 'setup');
+
+    env.service.updateInterfaceLanguage(interfaceLanguage);
+
+    tick();
+    verify(mockedCommandService.onlineInvoke(anyString(), anyString(), anything())).once();
+  }));
+
+  it('should not update interface language if logged out', fakeAsync(() => {
+    const env = new TestEnvironment({ isOnline: true });
+    const interfaceLanguage = 'es';
+    expect(interfaceLanguage).not.toEqual(env.language, 'setup');
+    let isLoggedIn: boolean = true;
+    env.service.isLoggedIn.then(result => (isLoggedIn = result));
+    tick();
+    expect(env.service.accessToken).toBeNull();
+    expect(env.service.idToken).toBeNull();
+    expect(env.service.expiresAt).toBeNull();
+    expect(isLoggedIn).toBe(false, 'setup');
+
+    env.service.updateInterfaceLanguage(interfaceLanguage);
+
+    tick();
+    verify(mockedCommandService.onlineInvoke(anything(), anything(), anything())).never();
+  }));
 });
+
+interface TestEnvironmentConstructorArgs {
+  isOnline?: boolean;
+  expiresIn?: number;
+}
 
 class TestEnvironment {
   readonly service: AuthService;
   readonly language = 'fr';
 
-  constructor() {
+  constructor({ isOnline = false, expiresIn }: TestEnvironmentConstructorArgs = {}) {
     resetCalls(mockedWebAuth);
-    when(mockedAuth0Service.init(anything())).thenReturn(instance(mockedWebAuth));
-    when(mockedLocalSettingsService.remoteChanges$).thenReturn(of());
+    this.setOnline(isOnline);
+    when(mockedWebAuth.checkSession(anything(), anything())).thenCall((_options, callback) => callback(undefined, {}));
     when(mockedCookieService.get(anyString())).thenReturn(aspCultureCookieValue(this.language));
+    when(mockedLocalSettingsService.remoteChanges$).thenReturn(of());
+    if (expiresIn) {
+      const expiresAt = expiresIn * 1000 + Date.now();
+      when(mockedLocalSettingsService.get<number>(EXPIRES_AT_SETTING)).thenReturn(expiresAt);
+    }
+
+    when(mockedAuth0Service.init(anything())).thenReturn(instance(mockedWebAuth));
     this.service = TestBed.inject(AuthService);
+  }
+
+  private setOnline(isOnline: boolean = true) {
+    when(mockedPwaService.checkOnline()).thenResolve(isOnline);
+    if (isOnline) {
+      when(mockedWebAuth.parseHash(anything())).thenCall(callback => callback({}));
+    } else {
+      when(mockedWebAuth.parseHash(anything())).thenResolve(); // results in "Error: Object{}"
+    }
   }
 }
