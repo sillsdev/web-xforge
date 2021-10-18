@@ -292,6 +292,12 @@ export class TextViewModel {
     return range == null ? '' : editor.getText(range.index, range.length);
   }
 
+  getSegmentContents(ref: string): DeltaStatic | undefined {
+    const editor: Quill = this.checkEditor();
+    const range: RangeStatic | undefined = this.getSegmentRange(ref);
+    return range == null ? undefined : editor.getContents(range.index, range.length);
+  }
+
   getSegmentRef(range: RangeStatic): string | undefined {
     let segmentRef: string | undefined;
     let maxOverlap = -1;
@@ -552,32 +558,44 @@ export class TextViewModel {
       return new Delta();
     }
     const adjustedDelta = new Delta();
-    const indices: number[] = Array.from(this._embeddedElements.values());
     let curIndex: number = 0;
     for (const op of modelDelta.ops) {
-      const cloneOp = cloneDeep(op);
+      let cloneOp: DeltaOperation | undefined = cloneDeep(op);
       if (cloneOp.retain != null) {
         // The range of content that this retain applies to
-        const opEndIndex: number = curIndex + cloneOp.retain - 1;
-        let embeddedElementsCount: number = 0;
-        for (const embedIndex of indices) {
-          if (embedIndex < curIndex) {
-            continue;
-          } else if (embedIndex >= curIndex && embedIndex <= opEndIndex) {
-            embeddedElementsCount++;
-          } else {
-            break;
-          }
-        }
+        const opEndIndex: number = curIndex + cloneOp.retain;
+        const embeddedElementsCount = this.getEmbeddedElementsWithin(curIndex, opEndIndex);
         curIndex += cloneOp.retain;
         // remove from the retain op the number of embedded elements contained in its content
         cloneOp.retain -= embeddedElementsCount;
       } else if (cloneOp.delete != null) {
-        // account for the length that the delete applies to
+        const opEndIndex: number = curIndex + cloneOp.delete;
+        const embeddedElementsCount = this.getEmbeddedElementsWithin(curIndex, opEndIndex);
         curIndex += cloneOp.delete;
+        // remove from the delete op the number of embedded elements contained in its content
+        cloneOp.delete -= embeddedElementsCount;
+        if (cloneOp.delete < 1) {
+          cloneOp = undefined;
+        }
       }
-      (adjustedDelta as any).push(cloneOp);
+      if (cloneOp != null) {
+        (adjustedDelta as any).push(cloneOp);
+      }
     }
     return adjustedDelta;
+  }
+
+  private getEmbeddedElementsWithin(startIndex: number, endIndex: number): number {
+    let embeddedElementsCount = 0;
+    for (const embedIndex of this.embeddedElements.values()) {
+      if (embedIndex < startIndex) {
+        continue;
+      } else if (embedIndex >= startIndex && embedIndex < endIndex) {
+        embeddedElementsCount++;
+      } else {
+        break;
+      }
+    }
+    return embeddedElementsCount;
   }
 }

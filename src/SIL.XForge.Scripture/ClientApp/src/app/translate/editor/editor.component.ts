@@ -112,6 +112,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private noteThreadQuery?: RealtimeQuery<NoteThreadDoc>;
   private toggleNoteThreadVerseRefs$: BehaviorSubject<void> = new BehaviorSubject<void>(undefined);
   private toggleNoteThreadSub?: Subscription;
+  private noteThreadAnchorsNeedUpdate: boolean = false;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -425,7 +426,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     segment?: Segment,
     delta?: DeltaStatic,
     prevSegment?: Segment,
-    oldSegmentEmbeds?: Map<string, number>
+    oldVerseEmbeds?: Map<string, number>
   ): Promise<void> {
     if (this.target == null || this.target.editor == null) {
       return;
@@ -486,8 +487,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.insertSuggestionEnd = -1;
           this.target.editor.setSelection(selectIndex, 0, 'user');
         }
-        if (segment != null && oldSegmentEmbeds != null) {
-          await this.updateSegmentNoteThreadAnchors(oldSegmentEmbeds, delta);
+        if (segment != null && oldVerseEmbeds != null && this.noteThreadAnchorsNeedUpdate) {
+          await this.updateVerseNoteThreadAnchors(oldVerseEmbeds, delta);
+          if (oldVerseEmbeds.size !== segment.embeddedElements.size) {
+            this.recreateDeletedNoteThreadEmbeds(Array.from(oldVerseEmbeds.keys()));
+          }
         }
       }
 
@@ -530,6 +534,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       case 'target':
         this.targetLoaded = true;
         this.toggleNoteThreadVerseRefs$.next();
+        this.noteThreadAnchorsNeedUpdate = true;
         break;
     }
     if ((!this.hasSource || this.sourceLoaded) && this.targetLoaded) {
@@ -627,18 +632,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         if (verseSegments.length === 0) {
           continue;
         }
-        const format = { iconsrc: featured.icon.var, preview: featured.preview, threadid: featured.id };
-        this.target.embedElementInline(
-          featured.verseRef,
-          featured.id,
-          featured.textAnchor ?? { start: 0, length: 0 },
-          'note-thread-embed',
-          format
-        );
+        this.embedNoteThread(featured);
       }
       const segments: string[] = this.target.toggleFeaturedVerseRefs(value, noteThreadVerseRefs, 'note-thread');
       this.subscribeClickEvents(segments);
     } else {
+      this.noteThreadAnchorsNeedUpdate = false;
       this.target.removeEmbeddedElements();
       // Un-subscribe from all segment click events as these all get setup again
       for (const event of this.clickSubs) {
@@ -997,46 +996,53 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   /** Update the text anchors for the note threads in the current segment. */
-  private async updateSegmentNoteThreadAnchors(
-    oldSegmentEmbeds: Map<string, number>,
-    editorUpdateDelta: DeltaStatic
-  ): Promise<void> {
-    if (this.noteThreadQuery == null || this.noteThreadQuery.docs.length < 1) {
+  private async updateVerseNoteThreadAnchors(oldVerseEmbeds: Map<string, number>, delta: DeltaStatic): Promise<void> {
+    if (this.target == null || this.noteThreadQuery == null || this.noteThreadQuery.docs.length < 1) {
       return;
     }
-    const updatePromises: Promise<boolean>[] = [];
-    if (editorUpdateDelta.ops == null || editorUpdateDelta.ops.length < 2) {
-      // All editor changes we want to process will begin with a retain, followed by at least another op.
-      return;
-    }
-    const editOpIndex: number | undefined = editorUpdateDelta.ops[0].retain;
-    let length = 0;
-    let operation: 'insert' | 'delete' = 'insert';
-    // get the length that was inserted or deleted to apply to the note text anchor
-    if (editorUpdateDelta.ops[1].insert != null && typeof editorUpdateDelta.ops[1].insert === 'string') {
-      length = editorUpdateDelta.ops[1].insert.length;
-    } else if (editorUpdateDelta.ops[1].delete != null) {
-      length = editorUpdateDelta.ops[1].delete;
-      operation = 'delete';
-    }
-    if (editOpIndex == null || length === 0) {
+    if (delta.ops == null || delta.ops.length < 2) {
+      // If the length is less than two, it can be skipped since productive ops have a minimum length of two
       return;
     }
 
-    for (const [threadId, embedIndex] of oldSegmentEmbeds.entries()) {
+    const updatePromises: Promise<boolean>[] = [];
+    const editOpIndex: number | undefined = delta.ops[0].retain;
+    let insertLength = 0;
+    let deleteLength = 0;
+    // get the length that was inserted or deleted to apply to the verse text anchors
+    if (delta.ops[1].insert != null && typeof delta.ops[1].insert === 'string') {
+      insertLength = delta.ops[1].insert.length;
+      if (delta.ops.length > 2 && delta.ops[2].delete != null) {
+        deleteLength = delta.ops[2].delete;
+      }
+    } else if (delta.ops[1].delete != null) {
+      const selection = this.target.editor?.getSelection();
+      const isBlank: boolean =
+        this.target.segment == null ? false : this.target.isSegmentBlank(this.target.segment.ref);
+      if ((editOpIndex != null && selection?.index === editOpIndex) || isBlank) {
+        // the user triggered the deletion, not editor logic i.e. blank deleted after user inserts text
+        // if the segment is blank, assume that the user triggered the deletion
+        deleteLength = delta.ops[1].delete;
+      }
+    }
+    if (editOpIndex == null || (insertLength === 0 && deleteLength === 0)) {
+      return;
+    }
+
+    for (const [threadId, embedIndex] of oldVerseEmbeds.entries()) {
       const noteThreadDoc: NoteThreadDoc | undefined = this.noteThreadQuery.docs.find(n => n.data?.dataId === threadId);
       if (noteThreadDoc?.data == null) {
         continue;
       }
 
-      const oldNotePosition: TextAnchor = noteThreadDoc.data.position ?? { start: 0, end: 0 };
-      const newSelection: TextAnchor = this.getUpdatedTextAnchor(
+      const oldNotePosition: TextAnchor = noteThreadDoc.data.position ?? { start: 0, length: 0 };
+      const newSelection: TextAnchor | undefined = this.getUpdatedTextAnchor(
         oldNotePosition,
-        oldSegmentEmbeds,
+        oldVerseEmbeds,
         embedIndex,
         editOpIndex,
-        length,
-        operation
+        insertLength,
+        deleteLength
       );
       updatePromises.push(noteThreadDoc.submitJson0Op(op => op.set(n => n.position, newSelection)));
     }
@@ -1073,42 +1079,32 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     oldVerseEmbedPositions: Map<string, number>,
     embedIndex: number,
     editIndex: number,
-    editLength: number,
-    operation: 'insert' | 'delete'
-  ): TextAnchor {
-    if (oldTextAnchor.length === 0) {
+    insertLength: number,
+    deleteLength: number
+  ): TextAnchor | undefined {
+    if (oldTextAnchor.start === 0 && oldTextAnchor.length === 0) {
       return oldTextAnchor;
     }
 
-    if (operation === 'insert') {
-      const embedCount: number = this.getEmbedCountInAnchorRange(
-        oldVerseEmbedPositions,
-        embedIndex,
-        oldTextAnchor.length
-      );
-      // Editor position just past the anchor span.
-      const afterAnchor: number = embedIndex + oldTextAnchor.length + embedCount;
+    let insertBeforeLength = 0;
+    let insertWithinLength = 0;
+    if (insertLength !== 0) {
+      const embedCount = this.getEmbedCountInAnchorRange(oldVerseEmbedPositions, embedIndex, oldTextAnchor.length);
+      const noteAnchorEndIndex = embedIndex + oldTextAnchor.length + embedCount;
       if (editIndex <= embedIndex) {
-        // The edit was before the embed.
-        return { start: oldTextAnchor.start + editLength, length: oldTextAnchor.length };
+        insertBeforeLength += insertLength;
+      } else if (editIndex > embedIndex && editIndex <= noteAnchorEndIndex) {
+        // Note that if the user inserted text at the end of this note anchor, we consider
+        // this inside the text anchor because the user could be expanding the last text anchor word.
+        insertWithinLength += insertLength;
       }
-      // Note that if the user inserted text at the end of this note anchor, we consider
-      // this inside the text anchor because the user could be expanding the last text anchor word.
-      if (editIndex > embedIndex && editIndex <= afterAnchor) {
-        // The edit was within, or immediately after, the note anchoring span. (Or just after the embed.)
-        return { start: oldTextAnchor.start, length: oldTextAnchor.length + editLength };
-      }
-      // The edit was further along than immediately following the anchor span. So there was at least one character
-      // after the anchor span and before the edit.
-      return oldTextAnchor;
     }
 
-    let lengthBefore = 0;
-    let lengthWithin = 0;
+    let deleteBeforeLength = 0;
+    let deleteWithinLength = 0;
     const embedPositions: Set<number> = new Set(oldVerseEmbedPositions.values());
 
-    // Count non-embeds that were deleted.
-    for (let charIndex = editIndex; charIndex < editIndex + editLength; charIndex++) {
+    for (let charIndex = editIndex; charIndex < editIndex + deleteLength; charIndex++) {
       if (embedPositions.has(charIndex)) {
         // The edit involves deleting an embed icon. It neither counts as length within nor before
         continue;
@@ -1120,22 +1116,61 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         );
       }
       if (charIndex < embedIndex) {
-        lengthBefore++;
+        deleteBeforeLength++;
       } else if (charIndex > embedIndex && charIndex <= embedIndex + oldTextAnchor.length) {
-        lengthWithin++;
+        deleteWithinLength++;
       } else {
         break;
       }
     }
 
-    if (lengthWithin >= oldTextAnchor.length) {
+    if (oldTextAnchor.length > 0 && deleteWithinLength >= oldTextAnchor.length) {
       return { start: 0, length: 0 };
     }
 
     return {
-      start: oldTextAnchor.start - lengthBefore,
-      length: oldTextAnchor.length - lengthWithin
+      start: oldTextAnchor.start + insertBeforeLength - deleteBeforeLength,
+      length: oldTextAnchor.length + insertWithinLength - deleteWithinLength
     };
+  }
+
+  /** Re-create any note embeds that have been deleted by the user. */
+  private recreateDeletedNoteThreadEmbeds(oldNoteEmbedIds: string[]): void {
+    if (this.noteThreadQuery?.docs == null || this.target == null) {
+      return;
+    }
+    const currentNotes: Readonly<Map<string, number>> = this.target.embeddedElements;
+    const segmentsToSubscribe: Set<string> = new Set<string>();
+    for (const noteId of oldNoteEmbedIds) {
+      if (currentNotes.has(noteId)) {
+        continue;
+      }
+      const noteThreadDoc: NoteThreadDoc | undefined = this.noteThreadQuery.docs.find(nt => nt.data?.dataId === noteId);
+      if (noteThreadDoc?.data == null) {
+        continue;
+      }
+      const featured: FeaturedVerseRefInfo = this.getFeaturedVerseRefInfo(noteThreadDoc);
+      const segment: string | undefined = this.embedNoteThread(featured);
+      if (segment != null && !segmentsToSubscribe.has(segment)) {
+        segmentsToSubscribe.add(segment);
+      }
+    }
+    this.subscribeClickEvents(Array.from(segmentsToSubscribe.values()));
+  }
+
+  private embedNoteThread(featured: FeaturedVerseRefInfo): string | undefined {
+    if (this.target == null) {
+      return;
+    }
+
+    const format = { iconsrc: featured.icon.var, preview: featured.preview, threadid: featured.id };
+    return this.target.embedElementInline(
+      featured.verseRef,
+      featured.id,
+      featured.textAnchor ?? { start: 0, length: 0 },
+      'note-thread-embed',
+      format
+    );
   }
 
   private syncScroll(): void {
