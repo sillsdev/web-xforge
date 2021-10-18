@@ -21,7 +21,7 @@ import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
-import { SharedModule } from '../../shared/shared.module';
+import { SharedModule } from '../shared.module';
 import { getSFProject, getTextDoc } from '../test-utils';
 import { DragAndDrop } from './drag-and-drop';
 import { TextComponent } from './text.component';
@@ -84,7 +84,7 @@ describe('TextComponent', () => {
     tick();
     env.fixture.detectChanges();
     expect(env.component.editor?.getText()).toContain('chapter 1, verse 6.', 'setup');
-    expect(env.component.editor?.getContents().ops?.length).toEqual(21, 'setup');
+    expect(env.component.editor?.getContents().ops?.length).toEqual(25, 'setup');
 
     env.component.editor?.updateContents(new Delta().retain(109).retain(31, { para: null }));
 

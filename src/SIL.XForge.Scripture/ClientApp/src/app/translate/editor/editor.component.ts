@@ -20,7 +20,6 @@ import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
-import { NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
@@ -51,7 +50,8 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { Segment } from '../../shared/text/segment';
 import { FeaturedVerseRefInfo, TextComponent } from '../../shared/text/text.component';
-import { verseRefFromMouseEvent } from '../../shared/utils';
+import { threadIdFromMouseEvent } from '../../shared/utils';
+import { NoteDialogComponent, NoteDialogData } from './note-dialog/note-dialog.component';
 import {
   SuggestionsSettingsDialogComponent,
   SuggestionsSettingsDialogData
@@ -62,10 +62,6 @@ import { TranslateMetricsSession } from './translate-metrics-session';
 export const UPDATE_SUGGESTIONS_TIMEOUT = 100;
 
 const PUNCT_SPACE_REGEX = XRegExp('^(\\p{P}|\\p{S}|\\p{Cc}|\\p{Z})+$');
-
-function iconSourceProp(name: string): string {
-  return `--icon-file: url(/assets/icons/TagIcons/${name}.png);`;
-}
 
 /** Scripture editing area. Used for Translate task. */
 @Component({
@@ -622,7 +618,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     );
     const noteThreadVerseRefs: VerseRef[] = chapterNoteThreadDocs.map(nt => toVerseRef(nt.data!.verseRef));
     const featureVerseRefInfo: FeaturedVerseRefInfo[] = chapterNoteThreadDocs.map(nt =>
-      this.getFeaturedVerseRefInfo(nt.data!)
+      this.getFeaturedVerseRefInfo(nt)
     );
 
     if (value) {
@@ -631,9 +627,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         if (verseSegments.length === 0) {
           continue;
         }
-        const iconName: string = featured.iconName ?? '01flag1';
-        const nodeProp: string = iconSourceProp(iconName);
-        const format = { iconsrc: nodeProp, preview: featured.preview, threadid: featured.id };
+        const format = { iconsrc: featured.icon.var, preview: featured.preview, threadid: featured.id };
         this.target.embedElementInline(
           featured.verseRef,
           featured.id,
@@ -653,9 +647,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  private showNoteThread(verseRef: VerseRef): void {
-    console.log('verse clicked ' + verseRef.toString());
-    // Show the Paratext note thread
+  private showNoteThread(threadId: string): void {
+    this.dialog.open(NoteDialogComponent, {
+      clickOutsideToClose: true,
+      escapeToClose: true,
+      autoFocus: false,
+      data: {
+        projectId: this.projectDoc!.id,
+        threadId: threadId
+      } as NoteDialogData
+    });
   }
 
   private setupTranslationEngine(): void {
@@ -930,21 +931,23 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
     for (const segment of segments) {
-      const element = this.target.getSegmentElement(segment)?.querySelector('display-note');
-      if (element == null) {
+      const elements = this.target.getSegmentElement(segment)?.querySelectorAll('display-note');
+      if (elements == null) {
         continue;
       }
-      this.clickSubs.push(
-        this.subscribe(fromEvent<MouseEvent>(element, 'click'), event => {
-          if (this.bookNum == null) {
-            return;
-          }
-          const verseRef = verseRefFromMouseEvent(event, this.bookNum);
-          if (verseRef != null) {
-            this.showNoteThread(verseRef);
-          }
-        })
-      );
+      Array.from(elements).map((element: Element) => {
+        this.clickSubs.push(
+          this.subscribe(fromEvent<MouseEvent>(element, 'click'), event => {
+            if (this.bookNum == null) {
+              return;
+            }
+            const threadId = threadIdFromMouseEvent(event);
+            if (threadId != null) {
+              this.showNoteThread(threadId);
+            }
+          })
+        );
+      });
     }
   }
 
@@ -972,19 +975,20 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   /** Gets the information needed to format a particular featured verse. */
-  private getFeaturedVerseRefInfo(thread: NoteThread): FeaturedVerseRefInfo {
-    const notes: Note[] = clone(thread.notes).sort((a, b) => Date.parse(a.dateCreated) - Date.parse(b.dateCreated));
+  private getFeaturedVerseRefInfo(threadDoc: NoteThreadDoc): FeaturedVerseRefInfo {
+    const notes: Note[] = clone(threadDoc.data!.notes).sort(
+      (a, b) => Date.parse(a.dateCreated) - Date.parse(b.dateCreated)
+    );
     let preview: string = this.stripXml(notes[0].content.trim());
     if (notes.length > 1) {
       preview += '\n' + translate('editor.more_notes', { count: notes.length - 1 });
     }
-    const iconDefinedNotes = notes.filter(n => n.tagIcon != null);
     return {
-      verseRef: toVerseRef(thread.verseRef),
-      id: thread.dataId,
+      verseRef: toVerseRef(threadDoc.data!.verseRef),
+      id: threadDoc.data!.dataId,
       preview,
-      iconName: iconDefinedNotes.length === 0 ? thread.tagIcon : iconDefinedNotes[iconDefinedNotes.length - 1].tagIcon,
-      textAnchor: thread.position
+      icon: threadDoc.icon,
+      textAnchor: threadDoc.data!.position
     };
   }
 

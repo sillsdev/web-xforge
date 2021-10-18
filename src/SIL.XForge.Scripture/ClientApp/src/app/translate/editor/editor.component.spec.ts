@@ -1,3 +1,4 @@
+import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
@@ -58,6 +59,7 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { SharedModule } from '../../shared/shared.module';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
+import { NoteDialogComponent } from './note-dialog/note-dialog.component';
 import { SuggestionsComponent } from './suggestions.component';
 import { ACTIVE_EDIT_TIMEOUT } from './translate-metrics-session';
 
@@ -70,6 +72,7 @@ const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
 const mockedTranslationEngineService = mock(TranslationEngineService);
+const mockedMdcDialog = mock(MdcDialog);
 
 class MockConsole {
   log(val: any) {
@@ -104,7 +107,8 @@ describe('EditorComponent', () => {
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: PwaService, useMock: mockedPwaService },
-      { provide: TranslationEngineService, useMock: mockedTranslationEngineService }
+      { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
+      { provide: MdcDialog, useMock: mockedMdcDialog }
     ]
   }));
 
@@ -1375,6 +1379,20 @@ describe('EditorComponent', () => {
       expect(verseNoteThreadDoc.data!.position).toEqual({ start: 0, length: 0 });
       env.dispose();
     }));
+
+    it('can display note dialog', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      const note = env.fixture.debugElement.query(By.css('display-note'));
+      expect(note).not.toBeNull();
+      note.nativeElement.click();
+      env.wait();
+
+      verify(mockedMdcDialog.open(NoteDialogComponent, anything())).once();
+      env.dispose();
+    }));
   });
 
   describe('Translation Suggestions disabled', () => {
@@ -1729,6 +1747,8 @@ class TestEnvironment {
     );
     when(mockedPwaService.isOnline).thenReturn(true);
     when(mockedPwaService.onlineStatus).thenReturn(of(true));
+    const mockedNoteDialogRef = mock<MdcDialogRef<NoteDialogComponent>>(MdcDialogRef);
+    when(mockedMdcDialog.open(NoteDialogComponent, anything())).thenReturn(instance(mockedNoteDialogRef));
 
     this.fixture = TestBed.createComponent(EditorComponent);
     this.component = this.fixture.componentInstance;

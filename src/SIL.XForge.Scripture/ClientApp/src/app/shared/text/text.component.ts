@@ -21,6 +21,7 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { getBrowserEngine, verseSlug } from 'xforge-common/utils';
 import { Delta, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
+import { NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { registerScripture } from './quill-scripture';
 import { Segment } from './segment';
 import { TextViewModel } from './text-view-model';
@@ -64,8 +65,8 @@ export interface TextUpdatedEvent {
 export interface FeaturedVerseRefInfo {
   verseRef: VerseRef;
   id: string;
-  iconName?: string;
   textAnchor?: TextAnchor;
+  icon: NoteThreadIcon;
   preview?: string;
 }
 

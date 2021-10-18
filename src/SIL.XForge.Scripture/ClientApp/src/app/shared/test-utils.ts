@@ -28,6 +28,11 @@ export function getTextDoc(id: TextDocId): TextData {
   delta.insert({ verse: { number: '6', style: 'v' } });
   delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 6. `, { segment: `verse_${id.chapterNum}_6` });
   delta.insert('\n', { para: { style: 'p' } });
+  delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 7.`, { segment: `verse_${id.chapterNum}_7` });
+  delta.insert('\n', { para: { style: 'p' } });
+  delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 7 - 2nd paragraph.`, {
+    segment: `verse_${id.chapterNum}_7/p_1`
+  });
   return delta;
 }
 

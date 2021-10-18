@@ -69,6 +69,10 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.realtimeService.subscribe(TextDoc.COLLECTION, textId instanceof TextDocId ? textId.toString() : textId);
   }
 
+  getNoteThread(threadId: string): Promise<NoteThreadDoc> {
+    return this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, threadId);
+  }
+
   queryQuestions(
     id: string,
     options: { bookNum?: number; activeOnly?: boolean; sort?: boolean } = {}
