@@ -135,7 +135,10 @@ export class TextViewModel {
     editor.setContents(this.textDoc.data as DeltaStatic);
     editor.history.clear();
     if (subscribeToUpdates) {
-      this.remoteChangesSub = this.textDoc.remoteChanges$.subscribe(ops => editor.updateContents(ops as DeltaStatic));
+      this.remoteChangesSub = this.textDoc.remoteChanges$.subscribe(ops => {
+        const deltaWithEmbeds: DeltaStatic = this.adjustDeltaForEmbeddedElements(ops as DeltaStatic, false);
+        editor.updateContents(deltaWithEmbeds);
+      });
     }
     this.onCreateSub = this.textDoc.create$.subscribe(() => {
       if (textDoc.data != null) {
@@ -366,6 +369,20 @@ export class TextViewModel {
     return undefined;
   }
 
+  /** Returns the editor position that corresponds to a text position past an editor position. */
+  getEditorPositionPlusTextPosition(startingEditorPos: number, textPosPast: number): number {
+    let textCharactersFound = 0;
+    let resultingEditorPos = startingEditorPos;
+    const embedEditorPositions = Array.from(this.embeddedElements.values());
+    while (textCharactersFound < textPosPast) {
+      if (!embedEditorPositions.includes(resultingEditorPos)) {
+        textCharactersFound++;
+      }
+      resultingEditorPos++;
+    }
+    return resultingEditorPos;
+  }
+
   private viewToData(delta: DeltaStatic): DeltaStatic {
     let modelDelta = new Delta();
     if (delta.ops != null) {
@@ -390,7 +407,7 @@ export class TextViewModel {
         (modelDelta as any).push(modelOp);
       }
       // Remove Paratext notes from model delta
-      modelDelta = this.adjustDeltaForEmbeddedElements(modelDelta);
+      modelDelta = this.adjustDeltaForEmbeddedElements(modelDelta, true);
     }
     return modelDelta.chop();
   }
@@ -577,49 +594,64 @@ export class TextViewModel {
   }
 
   /** Adjust the delta that is applied to the text doc by stripping off the embedded elements displayed in quill. */
-  private adjustDeltaForEmbeddedElements(modelDelta: DeltaStatic): DeltaStatic {
+  private adjustDeltaForEmbeddedElements(modelDelta: DeltaStatic, removeEmbeds: boolean): DeltaStatic {
     if (modelDelta.ops == null || modelDelta.ops.length < 1) {
       return new Delta();
     }
     const adjustedDelta = new Delta();
     let curIndex: number = 0;
+    let embedsUpToIndex: number = 0;
     for (const op of modelDelta.ops) {
       let cloneOp: DeltaOperation | undefined = cloneDeep(op);
+      const editorStartPos: number = removeEmbeds ? curIndex : curIndex + embedsUpToIndex;
       if (cloneOp.retain != null) {
-        // The range of content that this retain applies to
-        const opEndIndex: number = curIndex + cloneOp.retain;
-        const embeddedElementsCount = this.getEmbeddedElementsWithin(curIndex, opEndIndex);
+        // If adjusting the delta by removing embeds, editorStartPos is the current index, otherwise
+        // editorStartPos must be the current index plus the number of embeds previous
+        const embedsInRange: number = this.getEmbedsInRange(editorStartPos, cloneOp.retain, removeEmbeds);
+        embedsUpToIndex += embedsInRange;
         curIndex += cloneOp.retain;
-        // remove from the retain op the number of embedded elements contained in its content
-        cloneOp.retain -= embeddedElementsCount;
+        // add or remove from the retain op the number of embedded elements contained in its content
+        const adjustment: number = removeEmbeds ? embedsInRange * -1 : embedsInRange;
+        cloneOp.retain += adjustment;
       } else if (cloneOp.delete != null) {
-        const opEndIndex: number = curIndex + cloneOp.delete;
-        const embeddedElementsCount = this.getEmbeddedElementsWithin(curIndex, opEndIndex);
+        const embedsInRange: number = this.getEmbedsInRange(editorStartPos, cloneOp.delete, removeEmbeds);
         curIndex += cloneOp.delete;
-        // remove from the delete op the number of embedded elements contained in its content
-        cloneOp.delete -= embeddedElementsCount;
+        embedsUpToIndex += embedsUpToIndex;
+        // add or remove from the delete op the number of embedded elements contained in its content
+        const adjustment: number = removeEmbeds ? embedsInRange * -1 : embedsInRange;
+        cloneOp.delete += adjustment;
         if (cloneOp.delete < 1) {
           cloneOp = undefined;
         }
       }
+
       if (cloneOp != null) {
         (adjustedDelta as any).push(cloneOp);
       }
     }
+
     return adjustedDelta;
   }
 
-  private getEmbeddedElementsWithin(startIndex: number, endIndex: number): number {
-    let embeddedElementsCount = 0;
-    for (const embedIndex of this.embeddedElements.values()) {
-      if (embedIndex < startIndex) {
-        continue;
-      } else if (embedIndex >= startIndex && embedIndex < endIndex) {
-        embeddedElementsCount++;
-      } else {
-        break;
+  private getEmbedsInRange(startIndex: number, length: number, fromEditorContent: boolean): number {
+    const indices: number[] = Array.from(this._embeddedElements.values());
+    // The range of content that this retain applies to
+    const opEndIndex: number = startIndex + length;
+    if (fromEditorContent) {
+      // subtract embeds from range
+      let embeddedElementsCount: number = 0;
+      for (const embedIndex of indices) {
+        if (embedIndex < startIndex) {
+          continue;
+        } else if (embedIndex >= startIndex && embedIndex < opEndIndex) {
+          embeddedElementsCount++;
+        } else {
+          break;
+        }
       }
+      return embeddedElementsCount;
     }
-    return embeddedElementsCount;
+    // get the length that would include embeds
+    return this.getEditorPositionPlusTextPosition(startIndex, length) - (startIndex + length);
   }
 }

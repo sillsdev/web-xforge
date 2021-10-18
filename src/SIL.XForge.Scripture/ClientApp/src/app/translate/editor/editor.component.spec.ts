@@ -17,7 +17,7 @@ import {
 } from '@sillsdev/machine';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { CookieService } from 'ngx-cookie-service';
-import Quill, { DeltaStatic, Sources } from 'quill';
+import Quill, { DeltaOperation, DeltaStatic, Sources } from 'quill';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
@@ -1150,7 +1150,8 @@ describe('EditorComponent', () => {
 
       let contents = env.targetEditor.getContents();
       let noteThreadEmbedCount = env.countNoteThreadEmbeds(contents.ops!);
-      env.component.target!.removeEmbeddedElements();
+      expect(noteThreadEmbedCount).toEqual(5);
+      env.component.removeEmbeddedElements();
       env.wait();
 
       contents = env.targetEditor.getContents();
@@ -1526,6 +1527,54 @@ describe('EditorComponent', () => {
       expect(noteThreadDoc.data!.position).toEqual({ start: text.length, length: 9 });
       verse4p1Index = env.component.target!.getSegmentRange('verse_1_4/p_1')!.index;
       expect(env.getNoteThreadEditorPosition('thread05')).toEqual(verse4p1Index);
+      env.dispose();
+    }));
+
+    it('remote edits correctly applied to editor', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
+
+      // target: chap|ter 1, verse 1.
+      let index: number = 15;
+      const textDoc: TextDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
+      const insertDelta: DeltaStatic = new Delta();
+      (insertDelta as any).push({ retain: index } as DeltaOperation);
+      (insertDelta as any).push({ insert: 'abc' } as DeltaOperation);
+      textDoc.submit(insertDelta);
+      env.wait();
+      expect(env.component.target!.getSegmentText('verse_1_1')).toEqual('target: chapabcter 1, verse 1.');
+
+      index = env.getNoteThreadEditorPosition('thread02');
+      // targe|->t: chap<-|ter 1, verse 3.
+      const verse3InsertionIndex = index + 3;
+      const insertDeleteDelta: DeltaStatic = new Delta();
+      (insertDeleteDelta as any).push({ retain: verse3InsertionIndex } as DeltaOperation);
+      (insertDeleteDelta as any).push({ insert: 'defgh' } as DeltaOperation);
+      (insertDeleteDelta as any).push({ delete: 7 } as DeltaOperation);
+      textDoc.submit(insertDeleteDelta);
+      env.wait();
+      expect(env.component.target!.getSegmentText('verse_1_3')).toEqual('targdefghpter 1, verse 3.');
+
+      index = env.getNoteThreadEditorPosition('thread03');
+      // targdefghpter |->1, v<-|erse 3.
+      const verse3DeletionIndex: number = index - 6;
+      const deleteDelta: DeltaStatic = new Delta();
+      (deleteDelta as any).push({ retain: verse3DeletionIndex } as DeltaOperation);
+      (deleteDelta as any).push({ delete: 4 } as DeltaOperation);
+      textDoc.submit(deleteDelta);
+      env.wait();
+      expect(env.component.target!.getSegmentText('verse_1_3')).toEqual('targdefghpter erse 3.');
+      const notePositionInVerse: number = 19;
+      expect(env.getNoteThreadDoc('project01', 'thread03').data!.position.start).toEqual(notePositionInVerse);
+      expect(env.getNoteThreadDoc('project01', 'thread04').data!.position.start).toEqual(notePositionInVerse);
+      const verse3Index: number = env.component.target!.getSegmentRange('verse_1_3')!.index;
+      // 2 note icons in verse before this
+      expect(env.getNoteThreadEditorPosition('thread03')).toEqual(verse3Index + notePositionInVerse + 2);
+      // 1 note icon in verse before this
+      expect(env.getNoteThreadEditorPosition('thread04')).toEqual(verse3Index + notePositionInVerse + 1);
       env.dispose();
     }));
   });
