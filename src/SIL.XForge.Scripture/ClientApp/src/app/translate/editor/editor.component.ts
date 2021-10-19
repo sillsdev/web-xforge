@@ -1,4 +1,3 @@
-import { MdcDialog } from '@angular-mdc/web/dialog';
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, ViewChild } from '@angular/core';
 import { MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute } from '@angular/router';
@@ -39,6 +38,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
 import XRegExp from 'xregexp';
+import { MatDialog } from '@angular/material/dialog';
 import { environment } from '../../../environments/environment';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -119,7 +119,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
     noticeService: NoticeService,
-    private readonly dialog: MdcDialog,
+    private readonly dialog: MatDialog,
     private readonly mediaObserver: MediaObserver,
     private readonly pwaService: PwaService,
     private readonly translationEngineService: TranslationEngineService,
@@ -598,8 +598,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const dialogRef = this.dialog.open<SuggestionsSettingsDialogComponent, SuggestionsSettingsDialogData>(
       SuggestionsSettingsDialogComponent,
       {
-        clickOutsideToClose: true,
-        escapeToClose: true,
         autoFocus: false,
         data: { projectUserConfigDoc: this.projectUserConfigDoc }
       }
@@ -648,8 +646,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   private showNoteThread(threadId: string): void {
     this.dialog.open(NoteDialogComponent, {
-      clickOutsideToClose: true,
-      escapeToClose: true,
       autoFocus: false,
       data: {
         projectId: this.projectDoc!.id,
@@ -762,7 +758,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (
       this.projectUserConfigDoc != null &&
       this.projectUserConfigDoc.data != null &&
-      this.text != null &&
       this.projectUserConfigDoc.data.selectedBookNum === this.text.bookNum &&
       this.projectUserConfigDoc.data.selectedChapterNum === this._chapter &&
       this.projectUserConfigDoc.data.selectedSegment !== ''
@@ -1163,7 +1158,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
 
-    const format = { iconsrc: featured.icon.var, preview: featured.preview, threadid: featured.id };
+    const format = { iconsrc: featured.icon.cssVar, preview: featured.preview, threadid: featured.id };
     return this.target.embedElementInline(
       featured.verseRef,
       featured.id,

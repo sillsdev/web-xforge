@@ -40,6 +40,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoService } from '@ngneat/transloco';
+import { MatDialogModule } from '@angular/material/dialog';
 import { AutofocusDirective } from './autofocus.directive';
 import { BlurOnClickDirective } from './blur-on-click.directive';
 import { DonutChartModule } from './donut-chart/donut-chart.module';
@@ -53,6 +54,7 @@ const modules = [
   FormsModule,
   MatAutocompleteModule,
   MatButtonModule,
+  MatDialogModule,
   MatIconModule,
   MatInputModule,
   MatFormFieldModule,

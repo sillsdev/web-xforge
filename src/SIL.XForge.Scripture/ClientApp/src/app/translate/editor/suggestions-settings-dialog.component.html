@@ -1,51 +1,41 @@
 <ng-container *transloco="let t; read: 'suggestions_settings_dialog'">
-  <mdc-dialog>
-    <mdc-dialog-container>
-      <mdc-dialog-surface>
-        <mdc-dialog-title>{{ t("translation_suggestions_settings") }}</mdc-dialog-title>
-        <mdc-dialog-content class="content-padding" fxLayout="column" fxLayoutGap="25px">
-          <div class="offline-text" *ngIf="!pwaService.isOnline">{{ t("settings_not_available_offline") }}</div>
-          <mdc-form-field [formGroup]="suggestionsSwitchFormGroup">
-            <mdc-switch
-              id="suggestions-enabled-switch"
-              *ngIf="open"
-              formControlName="suggestionsEnabledSwitch"
-            ></mdc-switch>
-            <label class="switch-label">{{ t("translation_suggestions") }}</label>
-          </mdc-form-field>
-          <mdc-select
-            id="num-suggestions-select"
-            [disabled]="settingsDisabled"
-            [(ngModel)]="numSuggestions"
-            placeholder="{{ t('number_of_suggestions') }}"
-          >
-            <mdc-menu>
-              <mdc-list>
-                <mdc-list-item *ngFor="let value of ['1', '2', '3', '4', '5']" [value]="value">
-                  {{ value }}
-                </mdc-list-item>
-              </mdc-list>
-            </mdc-menu>
-          </mdc-select>
-          <mdc-form-field>
-            <label mdcSubtitle2>{{ t("suggestion_confidence") }}</label>
-            <div class="slider-labels" fxLayout="row" fxLayoutAlign="space-between">
-              <span mdcCaption>{{ t("more") }}</span> <span mdcCaption>{{ confidenceThreshold }}%</span>
-              <span mdcCaption>{{ t("better") }}</span>
-            </div>
-            <mdc-slider
-              #confidenceThresholdSlider
-              [disabled]="settingsDisabled"
-              [min]="0"
-              [max]="100"
-              [(ngModel)]="confidenceThreshold"
-            ></mdc-slider>
-          </mdc-form-field>
-        </mdc-dialog-content>
-        <mdc-dialog-actions>
-          <button mdcDialogButton [default]="true" type="button" mdcDialogAction="close">{{ t("close") }}</button>
-        </mdc-dialog-actions>
-      </mdc-dialog-surface>
-    </mdc-dialog-container>
-  </mdc-dialog>
+  <h1 mat-dialog-title>{{ t("translation_suggestions_settings") }}</h1>
+  <mat-dialog-content class="content-padding" fxLayout="column" fxLayoutGap="25px">
+    <div class="offline-text" *ngIf="!pwaService.isOnline">{{ t("settings_not_available_offline") }}</div>
+    <mdc-form-field [formGroup]="suggestionsSwitchFormGroup">
+      <mdc-switch id="suggestions-enabled-switch" *ngIf="open" formControlName="suggestionsEnabledSwitch"></mdc-switch>
+      <label class="switch-label">{{ t("translation_suggestions") }}</label>
+    </mdc-form-field>
+    <mdc-select
+      id="num-suggestions-select"
+      [disabled]="settingsDisabled"
+      [(ngModel)]="numSuggestions"
+      placeholder="{{ t('number_of_suggestions') }}"
+    >
+      <mdc-menu>
+        <mdc-list>
+          <mdc-list-item *ngFor="let value of ['1', '2', '3', '4', '5']" [value]="value">
+            {{ value }}
+          </mdc-list-item>
+        </mdc-list>
+      </mdc-menu>
+    </mdc-select>
+    <mdc-form-field>
+      <label mdcSubtitle2>{{ t("suggestion_confidence") }}</label>
+      <div class="slider-labels" fxLayout="row" fxLayoutAlign="space-between">
+        <span mdcCaption>{{ t("more") }}</span> <span mdcCaption>{{ confidenceThreshold }}%</span>
+        <span mdcCaption>{{ t("better") }}</span>
+      </div>
+      <mdc-slider
+        #confidenceThresholdSlider
+        [disabled]="settingsDisabled"
+        [min]="0"
+        [max]="100"
+        [(ngModel)]="confidenceThreshold"
+      ></mdc-slider>
+    </mdc-form-field>
+  </mat-dialog-content>
+  <mat-dialog-actions fxLayoutAlign="end">
+    <button mat-button mat-dialog-close>{{ t("close") }}</button>
+  </mat-dialog-actions>
 </ng-container>

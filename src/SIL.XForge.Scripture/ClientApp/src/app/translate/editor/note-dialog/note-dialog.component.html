@@ -1,31 +1,27 @@
-<mdc-dialog *transloco="let t; read: 'note_dialog'">
-  <mdc-dialog-container>
-    <mdc-dialog-surface>
-      <mdc-dialog-title>
-        <img [src]="flagIcon" /> <span>{{ verseRef }}</span>
-        <button mat-icon-button [matMenuTriggerFor]="menu"><mat-icon>more_vert</mat-icon></button>
-        <mat-menu #menu="matMenu">
-          <button mat-menu-item (click)="toggleSegmentText()">
-            <mat-icon>compare</mat-icon>
-            <span>{{ showSegmentText ? t("hide_changes") : t("show_changes") }}</span>
-          </button>
-        </mat-menu></mdc-dialog-title
-      >
-      <mdc-dialog-content class="content-padding" [ngClass]="{ rtl: isRtl, ltr: !isRtl }">
-        <div class="text">
-          <div class="note-text" [innerHTML]="noteContextText"></div>
-          <div *ngIf="showSegmentText" class="segment-text" [innerHTML]="segmentText"></div>
-        </div>
-        <div class="notes">
-          <div *ngFor="let note of notes" class="note">
-            <div class="content" [innerHTML]="parseNote(note.content)"></div>
-            <app-owner [ownerRef]="note.ownerRef" [dateTime]="note.dateCreated"></app-owner>
-          </div>
-        </div>
-      </mdc-dialog-content>
-      <mdc-dialog-actions>
-        <button mdcDialogButton mdcDialogAction="close" type="button">{{ t("close") }}</button>
-      </mdc-dialog-actions>
-    </mdc-dialog-surface>
-  </mdc-dialog-container>
-</mdc-dialog>
+<ng-container *transloco="let t; read: 'note_dialog'">
+  <h1 mat-dialog-title>
+    <img [src]="flagIcon" alt="" /> <span>{{ verseRef }}</span>
+    <button mat-icon-button [matMenuTriggerFor]="menu"><mat-icon>more_vert</mat-icon></button>
+    <mat-menu #menu="matMenu">
+      <button mat-menu-item (click)="toggleSegmentText()">
+        <mat-icon>compare</mat-icon>
+        <span>{{ showSegmentText ? t("hide_changes") : t("show_changes") }}</span>
+      </button>
+    </mat-menu>
+  </h1>
+  <mat-dialog-content class="content-padding" [ngClass]="{ rtl: isRtl, ltr: !isRtl }">
+    <div class="text">
+      <div class="note-text" [innerHTML]="noteContextText"></div>
+      <div *ngIf="showSegmentText" class="segment-text" [innerHTML]="segmentText"></div>
+    </div>
+    <div class="notes">
+      <div *ngFor="let note of notes" class="note">
+        <div class="content" [innerHTML]="parseNote(note.content)"></div>
+        <app-owner [ownerRef]="note.ownerRef" [dateTime]="note.dateCreated"></app-owner>
+      </div>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions fxLayoutAlign="end">
+    <button mat-button mat-dialog-close>{{ t("close") }}</button>
+  </mat-dialog-actions>
+</ng-container>

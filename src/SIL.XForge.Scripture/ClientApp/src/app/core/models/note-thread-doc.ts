@@ -8,7 +8,7 @@ import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { clone } from 'lodash-es';
 
 export interface NoteThreadIcon {
-  var: string;
+  cssVar: string;
   url: string;
 }
 
@@ -18,7 +18,7 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
 
   get icon(): NoteThreadIcon {
     if (this.data == null) {
-      return { var: '', url: '' };
+      return { cssVar: '', url: '' };
     }
     const notes: Note[] = clone(this.data.notes).sort((a, b) => Date.parse(a.dateCreated) - Date.parse(b.dateCreated));
     const iconDefinedNotes = notes.filter(n => n.tagIcon != null);
@@ -28,6 +28,6 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
       icon = '01flag1';
     }
     const iconUrl = `/assets/icons/TagIcons/${icon}.png`;
-    return { var: `--icon-file: url(${iconUrl});`, url: iconUrl };
+    return { cssVar: `--icon-file: url(${iconUrl});`, url: iconUrl };
   }
 }
