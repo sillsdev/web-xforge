@@ -1,7 +1,7 @@
-import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Params } from '@angular/router';
@@ -72,7 +72,7 @@ const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
 const mockedTranslationEngineService = mock(TranslationEngineService);
-const mockedMdcDialog = mock(MdcDialog);
+const mockedMatDialog = mock(MatDialog);
 
 class MockConsole {
   log(val: any) {
@@ -108,7 +108,7 @@ describe('EditorComponent', () => {
       { provide: CookieService, useMock: mockedCookieService },
       { provide: PwaService, useMock: mockedPwaService },
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
-      { provide: MdcDialog, useMock: mockedMdcDialog }
+      { provide: MatDialog, useMock: mockedMatDialog }
     ]
   }));
 
@@ -1461,7 +1461,7 @@ describe('EditorComponent', () => {
       expect(note).not.toBeNull();
       note.nativeElement.click();
       env.wait();
-      verify(mockedMdcDialog.open(NoteDialogComponent, anything())).once();
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
       env.dispose();
     }));
 
@@ -1860,8 +1860,8 @@ class TestEnvironment {
     );
     when(mockedPwaService.isOnline).thenReturn(true);
     when(mockedPwaService.onlineStatus).thenReturn(of(true));
-    const mockedNoteDialogRef = mock<MdcDialogRef<NoteDialogComponent>>(MdcDialogRef);
-    when(mockedMdcDialog.open(NoteDialogComponent, anything())).thenReturn(instance(mockedNoteDialogRef));
+    const mockedNoteDialogRef = mock<MatDialogRef<NoteDialogComponent>>(MatDialogRef);
+    when(mockedMatDialog.open(NoteDialogComponent, anything())).thenReturn(instance(mockedNoteDialogRef));
 
     this.fixture = TestBed.createComponent(EditorComponent);
     this.component = this.fixture.componentInstance;

@@ -1,5 +1,5 @@
-import { MDC_DIALOG_DATA } from '@angular-mdc/web/dialog';
 import { Component, Inject, OnInit } from '@angular/core';
+import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { sortBy } from 'lodash-es';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
@@ -28,7 +28,7 @@ export class NoteDialogComponent implements OnInit {
   private textDoc?: TextDoc;
 
   constructor(
-    @Inject(MDC_DIALOG_DATA) private readonly data: NoteDialogData,
+    @Inject(MAT_DIALOG_DATA) private readonly data: NoteDialogData,
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService
   ) {}
