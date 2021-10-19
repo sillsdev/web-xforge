@@ -120,6 +120,13 @@ quill-editor.rtl {
       background: var(--icon-file) no-repeat;
     }
   }
+  & display-text-anchor {
+    background-image: linear-gradient(to right, gray 75%, transparent 75%);
+    background-position: bottom left;
+    background-repeat: repeat-x;
+    background-size: 7px 1px;
+    position: relative;
+  }
 }
 
 .template-editor > .ql-container {
