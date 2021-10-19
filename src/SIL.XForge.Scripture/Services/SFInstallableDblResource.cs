@@ -220,12 +220,19 @@ namespace SIL.XForge.Scripture.Services
                 throw new ArgumentNullException(nameof(restClientFactory));
             }
 
-            ISFRestClient client = restClientFactory.Create(string.Empty, userSecret);
             baseUrl = string.IsNullOrWhiteSpace(baseUrl) ? InternetAccess.ParatextDBLServer : baseUrl;
             try
             {
-                _ = client.Head(BuildDblResourceEntriesUrl(baseUrl, id));
-                return true;
+                IEnumerable<SFInstallableDblResource> resources = GetInstallableDblResources(
+                    userSecret,
+                    paratextOptions,
+                    restClientFactory,
+                    fileSystemService,
+                    jwtTokenHelper,
+                    exceptionHandler,
+                    baseUrl,
+                    id);
+                return resources.Any(r => r.DBLEntryUid.Id == id);
             }
             catch (Exception ex)
             {
@@ -247,27 +254,6 @@ namespace SIL.XForge.Scripture.Services
                     {
                         // A 404 error means that the resource is not on the server
                         return false;
-                    }
-                    else if (httpException.Response.StatusCode == HttpStatusCode.MethodNotAllowed)
-                    {
-                        // A 405 means that HEAD request does not work on the server, so we will use the resource list
-                        // This is slower (although faster than a GET request on the resource), but more reliable
-                        IEnumerable<SFInstallableDblResource> resources =
-                            GetInstallableDblResources(
-                            userSecret,
-                            paratextOptions,
-                            restClientFactory,
-                            fileSystemService,
-                            jwtTokenHelper,
-                            exceptionHandler,
-                            baseUrl);
-                        return resources.Any(r => r.DBLEntryUid.Id == id);
-                    }
-                    else if (httpException.Response.StatusCode == HttpStatusCode.OK)
-                    {
-                        // A 200 status is success - this should not have triggered an error
-                        // This is only a just in case
-                        return true;
                     }
                     else
                     {
@@ -298,6 +284,7 @@ namespace SIL.XForge.Scripture.Services
         /// <param name="fileSystemService">The file system service.</param>
         /// <param name="jwtTokenHelper">The JWT token helper.</param>
         /// <param name="baseUrl">The base URL.</param>
+        /// <param name="id">ID of resource to filter for (optional).</param>
         /// <returns>The Installable Resources.</returns>
         /// <exception cref="ArgumentNullException">restClientFactory
         /// or
@@ -306,7 +293,7 @@ namespace SIL.XForge.Scripture.Services
         public static IEnumerable<SFInstallableDblResource> GetInstallableDblResources(UserSecret userSecret,
             ParatextOptions paratextOptions, ISFRestClientFactory restClientFactory,
             IFileSystemService fileSystemService, IJwtTokenHelper jwtTokenHelper, IExceptionHandler exceptionHandler,
-             string baseUrl = null)
+            string baseUrl = null, string id = null)
         {
             // Parameter check (just like the constructor)
             if (restClientFactory == null)
@@ -324,7 +311,7 @@ namespace SIL.XForge.Scripture.Services
             string response = null;
             try
             {
-                response = client.Get(BuildDblResourceEntriesUrl(baseUrl));
+                response = client.Get(BuildDblResourceListUrl(baseUrl, id));
             }
             catch (WebException e)
             {
@@ -541,23 +528,37 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>
-        /// Builds the DBL resource entries URL.
+        /// Get the URL for listing resources, or listing a single resource (getting metadata, not the resource itself).
         /// </summary>
         /// <param name="baseUri">The base URI.</param>
         /// <param name="entryUid">The entry unique identifier.</param>
         /// <returns>
         /// A URL to access the resource entries or specific entry if <paramref name="entryUid" /> is specified.
         /// </returns>
-        private static string BuildDblResourceEntriesUrl(string baseUri, string entryUid = null)
+        private static string BuildDblResourceListUrl(string baseUri, string entryUid = null)
         {
-            var uri = new Uri(new Uri(baseUri), DblResourceEntriesApiCall);
-            var sb = new StringBuilder(uri.AbsoluteUri);
+            var uriBuilder = new UriBuilder(baseUri);
+            uriBuilder.Path = DblResourceEntriesApiCall;
             if (!string.IsNullOrWhiteSpace(entryUid))
             {
-                sb.Append("/" + entryUid);
+                uriBuilder.Query = "id=" + entryUid;
             }
+            return uriBuilder.Uri.AbsoluteUri;
+        }
 
-            return sb.ToString();
+        /// <summary>
+        /// Get the URL for fetching a resource.
+        /// </summary>
+        /// <param name="baseUri">The base URI.</param>
+        /// <param name="entryUid">The entry unique identifier.</param>
+        /// <returns>
+        /// A URL to access the resource.
+        /// </returns>
+        private static string BuildDblResourceEntryUrl(string baseUri, string entryUid)
+        {
+            var uriBuilder = new UriBuilder(baseUri);
+            uriBuilder.Path = DblResourceEntriesApiCall + "/" + entryUid;
+            return uriBuilder.Uri.AbsoluteUri;
         }
 
         /// <summary>
@@ -639,7 +640,7 @@ namespace SIL.XForge.Scripture.Services
                         languageId = LanguageId.FromEthnologueCode(languageId.Id);
                     }
 
-                    string url = BuildDblResourceEntriesUrl(baseUri, id);
+                    string url = BuildDblResourceEntryUrl(baseUri, id);
                     var resource = new SFInstallableDblResource(userSecret, paratextOptions, restClientFactory,
                         fileSystemService, jwtTokenHelper, projectDeleter, migrationOperations, passwordProvider)
                     {

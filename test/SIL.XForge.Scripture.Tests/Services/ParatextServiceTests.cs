@@ -306,17 +306,12 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
-            // Set up mock REST client to return a successful HEAD request
+            // Set up mock REST client to return a successful GET request
             ISFRestClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
-            ISFRestClient successMockClient = Substitute.For<ISFRestClient>();
-            successMockClient.Head(Arg.Any<string>()).Returns(string.Empty);
-            mockRestClientFactory
-                .Create(Arg.Any<string>(), Arg.Is<UserSecret>(s => s.Id == env.User01))
-                .Returns(successMockClient);
 
-            // Set up mock REST client to return an unsuccessful HEAD request
+            // Set up mock REST client to return an unsuccessful GET request
             ISFRestClient failureMockClient = Substitute.For<ISFRestClient>();
-            failureMockClient.Head(Arg.Any<string>()).Throws<WebException>();
+            failureMockClient.Get(Arg.Any<string>()).Returns(string.Empty);
             mockRestClientFactory
                 .Create(Arg.Any<string>(), Arg.Is<UserSecret>(s => s.Id == env.User02))
                 .Returns(failureMockClient);
@@ -324,7 +319,7 @@ namespace SIL.XForge.Scripture.Services
             // Set up mock project
             var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
             var project = projects.First();
-            project.ParatextId = "resid_is_16_char";
+            project.ParatextId = env.Resource2Id;
             var ptUsernameMapping = new Dictionary<string, string>()
                 {
                     { env.User01, env.Username01 },
@@ -344,13 +339,8 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
-            // Set up mock REST client to return a successful HEAD request
+            // Set up mock REST client to return a successful GET request
             ISFRestClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
-            ISFRestClient mockClient = Substitute.For<ISFRestClient>();
-            mockClient.Head(Arg.Any<string>()).Throws<WebException>();
-            mockRestClientFactory
-                .Create(Arg.Any<string>(), Arg.Any<UserSecret>())
-                .Returns(mockClient);
 
             var paratextId = "resid_is_16_char";
             var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01, CancellationToken.None);
@@ -363,17 +353,8 @@ namespace SIL.XForge.Scripture.Services
             // Set up environment
             var env = new TestEnvironment();
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-
-            // Set up mock REST client to return a successful HEAD request
-            ISFRestClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
-            ISFRestClient mockClient = Substitute.For<ISFRestClient>();
-            mockClient.Head(Arg.Any<string>()).Returns(string.Empty);
-            mockRestClientFactory
-                .Create(Arg.Any<string>(), Arg.Any<UserSecret>())
-                .Returns(mockClient);
-
-            var paratextId = "resid_is_16_char";
-
+            env.SetRestClientFactory(user01Secret);
+            var paratextId = env.Resource2Id;
             var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01, CancellationToken.None);
             Assert.That(permission, Is.EqualTo(TextInfoPermission.Read));
         }
@@ -829,7 +810,7 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSuccessfulSendReceive();
             env.SetRestClientFactory(user01Secret);
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
-            string resourceId = "9bb76cd3e5a7f9b4"; // See the XML in SetRestClientFactory for this
+            string resourceId = env.Resource3Id; // See the XML in SetRestClientFactory for this
             await env.Service.SendReceiveAsync(user01Secret, ptProjectId);
             await env.Service.SendReceiveAsync(user01Secret, resourceId);
         }
@@ -1104,6 +1085,9 @@ namespace SIL.XForge.Scripture.Services
             public readonly string Project02 = "project02";
             public readonly string Project03 = "project03";
             public readonly string Project04 = "project04";
+            public readonly string Resource1Id = "e01f11e9b4b8e338";
+            public readonly string Resource2Id = "5e51f89e89947acb";
+            public readonly string Resource3Id = "9bb76cd3e5a7f9b4";
             public readonly Dictionary<string, HexId> PTProjectIds = new Dictionary<string, HexId>();
             public readonly string User01 = "user01";
             public readonly string User02 = "user02";
@@ -1238,7 +1222,7 @@ namespace SIL.XForge.Scripture.Services
             ""fullname"": ""Sob Jonah and Luke"",
             ""name"": ""SobP15"",
             ""permissions-checksum"": ""1ab119321b305f99"",
-            ""id"": ""e01f11e9b4b8e338"",
+            ""id"": """ + this.Resource1Id + @""",
             ""relevance"": {
                 ""basic_permissions"": [
                     ""allow_any_user""
@@ -1256,7 +1240,7 @@ namespace SIL.XForge.Scripture.Services
             ""fullname"": ""Aruamu New Testament [msy] Papua New Guinea 2004 DBL"",
             ""name"": ""AruNT04"",
             ""permissions-checksum"": ""1ab119321b305f99"",
-            ""id"": ""5e51f89e89947acb"",
+            ""id"": """ + this.Resource2Id + @""",
             ""relevance"": {
                 ""basic_permissions"": [
                     ""allow_any_user""
@@ -1274,7 +1258,7 @@ namespace SIL.XForge.Scripture.Services
             ""fullname"": ""Revised Version with Apocrypha 1885, 1895"",
             ""name"": ""RV1895"",
             ""permissions-checksum"": ""1ab119321b305f99"",
-            ""id"": ""9bb76cd3e5a7f9b4"",
+            ""id"": """ + this.Resource3Id + @""",
             ""relevance"": {
                 ""basic_permissions"": [
                     ""allow_any_user""
