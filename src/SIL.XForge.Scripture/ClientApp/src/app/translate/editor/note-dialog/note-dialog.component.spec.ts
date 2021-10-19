@@ -1,9 +1,10 @@
-import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, DebugElement, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { CookieService } from 'ngx-cookie-service';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -16,7 +17,7 @@ import { AuthService } from 'xforge-common/auth.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, matDialogCloseDelay, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
@@ -35,7 +36,7 @@ const mockedProjectService = mock(SFProjectService);
 
 describe('NoteDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [DialogTestModule, NoopAnimationsModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
       { provide: CookieService, useMock: mockedCookieService },
@@ -45,7 +46,7 @@ describe('NoteDialogComponent', () => {
   }));
 
   let env: TestEnvironment;
-  afterEach(() => env.dialogRef.close());
+  afterEach(fakeAsync(() => env.closeDialog()));
 
   it('show selected text and toggle visibility of related segment', fakeAsync(() => {
     env = new TestEnvironment();
@@ -199,8 +200,8 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   readonly component: NoteDialogComponent;
-  readonly dialogRef: MdcDialogRef<NoteDialogComponent>;
-  readonly mockedNoteMdcDialogRef = mock(MdcDialogRef);
+  readonly dialogRef: MatDialogRef<NoteDialogComponent>;
+  readonly mockedNoteMdcDialogRef = mock(MatDialogRef);
 
   constructor() {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
@@ -208,7 +209,7 @@ class TestEnvironment {
       projectId: TestEnvironment.PROJECT01,
       threadId: TestEnvironment.noteThread.dataId
     };
-    this.dialogRef = TestBed.inject(MdcDialog).open(NoteDialogComponent, { data: configData });
+    this.dialogRef = TestBed.inject(MatDialog).open(NoteDialogComponent, { data: configData });
     this.component = this.dialogRef.componentInstance;
     tick();
 
@@ -263,6 +264,11 @@ class TestEnvironment {
 
   private get overlayContainerElement(): DebugElement {
     return this.fixture.debugElement.parent!.query(By.css('.cdk-overlay-container'));
+  }
+
+  closeDialog(): void {
+    this.overlayContainerElement.query(By.css('button[mat-dialog-close]')).nativeElement.click();
+    tick(matDialogCloseDelay);
   }
 
   toggleSegmentButton(): void {

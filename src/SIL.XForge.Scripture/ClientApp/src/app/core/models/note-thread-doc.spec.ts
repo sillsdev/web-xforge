@@ -36,7 +36,7 @@ describe('NoteThreadDoc', () => {
     };
     const noteThreadDoc = await env.setupDoc(noteThread);
     const expectedIcon: NoteThreadIcon = {
-      var: '--icon-file: url(/assets/icons/TagIcons/flag02.png);',
+      cssVar: '--icon-file: url(/assets/icons/TagIcons/flag02.png);',
       url: '/assets/icons/TagIcons/flag02.png'
     };
     expect(noteThreadDoc.icon).toEqual(expectedIcon);
@@ -57,7 +57,7 @@ describe('NoteThreadDoc', () => {
     };
     const noteThreadDoc = await env.setupDoc(noteThread);
     const expectedIcon: NoteThreadIcon = {
-      var: '--icon-file: url(/assets/icons/TagIcons/01flag1.png);',
+      cssVar: '--icon-file: url(/assets/icons/TagIcons/01flag1.png);',
       url: '/assets/icons/TagIcons/01flag1.png'
     };
     expect(noteThreadDoc.icon).toEqual(expectedIcon);
@@ -112,7 +112,7 @@ describe('NoteThreadDoc', () => {
     };
     const noteThreadDoc = await env.setupDoc(noteThread);
     const expectedIcon: NoteThreadIcon = {
-      var: '--icon-file: url(/assets/icons/TagIcons/flag3.png);',
+      cssVar: '--icon-file: url(/assets/icons/TagIcons/flag3.png);',
       url: '/assets/icons/TagIcons/flag3.png'
     };
     expect(noteThreadDoc.icon).toEqual(expectedIcon);

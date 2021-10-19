@@ -1,7 +1,7 @@
-import { MdcDialogRef, MDC_DIALOG_DATA } from '@angular-mdc/web/dialog';
 import { MdcSlider } from '@angular-mdc/web/slider';
 import { Component, Inject, ViewChild } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { BehaviorSubject } from 'rxjs';
 import { debounceTime, map, skip } from 'rxjs/operators';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -31,8 +31,8 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
   private confidenceThreshold$ = new BehaviorSubject<number>(20);
 
   constructor(
-    dialogRef: MdcDialogRef<SuggestionsSettingsDialogComponent>,
-    @Inject(MDC_DIALOG_DATA) data: SuggestionsSettingsDialogData,
+    dialogRef: MatDialogRef<SuggestionsSettingsDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) data: SuggestionsSettingsDialogData,
     readonly pwaService: PwaService
   ) {
     super();

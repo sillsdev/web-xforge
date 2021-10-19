@@ -40,11 +40,11 @@ export function combineVerseRefStrs(startStr?: string, endStr?: string): VerseRe
 
 export function verseRefFromMouseEvent(event: MouseEvent, bookNum: number): VerseRef | undefined {
   const clickSegment = attributeFromMouseEvent(event, 'USX-SEGMENT', 'data-segment');
-  if (clickSegment != null) {
-    const segmentParts = clickSegment.split('_', 3);
-    return new VerseRef(bookNum, segmentParts[1], segmentParts[2]);
+  if (clickSegment == null) {
+    return;
   }
-  return;
+  const segmentParts = clickSegment.split('_', 3);
+  return new VerseRef(bookNum, segmentParts[1], segmentParts[2]);
 }
 
 export function threadIdFromMouseEvent(event: MouseEvent): string | undefined {
