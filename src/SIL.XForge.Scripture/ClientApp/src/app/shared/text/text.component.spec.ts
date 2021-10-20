@@ -445,6 +445,78 @@ describe('TextComponent', () => {
       expect(resultingSelection.length).toEqual(desiredSelectionLength);
     }));
 
+    it('moves drag-and-drop selection in doc when dragged to earlier in segment', fakeAsync(() => {
+      // If the user selects text in the text editing area and drags it, remove it from its current location and insert
+      // it into the new location. This should still work when dragging to a location earlier in the same segment.
+      const env = new TestEnvironment();
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+      const initialTextInDoc = 'target: chapter 1, verse 4.';
+      //                           ^    ---------
+      const textToMove = 'chapter 1';
+      const expectedFinalText = 'tarchapter 1get: , verse 4.';
+      //              New location: ---------
+      const targetSegmentRef: string = 'verse_1_4';
+      expect(env.component.getSegmentText(targetSegmentRef)).toEqual(initialTextInDoc, 'setup');
+      expect(env.component.editor!.getText()).toContain(initialTextInDoc, 'setup');
+
+      const sourceSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(targetSegmentRef);
+      if (sourceSegmentRange == null) {
+        throw Error();
+      }
+      // Location of textToMove in the editor's complete text.
+      const selectionStart: number = sourceSegmentRange.index + 'target: '.length;
+      const selectionLength: number = textToMove.length;
+      env.component.editor?.setSelection(selectionStart, selectionLength);
+
+      const dataTransfer = new DataTransfer();
+      dataTransfer.setData('text/plain', textToMove);
+      dataTransfer.setData('text/html', `<span background="white">${textToMove}</span>`);
+      const targetElement: Element | null = env.component.editor!.container.querySelector(
+        `usx-segment[data-segment="${targetSegmentRef}"]`
+      );
+      const dropEvent: MockDragEvent = new MockDragEvent('drop', {
+        dataTransfer,
+        cancelable: true
+      });
+      dropEvent.setTarget(targetElement);
+
+      // How far into the initialTextInDoc the user is trying to drop the text
+      const desiredIndexInSegment = 'tar'.length;
+      // Override the point-to-index method behaviour, since the unit test isn't really dragging the mouse to an
+      // element.
+      const startContainer: Node = targetElement!.childNodes[0] as Node;
+      document.caretRangeFromPoint = (_x: number, _y: number) =>
+        ({ startOffset: desiredIndexInSegment, startContainer } as Range);
+
+      const dragstartEvent: MockDragEvent = new MockDragEvent('dragstart', {
+        dataTransfer,
+        cancelable: true
+      });
+
+      env.component.editor?.container.dispatchEvent(dragstartEvent);
+      tick();
+
+      // SUT
+      env.component.editor?.container.dispatchEvent(dropEvent);
+      tick();
+
+      expect(env.component.getSegmentText(targetSegmentRef)).toEqual(expectedFinalText);
+      expect(env.component.editor?.getText()).toContain(expectedFinalText);
+
+      const desiredSelectionStart = sourceSegmentRange.index + 'tar'.length;
+      const desiredSelectionLength = textToMove.length;
+      const resultingSelection: RangeStatic | null = env.component.editor!.getSelection();
+      if (resultingSelection == null) {
+        throw Error();
+      }
+      // After text is dragged from one place in the document to another place, the selection should be on the moved
+      // text.
+      expect(resultingSelection.index).toEqual(desiredSelectionStart);
+      expect(resultingSelection.length).toEqual(desiredSelectionLength);
+    }));
+
     it('copies drag-and-drop if user holds ctrl key', fakeAsync(() => {
       // If the user selects text in the text editing area, holds the ctrl key, and drags the text selection, keep it
       // in its current location and insert it into the new location.
