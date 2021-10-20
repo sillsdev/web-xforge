@@ -61,7 +61,8 @@ module.exports = function (config) {
           '--disable-extensions',
           '--use-fake-device-for-media-stream',
           '--use-fake-ui-for-media-stream',
-          '--autoplay-policy=no-user-gesture-required'
+          '--autoplay-policy=no-user-gesture-required',
+          '--remote-debugging-port=9988'
         ]
       },
       xForgeChromeHeadless: {
@@ -71,7 +72,8 @@ module.exports = function (config) {
           '--disable-extensions',
           '--use-fake-device-for-media-stream',
           '--use-fake-ui-for-media-stream',
-          '--autoplay-policy=no-user-gesture-required'
+          '--autoplay-policy=no-user-gesture-required',
+          '--remote-debugging-port=9988'
         ]
       },
       xForgeChrome: {
@@ -79,7 +81,8 @@ module.exports = function (config) {
         flags: [
           '--use-fake-ui-for-media-stream',
           '--use-fake-device-for-media-stream',
-          '--autoplay-policy=no-user-gesture-required'
+          '--autoplay-policy=no-user-gesture-required',
+          '--remote-debugging-port=9988'
         ]
       }
     },
