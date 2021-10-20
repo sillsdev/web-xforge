@@ -199,7 +199,7 @@ describe('TextComponent', () => {
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
       tick();
-      env.embeddedElement(4);
+      env.embedNoteAtVerse(4);
       tick();
       const initialTextInDoc = 'target: chapter 1, verse 4.';
       //                                           ^ insert here
@@ -309,7 +309,7 @@ describe('TextComponent', () => {
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
       tick();
-      env.embeddedElement(4);
+      env.embedNoteAtVerse(4);
       tick();
       const initialTextInDoc = 'target: chapter 1, verse 4.';
       const textToDropIn = 'Hello';
@@ -1031,7 +1031,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  embeddedElement(verse: number): void {
+  embedNoteAtVerse(verse: number): void {
     const verseRef: VerseRef = VerseRef.parse(`MAT 1:${verse}`);
     const id: string = `embedid${verse}`;
     const textAnchor: TextAnchor = { start: 8, length: 9 };

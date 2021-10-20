@@ -77,7 +77,7 @@ export class DragAndDrop {
       // Determine character index of drop location in destination segment, using a browser-specific method.
       let startPositionInSegment: number = 0;
       let startPositionInTextNode: number = 0;
-      let droppedIntoNode: Node | undefined;
+      let nodeDroppedInto: Node | undefined;
       if (droppingInBlankSegment) {
         // If we are dropping into an empty segment, use the position at the end of the segment rather than using a
         // browser-determined index into the segment.
@@ -88,7 +88,7 @@ export class DragAndDrop {
         // Chromium/Chrome, Edge, and Safari browsers
         const range: Range = document.caretRangeFromPoint(dragEvent.clientX, dragEvent.clientY);
         startPositionInTextNode = range.startOffset;
-        droppedIntoNode = range.startContainer;
+        nodeDroppedInto = range.startContainer;
       } else if (document.caretPositionFromPoint !== undefined) {
         // Firefox browser
         const range: CaretPosition | null = document.caretPositionFromPoint(dragEvent.clientX, dragEvent.clientY);
@@ -97,19 +97,19 @@ export class DragAndDrop {
           return;
         }
         startPositionInTextNode = range.offset;
-        droppedIntoNode = range.offsetNode;
+        nodeDroppedInto = range.offsetNode;
       } else {
         console.warn(`Warning: Could not determine insertion position for drag-and-drop. Target:`, targetElement);
         return;
       }
 
       if (!droppingInBlankSegment) {
-        if (droppedIntoNode == null) {
+        if (nodeDroppedInto == null) {
           console.warn('Warning: Could not get the node that the text was dropped into.');
           return;
         }
 
-        let node: Node = droppedIntoNode;
+        let node: Node = nodeDroppedInto;
         const textNodeType = 3;
         // Add up the length of text and embeds that are previous nodes in the usx-segment
         while (node.previousSibling != null) {
