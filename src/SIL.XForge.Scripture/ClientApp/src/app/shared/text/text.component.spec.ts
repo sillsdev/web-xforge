@@ -918,6 +918,13 @@ describe('TextComponent', () => {
       });
     }));
 
+    it('skips problem: start container node is null', fakeAsync(() => {
+      skipProblemTest((_env: TestEnvironment, _dropEvent: MockDragEvent) => {
+        // the start container of the range for the browser's point-to-index method is unavailable.
+        document.caretRangeFromPoint = (_x: number, _y: number) => ({ startOffset: 0 } as Range);
+      });
+    }));
+
     // End drag-and-drop section of tests.
   });
 });
