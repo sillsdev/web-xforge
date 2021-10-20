@@ -371,10 +371,8 @@ namespace SIL.XForge.Scripture.Services
                 // update note thread docs
                 Dictionary<string, IDocument<NoteThread>> noteThreadDocs =
                     await FetchNoteThreadDocsAsync(text.BookNum);
-                IEnumerable<int> chapterNumbers = newSetOfChapters.Select(c => c.Number);
-                IEnumerable<Chapter> deletedChapters = text.Chapters.Where(c => !chapterNumbers.Contains(c.Number));
                 Dictionary<int, ChapterDelta> chapterDeltas = GetDeltasByChapter(text, targetParatextId);
-                await UpdateNoteThreadDocsAsync(text, noteThreadDocs, token, chapterDeltas, deletedChapters);
+                await UpdateNoteThreadDocsAsync(text, noteThreadDocs, token, chapterDeltas);
 
                 // update project metadata
                 await _projectDoc.SubmitJson0OpAsync(op =>
@@ -638,13 +636,10 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         private async Task UpdateNoteThreadDocsAsync(TextInfo text,
             Dictionary<string, IDocument<NoteThread>> noteThreadDocs, CancellationToken token,
-            Dictionary<int, ChapterDelta> chapterDeltas, IEnumerable<Chapter> chaptersDeleted)
+            Dictionary<int, ChapterDelta> chapterDeltas)
         {
-            List<string> deletedNoteThreadDocIds = await DeleteNoteThreadDocsInChapters(text.BookNum, chaptersDeleted);
-            IEnumerable<IDocument<NoteThread>> remainingDocs = noteThreadDocs.Values
-                .Where(d => !deletedNoteThreadDocIds.Contains(d.Id));
             IEnumerable<NoteThreadChange> noteThreadChanges = _paratextService.GetNoteThreadChanges(_userSecret,
-                _projectDoc.Data.ParatextId, text.BookNum, remainingDocs, chapterDeltas, _currentSyncUsers);
+                _projectDoc.Data.ParatextId, text.BookNum, noteThreadDocs.Values, chapterDeltas, _currentSyncUsers);
             var tasks = new List<Task>();
             IReadOnlyDictionary<string, string> idsToUsernames =
                 await _paratextService.GetParatextUsernameMappingAsync(_userSecret, _projectDoc.Data, token);
