@@ -2,30 +2,71 @@
   "version": "0.2.0",
   "compounds": [
     {
-      "name": "Full App (SF)",
-      "configurations": [".NET Core (SF)", "Chrome (SF)"]
+      "name": "Launch Chromium, run and debug frontend and backend",
+      "configurations": ["Run and debug backend", "Launch Chromium and debug the running frontend"]
     }
   ],
   "configurations": [
+
     {
-      "type": "node",
+      // Attach to Chromium and debug the running frontend.
+      // This also works with Edge. Type doesn't seem to need to be "pwa-msedge" to attach with Edge.
+      // First you need to launch Chromium/Chrome or Edge with --remote-debugging-port=9977. The SF frontend must also be running/accessible.
+      "name": "Attach to frontend (in a running Chromium)",
+      "port": 9977,
       "request": "attach",
-      "name": "Node",
-      "port": 9230
+      "type": "pwa-chrome",
+      "webRoot": "${workspaceRoot}/src/SIL.XForge.Scripture/ClientApp",
     },
     {
-      "type": "chrome",
+      // Attach to and debug the running backend
+      "name": "Attach to backend",
+      "type": "coreclr",
+      "request": "attach",
+      "processName": "SIL.XForge.Scripture"
+    },
+    {
+      // Attach to Chromium and debug the running frontend tests
+      // First you need to launch the test runner, such as by: cd ClientApp && npm test -- --include src/app/shared/text/text.component.spec.ts
+      "name": "Attach to frontend tests (via Karma in Chromium)",
+      "port": 9988,
+      "request": "attach",
+      "type": "pwa-chrome",
+      "webRoot": "${workspaceFolder}/src/SIL.XForge.Scripture/ClientApp",
+      "sourceMaps": true,
+      "pathMapping": {
+        "/_karma_webpack_": "${workspaceFolder}/src/SIL.XForge.Scripture/ClientApp"
+      },
+    },
+    {
+      "name": "Launch Chromium and debug the running frontend",
+      "type": "pwa-chrome",
       "request": "launch",
-      "preLaunchTask": "npm start (SF)",
-      "name": "Chrome (SF)",
       "url": "http://localhost:5000",
       "webRoot": "${workspaceRoot}/src/SIL.XForge.Scripture/ClientApp",
       "linux": {
+        "name": "",
+        "type": "pwa-chrome",
+        "request": "launch",
         "runtimeExecutable": "/usr/bin/chromium-browser"
       }
     },
     {
-      "name": ".NET Core - npm start (SF)",
+      "name": "Run and debug backend",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "dotnet build",
+      "program": "${workspaceRoot}/src/SIL.XForge.Scripture/bin/Debug/netcoreapp3.1/SIL.XForge.Scripture.dll",
+      "args": ["--start-ng-serve=listen"],
+      "cwd": "${workspaceRoot}/src/SIL.XForge.Scripture/",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "Run frontend, run and debug backend",
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "dotnet build",
@@ -39,82 +80,27 @@
       }
     },
     {
-      "name": ".NET Core - npm start (SF) - Beta",
-      "type": "coreclr",
+      // VSCode may complain about startup errors, but you may be successful to Debug Anyway.
+      "name": "Launch Chrome and run and debug frontend",
+      "type": "pwa-chrome",
       "request": "launch",
-      "preLaunchTask": "dotnet build",
-      "program": "${workspaceRoot}/src/SIL.XForge.Scripture/bin/Debug/netcoreapp3.1/SIL.XForge.Scripture.dll",
-      "args": ["--start-ng-serve=yes", "--enable-beta-realtime-server=yes"],
-      "cwd": "${workspaceRoot}/src/SIL.XForge.Scripture/",
-      "stopAtEntry": false,
-      "console": "integratedTerminal",
-      "env": {
-        "ASPNETCORE_ENVIRONMENT": "DevelopmentBeta"
-      }
-    },
-    {
-      "name": ".NET Core (SF)",
-      "type": "coreclr",
-      "request": "launch",
-      "preLaunchTask": "dotnet build",
-      "program": "${workspaceRoot}/src/SIL.XForge.Scripture/bin/Debug/netcoreapp3.1/SIL.XForge.Scripture.dll",
-      "args": ["--start-ng-serve=listen"],
-      "cwd": "${workspaceRoot}/src/SIL.XForge.Scripture/",
-      "stopAtEntry": false,
-      "console": "integratedTerminal",
-      "env": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      }
-    },
-    {
-      "name": "Migration PtdaSyncAll",
-      "type": "coreclr",
-      "request": "launch",
-      "preLaunchTask": "build-migrator-ptdaSyncAll",
-      "program": "${workspaceRoot}/src/Migrations/PtdaSyncAll/bin/Debug/netcoreapp3.1/PtdaSyncAll.dll",
-      "cwd": "${workspaceRoot}/src/Migrations/PtdaSyncAll",
-      "stopAtEntry": false,
-      "console": "integratedTerminal",
-      "args": ["--start-ng-serve=listen"],
-      "env": {
-        // "SYNC_SET": "sfProject2 sfProject3",
-        // "SF_PROJECT_ADMINS": "sfProject1:sfUserA sfProject2:sfUserB",
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "PTDASYNCALL_MODE": "NOTsync",
-        "SKIPSYNCBOOK": "NOTskip"
-      }
-    },
-    {
-      "name": "Migrations PTDDCloneAll",
-      "type": "coreclr",
-      "request": "launch",
-      "preLaunchTask": "build-migrator-PTDDCloneAll",
-      "program": "${workspaceRoot}/src/Migrations/PTDDCloneAll/bin/Debug/netcoreapp3.1/PTDDCloneAll.dll",
-      "cwd": "${workspaceRoot}/src/Migrations/PTDDCloneAll",
-      "stopAtEntry": false,
-      "console": "integratedTerminal",
-      "env": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      }
-    },
-    {
-      "name": "Migration SyncCancel",
-      "type": "coreclr",
-      "request": "launch",
-      "preLaunchTask": "build-migrator-ptdaSyncCancelAll",
-      "program": "${workspaceRoot}/src/Migrations/SyncCancel/bin/Debug/netcoreapp3.1/SyncCancel.dll",
-      "cwd": "${workspaceRoot}/src/Migrations/SyncCancel",
-      "stopAtEntry": false,
-      "console": "integratedTerminal",
-      "args": ["--start-ng-serve=listen"],
-      "env": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+      "preLaunchTask": "npm start (SF)",
+      "url": "http://localhost:5000",
+      "webRoot": "${workspaceRoot}/src/SIL.XForge.Scripture/ClientApp",
+      "linux": {
+        "runtimeExecutable": "/usr/bin/chromium-browser"
       }
     },
     {
       "type": "node",
-      "request": "launch",
+      "request": "attach",
+      "name": "Node",
+      "port": 9230
+    },
+    {
       "name": "vscode-jest-tests",
+      "type": "node",
+      "request": "launch",
       "program": "${workspaceFolder}/src/RealtimeServer/node_modules/.bin/jest",
       "args": ["--runInBand"],
       "console": "integratedTerminal",
@@ -126,7 +112,7 @@
       }
     },
     {
-      "name": "Karma active spec (SF)",
+      "name": "Launch Chromium and run and debug current spec",
       "type": "chrome",
       "request": "launch",
       "preLaunchTask": "npm test active spec (SF)",
@@ -140,6 +126,20 @@
       "linux": {
         "runtimeExecutable": "/usr/bin/chromium-browser"
       }
-    }
+    },
+    // {
+    //   "name": "Migration Foo",
+    //   "type": "coreclr",
+    //   "request": "launch",
+    //   "preLaunchTask": "build-migrator-foo",
+    //   "program": "${workspaceRoot}/src/Migrations/Foo/bin/Debug/netcoreapp3.1/Foo.dll",
+    //   "cwd": "${workspaceRoot}/src/Migrations/Foo",
+    //   "stopAtEntry": false,
+    //   "console": "integratedTerminal",
+    //   "args": ["--start-ng-serve=listen"],
+    //   "env": {
+    //     "ASPNETCORE_ENVIRONMENT": "Development"
+    //   }
+    // },
   ]
 }

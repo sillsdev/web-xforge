@@ -21,39 +21,6 @@
       "problemMatcher": "$msCompile"
     },
     {
-      "label": "build-migrator-ptdaSyncAll",
-      "command": "dotnet",
-      "args": ["build", "/property:GenerateFullPaths=true"],
-      "type": "shell",
-      "group": "build",
-      "options": {
-        "cwd": "${workspaceRoot}/src/Migrations/PtdaSyncAll"
-      },
-      "problemMatcher": "$msCompile"
-    },
-    {
-      "label": "build-migrator-PTDDCloneAll",
-      "command": "dotnet",
-      "args": ["build", "/property:GenerateFullPaths=true"],
-      "type": "shell",
-      "group": "build",
-      "options": {
-        "cwd": "${workspaceRoot}/src/Migrations/PTDDCloneAll"
-      },
-      "problemMatcher": "$msCompile"
-    },
-    {
-      "label": "build-migrator-syncCancel",
-      "command": "dotnet",
-      "args": ["build", "/property:GenerateFullPaths=true"],
-      "type": "shell",
-      "group": "build",
-      "options": {
-        "cwd": "${workspaceRoot}/src/Migrations/SyncCancel"
-      },
-      "problemMatcher": "$msCompile"
-    },
-    {
       "label": "npm start (SF)",
       "command": "npm start",
       "type": "shell",
@@ -151,6 +118,17 @@
         "cwd": "${workspaceRoot}/src/SIL.XForge.Scripture"
       },
       "problemMatcher": "$msCompile"
-    }
+    },
+    // {
+    //   "label": "build-migrator-foo",
+    //   "command": "dotnet",
+    //   "args": ["build", "/property:GenerateFullPaths=true"],
+    //   "type": "shell",
+    //   "group": "build",
+    //   "options": {
+    //     "cwd": "${workspaceRoot}/src/Migrations/Foo"
+    //   },
+    //   "problemMatcher": "$msCompile"
+    // },
   ]
 }
