@@ -337,32 +337,77 @@ describe('TranslateMetricsSession', () => {
     env.sessionDispose();
   }));
 
-  it('ignore not found error', fakeAsync(() => {
+  it('handles errors in sendMetrics', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(
-      new CommandError(CommandErrorCode.NotFound, 'NotFound')
-    );
 
+    // No error, no throw.
+    when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
     env.keyPress('a');
-    expect(() => env.sessionDispose()).not.toThrow();
-  }));
+    tick(SEND_METRICS_INTERVAL);
+    verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).once();
 
-  it('ignore forbidden error', fakeAsync(() => {
-    const env = new TestEnvironment();
-    when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(
-      new CommandError(CommandErrorCode.Forbidden, 'Forbidden')
-    );
+    // CommandError is re-thrown when online
+    resetCalls(mockedSFProjectService);
+    const commandError: CommandError = new CommandError(CommandErrorCode.InternalError, 'error');
+    when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(commandError);
+    expect(() => {
+      env.keyPress('a');
+      tick(SEND_METRICS_INTERVAL);
+    }).toThrow();
+    verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).once();
 
-    env.keyPress('a');
-    expect(() => env.sessionDispose()).not.toThrow();
-  }));
+    // Non-CommandError error is re-thrown when online
+    resetCalls(mockedSFProjectService);
+    const otherError: Error = new Error('problem');
+    when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(otherError);
+    expect(() => {
+      env.keyPress('a');
+      tick(SEND_METRICS_INTERVAL);
+    }).toThrow();
+    verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).once();
 
-  it('should throw on other errors', fakeAsync(() => {
-    const env = new TestEnvironment();
-    when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(new Error('Other'));
+    // CommandError NotFound is ignored
+    resetCalls(mockedSFProjectService);
+    const notFoundError: CommandError = new CommandError(CommandErrorCode.NotFound, 'error');
+    when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(notFoundError);
+    expect(() => {
+      env.keyPress('a');
+      tick(SEND_METRICS_INTERVAL);
+    }).not.toThrow();
+    verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).once();
 
-    env.keyPress('a');
-    expect(() => env.sessionDispose()).toThrow();
+    // CommandError Forbidden is ignored
+    resetCalls(mockedSFProjectService);
+    const forbiddenError: CommandError = new CommandError(CommandErrorCode.Forbidden, 'error');
+    when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(forbiddenError);
+    expect(() => {
+      env.keyPress('a');
+      tick(SEND_METRICS_INTERVAL);
+    }).not.toThrow();
+    verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).once();
+
+    // CommandError is ignored when offline
+    resetCalls(mockedSFProjectService);
+    when(mockedPwaService.isOnline).thenReturn(false);
+    when(mockedPwaService.onlineStatus).thenReturn(of(false));
+    when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(commandError);
+    expect(() => {
+      env.keyPress('a');
+      tick(SEND_METRICS_INTERVAL);
+    }).not.toThrow();
+    // Not calling since offline
+    verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
+
+    // Non-CommandError error is ignored when offline
+    resetCalls(mockedSFProjectService);
+    expect(() => {
+      env.keyPress('a');
+      tick(SEND_METRICS_INTERVAL);
+    }).not.toThrow();
+    // Not calling since offline
+    verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
+
+    env.sessionDispose();
   }));
 });
 

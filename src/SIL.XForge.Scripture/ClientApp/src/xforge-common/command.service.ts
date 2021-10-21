@@ -1,10 +1,12 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import uuidv1 from 'uuid/v1';
 import { BugsnagService } from './bugsnag.service';
 import { COMMAND_API_NAMESPACE } from './url-constants';
 
+/** See also C# enum EdjCase.JsonRpc.Common.RpcErrorCode, which this somewhat matches. */
 export enum CommandErrorCode {
+  Other = -32800,
   ParseError = -32700,
   InvalidRequest = -32600,
   MethodNotFound = -32601,
@@ -21,14 +23,14 @@ interface JsonRpcRequest {
   id?: string;
 }
 
-interface JsonRpcResponse<T> {
+export interface JsonRpcResponse<T> {
   jsonrpc: '2.0';
   result?: T;
   error?: JsonRpcError;
   id: string;
 }
 
-interface JsonRpcError {
+export interface JsonRpcError {
   code: number;
   message: string;
   data?: any;
@@ -80,8 +82,44 @@ export class CommandService {
       }
       return response.result;
     } catch (error) {
-      const message = `Error invoking ${method}: ${error.message}`;
-      throw new CommandError(error.code || error.status, message, error.data);
+      // Transform the various kinds of errors into a CommandError.
+
+      let code: CommandErrorCode = CommandErrorCode.Other;
+      let moreInformation: string = '';
+      let data: any = undefined;
+      if (
+        // Does error.error implement interface ErrorEvent?
+        error.error != null &&
+        error.error.colno !== undefined &&
+        error.error.error !== undefined &&
+        error.error.filename !== undefined &&
+        error.error.lineno !== undefined &&
+        error.error.message !== undefined
+      ) {
+        // (Also, error may be an HttpErrorResponse in this situation.)
+        const errorEvent: ErrorEvent = error.error;
+        moreInformation = `${errorEvent.type}: ${errorEvent.message}`;
+      } else if (error instanceof HttpErrorResponse) {
+        // Only set code to HTTP status code if it is a CommandErrorCode.
+        if (Object.values(CommandErrorCode).includes(error.status as CommandErrorCode)) {
+          code = error.status as CommandErrorCode;
+        }
+        moreInformation = error.message;
+      } else if (
+        // Does error implement interface JsonRpcError by having these properties?
+        error.code !== undefined &&
+        error.message !== undefined
+      ) {
+        // Note that we might not be using errors that implement JsonRpcError anymore. But if we do receive one:
+        const jsonRpcError: JsonRpcError = error;
+        moreInformation = jsonRpcError.message;
+        data = jsonRpcError.data;
+        code = jsonRpcError.code;
+      } else {
+        moreInformation = `Unexpected error type: ${error}`;
+      }
+      const message = `Error invoking ${method}: ${moreInformation}`;
+      throw new CommandError(code, message, data);
     }
   }
 }
