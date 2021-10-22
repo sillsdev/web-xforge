@@ -20,6 +20,7 @@ import { AuthService } from 'xforge-common/auth.service';
 import { BetaMigrationDialogComponent } from 'xforge-common/beta-migration/beta-migration-dialog/beta-migration-dialog.component';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
@@ -98,6 +99,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     readonly noticeService: NoticeService,
     readonly i18n: I18nService,
     readonly media: MediaObserver,
+    readonly urls: ExternalUrlService,
     private readonly pwaService: PwaService,
     iconRegistry: MdcIconRegistry,
     sanitizer: DomSanitizer
