@@ -1,85 +1,201 @@
 <ng-container *transloco="let t; read: 'import_questions_dialog'">
-  <mdc-dialog>
-    <mdc-dialog-container>
-      <mdc-dialog-surface>
-        <mdc-dialog-title> <i class="material-icons">help</i> {{ t("import_from_transcelerator") }} </mdc-dialog-title>
-        <mdc-dialog-content>
-          <form [formGroup]="filterForm" autocomplete="off">
-            <div class="filter-references">
-              <mdc-form-field>
-                <mdc-text-field formControlName="from" label="{{ t('reference_from') }}" [outlined]="true">
-                  <mdc-icon
-                    #fromRef
-                    mdcTextFieldIcon
-                    [trailing]="true"
-                    [clickable]="true"
-                    (click)="openScriptureChooser(fromControl)"
-                  >
-                    expand_more
-                  </mdc-icon>
-                </mdc-text-field>
-                <mdc-helper-text [validation]="true">{{ t("must_be_valid_reference") }}</mdc-helper-text>
-              </mdc-form-field>
-              <mdc-form-field>
-                <mdc-text-field formControlName="to" label="{{ t('reference_to') }}" [outlined]="true">
-                  <mdc-icon
-                    mdcTextFieldIcon
-                    [trailing]="true"
-                    [clickable]="true"
-                    (click)="openScriptureChooser(toControl)"
-                  >
-                    expand_more
-                  </mdc-icon>
-                </mdc-text-field>
-                <mdc-helper-text [validation]="true">{{ t("must_be_valid_reference") }}</mdc-helper-text>
-              </mdc-form-field>
-            </div>
-            <div colspan="2" class="filter-text">
-              <div>
-                <mdc-text-field formControlName="filter" placeholder="{{ t('filter_questions') }}"></mdc-text-field>
-                <button mdc-button type="button" (click)="clearFilters()">{{ t("show_all") }}</button>
-              </div>
-            </div>
-            <mdc-data-table>
-              <table mdcDataTableTable>
-                <thead>
-                  <tr mdcDataTableHeaderRow>
-                    <th mdcDataTableHeaderCell>
-                      <mdc-form-field class="select-all-checkbox">
-                        <mdc-checkbox #selectAllCheckbox (change)="selectAllChanged($event)"></mdc-checkbox>
-                        <label fxShow fxHide.xs>{{ t("select_all") }}</label>
-                        <label fxHide fxShow.xs>{{ t("all") }}</label>
-                      </mdc-form-field>
-                    </th>
-                    <th mdcDataTableHeaderCell>{{ t("question") }}</th>
-                  </tr>
-                </thead>
-                <tbody mdcDataTableContent>
-                  <tr mdcDataTableRow *ngFor="let listItem of filteredList" [selected]="listItem.checked">
-                    <td mdcDataTableCell>
-                      <mdc-form-field>
-                        <mdc-checkbox [checked]="listItem.checked" (change)="checkboxChanged($event, listItem)">
-                        </mdc-checkbox>
-                        <label>{{ referenceForDisplay(listItem.question) }}</label>
-                      </mdc-form-field>
-                    </td>
-                    <td mdcDataTableCell class="row-question">{{ listItem.question.text }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </mdc-data-table>
-          </form>
-          <p *ngIf="statusMessageKey">{{ t(statusMessageKey) }}</p>
-          <mat-error [class.hidden]="!(importClicked && selectedCount < 1)">{{ t("select_questions") }}</mat-error>
-        </mdc-dialog-content>
-        <mdc-dialog-actions>
-          <button mdcDialogButton mdcDialogAction="close" type="button">{{ t("cancel") }}</button>
-          <button mdcDialogButton [unelevated]="true" type="submit" (click)="importQuestions()">
-            <span fxShow fxHide.xs>{{ t("import_count_questions", { count: selectedCount }) }}</span>
-            <span fxHide fxShow.xs>{{ t("import") }}</span>
-          </button>
-        </mdc-dialog-actions>
-      </mdc-dialog-surface>
-    </mdc-dialog-container>
-  </mdc-dialog>
+  <h2 mat-dialog-title>
+    {{
+      status !== "progress"
+        ? t("import_questions")
+        : t("import_progress", { completed: importedCount, total: toImportCount })
+    }}
+  </h2>
+  <mat-dialog-content class="mat-typography">
+    <div *ngIf="status === 'file_import_errors'" class="dialog-content-header">
+      {{ t("invalid_csv_rows_will_be_skipped") }}
+    </div>
+
+    <div class="dialog-content-body" (scroll)="dialogScroll()" #dialogContentBody>
+      <div *ngIf="status === 'initial'" class="initial-import-screen">
+        <div class="card-wrapper">
+          <mat-card>
+            <mat-card-title>{{ t("import_from_transcelerator") }}</mat-card-title>
+            <mat-card-content>
+              <ng-container *ngFor="let i of i18n.interpolate('import_questions_dialog.transcelerator_paratext')">
+                {{ i.id == null ? i.text : "" }}
+                <a *ngIf="i.id == 1" [href]="urls.transcelerator" target="_blank">{{ i.text }}</a>
+                <a *ngIf="i.id == 3" [href]="urls.paratext" target="_blank">{{ i.text }}</a>
+              </ng-container>
+
+              <ol>
+                <li *ngFor="let line of transceleratorInstructions" [innerHTML]="line"></li>
+              </ol>
+            </mat-card-content>
+            <mat-card-actions>
+              <button mat-flat-button color="primary" (click)="importFromTranscelerator()">
+                {{ t("import_from_transcelerator") }}
+              </button>
+              <a mat-button [href]="urls.transceleratorImportHelpPage" target="_blank">{{ t("learn_more") }}</a>
+            </mat-card-actions>
+          </mat-card>
+          <mat-card>
+            <mat-card-title>{{ t("import_from_spreadsheet") }}</mat-card-title>
+            <mat-card-content>
+              <ol>
+                <li>
+                  {{ csvInstructions[0] }}
+                  <table>
+                    <!-- TODO internationalize the verse references, but only once we accept localized inputs -->
+                    <tr *ngFor="let verseNumber of [1, 2]">
+                      <td>1JN 1:{{ verseNumber }}</td>
+                      <td>{{ t("question_for_verse", { number: verseNumber }) }}</td>
+                    </tr>
+                  </table>
+                </li>
+                <li *ngFor="let line of csvInstructions.slice(1)" [innerHTML]="line"></li>
+              </ol>
+            </mat-card-content>
+
+            <mat-card-actions>
+              <button mat-flat-button color="primary" ngfSelect accept=".csv" (fileChange)="fileSelected($event)">
+                {{ t("import_from_csv_file") }}
+              </button>
+              <a mat-button [href]="urls.csvImportHelpPage" target="_blank">{{ t("learn_more") }}</a>
+            </mat-card-actions>
+          </mat-card>
+        </div>
+        <div class="support-message">
+          <ng-container *ngFor="let i of i18n.interpolate('import_questions_dialog.help_options')">
+            <ng-container *ngIf="i.id == null">{{ i.text }}</ng-container>
+            <a *ngIf="i.id === 1" [href]="urls.communitySupport" target="_blank">{{ i.text }}</a>
+            <a *ngIf="i.id === 3" href="mailto:{{ issueEmail }}" target="_blank">{{ issueEmail }}</a>
+          </ng-container>
+        </div>
+      </div>
+
+      <div *ngIf="status === 'loading'" class="loading"><mat-spinner></mat-spinner></div>
+
+      <div *ngIf="status === 'file_import_errors'">
+        <table mat-table [dataSource]="invalidRowsForDisplay">
+          <ng-container matColumnDef="rowNumber">
+            <th mat-header-cell *matHeaderCellDef>{{ t("row") }}</th>
+            <td mat-cell *matCellDef="let element">{{ element[0] }}</td>
+          </ng-container>
+          <ng-container matColumnDef="reference">
+            <th mat-header-cell *matHeaderCellDef>{{ t("reference") }}</th>
+            <td mat-cell *matCellDef="let element">{{ element[1] }}</td>
+          </ng-container>
+          <ng-container matColumnDef="question">
+            <th mat-header-cell *matHeaderCellDef>{{ t("question") }}</th>
+            <td mat-cell *matCellDef="let element">{{ element[2] }}</td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="['rowNumber', 'reference', 'question']"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['rowNumber', 'reference', 'question']"></tr>
+        </table>
+      </div>
+
+      <form *ngIf="status === 'filter'" [formGroup]="filterForm" autocomplete="off">
+        <div class="filter-references">
+          <mdc-form-field>
+            <mdc-text-field formControlName="from" label="{{ t('reference_from') }}" [outlined]="true">
+              <mdc-icon
+                #fromRef
+                mdcTextFieldIcon
+                [trailing]="true"
+                [clickable]="true"
+                (click)="openScriptureChooser(fromControl)"
+              >
+                expand_more
+              </mdc-icon>
+            </mdc-text-field>
+            <mdc-helper-text [validation]="true">{{ t("must_be_valid_reference") }}</mdc-helper-text>
+          </mdc-form-field>
+          <mdc-form-field>
+            <mdc-text-field formControlName="to" label="{{ t('reference_to') }}" [outlined]="true">
+              <mdc-icon mdcTextFieldIcon [trailing]="true" [clickable]="true" (click)="openScriptureChooser(toControl)">
+                expand_more
+              </mdc-icon>
+            </mdc-text-field>
+            <mdc-helper-text [validation]="true">{{ t("must_be_valid_reference") }}</mdc-helper-text>
+          </mdc-form-field>
+        </div>
+        <div colspan="2" class="filter-text">
+          <div>
+            <mdc-text-field formControlName="filter" placeholder="{{ t('filter_questions') }}"></mdc-text-field>
+            <button mdc-button type="button" (click)="clearFilters()">{{ t("show_all") }}</button>
+          </div>
+        </div>
+        <table mat-table [dataSource]="questionsForDisplay" class="question-list">
+          <ng-container matColumnDef="verse">
+            <th mat-header-cell *matHeaderCellDef>
+              <mat-checkbox #selectAllCheckbox (change)="selectAllChanged($event.checked)">{{
+                t("select_all")
+              }}</mat-checkbox>
+            </th>
+            <td mat-cell *matCellDef="let element">
+              <mat-checkbox
+                [(ngModel)]="element.checked"
+                (ngModelChange)="checkboxChanged(element)"
+                [ngModelOptions]="{ standalone: true }"
+                >{{ referenceForDisplay(element.question) }}</mat-checkbox
+              >
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="question">
+            <th mat-header-cell *matHeaderCellDef>{{ t("question") }}</th>
+            <td mat-cell *matCellDef="let element">{{ element.question.text }}</td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="['verse', 'question']"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['verse', 'question']"></tr>
+        </table>
+      </form>
+
+      <div *ngIf="status === 'no_questions'">{{ t("no_questions_available") }}</div>
+
+      <div *ngIf="status === 'update_transcelerator'">{{ t("update_transcelerator") }}</div>
+
+      <div *ngIf="status === 'progress'">
+        <mat-progress-bar mode="determinate" [value]="(importedCount / toImportCount) * 100"></mat-progress-bar>
+      </div>
+    </div>
+
+    <div *ngIf="status === 'filter'" class="dialog-content-footer">
+      <mat-error [class.hidden]="!(importClicked && selectedCount < 1)">
+        {{ t("select_questions") }}
+      </mat-error>
+      <div *ngIf="questionSource === 'transcelerator'" [class.hidden]="!showDuplicateImportNote">
+        {{ t("transcelerator_some_questions_already_imported") }}
+      </div>
+      <div *ngIf="questionSource === 'csv_file'" [class.hidden]="!showDuplicateImportNote">
+        {{ t("csv_questions_duplicates") }}
+      </div>
+    </div>
+
+    <div *ngIf="status === 'progress'" class="dialog-content-footer">
+      {{ t("canceling_import_not_remove_questions") }}
+      <br />
+      <!-- Intentionally not internationalized because this message should only be here for a short time. -->
+      Note: Importing a large number of questions is currently prohibitively slow. A fix is being worked on.
+      <div *ngIf="importCanceled" class="canceling-import">{{ t("canceling_import") }}</div>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions *ngIf="questionSource != null && importCanceled === false" align="end">
+    <button *ngIf="status === 'filter' || status === 'file_import_errors'" mat-button mat-dialog-close>
+      {{ t("cancel") }}
+    </button>
+    <button
+      *ngIf="status === 'no_questions' || status === 'update_transcelerator'"
+      mat-flat-button
+      mat-dialog-close
+      color="primary"
+    >
+      {{ t("close") }}
+    </button>
+
+    <button *ngIf="status === 'file_import_errors'" mat-flat-button color="primary" (click)="invalidRows = []">
+      {{ t("continue_import") }}
+    </button>
+    <button id="import-button" *ngIf="status === 'filter'" mat-flat-button color="primary" (click)="importQuestions()">
+      <span fxShow fxHide.xs>{{ t("import_count_questions", { count: selectedCount }) }}</span>
+      <span fxHide fxShow.xs>{{ t("import") }}</span>
+    </button>
+    <button *ngIf="status === 'progress'" mat-button (click)="importCanceled = true">{{ t("cancel") }}</button>
+  </mat-dialog-actions>
 </ng-container>
