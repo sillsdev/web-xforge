@@ -3,16 +3,96 @@
 @import 'src/variables';
 @import 'bootstrap/scss/mixins/breakpoints';
 
-mdc-dialog-title .material-icons {
-  vertical-align: text-bottom;
+// Section: General dialog styles
+
+.mat-dialog-title {
+  margin-bottom: 0.25em;
 }
 
-mdc-data-table {
+.mat-dialog-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog-content-body {
+  overflow-y: auto;
+  padding: 2px; // otherwise the mat-card elements have part of their shadows hidden
+}
+
+.dialog-content-header {
+  margin-bottom: 0.5em;
+}
+
+.dialog-content-footer {
+  margin-top: 0.5em;
+}
+
+// Section: Initial import screen
+
+.initial-import-screen {
+  max-width: 60em;
+}
+
+.card-wrapper {
+  display: flex;
+  column-gap: 1em;
+
+  @include media-breakpoint-only(xs) {
+    flex-direction: column;
+    row-gap: 1em;
+  }
+}
+
+.mat-card {
+  display: flex;
+  flex-direction: column;
+
+  mat-card-content {
+    flex-grow: 1;
+  }
+
+  ol {
+    padding-left: 1.25em;
+  }
+
+  table {
+    font-size: small;
+    border-collapse: collapse;
+    td {
+      border: 1px solid lightgray;
+      padding: 0 0.5em;
+    }
+  }
+}
+
+.support-message {
+  margin-top: 1em;
+}
+
+// Section: Loading screen
+
+.loading {
+  margin: 5em;
+}
+
+// Section: Import errors screen
+
+.mat-column-rowNumber {
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+  padding-right: 1em;
+  text-align: right;
+  font-weight: 500;
+}
+
+.mat-column-reference {
+  padding-left: 1em;
+  padding-right: 1em;
+}
+
+// Section: Question list screen
+
+.mat-table {
   width: 100%;
-}
-
-.select-all-checkbox {
-  margin-right: 1em;
 }
 
 .filter-text {
@@ -63,4 +143,14 @@ mdc-text-field ::ng-deep {
 .mat-error {
   margin-top: 10px;
   font-size: 14px;
+}
+
+.question-list td:first-child {
+  padding-right: 1em;
+}
+
+// Section: Importing screen
+
+.canceling-import {
+  margin-top: 1em;
 }

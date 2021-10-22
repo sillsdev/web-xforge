@@ -4,6 +4,7 @@ import { interval } from 'rxjs';
 import { takeWhile } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { BetaMigrationMessage } from 'xforge-common/beta-migration/beta-migration.component';
+import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
 import { environment } from '../../../environments/environment';
@@ -25,7 +26,8 @@ export class BetaMigrationDialogComponent {
     private sanitizer: DomSanitizer,
     private readonly locationService: LocationService,
     private readonly authService: AuthService,
-    private readonly i18n: I18nService
+    private readonly i18n: I18nService,
+    readonly urls: ExternalUrlService
   ) {
     this.betaUrl = this.migrationUrl;
     window.addEventListener('message', event => {
