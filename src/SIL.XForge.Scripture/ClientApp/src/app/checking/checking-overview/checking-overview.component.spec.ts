@@ -2,6 +2,7 @@ import { MdcDialog, MdcDialogModule, MdcDialogRef } from '@angular-mdc/web/dialo
 import { Location } from '@angular/common';
 import { DebugElement, NgModule, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { MatDialog } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Route } from '@angular/router';
@@ -52,6 +53,7 @@ import { CheckingOverviewComponent } from './checking-overview.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedMdcDialog = mock(MdcDialog);
+const mockedMatDialog = mock(MatDialog);
 const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
@@ -74,6 +76,7 @@ describe('CheckingOverviewComponent', () => {
     providers: [
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: MdcDialog, useMock: mockedMdcDialog },
+      { provide: MatDialog, useMock: mockedMatDialog },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
@@ -256,28 +259,15 @@ describe('CheckingOverviewComponent', () => {
 
   describe('Import Questions', () => {
     it('should open a dialog to import questions', fakeAsync(() => {
-      when(mockedProjectService.hasTransceleratorQuestions('project01')).thenResolve(true);
       const env = new TestEnvironment();
       env.waitForQuestions();
       env.clickElement(env.importButton);
-      verify(mockedMdcDialog.open(ImportQuestionsDialogComponent, anything())).once();
+      verify(mockedMatDialog.open(ImportQuestionsDialogComponent, anything())).once();
       expect().nothing();
-    }));
-
-    it('should hide import button if offline', fakeAsync(() => {
-      when(mockedProjectService.hasTransceleratorQuestions(anything())).thenReject(new Error('No Connection'));
-      const env = new TestEnvironment();
-      env.onlineStatus = false;
-      env.waitForQuestions();
-      expect(env.importButton).toBeNull();
-      when(mockedProjectService.hasTransceleratorQuestions('project01')).thenResolve(true);
-      env.onlineStatus = true;
-      expect(env.importButton).not.toBeNull();
     }));
 
     it('should not show import questions button until list of texts have loaded', fakeAsync(() => {
       const env = new TestEnvironment();
-      when(mockedProjectService.hasTransceleratorQuestions('project01')).thenResolve(true);
       const delayPromise = new Promise<void>(resolve => setTimeout(resolve, 10 * 1000));
       when(mockedProjectService.queryQuestions(anything())).thenReturn(
         delayPromise.then(() => env.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {}))
