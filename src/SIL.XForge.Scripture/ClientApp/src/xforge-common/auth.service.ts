@@ -300,6 +300,10 @@ export class AuthService {
         return false;
       }
     }
+    // Clear auth0 processed hash so it isn't used for repeat login handling i.e. during offline/online state changes
+    if (this.parsedHashPromise != null) {
+      this.parsedHashPromise = Promise.resolve(null);
+    }
     if (state.returnUrl != null) {
       this.router.navigateByUrl(state.returnUrl, { replaceUrl: true });
     } else if (this.locationService.hash !== '') {
