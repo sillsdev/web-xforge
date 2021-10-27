@@ -616,9 +616,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   removeEmbeddedElements(): void {
     this.shouldNoteThreadsRespondToEdits = false;
-    if (this.target != null) {
-      this.target.removeEmbeddedElements();
-    }
+    this.target?.removeEmbeddedElements();
     // Un-subscribe from all segment click events as these all get setup again
     for (const event of this.clickSubs) {
       event.unsubscribe();

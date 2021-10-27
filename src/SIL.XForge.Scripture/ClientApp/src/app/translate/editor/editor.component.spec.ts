@@ -1537,32 +1537,34 @@ describe('EditorComponent', () => {
       const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
       expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
 
-      // target: chap|ter 1, verse 1.
-      let index: number = 15;
+      // insert text
+      let remoteEditPosition: number = 15;
+      // target: $chap|ter 1, verse 1.
       const textDoc: TextDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
       const insertDelta: DeltaStatic = new Delta();
-      (insertDelta as any).push({ retain: index } as DeltaOperation);
+      (insertDelta as any).push({ retain: remoteEditPosition } as DeltaOperation);
       (insertDelta as any).push({ insert: 'abc' } as DeltaOperation);
       textDoc.submit(insertDelta);
       env.wait();
       expect(env.component.target!.getSegmentText('verse_1_1')).toEqual('target: chapabcter 1, verse 1.');
 
-      index = env.getNoteThreadEditorPosition('thread02');
-      // targe|->t: chap<-|ter 1, verse 3.
-      const verse3InsertionIndex = index + 3;
+      // select and insert text e.g. pasting in a selection
+      remoteEditPosition = 40;
+      // $targ|->et: chap<-|ter 1, $$verse 3.
       const insertDeleteDelta: DeltaStatic = new Delta();
-      (insertDeleteDelta as any).push({ retain: verse3InsertionIndex } as DeltaOperation);
+      (insertDeleteDelta as any).push({ retain: remoteEditPosition } as DeltaOperation);
       (insertDeleteDelta as any).push({ insert: 'defgh' } as DeltaOperation);
       (insertDeleteDelta as any).push({ delete: 7 } as DeltaOperation);
       textDoc.submit(insertDeleteDelta);
       env.wait();
       expect(env.component.target!.getSegmentText('verse_1_3')).toEqual('targdefghpter 1, verse 3.');
 
-      index = env.getNoteThreadEditorPosition('thread03');
-      // targdefghpter |->1, v<-|erse 3.
-      const verse3DeletionIndex: number = index - 6;
+      // select and delete text including deleting notes
+      remoteEditPosition = 50;
+      // $targdefghpter |->1, $$v<-|erse 3.
       const deleteDelta: DeltaStatic = new Delta();
-      (deleteDelta as any).push({ retain: verse3DeletionIndex } as DeltaOperation);
+      (deleteDelta as any).push({ retain: remoteEditPosition } as DeltaOperation);
+      // the remote edit deletes 4, but locally it is expanded to 6 to include the 2 note embeds
       (deleteDelta as any).push({ delete: 4 } as DeltaOperation);
       textDoc.submit(deleteDelta);
       env.wait();
