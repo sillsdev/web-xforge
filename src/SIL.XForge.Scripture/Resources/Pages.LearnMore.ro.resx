@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Microsoft ResX Schema
+
+    Version 2.0
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
+    associated with the data types.
+
+    Example:
+
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+
+    There are any number of "resheader" rows that contain simple
+    name/value pairs.
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
+    mimetype set.
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
+    extensible. For a given mimetype the value must be set accordingly:
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
+    read any of the formats listed below.
+
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+  -->
+  <xsd:schema xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace"/>
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0"/>
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string"/>
+              <xsd:attribute name="type" type="xsd:string"/>
+              <xsd:attribute name="mimetype" type="xsd:string"/>
+              <xsd:attribute ref="xml:space"/>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string"/>
+              <xsd:attribute name="name" type="xsd:string"/>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2"/>
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1"/>
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3"/>
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4"/>
+              <xsd:attribute ref="xml:space"/>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required"/>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="LearnCheckingHow" xml:space="preserve">
+    <value>Aflați cum să configurați și să utilizați {0}verificarea cu comunitatea{1}.</value>
+  </data>
+  <data name="LearnCheckingTitle" xml:space="preserve">
+    <value>Verificare în comunitate</value>
+  </data>
+  <data name="LearnHeader" xml:space="preserve">
+    <value>Aflați mai multe despre Scripture Forge</value>
+  </data>
+  <data name="LearnSliderCheckingOfflineAnwering" xml:space="preserve">
+    <value>{0}Cum sa răspunzi la întrebări{1}, inclusiv cum să înregistrezi un răspuns audio, offline.</value>
+  </data>
+  <data name="LearnSliderCheckingOfflineDescription" xml:space="preserve">
+    <value>{0}Membrii din comunitate{1} și {0}administratorii{1} ar trebui {2}să urmărească acest videoclip{3} pentru a vedea cum utilizatorii pot continua să lucreze, chiar și atunci când sunt offline. Acesta acoperă:</value>
+  </data>
+  <data name="LearnSliderCheckingOfflineHeader" xml:space="preserve">
+    <value>Lucrarea offline</value>
+  </data>
+  <data name="LearnSliderCheckingOfflineInstalling" xml:space="preserve">
+    <value>{0}Cum să instalați aplicația{1} pe dispozitivul dvs. cu ajutorul {2}Adăugarea la ecranul de start{3}.</value>
+  </data>
+  <data name="LearnSliderCheckingOfflineLoading" xml:space="preserve">
+    <value>{0}Cum să încărcați întrebările automat{1} înainte de a fi deconectat.</value>
+  </data>
+  <data name="LearnSliderCheckingOfflineSaving" xml:space="preserve">
+    <value>{0}Cum să salvați automat{1} răspunsurile actualizate când sunteți din nou online.</value>
+  </data>
+  <data name="LearnSliderCheckingSeeAnswer" xml:space="preserve">
+    <value>{0}Cum să răspundeți la întrebări{1} în format text și audio.</value>
+  </data>
+  <data name="LearnSliderCheckingSeeConnect" xml:space="preserve">
+    <value>{0}Cum să conectați la un proiect în Scripture Forge{1} ca un {2}verificator{3} invitat.</value>
+  </data>
+  <data name="LearnSliderCheckingSeeDescription" xml:space="preserve">
+    <value>{0}Verificatorii{1} și {0}administratorii{1} ar trebui {2}să urmărească acest videoclip{3} pentru a vedea cum {0}verificatorii{1} pot răspunde la întrebări și cum pot interacționa unii cu alții. Acesta acoperă:</value>
+  </data>
+  <data name="LearnSliderCheckingSeeHeader" xml:space="preserve">
+    <value>Cum funcționează verificarea în comunități?</value>
+  </data>
+  <data name="LearnSliderCheckingSeeInteract" xml:space="preserve">
+    <value>{0}Cum să colaborați{1} cu alți {2}verificatori{3} prin adăugarea de comentarii la răspunsurile lor.</value>
+  </data>
+  <data name="LearnSliderCheckingSeeReference" xml:space="preserve">
+    <value>{0}Cum să selectați pasaje din Biblie{1} pentru consultare.</value>
+  </data>
+  <data name="LearnSliderCheckingSetupAddQuestions" xml:space="preserve">
+    <value>{0}Cum să adăugați întrebări{1} pentru comunitate (acestea pot conține înregistrări audio ale versetelor sau o întrebare propriu-zisă).</value>
+  </data>
+  <data name="LearnSliderCheckingSetupConnect" xml:space="preserve">
+    <value>{0}Cum să selectați un proiect Paratext{1} ca să conectați la el din Scripture Forge.</value>
+  </data>
+  <data name="LearnSliderCheckingSetupDescription" xml:space="preserve">
+    <value>{0}Administratorii{1} proiectelor în {4}Paratext{5} pot {2}viziona acest video{3} pentru a învăța despre configurarea {0}verificării în comunități{1}. Acesta acoperă:</value>
+  </data>
+  <data name="LearnSliderCheckingSetupHeader" xml:space="preserve">
+    <value>Cum să începi cu verificare în comunități?</value>
+  </data>
+  <data name="LearnSliderCheckingSetupShare" xml:space="preserve">
+    <value>{0}Cum să invitați{1} {2}verificatori{3} să răspundă la întrebări.</value>
+  </data>
+  <data name="LearnSliderCheckingSetupSync" xml:space="preserve">
+    <value>{0}Cum să sincronizați{1} răspunsurile {2}verificatorilor{3} cu Paratext.</value>
+  </data>
+  <data name="LearnSliderSuggestionAcceptDescription" xml:space="preserve">
+    <value>Dacă motorul de sugestii este configurat și instruit, Scripture Forge poate oferi {0}traducătorilor{1} sugestii în timp ce aceștia lucrează.</value>
+  </data>
+  <data name="LearnSliderSuggestionAcceptEnter" xml:space="preserve">
+    <value>Apăsați {0}ENTER{1} sau faceți clic pe sugestie pentru a o accepta, sau apăsați {0}ESC{1} sau continuați să scrieți pentru a o ignora.</value>
+  </data>
+  <data name="LearnSliderSuggestionAcceptHeader" xml:space="preserve">
+    <value>Cum să acceptați o traducere propusă?</value>
+  </data>
+  <data name="LearnSliderSuggestionAcceptLearn" xml:space="preserve">
+    <value>{0}Motorul de sugestii învață{1} și oferă sugestii mai bune pe măsură ce fiecare verset este tradus.</value>
+  </data>
+  <data name="LearnSliderSuggestionAcceptReceive" xml:space="preserve">
+    <value>{0}Traducătorii{1} pot {2}primi sugestii{3} despre cum să traducă următorul cuvânt sau expresie, cum scriu.</value>
+  </data>
+  <data name="LearnSliderSuggestionSetupBased" xml:space="preserve">
+    <value>Selectați un proiect pe care traducerea este {0}bazată{1}, și motorul inteligent de sugestii poate fi antrenat ca să {2}propună traduceri utile{3}.</value>
+  </data>
+  <data name="LearnSliderSuggestionSetupBest" xml:space="preserve">
+    <value>Este cel mai potrivit pentru {0}proiecte strâns legate{1} cu o gramatică și un stil de traducere similare, cum ar fi proiectele de adaptare.</value>
+  </data>
+  <data name="LearnSliderSuggestionSetupDescription" xml:space="preserve">
+    <value>{0}Administratorii{1} pot activa {2}Sugestii de traducere{3} pentru a ajuta {0}traducătorii{1}.</value>
+  </data>
+  <data name="LearnSliderSuggestionSetupHeader" xml:space="preserve">
+    <value>Configurarea sugestiilor de traducere</value>
+  </data>
+  <data name="LearnSliderTranslateEditDescription" xml:space="preserve">
+    <value>{0}Administratorii{1} pot conecta un proiect {4}Paratext{5} la Scripture Forge pentru a edita Scriptura așa cum ar face-o în Paratext, beneficiind în același timp {2}de opțiuni de colaborare{3} sporite.</value>
+  </data>
+  <data name="LearnSliderTranslateEditHeader" xml:space="preserve">
+    <value>Editarea Scripturii</value>
+  </data>
+  <data name="LearnSliderTranslateEditScripture" xml:space="preserve">
+    <value>{0}Editați Scriptura{1} în Scripture Forge așa cum ați face-o în vizualizarea {2}Basic{3} din Paratext.</value>
+  </data>
+  <data name="LearnSliderTranslateEditSync" xml:space="preserve">
+    <value>{0}Sincronizați{1} proiectul Scripture Forge cu Paratext pentru a vă menține munca la zi.</value>
+  </data>
+  <data name="LearnSliderTranslateCollaborateDescription" xml:space="preserve">
+    <value>{0}Traducătorii{1} pot lucra la proiecte în mod colaborativ, {2}editând Scriptura în același timp{3}.</value>
+  </data>
+  <data name="LearnSliderTranslateCollaborateHeader" xml:space="preserve">
+    <value>Traduceți împreună</value>
+  </data>
+  <data name="LearnSliderTranslateCollaborateLocation" xml:space="preserve">
+    <value>Lucrați cu {0}traducătorii{1} în {2}locații multiple{3} pe același proiect.</value>
+  </data>
+  <data name="LearnSliderTranslateCollaborateRealtime" xml:space="preserve">
+    <value>Vedeți modificările ale altor {0}traducători{1} {2}în timp real{3}, cum ei scriu.</value>
+  </data>
+  <data name="LearnSliderTranslateCollaborateVerse" xml:space="preserve">
+    <value>Colaborați la aceeași carte, același capitol sau {0}chiar la același verset{1}.</value>
+  </data>
+  <data name="LearnTranslateHow" xml:space="preserve">
+    <value>Învățați cum să traduceți Biblia împreună și cum să folosiți sugestii de traducere.</value>
+  </data>
+  <data name="LearnTranslateTitle" xml:space="preserve">
+    <value>Traducere</value>
+  </data>
+  <data name="ReadyToTry" xml:space="preserve">
+    <value>Sunteți gata să încercați Scripture Forge?</value>
+  </data>
+</root>
