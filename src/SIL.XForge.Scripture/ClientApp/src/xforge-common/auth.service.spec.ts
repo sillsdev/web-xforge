@@ -1,11 +1,12 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { WebAuth } from 'auth0-js';
+import { Auth0DecodedHash, Auth0Error, WebAuth } from 'auth0-js';
 import { CookieService } from 'ngx-cookie-service';
 import { of } from 'rxjs';
 import { anyString, anything, capture, instance, mock, resetCalls, verify, when } from 'ts-mockito';
-import { AuthService, EXPIRES_AT_SETTING } from './auth.service';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
+import { AuthService, EXPIRES_AT_SETTING, XF_ROLE_CLAIM, XF_USER_ID_CLAIM } from './auth.service';
 import { Auth0Service } from './auth0.service';
 import { BugsnagService } from './bugsnag.service';
 import { CommandService } from './command.service';
@@ -97,6 +98,45 @@ describe('AuthService', () => {
     verify(mockedWebAuth.authorize(anything())).never();
   }));
 
+  it('check session is valid after returning online and login if session has expired', fakeAsync(async () => {
+    const env = new TestEnvironment({
+      isOnline: true,
+      isLoggedIn: true
+    });
+    const isAuthenticated = await env.service.isAuthenticated();
+    expect(isAuthenticated).toBe(true);
+    resetCalls(mockedPwaService);
+
+    env.setLogoutResponse();
+    await env.service.checkOnlineAuth();
+    tick();
+
+    verify(mockedPwaService.checkOnline()).once();
+    verify(mockedWebAuth.authorize(anything())).once();
+  }));
+
+  it('should log out and clear data', fakeAsync(async () => {
+    const env = new TestEnvironment({
+      isOnline: true,
+      isLoggedIn: true
+    });
+    const isAuthenticated = await env.service.isAuthenticated();
+    expect(isAuthenticated).toBe(true);
+    tick(1);
+    expect(env.service.currentUserId).toBe('user01');
+    expect(env.service.idToken).toBe(env.auth0Response.result!.idToken);
+    expect(env.service.currentUserRole).toBe(SystemRole.SystemAdmin);
+    expect(env.service.accessToken).toBe(env.auth0Response.result!.accessToken);
+    expect(env.service.expiresAt).toBeGreaterThan(env.auth0Response.result!.expiresIn!);
+
+    await env.service.logOut();
+    expect(env.service.idToken).toBeUndefined();
+    expect(env.service.currentUserRole).toBeUndefined();
+    expect(env.service.accessToken).toBeUndefined();
+    expect(env.service.expiresAt).toBeUndefined();
+    verify(mockedWebAuth.logout(anything())).once();
+  }));
+
   it('should expire token', fakeAsync(() => {
     const env = new TestEnvironment();
 
@@ -117,15 +157,22 @@ describe('AuthService', () => {
     verify(mockedWebAuth.checkSession(anything(), anything())).once();
   }));
 
-  it('should authenticate if not expired', fakeAsync(() => {
-    const env = new TestEnvironment({ expiresIn: 10 });
+  it('should renew tokens if expired', fakeAsync(() => {
+    const env = new TestEnvironment({ isLoggedIn: true });
     let isAuthenticated: boolean = false;
 
     env.service.isAuthenticated().then((result: boolean) => (isAuthenticated = result));
-
     tick();
     expect(isAuthenticated).toBe(true);
-    verify(mockedWebAuth.checkSession(anything(), anything())).never();
+
+    env.service.expireToken();
+    expect(env.service.expiresAt).toBe(0);
+
+    env.service.isAuthenticated().then((result: boolean) => (isAuthenticated = result));
+    env.clearTokenExpiryTimer();
+    expect(isAuthenticated).toBe(true);
+    expect(env.service.expiresAt).toBeGreaterThan(0);
+    verify(mockedWebAuth.checkSession(anything(), anything())).twice();
   }));
 
   it('should login', () => {
@@ -254,9 +301,9 @@ describe('AuthService', () => {
     let isLoggedIn: boolean = true;
     env.service.isLoggedIn.then(result => (isLoggedIn = result));
     tick();
-    expect(env.service.accessToken).toBeNull();
-    expect(env.service.idToken).toBeNull();
-    expect(env.service.expiresAt).toBeNull();
+    expect(env.service.accessToken).toBeUndefined();
+    expect(env.service.idToken).toBeUndefined();
+    expect(env.service.expiresAt).toBeUndefined();
     expect(isLoggedIn).toBe(false, 'setup');
 
     env.service.updateInterfaceLanguage(interfaceLanguage);
@@ -268,32 +315,97 @@ describe('AuthService', () => {
 
 interface TestEnvironmentConstructorArgs {
   isOnline?: boolean;
-  expiresIn?: number;
+  isLoggedIn?: boolean;
+}
+
+interface Auth0AccessToken {
+  [XF_ROLE_CLAIM]?: SystemRole;
+  [XF_USER_ID_CLAIM]?: string;
+}
+
+interface Auth0Response {
+  error?: Auth0Error;
+  result?: Auth0DecodedHash;
 }
 
 class TestEnvironment {
+  auth0Response: Auth0Response = { error: undefined, result: {} };
   readonly service: AuthService;
   readonly language = 'fr';
+  private tokenExpiryTimer: number;
+  private localStorage: Map<string, string> = new Map<string, string>();
 
-  constructor({ isOnline = false, expiresIn }: TestEnvironmentConstructorArgs = {}) {
+  static encodeAccessToken(token: Auth0AccessToken) {
+    // The response from auth0 contains 3 parts seperated by a dot
+    // jwtDecode does a base44 decode on a JSON string after the first dot
+    return '.' + btoa(JSON.stringify(token));
+  }
+
+  constructor({ isOnline = false, isLoggedIn }: TestEnvironmentConstructorArgs = {}) {
+    // Set default token expiry to 2 hours
+    const now = new Date();
+    now.setHours(now.getHours() + 2);
+    this.tokenExpiryTimer = now.getTime();
     resetCalls(mockedWebAuth);
+    if (isLoggedIn) {
+      this.setLoginResponse();
+    }
     this.setOnline(isOnline);
-    when(mockedWebAuth.checkSession(anything(), anything())).thenCall((_options, callback) => callback(undefined, {}));
+    when(mockedWebAuth.checkSession(anything(), anything())).thenCall((_options, callback) =>
+      callback(this.auth0Response.error, this.auth0Response.result)
+    );
     when(mockedCookieService.get(anyString())).thenReturn(aspCultureCookieValue(this.language));
     when(mockedLocalSettingsService.remoteChanges$).thenReturn(of());
-    if (expiresIn) {
-      const expiresAt = expiresIn * 1000 + Date.now();
-      when(mockedLocalSettingsService.get<number>(EXPIRES_AT_SETTING)).thenReturn(expiresAt);
-    }
+    when(mockedLocalSettingsService.get(anyString())).thenCall(key => this.localStorage.get(key));
+    when(mockedLocalSettingsService.set(anyString(), anything())).thenCall((key, value) => {
+      console.log('set', key, value);
+      this.localStorage.set(key, value);
+    });
+    when(mockedLocalSettingsService.clear()).thenCall(() => {
+      this.localStorage.clear();
+    });
 
     when(mockedAuth0Service.init(anything())).thenReturn(instance(mockedWebAuth));
     this.service = TestBed.inject(AuthService);
   }
 
-  private setOnline(isOnline: boolean = true) {
+  clearTokenExpiryTimer() {
+    tick(this.tokenExpiryTimer * 1000);
+  }
+
+  setTokenExpiry(expiresAt: number) {
+    this.tokenExpiryTimer = expiresAt;
+    this.auth0Response.result!.expiresIn = expiresAt;
+  }
+
+  setLoginResponse(auth0Response?: Auth0Response) {
+    if (auth0Response == null) {
+      auth0Response = {
+        result: {
+          accessToken: TestEnvironment.encodeAccessToken({
+            [XF_ROLE_CLAIM]: SystemRole.SystemAdmin,
+            [XF_USER_ID_CLAIM]: 'user01'
+          }),
+          idToken: '12345',
+          expiresIn: this.tokenExpiryTimer
+        }
+      };
+    }
+    this.auth0Response = auth0Response;
+  }
+
+  setLogoutResponse(response?: Auth0Response) {
+    if (response == null) {
+      response = { error: { error: 'Not logged in', code: 'login_required' } };
+    }
+
+    this.auth0Response = response;
+  }
+
+  private setOnline(isOnline: boolean = true): void {
     when(mockedPwaService.checkOnline()).thenResolve(isOnline);
     if (isOnline) {
-      when(mockedWebAuth.parseHash(anything())).thenCall(callback => callback({}));
+      when(mockedWebAuth.parseHash(anything())).thenCall(callback => callback(undefined, {}));
     } else {
       when(mockedWebAuth.parseHash(anything())).thenResolve(); // results in "Error: Object{}"
     }
