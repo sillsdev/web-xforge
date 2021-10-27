@@ -1547,6 +1547,11 @@ describe('EditorComponent', () => {
       textDoc.submit(insertDelta);
       env.wait();
       expect(env.component.target!.getSegmentText('verse_1_1')).toEqual('target: chapabcter 1, verse 1.');
+      const verse1Range = env.component.target!.getSegmentRange('verse_1_1')!;
+      const verse1Contents = env.targetEditor.getContents(verse1Range.index, verse1Range.length);
+      // (1)target: + (2)$ + (3)chapabcter 1 + (4), verse 1.
+      expect(verse1Contents.ops!.length).toEqual(4);
+      expect(verse1Contents.ops![2].attributes!['text-anchor']).toBe(true);
 
       // select and insert text e.g. pasting in a selection
       remoteEditPosition = 40;

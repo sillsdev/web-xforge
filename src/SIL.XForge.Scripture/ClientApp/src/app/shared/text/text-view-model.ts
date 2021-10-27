@@ -407,7 +407,7 @@ export class TextViewModel {
         (modelDelta as any).push(modelOp);
       }
       // Remove Paratext notes from model delta
-      modelDelta = this.removedEmbeddedElementsFromDelta(modelDelta);
+      modelDelta = this.removeEmbeddedElementsFromDelta(modelDelta);
     }
     return modelDelta.chop();
   }
@@ -597,7 +597,7 @@ export class TextViewModel {
    * Strip off the embedded elements displayed in quill from the delta. This can be used to convert a delta from
    * user edits to apply to a text doc.
    */
-  private removedEmbeddedElementsFromDelta(modelDelta: DeltaStatic): DeltaStatic {
+  private removeEmbeddedElementsFromDelta(modelDelta: DeltaStatic): DeltaStatic {
     if (modelDelta.ops == null || modelDelta.ops.length < 1) {
       return new Delta();
     }
@@ -658,6 +658,8 @@ export class TextViewModel {
         if (cloneOp.delete < 1) {
           cloneOp = undefined;
         }
+      } else if (cloneOp.insert != null) {
+        cloneOp.attributes = this.getAttributesAtPosition(editorStartPos);
       }
 
       if (cloneOp != null) {
@@ -690,5 +692,10 @@ export class TextViewModel {
     const positionWithoutEmbeds = editorStartIndex + length;
     const positionWithEmbeds = this.getEditorPositionPlusTextPosition(editorStartIndex, length);
     return positionWithEmbeds - positionWithoutEmbeds;
+  }
+
+  private getAttributesAtPosition(editorPosition: number) {
+    const editor: Quill = this.checkEditor();
+    return editor.getFormat(editorPosition);
   }
 }
