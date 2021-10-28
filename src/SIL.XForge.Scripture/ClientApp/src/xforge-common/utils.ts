@@ -73,6 +73,9 @@ export function parseJSON(str: string): any | undefined {
 }
 
 export function verseSlug(verse: VerseRef) {
+  if (verse.verse != null) {
+    return 'verse_' + verse.chapterNum + '_' + verse.verse;
+  }
   return 'verse_' + verse.chapterNum + '_' + verse.verseNum;
 }
 

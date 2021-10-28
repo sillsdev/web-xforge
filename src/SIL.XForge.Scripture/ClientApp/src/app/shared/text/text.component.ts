@@ -514,8 +514,9 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     // A single verse can be associated with multiple segments (e.g verse_1_1, verse_1_1/p_1)
-    const verseSegments: string[] = this.getVerseSegments(verseRef);
-    let editorPosOfSegmentToModify: RangeStatic | undefined = this.getSegmentRange(verseSegments[0]);
+    const ref: string = verseSlug(verseRef);
+    const verseSegments: string[] = [ref].concat(this.getRelatedSegmentRefs(ref));
+    let editorPosOfSegmentToModify: RangeStatic | undefined = this.getSegmentRange(ref);
     let startTextPosInVerse: number = textAnchor.start;
     if (Array.from(this.viewModel.embeddedElements.keys()).includes(id)) {
       return;
