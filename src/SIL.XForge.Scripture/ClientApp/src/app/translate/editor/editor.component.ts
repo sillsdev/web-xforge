@@ -617,7 +617,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
     const chapterNoteThreadDocs: NoteThreadDoc[] = this.noteThreadQuery.docs.filter(
       nt =>
-        nt.data != null && nt.data.verseRef.bookNum === this.bookNum && nt.data.verseRef.chapterNum === this._chapter
+        nt.data != null &&
+        nt.data.verseRef.bookNum === this.bookNum &&
+        nt.data.verseRef.chapterNum === this._chapter &&
+        nt.data.notes.length > 0
     );
     const noteThreadVerseRefs: VerseRef[] = chapterNoteThreadDocs.map(nt => toVerseRef(nt.data!.verseRef));
     const featureVerseRefInfo: FeaturedVerseRefInfo[] = chapterNoteThreadDocs.map(nt =>

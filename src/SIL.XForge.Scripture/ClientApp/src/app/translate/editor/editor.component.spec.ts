@@ -36,6 +36,7 @@ import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/model
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, of, Subject } from 'rxjs';
 import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
@@ -1058,7 +1059,7 @@ describe('EditorComponent', () => {
   describe('Note threads', () => {
     it('embeds note on verse segments', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.addParatextNoteThread(6, 2, '', { start: 0, length: 0 }, ['user01']);
+      env.addParatextNoteThread(6, 'MAT 1:2', '', { start: 0, length: 0 }, ['user01']);
       env.setProjectUserConfig();
       env.wait();
       const segment: HTMLElement = env.targetTextEditor.nativeElement.querySelector(
@@ -1074,7 +1075,7 @@ describe('EditorComponent', () => {
       expect(contents.ops![3].insert).toEqual('target: ');
       expect(contents.ops![4].attributes!['iconsrc']).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag3.png);');
 
-      // Two notes in the segment on verse 3
+      // three notes in the segment on verse 3
       const noteVerse3: HTMLElement[] = env.targetTextEditor.nativeElement.querySelectorAll(
         'usx-segment[data-segment="verse_1_3"] display-note'
       )!;
@@ -1086,6 +1087,16 @@ describe('EditorComponent', () => {
       expect(blankSegmentNote).not.toBeNull();
       expect(blankSegmentNote.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
       expect(blankSegmentNote.getAttribute('title')).toEqual('Note from user01');
+
+      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.addParatextNoteThread(7, 'LUK 1:2-3', '', { start: 0, length: 0 }, ['user01']);
+      env.wait();
+      env;
+      const verse2and3CombinedNote: HTMLElement = env.targetTextEditor.nativeElement.querySelector(
+        'usx-segment[data-segment="verse_1_2-3"] display-note'
+      );
+      expect(verse2and3CombinedNote).not.toBeNull();
+      expect();
       env.dispose();
     }));
 
@@ -1173,9 +1184,9 @@ describe('EditorComponent', () => {
 
     it('correctly places note in subsequent segment', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.addParatextNoteThread(6, 4, 'target', { start: 0, length: 6 }, ['user01']);
+      env.addParatextNoteThread(6, 'MAT 1:4', 'target', { start: 0, length: 6 }, ['user01']);
       // Note 7 should be at position 0 on segment 1_4/p_1
-      env.addParatextNoteThread(7, 4, '', { start: 27, length: 0 }, ['user01']);
+      env.addParatextNoteThread(7, 'MAT 1:4', '', { start: 27, length: 0 }, ['user01']);
       env.setProjectUserConfig();
       env.wait();
 
@@ -1290,7 +1301,7 @@ describe('EditorComponent', () => {
 
     it('handles deleting parts of two notes text anchors', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.addParatextNoteThread(6, 1, 'verse', { start: 19, length: 5 }, ['user01']);
+      env.addParatextNoteThread(6, 'MAT 1:1', 'verse', { start: 19, length: 5 }, ['user01']);
       env.setProjectUserConfig();
       env.wait();
 
@@ -1308,7 +1319,7 @@ describe('EditorComponent', () => {
 
     it('updates notes anchors in subsequent verse segments', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.addParatextNoteThread(6, 4, 'chapter 1', { start: 8, length: 9 }, ['user01']);
+      env.addParatextNoteThread(6, 'MAT 1:4', 'chapter 1', { start: 8, length: 9 }, ['user01']);
       env.setProjectUserConfig();
       env.wait();
 
@@ -1346,8 +1357,8 @@ describe('EditorComponent', () => {
 
     it('handles insert at the last character position', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.addParatextNoteThread(6, 1, '1', { start: 16, length: 1 }, ['user01']);
-      env.addParatextNoteThread(7, 3, '.', { start: 26, length: 1 }, ['user01']);
+      env.addParatextNoteThread(6, 'MAT 1:1', '1', { start: 16, length: 1 }, ['user01']);
+      env.addParatextNoteThread(7, 'MAT 1:3', '.', { start: 26, length: 1 }, ['user01']);
       env.setProjectUserConfig();
       env.wait();
 
@@ -1816,8 +1827,8 @@ class TestEnvironment {
     this.addTextDoc(new TextDocId('project01', 40, 2, 'target'));
     this.addTextDoc(new TextDocId('project02', 41, 1, 'target'), 'source');
     this.addTextDoc(new TextDocId('project01', 41, 1, 'target'));
-    this.addTextDoc(new TextDocId('project01', 42, 1, 'target'));
-    this.addTextDoc(new TextDocId('project01', 42, 2, 'target'));
+    this.addCustomVerseTextDoc(new TextDocId('project01', 42, 1, 'target'));
+    this.addCustomVerseTextDoc(new TextDocId('project01', 42, 2, 'target'));
     this.addEmptyTextDoc(new TextDocId('project01', 43, 1, 'target'));
 
     when(mockedActivatedRoute.params).thenReturn(this.params$);
@@ -1830,11 +1841,11 @@ class TestEnvironment {
       instance(this.mockedRemoteTranslationEngine)
     );
     this.setupProject();
-    this.addParatextNoteThread(1, 1, 'chapter 1', { start: 8, length: 9 }, ['user01', 'user02', 'user03']);
-    this.addParatextNoteThread(2, 3, 'target: chapter 1, verse 3.', { start: 0, length: 0 }, ['user01']);
-    this.addParatextNoteThread(3, 3, 'verse 3', { start: 19, length: 7 }, ['user01']);
-    this.addParatextNoteThread(4, 3, 'verse', { start: 19, length: 5 }, ['user01']);
-    this.addParatextNoteThread(5, 4, 'Paragraph', { start: 27, length: 9 }, ['user01']);
+    this.addParatextNoteThread(1, 'MAT 1:1', 'chapter 1', { start: 8, length: 9 }, ['user01', 'user02', 'user03']);
+    this.addParatextNoteThread(2, 'MAT 1:3', 'target: chapter 1, verse 3.', { start: 0, length: 0 }, ['user01']);
+    this.addParatextNoteThread(3, 'MAT 1:3', 'verse 3', { start: 19, length: 7 }, ['user01']);
+    this.addParatextNoteThread(4, 'MAT 1:3', 'verse', { start: 19, length: 5 }, ['user01']);
+    this.addParatextNoteThread(5, 'MAT 1:4', 'Paragraph', { start: 27, length: 9 }, ['user01']);
     when(this.mockedRemoteTranslationEngine.getWordGraph(anything())).thenCall(segment =>
       Promise.resolve(this.createWordGraph(segment))
     );
@@ -2237,7 +2248,7 @@ class TestEnvironment {
 
   addParatextNoteThread(
     threadNum: number,
-    verseNum: number,
+    verseStr: string,
     selectedText: string,
     position: TextAnchor,
     userIds: string[]
@@ -2262,7 +2273,13 @@ class TestEnvironment {
       notes.push(note);
     }
 
-    const vrd: VerseRefData = { bookNum: 40, chapterNum: 1, verseNum };
+    const verseRef: VerseRef = VerseRef.parse(verseStr);
+    const vrd: VerseRefData = {
+      bookNum: verseRef.bookNum,
+      chapterNum: verseRef.chapterNum,
+      verseNum: verseRef.verseNum,
+      verse: verseRef.verse
+    };
     this.realtimeService.addSnapshot<NoteThread>(NoteThreadDoc.COLLECTION, {
       id: `project01:${threadId}`,
       data: {
@@ -2303,6 +2320,22 @@ class TestEnvironment {
     this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
       id: getSFProjectUserConfigDocId('project01', userConfig.ownerRef),
       data: userConfig
+    });
+  }
+
+  private addCustomVerseTextDoc(id: TextDocId): void {
+    const delta = new Delta();
+    delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
+    delta.insert({ blank: true }, { segment: 'p_1' });
+    delta.insert({ verse: { number: '1', style: 'v' } });
+    delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 1.`, { segment: `verse_${id.chapterNum}_1` });
+    delta.insert({ verse: { number: '2-3', style: 'v' } });
+    delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 2-3.`, { segment: `verse_${id.chapterNum}_2-3` });
+    delta.insert('\n', { para: { style: 'p' } });
+    this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
+      id: id.toString(),
+      type: RichText.type.name,
+      data: delta
     });
   }
 
