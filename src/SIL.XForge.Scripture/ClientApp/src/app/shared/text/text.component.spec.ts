@@ -194,7 +194,7 @@ describe('TextComponent', () => {
       expect(resultingSelection.length).toEqual(desiredSelectionLength);
     }));
 
-    it('inserts externally introduced data in the right place with embeds minus formatting', fakeAsync(() => {
+    it('inserts externally introduced data in the right place, accounting for embeds', fakeAsync(() => {
       const env = new TestEnvironment();
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
@@ -202,6 +202,7 @@ describe('TextComponent', () => {
       env.embedNoteAtVerse(4);
       tick();
       const initialTextInDoc = 'target: chapter 1, verse 4.';
+      //       This part is anchored to ^^^^^^^
       //                                           ^ insert here
       const textToDropIn = 'Hello';
       const expectedFinalText = 'target: chapter 1, Helloverse 4.';
@@ -222,8 +223,11 @@ describe('TextComponent', () => {
       dragEvent.setTarget(targetElement);
 
       const startContainer: Node = targetElement!.childNodes[2] as Node;
+      // The text in the text node that is dropped into, leading up to the place of insertion. This text node is
+      // after the text spanned by the note anchor.
+      const dropTextNodeBeginningText: string = ` 1, `;
       // The length into this text node that will be returned by caretRangeFromPoint
-      const textNodeIndex: number = 'chapter 1, '.length;
+      const textNodeIndex: number = dropTextNodeBeginningText.length;
       document.caretRangeFromPoint = (_x: number, _y: number) =>
         ({ startOffset: textNodeIndex, startContainer } as Range);
 
@@ -249,7 +253,7 @@ describe('TextComponent', () => {
       expect(resultingSelection.length).toEqual(desiredSelectionLength);
     }));
 
-    it('also works in Firefox', fakeAsync(() => {
+    it('also works in Firefox: inserts externally introduced data in the right place, without formatting or line breaks', fakeAsync(() => {
       const env = new TestEnvironment();
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
@@ -304,7 +308,7 @@ describe('TextComponent', () => {
       expect(resultingSelection.length).toEqual(desiredSelectionLength);
     }));
 
-    it('also works for segment embeds in Firefox', fakeAsync(() => {
+    it('also works for Firefox: inserts externally introduced data in the right place, accounting for embeds', fakeAsync(() => {
       const env = new TestEnvironment();
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
@@ -330,7 +334,11 @@ describe('TextComponent', () => {
       });
       dragEvent.setTarget(targetElement);
 
-      const textNodeIndex = 'chapter 1, '.length;
+      // The text in the text node that is dropped into, leading up to the place of insertion. This text node is
+      // after the text spanned by the note anchor.
+      const dropTextNodeBeginningText: string = ` 1, `;
+      // The length into this text node that will be returned by the browser.
+      const textNodeIndex: number = dropTextNodeBeginningText.length;
       // Override the Firefox point-to-index method behaviour to simulate actually pointing to a location
       // when dropping.
       const offsetNode: Node = targetElement!.childNodes[2] as Node;
@@ -1034,7 +1042,7 @@ class TestEnvironment {
   embedNoteAtVerse(verse: number): void {
     const verseRef: VerseRef = VerseRef.parse(`MAT 1:${verse}`);
     const id: string = `embedid${verse}`;
-    const textAnchor: TextAnchor = { start: 8, length: 9 };
+    const textAnchor: TextAnchor = { start: 8, length: 7 };
     const iconSource: string = '--icon-file: url(/assets/icons/TagIcons/01flag1.png)';
     const text: string = `text message on ${id}`;
     const format = { iconsrc: iconSource, preview: text, threadid: id };
