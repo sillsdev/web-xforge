@@ -1540,8 +1540,13 @@ describe('EditorComponent', () => {
       // insert text
       let notePosition: number = env.getNoteThreadEditorPosition('thread01');
       let positionRelativeToNote: number = 5;
-      let localNoteCount: number = 1;
-      let remoteEditPosition: number = notePosition + positionRelativeToNote - localNoteCount;
+      let noteCountBeforePosition: number = 1;
+      let remoteEditPosition: number = env.getRemoteEditPosition(
+        notePosition,
+        positionRelativeToNote,
+        noteCountBeforePosition
+      );
+      // $ represents a note thread embed
       // target: $chap|ter 1, verse 1.
       const textDoc: TextDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
       const insertDelta: DeltaStatic = new Delta();
@@ -1552,15 +1557,15 @@ describe('EditorComponent', () => {
       expect(env.component.target!.getSegmentText('verse_1_1')).toEqual('target: chapabcter 1, verse 1.');
       const verse1Range = env.component.target!.getSegmentRange('verse_1_1')!;
       const verse1Contents = env.targetEditor.getContents(verse1Range.index, verse1Range.length);
-      // (1)target: + (2)$ + (3)chapabcter 1 + (4), verse 1.
+      // ops are [0]target:, [1]$, [2]chapabcter 1, [3], verse 1.
       expect(verse1Contents.ops!.length).toEqual(4);
       expect(verse1Contents.ops![2].attributes!['text-anchor']).toBe(true);
 
       // select and insert text e.g. pasting in a selection
       notePosition = env.getNoteThreadEditorPosition('thread02');
-      localNoteCount = 2;
-      remoteEditPosition = notePosition + positionRelativeToNote - localNoteCount;
-      // $targ|->et: chap<-|ter 1, $$verse 3.
+      noteCountBeforePosition = 2;
+      remoteEditPosition = env.getRemoteEditPosition(notePosition, positionRelativeToNote, noteCountBeforePosition);
+      // $targ|->et: cha<-|pter 1, $$verse 3.
       const insertDeleteDelta: DeltaStatic = new Delta();
       (insertDeleteDelta as any).push({ retain: remoteEditPosition } as DeltaOperation);
       (insertDeleteDelta as any).push({ insert: 'defgh' } as DeltaOperation);
@@ -1571,7 +1576,7 @@ describe('EditorComponent', () => {
 
       // select and delete text including deleting notes
       positionRelativeToNote = 15;
-      remoteEditPosition = notePosition + positionRelativeToNote - localNoteCount;
+      remoteEditPosition = env.getRemoteEditPosition(notePosition, positionRelativeToNote, noteCountBeforePosition);
       // $targdefghpter |->1, $$v<-|erse 3.
       const deleteDelta: DeltaStatic = new Delta();
       (deleteDelta as any).push({ retain: remoteEditPosition } as DeltaOperation);
@@ -2162,6 +2167,10 @@ class TestEnvironment {
   /** Editor position of note thread. */
   getNoteThreadEditorPosition(threadId: string): number {
     return this.component.target!.embeddedElements.get(threadId)!;
+  }
+
+  getRemoteEditPosition(notePosition: number, noteOffset: number, noteCount: number): number {
+    return notePosition + noteOffset - noteCount;
   }
 
   setDataInSync(projectId: string, isInSync: boolean): void {

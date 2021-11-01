@@ -672,7 +672,7 @@ export class TextViewModel {
 
   /** Gets the number of embeds in a given range displayed in the quill editor. */
   private getEmbedsInEditorRange(startIndex: number, length: number): number {
-    const indices: number[] = Array.from(this._embeddedElements.values());
+    const indices: IterableIterator<number> = this._embeddedElements.values();
     const opEndIndex: number = startIndex + length;
     let embeddedElementsCount: number = 0;
     for (const embedIndex of indices) {
