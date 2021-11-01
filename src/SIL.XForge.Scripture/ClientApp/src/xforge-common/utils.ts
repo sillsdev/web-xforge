@@ -9,6 +9,11 @@ import { Locale } from './models/i18n-locale';
 
 const BROWSER = Bowser.getParser(window.navigator.userAgent);
 
+// Regular expression for getting the verse from a segment ref
+export const VERSE_FROM_SEGMENT_REF_REGEX = /verse_[0-9]+_([0-9]+)[-/]*/;
+// Regular expression for the verse segment ref of scripture content
+export const VERSE_REGEX = /verse_[0-9]+_[0-9]+/;
+
 export function nameof<T>(name: Extract<keyof T, string>): string {
   return name;
 }

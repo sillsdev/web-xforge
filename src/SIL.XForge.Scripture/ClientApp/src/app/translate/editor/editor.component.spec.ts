@@ -34,7 +34,7 @@ import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-a
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
@@ -1060,6 +1060,7 @@ describe('EditorComponent', () => {
     it('embeds note on verse segments', fakeAsync(() => {
       const env = new TestEnvironment();
       env.addParatextNoteThread(6, 'MAT 1:2', '', { start: 0, length: 0 }, ['user01']);
+      env.addParatextNoteThread(7, 'LUK 1:2-3', '', { start: 0, length: 0 }, ['user01']);
       env.setProjectUserConfig();
       env.wait();
       const segment: HTMLElement = env.targetTextEditor.nativeElement.querySelector(
@@ -1089,14 +1090,13 @@ describe('EditorComponent', () => {
       expect(blankSegmentNote.getAttribute('title')).toEqual('Note from user01');
 
       env.updateParams({ projectId: 'project01', bookId: 'LUK' });
-      env.addParatextNoteThread(7, 'LUK 1:2-3', '', { start: 0, length: 0 }, ['user01']);
       env.wait();
-      env;
-      const verse2and3CombinedNote: HTMLElement = env.targetTextEditor.nativeElement.querySelector(
-        'usx-segment[data-segment="verse_1_2-3"] display-note'
+      const combinedVerseUsxSegment: HTMLElement = env.targetTextEditor.nativeElement.querySelector(
+        'usx-segment[data-segment="verse_1_2-3"]'
       );
+      expect(combinedVerseUsxSegment.classList).toContain('note-thread-segment');
+      const verse2and3CombinedNote: HTMLElement | null = combinedVerseUsxSegment.querySelector('display-note');
       expect(verse2and3CombinedNote).not.toBeNull();
-      expect();
       env.dispose();
     }));
 
@@ -1827,8 +1827,8 @@ class TestEnvironment {
     this.addTextDoc(new TextDocId('project01', 40, 2, 'target'));
     this.addTextDoc(new TextDocId('project02', 41, 1, 'target'), 'source');
     this.addTextDoc(new TextDocId('project01', 41, 1, 'target'));
-    this.addCustomVerseTextDoc(new TextDocId('project01', 42, 1, 'target'));
-    this.addCustomVerseTextDoc(new TextDocId('project01', 42, 2, 'target'));
+    this.addCombinedVerseTextDoc(new TextDocId('project01', 42, 1, 'target'));
+    this.addCombinedVerseTextDoc(new TextDocId('project01', 42, 2, 'target'));
     this.addEmptyTextDoc(new TextDocId('project01', 43, 1, 'target'));
 
     when(mockedActivatedRoute.params).thenReturn(this.params$);
@@ -2274,18 +2274,12 @@ class TestEnvironment {
     }
 
     const verseRef: VerseRef = VerseRef.parse(verseStr);
-    const vrd: VerseRefData = {
-      bookNum: verseRef.bookNum,
-      chapterNum: verseRef.chapterNum,
-      verseNum: verseRef.verseNum,
-      verse: verseRef.verse
-    };
     this.realtimeService.addSnapshot<NoteThread>(NoteThreadDoc.COLLECTION, {
       id: `project01:${threadId}`,
       data: {
         projectRef: 'project01',
         dataId: threadId,
-        verseRef: vrd,
+        verseRef: fromVerseRef(verseRef),
         ownerRef: 'user01',
         originalSelectedText: selectedText,
         notes,
@@ -2323,7 +2317,7 @@ class TestEnvironment {
     });
   }
 
-  private addCustomVerseTextDoc(id: TextDocId): void {
+  private addCombinedVerseTextDoc(id: TextDocId): void {
     const delta = new Delta();
     delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
     delta.insert({ blank: true }, { segment: 'p_1' });
