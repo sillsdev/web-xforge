@@ -173,7 +173,17 @@ export class DragAndDrop {
         if (node.nodeType === textNodeType && node.nodeValue != null) {
           startPositionInSegment += node.nodeValue.length;
         } else if (node.nodeType !== textNodeType) {
-          startPositionInSegment++;
+          if (node.nodeName.toLowerCase() === 'display-text-anchor') {
+            const anchoredTextOfNote: string = node.lastChild?.nodeValue ?? '';
+            startPositionInSegment += anchoredTextOfNote.length;
+            const lengthOfEmbed = 1;
+            startPositionInSegment += lengthOfEmbed;
+          } else {
+            console.warn(
+              `Warning: drag-and-drop is assuming length 1 for unknown element: ${node.nodeName.toLowerCase()}`
+            );
+            startPositionInSegment++;
+          }
         }
       }
       startPositionInSegment += startPositionInTextNode;
