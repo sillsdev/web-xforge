@@ -11,15 +11,21 @@ export abstract class JsonRealtimeDoc<T = any> extends RealtimeDoc<T, OtJson0Op[
    *
    * @param {(op: Json0OpBuilder<T>) => void} build The function to build the operation.
    * @param {*} [source] The source.
+   * @param {boolean} [bulk=false] Indicates that ops are being submitted in bulk. If true, it is the responsibility of
+   * caller to call RealtimeService.onLocalDocUpdate() once the bulk operation is completed.
    */
-  async submitJson0Op(build: (op: Json0OpBuilder<T>) => void, source: any = true): Promise<boolean> {
+  async submitJson0Op(
+    build: (op: Json0OpBuilder<T>) => void,
+    source: any = true,
+    bulk: boolean = false
+  ): Promise<boolean> {
     if (this.data == null) {
       return false;
     }
     const builder = new Json0OpBuilder(this.data);
     build(builder);
     if (builder.op.length > 0) {
-      await this.submit(builder.op, source);
+      await this.submit(builder.op, source, bulk);
       return true;
     }
     return false;

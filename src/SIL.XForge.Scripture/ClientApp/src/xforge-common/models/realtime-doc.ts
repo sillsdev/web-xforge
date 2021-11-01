@@ -102,27 +102,47 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
    *
    * @param {Ops} ops The operations to submit.
    * @param {*} [source] The source.
-   * @returns {Promise<void>} Resolves when the operations have been successfully submitted.
+   * @param {boolean} [bulk=false] Indicates that ops are being submitted in bulk. If true, it is the responsibility of
+   * caller to call RealtimeService.onLocalDocUpdate() once the bulk operation is completed.
    */
-  async submit(ops: Ops, source?: any): Promise<void> {
+  async submit(ops: Ops, source?: any, bulk: boolean = false): Promise<void> {
     // update offline data when the op has been acknowledged
     this.adapter.submitOp(ops, source).then(() => this.updateOfflineData());
     // update offline data when the op is first submitted
     await this.updateOfflineData();
-    await this.realtimeService.onLocalDocUpdate(this);
+    if (!bulk) {
+      await this.realtimeService.onLocalDocUpdate(this.collection);
+    }
   }
 
-  async create(data: T): Promise<void> {
+  /**
+   * Creates a new real-time doc.
+   *
+   * @param {T} data The initial snapshot.
+   * @param {boolean} [bulk=false] Indicates that docs are being created in bulk. If true, it is the responsibility of
+   * caller to call RealtimeService.onLocalDocUpdate() once the bulk operation is completed.
+   */
+  async create(data: T, bulk: boolean = false): Promise<void> {
     this.adapter.create(data).then(() => this.updateOfflineData(true));
     this.loadOfflineDataPromise = Promise.resolve();
     await this.updateOfflineData(true);
-    await this.realtimeService.onLocalDocUpdate(this);
+    if (!bulk) {
+      await this.realtimeService.onLocalDocUpdate(this.collection);
+    }
   }
 
-  async delete(): Promise<void> {
+  /**
+   * Deletes a real-time doc.
+   *
+   * @param {boolean} [bulk=false] Indicates that docs are being deleted in bulk. If true, it is the responsibility of
+   * caller to call RealtimeService.onLocalDocUpdate() once the bulk operation is completed.
+   */
+  async delete(bulk: boolean = false): Promise<void> {
     this.adapter.delete();
     await this.updateOfflineData();
-    await this.realtimeService.onLocalDocUpdate(this);
+    if (!bulk) {
+      await this.realtimeService.onLocalDocUpdate(this.collection);
+    }
   }
 
   async onAddedToSubscribeQuery(): Promise<void> {

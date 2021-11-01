@@ -90,11 +90,13 @@ export class RealtimeService {
    * @param {string} collection The collection name.
    * @param {string} id The id.
    * @param {*} data The initial data.
+   * @param {boolean} [bulk=false] Indicates that docs are being created in bulk. If true, it is the responsibility of
+   * caller to call RealtimeService.onLocalDocUpdate() once the bulk operation is completed.
    * @returns {Promise<T>} The newly created real-time doc.
    */
-  async create<T extends RealtimeDoc>(collection: string, id: string, data: any): Promise<T> {
+  async create<T extends RealtimeDoc>(collection: string, id: string, data: any, bulk: boolean = false): Promise<T> {
     const doc = this.get<T>(collection, id);
-    await doc.create(data);
+    await doc.create(data, bulk);
     return doc;
   }
 
@@ -146,8 +148,8 @@ export class RealtimeService {
     }
   }
 
-  async onLocalDocUpdate(doc: RealtimeDoc): Promise<void> {
-    const collectionQueries = this.subscribeQueries.get(doc.collection);
+  async onLocalDocUpdate(collection: string): Promise<void> {
+    const collectionQueries = this.subscribeQueries.get(collection);
     if (collectionQueries != null) {
       const promises: Promise<void>[] = [];
       for (const query of collectionQueries) {

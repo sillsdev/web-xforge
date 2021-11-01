@@ -334,14 +334,17 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
           transceleratorQuestionId: listItem.question.id
         };
         await this.zone.runOutsideAngular(() =>
-          this.projectService.createQuestion(this.data.projectId, newQuestion, undefined, undefined)
+          this.projectService.createQuestion(this.data.projectId, newQuestion, undefined, undefined, true)
         );
       } else if (this.questionsDiffer(listItem)) {
-        await listItem.sfVersionOfQuestion.submitJson0Op(op =>
-          op
-            .set(q => q.text!, listItem.question.text)
-            .set(q => q.verseRef, verseRefData)
-            .set(q => q.dateModified, currentDate)
+        await listItem.sfVersionOfQuestion.submitJson0Op(
+          op =>
+            op
+              .set(q => q.text!, listItem.question.text)
+              .set(q => q.verseRef, verseRefData)
+              .set(q => q.dateModified, currentDate),
+          true,
+          true
         );
       }
       this.importedCount++;
@@ -349,6 +352,8 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
         break;
       }
     }
+
+    await this.projectService.completeBulkQuestionUpdate();
 
     this.dialogRef.close();
   }

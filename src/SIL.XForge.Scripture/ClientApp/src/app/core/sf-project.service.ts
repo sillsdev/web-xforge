@@ -90,7 +90,8 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     id: string,
     question: Question,
     audioFileName?: string,
-    audioBlob?: Blob
+    audioBlob?: Blob,
+    bulk: boolean = false
   ): Promise<QuestionDoc | undefined> {
     const docId = getQuestionDocId(id, question.dataId);
     if (audioFileName != null && audioBlob != null) {
@@ -109,7 +110,11 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
       }
       question.audioUrl = audioUrl;
     }
-    return this.realtimeService.create<QuestionDoc>(QuestionDoc.COLLECTION, docId, question);
+    return this.realtimeService.create<QuestionDoc>(QuestionDoc.COLLECTION, docId, question, bulk);
+  }
+
+  async completeBulkQuestionUpdate(): Promise<void> {
+    return this.realtimeService.onLocalDocUpdate(QuestionDoc.COLLECTION);
   }
 
   onlineSync(id: string): Promise<void> {
