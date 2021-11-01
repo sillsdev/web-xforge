@@ -1,0 +1,235 @@
+{
+  "app": {
+    "settings": "Setări",
+    "synchronize": "Sincronizare",
+    "system_administration": "System Administration",
+    "translate": "Traducere",
+    "users": "Utilizatori"
+  },
+  "chapter_nav": {
+    "previous_chapter": "Capitolul anterior",
+    "next_chapter": "Capitolul următor"
+  },
+  "checking": {
+    "add_question": "Adaugă o întrebare"
+  },
+  "checking_answers": {
+    "archive": "Arhivă",
+    "only_community_checkers_can_like": "Numai verificatorii din comunitate pot da laik la răspunsuri."
+  },
+  "checking_overview": {
+    "add_question": "Adaugă o întrebare",
+    "answer_count_label": "{{ count }} răspunsuri",
+    "archive": "Arhivă",
+    "archived_questions": "Întrebări arhivate",
+    "click_add_question": "Faceți clic pe {{ boldStart }}Adaugă o întrebare{{ boldEnd }}, de mai sus.",
+    "import_questions": "Importare",
+    "no_archived_questions": "Nu sunt întrebări arhivate.",
+    "no_questions": "Nu sunt întrebări publicate. ",
+    "question_count_label": "{{ count }} întrebări",
+    "republish": "Republicare",
+    "time_archived_stamp": "Arhivat pe {{ timeStamp }}"
+  },
+  "collaborators": {
+    "allow_add_edit_questions": "Poate adăuga și edita întrebări",
+    "awaiting_response_from": "Se așteaptă răspunsul de la{{ newLine }}{{ email }}",
+    "cancel_invite": "Anulează invitația",
+    "change_roles_and_permissions": "Rolurile și permisiunile utilizatorilor pot fi modificate {{ boldStart }}doar{{ boldEnd }} în {{ boldStart }}Paratext{{ boldEnd }}. Deschideți proiectul în {{ boldStart }}Paratext{{ boldEnd }}, în fereastra proiectului faceți clic pe {{ templateTagBoundary }}{{ templateTagBoundary }}, apoi {{ boldStart }}Setări proiect{{ boldEnd }}, apoi {{ boldStart }}Permisiuni utilizator{{ boldEnd }}. După o {{ italicsStart }}Trimitere/Recepție{{ italicsEnd }} în {{ boldStart }}Paratext{{ boldEnd }} și apoi o {{ italicsStart }}Sincronizare{{ italicsEnd }} în {{ boldStart }}Scripture Forge{{ boldEnd }}, rolul lor va intra în vigoare aici, odată ce acel utilizator se conectează cu contul său {{ boldStart }}Paratext{{ boldEnd }} .",
+    "connect_network_to_manage_users": "Administrarea utilizatorilor este dezactivată în timpul deconectării. Vă rugăm să vă conectați la internet pentru a gestiona utilizatorii.",
+    "filter_users": "Filtrează pe utilizatori...",
+    "invitation_expired": "Invitația a expirat pentru{{ newLine }}{{ email }}",
+    "me": "eu",
+    "no_users_found": "Niciun utilizator găsit",
+    "problem_loading_invited_users": "A apărut o eroare la încărcarea listei de utilizatori invitați.",
+    "remove_from_project": "Elimină din proiect",
+    "share_with_others": "Distribuiți altora"
+  },
+  "connect_project": {
+    "additional_settings": "Setări suplimentare",
+    "already_connected": "(deja conectat)",
+    "based_on": "Bazat pe",
+    "choose_the_mother_project": "Alegeți proiectul Paratext pe care se bazează proiectul.",
+    "community_checking": "Verificare în comunitate",
+    "connect_network_to_connect_project": "Vă rugăm să vă conectați la internet pentru a permite conectarea la un proiect",
+    "connect_paratext_project": "Conectare proiect Paratext",
+    "connect": "Conectare",
+    "connecting_to_project": "Conectare la {{ projectName }}...",
+    "engage_the_wider_community_to_check_scripture": "Implicați comunitatea mai largă ca traducerea să fie clară, corectă și naturală. Selectați versurile, puneți întrebări țintite, permiteți discuții despre răspunsuri.",
+    "error_fetching_resources": "A apărut o eroare la preluarea resurselor din Digital Bible Library. Veți putea selecta doar proiecte.",
+    "log_in_with_paratext": "Autentificare cu Paratext",
+    "no_connectable_projects": "Se pare că nu există proiecte la care puteți să vă conectați.{{ newLine }}Mergeți la Paratext pentru a înregistra un proiect la care să vă conectați.",
+    "only_paratext_admins_can_start": "** Trebuie să fiți administratorul Paratext al unui proiect pentru a-l porni aici. Cereți administratorului dvs. să se conecteze la proiectul dvs., după care vă puteți conecta la el și aici.",
+    "paratext_account_linked_to_another_user": "V-ați conectat la un cont Paratext care este deja legat de un utilizator cu adresa de e-mail {{ email }}. Veți fi deconectat de la contul dvs. curent și veți continua ca utilizator Paratext.",
+    "paratext_project": "Proiectul Paratext",
+    "problem_already_connected": "Proiectul este deja conectat. Poate că un alt administrator de proiect a conectat proiectul în același timp. Vă rugăm să încercați din nou. Dacă problema persistă, vă rugăm să raportați problema pentru a o rezolva.",
+    "proceed": "Continuare",
+    "translation_suggestions": "Sugestii de traducere",
+    "translations_will_be_suggested_as_you_edit": "Traducerile pentru cuvinte și expresii vor fi propuse pe măsură ce editați Scriptura. Se recomandă ca proiectul dvs. să fie configurat ca o {{ boldStart }}Traducere fiică{{ boldEnd }} în Paratext.",
+    "you_can_change_later": "Le puteți schimba mai târziu.",
+    "you_must_be_logged_in_to_paratext": "Trebuie să vă autentificați cu contul dumneavoastră Paratext pentru a vă conecta la un proiect."
+  },
+  "delete_project_dialog": {
+    "are_you_sure_you_want_to_delete": "Sunteți sigur că doriți să ștergeți acest proiect?",
+    "cancel": "Renunță",
+    "delete_cannot_be_undone": "Această acțiune {{ boldStart }}nu poate fi anulată{{ boldEnd }}. Această acțiune va șterge definitiv proiectul {{ boldStart }}{{ projectName }}{{ boldEnd }}, datele de traducere, întrebările, răspunsurile și comentariile.",
+    "delete_this_project": "Șterge proiectul",
+    "i_understand_the_consequences": "Am înțeles consecințele. Ștergeți acest proiect",
+    "please_type_project_name": "Vă rugăm să introduceți numele proiectului pentru a confirma.",
+    "project_name": "Denumire proiect"
+  },
+  "editor": {
+    "cannot_edit_chapter_formatting_invalid": "Acest capitol nu poate fi editat deoarece formatarea nu este validă. Vă rugăm să remediați formatarea în Paratext.",
+    "completed_successfully": "Finalizat cu succes",
+    "configure_translation_suggestions": "Configurați sugestiile de traducere",
+    "project_data_out_of_sync": "Datele proiectului nu sunt sincronizate. Vă rugăm să sincronizați proiectul pentru a edita acest text.",
+    "swap_source_and_target": "Schimbă sursa și ținta",
+    "training": "Instruire",
+    "training_completed_successfully": "Instruirea finalizată cu succes",
+    "verse_too_long_for_suggestions": "Acest verset este prea lung pentru a genera sugestii."
+  },
+  "import_questions_confirmation_dialog": {
+    "done": "Gata",
+    "edited_questions_explanation": "Unele dintre întrebările pe care le-ați selectat au fost schimbate. Sunteți sigur că doriți să actualizați întrebările? Selectați întrebările pe care doriți să le actualizați.",
+    "number_answers": "Număr de răspunsuri",
+    "scripture_forge": "Scripture Forge",
+    "some_questions_edited": "Unele întrebări au fost modificate",
+    "transcelerator": "Transcelerator"
+  },
+  "import_questions_dialog": {
+    "all": "Toate",
+    "cancel": "Renunță",
+    "canceling_import": "Anulare import...",
+    "filter_questions": "Filtrează întrebările",
+    "import_count_questions": "Importă {{ count }} întrebări selectate",
+    "import_from_transcelerator": "Importă întrebări de la Transcelerator",
+    "import_progress": "S-a importat {{ completed }} din {{ total }} întrebări...",
+    "import": "Importare",
+    "loading": "Se încarcă...",
+    "must_be_valid_reference": "Trebuie să fie o referință validă",
+    "no_questions_available": "Nu există întrebări pentru cărțile din acest proiect.",
+    "question": "Întrebare",
+    "reference_from": "De la",
+    "reference_to": "până la",
+    "select_all": "Selectează tot",
+    "show_all": "Arată tot",
+    "update_transcelerator": "Versiunea de Transcelerator utilizată în acest proiect nu este suportată. Vă rugăm să actualizați cel puțin la versiunea Transcelerator 1.5.3.",
+    "select_questions": "Selectați întrebările de importat"
+  },
+  "paginator": {
+    "items_per_page": "Elemente pe pagină",
+    "next_page": "Pagina următoare",
+    "previous_page": "Pagina anterioară",
+    "range_label": "{{ startIndex }} - {{ endIndex }} din {{ length }}"
+  },
+  "project_select": {
+    "please_select_valid_project_or_resource": "Vă rugăm să selectați un proiect sau o resursă validă",
+    "projects": "Proiecte",
+    "resources": "Resurse"
+  },
+  "question_answered_dialog": {
+    "cancel": "Renunță",
+    "consider_creating_new_question": "N-ar fi mai bine să creați o întrebare nouă în loc să editați această întrebare?",
+    "edit_anyway": "Editează oricum",
+    "question_has_answer": "Întrebarea are deja un răspuns"
+  },
+  "question_dialog": {
+    "add_question_denied": "Nu aveți permisiunea să adăugați sau să editați întrebări.",
+    "cancel": "Renunță",
+    "edit_question": "Editare întrebare",
+    "end_reference": "Ultimul verset",
+    "enter_a_reference_to_load_text": "Pe care verset doriți să vizionați?",
+    "example_verse": "de exemplu JHN 3:16",
+    "must_be_after_scripture_reference": "Trebuie să vină după {{ boldStart }}(Primul) verset{{ boldEnd }}",
+    "must_be_inside_verse_range": "Trebuie să fie cuprins în intervalul de versete",
+    "must_be_same_book_and_chapter": "Trebuie să fie aceeași carte și același capitol",
+    "new_question": "Întrebare nouă",
+    "question": "Întrebare",
+    "recording_stopped": "Înregistrarea întrebării dvs. a fost oprită automat.",
+    "required_with_asterisk": "*Necesar",
+    "save": "Salvează",
+    "scripture_reference": "(Primul) verset"
+  },
+  "roles": {
+    "none": "Niciunul",
+    "pt_administrator": "Administrator",
+    "pt_consultant": "Consultant/Revizor/Arhivist/Tipograf",
+    "pt_observer": "Observator",
+    "pt_translator": "Traducător",
+    "sf_community_checker": "Verificator din comunitate",
+    "sf_reviewer": "Revizuitor",
+    "sf_observer": "Vizualizare traducere"
+  },
+  "settings": {
+    "anyone_with_a_link": "Oricine cu un link",
+    "based_on": "Bazat pe",
+    "choose_the_paratext_project": "Alegeți proiectul Paratext sau resursa din Digital Bible Library pe care se bazează proiectul.",
+    "community_checking": "Verificare în comunitate",
+    "connect_network_to_change_settings": "Setările proiectului nu pot fi modificate în timp ce sunteți offline. Vă rugăm să vă conectați la internet pentru a face modificări.",
+    "danger_zone": "Zonă de pericol",
+    "delete_project_cannot_be_undone": "Odată ce ați șters un proiect, nu mai există cale de întoarcere. Vă rugăm să fiți sigur.",
+    "delete_this_project": "Șterge proiectul",
+    "enable_translation_suggestions": "pentru a activa {{ boldStart }}Sugestii{{ boldEnd }} și a vedea mai multe opțiuni",
+    "engage_the_wider_community": "Implicați comunitatea mai largă, ca traducerea să fie clară, corectă și naturală. Selectați versurile, puneți întrebări țintite și permiteți discuții despre răspunsuri.",
+    "error_fetching_projects_resources": "A apărut o eroare la preluarea proiectelor și a resurselor. Nu puteți schimba pe ce se bazează proiectul.",
+    "error_fetching_projects": "A apărut o eroare la preluarea proiectelor. Veți putea selecta doar resurse din Digital Bible Library.",
+    "error_fetching_resources": "A apărut o eroare la preluarea resurselor din Digital Bible Library. Veți putea selecta doar proiecte.",
+    "log_in_with_paratext": "Autentificare la Paratext",
+    "see_others_answers_and_comments": "Vedeți răspunsurile și comentariile altora",
+    "select_additional_tools_and_features": "Selectați ce instrumente și caracteristici suplimentare sunt disponibile.",
+    "settings": "Setări",
+    "share": "Distribuire",
+    "source_projects_cannot_be_deleted": "Un alt proiect se bazează pe acest proiect și, prin urmare, nu poate fi șters.",
+    "specific_people": "Persoane specifice",
+    "tools": "Tools",
+    "translate_tool_is_always_available": "Instrumentul de traducere este întotdeauna disponibil pentru a colabora cu alți traducători care lucrează la același text.",
+    "translate": "Traducere",
+    "translation_suggestions": "Sugestii de traducere",
+    "translations_will_be_suggested": "În timp ce lucrați la Scriptură, se va propune traduceri pentru cuvinte și expresii. Se recomandă ca proiectul dvs. să fie configurat ca {{ boldStart }}Traducere fiică{{ boldEnd }} în Paratext numai dacă proiectul dvs. se bazează pe un alt proiect Paratext. Aceasta nu se aplică dacă proiectul dumneavoastră se bazează pe o resursă.",
+    "users_can_interact_with_each_other": "Utilizatorii pot vedea răspunsurile și comentariile celorlalți pentru a interacționa între ei.",
+    "users_can_share_the_project": "Utilizatorii pot invita prieteni să se alăture proiectului.{{ newLine }}{{ italicsStart }}Administratorii{{ italicsEnd }} pot invita întotdeauna alte persoane la proiect în {{ templateTagBoundary }}Utilizatori{{ templateTagBoundary }}.",
+    "will_not_delete_paratext_project": "Aceasta {{ boldStart }}nu{{ boldEnd }} va șterge proiectul Paratext, dar va șterge orice date nesincronizate stocate în Scripture Forge. Se recomandă să {{ templateTagBoundary }}sincronizați{{ templateTagBoundary }} înainte de ștergere."
+  },
+  "suggestions_settings_dialog": {
+    "better": "Mai bune",
+    "close": "Închide",
+    "more": "Mai multe",
+    "number_of_suggestions": "Numărul de sugestii",
+    "settings_not_available_offline": "Aceste setări nu sunt disponibile în timp ce sunteți offline.",
+    "suggestion_confidence": "Încredere în sugestii",
+    "translation_suggestions": "Sugestii de traducere",
+    "translation_suggestions_settings": "Setări pentru sugestii de traducere"
+  },
+  "sync": {
+    "cancel": "Renunță",
+    "connect_network_to_synchronize": "Vă rugăm să vă conectați la internet pentru a sincroniza acest proiect",
+    "last_synced_time_stamp": "Ultima sincronizare pe {{ timeStamp }}",
+    "log_in_to_paratext": "Autentificare la Paratext",
+    "never_been_synced": "Niciodată nu a fost sincronizat",
+    "something_went_wrong_synchronizing_this_project": "Eroare în timpul sincronizării {{ projectName }} cu Paratext. Vă rugăm să încercați din nou.",
+    "successfully_synchronized_with_paratext": "Sincronizat cu succes {{ projectName }} cu Paratext.",
+    "synchronize": "Sincronizare",
+    "synchronize_project": "Sincronizarea {{ projectName }} cu Paratext",
+    "your_project_is_being_synchronized": "Proiectul dumneavoastră este în curs de sincronizare...",
+    "sync_is_disabled": "Sincronizarea acestui proiect a trebuit să fie dezactivată, deci nu este disponibilă în acest moment. Vă rugăm să contactați {{ email }} pentru a discuta ce trebuie făcut, astfel încât sincronizarea proiectului să poată fi activată din nou."
+  },
+  "text": {
+    "book_does_not_exist": "Această carte nu există.",
+    "book_is_empty": "Această carte este goală. Adăugați capitole în Paratext.",
+    "loading": "Se încarcă...",
+    "not_available_offline": "Acest text nu este disponibil offline. Conectați-vă la internet pentru a vedea textul."
+  },
+  "translate_overview": {
+    "progress": "Progresul",
+    "quality": "Calitate",
+    "retrain": "Retrain",
+    "suggestion_engine": "Suggestion Engine",
+    "trained_segments": "trained segments",
+    "training": "Training...",
+    "translate_overview": "Prezentare generală a progresului",
+    "translated_segments": "{{ translatedSegments }} din {{ total }} segmente"
+  },
+  "users": {
+    "collaborators": "Colaboratori",
+    "users": "Utilizatori"
+  }
+}

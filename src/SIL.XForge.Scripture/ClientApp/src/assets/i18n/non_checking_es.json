@@ -98,11 +98,12 @@
   "import_questions_dialog": {
     "all": "Todo",
     "cancel": "Cancelar",
+    "canceling_import": "Canceling import...",
     "filter_questions": "Filtrar las preguntas",
-    "import": "Importar",
     "import_count_questions": "Importar {{ count }} preguntas seleccionadas",
     "import_from_transcelerator": "Importar preguntas del Transcelerador",
-    "importing_questions": "Importando {{ count }} preguntas...",
+    "import_progress": "Imported {{ completed }} of {{ total }} questions...",
+    "import": "Importar",
     "loading": "Cargando...",
     "must_be_valid_reference": "Debe ser una referencia válida",
     "no_questions_available": "No hay preguntas para los libros de este proyecto.",
@@ -111,7 +112,8 @@
     "reference_to": "Referencia a",
     "select_all": "Seleccionar todos",
     "show_all": "Mostrar todos",
-    "update_transcelerator": "La versión de Transcelerator utilizada en este proyecto no está soportada. Por favor, actualice al menos a la versión 1.5.3 de Transcelerator."
+    "update_transcelerator": "La versión de Transcelerator utilizada en este proyecto no está soportada. Por favor, actualice al menos a la versión 1.5.3 de Transcelerator.",
+    "select_questions": "Select questions to import"
   },
   "paginator": {
     "items_per_page": "Elementos por página",

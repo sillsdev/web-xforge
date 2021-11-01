@@ -98,11 +98,12 @@
   "import_questions_dialog": {
     "all": "All",
     "cancel": "Отменить",
+    "canceling_import": "Canceling import...",
     "filter_questions": "Filter questions",
-    "import": "Import",
     "import_count_questions": "Import {{ count }} Selected Questions",
     "import_from_transcelerator": "Import Questions from Transcelerator",
-    "importing_questions": "Importing {{ count }} questions...",
+    "import_progress": "Imported {{ completed }} of {{ total }} questions...",
+    "import": "Import",
     "loading": "Loading...",
     "must_be_valid_reference": "Must be a valid reference",
     "no_questions_available": "There are no questions for the books in this project.",
@@ -111,7 +112,8 @@
     "reference_to": "Reference to",
     "select_all": "Select All",
     "show_all": "Show All",
-    "update_transcelerator": "The version of Transcelerator used in this project is not supported. Please update to at least Transcelerator version 1.5.3."
+    "update_transcelerator": "The version of Transcelerator used in this project is not supported. Please update to at least Transcelerator version 1.5.3.",
+    "select_questions": "Select questions to import"
   },
   "paginator": {
     "items_per_page": "Элементов на странице",
