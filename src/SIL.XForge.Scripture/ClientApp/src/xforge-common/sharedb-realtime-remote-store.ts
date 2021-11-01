@@ -6,6 +6,7 @@ import { fromEvent, Observable, Subject } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { Connection, Doc, OTType, Query, Snapshot, types } from 'sharedb/lib/client';
 import { PwaService } from 'xforge-common/pwa.service';
+import { Snapshot as DataSnapshot } from 'xforge-common/models/snapshot';
 import { environment } from '../environments/environment';
 import { LocationService } from './location.service';
 import { QueryParameters } from './query-parameters';
@@ -233,6 +234,23 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
   updatePendingOps(ops: any[]): void {
     this.doc.pendingOps.push(...ops.map(component => ({ op: component, type: this.doc.type, callbacks: [] })));
     this.doc.flush();
+  }
+
+  previousSnapshot(): Promise<DataSnapshot> {
+    return new Promise((resolve, reject) => {
+      this.doc.connection.fetchSnapshot(
+        this.doc.collection,
+        this.doc.id,
+        Math.min(0, this.doc.version - 1),
+        (err, snapshot) => {
+          if (err) {
+            reject();
+          } else {
+            resolve(snapshot as DataSnapshot);
+          }
+        }
+      );
+    });
   }
 
   destroy(): Promise<void> {
