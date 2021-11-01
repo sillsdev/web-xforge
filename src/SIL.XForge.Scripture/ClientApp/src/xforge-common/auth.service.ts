@@ -26,13 +26,13 @@ import { ASP_CULTURE_COOKIE_NAME, getAspCultureCookieLanguage } from './utils';
 export const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
 export const XF_ROLE_CLAIM = 'http://xforge.org/role';
 
-const ACCESS_TOKEN_SETTING = 'access_token';
-const ID_TOKEN_SETTING = 'id_token';
-const USER_ID_SETTING = 'user_id';
-const ROLE_SETTING = 'role';
+export const ACCESS_TOKEN_SETTING = 'access_token';
+export const ID_TOKEN_SETTING = 'id_token';
+export const USER_ID_SETTING = 'user_id';
+export const ROLE_SETTING = 'role';
 export const EXPIRES_AT_SETTING = 'expires_at';
 
-interface AuthState {
+export interface AuthState {
   returnUrl?: string;
   linking?: boolean;
 }
@@ -209,7 +209,6 @@ export class AuthService {
   }
 
   private async tryLogIn(): Promise<LoginResult> {
-    console.log('tryLogIn');
     try {
       // If we have no valid auth0 data then we have to validate online first
       if (this.accessToken == null || this.idToken == null || this.expiresAt == null) {
@@ -224,29 +223,22 @@ export class AuthService {
   }
 
   private async tryOnlineLogIn(): Promise<LoginResult> {
-    console.log('tryOnlineLogin');
     try {
       if (await this.pwaService.checkOnline()) {
-        console.log('checkOnline passed');
         // In online mode do the normal checks with auth0
         let authResult = await this.parsedHashPromise;
-        console.log('authResult from promise', authResult);
         if (!(await this.handleOnlineAuth(authResult))) {
           authResult = await this.checkSession();
-          console.log('result', authResult);
           if (!(await this.handleOnlineAuth(authResult))) {
             this.clearState();
-            console.log('not logged in');
             return { loggedIn: false, newlyLoggedIn: false };
           }
         } else {
           // TODO newlyLoggedIn is incorrect the second time this is called, because a user cannot be "newly" logged in
           // multiple times in a single session. The value is ignored though after the first time it's called.
-          console.log('newly logged in');
           return { loggedIn: true, newlyLoggedIn: true };
         }
       }
-      console.log('we are logged in');
       return { loggedIn: true, newlyLoggedIn: false };
     } catch (error) {
       await this.handleLoginError('tryOnlineLogIn', error);
@@ -333,7 +325,6 @@ export class AuthService {
       mergeMap(expAt => {
         const now = Date.now();
         // Expiry 30 seconds sooner than the actual expiry date to avoid any inflight expiry issues
-        console.log('expiresAt', Math.max(1, expAt - now - 30000));
         return timer(Math.max(1, expAt - now - 30000));
       }),
       filter(() => this.pwaService.isOnline)
@@ -398,7 +389,6 @@ export class AuthService {
     if (this.checkSessionPromise == null) {
       this.checkSessionPromise = new Promise<auth0.Auth0DecodedHash | null>((resolve, reject) => {
         this.auth0.checkSession({ state: JSON.stringify({}) }, (err, authResult) => {
-          console.log(err, authResult);
           if (err != null) {
             if (err.code === 'login_required') {
               resolve(null);
@@ -420,7 +410,6 @@ export class AuthService {
 
   private async localLogIn(accessToken: string, idToken: string, expiresIn: number): Promise<void> {
     const claims: any = jwtDecode(accessToken);
-    console.log(claims);
     const prevUserId = this.currentUserId;
     const userId = claims[XF_USER_ID_CLAIM];
     if (prevUserId != null && prevUserId !== userId) {
@@ -429,13 +418,11 @@ export class AuthService {
     }
 
     const expiresAt = expiresIn * 1000 + Date.now();
-    console.log('localSettings', accessToken, idToken, expiresAt, userId, claims[XF_ROLE_CLAIM]);
     this.localSettings.set(ACCESS_TOKEN_SETTING, accessToken);
     this.localSettings.set(ID_TOKEN_SETTING, idToken);
     this.localSettings.set(EXPIRES_AT_SETTING, expiresAt);
     this.localSettings.set(USER_ID_SETTING, userId);
     this.localSettings.set(ROLE_SETTING, claims[XF_ROLE_CLAIM]);
-    console.log('current id', this.currentUserId);
     this.scheduleRenewal();
     this.bugsnagService.leaveBreadcrumb(
       'Local Login',
