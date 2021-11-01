@@ -52,6 +52,12 @@ declare module 'sharedb/lib/client' {
       options?: any,
       callback?: (err: Error, results: Doc[]) => void
     ): Query;
+    fetchSnapshot(
+      collectionName: string,
+      documentID: string,
+      version: number | null,
+      callback?: (err: Error, snapshot: Snapshot) => void
+    ): Snapshot;
     close(): void;
   }
 
@@ -111,6 +117,7 @@ declare module 'sharedb/lib/client' {
     whenNothingPending(callback: Callback): void;
     hasWritePending(): boolean;
     flush(): void;
+    previousSnapshot(): Snapshot;
   }
 
   export interface Query extends EventEmitter {

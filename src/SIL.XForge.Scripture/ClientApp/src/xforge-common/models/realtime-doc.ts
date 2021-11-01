@@ -1,6 +1,7 @@
 import { merge, Observable, Subject, Subscription } from 'rxjs';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { RealtimeDocAdapter } from '../realtime-remote-store';
+import { Snapshot } from './snapshot';
 import { RealtimeOfflineData } from './realtime-offline-data';
 
 export interface RealtimeDocConstructor {
@@ -138,6 +139,10 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
     if (this.isLoaded) {
       this.checkExists();
     }
+  }
+
+  previousSnapshot(): Promise<Snapshot<T>> {
+    return this.adapter.previousSnapshot();
   }
 
   /**
