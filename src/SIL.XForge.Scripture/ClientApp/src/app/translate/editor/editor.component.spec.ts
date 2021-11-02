@@ -59,6 +59,7 @@ import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { SharedModule } from '../../shared/shared.module';
+import { getCombinedVerseTextDoc } from '../../shared/test-utils';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
 import { NoteDialogComponent } from './note-dialog/note-dialog.component';
 import { SuggestionsComponent } from './suggestions.component';
@@ -807,7 +808,7 @@ describe('EditorComponent', () => {
       expect(env.component.targetLabel).toEqual('TRG');
       expect(env.component.target!.segmentRef).toEqual('verse_1_1');
       const selection = env.targetEditor.getSelection();
-      expect(selection!.index).toBe(30);
+      expect(selection!.index).toBe(50);
       expect(selection!.length).toBe(0);
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
       expect(env.component.showSuggestions).toBe(false);
@@ -1557,7 +1558,7 @@ describe('EditorComponent', () => {
       expect(env.component.chapter).toBe(2);
       expect(env.component.target!.segmentRef).toEqual('verse_2_1');
       const selection = env.targetEditor.getSelection();
-      expect(selection!.index).toBe(30);
+      expect(selection!.index).toBe(50);
       expect(selection!.length).toBe(0);
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
       expect(env.component.showSuggestions).toBe(false);
@@ -2301,6 +2302,14 @@ class TestEnvironment {
     return noteEmbedCount;
   }
 
+  private addCombinedVerseTextDoc(id: TextDocId): void {
+    this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
+      id: id.toString(),
+      type: RichText.type.name,
+      data: getCombinedVerseTextDoc(id)
+    });
+  }
+
   private addProjectUserConfig(userConfig: SFProjectUserConfig): void {
     if (userConfig.translationSuggestionsEnabled == null) {
       userConfig.translationSuggestionsEnabled = true;
@@ -2314,22 +2323,6 @@ class TestEnvironment {
     this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
       id: getSFProjectUserConfigDocId('project01', userConfig.ownerRef),
       data: userConfig
-    });
-  }
-
-  private addCombinedVerseTextDoc(id: TextDocId): void {
-    const delta = new Delta();
-    delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
-    delta.insert({ blank: true }, { segment: 'p_1' });
-    delta.insert({ verse: { number: '1', style: 'v' } });
-    delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 1.`, { segment: `verse_${id.chapterNum}_1` });
-    delta.insert({ verse: { number: '2-3', style: 'v' } });
-    delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 2-3.`, { segment: `verse_${id.chapterNum}_2-3` });
-    delta.insert('\n', { para: { style: 'p' } });
-    this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
-      id: id.toString(),
-      type: RichText.type.name,
-      data: delta
     });
   }
 

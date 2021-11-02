@@ -2,8 +2,8 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { Subscription } from 'rxjs';
-import { VERSE_FROM_SEGMENT_REF_REGEX } from 'xforge-common/utils';
 import { Delta, TextDoc } from '../../core/models/text-doc';
+import { VERSE_FROM_SEGMENT_REF_REGEX } from '../utils';
 import { USFM_STYLE_DESCRIPTIONS } from './usfm-style-descriptions';
 
 const PARA_STYLES: Set<string> = new Set<string>([
@@ -292,8 +292,7 @@ export class TextViewModel {
     const verses: VerseRef[] = verseRef.allVerses();
     const startVerseNum: number = verses[0].verseNum;
     const lastVerseNum: number = verses[verses.length - 1].verseNum;
-    const textSegments = Array.from(this._segments.keys());
-    for (const segment of textSegments) {
+    for (const segment of this._segments.keys()) {
       const match: RegExpExecArray | null = VERSE_FROM_SEGMENT_REF_REGEX.exec(segment);
       if (match == null) {
         continue;

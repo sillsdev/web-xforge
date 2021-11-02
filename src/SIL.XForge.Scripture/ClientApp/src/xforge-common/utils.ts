@@ -1,18 +1,12 @@
 import { translate } from '@ngneat/transloco';
 import Bowser from 'bowser';
 import ObjectID from 'bson-objectid';
-import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import locales from '../../../locales.json';
 import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
 import { Locale } from './models/i18n-locale';
 
 const BROWSER = Bowser.getParser(window.navigator.userAgent);
-
-// Regular expression for getting the verse from a segment ref
-export const VERSE_FROM_SEGMENT_REF_REGEX = /verse_[0-9]+_([0-9]+)[-/]*/;
-// Regular expression for the verse segment ref of scripture content
-export const VERSE_REGEX = /verse_[0-9]+_[0-9]+/;
 
 export function nameof<T>(name: Extract<keyof T, string>): string {
   return name;
@@ -75,13 +69,6 @@ export function parseJSON(str: string): any | undefined {
   } catch (err) {
     return undefined;
   }
-}
-
-export function verseSlug(verse: VerseRef) {
-  if (verse.verse != null) {
-    return 'verse_' + verse.chapterNum + '_' + verse.verse;
-  }
-  return 'verse_' + verse.chapterNum + '_' + verse.verseNum;
 }
 
 export const ASP_CULTURE_COOKIE_NAME = '.AspNetCore.Culture';
