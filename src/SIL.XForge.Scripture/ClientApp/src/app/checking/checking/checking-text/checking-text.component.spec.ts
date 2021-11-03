@@ -15,7 +15,7 @@ import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { SharedModule } from '../../../shared/shared.module';
-import { getSFProject, getTextDoc } from '../../../shared/test-utils';
+import { getCombinedVerseTextDoc, getSFProject, getTextDoc } from '../../../shared/test-utils';
 import { CheckingTextComponent } from './checking-text.component';
 
 const mockedSFProjectService = mock(SFProjectService);
@@ -85,6 +85,17 @@ describe('CheckingTextComponent', () => {
     expect(env.isSegmentHighlighted(1, 4)).toBe(true);
   }));
 
+  it('highlights combined verse', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.component.id = new TextDocId('project01', 41, 1);
+    env.component.questionVerses = [new VerseRef(41, 1, '2-3')];
+    env.component.activeVerse = new VerseRef(41, 1, '2-3');
+    env.wait();
+    expect(env.segmentHasQuestion(1, 1)).toBe(false);
+    expect(env.segmentHasQuestion(1, '2-3')).toBe(true);
+    expect(env.isSegmentHighlighted(1, '2-3')).toBe(true);
+  }));
+
   it('can set text direction explicitly', fakeAsync(() => {
     const env = new TestEnvironment();
     env.wait();
@@ -104,6 +115,7 @@ class TestEnvironment {
 
   constructor() {
     this.addTextDoc(new TextDocId('project01', 40, 1, 'target'));
+    this.addCombinedVerseTextDoc(new TextDocId('project01', 41, 1, 'target'));
     this.setupProject('project01');
     when(mockedSFProjectService.get('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
@@ -136,12 +148,12 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  isSegmentHighlighted(chapter: number, verse: number): boolean {
+  isSegmentHighlighted(chapter: number, verse: number | string): boolean {
     const segment = this.quillEditor.querySelector(`usx-segment[data-segment="verse_${chapter}_${verse}"]`)!;
     return segment != null && segment.classList.contains('highlight-segment');
   }
 
-  segmentHasQuestion(chapter: number, verse: number): boolean {
+  segmentHasQuestion(chapter: number, verse: number | string): boolean {
     const segment = this.quillEditor.querySelector(`usx-segment[data-segment="verse_${chapter}_${verse}"]`)!;
     return segment != null && segment.classList.contains('question-segment');
   }
@@ -157,6 +169,14 @@ class TestEnvironment {
       id: id.toString(),
       type: RichText.type.name,
       data: getTextDoc(id)
+    });
+  }
+
+  private addCombinedVerseTextDoc(id: TextDocId): void {
+    this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
+      id: id.toString(),
+      type: RichText.type.name,
+      data: getCombinedVerseTextDoc(id)
     });
   }
 

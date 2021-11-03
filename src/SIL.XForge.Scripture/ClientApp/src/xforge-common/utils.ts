@@ -1,7 +1,6 @@
 import { translate } from '@ngneat/transloco';
 import Bowser from 'bowser';
 import ObjectID from 'bson-objectid';
-import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import locales from '../../../locales.json';
 import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
@@ -70,10 +69,6 @@ export function parseJSON(str: string): any | undefined {
   } catch (err) {
     return undefined;
   }
-}
-
-export function verseSlug(verse: VerseRef) {
-  return 'verse_' + verse.chapterNum + '_' + verse.verseNum;
 }
 
 export const ASP_CULTURE_COOKIE_NAME = '.AspNetCore.Culture';
