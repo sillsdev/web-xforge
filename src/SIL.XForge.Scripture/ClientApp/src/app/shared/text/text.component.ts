@@ -13,6 +13,7 @@ import { TranslocoService } from '@ngneat/transloco';
 import isEqual from 'lodash-es/isEqual';
 import merge from 'lodash-es/merge';
 import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { fromEvent } from 'rxjs';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -400,6 +401,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return this.viewModel.hasSegmentRange(ref);
   }
 
+  getVerseSegments(verseRef?: VerseRef): string[] {
+    return this.viewModel.getVerseSegments(verseRef);
+  }
+
   /** Respond to text changes in the quill editor. */
   onContentChanged(delta: DeltaStatic, source: string): void {
     this.viewModel.update(delta, source as Sources);
@@ -598,12 +603,18 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     if (!this.viewModel.hasSegmentRange(segmentRef)) {
-      if (this._segment != null && this.highlightSegment) {
-        this.clearHighlight();
+      const verseParts: string[] = segmentRef.split('_');
+      const verseRef: VerseRef = new VerseRef(this.id?.bookNum, verseParts[1], verseParts[2]);
+      const correspondingSegments: string[] = this.getVerseSegments(verseRef);
+      if (correspondingSegments.length === 0) {
+        if (this._segment != null && this.highlightSegment) {
+          this.clearHighlight();
+        }
+        this._segment = undefined;
+        this.segmentRefChange.emit();
+        return true;
       }
-      this._segment = undefined;
-      this.segmentRefChange.emit();
-      return true;
+      segmentRef = correspondingSegments[0];
     }
 
     if (focus) {

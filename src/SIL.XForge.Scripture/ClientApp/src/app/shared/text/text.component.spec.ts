@@ -22,7 +22,7 @@ import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../../shared/shared.module';
-import { getSFProject, getTextDoc } from '../test-utils';
+import { getCombinedVerseTextDoc, getSFProject, getTextDoc } from '../test-utils';
 import { DragAndDrop } from './drag-and-drop';
 import { TextComponent } from './text.component';
 
@@ -95,6 +95,35 @@ describe('TextComponent', () => {
     } else {
       fail('should not get here if test is working properly!');
     }
+  }));
+
+  it('can highlight combined verses', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.fixture.detectChanges();
+    env.id = new TextDocId('project01', 41, 1);
+    tick();
+    env.fixture.detectChanges();
+    env.hostComponent.isReadOnly = true;
+
+    // segments overlaps on verse 2
+    env.component.setSegment('verse_1_2');
+    tick();
+    env.fixture.detectChanges();
+    expect(env.component.segment!.ref).toEqual('verse_1_2-3');
+    env.component.highlight();
+    tick();
+    env.fixture.detectChanges();
+    expect(env.isSegmentHighlighted(1, '2-3')).toBe(true);
+
+    // segments overlaps on verse 3
+    env.component.setSegment('verse_1_3');
+    tick();
+    env.fixture.detectChanges();
+    expect(env.component.segment!.ref).toEqual('verse_1_2-3');
+    env.component.highlight();
+    tick();
+    env.fixture.detectChanges();
+    expect(env.isSegmentHighlighted(1, '2-3')).toBe(true);
   }));
 
   it('adds data attributes for usfm labels', fakeAsync(() => {
@@ -832,7 +861,7 @@ class MockQuill extends Quill {}
     [placeholder]="initialPlaceHolder"
     [id]="id"
     [isRightToLeft]="isTextRightToLeft"
-    [isReadOnly]="false"
+    [isReadOnly]="isReadOnly"
   ></app-text>`
 })
 class HostComponent {
@@ -840,6 +869,7 @@ class HostComponent {
 
   initialPlaceHolder = 'initial placeholder text';
   isTextRightToLeft: boolean = false;
+  isReadOnly: boolean = false;
   id?: TextDocId;
 }
 
@@ -858,16 +888,24 @@ class TestEnvironment {
       (translationStringKey: string) => translationStringKey
     );
 
-    const textDocId = new TextDocId('project01', 40, 1);
+    const matTextDocId = new TextDocId('project01', 40, 1);
+    const mrkTextDocId = new TextDocId('project01', 41, 1);
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
       id: 'project01',
       data: getSFProject('project01')
     });
-    this.realtimeService.addSnapshot<TextData>(TextDoc.COLLECTION, {
-      id: textDocId.toString(),
-      data: getTextDoc(textDocId),
-      type: RichText.type.name
-    });
+    this.realtimeService.addSnapshots<TextData>(TextDoc.COLLECTION, [
+      {
+        id: matTextDocId.toString(),
+        data: getTextDoc(matTextDocId),
+        type: RichText.type.name
+      },
+      {
+        id: mrkTextDocId.toString(),
+        data: getCombinedVerseTextDoc(mrkTextDocId),
+        type: RichText.type.name
+      }
+    ]);
 
     when(mockedProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
@@ -896,5 +934,14 @@ class TestEnvironment {
     this._onlineStatus.next(value);
     tick();
     this.fixture.detectChanges();
+  }
+
+  get quillEditor(): HTMLElement {
+    return document.getElementsByClassName('ql-container')[0] as HTMLElement;
+  }
+
+  isSegmentHighlighted(chapter: number, verse: number | string): boolean {
+    const segment = this.quillEditor.querySelector(`usx-segment[data-segment="verse_${chapter}_${verse}"]`)!;
+    return segment != null && segment.classList.contains('highlight-segment');
   }
 }
