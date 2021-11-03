@@ -36,6 +36,20 @@ export function getTextDoc(id: TextDocId): TextData {
   return delta;
 }
 
+export function getCombinedVerseTextDoc(id: TextDocId): TextData {
+  const delta = new Delta();
+  delta.insert(`Title for chapter ${id.chapterNum}`, { segment: 's_1' });
+  delta.insert('\n', { para: { style: 's' } });
+  delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
+  delta.insert({ blank: true }, { segment: 'p_1' });
+  delta.insert({ verse: { number: '1', style: 'v' } });
+  delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 1.`, { segment: `verse_${id.chapterNum}_1` });
+  delta.insert({ verse: { number: '2-3', style: 'v' } });
+  delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 2-3.`, { segment: `verse_${id.chapterNum}_2-3` });
+  delta.insert('\n', { para: { style: 'p' } });
+  return delta;
+}
+
 export function getSFProject(id: string): SFProject {
   return {
     name: `${id} name`,

@@ -19,10 +19,11 @@ import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils
 import { fromEvent } from 'rxjs';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { getBrowserEngine, verseSlug } from 'xforge-common/utils';
+import { getBrowserEngine } from 'xforge-common/utils';
 import { Delta, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { NoteThreadIcon } from '../../core/models/note-thread-doc';
+import { VERSE_REGEX } from '../utils';
 import { registerScripture } from './quill-scripture';
 import { Segment } from './segment';
 import { TextViewModel } from './text-view-model';
@@ -48,9 +49,6 @@ function onNativeSelectionChanged(): void {
     }
   }
 }
-
-// Regular expression for the verse segment ref of scripture content
-const VERSE_REGEX = /verse_[0-9]+_[0-9]+/;
 
 const USX_FORMATS = registerScripture();
 window.document.addEventListener('selectionchange', onNativeSelectionChanged);
@@ -430,24 +428,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   getVerseSegments(verseRef?: VerseRef): string[] {
-    if (verseRef == null) {
-      return [];
-    }
-    const segments: string[] = [];
-    let segment = '';
-    for (const verseInRange of verseRef.allVerses()) {
-      segment = verseSlug(verseInRange);
-      if (!segments.includes(segment)) {
-        segments.push(segment);
-      }
-      // Check for related segments like this verse i.e. verse_1_2/q1
-      for (const relatedSegment of this.getRelatedSegmentRefs(segment)) {
-        if (!segments.includes(relatedSegment)) {
-          segments.push(relatedSegment);
-        }
-      }
-    }
-    return segments;
+    return this.viewModel.getVerseSegments(verseRef);
   }
 
   getSegmentElement(segment: string): Element | null {
@@ -459,22 +440,23 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     featureVerseRefs: VerseRef[],
     featureName: 'question' | 'note-thread'
   ): string[] {
-    if (this.editor == null) {
+    if (this.editor == null || this.id == null) {
       return [];
     }
     const segments: string[] = [];
     const verseFeatureCount = new Map<string, number>();
-    for (const verseRef of featureVerseRefs) {
-      const referenceSegments = this.getVerseSegments(verseRef);
-      if (referenceSegments.length > 0) {
-        const featureStartSegment = referenceSegments[0];
-        const count: number = verseFeatureCount.get(featureStartSegment) ?? 0;
-        verseFeatureCount.set(featureStartSegment, count + 1);
-
-        for (const segment of referenceSegments) {
-          if (!segments.includes(segment)) {
-            segments.push(segment);
-          }
+    const chapterFeaturedVerseRefs: VerseRef[] = featureVerseRefs.filter(fvr => fvr.chapterNum === this.id!.chapterNum);
+    for (const verseRef of chapterFeaturedVerseRefs) {
+      const featuredVerseSegments: string[] = this.viewModel.getVerseSegments(verseRef);
+      if (featuredVerseSegments.length === 0) {
+        continue;
+      }
+      const featureStartSegmentRef: string = featuredVerseSegments[0];
+      const count: number = verseFeatureCount.get(featureStartSegmentRef) ?? 0;
+      verseFeatureCount.set(featureStartSegmentRef, count + 1);
+      for (const segment of featuredVerseSegments) {
+        if (!segments.includes(segment)) {
+          segments.push(segment);
         }
       }
     }
@@ -514,7 +496,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     // A single verse can be associated with multiple segments (e.g verse_1_1, verse_1_1/p_1)
-    const verseSegments: string[] = this.getVerseSegments(verseRef);
+    const verseSegments: string[] = this.viewModel.getVerseSegments(verseRef);
+    if (verseSegments.length === 0) {
+      return;
+    }
     let editorPosOfSegmentToModify: RangeStatic | undefined = this.getSegmentRange(verseSegments[0]);
     let startTextPosInVerse: number = textAnchor.start;
     if (Array.from(this.viewModel.embeddedElements.keys()).includes(id)) {
