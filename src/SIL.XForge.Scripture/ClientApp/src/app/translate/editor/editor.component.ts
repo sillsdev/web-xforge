@@ -488,7 +488,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.insertSuggestionEnd = -1;
           this.target.editor.setSelection(selectIndex, 0, 'user');
         }
-        if (segment != null && oldVerseEmbeds != null && this.shouldNoteThreadsRespondToEdits && isLocalUpdate) {
+        if (segment != null && oldVerseEmbeds != null && this.shouldNoteThreadsRespondToEdits && !!isLocalUpdate) {
+          // only update the note anchors if the update is local, otherwise remote edits will mess up the note anchors
           await this.updateVerseNoteThreadAnchors(oldVerseEmbeds, delta);
         }
       }
@@ -503,7 +504,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.syncScroll();
     }
 
-    if (delta != null && this.shouldNoteThreadsRespondToEdits) {
+    if (delta != null) {
       // only recreate note embeds if the delta has productive edits
       this.recreateDeletedNoteThreadEmbeds();
     }
@@ -1156,7 +1157,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const segmentsToSubscribe: Set<string> = new Set<string>();
     const noteThreadDocs: NoteThreadDoc[] = this.currentChapterNoteThreadDocs();
     for (const noteThreadDoc of noteThreadDocs) {
-      if (noteThreadDoc?.data?.dataId == null || currentNotes.has(noteThreadDoc!.data!.dataId)) {
+      if (noteThreadDoc?.data?.dataId == null || currentNotes.has(noteThreadDoc.data.dataId)) {
         continue;
       }
 

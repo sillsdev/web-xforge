@@ -688,10 +688,11 @@ export class TextViewModel {
   }
 
   /** Get the number of embeds displayed in the quill editor for a given range of text data. */
-  private calculateEmbedsInTextRange(editorStartIndex: number, length: number): number {
-    const positionWithoutEmbeds = editorStartIndex + length;
-    const positionWithEmbeds = this.getEditorPositionPlusTextPosition(editorStartIndex, length);
-    return positionWithEmbeds - positionWithoutEmbeds;
+  private calculateEmbedsInTextRange(editorStartPos: number, length: number): number {
+    const editorEndPos: number = this.getEditorPositionPlusTextPosition(editorStartPos, length);
+    const lengthWithEmbeds: number = editorEndPos - editorStartPos;
+    const embedCount: number = lengthWithEmbeds - length;
+    return embedCount;
   }
 
   private getAttributesAtPosition(editorPosition: number) {
