@@ -2,7 +2,7 @@ import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils
 import { SelectableProject } from '../core/paratext.service';
 
 // Regular expression for getting the verse from a segment ref
-export const VERSE_FROM_SEGMENT_REF_REGEX = /verse_[0-9]+_([0-9]+-*[0-9]*)[/]*/;
+export const VERSE_FROM_SEGMENT_REF_REGEX = /verse_\d+_(\d+-?\d*)/;
 
 export function combineVerseRefStrs(startStr?: string, endStr?: string): VerseRef | undefined {
   if (!startStr) {
@@ -42,10 +42,7 @@ export function combineVerseRefStrs(startStr?: string, endStr?: string): VerseRe
 }
 
 export function verseSlug(verse: VerseRef) {
-  if (verse.verse != null) {
-    return 'verse_' + verse.chapterNum + '_' + verse.verse;
-  }
-  return 'verse_' + verse.chapterNum + '_' + verse.verseNum;
+  return 'verse_' + verse.chapterNum + '_' + (verse.verse == null ? verse.verseNum : verse.verse);
 }
 
 export function projectLabel(project: SelectableProject | undefined): string {

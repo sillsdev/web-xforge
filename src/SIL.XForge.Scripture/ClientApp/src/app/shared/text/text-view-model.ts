@@ -287,9 +287,9 @@ export class TextViewModel {
       if (match == null) {
         continue;
       }
-      const matchParts: string[] = match[1].split('-');
-      const matchStartNum: number = +matchParts[0];
-      const matchLastNum: number = +matchParts[matchParts.length - 1];
+      const verseParts: string[] = match[1].split('-');
+      const matchStartNum: number = +verseParts[0];
+      const matchLastNum: number = +verseParts[verseParts.length - 1];
       const matchStartsWithin = matchStartNum >= startVerseNum && matchStartNum <= lastVerseNum;
       const matchEndsWithin = matchLastNum >= startVerseNum && matchLastNum <= lastVerseNum;
       if (matchStartsWithin || matchEndsWithin) {
