@@ -23,16 +23,16 @@ import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
 import { USERS_URL } from './url-constants';
 import { ASP_CULTURE_COOKIE_NAME, getAspCultureCookieLanguage } from './utils';
 
-const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
-const XF_ROLE_CLAIM = 'http://xforge.org/role';
+export const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
+export const XF_ROLE_CLAIM = 'http://xforge.org/role';
 
-const ACCESS_TOKEN_SETTING = 'access_token';
-const ID_TOKEN_SETTING = 'id_token';
-const USER_ID_SETTING = 'user_id';
-const ROLE_SETTING = 'role';
-const EXPIRES_AT_SETTING = 'expires_at';
+export const ACCESS_TOKEN_SETTING = 'access_token';
+export const ID_TOKEN_SETTING = 'id_token';
+export const USER_ID_SETTING = 'user_id';
+export const ROLE_SETTING = 'role';
+export const EXPIRES_AT_SETTING = 'expires_at';
 
-interface AuthState {
+export interface AuthState {
   returnUrl?: string;
   linking?: boolean;
 }
@@ -171,6 +171,7 @@ export class AuthService {
     if (environment.beta) {
       window.parent.postMessage(<BetaMigrationMessage>{ message: 'login_required' }, environment.masterUrl);
     }
+    this.unscheduleRenewal();
     this.auth0.authorize(authOptions);
   }
 
@@ -190,6 +191,7 @@ export class AuthService {
   async logOut(): Promise<void> {
     await this.offlineStore.deleteDB();
     this.localSettings.clear();
+    this.unscheduleRenewal();
     this.auth0.logout({ returnTo: this.locationService.origin + '/' });
   }
 
@@ -212,10 +214,7 @@ export class AuthService {
       if (this.accessToken == null || this.idToken == null || this.expiresAt == null) {
         return await this.tryOnlineLogIn();
       }
-      // In offline mode check against the last known access
-      if (!(await this.handleOfflineAuth())) {
-        return { loggedIn: false, newlyLoggedIn: false };
-      }
+      await this.handleOfflineAuth();
       return { loggedIn: true, newlyLoggedIn: false };
     } catch (error) {
       await this.handleLoginError('tryLogIn', error);
