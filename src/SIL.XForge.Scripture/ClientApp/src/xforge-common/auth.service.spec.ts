@@ -449,7 +449,7 @@ class TestEnvironment {
   readonly service: AuthService;
   readonly language = 'fr';
   private tokenExpiryTimer = 720; // 2 hours
-  private localSettings: Map<string, string | number> = new Map<string, string | number>();
+  private localSettings = new Map<string, string | number>();
   private _localeSettingsRemoveChanges = new Subject<StorageEvent>();
   private _loginLinkedAccountId: string | undefined;
   private readonly _authLoginState?: string;
