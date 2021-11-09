@@ -81,7 +81,7 @@ describe('AuthService', () => {
 
   it('should not check online authentication if not logged in', fakeAsync(() => {
     const env = new TestEnvironment({ isOnline: true });
-    expect(env.isLoggedIn).toBe(false, 'setup');
+    expect(env.isLoggedIn).withContext('setup').toBe(false);
     resetCalls(mockedPwaService);
 
     env.service.checkOnlineAuth();
@@ -92,7 +92,7 @@ describe('AuthService', () => {
 
   it('should check online authentication if logged in', fakeAsync(() => {
     const env = new TestEnvironment();
-    expect(env.isLoggedIn).toBe(true, 'setup');
+    expect(env.isLoggedIn).withContext('setup').toBe(true);
     resetCalls(mockedPwaService);
 
     env.service.checkOnlineAuth();
@@ -244,7 +244,7 @@ describe('AuthService', () => {
     const returnUrl = 'test-returnUrl';
     const signUp = true;
     const locale = 'es';
-    expect(locale).not.toEqual(env.language, 'setup');
+    expect(locale).withContext('setup').not.toEqual(env.language);
 
     env.service.logIn(returnUrl, signUp, locale);
 
@@ -280,8 +280,8 @@ describe('AuthService', () => {
   it('should update interface language only if logged in', fakeAsync(() => {
     const env = new TestEnvironment();
     const interfaceLanguage = 'es';
-    expect(interfaceLanguage).not.toEqual(env.language, 'setup');
-    expect(env.isLoggedIn).toBe(true, 'setup');
+    expect(interfaceLanguage).withContext('setup').not.toEqual(env.language);
+    expect(env.isLoggedIn).withContext('setup').toBe(true);
 
     env.service.updateInterfaceLanguage(interfaceLanguage);
 
@@ -292,11 +292,11 @@ describe('AuthService', () => {
   it('should not update interface language if logged out', fakeAsync(() => {
     const env = new TestEnvironment({ isOnline: true });
     const interfaceLanguage = 'es';
-    expect(interfaceLanguage).not.toEqual(env.language, 'setup');
+    expect(interfaceLanguage).withContext('setup').not.toEqual(env.language);
     expect(env.service.accessToken).toBeUndefined();
     expect(env.service.idToken).toBeUndefined();
     expect(env.service.expiresAt).toBeUndefined();
-    expect(env.isLoggedIn).toBe(false, 'setup');
+    expect(env.isLoggedIn).withContext('setup').toBe(false);
 
     env.service.updateInterfaceLanguage(interfaceLanguage);
 
@@ -450,12 +450,12 @@ class TestEnvironment {
   readonly language = 'fr';
   private tokenExpiryTimer = 720; // 2 hours
   private localSettings: Map<string, string | number> = new Map<string, string | number>();
-  private _localeSettingsRemoveChanges: Subject<StorageEvent> = new Subject<StorageEvent>();
+  private _localeSettingsRemoveChanges = new Subject<StorageEvent>();
   private _loginLinkedAccountId: string | undefined;
   private readonly _authLoginState?: string;
 
   static encodeAccessToken(token: Auth0AccessToken) {
-    // The response from auth0 contains 3 parts seperated by a dot
+    // The response from auth0 contains 3 parts separated by a dot
     // jwtDecode does a base44 decode on a JSON string after the first dot
     return '.' + btoa(JSON.stringify(token));
   }
@@ -501,7 +501,7 @@ class TestEnvironment {
     when(mockedNoticeService.showMessageDialog(anything(), anything())).thenResolve();
     when(mockedAuth0Service.init(anything())).thenReturn(instance(mockedWebAuth));
     when(mockedCommandService.onlineInvoke(anything(), 'linkParatextAccount', anything())).thenCall(
-      (url, method, params) => {
+      (_url, _method, params) => {
         if (accountLinkingResponse != null) {
           throw accountLinkingResponse;
         }
