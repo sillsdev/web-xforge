@@ -1238,7 +1238,7 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             // Default resolved status is false
-            ParatextNoteThread thread02 = env.GetNoteThread("project01", "thread02");
+            NoteThread thread02 = env.GetNoteThread("project01", "thread02");
             Assert.That(thread02.VerseRef.ToString(), Is.EqualTo("MAT 1:1"));
             Assert.That(thread02.Resolved, Is.EqualTo(false));
 
@@ -1817,11 +1817,12 @@ namespace SIL.XForge.Scripture.Services
 
             public void SetupNoteStatusChange(string threadId, bool resolved, string verseRef = "MAT 1:1")
             {
-                var noteThreadChange = new ParatextNoteThreadChange(threadId, verseRef, $"{threadId} selected text.",
-                    "Context before ", " context after", 17, "icon1", resolved);
+                var noteThreadChange = new NoteThreadChange(threadId, verseRef, $"{threadId} selected text.",
+                    "Context before ", " context after", "icon1", resolved);
                 noteThreadChange.ThreadUpdated = true;
                 ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
-                    Arg.Any<IEnumerable<IDocument<ParatextNoteThread>>>(), Arg.Any<Dictionary<string, SyncUser>>())
+                    Arg.Any<IEnumerable<IDocument<NoteThread>>>(),
+                    Arg.Any<Dictionary<int, ChapterDelta>>(), Arg.Any<Dictionary<string, SyncUser>>())
                     .Returns(new[] { noteThreadChange });
             }
 

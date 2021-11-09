@@ -786,12 +786,12 @@ namespace SIL.XForge.Scripture.Services
                         threadChange.NoteIdsRemoved.Add(note.DataId);
                 }
                 // Make thread resolved if status has changed to deleted
-                if (existingThread.Status == NoteStatus.Deleted && threadDoc.Data.Resolved == false)
+                if (existingThread.Status == NoteStatus.Deleted && (threadDoc.Data.Resolved == false || threadDoc.Data.Resolved == null))
                 {
                     threadChange.Resolved = true;
                     threadChange.ThreadUpdated = true;
                 }
-                else if (existingThread.Status == NoteStatus.Todo && threadDoc.Data.Resolved == true)
+                else if (existingThread.Status == NoteStatus.Todo && (threadDoc.Data.Resolved == true || threadDoc.Data.Resolved == null))
                 {
                     threadChange.Resolved = false;
                     threadChange.ThreadUpdated = true;
