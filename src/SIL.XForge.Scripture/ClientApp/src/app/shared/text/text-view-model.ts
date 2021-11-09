@@ -1,7 +1,9 @@
 import cloneDeep from 'lodash-es/cloneDeep';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { Subscription } from 'rxjs';
 import { Delta, TextDoc } from '../../core/models/text-doc';
+import { VERSE_FROM_SEGMENT_REF_REGEX } from '../utils';
 import { USFM_STYLE_DESCRIPTIONS } from './usfm-style-descriptions';
 
 const PARA_STYLES: Set<string> = new Set<string>([
@@ -270,6 +272,31 @@ export class TextViewModel {
 
   getRelatedSegmentRefs(ref: string): string[] {
     return Array.from(this._segments.keys()).filter(r => r.indexOf(ref + '/') === 0);
+  }
+
+  getVerseSegments(verseRef?: VerseRef): string[] {
+    const segmentsInVerseRef: string[] = [];
+    if (verseRef == null) {
+      return segmentsInVerseRef;
+    }
+    const verses: VerseRef[] = verseRef.allVerses();
+    const startVerseNum: number = verses[0].verseNum;
+    const lastVerseNum: number = verses[verses.length - 1].verseNum;
+    for (const segment of this._segments.keys()) {
+      const match: RegExpExecArray | null = VERSE_FROM_SEGMENT_REF_REGEX.exec(segment);
+      if (match == null) {
+        continue;
+      }
+      const verseParts: string[] = match[1].split('-');
+      const matchStartNum: number = +verseParts[0];
+      const matchLastNum: number = +verseParts[verseParts.length - 1];
+      const matchStartsWithin = matchStartNum >= startVerseNum && matchStartNum <= lastVerseNum;
+      const matchEndsWithin = matchLastNum >= startVerseNum && matchLastNum <= lastVerseNum;
+      if (matchStartsWithin || matchEndsWithin) {
+        segmentsInVerseRef.push(segment);
+      }
+    }
+    return segmentsInVerseRef;
   }
 
   getSegmentRange(ref: string): RangeStatic | undefined {

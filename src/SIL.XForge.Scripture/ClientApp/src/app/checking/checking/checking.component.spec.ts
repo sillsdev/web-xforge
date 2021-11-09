@@ -314,7 +314,7 @@ describe('CheckingComponent', () => {
       env.selectQuestion(1);
       const question = env.component.answersPanel!.questionDoc!.data!;
       expect(question.isArchived).toBe(false);
-      expect(env.component.questionDocs.filter(q => q.data!.isArchived !== true).length).toEqual(15);
+      expect(env.component.questionDocs.length).toEqual(15);
       expect(env.component.questionVerseRefs.length).toEqual(15);
 
       env.clickButton(env.archiveQuestionButton);
@@ -322,7 +322,7 @@ describe('CheckingComponent', () => {
       tick(env.questionReadTimer);
 
       expect(question.isArchived).toBe(true);
-      expect(env.component.questionDocs.filter(q => q.data!.isArchived !== true).length).toEqual(14);
+      expect(env.component.questionDocs.length).toEqual(14);
       expect(env.component.questionVerseRefs.length).toEqual(14);
     }));
 
