@@ -14,5 +14,6 @@ export interface NoteThread extends ProjectData {
   originalContextBefore: string;
   originalContextAfter: string;
   position: TextAnchor;
+  resolved: boolean;
   tagIcon: string;
 }

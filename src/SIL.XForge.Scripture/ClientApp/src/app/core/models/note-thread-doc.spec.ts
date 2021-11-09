@@ -32,6 +32,7 @@ describe('NoteThreadDoc', () => {
       ownerRef: 'user01',
       projectRef: 'project01',
       tagIcon: 'flag02',
+      resolved: false,
       verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 }
     };
     const noteThreadDoc = await env.setupDoc(noteThread);
@@ -53,6 +54,7 @@ describe('NoteThreadDoc', () => {
       ownerRef: 'user01',
       projectRef: 'project01',
       tagIcon: '',
+      resolved: false,
       verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 }
     };
     const noteThreadDoc = await env.setupDoc(noteThread);
@@ -71,6 +73,7 @@ describe('NoteThreadDoc', () => {
       ownerRef: 'user01',
       projectRef: 'project01',
       tagIcon: '',
+      resolved: false,
       verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 },
       position: { start: 0, length: 1 },
       dataId: 'thread01',

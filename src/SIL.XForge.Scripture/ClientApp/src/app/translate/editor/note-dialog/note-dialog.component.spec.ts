@@ -163,6 +163,7 @@ class TestEnvironment {
     projectRef: TestEnvironment.PROJECT01,
     tagIcon: 'flag02',
     verseRef: { bookNum: 40, chapterNum: 1, verseNum: 7 },
+    resolved: false,
     notes: [
       {
         dataId: 'note01',
