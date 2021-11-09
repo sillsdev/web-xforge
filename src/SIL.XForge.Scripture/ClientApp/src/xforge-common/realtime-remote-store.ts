@@ -8,6 +8,7 @@ import { QueryParameters } from './query-parameters';
  * communicating with the real-time backend.
  */
 export abstract class RealtimeRemoteStore {
+  abstract init(getAccessToken: () => string | undefined): Promise<void>;
   abstract createDocAdapter(collection: string, id: string): RealtimeDocAdapter;
   abstract createQueryAdapter(collection: string, parameters: QueryParameters): RealtimeQueryAdapter;
 }
