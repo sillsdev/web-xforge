@@ -137,14 +137,13 @@ export class AuthService {
     });
   }
 
+  /**
+   * Triggered when app first loads and when returning from offline mode
+   * Ensure renewal timer is initiated so tokens can be refreshed when expired
+   */
   async checkOnlineAuth(): Promise<void> {
-    // Only need to check if the app has logged in via an offline state
     if (await this.isLoggedIn) {
-      this.tryOnlineLogIn().then(result => {
-        if (!result.loggedIn) {
-          this.logIn(this.locationService.pathname + this.locationService.search);
-        }
-      });
+      this.scheduleRenewal();
     }
   }
 
@@ -211,7 +210,12 @@ export class AuthService {
   private async tryLogIn(): Promise<LoginResult> {
     try {
       // If we have no valid auth0 data then we have to validate online first
-      if (this.accessToken == null || this.idToken == null || this.expiresAt == null) {
+      if (
+        this.accessToken == null ||
+        this.idToken == null ||
+        this.expiresAt == null ||
+        (this.pwaService.isOnline && (await this.hasExpired()))
+      ) {
         return await this.tryOnlineLogIn();
       }
       await this.handleOfflineAuth();
@@ -324,8 +328,7 @@ export class AuthService {
     const expiresIn$ = of(expiresAt).pipe(
       mergeMap(expAt => {
         const now = Date.now();
-        // Expiry 30 seconds sooner than the actual expiry date to avoid any inflight expiry issues
-        return timer(Math.max(1, expAt - now - 30000));
+        return timer(Math.max(1, expAt - now));
       }),
       filter(() => this.pwaService.isOnline)
     );
@@ -417,7 +420,8 @@ export class AuthService {
       this.localSettings.clear();
     }
 
-    const expiresAt = expiresIn * 1000 + Date.now();
+    // Expiry 30 seconds sooner than the actual expiry date to avoid any inflight expiry issues
+    const expiresAt = (expiresIn - 30) * 1000 + Date.now();
     this.localSettings.set(ACCESS_TOKEN_SETTING, accessToken);
     this.localSettings.set(ID_TOKEN_SETTING, idToken);
     this.localSettings.set(EXPIRES_AT_SETTING, expiresAt);
