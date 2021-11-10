@@ -25,7 +25,9 @@ export class AuthHttpInterceptor implements HttpInterceptor {
       this.authService = this.injector.get<AuthService>(AuthService);
     }
     // Make sure the user is authenticated with a valid access token
-    await this.authService.isAuthenticated();
+    if (!(await this.authService.isAuthenticated())) {
+      return await throwError('User not authenticated - login required').toPromise();
+    }
     // Add access token to the request header
     const authReq = req.clone({
       headers: req.headers.set('Authorization', 'Bearer ' + this.authService.accessToken)

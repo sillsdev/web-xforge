@@ -91,30 +91,38 @@ describe('AuthService', () => {
   }));
 
   it('should check online authentication if logged in', fakeAsync(() => {
-    const env = new TestEnvironment();
+    const env = new TestEnvironment({ isOnline: true, isLoggedIn: true });
+
     expect(env.isLoggedIn).withContext('setup').toBe(true);
-    resetCalls(mockedPwaService);
-
-    env.service.checkOnlineAuth();
-
-    tick();
     verify(mockedPwaService.checkOnline()).once();
+    verify(mockedWebAuth.checkSession(anything(), anything())).once();
     verify(mockedWebAuth.authorize(anything())).never();
+    env.discardTokenExpiryTimer();
   }));
 
   it('check session is valid after returning online and login if session has expired', fakeAsync(() => {
     const env = new TestEnvironment({
-      isOnline: true,
+      isOnline: false,
       isLoggedIn: true
     });
     expect(env.isAuthenticated).toBe(true);
-    resetCalls(mockedPwaService);
+    verify(mockedWebAuth.authorize(anything())).never();
 
     env.setLoginRequiredResponse();
-    env.service.checkOnlineAuth();
-    tick();
+    env.setOnline();
+    // Should still be true as the expiry set is still in the future
+    expect(env.isAuthenticated).toBe(true);
+    verify(mockedWebAuth.authorize(anything())).never();
 
-    verify(mockedPwaService.checkOnline()).once();
+    env.setOnline(false);
+    env.service.expireToken();
+    // Should still be authenticated as we were logged in and are now offline so can't do a renewal
+    expect(env.isAuthenticated).toBe(true);
+    verify(mockedWebAuth.authorize(anything())).never();
+
+    env.setOnline();
+    // Should now renew tokens as expired timer is reached
+    expect(env.isAuthenticated).toBe(false);
     verify(mockedWebAuth.authorize(anything())).once();
   }));
 
@@ -154,9 +162,14 @@ describe('AuthService', () => {
   }));
 
   it('should authenticate if expired', fakeAsync(() => {
-    const env = new TestEnvironment();
+    const env = new TestEnvironment({ isOnline: true, isLoggedIn: true });
     expect(env.isAuthenticated).toBe(true);
     verify(mockedWebAuth.checkSession(anything(), anything())).once();
+    resetCalls(mockedWebAuth);
+
+    env.clearTokenExpiryTimer();
+    verify(mockedWebAuth.checkSession(anything(), anything())).once();
+    env.discardTokenExpiryTimer();
   }));
 
   it('should renew tokens if expired and authenticating', fakeAsync(() => {
@@ -315,8 +328,7 @@ describe('AuthService', () => {
       [XF_ROLE_CLAIM]: SystemRole.SystemAdmin,
       [XF_USER_ID_CLAIM]: 'user02'
     });
-    env.service.checkOnlineAuth();
-    tick();
+    env.clearTokenExpiryTimer();
     expect(env.service.currentUserId).toBe('user02');
     verify(mockedLocalSettingsService.clear()).once();
     env.discardTokenExpiryTimer();
@@ -335,15 +347,22 @@ describe('AuthService', () => {
     expect(env.isAuthenticated).toBe(true);
 
     env.setTimeoutResponse();
+    env.service.expireToken();
     env.setOnline();
-    env.service.checkOnlineAuth();
-    tick();
-    // TODO: This probably should return false if no longer authenticated but always returns true
-    // env.service.isAuthenticated().then(authenticated => (isAuthenticated = authenticated));
-    // expect(isAuthenticated).toBeFalse();
-    verify(mockedPwaService.checkOnline()).once();
+    expect(env.isAuthenticated).toBe(false);
     verify(mockedWebAuth.checkSession(anything(), anything())).twice();
+    verify(mockedWebAuth.authorize(anything())).once();
     env.discardTokenExpiryTimer();
+  }));
+
+  it('should display login error when auth0 checkSession is rejected', fakeAsync(() => {
+    const callback = (env: TestEnvironment) => {
+      env.setTimeoutResponse();
+    };
+    const env = new TestEnvironment({ isOnline: true, isLoggedIn: true, callback });
+    expect(env.isLoggedIn).toBe(false);
+    verify(mockedWebAuth.checkSession(anything(), anything())).twice();
+    verify(mockedNoticeService.showMessageDialog(anything(), anything())).once();
   }));
 
   it('should link to paratext account on login', fakeAsync(() => {
@@ -425,6 +444,38 @@ describe('AuthService', () => {
     verify(mockedLocationService.go('/')).once();
     env.discardTokenExpiryTimer();
   }));
+
+  it('should try online login if local settings are available but have expired', fakeAsync(() => {
+    const callback = (env: TestEnvironment) => {
+      env.setLocalLoginData({ expiresAt: 0 });
+    };
+    const env = new TestEnvironment({ isOnline: true, isLoggedIn: true, callback });
+    expect(env.isLoggedIn).toBe(true);
+    expect(env.service.idToken).toBe(env.auth0Response.result!.idToken);
+    expect(env.service.accessToken).toBe(env.auth0Response.result!.accessToken);
+    expect(env.service.expiresAt).toBeGreaterThan(env.auth0Response.result!.expiresIn!);
+    verify(mockedPwaService.checkOnline()).once();
+    verify(mockedWebAuth.checkSession(anything(), anything())).once();
+    verify(mockedWebAuth.authorize(anything())).never();
+    env.discardTokenExpiryTimer();
+  }));
+
+  it('should schedule renewal when returning online', fakeAsync(() => {
+    const env = new TestEnvironment({ isLoggedIn: true });
+    expect(env.isLoggedIn).toBe(true);
+    verify(mockedPwaService.checkOnline()).never();
+
+    spyOn<any>(env.service, 'scheduleRenewal');
+    env.service.checkOnlineAuth();
+    tick();
+    expect(env.service['scheduleRenewal']).toHaveBeenCalledTimes(0);
+
+    env.setOnline();
+    env.service.checkOnlineAuth();
+    tick();
+    expect(env.service['scheduleRenewal']).toHaveBeenCalledTimes(1);
+    env.discardTokenExpiryTimer();
+  }));
 });
 
 interface TestEnvironmentConstructorArgs {
@@ -433,6 +484,7 @@ interface TestEnvironmentConstructorArgs {
   isNewlyLoggedIn?: boolean;
   loginState?: AuthState;
   accountLinkingResponse?: CommandError;
+  callback?: (env: TestEnvironment) => void;
 }
 
 interface Auth0AccessToken {
@@ -443,6 +495,14 @@ interface Auth0AccessToken {
 interface Auth0Response {
   error?: Auth0Error;
   result?: Auth0DecodedHash;
+}
+
+interface LocalSettings {
+  accessToken?: string;
+  idToken?: string;
+  userId?: string;
+  role?: SystemRole;
+  expiresAt?: number;
 }
 
 class TestEnvironment {
@@ -467,7 +527,8 @@ class TestEnvironment {
     isLoggedIn,
     isNewlyLoggedIn,
     loginState,
-    accountLinkingResponse
+    accountLinkingResponse,
+    callback
   }: TestEnvironmentConstructorArgs = {}) {
     resetCalls(mockedWebAuth);
     this._authLoginState = JSON.stringify(loginState);
@@ -482,11 +543,7 @@ class TestEnvironment {
     this.setOnline(isOnline);
     // If logged in but offline then set local data
     if (isLoggedIn && !isOnline) {
-      this.localSettings.set(ACCESS_TOKEN_SETTING, this.auth0Response.result!.accessToken!);
-      this.localSettings.set(ID_TOKEN_SETTING, this.auth0Response.result!.idToken!);
-      this.localSettings.set(USER_ID_SETTING, TestEnvironment.userId);
-      this.localSettings.set(ROLE_SETTING, SystemRole.SystemAdmin);
-      this.localSettings.set(EXPIRES_AT_SETTING, this.tokenExpiryTimer * 1000 + Date.now());
+      this.setLocalLoginData();
     }
     when(mockedWebAuth.checkSession(anything(), anything())).thenCall((_options, callback) =>
       callback(this.auth0Response.error, this.auth0Response.result)
@@ -512,6 +569,9 @@ class TestEnvironment {
         }
       }
     );
+    if (callback != null) {
+      callback(this);
+    }
     this.service = TestBed.inject(AuthService);
     tick();
   }
@@ -554,6 +614,14 @@ class TestEnvironment {
    */
   discardTokenExpiryTimer() {
     discardPeriodicTasks();
+  }
+
+  setLocalLoginData({ accessToken, idToken, userId, role, expiresAt }: LocalSettings = {}) {
+    this.localSettings.set(ACCESS_TOKEN_SETTING, accessToken ?? this.auth0Response.result!.accessToken!);
+    this.localSettings.set(ID_TOKEN_SETTING, idToken ?? this.auth0Response.result!.idToken!);
+    this.localSettings.set(USER_ID_SETTING, userId ?? TestEnvironment.userId);
+    this.localSettings.set(ROLE_SETTING, role ?? SystemRole.SystemAdmin);
+    this.localSettings.set(EXPIRES_AT_SETTING, expiresAt ?? this.tokenExpiryTimer * 1000 + Date.now());
   }
 
   setLoginResponse(auth0Response?: Auth0Response) {

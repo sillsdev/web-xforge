@@ -142,7 +142,7 @@ export class AuthService {
    * Ensure renewal timer is initiated so tokens can be refreshed when expired
    */
   async checkOnlineAuth(): Promise<void> {
-    if (await this.isLoggedIn) {
+    if ((await this.isLoggedIn) && this.pwaService.isOnline) {
       this.scheduleRenewal();
     }
   }
@@ -152,8 +152,12 @@ export class AuthService {
   }
 
   async isAuthenticated(): Promise<boolean> {
-    if (await this.hasExpired()) {
+    if ((await this.hasExpired()) && this.pwaService.isOnline) {
       await this.renewTokens();
+      // If still expired then the user is logging in and we need to degrade nicely while that happens
+      if (await this.hasExpired()) {
+        return false;
+      }
     }
     return true;
   }
@@ -264,7 +268,9 @@ export class AuthService {
     const state: AuthState = authResult.state == null ? {} : JSON.parse(authResult.state);
     if (state.linking != null && state.linking) {
       secondaryId = authResult.idTokenPayload.sub;
-      await this.isAuthenticated();
+      if (!(await this.isAuthenticated())) {
+        return false;
+      }
     } else {
       await this.localLogIn(authResult.accessToken, authResult.idToken, authResult.expiresIn);
     }
@@ -316,7 +322,6 @@ export class AuthService {
   }
 
   private async handleOfflineAuth(): Promise<boolean> {
-    this.scheduleRenewal();
     await this.remoteStore.init(() => this.accessToken);
     return true;
   }
