@@ -25,30 +25,11 @@ export class DragAndDrop {
       // Stop the browser from doing any drag-and-drop behaviour itself, such as inserting text with formatting.
       dragEvent.preventDefault();
 
-      let targetElement: Element | null = dragEvent.target as Element | null;
+      const [targetElement, droppingIntoBlankSegment]: [Element | null, boolean] = this.discernTarget(dragEvent);
       if (targetElement == null) {
-        console.warn(`Warning: DragEvent unexpectedly has null target.`);
         return;
       }
-      let targetElementName: string = targetElement.localName;
 
-      let droppingInBlankSegment: boolean = false;
-      if (targetElementName === 'usx-blank') {
-        droppingInBlankSegment = true;
-        targetElement = targetElement.parentElement as Element | null;
-        if (targetElement == null) {
-          console.warn(`Warning: DragEvent usx-blank target parent is unexpectedly null. Target:`, targetElement);
-          return;
-        }
-        targetElementName = targetElement.localName;
-      }
-
-      if (targetElementName !== 'usx-segment') {
-        // We need to be able to know where to insert the dropped text, such as from the drop target being a usx-segment
-        // element. Give up.
-        console.warn('Warning: DragEvent to invalid target:', targetElement);
-        return;
-      }
       if (dragEvent.dataTransfer == null) {
         console.warn(`Warning: DragEvent unexpectedly has null dataTransfer property.`);
         return;
@@ -70,36 +51,20 @@ export class DragAndDrop {
           'Warning: No defined range for drag-and-drop destination segment. Invalid segment specification? Destination segment ref:',
           destinationSegmentRef
         );
-
         return;
       }
 
-      // Determine character index of drop location in destination segment, using a browser-specific method.
-      let startPositionInSegment: number = 0;
-      if (droppingInBlankSegment) {
-        // If we are dropping into an empty segment, use the position at the end of the segment rather than using a
-        // browser-determined index into the segment.
-        // Use the position at the end of the segment, rather than at the beginning, so that it is after the blank and
-        // any other embeds.
-        startPositionInSegment = destinationSegmentRange.length;
-      } else if (document.caretRangeFromPoint !== undefined) {
-        // Chromium/Chrome, Edge, and Safari browsers
-        const range: Range = document.caretRangeFromPoint(dragEvent.clientX, dragEvent.clientY);
-        startPositionInSegment = range.startOffset;
-      } else if (document.caretPositionFromPoint !== undefined) {
-        // Firefox browser
-        const range: CaretPosition | null = document.caretPositionFromPoint(dragEvent.clientX, dragEvent.clientY);
-        if (range == null) {
-          console.warn('Warning: drag-and-drop inferred a null caret position for insertion. Target:', targetElement);
-          return;
-        }
-        startPositionInSegment = range.offset;
-      } else {
-        console.warn(`Warning: Could not determine insertion position for drag-and-drop. Target:`, targetElement);
+      let insertionPositionInDocument: number | undefined = this.determineInsertionPosition(
+        targetElement,
+        destinationSegmentRange,
+        droppingIntoBlankSegment,
+        dragEvent.clientX,
+        dragEvent.clientY
+      );
+      if (insertionPositionInDocument == null) {
         return;
       }
 
-      const insertionPositionInDocument: number = destinationSegmentRange.index + startPositionInSegment;
       let newText: string = dragEvent.dataTransfer.getData('text/plain');
       // Replace newlines with a space.
       newText = newText.replace(/(?:\r?\n)+/g, ' ');
@@ -124,5 +89,74 @@ export class DragAndDrop {
         // the selection.
       }
     });
+  }
+
+  /** Return the usx-segment element that the user is trying to drop into, if possible, and whether the original
+   * target was a usx-blank. */
+  private discernTarget(dragEvent: DragEvent): [Element | null, boolean] {
+    let targetElement: Element | null = dragEvent.target as Element | null;
+    let droppingIntoBlankSegment: boolean = false;
+
+    if (targetElement == null) {
+      console.warn(`Warning: DragEvent unexpectedly has null target.`);
+      return [targetElement, droppingIntoBlankSegment];
+    }
+    let targetElementName: string = targetElement.localName;
+
+    if (targetElementName === 'usx-blank') {
+      droppingIntoBlankSegment = true;
+      targetElement = targetElement.parentElement as Element | null;
+      if (targetElement == null) {
+        console.warn(`Warning: DragEvent usx-blank target parent is unexpectedly null. Target:`, targetElement);
+        return [targetElement, droppingIntoBlankSegment];
+      }
+      targetElementName = targetElement.localName;
+    }
+
+    if (targetElementName !== 'usx-segment') {
+      // We need to be able to know where to insert the dropped text, such as from the drop target being a usx-segment
+      // element. Give up.
+      console.warn('Warning: DragEvent to invalid target:', targetElement);
+      return [null, droppingIntoBlankSegment];
+    }
+    return [targetElement, droppingIntoBlankSegment];
+  }
+
+  /** Return the position in the quill editor where we want to insert text from a drop. */
+  private determineInsertionPosition(
+    targetElement: Element,
+    destinationSegmentRange: RangeStatic,
+    droppingIntoBlankSegment: boolean,
+    targetX: number,
+    targetY: number
+  ): number | undefined {
+    // Determine character index of drop location in destination segment, using a browser-specific method.
+
+    let startPositionInSegment: number = 0;
+    if (droppingIntoBlankSegment) {
+      // If we are dropping into an empty segment, use the position at the end of the segment rather than using a
+      // browser-determined index into the segment.
+      // Use the position at the end of the segment, rather than at the beginning, so that it is after the blank and
+      // any other embeds.
+      startPositionInSegment = destinationSegmentRange.length;
+    } else if (document.caretRangeFromPoint !== undefined) {
+      // Chromium/Chrome, Edge, and Safari browsers
+      const range: Range = document.caretRangeFromPoint(targetX, targetY);
+      startPositionInSegment = range.startOffset;
+    } else if (document.caretPositionFromPoint !== undefined) {
+      // Firefox browser
+      const range: CaretPosition | null = document.caretPositionFromPoint(targetX, targetY);
+      if (range == null) {
+        console.warn('Warning: drag-and-drop inferred a null caret position for insertion. Target:', targetElement);
+        return;
+      }
+      startPositionInSegment = range.offset;
+    } else {
+      console.warn(`Warning: Could not determine insertion position for drag-and-drop. Target:`, targetElement);
+      return;
+    }
+
+    const insertionPositionInDocument: number = destinationSegmentRange.index + startPositionInSegment;
+    return insertionPositionInDocument;
   }
 }
