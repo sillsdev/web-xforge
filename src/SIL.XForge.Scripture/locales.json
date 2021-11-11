@@ -55,7 +55,8 @@
   {
     "localName": "Română",
     "englishName": "Romanian",
-    "tags": ["ro", "ro-RO"]
+    "tags": ["ro", "ro-RO"],
+    "production": true
   },
   {
     "localName": "Azərbaycanca",
