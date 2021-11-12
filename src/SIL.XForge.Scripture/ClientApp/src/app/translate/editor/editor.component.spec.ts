@@ -1539,7 +1539,7 @@ describe('EditorComponent', () => {
 
       // The remote user inserts text after the thread01 note
       let notePosition: number = env.getNoteThreadEditorPosition('thread01');
-      let remoteEditPositionAfterNote: number = 5;
+      let remoteEditPositionAfterNote: number = 4;
       let noteCountBeforePosition: number = 1;
       // Text position in the text doc at which the remote user edits
       let remoteEditTextPos: number = env.getRemoteEditPosition(
@@ -1568,6 +1568,7 @@ describe('EditorComponent', () => {
 
       // The remote user selects some text and pastes in a replacement
       notePosition = env.getNoteThreadEditorPosition('thread02');
+      // 1 note from verse 1, and 1 in verse 3 before the selection point
       noteCountBeforePosition = 2;
       remoteEditTextPos = env.getRemoteEditPosition(notePosition, remoteEditPositionAfterNote, noteCountBeforePosition);
       const originalNotePosInVerse: number = env.getNoteThreadDoc('project01', 'thread03').data!.position.start;
@@ -1585,10 +1586,10 @@ describe('EditorComponent', () => {
       expect(env.component.target!.getSegmentText('verse_1_3')).toEqual('targ' + 'defgh' + 'pter 1, verse 3.');
 
       // The remote user selects and deletes some text that includes a couple note embeds.
-      remoteEditPositionAfterNote = 15;
+      remoteEditPositionAfterNote = 14;
       remoteEditTextPos = env.getRemoteEditPosition(notePosition, remoteEditPositionAfterNote, noteCountBeforePosition);
       // $targdefghpter |->1, $$v<-|erse 3.
-      //                   ------ 6 characters deleted locally
+      //                   ------ editor range deleted
       const deleteDelta: DeltaStatic = new Delta();
       (deleteDelta as any).push({ retain: remoteEditTextPos } as DeltaOperation);
       // the remote edit deletes 4, but locally it is expanded to 6 to include the 2 note embeds
@@ -1624,7 +1625,8 @@ describe('EditorComponent', () => {
 
       // simulate text changes at current segment
       let notePosition: number = env.getNoteThreadEditorPosition('thread03');
-      let remoteEditPositionAfterNote: number = 2;
+      let remoteEditPositionAfterNote: number = 1;
+      // 1 note in verse 1, and 3 in verse 3
       let noteCountBeforePosition: number = 4;
       // $target: chapter 1, $$v|erse 3.
       let remoteEditTextPos: number = env.getRemoteEditPosition(
@@ -2235,8 +2237,8 @@ class TestEnvironment {
     return this.component.target!.embeddedElements.get(threadId)!;
   }
 
-  getRemoteEditPosition(notePosition: number, noteOffset: number, noteCount: number): number {
-    return notePosition + noteOffset - noteCount;
+  getRemoteEditPosition(notePosition: number, positionAfter: number, noteCount: number): number {
+    return notePosition + 1 + positionAfter - noteCount;
   }
 
   setDataInSync(projectId: string, isInSync: boolean): void {
