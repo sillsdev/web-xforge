@@ -614,6 +614,73 @@ namespace SIL.XForge.Realtime.RichText
         }
 
         [Test]
+        public void Diff_CharIdUpdatedForTextInsertDiffDelta()
+        {
+            // The path to the cid can look like attributes.char.cid for usfm text formatting
+            JObject obj1Attr = new JObject(new JProperty("char", new JObject(new JProperty("cid", "123"))));
+            JObject obj2Attr = new JObject(new JProperty("char", new JObject(new JProperty("cid", "456"))));
+
+            var oldDel = Delta.New().Insert("text1", obj1Attr);
+            var newDel = Delta.New().Insert("text with edits 1", obj2Attr);
+
+            var length1 = "text".Length;
+            var length3 = "1".Length;
+            JObject expectedObj1 = new JObject(new JProperty("retain", length1), new JProperty("attributes",
+                new JObject(new JProperty("char", new JObject(new JProperty("cid", "456"))))));
+            JObject expectedObj2 = new JObject(new JProperty("insert", " with edits "), new JProperty("attributes",
+                new JObject(new JProperty("char", new JObject(new JProperty("cid", "456"))))));
+            JObject expectedObj3 = new JObject(new JProperty("retain", length3), new JProperty("attributes",
+                new JObject(new JProperty("char", new JObject(new JProperty("cid", "456"))))));
+
+            Delta result = oldDel.Diff(newDel);
+            Assert.That(result.Ops.Count, Is.EqualTo(3));
+            Assert.That(JToken.DeepEquals(result.Ops[0], expectedObj1), Is.True);
+            Assert.That(JToken.DeepEquals(result.Ops[1], expectedObj2), Is.True);
+            Assert.That(JToken.DeepEquals(result.Ops[2], expectedObj3), Is.True);
+        }
+
+        [Test]
+        public void Diff_CharIdUpdatedForTextFormattingDiffDelta()
+        {
+            // The path to the cid can look like attributes.char[0].cid for usfm text formatting
+            JObject obj1Attr = new JObject(new JProperty("char",
+                new JObject(new JProperty("cid", "123"), new JProperty("style", "wj"))));
+            JObject obj2Attr1 = new JObject(new JProperty("char",
+                new JObject(new JProperty("cid", "456"), new JProperty("style", "wj"))));
+            JObject obj2Attr2 = new JObject(new JProperty("char", new JArray(
+                new JObject(new JProperty("cid", "456"), new JProperty("style", "wj")),
+                new JObject(new JProperty("cid", "789"), new JProperty("style", "w"))
+            )));
+
+            var oldDel = Delta.New().Insert("Words of Jesus.", obj1Attr);
+            var newDel = Delta.New().Insert("Words of ", obj2Attr1).Insert("Jesus", obj2Attr2).Insert(".", obj2Attr1);
+
+            var length1 = "Words of ".Length;
+            var length2 = "Jesus".Length;
+            var length3 = ".".Length;
+            JObject expectedObj1 = new JObject(new JProperty("retain", length1), new JProperty("attributes",
+                new JObject(new JProperty("char",
+                    new JObject(new JProperty("cid", "456"), new JProperty("style", "wj"))))
+            ));
+            JObject expectedObj2 = new JObject(new JProperty("retain", length2), new JProperty("attributes",
+                new JObject(new JProperty("char", new JArray(
+                    new JObject(new JProperty("cid", "456"), new JProperty("style", "wj")),
+                    new JObject(new JProperty("cid", "789"), new JProperty("style", "w"))))
+                )
+            ));
+            JObject expectedObj3 = new JObject(new JProperty("retain", length3), new JProperty("attributes",
+                new JObject(new JProperty("char",
+                    new JObject(new JProperty("cid", "456"), new JProperty("style", "wj"))))
+            ));
+
+            Delta result = oldDel.Diff(newDel);
+            Assert.That(result.Ops.Count, Is.EqualTo(3));
+            Assert.That(JToken.DeepEquals(result.Ops[0], expectedObj1), Is.True);
+            Assert.That(JToken.DeepEquals(result.Ops[1], expectedObj2), Is.True);
+            Assert.That(JToken.DeepEquals(result.Ops[2], expectedObj3), Is.True);
+        }
+
+        [Test]
         public void GetLength_ReturnsOpLength()
         {
             var del = Delta.New();
