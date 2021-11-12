@@ -976,7 +976,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const notes: Note[] = clone(threadDoc.data!.notes).sort(
       (a, b) => Date.parse(a.dateCreated) - Date.parse(b.dateCreated)
     );
-    let preview: string = this.stripXml(notes[0].content.trim());
+    let preview: string = notes[0].content != null ? this.stripXml(notes[0].content.trim()) : '';
     if (notes.length > 1) {
       preview += '\n' + translate('editor.more_notes', { count: notes.length - 1 });
     }

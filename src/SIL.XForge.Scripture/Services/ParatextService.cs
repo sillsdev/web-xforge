@@ -756,7 +756,7 @@ namespace SIL.XForge.Scripture.Services
                 List<string> matchedCommentIds = new List<string>();
                 NoteThreadChange threadChange = new NoteThreadChange(threadDoc.Data.DataId,
                     threadDoc.Data.VerseRef.ToString(), threadDoc.Data.OriginalSelectedText, threadDoc.Data.OriginalContextBefore,
-                    threadDoc.Data.OriginalContextAfter, threadDoc.Data.Status);
+                    threadDoc.Data.OriginalContextAfter, threadDoc.Data.Status, threadDoc.Data.TagIcon);
                 // Find the corresponding comment thread
                 var existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
                 if (existingThread == null)
@@ -774,12 +774,13 @@ namespace SIL.XForge.Scripture.Services
                     if (matchedComment != null)
                     {
                         matchedCommentIds.Add(matchedComment.Id);
-                        ChangeType changeType = GetCommentChangeType(matchedComment, note);
+                        CommentTag commentIconTag = this.GetCommentTag(existingThread, matchedComment, commentTags);
+                        ChangeType changeType = GetCommentChangeType(matchedComment, note, commentIconTag);
                         if (changeType != ChangeType.None)
                         {
                             SyncUser syncUser = FindOrCreateSyncUser(matchedComment.User, syncUsers);
                             threadChange.AddChange(
-                                CreateNoteFromComment(note.DataId, matchedComment, commentTags, syncUser), changeType);
+                                CreateNoteFromComment(note.DataId, matchedComment, commentIconTag, syncUser), changeType);
                         }
                     }
                     else
@@ -790,6 +791,12 @@ namespace SIL.XForge.Scripture.Services
                     threadChange.Status = existingThread.Status.InternalValue;
                     threadChange.ThreadUpdated = true;
                 }
+                CommentTag defaultThreadIconTag = this.GetCommentTag(existingThread, null, commentTags);
+                if (defaultThreadIconTag?.Icon != threadDoc.Data.TagIcon)
+                {
+                    threadChange.TagIcon = defaultThreadIconTag?.Icon;
+                    threadChange.ThreadUpdated = true;
+                }
                 // Add new Comments to note thread change
                 IEnumerable<string> ptCommentIds = existingThread.Comments.Select(c => c.Id);
                 IEnumerable<string> newCommentIds = ptCommentIds.Except(matchedCommentIds);
@@ -798,8 +805,9 @@ namespace SIL.XForge.Scripture.Services
                     Paratext.Data.ProjectComments.Comment comment =
                         existingThread.Comments.Single(c => c.Id == commentId);
                     SyncUser syncUser = FindOrCreateSyncUser(comment.User, syncUsers);
+                    CommentTag commentIconTag = this.GetCommentTag(existingThread, comment, commentTags);
                     threadChange.AddChange(CreateNoteFromComment(
-                        _guidService.NewObjectId(), comment, commentTags, syncUser), ChangeType.Added);
+                        _guidService.NewObjectId(), comment, commentIconTag, syncUser), ChangeType.Added);
                 }
                 if (existingThread.Comments.Count > 0)
                 {
@@ -818,12 +826,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 CommentThread thread = commentThreads.Single(ct => ct.Id == threadId);
                 Paratext.Data.ProjectComments.Comment info = thread.Comments[0];
-
-                int defaultTagId = 1;
-                int tagId = info.TagsAdded != null && info.TagsAdded.Length > 0
-                    ? int.Parse(info.TagsAdded[0])
-                    : defaultTagId;
-                CommentTag initialTag = info.Type == NoteType.Conflict ? CommentTag.ConflictTag : commentTags.Get(tagId);
+                CommentTag initialTag = this.GetCommentTag(thread, null, commentTags);
                 NoteThreadChange newThread = new NoteThreadChange(threadId, info.VerseRefStr,
                     info.SelectedText, info.ContextBefore, info.ContextAfter, info.Status.InternalValue, initialTag.Icon);
                 newThread.Position = GetCommentTextAnchor(info, chapterDeltas);
@@ -831,7 +834,8 @@ namespace SIL.XForge.Scripture.Services
                 foreach (var comm in thread.Comments)
                 {
                     SyncUser syncUser = FindOrCreateSyncUser(comm.User, syncUsers);
-                    newThread.AddChange(CreateNoteFromComment(_guidService.NewObjectId(), comm, commentTags, syncUser),
+                    CommentTag commentIconTag = this.GetCommentTag(thread, comm, commentTags);
+                    newThread.AddChange(CreateNoteFromComment(_guidService.NewObjectId(), comm, commentIconTag, syncUser),
                         ChangeType.Added);
                 }
                 changes.Add(newThread);
@@ -1260,6 +1264,16 @@ namespace SIL.XForge.Scripture.Services
             _hgHelper.Update(clonePath);
         }
 
+        // private CommentTag GetCommentTag(Paratext.Data.ProjectComments.CommentThread thread, CommentTags commentTags)
+        // {
+        //     Paratext.Data.ProjectComments.Comment info = thread.Comments[0];
+        //     int defaultTagId = 1;
+        //         int tagId = info.TagsAdded != null && info.TagsAdded.Length > 0
+        //             ? int.Parse(info.TagsAdded[0])
+        //             : defaultTagId;
+        //         return info.Type == NoteType.Conflict ? CommentTag.ConflictTag : commentTags.Get(tagId);
+        // }
+
         private IEnumerable<CommentThread> GetCommentThreads(UserSecret userSecret, string projectId, int bookNum)
         {
             ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), projectId);
@@ -1519,12 +1533,12 @@ namespace SIL.XForge.Scripture.Services
             return changes;
         }
 
-        private ChangeType GetCommentChangeType(Paratext.Data.ProjectComments.Comment comment, Note note)
+        private ChangeType GetCommentChangeType(Paratext.Data.ProjectComments.Comment comment, Note note, CommentTag commentTag)
         {
             if (comment.Deleted != note.Deleted)
                 return ChangeType.Deleted;
             // Check if fields have been updated in Paratext
-            if (comment.Contents?.InnerXml != note.Content || comment.Status.InternalValue != note.Status)
+            if (comment.Contents?.InnerXml != note.Content || comment.Status.InternalValue != note.Status || commentTag?.Icon != note.TagIcon)
                 return ChangeType.Updated;
             return ChangeType.None;
         }
@@ -1549,11 +1563,8 @@ namespace SIL.XForge.Scripture.Services
         }
 
         private Note CreateNoteFromComment(string noteId, Paratext.Data.ProjectComments.Comment comment,
-            CommentTags commentTags, SyncUser syncUser)
+            CommentTag commentTag, SyncUser syncUser)
         {
-            CommentTag tag = comment.TagsAdded == null || comment.TagsAdded.Length == 0
-                ? (comment.Type == NoteType.Conflict ? CommentTag.ConflictTag : null)
-                : commentTags.Get(int.Parse(comment.TagsAdded[0]));
             return new Note
             {
                 DataId = noteId,
@@ -1567,8 +1578,56 @@ namespace SIL.XForge.Scripture.Services
                 DateModified = DateTime.Parse(comment.Date),
                 Deleted = comment.Deleted,
                 Status = comment.Status.InternalValue,
-                TagIcon = tag?.Icon
+                TagIcon = commentTag?.Icon
             };
+        }
+
+        private CommentTag GetCommentTag(Paratext.Data.ProjectComments.CommentThread thread,
+            Paratext.Data.ProjectComments.Comment comment, CommentTags commentTags)
+        {
+            // Use the main to do tag as default
+            CommentTag tagInUse = commentTags.Get(1);
+            CommentTag lastTodoTagUsed = null;
+            List<Paratext.Data.ProjectComments.Comment> threadComments = thread.Comments.ToList();
+            foreach (Paratext.Data.ProjectComments.Comment threadComment in threadComments)
+            {
+                bool tagAddedInUse = threadComment.TagsAdded != null && threadComment.TagsAdded.Length > 0;
+                if (tagAddedInUse)
+                {
+                    tagInUse = commentTags.Get(int.Parse(threadComment.TagsAdded[0]));
+                }
+
+                // When checking the tag for the thread and a conflict is found then use that
+                if (threadComment.Type == NoteType.Conflict && comment == null)
+                    return CommentTag.ConflictTag;
+
+                if (comment == null)
+                    continue;
+
+                if (threadComment.Id == comment.Id)
+                {
+                    // Overwrite any tag with a conflict if needed
+                    if (comment.Type == NoteType.Conflict)
+                        return CommentTag.ConflictTag;
+
+                    // Ignore any repeat tag icons i.e. only use a tag if it has changed
+                    if (lastTodoTagUsed != null && lastTodoTagUsed.Icon == tagInUse.Icon && (comment.Status == NoteStatus.Todo || tagAddedInUse))
+                        return null;
+
+                    // Only need to use the tag when there is a status in use or a tag has been specified
+                    if (comment.Status != NoteStatus.Unspecified || tagAddedInUse)
+                        return tagInUse;
+
+                    return null;
+                }
+                // Keep track of the last used to do status so we can avoid any repeats
+                if (threadComment.Status == NoteStatus.Todo)
+                    lastTodoTagUsed = tagInUse;
+                else if (threadComment.Status == NoteStatus.Deleted || threadComment.Status == NoteStatus.Done)
+                    lastTodoTagUsed = null;
+            }
+            // If we reach this far then the request is for the last used tag which is applied to the thread
+            return tagInUse;
         }
 
         private string GetVerseText(Delta delta, VerseRef verseRef)

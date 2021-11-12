@@ -1155,14 +1155,18 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             NoteThread thread01 = env.GetNoteThread("project01", "thread01");
+            string expectedThreadTagIcon = "tag02";
+            string expectedNoteTagIcon = "tag03";
             string threadExpected =
-                "Context before Scripture text in project context after-Start:0-Length:0-MAT 1:1-icon1";
+                "Context before Scripture text in project context after-Start:0-Length:0-MAT 1:1-" + expectedThreadTagIcon;
             Assert.That(thread01.NoteThreadToString(), Is.EqualTo(threadExpected));
+            Assert.That(thread01.TagIcon, Is.EqualTo(expectedThreadTagIcon));
             env.DeltaUsxMapper.ReceivedWithAnyArgs(2).ToChapterDeltas(default);
             Assert.That(thread01.Notes.Count, Is.EqualTo(3));
             Assert.That(thread01.Notes[0].Content, Is.EqualTo("thread01 added."));
-            string expected = "thread01-syncuser03--thread01 added.-icon1";
+            string expected = "thread01-syncuser03--thread01 added.-" + expectedNoteTagIcon;
             Assert.That(thread01.Notes[0].NoteToString(), Is.EqualTo(expected));
+            Assert.That(thread01.Notes[0].TagIcon, Is.EqualTo(expectedNoteTagIcon));
             Assert.That(thread01.Notes[0].OwnerRef, Is.EqualTo("user03"));
             Assert.That(thread01.Notes[1].Content, Is.EqualTo("thread01 updated."));
             Assert.That(thread01.Notes[2].Deleted, Is.True);
@@ -1780,14 +1784,15 @@ namespace SIL.XForge.Scripture.Services
                 if (fromParatext)
                 {
                     var noteThreadChange = new NoteThreadChange(threadId, verseRef, $"Scripture text in project",
-                        "Context before ", " context after", NoteStatus.Todo.InternalValue);
+                        "Context before ", " context after", NoteStatus.Todo.InternalValue, "tag02");
+                    noteThreadChange.ThreadUpdated = true;
                     noteThreadChange.Position = new TextAnchor { Start = 0, Length = 0 };
                     noteThreadChange.AddChange(
                         GetNote(threadId, "n01", "syncuser01", $"{threadId} updated.", ChangeType.Updated), ChangeType.Updated);
                     noteThreadChange.AddChange(
                         GetNote(threadId, "n02", "syncuser02", $"{threadId} deleted.", ChangeType.Deleted), ChangeType.Deleted);
                     noteThreadChange.AddChange(
-                        GetNote(threadId, "n03", "syncuser03", $"{threadId} added.", ChangeType.Added), ChangeType.Added);
+                        GetNote(threadId, "n03", "syncuser03", $"{threadId} added.", ChangeType.Added, "tag03"), ChangeType.Added);
 
                     ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
                         Arg.Any<IEnumerable<IDocument<NoteThread>>>(),
@@ -1966,7 +1971,7 @@ namespace SIL.XForge.Scripture.Services
                 return $"<usx version=\"2.5\"><book code=\"{bookId}\" style=\"id\">{paratextId}</book><content version=\"{version}\"/></usx>";
             }
 
-            private Note GetNote(string threadId, string noteId, string user, string content, ChangeType type)
+            private Note GetNote(string threadId, string noteId, string user, string content, ChangeType type, string tagIcon = null)
             {
                 return new Note
                 {
@@ -1977,7 +1982,7 @@ namespace SIL.XForge.Scripture.Services
                     Content = content,
                     DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc),
                     Deleted = type == ChangeType.Deleted,
-                    TagIcon = "icon1"
+                    TagIcon = tagIcon ?? "icon1"
                 };
             }
         }
