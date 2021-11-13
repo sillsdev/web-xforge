@@ -17,7 +17,7 @@ import {
 } from '@sillsdev/machine';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { CookieService } from 'ngx-cookie-service';
-import Quill, { DeltaStatic, Sources } from 'quill';
+import Quill, { DeltaOperation, DeltaStatic, Sources } from 'quill';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
@@ -1150,7 +1150,8 @@ describe('EditorComponent', () => {
 
       let contents = env.targetEditor.getContents();
       let noteThreadEmbedCount = env.countNoteThreadEmbeds(contents.ops!);
-      env.component.target!.removeEmbeddedElements();
+      expect(noteThreadEmbedCount).toEqual(5);
+      env.component.removeEmbeddedElements();
       env.wait();
 
       contents = env.targetEditor.getContents();
@@ -1526,6 +1527,140 @@ describe('EditorComponent', () => {
       expect(noteThreadDoc.data!.position).toEqual({ start: text.length, length: 9 });
       verse4p1Index = env.component.target!.getSegmentRange('verse_1_4/p_1')!.index;
       expect(env.getNoteThreadEditorPosition('thread05')).toEqual(verse4p1Index);
+      env.dispose();
+    }));
+
+    it('remote edits correctly applied to editor', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
+
+      // The remote user inserts text after the thread01 note
+      let notePosition: number = env.getNoteThreadEditorPosition('thread01');
+      let remoteEditPositionAfterNote: number = 4;
+      let noteCountBeforePosition: number = 1;
+      // Text position in the text doc at which the remote user edits
+      let remoteEditTextPos: number = env.getRemoteEditPosition(
+        notePosition,
+        remoteEditPositionAfterNote,
+        noteCountBeforePosition
+      );
+      // $ represents a note thread embed
+      // target: $chap|ter 1, verse 1.
+      const textDoc: TextDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
+      const insertDelta: DeltaStatic = new Delta();
+      (insertDelta as any).push({ retain: remoteEditTextPos } as DeltaOperation);
+      (insertDelta as any).push({ insert: 'abc' } as DeltaOperation);
+      // Simulate remote changes coming in
+      textDoc.submit(insertDelta);
+
+      // SUT 1
+      env.wait();
+      // The local editor was updated to apply the remote edit in the correct position locally
+      expect(env.component.target!.getSegmentText('verse_1_1')).toEqual('target: chap' + 'abc' + 'ter 1, verse 1.');
+      const verse1Range = env.component.target!.getSegmentRange('verse_1_1')!;
+      const verse1Contents = env.targetEditor.getContents(verse1Range.index, verse1Range.length);
+      // ops are [0]target: , [1]$, [2]chapabcter 1, [3], verse 1.
+      expect(verse1Contents.ops!.length).withContext('has expected op structure').toEqual(4);
+      expect(verse1Contents.ops![2].attributes!['text-anchor']).withContext('inserted text has formatting').toBe(true);
+
+      // The remote user selects some text and pastes in a replacement
+      notePosition = env.getNoteThreadEditorPosition('thread02');
+      // 1 note from verse 1, and 1 in verse 3 before the selection point
+      noteCountBeforePosition = 2;
+      remoteEditTextPos = env.getRemoteEditPosition(notePosition, remoteEditPositionAfterNote, noteCountBeforePosition);
+      const originalNotePosInVerse: number = env.getNoteThreadDoc('project01', 'thread03').data!.position.start;
+      // $targ|->et: cha<-|pter 1, $$verse 3.
+      //         ------- 7 characters get replaced locally by the text 'defgh'
+      const selectionLength: number = 'et: cha'.length;
+      const insertDeleteDelta: DeltaStatic = new Delta();
+      (insertDeleteDelta as any).push({ retain: remoteEditTextPos } as DeltaOperation);
+      (insertDeleteDelta as any).push({ insert: 'defgh' } as DeltaOperation);
+      (insertDeleteDelta as any).push({ delete: selectionLength } as DeltaOperation);
+      textDoc.submit(insertDeleteDelta);
+
+      // SUT 2
+      env.wait();
+      expect(env.component.target!.getSegmentText('verse_1_3')).toEqual('targ' + 'defgh' + 'pter 1, verse 3.');
+
+      // The remote user selects and deletes some text that includes a couple note embeds.
+      remoteEditPositionAfterNote = 14;
+      remoteEditTextPos = env.getRemoteEditPosition(notePosition, remoteEditPositionAfterNote, noteCountBeforePosition);
+      // $targdefghpter |->1, $$v<-|erse 3.
+      //                   ------ editor range deleted
+      const deleteDelta: DeltaStatic = new Delta();
+      (deleteDelta as any).push({ retain: remoteEditTextPos } as DeltaOperation);
+      // the remote edit deletes 4, but locally it is expanded to 6 to include the 2 note embeds
+      (deleteDelta as any).push({ delete: 4 } as DeltaOperation);
+      textDoc.submit(deleteDelta);
+
+      // SUT 3
+      env.wait();
+      expect(env.component.target!.getSegmentText('verse_1_3')).toEqual('targdefghpter ' + 'erse 3.');
+      expect(env.getNoteThreadDoc('project01', 'thread03').data!.position.start).toEqual(originalNotePosInVerse);
+      expect(env.getNoteThreadDoc('project01', 'thread04').data!.position.start).toEqual(originalNotePosInVerse);
+      const verse3Index: number = env.component.target!.getSegmentRange('verse_1_3')!.index;
+      // The note is re-embedded at the position in the note thread doc.
+      // Applying remote changes must not affect text anchors
+      let notesBefore: number = 2;
+      expect(env.getNoteThreadEditorPosition('thread03')).toEqual(verse3Index + originalNotePosInVerse + notesBefore);
+      notesBefore = 1;
+      expect(env.getNoteThreadEditorPosition('thread04')).toEqual(verse3Index + originalNotePosInVerse + notesBefore);
+      env.dispose();
+    }));
+
+    it('remote edits do not affect note thread text anchors', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      const noteThread1Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      const noteThread3Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread03');
+      const originalNoteThread1TextPos: TextAnchor = noteThread1Doc.data!.position;
+      const originalNoteThread3TextPos: TextAnchor = noteThread3Doc.data!.position;
+      expect(originalNoteThread1TextPos).toEqual({ start: 8, length: 9 });
+      expect(originalNoteThread3TextPos).toEqual({ start: 19, length: 7 });
+
+      // simulate text changes at current segment
+      let notePosition: number = env.getNoteThreadEditorPosition('thread03');
+      let remoteEditPositionAfterNote: number = 1;
+      // 1 note in verse 1, and 3 in verse 3
+      let noteCountBeforePosition: number = 4;
+      // $target: chapter 1, $$v|erse 3.
+      let remoteEditTextPos: number = env.getRemoteEditPosition(
+        notePosition,
+        remoteEditPositionAfterNote,
+        noteCountBeforePosition
+      );
+      env.targetEditor.setSelection(notePosition + remoteEditPositionAfterNote);
+
+      const inSegmentDelta = new Delta();
+      (inSegmentDelta as any).push({ retain: remoteEditTextPos } as DeltaOperation);
+      (inSegmentDelta as any).push({ insert: 'abc' } as DeltaOperation);
+      const textDoc: TextDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
+      textDoc.submit(inSegmentDelta);
+
+      // SUT 1
+      env.wait();
+      expect(env.component.target!.getSegmentText('verse_1_3')).toEqual('target: chapter 1, v' + 'abc' + 'erse 3.');
+      expect(noteThread3Doc.data!.position).toEqual(originalNoteThread3TextPos);
+
+      // simulate text changes at a different segment
+      notePosition = env.getNoteThreadEditorPosition('thread01');
+      noteCountBeforePosition = 1;
+      // target: $c|hapter 1, verse 1.
+      remoteEditTextPos = env.getRemoteEditPosition(notePosition, remoteEditPositionAfterNote, noteCountBeforePosition);
+      const outOfSegmentDelta = new Delta();
+      (outOfSegmentDelta as any).push({ retain: remoteEditTextPos });
+      (outOfSegmentDelta as any).push({ insert: 'def' });
+      textDoc.submit(outOfSegmentDelta);
+
+      // SUT 2
+      env.wait();
+      expect(env.component.target!.getSegmentText('verse_1_1')).toEqual('target: c' + 'def' + 'hapter 1, verse 1.');
+      expect(noteThread1Doc.data!.position).toEqual(originalNoteThread1TextPos);
       env.dispose();
     }));
   });
@@ -2100,6 +2235,10 @@ class TestEnvironment {
   /** Editor position of note thread. */
   getNoteThreadEditorPosition(threadId: string): number {
     return this.component.target!.embeddedElements.get(threadId)!;
+  }
+
+  getRemoteEditPosition(notePosition: number, positionAfter: number, noteCount: number): number {
+    return notePosition + 1 + positionAfter - noteCount;
   }
 
   setDataInSync(projectId: string, isInSync: boolean): void {

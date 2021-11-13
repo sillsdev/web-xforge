@@ -112,7 +112,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private noteThreadQuery?: RealtimeQuery<NoteThreadDoc>;
   private toggleNoteThreadVerseRefs$: BehaviorSubject<void> = new BehaviorSubject<void>(undefined);
   private toggleNoteThreadSub?: Subscription;
-  private noteThreadAnchorsNeedUpdate: boolean = false;
+  private shouldNoteThreadsRespondToEdits: boolean = false;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -426,7 +426,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     segment?: Segment,
     delta?: DeltaStatic,
     prevSegment?: Segment,
-    oldVerseEmbeds?: Map<string, number>
+    oldVerseEmbeds?: Map<string, number>,
+    isLocalUpdate?: boolean
   ): Promise<void> {
     if (this.target == null || this.target.editor == null) {
       return;
@@ -487,11 +488,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.insertSuggestionEnd = -1;
           this.target.editor.setSelection(selectIndex, 0, 'user');
         }
-        if (segment != null && oldVerseEmbeds != null && this.noteThreadAnchorsNeedUpdate) {
+        if (segment != null && oldVerseEmbeds != null && this.shouldNoteThreadsRespondToEdits && !!isLocalUpdate) {
+          // only update the note anchors if the update is local, otherwise remote edits will mess up the note anchors
           await this.updateVerseNoteThreadAnchors(oldVerseEmbeds, delta);
-          if (oldVerseEmbeds.size !== segment.embeddedElements.size) {
-            this.recreateDeletedNoteThreadEmbeds(Array.from(oldVerseEmbeds.keys()));
-          }
         }
       }
 
@@ -503,6 +502,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       }
       this.segmentUpdated$.next();
       this.syncScroll();
+    }
+
+    if (delta != null) {
+      // only recreate note embeds if the delta has productive edits
+      this.recreateDeletedNoteThreadEmbeds();
     }
   }
 
@@ -534,7 +538,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       case 'target':
         this.targetLoaded = true;
         this.toggleNoteThreadVerseRefs$.next();
-        this.noteThreadAnchorsNeedUpdate = true;
+        this.shouldNoteThreadsRespondToEdits = true;
         break;
     }
     if ((!this.hasSource || this.sourceLoaded) && this.targetLoaded) {
@@ -611,17 +615,20 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     });
   }
 
+  removeEmbeddedElements(): void {
+    this.shouldNoteThreadsRespondToEdits = false;
+    this.target?.removeEmbeddedElements();
+    // Un-subscribe from all segment click events as these all get setup again
+    for (const event of this.clickSubs) {
+      event.unsubscribe();
+    }
+  }
+
   private toggleNoteThreadVerses(value: boolean): void {
     if (this.target?.editor == null || this.noteThreadQuery == null || this.bookNum == null || this._chapter == null) {
       return;
     }
-    const chapterNoteThreadDocs: NoteThreadDoc[] = this.noteThreadQuery.docs.filter(
-      nt =>
-        nt.data != null &&
-        nt.data.verseRef.bookNum === this.bookNum &&
-        nt.data.verseRef.chapterNum === this._chapter &&
-        nt.data.notes.length > 0
-    );
+    const chapterNoteThreadDocs: NoteThreadDoc[] = this.currentChapterNoteThreadDocs();
     const noteThreadVerseRefs: VerseRef[] = chapterNoteThreadDocs.map(nt => toVerseRef(nt.data!.verseRef));
     const featureVerseRefInfo: FeaturedVerseRefInfo[] = chapterNoteThreadDocs.map(nt =>
       this.getFeaturedVerseRefInfo(nt)
@@ -634,12 +641,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       const segments: string[] = this.target.toggleFeaturedVerseRefs(value, noteThreadVerseRefs, 'note-thread');
       this.subscribeClickEvents(segments);
     } else {
-      this.noteThreadAnchorsNeedUpdate = false;
-      this.target.removeEmbeddedElements();
-      // Un-subscribe from all segment click events as these all get setup again
-      for (const event of this.clickSubs) {
-        event.unsubscribe();
-      }
+      this.removeEmbeddedElements();
     }
   }
 
@@ -1128,21 +1130,37 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     };
   }
 
+  private currentChapterNoteThreadDocs(): NoteThreadDoc[] {
+    if (
+      this.noteThreadQuery?.docs == null ||
+      this.noteThreadQuery.docs.length < 1 ||
+      this.bookNum == null ||
+      this._chapter == null
+    ) {
+      return [];
+    }
+    return this.noteThreadQuery.docs.filter(
+      nt =>
+        nt.data != null &&
+        nt.data.verseRef.bookNum === this.bookNum &&
+        nt.data.verseRef.chapterNum === this.chapter &&
+        nt.data.notes.length > 0
+    );
+  }
+
   /** Re-create any note embeds that have been deleted by the user. */
-  private recreateDeletedNoteThreadEmbeds(oldNoteEmbedIds: string[]): void {
-    if (this.noteThreadQuery?.docs == null || this.target == null) {
+  private recreateDeletedNoteThreadEmbeds(): void {
+    if (this.target == null || !this.shouldNoteThreadsRespondToEdits) {
       return;
     }
     const currentNotes: Readonly<Map<string, number>> = this.target.embeddedElements;
     const segmentsToSubscribe: Set<string> = new Set<string>();
-    for (const noteId of oldNoteEmbedIds) {
-      if (currentNotes.has(noteId)) {
+    const noteThreadDocs: NoteThreadDoc[] = this.currentChapterNoteThreadDocs();
+    for (const noteThreadDoc of noteThreadDocs) {
+      if (noteThreadDoc?.data?.dataId == null || currentNotes.has(noteThreadDoc.data.dataId)) {
         continue;
       }
-      const noteThreadDoc: NoteThreadDoc | undefined = this.noteThreadQuery.docs.find(nt => nt.data?.dataId === noteId);
-      if (noteThreadDoc?.data == null) {
-        continue;
-      }
+
       const featured: FeaturedVerseRefInfo = this.getFeaturedVerseRefInfo(noteThreadDoc);
       const segment: string | undefined = this.embedNoteThread(featured);
       if (segment != null && !segmentsToSubscribe.has(segment)) {

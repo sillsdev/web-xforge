@@ -58,6 +58,7 @@ export interface TextUpdatedEvent {
   prevSegment?: Segment;
   segment?: Segment;
   oldVerseEmbeds?: Map<string, number>;
+  isLocalUpdate?: boolean;
 }
 
 /**
@@ -536,19 +537,19 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       return;
     }
 
-    const embedInsertPos: number = this.getEditorPositionPlusTextPosition(
+    const embedInsertPos: number = this.viewModel.getEditorPositionPlusTextPosition(
       editorPosOfSegmentToModify.index,
       startTextPosInVerse
     );
 
     this.editor.insertEmbed(embedInsertPos, formatName, format, 'api');
     const anchorEndPosition: number = startTextPosInVerse + textAnchor.length - 1;
-    const endIndex: number = this.getEditorPositionPlusTextPosition(
+    const endPosition: number = this.viewModel.getEditorPositionPlusTextPosition(
       editorPosOfSegmentToModify.index,
       anchorEndPosition
     );
     // add one to include the embed to underline
-    const formatLength: number = endIndex - embedInsertPos + 1;
+    const formatLength: number = endPosition - embedInsertPos + 1;
     this.editor.formatText(embedInsertPos, formatLength, 'text-anchor', 'true', 'api');
     this.updateSegment();
     return embedSegmentRef;
@@ -560,7 +561,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     this.updatePlaceholderText();
     // skip updating when only formatting changes occurred
     if (delta.ops != null && delta.ops.some(op => op.insert != null || op.delete != null)) {
-      this.update(delta);
+      const isUserEdit: boolean = source === 'user';
+      this.update(delta, isUserEdit);
     }
   }
 
@@ -725,7 +727,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
   }
 
-  private update(delta?: DeltaStatic): void {
+  private update(delta?: DeltaStatic, isUserEdit?: boolean): void {
     let segmentRef: string | undefined;
     let checksum: number | undefined;
     let focus: boolean | undefined;
@@ -785,7 +787,13 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     Promise.resolve().then(() => this.adjustSelection());
-    this.updated.emit({ delta, prevSegment, segment: this._segment, oldVerseEmbeds: oldVerseEmbedsToUpdate });
+    this.updated.emit({
+      delta,
+      prevSegment,
+      segment: this._segment,
+      oldVerseEmbeds: oldVerseEmbedsToUpdate,
+      isLocalUpdate: isUserEdit
+    });
   }
 
   private tryChangeSegment(
@@ -915,22 +923,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private getEmbedCountInRange(editorStartPos: number, length: number): number {
     const embedPositions: number[] = Array.from(this.embeddedElements.values());
     return embedPositions.filter((pos: number) => pos >= editorStartPos && pos < editorStartPos + length).length;
-  }
-
-  /**
-   * Returns the editor position that corresponds to a text position past an editor position.
-   */
-  private getEditorPositionPlusTextPosition(startingEditorPos: number, textPosPast: number): number {
-    let textCharactersFound = 0;
-    let resultingEditorPos = startingEditorPos;
-    const embedEditorPositions = Array.from(this.embeddedElements.values());
-    while (textCharactersFound < textPosPast) {
-      if (!embedEditorPositions.includes(resultingEditorPos)) {
-        textCharactersFound++;
-      }
-      resultingEditorPos++;
-    }
-    return resultingEditorPos;
   }
 
   private setHighlightMarkerPosition(): void {

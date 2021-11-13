@@ -135,7 +135,10 @@ export class TextViewModel {
     editor.setContents(this.textDoc.data as DeltaStatic);
     editor.history.clear();
     if (subscribeToUpdates) {
-      this.remoteChangesSub = this.textDoc.remoteChanges$.subscribe(ops => editor.updateContents(ops as DeltaStatic));
+      this.remoteChangesSub = this.textDoc.remoteChanges$.subscribe(ops => {
+        const deltaWithEmbeds: DeltaStatic = this.addEmbeddedElementsToDelta(ops as DeltaStatic);
+        editor.updateContents(deltaWithEmbeds);
+      });
     }
     this.onCreateSub = this.textDoc.create$.subscribe(() => {
       if (textDoc.data != null) {
@@ -366,6 +369,20 @@ export class TextViewModel {
     return undefined;
   }
 
+  /** Returns the editor position that corresponds to a text position past an editor position. */
+  getEditorPositionPlusTextPosition(startingEditorPos: number, textPosPast: number): number {
+    let textCharactersFound = 0;
+    let resultingEditorPos = startingEditorPos;
+    const embedEditorPositions = Array.from(this.embeddedElements.values());
+    while (textCharactersFound < textPosPast) {
+      if (!embedEditorPositions.includes(resultingEditorPos)) {
+        textCharactersFound++;
+      }
+      resultingEditorPos++;
+    }
+    return resultingEditorPos;
+  }
+
   private viewToData(delta: DeltaStatic): DeltaStatic {
     let modelDelta = new Delta();
     if (delta.ops != null) {
@@ -390,7 +407,7 @@ export class TextViewModel {
         (modelDelta as any).push(modelOp);
       }
       // Remove Paratext notes from model delta
-      modelDelta = this.adjustDeltaForEmbeddedElements(modelDelta);
+      modelDelta = this.removeEmbeddedElementsFromDelta(modelDelta);
     }
     return modelDelta.chop();
   }
@@ -576,8 +593,11 @@ export class TextViewModel {
     return this.editor;
   }
 
-  /** Adjust the delta that is applied to the text doc by stripping off the embedded elements displayed in quill. */
-  private adjustDeltaForEmbeddedElements(modelDelta: DeltaStatic): DeltaStatic {
+  /**
+   * Strip off the embedded elements displayed in quill from the delta. This can be used to convert a delta from
+   * user edits to apply to a text doc.
+   */
+  private removeEmbeddedElementsFromDelta(modelDelta: DeltaStatic): DeltaStatic {
     if (modelDelta.ops == null || modelDelta.ops.length < 1) {
       return new Delta();
     }
@@ -586,40 +606,97 @@ export class TextViewModel {
     for (const op of modelDelta.ops) {
       let cloneOp: DeltaOperation | undefined = cloneDeep(op);
       if (cloneOp.retain != null) {
-        // The range of content that this retain applies to
-        const opEndIndex: number = curIndex + cloneOp.retain;
-        const embeddedElementsCount = this.getEmbeddedElementsWithin(curIndex, opEndIndex);
+        const embedsInRange: number = this.getEmbedsInEditorRange(curIndex, cloneOp.retain);
         curIndex += cloneOp.retain;
         // remove from the retain op the number of embedded elements contained in its content
-        cloneOp.retain -= embeddedElementsCount;
+        cloneOp.retain -= embedsInRange;
       } else if (cloneOp.delete != null) {
-        const opEndIndex: number = curIndex + cloneOp.delete;
-        const embeddedElementsCount = this.getEmbeddedElementsWithin(curIndex, opEndIndex);
+        const embedsInRange: number = this.getEmbedsInEditorRange(curIndex, cloneOp.delete);
         curIndex += cloneOp.delete;
         // remove from the delete op the number of embedded elements contained in its content
-        cloneOp.delete -= embeddedElementsCount;
+        cloneOp.delete -= embedsInRange;
         if (cloneOp.delete < 1) {
           cloneOp = undefined;
         }
       }
+
       if (cloneOp != null) {
         (adjustedDelta as any).push(cloneOp);
       }
     }
+
     return adjustedDelta;
   }
 
-  private getEmbeddedElementsWithin(startIndex: number, endIndex: number): number {
-    let embeddedElementsCount = 0;
-    for (const embedIndex of this.embeddedElements.values()) {
+  /**
+   * Add in the embedded elements displayed in quill to the delta. This can be used to convert a delta from a remote
+   * edit to apply to the current editor content.
+   */
+  private addEmbeddedElementsToDelta(modelDelta: DeltaStatic): DeltaStatic {
+    if (modelDelta.ops == null || modelDelta.ops.length < 1) {
+      return new Delta();
+    }
+    const adjustedDelta = new Delta();
+    let curIndex: number = 0;
+    let embedsUpToIndex: number = 0;
+    for (const op of modelDelta.ops) {
+      let cloneOp: DeltaOperation | undefined = cloneDeep(op);
+      const editorStartPos: number = curIndex + embedsUpToIndex;
+      if (cloneOp.retain != null) {
+        // editorStartPos must be the current index plus the number of embeds previous
+        const embedsInRange: number = this.calculateEmbedsInTextRange(editorStartPos, cloneOp.retain);
+        embedsUpToIndex += embedsInRange;
+        curIndex += cloneOp.retain;
+        // add to the retain op the number of embedded elements contained in its content
+        cloneOp.retain += embedsInRange;
+      } else if (cloneOp.delete != null) {
+        const embedsInRange: number = this.calculateEmbedsInTextRange(editorStartPos, cloneOp.delete);
+        curIndex += cloneOp.delete;
+        embedsUpToIndex += embedsInRange;
+        // add to the delete op the number of embedded elements contained in its content
+        cloneOp.delete += embedsInRange;
+        if (cloneOp.delete < 1) {
+          cloneOp = undefined;
+        }
+      } else if (cloneOp.insert != null) {
+        cloneOp.attributes = this.getAttributesAtPosition(editorStartPos);
+      }
+
+      if (cloneOp != null) {
+        (adjustedDelta as any).push(cloneOp);
+      }
+    }
+
+    return adjustedDelta;
+  }
+
+  /** Gets the number of embeds in a given range displayed in the quill editor. */
+  private getEmbedsInEditorRange(startIndex: number, length: number): number {
+    const indices: IterableIterator<number> = this._embeddedElements.values();
+    const opEndIndex: number = startIndex + length;
+    let embeddedElementsCount: number = 0;
+    for (const embedIndex of indices) {
       if (embedIndex < startIndex) {
         continue;
-      } else if (embedIndex >= startIndex && embedIndex < endIndex) {
+      } else if (embedIndex >= startIndex && embedIndex < opEndIndex) {
         embeddedElementsCount++;
       } else {
         break;
       }
     }
     return embeddedElementsCount;
+  }
+
+  /** Get the number of embeds displayed in the quill editor for a given range of text data. */
+  private calculateEmbedsInTextRange(editorStartPos: number, length: number): number {
+    const editorEndPos: number = this.getEditorPositionPlusTextPosition(editorStartPos, length);
+    const lengthWithEmbeds: number = editorEndPos - editorStartPos;
+    const embedCount: number = lengthWithEmbeds - length;
+    return embedCount;
+  }
+
+  private getAttributesAtPosition(editorPosition: number) {
+    const editor: Quill = this.checkEditor();
+    return editor.getFormat(editorPosition);
   }
 }
