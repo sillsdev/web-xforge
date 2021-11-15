@@ -4,6 +4,8 @@ import { sortBy } from 'lodash-es';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { I18nService } from 'xforge-common/i18n.service';
+import { NoteStatus } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
+import { translate } from '@ngneat/transloco';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -124,5 +126,30 @@ export class NoteDialogComponent implements OnInit {
 
   toggleSegmentText(): void {
     this.showSegmentText = !this.showSegmentText;
+  }
+
+  noteIcon(note: Note) {
+    if (this.threadDoc?.data == null) {
+      return '';
+    }
+    switch (note.status) {
+      case NoteStatus.Todo:
+        return this.threadDoc.icon.url;
+      case NoteStatus.Done:
+      case NoteStatus.Resolved:
+        return this.threadDoc.iconResolved.url;
+    }
+    return '';
+  }
+
+  noteTitle(note: Note) {
+    switch (note.status) {
+      case NoteStatus.Todo:
+        return translate('note_dialog.status_to_do');
+      case NoteStatus.Done:
+      case NoteStatus.Resolved:
+        return translate('note_dialog.status_resolved');
+    }
+    return '';
   }
 }
