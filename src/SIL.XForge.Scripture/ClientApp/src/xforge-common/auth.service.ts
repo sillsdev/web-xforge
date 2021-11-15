@@ -222,7 +222,7 @@ export class AuthService {
       ) {
         return await this.tryOnlineLogIn();
       }
-      await this.handleOfflineAuth();
+      await this.remoteStore.init(() => this.accessToken);
       return { loggedIn: true, newlyLoggedIn: false };
     } catch (error) {
       await this.handleLoginError('tryLogIn', error);
@@ -318,11 +318,6 @@ export class AuthService {
     } else if (this.locationService.hash !== '') {
       this.router.navigateByUrl(this.locationService.pathname, { replaceUrl: true });
     }
-    return true;
-  }
-
-  private async handleOfflineAuth(): Promise<boolean> {
-    await this.remoteStore.init(() => this.accessToken);
     return true;
   }
 

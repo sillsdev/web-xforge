@@ -101,10 +101,7 @@ describe('AuthService', () => {
   }));
 
   it('check session is valid after returning online and login if session has expired', fakeAsync(() => {
-    const env = new TestEnvironment({
-      isOnline: false,
-      isLoggedIn: true
-    });
+    const env = new TestEnvironment({ isOnline: false, isLoggedIn: true });
     expect(env.isAuthenticated).toBe(true);
     verify(mockedWebAuth.authorize(anything())).never();
 
