@@ -19,7 +19,7 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, matDialogCloseDelay, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
+import { NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
@@ -163,7 +163,7 @@ class TestEnvironment {
     projectRef: TestEnvironment.PROJECT01,
     tagIcon: 'flag02',
     verseRef: { bookNum: 40, chapterNum: 1, verseNum: 7 },
-    resolved: false,
+    status: NoteStatus.Todo,
     notes: [
       {
         dataId: 'note01',
@@ -172,6 +172,7 @@ class TestEnvironment {
         extUserId: 'user01',
         deleted: false,
         ownerRef: 'user01',
+        status: NoteStatus.Todo,
         dateCreated: '',
         dateModified: ''
       },
@@ -182,6 +183,7 @@ class TestEnvironment {
         extUserId: 'user01',
         deleted: false,
         ownerRef: 'user01',
+        status: NoteStatus.Todo,
         dateCreated: '',
         dateModified: ''
       },
@@ -192,6 +194,7 @@ class TestEnvironment {
         extUserId: 'user01',
         deleted: true,
         ownerRef: 'user01',
+        status: NoteStatus.Todo,
         dateCreated: '',
         dateModified: ''
       }

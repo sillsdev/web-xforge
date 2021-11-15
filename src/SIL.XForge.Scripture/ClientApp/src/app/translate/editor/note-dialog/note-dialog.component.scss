@@ -30,8 +30,11 @@ h1 {
 .notes {
   .note {
     padding: 20px 0;
+    display: flex;
+    flex-wrap: wrap;
     .content {
       color: #000;
+      flex: 1 1 100%;
     }
     &:first-child {
       padding-top: 10px;
@@ -41,7 +44,10 @@ h1 {
     }
     app-owner {
       display: block;
-      margin-top: 5px;
+      margin: 5px;
+    }
+    img {
+      align-self: center;
     }
   }
 }
@@ -52,7 +58,7 @@ h1 {
   }
 }
 .ltr {
-  app-owner {
-    text-align: right;
+  .note {
+    flex-direction: row-reverse;
   }
 }

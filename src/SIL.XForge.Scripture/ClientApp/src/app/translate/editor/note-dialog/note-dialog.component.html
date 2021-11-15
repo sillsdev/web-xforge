@@ -17,6 +17,7 @@
     <div class="notes">
       <div *ngFor="let note of notes" class="note">
         <div class="content" [innerHTML]="parseNote(note.content)"></div>
+        <img [src]="noteIcon(note)" alt="" [title]="noteTitle(note)" />
         <app-owner [ownerRef]="note.ownerRef" [dateTime]="note.dateCreated"></app-owner>
       </div>
     </div>
