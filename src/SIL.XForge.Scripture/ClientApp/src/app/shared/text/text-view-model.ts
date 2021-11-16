@@ -300,8 +300,12 @@ export class TextViewModel {
       if (match == null) {
         continue;
       }
-      const segmentVerseNum: number = +match[1];
-      if (segmentVerseNum >= startVerseNum && segmentVerseNum <= lastVerseNum) {
+      const verseParts: string[] = match[1].split('-');
+      const matchStartNum: number = +verseParts[0];
+      const matchLastNum: number = +verseParts[verseParts.length - 1];
+      const matchStartsWithin = matchStartNum >= startVerseNum && matchStartNum <= lastVerseNum;
+      const matchEndsWithin = matchLastNum >= startVerseNum && matchLastNum <= lastVerseNum;
+      if (matchStartsWithin || matchEndsWithin) {
         segmentsInVerseRef.push(segment);
       }
     }

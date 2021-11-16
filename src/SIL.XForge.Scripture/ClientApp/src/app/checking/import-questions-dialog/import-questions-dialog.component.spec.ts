@@ -217,6 +217,22 @@ describe('ImportQuestionsDialogComponent', () => {
     });
   }));
 
+  it('should show validation error when form is submitted with no questions selected', fakeAsync(() => {
+    const env = new TestEnvironment();
+    expect(env.noQuestionsError.classList).toContain('hidden');
+    env.click(env.submitButton);
+    expect(env.noQuestionsError.classList).not.toContain('hidden');
+
+    env.selectQuestion(env.questionRows[1]);
+    expect(env.noQuestionsError.classList).toContain('hidden');
+    env.selectQuestion(env.questionRows[1]);
+    expect(env.noQuestionsError.classList).not.toContain('hidden');
+
+    // Make valid and cleanup dialog
+    env.selectQuestion(env.questionRows[1]);
+    env.click(env.submitButton);
+  }));
+
   it('does not import questions that were selected if they no longer match the filter', fakeAsync(() => {
     const env = new TestEnvironment();
     expect(env.questionRows.length).toBe(2);
@@ -370,6 +386,10 @@ class TestEnvironment {
 
   get statusMessage(): string {
     return this.overlayContainerElement.querySelector('p')?.textContent || '';
+  }
+
+  get noQuestionsError(): HTMLElement {
+    return this.overlayContainerElement.querySelector('mat-error') as HTMLElement;
   }
 
   get submitButton(): HTMLButtonElement {

@@ -381,7 +381,8 @@ The best way to debug Angular unit tests is with Chrome/Chromium.
 - Run `npm test` (which will include source maps, `ng test` does not)
 - When the Chrome/Chromium window appears, press _F12_
 - Click the Sources tab
-- Files might show up under `webpack://` or `context/localhost:dddd/src` or elsewhere, but you can always press _CTRL-P_ and type the name of a file to get there faster.
+- Files might show up under `webpack://` or `context/localhost:dddd/src` or elsewhere, but you can always press Ctrl+P
+  and type the name of a file to get there faster.
 
 [This video](https://youtu.be/NVqplMyOZTM) has a live demo of the process.
 
@@ -389,11 +390,12 @@ It is also possible to debug Angular unit tests in VS Code.
 
 - Open the spec file that you want to debug in VS Code.
 - Set a breakpoint.
-- Navigate to the Debug view.
-- Select `Karma active spec` from the debug dropdown.
-- Click the `Start Debugging` button.
+- Navigate to the **Run and Debug** view.
+- Select **Launch Chromium and run and debug current spec** from the debug dropdown.
+- Click the **Start Debugging** button.
 
-This will run `ng test` on the active spec file, open Chrome, and attach the VS Code debugger. You can refresh the page by clicking the `Restart` button in the Debug toolbar.
+This will run `ng test` on the active spec file, open Chrome, and attach the VS Code debugger. You can refresh the page
+by clicking the `Restart` button in the Debug toolbar.
 
 #### Filtering Unit Tests
 
@@ -526,7 +528,60 @@ If a model change is made, then a corresponding data migration should be impleme
 
 ## Debugging
 
-In Visual Studio Code, in the debug sidebar, choose **Full App (SF)** to debug the front-end and back-end at the same time, or **Launch Chrome (SF)** or **.NET Core (SF)** to just debug the front-end or back-end.
+Run the frontend, such as with the following in its own Terminal tab. It will automatically re-compile when the code
+is changed.
+
+```bash
+cd src/SIL.XForge.Scripture/ClientApp && ng serve
+```
+
+Run the backend, such as with the following in its own Terminal tab. It will automatically re-compile when the code is
+changed. (Running the frontend and backend separately allow them to be independently restarted.)
+
+```bash
+cd src/SIL.XForge.Scripture && dotnet watch run --start-ng-serve=listen
+```
+
+Run frontend tests on desired specs, such as with the following in its own Terminal tab. It will automatically
+re-compile and re-run the tests when the code is changed. It will also open a browser window where you can watch the
+tests run, and inspect the DOM. Modify the `--include` arguments in the example below by replacing them with spec
+files you wish to test.
+
+```bash
+cd src/SIL.XForge.Scripture/ClientApp &&
+  npm test -- --include src/app/shared/text/text.component.spec.ts --include src/app/translate/editor/editor.component.spec.ts
+```
+
+Launch Chromium/Chrome or Edge with `--remote-debugging-port=9977`, and go to http://localhost:5000/ . For example, in
+Linux run:
+
+```bash
+chromium-browser --remote-debugging-port=9977
+```
+
+Or in Windows:
+  - Navigate to Chrome.exe.
+  - Right-click Chrome.exe and create a desktop shortcut.
+  - Right-click the new desktop shortcut, and modify its properties.
+  - Append ` --remote-debugging-port=9977` to the command.
+  - Double-click the desktop shortcut to launch Chrome.
+
+Note that your Chromium window for testing the frontend and your Chromium window for running unit tests will be
+different windows.
+
+In Visual Studio Code, go to the **Run and Debug** view. Choose one or more of the following and click
+**Start Debugging**.
+  - **Attach to frontend**
+  - **Attach to backend**
+  - **Attach to frontend tests**
+
+When you are finished debugging, click **Disconnect**. The processes will continue running until you press Ctrl+C
+to end them in the Terminal.
+
+To debug backend tests, open a C# Tests file. In the code above the test, click **Debug Test**, or above the class,
+click **Debug All Tests**.
+
+Other debugging targets are available as well, such as targets that start running the frontend and/or backend.
 
 ## Database
 

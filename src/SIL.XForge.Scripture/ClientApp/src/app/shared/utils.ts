@@ -2,7 +2,7 @@ import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils
 import { SelectableProject } from '../core/paratext.service';
 
 // Regular expression for getting the verse from a segment ref
-export const VERSE_FROM_SEGMENT_REF_REGEX = /verse_[0-9]+_([0-9]+)[-/]*/;
+export const VERSE_FROM_SEGMENT_REF_REGEX = /verse_\d+_(\d+-?\d*)/;
 // Regular expression for the verse segment ref of scripture content
 export const VERSE_REGEX = /verse_[0-9]+_[0-9]+/;
 

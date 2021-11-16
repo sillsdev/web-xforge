@@ -160,9 +160,14 @@ namespace SIL.XForge.Realtime.RichText
             List<Diff> diffResult = Differ.diff_main(thisStr, otherStr);
             var thisIter = new OpIterator(this.Ops);
             var otherIter = new OpIterator(other.Ops);
+            // If the strings are identical, then we retain the char IDs except on ops with formatting changes
+            bool retainCharIds = thisStr == otherStr;
             foreach (Diff component in diffResult)
             {
                 int length = component.text.Length;
+                DeltaOpsAttributeHelper deltaOpsHelper = component.operation == Operation.EQUAL
+                    ? new DeltaOpsAttributeHelper(retainCharIds)
+                    : null;
                 while (length > 0)
                 {
                     int opLength = 0;
@@ -183,19 +188,13 @@ namespace SIL.XForge.Realtime.RichText
                             opLength = Math.Min(Math.Min(thisIter.PeekLength(), otherIter.PeekLength()), length);
                             JToken thisOp = thisIter.Next(opLength);
                             JToken otherOp = otherIter.Next(opLength);
-                            if (JTokenDeepEqualsIgnoreCid(thisOp[InsertType], otherOp[InsertType]))
-                            {
-                                delta.Retain(opLength, DiffAttributes(thisOp[Attributes], otherOp[Attributes]));
-                            }
-                            else
-                            {
-                                delta.Add(otherOp);
-                                delta.Delete(opLength);
-                            }
+                            deltaOpsHelper.Add(opLength, thisOp, otherOp);
                             break;
                     }
                     length -= opLength;
                 }
+                if (deltaOpsHelper != null)
+                    deltaOpsHelper.AddOpsToDelta(delta);
             }
             return delta.Chop();
         }
@@ -315,28 +314,33 @@ namespace SIL.XForge.Realtime.RichText
         /// <summary>
         /// Test for value equality of two JTokens while ignoring the cid object property in char nodes.
         /// </summary>
-        private bool JTokenDeepEqualsIgnoreCid(JToken a, JToken b)
+        static bool JTokenDeepEqualsIgnoreCharId(JToken a, JToken b)
         {
+            if (b == null)
+                return false;
             // If the token is not an object, it will not have a char property
-            if (a.Type != JTokenType.Object || b.Type != JTokenType.Object)
+            if (a?.Type != JTokenType.Object || b?.Type != JTokenType.Object)
                 return JToken.DeepEquals(a, b);
             JObject aClone = (JObject)a.DeepClone();
             JObject bClone = (JObject)b.DeepClone();
-            StripCid(aClone);
-            StripCid(bClone);
+            StripCharId(aClone);
+            StripCharId(bClone);
             return JToken.DeepEquals(aClone, bClone);
         }
 
-        private static JToken DiffAttributes(JToken a, JToken b)
+        static JToken DiffAttributes(JToken a, JToken b, bool retainCharIds)
         {
             JObject aObj = a?.Type == JTokenType.Object ? (JObject)a : new JObject();
             JObject bObj = b?.Type == JTokenType.Object ? (JObject)b : new JObject();
             // Clone the objects so that if there is a real difference in the attributes we can update the cid
-            // on the original object
+            // to be the cid for the new object
             JObject aClone = (JObject)aObj.DeepClone();
             JObject bClone = (JObject)bObj.DeepClone();
-            StripCid(aClone);
-            StripCid(bClone);
+            if (retainCharIds)
+            {
+                StripCharId(aClone);
+                StripCharId(bClone);
+            }
             JObject attributes = aClone.Properties().Select(p => p.Name).Concat(bClone.Properties().Select(p => p.Name))
                 .Aggregate(new JObject(), (attrs, key) =>
                 {
@@ -348,12 +352,24 @@ namespace SIL.XForge.Realtime.RichText
         }
 
         /// <summary> Does a deep search and strips the cid object property from all char nodes. </summary>
-        private static void StripCid(JObject obj)
+        static void StripCharId(JObject obj)
         {
             if (obj.ContainsKey("char"))
             {
-                JObject charObj = obj["char"].Type == JTokenType.Object ? (JObject)obj["char"] : null;
-                charObj?.Property("cid")?.Remove();
+                switch (obj["char"].Type)
+                {
+                    case JTokenType.Object:
+                        ((JObject)obj["char"]).Property("cid")?.Remove();
+                        break;
+                    case JTokenType.Array:
+                        foreach (JToken token in (JArray)obj["char"])
+                            if (token.Type == JTokenType.Object)
+                                ((JObject)token).Property("cid")?.Remove();
+                        break;
+                    default:
+                        break;
+
+                }
             }
             IEnumerable<string> properties = obj.Properties().Select(p => p.Name);
             foreach (string prop in properties)
@@ -362,7 +378,7 @@ namespace SIL.XForge.Realtime.RichText
                 if (token.Type == JTokenType.Object)
                 {
                     // Strip the cid property off descendant nodes
-                    StripCid((JObject)token);
+                    StripCharId((JObject)token);
                 }
                 else if (token.Type == JTokenType.Array)
                 {
@@ -372,7 +388,7 @@ namespace SIL.XForge.Realtime.RichText
                         if (token[i].Type == JTokenType.Object)
                         {
                             // Strip the cid property off descendant nodes
-                            StripCid((JObject)token[i]);
+                            StripCharId((JObject)token[i]);
                         }
                     }
                 }
@@ -448,6 +464,70 @@ namespace SIL.XForge.Realtime.RichText
 
                 JToken nextOp = _ops[_index];
                 return nextOp.OpType();
+            }
+        }
+
+        // Provides methods to process ops for text that may have attribute changes
+        private class DeltaOpsAttributeHelper
+        {
+            private List<int> opLengths = new List<int>();
+            private List<JObject> originalDeltaOps = new List<JObject>();
+            private List<JObject> newDeltaOps = new List<JObject>();
+            private bool retainCharIdsOnAttributes;
+
+            public DeltaOpsAttributeHelper(bool retainCharIds)
+            {
+                retainCharIdsOnAttributes = retainCharIds;
+            }
+
+            public void Add(int length, JToken originalOp, JToken newOp)
+            {
+                opLengths.Add(length);
+                JObject originalOpObject = originalOp?.Type == JTokenType.Object ? (JObject)originalOp : new JObject();
+                JObject newOpObject = newOp?.Type == JTokenType.Object ? (JObject)newOp : new JObject();
+                originalDeltaOps.Add(originalOpObject);
+                newDeltaOps.Add(newOpObject);
+            }
+
+            // Adds the ops to the given delta based on the ops added the instance of this class
+            public void AddOpsToDelta(Delta delta)
+            {
+                // To retain cid properties in this diff, we check whether there is a change in
+                // the ops for all the ops in this diff. If the ops differ for any op
+                // in this diff, we update all of the cid properties that have been regenerated. Otherwise,
+                // we use the old cid properties instead of the regenerated ones.
+                bool retainCharIds = retainCharIdsOnAttributes && !HaveOpsChanged();
+                for (int i = 0; i < originalDeltaOps.Count; i++)
+                {
+                    JObject originalOp = originalDeltaOps[i];
+                    JObject newOp = newDeltaOps[i];
+                    if (JTokenDeepEqualsIgnoreCharId(originalOp[InsertType], newOp[InsertType]))
+                    {
+                        delta.Retain(opLengths[i],
+                            DiffAttributes(originalOp[Attributes], newOp[Attributes], retainCharIds));
+                    }
+                    else
+                    {
+                        delta.Add(newOp);
+                        delta.Delete(opLengths[i]);
+                    }
+                }
+            }
+
+            private bool HaveOpsChanged()
+            {
+                JObject[] originalOpsArray = originalDeltaOps.ToArray();
+                JObject[] newOpsArray = newDeltaOps.ToArray();
+                for (int i = 0; i < originalOpsArray.Length; i++)
+                {
+                    JObject originalOp = originalOpsArray[i];
+                    JObject newOp = newOpsArray[i];
+                    if (!JTokenDeepEqualsIgnoreCharId(originalOp[InsertType], newOp[InsertType]))
+                        return true;
+                    if (!JTokenDeepEqualsIgnoreCharId(originalOp[Attributes], newOp[Attributes]))
+                        return true;
+                }
+                return false;
             }
         }
     }

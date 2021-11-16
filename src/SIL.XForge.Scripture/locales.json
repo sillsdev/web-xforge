@@ -53,6 +53,12 @@
     "production": true
   },
   {
+    "localName": "Română",
+    "englishName": "Romanian",
+    "tags": ["ro", "ro-RO"],
+    "production": true
+  },
+  {
     "localName": "Azərbaycanca",
     "englishName": "Azerbaijani",
     "tags": ["az", "az-AZ"],

@@ -55,3 +55,12 @@ mdc-text-field ::ng-deep {
 .row-question {
   white-space: initial;
 }
+
+.hidden {
+  visibility: hidden;
+}
+
+.mat-error {
+  margin-top: 10px;
+  font-size: 14px;
+}

@@ -98,11 +98,12 @@
   "import_questions_dialog": {
     "all": "Hamısı",
     "cancel": "Ləğv etmək",
+    "canceling_import": "Canceling import...",
     "filter_questions": "Sualları süzgəcdən keçirmək",
-    "import": "İdxal",
     "import_count_questions": "{{Count}} Seçilmiş sualları idxal edin",
     "import_from_transcelerator": "Sualları Transcelerator-dan idxal et",
-    "importing_questions": "{{Count}} sual idxal edilir ...",
+    "import_progress": "Imported {{ completed }} of {{ total }} questions...",
+    "import": "İdxal",
     "loading": "Yüklənir...",
     "must_be_valid_reference": "Etibarlı bir istinad olmalıdır",
     "no_questions_available": "Bu layihədəki kitablara sual yoxdur.",
@@ -111,7 +112,8 @@
     "reference_to": "-ya İstinaddır",
     "select_all": "Hamısını seç",
     "show_all": "Hamısını göstər",
-    "update_transcelerator": "Bu layihədə istifadə olunan Transcelerator versiyası dəstəklənmir. Xahiş edirəm ən azı Transcelerator 1.5.3 versiyasına yeniləyin."
+    "update_transcelerator": "Bu layihədə istifadə olunan Transcelerator versiyası dəstəklənmir. Xahiş edirəm ən azı Transcelerator 1.5.3 versiyasına yeniləyin.",
+    "select_questions": "Select questions to import"
   },
   "paginator": {
     "items_per_page": "Hər səhifə üçün bəndlər",

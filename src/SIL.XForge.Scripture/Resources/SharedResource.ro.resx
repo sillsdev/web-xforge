@@ -117,67 +117,81 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="AboutCheckingTool" xml:space="preserve">
-    <value>Our Community Checking tool facilitates modular Scripture checking campaigns, to deliver broader feedback to the translation committee, faster.</value>
+  <data name="AudioOnlyQuestion" xml:space="preserve">
+    <value>- {0} întrebare doar audio -</value>
+    <comment>Text to show in Paratext Notes when question is audio-only</comment>
   </data>
-  <data name="AboutEngaging" xml:space="preserve">
-    <value>Scripture projects engage increasingly geographically diverse groups of heart language speakers.</value>
+  <data name="AudioOnlyResponse" xml:space="preserve">
+    <value>- {0} răspuns doar audio -</value>
+    <comment>Text to show in Paratext Notes when response is audio-only</comment>
   </data>
-  <data name="AboutFlexible" xml:space="preserve">
-    <value>Flexible</value>
+  <data name="EmailBad" xml:space="preserve">
+    <value>Introduceți o adresă de e-mail valabilă</value>
   </data>
-  <data name="AboutFlexibleDescription" xml:space="preserve">
-    <value>2 Compile {0}unique questions{1} that fit your specific context.</value>
+  <data name="EmailMissing" xml:space="preserve">
+    <value>Introduceți adresa de e-mail</value>
   </data>
-  <data name="AboutHeader" xml:space="preserve">
-    <value>About Scripture Forge</value>
+  <data name="InviteEmailOption" xml:space="preserve">
+    <value>Introduceți adresa dvs. de e-mail și o nouă parolă pentru contul dvs. {0} și faceți clic pe Înregistrare.</value>
   </data>
-  <data name="AboutParatext" xml:space="preserve">
-    <value>Works with Paratext</value>
+  <data name="InviteFacebookOption" xml:space="preserve">
+    <value>Faceți clic pe {0}Înscrieți-vă cu Facebook{1} și urmați instrucțiunile pentru a accesa {2} folosind un cont Facebook existent, sau</value>
   </data>
-  <data name="AboutParatextDescription" xml:space="preserve">
-    <value>1 {2}Paratext integration{3} and {0}ongoing synchronization{1} keeps your project up-to-date and allows user feedback via {4}Paratext Notes{3}.</value>
+  <data name="InviteGoogleOption" xml:space="preserve">
+    <value>Faceți clic pe {0}Înscrieți-vă cu Google{1} și urmați instrucțiunile pentru a accesa {2} utilizând un cont Google existent (cum ar fi Gmail) sau</value>
   </data>
-  <data name="AboutTitle" xml:space="preserve">
-    <value>Extend Your Reach with Scripture Checking</value>
+  <data name="InviteGreeting" xml:space="preserve">
+    <value>Bună ziua,{0}{1} vă invită să vă alăturați proiectului {2} pe {3}.{0}Trebuie doar să faceți clic pe link-ul de mai jos, să vă alegeți modul de conectare și veți fi gata să începeți.{0}{0}Pentru a vă alătura, urmați linkul {4}</value>
   </data>
-  <data name="AboutUserEngagement" xml:space="preserve">
-    <value>User Engagement</value>
+  <data name="InviteInstructions" xml:space="preserve">
+    <value>Dacă nu sunteți deja un utilizator {0}, după ce ați făcut clic pe link, faceți clic pe {1}Înregistrare{2} și efectuați una dintre următoarele acțiuni:</value>
   </data>
-  <data name="AboutUserEngagementDescription" xml:space="preserve">
-    <value>3 {0}Invited users{1} can answer questions, leave comments on existing answers and like responses.</value>
+  <data name="InviteLinkExpires" xml:space="preserve">
+    <value>Linkul de invitație la proiect expiră în 14 zile.</value>
   </data>
-  <data name="Description" xml:space="preserve">
-    <value>A free set of tools to do more with your Paratext project, wherever you are. </value>
+  <data name="InvitePTOption" xml:space="preserve">
+    <value>Faceți clic pe {0}Înscrieți-vă cu Paratext{1} și urmați instrucțiunile pentru a accesa {2} folosind un cont Paratext existent, sau</value>
   </data>
-  <data name="EngageChecking" xml:space="preserve">
-    <value>Engage in community checking</value>
+  <data name="InviteSignature" xml:space="preserve">
+    <value>Cu respect,{0}Echipa {1}</value>
   </data>
-  <data name="EngageCollaborate" xml:space="preserve">
-    <value>Collaborate on Scripture</value>
+  <data name="InviteSubject" xml:space="preserve">
+    <value>Ați fost invitat la proiectul {0} pe {1}</value>
   </data>
-  <data name="EngageSuggestions" xml:space="preserve">
-    <value>Get suggestions as you type</value>
+  <data name="Language" xml:space="preserve">
+    <value>Limba</value>
+    <comment>Tool tip for the language selector</comment>
   </data>
-  <data name="EngageTitle" xml:space="preserve">
-    <value>Engage with the language community. Collaborate with your peers.</value>
+  <data name="LearnMore" xml:space="preserve">
+    <value>Aflați mai multe</value>
+    <comment>Link to the learn more page seen in the page footer and as button at the bottom of the home page</comment>
   </data>
-  <data name="QuoteQuotation1" xml:space="preserve">
-    <value>It was so easy! ...all I had to do to get started was log in using my Paratext registration and boom! It was all there.</value>
+  <data name="LogIn" xml:space="preserve">
+    <value>Autentificare</value>
+    <comment>Log In button label</comment>
   </data>
-  <data name="QuoteQuotation2" xml:space="preserve">
-    <value>Right away I chose a verse and wrote a checking question for it. Then I also recorded myself asking that checking question.</value>
+  <data name="MessageMissing" xml:space="preserve">
+    <value>Spuneți-ne de ce vreți să folositi Scripture Forge</value>
   </data>
-  <data name="QuoteQuotation3" xml:space="preserve">
-    <value>It’s so great that feedback can be gathered either way. All the features are wonderful for remote contributors, including the option to answer the questions with an audio recording.</value>
+  <data name="NameMissing" xml:space="preserve">
+    <value>Introduceți numele dvs.</value>
   </data>
-  <data name="QuoteQuoterName" xml:space="preserve">
-    <value>Trevor Deck</value>
+  <data name="Privacy" xml:space="preserve">
+    <value>Confidențialitate</value>
+    <comment>Link to the Privacy policy seen in the page footer</comment>
   </data>
-  <data name="QuoteQuoterRole" xml:space="preserve">
-    <value>SIL Global Diaspora Specialist</value>
+  <data name="RoleMissing" xml:space="preserve">
+    <value>Selectați rolul dvs. în proiect</value>
   </data>
-  <data name="Statement" xml:space="preserve">
-    <value>Where translation and the community meet.</value>
+  <data name="SignUp" xml:space="preserve">
+    <value>Înregistrare</value>
+    <comment>Sign Up button label</comment>
+  </data>
+  <data name="Terms" xml:space="preserve">
+    <value>Termeni</value>
+    <comment>Link to the Terms of service seen in the page footer</comment>
+  </data>
+  <data name="UserMissing" xml:space="preserve">
+    <value>Utilizatorul nu există.</value>
   </data>
 </root>

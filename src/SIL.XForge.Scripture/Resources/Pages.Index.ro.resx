@@ -118,66 +118,66 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AboutCheckingTool" xml:space="preserve">
-    <value>Our Community Checking tool facilitates modular Scripture checking campaigns, to deliver broader feedback to the translation committee, faster.</value>
+    <value>Acestă parte a programului ajută la verificarea continuă a traducerii, pentru a solicita corecturi de la mai multe persoane și să le trimită înapoi mai rapid comitetului de traducere.</value>
   </data>
   <data name="AboutEngaging" xml:space="preserve">
-    <value>Scripture projects engage increasingly geographically diverse groups of heart language speakers.</value>
+    <value>Proiecte de traducere a Bibliei implică vorbitorii din cât mai multe locații.</value>
   </data>
   <data name="AboutFlexible" xml:space="preserve">
-    <value>Flexible</value>
+    <value>Flexibil</value>
   </data>
   <data name="AboutFlexibleDescription" xml:space="preserve">
-    <value>2 Compile {0}unique questions{1} that fit your specific context.</value>
+    <value>2 Alcătuiți {0}întrebări unice{1} care se potrivesc contextului dvs. specific.</value>
   </data>
   <data name="AboutHeader" xml:space="preserve">
-    <value>About Scripture Forge</value>
+    <value>Despre Scripture Forge</value>
   </data>
   <data name="AboutParatext" xml:space="preserve">
-    <value>Works with Paratext</value>
+    <value>Funcționează împreună cu Paratext</value>
   </data>
   <data name="AboutParatextDescription" xml:space="preserve">
-    <value>1 {2}Paratext integration{3} and {0}ongoing synchronization{1} keeps your project up-to-date and allows user feedback via {4}Paratext Notes{3}.</value>
+    <value>1 {2}Integrarea în Paratext{3} și {0}sincronizarea continuă{1} menține proiectul la zi, și furnizează feedback de la utilizatori care ajung să fie citite de către {4}notițele din Paratext{3}.</value>
   </data>
   <data name="AboutTitle" xml:space="preserve">
-    <value>Extend Your Reach with Scripture Checking</value>
+    <value>Verificați traducerea Scripturii cu cât mai mulți oameni</value>
   </data>
   <data name="AboutUserEngagement" xml:space="preserve">
-    <value>User Engagement</value>
+    <value>Implicați comunitatea</value>
   </data>
   <data name="AboutUserEngagementDescription" xml:space="preserve">
-    <value>3 {0}Invited users{1} can answer questions, leave comments on existing answers and like responses.</value>
+    <value>3 {0}Utilizatorii invitați{1} pot răspunde la întrebări, pot lăsa comentarii referitoare la răspunsuri existente și pot aprecia răspunsurile.</value>
   </data>
   <data name="Description" xml:space="preserve">
-    <value>A free set of tools to do more with your Paratext project, wherever you are. </value>
+    <value>Un set gratuit de instrumente pentru a scoate mai mult din proiectul dvs. Paratext, oriunde v-ați afla. </value>
   </data>
   <data name="EngageChecking" xml:space="preserve">
-    <value>Engage in community checking</value>
+    <value>Verificați traducerea împreună cu membrii din comunitate</value>
   </data>
   <data name="EngageCollaborate" xml:space="preserve">
-    <value>Collaborate on Scripture</value>
+    <value>Traduceți împreună</value>
   </data>
   <data name="EngageSuggestions" xml:space="preserve">
-    <value>Get suggestions as you type</value>
+    <value>Primiți sugestii în timp ce scrieți</value>
   </data>
   <data name="EngageTitle" xml:space="preserve">
-    <value>Engage with the language community. Collaborate with your peers.</value>
+    <value>Lucrați împreună cu vorbitorii de limbă și cu alți traducători.</value>
   </data>
   <data name="QuoteQuotation1" xml:space="preserve">
-    <value>It was so easy! ...all I had to do to get started was log in using my Paratext registration and boom! It was all there.</value>
+    <value>A fost atât de ușor! ...tot ce trebuia să fac pentru a începe, a fost să mă autentific folosind datele mele de înregistrare din Paratext... Și iată, totul a fost acolo!</value>
   </data>
   <data name="QuoteQuotation2" xml:space="preserve">
-    <value>Right away I chose a verse and wrote a checking question for it. Then I also recorded myself asking that checking question.</value>
+    <value>Îndată am ales un verset și am scris o întrebare de verificare pentru acesta. Apoi mi-am înregistrat vocea, citind cu glas tare acea întrebare.</value>
   </data>
   <data name="QuoteQuotation3" xml:space="preserve">
-    <value>It’s so great that feedback can be gathered either way. All the features are wonderful for remote contributors, including the option to answer the questions with an audio recording.</value>
+    <value>Este atât de bine că feedback-ul poate fi colectat în ambele moduri. Toate funcțiunile sunt folositoare pentru contribuitorii de la distanță, inclusiv opțiunea de a răspunde la întrebări prin înregistrări audio.</value>
   </data>
   <data name="QuoteQuoterName" xml:space="preserve">
     <value>Trevor Deck</value>
   </data>
   <data name="QuoteQuoterRole" xml:space="preserve">
-    <value>SIL Global Diaspora Specialist</value>
+    <value>Specialist SIL diaspora globală</value>
   </data>
   <data name="Statement" xml:space="preserve">
-    <value>Where translation and the community meet.</value>
+    <value>Locul în care traducerea și comunitatea se întâlnesc.</value>
   </data>
 </root>

@@ -113,7 +113,8 @@
     "reference_to": "Reference to",
     "select_all": "Select All",
     "show_all": "Show All",
-    "update_transcelerator": "The version of Transcelerator used in this project is not supported. Please update to at least Transcelerator version 1.5.3."
+    "update_transcelerator": "The version of Transcelerator used in this project is not supported. Please update to at least Transcelerator version 1.5.3.",
+    "select_questions": "Select questions to import"
   },
   "note_dialog": {
     "close": "Close",

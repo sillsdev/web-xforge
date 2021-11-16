@@ -63,7 +63,9 @@ export class CheckingTextComponent extends SubscriptionDisposable {
 
   @Input() set questionVerses(verseRefs: VerseRef[] | undefined) {
     this.toggleQuestionVerses(false);
-    this._questionVerses = clone(verseRefs);
+    this._questionVerses = clone(
+      verseRefs?.filter(v => v.bookNum === this.id?.bookNum && v.chapterNum === this.id?.chapterNum)
+    );
     this.toggleQuestionVerses(true);
   }
 

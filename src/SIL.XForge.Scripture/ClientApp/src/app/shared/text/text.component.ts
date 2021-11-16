@@ -815,12 +815,18 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     if (!this.viewModel.hasSegmentRange(segmentRef)) {
-      if (this._segment != null && this.highlightSegment) {
-        this.clearHighlight();
+      const verseParts: string[] = segmentRef.split('_');
+      const verseRef: VerseRef = new VerseRef(this.id?.bookNum, verseParts[1], verseParts[2]);
+      const correspondingSegments: string[] = this.getVerseSegments(verseRef);
+      if (correspondingSegments.length === 0) {
+        if (this._segment != null && this.highlightSegment) {
+          this.clearHighlight();
+        }
+        this._segment = undefined;
+        this.segmentRefChange.emit();
+        return true;
       }
-      this._segment = undefined;
-      this.segmentRefChange.emit();
-      return true;
+      segmentRef = correspondingSegments[0];
     }
 
     if (focus) {

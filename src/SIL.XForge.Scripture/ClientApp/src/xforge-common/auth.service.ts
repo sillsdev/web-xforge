@@ -23,16 +23,16 @@ import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
 import { USERS_URL } from './url-constants';
 import { ASP_CULTURE_COOKIE_NAME, getAspCultureCookieLanguage } from './utils';
 
-const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
-const XF_ROLE_CLAIM = 'http://xforge.org/role';
+export const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
+export const XF_ROLE_CLAIM = 'http://xforge.org/role';
 
-const ACCESS_TOKEN_SETTING = 'access_token';
-const ID_TOKEN_SETTING = 'id_token';
-const USER_ID_SETTING = 'user_id';
-const ROLE_SETTING = 'role';
-const EXPIRES_AT_SETTING = 'expires_at';
+export const ACCESS_TOKEN_SETTING = 'access_token';
+export const ID_TOKEN_SETTING = 'id_token';
+export const USER_ID_SETTING = 'user_id';
+export const ROLE_SETTING = 'role';
+export const EXPIRES_AT_SETTING = 'expires_at';
 
-interface AuthState {
+export interface AuthState {
   returnUrl?: string;
   linking?: boolean;
 }
@@ -137,14 +137,13 @@ export class AuthService {
     });
   }
 
+  /**
+   * Triggered when app first loads and when returning from offline mode
+   * Ensure renewal timer is initiated so tokens can be refreshed when expired
+   */
   async checkOnlineAuth(): Promise<void> {
-    // Only need to check if the app has logged in via an offline state
-    if (await this.isLoggedIn) {
-      this.tryOnlineLogIn().then(result => {
-        if (!result.loggedIn) {
-          this.logIn(this.locationService.pathname + this.locationService.search);
-        }
-      });
+    if ((await this.isLoggedIn) && this.pwaService.isOnline) {
+      this.scheduleRenewal();
     }
   }
 
@@ -153,8 +152,12 @@ export class AuthService {
   }
 
   async isAuthenticated(): Promise<boolean> {
-    if (await this.hasExpired()) {
+    if ((await this.hasExpired()) && this.pwaService.isOnline) {
       await this.renewTokens();
+      // If still expired then the user is logging in and we need to degrade nicely while that happens
+      if (await this.hasExpired()) {
+        return false;
+      }
     }
     return true;
   }
@@ -171,6 +174,7 @@ export class AuthService {
     if (environment.beta) {
       window.parent.postMessage(<BetaMigrationMessage>{ message: 'login_required' }, environment.masterUrl);
     }
+    this.unscheduleRenewal();
     this.auth0.authorize(authOptions);
   }
 
@@ -190,6 +194,7 @@ export class AuthService {
   async logOut(): Promise<void> {
     await this.offlineStore.deleteDB();
     this.localSettings.clear();
+    this.unscheduleRenewal();
     this.auth0.logout({ returnTo: this.locationService.origin + '/' });
   }
 
@@ -209,13 +214,15 @@ export class AuthService {
   private async tryLogIn(): Promise<LoginResult> {
     try {
       // If we have no valid auth0 data then we have to validate online first
-      if (this.accessToken == null || this.idToken == null || this.expiresAt == null) {
+      if (
+        this.accessToken == null ||
+        this.idToken == null ||
+        this.expiresAt == null ||
+        (this.pwaService.isOnline && (await this.hasExpired()))
+      ) {
         return await this.tryOnlineLogIn();
       }
-      // In offline mode check against the last known access
-      if (!(await this.handleOfflineAuth())) {
-        return { loggedIn: false, newlyLoggedIn: false };
-      }
+      await this.remoteStore.init(() => this.accessToken);
       return { loggedIn: true, newlyLoggedIn: false };
     } catch (error) {
       await this.handleLoginError('tryLogIn', error);
@@ -261,7 +268,9 @@ export class AuthService {
     const state: AuthState = authResult.state == null ? {} : JSON.parse(authResult.state);
     if (state.linking != null && state.linking) {
       secondaryId = authResult.idTokenPayload.sub;
-      await this.isAuthenticated();
+      if (!(await this.isAuthenticated())) {
+        return false;
+      }
     } else {
       await this.localLogIn(authResult.accessToken, authResult.idToken, authResult.expiresIn);
     }
@@ -300,17 +309,15 @@ export class AuthService {
         return false;
       }
     }
+    // Clear auth0 processed hash so it isn't used for repeat login handling i.e. during offline/online state changes
+    if (this.parsedHashPromise != null) {
+      this.parsedHashPromise = Promise.resolve(null);
+    }
     if (state.returnUrl != null) {
       this.router.navigateByUrl(state.returnUrl, { replaceUrl: true });
     } else if (this.locationService.hash !== '') {
       this.router.navigateByUrl(this.locationService.pathname, { replaceUrl: true });
     }
-    return true;
-  }
-
-  private async handleOfflineAuth(): Promise<boolean> {
-    this.scheduleRenewal();
-    await this.remoteStore.init(() => this.accessToken);
     return true;
   }
 
@@ -321,8 +328,7 @@ export class AuthService {
     const expiresIn$ = of(expiresAt).pipe(
       mergeMap(expAt => {
         const now = Date.now();
-        // Expiry 30 seconds sooner than the actual expiry date to avoid any inflight expiry issues
-        return timer(Math.max(1, expAt - now - 30000));
+        return timer(Math.max(1, expAt - now));
       }),
       filter(() => this.pwaService.isOnline)
     );
@@ -414,7 +420,8 @@ export class AuthService {
       this.localSettings.clear();
     }
 
-    const expiresAt = expiresIn * 1000 + Date.now();
+    // Expiry 30 seconds sooner than the actual expiry date to avoid any inflight expiry issues
+    const expiresAt = (expiresIn - 30) * 1000 + Date.now();
     this.localSettings.set(ACCESS_TOKEN_SETTING, accessToken);
     this.localSettings.set(ID_TOKEN_SETTING, idToken);
     this.localSettings.set(EXPIRES_AT_SETTING, expiresAt);
