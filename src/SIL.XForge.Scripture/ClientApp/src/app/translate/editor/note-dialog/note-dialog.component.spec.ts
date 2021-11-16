@@ -61,7 +61,7 @@ describe('NoteDialogComponent', () => {
 
   it('should not show deleted notes', fakeAsync(() => {
     env = new TestEnvironment();
-    expect(env.notes.length).toBe(2);
+    expect(env.notes.length).toBe(3);
   }));
 
   it('should style notes', fakeAsync(() => {
@@ -92,6 +92,26 @@ describe('NoteDialogComponent', () => {
   it('produce correct default note icon', fakeAsync(() => {
     env = new TestEnvironment();
     expect(env.component.flagIcon).toEqual('/assets/icons/TagIcons/flag02.png');
+  }));
+
+  it('should show correct icon', fakeAsync(() => {
+    env = new TestEnvironment();
+
+    // To do
+    expect(env.notes[0].nativeElement.querySelector('img').getAttribute('src')).toEqual(
+      '/assets/icons/TagIcons/flag02.png'
+    );
+    expect(env.notes[0].nativeElement.querySelector('img').getAttribute('title')).toEqual('To do');
+
+    // Resolved
+    expect(env.notes[1].nativeElement.querySelector('img').getAttribute('src')).toEqual(
+      '/assets/icons/TagIcons/flag05.png'
+    );
+    expect(env.notes[1].nativeElement.querySelector('img').getAttribute('title')).toEqual('Resolved');
+
+    // Blank/unspecified
+    expect(env.notes[2].nativeElement.querySelector('img').getAttribute('src')).toEqual('');
+    expect(env.notes[2].nativeElement.querySelector('img').getAttribute('title')).toEqual('');
   }));
 });
 
@@ -183,7 +203,7 @@ class TestEnvironment {
         extUserId: 'user01',
         deleted: false,
         ownerRef: 'user01',
-        status: NoteStatus.Todo,
+        status: NoteStatus.Resolved,
         dateCreated: '',
         dateModified: ''
       },
@@ -195,6 +215,17 @@ class TestEnvironment {
         deleted: true,
         ownerRef: 'user01',
         status: NoteStatus.Todo,
+        dateCreated: '',
+        dateModified: ''
+      },
+      {
+        dataId: 'note03',
+        threadId: 'thread01',
+        content: 'note03',
+        extUserId: 'user01',
+        deleted: false,
+        ownerRef: 'user01',
+        status: NoteStatus.Unspecified,
         dateCreated: '',
         dateModified: ''
       }
