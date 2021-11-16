@@ -827,6 +827,7 @@ namespace SIL.XForge.Scripture.Services
                 NoteThreadChange newThread = new NoteThreadChange(threadId, info.VerseRefStr,
                     info.SelectedText, info.ContextBefore, info.ContextAfter, info.Status.InternalValue, initialTag.Icon);
                 newThread.Position = GetCommentTextAnchor(info, chapterDeltas);
+                newThread.Status = thread.Status.InternalValue;
                 foreach (var comm in thread.Comments)
                 {
                     SyncUser syncUser = FindOrCreateSyncUser(comm.User, syncUsers);

@@ -648,6 +648,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private showNoteThread(threadId: string): void {
     this.dialog.open(NoteDialogComponent, {
       autoFocus: false,
+      width: '600px',
       data: {
         projectId: this.projectDoc!.id,
         threadId: threadId
