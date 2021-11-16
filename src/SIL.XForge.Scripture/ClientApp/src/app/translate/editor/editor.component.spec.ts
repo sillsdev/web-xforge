@@ -23,7 +23,7 @@ import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
-import { NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
+import { NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
@@ -1995,7 +1995,7 @@ class TestEnvironment {
     this.addParatextNoteThread(3, 'MAT 1:3', 'verse 3', { start: 19, length: 7 }, ['user01']);
     this.addParatextNoteThread(4, 'MAT 1:3', 'verse', { start: 19, length: 5 }, ['user01']);
     this.addParatextNoteThread(5, 'MAT 1:4', 'Paragraph', { start: 27, length: 9 }, ['user01']);
-    this.addParatextNoteThread(6, 'MAT 1:5', 'resolved note', { start: 0, length: 0 }, ['user01'], true);
+    this.addParatextNoteThread(6, 'MAT 1:5', 'resolved note', { start: 0, length: 0 }, ['user01'], NoteStatus.Resolved);
     when(this.mockedRemoteTranslationEngine.getWordGraph(anything())).thenCall(segment =>
       Promise.resolve(this.createWordGraph(segment))
     );
@@ -2027,7 +2027,7 @@ class TestEnvironment {
     when(mockedSFProjectService.queryNoteThreads('project01')).thenCall(id =>
       this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, {
         [obj<NoteThread>().pathStr(t => t.projectRef)]: id,
-        [obj<NoteThread>().pathStr(t => t.resolved)]: false
+        [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo
       })
     );
     when(mockedPwaService.isOnline).thenReturn(true);
@@ -2407,7 +2407,7 @@ class TestEnvironment {
     selectedText: string,
     position: TextAnchor,
     userIds: string[],
-    resolved: boolean = false
+    status: NoteStatus = NoteStatus.Todo
   ): void {
     const threadId: string = `thread0${threadNum}`;
     const notes: Note[] = [];
@@ -2424,6 +2424,7 @@ class TestEnvironment {
         content: `<p><bold>Note from ${id}</bold></p>`,
         extUserId: id,
         deleted: false,
+        status: NoteStatus.Todo,
         tagIcon: `01flag${i + 1}`
       };
       notes.push(note);
@@ -2443,7 +2444,7 @@ class TestEnvironment {
         originalContextBefore: '\\v 1 target: ',
         originalContextAfter: ', verse 1.',
         position,
-        resolved: resolved
+        status: status
       }
     });
   }
