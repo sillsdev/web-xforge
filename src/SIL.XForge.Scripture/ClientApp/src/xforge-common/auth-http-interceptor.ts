@@ -7,7 +7,7 @@ import {
   HttpResponse
 } from '@angular/common/http';
 import { Injectable, Injector } from '@angular/core';
-import { from, Observable, throwError } from 'rxjs';
+import { from, NEVER, Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { CommandErrorCode } from 'xforge-common/command.service';
 import { AuthService } from './auth.service';
@@ -26,7 +26,10 @@ export class AuthHttpInterceptor implements HttpInterceptor {
     }
     // Make sure the user is authenticated with a valid access token
     if (!(await this.authService.isAuthenticated())) {
-      return await throwError('User not authenticated - login required').toPromise();
+      // When authentication fails auth0 is already in the process of redirecting to the login screen
+      // Using NEVER is a graceful way of waiting for the browser to complete the redirection
+      // without triggering any other errors from an incomplete http request
+      return NEVER.toPromise();
     }
     // Add access token to the request header
     const authReq = req.clone({
