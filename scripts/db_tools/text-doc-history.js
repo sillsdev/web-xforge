@@ -15,11 +15,13 @@ const projectShortName = 'AAA';
 const book = 'GEN';
 const chapter = 1;
 const connectionConfig = utils.devConfig;
+utils.useColor(true);
 
 ShareDB.types.register(RichText.type);
 ShareDB.types.register(OTJson0.type);
 
 async function run() {
+  console.log(`Running`);
   const ws = new WebSocket(connectionConfig.wsConnectionString);
   const conn = new ShareDB.Connection(ws);
   const client = await MongoClient.connect(connectionConfig.dbLocation, { useUnifiedTopology: true });
@@ -66,7 +68,12 @@ function logEdit(snapshot, user, editCount, startTime, endTime) {
       : `from ${new Date(startTime).toUTCString()} to ${new Date(endTime).toUTCString()}`;
 
   console.log(`Modified by ${user} in ${editCount} edits ${time}`);
-  utils.visualizeOps(snapshot.data.ops);
+  const showAttributes = true;
+  if (snapshot.data == null) {
+    console.log(utils.colored(utils.colors.red, `Not rendering snapshot with null data.`));
+    return;
+  }
+  utils.visualizeOps(snapshot.data.ops, showAttributes);
   console.log();
 }
 
