@@ -515,6 +515,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       }
       const skipBlankSegment: boolean = this.isSegmentBlank(vs) && textAnchor.length > 0;
       if (skipBlankSegment) {
+        startTextPosInVerse--;
         continue;
       }
 
