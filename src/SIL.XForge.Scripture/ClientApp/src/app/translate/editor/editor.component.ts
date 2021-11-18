@@ -1007,20 +1007,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     let insertLength = 0;
     let deleteLength = 0;
     // get the length that was inserted or deleted to apply to the verse text anchors
-    if (delta.ops[1].insert != null && typeof delta.ops[1].insert === 'string') {
-      insertLength = delta.ops[1].insert.length;
+    if (delta.ops[1].insert != null) {
+      insertLength = typeof delta.ops[1].insert === 'string' ? delta.ops[1].insert.length : 1;
       if (delta.ops.length > 2 && delta.ops[2].delete != null) {
         deleteLength = delta.ops[2].delete;
       }
     } else if (delta.ops[1].delete != null) {
-      const selection = this.target.editor?.getSelection();
-      const isBlank: boolean =
-        this.target.segment == null ? false : this.target.isSegmentBlank(this.target.segment.ref);
-      if ((editOpIndex != null && selection?.index === editOpIndex) || isBlank) {
-        // the user triggered the deletion, not editor logic i.e. blank deleted after user inserts text
-        // if the segment is blank, assume that the user triggered the deletion
-        deleteLength = delta.ops[1].delete;
-      }
+      deleteLength = delta.ops[1].delete;
     }
     if (editOpIndex == null || (insertLength === 0 && deleteLength === 0)) {
       return;

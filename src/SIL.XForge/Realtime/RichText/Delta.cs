@@ -223,6 +223,12 @@ namespace SIL.XForge.Realtime.RichText
             return array.ToString();
         }
 
+        public bool TryConcatenateInserts(out string opStr, Func<JToken, bool> filter = null)
+        {
+            Delta filteredDelta = filter == null ? this : new Delta(this.Ops.Where(op => filter(op)));
+            return TryConcatInserts(filteredDelta, out opStr);
+        }
+
         private Delta Add(JToken newOp)
         {
             int index = Ops.Count;

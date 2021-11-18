@@ -1573,28 +1573,16 @@ namespace SIL.XForge.Scripture.Services
 
         private string GetVerseText(Delta delta, VerseRef verseRef)
         {
-            string segment = $"verse_{verseRef.ChapterNum}_{verseRef.VerseNum}";
-            IEnumerable<JToken> ops = delta.Ops.Where(op =>
-                op.Type == JTokenType.Object && op["attributes"] != null && op["attributes"]["segment"] != null &&
-                (((string)op["attributes"]["segment"]) == segment ||
-                ((string)op["attributes"]["segment"]).StartsWith(segment + "/"))
-            );
-            StringBuilder bldr = new StringBuilder();
-            foreach (JObject segmentObj in ops)
+            string vref = string.IsNullOrEmpty(verseRef.Verse) ? verseRef.VerseNum.ToString() : verseRef.Verse;
+            string segment = $"verse_{verseRef.ChapterNum}_{vref}";
+            bool segmentFilter(JToken op)
             {
-                if (segmentObj["insert"] != null)
-                {
-                    if (segmentObj["insert"].Type == JTokenType.String)
-                    {
-                        bldr.Append((string)segmentObj["insert"]);
-                    }
-                    else if (segmentObj["insert"].Type == JTokenType.Object && segmentObj["insert"]["note"] != null)
-                    {
-                        bldr.Append("*");
-                    }
-                }
-            }
-            return bldr.ToString();
+                return op.Type == JTokenType.Object &&
+                    op["attributes"] != null && op["attributes"]["segment"] != null &&
+                    (((string)op["attributes"]["segment"]) == segment ||
+                    ((string)op["attributes"]["segment"]).StartsWith(segment + "/"));
+            };
+            return delta.TryConcatenateInserts(out string verseText, segmentFilter) ? verseText : string.Empty;
         }
 
         private TextAnchor GetCommentTextAnchor(Paratext.Data.ProjectComments.Comment comment,
@@ -1604,9 +1592,9 @@ namespace SIL.XForge.Scripture.Services
                 comment.StartPosition == 0)
                 return new TextAnchor();
 
-            string verse = GetVerseText(chapterDelta.Delta, comment.VerseRef);
+            string verseText = GetVerseText(chapterDelta.Delta, comment.VerseRef);
             int startPos = 0;
-            PtxUtils.StringUtils.MatchContexts(verse, comment.ContextBefore, comment.SelectedText,
+            PtxUtils.StringUtils.MatchContexts(verseText, comment.ContextBefore, comment.SelectedText,
                 comment.ContextAfter, null, ref startPos, out int posJustPastLastCharacter);
             // The text anchor is relative to the text in the verse
             return new TextAnchor { Start = startPos, Length = posJustPastLastCharacter - startPos };

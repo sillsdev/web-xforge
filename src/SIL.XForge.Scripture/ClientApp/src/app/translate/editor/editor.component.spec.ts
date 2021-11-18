@@ -1533,7 +1533,7 @@ describe('EditorComponent', () => {
       const range = env.component.target!.getSegmentRange('verse_1_4')!;
       env.targetEditor.setSelection(range.index, range.length, 'user');
       env.deleteCharacters();
-      expect(noteThreadDoc.data!.position).toEqual({ start: 0, length: 9 });
+      expect(noteThreadDoc.data!.position).toEqual({ start: 1, length: 9 });
 
       // switch to a new book and back
       env.updateParams({ projectId: 'project01', bookId: 'MRK' });
@@ -1604,10 +1604,11 @@ describe('EditorComponent', () => {
       notePosition = env.getNoteThreadEditorPosition('thread02');
       // 1 note from verse 1, and 1 in verse 3 before the selection point
       noteCountBeforePosition = 2;
+      remoteEditPositionAfterNote = 5;
       remoteEditTextPos = env.getRemoteEditPosition(notePosition, remoteEditPositionAfterNote, noteCountBeforePosition);
       const originalNotePosInVerse: number = env.getNoteThreadDoc('project01', 'thread03').data!.position.start;
-      // $targ|->et: cha<-|pter 1, $$verse 3.
-      //         ------- 7 characters get replaced locally by the text 'defgh'
+      // $*targ|->et: cha<-|pter 1, $$verse 3.
+      //          ------- 7 characters get replaced locally by the text 'defgh'
       const selectionLength: number = 'et: cha'.length;
       const insertDeleteDelta: DeltaStatic = new Delta();
       (insertDeleteDelta as any).push({ retain: remoteEditTextPos } as DeltaOperation);
@@ -1620,10 +1621,10 @@ describe('EditorComponent', () => {
       expect(env.component.target!.getSegmentText('verse_1_3')).toEqual('targ' + 'defgh' + 'pter 1, verse 3.');
 
       // The remote user selects and deletes some text that includes a couple note embeds.
-      remoteEditPositionAfterNote = 14;
+      remoteEditPositionAfterNote = 15;
       remoteEditTextPos = env.getRemoteEditPosition(notePosition, remoteEditPositionAfterNote, noteCountBeforePosition);
-      // $targdefghpter |->1, $$v<-|erse 3.
-      //                   ------ editor range deleted
+      // $*targdefghpter |->1, $$v<-|erse 3.
+      //                    ------ editor range deleted
       const deleteDelta: DeltaStatic = new Delta();
       (deleteDelta as any).push({ retain: remoteEditTextPos } as DeltaOperation);
       // the remote edit deletes 4, but locally it is expanded to 6 to include the 2 note embeds
@@ -1655,7 +1656,7 @@ describe('EditorComponent', () => {
       const originalNoteThread1TextPos: TextAnchor = noteThread1Doc.data!.position;
       const originalNoteThread3TextPos: TextAnchor = noteThread3Doc.data!.position;
       expect(originalNoteThread1TextPos).toEqual({ start: 8, length: 9 });
-      expect(originalNoteThread3TextPos).toEqual({ start: 19, length: 7 });
+      expect(originalNoteThread3TextPos).toEqual({ start: 20, length: 7 });
 
       // simulate text changes at current segment
       let notePosition: number = env.getNoteThreadEditorPosition('thread03');
