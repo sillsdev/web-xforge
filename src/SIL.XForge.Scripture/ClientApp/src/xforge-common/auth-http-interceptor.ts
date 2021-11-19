@@ -12,7 +12,7 @@ import { catchError, map } from 'rxjs/operators';
 import { CommandErrorCode } from 'xforge-common/command.service';
 import { AuthService } from './auth.service';
 
-const AUTH_APIS = ['paratext-api', 'machine-api', 'command-api'];
+export const AUTH_APIS = ['paratext-api', 'machine-api', 'command-api'];
 
 @Injectable()
 export class AuthHttpInterceptor implements HttpInterceptor {
