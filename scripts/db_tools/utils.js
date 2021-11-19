@@ -1,8 +1,8 @@
 /**
- * @param {string} package The name of the package to import
+ * @param {string} packageName The name of the package to import
  */
-function requireFromRealTimeServer(package) {
-  return require('../../src/RealtimeServer/node_modules/' + package);
+function requireFromRealTimeServer(packageName) {
+  return require('../../src/RealtimeServer/node_modules/' + packageName);
 }
 
 /**
@@ -172,6 +172,11 @@ const liveConfig = {
   dbLocation: 'mongodb://localhost:3017/xforge',
   wsConnectionString: 'ws://127.0.0.1:3003/?server=true'
 };
+
+const databaseConfigs = new Map();
+databaseConfigs.set('dev', devConfig);
+databaseConfigs.set('qa', qaConfig);
+databaseConfigs.set('live', liveConfig);
 
 module.exports = {
   requireFromRealTimeServer,
