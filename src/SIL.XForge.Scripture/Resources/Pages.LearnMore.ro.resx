@@ -127,58 +127,58 @@
     <value>Aflați mai multe despre Scripture Forge</value>
   </data>
   <data name="LearnSliderCheckingOfflineAnwering" xml:space="preserve">
-    <value>{0}Cum sa răspunzi la întrebări{1}, inclusiv cum să înregistrezi un răspuns audio, offline.</value>
+    <value>{0}Puteți răspunde la întrebări{1} și înregistra răspunsuri audio, chiar și atunci când sunteți offline.</value>
   </data>
   <data name="LearnSliderCheckingOfflineDescription" xml:space="preserve">
-    <value>{0}Membrii din comunitate{1} și {0}administratorii{1} ar trebui {2}să urmărească acest videoclip{3} pentru a vedea cum utilizatorii pot continua să lucreze, chiar și atunci când sunt offline. Acesta acoperă:</value>
+    <value>{0}Membrii comunității{1} și {0}administratorii{1} pot {2}viziona acest video{3} pentru a vedea cum se poate face verificarea, chiar și atunci când sunt offline. Acesta acoperă:</value>
   </data>
   <data name="LearnSliderCheckingOfflineHeader" xml:space="preserve">
-    <value>Lucrarea offline</value>
+    <value>Lucrul offline</value>
   </data>
   <data name="LearnSliderCheckingOfflineInstalling" xml:space="preserve">
-    <value>{0}Cum să instalați aplicația{1} pe dispozitivul dvs. cu ajutorul {2}Adăugarea la ecranul de start{3}.</value>
+    <value>{0}Cum instalați aplicația{1} pe dispozitivul dvs. prin opțiunea {2}Adăugare la ecranul de pornire{3}.</value>
   </data>
   <data name="LearnSliderCheckingOfflineLoading" xml:space="preserve">
-    <value>{0}Cum să încărcați întrebările automat{1} înainte de a fi deconectat.</value>
+    <value>{0}Întrebările se încarcă în mod automat{1} înainte de a fi deconectat.</value>
   </data>
   <data name="LearnSliderCheckingOfflineSaving" xml:space="preserve">
-    <value>{0}Cum să salvați automat{1} răspunsurile actualizate când sunteți din nou online.</value>
+    <value>{0}Programul salvează automat{1} răspunsurile actualizate atunci când sunteți din nou online.</value>
   </data>
   <data name="LearnSliderCheckingSeeAnswer" xml:space="preserve">
-    <value>{0}Cum să răspundeți la întrebări{1} în format text și audio.</value>
+    <value>{0}Cum răspundem la întrebări{1} în scris și audio.</value>
   </data>
   <data name="LearnSliderCheckingSeeConnect" xml:space="preserve">
-    <value>{0}Cum să conectați la un proiect în Scripture Forge{1} ca un {2}verificator{3} invitat.</value>
+    <value>{0}Conectarea la un proiect Scripture Forge{1} după ce {2}verificatorul din comunitate{3} a fost invitat.</value>
   </data>
   <data name="LearnSliderCheckingSeeDescription" xml:space="preserve">
-    <value>{0}Verificatorii{1} și {0}administratorii{1} ar trebui {2}să urmărească acest videoclip{3} pentru a vedea cum {0}verificatorii{1} pot răspunde la întrebări și cum pot interacționa unii cu alții. Acesta acoperă:</value>
+    <value>{0}Verificatorii{1} și {0}administratorii{1} pot {2}viziona acest video{3} pentru a vedea modul în care {0}membrii comunității{1} pot răspunde la întrebări și pot interacționa unii cu alții. Acesta acoperă:</value>
   </data>
   <data name="LearnSliderCheckingSeeHeader" xml:space="preserve">
-    <value>Cum funcționează verificarea în comunități?</value>
+    <value>Cum funcționează verificarea în comunitate?</value>
   </data>
   <data name="LearnSliderCheckingSeeInteract" xml:space="preserve">
-    <value>{0}Cum să colaborați{1} cu alți {2}verificatori{3} prin adăugarea de comentarii la răspunsurile lor.</value>
+    <value>{0}Colaborare{1} cu alți {2}verificatori{3} prin adăugarea de comentarii la răspunsurile acestora.</value>
   </data>
   <data name="LearnSliderCheckingSeeReference" xml:space="preserve">
-    <value>{0}Cum să selectați pasaje din Biblie{1} pentru consultare.</value>
+    <value>{0}Atașarea unor versete biblice{1} la răspunsurile date.</value>
   </data>
   <data name="LearnSliderCheckingSetupAddQuestions" xml:space="preserve">
-    <value>{0}Cum să adăugați întrebări{1} pentru comunitate (acestea pot conține înregistrări audio ale versetelor sau o întrebare propriu-zisă).</value>
+    <value>{0}Formularea unor întrebări{1} pentru comunitate. Acestea pot conține înregistrări audio ale versetelor sau întrebările înseși.</value>
   </data>
   <data name="LearnSliderCheckingSetupConnect" xml:space="preserve">
-    <value>{0}Cum să selectați un proiect Paratext{1} ca să conectați la el din Scripture Forge.</value>
+    <value>{0}Selectarea unui proiect din Paratext{1} și conectarea la acesta în Scripture Forge.</value>
   </data>
   <data name="LearnSliderCheckingSetupDescription" xml:space="preserve">
-    <value>{0}Administratorii{1} proiectelor în {4}Paratext{5} pot {2}viziona acest video{3} pentru a învăța despre configurarea {0}verificării în comunități{1}. Acesta acoperă:</value>
+    <value>{0}Administratorii{1} proiectelor {4}Paratext{5} pot {2}viziona acest video{3} pentru a învăța despre configurarea {0}verificării în comunitate{1}. Acesta acoperă:</value>
   </data>
   <data name="LearnSliderCheckingSetupHeader" xml:space="preserve">
-    <value>Cum să începi cu verificare în comunități?</value>
+    <value>Cum începem verificarea în comunitate?</value>
   </data>
   <data name="LearnSliderCheckingSetupShare" xml:space="preserve">
-    <value>{0}Cum să invitați{1} {2}verificatori{3} să răspundă la întrebări.</value>
+    <value>{0}Împărtășirea proiectului{1} prin invitarea {2}verificatorilor din comunitate{3} care răspund la întrebări.</value>
   </data>
   <data name="LearnSliderCheckingSetupSync" xml:space="preserve">
-    <value>{0}Cum să sincronizați{1} răspunsurile {2}verificatorilor{3} cu Paratext.</value>
+    <value>{0}Sincronizarea{1} răspunsurilor din {2}comunitate{3} cu Paratext.</value>
   </data>
   <data name="LearnSliderSuggestionAcceptDescription" xml:space="preserve">
     <value>Dacă motorul de sugestii este configurat și instruit, Scripture Forge poate oferi {0}traducătorilor{1} sugestii în timp ce aceștia lucrează.</value>
@@ -187,22 +187,22 @@
     <value>Apăsați {0}ENTER{1} sau faceți clic pe sugestie pentru a o accepta, sau apăsați {0}ESC{1} sau continuați să scrieți pentru a o ignora.</value>
   </data>
   <data name="LearnSliderSuggestionAcceptHeader" xml:space="preserve">
-    <value>Cum să acceptați o traducere propusă?</value>
+    <value>Cum acceptați o sugestie de traducere?</value>
   </data>
   <data name="LearnSliderSuggestionAcceptLearn" xml:space="preserve">
-    <value>{0}Motorul de sugestii învață{1} și oferă sugestii mai bune pe măsură ce fiecare verset este tradus.</value>
+    <value>{0}Motorul de sugestii învață{1} și oferă sugestii tot mai bune, cu fiecare verset nou pe care îl traduceți.</value>
   </data>
   <data name="LearnSliderSuggestionAcceptReceive" xml:space="preserve">
-    <value>{0}Traducătorii{1} pot {2}primi sugestii{3} despre cum să traducă următorul cuvânt sau expresie, cum scriu.</value>
+    <value>{0}Traducătorii{1} pot {2}primi sugestii{3} referitoare la traducerea următorului cuvânt sau expresii, în timpul scrierii.</value>
   </data>
   <data name="LearnSliderSuggestionSetupBased" xml:space="preserve">
-    <value>Selectați un proiect pe care traducerea este {0}bazată{1}, și motorul inteligent de sugestii poate fi antrenat ca să {2}propună traduceri utile{3}.</value>
+    <value>Selectați un proiect pe care traducerea este {0}bazată{1}, și motorul inteligent de sugestii poate fi antrenat să {2}propună sugestii de traducere utile{3}.</value>
   </data>
   <data name="LearnSliderSuggestionSetupBest" xml:space="preserve">
-    <value>Este cel mai potrivit pentru {0}proiecte strâns legate{1} cu o gramatică și un stil de traducere similare, cum ar fi proiectele de adaptare.</value>
+    <value>Funcționează cel mai bine cu {0}proiectele strâns legate{1} având o gramatică și un stil de traducere similare, cum ar fi proiectele de adaptare.</value>
   </data>
   <data name="LearnSliderSuggestionSetupDescription" xml:space="preserve">
-    <value>{0}Administratorii{1} pot activa {2}Sugestii de traducere{3} pentru a ajuta {0}traducătorii{1}.</value>
+    <value>{0}Administratorii{1} pot activa {2}sugestiile de traducere{3} pentru a ajuta {0}traducătorii{1}.</value>
   </data>
   <data name="LearnSliderSuggestionSetupHeader" xml:space="preserve">
     <value>Configurarea sugestiilor de traducere</value>
@@ -214,7 +214,7 @@
     <value>Editarea Scripturii</value>
   </data>
   <data name="LearnSliderTranslateEditScripture" xml:space="preserve">
-    <value>{0}Editați Scriptura{1} în Scripture Forge așa cum ați face-o în vizualizarea {2}Basic{3} din Paratext.</value>
+    <value>{0}Editați Scriptura{1} în Scripture Forge așa cum ați face-o în Paratext, în modul de vizualizare {2}de bază{3}.</value>
   </data>
   <data name="LearnSliderTranslateEditSync" xml:space="preserve">
     <value>{0}Sincronizați{1} proiectul Scripture Forge cu Paratext pentru a vă menține munca la zi.</value>
@@ -223,19 +223,19 @@
     <value>{0}Traducătorii{1} pot lucra la proiecte în mod colaborativ, {2}editând Scriptura în același timp{3}.</value>
   </data>
   <data name="LearnSliderTranslateCollaborateHeader" xml:space="preserve">
-    <value>Traduceți împreună</value>
+    <value>Colaborarea în traducere</value>
   </data>
   <data name="LearnSliderTranslateCollaborateLocation" xml:space="preserve">
-    <value>Lucrați cu {0}traducătorii{1} în {2}locații multiple{3} pe același proiect.</value>
+    <value>Lucrați împreună cu {0}traducătorii{1} aflați {2}în mai multe locații{3} pe același proiect.</value>
   </data>
   <data name="LearnSliderTranslateCollaborateRealtime" xml:space="preserve">
-    <value>Vedeți modificările ale altor {0}traducători{1} {2}în timp real{3}, cum ei scriu.</value>
+    <value>Vedeți modificările {0}altor traducători{1} {2}în timp real{3}, pe măsură ce aceștia scriu.</value>
   </data>
   <data name="LearnSliderTranslateCollaborateVerse" xml:space="preserve">
     <value>Colaborați la aceeași carte, același capitol sau {0}chiar la același verset{1}.</value>
   </data>
   <data name="LearnTranslateHow" xml:space="preserve">
-    <value>Învățați cum să traduceți Biblia împreună și cum să folosiți sugestii de traducere.</value>
+    <value>Învățați cum să traduceți Biblia împreună și cum să folosiți sugestiile de traducere.</value>
   </data>
   <data name="LearnTranslateTitle" xml:space="preserve">
     <value>Traducere</value>

@@ -132,25 +132,25 @@
     <value>Introduceți adresa de e-mail</value>
   </data>
   <data name="InviteEmailOption" xml:space="preserve">
-    <value>Introduceți adresa dvs. de e-mail și o nouă parolă pentru contul dvs. {0} și faceți clic pe Înregistrare.</value>
+    <value>Introduceți adresa dvs. e-mail și o parolă nouă pentru contul dvs. {0}, și faceți clic pe butonul de înregistrare.</value>
   </data>
   <data name="InviteFacebookOption" xml:space="preserve">
-    <value>Faceți clic pe {0}Înscrieți-vă cu Facebook{1} și urmați instrucțiunile pentru a accesa {2} folosind un cont Facebook existent, sau</value>
+    <value>Faceți clic pe butonul {0}Înregistrare cu Facebook{1} și urmați instrucțiunile pentru a accesa {2} folosind un cont Facebook existent, sau</value>
   </data>
   <data name="InviteGoogleOption" xml:space="preserve">
-    <value>Faceți clic pe {0}Înscrieți-vă cu Google{1} și urmați instrucțiunile pentru a accesa {2} utilizând un cont Google existent (cum ar fi Gmail) sau</value>
+    <value>Faceți clic pe butonul {0}Înregistrare cu Google{1} și urmați instrucțiunile pentru a accesa {2} folosind un cont Google existent (cum ar fi Gmail), sau</value>
   </data>
   <data name="InviteGreeting" xml:space="preserve">
     <value>Bună ziua,{0}{1} vă invită să vă alăturați proiectului {2} pe {3}.{0}Trebuie doar să faceți clic pe link-ul de mai jos, să vă alegeți modul de conectare și veți fi gata să începeți.{0}{0}Pentru a vă alătura, urmați linkul {4}</value>
   </data>
   <data name="InviteInstructions" xml:space="preserve">
-    <value>Dacă nu sunteți deja un utilizator {0}, după ce ați făcut clic pe link, faceți clic pe {1}Înregistrare{2} și efectuați una dintre următoarele acțiuni:</value>
+    <value>Dacă nu sunteți încă un utilizator {0}, atunci după ce ați făcut clic pe link-ul de mai sus, faceți clic pe butonul {1}Înregistrare{2} și efectuați una dintre următoarele acțiuni:</value>
   </data>
   <data name="InviteLinkExpires" xml:space="preserve">
     <value>Linkul de invitație la proiect expiră în 14 zile.</value>
   </data>
   <data name="InvitePTOption" xml:space="preserve">
-    <value>Faceți clic pe {0}Înscrieți-vă cu Paratext{1} și urmați instrucțiunile pentru a accesa {2} folosind un cont Paratext existent, sau</value>
+    <value>Faceți clic pe butonul {0}Înregistrare cu Paratext{1} și urmați instrucțiunile pentru a accesa {2} folosind un cont Paratext existent, sau</value>
   </data>
   <data name="InviteSignature" xml:space="preserve">
     <value>Cu respect,{0}Echipa {1}</value>
@@ -171,7 +171,7 @@
     <comment>Log In button label</comment>
   </data>
   <data name="MessageMissing" xml:space="preserve">
-    <value>Spuneți-ne de ce vreți să folositi Scripture Forge</value>
+    <value>Spuneți-ne de ce doriți să folosiți Scripture Forge</value>
   </data>
   <data name="NameMissing" xml:space="preserve">
     <value>Introduceți numele dvs.</value>
