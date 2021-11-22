@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AboutCheckingTool" xml:space="preserve">
-    <value>Acestă parte a programului ajută la verificarea continuă a traducerii, pentru a solicita corecturi de la mai multe persoane și să le trimită înapoi mai rapid comitetului de traducere.</value>
+    <value>Acest program ajută la verificarea continuă a traducerii, pentru a solicita corecturi de la mai multe persoane și să le trimită înapoi mai rapid comitetului de traducere.</value>
   </data>
   <data name="AboutEngaging" xml:space="preserve">
     <value>Proiecte de traducere a Bibliei implică vorbitorii din cât mai multe locații.</value>
