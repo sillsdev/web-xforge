@@ -65,7 +65,7 @@ header {
       }
       select {
         padding: 3px 6px;
-        font-family: language_picker, Arial, Helvetica, sans-serif;
+        font-family: language_picker, language_picker_fallback, Arial, Helvetica, sans-serif;
         letter-spacing: 0px;
         line-height: 1.2rem;
         @include media-breakpoint-down(xs) {

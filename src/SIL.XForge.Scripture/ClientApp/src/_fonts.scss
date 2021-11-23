@@ -6,3 +6,12 @@
   font-weight: normal;
   font-style: normal;
 }
+
+@font-face {
+  font-family: 'language_picker_fallback';
+  src: url('/assets/fonts/language-picker-fallback.woff2') format('woff2'),
+    url('/assets/fonts/language-picker-fallback.woff') format('woff'),
+    url('/assets/fonts/language-picker-fallback.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
