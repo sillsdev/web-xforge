@@ -219,9 +219,9 @@ class TestEnvironment {
         dateModified: ''
       },
       {
-        dataId: 'note03',
+        dataId: 'note04',
         threadId: 'thread01',
-        content: 'note03',
+        content: 'note04',
         extUserId: 'user01',
         deleted: false,
         ownerRef: 'user01',

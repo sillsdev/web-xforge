@@ -1830,7 +1830,7 @@ namespace SIL.XForge.Scripture.Services
             public void SetupNewNoteThreadChange(string threadId, string syncUserId, string verseRef = "MAT 1:1")
             {
                 var noteThreadChange = new NoteThreadChange(threadId, verseRef, $"Scripture text in project",
-                    "Context before ", " context after", "todo", "icon1");
+                    "Context before ", " context after", NoteStatus.Todo.InternalValue, "icon1");
                 noteThreadChange.Position = new TextAnchor { Start = 0, Length = 0 };
                 noteThreadChange.AddChange(
                     GetNote(threadId, "n01", syncUserId, $"New {threadId} added.", ChangeType.Added), ChangeType.Added);
@@ -1843,7 +1843,7 @@ namespace SIL.XForge.Scripture.Services
             public void SetupNoteRemovedChange(string threadId, string noteId, string verseRef = "MAT 1:1")
             {
                 var noteThreadChange = new NoteThreadChange(threadId, verseRef, $"{threadId} selected text.",
-                    "Context before ", " context after", "deleted", "icon1");
+                    "Context before ", " context after", NoteStatus.Deleted.InternalValue, "icon1");
                 if (noteId == null)
                     noteThreadChange.ThreadRemoved = true;
                 else
