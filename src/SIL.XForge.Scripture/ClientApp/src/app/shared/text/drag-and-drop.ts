@@ -170,10 +170,24 @@ export class DragAndDrop {
       // Add up the length of text and embeds that are previous nodes in the usx-segment
       while (node.previousSibling != null) {
         node = node.previousSibling;
-        if (node.nodeType === textNodeType && node.nodeValue != null) {
-          startPositionInSegment += node.nodeValue.length;
-        } else if (node.nodeType !== textNodeType) {
-          startPositionInSegment++;
+        if (node.nodeType === textNodeType) {
+          if (node.nodeValue != null) {
+            startPositionInSegment += node.nodeValue.length;
+          } else {
+            console.warn(`Warning: Unexpected situation of null text node value`);
+          }
+        } else {
+          if (node.nodeName.toLowerCase() === 'display-text-anchor') {
+            const anchoredTextOfNote: string = node.lastChild?.nodeValue ?? '';
+            startPositionInSegment += anchoredTextOfNote.length;
+            const lengthOfEmbed = 1;
+            startPositionInSegment += lengthOfEmbed;
+          } else {
+            console.warn(
+              `Warning: drag-and-drop is assuming length 1 for unknown element: ${node.nodeName.toLowerCase()}`
+            );
+            startPositionInSegment++;
+          }
         }
       }
       startPositionInSegment += startPositionInTextNode;
