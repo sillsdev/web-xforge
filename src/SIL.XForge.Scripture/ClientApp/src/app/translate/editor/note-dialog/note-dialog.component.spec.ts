@@ -61,7 +61,7 @@ describe('NoteDialogComponent', () => {
 
   it('should not show deleted notes', fakeAsync(() => {
     env = new TestEnvironment();
-    expect(env.notes.length).toBe(3);
+    expect(env.notes.length).toBe(4);
   }));
 
   it('should style notes', fakeAsync(() => {
@@ -108,10 +108,20 @@ describe('NoteDialogComponent', () => {
       '/assets/icons/TagIcons/flag05.png'
     );
     expect(env.notes[1].nativeElement.querySelector('img').getAttribute('title')).toEqual('Resolved');
+    expect(env.notes[3].nativeElement.querySelector('img').getAttribute('src')).toEqual(
+      '/assets/icons/TagIcons/flag05.png'
+    );
+    expect(env.notes[3].nativeElement.querySelector('img').getAttribute('title')).toEqual('Resolved');
 
     // Blank/unspecified
     expect(env.notes[2].nativeElement.querySelector('img').getAttribute('src')).toEqual('');
     expect(env.notes[2].nativeElement.querySelector('img').getAttribute('title')).toEqual('');
+  }));
+
+  it('should gracefully return when data not ready', fakeAsync(() => {
+    env = new TestEnvironment({ includeSnapshots: false });
+    expect(env.component.segmentText).toEqual('');
+    expect(env.component.noteIcon(TestEnvironment.noteThread[0])).toEqual('');
   }));
 });
 
@@ -138,6 +148,10 @@ class ChildViewContainerComponent {
   exports: [ViewContainerDirective, ChildViewContainerComponent, NoteDialogComponent]
 })
 class DialogTestModule {}
+
+interface TestEnvironmentConstructorArgs {
+  includeSnapshots?: boolean;
+}
 
 class TestEnvironment {
   static PROJECT01: string = 'project01';
@@ -228,6 +242,17 @@ class TestEnvironment {
         status: NoteStatus.Unspecified,
         dateCreated: '',
         dateModified: ''
+      },
+      {
+        dataId: 'note05',
+        threadId: 'thread01',
+        content: 'note05',
+        extUserId: 'user01',
+        deleted: false,
+        ownerRef: 'user01',
+        status: NoteStatus.Done,
+        dateCreated: '',
+        dateModified: ''
       }
     ]
   };
@@ -238,7 +263,7 @@ class TestEnvironment {
   readonly dialogRef: MatDialogRef<NoteDialogComponent>;
   readonly mockedNoteMdcDialogRef = mock(MatDialogRef);
 
-  constructor() {
+  constructor({ includeSnapshots = true }: TestEnvironmentConstructorArgs = {}) {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     const configData: NoteDialogData = {
       projectId: TestEnvironment.PROJECT01,
@@ -248,20 +273,22 @@ class TestEnvironment {
     this.component = this.dialogRef.componentInstance;
     tick();
 
-    this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
-      id: configData.projectId,
-      data: TestEnvironment.testProject
-    });
-    const textDocId = new TextDocId(TestEnvironment.PROJECT01, 40, 1);
-    this.realtimeService.addSnapshot<TextData>(TextDoc.COLLECTION, {
-      id: textDocId.toString(),
-      data: getTextDoc(textDocId),
-      type: RichText.type.name
-    });
-    this.realtimeService.addSnapshot<NoteThread>(NoteThreadDoc.COLLECTION, {
-      id: [TestEnvironment.PROJECT01, TestEnvironment.noteThread.dataId].join(':'),
-      data: TestEnvironment.noteThread
-    });
+    if (includeSnapshots) {
+      this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
+        id: configData.projectId,
+        data: TestEnvironment.testProject
+      });
+      const textDocId = new TextDocId(TestEnvironment.PROJECT01, 40, 1);
+      this.realtimeService.addSnapshot<TextData>(TextDoc.COLLECTION, {
+        id: textDocId.toString(),
+        data: getTextDoc(textDocId),
+        type: RichText.type.name
+      });
+      this.realtimeService.addSnapshot<NoteThread>(NoteThreadDoc.COLLECTION, {
+        id: [TestEnvironment.PROJECT01, TestEnvironment.noteThread.dataId].join(':'),
+        data: TestEnvironment.noteThread
+      });
+    }
 
     when(mockedProjectService.getNoteThread(anything())).thenCall(id =>
       this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, id)

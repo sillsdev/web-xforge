@@ -112,9 +112,6 @@ export class NoteDialogComponent implements OnInit {
   }
 
   parseNote(content: string) {
-    if (content == null) {
-      return '';
-    }
     const replace = new Map<RegExp, string>();
     replace.set(/<bold>(.*)<\/bold>/gim, '<b>$1</b>'); // Bold style
     replace.set(/<italic>(.*)<\/italic>/gim, '<i>$1</i>'); // Italic style
