@@ -756,7 +756,7 @@ namespace SIL.XForge.Scripture.Services
                 List<string> matchedCommentIds = new List<string>();
                 NoteThreadChange threadChange = new NoteThreadChange(threadDoc.Data.DataId,
                     threadDoc.Data.VerseRef.ToString(), threadDoc.Data.OriginalSelectedText, threadDoc.Data.OriginalContextBefore,
-                    threadDoc.Data.OriginalContextAfter);
+                    threadDoc.Data.OriginalContextAfter, threadDoc.Data.Status);
                 // Find the corresponding comment thread
                 var existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
                 if (existingThread == null)
@@ -784,6 +784,11 @@ namespace SIL.XForge.Scripture.Services
                     }
                     else
                         threadChange.NoteIdsRemoved.Add(note.DataId);
+                }
+                if (existingThread.Status.InternalValue != threadDoc.Data.Status)
+                {
+                    threadChange.Status = existingThread.Status.InternalValue;
+                    threadChange.ThreadUpdated = true;
                 }
                 // Add new Comments to note thread change
                 IEnumerable<string> ptCommentIds = existingThread.Comments.Select(c => c.Id);
@@ -820,9 +825,9 @@ namespace SIL.XForge.Scripture.Services
                     : defaultTagId;
                 CommentTag initialTag = info.Type == NoteType.Conflict ? CommentTag.ConflictTag : commentTags.Get(tagId);
                 NoteThreadChange newThread = new NoteThreadChange(threadId, info.VerseRefStr,
-                    info.SelectedText, info.ContextBefore, info.ContextAfter, initialTag.Icon);
+                    info.SelectedText, info.ContextBefore, info.ContextAfter, info.Status.InternalValue, initialTag.Icon);
                 newThread.Position = GetCommentTextAnchor(info, chapterDeltas);
-
+                newThread.Status = thread.Status.InternalValue;
                 foreach (var comm in thread.Comments)
                 {
                     SyncUser syncUser = FindOrCreateSyncUser(comm.User, syncUsers);
@@ -1518,8 +1523,8 @@ namespace SIL.XForge.Scripture.Services
         {
             if (comment.Deleted != note.Deleted)
                 return ChangeType.Deleted;
-            // If the content does not match it has been updated in Paratext
-            if (comment.Contents?.InnerXml != note.Content)
+            // Check if fields have been updated in Paratext
+            if (comment.Contents?.InnerXml != note.Content || comment.Status.InternalValue != note.Status)
                 return ChangeType.Updated;
             return ChangeType.None;
         }
@@ -1561,6 +1566,7 @@ namespace SIL.XForge.Scripture.Services
                 DateCreated = DateTime.Parse(comment.Date),
                 DateModified = DateTime.Parse(comment.Date),
                 Deleted = comment.Deleted,
+                Status = comment.Status.InternalValue,
                 TagIcon = tag?.Icon
             };
         }

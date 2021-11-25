@@ -1805,7 +1805,8 @@ namespace SIL.XForge.Scripture.Services
                         Position = comp.appliesToVerse
                             ? new TextAnchor()
                             : new TextAnchor { Start = before.Length, Length = text.Length },
-                        OriginalContextAfter = comp.appliesToVerse ? "" : after
+                        OriginalContextAfter = comp.appliesToVerse ? "" : after,
+                        Status = NoteStatus.Todo.InternalValue
                     };
                     List<Note> notes = new List<Note>();
                     for (int i = 1; i <= comp.noteCount; i++)
@@ -1820,7 +1821,8 @@ namespace SIL.XForge.Scripture.Services
                             SyncUserRef = comp.isNew ? null : "syncuser01",
                             DateCreated = new DateTime(2019, 1, i, 8, 0, 0, DateTimeKind.Utc),
                             TagIcon = $"icon{comp.threadNum}",
-                            Deleted = comp.isDeleted
+                            Deleted = comp.isDeleted,
+                            Status = NoteStatus.Todo.InternalValue
                         });
                     }
                     noteThread.Notes = notes;
@@ -1936,6 +1938,7 @@ namespace SIL.XForge.Scripture.Services
                             Contents = content,
                             Date = date,
                             Deleted = comp.isDeleted,
+                            Status = NoteStatus.Todo,
                             ExternalUser = "user02",
                             TagsAdded = comp.isConflict ? null : new[] { comp.threadNum.ToString() },
                             Type = comp.isConflict ? NoteType.Conflict : NoteType.Normal

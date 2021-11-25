@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using Paratext.Data.ProjectComments;
+using PtxUtils;
 
 namespace SIL.XForge.Scripture.Models
 {
@@ -22,8 +24,10 @@ namespace SIL.XForge.Scripture.Models
         public string ContextAfter { get; set; }
         public TextAnchor Position { get; set; }
         public string TagIcon { get; set; }
+        public string Status { get; set; }
         /// <summary> True if the thread has been permanently removed. </summary>
         public bool ThreadRemoved { get; set; }
+        public bool ThreadUpdated { get; set; }
         public List<Note> NotesAdded { get; set; } = new List<Note>();
         public List<Note> NotesUpdated { get; set; } = new List<Note>();
         public List<Note> NotesDeleted { get; set; } = new List<Note>();
@@ -35,12 +39,12 @@ namespace SIL.XForge.Scripture.Models
             get
             {
                 return NotesAdded.Count > 0 || NotesUpdated.Count > 0 || NotesDeleted.Count > 0 ||
-                    NoteIdsRemoved.Count > 0 || ThreadRemoved || Position != null;
+                    NoteIdsRemoved.Count > 0 || ThreadRemoved || ThreadUpdated || Position != null;
             }
         }
 
         public NoteThreadChange(string threadId, string verseRef, string selectedText, string contextBefore,
-            string contextAfter, string tagIcon = null)
+            string contextAfter, string status, string tagIcon = null)
         {
             ThreadId = threadId;
             VerseRefStr = verseRef;
@@ -48,6 +52,7 @@ namespace SIL.XForge.Scripture.Models
             ContextBefore = contextBefore;
             ContextAfter = contextAfter;
             TagIcon = tagIcon;
+            Status = status;
         }
 
         public void AddChange(Note changedNote, ChangeType type)

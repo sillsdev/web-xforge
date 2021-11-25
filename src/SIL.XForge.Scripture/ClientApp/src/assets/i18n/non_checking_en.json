@@ -119,7 +119,9 @@
   "note_dialog": {
     "close": "Close",
     "hide_changes": "Hide changes",
-    "show_changes": "Show changes"
+    "show_changes": "Show changes",
+    "status_resolved": "Resolved",
+    "status_to_do": "To do"
   },
   "paginator": {
     "items_per_page": "Items per page",
