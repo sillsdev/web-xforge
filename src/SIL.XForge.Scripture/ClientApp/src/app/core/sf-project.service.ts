@@ -159,10 +159,6 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return (await this.onlineInvoke<TransceleratorQuestion[]>('transceleratorQuestions', { projectId }))!;
   }
 
-  async hasTransceleratorQuestions(projectId: string): Promise<boolean> {
-    return (await this.onlineInvoke<boolean>('hasTransceleratorQuestions', { projectId }))!;
-  }
-
   async onlineSetUserProjectPermissions(projectId: string, userId: string, permissions: string[]): Promise<void> {
     return (await this.onlineInvoke<void>('setUserProjectPermissions', { projectId, userId, permissions }))!;
   }
