@@ -144,3 +144,7 @@ button.mdc-icon-button {
 .offline-text {
   color: var(--mdc-theme-error);
 }
+
+.locale-fonts mat-option {
+  font-family: $languageFonts;
+}
