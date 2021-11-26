@@ -184,7 +184,7 @@ a {
 
 .locale-menu .mdc-list-item {
   white-space: nowrap;
-  font-family: language_picker, language_picker_fallback, Arial, Helvetica, sans-serif;
+  font-family: $languageFonts;
 }
 
 .online-status {

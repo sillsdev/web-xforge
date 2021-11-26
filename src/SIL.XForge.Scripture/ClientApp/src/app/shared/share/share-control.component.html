@@ -44,7 +44,7 @@
           </mat-form-field>
           <mat-form-field id="invitation-language">
             <mat-label>{{ t("invitation_language") }}</mat-label>
-            <mat-select formControlName="locale">
+            <mat-select formControlName="locale" panelClass="locale-fonts">
               <mat-option *ngFor="let locale of i18n.locales" [value]="locale.canonicalTag">
                 {{ locale.localName }}
               </mat-option>
