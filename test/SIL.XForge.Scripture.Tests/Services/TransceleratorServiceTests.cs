@@ -13,6 +13,22 @@ namespace SIL.XForge.Scripture.Services
         private const string Project01 = "project01";
 
         [Test]
+        public void TransceleratorService_HasQuestions()
+        {
+            var env = new TestEnvironment();
+            env.FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(true);
+            env.FileSystemService.EnumerateFiles(Arg.Any<string>()).Returns(
+                new string[] { "Just some file.xml" }
+            );
+            Assert.False(env.Service.HasQuestions(Project01));
+
+            env.FileSystemService.EnumerateFiles(Arg.Any<string>()).Returns(
+                new string[] { "Just some file.xml", "Translated Checking Questions for MAT.xml" }
+            );
+            Assert.True(env.Service.HasQuestions(Project01));
+        }
+
+        [Test]
         public void TransceleratorService_Questions()
         {
             var env = new TestEnvironment();

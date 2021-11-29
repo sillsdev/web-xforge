@@ -6,5 +6,6 @@ namespace SIL.XForge.Scripture.Services
     public interface ITransceleratorService
     {
         IEnumerable<TransceleratorQuestion> Questions(string paratextId);
+        bool HasQuestions(string paratextId);
     }
 }
