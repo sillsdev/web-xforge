@@ -362,7 +362,7 @@ namespace SIL.XForge.Scripture.Controllers
             }
         }
 
-        /// To be removed soon. Only here for clients still running a front end that still calls it.
+        [Obsolete("To be removed soon. Only here for clients still running a front end that still calls it.")]
         public async Task<IRpcMethodResult> HasTransceleratorQuestions(string projectId)
         {
             try
