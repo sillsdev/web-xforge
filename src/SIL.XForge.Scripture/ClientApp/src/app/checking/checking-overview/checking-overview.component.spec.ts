@@ -167,6 +167,18 @@ describe('CheckingOverviewComponent', () => {
       expect(env.questionEditButtons.length).toEqual(2);
     }));
 
+    it('should show question in canonical order', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.waitForQuestions();
+      expect(env.textRows.length).toEqual(2);
+      // Click on Matthew and then Matthew 1
+      env.simulateRowClick(0);
+      const id = new TextDocId('project01', 40, 1);
+      env.simulateRowClick(1, id);
+      expect(env.textRows[2].nativeElement.textContent).toContain('v3');
+      expect(env.textRows[3].nativeElement.textContent).toContain('v4');
+    }));
+
     it('should show new question after adding to a project with no questions', fakeAsync(() => {
       const env = new TestEnvironment(false);
       const dateNow = new Date();
@@ -546,7 +558,42 @@ class TestEnvironment {
 
   constructor(withQuestionData: boolean = true) {
     if (withQuestionData) {
+      // Question 2 deliberately before question 1 to test sorting
       this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, [
+        {
+          id: getQuestionDocId('project01', 'q2Id'),
+          data: {
+            dataId: 'q2Id',
+            projectRef: 'project01',
+            ownerRef: this.adminUser.id,
+            text: 'Book 1, Q2 text',
+            verseRef: {
+              bookNum: 40,
+              chapterNum: 1,
+              verseNum: 4
+            },
+            answers: [
+              {
+                dataId: 'a2Id',
+                ownerRef: this.anotherUserId,
+                likes: [{ ownerRef: this.checkerUser.id }],
+                dateCreated: '',
+                dateModified: '',
+                comments: [
+                  {
+                    dataId: 'c2Id',
+                    ownerRef: this.checkerUser.id,
+                    dateCreated: '',
+                    dateModified: ''
+                  }
+                ]
+              }
+            ],
+            isArchived: false,
+            dateModified: '',
+            dateCreated: ''
+          }
+        },
         {
           id: getQuestionDocId('project01', 'q1Id'),
           data: {
@@ -580,40 +627,6 @@ class TestEnvironment {
             isArchived: false,
             dateCreated: '',
             dateModified: ''
-          }
-        },
-        {
-          id: getQuestionDocId('project01', 'q2Id'),
-          data: {
-            dataId: 'q2Id',
-            projectRef: 'project01',
-            ownerRef: this.adminUser.id,
-            text: 'Book 1, Q2 text',
-            verseRef: {
-              bookNum: 40,
-              chapterNum: 1,
-              verseNum: 4
-            },
-            answers: [
-              {
-                dataId: 'a2Id',
-                ownerRef: this.anotherUserId,
-                likes: [{ ownerRef: this.checkerUser.id }],
-                dateCreated: '',
-                dateModified: '',
-                comments: [
-                  {
-                    dataId: 'c2Id',
-                    ownerRef: this.checkerUser.id,
-                    dateCreated: '',
-                    dateModified: ''
-                  }
-                ]
-              }
-            ],
-            isArchived: false,
-            dateModified: '',
-            dateCreated: ''
           }
         },
         {
