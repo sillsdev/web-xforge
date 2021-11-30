@@ -1789,8 +1789,8 @@ describe('EditorComponent', () => {
       // undo deleting multiple notes
       const noteThread3: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread03');
       const noteThread4: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread04');
-      const noteThread3Anchor: TextAnchor = { start: 19, length: 7 };
-      const noteThread4Anchor: TextAnchor = { start: 19, length: 5 };
+      const noteThread3Anchor: TextAnchor = { start: 20, length: 7 };
+      const noteThread4Anchor: TextAnchor = { start: 20, length: 5 };
       expect(noteThread3.data!.position).toEqual(noteThread3Anchor);
       expect(noteThread4.data!.position).toEqual(noteThread4Anchor);
       const note3Position: number = env.getNoteThreadEditorPosition('thread03');
