@@ -20,6 +20,11 @@ namespace SIL.XForge.Scripture.Services
             _siteOptions = siteOptions;
         }
 
+        public bool HasQuestions(string paratextId)
+        {
+            return QuestionFiles(paratextId).Count() > 0;
+        }
+
         public IEnumerable<TransceleratorQuestion> Questions(string paratextId)
         {
             IEnumerable<XmlElement> docs = QuestionFiles(paratextId).Select(file => ReadFileAsXml(file).DocumentElement);
