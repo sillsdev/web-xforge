@@ -54,40 +54,67 @@ export class DragAndDrop {
         return;
       }
 
-      let insertionPositionInDocument: number | undefined = this.determineInsertionPosition(
+      const insPos: number | undefined = this.determineInsertionPosition(
         targetElement,
         destinationSegmentRange,
         droppingIntoBlankSegment,
         dragEvent.clientX,
         dragEvent.clientY
       );
-      if (insertionPositionInDocument == null) {
+      if (insPos == null) {
         return;
       }
+      let insertionPositionInDocument: number = insPos;
 
-      let newText: string = dragEvent.dataTransfer.getData('text/plain');
-      // Replace newlines with a space.
-      newText = newText.replace(/(?:\r?\n)+/g, ' ');
-      quill.insertText(insertionPositionInDocument, newText, 'user');
-
-      // Identify the selection range, if any, now that we updated the document with an insert. This will be a
+      // Identify the selection range, if any. This will be a
       // selection that was already present before the drop, whether it is the text that was dragged, or a selection
       // not related to the drag.
       const originalSelection: RangeStatic | null = quill.getSelection();
 
-      // Select the inserted text.
-      quill.setSelection(insertionPositionInDocument, newText.length);
+      let newText: string = dragEvent.dataTransfer.getData('text/plain');
+      // Replace newlines with a space.
+      newText = newText.replace(/(?:\r?\n)+/g, ' ');
 
+      let quillIsSource: boolean = dragEvent.dataTransfer.types.includes(DragAndDrop.quillIsSourceToken);
+      let userIsHoldingCtrlKey: boolean = dragEvent.ctrlKey;
       if (originalSelection != null) {
         // There was a selection before the drop occurred.
-        if (dragEvent.dataTransfer.types.includes(DragAndDrop.quillIsSourceToken) && !dragEvent.ctrlKey) {
+        if (quillIsSource && !userIsHoldingCtrlKey) {
           // If the drag was started from within quill, then treat the selection as the source data of the drag, and
           // delete the selection. Unless the user was holding the ctrl key to copy text instead of move it.
           quill.deleteText(originalSelection.index, originalSelection.length, 'user');
+          // Adjust insertion position accordingly if preceding text was just deleted
+          if (insertionPositionInDocument > originalSelection.index) {
+            insertionPositionInDocument -= originalSelection.length;
+          }
         }
         // Or if the drag was not started from within quill, or the user was holding the ctrl key, then don't delete
         // the selection.
       }
+
+      // Behave like a user, to help editor event processing, by cutting the source text first (if applicable),
+      // putting the insertion point in at the target, and then inserting. Give an opportunity between each of these
+      // for EditorComponent.onTargetUpdated() to run, so that thread anchors are updated even in a source verse that
+      // is dragged out of. Use of setTimeout() allows TextComponent.updated to emit and be received by subscribers
+      // before we take further action here. Therefore, TextComponent.updated events are interleaved with our calls to
+      // quill.
+
+      setTimeout(() => {
+        quill.setSelection(insertionPositionInDocument, 0);
+        setTimeout(() => {
+          quill.insertText(insertionPositionInDocument, newText, 'user');
+          setTimeout(() => {
+            // If we inserted into a blank segment, and let SF respond by removing the blank in between our quill
+            // changes, then the position of insertion needs to move back by 1.
+            const lengthOfBlank: number = 1;
+            if (droppingIntoBlankSegment) {
+              insertionPositionInDocument -= lengthOfBlank;
+            }
+            // Select the inserted text.
+            quill.setSelection(insertionPositionInDocument, newText.length);
+          }, 1);
+        }, 1);
+      }, 1);
     });
   }
 
@@ -117,7 +144,7 @@ export class DragAndDrop {
       // We need to be able to know where to insert the dropped text, such as from the drop target being a usx-segment
       // element. Give up.
       console.warn('Warning: DragEvent to invalid target:', targetElement);
-      return [null, droppingIntoBlankSegment];
+      return [targetElement, droppingIntoBlankSegment];
     }
     return [targetElement, droppingIntoBlankSegment];
   }
