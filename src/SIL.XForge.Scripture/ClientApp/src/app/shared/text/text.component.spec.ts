@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, ViewChild } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { TranslocoService } from '@ngneat/transloco';
 import Quill, { RangeStatic } from 'quill';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -9,7 +9,7 @@ import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-a
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subscription } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
@@ -200,7 +200,7 @@ describe('TextComponent', () => {
 
       // SUT
       const cancelled = !env.component.editor?.container.dispatchEvent(dragEvent);
-      tick();
+      flush();
 
       expect(env.component.getSegmentText(targetSegmentRef)).toEqual(expectedFinalText);
       expect(env.component.editor?.getText()).toContain(expectedFinalText);
@@ -262,7 +262,7 @@ describe('TextComponent', () => {
 
       // SUT
       env.component.editor?.container.dispatchEvent(dragEvent);
-      tick();
+      flush();
 
       expect(env.component.getSegmentText(targetSegmentRef)).toEqual(expectedFinalText);
       expect(env.component.editor?.getText()).toContain(expectedFinalText);
@@ -317,7 +317,7 @@ describe('TextComponent', () => {
 
       // SUT
       const cancelled = !env.component.editor?.container.dispatchEvent(dragEvent);
-      tick();
+      flush();
 
       expect(env.component.getSegmentText(targetSegmentRef)).toEqual(expectedFinalText);
       expect(env.component.editor?.getText()).toContain(expectedFinalText);
@@ -378,7 +378,7 @@ describe('TextComponent', () => {
 
       // SUT
       const cancelled = !env.component.editor?.container.dispatchEvent(dragEvent);
-      tick();
+      flush();
 
       expect(env.component.getSegmentText(targetSegmentRef)).toEqual(expectedFinalText);
       expect(env.component.editor?.getText()).toContain(expectedFinalText);
@@ -465,7 +465,7 @@ describe('TextComponent', () => {
 
       // SUT 2
       env.component.editor?.container.dispatchEvent(dropEvent);
-      tick();
+      flush();
 
       expect(env.component.getSegmentText(targetSegmentRef)).toEqual(expectedFinalText);
       expect(env.component.editor?.getText()).toContain(expectedFinalText);
@@ -537,7 +537,7 @@ describe('TextComponent', () => {
 
       // SUT
       env.component.editor?.container.dispatchEvent(dropEvent);
-      tick();
+      flush();
 
       expect(env.component.getSegmentText(targetSegmentRef)).toEqual(expectedFinalText);
       expect(env.component.editor?.getText()).toContain(expectedFinalText);
@@ -623,7 +623,7 @@ describe('TextComponent', () => {
 
       // SUT 2
       env.component.editor?.container.dispatchEvent(dropEvent);
-      tick();
+      flush();
 
       expect(env.component.getSegmentText(targetSegmentRef)).toEqual(expectedFinalText);
       expect(env.component.editor?.getText()).toContain(expectedFinalText);
@@ -692,7 +692,7 @@ describe('TextComponent', () => {
 
       // SUT
       env.component.editor?.container.dispatchEvent(dragEvent);
-      tick();
+      flush();
 
       expect(env.component.getSegmentText(targetSegmentRef)).toEqual(expectedFinalText);
       expect(env.component.editor?.getText()).toContain(expectedFinalText);
@@ -772,7 +772,7 @@ describe('TextComponent', () => {
 
       // SUT
       const cancelled: boolean = !env.component.editor?.container.dispatchEvent(dragEvent);
-      tick();
+      flush();
 
       // No change to text. No insert or delete.
       expect(env.component.getSegmentText(targetSegmentRef)).toEqual(initialTextInDoc);
@@ -784,9 +784,14 @@ describe('TextComponent', () => {
       expect(env.component.editor!.getSelection()).toEqual(selection, 'selection should not have been changed');
     }));
 
-    it('allow drag-and-drop to blank verse', fakeAsync(() => {
+    it('allow drag-and-drop to blank verse, and quill changes are interleaved with TextComponent.updated events', fakeAsync(() => {
       // User drags to a blank verse. The target will be a usx-blank element rather than a usx-segment element. Insert
       // the text.
+      // drag-and-drop makes use of `setTimeout()` to allow interleaving multiple programmatic edits with multiple
+      // TextComponent.updated events. Without this, all the TextComponent.updated events would instead happen at once
+      // at the end (and do the wrong things). This test specifies that the individual edit (eg insert, delete)
+      // operations that drag-and-drop performs are interleaved with processing of subscribers to Textcomponent.updated.
+
       const env = new TestEnvironment();
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
@@ -855,9 +860,80 @@ describe('TextComponent', () => {
       tick();
       expect(dropEvent.dataTransfer?.types.includes(DragAndDrop.quillIsSourceToken)).toBeTrue();
 
+      // Watch insert, delete, and set selction activity and record their call counts.
+      const setSelectionSpy: jasmine.Spy<any> = spyOn<any>(env.component.editor!, 'setSelection').and.callThrough();
+      const deleteTextSpy: jasmine.Spy<any> = spyOn<any>(env.component.editor!, 'deleteText').and.callThrough();
+      const insertTextSpy: jasmine.Spy<any> = spyOn<any>(env.component.editor!, 'insertText').and.callThrough();
+
+      // Call counts of various quill methods, at times when TextComponent.updated emits are received by subscribers.
+      const quillCallCountsAtUpdateFirings: {
+        setSelectionCalls: number;
+        deleteTextCalls: number;
+        insertTextCalls: number;
+      }[] = [];
+      const updatedSubscription: Subscription = env.component.updated.subscribe(() => {
+        // Record call counts at the time of the 'updated' event.
+        // Each time `TextComponent.updated` is processed, we will record the call counts of a few methods, for
+        // later analysis.
+        quillCallCountsAtUpdateFirings.push({
+          setSelectionCalls: setSelectionSpy.calls.count(),
+          deleteTextCalls: deleteTextSpy.calls.count(),
+          insertTextCalls: insertTextSpy.calls.count()
+        });
+      });
+
       // SUT
       const cancelled: boolean = !env.component.editor?.container.dispatchEvent(dropEvent);
-      tick();
+      flush();
+
+      updatedSubscription.unsubscribe();
+
+      // It must be that TextComponent.updated is processed after each of delete, set selection, and insert
+      // is called, so that EditorComponent and TextComponent can make changes in response to edits before
+      // we move on to different segments.
+      //
+      // Note that when the SUT is run, at each occurrence of `TextComponent.updated` being processed, a snapshot is
+      // taken of how many calls to setSelection, deleteText, and inertText is taken. If all the `TextComponent.
+      // updated` events are processed last, at the end of the SUT, then all of the snapshots will report the same
+      // number of calls for setSelection, deleteText, and inertText, because they would all have been called a certain
+      // number of times before any `TextComponent.updated` events were processed. And this would show a problem
+      // behaviour, where processing of `TextComponent.updated` events was not interleaved with the edit and selection
+      // operations. If the `TextComponent.updated` events are in fact interleaved with the edit and selection
+      // operations, then the array of snapshots should contain snapshots with _different_ data from one another, and
+      // from it we can demonstrate that `TextComponent.updated` was processed after specific numbers of edit and
+      // selection operations and before other ones. It doesn't matter if there are `TextComponent.updated` events
+      // between one good snapshot and another good snapshot. And snapshots may show that other edit or selection
+      // operations happened that we weren't anticipating at first, which can be okay. It is enough to assert that
+      // there are specific snapshots in the set at all, as done below, to show a successful interleaving.
+
+      // For the following expect, setSelection may have been called before we get to our deleteText, or
+      // maybe as part of processing it. But significantly in the following expect() is that TextComponent.updated
+      // fired after delete and before more setSelection or insertText calls.
+      expect(quillCallCountsAtUpdateFirings).toContain({
+        setSelectionCalls: 1,
+        deleteTextCalls: 1,
+        insertTextCalls: 0
+      });
+      // Then setSelection is called.
+      expect(quillCallCountsAtUpdateFirings).toContain({
+        setSelectionCalls: 2,
+        deleteTextCalls: 1,
+        insertTextCalls: 0
+      });
+      // Then insertText is called. Also setSelection must be getting called elsewhere as well. But importantly,
+      // insertTextCalls increased.
+      expect(quillCallCountsAtUpdateFirings).toContain({
+        setSelectionCalls: 5,
+        deleteTextCalls: 1,
+        insertTextCalls: 1
+      });
+      // Then setSelection is called. It may not be as significant that the selecting of the inserted text is
+      // interleaved with TextComponent.updated events, but it is in case.
+      expect(quillCallCountsAtUpdateFirings).toContain({
+        setSelectionCalls: 6,
+        deleteTextCalls: 1,
+        insertTextCalls: 1
+      });
 
       // source segment lost the text
       expect(env.component.getSegmentText('verse_1_1')).toEqual(expectedTextInDoc_1_1);
@@ -951,7 +1027,7 @@ describe('TextComponent', () => {
 
       // SUT
       const cancelled: boolean = !env.component.editor?.container.dispatchEvent(dropEvent);
-      tick();
+      flush();
 
       // No change to text. No insert or delete.
       expect(env.component.getSegmentText(targetSegmentRef)).toEqual(startingTextInQuillSegment_1_4);
