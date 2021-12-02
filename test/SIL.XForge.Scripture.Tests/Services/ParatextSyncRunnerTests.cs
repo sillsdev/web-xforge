@@ -1182,6 +1182,29 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task SyncAsync_ParatextNoteThreadReattached()
+        {
+            var env = new TestEnvironment();
+            var book = new Book("MAT", 1, true);
+            env.SetupSFData(true, false, false, true, book);
+            env.SetupPTData(book);
+            string threadId = "thread01";
+            string verseStr = "MAT 1:5";
+            env.SetupNoteReattachedChange(threadId, verseStr);
+
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+
+            NoteThread thread01 = env.GetNoteThread("project01", "thread01");
+            string[] reattachedParts = new[] {
+                "MAT 1:5" , "reattach selected text", "16", "Reattach before ", " reattach after." };
+            string reattached = string.Join(PtxUtils.StringUtils.orcCharacter, reattachedParts);
+            string expected = "Context before Scripture text in project context after-" +
+                $"Start:16-Length:22-MAT 1:1-icon1";
+            Assert.That(thread01.NoteThreadToString(), Is.EqualTo(expected));
+            Assert.That(thread01.Notes.Single(n => n.Reattached != null).Reattached, Is.EqualTo(reattached));
+        }
+
+        [Test]
         public async Task SyncAsync_AddParatextNoteThreadDoc()
         {
             var env = new TestEnvironment();
@@ -1853,6 +1876,27 @@ namespace SIL.XForge.Scripture.Services
                     noteThreadChange.ThreadRemoved = true;
                 else
                     noteThreadChange.NoteIdsRemoved.Add(noteId);
+                ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
+                    Arg.Any<IEnumerable<IDocument<NoteThread>>>(),
+                    Arg.Any<Dictionary<int, ChapterDelta>>(), Arg.Any<Dictionary<string, SyncUser>>())
+                    .Returns(new[] { noteThreadChange });
+            }
+
+            public void SetupNoteReattachedChange(string threadId, string verseRef)
+            {
+                var noteThreadChange = new NoteThreadChange(threadId, verseRef, $"{threadId} selected text.",
+                    "Context before ", " context after", null);
+                string before = "Reattach before ";
+                string reattachSelectedText = "reattach selected text";
+                int start = before.Length;
+                int length = reattachSelectedText.Length;
+                noteThreadChange.Position = new TextAnchor { Start = start, Length = length };
+                string[] reattachParts = {
+                    verseRef, reattachSelectedText, start.ToString(), before, " reattach after." };
+                string reattached = string.Join(PtxUtils.StringUtils.orcCharacter, reattachParts);
+                Note reattachedNote = GetNote(threadId, "reattached01", "syncuser01", null, ChangeType.Added);
+                reattachedNote.Reattached = reattached;
+                noteThreadChange.AddChange(reattachedNote, ChangeType.Added);
                 ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
                     Arg.Any<IEnumerable<IDocument<NoteThread>>>(),
                     Arg.Any<Dictionary<int, ChapterDelta>>(), Arg.Any<Dictionary<string, SyncUser>>())

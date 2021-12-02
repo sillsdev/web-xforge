@@ -8,4 +8,5 @@ export interface Note extends Comment {
   deleted: boolean;
   tagIcon?: string;
   status: NoteStatus;
+  reattached?: string;
 }

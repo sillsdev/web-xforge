@@ -624,7 +624,7 @@ namespace SIL.XForge.Scripture.Services
 
                 string contextBefore = "Context before changed ";
                 string selectionText = "Text selected changed";
-                Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBookAsync(env.Project01, 40, 1,
+                Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(env.Project01, 40, 1,
                     contextBefore, selectionText, false);
 
                 IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret,
@@ -670,7 +670,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     { env.Username01, new SyncUser { Id = "syncuser01", ParatextUsername = env.Username01 }}
                 };
-                Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBookAsync(env.Project01, 40, 1,
+                Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(env.Project01, 40, 1,
                     "Unrecognizable context ", "unrecognizable selection", false);
 
                 IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret,
@@ -725,7 +725,7 @@ namespace SIL.XForge.Scripture.Services
                     { new SyncUser { Id = "syncuser01", ParatextUsername = env.Username01 } }
                     .ToDictionary(u => u.ParatextUsername);
                 Dictionary<int, ChapterDelta> chapterDeltas =
-                    env.GetChapterDeltasByBookAsync(env.Project01, 40, 1, "Context before ", "Text selected");
+                    env.GetChapterDeltasByBook(env.Project01, 40, 1, "Context before ", "Text selected");
                 IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
                     userSecret, ptProjectId, 40, noteThreadDocs, chapterDeltas, syncUsers);
                 Assert.That(changes.Count, Is.EqualTo(8));
@@ -734,7 +734,7 @@ namespace SIL.XForge.Scripture.Services
                 // Edited comment
                 NoteThreadChange change01 = changes.Where(c => c.ThreadId == "thread1").Single();
                 Assert.That(change01.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread1 context after -MAT 1:1-icon1"));
+                    Is.EqualTo("Context before Text selected thread1 context after.-MAT 1:1-icon1"));
                 Assert.That(change01.NotesUpdated.Count, Is.EqualTo(1));
                 string expected1 = "thread1-syncuser01-user02-<p>thread1 note 1: EDITED.</p>-icon1";
                 Assert.That(change01.NotesUpdated[0].NoteToString(), Is.EqualTo(expected1));
@@ -742,7 +742,7 @@ namespace SIL.XForge.Scripture.Services
                 // Deleted comment
                 NoteThreadChange change02 = changes.Where(c => c.ThreadId == "thread2").Single();
                 Assert.That(change02.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread2 context after -MAT 1:2-icon2"));
+                    Is.EqualTo("Context before Text selected thread2 context after.-MAT 1:2-icon2"));
                 Assert.That(change02.NotesDeleted.Count, Is.EqualTo(1));
                 string expected2 = "thread2-syncuser01-user02-<p>thread2 note 1.</p>-deleted-icon2";
                 Assert.That(change02.NotesDeleted[0].NoteToString(), Is.EqualTo(expected2));
@@ -750,7 +750,7 @@ namespace SIL.XForge.Scripture.Services
                 // Added comment on new thread
                 NoteThreadChange change03 = changes.Where(c => c.ThreadId == "thread3").Single();
                 Assert.That(change03.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread3 context after -Start:15-Length:21-MAT 1:3-icon3"));
+                    Is.EqualTo("Context before Text selected thread3 context after.-Start:15-Length:21-MAT 1:3-icon3"));
                 Assert.That(change03.NotesAdded.Count, Is.EqualTo(1));
                 string expected3 = "thread3-syncuser03-user02-<p>thread3 note 1.</p>-icon3";
                 Assert.That(change03.NotesAdded[0].NoteToString(), Is.EqualTo(expected3));
@@ -759,19 +759,19 @@ namespace SIL.XForge.Scripture.Services
                 // Permanently removed comment
                 NoteThreadChange change04 = changes.Where(c => c.ThreadId == "thread4").Single();
                 Assert.That(change04.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread4 context after -MAT 1:4-icon4"));
+                    Is.EqualTo("Context before Text selected thread4 context after.-MAT 1:4-icon4"));
                 Assert.That(change04.NoteIdsRemoved, Is.EquivalentTo(new[] { "n2onthread4" }));
 
                 // Permanently removed thread
                 NoteThreadChange change05 = changes.Where(c => c.ThreadId == "thread5").Single();
                 Assert.That(change05.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread5 context after -MAT 1:5-icon5"));
+                    Is.EqualTo("Context before Text selected thread5 context after.-MAT 1:5-icon5"));
                 Assert.That(change05.ThreadRemoved, Is.True);
 
                 // Added conflict comment
                 NoteThreadChange change06 = changes.Where(c => c.ThreadId == "thread6").Single();
                 Assert.That(change06.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread6 context after -Start:15-Length:21-MAT 1:6-conflict1"));
+                    Is.EqualTo("Context before Text selected thread6 context after.-Start:15-Length:21-MAT 1:6-conflict1"));
                 string expected6 = "thread6-syncuser01-user02-<p>thread6 note 1.</p>-conflict1";
                 Assert.That(change06.NotesAdded[0].NoteToString(), Is.EqualTo(expected6));
 
@@ -871,7 +871,7 @@ namespace SIL.XForge.Scripture.Services
 
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
-                var deltas = env.GetChapterDeltasByBookAsync(env.Project01, 40, 1, "Context before ", "Text selected",
+                var deltas = env.GetChapterDeltasByBook(env.Project01, 40, 1, "Context before ", "Text selected",
                     true, true);
                 Dictionary<string, SyncUser> syncUsers = new Dictionary<string, SyncUser> {
                     { "syncuser01",  new SyncUser { Id = "syncuser01", ParatextUsername = env.Username01 } }
@@ -896,6 +896,63 @@ namespace SIL.XForge.Scripture.Services
                 // This test also verifies that fetching verse text for verse 10 will fetch text from both segments
                 // "verse_1_10" and "verse_1_10/p_1".
                 Assert.That(thread10Change.Position, Is.EqualTo(expected2));
+            }
+        }
+
+        [Test]
+        public async Task GetNoteThreadChanges_ReattachedNote_PositionUpdated()
+        {
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+            env.AddTextDocs(40, 1, 6, "Context before ", "Text selected");
+            // The text doc is set up so that verse 7 has unique text that we reattach to
+            string verseStr = "MAT 1:7";
+            ReattachedNoteThread rnt = env.GetReattachedNoteThread(verseStr);
+
+            env.AddNoteThreadData(new[]
+            {
+                new ThreadComponents { threadNum = 1, noteCount = 1 },
+                new ThreadComponents { threadNum = 3, noteCount = 1, reattachedVerseStr = verseStr }
+            });
+            env.AddParatextComments(new[]
+            {
+                new ThreadComponents { threadNum = 1, noteCount = 1, username = env.Username01, reattachedVerseStr = verseStr },
+                new ThreadComponents { threadNum = 2, noteCount = 1, username = env.Username01, reattachedVerseStr = verseStr },
+                new ThreadComponents { threadNum = 3, noteCount = 1, username = env.Username01, reattachedVerseStr = verseStr }
+            });
+
+            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            {
+                IEnumerable<IDocument<NoteThread>> noteThreadDocs =
+                    await env.GetNoteThreadDocsAsync(conn, new[] { "thread1", "thread3" });
+                string before = rnt.contextBefore;
+                Dictionary<int, ChapterDelta> chapterDeltas =
+                    env.GetChapterDeltasByBook(env.Project01, 40, 1, before, "Text selected");
+                Dictionary<string, SyncUser> syncUsers = new Dictionary<string, SyncUser>
+                {
+                    { "syncuser01", new SyncUser { Id = "syncuser01", ParatextUsername = env.Username01 } }
+                };
+                IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret, ptProjectId, 40,
+                    noteThreadDocs, chapterDeltas, syncUsers);
+                Assert.That(changes.Count, Is.EqualTo(2));
+
+                // The reattach note in thread3 is existing and is not changed
+                Assert.That(changes.FirstOrDefault(c => c.ThreadId == "thread3"), Is.Null);
+                NoteThreadChange change1 = changes.Single(c => c.ThreadId == "thread1");
+                Assert.That(change1.NotesAdded.Count, Is.EqualTo(1));
+                Assert.That(change1.NotesAdded.Single().Reattached, Is.Not.Null);
+                TextAnchor expectedAnchor = new TextAnchor
+                {
+                    Start = rnt.contextBefore.Length,
+                    Length = rnt.selectedText.Length
+                };
+                Assert.That(change1.Position, Is.EqualTo(expectedAnchor));
+                NoteThreadChange change2 = changes.Single(c => c.ThreadId == "thread2");
+                Assert.That(change2.NotesAdded.Count, Is.EqualTo(2));
+                Assert.That(change2.NotesAdded[1].Reattached, Is.Not.Null);
+                Assert.That(change2.Position, Is.EqualTo(expectedAnchor));
             }
         }
 
@@ -1319,6 +1376,16 @@ namespace SIL.XForge.Scripture.Services
             public bool isDeleted;
             public bool isConflict;
             public bool appliesToVerse;
+            public string reattachedVerseStr;
+        }
+
+        struct ReattachedNoteThread
+        {
+            public string verseStr;
+            public string selectedText;
+            public string startPos;
+            public string contextBefore;
+            public string contextAfter;
         }
 
         struct ThreadNoteComponents
@@ -1866,7 +1933,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 IEnumerable<NoteThread> threads = new NoteThread[0];
                 string before = "Context before ";
-                string after = " context after ";
+                string after = " context after.";
                 foreach (var comp in threadComponents)
                 {
                     string threadId = "thread" + comp.threadNum;
@@ -1905,6 +1972,25 @@ namespace SIL.XForge.Scripture.Services
                             Status = NoteStatus.Todo.InternalValue
                         });
                     }
+                    if (comp.reattachedVerseStr != null)
+                    {
+                        ReattachedNoteThread rnt = GetReattachedNoteThread(comp.reattachedVerseStr);
+                        notes.Add(new Note
+                        {
+                            DataId = $"reattached{threadId}",
+                            ThreadId = threadId,
+                            OwnerRef = "user02",
+                            ExtUserId = "user02",
+                            SyncUserRef = "syncuser01",
+                            DateCreated = new DateTime(2019, 1, 20, 8, 0, 0, DateTimeKind.Utc),
+                            Reattached = ReattachedNoteThreadToString(rnt)
+                        });
+                        noteThread.Position = new TextAnchor
+                        {
+                            Start = before.Length,
+                            Length = rnt.selectedText.Length
+                        };
+                    }
                     noteThread.Notes = notes;
                     if (notes.Count > 0)
                         threads = threads.Append(noteThread);
@@ -1913,7 +1999,7 @@ namespace SIL.XForge.Scripture.Services
                     new MemoryRepository<NoteThread>(threads));
             }
 
-            public Dictionary<int, ChapterDelta> GetChapterDeltasByBookAsync(string projectId, int bookNum,
+            public Dictionary<int, ChapterDelta> GetChapterDeltasByBook(string projectId, int bookNum,
                 int chapters, string contextBefore, string selectedText, bool useThreadSuffix = true,
                 bool includeRelatedVerse = false)
             {
@@ -1993,9 +2079,10 @@ namespace SIL.XForge.Scripture.Services
                     string threadId = "thread" + comp.threadNum;
                     var associatedPtUser = new SFParatextUser(comp.username);
                     string before = "Context before ";
-                    string after = " context after ";
+                    string after = " context after.";
                     string text = "Text selected " + threadId;
                     string selectedText = comp.appliesToVerse ? before + text + after : text;
+                    string verseStr = $"MAT 1:{comp.threadNum}";
                     for (int i = 1; i <= comp.noteCount; i++)
                     {
                         string date = $"2019-01-0{i}T08:00:00.0000000+00:00";
@@ -2013,7 +2100,7 @@ namespace SIL.XForge.Scripture.Services
                         ProjectCommentManager.AddComment(new Paratext.Data.ProjectComments.Comment(associatedPtUser)
                         {
                             Thread = threadId,
-                            VerseRefStr = $"MAT 1:{comp.threadNum}",
+                            VerseRefStr = verseStr,
                             SelectedText = selectedText,
                             ContextBefore = comp.appliesToVerse ? "" : before,
                             ContextAfter = comp.appliesToVerse ? "" : after,
@@ -2025,6 +2112,21 @@ namespace SIL.XForge.Scripture.Services
                             ExternalUser = "user02",
                             TagsAdded = comp.isConflict ? null : note.tagsAdded == null ? null : new[] { note.tagsAdded[0] },
                             Type = comp.isConflict ? NoteType.Conflict : NoteType.Normal
+                        });
+                    }
+                    if (comp.reattachedVerseStr != null)
+                    {
+                        ReattachedNoteThread rnt = GetReattachedNoteThread(comp.reattachedVerseStr);
+                        ProjectCommentManager.AddComment(new Paratext.Data.ProjectComments.Comment(associatedPtUser)
+                        {
+                            Thread = threadId,
+                            VerseRefStr = verseStr,
+                            SelectedText = selectedText,
+                            ContextBefore = comp.appliesToVerse ? "" : before,
+                            ContextAfter = comp.appliesToVerse ? "" : after,
+                            StartPosition = comp.appliesToVerse ? 0 : before.Length,
+                            Date = "2019-01-20T08:00:00.0000000+00:00",
+                            Reattached = ReattachedNoteThreadToString(rnt)
                         });
                     }
                 }
@@ -2080,6 +2182,29 @@ namespace SIL.XForge.Scripture.Services
                 });
             }
 
+            public ReattachedNoteThread GetReattachedNoteThread(string verseStr)
+            {
+                string selectedText = "reattached text";
+                string before = "Context before ";
+                string after = " context after.";
+                string startPos = before.Length.ToString();
+                return new ReattachedNoteThread
+                {
+                    verseStr = verseStr,
+                    selectedText = selectedText,
+                    startPos = startPos,
+                    contextBefore = before,
+                    contextAfter = after
+                };
+            }
+
+            public string ReattachedNoteThreadToString(ReattachedNoteThread rnt)
+            {
+                string[] reattachParts = new[] {
+                    rnt.verseStr, rnt.selectedText, rnt.startPos, rnt.contextBefore, rnt.contextAfter };
+                return string.Join(StringUtils.orcCharacter, reattachParts);
+            }
+
             private Delta GetChapterDelta(int chapterNum, int verses, string contextBefore, string selectedText,
                 bool useThreadSuffix, bool includeExtraLastVerseSegment)
             {
@@ -2087,6 +2212,8 @@ namespace SIL.XForge.Scripture.Services
                 for (int i = 1; i <= verses; i++)
                 {
                     string noteSelectedText = useThreadSuffix ? selectedText + $" thread{i}" : selectedText;
+                    if (i == 7)
+                        noteSelectedText = "reattached text";
                     chapterText = chapterText + "," +
                         "{ \"insert\": { \"verse\": { \"number\": \"" + i + "\" } }}, " +
                         "{ \"insert\": \"" + contextBefore + noteSelectedText + " context after \", " +
