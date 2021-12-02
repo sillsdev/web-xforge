@@ -231,14 +231,9 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     if (textDocId == null) {
       return [];
     }
-    const textQuestionDocs = this.questionDocs.get(textDocId.toString());
-    if (textQuestionDocs == null) {
-      return [];
-    }
-    if (fromArchive) {
-      return textQuestionDocs.filter(qd => qd.data != null && qd.data.isArchived);
-    }
-    return textQuestionDocs.filter(qd => qd.data != null && !qd.data.isArchived);
+    return (this.questionDocs.get(textDocId.toString()) || [])
+      .filter(qd => qd.data?.isArchived === fromArchive)
+      .sort((a, b) => a.data!.verseRef.verseNum - b.data!.verseRef.verseNum);
   }
 
   bookQuestionCount(text: TextInfo, fromArchive = false): number {
