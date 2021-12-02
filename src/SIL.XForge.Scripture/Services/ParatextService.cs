@@ -804,7 +804,7 @@ namespace SIL.XForge.Scripture.Services
                 if (existingThread.Comments.Count > 0)
                 {
                     // Get the text anchor to use for the note
-                    TextAnchor range = GetCommentTextAnchor(existingThread.Comments[0], chapterDeltas);
+                    TextAnchor range = GetCommentTextAnchor(existingThread, chapterDeltas);
                     if (!range.Equals(threadDoc.Data.Position))
                         threadChange.Position = range;
                 }
@@ -826,7 +826,7 @@ namespace SIL.XForge.Scripture.Services
                 CommentTag initialTag = info.Type == NoteType.Conflict ? CommentTag.ConflictTag : commentTags.Get(tagId);
                 NoteThreadChange newThread = new NoteThreadChange(threadId, info.VerseRefStr,
                     info.SelectedText, info.ContextBefore, info.ContextAfter, info.Status.InternalValue, initialTag.Icon);
-                newThread.Position = GetCommentTextAnchor(info, chapterDeltas);
+                newThread.Position = GetCommentTextAnchor(thread, chapterDeltas);
                 newThread.Status = thread.Status.InternalValue;
                 foreach (var comm in thread.Comments)
                 {
@@ -1524,7 +1524,9 @@ namespace SIL.XForge.Scripture.Services
             if (comment.Deleted != note.Deleted)
                 return ChangeType.Deleted;
             // Check if fields have been updated in Paratext
-            if (comment.Contents?.InnerXml != note.Content || comment.Status.InternalValue != note.Status)
+            bool statusChanged =
+                !string.IsNullOrEmpty(comment.Status.InternalValue) && comment.Status.InternalValue != note.Status;
+            if (comment.Contents?.InnerXml != note.Content || statusChanged)
                 return ChangeType.Updated;
             return ChangeType.None;
         }
@@ -1567,7 +1569,8 @@ namespace SIL.XForge.Scripture.Services
                 DateModified = DateTime.Parse(comment.Date),
                 Deleted = comment.Deleted,
                 Status = comment.Status.InternalValue,
-                TagIcon = tag?.Icon
+                TagIcon = tag?.Icon,
+                Reattached = comment.Reattached
             };
         }
 
@@ -1585,17 +1588,31 @@ namespace SIL.XForge.Scripture.Services
             return delta.TryConcatenateInserts(out string verseText, segmentFilter) ? verseText : string.Empty;
         }
 
-        private TextAnchor GetCommentTextAnchor(Paratext.Data.ProjectComments.Comment comment,
-            Dictionary<int, ChapterDelta> chapterDeltas)
+        private TextAnchor GetCommentTextAnchor(CommentThread thread, Dictionary<int, ChapterDelta> chapterDeltas)
         {
-            if (!chapterDeltas.TryGetValue(comment.VerseRef.ChapterNum, out ChapterDelta chapterDelta) ||
-                comment.StartPosition == 0)
+            Paratext.Data.ProjectComments.Comment comment =
+                thread.Comments.LastOrDefault(c => c.Reattached != null) ?? thread.Comments[0];
+            VerseRef verseRef = comment.VerseRef;
+            int startPos = comment.StartPosition;
+            string selectedText = comment.SelectedText;
+            string contextBefore = comment.ContextBefore;
+            string contextAfter = comment.ContextAfter;
+            if (comment.Reattached != null)
+            {
+                string[] reattachedParts = comment.Reattached.Split(PtxUtils.StringUtils.orcCharacter);
+                verseRef = new VerseRef(reattachedParts[0]);
+                selectedText = reattachedParts[1];
+                startPos = int.Parse(reattachedParts[2]);
+                contextBefore = reattachedParts[3];
+                contextAfter = reattachedParts[4];
+            }
+
+            if (!chapterDeltas.TryGetValue(verseRef.ChapterNum, out ChapterDelta chapterDelta) || startPos == 0)
                 return new TextAnchor();
 
-            string verseText = GetVerseText(chapterDelta.Delta, comment.VerseRef);
-            int startPos = 0;
-            PtxUtils.StringUtils.MatchContexts(verseText, comment.ContextBefore, comment.SelectedText,
-                comment.ContextAfter, null, ref startPos, out int posJustPastLastCharacter);
+            string verseText = GetVerseText(chapterDelta.Delta, verseRef);
+            PtxUtils.StringUtils.MatchContexts(verseText, contextBefore, selectedText, contextAfter, null, ref startPos,
+                out int posJustPastLastCharacter);
             // The text anchor is relative to the text in the verse
             return new TextAnchor { Start = startPos, Length = posJustPastLastCharacter - startPos };
         }

@@ -8,5 +8,6 @@ namespace SIL.XForge.Scripture.Models
         public bool Deleted { get; set; }
         public string Status { get; set; }
         public string TagIcon { get; set; }
+        public string Reattached { get; set; }
     }
 }
