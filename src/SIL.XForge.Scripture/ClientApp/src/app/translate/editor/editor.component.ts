@@ -14,7 +14,6 @@ import {
   RemoteTranslationEngine,
   TranslationSuggester
 } from '@sillsdev/machine';
-import clone from 'lodash-es/clone';
 import isEqual from 'lodash-es/isEqual';
 import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -26,7 +25,6 @@ import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-a
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
-import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { DeltaOperation } from 'rich-text';
@@ -630,10 +628,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
     const chapterNoteThreadDocs: NoteThreadDoc[] = this.currentChapterNoteThreadDocs();
-    const noteThreadVerseRefs: VerseRef[] = chapterNoteThreadDocs.map(nt => toVerseRef(nt.data!.verseRef));
     const featureVerseRefInfo: FeaturedVerseRefInfo[] = chapterNoteThreadDocs.map(nt =>
       this.getFeaturedVerseRefInfo(nt)
     );
+    const noteThreadVerseRefs: VerseRef[] = featureVerseRefInfo.map(f => f.verseRef);
 
     if (value) {
       for (const featured of featureVerseRefInfo) {
@@ -973,15 +971,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   /** Gets the information needed to format a particular featured verse. */
   private getFeaturedVerseRefInfo(threadDoc: NoteThreadDoc): FeaturedVerseRefInfo {
-    const notes: Note[] = clone(threadDoc.data!.notes).sort(
-      (a, b) => Date.parse(a.dateCreated) - Date.parse(b.dateCreated)
-    );
-    let preview: string = notes[0].content != null ? this.stripXml(notes[0].content.trim()) : '';
+    const notes: Note[] = threadDoc.notesInOrderClone(threadDoc.data!.notes);
+    let preview: string = this.stripXml(notes[0].content != null ? notes[0].content.trim() : '');
     if (notes.length > 1) {
       preview += '\n' + translate('editor.more_notes', { count: notes.length - 1 });
     }
     return {
-      verseRef: toVerseRef(threadDoc.data!.verseRef),
+      verseRef: threadDoc.currentVerseRef(threadDoc.data!),
       id: threadDoc.data!.dataId,
       preview,
       icon: threadDoc.icon,
