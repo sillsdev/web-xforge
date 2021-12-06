@@ -1724,7 +1724,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('undo deleting a note icon removes the duplicate recreated icon', fakeAsync(() => {
+    it('undo delete-a-note-icon removes the duplicate recreated icon', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       const noteThread6Anchor: TextAnchor = { start: 19, length: 5 };
@@ -1735,6 +1735,8 @@ describe('EditorComponent', () => {
       const noteThread1: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
       const noteThread1Anchor: TextAnchor = { start: 8, length: 9 };
       expect(noteThread1.data!.position).toEqual(noteThread1Anchor);
+      const textDoc: TextDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
+      expect(textDoc.data!.ops![3].insert).toEqual('target: chapter 1, verse 1.');
       const note1Position: number = env.getNoteThreadEditorPosition('thread01');
       // target: |->$<-|chapter 1, $verse 1.
       env.targetEditor.setSelection(note1Position, 1, 'user');
@@ -1785,6 +1787,7 @@ describe('EditorComponent', () => {
       expect(env.getNoteThreadEditorPosition('thread06')).toEqual(note6Position);
       expect(noteThread6.data!.position).toEqual(noteThread6Anchor);
       expect(noteThread1.data!.position).toEqual(noteThread1Anchor);
+      expect(textDoc.data!.ops![3].insert).toEqual('target: chapter 1, verse 1.');
 
       // undo deleting multiple notes
       const noteThread3: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread03');
@@ -1793,6 +1796,7 @@ describe('EditorComponent', () => {
       const noteThread4Anchor: TextAnchor = { start: 20, length: 5 };
       expect(noteThread3.data!.position).toEqual(noteThread3Anchor);
       expect(noteThread4.data!.position).toEqual(noteThread4Anchor);
+      expect(textDoc.data!.ops![8].insert).toEqual('target: chapter 1, verse 3.');
       const note3Position: number = env.getNoteThreadEditorPosition('thread03');
       const note4Position: number = env.getNoteThreadEditorPosition('thread04');
       deleteLength = 6;
@@ -1809,6 +1813,7 @@ describe('EditorComponent', () => {
       expect(env.getNoteThreadEditorPosition('thread04')).toEqual(note4Position);
       expect(noteThread3.data!.position).toEqual(noteThread3Anchor);
       expect(noteThread4.data!.position).toEqual(noteThread4Anchor);
+      expect(textDoc.data!.ops![8].insert).toEqual('target: chapter 1, verse 3.');
       env.dispose();
     }));
   });
