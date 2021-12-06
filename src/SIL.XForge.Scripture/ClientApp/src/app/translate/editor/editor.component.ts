@@ -1078,12 +1078,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     let insertBeforeLength = 0;
     let insertWithinLength = 0;
+    const embedCount = this.getEmbedCountInAnchorRange(oldVerseEmbedPositions, embedIndex, oldTextAnchor.length);
+    const posAfterNoteAnchor = embedIndex + oldTextAnchor.length + embedCount;
     if (insertLength !== 0) {
-      const embedCount = this.getEmbedCountInAnchorRange(oldVerseEmbedPositions, embedIndex, oldTextAnchor.length);
-      const noteAnchorEndIndex = embedIndex + oldTextAnchor.length + embedCount;
       if (editIndex <= embedIndex) {
         insertBeforeLength += insertLength;
-      } else if (editIndex > embedIndex && editIndex <= noteAnchorEndIndex) {
+      } else if (editIndex > embedIndex && editIndex <= posAfterNoteAnchor) {
         // Note that if the user inserted text at the end of this note anchor, we consider
         // this inside the text anchor because the user could be expanding the last text anchor word.
         insertWithinLength += insertLength;
@@ -1107,7 +1107,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       }
       if (charIndex < embedIndex) {
         deleteBeforeLength++;
-      } else if (charIndex > embedIndex && charIndex <= embedIndex + oldTextAnchor.length) {
+      } else if (charIndex > embedIndex && charIndex < posAfterNoteAnchor) {
         deleteWithinLength++;
       } else {
         break;
