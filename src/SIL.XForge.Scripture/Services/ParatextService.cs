@@ -756,7 +756,7 @@ namespace SIL.XForge.Scripture.Services
                 List<string> matchedCommentIds = new List<string>();
                 NoteThreadChange threadChange = new NoteThreadChange(threadDoc.Data.DataId,
                     threadDoc.Data.VerseRef.ToString(), threadDoc.Data.OriginalSelectedText, threadDoc.Data.OriginalContextBefore,
-                    threadDoc.Data.OriginalContextAfter);
+                    threadDoc.Data.OriginalContextAfter, threadDoc.Data.Status);
                 // Find the corresponding comment thread
                 var existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
                 if (existingThread == null)
@@ -784,6 +784,11 @@ namespace SIL.XForge.Scripture.Services
                     }
                     else
                         threadChange.NoteIdsRemoved.Add(note.DataId);
+                }
+                if (existingThread.Status.InternalValue != threadDoc.Data.Status)
+                {
+                    threadChange.Status = existingThread.Status.InternalValue;
+                    threadChange.ThreadUpdated = true;
                 }
                 // Add new Comments to note thread change
                 IEnumerable<string> ptCommentIds = existingThread.Comments.Select(c => c.Id);
@@ -820,9 +825,9 @@ namespace SIL.XForge.Scripture.Services
                     : defaultTagId;
                 CommentTag initialTag = info.Type == NoteType.Conflict ? CommentTag.ConflictTag : commentTags.Get(tagId);
                 NoteThreadChange newThread = new NoteThreadChange(threadId, info.VerseRefStr,
-                    info.SelectedText, info.ContextBefore, info.ContextAfter, initialTag.Icon);
+                    info.SelectedText, info.ContextBefore, info.ContextAfter, info.Status.InternalValue, initialTag.Icon);
                 newThread.Position = GetCommentTextAnchor(info, chapterDeltas);
-
+                newThread.Status = thread.Status.InternalValue;
                 foreach (var comm in thread.Comments)
                 {
                     SyncUser syncUser = FindOrCreateSyncUser(comm.User, syncUsers);
@@ -1518,8 +1523,8 @@ namespace SIL.XForge.Scripture.Services
         {
             if (comment.Deleted != note.Deleted)
                 return ChangeType.Deleted;
-            // If the content does not match it has been updated in Paratext
-            if (comment.Contents?.InnerXml != note.Content)
+            // Check if fields have been updated in Paratext
+            if (comment.Contents?.InnerXml != note.Content || comment.Status.InternalValue != note.Status)
                 return ChangeType.Updated;
             return ChangeType.None;
         }
@@ -1561,27 +1566,23 @@ namespace SIL.XForge.Scripture.Services
                 DateCreated = DateTime.Parse(comment.Date),
                 DateModified = DateTime.Parse(comment.Date),
                 Deleted = comment.Deleted,
+                Status = comment.Status.InternalValue,
                 TagIcon = tag?.Icon
             };
         }
 
         private string GetVerseText(Delta delta, VerseRef verseRef)
         {
-            string segment = $"verse_{verseRef.ChapterNum}_{verseRef.VerseNum}";
-            IEnumerable<JToken> ops = delta.Ops.Where(op =>
-                op.Type == JTokenType.Object && op["attributes"] != null && op["attributes"]["segment"] != null &&
-                (((string)op["attributes"]["segment"]) == segment ||
-                ((string)op["attributes"]["segment"]).StartsWith(segment + "/"))
-            );
-            StringBuilder bldr = new StringBuilder();
-            foreach (JObject segmentObj in ops)
+            string vref = string.IsNullOrEmpty(verseRef.Verse) ? verseRef.VerseNum.ToString() : verseRef.Verse;
+            string segment = $"verse_{verseRef.ChapterNum}_{vref}";
+            bool segmentFilter(JToken op)
             {
-                if (segmentObj["insert"] != null && segmentObj["insert"].Type == JTokenType.String)
-                {
-                    bldr.Append((string)segmentObj["insert"]);
-                }
-            }
-            return bldr.ToString();
+                return op.Type == JTokenType.Object &&
+                    op["attributes"] != null && op["attributes"]["segment"] != null &&
+                    (((string)op["attributes"]["segment"]) == segment ||
+                    ((string)op["attributes"]["segment"]).StartsWith(segment + "/"));
+            };
+            return delta.TryConcatenateInserts(out string verseText, segmentFilter) ? verseText : string.Empty;
         }
 
         private TextAnchor GetCommentTextAnchor(Paratext.Data.ProjectComments.Comment comment,
@@ -1591,9 +1592,9 @@ namespace SIL.XForge.Scripture.Services
                 comment.StartPosition == 0)
                 return new TextAnchor();
 
-            string verse = GetVerseText(chapterDelta.Delta, comment.VerseRef);
+            string verseText = GetVerseText(chapterDelta.Delta, comment.VerseRef);
             int startPos = 0;
-            PtxUtils.StringUtils.MatchContexts(verse, comment.ContextBefore, comment.SelectedText,
+            PtxUtils.StringUtils.MatchContexts(verseText, comment.ContextBefore, comment.SelectedText,
                 comment.ContextAfter, null, ref startPos, out int posJustPastLastCharacter);
             // The text anchor is relative to the text in the verse
             return new TextAnchor { Start = startPos, Length = posJustPastLastCharacter - startPos };

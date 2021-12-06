@@ -670,7 +670,8 @@ namespace SIL.XForge.Scripture.Services
                             OriginalContextBefore = change.ContextBefore,
                             OriginalContextAfter = change.ContextAfter,
                             TagIcon = change.TagIcon,
-                            Position = change.Position
+                            Position = change.Position,
+                            Status = change.Status
                         });
                         await SubmitChangesOnNoteThreadDocAsync(doc, change, usernamesToUserIds);
                     }
@@ -777,14 +778,29 @@ namespace SIL.XForge.Scripture.Services
 
             await threadDoc.SubmitJson0OpAsync(op =>
             {
+                // Update thread details
+                if (change.ThreadUpdated)
+                {
+                    if (threadDoc.Data.Status != change.Status)
+                    {
+                        op.Set(td => td.Status, change.Status);
+                    }
+                }
                 // Update content for updated notes
                 foreach (Note updated in change.NotesUpdated)
                 {
                     int index = threadDoc.Data.Notes.FindIndex(n => n.DataId == updated.DataId);
                     if (index >= 0)
-                        op.Set(td => td.Notes[index].Content, updated.Content);
+                    {
+                        if (threadDoc.Data.Notes[index].Content != updated.Content)
+                            op.Set(td => td.Notes[index].Content, updated.Content);
+                        if (threadDoc.Data.Notes[index].Status != updated.Status)
+                            op.Set(td => td.Notes[index].Status, updated.Status);
+                    }
                     else
+                    {
                         _logger.LogWarning("Unable to update note in database with id: " + updated.DataId);
+                    }
                 }
                 // Delete notes
                 foreach (Note deleted in change.NotesDeleted)

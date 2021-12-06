@@ -14,5 +14,6 @@ namespace SIL.XForge.Scripture.Models
         public TextAnchor Position { get; set; }
         public string ParatextUser { get; set; }
         public string TagIcon { get; set; }
+        public string Status { get; set; }
     }
 }

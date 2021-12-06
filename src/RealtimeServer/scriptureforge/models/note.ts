@@ -1,4 +1,5 @@
 import { Comment } from './comment';
+import { NoteStatus } from './note-thread';
 
 export interface Note extends Comment {
   threadId: string;
@@ -6,4 +7,5 @@ export interface Note extends Comment {
   extUserId: string;
   deleted: boolean;
   tagIcon?: string;
+  status: NoteStatus;
 }

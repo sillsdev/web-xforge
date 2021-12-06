@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
-import { NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
+import { NoteThread, NoteStatus } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProject, SF_PROJECTS_COLLECTION } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -119,7 +119,10 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   queryNoteThreads(id: string): Promise<RealtimeQuery<NoteThreadDoc>> {
-    const queryParams: QueryParameters = { [obj<NoteThread>().pathStr(t => t.projectRef)]: id };
+    const queryParams: QueryParameters = {
+      [obj<NoteThread>().pathStr(t => t.projectRef)]: id,
+      [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo
+    };
     return this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, queryParams);
   }
 
