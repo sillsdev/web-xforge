@@ -622,6 +622,8 @@ export class TextViewModel {
         if (cloneOp.delete < 1) {
           cloneOp = undefined;
         }
+      } else if (cloneOp.insert != null && cloneOp.insert['note-thread-embed'] != null) {
+        cloneOp = undefined;
       }
 
       if (cloneOp != null) {

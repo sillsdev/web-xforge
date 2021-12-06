@@ -241,7 +241,7 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
       this.doc.connection.fetchSnapshot(
         this.doc.collection,
         this.doc.id,
-        Math.min(0, this.doc.version - 1),
+        Math.max(0, this.doc.version - 1),
         (err, snapshot) => {
           if (err) {
             reject();

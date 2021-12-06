@@ -936,7 +936,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   /**
-   * Delete existing notes in the quill editor when the delta includes inserting a note.
+   * Notes that get inserted by the delta are removed from the editor to clean up duplicates.
    * i.e. The user triggers an undo after deleting a note.
    */
   private deleteDuplicateNoteIcons(delta: DeltaStatic): void {
@@ -950,9 +950,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         const embedId: string = op.insert['note-thread-embed']['threadid'];
         let deletePosition = this.embeddedElements.get(embedId);
         if (deletePosition != null) {
-          const noteDeleteOpDelta = new Delta();
-          (noteDeleteOpDelta as any).push({ retain: deletePosition } as DeltaOperation);
-          (noteDeleteOpDelta as any).push({ delete: 1 } as DeltaOperation);
+          const noteDeleteOps: DeltaOperation[] = [{ retain: deletePosition }, { delete: 1 }];
+          const noteDeleteOpDelta = new Delta(noteDeleteOps);
           notesDeletionDelta =
             notesDeletionDelta == null ? noteDeleteOpDelta : noteDeleteOpDelta.compose(notesDeletionDelta);
         }
@@ -961,8 +960,9 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
     if (notesDeletionDelta != null) {
       notesDeletionDelta.chop();
-      Promise.resolve(notesDeletionDelta).then(del => {
-        this.editor?.updateContents(del, 'api');
+      // Defer the update so that the current delta can be processed
+      Promise.resolve(notesDeletionDelta).then(deleteDelta => {
+        this.editor?.updateContents(deleteDelta, 'api');
       });
     }
   }
