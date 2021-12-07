@@ -123,6 +123,21 @@ describe('NoteDialogComponent', () => {
     expect(env.component.segmentText).toEqual('');
     expect(env.component.noteIcon(TestEnvironment.noteThread[0])).toEqual('');
   }));
+
+  it('uses rtl direction with rtl project', fakeAsync(() => {
+    env = new TestEnvironment({ isRightToLeftProject: true });
+    expect(env.component.isRtl).withContext('setup').toBeTrue();
+    // RTL is detected and applied.
+    expect(env.dialogContentArea.classes.rtl).toBeTrue();
+    expect(env.dialogContentArea.classes.ltr).toBeUndefined();
+  }));
+
+  it('uses ltr direction with ltr project', fakeAsync(() => {
+    env = new TestEnvironment();
+    expect(env.component.isRtl).withContext('setup').toBeFalse();
+    expect(env.dialogContentArea.classes.rtl).toBeUndefined();
+    expect(env.dialogContentArea.classes.ltr).toBeTrue();
+  }));
 });
 
 @Directive({
@@ -151,6 +166,7 @@ class DialogTestModule {}
 
 interface TestEnvironmentConstructorArgs {
   includeSnapshots?: boolean;
+  isRightToLeftProject?: boolean;
 }
 
 class TestEnvironment {
@@ -263,12 +279,13 @@ class TestEnvironment {
   readonly dialogRef: MatDialogRef<NoteDialogComponent>;
   readonly mockedNoteMdcDialogRef = mock(MatDialogRef);
 
-  constructor({ includeSnapshots = true }: TestEnvironmentConstructorArgs = {}) {
+  constructor({ includeSnapshots = true, isRightToLeftProject }: TestEnvironmentConstructorArgs = {}) {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     const configData: NoteDialogData = {
       projectId: TestEnvironment.PROJECT01,
       threadId: TestEnvironment.noteThread.dataId
     };
+    TestEnvironment.testProject.isRightToLeft = isRightToLeftProject;
     this.dialogRef = TestBed.inject(MatDialog).open(NoteDialogComponent, { data: configData });
     this.component = this.dialogRef.componentInstance;
     tick();
@@ -322,6 +339,10 @@ class TestEnvironment {
 
   get segmentText(): DebugElement {
     return this.overlayContainerElement.query(By.css('.segment-text'));
+  }
+
+  get dialogContentArea(): DebugElement {
+    return this.overlayContainerElement.query(By.css('mat-dialog-content'));
   }
 
   private get overlayContainerElement(): DebugElement {
