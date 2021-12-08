@@ -4,6 +4,8 @@ import { NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/m
 import { TestBed } from '@angular/core/testing';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { SFProjectService } from '../sf-project.service';
 import { NoteThreadDoc, NoteThreadIcon } from './note-thread-doc';
 import { SF_TYPE_REGISTRY } from './sf-type-registry';
@@ -149,6 +151,54 @@ describe('NoteThreadDoc', () => {
       url: '/assets/icons/TagIcons/flag3.png'
     };
     expect(noteThreadDoc.icon).toEqual(expectedIcon);
+  });
+
+  it('reports the reattached verse reference', async () => {
+    const reattachParts: string[] = ['MAT 1:2', 'reattached selected text', '0', '', ''];
+    const reattached: string = reattachParts.join(REATTACH_SEPARATOR);
+    const noteThread: NoteThread = {
+      originalContextBefore: '',
+      originalContextAfter: '',
+      originalSelectedText: '',
+      ownerRef: 'user01',
+      projectRef: 'project01',
+      tagIcon: '',
+      status: NoteStatus.Todo,
+      verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 },
+      position: { start: 0, length: 1 },
+      dataId: 'thread01',
+      notes: [
+        {
+          dataId: 'note01',
+          threadId: 'thread01',
+          content: 'note content',
+          deleted: false,
+          tagIcon: 'flag2',
+          status: NoteStatus.Todo,
+          ownerRef: 'user01',
+          extUserId: 'user01',
+          dateCreated: '2021-11-10T12:00:00',
+          dateModified: '2021-11-10T12:00:00'
+        },
+        {
+          dataId: 'reattach01',
+          threadId: 'thread01',
+          content: '',
+          deleted: false,
+          status: NoteStatus.Unspecified,
+          ownerRef: 'user01',
+          extUserId: 'user01',
+          dateCreated: '2021-11-10T13:00:00',
+          dateModified: '2021-11-10T13:00:00',
+          reattached
+        }
+      ]
+    };
+
+    const noteThreadDoc: NoteThreadDoc = await env.setupDoc(noteThread);
+    const verseRef: VerseRef = noteThreadDoc.currentVerseRef(noteThreadDoc.data!);
+    const expected: VerseRef = VerseRef.parse('MAT 1:2');
+    expect(verseRef.equals(expected)).toBe(true);
   });
 });
 

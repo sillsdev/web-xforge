@@ -1230,9 +1230,10 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    fit('shows reattached note in updated location', fakeAsync(() => {
+    it('shows reattached note in updated location', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
+      // reattach thread04 from MAT 1:3 to MAT 1:4
       env.reattachNote('project01', 'thread04', 'MAT 1:4');
       env.wait();
 

@@ -2,10 +2,11 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { sortBy } from 'lodash-es';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
+import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoteStatus } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { translate } from '@ngneat/transloco';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -111,10 +112,14 @@ export class NoteDialogComponent implements OnInit {
     return this.data.threadId;
   }
 
-  parseNote(content: string | undefined) {
-    if (content == null) {
-      return '';
+  noteContent(note: Note): string {
+    if (note.reattached != null) {
+      return this.reattachedText(note);
     }
+    return this.parseNote(note.content);
+  }
+
+  parseNote(content: string): string {
     const replace = new Map<RegExp, string>();
     replace.set(/<bold>(.*)<\/bold>/gim, '<b>$1</b>'); // Bold style
     replace.set(/<italic>(.*)<\/italic>/gim, '<i>$1</i>'); // Italic style
@@ -132,6 +137,9 @@ export class NoteDialogComponent implements OnInit {
     if (this.threadDoc?.data == null) {
       return '';
     }
+    if (note.reattached != null) {
+      return this.threadDoc.iconReattached.url;
+    }
     switch (note.status) {
       case NoteStatus.Todo:
         return this.threadDoc.getNoteIcon(note).url;
@@ -143,6 +151,9 @@ export class NoteDialogComponent implements OnInit {
   }
 
   noteTitle(note: Note) {
+    if (note.reattached != null) {
+      return translate('note_dialog.note_reattached');
+    }
     switch (note.status) {
       case NoteStatus.Todo:
         return translate('note_dialog.status_to_do');
@@ -151,5 +162,18 @@ export class NoteDialogComponent implements OnInit {
         return translate('note_dialog.status_resolved');
     }
     return '';
+  }
+
+  reattachedText(note: Note): string {
+    if (note.reattached == null) {
+      return '';
+    }
+    const reattachedParts: string[] = note.reattached.split(REATTACH_SEPARATOR);
+    const reattachedText: string = reattachedParts[3] + '<b>' + reattachedParts[1] + '</b>' + reattachedParts[4];
+    const vref: VerseRef = VerseRef.parse(reattachedParts[0]);
+    const verseRef: string = this.i18n.localizeReference(vref);
+    const reattached: string = translate('note_dialog.reattached');
+
+    return `${verseRef} ${reattached}</br>${reattachedText}`;
   }
 }

@@ -21,6 +21,7 @@ import { configureTestingModule, matDialogCloseDelay, TestTranslocoModule } from
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
@@ -61,7 +62,7 @@ describe('NoteDialogComponent', () => {
 
   it('should not show deleted notes', fakeAsync(() => {
     env = new TestEnvironment();
-    expect(env.notes.length).toBe(4);
+    expect(env.notes.length).toBe(5);
   }));
 
   it('should style notes', fakeAsync(() => {
@@ -134,6 +135,15 @@ describe('NoteDialogComponent', () => {
     expect(env.notes[2].nativeElement.querySelector('img').getAttribute('title'))
       .withContext('[n2] blank - title')
       .toEqual('');
+  }));
+
+  it('should show notes for reattachment', fakeAsync(() => {
+    env = new TestEnvironment();
+    const verseText = 'before selection reattached text after selection';
+    const expectedSrc = '/assets/icons/TagIcons/ReattachNote.png';
+    const reattachNote = env.notes[4].nativeElement as HTMLElement;
+    expect(reattachNote.querySelector('.content')!.textContent).toContain(verseText);
+    expect(reattachNote.querySelector('img')?.getAttribute('src')).toEqual(expectedSrc);
   }));
 
   it('should gracefully return when data not ready', fakeAsync(() => {
@@ -221,6 +231,9 @@ class TestEnvironment {
       user01: SFProjectRole.ParatextAdministrator
     }
   };
+  static reattached: string = ['MAT 1:4', 'reattached text', '17', 'before selection ', ' after selection'].join(
+    REATTACH_SEPARATOR
+  );
   static noteThread: NoteThread = {
     originalContextBefore: 'before selection ',
     originalContextAfter: ' after selection',
@@ -291,6 +304,18 @@ class TestEnvironment {
         tagIcon: 'flag02',
         dateCreated: '',
         dateModified: ''
+      },
+      {
+        dataId: 'reattached01',
+        threadId: 'thread01',
+        content: '',
+        extUserId: 'user01',
+        deleted: false,
+        ownerRef: 'user01',
+        status: NoteStatus.Unspecified,
+        dateCreated: '',
+        dateModified: '',
+        reattached: TestEnvironment.reattached
       }
     ]
   };

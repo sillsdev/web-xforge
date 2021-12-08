@@ -1530,7 +1530,9 @@ namespace SIL.XForge.Scripture.Services
             // Check if fields have been updated in Paratext
             bool statusChanged =
                 !string.IsNullOrEmpty(comment.Status.InternalValue) && comment.Status.InternalValue != note.Status;
-            if (comment.Contents?.InnerXml != note.Content || statusChanged)
+            bool contentExists = !string.IsNullOrEmpty(note.Content) ||
+                !string.IsNullOrEmpty(comment.Contents?.InnerXml);
+            if ((contentExists && comment.Contents?.InnerXml != note.Content) || statusChanged)
                 return ChangeType.Updated;
             return ChangeType.None;
         }
@@ -1543,8 +1545,11 @@ namespace SIL.XForge.Scripture.Services
             comment.Date = new DateTimeOffset(note.DateCreated).ToString("o");
             comment.Deleted = note.Deleted;
 
-            comment.AddTextToContent("", false);
-            comment.Contents.InnerXml = note.Content;
+            if (!string.IsNullOrEmpty(note.Content))
+            {
+                comment.AddTextToContent("", false);
+                comment.Contents.InnerXml = note.Content;
+            }
             if (_userSecretRepository.Query().Any(u => u.Id == note.OwnerRef))
                 comment.ExternalUser = note.OwnerRef;
             if (note.TagIcon != null)
@@ -1565,7 +1570,7 @@ namespace SIL.XForge.Scripture.Services
                 // The owner is unknown at this point and is determined when submitting the ops to the note thread docs
                 OwnerRef = "",
                 SyncUserRef = syncUser.Id,
-                Content = comment.Contents?.InnerXml,
+                Content = comment.Contents?.InnerXml ?? string.Empty,
                 DateCreated = DateTime.Parse(comment.Date),
                 DateModified = DateTime.Parse(comment.Date),
                 Deleted = comment.Deleted,

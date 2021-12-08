@@ -36,6 +36,10 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
     return this.iconProperties(iconTag);
   }
 
+  get iconReattached(): NoteThreadIcon {
+    return this.iconProperties('ReattachNote');
+  }
+
   currentVerseRef(noteThread: NoteThread): VerseRef {
     const reattachedNotes: string[] = this.notesInOrderClone(noteThread.notes)
       .filter(n => n.reattached != null)
