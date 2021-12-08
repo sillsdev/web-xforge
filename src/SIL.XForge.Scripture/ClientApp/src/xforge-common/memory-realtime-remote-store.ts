@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import * as OTJson0 from 'ot-json0';
 import { EMPTY, Subject } from 'rxjs';
@@ -66,6 +67,7 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
   readonly create$ = new Subject<void>();
   readonly delete$ = new Subject<void>();
   readonly idle$ = EMPTY;
+  private _previousSnapshot: Snapshot;
 
   constructor(
     public readonly collection: string,
@@ -79,6 +81,7 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
     } else if (this.data != null) {
       this.version = 0;
     }
+    this._previousSnapshot = cloneDeep(this) as any as Snapshot;
   }
 
   create(data: any, type: string = OTJson0.type.name): Promise<void> {
@@ -106,6 +109,7 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
     if (this.type == null) {
       throw new Error('The doc has not been loaded.');
     }
+    this._previousSnapshot = cloneDeep(this) as any as Snapshot;
 
     if (op != null && this.type.normalize != null) {
       op = this.type.normalize(op);
@@ -116,6 +120,10 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
       this.emitRemoteChange(op);
     }
     return Promise.resolve();
+  }
+
+  previousSnapshot(): Promise<Snapshot> {
+    return Promise.resolve(this._previousSnapshot);
   }
 
   exists(): Promise<boolean> {
