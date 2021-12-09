@@ -13,7 +13,7 @@ import { TranslocoService } from '@ngneat/transloco';
 import { clone } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import merge from 'lodash-es/merge';
-import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
+import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources } from 'quill';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { fromEvent } from 'rxjs';
@@ -558,6 +558,9 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   /** Respond to text changes in the quill editor. */
   onContentChanged(delta: DeltaStatic, source: string): void {
+    if ((source as Sources) === 'user') {
+      this.deleteDuplicateNoteIcons(delta);
+    }
     this.viewModel.update(delta, source as Sources);
     this.updatePlaceholderText();
     // skip updating when only formatting changes occurred
@@ -930,6 +933,38 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private getEmbedCountInRange(editorStartPos: number, length: number): number {
     const embedPositions: number[] = Array.from(this.embeddedElements.values());
     return embedPositions.filter((pos: number) => pos >= editorStartPos && pos < editorStartPos + length).length;
+  }
+
+  /**
+   * Notes that get inserted by the delta are removed from the editor to clean up duplicates.
+   * i.e. The user triggers an undo after deleting a note.
+   */
+  private deleteDuplicateNoteIcons(delta: DeltaStatic): void {
+    if (this.editor == null || delta.ops == null) {
+      return;
+    }
+    // Delta for the removal of notes that were re-created
+    let notesDeletionDelta: DeltaStatic | undefined;
+    for (const op of delta.ops) {
+      if (op.insert != null && op.insert['note-thread-embed'] != null) {
+        const embedId: string = op.insert['note-thread-embed']['threadid'];
+        let deletePosition = this.embeddedElements.get(embedId);
+        if (deletePosition != null) {
+          const noteDeleteOps: DeltaOperation[] = [{ retain: deletePosition }, { delete: 1 }];
+          const noteDeleteOpDelta = new Delta(noteDeleteOps);
+          notesDeletionDelta =
+            notesDeletionDelta == null ? noteDeleteOpDelta : noteDeleteOpDelta.compose(notesDeletionDelta);
+        }
+      }
+    }
+
+    if (notesDeletionDelta != null) {
+      notesDeletionDelta.chop();
+      // Defer the update so that the current delta can be processed
+      Promise.resolve(notesDeletionDelta).then(deleteDelta => {
+        this.editor?.updateContents(deleteDelta, 'api');
+      });
+    }
   }
 
   private setHighlightMarkerPosition(): void {

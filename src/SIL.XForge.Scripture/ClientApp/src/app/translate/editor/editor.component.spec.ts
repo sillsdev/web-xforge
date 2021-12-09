@@ -1723,6 +1723,99 @@ describe('EditorComponent', () => {
       expect(noteThread1Doc.data!.position).toEqual(originalNoteThread1TextPos);
       env.dispose();
     }));
+
+    it('undo delete-a-note-icon removes the duplicate recreated icon', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      const noteThread6Anchor: TextAnchor = { start: 19, length: 5 };
+      env.addParatextNoteThread(6, 'MAT 1:1', 'verse', noteThread6Anchor, ['user01']);
+      env.wait();
+
+      // undo deleting just the note
+      const noteThread1: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      const noteThread1Anchor: TextAnchor = { start: 8, length: 9 };
+      expect(noteThread1.data!.position).toEqual(noteThread1Anchor);
+      const textDoc: TextDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
+      expect(textDoc.data!.ops![3].insert).toEqual('target: chapter 1, verse 1.');
+      const note1Position: number = env.getNoteThreadEditorPosition('thread01');
+      // target: |->$<-|chapter 1, $verse 1.
+      env.targetEditor.setSelection(note1Position, 1, 'user');
+      env.deleteCharacters();
+      const positionAfterDelete: number = env.getNoteThreadEditorPosition('thread01');
+      expect(positionAfterDelete).toEqual(note1Position);
+      env.triggerUndo();
+      expect(env.getNoteThreadEditorPosition('thread01')).toEqual(note1Position);
+      expect(env.component.target!.getSegmentText('verse_1_1')).toBe('target: chapter 1, verse 1.');
+      expect(noteThread1.data!.position).toEqual(noteThread1Anchor);
+
+      // undo deleting note and context
+      let deleteLength: number = 5;
+      let beforeNoteLength: number = 2;
+      // target|->: $ch<-|apter 1, $verse 1.
+      env.targetEditor.setSelection(note1Position - beforeNoteLength, deleteLength, 'user');
+      env.deleteCharacters();
+      let newNotePosition: number = env.getNoteThreadEditorPosition('thread01');
+      expect(newNotePosition).toEqual(note1Position - beforeNoteLength);
+      env.triggerUndo();
+      expect(env.getNoteThreadEditorPosition('thread01')).toEqual(note1Position);
+      expect(noteThread1.data!.position).toEqual(noteThread1Anchor);
+
+      // undo deleting note and entire selection
+      const embedLength = 1;
+      deleteLength = beforeNoteLength + embedLength + noteThread1.data!.position.length;
+      // target|->: $chapter<-| 1: $verse 1.
+      env.targetEditor.setSelection(note1Position - beforeNoteLength, deleteLength, 'user');
+      env.deleteCharacters();
+      newNotePosition = env.getNoteThreadEditorPosition('thread01');
+      const range = env.component.target!.getSegmentRange('verse_1_1')!;
+      // note moves to the beginning of the verse
+      expect(newNotePosition).toEqual(range.index);
+      env.triggerUndo();
+      expect(noteThread1.data!.position).toEqual({ start: 8, length: 9 });
+
+      // undo deleting a second note in verse does not affect first note
+      const note6Position: number = env.getNoteThreadEditorPosition('thread06');
+      const noteThread6: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread06');
+      deleteLength = 3;
+      const text = 'abc';
+      // target: $chapter 1, |->$ve<-|rse 1.
+      env.targetEditor.setSelection(note6Position, deleteLength, 'api');
+      env.typeCharacters(text);
+      newNotePosition = env.getNoteThreadEditorPosition('thread06');
+      expect(newNotePosition).toEqual(note6Position + text.length);
+      env.triggerUndo();
+      expect(env.getNoteThreadEditorPosition('thread06')).toEqual(note6Position);
+      expect(noteThread6.data!.position).toEqual(noteThread6Anchor);
+      expect(noteThread1.data!.position).toEqual(noteThread1Anchor);
+      expect(textDoc.data!.ops![3].insert).toEqual('target: chapter 1, verse 1.');
+
+      // undo deleting multiple notes
+      const noteThread3: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread03');
+      const noteThread4: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread04');
+      const noteThread3Anchor: TextAnchor = { start: 20, length: 7 };
+      const noteThread4Anchor: TextAnchor = { start: 20, length: 5 };
+      expect(noteThread3.data!.position).toEqual(noteThread3Anchor);
+      expect(noteThread4.data!.position).toEqual(noteThread4Anchor);
+      expect(textDoc.data!.ops![8].insert).toEqual('target: chapter 1, verse 3.');
+      const note3Position: number = env.getNoteThreadEditorPosition('thread03');
+      const note4Position: number = env.getNoteThreadEditorPosition('thread04');
+      deleteLength = 6;
+      // $target: chapter 1|->, $$ve<-|rse 3.
+      env.targetEditor.setSelection(note4Position - beforeNoteLength, deleteLength, 'api');
+      env.deleteCharacters();
+      newNotePosition = env.getNoteThreadEditorPosition('thread03');
+      expect(newNotePosition).toEqual(note3Position - beforeNoteLength);
+      newNotePosition = env.getNoteThreadEditorPosition('thread04');
+      expect(newNotePosition).toEqual(note4Position - beforeNoteLength);
+      env.triggerUndo();
+      env.wait();
+      expect(env.getNoteThreadEditorPosition('thread03')).toEqual(note3Position);
+      expect(env.getNoteThreadEditorPosition('thread04')).toEqual(note4Position);
+      expect(noteThread3.data!.position).toEqual(noteThread3Anchor);
+      expect(noteThread4.data!.position).toEqual(noteThread4Anchor);
+      expect(textDoc.data!.ops![8].insert).toEqual('target: chapter 1, verse 3.');
+      env.dispose();
+    }));
   });
 
   describe('Translation Suggestions disabled', () => {
