@@ -392,6 +392,10 @@ export class TextViewModel {
       }
       resultingEditorPos++;
     }
+    // if the position ends on an embed, include it in the final editor position i.e. make this greedy
+    while (embedEditorPositions.includes(resultingEditorPos)) {
+      resultingEditorPos++;
+    }
     return resultingEditorPos;
   }
 
