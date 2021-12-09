@@ -1049,6 +1049,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         editOpIndex,
         delta
       );
+      if (isEqual(oldNotePosition, newSelection)) {
+        continue;
+      }
       updatePromises.push(noteThreadDoc.submitJson0Op(op => op.set(n => n.position, newSelection)));
     }
     await Promise.all(updatePromises);

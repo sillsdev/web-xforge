@@ -1300,6 +1300,49 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('does not try to update positions with an unchanged value', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
+      env.wait();
+
+      const priorThreadId = 'thread02';
+      const priorThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', priorThreadId);
+      const laterThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread04');
+      const origPriorThreadDocAnchorStart: number = priorThreadDoc.data!.position.start;
+      const origPriorThreadDocAnchorLength: number = priorThreadDoc.data!.position.length;
+      const origLaterThreadDocAnchorStart: number = laterThreadDoc.data!.position.start;
+      const origLaterThreadDocAnchorLength: number = laterThreadDoc.data!.position.length;
+      expect(laterThreadDoc.data!.position.start)
+        .withContext('setup: have some space between the anchorings')
+        .toBeGreaterThan(origPriorThreadDocAnchorStart + origPriorThreadDocAnchorLength);
+
+      const insertedText = 'inserted text';
+      const insertedTextLength = insertedText.length;
+      let priorThreadEditorPos = env.getNoteThreadEditorPosition(priorThreadId);
+
+      // Edit between anchorings
+      env.targetEditor.setSelection(priorThreadEditorPos, 0, 'user');
+      env.wait();
+      const priorThreadDocSpy: jasmine.Spy<any> = spyOn<any>(priorThreadDoc, 'submitJson0Op').and.callThrough();
+      const laterThreadDocSpy: jasmine.Spy<any> = spyOn<any>(laterThreadDoc, 'submitJson0Op').and.callThrough();
+      // SUT
+      env.typeCharacters(insertedText);
+      expect(priorThreadDoc.data!.position)
+        .withContext('unchanged')
+        .toEqual({ start: origPriorThreadDocAnchorStart, length: origPriorThreadDocAnchorLength });
+      expect(laterThreadDoc.data!.position)
+        .withContext('pushed over')
+        .toEqual({ start: origLaterThreadDocAnchorStart + insertedTextLength, length: origLaterThreadDocAnchorLength });
+      // It makes sense to update thread anchor position information when they changed, but we need not request
+      // position changes with unchanged information.
+      expect(priorThreadDocSpy.calls.count())
+        .withContext('do not try to update position with an unchanged value')
+        .toEqual(0);
+      expect(laterThreadDocSpy.calls.count()).withContext('do update position where it changed').toEqual(1);
+
+      env.dispose();
+    }));
+
     it('re-embeds a note icon when a user deletes it', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
