@@ -157,13 +157,13 @@
     </div>
 
     <div *ngIf="status === 'filter'" class="dialog-content-footer">
-      <mat-error [class.hidden]="!(importClicked && selectedCount < 1)">
+      <mat-error *ngIf="importClicked && selectedCount < 1">
         {{ t("select_questions") }}
       </mat-error>
-      <div *ngIf="questionSource === 'transcelerator'" [class.hidden]="!showDuplicateImportNote">
+      <div *ngIf="showDuplicateImportNote && questionSource === 'transcelerator'">
         {{ t("transcelerator_some_questions_already_imported") }}
       </div>
-      <div *ngIf="questionSource === 'csv_file'" [class.hidden]="!showDuplicateImportNote">
+      <div *ngIf="showDuplicateImportNote && questionSource === 'csv_file'">
         {{ t("csv_questions_duplicates") }}
       </div>
     </div>
