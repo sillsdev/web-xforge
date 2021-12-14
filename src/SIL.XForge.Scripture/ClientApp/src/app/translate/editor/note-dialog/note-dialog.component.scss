@@ -56,6 +56,12 @@ h1 {
   .text {
     text-align: right;
   }
+  .text {
+    direction: rtl;
+  }
+  .note .content {
+    direction: rtl;
+  }
 }
 .ltr {
   .note {
