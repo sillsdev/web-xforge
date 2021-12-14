@@ -22,6 +22,6 @@ export class ExternalUrlService {
   }
 
   get csvImportHelpPage(): string {
-    return this.helps; // TODO implement
+    return this.helps + '/#t=Tasks%2FAdministrator_tasks%2FImport_questions_from_spreadsheet.htm';
   }
 }
