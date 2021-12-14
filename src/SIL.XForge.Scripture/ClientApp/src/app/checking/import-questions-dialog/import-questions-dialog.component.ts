@@ -14,6 +14,7 @@ import Papa from 'papaparse';
 import { TranslocoService } from '@ngneat/transloco';
 import { I18nService } from 'xforge-common/i18n.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { environment } from '../../../environments/environment';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
@@ -77,6 +78,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
   loading = false;
   importClicked: boolean = false;
   maxListItemsToDisplay = 100;
+  showTransceleratorOfflineMsg = true;
 
   importing: boolean = false;
   importedCount: number = 0;
@@ -104,6 +106,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
     private readonly dialogRef: MatDialogRef<ImportQuestionsDialogComponent>,
     private readonly transloco: TranslocoService,
     private readonly mdcDialog: MdcDialog,
+    private readonly pwaService: PwaService,
     readonly i18n: I18nService,
     readonly urls: ExternalUrlService
   ) {
@@ -126,14 +129,19 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
       this.updateSelectAllCheckbox();
     });
 
-    this.promiseForTransceleratorQuestions = projectService.transceleratorQuestions(this.data.projectId).catch(err => {
-      if (/Transcelerator version unsupported/.test(err.message)) {
-        this.transceleratorOutdated = true;
-        return [];
-      } else {
-        throw err;
-      }
-    });
+    this.promiseForTransceleratorQuestions = this.pwaService.online
+      .then(() => {
+        this.showTransceleratorOfflineMsg = false;
+        return projectService.transceleratorQuestions(this.data.projectId);
+      })
+      .catch(err => {
+        if (/Transcelerator version unsupported/.test(err.message)) {
+          this.transceleratorOutdated = true;
+          return [];
+        } else {
+          throw err;
+        }
+      });
 
     this.promiseForQuestionDocQuery = projectService.queryQuestions(this.data.projectId);
   }

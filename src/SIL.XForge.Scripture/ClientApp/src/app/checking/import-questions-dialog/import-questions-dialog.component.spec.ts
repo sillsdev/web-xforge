@@ -14,10 +14,11 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
-import { Observable, of } from 'rxjs';
+import { Observable, of, Subject } from 'rxjs';
 import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
+import { PwaService } from 'xforge-common/pwa.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { QuestionDoc } from '../../core/models/question-doc';
@@ -35,6 +36,7 @@ const mockedProjectService = mock(SFProjectService);
 const mockedAuthService = mock(AuthService);
 const mockedCookieService = mock(CookieService);
 const mockedMdcDialog = mock(MdcDialog);
+const mockedPwaService = mock(PwaService);
 
 describe('ImportQuestionsDialogComponent', () => {
   configureTestingModule(() => ({
@@ -43,7 +45,8 @@ describe('ImportQuestionsDialogComponent', () => {
       { provide: AuthService, useMock: mockedAuthService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: CookieService, useMock: mockedCookieService },
-      { provide: MdcDialog, useMock: mockedMdcDialog }
+      { provide: MdcDialog, useMock: mockedMdcDialog },
+      { provide: PwaService, useMock: mockedPwaService }
     ]
   }));
 
@@ -174,7 +177,7 @@ describe('ImportQuestionsDialogComponent', () => {
   }));
 
   it('prompts for edited questions that have already been imported', fakeAsync(() => {
-    const env = new TestEnvironment(true, false, [1, 4]);
+    const env = new TestEnvironment({ includeAllBooks: true, editedQuestionIds: [1, 4] });
     env.click(env.importFromTransceleratorButton);
     expect(env.questionRows.length).toBe(4);
     expect(env.component.filteredList[0].checked).toBe(false);
@@ -194,7 +197,7 @@ describe('ImportQuestionsDialogComponent', () => {
   }));
 
   it('allows updating questions that have been edited in Transcelerator', fakeAsync(() => {
-    const env = new TestEnvironment(true, false, [1, 4]);
+    const env = new TestEnvironment({ includeAllBooks: true, editedQuestionIds: [1, 4] });
     when(env.mockedImportQuestionsConfirmationMdcDialogRef.afterClosed()).thenReturn(of([true, true]));
     env.click(env.importFromTransceleratorButton);
     expect(env.questionRows.length).toBe(4);
@@ -205,7 +208,7 @@ describe('ImportQuestionsDialogComponent', () => {
   }));
 
   it('should inform the user when Transcelerator version is unsupported', fakeAsync(() => {
-    const env = new TestEnvironment(false, true);
+    const env = new TestEnvironment({ errorOnFetchQuestions: true });
     env.click(env.importFromTransceleratorButton);
     expect(env.bodyText).toEqual(
       'The version of Transcelerator used in this project is not supported. Please update to at least Transcelerator version 1.5.3.'
@@ -303,7 +306,7 @@ describe('ImportQuestionsDialogComponent', () => {
   }));
 
   it('can import from a CSV file', async () => {
-    const env = new TestEnvironment();
+    const env = new TestEnvironment({ fakeAsync: false });
 
     const genQuestions = 'Genesis 1:1,Question for Genesis 1:1';
     const matQuestions = Array.from(Array(100), (_, i) => `MAT 1:${i + 1},Question for Matthew 1:${i + 1}`).join('\n');
@@ -323,7 +326,7 @@ describe('ImportQuestionsDialogComponent', () => {
   });
 
   it('informs when there are no questions', fakeAsync(() => {
-    const env = new TestEnvironment(false, false, [], []);
+    const env = new TestEnvironment({ transceleratorQuestions: [] });
     env.click(env.importFromTransceleratorButton);
     expect(env.bodyText).toBe('There are no questions for the books in this project.');
     env.click(env.closeButton);
@@ -344,13 +347,24 @@ describe('ImportQuestionsDialogComponent', () => {
       text: 'Question for verse ' + (i + 1),
       id: 'id_' + (i + 1)
     }));
-    const env = new TestEnvironment(false, false, [], questions);
+    const env = new TestEnvironment({ transceleratorQuestions: questions });
     env.click(env.importFromTransceleratorButton);
     expect(env.questionRows.length).toBe(100);
     env.scrollDialogContentBodyToBottom();
     expect(env.questionRows.length).toBe(125);
     env.scrollDialogContentBodyToBottom();
     expect(env.questionRows.length).toBe(150);
+    env.click(env.cancelButton);
+  }));
+
+  it('does not try to load transcelerator questions when the user is online', fakeAsync(() => {
+    const env = new TestEnvironment({ offline: true });
+    expect(env.importFromTransceleratorButton.disabled).toBe(true);
+    expect(env.errorMessages).toEqual(['Importing from Transcelerator is not available offline.']);
+    env.setOnline();
+    expect(env.importFromTransceleratorButton.disabled).toBe(false);
+    expect(env.errorMessages).toEqual([]);
+    env.click(env.importFromTransceleratorButton);
     env.click(env.cancelButton);
   }));
 });
@@ -401,6 +415,7 @@ class TestEnvironment {
   mockedImportQuestionsConfirmationMdcDialogRef =
     mock<MdcDialogRef<ImportQuestionsConfirmationDialogComponent>>(MdcDialogRef);
   editedTransceleratorQuestionIds: string[] = [];
+  uponOnline$ = new Subject<void>();
 
   private questions: TransceleratorQuestion[] = [
     {
@@ -437,18 +452,27 @@ class TestEnvironment {
   ];
 
   private existingQuestions: Readonly<QuestionDoc[]> = [];
+  private errorOnFetchQuestions: boolean;
 
   constructor(
-    includeAllBooks = false,
-    private errorOnFetchQuestions = false,
-    editedQuestionIds: number[] = [],
-    transceleratorQuestions?: TransceleratorQuestion[]
+    options: {
+      includeAllBooks?: boolean;
+      errorOnFetchQuestions?: boolean;
+      editedQuestionIds?: number[];
+      transceleratorQuestions?: TransceleratorQuestion[];
+      fakeAsync?: boolean;
+      offline?: boolean;
+    } = {}
   ) {
-    if (transceleratorQuestions != null) {
-      this.questions = transceleratorQuestions;
+    this.questions = options.transceleratorQuestions || this.questions;
+    this.errorOnFetchQuestions = !!options.errorOnFetchQuestions;
+    when(mockedPwaService.online).thenReturn(this.uponOnline$.toPromise());
+    if (!options.offline) {
+      this.uponOnline$.complete();
     }
+
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
-    this.simulateQuestionsAlreadyExisting(editedQuestionIds);
+    this.simulateQuestionsAlreadyExisting(options.editedQuestionIds || []);
     this.setupTransceleratorQuestions();
 
     const gen: TextInfo = {
@@ -465,7 +489,7 @@ class TestEnvironment {
     };
     const textsByBookId: TextsByBookId = {};
     textsByBookId[Canon.bookNumberToId(mat.bookNum)] = mat;
-    if (includeAllBooks) {
+    if (options.includeAllBooks) {
       textsByBookId[Canon.bookNumberToId(gen.bookNum)] = gen;
     }
     const configData: ImportQuestionsDialogData = {
@@ -486,6 +510,9 @@ class TestEnvironment {
       )
     );
     this.fixture.detectChanges();
+    if (options.fakeAsync !== false) {
+      tick();
+    }
   }
 
   get overlayContainerElement(): HTMLElement {
@@ -564,6 +591,12 @@ class TestEnvironment {
     this.click(
       this.overlayContainerElement.querySelector('mdc-text-field[formControlName="from"] mdc-icon') as HTMLInputElement
     );
+  }
+
+  setOnline() {
+    this.uponOnline$.complete();
+    tick();
+    this.fixture.detectChanges();
   }
 
   setControlValue(control: FormControl, value: string) {

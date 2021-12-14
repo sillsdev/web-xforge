@@ -117,6 +117,7 @@
     "loading": "Loading...",
     "must_be_valid_reference": "Must be a valid reference",
     "no_questions_available": "There are no questions for the books in this project.",
+    "no_transcelerator_offline": "Importing from Transcelerator is not available offline.",
     "question_for_verse": "Question for verse {{ number }}",
     "question": "Question",
     "reference_from": "Reference from",
