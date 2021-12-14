@@ -249,14 +249,14 @@ describe('ImportQuestionsDialogComponent', () => {
   it('should show validation error when form is submitted with no questions selected', fakeAsync(() => {
     const env = new TestEnvironment();
     env.click(env.importFromTransceleratorButton);
-    expect(env.noQuestionsError.classList).toContain('hidden');
+    expect(env.errorMessages).toEqual([]);
     env.click(env.importSelectedQuestionsButton);
-    expect(env.noQuestionsError.classList).not.toContain('hidden');
+    expect(env.errorMessages).toEqual(['Select questions to import']);
 
     env.selectQuestion(env.questionRows[1]);
-    expect(env.noQuestionsError.classList).toContain('hidden');
+    expect(env.errorMessages).toEqual([]);
     env.selectQuestion(env.questionRows[1]);
-    expect(env.noQuestionsError.classList).not.toContain('hidden');
+    expect(env.errorMessages).toEqual(['Select questions to import']);
 
     // Make valid and cleanup dialog
     env.selectQuestion(env.questionRows[1]);
@@ -524,8 +524,10 @@ class TestEnvironment {
     return this.dialogContentBody.textContent || '';
   }
 
-  get noQuestionsError(): HTMLElement {
-    return this.overlayContainerElement.querySelector('mat-error') as HTMLElement;
+  get errorMessages(): string[] {
+    return Array.from(this.overlayContainerElement.querySelectorAll('mat-error')).map(node =>
+      (node.textContent || '').trim()
+    );
   }
 
   get importSelectedQuestionsButton(): HTMLButtonElement {
