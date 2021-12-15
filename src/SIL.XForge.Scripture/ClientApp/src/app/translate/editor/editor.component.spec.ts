@@ -1858,6 +1858,13 @@ describe('EditorComponent', () => {
       expect(env.getNoteThreadEditorPosition('thread01')).toEqual(note1Position);
       expect(noteThread1.data!.position).toEqual(noteThread1Anchor);
 
+      // undo deleting just the note when note thread doc has history
+      // target: |->$<-|chapter 1, $verse 1.
+      env.targetEditor.setSelection(note1Position, 1, 'user');
+      env.deleteCharacters();
+      env.triggerUndo();
+      expect(noteThread1.data!.position).toEqual(noteThread1Anchor);
+
       // undo deleting note and entire selection
       const embedLength = 1;
       deleteLength = beforeNoteLength + embedLength + noteThread1.data!.position.length;
@@ -1912,6 +1919,29 @@ describe('EditorComponent', () => {
       expect(noteThread3.data!.position).toEqual(noteThread3Anchor);
       expect(noteThread4.data!.position).toEqual(noteThread4Anchor);
       expect(textDoc.data!.ops![8].insert).toEqual('target: chapter 1, verse 3.');
+      env.dispose();
+    }));
+
+    it('note dialog appears after undo delete-a-note', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+      let element: HTMLElement = env.getNoteThreadIconElement('verse_1_1', 'thread01')!;
+      element.click();
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
+
+      const notePosition: number = env.getNoteThreadEditorPosition('thread01');
+      const selectionIndex: number = notePosition - 2;
+      const length: number = 5;
+      env.targetEditor.setSelection(selectionIndex, length, 'user');
+      env.wait();
+      env.deleteCharacters();
+      env.triggerUndo();
+      element = env.getNoteThreadIconElement('verse_1_1', 'thread01')!;
+      element.click();
+      env.wait();
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).twice();
+      expect().nothing();
       env.dispose();
     }));
   });

@@ -479,7 +479,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       if (count != null) {
         formats[formatCount] = value ? count : false;
       }
-      this.editor.formatText(range.index, range.length, formats, 'silent');
+      this.editor.formatText(range.index, range.length, formats, 'api');
     }
     return segments;
   }
