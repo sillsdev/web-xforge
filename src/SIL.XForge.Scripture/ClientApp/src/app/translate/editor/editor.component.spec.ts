@@ -1233,15 +1233,16 @@ describe('EditorComponent', () => {
     it('shows reattached note in updated location', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
+      const position: TextAnchor = { start: 19, length: 5 };
       // reattach thread04 from MAT 1:3 to MAT 1:4
-      env.reattachNote('project01', 'thread04', 'MAT 1:4');
+      env.reattachNote('project01', 'thread04', 'MAT 1:4', position);
       env.wait();
 
       const range: RangeStatic = env.component.target!.getSegmentRange('verse_1_4')!;
       const note4Position: number = env.getNoteThreadEditorPosition('thread04');
       const note4Anchor: TextAnchor = env.getNoteThreadDoc('project01', 'thread04')!.data!.position;
-      expect(note4Anchor).toEqual({ start: 19, length: 5 });
-      expect(note4Position).toEqual(range.index + note4Anchor.start);
+      expect(note4Anchor).toEqual(position);
+      expect(note4Position).toEqual(range.index + position.start);
       env.dispose();
     }));
 
@@ -2648,19 +2649,12 @@ class TestEnvironment {
     });
   }
 
-  reattachNote(projectId: string, threadId: string, verseStr: string): void {
+  reattachNote(projectId: string, threadId: string, verseStr: string, position: TextAnchor): void {
     const noteThreadDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadId);
     const template: Note = noteThreadDoc.data!.notes[0];
-    const textAnchor: TextAnchor = { start: 19, length: 5 };
     const verseRef: VerseRef = VerseRef.parse(verseStr);
     const contextAfter: string = ` ${verseRef.verseNum}.`;
-    const reattachParts: string[] = [
-      verseStr,
-      'verse',
-      textAnchor.start.toString(),
-      'target: chapter 1, ',
-      contextAfter
-    ];
+    const reattachParts: string[] = [verseStr, 'verse', position.start.toString(), 'target: chapter 1, ', contextAfter];
     const reattached: string = reattachParts.join(REATTACH_SEPARATOR);
     const note: Note = {
       dataId: 'reattach01',
@@ -2676,7 +2670,7 @@ class TestEnvironment {
     };
     const index: number = noteThreadDoc.data!.notes.length;
     noteThreadDoc.submitJson0Op(op => {
-      op.set(nt => nt.position, textAnchor);
+      op.set(nt => nt.position, position);
       op.insert(nt => nt.notes, index, note);
     });
   }

@@ -137,9 +137,6 @@ export class NoteDialogComponent implements OnInit {
     if (this.threadDoc?.data == null) {
       return '';
     }
-    if (note.reattached != null) {
-      return this.threadDoc.iconReattached.url;
-    }
     switch (note.status) {
       case NoteStatus.Todo:
         return this.threadDoc.getNoteIcon(note).url;
@@ -147,13 +144,10 @@ export class NoteDialogComponent implements OnInit {
       case NoteStatus.Resolved:
         return this.threadDoc.getNoteResolvedIcon(note).url;
     }
-    return this.threadDoc.getNoteIcon(note).url;
+    return note.reattached != null ? this.threadDoc.iconReattached.url : this.threadDoc.getNoteIcon(note);
   }
 
   noteTitle(note: Note) {
-    if (note.reattached != null) {
-      return translate('note_dialog.note_reattached');
-    }
     switch (note.status) {
       case NoteStatus.Todo:
         return translate('note_dialog.status_to_do');
@@ -161,7 +155,7 @@ export class NoteDialogComponent implements OnInit {
       case NoteStatus.Resolved:
         return translate('note_dialog.status_resolved');
     }
-    return '';
+    return note.reattached != null ? translate('note_dialog.note_reattached') : '';
   }
 
   reattachedText(note: Note): string {
@@ -169,11 +163,17 @@ export class NoteDialogComponent implements OnInit {
       return '';
     }
     const reattachedParts: string[] = note.reattached.split(REATTACH_SEPARATOR);
-    const reattachedText: string = reattachedParts[3] + '<b>' + reattachedParts[1] + '</b>' + reattachedParts[4];
-    const vref: VerseRef = VerseRef.parse(reattachedParts[0]);
+    const verseStr: string = reattachedParts[0];
+    const selectedText: string = reattachedParts[1];
+    const contextBefore: string = reattachedParts[3];
+    const contextAfter: string = reattachedParts[4];
+    const reattachedText: string = contextBefore + '<b>' + selectedText + '</b>' + contextAfter;
+    const vref: VerseRef = VerseRef.parse(verseStr);
     const verseRef: string = this.i18n.localizeReference(vref);
     const reattached: string = translate('note_dialog.reattached');
+    let noteContent: string = this.parseNote(note.content);
+    noteContent = noteContent === '' ? '' : `<br>${noteContent}`;
 
-    return `${verseRef} ${reattached}</br>${reattachedText}`;
+    return `${verseRef} ${reattached}<br>${reattachedText}${noteContent}`;
   }
 }

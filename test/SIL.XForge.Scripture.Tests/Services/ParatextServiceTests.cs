@@ -909,37 +909,41 @@ namespace SIL.XForge.Scripture.Services
             env.AddTextDocs(40, 1, 6, "Context before ", "Text selected");
             // The text doc is set up so that verse 7 has unique text that we reattach to
             string verseStr = "MAT 1:7";
-            ReattachedNoteThread rnt = env.GetReattachedNoteThread(verseStr);
+            ReattachedThreadInfo rnt = env.GetReattachedThreadInfo(verseStr);
 
             env.AddNoteThreadData(new[]
             {
                 new ThreadComponents { threadNum = 1, noteCount = 1 },
-                new ThreadComponents { threadNum = 3, noteCount = 1, reattachedVerseStr = verseStr }
+                new ThreadComponents { threadNum = 3, noteCount = 1, reattachedVerseStr = verseStr },
+                new ThreadComponents { threadNum = 4, noteCount = 1 },
+                new ThreadComponents { threadNum = 5, noteCount = 1, reattachedVerseStr = verseStr }
             });
             env.AddParatextComments(new[]
             {
                 new ThreadComponents { threadNum = 1, noteCount = 1, username = env.Username01, reattachedVerseStr = verseStr },
                 new ThreadComponents { threadNum = 2, noteCount = 1, username = env.Username01, reattachedVerseStr = verseStr },
-                new ThreadComponents { threadNum = 3, noteCount = 1, username = env.Username01, reattachedVerseStr = verseStr }
+                new ThreadComponents { threadNum = 3, noteCount = 1, username = env.Username01, reattachedVerseStr = verseStr },
+                new ThreadComponents { threadNum = 4, noteCount = 2, username = env.Username01, reattachedVerseStr = verseStr },
+                new ThreadComponents { threadNum = 5, noteCount = 1, username = env.Username01 }
             });
 
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 IEnumerable<IDocument<NoteThread>> noteThreadDocs =
-                    await env.GetNoteThreadDocsAsync(conn, new[] { "thread1", "thread3" });
-                string before = rnt.contextBefore;
+                    await env.GetNoteThreadDocsAsync(conn, new[] { "thread1", "thread3", "thread4", "thread5" });
                 Dictionary<int, ChapterDelta> chapterDeltas =
-                    env.GetChapterDeltasByBook(env.Project01, 40, 1, before, "Text selected");
+                    env.GetChapterDeltasByBook(env.Project01, 40, 1, env.ContextBefore, "Text selected");
                 Dictionary<string, SyncUser> syncUsers = new Dictionary<string, SyncUser>
                 {
                     { "syncuser01", new SyncUser { Id = "syncuser01", ParatextUsername = env.Username01 } }
                 };
                 IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret, ptProjectId, 40,
                     noteThreadDocs, chapterDeltas, syncUsers);
-                Assert.That(changes.Count, Is.EqualTo(2));
+                Assert.That(changes.Count, Is.EqualTo(4));
 
                 // The reattach note in thread3 is existing and is not changed
                 Assert.That(changes.FirstOrDefault(c => c.ThreadId == "thread3"), Is.Null);
+                // Existing thread reattached
                 NoteThreadChange change1 = changes.Single(c => c.ThreadId == "thread1");
                 Assert.That(change1.NotesAdded.Count, Is.EqualTo(1));
                 Assert.That(change1.NotesAdded.Single().Reattached, Is.Not.Null);
@@ -949,10 +953,29 @@ namespace SIL.XForge.Scripture.Services
                     Length = rnt.selectedText.Length
                 };
                 Assert.That(change1.Position, Is.EqualTo(expectedAnchor));
+
+                // New thread note reattached
                 NoteThreadChange change2 = changes.Single(c => c.ThreadId == "thread2");
                 Assert.That(change2.NotesAdded.Count, Is.EqualTo(2));
                 Assert.That(change2.NotesAdded[1].Reattached, Is.Not.Null);
                 Assert.That(change2.Position, Is.EqualTo(expectedAnchor));
+
+                // Existing thread new comment and reattached
+                NoteThreadChange change4 = changes.Single(c => c.ThreadId == "thread4");
+                Assert.That(change4.NotesAdded.Count, Is.EqualTo(2));
+                Assert.That(change4.NotesAdded[1].Reattached, Is.Not.Null);
+                Assert.That(change4.Position, Is.EqualTo(expectedAnchor));
+
+                // Existing thread and reattach comment removed
+                NoteThreadChange change5 = changes.Single(c => c.ThreadId == "thread5");
+                Assert.That(change5.NoteIdsRemoved.Count, Is.EqualTo(1));
+                Assert.That(change5.NoteIdsRemoved[0], Is.EqualTo("reattachedthread5"));
+                TextAnchor originalAnchor = new TextAnchor
+                {
+                    Start = change5.ContextBefore.Length,
+                    Length = change5.SelectedText.Length
+                };
+                Assert.That(change5.Position, Is.EqualTo(originalAnchor));
             }
         }
 
@@ -1379,7 +1402,7 @@ namespace SIL.XForge.Scripture.Services
             public string reattachedVerseStr;
         }
 
-        struct ReattachedNoteThread
+        struct ReattachedThreadInfo
         {
             public string verseStr;
             public string selectedText;
@@ -1599,6 +1622,11 @@ namespace SIL.XForge.Scripture.Services
             public readonly string Username02 = "User 02";
             public readonly string Username03 = "User 03";
             public readonly string SyncDir = Path.GetTempPath();
+            public readonly string ContextBefore = "Context before ";
+            public readonly string ContextAfter = " context after.";
+            public readonly string AlternateBefore = "Alternate before ";
+            public readonly string AlternateAfter = " alternate after.";
+            public readonly string ReattachedSelectedText = "reattached text";
 
             private string ruthBookUsfm = "\\id RUT - ProjectNameHere\n" +
                 "\\c 1\n" +
@@ -1932,13 +1960,11 @@ namespace SIL.XForge.Scripture.Services
             public void AddNoteThreadData(ThreadComponents[] threadComponents)
             {
                 IEnumerable<NoteThread> threads = new NoteThread[0];
-                string before = "Context before ";
-                string after = " context after.";
                 foreach (var comp in threadComponents)
                 {
                     string threadId = "thread" + comp.threadNum;
                     string text = "Text selected " + threadId;
-                    string selectedText = comp.appliesToVerse ? before + text + after : text;
+                    string selectedText = comp.appliesToVerse ? ContextBefore + text + ContextAfter : text;
                     var noteThread = new NoteThread
                     {
                         Id = "project01:" + threadId,
@@ -1947,11 +1973,11 @@ namespace SIL.XForge.Scripture.Services
                         OwnerRef = "user01",
                         VerseRef = new VerseRefData(40, 1, comp.threadNum),
                         OriginalSelectedText = selectedText,
-                        OriginalContextBefore = comp.appliesToVerse ? "" : before,
+                        OriginalContextBefore = comp.appliesToVerse ? "" : ContextBefore,
                         Position = comp.appliesToVerse
                             ? new TextAnchor()
-                            : new TextAnchor { Start = before.Length, Length = text.Length },
-                        OriginalContextAfter = comp.appliesToVerse ? "" : after,
+                            : new TextAnchor { Start = ContextBefore.Length, Length = text.Length },
+                        OriginalContextAfter = comp.appliesToVerse ? "" : ContextAfter,
                         Status = NoteStatus.Todo.InternalValue,
                         TagIcon = $"icon{comp.threadNum}"
                     };
@@ -1974,7 +2000,7 @@ namespace SIL.XForge.Scripture.Services
                     }
                     if (comp.reattachedVerseStr != null)
                     {
-                        ReattachedNoteThread rnt = GetReattachedNoteThread(comp.reattachedVerseStr);
+                        ReattachedThreadInfo rti = GetReattachedThreadInfo(comp.reattachedVerseStr);
                         notes.Add(new Note
                         {
                             DataId = $"reattached{threadId}",
@@ -1983,12 +2009,12 @@ namespace SIL.XForge.Scripture.Services
                             ExtUserId = "user02",
                             SyncUserRef = "syncuser01",
                             DateCreated = new DateTime(2019, 1, 20, 8, 0, 0, DateTimeKind.Utc),
-                            Reattached = ReattachedNoteThreadToString(rnt)
+                            Reattached = ReattachedThreadInfoStr(rti)
                         });
                         noteThread.Position = new TextAnchor
                         {
-                            Start = before.Length,
-                            Length = rnt.selectedText.Length
+                            Start = rti.contextBefore.Length,
+                            Length = rti.selectedText.Length
                         };
                     }
                     noteThread.Notes = notes;
@@ -2078,10 +2104,10 @@ namespace SIL.XForge.Scripture.Services
                 {
                     string threadId = "thread" + comp.threadNum;
                     var associatedPtUser = new SFParatextUser(comp.username);
-                    string before = "Context before ";
-                    string after = " context after.";
+                    string before = ContextBefore;
+                    string after = ContextAfter;
                     string text = "Text selected " + threadId;
-                    string selectedText = comp.appliesToVerse ? before + text + after : text;
+                    string selectedText = comp.appliesToVerse ? ContextBefore + text + ContextAfter : text;
                     string verseStr = $"MAT 1:{comp.threadNum}";
                     for (int i = 1; i <= comp.noteCount; i++)
                     {
@@ -2116,7 +2142,7 @@ namespace SIL.XForge.Scripture.Services
                     }
                     if (comp.reattachedVerseStr != null)
                     {
-                        ReattachedNoteThread rnt = GetReattachedNoteThread(comp.reattachedVerseStr);
+                        ReattachedThreadInfo rti = GetReattachedThreadInfo(comp.reattachedVerseStr);
                         ProjectCommentManager.AddComment(new Paratext.Data.ProjectComments.Comment(associatedPtUser)
                         {
                             Thread = threadId,
@@ -2126,7 +2152,7 @@ namespace SIL.XForge.Scripture.Services
                             ContextAfter = comp.appliesToVerse ? "" : after,
                             StartPosition = comp.appliesToVerse ? 0 : before.Length,
                             Date = "2019-01-20T08:00:00.0000000+00:00",
-                            Reattached = ReattachedNoteThreadToString(rnt)
+                            Reattached = ReattachedThreadInfoStr(rti)
                         });
                     }
                 }
@@ -2182,23 +2208,20 @@ namespace SIL.XForge.Scripture.Services
                 });
             }
 
-            public ReattachedNoteThread GetReattachedNoteThread(string verseStr)
+            public ReattachedThreadInfo GetReattachedThreadInfo(string verseStr)
             {
-                string selectedText = "reattached text";
-                string before = "Context before ";
-                string after = " context after.";
-                string startPos = before.Length.ToString();
-                return new ReattachedNoteThread
+                string startPos = AlternateBefore.Length.ToString();
+                return new ReattachedThreadInfo
                 {
                     verseStr = verseStr,
-                    selectedText = selectedText,
+                    selectedText = ReattachedSelectedText,
                     startPos = startPos,
-                    contextBefore = before,
-                    contextAfter = after
+                    contextBefore = AlternateBefore,
+                    contextAfter = AlternateAfter
                 };
             }
 
-            public string ReattachedNoteThreadToString(ReattachedNoteThread rnt)
+            public string ReattachedThreadInfoStr(ReattachedThreadInfo rnt)
             {
                 string[] reattachParts = new[] {
                     rnt.verseStr, rnt.selectedText, rnt.startPos, rnt.contextBefore, rnt.contextAfter };
@@ -2212,11 +2235,18 @@ namespace SIL.XForge.Scripture.Services
                 for (int i = 1; i <= verses; i++)
                 {
                     string noteSelectedText = useThreadSuffix ? selectedText + $" thread{i}" : selectedText;
+                    string before = contextBefore;
+                    string after = ContextAfter;
+                    // Make verse 7 with alternate text to optionally use to re-attach to
                     if (i == 7)
-                        noteSelectedText = "reattached text";
+                    {
+                        before = AlternateBefore;
+                        after = AlternateAfter;
+                        noteSelectedText = ReattachedSelectedText;
+                    }
                     chapterText = chapterText + "," +
                         "{ \"insert\": { \"verse\": { \"number\": \"" + i + "\" } }}, " +
-                        "{ \"insert\": \"" + contextBefore + noteSelectedText + " context after \", " +
+                        "{ \"insert\": \"" + before + noteSelectedText + after + "\", " +
                         "\"attributes\": { \"segment\": \"verse_" + chapterNum + "_" + i + "\" } }";
                 }
                 if (includeExtraLastVerseSegment)

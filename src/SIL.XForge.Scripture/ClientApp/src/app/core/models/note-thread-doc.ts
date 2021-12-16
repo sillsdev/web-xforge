@@ -40,22 +40,22 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
     return this.iconProperties('ReattachNote');
   }
 
-  currentVerseRef(noteThread: NoteThread): VerseRef {
-    const reattachedNotes: string[] = this.notesInOrderClone(noteThread.notes)
-      .filter(n => n.reattached != null)
-      .map(r => r.reattached!);
-    if (reattachedNotes.length < 1) {
-      return toVerseRef(noteThread.verseRef);
+  currentVerseRef(): VerseRef | undefined {
+    if (this.data == null) {
+      return;
+    }
+    const lastReattach: Note | undefined = this.notesInOrderClone(this.data.notes)
+      .reverse()
+      .find(note => note.reattached != null);
+    if (lastReattach == null || lastReattach.reattached == null) {
+      return toVerseRef(this.data.verseRef);
     }
 
-    const verseStr: string = reattachedNotes[reattachedNotes.length - 1].split(REATTACH_SEPARATOR)[0];
+    const verseStr: string = lastReattach.reattached.split(REATTACH_SEPARATOR)[0];
     return VerseRef.parse(verseStr);
   }
 
   notesInOrderClone(notes: Note[]): Note[] {
-    if (this.data == null) {
-      return [];
-    }
     return clone(notes).sort((a, b) => Date.parse(a.dateCreated) - Date.parse(b.dateCreated));
   }
 

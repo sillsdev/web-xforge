@@ -628,9 +628,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
     const chapterNoteThreadDocs: NoteThreadDoc[] = this.currentChapterNoteThreadDocs();
-    const featureVerseRefInfo: FeaturedVerseRefInfo[] = chapterNoteThreadDocs.map(nt =>
-      this.getFeaturedVerseRefInfo(nt)
-    );
+    const featureVerseRefInfo: FeaturedVerseRefInfo[] = [];
+    for (const noteThreadDoc of chapterNoteThreadDocs) {
+      const featured: FeaturedVerseRefInfo | undefined = this.getFeaturedVerseRefInfo(noteThreadDoc);
+      if (featured != null) {
+        featureVerseRefInfo.push(featured);
+      }
+    }
     const noteThreadVerseRefs: VerseRef[] = featureVerseRefInfo.map(f => f.verseRef);
 
     if (value) {
@@ -970,18 +974,23 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   /** Gets the information needed to format a particular featured verse. */
-  private getFeaturedVerseRefInfo(threadDoc: NoteThreadDoc): FeaturedVerseRefInfo {
+  private getFeaturedVerseRefInfo(threadDoc: NoteThreadDoc): FeaturedVerseRefInfo | undefined {
     const notes: Note[] = threadDoc.notesInOrderClone(threadDoc.data!.notes);
     let preview: string = this.stripXml(notes[0].content != null ? notes[0].content.trim() : '');
     if (notes.length > 1) {
       preview += '\n' + translate('editor.more_notes', { count: notes.length - 1 });
     }
+    const verseRef: VerseRef | undefined = threadDoc.currentVerseRef();
+    if (threadDoc.data == null || verseRef == null) {
+      return;
+    }
+
     return {
-      verseRef: threadDoc.currentVerseRef(threadDoc.data!),
-      id: threadDoc.data!.dataId,
+      verseRef,
+      id: threadDoc.data.dataId,
       preview,
       icon: threadDoc.icon,
-      textAnchor: threadDoc.data!.position
+      textAnchor: threadDoc.data.position
     };
   }
 
@@ -1221,7 +1230,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         continue;
       }
 
-      const featured: FeaturedVerseRefInfo = this.getFeaturedVerseRefInfo(noteThreadDoc);
+      const featured: FeaturedVerseRefInfo | undefined = this.getFeaturedVerseRefInfo(noteThreadDoc);
+      if (featured == null) {
+        continue;
+      }
       const segment: string | undefined = this.embedNoteThread(featured);
       if (segment != null && !segmentsToSubscribe.has(segment)) {
         segmentsToSubscribe.add(segment);

@@ -812,7 +812,7 @@ namespace SIL.XForge.Scripture.Services
                 if (existingThread.Comments.Count > 0)
                 {
                     // Get the text anchor to use for the note
-                    TextAnchor range = GetCommentTextAnchor(existingThread, chapterDeltas);
+                    TextAnchor range = GetThreadTextAnchor(existingThread, chapterDeltas);
                     if (!range.Equals(threadDoc.Data.Position))
                         threadChange.Position = range;
                 }
@@ -829,7 +829,7 @@ namespace SIL.XForge.Scripture.Services
                 CommentTag initialTag = GetCommentTag(thread, null, commentTags);
                 NoteThreadChange newThread = new NoteThreadChange(threadId, info.VerseRefStr,
                     info.SelectedText, info.ContextBefore, info.ContextAfter, info.Status.InternalValue, initialTag.Icon);
-                newThread.Position = GetCommentTextAnchor(thread, chapterDeltas);
+                newThread.Position = GetThreadTextAnchor(thread, chapterDeltas);
                 newThread.Status = thread.Status.InternalValue;
                 foreach (var comm in thread.Comments)
                 {
@@ -1528,11 +1528,13 @@ namespace SIL.XForge.Scripture.Services
             if (comment.Deleted != note.Deleted)
                 return ChangeType.Deleted;
             // Check if fields have been updated in Paratext
-            bool statusChanged =
-                !string.IsNullOrEmpty(comment.Status.InternalValue) && comment.Status.InternalValue != note.Status;
+            bool statusExists = !string.IsNullOrEmpty(comment.Status.InternalValue) ||
+                !string.IsNullOrEmpty(note.Status);
+            bool statusChanged = statusExists && comment.Status.InternalValue != note.Status;
             bool contentExists = !string.IsNullOrEmpty(note.Content) ||
                 !string.IsNullOrEmpty(comment.Contents?.InnerXml);
-            if ((contentExists && comment.Contents?.InnerXml != note.Content) || statusChanged)
+            bool contentChanged = contentExists && comment.Contents.InnerXml != note.Content;
+            if (contentChanged || statusChanged)
                 return ChangeType.Updated;
             return ChangeType.None;
         }
@@ -1546,10 +1548,7 @@ namespace SIL.XForge.Scripture.Services
             comment.Deleted = note.Deleted;
 
             if (!string.IsNullOrEmpty(note.Content))
-            {
-                comment.AddTextToContent("", false);
-                comment.Contents.InnerXml = note.Content;
-            }
+                comment.GetOrCreateCommentNode().InnerXml = note.Content;
             if (_userSecretRepository.Query().Any(u => u.Id == note.OwnerRef))
                 comment.ExternalUser = note.OwnerRef;
             if (note.TagIcon != null)
@@ -1643,7 +1642,7 @@ namespace SIL.XForge.Scripture.Services
             return delta.TryConcatenateInserts(out string verseText, segmentFilter) ? verseText : string.Empty;
         }
 
-        private TextAnchor GetCommentTextAnchor(CommentThread thread, Dictionary<int, ChapterDelta> chapterDeltas)
+        private TextAnchor GetThreadTextAnchor(CommentThread thread, Dictionary<int, ChapterDelta> chapterDeltas)
         {
             Paratext.Data.ProjectComments.Comment comment =
                 thread.Comments.LastOrDefault(c => c.Reattached != null) ?? thread.Comments[0];
