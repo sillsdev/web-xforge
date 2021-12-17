@@ -1264,16 +1264,6 @@ namespace SIL.XForge.Scripture.Services
             _hgHelper.Update(clonePath);
         }
 
-        // private CommentTag GetCommentTag(Paratext.Data.ProjectComments.CommentThread thread, CommentTags commentTags)
-        // {
-        //     Paratext.Data.ProjectComments.Comment info = thread.Comments[0];
-        //     int defaultTagId = 1;
-        //         int tagId = info.TagsAdded != null && info.TagsAdded.Length > 0
-        //             ? int.Parse(info.TagsAdded[0])
-        //             : defaultTagId;
-        //         return info.Type == NoteType.Conflict ? CommentTag.ConflictTag : commentTags.Get(tagId);
-        // }
-
         private IEnumerable<CommentThread> GetCommentThreads(UserSecret userSecret, string projectId, int bookNum)
         {
             ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), projectId);
