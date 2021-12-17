@@ -142,7 +142,7 @@ describe('NoteDialogComponent', () => {
     const verseText = 'before selection reattached text after selection';
     const expectedSrc = '/assets/icons/TagIcons/ReattachNote.png';
     const reattachNote = env.notes[4].nativeElement as HTMLElement;
-    expect(reattachNote.querySelector('.content')!.textContent).toContain(verseText);
+    expect(reattachNote.querySelector('.content .text')!.textContent).toContain(verseText);
     expect(reattachNote.querySelector('img')?.getAttribute('src')).toEqual(expectedSrc);
     expect(reattachNote.querySelector('img')?.getAttribute('title')).toEqual('Note reattached');
   }));
@@ -150,11 +150,11 @@ describe('NoteDialogComponent', () => {
   it('reattached note with content', fakeAsync(() => {
     const content: string = 'Reattached content text.';
     env = new TestEnvironment({ reattachedContent: content });
-    const verseText = 'before selection <b>reattached text</b> after selection';
+    const verseText = 'before selection reattached text after selection';
     const expectedSrc = '/assets/icons/TagIcons/flag02.png';
     const reattachNote = env.notes[4].nativeElement as HTMLElement;
-    const expectedContent = `${verseText}<br>${content}`;
-    expect(reattachNote.querySelector('.content')!.innerHTML).toContain(expectedContent);
+    expect(reattachNote.querySelector('.content .text')!.textContent).toContain(verseText);
+    expect(reattachNote.querySelector('.content .note-content')!.textContent).toContain(content);
     expect(reattachNote.querySelector('img')?.getAttribute('src')).toEqual(expectedSrc);
     expect(reattachNote.querySelector('img')?.getAttribute('title')).toEqual('To do');
   }));

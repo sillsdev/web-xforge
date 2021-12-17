@@ -16,7 +16,11 @@
     </div>
     <div class="notes">
       <div *ngFor="let note of notes" class="note">
-        <div class="content" [innerHTML]="noteContent(note)"></div>
+        <div class="content">
+          <div *ngIf="note.reattached">{{ reattachedVerse(note) }}</div>
+          <div *ngIf="note.reattached" class="text" [innerHTML]="reattachedText(note)"></div>
+          <div class="note-content" [innerHTML]="parseNote(note.content)"></div>
+        </div>
         <img [src]="noteIcon(note)" alt="" [title]="noteTitle(note)" />
         <app-owner [ownerRef]="note.ownerRef" [dateTime]="note.dateCreated"></app-owner>
       </div>

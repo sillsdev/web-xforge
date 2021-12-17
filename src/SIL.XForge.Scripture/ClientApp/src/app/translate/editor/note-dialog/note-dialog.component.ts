@@ -163,17 +163,23 @@ export class NoteDialogComponent implements OnInit {
       return '';
     }
     const reattachedParts: string[] = note.reattached.split(REATTACH_SEPARATOR);
-    const verseStr: string = reattachedParts[0];
     const selectedText: string = reattachedParts[1];
     const contextBefore: string = reattachedParts[3];
     const contextAfter: string = reattachedParts[4];
     const reattachedText: string = contextBefore + '<b>' + selectedText + '</b>' + contextAfter;
+
+    return reattachedText;
+  }
+
+  reattachedVerse(note: Note): string {
+    if (note.reattached == null) {
+      return '';
+    }
+    const reattachedParts: string[] = note.reattached.split(REATTACH_SEPARATOR);
+    const verseStr: string = reattachedParts[0];
     const vref: VerseRef = VerseRef.parse(verseStr);
     const verseRef: string = this.i18n.localizeReference(vref);
     const reattached: string = translate('note_dialog.reattached');
-    let noteContent: string = this.parseNote(note.content);
-    noteContent = noteContent === '' ? '' : `<br>${noteContent}`;
-
-    return `${verseRef} ${reattached}<br>${reattachedText}${noteContent}`;
+    return `${verseRef} ${reattached}`;
   }
 }
