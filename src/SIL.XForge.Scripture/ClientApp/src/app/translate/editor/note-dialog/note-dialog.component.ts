@@ -119,14 +119,14 @@ export class NoteDialogComponent implements OnInit {
     return this.parseNote(note.content);
   }
 
-  parseNote(content: string): string {
+  parseNote(content: string | undefined): string {
     const replace = new Map<RegExp, string>();
     replace.set(/<bold>(.*)<\/bold>/gim, '<b>$1</b>'); // Bold style
     replace.set(/<italic>(.*)<\/italic>/gim, '<i>$1</i>'); // Italic style
     replace.set(/<p>(.*)<\/p>/gim, '$1<br />'); // Turn paragraphs into line breaks
     replace.set(/<(?!i|b|br|\/)(.*?>)(.*?)<\/(.*?)>/gim, '$2'); // Strip out any tags that don't match the above replacements
-    replace.forEach((replacement, regEx) => (content = content!.replace(regEx, replacement)));
-    return content;
+    replace.forEach((replacement, regEx) => (content = content?.replace(regEx, replacement)));
+    return content ?? '';
   }
 
   toggleSegmentText(): void {

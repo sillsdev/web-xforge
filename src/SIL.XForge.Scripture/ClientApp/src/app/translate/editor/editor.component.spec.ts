@@ -1236,13 +1236,17 @@ describe('EditorComponent', () => {
       const position: TextAnchor = { start: 19, length: 5 };
       // reattach thread04 from MAT 1:3 to MAT 1:4
       env.reattachNote('project01', 'thread04', 'MAT 1:4', position);
-      env.wait();
 
+      // SUT
+      env.wait();
       const range: RangeStatic = env.component.target!.getSegmentRange('verse_1_4')!;
       const note4Position: number = env.getNoteThreadEditorPosition('thread04');
-      const note4Anchor: TextAnchor = env.getNoteThreadDoc('project01', 'thread04')!.data!.position;
+      const note4Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread04')!;
+      const note4Anchor: TextAnchor = note4Doc.data!.position;
       expect(note4Anchor).toEqual(position);
       expect(note4Position).toEqual(range.index + position.start);
+      // The original note thread was on verse 3
+      expect(note4Doc.data!.verseRef.verseNum).toEqual(3);
       env.dispose();
     }));
 

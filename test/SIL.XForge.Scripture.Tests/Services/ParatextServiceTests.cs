@@ -2009,6 +2009,7 @@ namespace SIL.XForge.Scripture.Services
                             ExtUserId = "user02",
                             SyncUserRef = "syncuser01",
                             DateCreated = new DateTime(2019, 1, 20, 8, 0, 0, DateTimeKind.Utc),
+                            Status = NoteStatus.Unspecified.InternalValue,
                             Reattached = ReattachedThreadInfoStr(rti)
                         });
                         noteThread.Position = new TextAnchor
@@ -2151,6 +2152,7 @@ namespace SIL.XForge.Scripture.Services
                             ContextBefore = comp.appliesToVerse ? "" : before,
                             ContextAfter = comp.appliesToVerse ? "" : after,
                             StartPosition = comp.appliesToVerse ? 0 : before.Length,
+                            Status = NoteStatus.Unspecified,
                             Date = "2019-01-20T08:00:00.0000000+00:00",
                             Reattached = ReattachedThreadInfoStr(rti)
                         });

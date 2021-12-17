@@ -1528,12 +1528,8 @@ namespace SIL.XForge.Scripture.Services
             if (comment.Deleted != note.Deleted)
                 return ChangeType.Deleted;
             // Check if fields have been updated in Paratext
-            bool statusExists = !string.IsNullOrEmpty(comment.Status.InternalValue) ||
-                !string.IsNullOrEmpty(note.Status);
-            bool statusChanged = statusExists && comment.Status.InternalValue != note.Status;
-            bool contentExists = !string.IsNullOrEmpty(note.Content) ||
-                !string.IsNullOrEmpty(comment.Contents?.InnerXml);
-            bool contentChanged = contentExists && comment.Contents.InnerXml != note.Content;
+            bool statusChanged = comment.Status.InternalValue != note.Status;
+            bool contentChanged = comment.Contents?.InnerXml != note.Content;
             if (contentChanged || statusChanged)
                 return ChangeType.Updated;
             return ChangeType.None;
@@ -1569,7 +1565,7 @@ namespace SIL.XForge.Scripture.Services
                 // The owner is unknown at this point and is determined when submitting the ops to the note thread docs
                 OwnerRef = "",
                 SyncUserRef = syncUser.Id,
-                Content = comment.Contents?.InnerXml ?? string.Empty,
+                Content = comment.Contents?.InnerXml,
                 DateCreated = DateTime.Parse(comment.Date),
                 DateModified = DateTime.Parse(comment.Date),
                 Deleted = comment.Deleted,
