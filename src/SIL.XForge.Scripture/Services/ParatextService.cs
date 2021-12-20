@@ -791,7 +791,7 @@ namespace SIL.XForge.Scripture.Services
                     threadChange.Status = existingThread.Status.InternalValue;
                     threadChange.ThreadUpdated = true;
                 }
-                CommentTag defaultThreadIconTag = this.GetCommentTag(existingThread, null, commentTags);
+                CommentTag defaultThreadIconTag = GetCommentTag(existingThread, null, commentTags);
                 if (defaultThreadIconTag?.Icon != threadDoc.Data.TagIcon)
                 {
                     threadChange.TagIcon = defaultThreadIconTag?.Icon;
@@ -805,7 +805,7 @@ namespace SIL.XForge.Scripture.Services
                     Paratext.Data.ProjectComments.Comment comment =
                         existingThread.Comments.Single(c => c.Id == commentId);
                     SyncUser syncUser = FindOrCreateSyncUser(comment.User, syncUsers);
-                    CommentTag commentIconTag = this.GetCommentTag(existingThread, comment, commentTags);
+                    CommentTag commentIconTag = GetCommentTag(existingThread, comment, commentTags);
                     threadChange.AddChange(CreateNoteFromComment(
                         _guidService.NewObjectId(), comment, commentIconTag, syncUser), ChangeType.Added);
                 }
@@ -826,7 +826,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 CommentThread thread = commentThreads.Single(ct => ct.Id == threadId);
                 Paratext.Data.ProjectComments.Comment info = thread.Comments[0];
-                CommentTag initialTag = this.GetCommentTag(thread, null, commentTags);
+                CommentTag initialTag = GetCommentTag(thread, null, commentTags);
                 NoteThreadChange newThread = new NoteThreadChange(threadId, info.VerseRefStr,
                     info.SelectedText, info.ContextBefore, info.ContextAfter, info.Status.InternalValue, initialTag.Icon);
                 newThread.Position = GetCommentTextAnchor(info, chapterDeltas);
@@ -834,7 +834,7 @@ namespace SIL.XForge.Scripture.Services
                 foreach (var comm in thread.Comments)
                 {
                     SyncUser syncUser = FindOrCreateSyncUser(comm.User, syncUsers);
-                    CommentTag commentIconTag = this.GetCommentTag(thread, comm, commentTags);
+                    CommentTag commentIconTag = GetCommentTag(thread, comm, commentTags);
                     newThread.AddChange(CreateNoteFromComment(_guidService.NewObjectId(), comm, commentIconTag, syncUser),
                         ChangeType.Added);
                 }
