@@ -774,7 +774,7 @@ namespace SIL.XForge.Scripture.Services
                     if (matchedComment != null)
                     {
                         matchedCommentIds.Add(matchedComment.Id);
-                        CommentTag commentIconTag = this.GetCommentTag(existingThread, matchedComment, commentTags);
+                        CommentTag commentIconTag = GetCommentTag(existingThread, matchedComment, commentTags);
                         ChangeType changeType = GetCommentChangeType(matchedComment, note, commentIconTag);
                         if (changeType != ChangeType.None)
                         {
@@ -1576,7 +1576,7 @@ namespace SIL.XForge.Scripture.Services
             Paratext.Data.ProjectComments.Comment comment, CommentTags commentTags)
         {
             // Use the main to do tag as default
-            CommentTag tagInUse = commentTags.Get(1);
+            CommentTag tagInUse = commentTags.Get(CommentTag.toDoTagId);
             CommentTag lastTodoTagUsed = null;
             List<Paratext.Data.ProjectComments.Comment> threadComments = thread.Comments.ToList();
             foreach (Paratext.Data.ProjectComments.Comment threadComment in threadComments)
@@ -1588,11 +1588,12 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 // When checking the tag for the thread and a conflict is found then use that
-                if (threadComment.Type == NoteType.Conflict && comment == null)
-                    return CommentTag.ConflictTag;
-
                 if (comment == null)
+                {
+                    if (threadComment.Type == NoteType.Conflict)
+                        return CommentTag.ConflictTag;
                     continue;
+                }
 
                 if (threadComment.Id == comment.Id)
                 {

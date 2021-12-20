@@ -21,7 +21,7 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
   }
 
   get iconResolved(): NoteThreadIcon {
-    let iconTag = this.getResolvedTag(this.getTag());
+    const iconTag = this.getResolvedTag(this.getTag());
     return this.iconProperties(iconTag);
   }
 
