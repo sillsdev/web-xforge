@@ -111,13 +111,16 @@ export class NoteDialogComponent implements OnInit {
     return this.data.threadId;
   }
 
-  parseNote(content: string) {
+  parseNote(content: string | undefined) {
+    if (content == null) {
+      return '';
+    }
     const replace = new Map<RegExp, string>();
     replace.set(/<bold>(.*)<\/bold>/gim, '<b>$1</b>'); // Bold style
     replace.set(/<italic>(.*)<\/italic>/gim, '<i>$1</i>'); // Italic style
     replace.set(/<p>(.*)<\/p>/gim, '$1<br />'); // Turn paragraphs into line breaks
     replace.set(/<(?!i|b|br|\/)(.*?>)(.*?)<\/(.*?)>/gim, '$2'); // Strip out any tags that don't match the above replacements
-    replace.forEach((replacement, regEx) => (content = content.replace(regEx, replacement)));
+    replace.forEach((replacement, regEx) => (content = content!.replace(regEx, replacement)));
     return content;
   }
 
@@ -131,12 +134,12 @@ export class NoteDialogComponent implements OnInit {
     }
     switch (note.status) {
       case NoteStatus.Todo:
-        return this.threadDoc.icon.url;
+        return this.threadDoc.getNoteIcon(note).url;
       case NoteStatus.Done:
       case NoteStatus.Resolved:
-        return this.threadDoc.iconResolved.url;
+        return this.threadDoc.getNoteResolvedIcon(note).url;
     }
-    return '';
+    return this.threadDoc.getNoteIcon(note).url;
   }
 
   noteTitle(note: Note) {

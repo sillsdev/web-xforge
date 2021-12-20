@@ -782,9 +782,9 @@ namespace SIL.XForge.Scripture.Services
                 if (change.ThreadUpdated)
                 {
                     if (threadDoc.Data.Status != change.Status)
-                    {
                         op.Set(td => td.Status, change.Status);
-                    }
+                    if (threadDoc.Data.TagIcon != change.TagIcon)
+                        op.Set(td => td.TagIcon, change.TagIcon);
                 }
                 // Update content for updated notes
                 foreach (Note updated in change.NotesUpdated)
@@ -796,6 +796,8 @@ namespace SIL.XForge.Scripture.Services
                             op.Set(td => td.Notes[index].Content, updated.Content);
                         if (threadDoc.Data.Notes[index].Status != updated.Status)
                             op.Set(td => td.Notes[index].Status, updated.Status);
+                        if (threadDoc.Data.Notes[index].TagIcon != updated.TagIcon)
+                            op.Set(td => td.Notes[index].TagIcon, updated.TagIcon);
                     }
                     else
                     {

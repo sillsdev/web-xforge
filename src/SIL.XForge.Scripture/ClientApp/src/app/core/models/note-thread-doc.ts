@@ -21,11 +21,16 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
   }
 
   get iconResolved(): NoteThreadIcon {
-    let iconTag = this.getTag();
-    if (iconTag !== '') {
-      // Resolved tags use 5 in the filename instead of the current number suffix
-      iconTag = iconTag.slice(0, iconTag.length - 1) + '5';
-    }
+    const iconTag = this.getResolvedTag(this.getTag());
+    return this.iconProperties(iconTag);
+  }
+
+  getNoteIcon(note: Note): NoteThreadIcon {
+    return this.iconProperties(note.tagIcon ? note.tagIcon : '');
+  }
+
+  getNoteResolvedIcon(note: Note): NoteThreadIcon {
+    const iconTag = this.getResolvedTag(note.tagIcon ? note.tagIcon : '');
     return this.iconProperties(iconTag);
   }
 
@@ -43,7 +48,18 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
     return iconTag;
   }
 
+  private getResolvedTag(iconTag: string = ''): string {
+    if (iconTag !== '') {
+      // Resolved tags use 5 in the filename instead of the current number suffix
+      iconTag = iconTag.slice(0, iconTag.length - 1) + '5';
+    }
+    return iconTag;
+  }
+
   private iconProperties(iconTag: string): NoteThreadIcon {
+    if (iconTag === '') {
+      return { cssVar: '', url: '' };
+    }
     const iconUrl = `/assets/icons/TagIcons/${iconTag}.png`;
     return { cssVar: `--icon-file: url(${iconUrl});`, url: iconUrl };
   }

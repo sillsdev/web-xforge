@@ -66,7 +66,7 @@ describe('NoteDialogComponent', () => {
 
   it('should style notes', fakeAsync(() => {
     env = new TestEnvironment();
-    const tests: { text: string; expected: string }[] = [
+    const tests: { text: string | undefined; expected: string }[] = [
       {
         text: 'turn <bold>text bold</bold>',
         expected: 'turn <b>text bold</b>'
@@ -82,6 +82,14 @@ describe('NoteDialogComponent', () => {
       {
         text: 'check <unknown id="anything">unknown</unknown> <italic>text</italic>',
         expected: 'check unknown <i>text</i>'
+      },
+      {
+        text: '',
+        expected: ''
+      },
+      {
+        text: undefined,
+        expected: ''
       }
     ];
     tests.forEach(test => {
@@ -98,24 +106,34 @@ describe('NoteDialogComponent', () => {
     env = new TestEnvironment();
 
     // To do
-    expect(env.notes[0].nativeElement.querySelector('img').getAttribute('src')).toEqual(
-      '/assets/icons/TagIcons/flag02.png'
-    );
-    expect(env.notes[0].nativeElement.querySelector('img').getAttribute('title')).toEqual('To do');
+    expect(env.notes[0].nativeElement.querySelector('img').getAttribute('src'))
+      .withContext('[n0] to do - src')
+      .toEqual('/assets/icons/TagIcons/flag02.png');
+    expect(env.notes[0].nativeElement.querySelector('img').getAttribute('title'))
+      .withContext('[n0] to do - title')
+      .toEqual('To do');
 
     // Resolved
-    expect(env.notes[1].nativeElement.querySelector('img').getAttribute('src')).toEqual(
-      '/assets/icons/TagIcons/flag05.png'
-    );
-    expect(env.notes[1].nativeElement.querySelector('img').getAttribute('title')).toEqual('Resolved');
-    expect(env.notes[3].nativeElement.querySelector('img').getAttribute('src')).toEqual(
-      '/assets/icons/TagIcons/flag05.png'
-    );
-    expect(env.notes[3].nativeElement.querySelector('img').getAttribute('title')).toEqual('Resolved');
+    expect(env.notes[1].nativeElement.querySelector('img').getAttribute('src'))
+      .withContext('[n1] resolved - src')
+      .toEqual('/assets/icons/TagIcons/flag05.png');
+    expect(env.notes[1].nativeElement.querySelector('img').getAttribute('title'))
+      .withContext('[n1] resolved - title')
+      .toEqual('Resolved');
+    expect(env.notes[3].nativeElement.querySelector('img').getAttribute('src'))
+      .withContext('[n3] resolved - src')
+      .toEqual('/assets/icons/TagIcons/flag05.png');
+    expect(env.notes[3].nativeElement.querySelector('img').getAttribute('title'))
+      .withContext('[n3] resolved - title')
+      .toEqual('Resolved');
 
     // Blank/unspecified
-    expect(env.notes[2].nativeElement.querySelector('img').getAttribute('src')).toEqual('');
-    expect(env.notes[2].nativeElement.querySelector('img').getAttribute('title')).toEqual('');
+    expect(env.notes[2].nativeElement.querySelector('img').getAttribute('src'))
+      .withContext('[n2] blank - src')
+      .toEqual('');
+    expect(env.notes[2].nativeElement.querySelector('img').getAttribute('title'))
+      .withContext('[n2] blank - title')
+      .toEqual('');
   }));
 
   it('should gracefully return when data not ready', fakeAsync(() => {
@@ -223,6 +241,7 @@ class TestEnvironment {
         deleted: false,
         ownerRef: 'user01',
         status: NoteStatus.Todo,
+        tagIcon: 'flag02',
         dateCreated: '',
         dateModified: ''
       },
@@ -234,6 +253,7 @@ class TestEnvironment {
         deleted: false,
         ownerRef: 'user01',
         status: NoteStatus.Resolved,
+        tagIcon: 'flag02',
         dateCreated: '',
         dateModified: ''
       },
@@ -245,6 +265,7 @@ class TestEnvironment {
         deleted: true,
         ownerRef: 'user01',
         status: NoteStatus.Todo,
+        tagIcon: 'flag02',
         dateCreated: '',
         dateModified: ''
       },
@@ -267,6 +288,7 @@ class TestEnvironment {
         deleted: false,
         ownerRef: 'user01',
         status: NoteStatus.Done,
+        tagIcon: 'flag02',
         dateCreated: '',
         dateModified: ''
       }
