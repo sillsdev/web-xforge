@@ -112,13 +112,6 @@ export class NoteDialogComponent implements OnInit {
     return this.data.threadId;
   }
 
-  noteContent(note: Note): string {
-    if (note.reattached != null) {
-      return this.reattachedText(note);
-    }
-    return this.parseNote(note.content);
-  }
-
   parseNote(content: string | undefined): string {
     const replace = new Map<RegExp, string>();
     replace.set(/<bold>(.*)<\/bold>/gim, '<b>$1</b>'); // Bold style
@@ -167,7 +160,6 @@ export class NoteDialogComponent implements OnInit {
     const contextBefore: string = reattachedParts[3];
     const contextAfter: string = reattachedParts[4];
     const reattachedText: string = contextBefore + '<b>' + selectedText + '</b>' + contextAfter;
-
     return reattachedText;
   }
 
