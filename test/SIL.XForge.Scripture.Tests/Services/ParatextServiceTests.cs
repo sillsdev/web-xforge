@@ -829,7 +829,7 @@ namespace SIL.XForge.Scripture.Services
                     { new SyncUser { Id = "syncuser01", ParatextUsername = env.Username01 } }
                     .ToDictionary(u => u.ParatextUsername);
                 Dictionary<int, ChapterDelta> chapterDeltas =
-                    env.GetChapterDeltasByBookAsync(env.Project01, 40, 1, "Context before ", "Text selected");
+                    env.GetChapterDeltasByBook(env.Project01, 40, 1, "Context before ", "Text selected");
                 IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
                     userSecret, ptProjectId, 40, noteThreadDocs, chapterDeltas, syncUsers);
 
@@ -909,7 +909,7 @@ namespace SIL.XForge.Scripture.Services
             env.AddTextDocs(40, 1, 6, "Context before ", "Text selected");
             // The text doc is set up so that verse 7 has unique text that we reattach to
             string verseStr = "MAT 1:7";
-            ReattachedThreadInfo rnt = env.GetReattachedThreadInfo(verseStr);
+            ReattachedThreadInfo rti = env.GetReattachedThreadInfo(verseStr);
 
             env.AddNoteThreadData(new[]
             {
@@ -949,8 +949,8 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(change1.NotesAdded.Single().Reattached, Is.Not.Null);
                 TextAnchor expectedAnchor = new TextAnchor
                 {
-                    Start = rnt.contextBefore.Length,
-                    Length = rnt.selectedText.Length
+                    Start = rti.contextBefore.Length,
+                    Length = rti.selectedText.Length
                 };
                 Assert.That(change1.Position, Is.EqualTo(expectedAnchor));
 
@@ -970,6 +970,9 @@ namespace SIL.XForge.Scripture.Services
                 NoteThreadChange change5 = changes.Single(c => c.ThreadId == "thread5");
                 Assert.That(change5.NoteIdsRemoved.Count, Is.EqualTo(1));
                 Assert.That(change5.NoteIdsRemoved[0], Is.EqualTo("reattachedthread5"));
+                // The context of the original note thread is not what the thread was reattached and un-reattached to
+                Assert.That(change5.ContextBefore, Is.Not.EqualTo(rti.contextBefore));
+                Assert.That(change5.SelectedText, Is.Not.EqualTo(rti.selectedText));
                 TextAnchor originalAnchor = new TextAnchor
                 {
                     Start = change5.ContextBefore.Length,

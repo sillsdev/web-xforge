@@ -17,7 +17,7 @@
     <div class="notes">
       <div *ngFor="let note of notes" class="note">
         <div class="content">
-          <div *ngIf="note.reattached">{{ reattachedVerse(note) }}</div>
+          <div *ngIf="note.reattached" class="verse-reattached">{{ reattachedVerse(note) }}</div>
           <div *ngIf="note.reattached" class="text" [innerHTML]="reattachedText(note)"></div>
           <div class="note-content" [innerHTML]="parseNote(note.content)"></div>
         </div>

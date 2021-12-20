@@ -143,6 +143,7 @@ describe('NoteDialogComponent', () => {
     const expectedSrc = '/assets/icons/TagIcons/ReattachNote.png';
     const reattachNote = env.notes[4].nativeElement as HTMLElement;
     expect(reattachNote.querySelector('.content .text')!.textContent).toContain(verseText);
+    expect(reattachNote.querySelector('.content .verse-reattached')!.textContent).toContain('Matthew 1:4');
     expect(reattachNote.querySelector('img')?.getAttribute('src')).toEqual(expectedSrc);
     expect(reattachNote.querySelector('img')?.getAttribute('title')).toEqual('Note reattached');
   }));
@@ -154,6 +155,7 @@ describe('NoteDialogComponent', () => {
     const expectedSrc = '/assets/icons/TagIcons/flag02.png';
     const reattachNote = env.notes[4].nativeElement as HTMLElement;
     expect(reattachNote.querySelector('.content .text')!.textContent).toContain(verseText);
+    expect(reattachNote.querySelector('.content .verse-reattached')!.textContent).toContain('Matthew 1:4');
     expect(reattachNote.querySelector('.content .note-content')!.textContent).toContain(content);
     expect(reattachNote.querySelector('img')?.getAttribute('src')).toEqual(expectedSrc);
     expect(reattachNote.querySelector('img')?.getAttribute('title')).toEqual('To do');
@@ -332,6 +334,7 @@ class TestEnvironment {
         deleted: false,
         ownerRef: 'user01',
         status: reattachedContent === '' ? NoteStatus.Unspecified : NoteStatus.Todo,
+        tagIcon: reattachedContent === '' ? undefined : 'flag02',
         dateCreated: '',
         dateModified: '',
         reattached: TestEnvironment.reattached

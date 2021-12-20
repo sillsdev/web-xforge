@@ -755,8 +755,9 @@ namespace SIL.XForge.Scripture.Services
             {
                 List<string> matchedCommentIds = new List<string>();
                 NoteThreadChange threadChange = new NoteThreadChange(threadDoc.Data.DataId,
-                    threadDoc.Data.VerseRef.ToString(), threadDoc.Data.OriginalSelectedText, threadDoc.Data.OriginalContextBefore,
-                    threadDoc.Data.OriginalContextAfter, threadDoc.Data.Status, threadDoc.Data.TagIcon);
+                    threadDoc.Data.VerseRef.ToString(), threadDoc.Data.OriginalSelectedText,
+                    threadDoc.Data.OriginalContextBefore, threadDoc.Data.OriginalContextAfter, threadDoc.Data.Status,
+                    threadDoc.Data.TagIcon);
                 // Find the corresponding comment thread
                 var existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
                 if (existingThread == null)
@@ -1523,14 +1524,16 @@ namespace SIL.XForge.Scripture.Services
             return changes;
         }
 
-        private ChangeType GetCommentChangeType(Paratext.Data.ProjectComments.Comment comment, Note note, CommentTag commentTag)
+        private ChangeType GetCommentChangeType(Paratext.Data.ProjectComments.Comment comment, Note note,
+            CommentTag commentTag)
         {
             if (comment.Deleted != note.Deleted)
                 return ChangeType.Deleted;
             // Check if fields have been updated in Paratext
             bool statusChanged = comment.Status.InternalValue != note.Status;
             bool contentChanged = comment.Contents?.InnerXml != note.Content;
-            if (contentChanged || statusChanged)
+            bool tagChanged = commentTag?.Icon != note.TagIcon;
+            if (contentChanged || statusChanged || tagChanged)
                 return ChangeType.Updated;
             return ChangeType.None;
         }

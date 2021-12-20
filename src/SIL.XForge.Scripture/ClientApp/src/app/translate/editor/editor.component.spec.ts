@@ -1233,6 +1233,7 @@ describe('EditorComponent', () => {
     it('shows reattached note in updated location', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
+      // active position of thread04 when reattached to verse 4
       const position: TextAnchor = { start: 19, length: 5 };
       // reattach thread04 from MAT 1:3 to MAT 1:4
       env.reattachNote('project01', 'thread04', 'MAT 1:4', position);
