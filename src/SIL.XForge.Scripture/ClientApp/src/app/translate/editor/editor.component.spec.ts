@@ -1818,8 +1818,48 @@ describe('EditorComponent', () => {
 
       // SUT 2
       env.wait();
-      expect(env.component.target!.getSegmentText('verse_1_1')).toEqual('target: c' + 'def' + 'hapter 1, verse 1.');
+      expect(env.component.target!.getSegmentText('verse_1_1')).toEqual('target: c' + insert + 'hapter 1, verse 1.');
       expect(noteThread1Doc.data!.position).toEqual(originalNoteThread1TextPos);
+
+      // simulate text changes just before a note embed
+      remoteEditPositionAfterNote = -1;
+      noteCountBeforePosition = 0;
+      // target: |$cdefhapter 1, verse 1.
+      remoteEditTextPos = env.getRemoteEditPosition(notePosition, remoteEditPositionAfterNote, noteCountBeforePosition);
+      insert = 'before';
+      deltaOps = [{ retain: remoteEditTextPos }, { insert: insert }];
+      const insertDelta = new Delta(deltaOps);
+      textDoc.submit(insertDelta);
+      const note1Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      const anchor: TextAnchor = { start: 8 + insert.length, length: 12 };
+      note1Doc.submitJson0Op(op => op.set(nt => nt.position, anchor));
+
+      // SUT 3
+      env.wait();
+      expect(env.component.target!.getSegmentText('verse_1_1')).toEqual('target: ' + insert + 'cdefhapter 1, verse 1.');
+      const range: RangeStatic = env.component.target!.getSegmentRange('verse_1_1')!;
+      expect(env.getNoteThreadEditorPosition('thread01')).toEqual(range.index + anchor.start);
+      const contents = env.targetEditor.getContents(range.index, range.length);
+      expect(contents.ops![0].insert).toEqual('target: ' + insert);
+      expect(contents.ops![0].attributes!['text-anchor']).toBeUndefined();
+
+      // simulate text changes just after a note embed
+      notePosition = env.getNoteThreadEditorPosition('thread01');
+      remoteEditPositionAfterNote = 0;
+      noteCountBeforePosition = 1;
+      // target: before$|cdefhapter 1, verse 1.
+      remoteEditTextPos = env.getRemoteEditPosition(notePosition, remoteEditPositionAfterNote, noteCountBeforePosition);
+      insert = 'ghi';
+      deltaOps = [{ retain: remoteEditTextPos }, { insert: insert }];
+      const insertAfterNoteDelta = new Delta(deltaOps);
+      textDoc.submit(insertAfterNoteDelta);
+
+      // SUT 4
+      env.wait();
+      expect(env.getNoteThreadEditorPosition('thread01')).toEqual(notePosition);
+      expect(env.component.target!.getSegmentText('verse_1_1')).toEqual(
+        'target: before' + insert + 'cdefhapter 1, verse 1.'
+      );
       env.dispose();
     }));
 

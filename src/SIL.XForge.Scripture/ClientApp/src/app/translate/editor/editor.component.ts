@@ -43,7 +43,7 @@ import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
-import { Delta } from '../../core/models/text-doc';
+import { Delta, TextDoc } from '../../core/models/text-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
@@ -105,6 +105,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private lastShownSuggestions: Suggestion[] = [];
   private readonly segmentUpdated$: Subject<void>;
   private trainingSub?: Subscription;
+  private remoteChangeSub?: Subscription;
   private projectDataChangesSub?: Subscription;
   private trainingProgressClosed: boolean = false;
   private trainingCompletedTimeout: any;
@@ -412,6 +413,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (this.projectDataChangesSub != null) {
       this.projectDataChangesSub.unsubscribe();
     }
+    if (this.remoteChangeSub != null) {
+      this.remoteChangeSub.unsubscribe();
+    }
     if (this.metricsSession != null) {
       this.metricsSession.dispose();
     }
@@ -533,7 +537,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  onTextLoaded(textType: TextType): void {
+  onTextLoaded(textType: TextType, textDoc?: TextDoc): void {
     switch (textType) {
       case 'source':
         this.sourceLoaded = true;
@@ -542,6 +546,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.targetLoaded = true;
         this.toggleNoteThreadVerseRefs$.next();
         this.shouldNoteThreadsRespondToEdits = true;
+        this.remoteChangeSub?.unsubscribe();
+        if (textDoc != null) {
+          this.remoteChangeSub = this.subscribe(textDoc.remoteChanges$, ops =>
+            Promise.resolve().then(() => this.refreshNoteEmbedPositions(ops as DeltaStatic))
+          );
+        }
         break;
     }
     if ((!this.hasSource || this.sourceLoaded) && this.targetLoaded) {
@@ -1265,6 +1275,38 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         nt.data.verseRef.chapterNum === this.chapter &&
         nt.data.notes.length > 0
     );
+  }
+
+  private refreshNoteEmbedPositions(delta: DeltaStatic): void {
+    if (delta.ops == null || this.target == null || this.noteThreadQuery?.docs == null) {
+      return;
+    }
+
+    const embedsToRefresh: string[] = [];
+    let insertLength: number = 0;
+    for (const op of delta.ops) {
+      let insertionPos = 0;
+      if (op.retain != null) {
+        insertionPos = op.retain;
+        // Find all embeds that exist at the insertion point
+        for (const [embedId, pos] of this.target.embeddedElements.entries()) {
+          if (insertionPos > pos) {
+            // an embed exists before the insertion position, so the true position of the insertion is incremented
+          } else if (insertionPos == pos) {
+            embedsToRefresh.push(embedId);
+          } else {
+            break;
+          }
+          insertionPos++;
+        }
+      } else if (op.insert != null) {
+        insertLength = typeof op.insert === 'string' ? op.insert.length : 1;
+      }
+    }
+    // remove and redraw embeds only if the remote user has inserted something
+    if (insertLength > 0) {
+      this.target.removeEmbeddedElements(embedsToRefresh.map(e => [e, insertLength]));
+    }
   }
 
   /** Re-create any note embeds that have been deleted by the user. */
