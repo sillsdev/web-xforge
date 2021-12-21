@@ -17,6 +17,7 @@ import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils
 import { Observable, of, Subject } from 'rxjs';
 import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
+import { CsvService } from 'xforge-common/csv-service.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { PwaService } from 'xforge-common/pwa.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -37,6 +38,7 @@ const mockedAuthService = mock(AuthService);
 const mockedCookieService = mock(CookieService);
 const mockedMdcDialog = mock(MdcDialog);
 const mockedPwaService = mock(PwaService);
+const mockedCsvService = mock(CsvService);
 
 describe('ImportQuestionsDialogComponent', () => {
   configureTestingModule(() => ({
@@ -46,7 +48,8 @@ describe('ImportQuestionsDialogComponent', () => {
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: MdcDialog, useMock: mockedMdcDialog },
-      { provide: PwaService, useMock: mockedPwaService }
+      { provide: PwaService, useMock: mockedPwaService },
+      { provide: CsvService, useMock: mockedCsvService }
     ]
   }));
 
@@ -305,25 +308,23 @@ describe('ImportQuestionsDialogComponent', () => {
     verify(mockedProjectService.createQuestion('project01', anything(), undefined, undefined)).once();
   }));
 
-  it('can import from a CSV file', async () => {
+  it('can import from a CSV file', fakeAsync(() => {
     const env = new TestEnvironment({ fakeAsync: false });
 
-    const genQuestions = 'Genesis 1:1,Question for Genesis 1:1';
-    const matQuestions = Array.from(Array(100), (_, i) => `MAT 1:${i + 1},Question for Matthew 1:${i + 1}`).join('\n');
-    const file = new Blob([genQuestions + '\n' + matQuestions], { type: 'text/csv' }) as File;
+    const genQuestions = [['Genesis 1:1', 'Question for Genesis 1:1']];
+    const matQuestions = Array.from(Array(100), (_, i) => [`MAT 1:${i + 1}`, `Question for Matthew 1:${i + 1}`]);
 
-    await env.component.fileSelected(file);
+    when(mockedCsvService.parse(anything())).thenResolve(genQuestions.concat(matQuestions));
 
+    env.component.fileSelected({} as File);
+    tick();
     env.fixture.detectChanges();
+
     expect(env.questionReferences.length).toBe(1);
     expect(env.questionReferences[0].textContent).toEqual('Genesis 1:1');
-    env.continueImportButton.click();
-    env.fixture.detectChanges();
-    env.cancelButton.click();
-    // Clean up the overlay container. Necessary because we can't do tick() so it's hard to clean up automatically.
-    // Not sure whether this is a good idea, but it stops the error message saying it wasn't cleaned up.
-    env.overlayContainerElement.innerHTML = '';
-  });
+    env.click(env.continueImportButton);
+    env.click(env.cancelButton);
+  }));
 
   it('informs when there are no questions', fakeAsync(() => {
     const env = new TestEnvironment({ transceleratorQuestions: [] });
