@@ -10,11 +10,11 @@ import { first } from 'rxjs/operators';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { objectId } from 'xforge-common/utils';
-import Papa from 'papaparse';
 import { TranslocoService } from '@ngneat/transloco';
 import { I18nService } from 'xforge-common/i18n.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { PwaService } from 'xforge-common/pwa.service';
+import { CsvParser } from 'xforge-common/csv-parser.service';
 import { environment } from '../../../environments/environment';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
@@ -107,6 +107,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
     private readonly transloco: TranslocoService,
     private readonly mdcDialog: MdcDialog,
     private readonly pwaService: PwaService,
+    private readonly csvParser: CsvParser,
     readonly i18n: I18nService,
     readonly urls: ExternalUrlService
   ) {
@@ -378,12 +379,12 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
   async fileSelected(file: File) {
     this.loading = true;
 
-    const result = await new Promise<Papa.ParseResult<string[]>>(resolve => Papa.parse(file, { complete: resolve }));
+    const result = await this.csvParser.parse(file);
 
     let invalidRows: string[][] = [];
     const questions: SourceQuestion[] = [];
 
-    for (const [index, row] of result.data.entries()) {
+    for (const [index, row] of result.entries()) {
       // skip rows where every cell is the empty string
       if (!row.some(cell => cell !== '')) {
         continue;
