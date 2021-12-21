@@ -2,10 +2,11 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { sortBy } from 'lodash-es';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
+import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoteStatus } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { translate } from '@ngneat/transloco';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -111,17 +112,14 @@ export class NoteDialogComponent implements OnInit {
     return this.data.threadId;
   }
 
-  parseNote(content: string | undefined) {
-    if (content == null) {
-      return '';
-    }
+  parseNote(content: string | undefined): string {
     const replace = new Map<RegExp, string>();
     replace.set(/<bold>(.*)<\/bold>/gim, '<b>$1</b>'); // Bold style
     replace.set(/<italic>(.*)<\/italic>/gim, '<i>$1</i>'); // Italic style
     replace.set(/<p>(.*)<\/p>/gim, '$1<br />'); // Turn paragraphs into line breaks
     replace.set(/<(?!i|b|br|\/)(.*?>)(.*?)<\/(.*?)>/gim, '$2'); // Strip out any tags that don't match the above replacements
-    replace.forEach((replacement, regEx) => (content = content!.replace(regEx, replacement)));
-    return content;
+    replace.forEach((replacement, regEx) => (content = content?.replace(regEx, replacement)));
+    return content ?? '';
   }
 
   toggleSegmentText(): void {
@@ -139,7 +137,7 @@ export class NoteDialogComponent implements OnInit {
       case NoteStatus.Resolved:
         return this.threadDoc.getNoteResolvedIcon(note).url;
     }
-    return this.threadDoc.getNoteIcon(note).url;
+    return note.reattached != null ? this.threadDoc.iconReattached.url : this.threadDoc.getNoteIcon(note).url;
   }
 
   noteTitle(note: Note) {
@@ -150,6 +148,30 @@ export class NoteDialogComponent implements OnInit {
       case NoteStatus.Resolved:
         return translate('note_dialog.status_resolved');
     }
-    return '';
+    return note.reattached != null ? translate('note_dialog.note_reattached') : '';
+  }
+
+  reattachedText(note: Note): string {
+    if (note.reattached == null) {
+      return '';
+    }
+    const reattachedParts: string[] = note.reattached.split(REATTACH_SEPARATOR);
+    const selectedText: string = reattachedParts[1];
+    const contextBefore: string = reattachedParts[3];
+    const contextAfter: string = reattachedParts[4];
+    const reattachedText: string = contextBefore + '<b>' + selectedText + '</b>' + contextAfter;
+    return reattachedText;
+  }
+
+  reattachedVerse(note: Note): string {
+    if (note.reattached == null) {
+      return '';
+    }
+    const reattachedParts: string[] = note.reattached.split(REATTACH_SEPARATOR);
+    const verseStr: string = reattachedParts[0];
+    const vref: VerseRef = VerseRef.parse(verseStr);
+    const verseRef: string = this.i18n.localizeReference(vref);
+    const reattached: string = translate('note_dialog.reattached');
+    return `${verseRef} ${reattached}`;
   }
 }

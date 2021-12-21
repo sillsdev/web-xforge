@@ -21,6 +21,7 @@ import { configureTestingModule, matDialogCloseDelay, TestTranslocoModule } from
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
@@ -136,10 +137,35 @@ describe('NoteDialogComponent', () => {
       .toEqual('');
   }));
 
+  it('should show notes for reattachment', fakeAsync(() => {
+    env = new TestEnvironment({ reattachedContent: '' });
+    const verseText = 'before selection reattached text after selection';
+    const expectedSrc = '/assets/icons/TagIcons/ReattachNote.png';
+    const reattachNote = env.notes[4].nativeElement as HTMLElement;
+    expect(reattachNote.querySelector('.content .text')!.textContent).toContain(verseText);
+    expect(reattachNote.querySelector('.content .verse-reattached')!.textContent).toContain('Matthew 1:4');
+    expect(reattachNote.querySelector('img')?.getAttribute('src')).toEqual(expectedSrc);
+    expect(reattachNote.querySelector('img')?.getAttribute('title')).toEqual('Note reattached');
+  }));
+
+  it('reattached note with content', fakeAsync(() => {
+    const content: string = 'Reattached content text.';
+    env = new TestEnvironment({ reattachedContent: content });
+    const verseText = 'before selection reattached text after selection';
+    const expectedSrc = '/assets/icons/TagIcons/flag02.png';
+    const reattachNote = env.notes[4].nativeElement as HTMLElement;
+    expect(reattachNote.querySelector('.content .text')!.textContent).toContain(verseText);
+    expect(reattachNote.querySelector('.content .verse-reattached')!.textContent).toContain('Matthew 1:4');
+    expect(reattachNote.querySelector('.content .note-content')!.textContent).toContain(content);
+    expect(reattachNote.querySelector('img')?.getAttribute('src')).toEqual(expectedSrc);
+    expect(reattachNote.querySelector('img')?.getAttribute('title')).toEqual('To do');
+  }));
+
   it('should gracefully return when data not ready', fakeAsync(() => {
     env = new TestEnvironment({ includeSnapshots: false });
     expect(env.component.segmentText).toEqual('');
-    expect(env.component.noteIcon(TestEnvironment.noteThread[0])).toEqual('');
+    const noteThread: NoteThread = TestEnvironment.getNoteThread();
+    expect(env.component.noteIcon(noteThread[0])).toEqual('');
   }));
 
   it('uses rtl direction with rtl project', fakeAsync(() => {
@@ -185,6 +211,7 @@ class DialogTestModule {}
 interface TestEnvironmentConstructorArgs {
   includeSnapshots?: boolean;
   isRightToLeftProject?: boolean;
+  reattachedContent?: string;
 }
 
 class TestEnvironment {
@@ -221,79 +248,100 @@ class TestEnvironment {
       user01: SFProjectRole.ParatextAdministrator
     }
   };
-  static noteThread: NoteThread = {
-    originalContextBefore: 'before selection ',
-    originalContextAfter: ' after selection',
-    originalSelectedText: 'selected text',
-    dataId: 'thread01',
-    ownerRef: 'user01',
-    position: { start: 1, length: 1 },
-    projectRef: TestEnvironment.PROJECT01,
-    tagIcon: 'flag02',
-    verseRef: { bookNum: 40, chapterNum: 1, verseNum: 7 },
-    status: NoteStatus.Todo,
-    notes: [
-      {
-        dataId: 'note01',
+  static reattached: string = ['MAT 1:4', 'reattached text', '17', 'before selection ', ' after selection'].join(
+    REATTACH_SEPARATOR
+  );
+  static getNoteThread(reattachedContent?: string): NoteThread {
+    const noteThread: NoteThread = {
+      originalContextBefore: 'before selection ',
+      originalContextAfter: ' after selection',
+      originalSelectedText: 'selected text',
+      dataId: 'thread01',
+      ownerRef: 'user01',
+      position: { start: 1, length: 1 },
+      projectRef: TestEnvironment.PROJECT01,
+      tagIcon: 'flag02',
+      verseRef: { bookNum: 40, chapterNum: 1, verseNum: 7 },
+      status: NoteStatus.Todo,
+      notes: [
+        {
+          dataId: 'note01',
+          threadId: 'thread01',
+          content: 'note',
+          extUserId: 'user01',
+          deleted: false,
+          ownerRef: 'user01',
+          status: NoteStatus.Todo,
+          tagIcon: 'flag02',
+          dateCreated: '',
+          dateModified: ''
+        },
+        {
+          dataId: 'note02',
+          threadId: 'thread01',
+          content: 'note02',
+          extUserId: 'user01',
+          deleted: false,
+          ownerRef: 'user01',
+          status: NoteStatus.Resolved,
+          tagIcon: 'flag02',
+          dateCreated: '',
+          dateModified: ''
+        },
+        {
+          dataId: 'note03',
+          threadId: 'thread01',
+          content: 'note03',
+          extUserId: 'user01',
+          deleted: true,
+          ownerRef: 'user01',
+          status: NoteStatus.Todo,
+          tagIcon: 'flag02',
+          dateCreated: '',
+          dateModified: ''
+        },
+        {
+          dataId: 'note04',
+          threadId: 'thread01',
+          content: 'note04',
+          extUserId: 'user01',
+          deleted: false,
+          ownerRef: 'user01',
+          status: NoteStatus.Unspecified,
+          dateCreated: '',
+          dateModified: ''
+        },
+        {
+          dataId: 'note05',
+          threadId: 'thread01',
+          content: 'note05',
+          extUserId: 'user01',
+          deleted: false,
+          ownerRef: 'user01',
+          status: NoteStatus.Done,
+          tagIcon: 'flag02',
+          dateCreated: '',
+          dateModified: ''
+        }
+      ]
+    };
+    if (reattachedContent != null) {
+      noteThread.notes.push({
+        dataId: 'reattached01',
         threadId: 'thread01',
-        content: 'note',
+        content: reattachedContent,
         extUserId: 'user01',
         deleted: false,
         ownerRef: 'user01',
-        status: NoteStatus.Todo,
-        tagIcon: 'flag02',
+        status: reattachedContent === '' ? NoteStatus.Unspecified : NoteStatus.Todo,
+        tagIcon: reattachedContent === '' ? undefined : 'flag02',
         dateCreated: '',
-        dateModified: ''
-      },
-      {
-        dataId: 'note02',
-        threadId: 'thread01',
-        content: 'note02',
-        extUserId: 'user01',
-        deleted: false,
-        ownerRef: 'user01',
-        status: NoteStatus.Resolved,
-        tagIcon: 'flag02',
-        dateCreated: '',
-        dateModified: ''
-      },
-      {
-        dataId: 'note03',
-        threadId: 'thread01',
-        content: 'note03',
-        extUserId: 'user01',
-        deleted: true,
-        ownerRef: 'user01',
-        status: NoteStatus.Todo,
-        tagIcon: 'flag02',
-        dateCreated: '',
-        dateModified: ''
-      },
-      {
-        dataId: 'note04',
-        threadId: 'thread01',
-        content: 'note04',
-        extUserId: 'user01',
-        deleted: false,
-        ownerRef: 'user01',
-        status: NoteStatus.Unspecified,
-        dateCreated: '',
-        dateModified: ''
-      },
-      {
-        dataId: 'note05',
-        threadId: 'thread01',
-        content: 'note05',
-        extUserId: 'user01',
-        deleted: false,
-        ownerRef: 'user01',
-        status: NoteStatus.Done,
-        tagIcon: 'flag02',
-        dateCreated: '',
-        dateModified: ''
-      }
-    ]
-  };
+        dateModified: '',
+        reattached: TestEnvironment.reattached
+      });
+    }
+    return noteThread;
+  }
 
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
@@ -301,11 +349,16 @@ class TestEnvironment {
   readonly dialogRef: MatDialogRef<NoteDialogComponent>;
   readonly mockedNoteMdcDialogRef = mock(MatDialogRef);
 
-  constructor({ includeSnapshots = true, isRightToLeftProject }: TestEnvironmentConstructorArgs = {}) {
+  constructor({
+    includeSnapshots = true,
+    isRightToLeftProject,
+    reattachedContent
+  }: TestEnvironmentConstructorArgs = {}) {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
+    const noteThread: NoteThread = TestEnvironment.getNoteThread(reattachedContent);
     const configData: NoteDialogData = {
       projectId: TestEnvironment.PROJECT01,
-      threadId: TestEnvironment.noteThread.dataId
+      threadId: noteThread.dataId
     };
     TestEnvironment.testProject.isRightToLeft = isRightToLeftProject;
     this.dialogRef = TestBed.inject(MatDialog).open(NoteDialogComponent, { data: configData });
@@ -324,8 +377,8 @@ class TestEnvironment {
         type: RichText.type.name
       });
       this.realtimeService.addSnapshot<NoteThread>(NoteThreadDoc.COLLECTION, {
-        id: [TestEnvironment.PROJECT01, TestEnvironment.noteThread.dataId].join(':'),
-        data: TestEnvironment.noteThread
+        id: [TestEnvironment.PROJECT01, noteThread.dataId].join(':'),
+        data: noteThread
       });
     }
 

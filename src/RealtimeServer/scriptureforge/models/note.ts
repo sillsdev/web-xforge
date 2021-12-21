@@ -1,6 +1,8 @@
 import { Comment } from './comment';
 import { NoteStatus } from './note-thread';
 
+export const REATTACH_SEPARATOR = '\uFFFC';
+
 export interface Note extends Comment {
   threadId: string;
   content?: string;
@@ -8,4 +10,5 @@ export interface Note extends Comment {
   deleted: boolean;
   tagIcon?: string;
   status: NoteStatus;
+  reattached?: string;
 }

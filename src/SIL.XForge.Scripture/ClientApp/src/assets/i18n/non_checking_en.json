@@ -119,6 +119,8 @@
   "note_dialog": {
     "close": "Close",
     "hide_changes": "Hide changes",
+    "note_reattached": "Note reattached",
+    "reattached": "(Re-attached)",
     "show_changes": "Show changes",
     "status_resolved": "Resolved",
     "status_to_do": "To do"

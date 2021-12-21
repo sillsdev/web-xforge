@@ -22,7 +22,7 @@ import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
+import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -1227,6 +1227,27 @@ describe('EditorComponent', () => {
 
       const index = env.getNoteThreadEditorPosition('thread07');
       expect(index).toEqual(env.component.target!.getSegmentRange('verse_1_4/p_1')!.index);
+      env.dispose();
+    }));
+
+    it('shows reattached note in updated location', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      // active position of thread04 when reattached to verse 4
+      const position: TextAnchor = { start: 19, length: 5 };
+      // reattach thread04 from MAT 1:3 to MAT 1:4
+      env.reattachNote('project01', 'thread04', 'MAT 1:4', position);
+
+      // SUT
+      env.wait();
+      const range: RangeStatic = env.component.target!.getSegmentRange('verse_1_4')!;
+      const note4Position: number = env.getNoteThreadEditorPosition('thread04');
+      const note4Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread04')!;
+      const note4Anchor: TextAnchor = note4Doc.data!.position;
+      expect(note4Anchor).toEqual(position);
+      expect(note4Position).toEqual(range.index + position.start);
+      // The original note thread was on verse 3
+      expect(note4Doc.data!.verseRef.verseNum).toEqual(3);
       env.dispose();
     }));
 
@@ -2630,6 +2651,32 @@ class TestEnvironment {
         position,
         status: status
       }
+    });
+  }
+
+  reattachNote(projectId: string, threadId: string, verseStr: string, position: TextAnchor): void {
+    const noteThreadDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadId);
+    const template: Note = noteThreadDoc.data!.notes[0];
+    const verseRef: VerseRef = VerseRef.parse(verseStr);
+    const contextAfter: string = ` ${verseRef.verseNum}.`;
+    const reattachParts: string[] = [verseStr, 'verse', position.start.toString(), 'target: chapter 1, ', contextAfter];
+    const reattached: string = reattachParts.join(REATTACH_SEPARATOR);
+    const note: Note = {
+      dataId: 'reattach01',
+      threadId: template.threadId,
+      content: template.content,
+      deleted: false,
+      extUserId: '',
+      ownerRef: template.ownerRef,
+      status: NoteStatus.Unspecified,
+      dateCreated: template.dateCreated,
+      dateModified: template.dateModified,
+      reattached
+    };
+    const index: number = noteThreadDoc.data!.notes.length;
+    noteThreadDoc.submitJson0Op(op => {
+      op.set(nt => nt.position, position);
+      op.insert(nt => nt.notes, index, note);
     });
   }
 
