@@ -67,7 +67,7 @@
                 $event.isLocalUpdate
               )
             "
-            (loaded)="onTextLoaded('target')"
+            (loaded)="onTextLoaded('target', $event)"
             (focused)="targetFocused = $event"
             [highlightSegment]="targetFocused"
             [markInvalid]="true"
