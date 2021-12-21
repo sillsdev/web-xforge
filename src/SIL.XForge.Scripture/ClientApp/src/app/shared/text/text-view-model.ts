@@ -137,7 +137,7 @@ export class TextViewModel {
     if (subscribeToUpdates) {
       this.remoteChangesSub = this.textDoc.remoteChanges$.subscribe(ops => {
         const deltaWithEmbeds: DeltaStatic = this.addEmbeddedElementsToDelta(ops as DeltaStatic);
-        editor.updateContents(deltaWithEmbeds);
+        editor.updateContents(deltaWithEmbeds, 'api');
       });
     }
     this.onCreateSub = this.textDoc.create$.subscribe(() => {
