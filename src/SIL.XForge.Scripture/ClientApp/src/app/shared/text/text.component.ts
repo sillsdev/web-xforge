@@ -13,14 +13,14 @@ import { TranslocoService } from '@ngneat/transloco';
 import { clone } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import merge from 'lodash-es/merge';
-import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources } from 'quill';
+import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { fromEvent } from 'rxjs';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { getBrowserEngine } from 'xforge-common/utils';
-import { Delta, TextDocId } from '../../core/models/text-doc';
+import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { VERSE_REGEX } from '../utils';
@@ -87,8 +87,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   @Input() subscribeToUpdates = true;
   @Output() updated = new EventEmitter<TextUpdatedEvent>(true);
   @Output() segmentRefChange = new EventEmitter<string>();
-  @Output() loaded = new EventEmitter(true);
   @Output() focused = new EventEmitter<boolean>(true);
+  @Output() loaded = new EventEmitter<TextDoc>(true);
   lang: string = '';
   // only use USX formats and not default Quill formats
   readonly allowedFormats: string[] = USX_FORMATS;
@@ -199,7 +199,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private highlightMarkerHeight: number = 0;
   private _placeholder?: string;
   private displayMessage: string = '';
-
   constructor(
     private readonly projectService: SFProjectService,
     private readonly transloco: TranslocoService,
@@ -613,19 +612,42 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
   }
 
-  removeEmbeddedElements(): void {
+  removeEmbeddedElements(embedIdsWithLength?: [string, number][]): void {
     if (this.editor == null) {
       return;
     }
-    let previousEmbedIndex = -1;
+    let embedIndicesWithLength: [number, number][] = [];
+    if (embedIdsWithLength == null) {
+      embedIndicesWithLength = Array.from(this.viewModel.embeddedElements.values()).map(e => [e, 0]);
+    } else {
+      for (const [embedId, length] of embedIdsWithLength) {
+        const index: number | undefined = this.viewModel.embeddedElements.get(embedId);
+        if (index != null) {
+          embedIndicesWithLength.push([index, length]);
+        }
+      }
+    }
+
     const deleteDelta = new Delta();
-    for (const embedIndex of this.viewModel.embeddedElements.values()) {
-      // retain elements other than notes between the previous and current embed
-      if (embedIndex > previousEmbedIndex + 1) {
-        deleteDelta.retain(embedIndex - (previousEmbedIndex + 1));
+    let previousEmbedIndex = -1;
+    let textAnchorRemovalLength = 0;
+    const ops: StringMap = { 'text-anchor': false };
+    for (const [embedIndex, textAnchorLength] of embedIndicesWithLength) {
+      const lengthBetweenEmbeds: number = embedIndex - (previousEmbedIndex + 1);
+      if (lengthBetweenEmbeds > 0) {
+        // retain elements other than notes between the previous and current embed
+        if (textAnchorRemovalLength > 0) {
+          deleteDelta.retain(textAnchorRemovalLength, ops);
+        }
+        deleteDelta.retain(lengthBetweenEmbeds - textAnchorRemovalLength);
+        textAnchorRemovalLength = 0;
       }
       deleteDelta.delete(1);
       previousEmbedIndex = embedIndex;
+      textAnchorRemovalLength = Math.max(textAnchorRemovalLength, textAnchorLength);
+    }
+    if (textAnchorRemovalLength > 0) {
+      deleteDelta.retain(textAnchorRemovalLength, ops);
     }
     deleteDelta.chop();
     if (deleteDelta.ops != null && deleteDelta.ops.length > 0) {
@@ -671,7 +693,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     this.viewModel.bind(textDoc, this.subscribeToUpdates);
     this.updatePlaceholderText();
 
-    this.loaded.emit();
+    this.loaded.emit(textDoc);
     this.applyEditorStyles();
   }
 
