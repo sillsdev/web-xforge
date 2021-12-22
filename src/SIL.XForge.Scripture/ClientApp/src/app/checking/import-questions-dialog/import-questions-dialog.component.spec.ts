@@ -509,6 +509,7 @@ class TestEnvironment {
         this.mockedImportQuestionsConfirmationMdcDialogRef
       )
     );
+    when(mockedProjectService.createQuestion(anything(), anything(), anything(), anything())).thenResolve();
     this.fixture.detectChanges();
     if (options.fakeAsync !== false) {
       tick();
