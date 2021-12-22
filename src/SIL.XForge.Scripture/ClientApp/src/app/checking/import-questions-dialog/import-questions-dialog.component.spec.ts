@@ -309,20 +309,31 @@ describe('ImportQuestionsDialogComponent', () => {
   }));
 
   it('can import from a CSV file', fakeAsync(() => {
-    const env = new TestEnvironment({ fakeAsync: false });
+    const env = new TestEnvironment();
 
     const genQuestions = [['Genesis 1:1', 'Question for Genesis 1:1']];
     const matQuestions = Array.from(Array(100), (_, i) => [`MAT 1:${i + 1}`, `Question for Matthew 1:${i + 1}`]);
 
-    when(mockedCsvService.parse(anything())).thenResolve(genQuestions.concat(matQuestions));
-
-    env.component.fileSelected({} as File);
-    tick();
-    env.fixture.detectChanges();
+    env.selectFileWithContents(genQuestions.concat(matQuestions));
 
     expect(env.questionReferences.length).toBe(1);
     expect(env.questionReferences[0].textContent).toEqual('Genesis 1:1');
     env.click(env.continueImportButton);
+    env.click(env.cancelButton);
+  }));
+
+  it('does not import exact duplicate questions from a CSV file', fakeAsync(() => {
+    const question = { data: { text: 'Matthew 1:1 question', verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 } } };
+    const env = new TestEnvironment({ existingQuestions: [question as QuestionDoc] });
+
+    env.selectFileWithContents([['MAT 1:1', 'Matthew 1:1 question']]);
+
+    expect(env.questionReferences.length).toBe(1);
+    expect(env.questionReferences[0].textContent).toEqual('Matthew 1:1 question');
+    env.selectQuestion(env.questionRows[0]);
+    expect(env.footerText).toBe(
+      'Note: Some of the selected questions are exact duplicates of questions that are already part of your project. They will not be re-imported.'
+    );
     env.click(env.cancelButton);
   }));
 
@@ -452,7 +463,7 @@ class TestEnvironment {
     }
   ];
 
-  private existingQuestions: Readonly<QuestionDoc[]> = [];
+  private existingQuestions: QuestionDoc[] = [];
   private errorOnFetchQuestions: boolean;
 
   constructor(
@@ -461,8 +472,8 @@ class TestEnvironment {
       errorOnFetchQuestions?: boolean;
       editedQuestionIds?: number[];
       transceleratorQuestions?: TransceleratorQuestion[];
-      fakeAsync?: boolean;
       offline?: boolean;
+      existingQuestions?: QuestionDoc[];
     } = {}
   ) {
     this.questions = options.transceleratorQuestions || this.questions;
@@ -473,7 +484,12 @@ class TestEnvironment {
     }
 
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
-    this.simulateQuestionsAlreadyExisting(options.editedQuestionIds || []);
+    if (options.editedQuestionIds) {
+      this.simulateTransceleratorQuestionsAlreadyExisting(options.editedQuestionIds || []);
+    }
+    if (options.existingQuestions) {
+      this.existingQuestions = options.existingQuestions;
+    }
     this.setupTransceleratorQuestions();
 
     const gen: TextInfo = {
@@ -512,9 +528,7 @@ class TestEnvironment {
     );
     when(mockedProjectService.createQuestion(anything(), anything(), anything(), anything())).thenResolve();
     this.fixture.detectChanges();
-    if (options.fakeAsync !== false) {
-      tick();
-    }
+    tick();
   }
 
   get overlayContainerElement(): HTMLElement {
@@ -579,6 +593,10 @@ class TestEnvironment {
     return this.getButtonByText('Continue Import');
   }
 
+  get footerText(): string {
+    return this.overlayContainerElement.querySelector('.dialog-content-footer')?.textContent?.trim() || '';
+  }
+
   private getButtonByText(text: string): HTMLButtonElement {
     return Array.from(this.overlayContainerElement.querySelectorAll('button')).find(
       button => button.textContent!.trim().toLowerCase() === text.toLowerCase()
@@ -628,6 +646,13 @@ class TestEnvironment {
     tick();
   }
 
+  selectFileWithContents(contents: string[][]) {
+    when(mockedCsvService.parse(anything())).thenResolve(contents);
+    this.component.fileSelected({} as File);
+    tick();
+    this.fixture.detectChanges();
+  }
+
   click(element: HTMLElement) {
     element.click();
     tick();
@@ -635,11 +660,11 @@ class TestEnvironment {
     flush();
   }
 
-  private simulateQuestionsAlreadyExisting(ids: number[]): void {
-    this.existingQuestions = ids.map(id => {
+  private simulateTransceleratorQuestionsAlreadyExisting(ids: number[]): void {
+    ids.forEach(id => {
       const doc: TransceleratorQuestion = this.questions.find(question => question.id == id + '')!;
       const verse = doc.endVerse && !doc.endChapter ? doc.startVerse + '-' + doc.endVerse : doc.startVerse;
-      return {
+      this.existingQuestions.push({
         data: {
           text: doc.text + ' [before edit]',
           transceleratorQuestionId: doc.id,
@@ -649,7 +674,7 @@ class TestEnvironment {
         submitJson0Op: (_: any) => {
           this.editedTransceleratorQuestionIds.push(doc.id);
         }
-      } as QuestionDoc;
+      } as QuestionDoc);
     });
   }
 
@@ -666,7 +691,7 @@ class TestEnvironment {
         setTimeout(() => subscriber.next(), 0);
       }),
       dispose: () => {},
-      docs: this.existingQuestions
+      docs: this.existingQuestions as Readonly<QuestionDoc[]>
     } as RealtimeQuery<QuestionDoc>);
   }
 }
