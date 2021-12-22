@@ -1,5 +1,5 @@
 import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
-import { Component, ElementRef, Inject, ViewChild } from '@angular/core';
+import { Component, ElementRef, Inject, NgZone, ViewChild } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -107,6 +107,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
     private readonly transloco: TranslocoService,
     private readonly mdcDialog: MdcDialog,
     private readonly pwaService: PwaService,
+    private readonly zone: NgZone,
     readonly i18n: I18nService,
     readonly urls: ExternalUrlService
   ) {
@@ -331,7 +332,9 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
           dateModified: currentDate,
           transceleratorQuestionId: listItem.question.id
         };
-        await this.projectService.createQuestion(this.data.projectId, newQuestion, undefined, undefined);
+        await this.zone.runOutsideAngular(() =>
+          this.projectService.createQuestion(this.data.projectId, newQuestion, undefined, undefined)
+        );
       } else if (this.questionsDiffer(listItem)) {
         await listItem.sfVersionOfQuestion.submitJson0Op(op =>
           op
