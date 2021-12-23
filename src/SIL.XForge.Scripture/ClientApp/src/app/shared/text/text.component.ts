@@ -87,6 +87,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   @Output() updated = new EventEmitter<TextUpdatedEvent>(true);
   @Output() segmentRefChange = new EventEmitter<string>();
   @Output() loaded = new EventEmitter(true);
+  @Output() focused = new EventEmitter<boolean>(true);
   lang: string = '';
   // only use USX formats and not default Quill formats
   readonly allowedFormats: string[] = USX_FORMATS;
