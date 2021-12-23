@@ -34,7 +34,7 @@
           <app-text
             #source
             [isReadOnly]="true"
-            [highlightSegment]="target.hasFocus"
+            [highlightSegment]="targetFocused"
             (loaded)="onTextLoaded('source')"
             (updated)="onSourceUpdated($event.delta != null)"
             [isRightToLeft]="isSourceRightToLeft"
@@ -68,7 +68,8 @@
               )
             "
             (loaded)="onTextLoaded('target')"
-            [highlightSegment]="target.hasFocus"
+            (focused)="targetFocused = $event"
+            [highlightSegment]="targetFocused"
             [markInvalid]="true"
             [isRightToLeft]="isTargetRightToLeft"
           ></app-text>
