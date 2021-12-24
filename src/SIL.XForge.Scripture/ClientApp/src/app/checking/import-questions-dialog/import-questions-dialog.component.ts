@@ -57,7 +57,7 @@ interface DialogListItem {
   question: SourceQuestion;
   checked: boolean;
   matchesFilter: boolean;
-  sfVersionOfQuestion: QuestionDoc | null;
+  sfVersionOfQuestion?: QuestionDoc;
 }
 
 type DialogErrorState = 'update_transcelerator' | 'file_import_errors';
@@ -213,7 +213,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
     }
   }
 
-  async setUpQuestionList(questions: SourceQuestion[]) {
+  async setUpQuestionList(questions: SourceQuestion[], useQuestionIds: boolean) {
     const questionQuery = await this.promiseForQuestionDocQuery;
 
     if (!questionQuery.ready) {
@@ -224,16 +224,16 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
     questions.sort((a, b) => a.verseRef.BBBCCCVVV - b.verseRef.BBBCCCVVV);
 
     for (const question of questions.filter(q => this.data.textsByBookId[q.verseRef.book] != null)) {
-      const sfVersionOfQuestion =
-        questionQuery.docs.find(
-          doc =>
-            doc.data != null &&
-            doc.data.transceleratorQuestionId != null &&
-            doc.data.transceleratorQuestionId === question.id &&
-            // The id should be unique for a given verse, but not across different verses
-            // Transcelerator does not allow changing the reference for a question, as of 2021-03-09
-            !this.verseRefDataDiffers(doc.data.verseRef, fromVerseRef(question.verseRef))
-        ) || null;
+      // Questions imported from Transcelerator are considered duplicates if the ID and verse ref is the same. The
+      // version in SF should be updated if the text is different from the version being imported. Transcelerator does
+      // not allow changing the reference for a question, as of 2021-03-09
+      // Questions imported from a file should be skipped only if they are exactly the same as what is currently in SF.
+      const sfVersionOfQuestion: QuestionDoc | undefined = questionQuery.docs.find(
+        doc =>
+          doc.data != null &&
+          !this.verseRefDataDiffers(doc.data.verseRef, fromVerseRef(question.verseRef)) &&
+          (useQuestionIds ? doc.data.transceleratorQuestionId === question.id : doc.data.text === question.text)
+      );
 
       this.questionList.push({
         question,
@@ -371,7 +371,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
         id: q.id
       };
     });
-    await this.setUpQuestionList(sourceQuestions);
+    await this.setUpQuestionList(sourceQuestions, true);
     if (this.transceleratorOutdated) {
       this.errorState = 'update_transcelerator';
     }
@@ -413,7 +413,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
       this.invalidRows = invalidRows;
     }
 
-    await this.setUpQuestionList(questions);
+    await this.setUpQuestionList(questions, false);
     this.questionSource = 'csv_file';
     this.loading = false;
   }
