@@ -7,7 +7,8 @@
 // Find potentially problematic usages of character ids (cids) in op inserts in a text doc, which could indicate poor
 // handling of character styling.
 // This script needs ts-node and must be run from the containing directory. Setup: npm ci
-// Usage example: ./find-problem-cids.ts --server dev --color false > output.txt
+// Usage information: ./find-problem-cids.ts --help
+// Usage example: ./find-problem-cids.ts --server dev --no-color > output.txt
 // Potential problems are flagged with 'NOT EQUAL' and less significantly, 'more than one'.
 
 import * as RichText from 'rich-text';
@@ -29,13 +30,14 @@ import {
 } from './utils';
 import { Canon } from '../../src/RealtimeServer/scriptureforge/scripture-utils/canon';
 
-type ProgArgs = { color: boolean; server: string };
+type ProgArgs = { color: boolean; server: string; proj: string | undefined };
 type StyleUsage = { style: string; cid: string };
 
 /** Can look for problems with usages of character ids. */
 class ProblemCidFinder {
   server: string | undefined;
   connectionConfig: ConnectionSettings | undefined;
+  limitProj: string | undefined;
 
   constructor() {
     this.processArguments();
@@ -56,12 +58,17 @@ class ProblemCidFinder {
         requiresArg: true,
         description: 'server to connect to'
       })
+      .option('proj', {
+        type: 'string',
+        description: 'Limit to project shortName (eg ABC)'
+      })
       .strict()
       .parseSync();
     const shouldUseColor: boolean = args.color;
     useColor(shouldUseColor);
     this.server = args.server;
     this.connectionConfig = databaseConfigs.get(this.server);
+    this.limitProj = args.proj;
   }
 
   /** Examine the latest snapshot for a text, as found by project short name, book, and chapter. */
@@ -107,7 +114,10 @@ class ProblemCidFinder {
       const db: Db = client.db();
       const projectCollection: Collection<any> = db.collection('sf_projects');
       const textOperationCollection: Collection<any> = db.collection('o_texts');
-      const projectsInDB: any[] = await projectCollection.find().toArray();
+      let projectsInDB: any[] = await projectCollection.find().toArray();
+      if (this.limitProj != null) {
+        projectsInDB = projectsInDB.filter((item: any) => item.shortName === this.limitProj);
+      }
       for (const projectDoc of projectsInDB) {
         const booksInProject: any = projectDoc.texts;
         for (const book of booksInProject) {
