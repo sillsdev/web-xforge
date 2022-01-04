@@ -78,6 +78,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   trainingMessage: string = '';
   showTrainingProgress: boolean = false;
   textHeight: string = '';
+  targetFocused = false;
 
   @ViewChild('targetContainer') targetContainer?: ElementRef;
   @ViewChild('source') source?: TextComponent;
@@ -735,12 +736,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const bounds = elem.getBoundingClientRect();
     // add bottom padding
     const top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
-    if (this.target.editor != null && this.target.hasFocus) {
+    if (this.target.editor != null && this.targetFocused) {
       // reset scroll position
       this.target.editor.scrollingContainer.scrollTop = 0;
     }
     this.textHeight = `calc(100vh - ${top}px)`;
-    if (this.target.hasFocus) {
+    if (this.targetFocused) {
       setTimeout(() => {
         // reset focus, which causes Quill to scroll to the selection
         this.target!.blur();
@@ -1266,7 +1267,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.target == null ||
       this.target.segment == null ||
       this.target.editor == null ||
-      !this.target.hasFocus
+      !this.targetFocused
     ) {
       return;
     }
