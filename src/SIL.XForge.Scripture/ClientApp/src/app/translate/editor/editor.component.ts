@@ -677,7 +677,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       }
       this.projectUserConfigDoc.submitJson0Op(op => {
         for (const noteId of notesRead) {
-          op.insert(puc => puc.noteRefsRead, 0, noteId);
+          op.add(puc => puc.noteRefsRead, noteId);
         }
       });
     }

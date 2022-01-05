@@ -1266,13 +1266,22 @@ describe('EditorComponent', () => {
       expect(puc.data!.noteRefsRead).not.toContain('thread01_note1');
       expect(puc.data!.noteRefsRead).not.toContain('thread01_note2');
 
-      const element: HTMLElement = env.getNoteThreadIconElement('verse_1_1', 'thread01')!;
-      element.click();
+      let iconElement: HTMLElement = env.getNoteThreadIconElement('verse_1_1', 'thread01')!;
+      iconElement.click();
       env.wait();
       puc = env.getProjectUserConfigDoc('user01');
       expect(puc.data!.noteRefsRead).toContain('thread01_note1');
       expect(puc.data!.noteRefsRead).toContain('thread01_note2');
       expect(env.isNoteIconHighlighted('thread01')).toBe(false);
+
+      expect(puc.data!.noteRefsRead).toContain('thread02_note0');
+      iconElement = env.getNoteThreadIconElement('verse_1_3', 'thread02')!;
+      iconElement.click();
+      env.wait();
+      puc = env.getProjectUserConfigDoc('user01');
+      expect(puc.data!.noteRefsRead).toContain('thread02_note0');
+      expect(puc.data!.noteRefsRead.filter(ref => ref === 'thread02_note0').length).toEqual(1);
+      expect(env.isNoteIconHighlighted('thread02')).toBe(false);
       env.dispose();
     }));
 
