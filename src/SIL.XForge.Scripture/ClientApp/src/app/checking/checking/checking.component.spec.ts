@@ -1477,7 +1477,8 @@ class TestEnvironment {
     selectedSegment: '',
     questionRefsRead: [],
     answerRefsRead: [],
-    commentRefsRead: []
+    commentRefsRead: [],
+    noteRefsRead: []
   };
 
   private readonly checkerProjectUserConfig: SFProjectUserConfig = {
@@ -1491,7 +1492,8 @@ class TestEnvironment {
     selectedQuestionRef: 'project01:q5Id',
     questionRefsRead: [],
     answerRefsRead: ['a0Id', 'a1Id'],
-    commentRefsRead: []
+    commentRefsRead: [],
+    noteRefsRead: []
   };
 
   private readonly cleanCheckerProjectUserConfig: SFProjectUserConfig = {
@@ -1504,7 +1506,8 @@ class TestEnvironment {
     selectedSegment: '',
     questionRefsRead: [],
     answerRefsRead: [],
-    commentRefsRead: []
+    commentRefsRead: [],
+    noteRefsRead: []
   };
 
   private readonly observerProjectUserConfig: SFProjectUserConfig = {
@@ -1518,7 +1521,8 @@ class TestEnvironment {
     selectedSegment: '',
     questionRefsRead: [],
     answerRefsRead: [],
-    commentRefsRead: []
+    commentRefsRead: [],
+    noteRefsRead: []
   };
 
   private projectBookRoute: string = 'JHN';
