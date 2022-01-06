@@ -176,9 +176,6 @@
 
     <div *ngIf="status === 'progress'" class="dialog-content-footer">
       {{ t("canceling_import_not_remove_questions") }}
-      <br />
-      <!-- Intentionally not internationalized because this message should only be here for a short time. -->
-      Note: Importing a large number of questions is currently prohibitively slow. A fix is being worked on.
       <div *ngIf="importCanceled" class="canceling-import">{{ t("canceling_import") }}</div>
     </div>
   </mat-dialog-content>
