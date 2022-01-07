@@ -672,16 +672,13 @@ export function registerScripture(): string[] {
     if (delta.ops != null) {
       for (const op of delta.ops) {
         const modelOp: DeltaOperation = cloneDeep(op);
-        let attrs = modelOp.attributes;
+        const attrs = modelOp.attributes;
         if (attrs != null && attrs['segment'] != null && attrs['highlight-segment'] == null) {
           attrs['highlight-segment'] = false;
         }
-        if (
-          modelOp.insert != null &&
-          typeof modelOp.insert === 'object' &&
-          modelOp.insert['note-thread-embed'] != null
-        ) {
-          attrs = undefined;
+        if (typeof modelOp.insert === 'object') {
+          // clear the formatting attributes on embeds to prevent dom elements from being corrupted
+          modelOp.attributes = undefined;
         }
         (updatedDelta as any).push(modelOp);
       }

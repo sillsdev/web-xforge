@@ -1048,12 +1048,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     // a user initiated delta with ops that include inserting a note embed can only be undo deleting a note icon
-    const reinsertedNotes: DeltaOperation[] = delta.filter(
+    const reinsertedNoteEmbeds: DeltaOperation[] = delta.filter(
       op => op.insert != null && op.insert['note-thread-embed'] != null
     );
-    const duplicateNoteIds: string[] = reinsertedNotes.map(op =>
-      op.attributes == null ? null : op.attributes['threadid']
-    );
+    const reinsertedNoteIds: string[] = [];
+    reinsertedNoteEmbeds.forEach(n => {
+      if (n.attributes != null && n.attributes['threadid'] != null) {
+        reinsertedNoteIds.push(n.attributes['threadid']);
+      }
+    });
     const textInsertOps: DeltaOperation[] = delta.filter(
       ops => ops.insert != null && ops.insert['note-thread-embed'] == null
     );
@@ -1074,8 +1077,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       // A note anchor is only affected by the undo operation if the delta includes inserting the note embed, or
       // if the edit op occurs before the note text anchor last character
       // i.e. note anchors are unaffected if the edit index comes after the note and anchor
-      const noteIsAffected: boolean = noteAnchorEndIndex >= editOpIndex || duplicateNoteIds.includes(threadId);
-      if (reinsertedNotes.length > 0 && noteIsAffected && hasTextEditOp) {
+      const noteIsAffected: boolean = noteAnchorEndIndex >= editOpIndex || reinsertedNoteIds.includes(threadId);
+      if (reinsertedNoteEmbeds.length > 0 && noteIsAffected && hasTextEditOp) {
         updatePromises.push(
           noteThreadDoc
             .previousSnapshot()
@@ -1098,6 +1101,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       updatePromises.push(noteThreadDoc.submitJson0Op(op => op.set(n => n.position, newSelection)));
     }
     await Promise.all(updatePromises);
+
+    // Re-apply the underline style to notes that were re-inserted
+    const embedPositions: Readonly<Map<string, number>> = this.target.embeddedElements;
+    for (const id of reinsertedNoteIds) {
+      const index: number | undefined = embedPositions.get(id);
+      if (index != null) {
+        this.target.editor?.formatText(index, 1, 'text-anchor', 'true', 'api');
+      }
+    }
   }
 
   /** Determine the number of embeds that are within an anchoring.

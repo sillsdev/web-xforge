@@ -1926,22 +1926,31 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
-      let element: HTMLElement = env.getNoteThreadIconElement('verse_1_1', 'thread01')!;
-      element.click();
+      let iconElement02: HTMLElement = env.getNoteThreadIconElement('verse_1_3', 'thread02')!;
+      iconElement02.click();
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
-
-      const notePosition: number = env.getNoteThreadEditorPosition('thread01');
-      const selectionIndex: number = notePosition - 2;
-      const length: number = 5;
-      env.targetEditor.setSelection(selectionIndex, length, 'user');
-      env.wait();
-      env.deleteCharacters();
-      env.triggerUndo();
-      element = env.getNoteThreadIconElement('verse_1_1', 'thread01')!;
-      element.click();
-      env.wait();
+      let iconElement03: HTMLElement = env.getNoteThreadIconElement('verse_1_3', 'thread03')!;
+      iconElement03.click();
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).twice();
-      expect().nothing();
+
+      const notePosition: number = env.getNoteThreadEditorPosition('thread02');
+      const selectionIndex: number = notePosition + 1;
+      env.targetEditor.setSelection(selectionIndex, 'user');
+      env.wait();
+      env.backspace();
+
+      // SUT
+      env.triggerUndo();
+      iconElement02 = env.getNoteThreadIconElement('verse_1_3', 'thread02')!;
+      iconElement02.click();
+      env.wait();
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).thrice();
+      expect(iconElement02.parentElement!.tagName.toLowerCase()).toBe('display-text-anchor');
+      iconElement03 = env.getNoteThreadIconElement('verse_1_3', 'thread03')!;
+      iconElement03.click();
+      env.wait();
+      // ensure that clicking subsequent notes in a verse still works
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).times(4);
       env.dispose();
     }));
   });
@@ -2620,6 +2629,13 @@ class TestEnvironment {
       this.wait();
     }
     return selectionIndex;
+  }
+
+  backspace(): void {
+    const selection = this.targetEditor.getSelection()!;
+    const delta = new Delta([{ retain: selection.index - 1 }, { delete: 1 }]);
+    this.targetEditor.updateContents(delta, 'user');
+    this.wait();
   }
 
   deleteCharacters(): number {
