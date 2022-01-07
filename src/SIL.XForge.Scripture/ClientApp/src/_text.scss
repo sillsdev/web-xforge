@@ -116,11 +116,12 @@ quill-editor.rtl {
       display: inline-block;
       text-indent: 0;
       background: var(--icon-file) no-repeat;
+      margin-left: 0.25em;
+      border: solid 1px transparent;
     }
     &.note-thread-highlight {
       &:before {
         border: solid 1px #a9ca25;
-        margin-left: 0.25em;
       }
     }
   }

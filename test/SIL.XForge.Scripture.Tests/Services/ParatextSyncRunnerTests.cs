@@ -1163,13 +1163,13 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(thread01.TagIcon, Is.EqualTo(expectedThreadTagIcon));
             env.DeltaUsxMapper.ReceivedWithAnyArgs(2).ToChapterDeltas(default);
             Assert.That(thread01.Notes.Count, Is.EqualTo(3));
-            Assert.That(thread01.Notes[0].Content, Is.EqualTo("thread01 added."));
+            Assert.That(thread01.Notes[0].Content, Is.EqualTo("thread01 updated."));
+            Assert.That(thread01.Notes[1].Deleted, Is.True);
+            Assert.That(thread01.Notes[2].Content, Is.EqualTo("thread01 added."));
             string expected = "thread01-syncuser03--thread01 added.-" + expectedNoteTagIcon;
-            Assert.That(thread01.Notes[0].NoteToString(), Is.EqualTo(expected));
-            Assert.That(thread01.Notes[0].TagIcon, Is.EqualTo(expectedNoteTagIcon));
-            Assert.That(thread01.Notes[0].OwnerRef, Is.EqualTo("user03"));
-            Assert.That(thread01.Notes[1].Content, Is.EqualTo("thread01 updated."));
-            Assert.That(thread01.Notes[2].Deleted, Is.True);
+            Assert.That(thread01.Notes[2].NoteToString(), Is.EqualTo(expected));
+            Assert.That(thread01.Notes[2].TagIcon, Is.EqualTo(expectedNoteTagIcon));
+            Assert.That(thread01.Notes[2].OwnerRef, Is.EqualTo("user03"));
 
             SFProjectSecret projectSecret = env.GetProjectSecret();
             // User 3 was added as a sync user

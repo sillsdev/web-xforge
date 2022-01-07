@@ -825,7 +825,7 @@ namespace SIL.XForge.Scripture.Services
                     if (username != null)
                         usernamesToUserIds.TryGetValue(username, out ownerRef);
                     added.OwnerRef = string.IsNullOrEmpty(ownerRef) ? _userSecret.Id : ownerRef;
-                    op.Insert(td => td.Notes, 0, added);
+                    op.Add(td => td.Notes, added);
                 }
 
                 // Permanently removes a note

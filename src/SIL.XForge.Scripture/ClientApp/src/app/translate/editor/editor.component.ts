@@ -661,9 +661,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private updateReadNotes(threadId: string) {
-    const noteThread: NoteThreadDoc | undefined = this.noteThreadQuery?.docs.find(
-      d => d.data != null && d.data.dataId == threadId
-    );
+    const noteThread: NoteThreadDoc | undefined = this.noteThreadQuery?.docs.find(d => d.data?.dataId === threadId);
     if (noteThread?.data != null && this.projectUserConfigDoc?.data != null) {
       const notesRead: string[] = [];
       for (const note of noteThread.data.notes) {

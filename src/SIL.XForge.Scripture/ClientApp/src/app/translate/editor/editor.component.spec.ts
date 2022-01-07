@@ -2503,7 +2503,7 @@ class TestEnvironment {
 
   isNoteIconHighlighted(threadId: string): boolean {
     const thread: HTMLElement | null = this.targetTextEditor.nativeElement.querySelector(
-      'usx-segment display-note[data-thread-id="' + threadId + '"].note-thread-highlight'
+      `usx-segment display-note[data-thread-id="${threadId}"].note-thread-highlight`
     );
     return thread != null;
   }
