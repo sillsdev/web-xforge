@@ -334,10 +334,10 @@ describe('CheckingOverviewComponent', () => {
       expect(read).toBe(2);
       expect(answered).toBe(1);
       // 1 of 7 questions of MAT is archived + 1 in LUK
-      expect(env.component.allQuestionsCount).toBe('7');
-      expect(env.component.myAnswerCount).toBe('1');
-      expect(env.component.myCommentCount).toBe('2');
-      expect(env.component.myLikeCount).toBe('3');
+      expect(env.component.allQuestionsCount).toBe(7);
+      expect(env.component.myAnswerCount).toBe(1);
+      expect(env.component.myCommentCount).toBe(2);
+      expect(env.component.myLikeCount).toBe(3);
     }));
 
     it('should calculate the right stats for project admin', fakeAsync(() => {
@@ -345,10 +345,10 @@ describe('CheckingOverviewComponent', () => {
       env.setCurrentUser(env.adminUser);
       env.waitForQuestions();
       // 1 of 7 questions of MAT is archived + 1 in LUK
-      expect(env.component.allQuestionsCount).toBe('7');
-      expect(env.component.myAnswerCount).toBe('3');
-      expect(env.component.myCommentCount).toBe('3');
-      expect(env.component.myLikeCount).toBe('4');
+      expect(env.component.allQuestionsCount).toBe(7);
+      expect(env.component.myAnswerCount).toBe(3);
+      expect(env.component.myCommentCount).toBe(3);
+      expect(env.component.myLikeCount).toBe(4);
     }));
 
     it('should hide like card if see other user responses is disabled', fakeAsync(() => {

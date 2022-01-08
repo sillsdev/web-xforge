@@ -62,57 +62,63 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     super(noticeService);
   }
 
-  get allQuestionsCount(): string {
-    return '' + this.allPublishedQuestions.length;
+  get allQuestionsCount(): number {
+    return this.allPublishedQuestions.length;
   }
 
-  get myAnswerCount(): string {
+  get myAnswerCount(): number {
     let count: number = 0;
+    const canCreateQuestion = this.canCreateQuestion;
+    const currentUserId = this.userService.currentUserId;
     for (const questionDoc of this.allPublishedQuestions) {
       if (questionDoc.data != null) {
-        if (this.canCreateQuestion) {
+        if (canCreateQuestion) {
           count += questionDoc.data.answers.length;
         } else {
-          count += questionDoc.data.answers.filter(a => a.ownerRef === this.userService.currentUserId).length;
+          count += questionDoc.data.answers.filter(a => a.ownerRef === currentUserId).length;
         }
       }
     }
 
-    return '' + count;
+    return count;
   }
 
-  get myLikeCount(): string {
+  get myLikeCount(): number {
     let count: number = 0;
+    const canCreateQuestion = this.canCreateQuestion;
+    const currentUserId = this.userService.currentUserId;
     for (const questionDoc of this.allPublishedQuestions) {
       if (questionDoc.data != null) {
         for (const answer of questionDoc.data.answers) {
-          if (this.canCreateQuestion) {
+          if (canCreateQuestion) {
             count += answer.likes.length;
           } else {
-            count += answer.likes.filter(l => l.ownerRef === this.userService.currentUserId).length;
+            count += answer.likes.filter(l => l.ownerRef === currentUserId).length;
           }
         }
       }
     }
 
-    return '' + count;
+    return count;
   }
 
-  get myCommentCount(): string {
+  get myCommentCount(): number {
     let count: number = 0;
+    const canCreateQuestion = this.canCreateQuestion;
+    const currentUserId = this.userService.currentUserId;
     for (const questionDoc of this.allPublishedQuestions) {
       if (questionDoc.data != null) {
         for (const answer of questionDoc.data.answers) {
-          if (this.canCreateQuestion) {
+          if (canCreateQuestion) {
             count += answer.comments.length;
           } else {
-            count += answer.comments.filter(c => c.ownerRef === this.userService.currentUserId).length;
+            count += answer.comments.filter(c => c.ownerRef === currentUserId).length;
           }
         }
       }
     }
 
-    return '' + count;
+    return count;
   }
 
   get canSeeOtherUserResponses(): boolean {
