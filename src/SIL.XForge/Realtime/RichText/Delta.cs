@@ -223,10 +223,26 @@ namespace SIL.XForge.Realtime.RichText
             return array.ToString();
         }
 
-        public bool TryConcatenateInserts(out string opStr, Func<JToken, bool> filter = null)
+        public bool TryConcatenateInserts(out string opStr, string verse)
         {
-            Delta filteredDelta = filter == null ? this : new Delta(this.Ops.Where(op => filter(op)));
-            return TryConcatInserts(filteredDelta, out opStr);
+            List<JToken> verseOps = new List<JToken>();
+            bool targetVerse = false;
+            foreach (JToken op in this.Ops)
+            {
+                if (op[InsertType]?.Type == JTokenType.Object &&
+                    ((JObject)op[InsertType]).Property("verse")?.Value.Type == JTokenType.Object)
+                {
+                    JProperty numberToken =
+                        ((JObject)((JObject)op[InsertType]).Property("verse").Value).Property("number");
+                    // update target verse so we know what verse we are in
+                    targetVerse = numberToken.Value.Type == JTokenType.String && (string)numberToken.Value == verse;
+                    continue;
+                }
+                if (targetVerse)
+                    verseOps.Add(op);
+            }
+            Delta verseDeltaOps = new Delta(verseOps);
+            return TryConcatInserts(verseDeltaOps, out opStr);
         }
 
         private Delta Add(JToken newOp)
