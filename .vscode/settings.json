@@ -1,26 +1,7 @@
 {
-  "dotnet-test-explorer.testProjectPath": "test/**/*.Tests.csproj",
-  "editor.formatOnSave": true,
-  "editor.rulers": [120],
-  "editor.wordWrapColumn": 120,
-  "eslint.workingDirectories": [
-    "./src/RealtimeServer",
-    "./src/SIL.XForge.Scripture/ClientApp",
-  ],
-  "liveSassCompile.settings.includeItems": ["src/SIL.XForge.Scripture/wwwroot/scss/**.*"],
-  "liveSassCompile.settings.formats": [
-    {
-      "format": "compressed",
-      "extensionName": ".min.css",
-      "savePath": "~/../css/"
-    }
-  ],
-  "liveSassCompile.settings.generateMap": false,
+  "angularKarmaTestExplorer.angularProcessArguments": ["--sourceMap=true"],
   "angularKarmaTestExplorer.karmaConfFilePath": "src/karma.conf.js",
   "angularKarmaTestExplorer.projectRootPath": "src/SIL.XForge.Scripture/ClientApp",
-  "jest.rootPath": "src/RealtimeServer",
-  "jest.debugCodeLens.showWhenTestStateIn": ["fail"],
-  "angularKarmaTestExplorer.angularProcessArguments": ["--sourceMap=true"],
   "cSpell.words": [
     "appbuilder",
     "backout",
@@ -78,6 +59,23 @@
     "xforge",
     "xlink"
   ],
+  "dotnet-test-explorer.testProjectPath": "test/**/*.Tests.csproj",
+  "editor.formatOnSave": true,
+  "editor.rulers": [120],
+  "editor.tabSize": 2,
+  "editor.wordWrapColumn": 120,
+  "eslint.workingDirectories": ["./src/RealtimeServer", "./src/SIL.XForge.Scripture/ClientApp"],
+  "jest.debugCodeLens.showWhenTestStateIn": ["fail"],
+  "jest.rootPath": "src/RealtimeServer",
+  "liveSassCompile.settings.includeItems": ["src/SIL.XForge.Scripture/wwwroot/scss/**.*"],
+  "liveSassCompile.settings.formats": [
+    {
+      "format": "compressed",
+      "extensionName": ".min.css",
+      "savePath": "~/../css/"
+    }
+  ],
+  "liveSassCompile.settings.generateMap": false,
   "python.formatting.provider": "black",
   "typescript.tsdk": "./src/SIL.XForge.Scripture/ClientApp/node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true
