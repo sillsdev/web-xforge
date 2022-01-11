@@ -25,6 +25,7 @@ import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../shared.module';
 import { getCombinedVerseTextDoc, getSFProject, getTextDoc } from '../test-utils';
+import { MockConsole } from '../../../xforge-common/mock-console';
 import { DragAndDrop } from './drag-and-drop';
 import { TextComponent } from './text.component';
 
@@ -32,6 +33,7 @@ const mockedBugsnagService = mock(BugsnagService);
 const mockedTranslocoService = mock(TranslocoService);
 const mockedPwaService = mock(PwaService);
 const mockedProjectService = mock(SFProjectService);
+const mockedConsole: MockConsole = MockConsole.install();
 
 describe('TextComponent', () => {
   configureTestingModule(() => ({
@@ -51,6 +53,9 @@ describe('TextComponent', () => {
       { provide: PwaService, useMock: mockedPwaService }
     ]
   }));
+  beforeEach(() => {
+    mockedConsole.reset();
+  });
 
   it('display placeholder messages', fakeAsync(() => {
     const env: TestEnvironment = new TestEnvironment();
@@ -770,6 +775,11 @@ describe('TextComponent', () => {
       document.caretRangeFromPoint = (_x: number, _y: number) =>
         ({ startOffset: desiredIndexInSegment, startContainer } as Range);
 
+      mockedConsole.expectAndHide(
+        /never found a needed usx-segment ancestor for drop target/,
+        'should make a note in the console while we identify more places for refinement'
+      );
+
       // SUT
       const cancelled: boolean = !env.component.editor?.container.dispatchEvent(dragEvent);
       flush();
@@ -782,6 +792,7 @@ describe('TextComponent', () => {
       // drag-and-drop.
       expect(cancelled).toBeTrue();
       expect(env.component.editor!.getSelection()).toEqual(selection, 'selection should not have been changed');
+      mockedConsole.verify();
     }));
 
     it('allow drag-and-drop to blank verse, and quill changes are interleaved with TextComponent.updated events', fakeAsync(() => {
@@ -1899,27 +1910,34 @@ describe('TextComponent', () => {
     }
 
     it('skips problem: the drag event has a null target element.', fakeAsync(() => {
+      mockedConsole.expectAndHideOnly(/unexpectedly has null target/);
       skipProblemTest((_env: TestEnvironment, dropEvent: MockDragEvent) => {
         const targetElement: Element | null = null;
         dropEvent.setTarget(targetElement);
       });
+      mockedConsole.verify();
     }));
 
     it('skips problem: the drag event has a usx-blank target with a null parent element.', fakeAsync(() => {
+      mockedConsole.expectAndHideOnly(/never found a needed usx-segment ancestor for drop target/);
       skipProblemTest((env: TestEnvironment, dropEvent: MockDragEvent) => {
         const targetElement: Element = document.createElement('usx-blank');
         expect(targetElement.parentElement).toBeNull('setup');
         dropEvent.setTarget(targetElement);
       });
+      mockedConsole.verify();
     }));
 
     it('skips problem: The drag event unexpectedly has null dataTransfer information.', fakeAsync(() => {
+      mockedConsole.expectAndHideOnly(/unexpectedly has null dataTransfer/);
       skipProblemTest((_env: TestEnvironment, dropEvent: MockDragEvent) => {
         dropEvent.setDataTransfer(null);
       });
+      mockedConsole.verify();
     }));
 
     it('skips problem: target element defines no segment ref attribute ', fakeAsync(() => {
+      mockedConsole.expectAndHideOnly(/no segment ref attribute/);
       skipProblemTest((_env: TestEnvironment, dropEvent: MockDragEvent) => {
         // Don't grab the actual target in the DOM and remove the attribute because later the quill editor selection
         // gets changed. Instead, just make a new element with no `data-segment` attribute and overwrite the target
@@ -1927,17 +1945,21 @@ describe('TextComponent', () => {
         const outOfDomTargetElement: Element = document.createElement('usx-segment');
         dropEvent.setTarget(outOfDomTargetElement);
       });
+      mockedConsole.verify();
     }));
 
     it('skips problem: TextComponent has no segment range recorded for null destination segment ref.', fakeAsync(() => {
+      mockedConsole.expectAndHideOnly(/Invalid segment specification/);
       skipProblemTest((env: TestEnvironment, dropEvent: MockDragEvent) => {
         // An Element was written into the event target, so just cast target back to an Element.
         const targetElement: Element = dropEvent.target as Element;
         targetElement!.attributes['data-segment'].value = null;
       });
+      mockedConsole.verify();
     }));
 
     it('skips problem: TextComponent has no segment range recorded for unfamiliar destination segment.', fakeAsync(() => {
+      mockedConsole.expectAndHideOnly(/Invalid segment specification/);
       skipProblemTest((env: TestEnvironment, dropEvent: MockDragEvent) => {
         const targetSegmentRef = 'not_findable';
         expect(env.component!.getSegmentRange(targetSegmentRef)).not.toBeDefined('setup');
@@ -1945,29 +1967,36 @@ describe('TextComponent', () => {
         const targetElement: Element = dropEvent.target as Element;
         targetElement!.attributes['data-segment'].value = targetSegmentRef;
       });
+      mockedConsole.verify();
     }));
 
     it('skips problem: Firefox unexpectedly gives a null insertion position.', fakeAsync(() => {
+      mockedConsole.expectAndHideOnly(/null caret position for insertion/);
       skipProblemTest((_env: TestEnvironment, _dropEvent: MockDragEvent) => {
         document.caretPositionFromPoint = (_x: number, _y: number) => null;
         // Remove the Chromium point-to-index method so the Firefox one will be used (in our Chromium test runner).
         (document as any).caretRangeFromPoint = undefined;
       });
+      mockedConsole.verify();
     }));
 
     it('skips problem: No success determining insertion position.', fakeAsync(() => {
+      mockedConsole.expectAndHideOnly(/Could not determine insertion position/);
       skipProblemTest((_env: TestEnvironment, _dropEvent: MockDragEvent) => {
         // Both Chromium and Firefox point-to-index methods are unavailable for this test.
         (document as any).caretRangeFromPoint = undefined;
         (document as any).caretPositionFromPoint = undefined;
       });
+      mockedConsole.verify();
     }));
 
     it('skips problem: start container node is null', fakeAsync(() => {
+      mockedConsole.expectAndHideOnly(/Could not get the node that the text was dropped into/);
       skipProblemTest((_env: TestEnvironment, _dropEvent: MockDragEvent) => {
         // the start container of the range for the browser's point-to-index method is unavailable.
         document.caretRangeFromPoint = (_x: number, _y: number) => ({ startOffset: 0 } as Range);
       });
+      mockedConsole.verify();
     }));
 
     // End drag-and-drop section of tests.
