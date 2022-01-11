@@ -979,6 +979,291 @@ describe('TextComponent', () => {
       expect(resultingSelection.length).toEqual(desiredSelectionLength);
     }));
 
+    it('can drag-and-drop into note thread anchoring area', fakeAsync(() => {
+      // The user drags into the region of the editor that is anchored to by a thread's text anchor. The dragged text
+      // should appear where it's dropped.
+
+      const env = new TestEnvironment();
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+
+      // segment 1 1 - user selects text
+      const textLeadingUpToSelection_1_1 = 'target: ';
+      const initialTextInDoc_1_1 = 'target: chapter 1, verse 1.';
+      //                          move this ---------   ^^^^ thread anchoring
+      const textToMoveFromSegment_1_1 = 'chapter 1';
+      // User drags to the middle of the thread anchoring and drops.
+      const expectedTextInDoc_1_1 = 'target: , verchapter 1se 1.';
+      const textLeadingUpToTargetLocationAfterEvent_1_1 = 'target: , ver';
+      const textNodeTextBeforeEvent_1_1 = 'erse';
+      const textLeadingUpToTargetTextNodeBeforeEvent_1_1 = 'target: chapter 1, v';
+      // The drop location is in a text node in a display-text-anchor element. These are the characters in the text
+      // node that lead up to the drop location.
+      const textNodeTextLeadingUpToTargetLocationAfterEvent_1_1 = 'er';
+      // The number of thread icons in the segment up to the location where the drop occurs (which is both before and
+      // after the event in this test).
+      const numberOfIconsLeadingUpToTargetLocation_1_1 = 1;
+      const editorLengthOfThreadIcon = 1;
+      env.embedThreadAt('MAT 1:1', {
+        start: textLeadingUpToTargetTextNodeBeforeEvent_1_1.length,
+        length: textNodeTextBeforeEvent_1_1.length
+      });
+      expect(env.component.getSegmentText('verse_1_1')).withContext('setup').toEqual(initialTextInDoc_1_1);
+      expect(env.component.editor!.getText()).toContain(initialTextInDoc_1_1, 'setup');
+      const initialCountDisplayTextAnchorElements = (env.component.editor?.root as HTMLDivElement).getElementsByTagName(
+        'display-text-anchor'
+      ).length;
+      expect(initialCountDisplayTextAnchorElements).withContext('setup').toEqual(1);
+      // The behaviour shouldn't result in any change to the number of <display-text-anchor> elements.
+      const expectedCountDisplayTextAnchorElements = initialCountDisplayTextAnchorElements;
+      const initialCountDisplayNoteElements = (env.component.editor?.root as HTMLDivElement).getElementsByTagName(
+        'display-note'
+      ).length;
+      expect(initialCountDisplayNoteElements).withContext('setup').toEqual(1);
+      // The behaviour shouldn't result in any change to the number of <display-note> elements.
+      const expectedCountDisplayNoteElements = initialCountDisplayNoteElements;
+
+      const sourceSegmentRange: RangeStatic | undefined = env.component.getSegmentRange('verse_1_1');
+      if (sourceSegmentRange == null) {
+        throw Error();
+      }
+      const selectionStart: number = sourceSegmentRange.index + textLeadingUpToSelection_1_1.length;
+      const selectionLength: number = textToMoveFromSegment_1_1.length;
+      env.component.editor?.setSelection(selectionStart, selectionLength);
+
+      // Element on which the user drops.
+      const elementDropTarget = env.component.editor!.container.querySelector(
+        'usx-segment[data-segment="verse_1_1"] display-text-anchor'
+      );
+      // Specific node on which the user drops. This is the Range.startContainer reported by Chromium.
+      const specificNodeDropTarget: ChildNode | undefined = elementDropTarget?.childNodes[1];
+      if (specificNodeDropTarget == null) {
+        fail('setup');
+        return;
+      }
+
+      const dataTransfer = new DataTransfer();
+      dataTransfer.setData('text/plain', textToMoveFromSegment_1_1);
+      dataTransfer.setData('text/html', `<span background="white">${textToMoveFromSegment_1_1}</span>`);
+      const dropEvent: MockDragEvent = new MockDragEvent('drop', {
+        dataTransfer,
+        cancelable: true
+      });
+      dropEvent.setTarget(elementDropTarget);
+
+      // How far into the target text node the user is trying to drop the text.
+      const dropDistanceIn: number = textNodeTextLeadingUpToTargetLocationAfterEvent_1_1.length;
+      expect(specificNodeDropTarget.nodeName).withContext('setup').toEqual('#text');
+      expect(specificNodeDropTarget.nodeValue).withContext('setup').toEqual(textNodeTextBeforeEvent_1_1);
+      document.caretRangeFromPoint = (_x: number, _y: number) =>
+        ({ startOffset: dropDistanceIn, startContainer: specificNodeDropTarget as Node } as Range);
+
+      const dragstartEvent: MockDragEvent = new MockDragEvent('dragstart', {
+        dataTransfer,
+        cancelable: true
+      });
+      env.component.editor?.container.dispatchEvent(dragstartEvent);
+      tick();
+
+      // SUT
+      const cancelled: boolean = !env.component.editor?.container.dispatchEvent(dropEvent);
+      flush();
+
+      expect(env.component.getSegmentText('verse_1_1'))
+        .withContext('source segment should be changed as expected')
+        .toEqual(expectedTextInDoc_1_1);
+      expect(cancelled).withContext('should cancel browser acting').toBeTrue();
+
+      const targetSegmentRange: RangeStatic | undefined = env.component.getSegmentRange('verse_1_1');
+      if (targetSegmentRange == null) {
+        throw Error();
+      }
+      const desiredSelectionStart =
+        targetSegmentRange.index +
+        textLeadingUpToTargetLocationAfterEvent_1_1.length +
+        numberOfIconsLeadingUpToTargetLocation_1_1 * editorLengthOfThreadIcon;
+      const desiredSelectionLength = textToMoveFromSegment_1_1.length;
+      const resultingSelection: RangeStatic | null = env.component.editor!.getSelection();
+      if (resultingSelection == null) {
+        throw Error();
+      }
+      const endingCountDisplayTextAnchorElements = (env.component.editor?.root as HTMLDivElement).getElementsByTagName(
+        'display-text-anchor'
+      ).length;
+      expect(endingCountDisplayTextAnchorElements)
+        .withContext('number of display-text-anchor elements should be as expected')
+        .toEqual(expectedCountDisplayTextAnchorElements);
+      const endingCountDisplayNoteElements = (env.component.editor?.root as HTMLDivElement).getElementsByTagName(
+        'display-note'
+      ).length;
+      expect(endingCountDisplayNoteElements)
+        .withContext('number of display-note elements should be as expected')
+        .toEqual(expectedCountDisplayNoteElements);
+
+      // After text is dragged, the new selection should be the inserted text.
+      expect(resultingSelection.index).toEqual(desiredSelectionStart);
+      expect(resultingSelection.length).toEqual(desiredSelectionLength);
+    }));
+
+    it('can drag-and-drop correctly into overlapping note thread anchoring area', fakeAsync(() => {
+      // The user drags into the region of the editor that is anchored to by the text anchorings of two threads. The
+      // dragged text should appear where it's dropped. There should not be incorrect placement as a result of not
+      // accounting for thread icons.
+
+      const env = new TestEnvironment();
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+
+      // segment 1 1 - user selects text
+      const textLeadingUpToSelection_1_1 = 'target: ';
+      // Note that in this test, there is reference to a "thread1 text node" and a "thread2 text node". Those are
+      // helpful designations but also inaccurate. There are text nodes, but not so much belonging to thread2, for
+      // example.
+      const initialTextInDoc_1_1 = 'target: chapter 1, verse 1.';
+      //                          move this ---------   ^^^^   thread1 anchoring
+      //                                                ^      thread1 text node
+      //                                                 ^^^^^ thread2 anchoring
+      //                                                 ^^^^^ thread2 text node
+      const textToMoveFromSegment_1_1 = 'chapter 1';
+      // User drags to the middle of the thread1 anchoring and drops.
+      const expectedTextInDoc_1_1 = 'target: , verchapter 1se 1.';
+      const textLeadingUpToTargetLocationAfterEvent_1_1 = 'target: , ver';
+      // There is no text node for the thread1's whole anchored content, but there will be a text node for the content
+      // that is anchored to by thread1 and not by thread2.
+      const thread1TextNodeTextBeforeEvent_1_1 = 'e';
+      const thread1TextAnchoredTo = 'erse';
+      const thread2TextNodeTextBeforeEvent_1_1 = 'rse 1';
+      const thread2TextAnchoredTo = 'rse 1';
+      const textLeadingUpToThread1TextNodeBeforeEvent_1_1 = 'target: chapter 1, v';
+      const textLeadingUpToThread2TextNodeBeforeEvent_1_1 = 'target: chapter 1, ve';
+      // The drop location is in a text node in a display-text-anchor element. This variable is of the characters in
+      // the text node that lead up to the drop location. Note that the product will have one <display-text-anchor>
+      // element containing multiple <display-note> elements (for icons) and #text nodes; there will not be multiple
+      // <display-text-anchor> elements for the area of overlapping anchoring. The text node that the drop happens in
+      // will be the thread2 text node.
+      const textNodeTextLeadingUpToTargetLocationAfterEvent_1_1 = 'r';
+      // The number of thread icons in the segment up to the location where the drop occurs (which is both before and
+      // after the event in this test).
+      const numberOfIconsLeadingUpToTargetLocation_1_1 = 2;
+      const editorLengthOfThreadIcon = 1;
+      env.embedThreadAt('MAT 1:1', {
+        start: textLeadingUpToThread1TextNodeBeforeEvent_1_1.length,
+        length: thread1TextAnchoredTo.length
+      });
+      env.embedThreadAt('MAT 1:1', {
+        start: textLeadingUpToThread2TextNodeBeforeEvent_1_1.length,
+        length: thread2TextAnchoredTo.length
+      });
+      tick();
+      flush();
+      env.fixture.detectChanges();
+      tick();
+      flush();
+      expect(env.component.getSegmentText('verse_1_1')).withContext('setup').toEqual(initialTextInDoc_1_1);
+      expect(env.component.editor!.getText()).toContain(initialTextInDoc_1_1, 'setup');
+      expect(env.component.editor!.getText()).toContain(
+        textLeadingUpToThread1TextNodeBeforeEvent_1_1 +
+          thread1TextNodeTextBeforeEvent_1_1 +
+          thread2TextNodeTextBeforeEvent_1_1,
+        'setup'
+      );
+      const initialCountDisplayTextAnchorElements = (env.component.editor?.root as HTMLDivElement).getElementsByTagName(
+        'display-text-anchor'
+      ).length;
+      expect(initialCountDisplayTextAnchorElements).withContext('setup').toEqual(1);
+      // The behaviour shouldn't result in any change to the number of <display-text-anchor> elements.
+      const expectedCountDisplayTextAnchorElements = initialCountDisplayTextAnchorElements;
+      const initialCountDisplayNoteElements = (env.component.editor?.root as HTMLDivElement).getElementsByTagName(
+        'display-note'
+      ).length;
+      expect(initialCountDisplayNoteElements).withContext('setup').toEqual(2);
+      // The behaviour shouldn't result in any change to the number of <display-note> elements.
+      const expectedCountDisplayNoteElements = initialCountDisplayNoteElements;
+
+      const sourceSegmentRange: RangeStatic | undefined = env.component.getSegmentRange('verse_1_1');
+      if (sourceSegmentRange == null) {
+        throw Error();
+      }
+      const selectionStart: number = sourceSegmentRange.index + textLeadingUpToSelection_1_1.length;
+      const selectionLength: number = textToMoveFromSegment_1_1.length;
+      env.component.editor?.setSelection(selectionStart, selectionLength);
+
+      // Element on which the user drops.
+      const elementDropTarget = env.component.editor!.container.querySelector(
+        'usx-segment[data-segment="verse_1_1"] display-text-anchor'
+      );
+      // Specific node on which the user drops. This is the Range.startContainer reported by Chromium.
+      const specificNodeDropTarget: ChildNode | undefined = elementDropTarget?.childNodes[3];
+      if (specificNodeDropTarget == null) {
+        fail('setup');
+        return;
+      }
+
+      const dataTransfer = new DataTransfer();
+      dataTransfer.setData('text/plain', textToMoveFromSegment_1_1);
+      dataTransfer.setData('text/html', `<span background="white">${textToMoveFromSegment_1_1}</span>`);
+      const dropEvent: MockDragEvent = new MockDragEvent('drop', {
+        dataTransfer,
+        cancelable: true
+      });
+      dropEvent.setTarget(elementDropTarget);
+
+      // How far into the target text node the user is trying to drop the text.
+      const dropDistanceIn: number = textNodeTextLeadingUpToTargetLocationAfterEvent_1_1.length;
+      expect(specificNodeDropTarget.nodeName).withContext('setup').toEqual('#text');
+      expect(specificNodeDropTarget.nodeValue).withContext('setup').toEqual(thread2TextNodeTextBeforeEvent_1_1);
+      document.caretRangeFromPoint = (_x: number, _y: number) =>
+        ({ startOffset: dropDistanceIn, startContainer: specificNodeDropTarget as Node } as Range);
+
+      const dragstartEvent: MockDragEvent = new MockDragEvent('dragstart', {
+        dataTransfer,
+        cancelable: true
+      });
+      env.component.editor?.container.dispatchEvent(dragstartEvent);
+      tick();
+
+      // SUT
+      const cancelled: boolean = !env.component.editor?.container.dispatchEvent(dropEvent);
+      flush();
+
+      expect(env.component.getSegmentText('verse_1_1'))
+        .withContext('source segment should be changed as expected')
+        .toEqual(expectedTextInDoc_1_1);
+      expect(cancelled).withContext('should cancel browser acting').toBeTrue();
+
+      const targetSegmentRange: RangeStatic | undefined = env.component.getSegmentRange('verse_1_1');
+      if (targetSegmentRange == null) {
+        throw Error();
+      }
+      const desiredSelectionStart =
+        targetSegmentRange.index +
+        textLeadingUpToTargetLocationAfterEvent_1_1.length +
+        numberOfIconsLeadingUpToTargetLocation_1_1 * editorLengthOfThreadIcon;
+      const desiredSelectionLength = textToMoveFromSegment_1_1.length;
+      const resultingSelection: RangeStatic | null = env.component.editor!.getSelection();
+      if (resultingSelection == null) {
+        throw Error();
+      }
+      const endingCountDisplayTextAnchorElements = (env.component.editor?.root as HTMLDivElement).getElementsByTagName(
+        'display-text-anchor'
+      ).length;
+      expect(endingCountDisplayTextAnchorElements)
+        .withContext('number of display-text-anchor elements should be as expected')
+        .toEqual(expectedCountDisplayTextAnchorElements);
+      const endingCountDisplayNoteElements = (env.component.editor?.root as HTMLDivElement).getElementsByTagName(
+        'display-note'
+      ).length;
+      expect(endingCountDisplayNoteElements)
+        .withContext('number of display-note elements should be as expected')
+        .toEqual(expectedCountDisplayNoteElements);
+
+      // After text is dragged, the new selection should be the inserted text.
+      expect(resultingSelection.index).toEqual(desiredSelectionStart);
+      expect(resultingSelection.length).toEqual(desiredSelectionLength);
+    }));
+
     function skipProblemTest(extraSteps: (env: TestEnvironment, dropEvent: MockDragEvent) => void) {
       // Certain unexpected situations should result in not doing anything without creating a problem.
 
@@ -1235,9 +1520,15 @@ class TestEnvironment {
   }
 
   embedNoteAtVerse(verse: number): void {
-    const verseRef: VerseRef = VerseRef.parse(`MAT 1:${verse}`);
-    const id: string = `embedid${verse}`;
     const textAnchor: TextAnchor = { start: 8, length: 7 };
+    this.embedThreadAt(`MAT 1:${verse}`, textAnchor);
+  }
+
+  /** Where reference is like 'MAT 1:2'. */
+  embedThreadAt(reference: string, textAnchor: TextAnchor): void {
+    const verseRef: VerseRef = VerseRef.parse(reference);
+    const uniqueSuffix: string = Math.random().toString();
+    const id: string = `embedid${reference}${uniqueSuffix}`;
     const iconSource: string = '--icon-file: url(/assets/icons/TagIcons/01flag1.png)';
     const text: string = `text message on ${id}`;
     const format = { iconsrc: iconSource, preview: text, threadid: id };
