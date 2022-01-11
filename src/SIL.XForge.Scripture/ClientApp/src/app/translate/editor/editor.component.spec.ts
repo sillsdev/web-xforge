@@ -1074,43 +1074,44 @@ describe('EditorComponent', () => {
     it('embeds note on verse segments', fakeAsync(() => {
       const env = new TestEnvironment();
       env.addParatextNoteThread(6, 'MAT 1:2', '', { start: 0, length: 0 }, ['user01']);
-      env.addParatextNoteThread(7, 'LUK 1:2-3', '', { start: 0, length: 0 }, ['user01']);
+      env.addParatextNoteThread(7, 'LUK 1:0', 'for chapter', { start: 6, length: 11 }, ['user01']);
+      env.addParatextNoteThread(8, 'LUK 1:2-3', '', { start: 0, length: 0 }, ['user01']);
+      env.addParatextNoteThread(9, 'LUK 1:2-3', 'section heading', { start: 37, length: 15 }, ['user01']);
       env.setProjectUserConfig();
       env.wait();
-      const segment: HTMLElement = env.targetTextEditor.nativeElement.querySelector(
-        'usx-segment[data-segment=verse_1_1]'
-      )!;
-      expect(segment).not.toBeNull();
-
-      const note = segment.querySelector('display-note')! as HTMLElement;
-      expect(note).not.toBeNull();
-      expect(note.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag3.png);');
-      expect(note.getAttribute('title')).toEqual('Note from user01\n--- 2 more note(s) ---');
-      const contents = env.targetEditor.getContents();
+      const verse1Segment: HTMLElement = env.getSegmentElement('verse_1_1')!;
+      const verse1Note = verse1Segment.querySelector('display-note') as HTMLElement;
+      expect(verse1Note).not.toBeNull();
+      expect(verse1Note.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag3.png);');
+      expect(verse1Note.getAttribute('title')).toEqual('Note from user01\n--- 2 more note(s) ---');
+      let contents = env.targetEditor.getContents();
       expect(contents.ops![3].insert).toEqual('target: ');
       expect(contents.ops![4].attributes!['iconsrc']).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag3.png);');
 
       // three notes in the segment on verse 3
-      const noteVerse3: HTMLElement[] = env.targetTextEditor.nativeElement.querySelectorAll(
-        'usx-segment[data-segment="verse_1_3"] display-note'
-      )!;
+      const noteVerse3: NodeListOf<Element> = env.getSegmentElement('verse_1_3')!.querySelectorAll('display-note')!;
       expect(noteVerse3.length).toEqual(3);
 
-      const blankSegmentNote = env.targetTextEditor.nativeElement.querySelector(
-        'usx-segment[data-segment="verse_1_2"] display-note'
-      )! as HTMLElement;
-      expect(blankSegmentNote).not.toBeNull();
+      const blankSegmentNote = env.getSegmentElement('verse_1_2')!.querySelector('display-note') as HTMLElement;
       expect(blankSegmentNote.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
       expect(blankSegmentNote.getAttribute('title')).toEqual('Note from user01');
 
       env.updateParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
-      const combinedVerseUsxSegment: HTMLElement = env.targetTextEditor.nativeElement.querySelector(
-        'usx-segment[data-segment="verse_1_2-3"]'
-      );
+      const titleUsxSegment: HTMLElement = env.getSegmentElement('s_1')!;
+      expect(titleUsxSegment.classList).toContain('note-thread-segment');
+      const titleUsxNote: HTMLElement | null = titleUsxSegment.querySelector('display-note');
+      expect(titleUsxNote).not.toBeNull();
+
+      const combinedVerseUsxSegment: HTMLElement = env.getSegmentElement('verse_1_2-3')!;
       expect(combinedVerseUsxSegment.classList).toContain('note-thread-segment');
       const verse2and3CombinedNote: HTMLElement | null = combinedVerseUsxSegment.querySelector('display-note');
       expect(verse2and3CombinedNote).not.toBeNull();
+
+      const sectionHeadingUsxSegment: HTMLElement = env.getSegmentElement('s_2')!;
+      expect(sectionHeadingUsxSegment.classList).toContain('note-thread-segment');
+      const sectionHeadingNote: HTMLElement | null = sectionHeadingUsxSegment.querySelector('display-note');
+      expect(sectionHeadingNote).not.toBeNull();
       env.dispose();
     }));
 
