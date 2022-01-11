@@ -25,8 +25,12 @@ export class DragAndDrop {
       // Stop the browser from doing any drag-and-drop behaviour itself, such as inserting text with formatting.
       dragEvent.preventDefault();
 
-      const [targetElement, droppingIntoBlankSegment]: [Element | null, boolean] = this.discernTarget(dragEvent);
-      if (targetElement == null) {
+      const [targetUsxSegmentElement, targetElement, droppingIntoBlankSegment]: [
+        Element | null,
+        Element | null,
+        boolean
+      ] = this.discernTarget(dragEvent);
+      if (targetUsxSegmentElement == null || targetElement == null) {
         return;
       }
 
@@ -38,9 +42,12 @@ export class DragAndDrop {
       // Determine where we should be placing the dropped text, using the location of the destination segment, and the
       // index within that segment.
 
-      const dataSegmentAttribute: any = targetElement.attributes['data-segment'];
+      const dataSegmentAttribute: any = targetUsxSegmentElement.attributes['data-segment'];
       if (dataSegmentAttribute == null) {
-        console.warn('Warning: drag-and-drop to target with no segment ref attribute:', targetElement);
+        console.warn(
+          'Warning: drag-and-drop to usx segment element with no segment ref attribute:',
+          targetUsxSegmentElement
+        );
         return;
       }
       const destinationSegmentRef: string = dataSegmentAttribute.value;
@@ -55,6 +62,7 @@ export class DragAndDrop {
       }
 
       const insPos: number | undefined = this.determineInsertionPosition(
+        targetUsxSegmentElement,
         targetElement,
         destinationSegmentRange,
         droppingIntoBlankSegment,
@@ -118,39 +126,58 @@ export class DragAndDrop {
     });
   }
 
-  /** Return the usx-segment element that the user is trying to drop into, if possible, and whether the original
-   * target was a usx-blank. */
-  private discernTarget(dragEvent: DragEvent): [Element | null, boolean] {
-    let targetElement: Element | null = dragEvent.target as Element | null;
+  /** Return the usx-segment element that the user is trying to drop into (if possible), the actual target element
+   * being dropped into, and whether the original target was a usx-blank. The actual element being dropped into may be
+   * something other than a usx-segment, such as a display-text-anchor, in which case the usx segment element returned
+   * will be the one containing the display-text-anchor being dropped into. */
+  private discernTarget(dragEvent: DragEvent): [Element | null, Element | null, boolean] {
+    const targetElement: Element | null = dragEvent.target as Element | null;
     let droppingIntoBlankSegment: boolean = false;
+    let targetUsxSegmentElement: Element | null = null;
 
     if (targetElement == null) {
       console.warn(`Warning: DragEvent unexpectedly has null target.`);
-      return [targetElement, droppingIntoBlankSegment];
+      return [targetUsxSegmentElement, targetElement, droppingIntoBlankSegment];
     }
     let targetElementName: string = targetElement.localName;
 
-    if (targetElementName === 'usx-blank') {
-      droppingIntoBlankSegment = true;
-      targetElement = targetElement.parentElement as Element | null;
-      if (targetElement == null) {
-        console.warn(`Warning: DragEvent usx-blank target parent is unexpectedly null. Target:`, targetElement);
-        return [targetElement, droppingIntoBlankSegment];
-      }
-      targetElementName = targetElement.localName;
+    if (targetElementName === 'usx-segment') {
+      targetUsxSegmentElement = targetElement;
+      return [targetUsxSegmentElement, targetElement, droppingIntoBlankSegment];
     }
 
-    if (targetElementName !== 'usx-segment') {
-      // We need to be able to know where to insert the dropped text, such as from the drop target being a usx-segment
-      // element. Give up.
-      console.warn('Warning: DragEvent to invalid target:', targetElement);
-      return [targetElement, droppingIntoBlankSegment];
+    if (targetElementName === 'usx-blank') {
+      droppingIntoBlankSegment = true;
+      targetUsxSegmentElement = targetElement.parentElement as Element | null;
+      if (targetUsxSegmentElement == null) {
+        console.warn(`Warning: DragEvent usx-blank target parent is unexpectedly null. Target:`, targetElement);
+        return [null, targetElement, droppingIntoBlankSegment];
+      }
+      if (targetUsxSegmentElement.localName === 'usx-segment') {
+        return [targetUsxSegmentElement, targetElement, droppingIntoBlankSegment];
+      } else {
+        console.warn(
+          'Warning: DragEvent usx-blank target parent is unexpectedly not a usx-segment. Target:`, targetElement'
+        );
+        return [null, targetElement, droppingIntoBlankSegment];
+      }
     }
-    return [targetElement, droppingIntoBlankSegment];
+
+    let element: Element = targetElement;
+    while (element.localName != 'usx-segment' && element.parentElement != null) {
+      element = element.parentElement;
+    }
+    if (element == null || element.localName != 'usx-segment') {
+      console.warn('Warning: DragEvent never found a needed usx-segment ancestor for drop target:', targetElement);
+      return [null, targetElement, droppingIntoBlankSegment];
+    }
+    targetUsxSegmentElement = element;
+    return [targetUsxSegmentElement, targetElement, droppingIntoBlankSegment];
   }
 
   /** Return the position in the quill editor where we want to insert text from a drop. */
   private determineInsertionPosition(
+    targetUsxSegmentElement: Element,
     targetElement: Element,
     destinationSegmentRange: RangeStatic,
     droppingIntoBlankSegment: boolean,
@@ -192,34 +219,61 @@ export class DragAndDrop {
         console.warn('Warning: Could not get the node that the text was dropped into.');
         return;
       }
-      let node: Node = nodeDroppedInto;
-      const textNodeType = 3;
-      // Add up the length of text and embeds that are previous nodes in the usx-segment
-      while (node.previousSibling != null) {
-        node = node.previousSibling;
-        if (node.nodeType === textNodeType) {
-          if (node.nodeValue != null) {
-            startPositionInSegment += node.nodeValue.length;
-          } else {
-            console.warn(`Warning: Unexpected situation of null text node value`);
-          }
-        } else {
-          if (node.nodeName.toLowerCase() === 'display-text-anchor') {
-            const anchoredTextOfNote: string = node.lastChild?.nodeValue ?? '';
-            startPositionInSegment += anchoredTextOfNote.length;
-            const lengthOfEmbed = 1;
-            startPositionInSegment += lengthOfEmbed;
-          } else {
-            console.warn(
-              `Warning: drag-and-drop is assuming length 1 for unknown element: ${node.nodeName.toLowerCase()}`
-            );
-            startPositionInSegment++;
-          }
-        }
-      }
-      startPositionInSegment += startPositionInTextNode;
+      startPositionInSegment = this.determineEditorLengthOfNodesUpToPosition(
+        targetUsxSegmentElement,
+        nodeDroppedInto,
+        startPositionInTextNode
+      );
     }
     const insertionPositionInDocument: number = destinationSegmentRange.index + startPositionInSegment;
     return insertionPositionInDocument;
+  }
+
+  private determineEditorLengthOfNodesUpToPosition(
+    targetUsxSegmentElement: Element,
+    nodeDroppedInto: Node,
+    positionInTextNode: number
+  ): number {
+    return positionInTextNode + this.determineLengthBeforeTerminationNode(targetUsxSegmentElement, nodeDroppedInto);
+  }
+
+  /**
+   * Determine the editor length for `node` up until a contained `terminationChildNode`. Length is
+   * determined from text nodes and some elements.
+   */
+  private determineLengthBeforeTerminationNode(node: Node, terminationChildNode: Node): number {
+    // Using preorder traversal and stops traversing when the terminationNode is reached.
+    if (node === terminationChildNode) {
+      return 0;
+    }
+    if (node.nodeType === Node.TEXT_NODE) {
+      if (node.nodeValue == null) {
+        // Based on the API docs, text nodes should not have a null value. So this should never happen.
+        return 0;
+      }
+      return node.nodeValue.length;
+      // Text nodes will not have children to further process.
+    }
+
+    const elementsToLookInside: string[] = ['usx-segment', 'display-text-anchor'];
+    if (elementsToLookInside.includes(node.nodeName.toLowerCase())) {
+      let lengthOfDescendants: number = 0;
+      for (let i = 0; i < node.childNodes.length; i++) {
+        let childNode: Node = node.childNodes[i];
+        lengthOfDescendants += this.determineLengthBeforeTerminationNode(childNode, terminationChildNode);
+        if (childNode.contains(terminationChildNode)) {
+          break;
+        }
+      }
+      return lengthOfDescendants;
+    }
+
+    const lengthOfAnythingElse = 1;
+    const elementsKnownToBeLengthOne: string[] = ['display-note', 'usx-figure'];
+    if (!elementsKnownToBeLengthOne.includes(node.nodeName.toLowerCase())) {
+      // Also return 1 for anything else. But note it in the console until it too is incorporated.
+      console.warn(`Warning: Drag-and-drop is assuming length 1 for node ${node.nodeName}`);
+    }
+    return lengthOfAnythingElse;
   }
 }
