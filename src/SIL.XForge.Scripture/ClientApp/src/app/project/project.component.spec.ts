@@ -314,7 +314,8 @@ class TestEnvironment {
           selectedSegment: '',
           questionRefsRead: [],
           answerRefsRead: [],
-          commentRefsRead: []
+          commentRefsRead: [],
+          noteRefsRead: []
         }
       });
 

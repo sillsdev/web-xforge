@@ -1251,6 +1251,40 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('shows highlights note icons when new content is unread', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig({ noteRefsRead: ['thread01_note0', 'thread02_note0'] });
+      env.wait();
+
+      expect(env.isNoteIconHighlighted('thread01')).toBe(true);
+      expect(env.isNoteIconHighlighted('thread02')).toBe(false);
+      expect(env.isNoteIconHighlighted('thread03')).toBe(true);
+      expect(env.isNoteIconHighlighted('thread04')).toBe(true);
+      expect(env.isNoteIconHighlighted('thread05')).toBe(true);
+
+      let puc: SFProjectUserConfigDoc = env.getProjectUserConfigDoc('user01');
+      expect(puc.data!.noteRefsRead).not.toContain('thread01_note1');
+      expect(puc.data!.noteRefsRead).not.toContain('thread01_note2');
+
+      let iconElement: HTMLElement = env.getNoteThreadIconElement('verse_1_1', 'thread01')!;
+      iconElement.click();
+      env.wait();
+      puc = env.getProjectUserConfigDoc('user01');
+      expect(puc.data!.noteRefsRead).toContain('thread01_note1');
+      expect(puc.data!.noteRefsRead).toContain('thread01_note2');
+      expect(env.isNoteIconHighlighted('thread01')).toBe(false);
+
+      expect(puc.data!.noteRefsRead).toContain('thread02_note0');
+      iconElement = env.getNoteThreadIconElement('verse_1_3', 'thread02')!;
+      iconElement.click();
+      env.wait();
+      puc = env.getProjectUserConfigDoc('user01');
+      expect(puc.data!.noteRefsRead).toContain('thread02_note0');
+      expect(puc.data!.noteRefsRead.filter(ref => ref === 'thread02_note0').length).toEqual(1);
+      expect(env.isNoteIconHighlighted('thread02')).toBe(false);
+      env.dispose();
+    }));
+
     it('should update note position when inserting text', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
@@ -2401,6 +2435,7 @@ class TestEnvironment {
   }
 
   setProjectUserConfig(userConfig: Partial<SFProjectUserConfig> = {}): void {
+    userConfig.noteRefsRead = userConfig.noteRefsRead ?? [];
     const user1Config = cloneDeep(userConfig);
     user1Config.ownerRef = 'user01';
     this.addProjectUserConfig(user1Config as SFProjectUserConfig);
@@ -2451,6 +2486,12 @@ class TestEnvironment {
     return this.realtimeService.get<NoteThreadDoc>(NoteThreadDoc.COLLECTION, docId);
   }
 
+  getNoteThreadIconElement(segmentRef: string, threadId: string): HTMLElement | null {
+    return this.fixture.nativeElement.querySelector(
+      `usx-segment[data-segment=${segmentRef}] display-note[data-thread-id=${threadId}]`
+    );
+  }
+
   /** Editor position of note thread. */
   getNoteThreadEditorPosition(threadId: string): number {
     return this.component.target!.embeddedElements.get(threadId)!;
@@ -2458,6 +2499,13 @@ class TestEnvironment {
 
   getRemoteEditPosition(notePosition: number, positionAfter: number, noteCount: number): number {
     return notePosition + 1 + positionAfter - noteCount;
+  }
+
+  isNoteIconHighlighted(threadId: string): boolean {
+    const thread: HTMLElement | null = this.targetTextEditor.nativeElement.querySelector(
+      `usx-segment display-note[data-thread-id="${threadId}"].note-thread-highlight`
+    );
+    return thread != null;
   }
 
   setDataInSync(projectId: string, isInSync: boolean): void {
@@ -2623,7 +2671,7 @@ class TestEnvironment {
       const note: Note = {
         threadId: threadId,
         ownerRef: id,
-        dataId: `thread01_note${id}`,
+        dataId: `${threadId}_note${i}`,
         dateCreated: date.toJSON(),
         dateModified: date.toJSON(),
         content: `<p><bold>Note from ${id}</bold></p>`,

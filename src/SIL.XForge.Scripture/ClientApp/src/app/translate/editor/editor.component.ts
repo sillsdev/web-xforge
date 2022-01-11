@@ -660,6 +660,27 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     });
   }
 
+  private updateReadNotes(threadId: string) {
+    const noteThread: NoteThreadDoc | undefined = this.noteThreadQuery?.docs.find(d => d.data?.dataId === threadId);
+    if (noteThread?.data != null && this.projectUserConfigDoc?.data != null) {
+      const notesRead: string[] = [];
+      for (const note of noteThread.data.notes) {
+        if (!this.projectUserConfigDoc.data.noteRefsRead.includes(note.dataId)) {
+          notesRead.push(note.dataId);
+        }
+      }
+
+      if (notesRead.length == 0) {
+        return;
+      }
+      this.projectUserConfigDoc.submitJson0Op(op => {
+        for (const noteId of notesRead) {
+          op.add(puc => puc.noteRefsRead, noteId);
+        }
+      });
+    }
+  }
+
   private setupTranslationEngine(): void {
     if (this.trainingSub != null) {
       this.trainingSub.unsubscribe();
@@ -944,6 +965,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             const threadId = threadIdFromMouseEvent(event);
             if (threadId != null) {
               this.showNoteThread(threadId);
+              this.target?.formatEmbed(threadId, 'note-thread-embed', { ['highlight']: false });
+              this.updateReadNotes(threadId);
             }
           })
         );
@@ -985,13 +1008,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (threadDoc.data == null || verseRef == null) {
       return;
     }
+    const hasNewContent: boolean = this.hasNewContent(threadDoc);
 
     return {
       verseRef,
       id: threadDoc.data.dataId,
       preview,
       icon: threadDoc.icon,
-      textAnchor: threadDoc.data.position
+      textAnchor: threadDoc.data.position,
+      highlight: hasNewContent
     };
   }
 
@@ -1249,6 +1274,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     const format = { iconsrc: featured.icon.cssVar, preview: featured.preview, threadid: featured.id };
+    if (featured.highlight) {
+      format['highlight'] = featured.highlight;
+    }
     return this.target.embedElementInline(
       featured.verseRef,
       featured.id,
@@ -1256,6 +1284,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       'note-thread-embed',
       format
     );
+  }
+
+  private hasNewContent(thread: NoteThreadDoc): boolean {
+    const noteId: string | undefined = thread.data?.notes[thread.data?.notes.length - 1].dataId;
+    if (noteId == null || this.projectUserConfigDoc?.data == null) {
+      return false;
+    }
+    return !this.projectUserConfigDoc.data.noteRefsRead.includes(noteId);
   }
 
   private syncScroll(): void {

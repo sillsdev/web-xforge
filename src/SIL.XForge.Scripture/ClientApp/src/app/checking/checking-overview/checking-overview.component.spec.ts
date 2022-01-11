@@ -476,7 +476,8 @@ class TestEnvironment {
     selectedSegment: '',
     questionRefsRead: [],
     answerRefsRead: [],
-    commentRefsRead: []
+    commentRefsRead: [],
+    noteRefsRead: []
   };
   private reviewerProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.checkerUser.id,
@@ -488,7 +489,8 @@ class TestEnvironment {
     selectedSegment: '',
     questionRefsRead: ['q1Id', 'q2Id', 'q3Id'],
     answerRefsRead: [],
-    commentRefsRead: []
+    commentRefsRead: [],
+    noteRefsRead: []
   };
   private translatorProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.translatorUser.id,
@@ -500,7 +502,8 @@ class TestEnvironment {
     selectedSegment: '',
     questionRefsRead: [],
     answerRefsRead: [],
-    commentRefsRead: []
+    commentRefsRead: [],
+    noteRefsRead: []
   };
   private testProject: SFProject = {
     name: 'Project 01',

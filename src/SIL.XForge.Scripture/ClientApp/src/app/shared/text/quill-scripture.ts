@@ -40,6 +40,7 @@ interface NoteThread {
   iconsrc: string;
   preview: string;
   threadid: string;
+  highlight?: boolean;
 }
 
 interface Verse extends UsxStyle {
@@ -285,6 +286,9 @@ export function registerScripture(): string[] {
       node.setAttribute('style', value.iconsrc);
       node.setAttribute('title', value.preview);
       node.setAttribute(customAttributeName('thread-id'), value.threadid);
+      if (value.highlight) {
+        node.classList.add('note-thread-highlight');
+      }
       return node;
     }
 
@@ -304,9 +308,7 @@ export function registerScripture(): string[] {
       if (name === NoteThreadEmbed.blotName && value != null) {
         const ref = value as NoteThread;
         const elem = this.domNode as HTMLElement;
-        elem.setAttribute('style', ref.iconsrc);
-        elem.setAttribute('title', ref.preview);
-        elem.setAttribute(customAttributeName('thread-id'), ref.threadid);
+        ref.highlight ? elem.classList.add('note-thread-highlight') : elem.classList.remove('note-thread-highlight');
       } else {
         super.format(name, value);
       }
@@ -584,6 +586,10 @@ export function registerScripture(): string[] {
     scope: Parchment.Scope.INLINE
   });
   formats.push(NoteThreadSegmentClass);
+  const NoteThreadHighlightClass = new ClassAttributor('note-thread-highlight', 'note-thread-highlight', {
+    scope: Parchment.Scope.INLINE
+  });
+  formats.push(NoteThreadHighlightClass);
 
   const NoteThreadCountAttribute = new QuillParchment.Attributor.Attribute(
     'note-thread-count',

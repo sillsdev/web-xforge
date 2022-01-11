@@ -27,5 +27,6 @@ namespace SIL.XForge.Scripture.Models
         public List<string> AnswerRefsRead { get; set; } = new List<string>();
         public List<string> CommentRefsRead { get; set; } = new List<string>();
         public string SelectedQuestionRef { get; set; }
+        public List<string> NoteRefsRead { get; set; } = new List<string>();
     }
 }

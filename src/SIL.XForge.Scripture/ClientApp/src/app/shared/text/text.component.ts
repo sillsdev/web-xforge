@@ -71,6 +71,7 @@ export interface FeaturedVerseRefInfo {
   textAnchor?: TextAnchor;
   icon: NoteThreadIcon;
   preview?: string;
+  highlight?: boolean;
 }
 
 /** View of an editable text document. Used for displaying Scripture. */
@@ -555,6 +556,13 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     this.editor.formatText(embedInsertPos, formatLength, 'text-anchor', 'true', 'api');
     this.updateSegment();
     return embedSegmentRef;
+  }
+
+  formatEmbed(embedId: string, embedName: string, format: any) {
+    const position: number | undefined = this.embeddedElements.get(embedId);
+    if (position != null && this.editor != null) {
+      this.editor.formatText(position, 1, embedName, format, 'api');
+    }
   }
 
   /** Respond to text changes in the quill editor. */
