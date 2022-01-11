@@ -295,14 +295,16 @@ export class TextViewModel {
     const verses: VerseRef[] = verseRef.allVerses();
     const startVerseNum: number = verses[0].verseNum;
     const lastVerseNum: number = verses[verses.length - 1].verseNum;
+    let matchStartNum = 0;
+    let matchLastNum = 0;
     for (const segment of this._segments.keys()) {
       const match: RegExpExecArray | null = VERSE_FROM_SEGMENT_REF_REGEX.exec(segment);
-      if (match == null) {
-        continue;
+      if (match != null) {
+        // update numbers for the new verse
+        const verseParts: string[] = match[1].split('-');
+        matchStartNum = +verseParts[0];
+        matchLastNum = +verseParts[verseParts.length - 1];
       }
-      const verseParts: string[] = match[1].split('-');
-      const matchStartNum: number = +verseParts[0];
-      const matchLastNum: number = +verseParts[verseParts.length - 1];
       const matchStartsWithin = matchStartNum >= startVerseNum && matchStartNum <= lastVerseNum;
       const matchEndsWithin = matchLastNum >= startVerseNum && matchLastNum <= lastVerseNum;
       if (matchStartsWithin || matchEndsWithin) {

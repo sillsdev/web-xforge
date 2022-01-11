@@ -226,19 +226,24 @@ namespace SIL.XForge.Realtime.RichText
         public bool TryConcatenateInserts(out string opStr, string verse)
         {
             List<JToken> verseOps = new List<JToken>();
-            bool targetVerse = false;
+            bool isTargetVerse = verse == "0";
             foreach (JToken op in this.Ops)
             {
-                if (op[InsertType]?.Type == JTokenType.Object &&
-                    ((JObject)op[InsertType]).Property("verse")?.Value.Type == JTokenType.Object)
+                if (op[InsertType]?.Type == JTokenType.Object)
                 {
-                    JProperty numberToken =
-                        ((JObject)((JObject)op[InsertType]).Property("verse").Value).Property("number");
-                    // update target verse so we know what verse we are in
-                    targetVerse = numberToken.Value.Type == JTokenType.String && (string)numberToken.Value == verse;
-                    continue;
+                    if (((JObject)op[InsertType]).Property("verse")?.Value.Type == JTokenType.Object)
+                    {
+                        JProperty numberToken =
+                            ((JObject)((JObject)op[InsertType]).Property("verse").Value).Property("number");
+                        // update target verse so we know what verse we are in
+                        isTargetVerse = numberToken.Value.Type == JTokenType.String && (string)numberToken.Value == verse;
+                        continue;
+                    }
+                    else if (((JObject)op[InsertType]).Property("chapter")?.Value.Type == JTokenType.Object)
+                        continue;
                 }
-                if (targetVerse)
+                bool isNewLine = op[InsertType]?.Type == JTokenType.String && (string)op[InsertType] == "\n";
+                if (isTargetVerse && !isNewLine)
                     verseOps.Add(op);
             }
             Delta verseDeltaOps = new Delta(verseOps);

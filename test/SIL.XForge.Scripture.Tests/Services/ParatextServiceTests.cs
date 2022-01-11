@@ -891,13 +891,13 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(thread1Change.Position.Length, Is.LessThan("other text in verse".Length));
 
                 NoteThreadChange thread8Change = changes.Single(c => c.ThreadId == "thread8");
-                string textBefore8 = "Context before Text selected thread8 context after.\n";
-                int thread8AnchoringLength = "Section heading text\n".Length;
+                string textBefore8 = "Context before Text selected thread8 context after.";
+                int thread8AnchoringLength = "Section heading text".Length;
                 TextAnchor expected8 = new TextAnchor { Start = textBefore8.Length, Length = thread8AnchoringLength };
                 Assert.That(thread8Change.Position, Is.EqualTo(expected8));
 
                 NoteThreadChange thread10Change = changes.Single(c => c.ThreadId == "thread10");
-                string textBefore10 = "Context before Text selected thread10 context after.\n*";
+                string textBefore10 = "Context before Text selected thread10 context after.*";
                 int thread10AnchoringLength = "other text in verse".Length;
                 TextAnchor expected10 = new TextAnchor { Start = textBefore10.Length, Length = thread10AnchoringLength };
                 // This test also verifies that fetching verse text for verse 10 will fetch text from both segments
