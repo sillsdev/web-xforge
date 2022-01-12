@@ -656,7 +656,7 @@ export function registerScripture(): string[] {
       this.lastRecorded = 0;
       this.ignoreChange = true;
       // during undo/redo, segments can be incorrectly highlighted, so explicitly remove incorrect highlighting
-      this.quill.updateContents(removeSegmentHighlight(delta[source]), 'user');
+      this.quill.updateContents(removeObsoleteSegmentAttrs(delta[source]), 'user');
       this.ignoreChange = false;
       const index = getLastChangeIndex(delta[source]);
       this.quill.setSelection(index);
@@ -665,8 +665,9 @@ export function registerScripture(): string[] {
 
   /**
    * Updates delta to remove segment highlights from segments that are not explicitly highlighted
+   * and strips off formatting from note thread embeds.
    */
-  function removeSegmentHighlight(delta: DeltaStatic): DeltaStatic {
+  function removeObsoleteSegmentAttrs(delta: DeltaStatic): DeltaStatic {
     const updatedDelta = new Delta();
     if (delta.ops != null) {
       for (const op of delta.ops) {
@@ -674,6 +675,10 @@ export function registerScripture(): string[] {
         const attrs = modelOp.attributes;
         if (attrs != null && attrs['segment'] != null && attrs['highlight-segment'] == null) {
           attrs['highlight-segment'] = false;
+        }
+        if (typeof modelOp.insert === 'object') {
+          // clear the formatting attributes on embeds to prevent dom elements from being corrupted
+          modelOp.attributes = undefined;
         }
         (updatedDelta as any).push(modelOp);
       }

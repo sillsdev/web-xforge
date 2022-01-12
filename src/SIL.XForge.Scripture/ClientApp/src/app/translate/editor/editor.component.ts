@@ -108,7 +108,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private projectDataChangesSub?: Subscription;
   private trainingProgressClosed: boolean = false;
   private trainingCompletedTimeout: any;
-  private clickSubs: Subscription[] = [];
+  private clickSubs: Map<string, Subscription[]> = new Map<string, Subscription[]>();
   private noteThreadQuery?: RealtimeQuery<NoteThreadDoc>;
   private toggleNoteThreadVerseRefs$: BehaviorSubject<void> = new BehaviorSubject<void>(undefined);
   private toggleNoteThreadSub?: Subscription;
@@ -507,6 +507,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (delta != null) {
       // only recreate note embeds if the delta has productive edits
       this.recreateDeletedNoteThreadEmbeds();
+      if (segment != null) {
+        this.subscribeClickEvents([segment.ref]);
+      }
     }
   }
 
@@ -619,8 +622,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.shouldNoteThreadsRespondToEdits = false;
     this.target?.removeEmbeddedElements();
     // Un-subscribe from all segment click events as these all get setup again
-    for (const event of this.clickSubs) {
-      event.unsubscribe();
+    for (const segmentEvents of this.clickSubs.values()) {
+      for (const event of segmentEvents) {
+        event.unsubscribe();
+      }
     }
   }
 
@@ -639,10 +644,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const noteThreadVerseRefs: VerseRef[] = featureVerseRefInfo.map(f => f.verseRef);
 
     if (value) {
+      const segments: string[] = this.target.toggleFeaturedVerseRefs(value, noteThreadVerseRefs, 'note-thread');
       for (const featured of featureVerseRefInfo) {
         this.embedNoteThread(featured);
       }
-      const segments: string[] = this.target.toggleFeaturedVerseRefs(value, noteThreadVerseRefs, 'note-thread');
       this.subscribeClickEvents(segments);
     } else {
       this.removeEmbeddedElements();
@@ -956,8 +961,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       if (elements == null) {
         continue;
       }
-      Array.from(elements).map((element: Element) => {
-        this.clickSubs.push(
+      this.clickSubs.get(segment)?.forEach(s => s.unsubscribe());
+      this.clickSubs.set(
+        segment,
+        Array.from(elements).map((element: Element) =>
           this.subscribe(fromEvent<MouseEvent>(element, 'click'), event => {
             if (this.bookNum == null) {
               return;
@@ -969,8 +976,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
               this.updateReadNotes(threadId);
             }
           })
-        );
-      });
+        )
+      );
     }
   }
 
@@ -1041,12 +1048,20 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     // a user initiated delta with ops that include inserting a note embed can only be undo deleting a note icon
-    const reinsertedNotes: DeltaOperation[] = delta.ops.filter(
+    const reinsertedNoteEmbeds: DeltaOperation[] = delta.filter(
       op => op.insert != null && op.insert['note-thread-embed'] != null
     );
-    const duplicateNoteIds: string[] = reinsertedNotes.map(op =>
-      op.attributes == null ? null : op.attributes['threadid']
+    const reinsertedNoteIds: string[] = [];
+    reinsertedNoteEmbeds.forEach(n => {
+      if (n.attributes != null && n.attributes['threadid'] != null) {
+        reinsertedNoteIds.push(n.attributes['threadid']);
+      }
+    });
+    const textInsertOps: DeltaOperation[] = delta.filter(
+      ops => ops.insert != null && ops.insert['note-thread-embed'] == null
     );
+    const textDeleteOps: DeltaOperation[] = delta.filter(ops => ops.delete != null);
+    const hasTextEditOp: boolean = textInsertOps.length > 0 || textDeleteOps.length > 0;
     for (const [threadId, noteIndex] of oldVerseEmbeds.entries()) {
       const noteThreadDoc: NoteThreadDoc | undefined = this.noteThreadQuery.docs.find(n => n.data?.dataId === threadId);
       if (noteThreadDoc?.data == null) {
@@ -1059,11 +1074,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         noteThreadDoc.data.position.length
       );
       const noteAnchorEndIndex: number = noteIndex + noteThreadDoc.data.position.length + noteCountInTextAnchor;
-      // A note is only affected by the undo operation if the delta includes inserting a note with the specified
-      // thread id, or if the edit op occurs before the note text anchor last character
+      // A note anchor is only affected by the undo operation if the delta includes inserting the note embed, or
+      // if the edit op occurs before the note text anchor last character
       // i.e. note anchors are unaffected if the edit index comes after the note and anchor
-      const noteIsAffected: boolean = noteAnchorEndIndex >= editOpIndex || duplicateNoteIds.includes(threadId);
-      if (reinsertedNotes.length > 0 && noteIsAffected) {
+      const noteIsAffected: boolean = noteAnchorEndIndex >= editOpIndex || reinsertedNoteIds.includes(threadId);
+      if (reinsertedNoteEmbeds.length > 0 && noteIsAffected && hasTextEditOp) {
         updatePromises.push(
           noteThreadDoc
             .previousSnapshot()
@@ -1086,6 +1101,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       updatePromises.push(noteThreadDoc.submitJson0Op(op => op.set(n => n.position, newSelection)));
     }
     await Promise.all(updatePromises);
+
+    // Re-apply the underline style to notes that were re-inserted
+    const embedPositions: Readonly<Map<string, number>> = this.target.embeddedElements;
+    for (const id of reinsertedNoteIds) {
+      const index: number | undefined = embedPositions.get(id);
+      if (index != null) {
+        this.target.editor?.formatText(index, 1, 'text-anchor', 'true', 'api');
+      }
+    }
   }
 
   /** Determine the number of embeds that are within an anchoring.

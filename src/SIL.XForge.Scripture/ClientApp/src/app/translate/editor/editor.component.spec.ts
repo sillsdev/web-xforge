@@ -1858,6 +1858,13 @@ describe('EditorComponent', () => {
       expect(env.getNoteThreadEditorPosition('thread01')).toEqual(note1Position);
       expect(noteThread1.data!.position).toEqual(noteThread1Anchor);
 
+      // undo deleting just the note when note thread doc has history
+      // target: |->$<-|chapter 1, $verse 1.
+      env.targetEditor.setSelection(note1Position, 1, 'user');
+      env.deleteCharacters();
+      env.triggerUndo();
+      expect(noteThread1.data!.position).toEqual(noteThread1Anchor);
+
       // undo deleting note and entire selection
       const embedLength = 1;
       deleteLength = beforeNoteLength + embedLength + noteThread1.data!.position.length;
@@ -1912,6 +1919,38 @@ describe('EditorComponent', () => {
       expect(noteThread3.data!.position).toEqual(noteThread3Anchor);
       expect(noteThread4.data!.position).toEqual(noteThread4Anchor);
       expect(textDoc.data!.ops![8].insert).toEqual('target: chapter 1, verse 3.');
+      env.dispose();
+    }));
+
+    it('note dialog appears after undo delete-a-note', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+      let iconElement02: HTMLElement = env.getNoteThreadIconElement('verse_1_3', 'thread02')!;
+      iconElement02.click();
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
+      let iconElement03: HTMLElement = env.getNoteThreadIconElement('verse_1_3', 'thread03')!;
+      iconElement03.click();
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).twice();
+
+      const notePosition: number = env.getNoteThreadEditorPosition('thread02');
+      const selectionIndex: number = notePosition + 1;
+      env.targetEditor.setSelection(selectionIndex, 'user');
+      env.wait();
+      env.backspace();
+
+      // SUT
+      env.triggerUndo();
+      iconElement02 = env.getNoteThreadIconElement('verse_1_3', 'thread02')!;
+      iconElement02.click();
+      env.wait();
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).thrice();
+      expect(iconElement02.parentElement!.tagName.toLowerCase()).toBe('display-text-anchor');
+      iconElement03 = env.getNoteThreadIconElement('verse_1_3', 'thread03')!;
+      iconElement03.click();
+      env.wait();
+      // ensure that clicking subsequent notes in a verse still works
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).times(4);
       env.dispose();
     }));
   });
@@ -2590,6 +2629,13 @@ class TestEnvironment {
       this.wait();
     }
     return selectionIndex;
+  }
+
+  backspace(): void {
+    const selection = this.targetEditor.getSelection()!;
+    const delta = new Delta([{ retain: selection.index - 1 }, { delete: 1 }]);
+    this.targetEditor.updateContents(delta, 'user');
+    this.wait();
   }
 
   deleteCharacters(): number {
