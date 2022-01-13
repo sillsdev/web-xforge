@@ -32,12 +32,17 @@
                 mat-flat-button
                 color="primary"
                 (click)="importFromTranscelerator()"
-                [disabled]="showTransceleratorOfflineMsg"
+                [disabled]="transceleratorRequest.status !== 'complete'"
               >
                 {{ t("import_from_transcelerator") }}
               </button>
               <a mat-button [href]="urls.transceleratorImportHelpPage" target="_blank">{{ t("learn_more") }}</a>
-              <mat-error *ngIf="showTransceleratorOfflineMsg">{{ t("no_transcelerator_offline") }}</mat-error>
+              <mat-error *ngIf="transceleratorRequest.status === 'offline'">
+                {{ t("no_transcelerator_offline") }}
+              </mat-error>
+              <mat-error *ngIf="transceleratorRequest.status === 'trying' && transceleratorRequest.failedAttempts > 0">
+                {{ t("network_error_transcelerator", { count: transceleratorRequest.failedAttempts }) }}
+              </mat-error>
             </mat-card-actions>
           </mat-card>
           <mat-card>
