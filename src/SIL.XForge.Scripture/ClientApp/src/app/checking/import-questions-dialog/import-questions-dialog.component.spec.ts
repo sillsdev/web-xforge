@@ -14,13 +14,13 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
-import { Observable, of, Subject } from 'rxjs';
+import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
-import { PwaService } from 'xforge-common/pwa.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { TestingRetryingRequestService } from 'xforge-common/testing-retrying-request.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
@@ -37,7 +37,6 @@ const mockedProjectService = mock(SFProjectService);
 const mockedAuthService = mock(AuthService);
 const mockedCookieService = mock(CookieService);
 const mockedMdcDialog = mock(MdcDialog);
-const mockedPwaService = mock(PwaService);
 const mockedCsvService = mock(CsvService);
 
 describe('ImportQuestionsDialogComponent', () => {
@@ -48,7 +47,6 @@ describe('ImportQuestionsDialogComponent', () => {
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: MdcDialog, useMock: mockedMdcDialog },
-      { provide: PwaService, useMock: mockedPwaService },
       { provide: CsvService, useMock: mockedCsvService }
     ]
   }));
@@ -393,7 +391,7 @@ describe('ImportQuestionsDialogComponent', () => {
     const env = new TestEnvironment({ offline: true });
     expect(env.importFromTransceleratorButton.disabled).toBe(true);
     expect(env.errorMessages).toEqual(['Importing from Transcelerator is not available offline.']);
-    env.setOnline();
+    env.setOnline(true);
     expect(env.importFromTransceleratorButton.disabled).toBe(false);
     expect(env.errorMessages).toEqual([]);
     env.click(env.importFromTransceleratorButton);
@@ -447,7 +445,7 @@ class TestEnvironment {
   mockedImportQuestionsConfirmationMdcDialogRef =
     mock<MdcDialogRef<ImportQuestionsConfirmationDialogComponent>>(MdcDialogRef);
   editedTransceleratorQuestionIds: string[] = [];
-  uponOnline$ = new Subject<void>();
+  online$ = new BehaviorSubject<boolean>(true);
 
   private questions: TransceleratorQuestion[] = [
     {
@@ -498,9 +496,8 @@ class TestEnvironment {
   ) {
     this.questions = options.transceleratorQuestions || this.questions;
     this.errorOnFetchQuestions = !!options.errorOnFetchQuestions;
-    when(mockedPwaService.online).thenReturn(this.uponOnline$.toPromise());
-    if (!options.offline) {
-      this.uponOnline$.complete();
+    if (options.offline === true) {
+      this.online$.next(false);
     }
 
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
@@ -633,8 +630,8 @@ class TestEnvironment {
     );
   }
 
-  setOnline() {
-    this.uponOnline$.complete();
+  setOnline(value: boolean) {
+    this.online$.next(value);
     tick();
     this.fixture.detectChanges();
   }
@@ -704,11 +701,13 @@ class TestEnvironment {
 
   private setupTransceleratorQuestions(): void {
     if (this.errorOnFetchQuestions) {
-      when(mockedProjectService.transceleratorQuestions('project01')).thenReject(
-        new Error('Transcelerator version unsupported')
+      when(mockedProjectService.transceleratorQuestions('project01', anything())).thenCall(() =>
+        TestingRetryingRequestService.createRequest(throwError(new Error('Transcelerator version unsupported')))
       );
     } else {
-      when(mockedProjectService.transceleratorQuestions('project01')).thenCall(() => Promise.resolve(this.questions));
+      when(mockedProjectService.transceleratorQuestions('project01', anything())).thenCall(() =>
+        TestingRetryingRequestService.createRequest(of(this.questions), this.online$)
+      );
     }
     when(mockedProjectService.queryQuestions('project01')).thenResolve({
       ready$: new Observable<void>(subscriber => {
