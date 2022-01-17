@@ -181,6 +181,7 @@ export function registerScripture(): string[] {
   }
   formats.push(EmptyEmbed);
 
+  /** Span of characters or elements, that can have formatting. */
   class CharInline extends Inline {
     static blotName = 'char';
     static tagName = 'usx-char';

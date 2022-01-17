@@ -269,10 +269,10 @@ export class DragAndDrop {
     }
 
     const lengthOfAnythingElse = 1;
-    const elementsKnownToBeLengthOne: string[] = ['display-note', 'usx-figure'];
+    const elementsKnownToBeLengthOne: string[] = ['display-note', 'usx-figure', 'usx-note'];
     if (!elementsKnownToBeLengthOne.includes(node.nodeName.toLowerCase())) {
       // Also return 1 for anything else. But note it in the console until it too is incorporated.
-      console.warn(`Warning: Drag-and-drop is assuming length 1 for node ${node.nodeName}`);
+      console.warn(`Warning: Drag-and-drop is assuming length 1 for node ${node.nodeName.toLowerCase()}`);
     }
     return lengthOfAnythingElse;
   }
