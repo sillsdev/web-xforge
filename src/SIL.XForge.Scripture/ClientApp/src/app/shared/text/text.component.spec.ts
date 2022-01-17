@@ -1264,42 +1264,175 @@ describe('TextComponent', () => {
       // The user drags into a segment with a figure. We need to correctly calculate the drop position by correctly
       // understanding the editor length of the figure.
 
-      const env = new TestEnvironment();
+      // Various items other than body text can be in a document, such as endnotes, footnotes, cross references,
+      // and figures. Each of these are editor-length 1, even if it is represented by a multi-character
+      // string (like a footnote '12'). Drag-and-drop should work correctly in segments that contain
+      // these, here referred to as "nuggets".
+      // This test specifies behaviour around nuggets of the following element name.
+      const nuggetElementName = 'usx-figure';
 
       const chapterNum = 2;
+      // The following will be inserted into the text doc as part of the test.
+      const nuggetTextDocSnippet: any = {
+        figure: {
+          style: 'fig',
+          alt: 'figure description',
+          src: 'picture.png',
+          size: 'col',
+          loc: 'location',
+          copy: 'copyright c 1234',
+          ref: `${chapterNum}.1`,
+          contents: {
+            ops: [
+              {
+                insert: 'caption here for a figure'
+              }
+            ]
+          }
+        }
+      };
+      testNugget(nuggetElementName, chapterNum, nuggetTextDocSnippet);
+    }));
+
+    it('can drag-and-drop correctly near endnote', fakeAsync(() => {
+      // The user drags into a segment with an endnote. We need to correctly calculate the drop position by correctly
+      // understanding the editor length of the endnote representation in the editor's body text.
+
+      const nuggetElementName = 'usx-note';
+      const chapterNum = 2;
+      const nuggetTextDocSnippet: any = {
+        note: {
+          caller: '+',
+          style: 'fe',
+          contents: {
+            ops: [
+              {
+                insert: `${chapterNum}.1 `,
+                attributes: {
+                  char: {
+                    style: 'fr',
+                    closed: 'false',
+                    cid: '65efb8c9-ebf1-4ac8-abd2-20b5e067996d'
+                  }
+                }
+              },
+              {
+                insert: 'end note here ',
+                attributes: {
+                  char: {
+                    style: 'ft',
+                    closed: 'false',
+                    cid: '6746d56a-77eb-4b72-8d38-4b87f3af32e2'
+                  }
+                }
+              }
+            ]
+          }
+        }
+      };
+      testNugget(nuggetElementName, chapterNum, nuggetTextDocSnippet);
+    }));
+
+    it('can drag-and-drop correctly near foot note', fakeAsync(() => {
+      // The user drags into a segment with a footnote. We need to correctly calculate the drop position by correctly
+      // understanding the editor length of the foot note representation.
+
+      const nuggetElementName = 'usx-note';
+      const chapterNum = 2;
+      const nuggetTextDocSnippet: any = {
+        note: {
+          caller: '+',
+          style: 'f',
+          contents: {
+            ops: [
+              {
+                insert: `${chapterNum}.1 `,
+                attributes: {
+                  char: {
+                    style: 'fr',
+                    closed: 'false',
+                    cid: '301a06f5-1db7-4cb8-baa5-9d59e6d18aff'
+                  }
+                }
+              },
+              {
+                insert: 'footnote content ',
+                attributes: {
+                  char: {
+                    style: 'ft',
+                    closed: 'false',
+                    cid: '4da3adf5-7c58-43c2-83e4-3e83e32568c3'
+                  }
+                }
+              }
+            ]
+          }
+        }
+      };
+      testNugget(nuggetElementName, chapterNum, nuggetTextDocSnippet);
+    }));
+
+    it('can drag-and-drop correctly near cross reference', fakeAsync(() => {
+      // The user drags into a segment with a cross reference. We need to correctly calculate the
+      // drop position by correctly understanding the editor length of the cross reference in the DOM,
+      // whether visible or not.
+
+      const nuggetElementName = 'usx-note';
+      const chapterNum = 2;
+      const nuggetTextDocSnippet: any = {
+        note: {
+          caller: '-',
+          style: 'x',
+          contents: {
+            ops: [
+              {
+                insert: `${chapterNum}.1 `,
+                attributes: {
+                  char: {
+                    style: 'xo',
+                    closed: 'false',
+                    cid: '9e96af0f-508c-44c7-b112-1fc2ef4dc952'
+                  }
+                }
+              },
+              {
+                insert: 'rut 1:1 ',
+                attributes: {
+                  char: {
+                    style: 'xt',
+                    closed: 'false',
+                    cid: '49669fbe-a14d-4c55-9fe0-f4503740d392'
+                  }
+                }
+              }
+            ]
+          }
+        }
+      };
+      testNugget(nuggetElementName, chapterNum, nuggetTextDocSnippet);
+    }));
+
+    function testNugget(
+      nuggetElementName: string,
+      chapterNum: number,
+      nuggetTextDocSnippet: any,
+      nugetTextDocAttributes?: any
+    ): void {
+      const env = new TestEnvironment();
       const sourceSegmentRef = `verse_${chapterNum}_1`;
       const targetSegmentRef = `verse_${chapterNum}_1`;
-
       const textDocId: TextDocId = new TextDocId('project01', 40, chapterNum);
+      if (nugetTextDocAttributes == null) {
+        nugetTextDocAttributes = { segment: sourceSegmentRef };
+      }
 
       const delta = new Delta();
       delta.insert({ chapter: { number: chapterNum.toString(), style: 'c' } });
       delta.insert({ blank: true }, { segment: 'p_1' });
       delta.insert({ verse: { number: '1', style: 'v' } });
       delta.insert(`The quick b`, { segment: `verse_${chapterNum}_1` });
-      delta.insert(
-        {
-          figure: {
-            style: 'fig',
-            alt: 'figure description',
-            src: 'picture.png',
-            size: 'col',
-            loc: 'location',
-            copy: 'copyright c 1234',
-            ref: `${chapterNum}.1`,
-            contents: {
-              ops: [
-                {
-                  insert: 'caption here for a figure'
-                }
-              ]
-            }
-          }
-        },
-        { segment: sourceSegmentRef }
-      );
+      delta.insert(nuggetTextDocSnippet, nugetTextDocAttributes);
       delta.insert(`rown fox jumps over the lazy dog.`, { segment: `verse_${chapterNum}_1` });
-
       env.realtimeService.addSnapshot<TextData>(TextDoc.COLLECTION, {
         id: textDocId.toString(),
         data: delta,
@@ -1311,12 +1444,12 @@ describe('TextComponent', () => {
       tick();
 
       const initialTextInDoc = `The quick brown fox jumps over the lazy dog.`;
-      // figure before this char ----------^
+      // nugget before this char ----------^
       // user selection ------------^^^^^
       // drop location -----------------------------^
-      // content of text node after fig ---^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      // content of text node after nugget ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       const expectedTextInDoc = `The  brown fox quickjumps over the lazy dog.`;
-      // figure should still be here --^
+      // nugget should still be here --^
 
       const textLeadingUpToSelectionBeforeEvent = 'The ';
       const textToMove = 'quick';
@@ -1331,11 +1464,11 @@ describe('TextComponent', () => {
 
       expect(env.component.getSegmentText(sourceSegmentRef)).withContext('setup').toEqual(initialTextInDoc);
       expect(env.component.editor!.getText()).toContain(initialTextInDoc, 'setup');
-      const initialElementCountUsxFig = (env.component.editor?.root as HTMLDivElement).getElementsByTagName(
-        'usx-figure'
+      const initialNuggetElementCount = (env.component.editor?.root as HTMLDivElement).getElementsByTagName(
+        nuggetElementName
       ).length;
-      expect(initialElementCountUsxFig).withContext('setup').toEqual(1);
-      const expectedElementCountUsxFig = initialElementCountUsxFig;
+      expect(initialNuggetElementCount).withContext('setup').toEqual(1);
+      const expectedElementCountNugget = initialNuggetElementCount;
 
       const sourceSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(sourceSegmentRef);
       if (sourceSegmentRange == null) {
@@ -1401,17 +1534,17 @@ describe('TextComponent', () => {
       if (resultingSelection == null) {
         throw Error();
       }
-      const resultElementCountUsxFig = (env.component.editor?.root as HTMLDivElement).getElementsByTagName(
-        'usx-figure'
+      const resultElementCountNugget = (env.component.editor?.root as HTMLDivElement).getElementsByTagName(
+        nuggetElementName
       ).length;
-      expect(resultElementCountUsxFig)
+      expect(resultElementCountNugget)
         .withContext('number of these elements should be as expected')
-        .toEqual(expectedElementCountUsxFig);
+        .toEqual(expectedElementCountNugget);
 
       // After text is dragged, the new selection should be the inserted text.
       expect(resultingSelection.index).toEqual(desiredSelectionStart);
       expect(resultingSelection.length).toEqual(desiredSelectionLength);
-    }));
+    }
 
     function skipProblemTest(extraSteps: (env: TestEnvironment, dropEvent: MockDragEvent) => void) {
       // Certain unexpected situations should result in not doing anything without creating a problem.
