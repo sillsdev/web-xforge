@@ -628,7 +628,7 @@ namespace SIL.XForge.Scripture.Services
                     contextBefore, selectionText, false);
 
                 IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret,
-                    ptProjectId, 40, noteThreadDocs, chapterDeltas, syncUsers);
+                    ptProjectId, 40, noteThreadDocs, chapterDeltas, syncUsers, env.usernamesToIds);
                 Assert.That(changes.Count, Is.EqualTo(2));
 
                 // Context, including the selected text have changed
@@ -674,7 +674,7 @@ namespace SIL.XForge.Scripture.Services
                     "Unrecognizable context ", "unrecognizable selection", false);
 
                 IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret,
-                    ptProjectId, 40, noteThreadDocs, chapterDeltas, syncUsers);
+                    ptProjectId, 40, noteThreadDocs, chapterDeltas, syncUsers, env.usernamesToIds);
                 Assert.That(changes.Count, Is.EqualTo(1));
 
                 // Vigorous text changes, the note defaults to the start
@@ -727,7 +727,7 @@ namespace SIL.XForge.Scripture.Services
                 Dictionary<int, ChapterDelta> chapterDeltas =
                     env.GetChapterDeltasByBook(env.Project01, 40, 1, "Context before ", "Text selected");
                 IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
-                    userSecret, ptProjectId, 40, noteThreadDocs, chapterDeltas, syncUsers);
+                    userSecret, ptProjectId, 40, noteThreadDocs, chapterDeltas, syncUsers, env.usernamesToIds);
                 Assert.That(changes.Count, Is.EqualTo(8));
                 Assert.That(changes.FirstOrDefault(c => c.ThreadId == "thread8"), Is.Null);
 
@@ -831,7 +831,7 @@ namespace SIL.XForge.Scripture.Services
                 Dictionary<int, ChapterDelta> chapterDeltas =
                     env.GetChapterDeltasByBook(env.Project01, 40, 1, "Context before ", "Text selected");
                 IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
-                    userSecret, ptProjectId, 40, noteThreadDocs, chapterDeltas, syncUsers);
+                    userSecret, ptProjectId, 40, noteThreadDocs, chapterDeltas, syncUsers, env.usernamesToIds);
 
                 List<string> expectedIcons = new List<string>() {
                     "icon2",
@@ -852,6 +852,102 @@ namespace SIL.XForge.Scripture.Services
                     Assert.That(note.DataId, Is.EqualTo($"n{i + 1}onthread1"));
                     Assert.That(note.TagIcon, Is.EqualTo(expectedIcons[i]));
                 }
+            }
+        }
+
+        [Test]
+        public async Task GetNoteThreadChanges_SetsAssignedUser()
+        {
+            // assign user id to assigned user
+            var env = new TestEnvironment();
+            var associatedPTUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPTUser);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+            env.AddNoteThreadData(new[]
+            {
+                new ThreadComponents { threadNum = 1, noteCount = 1 },
+                new ThreadComponents { threadNum = 3, noteCount = 1 },
+                new ThreadComponents { threadNum = 4, noteCount = 1 }
+            });
+
+            ThreadNoteComponents[] threadNotes1 = new[]
+            {
+                new ThreadNoteComponents { assignedPTUser = Paratext.Data.ProjectComments.CommentThread.teamUser },
+                new ThreadNoteComponents { assignedPTUser = env.Username02 }
+            };
+            ThreadNoteComponents[] threadNotes2 = new[]
+            {
+                new ThreadNoteComponents
+                {
+                    assignedPTUser = env.Username02, tagsAdded = new[] { "2" }, status = NoteStatus.Todo
+                }
+            };
+            ThreadNoteComponents[] threadNotes3 = new[]
+            {
+                new ThreadNoteComponents
+                {
+                    assignedPTUser = env.Username02, tagsAdded = new[] { "3" }, status = NoteStatus.Todo
+                }
+            };
+            ThreadNoteComponents[] threadNotes4 = new[]
+            {
+                new ThreadNoteComponents
+                {
+                    assignedPTUser = Paratext.Data.ProjectComments.CommentThread.teamUser,
+                    tagsAdded = new[] { "4" },
+                    status = NoteStatus.Todo
+                }
+            };
+            env.AddParatextComments(new[]
+            {
+                new ThreadComponents { threadNum = 1, noteCount = 2, username = env.Username01, notes = threadNotes1 },
+                new ThreadComponents { threadNum = 2, noteCount = 1, username = env.Username01, notes = threadNotes2 },
+                new ThreadComponents { threadNum = 3, noteCount = 1, username = env.Username01, notes = threadNotes3 },
+                new ThreadComponents { threadNum = 4, noteCount = 1, username = env.Username01, notes = threadNotes4 }
+            });
+
+            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            {
+                IEnumerable<IDocument<NoteThread>> noteThreadDocs =
+                    await env.GetNoteThreadDocsAsync(conn, new[] { "thread1", "thread3", "thread4" });
+                var deltas = env.GetChapterDeltasByBook(env.Project01, 40, 1, "Context before ", "Text selected", true);
+                Dictionary<string, SyncUser> syncUsers = new Dictionary<string, SyncUser> {
+                    { "syncuser01",  new SyncUser { Id = "syncuser01", ParatextUsername = env.Username01 } }
+                };
+                IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret, ptProjectId, 40,
+                    noteThreadDocs, deltas, syncUsers, env.usernamesToIds);
+
+                Assert.That(changes.Count, Is.EqualTo(4));
+                // Note added and user assigned
+                NoteThreadChange change1 = changes.Single(c => c.ThreadId == "thread1");
+                Assert.That(change1.AssignedUserRef, Is.EqualTo(env.User02));
+                Assert.That(change1.AssignedPTUsername, Is.EqualTo(env.Username02));
+                Assert.That(change1.NotesAdded.Count, Is.EqualTo(1));
+
+                // Note thread added and user assigned
+                NoteThreadChange change2 = changes.Single(c => c.ThreadId == "thread2");
+                Assert.That(change2.AssignedUserRef, Is.EqualTo(env.User02));
+                Assert.That(change2.AssignedPTUsername, Is.EqualTo(env.Username02));
+                Assert.That(change2.NotesAdded.Count, Is.EqualTo(1));
+
+                // Note updated with new user assigned
+                NoteThreadChange change3 = changes.Single(c => c.ThreadId == "thread3");
+                Assert.That(change3.AssignedUserRef, Is.EqualTo(env.User02));
+                Assert.That(change3.AssignedPTUsername, Is.EqualTo(env.Username02));
+                Assert.That(change3.NotesUpdated.Count, Is.EqualTo(1));
+                Assert.That(change3.NotesUpdated[0].AssignedUserRef, Is.EqualTo(env.User02));
+                Assert.That(change3.NotesUpdated[0].AssignedPTUsername, Is.EqualTo(env.Username02));
+
+                // Note updated with team assigned
+                NoteThreadChange change4 = changes.Single(c => c.ThreadId == "thread4");
+                Assert.That(change4.AssignedUserRef, Is.Null);
+                Assert.That(change4.AssignedPTUsername,
+                    Is.EqualTo(Paratext.Data.ProjectComments.CommentThread.teamUser));
+                Assert.That(change4.NotesUpdated.Count, Is.EqualTo(1));
+                Assert.That(change4.NotesUpdated[0].AssignedUserRef, Is.Null);
+                Assert.That(change4.NotesUpdated[0].AssignedPTUsername,
+                    Is.EqualTo(Paratext.Data.ProjectComments.CommentThread.teamUser));
             }
         }
 
@@ -878,7 +974,7 @@ namespace SIL.XForge.Scripture.Services
                     { "syncuser01",  new SyncUser { Id = "syncuser01", ParatextUsername = env.Username01 } }
                 };
                 IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret, ptProjectId, 40,
-                    new IDocument<NoteThread>[0], deltas, syncUsers);
+                    new IDocument<NoteThread>[0], deltas, syncUsers, env.usernamesToIds);
 
                 Assert.That(changes.Count, Is.EqualTo(3));
                 NoteThreadChange thread1Change = changes.Single(c => c.ThreadId == "thread1");
@@ -945,7 +1041,7 @@ namespace SIL.XForge.Scripture.Services
                     { "syncuser01", new SyncUser { Id = "syncuser01", ParatextUsername = env.Username01 } }
                 };
                 IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret, ptProjectId, 40,
-                    noteThreadDocs, chapterDeltas, syncUsers);
+                    noteThreadDocs, chapterDeltas, syncUsers, env.usernamesToIds);
                 Assert.That(changes.Count, Is.EqualTo(4));
 
                 // The reattach note in thread3 is existing and is not changed
@@ -1379,7 +1475,7 @@ namespace SIL.XForge.Scripture.Services
             env.SetSharedRepositorySource(userSecret, UserRoles.Administrator);
             var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
             var project = projects.First();
-            var mapping = await env.Service.GetParatextUsernameMappingAsync(userSecret, project, CancellationToken.None);
+            var mapping = await env.Service.GetParatextUsernameMappingAsync(userSecret, project, CancellationToken.None, true);
             Assert.That(mapping.Count, Is.EqualTo(2));
             Assert.That(mapping.First(), Is.EqualTo(new KeyValuePair<string, string>(env.User01, env.Username01)));
             Assert.That(mapping.Last(), Is.EqualTo(new KeyValuePair<string, string>(env.User02, env.Username02)));
@@ -1393,7 +1489,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(resourceId.Length, Is.EqualTo(SFInstallableDblResource.ResourceIdentifierLength));
             var userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             var mapping = await env.Service.GetParatextUsernameMappingAsync(userSecret,
-                new SFProject { ParatextId = resourceId }, CancellationToken.None);
+                new SFProject { ParatextId = resourceId }, CancellationToken.None, true);
             Assert.That(mapping.Count, Is.EqualTo(0));
         }
 
@@ -1432,6 +1528,7 @@ namespace SIL.XForge.Scripture.Services
         {
             public Enum<NoteStatus> status;
             public string[] tagsAdded;
+            public string assignedPTUser;
         }
 
         [Test]
@@ -1644,11 +1741,16 @@ namespace SIL.XForge.Scripture.Services
             public readonly string AlternateBefore = "Alternate before ";
             public readonly string AlternateAfter = " alternate after.";
             public readonly string ReattachedSelectedText = "reattached text";
+            public Dictionary<string, string> usernamesToIds = new Dictionary<string, string>
+            {
+                { "User 01", "user01" }, { "User 02", "user02" }, { "User 03", "user03" }
+            };
 
             private string ruthBookUsfm = "\\id RUT - ProjectNameHere\n" +
                 "\\c 1\n" +
                 "\\v 1 Verse 1 here.\n" +
                 "\\v 2 Verse 2 here.";
+
 
             public IWebHostEnvironment MockWebHostEnvironment;
             public IOptions<ParatextOptions> MockParatextOptions;
@@ -1996,7 +2098,8 @@ namespace SIL.XForge.Scripture.Services
                             : new TextAnchor { Start = ContextBefore.Length, Length = text.Length },
                         OriginalContextAfter = comp.appliesToVerse ? "" : ContextAfter,
                         Status = NoteStatus.Todo.InternalValue,
-                        TagIcon = $"icon{comp.threadNum}"
+                        TagIcon = $"icon{comp.threadNum}",
+                        AssignedPTUsername = Paratext.Data.ProjectComments.CommentThread.unassignedUser
                     };
                     List<Note> notes = new List<Note>();
                     for (int i = 1; i <= comp.noteCount; i++)
@@ -2012,7 +2115,8 @@ namespace SIL.XForge.Scripture.Services
                             DateCreated = new DateTime(2019, 1, i, 8, 0, 0, DateTimeKind.Utc),
                             TagIcon = $"icon{comp.threadNum}",
                             Deleted = comp.isDeleted,
-                            Status = NoteStatus.Todo.InternalValue
+                            Status = NoteStatus.Todo.InternalValue,
+                            AssignedPTUsername = Paratext.Data.ProjectComments.CommentThread.unassignedUser
                         });
                     }
                     if (comp.reattachedVerseStr != null)
@@ -2127,63 +2231,69 @@ namespace SIL.XForge.Scripture.Services
                     string text = "Text selected " + threadId;
                     string selectedText = comp.appliesToVerse ? ContextBefore + text + ContextAfter : text;
                     string verseStr = $"MAT 1:{comp.threadNum}";
+
+                    if (comp.alternateText == SelectionType.RelatedVerse)
+                    {
+                        // The alternate text is in a subsequent paragraph with a footnote represented by '*'
+                        before = before + text + after + "\n*";
+                        after = "";
+                        selectedText = "other text in verse";
+                    }
+                    else if (comp.alternateText == SelectionType.Section)
+                    {
+                        before = before + text + after;
+                        after = "";
+                        selectedText = "Section heading text";
+                    }
+
+                    Paratext.Data.ProjectComments.Comment getThreadComment()
+                    {
+                        return new Paratext.Data.ProjectComments.Comment(associatedPtUser)
+                        {
+                            Thread = threadId,
+                            VerseRefStr = verseStr,
+                            SelectedText = selectedText,
+                            ContextBefore = comp.appliesToVerse ? "" : before,
+                            ContextAfter = comp.appliesToVerse ? "" : after,
+                            StartPosition = comp.appliesToVerse ? 0 : before.Length,
+                        };
+                    }
+
                     for (int i = 1; i <= comp.noteCount; i++)
                     {
                         string date = $"2019-01-0{i}T08:00:00.0000000+00:00";
                         XmlElement content = doc.CreateElement("Contents");
                         content.InnerXml = comp.isEdited ? $"<p>{threadId} note {i}: EDITED.</p>" : $"<p>{threadId} note {i}.</p>";
-                        if (comp.alternateText == SelectionType.RelatedVerse)
-                        {
-                            // The alternate text is in a subsequent paragraph with a footnote represented by '*'
-                            before = before + text + after + "\n*";
-                            after = "";
-                            selectedText = "other text in verse";
-                        }
-                        else if (comp.alternateText == SelectionType.Section)
-                        {
-                            before = before + text + after;
-                            after = "";
-                            selectedText = "Section heading text";
-                        }
+                        Paratext.Data.ProjectComments.Comment comment = getThreadComment();
+
                         ThreadNoteComponents note = new ThreadNoteComponents
                         {
                             status = NoteStatus.Todo,
-                            tagsAdded = new[] { comp.threadNum.ToString() }
+                            tagsAdded = new[] { comp.threadNum.ToString() },
+                            assignedPTUser = Paratext.Data.ProjectComments.CommentThread.unassignedUser
                         };
                         if (comp.notes != null)
                             note = comp.notes[i - 1];
-                        ProjectCommentManager.AddComment(new Paratext.Data.ProjectComments.Comment(associatedPtUser)
-                        {
-                            Thread = threadId,
-                            VerseRefStr = verseStr,
-                            SelectedText = selectedText,
-                            ContextBefore = comp.appliesToVerse ? "" : before,
-                            ContextAfter = comp.appliesToVerse ? "" : after,
-                            StartPosition = comp.appliesToVerse ? 0 : before.Length,
-                            Contents = content,
-                            Date = date,
-                            Deleted = comp.isDeleted,
-                            Status = note.status,
-                            ExternalUser = "user02",
-                            TagsAdded = comp.isConflict ? null : note.tagsAdded == null ? null : new[] { note.tagsAdded[0] },
-                            Type = comp.isConflict ? NoteType.Conflict : NoteType.Normal
-                        });
+
+                        comment.Contents = content;
+                        comment.Date = date;
+                        comment.Deleted = comp.isDeleted;
+                        comment.Status = note.status;
+                        comment.ExternalUser = "user02";
+                        comment.TagsAdded = comp.isConflict ? null : note.tagsAdded == null ? null : note.tagsAdded;
+                        comment.Type = comp.isConflict ? NoteType.Conflict : NoteType.Normal;
+                        comment.AssignedUser = note.assignedPTUser;
+                        ProjectCommentManager.AddComment(comment);
                     }
+
                     if (comp.reattachedVerseStr != null)
                     {
                         ReattachedThreadInfo rti = GetReattachedThreadInfo(comp.reattachedVerseStr);
-                        ProjectCommentManager.AddComment(new Paratext.Data.ProjectComments.Comment(associatedPtUser)
-                        {
-                            Thread = threadId,
-                            VerseRefStr = verseStr,
-                            SelectedText = selectedText,
-                            ContextBefore = comp.appliesToVerse ? "" : before,
-                            ContextAfter = comp.appliesToVerse ? "" : after,
-                            StartPosition = comp.appliesToVerse ? 0 : before.Length,
-                            Status = NoteStatus.Unspecified,
-                            Date = "2019-01-20T08:00:00.0000000+00:00",
-                            Reattached = ReattachedThreadInfoStr(rti)
-                        });
+                        Paratext.Data.ProjectComments.Comment reattachedComment = getThreadComment();
+                        reattachedComment.Status = NoteStatus.Unspecified;
+                        reattachedComment.Date = "2019-01-20T08:00:00.0000000+00:00";
+                        reattachedComment.Reattached = ReattachedThreadInfoStr(rti);
+                        ProjectCommentManager.AddComment(reattachedComment);
                     }
                 }
             }
