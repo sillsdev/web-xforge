@@ -24,7 +24,7 @@ namespace SIL.XForge.Scripture.Services
         bool IsResource(string paratextId);
         Task<string> GetResourcePermissionAsync(string paratextId, string userId, CancellationToken token);
         Task<IReadOnlyDictionary<string, string>> GetParatextUsernameMappingAsync(UserSecret userSecret,
-            SFProject project, CancellationToken token);
+            SFProject project, CancellationToken token, bool useIdAsKey);
         Task<Dictionary<string, string>> GetPermissionsAsync(UserSecret userSecret, SFProject project,
             IReadOnlyDictionary<string, string> ptUsernameMapping, int book = 0, int chapter = 0,
             CancellationToken token = default);
@@ -39,7 +39,7 @@ namespace SIL.XForge.Scripture.Services
             IEnumerable<IDocument<NoteThread>> noteThreadDocs, Dictionary<string, SyncUser> syncUsers);
         IEnumerable<NoteThreadChange> GetNoteThreadChanges(UserSecret userSecret, string projectId, int bookNum,
             IEnumerable<IDocument<NoteThread>> noteThreadDocs, Dictionary<int, ChapterDelta> chapterDeltas,
-            Dictionary<string, SyncUser> syncUsers);
+            Dictionary<string, SyncUser> syncUsers, IReadOnlyDictionary<string, string> userIdsToUsername);
         string GetLatestSharedVersion(UserSecret userSecret, string paratextId);
         bool BackupExists(UserSecret userSecret, string paratextId);
         bool BackupRepository(UserSecret userSecret, string paratextId);

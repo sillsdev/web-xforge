@@ -15,5 +15,7 @@ namespace SIL.XForge.Scripture.Models
         public string ParatextUser { get; set; }
         public string TagIcon { get; set; }
         public string Status { get; set; }
+        public string AssignedUserRef { get; set; }
+        public string AssignedPTUsername { get; set; }
     }
 }

@@ -19,7 +19,7 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, matDialogCloseDelay, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
+import { AssignedUsers, NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
@@ -161,6 +161,13 @@ describe('NoteDialogComponent', () => {
     expect(reattachNote.querySelector('img')?.getAttribute('title')).toEqual('To do');
   }));
 
+  it('shows assigned user', fakeAsync(() => {
+    env = new TestEnvironment();
+    expect(env.threadAssignedUser.nativeElement.textContent).toContain('Team');
+    expect(env.notes[0].nativeElement.querySelector('.assigned-user').textContent).toContain('User 1');
+    expect(env.notes[1].nativeElement.querySelector('.assigned-user').textContent).toContain('Team');
+  }));
+
   it('should gracefully return when data not ready', fakeAsync(() => {
     env = new TestEnvironment({ includeSnapshots: false });
     expect(env.component.segmentText).toEqual('');
@@ -263,6 +270,7 @@ class TestEnvironment {
       tagIcon: 'flag02',
       verseRef: { bookNum: 40, chapterNum: 1, verseNum: 7 },
       status: NoteStatus.Todo,
+      assignedPTUsername: AssignedUsers.TeamUser,
       notes: [
         {
           dataId: 'note01',
@@ -274,7 +282,8 @@ class TestEnvironment {
           status: NoteStatus.Todo,
           tagIcon: 'flag02',
           dateCreated: '',
-          dateModified: ''
+          dateModified: '',
+          assignedPTUsername: 'User 1'
         },
         {
           dataId: 'note02',
@@ -286,7 +295,8 @@ class TestEnvironment {
           status: NoteStatus.Resolved,
           tagIcon: 'flag02',
           dateCreated: '',
-          dateModified: ''
+          dateModified: '',
+          assignedPTUsername: AssignedUsers.TeamUser
         },
         {
           dataId: 'note03',
@@ -418,6 +428,10 @@ class TestEnvironment {
 
   get dialogContentArea(): DebugElement {
     return this.overlayContainerElement.query(By.css('mat-dialog-content'));
+  }
+
+  get threadAssignedUser(): DebugElement {
+    return this.overlayContainerElement.query(By.css('#assignedUser'));
   }
 
   private get overlayContainerElement(): DebugElement {

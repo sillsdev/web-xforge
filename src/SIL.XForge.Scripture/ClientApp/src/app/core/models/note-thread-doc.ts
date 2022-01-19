@@ -18,13 +18,13 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
   static readonly COLLECTION = NOTE_THREAD_COLLECTION;
   static readonly INDEX_PATHS = NOTE_THREAD_INDEX_PATHS;
 
-  get icon(): NoteThreadIcon {
-    return this.iconProperties(this.getTag());
-  }
-
   get iconResolved(): NoteThreadIcon {
     const iconTag = this.getResolvedTag(this.getTag());
     return this.iconProperties(iconTag);
+  }
+
+  get iconReattached(): NoteThreadIcon {
+    return this.iconProperties('ReattachNote');
   }
 
   getNoteIcon(note: Note): NoteThreadIcon {
@@ -36,8 +36,12 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
     return this.iconProperties(iconTag);
   }
 
-  get iconReattached(): NoteThreadIcon {
-    return this.iconProperties('ReattachNote');
+  getIcon(grayOut?: boolean): NoteThreadIcon {
+    let tag: string = this.getTag();
+    if (grayOut) {
+      tag = this.grayOutTag(tag);
+    }
+    return this.iconProperties(tag);
   }
 
   currentVerseRef(): VerseRef | undefined {
@@ -77,6 +81,13 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
     if (iconTag !== '') {
       // Resolved tags use 5 in the filename instead of the current number suffix
       iconTag = iconTag.slice(0, iconTag.length - 1) + '5';
+    }
+    return iconTag;
+  }
+
+  private grayOutTag(iconTag: string): string {
+    if (iconTag !== '') {
+      iconTag = iconTag.slice(0, iconTag.length - 1) + '4';
     }
     return iconTag;
   }

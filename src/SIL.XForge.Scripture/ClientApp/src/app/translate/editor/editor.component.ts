@@ -19,6 +19,7 @@ import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
+import { AssignedUsers } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
@@ -1023,7 +1024,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       verseRef,
       id: threadDoc.data.dataId,
       preview,
-      icon: threadDoc.icon,
+      icon: threadDoc.getIcon(this.isAssignedToOtherUser(threadDoc)),
       textAnchor: threadDoc.data.position,
       highlight: hasNewContent
     };
@@ -1318,6 +1319,19 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return false;
     }
     return !this.projectUserConfigDoc.data.noteRefsRead.includes(noteId);
+  }
+
+  private isAssignedToOtherUser(thread: NoteThreadDoc): boolean {
+    if (thread.data?.assignedUserRef != null && thread.data.assignedUserRef.length > 0) {
+      return thread.data.assignedUserRef !== this.userService.currentUserId;
+    }
+    switch (thread.data?.assignedPTUsername) {
+      case AssignedUsers.TeamUser:
+      case AssignedUsers.Unspecified:
+      case undefined:
+        return false;
+    }
+    return true;
   }
 
   private syncScroll(): void {

@@ -11,4 +11,6 @@ export interface Note extends Comment {
   tagIcon?: string;
   status: NoteStatus;
   reattached?: string;
+  assignedUserRef?: string;
+  assignedPTUsername?: string;
 }

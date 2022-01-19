@@ -1075,7 +1075,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.addParatextNoteThread(6, 'MAT 1:2', '', { start: 0, length: 0 }, ['user01']);
       env.addParatextNoteThread(7, 'LUK 1:0', 'for chapter', { start: 6, length: 11 }, ['user01']);
-      env.addParatextNoteThread(8, 'LUK 1:2-3', '', { start: 0, length: 0 }, ['user01']);
+      env.addParatextNoteThread(8, 'LUK 1:2-3', '', { start: 0, length: 0 }, ['user01'], NoteStatus.Todo, 'user02');
       env.addParatextNoteThread(9, 'LUK 1:2-3', 'section heading', { start: 37, length: 15 }, ['user01']);
       env.setProjectUserConfig();
       env.wait();
@@ -1103,15 +1103,17 @@ describe('EditorComponent', () => {
       const titleUsxNote: HTMLElement | null = titleUsxSegment.querySelector('display-note');
       expect(titleUsxNote).not.toBeNull();
 
-      const combinedVerseUsxSegment: HTMLElement = env.getSegmentElement('verse_1_2-3')!;
-      expect(combinedVerseUsxSegment.classList).toContain('note-thread-segment');
-      const verse2and3CombinedNote: HTMLElement | null = combinedVerseUsxSegment.querySelector('display-note');
-      expect(verse2and3CombinedNote).not.toBeNull();
-
       const sectionHeadingUsxSegment: HTMLElement = env.getSegmentElement('s_2')!;
       expect(sectionHeadingUsxSegment.classList).toContain('note-thread-segment');
       const sectionHeadingNote: HTMLElement | null = sectionHeadingUsxSegment.querySelector('display-note');
       expect(sectionHeadingNote).not.toBeNull();
+      const combinedVerseUsxSegment: HTMLElement = env.getSegmentElement('verse_1_2-3')!;
+      expect(combinedVerseUsxSegment.classList).toContain('note-thread-segment');
+      const verse2and3CombinedNote = combinedVerseUsxSegment.querySelector('display-note')! as HTMLElement;
+      // Note assigned to a different specific user
+      expect(verse2and3CombinedNote.getAttribute('style')).toEqual(
+        '--icon-file: url(/assets/icons/TagIcons/01flag4.png);'
+      );
       env.dispose();
     }));
 
@@ -2749,7 +2751,8 @@ class TestEnvironment {
     selectedText: string,
     position: TextAnchor,
     userIds: string[],
-    status: NoteStatus = NoteStatus.Todo
+    status: NoteStatus = NoteStatus.Todo,
+    assignedPTUsername?: string
   ): void {
     const threadId: string = `thread0${threadNum}`;
     const notes: Note[] = [];
@@ -2767,7 +2770,9 @@ class TestEnvironment {
         extUserId: id,
         deleted: false,
         status: NoteStatus.Todo,
-        tagIcon: `01flag${i + 1}`
+        tagIcon: `01flag${i + 1}`,
+        assignedPTUsername,
+        assignedUserRef: assignedPTUsername
       };
       notes.push(note);
     }
@@ -2786,7 +2791,9 @@ class TestEnvironment {
         originalContextBefore: '\\v 1 target: ',
         originalContextAfter: ', verse 1.',
         position,
-        status: status
+        status: status,
+        assignedPTUsername,
+        assignedUserRef: assignedPTUsername
       }
     });
   }

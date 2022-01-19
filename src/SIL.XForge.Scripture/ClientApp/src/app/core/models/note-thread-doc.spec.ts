@@ -29,7 +29,7 @@ describe('NoteThreadDoc', () => {
       cssVar: '--icon-file: url(/assets/icons/TagIcons/flag02.png);',
       url: '/assets/icons/TagIcons/flag02.png'
     };
-    expect(noteThreadDoc.icon).toEqual(expectedIcon);
+    expect(noteThreadDoc.getIcon()).toEqual(expectedIcon);
     const expectedVerseRef = VerseRef.parse('MAT 1:1');
     expect(noteThreadDoc.currentVerseRef()!.equals(expectedVerseRef)).toBe(true);
   });
@@ -40,7 +40,7 @@ describe('NoteThreadDoc', () => {
       cssVar: '--icon-file: url(/assets/icons/TagIcons/01flag1.png);',
       url: '/assets/icons/TagIcons/01flag1.png'
     };
-    expect(noteThreadDoc.icon).toEqual(expectedIcon);
+    expect(noteThreadDoc.getIcon()).toEqual(expectedIcon);
   });
 
   it('should use resolved icon', async () => {
@@ -53,7 +53,7 @@ describe('NoteThreadDoc', () => {
       cssVar: '--icon-file: url(/assets/icons/TagIcons/01flag5.png);',
       url: '/assets/icons/TagIcons/01flag5.png'
     };
-    expect(noteThreadDoc.icon).toEqual(expectedIcon);
+    expect(noteThreadDoc.getIcon()).toEqual(expectedIcon);
     expect(noteThreadDoc.iconResolved).toEqual(expectedIconResolved);
   });
 
@@ -101,7 +101,7 @@ describe('NoteThreadDoc', () => {
       cssVar: '--icon-file: url(/assets/icons/TagIcons/flag3.png);',
       url: '/assets/icons/TagIcons/flag3.png'
     };
-    expect(noteThreadDoc.icon).toEqual(expectedIcon);
+    expect(noteThreadDoc.getIcon()).toEqual(expectedIcon);
     const expectedVerseRef = VerseRef.parse('MAT 1:1');
     expect(noteThreadDoc.currentVerseRef()!.equals(expectedVerseRef)).toBe(true);
   });

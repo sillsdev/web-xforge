@@ -4,7 +4,7 @@ import { sortBy } from 'lodash-es';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { I18nService } from 'xforge-common/i18n.service';
-import { NoteStatus } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
+import { AssignedUsers, NoteStatus } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
@@ -42,11 +42,15 @@ export class NoteDialogComponent implements OnInit {
     this.projectDoc = await this.projectService.get(this.projectId);
   }
 
+  get threadAssignedUser(): string | undefined {
+    return this.threadDoc?.data?.assignedPTUsername;
+  }
+
   get flagIcon(): string {
     if (this.threadDoc?.data == null) {
       return '';
     }
-    return this.threadDoc.icon.url;
+    return this.threadDoc.getIcon().url;
   }
 
   get isRtl(): boolean {
@@ -173,5 +177,15 @@ export class NoteDialogComponent implements OnInit {
     const verseRef: string = this.i18n.localizeReference(vref);
     const reattached: string = translate('note_dialog.reattached');
     return `${verseRef} ${reattached}`;
+  }
+
+  getAssignedUserString(assignedPTUsername: string): string {
+    switch (assignedPTUsername) {
+      case AssignedUsers.TeamUser:
+        return translate('note_dialog.team');
+      case AssignedUsers.Unspecified:
+        return translate('note_dialog.unassigned');
+    }
+    return assignedPTUsername;
   }
 }

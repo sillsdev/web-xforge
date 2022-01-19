@@ -17,6 +17,11 @@ export enum NoteStatus {
   Resolved = 'deleted'
 }
 
+export enum AssignedUsers {
+  Unspecified = '',
+  TeamUser = 'Team'
+}
+
 export interface NoteThread extends ProjectData {
   dataId: string;
   verseRef: VerseRefData;
@@ -27,4 +32,6 @@ export interface NoteThread extends ProjectData {
   position: TextAnchor;
   status: NoteStatus;
   tagIcon: string;
+  assignedUserRef?: string;
+  assignedPTUsername?: string;
 }
