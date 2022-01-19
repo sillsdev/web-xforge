@@ -454,12 +454,7 @@ To test the PWA (Progressive Web App), build the app for PWA testing and run the
 ```bash
 cd src/SIL.XForge.Scripture/ClientApp/
 ng build --configuration=pwaTest
-```
-
-In another terminal, from the repo root
-
-```bash
-cd src/SIL.XForge.Scripture/
+cd ..
 dotnet run --start-ng-serve=no
 ```
 
