@@ -1291,7 +1291,10 @@ describe('TextComponent', () => {
           }
         }
       };
-      testNugget(nuggetElementName, chapterNum, nuggetTextDocSnippet);
+      // Length in the quill editor that is taken up by the nugget. For example, a usx-figure may be
+      // length 1, while inserted text of 'hello' would be length 'hello'.length.
+      const nuggetEditorLength = 1;
+      testNugget({ nuggetElementName, chapterNum, nuggetTextDocSnippet, nuggetEditorLength });
     }));
 
     it('can drag-and-drop correctly near endnote', fakeAsync(() => {
@@ -1330,7 +1333,8 @@ describe('TextComponent', () => {
           }
         }
       };
-      testNugget(nuggetElementName, chapterNum, nuggetTextDocSnippet);
+      const nuggetEditorLength = 1;
+      testNugget({ nuggetElementName, chapterNum, nuggetTextDocSnippet, nuggetEditorLength });
     }));
 
     it('can drag-and-drop correctly near foot note', fakeAsync(() => {
@@ -1369,7 +1373,8 @@ describe('TextComponent', () => {
           }
         }
       };
-      testNugget(nuggetElementName, chapterNum, nuggetTextDocSnippet);
+      const nuggetEditorLength = 1;
+      testNugget({ nuggetElementName, chapterNum, nuggetTextDocSnippet, nuggetEditorLength });
     }));
 
     it('can drag-and-drop correctly near cross reference', fakeAsync(() => {
@@ -1409,30 +1414,131 @@ describe('TextComponent', () => {
           }
         }
       };
-      testNugget(nuggetElementName, chapterNum, nuggetTextDocSnippet);
+      const nuggetEditorLength = 1;
+      testNugget({ nuggetElementName, chapterNum, nuggetTextDocSnippet, nuggetEditorLength });
     }));
 
-    function testNugget(
-      nuggetElementName: string,
-      chapterNum: number,
-      nuggetTextDocSnippet: any,
-      nugetTextDocAttributes?: any
-    ): void {
+    it('can drag-and-drop correctly around usx-char elements', fakeAsync(() => {
+      // The user drags text in a segment past a usx-char element.
+      // We need to correctly calculate the drop position by correctly understanding the editor length of the
+      /// usx-char element and its content.
+
+      const nuggetElementName = 'usx-char';
+      const chapterNum = 2;
+      const nuggetTextDocSnippet: any = 'Some text to insert';
+      const nuggetTextDocAttributes: any = {
+        char: {
+          style: 'w',
+          closed: 'false',
+          cid: '5e857a1b-82d5-4a4d-b904-903ce971cd90'
+        },
+        segment: `verse_${chapterNum}_1`
+      };
+      const nuggetTextDocText: string = nuggetTextDocSnippet;
+      const nuggetEditorLength: number = nuggetTextDocSnippet.length;
+      testNugget({
+        nuggetElementName,
+        chapterNum,
+        nuggetTextDocSnippet,
+        nuggetEditorLength,
+        nuggetTextDocAttributes,
+        nuggetTextDocText
+      });
+    }));
+
+    it('can drag-and-drop correctly around usx-char elements with child elements', fakeAsync(() => {
+      // The user drags text in a segment past a usx-char element that has one or more child nodes.
+      // A usx-char may contain a text node of arbitrary length or other elements.
+
+      const nuggetElementName = 'usx-char';
+      const chapterNum = 2;
+      // The following looks like it should just generate a <usx-note> element, not a <usx-char> element.
+      // But setting "char" in the attributes results in creation of a <usx-char> that
+      // contains this <usx-note>.
+      // This textdoc data generates the following HTML in the DOM:
+      // <usx-char data-style="w"><usx-note data-style="f" data-caller="+"
+      // title="1.1 some footnote text ">X<span contenteditable="false"></span>X</usx-note></usx-char>
+      // where the two `X`s are UTF-8 ef bb bf.
+      const nuggetTextDocSnippet: any = {
+        note: {
+          caller: '+',
+          style: 'f',
+          contents: {
+            ops: [
+              {
+                insert: '1.1 ',
+                attributes: {
+                  char: {
+                    style: 'fr',
+                    closed: 'false',
+                    cid: '9ccc949b-44d4-4a63-bc98-eb50c45e9b92'
+                  }
+                }
+              },
+              {
+                insert: 'some footnote text ',
+                attributes: {
+                  char: {
+                    style: 'ft',
+                    closed: 'false',
+                    cid: '8b2480e4-70a9-414b-bad5-0458c5ab7296'
+                  }
+                }
+              }
+            ]
+          }
+        }
+      };
+      const nuggetTextDocAttributes: any = {
+        char: {
+          style: 'w',
+          cid: 'dc7a49c1-ebfe-4f3d-af05-d86c61d776eb'
+        },
+        segment: `verse_${chapterNum}_1`
+      };
+      // 'body' text in the text doc that corresponds to the nugget.
+      const nuggetTextDocText: string = '';
+      const editorLengthOfFootnoteMark = 1;
+      const nuggetEditorLength: number = editorLengthOfFootnoteMark;
+      testNugget({
+        nuggetElementName,
+        chapterNum,
+        nuggetTextDocSnippet,
+        nuggetEditorLength,
+        nuggetTextDocAttributes,
+        nuggetTextDocText
+      });
+    }));
+
+    interface testNuggetArgs {
+      nuggetElementName: string;
+      chapterNum: number;
+      nuggetTextDocSnippet: any;
+      nuggetEditorLength: number;
+      nuggetTextDocAttributes?: any;
+      // The text, as present in the text doc, that is part of 'body' text and is present by virtue of
+      // the nugget existing. If any (it may be none for something like a figure).
+      nuggetTextDocText?: string;
+    }
+    function testNugget(args: testNuggetArgs): void {
       const env = new TestEnvironment();
-      const sourceSegmentRef = `verse_${chapterNum}_1`;
-      const targetSegmentRef = `verse_${chapterNum}_1`;
-      const textDocId: TextDocId = new TextDocId('project01', 40, chapterNum);
-      if (nugetTextDocAttributes == null) {
-        nugetTextDocAttributes = { segment: sourceSegmentRef };
+      const sourceSegmentRef = `verse_${args.chapterNum}_1`;
+      const targetSegmentRef = `verse_${args.chapterNum}_1`;
+      const textDocId: TextDocId = new TextDocId('project01', 40, args.chapterNum);
+      if (args.nuggetTextDocAttributes == null) {
+        args.nuggetTextDocAttributes = { segment: sourceSegmentRef };
+      }
+      if (args.nuggetTextDocText == null) {
+        args.nuggetTextDocText = '';
       }
 
       const delta = new Delta();
-      delta.insert({ chapter: { number: chapterNum.toString(), style: 'c' } });
+      delta.insert({ chapter: { number: args.chapterNum.toString(), style: 'c' } });
       delta.insert({ blank: true }, { segment: 'p_1' });
       delta.insert({ verse: { number: '1', style: 'v' } });
-      delta.insert(`The quick b`, { segment: `verse_${chapterNum}_1` });
-      delta.insert(nuggetTextDocSnippet, nugetTextDocAttributes);
-      delta.insert(`rown fox jumps over the lazy dog.`, { segment: `verse_${chapterNum}_1` });
+      delta.insert(`The quick b`, { segment: `verse_${args.chapterNum}_1` });
+      delta.insert(args.nuggetTextDocSnippet, args.nuggetTextDocAttributes);
+      delta.insert(`rown fox jumps over the lazy dog.`, { segment: `verse_${args.chapterNum}_1` });
       env.realtimeService.addSnapshot<TextData>(TextDoc.COLLECTION, {
         id: textDocId.toString(),
         data: delta,
@@ -1443,29 +1549,51 @@ describe('TextComponent', () => {
       env.id = textDocId;
       tick();
 
-      const initialTextInDoc = `The quick brown fox jumps over the lazy dog.`;
-      // nugget before this char ----------^
-      // user selection ------------^^^^^
-      // drop location -----------------------------^
-      // content of text node after nugget ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      const expectedTextInDoc = `The  brown fox quickjumps over the lazy dog.`;
-      // nugget should still be here --^
+      const textLeadingUpToSelectionBeforeEvent = `The `;
+      // This text is selected and is the text that will be moved by the drag-and-drop.
+      const textToMove = `quick`;
+      const textBetweenSelectionAndNugget = ` b`;
+      // Then the nugget is present, possibly with text that would also be in the text doc.
 
-      const textLeadingUpToSelectionBeforeEvent = 'The ';
-      const textToMove = 'quick';
-      const textLeadingUpToTargetLocationAfterEvent = 'The  brown fox ';
-      const textInTargetTextNodeLeadingUpToDropLocation = 'rown fox ';
-      const textInTargetTextNodeBeforeEvent = 'rown fox jumps over the lazy dog.';
+      const textBetweenNuggetAndDropLocation = `rown fox `;
+      // Then is the drop location.
 
-      // The number of elements in the segment up to the location where the drop occurs, which are elements that are
-      // considered to be of length 1 in the editor.
-      const numberOfSinglesLeadingUpToTargetLocation = 1;
-      const editorLengthOfSingles = 1;
+      const textAfterDropLocation = `jumps over the lazy dog.`;
+      // For example: `The quick brown fox jumps over the lazy dog.`
+      const initialTextInDoc: string =
+        textLeadingUpToSelectionBeforeEvent +
+        textToMove +
+        textBetweenSelectionAndNugget +
+        args.nuggetTextDocText +
+        textBetweenNuggetAndDropLocation +
+        textAfterDropLocation;
+      // For example: `The  brown fox quickjumps over the lazy dog.`;
+      const expectedTextInDoc =
+        textLeadingUpToSelectionBeforeEvent +
+        textBetweenSelectionAndNugget +
+        args.nuggetTextDocText +
+        textBetweenNuggetAndDropLocation +
+        textToMove +
+        textAfterDropLocation;
+
+      // After the drag-and-drop event, this is the editor length from the beginning of the segment
+      // up to the drop location. Note that it's different than the _text_ length, as it can include
+      // items that are only in the editor, like a footnote mark.
+      // For example: Length of any editor-only things + 'The  brown fox '.length
+      const editorLengthToTargetLocationAfterEvent: number =
+        textLeadingUpToSelectionBeforeEvent.length +
+        textBetweenSelectionAndNugget.length +
+        args.nuggetEditorLength +
+        textBetweenNuggetAndDropLocation.length;
+
+      const textInTargetTextNodeLeadingUpToDropLocation = textBetweenNuggetAndDropLocation;
+      // For example:  'rown fox jumps over the lazy dog.'
+      const textInTargetTextNodeBeforeEvent = textBetweenNuggetAndDropLocation + textAfterDropLocation;
 
       expect(env.component.getSegmentText(sourceSegmentRef)).withContext('setup').toEqual(initialTextInDoc);
       expect(env.component.editor!.getText()).toContain(initialTextInDoc, 'setup');
       const initialNuggetElementCount = (env.component.editor?.root as HTMLDivElement).getElementsByTagName(
-        nuggetElementName
+        args.nuggetElementName
       ).length;
       expect(initialNuggetElementCount).withContext('setup').toEqual(1);
       const expectedElementCountNugget = initialNuggetElementCount;
@@ -1482,8 +1610,14 @@ describe('TextComponent', () => {
       const elementDropTarget = env.component.editor!.container.querySelector(
         `usx-segment[data-segment="${targetSegmentRef}"]`
       );
+      // Child node number on which the drop occurs, assuming the usx-segment has 3 child nodes:
+      // text node, the nugget node, and a text node.
+      const dropChildNodeIndex = 2;
+      expect(elementDropTarget?.childNodes.length)
+        .withContext('setup: not necessarily ready to handle this kind of test data')
+        .toEqual(3);
       // Specific node on which the user drops. This is the Range.startContainer reported by Chromium.
-      const specificNodeDropTarget: ChildNode | undefined = elementDropTarget?.childNodes[2];
+      const specificNodeDropTarget: ChildNode | undefined = elementDropTarget?.childNodes[dropChildNodeIndex];
       if (specificNodeDropTarget == null) {
         fail('setup');
         return;
@@ -1525,17 +1659,14 @@ describe('TextComponent', () => {
       if (targetSegmentRange == null) {
         throw Error();
       }
-      const desiredSelectionStart =
-        targetSegmentRange.index +
-        textLeadingUpToTargetLocationAfterEvent.length +
-        numberOfSinglesLeadingUpToTargetLocation * editorLengthOfSingles;
+      const desiredSelectionStart = targetSegmentRange.index + editorLengthToTargetLocationAfterEvent;
       const desiredSelectionLength = textToMove.length;
       const resultingSelection: RangeStatic | null = env.component.editor!.getSelection();
       if (resultingSelection == null) {
         throw Error();
       }
       const resultElementCountNugget = (env.component.editor?.root as HTMLDivElement).getElementsByTagName(
-        nuggetElementName
+        args.nuggetElementName
       ).length;
       expect(resultElementCountNugget)
         .withContext('number of these elements should be as expected')
