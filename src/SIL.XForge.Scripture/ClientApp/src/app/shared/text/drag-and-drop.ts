@@ -255,7 +255,7 @@ export class DragAndDrop {
       // Text nodes will not have children to further process.
     }
 
-    const elementsToLookInside: string[] = ['usx-segment', 'display-text-anchor'];
+    const elementsToLookInside: string[] = ['usx-segment', 'display-text-anchor', 'usx-char'];
     if (elementsToLookInside.includes(node.nodeName.toLowerCase())) {
       let lengthOfDescendants: number = 0;
       for (let i = 0; i < node.childNodes.length; i++) {
