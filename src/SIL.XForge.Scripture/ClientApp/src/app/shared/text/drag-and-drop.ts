@@ -8,14 +8,14 @@ export interface DragAndDropOptions {
 /** Drag-and-drop module for Quill, for dropping only unformatted text into a usx-segment. Unit tests on the behaviour
  *  specification can be found in text.component.spec.ts.*/
 export class DragAndDrop {
-  /** Mostly arbitrary value to indicate that our quill is the source of the drag data. */
+  /** Mostly arbitrary value to indicate that our quill is the origin of the drag data. */
   static readonly quillIsSourceToken: string = 'x-dragstart-in-quill';
 
   constructor(quill: Quill, options: DragAndDropOptions) {
     quill.container.addEventListener('dragstart', (event: Event) => {
       const dragEvent = event as DragEvent;
       // Write a custom note on the event. This will only end up being done if the drag started from in quill. In this
-      // way, we can differentiate between drag-and-drops that have their source as quill or from elsewhere, such as
+      // way, we can differentiate between drag-and-drops that have their origin as quill or from elsewhere, such as
       // elsewhere in the same web page window or from another window or application.
       dragEvent.dataTransfer?.setData(DragAndDrop.quillIsSourceToken, '');
     });
@@ -88,7 +88,7 @@ export class DragAndDrop {
       if (originalSelection != null) {
         // There was a selection before the drop occurred.
         if (quillIsSource && !userIsHoldingCtrlKey) {
-          // If the drag was started from within quill, then treat the selection as the source data of the drag, and
+          // If the drag was started from within quill, then treat the selection as the origin data of the drag, and
           // delete the selection. Unless the user was holding the ctrl key to copy text instead of move it.
           quill.deleteText(originalSelection.index, originalSelection.length, 'user');
           // Adjust insertion position accordingly if preceding text was just deleted
@@ -100,9 +100,9 @@ export class DragAndDrop {
         // the selection.
       }
 
-      // Behave like a user, to help editor event processing, by cutting the source text first (if applicable),
+      // Behave like a user, to help editor event processing, by cutting the origin text first (if applicable),
       // putting the insertion point in at the target, and then inserting. Give an opportunity between each of these
-      // for EditorComponent.onTargetUpdated() to run, so that thread anchors are updated even in a source verse that
+      // for EditorComponent.onTargetUpdated() to run, so that thread anchors are updated even in an origin verse that
       // is dragged out of. Use of setTimeout() allows TextComponent.updated to emit and be received by subscribers
       // before we take further action here. Therefore, TextComponent.updated events are interleaved with our calls to
       // quill.
