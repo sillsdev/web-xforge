@@ -56,7 +56,7 @@ describe('ImportQuestionsDialogComponent', () => {
   it('shows questions only from the books in the project', fakeAsync(() => {
     const env = new TestEnvironment();
     env.click(env.importFromTransceleratorButton);
-    const questions = env.questionRows;
+    const questions = env.tableRows;
     expect(questions.length).toBe(2);
     expect(env.getRowReference(questions[0])).toBe('MAT 1:1-3');
     expect(env.getRowQuestion(questions[0])).toBe('Transcelerator question 1:1');
@@ -68,7 +68,7 @@ describe('ImportQuestionsDialogComponent', () => {
   it('can select questions in the list', fakeAsync(() => {
     const env = new TestEnvironment();
     env.click(env.importFromTransceleratorButton);
-    const questions = env.questionRows;
+    const questions = env.tableRows;
 
     expect(env.component.filteredList[0].checked).toBe(false);
     expect(env.selectAllCheckbox.checked).toBe(false);
@@ -126,9 +126,9 @@ describe('ImportQuestionsDialogComponent', () => {
   it('can filter questions for text', fakeAsync(() => {
     const env = new TestEnvironment();
     env.click(env.importFromTransceleratorButton);
-    expect(env.questionRows.length).toBe(2);
+    expect(env.tableRows.length).toBe(2);
     env.setControlValue(env.component.filterControl, '1:2');
-    expect(env.questionRows.length).toBe(1);
+    expect(env.tableRows.length).toBe(1);
     env.click(env.cancelButton);
   }));
 
@@ -151,21 +151,21 @@ describe('ImportQuestionsDialogComponent', () => {
   it('can filter questions with verse reference', fakeAsync(() => {
     const env = new TestEnvironment();
     env.click(env.importFromTransceleratorButton);
-    expect(env.questionRows.length).toBe(2);
+    expect(env.tableRows.length).toBe(2);
     env.setControlValue(env.component.fromControl, 'MAT 1:2');
-    expect(env.questionRows.length).toBe(1);
+    expect(env.tableRows.length).toBe(1);
 
     // Show 0 question if all questions previous to the input in fromControl
     env.setControlValue(env.component.fromControl, 'MAT 1:3');
-    expect(env.questionRows.length).toBe(0);
+    expect(env.tableRows.length).toBe(0);
     env.setControlValue(env.component.fromControl, '');
-    expect(env.questionRows.length).toBe(2);
+    expect(env.tableRows.length).toBe(2);
 
     // Show all question previous to the input in toControl
     env.setControlValue(env.component.toControl, 'MAT 1:1');
-    expect(env.questionRows.length).toBe(1);
+    expect(env.tableRows.length).toBe(1);
     env.setControlValue(env.component.toControl, 'MAL 1:1');
-    expect(env.questionRows.length).toBe(0);
+    expect(env.tableRows.length).toBe(0);
     env.click(env.cancelButton);
   }));
 
@@ -182,7 +182,7 @@ describe('ImportQuestionsDialogComponent', () => {
   it('prompts for edited questions that have already been imported', fakeAsync(() => {
     const env = new TestEnvironment({ includeAllBooks: true, editedQuestionIds: [1, 4] });
     env.click(env.importFromTransceleratorButton);
-    expect(env.questionRows.length).toBe(4);
+    expect(env.tableRows.length).toBe(4);
     expect(env.component.filteredList[0].checked).toBe(false);
     expect(env.component.filteredList[1].checked).toBe(false);
     expect(env.component.filteredList[2].checked).toBe(false);
@@ -191,7 +191,7 @@ describe('ImportQuestionsDialogComponent', () => {
     when(env.mockedImportQuestionsConfirmationMdcDialogRef.afterClosed()).thenReturn(of([false, false]));
     env.clickSelectAll();
     verify(mockedMdcDialog.open(anything(), anything())).once();
-    expect(env.questionRows.length).toBe(4);
+    expect(env.tableRows.length).toBe(4);
     expect(env.component.filteredList[0].checked).toBe(false);
     expect(env.component.filteredList[1].checked).toBe(false);
     expect(env.component.filteredList[2].checked).toBe(true);
@@ -203,7 +203,7 @@ describe('ImportQuestionsDialogComponent', () => {
     const env = new TestEnvironment({ includeAllBooks: true, editedQuestionIds: [1, 4] });
     when(env.mockedImportQuestionsConfirmationMdcDialogRef.afterClosed()).thenReturn(of([true, true]));
     env.click(env.importFromTransceleratorButton);
-    expect(env.questionRows.length).toBe(4);
+    expect(env.tableRows.length).toBe(4);
     env.clickSelectAll();
     verify(mockedMdcDialog.open(anything(), anything())).once();
     env.click(env.importSelectedQuestionsButton);
@@ -222,7 +222,7 @@ describe('ImportQuestionsDialogComponent', () => {
   it('should import questions that cover a verse range', fakeAsync(() => {
     const env = new TestEnvironment();
     env.click(env.importFromTransceleratorButton);
-    env.selectQuestion(env.questionRows[0]);
+    env.selectQuestion(env.tableRows[0]);
     env.click(env.importSelectedQuestionsButton);
     verify(mockedProjectService.createQuestion('project01', anything(), undefined, undefined)).once();
     const question = capture(mockedProjectService.createQuestion).last()[1];
@@ -240,7 +240,7 @@ describe('ImportQuestionsDialogComponent', () => {
   it('should properly import questions that are on a single verse', fakeAsync(() => {
     const env = new TestEnvironment();
     env.click(env.importFromTransceleratorButton);
-    env.selectQuestion(env.questionRows[1]);
+    env.selectQuestion(env.tableRows[1]);
     env.click(env.importSelectedQuestionsButton);
     verify(mockedProjectService.createQuestion('project01', anything(), undefined, undefined)).once();
     const question = capture(mockedProjectService.createQuestion).last()[1];
@@ -259,26 +259,26 @@ describe('ImportQuestionsDialogComponent', () => {
     env.click(env.importSelectedQuestionsButton);
     expect(env.errorMessages).toEqual(['Select questions to import']);
 
-    env.selectQuestion(env.questionRows[1]);
+    env.selectQuestion(env.tableRows[1]);
     expect(env.errorMessages).toEqual([]);
-    env.selectQuestion(env.questionRows[1]);
+    env.selectQuestion(env.tableRows[1]);
     expect(env.errorMessages).toEqual(['Select questions to import']);
 
     // Make valid and cleanup dialog
-    env.selectQuestion(env.questionRows[1]);
+    env.selectQuestion(env.tableRows[1]);
     env.click(env.importSelectedQuestionsButton);
   }));
 
   it('does not import questions that were selected if they no longer match the filter', fakeAsync(() => {
     const env = new TestEnvironment();
     env.click(env.importFromTransceleratorButton);
-    expect(env.questionRows.length).toBe(2);
+    expect(env.tableRows.length).toBe(2);
     expect(env.importSelectedQuestionsButton.textContent).toContain('0');
     env.clickSelectAll();
     expect(env.importSelectedQuestionsButton.textContent).toContain('2');
 
     env.setControlValue(env.component.fromControl, 'MAT 1:2');
-    expect(env.questionRows.length).toBe(1);
+    expect(env.tableRows.length).toBe(1);
     expect(env.importSelectedQuestionsButton.textContent).toContain('1');
 
     env.click(env.importSelectedQuestionsButton);
@@ -291,7 +291,7 @@ describe('ImportQuestionsDialogComponent', () => {
     when(mockedProjectService.createQuestion('project01', anything(), undefined, undefined)).thenCall(
       () => new Promise(resolve => setTimeout(resolve, 5000))
     );
-    expect(env.questionRows.length).toBe(2);
+    expect(env.tableRows.length).toBe(2);
     expect(env.importSelectedQuestionsButton.textContent).toContain('0');
     env.clickSelectAll();
     expect(env.importSelectedQuestionsButton.textContent).toContain('2');
@@ -316,8 +316,8 @@ describe('ImportQuestionsDialogComponent', () => {
 
     env.selectFileWithContents(genQuestions.concat(matQuestions));
 
-    expect(env.questionReferences.length).toBe(1);
-    expect(env.questionReferences[0].textContent).toEqual('Genesis 1:1');
+    expect(env.tableRows.length).toBe(1);
+    expect(env.getColumnTwoText(env.tableRows[0])).toEqual('Genesis 1:1');
     env.click(env.continueImportButton);
     env.click(env.cancelButton);
   }));
@@ -328,12 +328,32 @@ describe('ImportQuestionsDialogComponent', () => {
 
     env.selectFileWithContents([['MAT 1:1', 'Matthew 1:1 question']]);
 
-    expect(env.questionReferences.length).toBe(1);
-    expect(env.questionReferences[0].textContent).toEqual('Matthew 1:1 question');
-    env.selectQuestion(env.questionRows[0]);
+    expect(env.tableRows.length).toBe(1);
+    expect(env.getColumnTwoText(env.tableRows[0])).toEqual('Matthew 1:1 question');
+    env.selectQuestion(env.tableRows[0]);
     expect(env.footerText).toBe(
       'Note: Some of the selected questions are exact duplicates of questions that are already part of your project. They will not be re-imported.'
     );
+    env.click(env.cancelButton);
+  }));
+
+  it('it informs the user about invalid rows in the CSV file and skips them', fakeAsync(() => {
+    const env = new TestEnvironment();
+
+    env.selectFileWithContents([['Lorem ipsum'], ['MAT 1:1', ' '], ['MAT 1:2', 'Question for MAT 1:2']]);
+
+    expect(env.headerText).toBe('These rows in the CSV file were invalid and will be skipped.');
+    const invalidRows = env.tableRows;
+    expect(invalidRows.length).toBe(2);
+    expect(env.getColumnTwoText(invalidRows[0])).toEqual('Lorem ipsum');
+    expect(env.getColumnTwoText(invalidRows[1])).toEqual('MAT 1:1');
+
+    env.click(env.continueImportButton);
+
+    const questionRows = env.tableRows;
+    expect(questionRows.length).toBe(1);
+    expect(env.getRowReference(env.tableRows[0])).toEqual('MAT 1:2');
+
     env.click(env.cancelButton);
   }));
 
@@ -361,11 +381,11 @@ describe('ImportQuestionsDialogComponent', () => {
     }));
     const env = new TestEnvironment({ transceleratorQuestions: questions });
     env.click(env.importFromTransceleratorButton);
-    expect(env.questionRows.length).toBe(100);
+    expect(env.tableRows.length).toBe(100);
     env.scrollDialogContentBodyToBottom();
-    expect(env.questionRows.length).toBe(125);
+    expect(env.tableRows.length).toBe(125);
     env.scrollDialogContentBodyToBottom();
-    expect(env.questionRows.length).toBe(150);
+    expect(env.tableRows.length).toBe(150);
     env.click(env.cancelButton);
   }));
 
@@ -543,16 +563,12 @@ class TestEnvironment {
     return this.overlayContainerElement.querySelector('mat-card:last-child button') as HTMLButtonElement;
   }
 
-  get questionRows(): HTMLElement[] {
+  get tableRows(): HTMLElement[] {
     return Array.from(this.table.querySelectorAll('tbody tr')).map(r => r as HTMLElement);
   }
 
   get table(): HTMLElement {
     return this.overlayContainerElement.querySelector('table') as HTMLElement;
-  }
-
-  get questionReferences(): HTMLElement[] {
-    return Array.from(this.overlayContainerElement.querySelectorAll('table[mat-table] tbody tr td:nth-child(2)'));
   }
 
   get selectAllCheckbox(): MatCheckbox {
@@ -593,6 +609,10 @@ class TestEnvironment {
     return this.getButtonByText('Continue Import');
   }
 
+  get headerText(): string {
+    return this.overlayContainerElement.querySelector('.dialog-content-header')?.textContent?.trim() || '';
+  }
+
   get footerText(): string {
     return this.overlayContainerElement.querySelector('.dialog-content-footer')?.textContent?.trim() || '';
   }
@@ -631,6 +651,10 @@ class TestEnvironment {
 
   getRowQuestion(row: HTMLElement): string {
     return row.querySelector('td:last-child')?.textContent || '';
+  }
+
+  getColumnTwoText(row: HTMLElement): string {
+    return row.querySelector('td:nth-child(2)')?.textContent || '';
   }
 
   selectQuestion(row: HTMLElement): void {
