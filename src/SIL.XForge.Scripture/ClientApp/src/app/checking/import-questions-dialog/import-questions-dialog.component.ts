@@ -393,8 +393,8 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
         continue;
       }
       const rowNumber: string = index + 1 + '';
-      const reference: string = row[0];
-      const questionText: string = row[1];
+      const reference: string = (row[0] || '').trim();
+      const questionText: string = (row[1] || '').trim();
       if (row.length < 2 || reference === '' || questionText === '') {
         invalidRows.push([rowNumber].concat(row));
         continue;
