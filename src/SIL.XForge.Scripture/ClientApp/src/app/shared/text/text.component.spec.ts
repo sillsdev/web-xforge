@@ -208,11 +208,11 @@ describe('TextComponent', () => {
       // happen, carrying in formatting.
       expect(cancelled).toBeTrue();
 
-      const sourceSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(targetSegmentRef);
-      if (sourceSegmentRange == null) {
+      const originSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(targetSegmentRef);
+      if (originSegmentRange == null) {
         throw Error();
       }
-      const desiredSelectionStart = sourceSegmentRange.index + 'target: chapter'.length;
+      const desiredSelectionStart = originSegmentRange.index + 'target: chapter'.length;
       const desiredSelectionLength = 'Hello Hello Hello'.length;
       const resultingSelection: RangeStatic | null = env.component.editor!.getSelection();
       if (resultingSelection == null) {
@@ -267,11 +267,11 @@ describe('TextComponent', () => {
       expect(env.component.getSegmentText(targetSegmentRef)).toEqual(expectedFinalText);
       expect(env.component.editor?.getText()).toContain(expectedFinalText);
 
-      const sourceSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(targetSegmentRef);
-      if (sourceSegmentRange == null) {
+      const originSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(targetSegmentRef);
+      if (originSegmentRange == null) {
         throw Error();
       }
-      const desiredSelectionStart = sourceSegmentRange.index + 'target: $chapter 1, '.length;
+      const desiredSelectionStart = originSegmentRange.index + 'target: $chapter 1, '.length;
       const desiredSelectionLength = 'Hello'.length;
       const resultingSelection: RangeStatic | null = env.component.editor!.getSelection();
       if (resultingSelection == null) {
@@ -323,11 +323,11 @@ describe('TextComponent', () => {
       expect(env.component.editor?.getText()).toContain(expectedFinalText);
       expect(cancelled).toBeTrue();
 
-      const sourceSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(targetSegmentRef);
-      if (sourceSegmentRange == null) {
+      const originSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(targetSegmentRef);
+      if (originSegmentRange == null) {
         throw Error();
       }
-      const desiredSelectionStart = sourceSegmentRange.index + 'target: chapter'.length;
+      const desiredSelectionStart = originSegmentRange.index + 'target: chapter'.length;
       const desiredSelectionLength = 'Hello Hello Hello'.length;
       const resultingSelection: RangeStatic | null = env.component.editor!.getSelection();
       if (resultingSelection == null) {
@@ -384,11 +384,11 @@ describe('TextComponent', () => {
       expect(env.component.editor?.getText()).toContain(expectedFinalText);
       expect(cancelled).toBeTrue();
 
-      const sourceSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(targetSegmentRef);
-      if (sourceSegmentRange == null) {
+      const originSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(targetSegmentRef);
+      if (originSegmentRange == null) {
         throw Error();
       }
-      const desiredSelectionStart = sourceSegmentRange.index + 'target: $chapter 1, '.length;
+      const desiredSelectionStart = originSegmentRange.index + 'target: $chapter 1, '.length;
       const desiredSelectionLength = 'Hello'.length;
       const resultingSelection: RangeStatic | null = env.component.editor!.getSelection();
       if (resultingSelection == null) {
@@ -414,12 +414,12 @@ describe('TextComponent', () => {
       expect(env.component.getSegmentText(targetSegmentRef)).toEqual(initialTextInDoc, 'setup');
       expect(env.component.editor!.getText()).toContain(initialTextInDoc, 'setup');
 
-      const sourceSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(targetSegmentRef);
-      if (sourceSegmentRange == null) {
+      const originSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(targetSegmentRef);
+      if (originSegmentRange == null) {
         throw Error();
       }
       // Location of textToMove in the editor's complete text.
-      const selectionStart: number = sourceSegmentRange.index + 'target: '.length;
+      const selectionStart: number = originSegmentRange.index + 'target: '.length;
       const selectionLength: number = textToMove.length;
       env.component.editor?.setSelection(selectionStart, selectionLength);
 
@@ -470,7 +470,7 @@ describe('TextComponent', () => {
       expect(env.component.getSegmentText(targetSegmentRef)).toEqual(expectedFinalText);
       expect(env.component.editor?.getText()).toContain(expectedFinalText);
 
-      const desiredSelectionStart = sourceSegmentRange.index + 'target: , ver'.length;
+      const desiredSelectionStart = originSegmentRange.index + 'target: , ver'.length;
       const desiredSelectionLength = textToMove.length;
       const resultingSelection: RangeStatic | null = env.component.editor!.getSelection();
       if (resultingSelection == null) {
@@ -498,12 +498,12 @@ describe('TextComponent', () => {
       expect(env.component.getSegmentText(targetSegmentRef)).toEqual(initialTextInDoc, 'setup');
       expect(env.component.editor!.getText()).toContain(initialTextInDoc, 'setup');
 
-      const sourceSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(targetSegmentRef);
-      if (sourceSegmentRange == null) {
+      const originSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(targetSegmentRef);
+      if (originSegmentRange == null) {
         throw Error();
       }
       // Location of textToMove in the editor's complete text.
-      const selectionStart: number = sourceSegmentRange.index + 'target: '.length;
+      const selectionStart: number = originSegmentRange.index + 'target: '.length;
       const selectionLength: number = textToMove.length;
       env.component.editor?.setSelection(selectionStart, selectionLength);
 
@@ -542,7 +542,7 @@ describe('TextComponent', () => {
       expect(env.component.getSegmentText(targetSegmentRef)).toEqual(expectedFinalText);
       expect(env.component.editor?.getText()).toContain(expectedFinalText);
 
-      const desiredSelectionStart = sourceSegmentRange.index + 'tar'.length;
+      const desiredSelectionStart = originSegmentRange.index + 'tar'.length;
       const desiredSelectionLength = textToMove.length;
       const resultingSelection: RangeStatic | null = env.component.editor!.getSelection();
       if (resultingSelection == null) {
@@ -570,12 +570,12 @@ describe('TextComponent', () => {
       expect(env.component.getSegmentText(targetSegmentRef)).toEqual(initialTextInDoc, 'setup');
       expect(env.component.editor!.getText()).toContain(initialTextInDoc, 'setup');
 
-      const sourceSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(targetSegmentRef);
-      if (sourceSegmentRange == null) {
+      const originSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(targetSegmentRef);
+      if (originSegmentRange == null) {
         throw Error();
       }
       // Location of textToMove in the editor's complete text.
-      const selectionStart: number = sourceSegmentRange.index + 'target: '.length;
+      const selectionStart: number = originSegmentRange.index + 'target: '.length;
       const selectionLength: number = textToMove.length;
       env.component.editor?.setSelection(selectionStart, selectionLength);
 
@@ -629,7 +629,7 @@ describe('TextComponent', () => {
       expect(env.component.editor?.getText()).toContain(expectedFinalText);
 
       const textLeadingUpToInsertionPosition = 'target: chapter 1, ver';
-      const desiredSelectionStart = sourceSegmentRange.index + textLeadingUpToInsertionPosition.length;
+      const desiredSelectionStart = originSegmentRange.index + textLeadingUpToInsertionPosition.length;
       const desiredSelectionLength = textToMove.length;
       const resultingSelection: RangeStatic | null = env.component.editor!.getSelection();
       if (resultingSelection == null) {
@@ -719,7 +719,7 @@ describe('TextComponent', () => {
       // given segment. We could make guesses based on whether the text was dropped near the top of a paragraph or the
       // bottom of a paragraph. But the current approach does not have enough information to just identify the target
       // segment and insert the new content. So when this happens, just reject the drop. Don't insert, and don't remove
-      // from the source location.
+      // from the origin location.
       // As a helpful side effect, only dropping into a usx-segment also prevents inserting text where it doesn't
       // belong, like right before the verse of a paragraph, in a `usx-para` or right before the chapter number, in a
       // `div`.
@@ -736,11 +736,11 @@ describe('TextComponent', () => {
       expect(env.component.getSegmentText(targetSegmentRef)).toEqual(initialTextInDoc, 'setup');
       expect(env.component.editor!.getText()).toContain(initialTextInDoc, 'setup');
 
-      const sourceSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(targetSegmentRef);
-      if (sourceSegmentRange == null) {
+      const originSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(targetSegmentRef);
+      if (originSegmentRange == null) {
         throw Error();
       }
-      const selectionStart: number = sourceSegmentRange.index + 'target: '.length;
+      const selectionStart: number = originSegmentRange.index + 'target: '.length;
       const selectionLength: number = textToMove.length;
       env.component.editor?.setSelection(selectionStart, selectionLength);
       const selection: RangeStatic | null = env.component.editor!.getSelection();
@@ -819,11 +819,11 @@ describe('TextComponent', () => {
         'usx-segment'
       ).length;
 
-      const sourceSegmentRange: RangeStatic | undefined = env.component.getSegmentRange('verse_1_1');
-      if (sourceSegmentRange == null) {
+      const originSegmentRange: RangeStatic | undefined = env.component.getSegmentRange('verse_1_1');
+      if (originSegmentRange == null) {
         throw Error();
       }
-      const selectionStart: number = sourceSegmentRange.index + textLeadingUpToSelection_1_1.length;
+      const selectionStart: number = originSegmentRange.index + textLeadingUpToSelection_1_1.length;
       const selectionLength: number = textToMoveFromSegment_1_1.length;
       env.component.editor?.setSelection(selectionStart, selectionLength);
 
@@ -851,7 +851,7 @@ describe('TextComponent', () => {
       document.caretRangeFromPoint = (_x: number, _y: number) =>
         ({ startOffset: valueThatShouldBeIgnored, startContainer: blankElementTarget as Node } as Range);
 
-      // Write custom note on event information that quill is the source of the drag.
+      // Write custom note on event information that quill is the origin of the drag.
       const dragstartEvent: MockDragEvent = new MockDragEvent('dragstart', {
         dataTransfer,
         cancelable: true
@@ -935,7 +935,7 @@ describe('TextComponent', () => {
         insertTextCalls: 1
       });
 
-      // source segment lost the text
+      // origin segment lost the text
       expect(env.component.getSegmentText('verse_1_1')).toEqual(expectedTextInDoc_1_1);
       // destination segment gained the text
       expect(env.component.getSegmentText('verse_1_2')).toEqual(expectedTextInDoc_1_2);
@@ -1024,11 +1024,11 @@ describe('TextComponent', () => {
       // The behaviour shouldn't result in any change to the number of <display-note> elements.
       const expectedCountDisplayNoteElements = initialCountDisplayNoteElements;
 
-      const sourceSegmentRange: RangeStatic | undefined = env.component.getSegmentRange('verse_1_1');
-      if (sourceSegmentRange == null) {
+      const originSegmentRange: RangeStatic | undefined = env.component.getSegmentRange('verse_1_1');
+      if (originSegmentRange == null) {
         throw Error();
       }
-      const selectionStart: number = sourceSegmentRange.index + textLeadingUpToSelection_1_1.length;
+      const selectionStart: number = originSegmentRange.index + textLeadingUpToSelection_1_1.length;
       const selectionLength: number = textToMoveFromSegment_1_1.length;
       env.component.editor?.setSelection(selectionStart, selectionLength);
 
@@ -1071,7 +1071,7 @@ describe('TextComponent', () => {
       flush();
 
       expect(env.component.getSegmentText('verse_1_1'))
-        .withContext('source segment should be changed as expected')
+        .withContext('origin segment should be changed as expected')
         .toEqual(expectedTextInDoc_1_1);
       expect(cancelled).withContext('should cancel browser acting').toBeTrue();
 
@@ -1178,11 +1178,11 @@ describe('TextComponent', () => {
       // The behaviour shouldn't result in any change to the number of <display-note> elements.
       const expectedCountDisplayNoteElements = initialCountDisplayNoteElements;
 
-      const sourceSegmentRange: RangeStatic | undefined = env.component.getSegmentRange('verse_1_1');
-      if (sourceSegmentRange == null) {
+      const originSegmentRange: RangeStatic | undefined = env.component.getSegmentRange('verse_1_1');
+      if (originSegmentRange == null) {
         throw Error();
       }
-      const selectionStart: number = sourceSegmentRange.index + textLeadingUpToSelection_1_1.length;
+      const selectionStart: number = originSegmentRange.index + textLeadingUpToSelection_1_1.length;
       const selectionLength: number = textToMoveFromSegment_1_1.length;
       env.component.editor?.setSelection(selectionStart, selectionLength);
 
@@ -1225,7 +1225,7 @@ describe('TextComponent', () => {
       flush();
 
       expect(env.component.getSegmentText('verse_1_1'))
-        .withContext('source segment should be changed as expected')
+        .withContext('origin segment should be changed as expected')
         .toEqual(expectedTextInDoc_1_1);
       expect(cancelled).withContext('should cancel browser acting').toBeTrue();
 
@@ -1522,11 +1522,11 @@ describe('TextComponent', () => {
     }
     function testNugget(args: testNuggetArgs): void {
       const env = new TestEnvironment();
-      const sourceSegmentRef = `verse_${args.chapterNum}_1`;
+      const originSegmentRef = `verse_${args.chapterNum}_1`;
       const targetSegmentRef = `verse_${args.chapterNum}_1`;
       const textDocId: TextDocId = new TextDocId('project01', 40, args.chapterNum);
       if (args.nuggetTextDocAttributes == null) {
-        args.nuggetTextDocAttributes = { segment: sourceSegmentRef };
+        args.nuggetTextDocAttributes = { segment: originSegmentRef };
       }
       if (args.nuggetTextDocText == null) {
         args.nuggetTextDocText = '';
@@ -1590,7 +1590,7 @@ describe('TextComponent', () => {
       // For example:  'rown fox jumps over the lazy dog.'
       const textInTargetTextNodeBeforeEvent = textBetweenNuggetAndDropLocation + textAfterDropLocation;
 
-      expect(env.component.getSegmentText(sourceSegmentRef)).withContext('setup').toEqual(initialTextInDoc);
+      expect(env.component.getSegmentText(originSegmentRef)).withContext('setup').toEqual(initialTextInDoc);
       expect(env.component.editor!.getText()).toContain(initialTextInDoc, 'setup');
       const initialNuggetElementCount = (env.component.editor?.root as HTMLDivElement).getElementsByTagName(
         args.nuggetElementName
@@ -1598,11 +1598,11 @@ describe('TextComponent', () => {
       expect(initialNuggetElementCount).withContext('setup').toEqual(1);
       const expectedElementCountNugget = initialNuggetElementCount;
 
-      const sourceSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(sourceSegmentRef);
-      if (sourceSegmentRange == null) {
+      const originSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(originSegmentRef);
+      if (originSegmentRange == null) {
         throw Error();
       }
-      const selectionStart: number = sourceSegmentRange.index + textLeadingUpToSelectionBeforeEvent.length;
+      const selectionStart: number = originSegmentRange.index + textLeadingUpToSelectionBeforeEvent.length;
       const selectionLength: number = textToMove.length;
       env.component.editor?.setSelection(selectionStart, selectionLength);
 
@@ -1650,8 +1650,8 @@ describe('TextComponent', () => {
       const cancelled: boolean = !env.component.editor?.container.dispatchEvent(dropEvent);
       flush();
 
-      expect(env.component.getSegmentText(sourceSegmentRef))
-        .withContext('source segment should be changed as expected')
+      expect(env.component.getSegmentText(originSegmentRef))
+        .withContext('origin segment should be changed as expected')
         .toEqual(expectedTextInDoc);
       expect(cancelled).withContext('should cancel browser acting').toBeTrue();
 
@@ -1708,7 +1708,7 @@ describe('TextComponent', () => {
       // to an element.
       document.caretRangeFromPoint = (_x: number, _y: number) => ({ startOffset: desiredIndexInSegment } as Range);
 
-      // Quill is not the source of the drag for this test.
+      // Quill is not the origin of the drag for this test.
       expect(dropEvent.dataTransfer?.types.includes(DragAndDrop.quillIsSourceToken)).toBeFalse();
 
       // Some text is selected in the editor at the time.
