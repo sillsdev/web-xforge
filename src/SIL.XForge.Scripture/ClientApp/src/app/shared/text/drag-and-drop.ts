@@ -25,12 +25,9 @@ export class DragAndDrop {
       // Stop the browser from doing any drag-and-drop behaviour itself, such as inserting text with formatting.
       dragEvent.preventDefault();
 
-      const [targetUsxSegmentElement, targetElement, droppingIntoBlankSegment]: [
-        Element | null,
-        Element | null,
-        boolean
-      ] = this.discernTarget(dragEvent);
-      if (targetUsxSegmentElement == null || targetElement == null) {
+      const [targetUsxSegmentElement, droppingIntoBlankSegment]: [Element | null, boolean] =
+        this.discernTarget(dragEvent);
+      if (targetUsxSegmentElement == null) {
         return;
       }
 
@@ -61,18 +58,15 @@ export class DragAndDrop {
         return;
       }
 
-      const insPos: number | undefined = this.determineInsertionPosition(
+      const insPosInSegment: number | undefined = this.getInsertionPositionInSegment(
         targetUsxSegmentElement,
-        targetElement,
-        destinationSegmentRange,
-        droppingIntoBlankSegment,
         dragEvent.clientX,
         dragEvent.clientY
       );
-      if (insPos == null) {
+      if (insPosInSegment == null) {
         return;
       }
-      let insertionPositionInDocument: number = insPos;
+      let insertionPositionInDocument: number = destinationSegmentRange.index + insPosInSegment;
 
       // Identify the selection range, if any. This will be a
       // selection that was already present before the drop, whether it is the text that was dragged, or a selection
@@ -113,7 +107,7 @@ export class DragAndDrop {
           quill.insertText(insertionPositionInDocument, newText, 'user');
           setTimeout(() => {
             // If we inserted into a blank segment, and let SF respond by removing the blank in between our quill
-            // changes, then the position of insertion needs to move back by 1.
+            // changes, then the position needs to move back by 1 to select the inserted text.
             const lengthOfBlank: number = 1;
             if (droppingIntoBlankSegment) {
               insertionPositionInDocument -= lengthOfBlank;
@@ -126,41 +120,28 @@ export class DragAndDrop {
     });
   }
 
-  /** Return the usx-segment element that the user is trying to drop into (if possible), the actual target element
-   * being dropped into, and whether the original target was a usx-blank. The actual element being dropped into may be
+  /** Return the usx-segment element that the user is trying to drop into (if possible), and whether the actual
+   * target element being dropped into is a usx-blank. The actual element being dropped into may be
    * something other than a usx-segment, such as a display-text-anchor, in which case the usx segment element returned
-   * will be the one containing the display-text-anchor being dropped into. */
-  private discernTarget(dragEvent: DragEvent): [Element | null, Element | null, boolean] {
+   * will be the one containing the element or node being dropped into. */
+  private discernTarget(dragEvent: DragEvent): [Element | null, boolean] {
     const targetElement: Element | null = dragEvent.target as Element | null;
     let droppingIntoBlankSegment: boolean = false;
     let targetUsxSegmentElement: Element | null = null;
 
     if (targetElement == null) {
       console.warn(`Warning: DragEvent unexpectedly has null target.`);
-      return [targetUsxSegmentElement, targetElement, droppingIntoBlankSegment];
+      return [targetUsxSegmentElement, droppingIntoBlankSegment];
     }
     let targetElementName: string = targetElement.localName;
 
     if (targetElementName === 'usx-segment') {
       targetUsxSegmentElement = targetElement;
-      return [targetUsxSegmentElement, targetElement, droppingIntoBlankSegment];
+      return [targetUsxSegmentElement, droppingIntoBlankSegment];
     }
 
     if (targetElementName === 'usx-blank') {
       droppingIntoBlankSegment = true;
-      targetUsxSegmentElement = targetElement.parentElement as Element | null;
-      if (targetUsxSegmentElement == null) {
-        console.warn(`Warning: DragEvent usx-blank target parent is unexpectedly null. Target:`, targetElement);
-        return [null, targetElement, droppingIntoBlankSegment];
-      }
-      if (targetUsxSegmentElement.localName === 'usx-segment') {
-        return [targetUsxSegmentElement, targetElement, droppingIntoBlankSegment];
-      } else {
-        console.warn(
-          'Warning: DragEvent usx-blank target parent is unexpectedly not a usx-segment. Target:`, targetElement'
-        );
-        return [null, targetElement, droppingIntoBlankSegment];
-      }
     }
 
     let element: Element = targetElement;
@@ -169,72 +150,67 @@ export class DragAndDrop {
     }
     if (element == null || element.localName != 'usx-segment') {
       console.warn('Warning: DragEvent never found a needed usx-segment ancestor for drop target:', targetElement);
-      return [null, targetElement, droppingIntoBlankSegment];
+      return [null, droppingIntoBlankSegment];
     }
     targetUsxSegmentElement = element;
-    return [targetUsxSegmentElement, targetElement, droppingIntoBlankSegment];
+    return [targetUsxSegmentElement, droppingIntoBlankSegment];
   }
 
-  /** Return the position in the quill editor where we want to insert text from a drop. */
-  private determineInsertionPosition(
+  /** Return the editor position in the segment where we want to insert text from a drop. */
+  private getInsertionPositionInSegment(
     targetUsxSegmentElement: Element,
-    targetElement: Element,
-    destinationSegmentRange: RangeStatic,
-    droppingIntoBlankSegment: boolean,
     targetX: number,
     targetY: number
   ): number | undefined {
     // Determine character index of drop location in destination segment, using a browser-specific method.
 
-    let startPositionInSegment: number = 0;
-    let startPositionInTextNode: number = 0;
+    let startPositionInTargetNode: number = 0;
     let nodeDroppedInto: Node | undefined;
-    if (droppingIntoBlankSegment) {
-      // If we are dropping into an empty segment, use the position at the end of the segment rather than using a
-      // browser-determined index into the segment.
-      // Use the position at the end of the segment, rather than at the beginning, so that it is after the blank and
-      // any other embeds.
-      startPositionInSegment = destinationSegmentRange.length;
-    } else if (document.caretRangeFromPoint !== undefined) {
+    if (document.caretRangeFromPoint !== undefined) {
       // Chromium/Chrome, Edge, and Safari browsers
       const range: Range = document.caretRangeFromPoint(targetX, targetY);
-      startPositionInTextNode = range.startOffset;
+      startPositionInTargetNode = range.startOffset;
       nodeDroppedInto = range.startContainer;
     } else if (document.caretPositionFromPoint !== undefined) {
       // Firefox browser
       const range: CaretPosition | null = document.caretPositionFromPoint(targetX, targetY);
       if (range == null) {
-        console.warn('Warning: drag-and-drop inferred a null caret position for insertion. Target:', targetElement);
+        console.warn('Warning: drag-and-drop inferred a null caret position for insertion');
         return;
       }
-      startPositionInTextNode = range.offset;
+      startPositionInTargetNode = range.offset;
       nodeDroppedInto = range.offsetNode;
     } else {
-      console.warn(`Warning: Could not determine insertion position for drag-and-drop. Target:`, targetElement);
+      console.warn(`Warning: Could not determine insertion position for drag-and-drop.`);
+      return;
+    }
+    if (nodeDroppedInto == null) {
+      console.warn('Warning: Could not get the node that the text was dropped into.');
       return;
     }
 
-    if (!droppingIntoBlankSegment) {
-      if (nodeDroppedInto == null) {
-        console.warn('Warning: Could not get the node that the text was dropped into.');
-        return;
-      }
-      startPositionInSegment = this.determineEditorLengthOfNodesUpToPosition(
-        targetUsxSegmentElement,
-        nodeDroppedInto,
-        startPositionInTextNode
-      );
+    if (nodeDroppedInto.nodeName.toLowerCase() === 'usx-blank') {
+      // If we are dropping onto a usx-blank, specify position 1 to mean the end of the usx-blank element, rather
+      // than using a browser-determined index into the usx-blank.
+      startPositionInTargetNode = 1;
     }
-    const insertionPositionInDocument: number = destinationSegmentRange.index + startPositionInSegment;
-    return insertionPositionInDocument;
+
+    const startPositionInSegment: number = this.determineEditorLengthOfNodesUpToPosition(
+      targetUsxSegmentElement,
+      nodeDroppedInto,
+      startPositionInTargetNode
+    );
+    return startPositionInSegment;
   }
 
+  /** Determine the editor length for `targetUsxSegmentElement`, up thru position `positionInTargetNode` in
+   * `nodeDroppedInto`. */
   private determineEditorLengthOfNodesUpToPosition(
     targetUsxSegmentElement: Element,
     nodeDroppedInto: Node,
-    positionInTextNode: number
+    positionInTargetNode: number
   ): number {
-    return positionInTextNode + this.determineLengthBeforeTerminationNode(targetUsxSegmentElement, nodeDroppedInto);
+    return positionInTargetNode + this.determineLengthBeforeTerminationNode(targetUsxSegmentElement, nodeDroppedInto);
   }
 
   /**
