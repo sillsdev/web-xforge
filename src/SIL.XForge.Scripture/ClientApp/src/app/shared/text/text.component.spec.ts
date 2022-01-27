@@ -1677,6 +1677,305 @@ describe('TextComponent', () => {
       expect(resultingSelection.length).toEqual(desiredSelectionLength);
     }
 
+    it('can drag-and-drop correctly to blank with sibling', fakeAsync(() => {
+      // Some segments contain only a usx-blank. But usx-blank elements can also be accompanied by other pieces of
+      // data in the text doc or in the DOM, such as a newline character or a display-text-anchor element (anchored
+      // over an empty string).
+      // It is possible for segment containing a display-text-anchor and usx-blank to be represented in the
+      // DOM as children in the same usx-segment element, or as children in distinct usx-segment elements
+      // (both with the same data-segment segment ref value). This test is for the case of the
+      // display-text-anchor and usx-blank being in the same usx-segment element. The resulting DOM after
+      // the drop will be for now two usx-segment elements, one with the display-text-anchor and one with the usx-blank.
+
+      // The user drags to the usx-blank element. Text is dropped immediately after the usx-blank element.
+
+      // Beginning text doc.
+
+      const chapterNum = 2;
+      const targetSegmentVerse = 2;
+      const originSegmentRef = `verse_${chapterNum}_1`;
+      const targetSegmentRef = `verse_${chapterNum}_${targetSegmentVerse}`;
+      const textDoc: RichText.DeltaOperation[] = [
+        { insert: { chapter: { number: chapterNum.toString(), style: 'c' } } },
+        { insert: { verse: { number: '1', style: 'v' } } },
+        {
+          attributes: {
+            segment: originSegmentRef
+          },
+          insert: 'The quick brown fox'
+        },
+        { insert: { verse: { number: `${targetSegmentVerse}`, style: 'v' } } },
+        {
+          attributes: {
+            segment: targetSegmentRef
+          },
+          insert: {
+            blank: true
+          }
+        },
+        { insert: { verse: { number: '3', style: 'v' } } },
+        {
+          attributes: {
+            segment: `verse_${chapterNum}_3`
+          },
+          insert: 'jumps over the lazy dog.'
+        }
+      ];
+
+      // The corresponding DOM for the segment with a blank and a note will be something like:
+      // <usx-segment data-segment="verse_2_2" data-note-thread-count="1"
+      // class="note-thread-segment"><display-text-anchor><display-note
+      // style="--icon-file: url(/assets/icons/TagIcons/01flag1.png);" title="note text"
+      // data-thread-id="f6653f5d">﻿<span contenteditable="false"
+      // ></span>﻿</display-note></display-text-anchor><usx-blank>﻿<span contenteditable="false"
+      // >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>﻿</usx-blank></usx-segment>
+
+      // TextComponent segment text, editor content, and expectations.
+
+      const editorLengthOfBlank = 1;
+      const editorLengthOfThreadIcon = 1;
+
+      const textToMove = 'quick';
+      const originSegmentContentBeforeEvent: SegmentContent = {
+        text: 'The quick brown fox',
+        editorLength: 'The quick brown fox'.length
+      };
+      expect(originSegmentContentBeforeEvent.text).withContext('setup').toContain(textToMove);
+      const selectionBeforeEvent: SelectionSpecification = {
+        segmentRef: originSegmentRef,
+        text: textToMove,
+        startEditorPosInSegment: 'The '.length,
+        editorLength: textToMove.length
+      };
+      const targetSegmentContentBeforeEvent: SegmentContent = {
+        text: '',
+        editorLength: editorLengthOfThreadIcon + editorLengthOfBlank
+      };
+      const topLevelNodeSeriesBeforeEvent: string[] = ['display-text-anchor', 'usx-blank'];
+
+      const expectedOriginSegmentContentAfterEvent: SegmentContent = {
+        text: 'The  brown fox',
+        editorLength: 'The  brown fox'.length
+      };
+      const expectedTargetSegmentContentAfterEvent: SegmentContent = {
+        text: 'quick',
+        editorLength: editorLengthOfThreadIcon + 'quick'.length
+      };
+      const expectedSelectionAfterEvent: SelectionSpecification = {
+        segmentRef: targetSegmentRef,
+        text: textToMove,
+        startEditorPosInSegment: editorLengthOfThreadIcon,
+        editorLength: textToMove.length
+      };
+      // It would make sense to here expect `['display-text-anchor', '#text']`, but initially, the target usx-segment
+      // element will be left with the display-text-anchor element alone, and a new usx-segment will be
+      // created with the text node.
+      const expectedTopLevelNodeSeriesAfterEvent: string[] = ['display-text-anchor'];
+
+      const env = new TestEnvironment();
+      const textDocId: TextDocId = new TextDocId('project01', 40, chapterNum);
+      const delta = new Delta(textDoc);
+      env.realtimeService.addSnapshot<TextData>(TextDoc.COLLECTION, {
+        id: textDocId.toString(),
+        data: delta,
+        type: RichText.type.name
+      });
+      env.fixture.detectChanges();
+      env.id = textDocId;
+      tick();
+
+      env.embedThreadAt(`MAT ${chapterNum}:${targetSegmentVerse}`, {
+        start: 0,
+        length: 0
+      });
+
+      // Drop target information.
+
+      expect(env.component.editor!.container.querySelectorAll(`usx-segment[data-segment="${targetSegmentRef}"]`).length)
+        .withContext('setup: should be testing situation with one usx-segment element for the segment ref')
+        .toEqual(1);
+      // usx-segment element where the drop occurs.
+      const segmentElementDropTarget: Element | null = env.component.editor!.container.querySelector(
+        `usx-segment[data-segment="${targetSegmentRef}"]`
+      );
+      // Element on which the user drops (which might be the same as the usx-segment element).
+      const elementDropTarget: Element | null = env.component.editor!.container.querySelector(
+        `usx-segment[data-segment="${targetSegmentRef}"] usx-blank`
+      );
+      // Specific node on which the user drops, such as sometimes a #text node. This is the
+      // Range.startContainer reported by Chromium.
+      // When dropping on a usx-blank, the startContainer is the usx-blank, not the usx-blank's span's [0] #text node.
+      const specificNodeDropTarget: ChildNode | null | undefined = env.component.editor?.container.querySelector(
+        `usx-segment[data-segment="${targetSegmentRef}"] usx-blank`
+      );
+
+      // How far into the specific drop node the user is trying to drop the text.
+      // The drop position into a usx-blank can be one of various small numbers, presumably depending on
+      // where in the set of nbsp characters the drop occurs. Let's say 3 here.
+      const dropDistanceIn: number = 3;
+
+      if (segmentElementDropTarget == null) {
+        fail('setup');
+        return;
+      }
+      if (elementDropTarget == null) {
+        fail('setup');
+        return;
+      }
+      if (specificNodeDropTarget == null) {
+        fail('setup');
+        return;
+      }
+
+      const args: performDropTestArgs = {
+        env,
+        originSegmentRef,
+        targetSegmentRef,
+        originSegmentContentBeforeEvent,
+        selectionBeforeEvent,
+        targetSegmentContentBeforeEvent,
+        expectedOriginSegmentContentAfterEvent,
+        expectedTargetSegmentContentAfterEvent,
+        expectedSelectionAfterEvent,
+        elementDropTarget,
+        segmentElementDropTarget,
+        specificNodeDropTarget,
+        dropDistanceIn,
+        topLevelNodeSeriesBeforeEvent,
+        expectedTopLevelNodeSeriesAfterEvent
+      };
+      performDropTest(args);
+    }));
+
+    /** Assert that in `parentNode`, there are only immediate children with name and order specified in
+     * `nodeOrderings`. */
+    function assertNodeOrder(parentNode: Node, nodeOrderings: string[]): void {
+      const childNodes: string[] = Array.from(parentNode.childNodes).map((n: ChildNode) => n.nodeName.toLowerCase());
+      expect(childNodes)
+        .withContext(`not expected list of nodes: [${childNodes}] does not match expected [${nodeOrderings}]`)
+        .toEqual(nodeOrderings);
+    }
+
+    /** Represents both what the TextComponent understand to be the text in a segment, and what the editor
+     * understands the lengh to be, which includes non-text items like icons. */
+    interface SegmentContent {
+      text: string;
+      editorLength: number;
+    }
+    /** Represents a selection in the editor: Where it is, and what it contains. */
+    interface SelectionSpecification {
+      segmentRef: string;
+      text: string;
+      startEditorPosInSegment: number;
+      editorLength: number;
+    }
+    /** Arguments for method. */
+    interface performDropTestArgs {
+      env: TestEnvironment;
+      originSegmentRef: string;
+      targetSegmentRef: string;
+      originSegmentContentBeforeEvent: SegmentContent;
+      selectionBeforeEvent: SelectionSpecification;
+      targetSegmentContentBeforeEvent: SegmentContent;
+      expectedOriginSegmentContentAfterEvent: SegmentContent;
+      expectedTargetSegmentContentAfterEvent: SegmentContent;
+      expectedSelectionAfterEvent: SelectionSpecification;
+      segmentElementDropTarget: Element;
+      elementDropTarget: Element;
+      specificNodeDropTarget: ChildNode;
+      dropDistanceIn: number;
+      topLevelNodeSeriesBeforeEvent: string[];
+      expectedTopLevelNodeSeriesAfterEvent: string[];
+    }
+    /** Helper method to perform a drag-and-drop and check expectations on resulting data, elements, and
+     *  editor selection. */
+    function performDropTest({
+      env,
+      originSegmentRef,
+      targetSegmentRef,
+      originSegmentContentBeforeEvent,
+      selectionBeforeEvent,
+      targetSegmentContentBeforeEvent,
+      expectedOriginSegmentContentAfterEvent,
+      expectedTargetSegmentContentAfterEvent,
+      expectedSelectionAfterEvent,
+      elementDropTarget,
+      segmentElementDropTarget,
+      specificNodeDropTarget,
+      dropDistanceIn,
+      topLevelNodeSeriesBeforeEvent,
+      expectedTopLevelNodeSeriesAfterEvent
+    }: performDropTestArgs): void {
+      assertNodeOrder(segmentElementDropTarget, topLevelNodeSeriesBeforeEvent);
+
+      expect(env.component.getSegmentText(originSegmentRef))
+        .withContext('setup')
+        .toEqual(originSegmentContentBeforeEvent.text);
+      expect(env.component.getSegmentText(targetSegmentRef))
+        .withContext('setup')
+        .toEqual(targetSegmentContentBeforeEvent.text);
+
+      const originSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(
+        selectionBeforeEvent.segmentRef
+      );
+      if (originSegmentRange == null) {
+        throw Error();
+      }
+      const selectionStart: number = originSegmentRange.index + selectionBeforeEvent.startEditorPosInSegment;
+      const selectionLength: number = selectionBeforeEvent.editorLength;
+      env.component.editor?.setSelection(selectionStart, selectionLength);
+
+      const dataTransfer = new DataTransfer();
+      dataTransfer.setData('text/plain', selectionBeforeEvent.text);
+      dataTransfer.setData('text/html', `<span background="white">${selectionBeforeEvent.text}</span>`);
+      const dropEvent: MockDragEvent = new MockDragEvent('drop', {
+        dataTransfer,
+        cancelable: true
+      });
+      dropEvent.setTarget(elementDropTarget);
+
+      document.caretRangeFromPoint = (_x: number, _y: number) =>
+        ({ startOffset: dropDistanceIn, startContainer: specificNodeDropTarget as Node } as Range);
+
+      const dragstartEvent: MockDragEvent = new MockDragEvent('dragstart', {
+        dataTransfer,
+        cancelable: true
+      });
+      env.component.editor?.container.dispatchEvent(dragstartEvent);
+      tick();
+
+      // SUT
+      const cancelled: boolean = !env.component.editor?.container.dispatchEvent(dropEvent);
+      flush();
+
+      expect(cancelled).withContext('should cancel browser acting').toBeTrue();
+      expect(env.component.getSegmentText(originSegmentRef))
+        .withContext('origin segment should be changed as expected')
+        .toEqual(expectedOriginSegmentContentAfterEvent.text);
+      expect(env.component.getSegmentText(targetSegmentRef))
+        .withContext('target segment should be changed as expected')
+        .toEqual(expectedTargetSegmentContentAfterEvent.text);
+
+      const targetSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(
+        expectedSelectionAfterEvent.segmentRef
+      );
+      if (targetSegmentRange == null) {
+        throw Error();
+      }
+      const desiredSelectionStart = targetSegmentRange.index + expectedSelectionAfterEvent.startEditorPosInSegment;
+      const desiredSelectionLength = expectedSelectionAfterEvent.editorLength;
+      const resultingSelection: RangeStatic | null = env.component.editor!.getSelection();
+      if (resultingSelection == null) {
+        throw Error();
+      }
+
+      // After text is dragged, the new selection should be the inserted text.
+      expect(resultingSelection.index).toEqual(desiredSelectionStart);
+      expect(resultingSelection.length).toEqual(desiredSelectionLength);
+
+      assertNodeOrder(segmentElementDropTarget, expectedTopLevelNodeSeriesAfterEvent);
+    }
+
     function skipProblemTest(extraSteps: (env: TestEnvironment, dropEvent: MockDragEvent) => void) {
       // Certain unexpected situations should result in not doing anything without creating a problem.
 
