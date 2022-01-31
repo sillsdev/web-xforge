@@ -9,7 +9,6 @@ namespace SIL.XForge.Scripture.Models
         public string Status { get; set; }
         public string TagIcon { get; set; }
         public string Reattached { get; set; }
-        public string AssignedUserRef { get; set; }
         public string AssignedPTUsername { get; set; }
     }
 }

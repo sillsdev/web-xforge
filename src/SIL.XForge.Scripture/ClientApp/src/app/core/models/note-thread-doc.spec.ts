@@ -29,7 +29,7 @@ describe('NoteThreadDoc', () => {
       cssVar: '--icon-file: url(/assets/icons/TagIcons/flag02.png);',
       url: '/assets/icons/TagIcons/flag02.png'
     };
-    expect(noteThreadDoc.getIcon()).toEqual(expectedIcon);
+    expect(noteThreadDoc.icon).toEqual(expectedIcon);
     const expectedVerseRef = VerseRef.parse('MAT 1:1');
     expect(noteThreadDoc.currentVerseRef()!.equals(expectedVerseRef)).toBe(true);
   });
@@ -40,7 +40,7 @@ describe('NoteThreadDoc', () => {
       cssVar: '--icon-file: url(/assets/icons/TagIcons/01flag1.png);',
       url: '/assets/icons/TagIcons/01flag1.png'
     };
-    expect(noteThreadDoc.getIcon()).toEqual(expectedIcon);
+    expect(noteThreadDoc.icon).toEqual(expectedIcon);
   });
 
   it('should use resolved icon', async () => {
@@ -53,8 +53,22 @@ describe('NoteThreadDoc', () => {
       cssVar: '--icon-file: url(/assets/icons/TagIcons/01flag5.png);',
       url: '/assets/icons/TagIcons/01flag5.png'
     };
-    expect(noteThreadDoc.getIcon()).toEqual(expectedIcon);
+    expect(noteThreadDoc.icon).toEqual(expectedIcon);
     expect(noteThreadDoc.iconResolved).toEqual(expectedIconResolved);
+  });
+
+  it('should use grayed out icon', async () => {
+    const noteThreadDoc = await env.setupDoc([]);
+    const expectedIcon: NoteThreadIcon = {
+      cssVar: '--icon-file: url(/assets/icons/TagIcons/01flag1.png);',
+      url: '/assets/icons/TagIcons/01flag1.png'
+    };
+    const expectedIconGrayedOut: NoteThreadIcon = {
+      cssVar: '--icon-file: url(/assets/icons/TagIcons/01flag4.png);',
+      url: '/assets/icons/TagIcons/01flag4.png'
+    };
+    expect(noteThreadDoc.icon).toEqual(expectedIcon);
+    expect(noteThreadDoc.iconGrayed).toEqual(expectedIconGrayedOut);
   });
 
   it('should use the last icon specified in a threads note list based on date ', async () => {
@@ -101,7 +115,7 @@ describe('NoteThreadDoc', () => {
       cssVar: '--icon-file: url(/assets/icons/TagIcons/flag3.png);',
       url: '/assets/icons/TagIcons/flag3.png'
     };
-    expect(noteThreadDoc.getIcon()).toEqual(expectedIcon);
+    expect(noteThreadDoc.icon).toEqual(expectedIcon);
     const expectedVerseRef = VerseRef.parse('MAT 1:1');
     expect(noteThreadDoc.currentVerseRef()!.equals(expectedVerseRef)).toBe(true);
   });

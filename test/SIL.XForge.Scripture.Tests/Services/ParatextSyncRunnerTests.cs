@@ -307,8 +307,7 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
             env.ParatextService.Received().GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 41,
                 Arg.Is<IEnumerable<IDocument<NoteThread>>>(threads => threads.Any(t => t.Id == "project01:thread02")),
-                Arg.Any<Dictionary<int, ChapterDelta>>(), Arg.Any<Dictionary<string, SyncUser>>(),
-                Arg.Any<IReadOnlyDictionary<string, string>>());
+                Arg.Any<Dictionary<int, ChapterDelta>>(), Arg.Any<Dictionary<string, SyncUser>>());
 
             Assert.That(env.ContainsText("project01", "MAT", 3), Is.True);
             Assert.That(env.ContainsText("project01", "MRK", 2), Is.False);
@@ -1162,11 +1161,9 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(thread01.NoteThreadToString(), Is.EqualTo(threadExpected));
             Assert.That(thread01.TagIcon, Is.EqualTo(expectedThreadTagIcon));
             Assert.That(thread01.AssignedPTUsername, Is.EqualTo(CommentThread.teamUser));
-            Assert.That(thread01.AssignedUserRef, Is.Null);
             env.DeltaUsxMapper.ReceivedWithAnyArgs(2).ToChapterDeltas(default);
             Assert.That(thread01.Notes.Count, Is.EqualTo(3));
             Assert.That(thread01.Notes[0].Content, Is.EqualTo("thread01 updated."));
-            Assert.That(thread01.Notes[0].AssignedUserRef, Is.Null);
             Assert.That(thread01.Notes[0].AssignedPTUsername, Is.EqualTo(CommentThread.teamUser));
             Assert.That(thread01.Notes[1].Deleted, Is.True);
             Assert.That(thread01.Notes[2].Content, Is.EqualTo("thread01 added."));
@@ -1227,7 +1224,6 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(thread02.Notes[0].Content, Is.EqualTo("New thread02 added."));
             Assert.That(thread02.Notes[0].OwnerRef, Is.EqualTo("user01"));
             Assert.That(thread02.Status, Is.EqualTo(NoteStatus.Todo.InternalValue));
-            Assert.That(thread02.AssignedUserRef, Is.Null);
             Assert.That(thread02.AssignedPTUsername, Is.EqualTo(CommentThread.teamUser));
             SFProject project = env.GetProject();
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
@@ -1826,7 +1822,7 @@ namespace SIL.XForge.Scripture.Services
 
                     ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
                         Arg.Any<IEnumerable<IDocument<NoteThread>>>(), Arg.Any<Dictionary<int, ChapterDelta>>(),
-                        Arg.Any<Dictionary<string, SyncUser>>(), Arg.Any<IReadOnlyDictionary<string, string>>())
+                        Arg.Any<Dictionary<string, SyncUser>>())
                         .Returns(x =>
                         {
                             ((Dictionary<string, SyncUser>)x[5]).Add("User 3", new SyncUser
@@ -1837,15 +1833,8 @@ namespace SIL.XForge.Scripture.Services
                     {
                         { "user01", "User 1" }, { "user02", "User 2" }, { "user03", "User 3" }
                     };
-                    Dictionary<string, string> usernamesToUserIds = new Dictionary<string, string>
-                    {
-                        { "User 1", "user01"}, { "User 2", "user02" }, { "User 3", "user03" }
-                    };
                     ParatextService.GetParatextUsernameMappingAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
-                        CancellationToken.None, Arg.Any<bool>()).Returns(x =>
-                        {
-                            return (bool)x[3] ? userIdsToUsernames : usernamesToUserIds;
-                        });
+                        CancellationToken.None).Returns(userIdsToUsernames);
                 }
                 else
                 {
@@ -1865,7 +1854,7 @@ namespace SIL.XForge.Scripture.Services
                 noteThreadChange.ThreadUpdated = true;
                 ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
                     Arg.Any<IEnumerable<IDocument<NoteThread>>>(), Arg.Any<Dictionary<int, ChapterDelta>>(),
-                    Arg.Any<Dictionary<string, SyncUser>>(), Arg.Any<IReadOnlyDictionary<string, string>>())
+                    Arg.Any<Dictionary<string, SyncUser>>())
                     .Returns(new[] { noteThreadChange });
             }
 
@@ -1879,7 +1868,7 @@ namespace SIL.XForge.Scripture.Services
                     GetNote(threadId, "n01", syncUserId, $"New {threadId} added.", ChangeType.Added), ChangeType.Added);
                 ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
                     Arg.Any<IEnumerable<IDocument<NoteThread>>>(), Arg.Any<Dictionary<int, ChapterDelta>>(),
-                    Arg.Any<Dictionary<string, SyncUser>>(), Arg.Any<IReadOnlyDictionary<string, string>>())
+                    Arg.Any<Dictionary<string, SyncUser>>())
                     .Returns(new[] { noteThreadChange });
             }
 
@@ -1893,7 +1882,7 @@ namespace SIL.XForge.Scripture.Services
                     noteThreadChange.NoteIdsRemoved.Add(noteId);
                 ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
                     Arg.Any<IEnumerable<IDocument<NoteThread>>>(), Arg.Any<Dictionary<int, ChapterDelta>>(),
-                    Arg.Any<Dictionary<string, SyncUser>>(), Arg.Any<IReadOnlyDictionary<string, string>>())
+                    Arg.Any<Dictionary<string, SyncUser>>())
                     .Returns(new[] { noteThreadChange });
             }
 
@@ -1914,7 +1903,7 @@ namespace SIL.XForge.Scripture.Services
                 noteThreadChange.AddChange(reattachedNote, ChangeType.Added);
                 ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
                     Arg.Any<IEnumerable<IDocument<NoteThread>>>(), Arg.Any<Dictionary<int, ChapterDelta>>(),
-                    Arg.Any<Dictionary<string, SyncUser>>(), Arg.Any<IReadOnlyDictionary<string, string>>())
+                    Arg.Any<Dictionary<string, SyncUser>>())
                     .Returns(new[] { noteThreadChange });
             }
 

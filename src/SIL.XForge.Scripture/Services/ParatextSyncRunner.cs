@@ -638,17 +638,15 @@ namespace SIL.XForge.Scripture.Services
             Dictionary<string, IDocument<NoteThread>> noteThreadDocs, CancellationToken token,
             Dictionary<int, ChapterDelta> chapterDeltas)
         {
-            // Dictionary<string, string> usernamesToUserIds = new Dictionary<string, string>();
-            // Swap the keys and values
-            // foreach (KeyValuePair<string, string> kvp in idsToUsernames)
-            //     usernamesToUserIds.Add(kvp.Value, kvp.Key);
-
-            IReadOnlyDictionary<string, string> usernamesToUserIds =
-                await _paratextService.GetParatextUsernameMappingAsync(_userSecret, _projectDoc.Data, token, false);
             IEnumerable<NoteThreadChange> noteThreadChanges = _paratextService.GetNoteThreadChanges(_userSecret,
-                _projectDoc.Data.ParatextId, text.BookNum, noteThreadDocs.Values, chapterDeltas, _currentSyncUsers,
-                usernamesToUserIds);
+                 _projectDoc.Data.ParatextId, text.BookNum, noteThreadDocs.Values, chapterDeltas, _currentSyncUsers);
             var tasks = new List<Task>();
+            IReadOnlyDictionary<string, string> idsToUsernames =
+                await _paratextService.GetParatextUsernameMappingAsync(_userSecret, _projectDoc.Data, token);
+            Dictionary<string, string> usernamesToUserIds = new Dictionary<string, string>();
+            // Swap the keys and values
+            foreach (KeyValuePair<string, string> kvp in idsToUsernames)
+                usernamesToUserIds.Add(kvp.Value, kvp.Key);
             foreach (NoteThreadChange change in noteThreadChanges)
             {
                 // Find the thread doc if it exists
@@ -673,7 +671,6 @@ namespace SIL.XForge.Scripture.Services
                             TagIcon = change.TagIcon,
                             Position = change.Position,
                             Status = change.Status,
-                            AssignedUserRef = change.AssignedUserRef,
                             AssignedPTUsername = change.AssignedPTUsername
                         });
                         await SubmitChangesOnNoteThreadDocAsync(doc, change, usernamesToUserIds);
@@ -790,8 +787,6 @@ namespace SIL.XForge.Scripture.Services
                         op.Set(td => td.TagIcon, change.TagIcon);
                     if (threadDoc.Data.AssignedPTUsername != change.AssignedPTUsername)
                         op.Set(td => td.AssignedPTUsername, change.AssignedPTUsername);
-                    if (threadDoc.Data.AssignedUserRef != change.AssignedUserRef)
-                        op.Set(td => td.AssignedUserRef, change.AssignedUserRef);
                 }
                 // Update content for updated notes
                 foreach (Note updated in change.NotesUpdated)
@@ -805,8 +800,6 @@ namespace SIL.XForge.Scripture.Services
                             op.Set(td => td.Notes[index].Status, updated.Status);
                         if (threadDoc.Data.Notes[index].TagIcon != updated.TagIcon)
                             op.Set(td => td.Notes[index].TagIcon, updated.TagIcon);
-                        if (threadDoc.Data.Notes[index].AssignedUserRef != updated.AssignedUserRef)
-                            op.Set(td => td.Notes[index].AssignedUserRef, updated.AssignedUserRef);
                         if (threadDoc.Data.Notes[index].AssignedPTUsername != updated.AssignedPTUsername)
                             op.Set(td => td.Notes[index].AssignedPTUsername, updated.AssignedPTUsername);
                     }

@@ -23,7 +23,7 @@ import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
-import { NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
+import { AssignedUsers, NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
@@ -1074,9 +1074,25 @@ describe('EditorComponent', () => {
     it('embeds note on verse segments', fakeAsync(() => {
       const env = new TestEnvironment();
       env.addParatextNoteThread(6, 'MAT 1:2', '', { start: 0, length: 0 }, ['user01']);
-      env.addParatextNoteThread(7, 'LUK 1:0', 'for chapter', { start: 6, length: 11 }, ['user01']);
-      env.addParatextNoteThread(8, 'LUK 1:2-3', '', { start: 0, length: 0 }, ['user01'], NoteStatus.Todo, 'user02');
-      env.addParatextNoteThread(9, 'LUK 1:2-3', 'section heading', { start: 37, length: 15 }, ['user01']);
+      env.addParatextNoteThread(
+        7,
+        'LUK 1:0',
+        'for chapter',
+        { start: 6, length: 11 },
+        ['user01'],
+        NoteStatus.Todo,
+        'user02'
+      );
+      env.addParatextNoteThread(8, 'LUK 1:2-3', '', { start: 0, length: 0 }, ['user01'], NoteStatus.Todo, 'user01');
+      env.addParatextNoteThread(
+        9,
+        'LUK 1:2-3',
+        'section heading',
+        { start: 37, length: 15 },
+        ['user01'],
+        NoteStatus.Todo,
+        AssignedUsers.TeamUser
+      );
       env.setProjectUserConfig();
       env.wait();
       const verse1Segment: HTMLElement = env.getSegmentElement('verse_1_1')!;
@@ -1109,11 +1125,19 @@ describe('EditorComponent', () => {
       expect(sectionHeadingNote).not.toBeNull();
       const combinedVerseUsxSegment: HTMLElement = env.getSegmentElement('verse_1_2-3')!;
       expect(combinedVerseUsxSegment.classList).toContain('note-thread-segment');
-      const verse2and3CombinedNote = combinedVerseUsxSegment.querySelector('display-note')! as HTMLElement;
-      // Note assigned to a different specific user
-      expect(verse2and3CombinedNote.getAttribute('style')).toEqual(
-        '--icon-file: url(/assets/icons/TagIcons/01flag4.png);'
+      const verse2and3CombinedNotes: HTMLElement[] = Array.from(
+        combinedVerseUsxSegment.querySelectorAll('display-note')
       );
+      expect(verse2and3CombinedNotes.length).toEqual(3);
+      // Note assigned to a different specific user
+      const otherUserNoteIcon = verse2and3CombinedNotes.find(n => n.getAttribute('data-thread-id') === 'thread07')!;
+      expect(otherUserNoteIcon.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag4.png);');
+      // Note assigned to current user
+      const thisUserNoteIcon = verse2and3CombinedNotes.find(n => n.getAttribute('data-thread-id') === 'thread08')!;
+      expect(thisUserNoteIcon.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
+      // Note assigned to team
+      const teamNoteIcon = verse2and3CombinedNotes.find(n => n.getAttribute('data-thread-id') === 'thread09')!;
+      expect(teamNoteIcon.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
       env.dispose();
     }));
 
@@ -2752,7 +2776,7 @@ class TestEnvironment {
     position: TextAnchor,
     userIds: string[],
     status: NoteStatus = NoteStatus.Todo,
-    assignedPTUsername?: string
+    assignedUserRef?: string
   ): void {
     const threadId: string = `thread0${threadNum}`;
     const notes: Note[] = [];
@@ -2771,8 +2795,8 @@ class TestEnvironment {
         deleted: false,
         status: NoteStatus.Todo,
         tagIcon: `01flag${i + 1}`,
-        assignedPTUsername,
-        assignedUserRef: assignedPTUsername
+        assignedUserRef: assignedUserRef === AssignedUsers.TeamUser ? undefined : assignedUserRef,
+        assignedPTUsername: assignedUserRef
       };
       notes.push(note);
     }
@@ -2792,8 +2816,8 @@ class TestEnvironment {
         originalContextAfter: ', verse 1.',
         position,
         status: status,
-        assignedPTUsername,
-        assignedUserRef: assignedPTUsername
+        assignedUserRef: assignedUserRef === AssignedUsers.TeamUser ? undefined : assignedUserRef,
+        assignedPTUsername: assignedUserRef
       }
     });
   }

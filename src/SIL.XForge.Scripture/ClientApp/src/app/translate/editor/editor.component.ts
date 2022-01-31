@@ -1024,7 +1024,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       verseRef,
       id: threadDoc.data.dataId,
       preview,
-      icon: threadDoc.getIcon(this.isAssignedToOtherUser(threadDoc)),
+      icon: this.isAssignedToOtherUser(threadDoc) ? threadDoc.iconGrayed : threadDoc.icon,
       textAnchor: threadDoc.data.position,
       highlight: hasNewContent
     };

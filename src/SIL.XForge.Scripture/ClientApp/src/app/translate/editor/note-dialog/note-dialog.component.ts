@@ -42,7 +42,7 @@ export class NoteDialogComponent implements OnInit {
     this.projectDoc = await this.projectService.get(this.projectId);
   }
 
-  get threadAssignedUser(): string | undefined {
+  get threadAssignedPTUsername(): string | undefined {
     return this.threadDoc?.data?.assignedPTUsername;
   }
 
@@ -50,7 +50,7 @@ export class NoteDialogComponent implements OnInit {
     if (this.threadDoc?.data == null) {
       return '';
     }
-    return this.threadDoc.getIcon().url;
+    return this.threadDoc.icon.url;
   }
 
   get isRtl(): boolean {
