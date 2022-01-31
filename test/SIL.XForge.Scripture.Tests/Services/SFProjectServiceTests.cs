@@ -573,7 +573,7 @@ namespace SIL.XForge.Scripture.Services
             env.ParatextService.GetParatextUsernameMappingAsync(
                 Arg.Is<UserSecret>((UserSecret userSecret) => userSecret.Id == User03),
                 Arg.Is((SFProject project) => project.ParatextId == project05PTId),
-                Arg.Any<CancellationToken>(), Arg.Any<bool>())
+                Arg.Any<CancellationToken>())
                 .Returns(Task.FromException<IReadOnlyDictionary<string, string>>(new System.Net.Http.HttpRequestException()));
 
             string userRoleOnPTProject = (string)null;
@@ -696,7 +696,7 @@ namespace SIL.XForge.Scripture.Services
             env.ParatextService.GetParatextUsernameMappingAsync(
                 Arg.Is<UserSecret>((UserSecret userSecret) => userSecret.Id == User03),
                 Arg.Is((SFProject project) => project.ParatextId == project05PTId),
-                Arg.Any<CancellationToken>(), Arg.Any<bool>())
+                Arg.Any<CancellationToken>())
                 .Returns(Task.FromException<IReadOnlyDictionary<string, string>>(new System.Net.Http.HttpRequestException()));
 
             string userRoleOnPTProject = (string)null;
