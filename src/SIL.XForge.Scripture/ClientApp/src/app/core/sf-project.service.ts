@@ -4,6 +4,7 @@ import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scripturefor
 import { SFProject, SF_PROJECTS_COLLECTION } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getSFProjectUserConfigDocId } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { Subject } from 'rxjs';
 import { CommandService } from 'xforge-common/command.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
@@ -11,6 +12,7 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { ProjectService } from 'xforge-common/project.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
+import { RetryingRequest, RetryingRequestService } from 'xforge-common/retrying-request.service';
 import { TransceleratorQuestion } from '../checking/import-questions-dialog/import-questions-dialog.component';
 import { InviteeStatus } from '../users/collaborators/collaborators.component';
 import { QuestionDoc } from './models/question-doc';
@@ -31,9 +33,10 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   constructor(
     realtimeService: RealtimeService,
     commandService: CommandService,
-    private readonly fileService: FileService
+    private readonly fileService: FileService,
+    protected readonly retryingRequestService: RetryingRequestService
   ) {
-    super(realtimeService, commandService, SF_PROJECT_ROLES);
+    super(realtimeService, commandService, retryingRequestService, SF_PROJECT_ROLES);
   }
 
   async onlineCreate(settings: SFProjectCreateSettings): Promise<string> {
@@ -155,8 +158,8 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return (await this.onlineInvoke<string>('linkSharingKey', { projectId, role })) ?? '';
   }
 
-  async transceleratorQuestions(projectId: string): Promise<TransceleratorQuestion[]> {
-    return (await this.onlineInvoke<TransceleratorQuestion[]>('transceleratorQuestions', { projectId }))!;
+  transceleratorQuestions(projectId: string, cancel: Subject<void>): RetryingRequest<TransceleratorQuestion[]> {
+    return this.onlineRetryInvoke<TransceleratorQuestion[]>('transceleratorQuestions', cancel, { projectId });
   }
 
   async onlineSetUserProjectPermissions(projectId: string, userId: string, permissions: string[]): Promise<void> {

@@ -13,8 +13,8 @@ import { objectId } from 'xforge-common/utils';
 import { TranslocoService } from '@ngneat/transloco';
 import { I18nService } from 'xforge-common/i18n.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
-import { PwaService } from 'xforge-common/pwa.service';
 import { CsvService } from 'xforge-common/csv-service.service';
+import { RetryingRequest } from 'xforge-common/retrying-request.service';
 import { environment } from '../../../environments/environment';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
@@ -78,7 +78,6 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
   loading = false;
   importClicked: boolean = false;
   maxListItemsToDisplay = 100;
-  showTransceleratorOfflineMsg = true;
 
   importing: boolean = false;
   importedCount: number = 0;
@@ -97,7 +96,8 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
     filter: this.filterControl
   });
 
-  promiseForTransceleratorQuestions: Promise<TransceleratorQuestion[]>;
+  transceleratorRequest: RetryingRequest<TransceleratorQuestion[]>;
+  promiseForTransceleratorQuestions: Promise<TransceleratorQuestion[] | undefined>;
   promiseForQuestionDocQuery: Promise<RealtimeQuery<QuestionDoc>>;
 
   constructor(
@@ -106,7 +106,6 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
     private readonly dialogRef: MatDialogRef<ImportQuestionsDialogComponent>,
     private readonly transloco: TranslocoService,
     private readonly mdcDialog: MdcDialog,
-    private readonly pwaService: PwaService,
     private readonly zone: NgZone,
     private readonly csvService: CsvService,
     readonly i18n: I18nService,
@@ -131,19 +130,16 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
       this.updateSelectAllCheckbox();
     });
 
-    this.promiseForTransceleratorQuestions = this.pwaService.online
-      .then(() => {
-        this.showTransceleratorOfflineMsg = false;
-        return projectService.transceleratorQuestions(this.data.projectId);
-      })
-      .catch(err => {
-        if (/Transcelerator version unsupported/.test(err.message)) {
-          this.transceleratorOutdated = true;
-          return [];
-        } else {
-          throw err;
-        }
-      });
+    this.transceleratorRequest = projectService.transceleratorQuestions(this.data.projectId, this.ngUnsubscribe);
+
+    this.promiseForTransceleratorQuestions = this.transceleratorRequest.promiseForResult.catch((error: unknown) => {
+      if (typeof error === 'object' && /Transcelerator version unsupported/.test(error?.['message'])) {
+        this.transceleratorOutdated = true;
+        return [];
+      } else {
+        throw error;
+      }
+    });
 
     this.promiseForQuestionDocQuery = projectService.queryQuestions(this.data.projectId);
   }
@@ -355,25 +351,29 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
 
   async importFromTranscelerator() {
     this.loading = true;
-    const transceleratorQuestions: TransceleratorQuestion[] = await this.promiseForTransceleratorQuestions;
-    const sourceQuestions: SourceQuestion[] = transceleratorQuestions.map(q => {
-      let verse = q.startVerse;
-      if (
-        q.endVerse != null &&
-        q.endVerse !== q.startVerse &&
-        (q.endChapter == null || q.endChapter === q.startChapter)
-      ) {
-        verse += '-' + q.endVerse;
-      }
-      return {
-        verseRef: new VerseRef(q.book, q.startChapter, verse),
-        text: q.text,
-        id: q.id
-      };
-    });
-    await this.setUpQuestionList(sourceQuestions, true);
+
+    await this.promiseForTransceleratorQuestions;
+
     if (this.transceleratorOutdated) {
       this.errorState = 'update_transcelerator';
+    } else {
+      const transceleratorQuestions: TransceleratorQuestion[] = this.transceleratorRequest.result || [];
+      const sourceQuestions: SourceQuestion[] = transceleratorQuestions.map(q => {
+        let verse = q.startVerse;
+        if (
+          q.endVerse != null &&
+          q.endVerse !== q.startVerse &&
+          (q.endChapter == null || q.endChapter === q.startChapter)
+        ) {
+          verse += '-' + q.endVerse;
+        }
+        return {
+          verseRef: new VerseRef(q.book, q.startChapter, verse),
+          text: q.text,
+          id: q.id
+        };
+      });
+      await this.setUpQuestionList(sourceQuestions, true);
     }
     this.questionSource = 'transcelerator';
     this.loading = false;
