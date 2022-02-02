@@ -72,11 +72,15 @@ describe('I18nService', () => {
     const date = new Date('November 25, 1991 17:28');
     const service = getI18nService();
     expect(service.formatDate(date)).toEqual('Nov 25, 1991, 5:28 PM');
+
     service.setLocale('en-GB');
     expect(service.formatDate(date)).toEqual('25 Nov 1991, 5:28 pm');
+
+    // As of Chromium 98 for zh-CN it's changed from using characters to indicate AM/PM, to using a 24 hour clock. It's
+    // unclear whether the cause is Chromium itself or a localization library. The tests should pass with either version
     service.setLocale('zh-CN');
-    // Chromium 88 stopped including a space. This removal of spaces could be removed once everyone is on v88.
-    expect(service.formatDate(date).replace(' ', '')).toEqual('1991/11/25下午5:28');
+    expect(['1991/11/25 17:28', '1991/11/25下午5:28']).toContain(service.formatDate(date));
+
     service.setLocale('az');
     expect(service.formatDate(date)).toEqual('25.11.1991 17:28');
   });
