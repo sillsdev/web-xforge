@@ -36,7 +36,7 @@
     "loading": "Cargando",
     "loading_retry": "Cargando - reintentando ({{ attempt }})",
     "login_required": "Es necesario iniciar sesión",
-    "please_wait": "Scripture Forge ahora está fuera de la Beta: ¡aún! espere mientras migramos su cuenta a la nueva versión completa.",
+    "please_wait": "Scripture Forge ha salido de la fase Beta: ¡espere aún! mientras migramos su cuenta a la nueva versión completa.",
     "recourse": "Asegúrese de que no está utilizando una ventana de navegador de incógnito/privado y de que está conectado a Internet. Si sigues teniendo problemas, por favor {{ templateTagBoundary }}pide ayuda{{ templateTagBoundary }}."
   },
   "canon": {
@@ -305,7 +305,7 @@
     "invitation_sent": "Se ha enviado un correo electrónico de invitación a {{ email }}",
     "invite_people": "Invitar a otras personas",
     "link_copied": "Enlace copiado al portapapeles",
-    "link_sharing_not_available_offline": "Invitar a los usuarios mediante el compartimiento de enlaces no está disponible mientras se está fuera de línea.",
+    "link_sharing_not_available_offline": "Invitar a los usuarios mediante enlaces compartidos no está disponible mientras se está fuera de línea.",
     "link_sharing": "Compartir enlaces",
     "not_inviting_already_member": "No se invitó: El usuario ya es miembro de este proyecto",
     "resend": "Reenviar",
