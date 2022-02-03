@@ -74,6 +74,12 @@ export interface FeaturedVerseRefInfo {
   highlight?: boolean;
 }
 
+/** Information about an embed and its associated formatting. */
+export interface EmbedFormat {
+  id: string;
+  formatLength: number;
+}
+
 /** View of an editable text document. Used for displaying Scripture. */
 @Component({
   selector: 'app-text',
@@ -612,18 +618,24 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
   }
 
-  removeEmbeddedElements(embedIdsWithLength?: [string, number][]): void {
+  /** Remove embedded elements that are not part of the text data. This may be necessary to preserve the cursor
+   * location when switching between texts. This is also helpful if a particular embed needs to be redrawn.
+   * @param embedFormats An array of the ids and format lengths for each embed to remove. The embed is removed
+   * along with the corresponding length for formatting associated with the embed.
+   * Set to undefined to remove all embeds.
+   */
+  removeEmbeddedElements(embedFormats?: EmbedFormat[]): void {
     if (this.editor == null) {
       return;
     }
     let embedIndicesWithLength: [number, number][] = [];
-    if (embedIdsWithLength == null) {
+    if (embedFormats == null) {
       embedIndicesWithLength = Array.from(this.viewModel.embeddedElements.values()).map(e => [e, 0]);
     } else {
-      for (const [embedId, length] of embedIdsWithLength) {
-        const index: number | undefined = this.viewModel.embeddedElements.get(embedId);
+      for (const embed of embedFormats) {
+        const index: number | undefined = this.viewModel.embeddedElements.get(embed.id);
         if (index != null) {
-          embedIndicesWithLength.push([index, length]);
+          embedIndicesWithLength.push([index, embed.formatLength]);
         }
       }
     }
