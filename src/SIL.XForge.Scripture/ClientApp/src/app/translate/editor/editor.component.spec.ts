@@ -918,10 +918,11 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('user cannot backspace or delete blanks', fakeAsync(() => {
+    it('backspace and delete disabled for non-text elements and at segment boundaries', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
+      expect(env.targetEditor.history['stack']['undo'].length).withContext('setup').toEqual(0);
       let range = env.component.target!.getSegmentRange('verse_1_2')!;
       let contents = env.targetEditor.getContents(range.index, 1);
       expect(contents.ops![0].insert.blank).toBeDefined();
@@ -929,7 +930,6 @@ describe('EditorComponent', () => {
       // set selection on a blank segment
       env.targetEditor.setSelection(range.index, 'user');
       env.wait();
-      expect(env.targetEditor.hasFocus()).toBe(true);
       expect(env.targetEditor.history['stack']['undo'].length).toEqual(0);
 
       env.pressKey('backspace');
@@ -939,13 +939,28 @@ describe('EditorComponent', () => {
       contents = env.targetEditor.getContents(range.index, 1);
       expect(contents.ops![0].insert.blank).toBeDefined();
 
-      // set selection at the end of a segment
+      // set selection at segment boundaries
       range = env.component.target!.getSegmentRange('verse_1_4')!;
       env.targetEditor.setSelection(range.index + range.length, 'user');
       env.wait();
-      expect(env.targetEditor.hasFocus()).toBe(true);
       env.pressKey('delete');
       expect(env.targetEditor.history['stack']['undo'].length).toEqual(0);
+      env.targetEditor.setSelection(range.index, 'user');
+      env.wait();
+      env.pressKey('backspace');
+      expect(env.targetEditor.history['stack']['undo'].length).toEqual(0);
+
+      // other non-text elements
+      range = env.component.target!.getSegmentRange('verse_1_1')!;
+      env.targetEditor.insertEmbed(range.index, 'note', { caller: 'a', style: 'ft' }, 'api');
+      env.wait();
+      contents = env.targetEditor.getContents(range.index, 1);
+      expect(contents.ops![0].insert.note).toBeDefined();
+      env.targetEditor.setSelection(range.index + 1, 'user');
+      env.pressKey('backspace');
+      expect(env.targetEditor.history['stack']['undo'].length).toEqual(0);
+      contents = env.targetEditor.getContents(range.index, 1);
+      expect(contents.ops![0].insert.note).toBeDefined();
       env.dispose();
     }));
 
