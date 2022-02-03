@@ -48,7 +48,7 @@ import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { Segment } from '../../shared/text/segment';
-import { FeaturedVerseRefInfo, TextComponent } from '../../shared/text/text.component';
+import { FeaturedVerseRefInfo, EmbedFormat, TextComponent } from '../../shared/text/text.component';
 import { threadIdFromMouseEvent } from '../../shared/utils';
 import { NoteDialogComponent, NoteDialogData } from './note-dialog/note-dialog.component';
 import {
@@ -549,7 +549,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.remoteChangeSub?.unsubscribe();
         if (textDoc != null) {
           this.remoteChangeSub = this.subscribe(textDoc.remoteChanges$, ops =>
-            Promise.resolve().then(() => this.refreshNoteEmbedPositions(ops as DeltaStatic))
+            Promise.resolve().then(() => this.refreshEmbedsAfterRemoteDelta(ops as DeltaStatic))
           );
         }
         break;
@@ -1277,26 +1277,30 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     );
   }
 
-  private refreshNoteEmbedPositions(delta: DeltaStatic): void {
-    if (delta.ops == null || this.target == null || this.noteThreadQuery?.docs == null) {
+  /** Refresh the note embeds positioned at same index as the remote edit. */
+  private refreshEmbedsAfterRemoteDelta(remoteDelta: DeltaStatic): void {
+    if (remoteDelta.ops == null || this.target == null || this.noteThreadQuery?.docs == null) {
       return;
     }
 
+    // Since there is no way to tell if a remote edit comes before or after a note
+    // when the edit occurs at the same index, we must redraw those note embeds.
     const embedsToRefresh: string[] = [];
     let insertLength: number = 0;
-    for (const op of delta.ops) {
+    for (const op of remoteDelta.ops) {
       let insertionPos = 0;
       if (op.retain != null) {
         insertionPos = op.retain;
-        // Find all embeds that exist at the insertion point
+        // find all embeds that exist at the insertion point
         for (const [embedId, pos] of this.target.embeddedElements.entries()) {
-          if (insertionPos > pos) {
-            // an embed exists before the insertion position, so the true position of the insertion is incremented
-          } else if (insertionPos == pos) {
+          if (insertionPos == pos) {
             embedsToRefresh.push(embedId);
-          } else {
+          } else if (pos > insertionPos) {
+            // we found all potentially affected embeds
             break;
           }
+          // an embed is positioned before or at the remote edit position, so increment the insertion position
+          // so we can compare it to an embed's editor position
           insertionPos++;
         }
       } else if (op.insert != null) {
@@ -1305,7 +1309,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
     // remove and redraw embeds only if the remote user has inserted something
     if (insertLength > 0) {
-      this.target.removeEmbeddedElements(embedsToRefresh.map(e => [e, insertLength]));
+      const embedsAndTextAnchors: EmbedFormat[] = [];
+      embedsToRefresh.forEach(embedId => embedsAndTextAnchors.push({ id: embedId, formatLength: insertLength }));
+      this.target.removeEmbeddedElements(embedsAndTextAnchors);
     }
   }
 
