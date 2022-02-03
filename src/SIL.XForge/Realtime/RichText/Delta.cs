@@ -223,10 +223,18 @@ namespace SIL.XForge.Realtime.RichText
             return array.ToString();
         }
 
-        public bool TryConcatenateInserts(out string opStr, string verse)
+        /// <summary>
+        /// Concatenate all the text belonging to a given verse, including section headings. If the verse string
+        /// given is 0, this returns all the text previous to the first verse in the text.
+        /// </summary>
+        /// <param name="opStr">The string of text belonging to a verse.</param>
+        /// <param name="verseRef">
+        /// The reference to the verse. For example: "1". If the verses in the text data is combined, "1-2".
+        /// </param>
+        public bool TryConcatenateInserts(out string opStr, string verseRef)
         {
             List<JToken> verseOps = new List<JToken>();
-            bool isTargetVerse = verse == "0";
+            bool isTargetVerse = verseRef == "0";
             foreach (JToken op in this.Ops)
             {
                 if (op[InsertType]?.Type == JTokenType.Object)
@@ -236,7 +244,7 @@ namespace SIL.XForge.Realtime.RichText
                         JProperty numberToken =
                             ((JObject)((JObject)op[InsertType]).Property("verse").Value).Property("number");
                         // update target verse so we know what verse we are in
-                        isTargetVerse = numberToken.Value.Type == JTokenType.String && (string)numberToken.Value == verse;
+                        isTargetVerse = numberToken.Value.Type == JTokenType.String && (string)numberToken.Value == verseRef;
                         continue;
                     }
                     else if (((JObject)op[InsertType]).Property("chapter")?.Value.Type == JTokenType.Object)
