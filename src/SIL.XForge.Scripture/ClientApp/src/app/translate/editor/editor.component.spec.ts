@@ -923,6 +923,8 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.wait();
       let range = env.component.target!.getSegmentRange('verse_1_2')!;
+      let contents = env.targetEditor.getContents(range.index, 1);
+      expect(contents.ops![0].insert.blank).toBeDefined();
 
       // set selection on a blank segment
       env.targetEditor.setSelection(range.index, 'user');
@@ -934,6 +936,8 @@ describe('EditorComponent', () => {
       expect(env.targetEditor.history['stack']['undo'].length).toEqual(0);
       env.pressKey('delete');
       expect(env.targetEditor.history['stack']['undo'].length).toEqual(0);
+      contents = env.targetEditor.getContents(range.index, 1);
+      expect(contents.ops![0].insert.blank).toBeDefined();
 
       // set selection at the end of a segment
       range = env.component.target!.getSegmentRange('verse_1_4')!;
