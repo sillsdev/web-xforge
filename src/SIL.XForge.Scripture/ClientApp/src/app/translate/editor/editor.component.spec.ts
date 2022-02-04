@@ -1203,6 +1203,18 @@ describe('EditorComponent', () => {
       expect(env.invalidWarning).not.toBeNull();
       env.dispose();
     }));
+
+    it('prevents editing and informs user when text doc is corrupted', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject({ translateConfig: defaultTranslateConfig });
+      env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 3 });
+      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.wait();
+      expect(env.component.hasEditRight).toBe(true);
+      expect(env.component.canEdit).toBe(false);
+      expect(env.corruptedWarning).not.toBeNull();
+      env.dispose();
+    }));
   });
 });
 
@@ -1313,6 +1325,12 @@ class TestEnvironment {
               user02: TextInfoPermission.None,
               user03: TextInfoPermission.Write
             }
+          },
+          {
+            number: 3,
+            lastVerse: 3,
+            isValid: true,
+            permissions: this.textInfoPermissions
           }
         ],
         hasSource: false,
@@ -1357,6 +1375,7 @@ class TestEnvironment {
     this.addTextDoc(new TextDocId('project01', 41, 1, 'target'));
     this.addTextDoc(new TextDocId('project01', 42, 1, 'target'));
     this.addTextDoc(new TextDocId('project01', 42, 2, 'target'));
+    this.addTextDoc(new TextDocId('project01', 42, 3, 'target'), 'target', true);
     this.addEmptyTextDoc(new TextDocId('project01', 43, 1, 'target'));
 
     when(mockedActivatedRoute.params).thenReturn(this.params$);
@@ -1441,7 +1460,11 @@ class TestEnvironment {
   }
 
   get invalidWarning(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.invalid-warning'));
+    return this.fixture.debugElement.query(By.css('.formatting-invalid-warning'));
+  }
+
+  get corruptedWarning(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.doc-corrupted-warning'));
   }
 
   get outOfSyncWarning(): DebugElement {
@@ -1723,7 +1746,7 @@ class TestEnvironment {
     this.component.metricsSession!.dispose();
   }
 
-  addTextDoc(id: TextDocId, textType: TextType = 'target'): void {
+  addTextDoc(id: TextDocId, textType: TextType = 'target', corrupt = false): void {
     const delta = new Delta();
     delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
     delta.insert({ blank: true }, { segment: 'p_1' });
@@ -1754,6 +1777,11 @@ class TestEnvironment {
         break;
     }
     delta.insert('\n', { para: { style: 'p' } });
+    if (corrupt) {
+      delta.insert('this doc is corrupt');
+      delta.delete(100);
+      delta.retain(1);
+    }
     this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
       id: id.toString(),
       type: RichText.type.name,
