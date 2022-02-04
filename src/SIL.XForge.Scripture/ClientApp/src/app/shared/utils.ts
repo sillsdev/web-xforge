@@ -41,7 +41,7 @@ export function combineVerseRefStrs(startStr?: string, endStr?: string): VerseRe
   return range.verseRef;
 }
 
-export function verseSlug(verse: VerseRef) {
+export function verseSlug(verse: VerseRef): string {
   return 'verse_' + verse.chapterNum + '_' + (verse.verse == null ? verse.verseNum : verse.verse);
 }
 
@@ -57,4 +57,26 @@ export function projectLabel(project: SelectableProject | undefined): string {
     return project.shortName;
   }
   return project.shortName + ' - ' + project.name;
+}
+
+/**
+ * Checks whether a doc is corrupted. If this function returns false that does not mean the doc is definitely not
+ * corrupted, only that it has passed a basic check. It's essentially a linter that runs through several rules to see if
+ * any of them are violated.
+ * @param ops An array of ops to check.
+ */
+export function isDocCorrupted(ops: any[]): boolean {
+  return ops.some(
+    op =>
+      // insert must be defined for any op, and can't be nullish
+      op.insert == null ||
+      // insert needs to be a string, or an object
+      ['object', 'string'].includes(typeof op.insert) === false ||
+      // insert.verse, if it exists, should be an object, not a boolean like we've seen in the past
+      (typeof op.insert === 'object' &&
+        'verse' in op.insert &&
+        (op.insert.verse == null || typeof op.insert.verse !== 'object')) ||
+      // the segment identifier should not have null or undefined in it, like we've seen in the past
+      (typeof op.attributes?.segment === 'string' && /(?:undefined|null)/.test(op.attributes.segment))
+  );
 }
