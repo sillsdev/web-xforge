@@ -1,6 +1,6 @@
 import { getAspCultureCookieLanguage, getLinkHTML } from './utils';
 
-describe('Utils', () => {
+describe('xforge-common utils', () => {
   it('should parse ASP Culture cookie', () => {
     let language = getAspCultureCookieLanguage('c=ab');
     expect(language).toEqual('ab');
