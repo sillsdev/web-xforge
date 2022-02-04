@@ -270,7 +270,7 @@ class TestEnvironment {
       tagIcon: 'flag02',
       verseRef: { bookNum: 40, chapterNum: 1, verseNum: 7 },
       status: NoteStatus.Todo,
-      assignedPTUsername: AssignedUsers.TeamUser,
+      assignedNoteUserRef: AssignedUsers.TeamUser,
       notes: [
         {
           dataId: 'note01',
@@ -283,7 +283,7 @@ class TestEnvironment {
           tagIcon: 'flag02',
           dateCreated: '',
           dateModified: '',
-          assignedPTUsername: 'User 1'
+          assignedNoteUserRef: 'User 1'
         },
         {
           dataId: 'note02',
@@ -296,7 +296,7 @@ class TestEnvironment {
           tagIcon: 'flag02',
           dateCreated: '',
           dateModified: '',
-          assignedPTUsername: AssignedUsers.TeamUser
+          assignedNoteUserRef: AssignedUsers.TeamUser
         },
         {
           dataId: 'note03',

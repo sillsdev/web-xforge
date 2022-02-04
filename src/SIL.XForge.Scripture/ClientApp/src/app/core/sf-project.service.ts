@@ -21,6 +21,7 @@ import { SFProjectDoc } from './models/sf-project-doc';
 import { SF_PROJECT_ROLES } from './models/sf-project-role-info';
 import { SFProjectSettings } from './models/sf-project-settings';
 import { SFProjectUserConfigDoc } from './models/sf-project-user-config-doc';
+import { SFProjectProfileDoc } from './models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from './models/text-doc';
 import { TranslateMetrics } from './models/translate-metrics';
 
@@ -40,6 +41,10 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
 
   async onlineCreate(settings: SFProjectCreateSettings): Promise<string> {
     return (await this.onlineInvoke<string>('create', { settings }))!;
+  }
+
+  getProfile(id: string): Promise<SFProjectProfileDoc> {
+    return this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id);
   }
 
   getUserConfig(id: string, userId: string): Promise<SFProjectUserConfigDoc> {

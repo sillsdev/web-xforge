@@ -45,9 +45,9 @@ namespace SIL.XForge.Scripture.Services
                             </comment>
                         </thread>
                     </notes>";
-                Dictionary<string, SyncUser> syncUsers = env.SyncUsers.ToDictionary(u => u.ParatextUsername);
+                Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(u => u.Username);
                 XElement notesElem = await env.Mapper.GetNotesChangelistAsync(XElement.Parse(oldNotesText),
-                    await env.GetQuestionDocsAsync(conn), syncUsers);
+                    await env.GetQuestionDocsAsync(conn), ptProjectUsers);
 
                 const string expectedNotesText = @"
                     <notes version=""1.1"">
@@ -88,7 +88,7 @@ namespace SIL.XForge.Scripture.Services
                     </notes>";
                 Assert.That(XNode.DeepEquals(notesElem, XElement.Parse(expectedNotesText)), Is.True);
 
-                Assert.That(syncUsers.Keys, Is.EquivalentTo(new[] { "PT User 1", "PT User 3" }));
+                Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { "PT User 1", "PT User 3" }));
             }
         }
 
@@ -114,9 +114,9 @@ namespace SIL.XForge.Scripture.Services
                             </comment>
                         </thread>
                     </notes>";
-                Dictionary<string, SyncUser> syncUsers = env.SyncUsers.ToDictionary(u => u.ParatextUsername);
+                Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(u => u.Username);
                 XElement notesElem = await env.Mapper.GetNotesChangelistAsync(XElement.Parse(oldNotesText),
-                    await env.GetQuestionDocsAsync(conn), syncUsers);
+                    await env.GetQuestionDocsAsync(conn), ptProjectUsers);
 
                 const string expectedNotesText = @"
                     <notes version=""1.1"">
@@ -157,7 +157,7 @@ namespace SIL.XForge.Scripture.Services
                     </notes>";
                 Assert.That(XNode.DeepEquals(notesElem, XElement.Parse(expectedNotesText)), Is.True);
 
-                Assert.That(syncUsers.Keys, Is.EquivalentTo(new[] { "PT User 1", "PT User 3" }));
+                Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { "PT User 1", "PT User 3" }));
             }
         }
 
@@ -183,9 +183,9 @@ namespace SIL.XForge.Scripture.Services
                             </comment>
                         </thread>
                     </notes>";
-                Dictionary<string, SyncUser> syncUsers = env.SyncUsers.ToDictionary(u => u.ParatextUsername);
+                Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(u => u.Username);
                 XElement notesElem = await env.Mapper.GetNotesChangelistAsync(XElement.Parse(oldNotesText),
-                    await env.GetQuestionDocsAsync(conn), syncUsers);
+                    await env.GetQuestionDocsAsync(conn), ptProjectUsers);
 
                 // User 3 is a PT user but does not have a role on this particular PT project, according to the PT
                 // Registry. So we will attribute their comment to user 1, who does have a role on this project
@@ -231,7 +231,7 @@ namespace SIL.XForge.Scripture.Services
                     </notes>";
                 Assert.That(XNode.DeepEquals(notesElem, XElement.Parse(expectedNotesText)), Is.True);
 
-                Assert.That(syncUsers.Keys, Is.EquivalentTo(new[] { "PT User 1" }));
+                Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { "PT User 1" }));
             }
         }
 
@@ -270,9 +270,9 @@ namespace SIL.XForge.Scripture.Services
                             </comment>
                         </thread>
                     </notes>";
-                Dictionary<string, SyncUser> syncUsers = env.SyncUsers.ToDictionary(u => u.ParatextUsername);
+                Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(u => u.Username);
                 XElement notesElem = await env.Mapper.GetNotesChangelistAsync(XElement.Parse(oldNotesText),
-                    await env.GetQuestionDocsAsync(conn), syncUsers);
+                    await env.GetQuestionDocsAsync(conn), ptProjectUsers);
 
                 const string expectedNotesText = @"
                     <notes version=""1.1"">
@@ -349,9 +349,9 @@ namespace SIL.XForge.Scripture.Services
                             </comment>
                         </thread>
                     </notes>";
-                Dictionary<string, SyncUser> syncUsers = env.SyncUsers.ToDictionary(u => u.ParatextUsername);
+                Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(u => u.Username);
                 XElement notesElem = await env.Mapper.GetNotesChangelistAsync(XElement.Parse(oldNotesText),
-                    await env.GetQuestionDocsAsync(conn), syncUsers);
+                    await env.GetQuestionDocsAsync(conn), ptProjectUsers);
 
                 const string expectedNotesText = @"
                     <notes version=""1.1"">
@@ -415,14 +415,14 @@ namespace SIL.XForge.Scripture.Services
             public SFMemoryRealtimeService RealtimeService { get; }
             public IParatextService ParatextService { get; }
             public IStringLocalizer<SharedResource> Localizer { get; }
-            public IEnumerable<SyncUser> SyncUsers { get; set; }
+            public IEnumerable<ParatextUserProfile> PtProjectUsers { get; set; }
 
             public async Task InitMapperAsync(bool includeSyncUsers, bool twoPtUsersOnProject)
             {
-                SFProjectSecret projectSecrets = ProjectSecret(includeSyncUsers);
-                SyncUsers = projectSecrets.SyncUsers;
-                await Mapper.InitAsync(UserSecrets.Get("user01"), projectSecrets,
-                    ParatextUsersOnProject(twoPtUsersOnProject), Project(), CancellationToken.None);
+                SFProject project = Project(includeSyncUsers);
+                PtProjectUsers = project.ParatextUsers;
+                await Mapper.InitAsync(UserSecrets.Get("user01"), ProjectSecret(),
+                    ParatextUsersOnProject(twoPtUsersOnProject), project, CancellationToken.None);
             }
 
             public void AddData(string answerSyncUserId1, string answerSyncUserId2, string commentSyncUserId1,
@@ -516,28 +516,27 @@ namespace SIL.XForge.Scripture.Services
                     Arg.Any<CancellationToken>()).Returns(ptUserRoles);
             }
 
-            private static SFProject Project()
+            private static SFProject Project(bool includeSyncUsers = true)
             {
+                var ptProjectUsers = new List<ParatextUserProfile>();
+                if (includeSyncUsers)
+                {
+                    ptProjectUsers.Add(new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = "PT User 1" });
+                    ptProjectUsers.Add(new ParatextUserProfile { OpaqueUserId = "syncuser03", Username = "PT User 3" });
+                }
                 return new SFProject
                 {
                     Id = "project01",
                     ParatextId = "paratextId",
+                    ParatextUsers = ptProjectUsers
                 };
             }
 
-            private static SFProjectSecret ProjectSecret(bool includeSyncUsers)
+            private static SFProjectSecret ProjectSecret()
             {
-                var syncUsers = new List<SyncUser>();
-                if (includeSyncUsers)
-                {
-                    syncUsers.Add(new SyncUser { Id = "syncuser01", ParatextUsername = "PT User 1" });
-                    syncUsers.Add(new SyncUser { Id = "syncuser03", ParatextUsername = "PT User 3" });
-                }
-
                 return new SFProjectSecret
                 {
                     Id = "project01",
-                    SyncUsers = syncUsers.ToList()
                 };
             }
 

@@ -1,14 +1,13 @@
-import {
-  SFProject,
-  SF_PROJECTS_COLLECTION,
-  SF_PROJECT_INDEX_PATHS
-} from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectBaseDoc } from './sf-project-base-doc';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { TEXTS_COLLECTION } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { ProjectDoc } from 'xforge-common/models/project-doc';
+// import { ProjectDoc } from 'xforge-common/models/project-doc';
+import { RealtimeDoc } from 'xforge-common/models/realtime-doc';
+import { QuestionDoc } from './question-doc';
+import { SFProjectUserConfigDoc } from './sf-project-user-config-doc';
+import { TextDoc, TextDocId } from './text-doc';
 
-export class SFProjectDoc extends SFProjectBaseDoc<SFProject> {
-  static readonly COLLECTION = SF_PROJECTS_COLLECTION;
-  static readonly INDEX_PATHS = SF_PROJECT_INDEX_PATHS;
-  /*
+export abstract class SFProjectBaseDoc<T extends SFProjectProfile> extends ProjectDoc<T> {
   get taskNames(): string[] {
     if (this.data == null) {
       return [];
@@ -67,5 +66,4 @@ export class SFProjectDoc extends SFProjectBaseDoc<SFProject> {
     }
     await Promise.all(tasks);
   }
-  */
 }

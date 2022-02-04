@@ -20,6 +20,7 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { AssignedUsers } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
+import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
@@ -1322,16 +1323,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private isAssignedToOtherUser(thread: NoteThreadDoc): boolean {
-    if (thread.data?.assignedUserRef != null && thread.data.assignedUserRef.length > 0) {
-      return thread.data.assignedUserRef !== this.userService.currentUserId;
-    }
-    switch (thread.data?.assignedPTUsername) {
+    switch (thread.data?.assignedNoteUserRef) {
       case AssignedUsers.TeamUser:
       case AssignedUsers.Unspecified:
       case undefined:
         return false;
     }
-    return true;
+    const ptUser: ParatextUserProfile | undefined = this.projectDoc?.data?.paratextUsers?.find(
+      user => user.opaqueUserId === thread.data?.assignedNoteUserRef
+    );
+    return ptUser?.sfUserId !== this.userService.currentUserId;
   }
 
   private syncScroll(): void {

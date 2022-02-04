@@ -32,5 +32,5 @@ export interface NoteThread extends ProjectData {
   position: TextAnchor;
   status: NoteStatus;
   tagIcon: string;
-  assignedPTUsername?: string;
+  assignedNoteUserRef?: string;
 }
