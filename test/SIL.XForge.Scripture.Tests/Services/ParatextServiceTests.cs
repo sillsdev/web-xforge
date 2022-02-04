@@ -2134,6 +2134,7 @@ namespace SIL.XForge.Scripture.Services
                         content.InnerXml = comp.isEdited ? $"<p>{threadId} note {i}: EDITED.</p>" : $"<p>{threadId} note {i}.</p>";
                         if (comp.alternateText == SelectionType.RelatedVerse)
                         {
+                            // The alternate text is in a proceeding paragraph with a footnote represented by '*'
                             before = before + text + after + "\n*";
                             after = "";
                             selectedText = "other text in verse";

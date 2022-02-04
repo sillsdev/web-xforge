@@ -287,6 +287,11 @@ export class TextViewModel {
     return Array.from(this._segments.keys()).filter(r => r.indexOf(ref + '/') === 0);
   }
 
+  /** Get the segments that fall within a given verse reference. A segment is considered
+   * to be in the reference if its ref is (or the first preceding segment with a ref) of the
+   * format verse_c_v falls within the given verse reference.
+   * For example, the result for MAT 1:1 can be as follows: [verse_1_1, verse_1_1/p_1, s_1]
+   */
   getVerseSegments(verseRef?: VerseRef): string[] {
     const segmentsInVerseRef: string[] = [];
     if (verseRef == null) {
