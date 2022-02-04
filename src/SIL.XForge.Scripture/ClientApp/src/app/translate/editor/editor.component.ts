@@ -32,6 +32,7 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
+import { getLinkHTML, issuesEmailTemplate } from 'xforge-common/utils';
 import XRegExp from 'xregexp';
 import { environment } from '../../../environments/environment';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -244,7 +245,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get canEdit(): boolean {
-    return this.isValid && this.hasEditRight && this.dataInSync;
+    return this.isUsfmValid && this.hasEditRight && this.dataInSync && !this.target?.areOpsCorrupted;
   }
 
   get canShare(): boolean {
@@ -265,7 +266,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return false;
   }
 
-  get isValid(): boolean {
+  get isUsfmValid(): boolean {
     if (this.text == null) {
       return true;
     }
@@ -276,6 +277,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   get dataInSync(): boolean {
     return this.projectDoc?.data?.sync?.dataInSync !== false;
+  }
+
+  get issueEmailLink(): string {
+    return getLinkHTML(environment.issueEmail, issuesEmailTemplate());
   }
 
   private get hasSource(): boolean {

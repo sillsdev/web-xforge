@@ -196,6 +196,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return this.displayMessage;
   }
 
+  get areOpsCorrupted(): boolean {
+    return this.viewModel.areOpsCorrupted;
+  }
+
   @Input() set placeholder(value: string) {
     this._placeholder = value;
   }
