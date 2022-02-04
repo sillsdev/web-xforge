@@ -63,7 +63,7 @@ namespace SIL.XForge.Scripture.Services
         private UserSecret _userSecret;
         private IDocument<SFProject> _projectDoc;
         private SFProjectSecret _projectSecret;
-        private Dictionary<string, SyncUser> _currentSyncUsers;
+        private Dictionary<string, ParatextUserProfile> _currentPtSyncUsers;
 
         public ParatextSyncRunner(IRepository<UserSecret> userSecrets, IRepository<SFProjectSecret> projectSecrets,
             ISFProjectService projectService, IEngineService engineService, IParatextService paratextService,
@@ -181,7 +181,7 @@ namespace SIL.XForge.Scripture.Services
                         IEnumerable<IDocument<NoteThread>> noteThreadDocs =
                             (await FetchNoteThreadDocsAsync(text.BookNum)).Values;
                         await _paratextService.UpdateParatextCommentsAsync(_userSecret, targetParatextId, text.BookNum,
-                            noteThreadDocs, _currentSyncUsers);
+                            noteThreadDocs, _currentPtSyncUsers);
                     }
                 }
 
@@ -341,6 +341,7 @@ namespace SIL.XForge.Scripture.Services
             Dictionary<int, IReadOnlyList<IDocument<Question>>> questionDocsByBook, HashSet<int> targetBooks,
             HashSet<int> sourceBooks, CancellationToken token)
         {
+            Dictionary<string, string> usernamesToUserIds = await GetParatextUsernameToUserIdsAsync(token);
             // update source and target real-time docs
             foreach (int bookNum in targetBooks)
             {
@@ -372,7 +373,8 @@ namespace SIL.XForge.Scripture.Services
                 Dictionary<string, IDocument<NoteThread>> noteThreadDocs =
                     await FetchNoteThreadDocsAsync(text.BookNum);
                 Dictionary<int, ChapterDelta> chapterDeltas = GetDeltasByChapter(text, targetParatextId);
-                await UpdateNoteThreadDocsAsync(text, noteThreadDocs, token, chapterDeltas);
+
+                await UpdateNoteThreadDocsAsync(text, noteThreadDocs, token, chapterDeltas, usernamesToUserIds);
 
                 // update project metadata
                 await _projectDoc.SubmitJson0OpAsync(op =>
@@ -412,7 +414,7 @@ namespace SIL.XForge.Scripture.Services
                 Log($"Could not find project secret.", projectSFId, userId);
                 return false;
             }
-            _currentSyncUsers = _projectSecret.SyncUsers.ToDictionary(u => u.ParatextUsername);
+            _currentPtSyncUsers = _projectDoc.Data.ParatextUsers.ToDictionary(u => u.Username);
 
             if (!(await _userSecrets.TryGetAsync(userId)).TryResult(out _userSecret))
             {
@@ -536,7 +538,7 @@ namespace SIL.XForge.Scripture.Services
             else
                 oldNotesElem = new XElement("notes", new XAttribute("version", "1.1"));
 
-            XElement notesElem = await _notesMapper.GetNotesChangelistAsync(oldNotesElem, questionDocs, _currentSyncUsers);
+            XElement notesElem = await _notesMapper.GetNotesChangelistAsync(oldNotesElem, questionDocs, _currentPtSyncUsers);
             if (notesElem.Elements("thread").Any())
                 _paratextService.PutNotes(_userSecret, _projectDoc.Data.ParatextId, notesElem.ToString());
 
@@ -636,17 +638,12 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         private async Task UpdateNoteThreadDocsAsync(TextInfo text,
             Dictionary<string, IDocument<NoteThread>> noteThreadDocs, CancellationToken token,
-            Dictionary<int, ChapterDelta> chapterDeltas)
+            Dictionary<int, ChapterDelta> chapterDeltas, Dictionary<string, string> usernamesToUserIds)
         {
             IEnumerable<NoteThreadChange> noteThreadChanges = _paratextService.GetNoteThreadChanges(_userSecret,
-                 _projectDoc.Data.ParatextId, text.BookNum, noteThreadDocs.Values, chapterDeltas, _currentSyncUsers);
+                 _projectDoc.Data.ParatextId, text.BookNum, noteThreadDocs.Values, chapterDeltas, _currentPtSyncUsers);
             var tasks = new List<Task>();
-            IReadOnlyDictionary<string, string> idsToUsernames =
-                await _paratextService.GetParatextUsernameMappingAsync(_userSecret, _projectDoc.Data, token);
-            Dictionary<string, string> usernamesToUserIds = new Dictionary<string, string>();
-            // Swap the keys and values
-            foreach (KeyValuePair<string, string> kvp in idsToUsernames)
-                usernamesToUserIds.Add(kvp.Value, kvp.Key);
+
             foreach (NoteThreadChange change in noteThreadChanges)
             {
                 // Find the thread doc if it exists
@@ -671,7 +668,7 @@ namespace SIL.XForge.Scripture.Services
                             TagIcon = change.TagIcon,
                             Position = change.Position,
                             Status = change.Status,
-                            AssignedPTUsername = change.AssignedPTUsername
+                            AssignedNoteUserRef = change.AssignedNoteUserRef
                         });
                         await SubmitChangesOnNoteThreadDocAsync(doc, change, usernamesToUserIds);
                     }
@@ -785,8 +782,8 @@ namespace SIL.XForge.Scripture.Services
                         op.Set(td => td.Status, change.Status);
                     if (threadDoc.Data.TagIcon != change.TagIcon)
                         op.Set(td => td.TagIcon, change.TagIcon);
-                    if (threadDoc.Data.AssignedPTUsername != change.AssignedPTUsername)
-                        op.Set(td => td.AssignedPTUsername, change.AssignedPTUsername);
+                    if (threadDoc.Data.AssignedNoteUserRef != change.AssignedNoteUserRef)
+                        op.Set(td => td.AssignedNoteUserRef, change.AssignedNoteUserRef);
                 }
                 // Update content for updated notes
                 foreach (Note updated in change.NotesUpdated)
@@ -800,8 +797,8 @@ namespace SIL.XForge.Scripture.Services
                             op.Set(td => td.Notes[index].Status, updated.Status);
                         if (threadDoc.Data.Notes[index].TagIcon != updated.TagIcon)
                             op.Set(td => td.Notes[index].TagIcon, updated.TagIcon);
-                        if (threadDoc.Data.Notes[index].AssignedPTUsername != updated.AssignedPTUsername)
-                            op.Set(td => td.Notes[index].AssignedPTUsername, updated.AssignedPTUsername);
+                        if (threadDoc.Data.Notes[index].AssignedNoteUserRef != updated.AssignedNoteUserRef)
+                            op.Set(td => td.Notes[index].AssignedNoteUserRef, updated.AssignedNoteUserRef);
                     }
                     else
                     {
@@ -825,7 +822,8 @@ namespace SIL.XForge.Scripture.Services
                 foreach (Note added in change.NotesAdded)
                 {
                     string ownerRef = null;
-                    string username = _currentSyncUsers.Values.Single(u => u.Id == added.SyncUserRef).ParatextUsername;
+                    string username = _currentPtSyncUsers.Values
+                        .Single(u => u.OpaqueUserId == added.SyncUserRef).Username;
                     if (username != null)
                         usernamesToUserIds.TryGetValue(username, out ownerRef);
                     added.OwnerRef = string.IsNullOrEmpty(ownerRef) ? _userSecret.Id : ownerRef;
@@ -1047,35 +1045,40 @@ namespace SIL.XForge.Scripture.Services
                     op.Set(pd => pd.TranslateConfig.Source.IsRightToLeft, sourceIsRtl);
                 }
             });
+
             foreach (var userId in userIdsToRemove)
                 await _projectService.RemoveUserAsync(_userSecret.Id, _projectDoc.Id, userId);
-            IEnumerable<SyncUser> newSyncUsers = null;
-            if (_currentSyncUsers != null)
-                newSyncUsers = _currentSyncUsers.Values.Where(u => !_projectSecret.SyncUsers.Exists(s => s.Id == u.Id));
-            if (newSyncUsers != null && newSyncUsers.Count() > 0)
+
+
+            Dictionary<string, string> usernamesToUserIds = await GetParatextUsernameToUserIdsAsync(token);
+            await _projectDoc.SubmitJson0OpAsync(op =>
+            {
+                foreach (ParatextUserProfile activePtSyncUser in _currentPtSyncUsers.Values)
+                {
+                    ParatextUserProfile existingUser =
+                        _projectDoc.Data.ParatextUsers.SingleOrDefault(u => u.Username == activePtSyncUser.Username);
+                    if (existingUser == null)
+                    {
+                        if (usernamesToUserIds.TryGetValue(activePtSyncUser.Username, out string userId))
+                            activePtSyncUser.SfUserId = userId;
+                        op.Add(pd => pd.ParatextUsers, activePtSyncUser);
+                    }
+                    else if (existingUser.SfUserId == null &&
+                        usernamesToUserIds.TryGetValue(existingUser.Username, out string userId))
+                    {
+                        int index = _projectDoc.Data.ParatextUsers.FindIndex(u => u.Username == activePtSyncUser.Username);
+                        op.Set(pd => pd.ParatextUsers[index].SfUserId, userId);
+                    }
+                }
+            });
+
+            // If we have an id in the job ids collection, remove the first one
+            if (_projectSecret.JobIds.Any())
             {
                 await _projectSecrets.UpdateAsync(_projectSecret.Id, u =>
                 {
-                    foreach (SyncUser syncUser in newSyncUsers)
-                        u.Add(p => p.SyncUsers, syncUser);
-
-                    // If we have an id in the job ids collection, remove the first one
-                    if (_projectSecret.JobIds.Any())
-                    {
-                        u.Remove(p => p.JobIds, _projectSecret.JobIds.First());
-                    }
+                    u.Remove(p => p.JobIds, _projectSecret.JobIds.First());
                 });
-            }
-            else
-            {
-                // If we have an id in the job ids collection, remove the first one
-                if (_projectSecret.JobIds.Any())
-                {
-                    await _projectSecrets.UpdateAsync(_projectSecret.Id, u =>
-                    {
-                        u.Remove(p => p.JobIds, _projectSecret.JobIds.First());
-                    });
-                }
             }
 
             // Commit or rollback the transaction, depending on success
@@ -1100,6 +1103,17 @@ namespace SIL.XForge.Scripture.Services
                 _conn.RollbackTransaction();
             }
             Log($"CompleteSync: Finished. Sync was {(successful ? "successful" : "unsuccessful")}.");
+        }
+
+        private async Task<Dictionary<string, string>> GetParatextUsernameToUserIdsAsync(CancellationToken token)
+        {
+            IReadOnlyDictionary<string, string> idsToUsernames =
+                await _paratextService.GetParatextUsernameMappingAsync(_userSecret, _projectDoc.Data, token);
+            Dictionary<string, string> usernamesToUserIds = new Dictionary<string, string>();
+            // Swap the keys and values
+            foreach (KeyValuePair<string, string> kvp in idsToUsernames)
+                usernamesToUserIds.Add(kvp.Value, kvp.Key);
+            return usernamesToUserIds;
         }
 
         private IDocument<TextData> GetTextDoc(TextInfo text, int chapter)

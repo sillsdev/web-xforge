@@ -36,10 +36,10 @@ namespace SIL.XForge.Scripture.Services
         string GetNotes(UserSecret userSecret, string ptProjectId, int bookNum);
         void PutNotes(UserSecret userSecret, string ptProjectId, string notesText);
         Task UpdateParatextCommentsAsync(UserSecret userSecret, string projectId, int bookNum,
-            IEnumerable<IDocument<NoteThread>> noteThreadDocs, Dictionary<string, SyncUser> syncUsers);
+            IEnumerable<IDocument<NoteThread>> noteThreadDocs, Dictionary<string, ParatextUserProfile> ptProjectUsers);
         IEnumerable<NoteThreadChange> GetNoteThreadChanges(UserSecret userSecret, string projectId, int bookNum,
             IEnumerable<IDocument<NoteThread>> noteThreadDocs, Dictionary<int, ChapterDelta> chapterDeltas,
-            Dictionary<string, SyncUser> syncUsers);
+            Dictionary<string, ParatextUserProfile> ptProjectUsers);
         string GetLatestSharedVersion(UserSecret userSecret, string paratextId);
         bool BackupExists(UserSecret userSecret, string paratextId);
         bool BackupRepository(UserSecret userSecret, string paratextId);

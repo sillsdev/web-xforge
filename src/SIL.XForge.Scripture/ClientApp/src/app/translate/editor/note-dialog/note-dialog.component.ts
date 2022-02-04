@@ -7,6 +7,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { AssignedUsers, NoteStatus } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -40,10 +41,11 @@ export class NoteDialogComponent implements OnInit {
     this.threadDoc = await this.projectService.getNoteThread(this.projectId + ':' + this.threadId);
     this.textDoc = await this.projectService.getText(this.textDocId);
     this.projectDoc = await this.projectService.get(this.projectId);
+    // only get the profile
   }
 
   get threadAssignedPTUsername(): string | undefined {
-    return this.threadDoc?.data?.assignedPTUsername;
+    return this.threadDoc?.data?.assignedNoteUserRef;
   }
 
   get flagIcon(): string {
@@ -179,13 +181,16 @@ export class NoteDialogComponent implements OnInit {
     return `${verseRef} ${reattached}`;
   }
 
-  getAssignedUserString(assignedPTUsername: string): string {
-    switch (assignedPTUsername) {
+  getAssignedUserString(assignedNoteUserRef: string): string {
+    switch (assignedNoteUserRef) {
       case AssignedUsers.TeamUser:
         return translate('note_dialog.team');
       case AssignedUsers.Unspecified:
         return translate('note_dialog.unassigned');
     }
-    return assignedPTUsername;
+    const paratextUser: ParatextUserProfile | undefined = this.projectDoc?.data?.paratextUsers?.find(
+      u => u.opaqueUserId === assignedNoteUserRef
+    );
+    return paratextUser?.username || assignedNoteUserRef;
   }
 }

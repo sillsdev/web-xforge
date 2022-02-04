@@ -13,6 +13,6 @@ namespace SIL.XForge.Scripture.Services
         Task InitAsync(UserSecret currentUserSecret, SFProjectSecret projectSecret, List<User> ptUsers,
             SFProject project, CancellationToken token);
         Task<XElement> GetNotesChangelistAsync(XElement oldNotesElem, IEnumerable<IDocument<Question>> questionsDocs,
-            Dictionary<string, SyncUser> syncUsers);
+            Dictionary<string, ParatextUserProfile> ptProjectUsers);
     }
 }

@@ -2753,8 +2753,7 @@ class TestEnvironment {
         deleted: false,
         status: NoteStatus.Todo,
         tagIcon: `01flag${i + 1}`,
-        assignedUserRef: assignedUserRef === AssignedUsers.TeamUser ? undefined : assignedUserRef,
-        assignedPTUsername: assignedUserRef
+        assignedNoteUserRef: assignedUserRef === AssignedUsers.TeamUser ? undefined : assignedUserRef
       };
       notes.push(note);
     }
@@ -2774,8 +2773,7 @@ class TestEnvironment {
         originalContextAfter: ', verse 1.',
         position,
         status: status,
-        assignedUserRef: assignedUserRef === AssignedUsers.TeamUser ? undefined : assignedUserRef,
-        assignedPTUsername: assignedUserRef
+        assignedNoteUserRef: assignedUserRef === AssignedUsers.TeamUser ? undefined : assignedUserRef
       }
     });
   }

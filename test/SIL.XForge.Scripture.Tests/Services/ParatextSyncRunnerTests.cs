@@ -208,10 +208,8 @@ namespace SIL.XForge.Scripture.Services
 
             env.ParatextService.DidNotReceive().PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
 
-            SFProjectSecret projectSecret = env.GetProjectSecret();
-            Assert.That(projectSecret.SyncUsers.Count, Is.EqualTo(2));
-
             SFProject project = env.VerifyProjectSync(true);
+            Assert.That(project.ParatextUsers.Count, Is.EqualTo(2));
             Assert.That(project.UserRoles["user01"], Is.EqualTo(SFProjectRole.Administrator));
             Assert.That(project.UserRoles["user02"], Is.EqualTo(SFProjectRole.Translator));
         }
@@ -250,8 +248,8 @@ namespace SIL.XForge.Scripture.Services
 
             env.ParatextService.Received(2).PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
 
-            SFProjectSecret projectSecret = env.GetProjectSecret();
-            Assert.That(projectSecret.SyncUsers.Count, Is.EqualTo(2));
+            SFProject project = env.GetProject();
+            Assert.That(project.ParatextUsers.Count, Is.EqualTo(2));
             env.VerifyProjectSync(true);
         }
 
@@ -289,8 +287,8 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.GetText("project02", "MRK", 1).DeepEquals(delta), Is.True);
             Assert.That(env.GetText("project02", "MRK", 2).DeepEquals(delta), Is.True);
 
-            SFProjectSecret projectSecret = env.GetProjectSecret();
-            Assert.That(projectSecret.SyncUsers.Count, Is.EqualTo(2));
+            SFProject project = env.GetProject();
+            Assert.That(project.ParatextUsers.Count, Is.EqualTo(2));
             env.VerifyProjectSync(true);
         }
 
@@ -307,7 +305,7 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
             env.ParatextService.Received().GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 41,
                 Arg.Is<IEnumerable<IDocument<NoteThread>>>(threads => threads.Any(t => t.Id == "project01:thread02")),
-                Arg.Any<Dictionary<int, ChapterDelta>>(), Arg.Any<Dictionary<string, SyncUser>>());
+                Arg.Any<Dictionary<int, ChapterDelta>>(), Arg.Any<Dictionary<string, ParatextUserProfile>>());
 
             Assert.That(env.ContainsText("project01", "MAT", 3), Is.True);
             Assert.That(env.ContainsText("project01", "MRK", 2), Is.False);
@@ -677,7 +675,7 @@ namespace SIL.XForge.Scripture.Services
                 // We should get into UpdateParatextNotesAsync() and fetch and perhaps put notes.
                 env.ParatextService.Received().GetNotes(Arg.Any<UserSecret>(), projectPTId, Arg.Any<int>());
                 await env.NotesMapper.Received().GetNotesChangelistAsync(Arg.Any<XElement>(),
-                    Arg.Any<IEnumerable<IDocument<Question>>>(), Arg.Any<Dictionary<string, SyncUser>>());
+                    Arg.Any<IEnumerable<IDocument<Question>>>(), Arg.Any<Dictionary<string, ParatextUserProfile>>());
                 // We should have then called SR
                 await env.ParatextService.Received(1).SendReceiveAsync(Arg.Any<UserSecret>(), projectPTId,
                     Arg.Any<IProgress<ProgressState>>());
@@ -726,7 +724,7 @@ namespace SIL.XForge.Scripture.Services
                     Arg.Any<IEnumerable<ChapterDelta>>());
                 env.ParatextService.DidNotReceiveWithAnyArgs().GetNotes(default, default, default);
                 await env.NotesMapper.DidNotReceiveWithAnyArgs().GetNotesChangelistAsync(Arg.Any<XElement>(),
-                    Arg.Any<IEnumerable<IDocument<Question>>>(), Arg.Any<Dictionary<string, SyncUser>>());
+                    Arg.Any<IEnumerable<IDocument<Question>>>(), Arg.Any<Dictionary<string, ParatextUserProfile>>());
                 // We should have then called SR
                 await env.ParatextService.Received(1).SendReceiveAsync(Arg.Any<UserSecret>(), projectPTId,
                     Arg.Any<IProgress<ProgressState>>());
@@ -1128,17 +1126,17 @@ namespace SIL.XForge.Scripture.Services
             env.SetupPTData(book);
             env.SetupNoteChanges("thread01", "MAT 1:1", false);
             await env.ParatextService.UpdateParatextCommentsAsync(Arg.Any<UserSecret>(), default, default,
-                Arg.Any<IEnumerable<IDocument<NoteThread>>>(), Arg.Any<Dictionary<string, SyncUser>>());
+                Arg.Any<IEnumerable<IDocument<NoteThread>>>(), Arg.Any<Dictionary<string, ParatextUserProfile>>());
 
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
             await env.ParatextService.Received(1).UpdateParatextCommentsAsync(Arg.Any<UserSecret>(), "target", 40,
                 Arg.Is<IEnumerable<IDocument<NoteThread>>>(t =>
                     t.Count() == 1 && t.First().Id == "project01:thread01"),
-                Arg.Any<Dictionary<string, SyncUser>>()
+                Arg.Any<Dictionary<string, ParatextUserProfile>>()
             );
 
-            SFProjectSecret projectSecret = env.GetProjectSecret();
-            Assert.That(projectSecret.SyncUsers.Select(u => u.ParatextUsername), Is.EquivalentTo(
+            SFProject project = env.GetProject();
+            Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(
                 new[] { "User 1", "User 2" }));
         }
 
@@ -1160,11 +1158,11 @@ namespace SIL.XForge.Scripture.Services
                 "Context before Scripture text in project context after-Start:0-Length:0-MAT 1:1-" + expectedThreadTagIcon;
             Assert.That(thread01.NoteThreadToString(), Is.EqualTo(threadExpected));
             Assert.That(thread01.TagIcon, Is.EqualTo(expectedThreadTagIcon));
-            Assert.That(thread01.AssignedPTUsername, Is.EqualTo(CommentThread.teamUser));
+            Assert.That(thread01.AssignedNoteUserRef, Is.EqualTo(CommentThread.teamUser));
             env.DeltaUsxMapper.ReceivedWithAnyArgs(2).ToChapterDeltas(default);
             Assert.That(thread01.Notes.Count, Is.EqualTo(3));
             Assert.That(thread01.Notes[0].Content, Is.EqualTo("thread01 updated."));
-            Assert.That(thread01.Notes[0].AssignedPTUsername, Is.EqualTo(CommentThread.teamUser));
+            Assert.That(thread01.Notes[0].AssignedNoteUserRef, Is.EqualTo(CommentThread.teamUser));
             Assert.That(thread01.Notes[1].Deleted, Is.True);
             Assert.That(thread01.Notes[2].Content, Is.EqualTo("thread01 added."));
             string expected = "thread01-syncuser03--thread01 added.-" + expectedNoteTagIcon;
@@ -1172,12 +1170,12 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(thread01.Notes[2].TagIcon, Is.EqualTo(expectedNoteTagIcon));
             Assert.That(thread01.Notes[2].OwnerRef, Is.EqualTo("user03"));
 
-            SFProjectSecret projectSecret = env.GetProjectSecret();
-            // User 3 was added as a sync user
-            Assert.That(projectSecret.SyncUsers.Select(u => u.ParatextUsername), Is.EquivalentTo(
-                new[] { "User 1", "User 2", "User 3" }));
-
             SFProject project = env.GetProject();
+            // User 3 was added as a sync user
+            Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(
+                new[] { "User 1", "User 2", "User 3" }));
+            Assert.That(project.ParatextUsers.Single(u => u.Username == "User 1").SfUserId, Is.EqualTo("user01"));
+            Assert.That(project.ParatextUsers.Single(u => u.Username == "User 3").SfUserId, Is.EqualTo("user03"));
             Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
         }
@@ -1224,7 +1222,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(thread02.Notes[0].Content, Is.EqualTo("New thread02 added."));
             Assert.That(thread02.Notes[0].OwnerRef, Is.EqualTo("user01"));
             Assert.That(thread02.Status, Is.EqualTo(NoteStatus.Todo.InternalValue));
-            Assert.That(thread02.AssignedPTUsername, Is.EqualTo(CommentThread.teamUser));
+            Assert.That(thread02.AssignedNoteUserRef, Is.EqualTo(CommentThread.teamUser));
             SFProject project = env.GetProject();
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
         }
@@ -1336,10 +1334,6 @@ namespace SIL.XForge.Scripture.Services
                     {
                         Id = "project01",
                         JobIds = new List<string>{ "test_jobid" },
-                        SyncUsers = new List<SyncUser> {
-                            new SyncUser { Id = "syncuser01", ParatextUsername = "User 1" },
-                            new SyncUser { Id = "syncuser02", ParatextUsername = "User 2" }
-                        }
                     },
                     new SFProjectSecret { Id = "project02" },
                     new SFProjectSecret { Id = "project03" },
@@ -1580,6 +1574,19 @@ namespace SIL.XForge.Scripture.Services
                                 QueuedCount = 1,
                                 SyncedToRepositoryVersion = "beforeSR",
                                 DataInSync = true
+                            },
+                            ParatextUsers = new List<ParatextUserProfile>
+                            {
+                                new ParatextUserProfile
+                                {
+                                    OpaqueUserId = "syncuser01",
+                                    Username = "User 1"
+                                },
+                                new ParatextUserProfile
+                                {
+                                    OpaqueUserId = "syncuser02",
+                                    Username = "User 2"
+                                }
                             }
                         },
                         new SFProject
@@ -1748,7 +1755,8 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 NotesMapper.GetNotesChangelistAsync(Arg.Any<XElement>(),
-                    Arg.Any<IEnumerable<IDocument<Question>>>(), Arg.Any<Dictionary<string, SyncUser>>()).Returns(Task.FromResult(notesElem));
+                    Arg.Any<IEnumerable<IDocument<Question>>>(), Arg.Any<Dictionary<string, ParatextUserProfile>>())
+                    .Returns(Task.FromResult(notesElem));
             }
 
             public TextInfo TextInfoFromBook(Book book)
@@ -1812,7 +1820,7 @@ namespace SIL.XForge.Scripture.Services
                         "Context before ", " context after", NoteStatus.Todo.InternalValue, "tag02");
                     noteThreadChange.ThreadUpdated = true;
                     noteThreadChange.Position = new TextAnchor { Start = 0, Length = 0 };
-                    noteThreadChange.AssignedPTUsername = CommentThread.teamUser;
+                    noteThreadChange.AssignedNoteUserRef = CommentThread.teamUser;
                     noteThreadChange.AddChange(
                         GetNote(threadId, "n01", "syncuser01", $"{threadId} updated.", ChangeType.Updated), ChangeType.Updated);
                     noteThreadChange.AddChange(
@@ -1822,11 +1830,11 @@ namespace SIL.XForge.Scripture.Services
 
                     ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
                         Arg.Any<IEnumerable<IDocument<NoteThread>>>(), Arg.Any<Dictionary<int, ChapterDelta>>(),
-                        Arg.Any<Dictionary<string, SyncUser>>())
+                        Arg.Any<Dictionary<string, ParatextUserProfile>>())
                         .Returns(x =>
                         {
-                            ((Dictionary<string, SyncUser>)x[5]).Add("User 3", new SyncUser
-                            { Id = "syncuser03", ParatextUsername = "User 3" });
+                            ((Dictionary<string, ParatextUserProfile>)x[5]).Add("User 3", new ParatextUserProfile
+                            { OpaqueUserId = "syncuser03", Username = "User 3" });
                             return new[] { noteThreadChange };
                         });
                     Dictionary<string, string> userIdsToUsernames = new Dictionary<string, string>
@@ -1854,7 +1862,7 @@ namespace SIL.XForge.Scripture.Services
                 noteThreadChange.ThreadUpdated = true;
                 ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
                     Arg.Any<IEnumerable<IDocument<NoteThread>>>(), Arg.Any<Dictionary<int, ChapterDelta>>(),
-                    Arg.Any<Dictionary<string, SyncUser>>())
+                    Arg.Any<Dictionary<string, ParatextUserProfile>>())
                     .Returns(new[] { noteThreadChange });
             }
 
@@ -1863,12 +1871,12 @@ namespace SIL.XForge.Scripture.Services
                 var noteThreadChange = new NoteThreadChange(threadId, verseRef, $"Scripture text in project",
                     "Context before ", " context after", NoteStatus.Todo.InternalValue, "icon1");
                 noteThreadChange.Position = new TextAnchor { Start = 0, Length = 0 };
-                noteThreadChange.AssignedPTUsername = CommentThread.teamUser;
+                noteThreadChange.AssignedNoteUserRef = CommentThread.teamUser;
                 noteThreadChange.AddChange(
                     GetNote(threadId, "n01", syncUserId, $"New {threadId} added.", ChangeType.Added), ChangeType.Added);
                 ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
                     Arg.Any<IEnumerable<IDocument<NoteThread>>>(), Arg.Any<Dictionary<int, ChapterDelta>>(),
-                    Arg.Any<Dictionary<string, SyncUser>>())
+                    Arg.Any<Dictionary<string, ParatextUserProfile>>())
                     .Returns(new[] { noteThreadChange });
             }
 
@@ -1882,7 +1890,7 @@ namespace SIL.XForge.Scripture.Services
                     noteThreadChange.NoteIdsRemoved.Add(noteId);
                 ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
                     Arg.Any<IEnumerable<IDocument<NoteThread>>>(), Arg.Any<Dictionary<int, ChapterDelta>>(),
-                    Arg.Any<Dictionary<string, SyncUser>>())
+                    Arg.Any<Dictionary<string, ParatextUserProfile>>())
                     .Returns(new[] { noteThreadChange });
             }
 
@@ -1903,7 +1911,7 @@ namespace SIL.XForge.Scripture.Services
                 noteThreadChange.AddChange(reattachedNote, ChangeType.Added);
                 ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
                     Arg.Any<IEnumerable<IDocument<NoteThread>>>(), Arg.Any<Dictionary<int, ChapterDelta>>(),
-                    Arg.Any<Dictionary<string, SyncUser>>())
+                    Arg.Any<Dictionary<string, ParatextUserProfile>>())
                     .Returns(new[] { noteThreadChange });
             }
 
@@ -2031,7 +2039,7 @@ namespace SIL.XForge.Scripture.Services
                     DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc),
                     Deleted = type == ChangeType.Deleted,
                     TagIcon = tagIcon ?? "icon1",
-                    AssignedPTUsername = CommentThread.teamUser
+                    AssignedNoteUserRef = CommentThread.teamUser
                 };
             }
         }
