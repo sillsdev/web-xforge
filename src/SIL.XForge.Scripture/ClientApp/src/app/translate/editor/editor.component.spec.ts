@@ -2699,6 +2699,7 @@ class TestEnvironment {
   }
 
   dispose(): void {
+    this.wait();
     this.component.metricsSession!.dispose();
   }
 

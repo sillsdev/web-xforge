@@ -43,12 +43,12 @@ import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
-import { Delta, TextDoc } from '../../core/models/text-doc';
+import { Delta } from '../../core/models/text-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { Segment } from '../../shared/text/segment';
-import { FeaturedVerseRefInfo, EmbedFormat, TextComponent } from '../../shared/text/text.component';
+import { FeaturedVerseRefInfo, TextComponent } from '../../shared/text/text.component';
 import { threadIdFromMouseEvent } from '../../shared/utils';
 import { NoteDialogComponent, NoteDialogData } from './note-dialog/note-dialog.component';
 import {
@@ -105,7 +105,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private lastShownSuggestions: Suggestion[] = [];
   private readonly segmentUpdated$: Subject<void>;
   private trainingSub?: Subscription;
-  private remoteChangeSub?: Subscription;
   private projectDataChangesSub?: Subscription;
   private trainingProgressClosed: boolean = false;
   private trainingCompletedTimeout: any;
@@ -413,9 +412,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (this.projectDataChangesSub != null) {
       this.projectDataChangesSub.unsubscribe();
     }
-    if (this.remoteChangeSub != null) {
-      this.remoteChangeSub.unsubscribe();
-    }
     if (this.metricsSession != null) {
       this.metricsSession.dispose();
     }
@@ -509,11 +505,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     if (delta != null) {
-      // only recreate note embeds if the delta has productive edits
-      this.recreateDeletedNoteThreadEmbeds();
-      if (segment != null) {
-        this.subscribeClickEvents([segment.ref]);
-      }
+      // wait 20 ms so that note thread docs have time to receive the updated note positions
+      setTimeout(() => {
+        this.recreateDeletedNoteThreadEmbeds();
+        if (segment != null) {
+          this.subscribeClickEvents([segment.ref]);
+        }
+      }, 20);
     }
   }
 
@@ -537,7 +535,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  onTextLoaded(textType: TextType, textDoc?: TextDoc): void {
+  onTextLoaded(textType: TextType): void {
     switch (textType) {
       case 'source':
         this.sourceLoaded = true;
@@ -546,12 +544,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.targetLoaded = true;
         this.toggleNoteThreadVerseRefs$.next();
         this.shouldNoteThreadsRespondToEdits = true;
-        this.remoteChangeSub?.unsubscribe();
-        if (textDoc != null) {
-          this.remoteChangeSub = this.subscribe(textDoc.remoteChanges$, ops =>
-            Promise.resolve().then(() => this.refreshEmbedsAfterRemoteDelta(ops as DeltaStatic))
-          );
-        }
         break;
     }
     if ((!this.hasSource || this.sourceLoaded) && this.targetLoaded) {
@@ -1275,44 +1267,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         nt.data.verseRef.chapterNum === this.chapter &&
         nt.data.notes.length > 0
     );
-  }
-
-  /** Refresh the note embeds positioned at same index as the remote edit. */
-  private refreshEmbedsAfterRemoteDelta(remoteDelta: DeltaStatic): void {
-    if (remoteDelta.ops == null || this.target == null || this.noteThreadQuery?.docs == null) {
-      return;
-    }
-
-    // Since there is no way to tell if a remote edit comes before or after a note
-    // when the edit occurs at the same index, we must redraw those note embeds.
-    const embedsToRefresh: string[] = [];
-    let insertLength: number = 0;
-    for (const op of remoteDelta.ops) {
-      let insertionPos = 0;
-      if (op.retain != null) {
-        insertionPos = op.retain;
-        // find all embeds that exist at the insertion point
-        for (const [embedId, pos] of this.target.embeddedElements.entries()) {
-          if (insertionPos == pos) {
-            embedsToRefresh.push(embedId);
-          } else if (pos > insertionPos) {
-            // we found all potentially affected embeds
-            break;
-          }
-          // an embed is positioned before or at the remote edit position, so increment the insertion position
-          // so we can compare it to an embed's editor position
-          insertionPos++;
-        }
-      } else if (op.insert != null) {
-        insertLength = typeof op.insert === 'string' ? op.insert.length : 1;
-      }
-    }
-    // remove and redraw embeds only if the remote user has inserted something
-    if (insertLength > 0) {
-      const embedsAndTextAnchors: EmbedFormat[] = [];
-      embedsToRefresh.forEach(embedId => embedsAndTextAnchors.push({ id: embedId, formatLength: insertLength }));
-      this.target.removeEmbeddedElements(embedsAndTextAnchors);
-    }
   }
 
   /** Re-create any note embeds that have been deleted by the user. */

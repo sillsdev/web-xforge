@@ -13,20 +13,20 @@ import { TranslocoService } from '@ngneat/transloco';
 import { clone } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import merge from 'lodash-es/merge';
-import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
+import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources } from 'quill';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { fromEvent } from 'rxjs';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { getBrowserEngine } from 'xforge-common/utils';
-import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
+import { Delta, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { VERSE_REGEX } from '../utils';
 import { registerScripture } from './quill-scripture';
 import { Segment } from './segment';
-import { TextViewModel } from './text-view-model';
+import { EditorRange, TextViewModel } from './text-view-model';
 
 const EDITORS = new Set<Quill>();
 
@@ -74,12 +74,6 @@ export interface FeaturedVerseRefInfo {
   highlight?: boolean;
 }
 
-/** Information about an embed and its associated formatting. */
-export interface EmbedFormat {
-  id: string;
-  formatLength: number;
-}
-
 /** View of an editable text document. Used for displaying Scripture. */
 @Component({
   selector: 'app-text',
@@ -93,8 +87,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   @Input() subscribeToUpdates = true;
   @Output() updated = new EventEmitter<TextUpdatedEvent>(true);
   @Output() segmentRefChange = new EventEmitter<string>();
+  @Output() loaded = new EventEmitter(true);
   @Output() focused = new EventEmitter<boolean>(true);
-  @Output() loaded = new EventEmitter<TextDoc>(true);
   lang: string = '';
   // only use USX formats and not default Quill formats
   readonly allowedFormats: string[] = USX_FORMATS;
@@ -205,6 +199,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private highlightMarkerHeight: number = 0;
   private _placeholder?: string;
   private displayMessage: string = '';
+
   constructor(
     private readonly projectService: SFProjectService,
     private readonly transloco: TranslocoService,
@@ -545,19 +540,19 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       return;
     }
 
-    const embedInsertPos: number = this.viewModel.getEditorPositionPlusTextPosition(
+    const editorRange: EditorRange = this.viewModel.getEditorContentRange(
       editorPosOfSegmentToModify.index,
       startTextPosInVerse
     );
+    const embedInsertPos: number = editorRange.endEditorPosition + editorRange.trailingEmbedCount;
 
     this.editor.insertEmbed(embedInsertPos, formatName, format, 'api');
-    const anchorEndPosition: number = startTextPosInVerse + textAnchor.length - 1;
-    const endPosition: number = this.viewModel.getEditorPositionPlusTextPosition(
-      editorPosOfSegmentToModify.index,
-      anchorEndPosition
-    );
+    const endPosition: number = this.viewModel.getEditorContentRange(
+      embedInsertPos,
+      textAnchor.length
+    ).endEditorPosition;
     // add one to include the embed to underline
-    const formatLength: number = endPosition - embedInsertPos + 1;
+    const formatLength: number = endPosition - embedInsertPos;
     this.editor.formatText(embedInsertPos, formatLength, 'text-anchor', 'true', 'api');
     this.updateSegment();
     return embedSegmentRef;
@@ -618,48 +613,24 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
   }
 
-  /** Remove embedded elements that are not part of the text data. This may be necessary to preserve the cursor
-   * location when switching between texts. This is also helpful if a particular embed needs to be redrawn.
-   * @param embedFormats An array of the ids and format lengths for each embed to remove. The embed is removed
-   * along with the corresponding length for formatting associated with the embed.
-   * Set to undefined to remove all embeds.
+  /**
+   * Remove embedded elements that are not part of the text data. This may be necessary to preserve the cursor
+   * location when switching between texts.
    */
-  removeEmbeddedElements(embedFormats?: EmbedFormat[]): void {
+  removeEmbeddedElements(): void {
     if (this.editor == null) {
       return;
     }
-    let embedIndicesWithLength: [number, number][] = [];
-    if (embedFormats == null) {
-      embedIndicesWithLength = Array.from(this.viewModel.embeddedElements.values()).map(e => [e, 0]);
-    } else {
-      for (const embed of embedFormats) {
-        const index: number | undefined = this.viewModel.embeddedElements.get(embed.id);
-        if (index != null) {
-          embedIndicesWithLength.push([index, embed.formatLength]);
-        }
-      }
-    }
-
-    const deleteDelta = new Delta();
     let previousEmbedIndex = -1;
-    let textAnchorRemovalLength = 0;
-    const ops: StringMap = { 'text-anchor': false };
-    for (const [embedIndex, textAnchorLength] of embedIndicesWithLength) {
+    const deleteDelta = new Delta();
+    for (const embedIndex of this.viewModel.embeddedElements.values()) {
       const lengthBetweenEmbeds: number = embedIndex - (previousEmbedIndex + 1);
       if (lengthBetweenEmbeds > 0) {
         // retain elements other than notes between the previous and current embed
-        if (textAnchorRemovalLength > 0) {
-          deleteDelta.retain(textAnchorRemovalLength, ops);
-        }
-        deleteDelta.retain(lengthBetweenEmbeds - textAnchorRemovalLength);
-        textAnchorRemovalLength = 0;
+        deleteDelta.retain(lengthBetweenEmbeds);
       }
       deleteDelta.delete(1);
       previousEmbedIndex = embedIndex;
-      textAnchorRemovalLength = Math.max(textAnchorRemovalLength, textAnchorLength);
-    }
-    if (textAnchorRemovalLength > 0) {
-      deleteDelta.retain(textAnchorRemovalLength, ops);
     }
     deleteDelta.chop();
     if (deleteDelta.ops != null && deleteDelta.ops.length > 0) {
@@ -705,7 +676,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     this.viewModel.bind(textDoc, this.subscribeToUpdates);
     this.updatePlaceholderText();
 
-    this.loaded.emit(textDoc);
+    this.loaded.emit();
     this.applyEditorStyles();
   }
 
