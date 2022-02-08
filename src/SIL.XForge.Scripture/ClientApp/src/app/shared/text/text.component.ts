@@ -506,8 +506,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       const text = this._editor.getText(range.index, range.length);
       return text !== '';
     }
+    const text = this._editor.getText(range.index - 1, 1);
+    const isTextDeletion: boolean = text != null && text.length > 0;
 
-    return this._segment != null && range.index !== this._segment.range.index;
+    return isTextDeletion && this._segment != null && range.index !== this._segment.range.index;
   }
 
   private isDeleteAllowed(range: RangeStatic): boolean {
@@ -519,8 +521,12 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       const text = this._editor.getText(range.index, range.length);
       return text !== '';
     }
+    const text = this._editor.getText(range.index, 1);
+    const isTextDeletion: boolean = text != null && text.length > 0;
 
-    return this._segment != null && range.index !== this._segment.range.index + this._segment.range.length;
+    return (
+      isTextDeletion && this._segment != null && range.index !== this._segment.range.index + this._segment.range.length
+    );
   }
 
   private moveNextSegment(end: boolean = true): void {

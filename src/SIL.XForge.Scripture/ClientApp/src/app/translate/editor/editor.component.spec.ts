@@ -918,6 +918,54 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('backspace and delete disabled for non-text elements and at segment boundaries', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+      expect(env.targetEditor.history['stack']['undo'].length).withContext('setup').toEqual(0);
+      let range = env.component.target!.getSegmentRange('verse_1_2')!;
+      let contents = env.targetEditor.getContents(range.index, 1);
+      expect(contents.ops![0].insert.blank).toBeDefined();
+
+      // set selection on a blank segment
+      env.targetEditor.setSelection(range.index, 'user');
+      env.wait();
+      // the selection is programmatically set to after the blank
+      expect(env.targetEditor.getSelection()!.index).toEqual(range.index + 1);
+      expect(env.targetEditor.history['stack']['undo'].length).toEqual(0);
+
+      env.pressKey('backspace');
+      expect(env.targetEditor.history['stack']['undo'].length).toEqual(0);
+      env.pressKey('delete');
+      expect(env.targetEditor.history['stack']['undo'].length).toEqual(0);
+      contents = env.targetEditor.getContents(range.index, 1);
+      expect(contents.ops![0].insert.blank).toBeDefined();
+
+      // set selection at segment boundaries
+      range = env.component.target!.getSegmentRange('verse_1_4')!;
+      env.targetEditor.setSelection(range.index + range.length, 'user');
+      env.wait();
+      env.pressKey('delete');
+      expect(env.targetEditor.history['stack']['undo'].length).toEqual(0);
+      env.targetEditor.setSelection(range.index, 'user');
+      env.wait();
+      env.pressKey('backspace');
+      expect(env.targetEditor.history['stack']['undo'].length).toEqual(0);
+
+      // other non-text elements
+      range = env.component.target!.getSegmentRange('verse_1_1')!;
+      env.targetEditor.insertEmbed(range.index, 'note', { caller: 'a', style: 'ft' }, 'api');
+      env.wait();
+      contents = env.targetEditor.getContents(range.index, 1);
+      expect(contents.ops![0].insert.note).toBeDefined();
+      env.targetEditor.setSelection(range.index + 1, 'user');
+      env.pressKey('backspace');
+      expect(env.targetEditor.history['stack']['undo'].length).toEqual(0);
+      contents = env.targetEditor.getContents(range.index, 1);
+      expect(contents.ops![0].insert.note).toBeDefined();
+      env.dispose();
+    }));
+
     it('undo/redo', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_2' });
@@ -1384,6 +1432,10 @@ class TestEnvironment {
     return this.trainingProgress.query(By.css('#training-close-button'));
   }
 
+  get targetTextEditor(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#target-text-area .ql-container'));
+  }
+
   get sourceTextArea(): DebugElement {
     return this.fixture.debugElement.query(By.css('#source-text-area'));
   }
@@ -1646,6 +1698,15 @@ class TestEnvironment {
     this.targetEditor.setSelection(selection.index, 'user');
     this.wait();
     return selection.index;
+  }
+
+  pressKey(key: string): void {
+    const keyCodes = { backspace: 8, delete: 46 };
+    if (keyCodes[key] == null) {
+      throw new Error('key code does not exist');
+    }
+    this.targetEditor.root.dispatchEvent(new KeyboardEvent('keydown', { keyCode: keyCodes[key] }));
+    this.wait();
   }
 
   triggerUndo(): void {
