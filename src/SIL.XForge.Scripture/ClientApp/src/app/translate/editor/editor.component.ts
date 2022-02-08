@@ -1277,34 +1277,37 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     );
   }
 
-  /** Refresh the note embeds positioned at same index as the remote edit. */
+  /** Refresh the note embeds positioned at the same text position as the remote edit. */
   private refreshEmbedsAfterRemoteDelta(remoteDelta: DeltaStatic): void {
     if (remoteDelta.ops == null || this.target == null || this.noteThreadQuery?.docs == null) {
       return;
     }
 
     // Since there is no way to tell if a remote edit comes before or after a note
-    // when the edit occurs at the same index, we must redraw those note embeds.
+    // when the edit occurs at the same text position, we must redraw those note embeds.
     const embedsToRefresh: string[] = [];
     let insertLength: number = 0;
     for (const op of remoteDelta.ops) {
-      let insertionPos = 0;
+      // only need to assess the first delete and insert ops since remote edits will generally contain only 2 ops
       if (op.retain != null) {
-        insertionPos = op.retain;
+        const insertionPos: number = op.retain;
+        let embedCount = 0;
         // find all embeds that exist at the insertion point
         for (const [embedId, pos] of this.target.embeddedElements.entries()) {
-          if (insertionPos == pos) {
+          const embedTextPosition = pos - embedCount;
+          if (insertionPos === embedTextPosition) {
             embedsToRefresh.push(embedId);
-          } else if (pos > insertionPos) {
+          } else if (insertionPos < embedTextPosition) {
             // we found all potentially affected embeds
             break;
           }
-          // an embed is positioned before or at the remote edit position, so increment the insertion position
-          // so we can compare it to an embed's editor position
-          insertionPos++;
+          // an embed is positioned before or at the remote edit position, so increment the embedCount
+          embedCount++;
         }
       } else if (op.insert != null) {
+        // get the length that was inserted that needs to have its text anchor formatting removed
         insertLength = typeof op.insert === 'string' ? op.insert.length : 1;
+        break;
       }
     }
     // remove and redraw embeds only if the remote user has inserted something
