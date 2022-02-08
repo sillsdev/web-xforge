@@ -73,7 +73,7 @@ namespace SIL.XForge.Scripture
             Configuration = configuration;
             Environment = env;
             LoggerFactory = loggerFactory;
-            if (IsDevelopmentEnvironment)
+            if (IsDevelopmentEnvironment || IsTestingEnvironment)
             {
                 SpaGetRoutes.UnionWith(DevelopmentSpaGetRoutes);
                 SpaPostRoutes.UnionWith(DevelopmentSpaPostRoutes);
@@ -285,8 +285,8 @@ namespace SIL.XForge.Scripture
             if (index == -1)
                 index = path.Length;
             string prefix = path.Substring(1, index - 1);
-            if (!IsDevelopmentEnvironment && (prefix.EndsWith(".js") || prefix.EndsWith(".js.map") ||
-                prefix.EndsWith(".css") || prefix.EndsWith(".css.map")))
+            if (!IsDevelopmentEnvironment && !IsTestingEnvironment && (prefix.EndsWith(".js") ||
+                prefix.EndsWith(".js.map") || prefix.EndsWith(".css") || prefix.EndsWith(".css.map")))
             {
                 int periodIndex = path.IndexOf(".");
                 prefix = prefix.Substring(0, periodIndex - 1);

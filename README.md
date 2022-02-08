@@ -402,6 +402,45 @@ To run (or not to run) specific tests or fixtures, you can use the prefixes `f`o
 
 See documentation for [running tests](https://github.com/angular/angular-cli/wiki/test) and [writing tests](https://angular.io/guide/testing#testing).
 
+### Angular End-To-End (E2E) Testing
+
+Before running any tests (only need to do this once), from the repo root
+
+```bash
+cd src/SIL.XForge.Scripture/ClientApp/
+npm run e2e:install
+```
+
+To run E2E tests, make sure you are serving the app. From the repo root
+
+```bash
+cd src/SIL.XForge.Scripture/
+dotnet run --environment "Testing"
+```
+
+In a second terminal, from the repo root
+
+```bash
+cd src/SIL.XForge.Scripture/ClientApp/
+ng serve
+```
+
+In a third terminal, from the repo root
+
+```bash
+cd src/SIL.XForge.Scripture/ClientApp/
+npm run e2e
+```
+
+#### Debugging E2E Tests
+
+In the third terminal above, instead run
+
+```bash
+npm run e2e:debug
+```
+Also see [PlayWright Debugging Tools](https://playwright.dev/docs/debug).
+
 ### PWA Testing
 
 To test the PWA (Progressive Web App), build the app for PWA testing and run the server without `ng serve`. From the repo root

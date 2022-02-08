@@ -14,6 +14,9 @@
     "lint": "ng lint",
     "prettier": "prettier --write \"**/*.{ts,js,json,css,scss,less,html,md,yml}\"",
     "prettier:tc": "prettier --list-different \"**/*.{ts,js,json,css,scss,less,html,md,yml}\"",
+    "e2e:install": "playwright install",
+    "e2e": "playwright test",
+    "e2e:debug": "playwright test --debug",
     "bundle-report": "webpack-bundle-analyzer dist/stats.json",
     "build:stats": "ng build --configuration production --stats-json",
     "prepare": "cd ../../.. && husky install src/SIL.XForge.Scripture/ClientApp/.husky"
@@ -79,6 +82,7 @@
     "@angular/compiler": "~12.2.16",
     "@angular/compiler-cli": "~12.2.16",
     "@angular/language-service": "~12.2.16",
+    "@playwright/test": "^1.18.1",
     "@triviality/logger": "^1.1.6",
     "@types/auth0-js": "^9.14.5",
     "@types/events": "^3.0.0",

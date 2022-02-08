@@ -33,6 +33,10 @@
 npm-debug.log
 testem.log
 
+# e2e
+test-results/
+playwright-report/
+
 # System Files
 .DS_Store
 Thumbs.db
