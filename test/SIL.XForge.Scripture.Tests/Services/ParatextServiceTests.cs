@@ -2134,7 +2134,7 @@ namespace SIL.XForge.Scripture.Services
                         content.InnerXml = comp.isEdited ? $"<p>{threadId} note {i}: EDITED.</p>" : $"<p>{threadId} note {i}.</p>";
                         if (comp.alternateText == SelectionType.RelatedVerse)
                         {
-                            // The alternate text is in a proceeding paragraph with a footnote represented by '*'
+                            // The alternate text is in a subsequent paragraph with a footnote represented by '*'
                             before = before + text + after + "\n*";
                             after = "";
                             selectedText = "other text in verse";
@@ -2145,7 +2145,11 @@ namespace SIL.XForge.Scripture.Services
                             after = "";
                             selectedText = "Section heading text";
                         }
-                        ThreadNoteComponents note = new ThreadNoteComponents { status = NoteStatus.Todo, tagsAdded = new[] { comp.threadNum.ToString() } };
+                        ThreadNoteComponents note = new ThreadNoteComponents
+                        {
+                            status = NoteStatus.Todo,
+                            tagsAdded = new[] { comp.threadNum.ToString() }
+                        };
                         if (comp.notes != null)
                             note = comp.notes[i - 1];
                         ProjectCommentManager.AddComment(new Paratext.Data.ProjectComments.Comment(associatedPtUser)
