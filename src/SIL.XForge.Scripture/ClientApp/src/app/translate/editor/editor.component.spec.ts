@@ -930,6 +930,8 @@ describe('EditorComponent', () => {
       // set selection on a blank segment
       env.targetEditor.setSelection(range.index, 'user');
       env.wait();
+      // the selection is programmatically set to after the blank
+      expect(env.targetEditor.getSelection()!.index).toEqual(range.index + 1);
       expect(env.targetEditor.history['stack']['undo'].length).toEqual(0);
 
       env.pressKey('backspace');
