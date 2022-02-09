@@ -21,3 +21,10 @@
   [attr.data-browser-engine]="browserEngine"
 >
 </quill-editor>
+<div style="padding: 1em">
+  <strong>Diagnostics:</strong> <strong>Selection:</strong> {{ selectionDiagnostic }} <strong>Segment Ref:</strong>
+  {{ segmentRef }} <br /><strong>Quill selection ops:</strong>
+  <pre>{{ quillSelectionOpsDiagnostic }}</pre>
+  <br /><strong>Quill segment ops:</strong>
+  <pre>{{ quillSegmentOpsDiagnostic }}</pre>
+</div>

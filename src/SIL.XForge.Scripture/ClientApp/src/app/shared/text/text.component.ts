@@ -251,6 +251,38 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
   }
 
+  get selectionDiagnostic(): string {
+    const selection: RangeStatic | undefined | null = this.editor?.getSelection();
+    if (selection == null) {
+      return '';
+    }
+    return `pos ${selection.index}, len ${selection.length}`;
+  }
+
+  get quillSelectionOpsDiagnostic(): string {
+    const selection: RangeStatic | undefined | null = this.editor?.getSelection();
+    if (selection == null) {
+      return '';
+    }
+    const segmentRef: string = this.segmentRef;
+    if (segmentRef === '') {
+      return '';
+    }
+    return JSON.stringify(this.editor?.getContents(selection?.index, selection?.length), null, 2);
+  }
+
+  get quillSegmentOpsDiagnostic(): string {
+    const selection: RangeStatic | undefined | null = this.editor?.getSelection();
+    if (selection == null) {
+      return '';
+    }
+    const segmentRef: string = this.segmentRef;
+    if (segmentRef === '') {
+      return '';
+    }
+    return JSON.stringify(this.getSegmentContents(segmentRef), null, 2);
+  }
+
   get segmentRef(): string {
     if (this._segment == null) {
       return this.initialSegmentRef == null ? '' : this.initialSegmentRef;
