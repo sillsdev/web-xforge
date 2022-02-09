@@ -287,6 +287,12 @@ export class TextViewModel {
     return Array.from(this._segments.keys()).filter(r => r.indexOf(ref + '/') === 0);
   }
 
+  /** Get the segments that fall within a given verse reference. A segment is considered
+   * to be in the reference if (1) its ref is in the format verse_c_v or verse_c_v-w, and that
+   * ref is within the given verse reference, or (2) its ref is not in that format, but the
+   * first preceding segment with a ref in that format is within the given verse reference.
+   * For example, the result for MAT 1:1 can be as follows: [verse_1_1, verse_1_1/p_1, s_1]
+   */
   getVerseSegments(verseRef?: VerseRef): string[] {
     const segmentsInVerseRef: string[] = [];
     if (verseRef == null) {
@@ -295,14 +301,16 @@ export class TextViewModel {
     const verses: VerseRef[] = verseRef.allVerses();
     const startVerseNum: number = verses[0].verseNum;
     const lastVerseNum: number = verses[verses.length - 1].verseNum;
+    let matchStartNum = 0;
+    let matchLastNum = 0;
     for (const segment of this._segments.keys()) {
       const match: RegExpExecArray | null = VERSE_FROM_SEGMENT_REF_REGEX.exec(segment);
-      if (match == null) {
-        continue;
+      if (match != null) {
+        // update numbers for the new verse
+        const verseParts: string[] = match[1].split('-');
+        matchStartNum = +verseParts[0];
+        matchLastNum = +verseParts[verseParts.length - 1];
       }
-      const verseParts: string[] = match[1].split('-');
-      const matchStartNum: number = +verseParts[0];
-      const matchLastNum: number = +verseParts[verseParts.length - 1];
       const matchStartsWithin = matchStartNum >= startVerseNum && matchStartNum <= lastVerseNum;
       const matchEndsWithin = matchLastNum >= startVerseNum && matchLastNum <= lastVerseNum;
       if (matchStartsWithin || matchEndsWithin) {

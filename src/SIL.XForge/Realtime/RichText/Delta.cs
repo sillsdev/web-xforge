@@ -223,10 +223,39 @@ namespace SIL.XForge.Realtime.RichText
             return array.ToString();
         }
 
-        public bool TryConcatenateInserts(out string opStr, Func<JToken, bool> filter = null)
+        /// <summary>
+        /// Concatenate all the text belonging to a given verse, including section headings. If the verse string
+        /// given is 0, this returns all the text previous to the first verse in the text.
+        /// </summary>
+        /// <param name="opStr">The string of text belonging to a verse.</param>
+        /// <param name="verseRef">
+        /// The reference to the verse. For example: "1". If the verses in the text data is combined, "1-2".
+        /// </param>
+        public bool TryConcatenateInserts(out string opStr, string verseRef)
         {
-            Delta filteredDelta = filter == null ? this : new Delta(this.Ops.Where(op => filter(op)));
-            return TryConcatInserts(filteredDelta, out opStr);
+            List<JToken> verseOps = new List<JToken>();
+            bool isTargetVerse = verseRef == "0";
+            foreach (JToken op in this.Ops)
+            {
+                if (op[InsertType]?.Type == JTokenType.Object)
+                {
+                    if (((JObject)op[InsertType]).Property("verse")?.Value.Type == JTokenType.Object)
+                    {
+                        JProperty numberToken =
+                            ((JObject)((JObject)op[InsertType]).Property("verse").Value).Property("number");
+                        // update target verse so we know what verse we are in
+                        isTargetVerse = numberToken.Value.Type == JTokenType.String && (string)numberToken.Value == verseRef;
+                        continue;
+                    }
+                    else if (((JObject)op[InsertType]).Property("chapter")?.Value.Type == JTokenType.Object)
+                        continue;
+                }
+                bool isNewLine = op[InsertType]?.Type == JTokenType.String && (string)op[InsertType] == "\n";
+                if (isTargetVerse && !isNewLine)
+                    verseOps.Add(op);
+            }
+            Delta verseDeltaOps = new Delta(verseOps);
+            return TryConcatInserts(verseDeltaOps, out opStr);
         }
 
         private Delta Add(JToken newOp)

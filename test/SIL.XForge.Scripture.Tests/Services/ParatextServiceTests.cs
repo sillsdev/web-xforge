@@ -865,8 +865,9 @@ namespace SIL.XForge.Scripture.Services
 
             env.AddParatextComments(new[]
             {
-                new ThreadComponents { threadNum = 1, noteCount = 1, username = env.Username01, relatedVerseSelection = true },
-                new ThreadComponents { threadNum = 10, noteCount = 1, username = env.Username01, relatedVerseSelection = true }
+                new ThreadComponents { threadNum = 1, noteCount = 1, username = env.Username01, alternateText = SelectionType.RelatedVerse },
+                new ThreadComponents { threadNum = 8, noteCount = 1, username = env.Username01, alternateText = SelectionType.Section },
+                new ThreadComponents { threadNum = 10, noteCount = 1, username = env.Username01, alternateText = SelectionType.RelatedVerse }
             });
 
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
@@ -879,7 +880,7 @@ namespace SIL.XForge.Scripture.Services
                 IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret, ptProjectId, 40,
                     new IDocument<NoteThread>[0], deltas, syncUsers);
 
-                Assert.That(changes.Count, Is.EqualTo(2));
+                Assert.That(changes.Count, Is.EqualTo(3));
                 NoteThreadChange thread1Change = changes.Single(c => c.ThreadId == "thread1");
                 // The full matching text of thread1Change.SelectedText is not found. The best match is a substring.
                 // This test also verifies that fetching verse text for verse 1 will fetch text from segment
@@ -889,13 +890,19 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(thread1Change.SelectedText, Is.EqualTo("other text in verse"), "setup");
                 Assert.That(thread1Change.Position.Length, Is.LessThan("other text in verse".Length));
 
+                NoteThreadChange thread8Change = changes.Single(c => c.ThreadId == "thread8");
+                string textBefore8 = "Context before Text selected thread8 context after.";
+                int thread8AnchoringLength = "Section heading text".Length;
+                TextAnchor expected8 = new TextAnchor { Start = textBefore8.Length, Length = thread8AnchoringLength };
+                Assert.That(thread8Change.Position, Is.EqualTo(expected8));
+
                 NoteThreadChange thread10Change = changes.Single(c => c.ThreadId == "thread10");
-                string textBefore = "Context before Text selected thread10 context after *";
+                string textBefore10 = "Context before Text selected thread10 context after.*";
                 int thread10AnchoringLength = "other text in verse".Length;
-                TextAnchor expected2 = new TextAnchor { Start = textBefore.Length, Length = thread10AnchoringLength };
+                TextAnchor expected10 = new TextAnchor { Start = textBefore10.Length, Length = thread10AnchoringLength };
                 // This test also verifies that fetching verse text for verse 10 will fetch text from both segments
                 // "verse_1_10" and "verse_1_10/p_1".
-                Assert.That(thread10Change.Position, Is.EqualTo(expected2));
+                Assert.That(thread10Change.Position, Is.EqualTo(expected10));
             }
         }
 
@@ -1390,13 +1397,20 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(mapping.Count, Is.EqualTo(0));
         }
 
+        enum SelectionType
+        {
+            Standard,
+            RelatedVerse,
+            Section
+        }
+
         struct ThreadComponents
         {
             public int threadNum;
             public int noteCount;
             public ThreadNoteComponents[] notes;
             public string username;
-            public bool relatedVerseSelection;
+            public SelectionType alternateText;
             public bool isNew;
             public bool isEdited;
             public bool isDeleted;
@@ -2118,13 +2132,24 @@ namespace SIL.XForge.Scripture.Services
                         string date = $"2019-01-0{i}T08:00:00.0000000+00:00";
                         XmlElement content = doc.CreateElement("Contents");
                         content.InnerXml = comp.isEdited ? $"<p>{threadId} note {i}: EDITED.</p>" : $"<p>{threadId} note {i}.</p>";
-                        if (comp.relatedVerseSelection)
+                        if (comp.alternateText == SelectionType.RelatedVerse)
                         {
-                            before = before + text + after;
+                            // The alternate text is in a subsequent paragraph with a footnote represented by '*'
+                            before = before + text + after + "\n*";
                             after = "";
                             selectedText = "other text in verse";
                         }
-                        ThreadNoteComponents note = new ThreadNoteComponents { status = NoteStatus.Todo, tagsAdded = new[] { comp.threadNum.ToString() } };
+                        else if (comp.alternateText == SelectionType.Section)
+                        {
+                            before = before + text + after;
+                            after = "";
+                            selectedText = "Section heading text";
+                        }
+                        ThreadNoteComponents note = new ThreadNoteComponents
+                        {
+                            status = NoteStatus.Todo,
+                            tagsAdded = new[] { comp.threadNum.ToString() }
+                        };
                         if (comp.notes != null)
                             note = comp.notes[i - 1];
                         ProjectCommentManager.AddComment(new Paratext.Data.ProjectComments.Comment(associatedPtUser)
@@ -2253,6 +2278,15 @@ namespace SIL.XForge.Scripture.Services
                         "{ \"insert\": { \"verse\": { \"number\": \"" + i + "\" } }}, " +
                         "{ \"insert\": \"" + before + noteSelectedText + after + "\", " +
                         "\"attributes\": { \"segment\": \"verse_" + chapterNum + "_" + i + "\" } }";
+                    if (i == 8)
+                    {
+                        // create a new section heading after verse 8
+                        chapterText = chapterText + " ," +
+                            "{ \"insert\": \"\n\", \"attributes\": { \"para\": { \"style\": \"p\" } }}, " +
+                            "{ \"insert\": \"Section heading text\", \"attributes\": { \"segment\": \"s_1\" } }, " +
+                            "{ \"insert\": \"\n\", \"attributes\": { \"para\": { \"style\": \"s\" } }}, " +
+                            "{ \"insert\": { \"blank\": true }, \"attributes\": { \"segment\": \"p_1\" } }";
+                    }
                 }
                 if (includeExtraLastVerseSegment)
                 {

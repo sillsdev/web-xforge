@@ -47,6 +47,12 @@ export function getCombinedVerseTextDoc(id: TextDocId): TextData {
   delta.insert({ verse: { number: '2-3', style: 'v' } });
   delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 2-3.`, { segment: `verse_${id.chapterNum}_2-3` });
   delta.insert('\n', { para: { style: 'p' } });
+  delta.insert('Text in section heading', { segment: 's_2' });
+  delta.insert('\n', { para: { style: 's' } });
+  delta.insert({ blank: true }, { segment: 'p_2' });
+  delta.insert({ verse: { number: '4', style: 'v' } });
+  delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 4.`, { segment: `verse_${id.chapterNum}_4` });
+  delta.insert('\n', { para: { style: 'p' } });
   return delta;
 }
 
