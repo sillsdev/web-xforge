@@ -6,7 +6,6 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
-import { first } from 'rxjs/operators';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { objectId } from 'xforge-common/utils';
@@ -211,11 +210,6 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
 
   async setUpQuestionList(questions: SourceQuestion[], useQuestionIds: boolean) {
     const questionQuery = await this.promiseForQuestionDocQuery;
-
-    if (!questionQuery.ready) {
-      await questionQuery.ready$.pipe(first()).toPromise();
-    }
-    questionQuery.dispose();
 
     questions.sort((a, b) => a.verseRef.BBBCCCVVV - b.verseRef.BBBCCCVVV);
 
