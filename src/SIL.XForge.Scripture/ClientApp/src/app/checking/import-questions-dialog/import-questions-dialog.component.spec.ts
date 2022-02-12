@@ -14,7 +14,7 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
-import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { CsvService } from 'xforge-common/csv-service.service';
@@ -38,6 +38,7 @@ const mockedAuthService = mock(AuthService);
 const mockedCookieService = mock(CookieService);
 const mockedMdcDialog = mock(MdcDialog);
 const mockedCsvService = mock(CsvService);
+const mockedRealtimeQuery = mock(RealtimeQuery);
 
 describe('ImportQuestionsDialogComponent', () => {
   configureTestingModule(() => ({
@@ -709,12 +710,7 @@ class TestEnvironment {
         TestingRetryingRequestService.createRequest(of(this.questions), this.online$)
       );
     }
-    when(mockedProjectService.queryQuestions('project01')).thenResolve({
-      ready$: new Observable<void>(subscriber => {
-        setTimeout(() => subscriber.next(), 0);
-      }),
-      dispose: () => {},
-      docs: this.existingQuestions as Readonly<QuestionDoc[]>
-    } as RealtimeQuery<QuestionDoc>);
+    when(mockedRealtimeQuery.docs).thenReturn(this.existingQuestions);
+    when(mockedProjectService.queryQuestions('project01')).thenResolve(instance(mockedRealtimeQuery));
   }
 }
