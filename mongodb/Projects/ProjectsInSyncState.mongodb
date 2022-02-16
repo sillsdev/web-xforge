@@ -1,8 +1,17 @@
-// This script searches for projects that are in the sync state. It is intended to be used for finding projects that
-// are stuck in a perpetual state of syncing. Keep in mind that when things go wrong the project's state may not fully
+// This script searches for projects that are in the sync state. It is intended to be used for finding projects that are
+// stuck in a perpetual state of syncing. Keep in mind that when things go wrong the project's state may not fully
 // reflect whether a Hangfire job is currently in the queue for this project, so checking the Hangfire dashboard at the
 // same time may be useful.
 
-use('xforge')
+// This script is designed to be run either by mongosh on the command line (logging results), or by the MongoDB VS Code
+// extension (showing projects in the results pane).
 
-db.sf_projects.find({'sync.queuedCount': {$ne: 0}})
+use('xforge');
+
+const projects = db.sf_projects
+  .find({ 'sync.queuedCount': { $ne: 0 } }, { paratextId: 1, shortName: 1, sync: 1, name: 1, syncDisabled: 1 })
+  .toArray();
+for (const project of projects) {
+  console.log(JSON.stringify(project, null, 2));
+}
+projects
