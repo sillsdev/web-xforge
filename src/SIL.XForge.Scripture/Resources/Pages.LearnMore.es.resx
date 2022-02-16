@@ -127,22 +127,22 @@
     <value>Más información en Scripture Forge</value>
   </data>
   <data name="LearnSliderCheckingOfflineAnwering" xml:space="preserve">
-    <value>{0}Answering questions{1}, including recording an audio answer, offline.</value>
+    <value>{0}Responder preguntas{1}, incluyendo la grabación de una respuesta de audio, desconectados.</value>
   </data>
   <data name="LearnSliderCheckingOfflineDescription" xml:space="preserve">
-    <value>{0}Community Checkers{1} and {0}Administrators{1} should {2}watch this video{3} to see how users can keep working, even when offline. It covers:</value>
+    <value>{0}Los revisores de la comunidad{1} y {0}los administradores{1} deberían {2}ver este vídeo{3} para ver cómo los usuarios pueden seguir trabajando, incluso cuando están desconectados. Cubre:</value>
   </data>
   <data name="LearnSliderCheckingOfflineHeader" xml:space="preserve">
-    <value>Working Offline</value>
+    <value>Trabajar sin conexión</value>
   </data>
   <data name="LearnSliderCheckingOfflineInstalling" xml:space="preserve">
-    <value>{0}Installing the app{1} on your device by using {2}Add to Home screen{3}.</value>
+    <value>{0}Instalar la app{1} en tu dispositivo mediante {2}Añadir a la pantalla de inicio{3}.</value>
   </data>
   <data name="LearnSliderCheckingOfflineLoading" xml:space="preserve">
-    <value>{0}Loading questions{1} automatically before going offline.</value>
+    <value>{0}Cargando preguntas{1} de forma automática antes de desconectarse.</value>
   </data>
   <data name="LearnSliderCheckingOfflineSaving" xml:space="preserve">
-    <value>{0}Automatically saving{1} updated answers once you're back online.</value>
+    <value>{0}Guarda automáticamente{1} las respuestas actualizadas una vez que vuelvas a estar conectado.</value>
   </data>
   <data name="LearnSliderCheckingSeeAnswer" xml:space="preserve">
     <value>{0}Contestando a las preguntas{1} en forma de texto y audio.</value>
@@ -151,7 +151,7 @@
     <value>{0}Conectando a un proyecto de Scripture Forge{1} como un {2}revisor de la comunidad{3} invitado.</value>
   </data>
   <data name="LearnSliderCheckingSeeDescription" xml:space="preserve">
-    <value>{0}Revisores de la comunidad{1} y {0}Administradores{1} deben {2}ver este video{3} para ver cómo {0}revisores de la comunidad{1} pueden responder a preguntas e interactuar entre sí. Cubre:</value>
+    <value>{0}Revisores de la comunidad{1} y {0}Administradores{1} deben {2}ver este video{3} para ver cómo los {0}revisores de la comunidad{1} pueden responder a preguntas e interactuar entre sí. Cubre:</value>
   </data>
   <data name="LearnSliderCheckingSeeHeader" xml:space="preserve">
     <value>Vea cómo funciona la Comprobación por la comunidad</value>
@@ -160,16 +160,16 @@
     <value>{0}Interactuando{1} con otros {2}revisores de la comunidad{3} añadiendo comentarios a sus respuestas.</value>
   </data>
   <data name="LearnSliderCheckingSeeReference" xml:space="preserve">
-    <value>{0}Selecting Scripture{1} to reference with answers.</value>
+    <value>{0}Seleccionando la Escritura{1} para referenciarla con las respuestas.</value>
   </data>
   <data name="LearnSliderCheckingSetupAddQuestions" xml:space="preserve">
-    <value>{0}Adding questions{1} to be checked by the community (these can feature audio recordings of the relevant Scripture, or the question itself).</value>
+    <value>{0}Añadir preguntas{1} para que sean revisadas por la comunidad (pueden incluir grabaciones de audio de la Escritura correspondiente, o la propia pregunta).</value>
   </data>
   <data name="LearnSliderCheckingSetupConnect" xml:space="preserve">
-    <value>{0}Connecting to a Paratext project{1} in Scripture Forge.</value>
+    <value>{0}Conectando con un proyecto Paratext{1} en Scripture Forge.</value>
   </data>
   <data name="LearnSliderCheckingSetupDescription" xml:space="preserve">
-    <value>{4}Paratext{5} project {0}Administrators{1} can {2}watch this video{3} to learn about setting up {0}Community Checking{1}. It covers:</value>
+    <value>{0}Los administradores{1} del proyecto {4}Paratext{5} pueden {2}ver este vídeo{3} para aprender a configurar la {0}comprobación de la comunidad{1}. Cubre:</value>
   </data>
   <data name="LearnSliderCheckingSetupHeader" xml:space="preserve">
     <value>Configurar la Comprobación por la comunidad</value>
@@ -181,55 +181,55 @@
     <value>{0}Sincronizando{1} las respuestas de los {2}revisores de la comunidad{3} con Paratext.</value>
   </data>
   <data name="LearnSliderSuggestionAcceptDescription" xml:space="preserve">
-    <value>With the suggestion engine set up and trained, Scripture Forge may offer {0}Translators{1} suggestions as they type.</value>
+    <value>Con el motor de sugerencias configurado y entrenado, Scripture Forge puede ofrecer a los {0}traductores{1} sugerencias mientras escriben.</value>
   </data>
   <data name="LearnSliderSuggestionAcceptEnter" xml:space="preserve">
-    <value>Simply hit {0}ENTER{1} or click on the suggestion to accept it, or hit {0}ESC{1} or continue typing to ignore it.</value>
+    <value>Simplemente pulsa {0}ENTER{1} o haz clic en la sugerencia para aceptarla, o pulsa {0}ESC{1} o continúa escribiendo para ignorarla.</value>
   </data>
   <data name="LearnSliderSuggestionAcceptHeader" xml:space="preserve">
-    <value>Accepting a Translation Suggestion</value>
+    <value>Aceptar una sugerencia de traducción</value>
   </data>
   <data name="LearnSliderSuggestionAcceptLearn" xml:space="preserve">
-    <value>The {0}suggestion engine learns{1} and provides better suggestions as each verse is translated.</value>
+    <value>El {0}motor de sugerencias aprende{1} y ofrece mejores sugerencias a medida que se traduce cada verso.</value>
   </data>
   <data name="LearnSliderSuggestionAcceptReceive" xml:space="preserve">
-    <value>{0}Translators{1} can {2}receive suggestions{3} about how to translate the next word or phrase, as they type.</value>
+    <value>{0}Los traductores{1} pueden {2}recibir sugerencias{3} sobre cómo traducir la siguiente palabra o frase, mientras escriben.</value>
   </data>
   <data name="LearnSliderSuggestionSetupBased" xml:space="preserve">
-    <value>Select a project the translation is {0}Based on{1} and the intelligent suggestion engine can be trained to {2}provide helpful translation suggestions{3}.</value>
+    <value>Seleccione un proyecto {0}en el que se basa{1} la traducción y el motor de sugerencias inteligentes puede ser entrenado para {2}proporcionar sugerencias de traducción útiles{3}.</value>
   </data>
   <data name="LearnSliderSuggestionSetupBest" xml:space="preserve">
-    <value>Most effective on {0}closely related projects{1} with similar grammar and style of translation, such as adaptation projects.</value>
+    <value>Es más eficaz en {0}proyectos estrechamente relacionados{1} con una gramática y un estilo de traducción similares, como los proyectos de adaptación.</value>
   </data>
   <data name="LearnSliderSuggestionSetupDescription" xml:space="preserve">
-    <value>{0}Administrators{1} can enable {2}Translation Suggestions{3} to assist {0}Translators{1}.</value>
+    <value>{0}Los administradores{1} pueden activar {2}las sugerencias de traducción{3} para ayudar a {0}los traductores{1}.</value>
   </data>
   <data name="LearnSliderSuggestionSetupHeader" xml:space="preserve">
-    <value>Setting Up Translation Suggestions</value>
+    <value>Configuración de las sugerencias de traducción</value>
   </data>
   <data name="LearnSliderTranslateEditDescription" xml:space="preserve">
-    <value>{0}Administrators{1} can connect a {4}Paratext{5} project to Scripture Forge to edit Scripture as they would in Paratext, while {2}benefiting from increased collaboration{3} options.</value>
+    <value>{0}Los administradores{1} pueden conectar un proyecto de {4}Paratext{5} a Scripture Forge para editar las Escrituras como lo harían en Paratext, al tiempo que se {2}benefician de mayores opciones de colaboración{3}.</value>
   </data>
   <data name="LearnSliderTranslateEditHeader" xml:space="preserve">
-    <value>Editing Scripture</value>
+    <value>Edición de las Escrituras</value>
   </data>
   <data name="LearnSliderTranslateEditScripture" xml:space="preserve">
-    <value>{0}Edit Scripture{1} in Scripture Forge as you would in Paratext’s {2}Basic{3} view.</value>
+    <value>{0}Edite la Escritura{1} en Scripture Forge como lo haría en la vista {2}básica{3} de Paratext.</value>
   </data>
   <data name="LearnSliderTranslateEditSync" xml:space="preserve">
-    <value>{0}Synchronize{1} your Scripture Forge project with Paratext to keep your work up to date.</value>
+    <value>{0}Sincroniza{1} tu proyecto de Scripture Forge con Paratext para mantener tu trabajo actualizado.</value>
   </data>
   <data name="LearnSliderTranslateCollaborateDescription" xml:space="preserve">
-    <value>{0}Translators{1} can work on projects collaboratively, {2}editing Scripture at the same time{3}.</value>
+    <value>{0}Los traductores{1} pueden trabajar en proyectos de forma colaborativa, {2}editando la Escritura al mismo tiempo{3}.</value>
   </data>
   <data name="LearnSliderTranslateCollaborateHeader" xml:space="preserve">
-    <value>Collaborating on Scripture</value>
+    <value>Colaboración en las Escrituras</value>
   </data>
   <data name="LearnSliderTranslateCollaborateLocation" xml:space="preserve">
-    <value>Work with {0}Translators{1} in {2}multiple locations{3} on the same project.</value>
+    <value>Trabajar con {0}Traductores{1} en {2}múltiples ubicaciones{3} en el mismo proyecto.</value>
   </data>
   <data name="LearnSliderTranslateCollaborateRealtime" xml:space="preserve">
-    <value>See other {0}Translators'{1} {2}edits in real time{3}, as they type.</value>
+    <value>Vea las ediciones de otros {0}traductores{1} {2}en tiempo real{3}, mientras escriben.</value>
   </data>
   <data name="LearnSliderTranslateCollaborateVerse" xml:space="preserve">
     <value>Colaborar en el mismo libro, el mismo capítulo, o {0}incluso el mismo versículo{1}.</value>
