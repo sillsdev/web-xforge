@@ -83,8 +83,10 @@
     "configure_translation_suggestions": "ꤘꤛꤢꤩꤜꤟꤌꤣ꤭ꤓꤛꤢ꤬ ꤒꤟꤢꤧ꤬ꤚꤢ꤭ꤕꤟꤥ꤬ꤓꤢꤩ꤬ ꤢ꤬ꤒꤟꤢꤧ꤬ꤘꤛꤢꤩꤞꤢꤧꤑꤢꤩ꤭ꤡꤝꤟꤥ ꤒꤢ꤬ꤟꤢꤩ꤬",
     "project_data_out_of_sync": "Your project data is out of sync. Please synchronize your project to edit this text.",
     "swap_source_and_target": "ꤜꤟꤢꤩꤗꤟꤢꤩ꤬ꤒꤟꤢꤧ꤬ ꤒꤟꤢ꤭ꤤ꤭ꤒꤟꤢꤧ꤬ ꤔꤢ ꤊꤟꤢꤦꤚꤟꤢꤩꤗꤟꤢꤩ꤬ꤒꤟꤢꤧ꤬",
-    "training": "ꤒꤟꤢꤧ꤬ꤤ꤬ꤞꤛꤥ",
+    "text_doc_corrupted": "This chapter cannot be edited because the data has become corrupted.",
+    "to_report_issue_email": "ꤜꤟꤢꤩꤘꤛꤢꤩꤜꤟꤌꤣ꤭ꤓꤛꤢ꤬ ꤒꤟꤢꤧ꤬ꤚꤤ꤬ꤒꤟꤢꤧ꤬ꤊꤛꤢ꤭, email {{ issueEmailLink }}.",
     "training_completed_successfully": "ꤒꤟꤢꤧ꤬ꤤ꤬ꤞꤛꤥ ꤢ꤬ꤓꤌꤣ꤭ꤢ꤬ꤕꤜꤥ꤭ ꤚꤛꤢ ꤊꤛꤢ꤭ ꤟꤢꤪ",
+    "training": "ꤒꤟꤢꤧ꤬ꤤ꤬ꤞꤛꤥ",
     "verse_too_long_for_suggestions": "ꤜꤟꤢꤩ ꤘꤛꤢꤩ ꤒꤟꤢꤧ꤬ꤘꤛꤢꤩꤞꤢꤧꤑꤢꤩ꤭ꤡꤝꤟꤥ ꤢ꤬ꤑꤢꤩ꤭ ꤜꤤ꤬ꤡꤢ꤭ꤏꤢꤧ꤭ꤗꤟꤢ꤭ ꤛꤢꤩ꤭ ꤗꤢ꤬ ꤢ꤬ꤓꤢꤨ꤭ꤏꤢꤦ꤬ꤜꤢꤦ꤭ ꤡꤢꤪ꤯ \n"
   },
   "import_questions_confirmation_dialog": {

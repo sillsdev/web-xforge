@@ -83,8 +83,10 @@
     "configure_translation_suggestions": "Configurer les suggestions de traduction",
     "project_data_out_of_sync": "Les données de votre projet ne sont pas synchronisées. Veuillez synchroniser votre projet pour modifier ce texte.",
     "swap_source_and_target": "Intervertir la source et la cible",
-    "training": "Formation",
+    "text_doc_corrupted": "This chapter cannot be edited because the data has become corrupted.",
+    "to_report_issue_email": "Pour signaler un problème, envoyez un e-mail à {{ issueEmailLink }}.",
     "training_completed_successfully": "Formation terminée avec succès",
+    "training": "Formation",
     "verse_too_long_for_suggestions": "Ce verset est trop long pour générer des suggestions."
   },
   "import_questions_confirmation_dialog": {

@@ -127,19 +127,19 @@
     <value>Más información en Scripture Forge</value>
   </data>
   <data name="LearnSliderCheckingOfflineAnwering" xml:space="preserve">
-    <value>{0}Responder preguntas{1}, incluyendo la grabación de una respuesta de audio, desconectados.</value>
+    <value>{0}Responder preguntas{1}, incluyendo la grabación de una respuesta de audio, fuera de línea.</value>
   </data>
   <data name="LearnSliderCheckingOfflineDescription" xml:space="preserve">
-    <value>{0}Los revisores de la comunidad{1} y {0}los administradores{1} deberían {2}ver este vídeo{3} para ver cómo los usuarios pueden seguir trabajando, incluso cuando están desconectados. Cubre:</value>
+    <value>{0}Los revisores de la comunidad{1} y {0}los administradores{1} deberían {2}ver este vídeo{3} para ver cómo los usuarios pueden seguir trabajando, incluso cuando están fuera de línea. Cubre:</value>
   </data>
   <data name="LearnSliderCheckingOfflineHeader" xml:space="preserve">
-    <value>Trabajar sin conexión</value>
+    <value>Trabajar fuera de línea</value>
   </data>
   <data name="LearnSliderCheckingOfflineInstalling" xml:space="preserve">
     <value>{0}Instalar la app{1} en tu dispositivo mediante {2}Añadir a la pantalla de inicio{3}.</value>
   </data>
   <data name="LearnSliderCheckingOfflineLoading" xml:space="preserve">
-    <value>{0}Cargando preguntas{1} de forma automática antes de desconectarse.</value>
+    <value>{0}Cargando preguntas{1} de forma automática antes de desconectarse de Internet.</value>
   </data>
   <data name="LearnSliderCheckingOfflineSaving" xml:space="preserve">
     <value>{0}Guarda automáticamente{1} las respuestas actualizadas una vez que vuelvas a estar conectado.</value>

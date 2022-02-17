@@ -83,8 +83,10 @@
     "configure_translation_suggestions": "Настройка предложений по переводу",
     "project_data_out_of_sync": "Your project data is out of sync. Please synchronize your project to edit this text.",
     "swap_source_and_target": "Поменять местами источник и цель",
-    "training": "Обучение",
+    "text_doc_corrupted": "This chapter cannot be edited because the data has become corrupted.",
+    "to_report_issue_email": "Чтобы сообщить о проблеме, отправьте сообщение по электронной почте {{ issueEmailLink }}.",
     "training_completed_successfully": "Обучение успешно завершено",
+    "training": "Обучение",
     "verse_too_long_for_suggestions": "Этот стих слишком длинный для того, чтобы вносить предложения."
   },
   "import_questions_confirmation_dialog": {
