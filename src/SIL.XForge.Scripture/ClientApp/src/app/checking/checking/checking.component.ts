@@ -25,8 +25,8 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { QuestionDoc } from '../../core/models/question-doc';
-import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_DEFAULT_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { TextDocId } from '../../core/models/text-doc';
@@ -81,7 +81,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   };
   questionVerseRefs: VerseRef[] = [];
   answersPanelContainerElement?: ElementRef;
-  projectDoc?: SFProjectDoc;
+  projectDoc?: SFProjectProfileDoc;
   projectUserConfigDoc?: SFProjectUserConfigDoc;
   textDocId?: TextDocId;
   userDoc?: UserDoc;
@@ -365,7 +365,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       const projectId = params['projectId'] as string;
       const bookId = params['bookId'] as string;
       const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
-      this.projectDoc = await this.projectService.get(projectId);
+      this.projectDoc = await this.projectService.getProfile(projectId);
       if (!this.projectDoc.isLoaded) {
         return;
       }

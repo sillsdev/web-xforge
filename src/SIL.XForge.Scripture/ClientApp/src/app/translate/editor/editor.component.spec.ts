@@ -24,8 +24,8 @@ import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { AssignedUsers, NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
-import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { hasParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
@@ -51,6 +51,8 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -59,7 +61,7 @@ import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { SharedModule } from '../../shared/shared.module';
-import { getCombinedVerseTextDoc } from '../../shared/test-utils';
+import { getCombinedVerseTextDoc, paratextUsersFromRoles } from '../../shared/test-utils';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
 import { NoteDialogComponent } from './note-dialog/note-dialog.component';
 import { SuggestionsComponent } from './suggestions.component';
@@ -1114,30 +1116,30 @@ describe('EditorComponent', () => {
 
       env.updateParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
+      const redFlagIcon = '01flag1.png';
+      const grayFlagIcon = '01flag4.png';
       const titleUsxSegment: HTMLElement = env.getSegmentElement('s_1')!;
       expect(titleUsxSegment.classList).toContain('note-thread-segment');
       const titleUsxNote: HTMLElement | null = titleUsxSegment.querySelector('display-note');
       expect(titleUsxNote).not.toBeNull();
+      // Note assigned to a different specific user
+      expect(titleUsxNote!.getAttribute('style')).toEqual(`--icon-file: url(/assets/icons/TagIcons/${grayFlagIcon});`);
 
       const sectionHeadingUsxSegment: HTMLElement = env.getSegmentElement('s_2')!;
       expect(sectionHeadingUsxSegment.classList).toContain('note-thread-segment');
       const sectionHeadingNote: HTMLElement | null = sectionHeadingUsxSegment.querySelector('display-note');
       expect(sectionHeadingNote).not.toBeNull();
-      const combinedVerseUsxSegment: HTMLElement = env.getSegmentElement('verse_1_2-3')!;
-      expect(combinedVerseUsxSegment.classList).toContain('note-thread-segment');
-      const verse2and3CombinedNotes: HTMLElement[] = Array.from(
-        combinedVerseUsxSegment.querySelectorAll('display-note')
-      );
-      expect(verse2and3CombinedNotes.length).toEqual(3);
-      // Note assigned to a different specific user
-      const otherUserNoteIcon = verse2and3CombinedNotes.find(n => n.getAttribute('data-thread-id') === 'thread07')!;
-      expect(otherUserNoteIcon.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag4.png);');
-      // Note assigned to current user
-      const thisUserNoteIcon = verse2and3CombinedNotes.find(n => n.getAttribute('data-thread-id') === 'thread08')!;
-      expect(thisUserNoteIcon.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
       // Note assigned to team
-      const teamNoteIcon = verse2and3CombinedNotes.find(n => n.getAttribute('data-thread-id') === 'thread09')!;
-      expect(teamNoteIcon.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
+      expect(sectionHeadingNote!.getAttribute('style')).toEqual(
+        `--icon-file: url(/assets/icons/TagIcons/${redFlagIcon});`
+      );
+      const combinedVerseUsxSegment: HTMLElement = env.getSegmentElement('verse_1_2-3')!;
+      const combinedVerseNote: HTMLElement | null = combinedVerseUsxSegment.querySelector('display-note');
+      expect(combinedVerseNote!.getAttribute('data-thread-id')).toEqual('thread08');
+      // Note assigned to current user
+      expect(combinedVerseNote!.getAttribute('style')).toEqual(
+        `--icon-file: url(/assets/icons/TagIcons/${redFlagIcon});`
+      );
       env.dispose();
     }));
 
@@ -2190,6 +2192,7 @@ class TestEnvironment {
     user03: SFProjectRole.ParatextTranslator,
     user04: SFProjectRole.ParatextAdministrator
   };
+  private paratextUsersOnProject = paratextUsersFromRoles(this.userRolesOnProject);
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private readonly params$: BehaviorSubject<Params>;
   private trainingProgress$ = new Subject<ProgressStatus>();
@@ -2199,7 +2202,7 @@ class TestEnvironment {
     user03: TextInfoPermission.Read
   };
 
-  private testProject: SFProject = {
+  private testProjectProfile: SFProjectProfile = {
     name: 'project 01',
     paratextId: 'target01',
     shortName: 'TRG',
@@ -2347,11 +2350,14 @@ class TestEnvironment {
     when(this.mockedRemoteTranslationEngine.trainSegment(anything(), anything(), anything())).thenResolve();
     when(this.mockedRemoteTranslationEngine.listenForTrainingStatus()).thenReturn(defer(() => this.trainingProgress$));
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
-    when(mockedSFProjectService.get('project01')).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
+    when(mockedSFProjectService.getProfile('project01')).thenCall(() =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01')
     );
-    when(mockedSFProjectService.get('project02')).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project02')
+    when(mockedSFProjectService.getProfile('project02')).thenCall(() =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project02')
+    );
+    when(mockedSFProjectService.tryGetForRole('project01', anything())).thenCall((id, role) =>
+      hasParatextRole(role) ? this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id) : undefined
     );
     when(mockedSFProjectService.getUserConfig('project01', anything())).thenCall((_projectId, userId) =>
       this.realtimeService.subscribe(
@@ -2518,25 +2524,34 @@ class TestEnvironment {
   }
 
   setupProject(data: Partial<SFProject> = {}): void {
-    const projectData = cloneDeep(this.testProject);
+    const projectProfileData = cloneDeep(this.testProjectProfile);
+    const projectData: SFProject = {
+      ...this.testProjectProfile,
+      paratextUsers: this.paratextUsersOnProject
+    };
     if (data.translateConfig?.translationSuggestionsEnabled != null) {
-      projectData.translateConfig.translationSuggestionsEnabled = data.translateConfig.translationSuggestionsEnabled;
+      projectProfileData.translateConfig.translationSuggestionsEnabled =
+        data.translateConfig.translationSuggestionsEnabled;
       if (!data.translateConfig.translationSuggestionsEnabled) {
-        projectData.texts.forEach(t => (t.hasSource = false));
+        projectProfileData.texts.forEach(t => (t.hasSource = false));
       }
     }
     if (data.translateConfig?.source !== undefined) {
-      projectData.translateConfig.source = data.translateConfig?.source;
+      projectProfileData.translateConfig.source = data.translateConfig?.source;
     }
     if (data.isRightToLeft != null) {
-      projectData.isRightToLeft = data.isRightToLeft;
+      projectProfileData.isRightToLeft = data.isRightToLeft;
     }
-    this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
+    this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
       id: 'project01',
-      data: projectData
+      data: projectProfileData
+    });
+    this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
+      id: 'project02',
+      data: projectProfileData
     });
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
-      id: 'project02',
+      id: 'project01',
       data: projectData
     });
   }
@@ -2616,7 +2631,10 @@ class TestEnvironment {
   }
 
   setDataInSync(projectId: string, isInSync: boolean): void {
-    const projectDoc: SFProjectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, projectId);
+    const projectDoc: SFProjectProfileDoc = this.realtimeService.get<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      projectId
+    );
     projectDoc.submitJson0Op(op => op.set(p => p.sync.dataInSync!, isInSync));
     tick();
     this.fixture.detectChanges();
@@ -2779,6 +2797,9 @@ class TestEnvironment {
     assignedUserRef?: string
   ): void {
     const threadId: string = `thread0${threadNum}`;
+    const assignedUser: ParatextUserProfile | undefined = this.paratextUsersOnProject.find(
+      u => u.sfUserId === assignedUserRef
+    );
     const notes: Note[] = [];
     for (let i = 0; i < userIds.length; i++) {
       const id = userIds[i];
@@ -2795,7 +2816,7 @@ class TestEnvironment {
         deleted: false,
         status: NoteStatus.Todo,
         tagIcon: `01flag${i + 1}`,
-        assignedNoteUserRef: assignedUserRef === AssignedUsers.TeamUser ? undefined : assignedUserRef
+        assignedNoteUserRef: assignedUser?.opaqueUserId
       };
       notes.push(note);
     }
@@ -2815,7 +2836,7 @@ class TestEnvironment {
         originalContextAfter: ', verse 1.',
         position,
         status: status,
-        assignedNoteUserRef: assignedUserRef === AssignedUsers.TeamUser ? undefined : assignedUserRef
+        assignedNoteUserRef: assignedUser?.opaqueUserId
       }
     });
   }

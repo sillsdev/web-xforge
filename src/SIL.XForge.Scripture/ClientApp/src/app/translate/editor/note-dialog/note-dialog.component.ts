@@ -8,10 +8,12 @@ import { AssignedUsers, NoteStatus } from 'realtime-server/lib/esm/scriptureforg
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
-import { SFProjectDoc } from '../../../core/models/sf-project-doc';
+import { UserService } from 'xforge-common/user.service';
+import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { NoteThreadDoc } from '../../../core/models/note-thread-doc';
+import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 
 export interface NoteDialogData {
   threadId: string;
@@ -28,23 +30,31 @@ export interface NoteDialogData {
 export class NoteDialogComponent implements OnInit {
   showSegmentText: boolean = false;
   private threadDoc?: NoteThreadDoc;
-  private projectDoc?: SFProjectDoc;
+  private projectProfileDoc?: SFProjectProfileDoc;
   private textDoc?: TextDoc;
+  private paratextProjectUsers?: ParatextUserProfile[];
 
   constructor(
     @Inject(MAT_DIALOG_DATA) private readonly data: NoteDialogData,
     private readonly i18n: I18nService,
-    private readonly projectService: SFProjectService
+    private readonly projectService: SFProjectService,
+    private readonly userService: UserService
   ) {}
 
   async ngOnInit(): Promise<void> {
     this.threadDoc = await this.projectService.getNoteThread(this.projectId + ':' + this.threadId);
     this.textDoc = await this.projectService.getText(this.textDocId);
-    this.projectDoc = await this.projectService.get(this.projectId);
-    // only get the profile
+    this.projectProfileDoc = await this.projectService.getProfile(this.projectId);
+    const userRole = this.projectProfileDoc?.data?.userRoles[this.userService.currentUserId];
+    if (userRole != null) {
+      const projectDoc: SFProjectDoc | undefined = await this.projectService.tryGetForRole(this.projectId, userRole);
+      if (projectDoc != null && projectDoc.data?.paratextUsers != null) {
+        this.paratextProjectUsers = projectDoc.data.paratextUsers;
+      }
+    }
   }
 
-  get threadAssignedPTUsername(): string | undefined {
+  get noteThreadAssignedUserRef(): string | undefined {
     return this.threadDoc?.data?.assignedNoteUserRef;
   }
 
@@ -56,10 +66,10 @@ export class NoteDialogComponent implements OnInit {
   }
 
   get isRtl(): boolean {
-    if (this.projectDoc?.data == null) {
+    if (this.projectProfileDoc?.data == null) {
       return false;
     }
-    return this.projectDoc.data.isRightToLeft ?? false;
+    return this.projectProfileDoc.data.isRightToLeft ?? false;
   }
 
   get notes(): Note[] {
@@ -188,9 +198,9 @@ export class NoteDialogComponent implements OnInit {
       case AssignedUsers.Unspecified:
         return translate('note_dialog.unassigned');
     }
-    const paratextUser: ParatextUserProfile | undefined = this.projectDoc?.data?.paratextUsers?.find(
+    const paratextUser: ParatextUserProfile | undefined = this.paratextProjectUsers?.find(
       u => u.opaqueUserId === assignedNoteUserRef
     );
-    return paratextUser?.username || assignedNoteUserRef;
+    return paratextUser?.username || translate('note_dialog.paratext_user');
   }
 }

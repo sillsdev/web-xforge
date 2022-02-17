@@ -39,11 +39,12 @@ import { objectId } from 'xforge-common/utils';
 import { environment } from '../environments/environment';
 import { AppComponent, CONNECT_PROJECT_OPTION } from './app.component';
 import { QuestionDoc } from './core/models/question-doc';
-import { SFProjectDoc } from './core/models/sf-project-doc';
+import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from './core/models/sf-type-registry';
 import { SFProjectService } from './core/sf-project.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
 import { SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
+import { paratextUsersFromRoles } from './shared/test-utils';
 
 const mockedAuthService = mock(AuthService);
 const mockedUserService = mock(UserService);
@@ -683,8 +684,8 @@ class TestEnvironment {
       { bookNum: 47, hasSource: true, chapters: [], permissions: {} }
     ]);
 
-    when(mockedSFProjectService.get(anything())).thenCall(projectId =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId)
+    when(mockedSFProjectService.getProfile(anything())).thenCall(projectId =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
     );
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedAuthService.isLoggedIn).thenResolve(true);
@@ -902,20 +903,20 @@ class TestEnvironment {
       when(mockedUserService.currentProjectId).thenReturn(undefined);
     }
     this.ngZone.run(() => {
-      const projectDoc = this.realtimeService.get(SFProjectDoc.COLLECTION, projectId);
+      const projectDoc = this.realtimeService.get(SFProjectProfileDoc.COLLECTION, projectId);
       projectDoc.delete();
     });
     this.wait();
   }
 
   removesUserFromProject(projectId: string): void {
-    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, projectId);
+    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(op => op.unset<string>(p => p.userRoles['user01']), false);
     this.wait();
   }
 
   addUserToProject(projectId: string): void {
-    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, projectId);
+    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.CommunityChecker), false);
     this.currentUserDoc.submitJson0Op(op => op.add<string>(u => u.sites['sf'].projects, 'project04'), false);
   }
@@ -925,7 +926,7 @@ class TestEnvironment {
   }
 
   private addProject(projectId: string, userRoles: { [userRef: string]: string }, texts: TextInfo[]): void {
-    this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
+    this.realtimeService.addSnapshot<SFProject>(SFProjectProfileDoc.COLLECTION, {
       id: projectId,
       data: {
         name: projectId,
@@ -948,7 +949,8 @@ class TestEnvironment {
         sync: { queuedCount: 0 },
         userRoles,
         userPermissions: {},
-        texts
+        texts,
+        paratextUsers: paratextUsersFromRoles(userRoles)
       }
     });
   }

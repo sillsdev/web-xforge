@@ -132,6 +132,7 @@ class TestEnvironment {
         translator: SFProjectRole.ParatextTranslator,
         observer: SFProjectRole.ParatextObserver
       },
+      paratextUsers: [{ sfUserId: 'translator', username: 'pttranslator', opaqueUserId: 'opaquetranslator' }],
       userPermissions: {}
     });
 

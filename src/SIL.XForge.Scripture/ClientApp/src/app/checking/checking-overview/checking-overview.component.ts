@@ -16,7 +16,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
-import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
@@ -44,7 +44,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   private _hasTransceleratorQuestions = false;
   private questionDocs = new Map<string, QuestionDoc[]>();
   private textsByBookId?: TextsByBookId;
-  private projectDoc?: SFProjectDoc;
+  private projectDoc?: SFProjectProfileDoc;
   private dataChangesSub?: Subscription;
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
   private questionsQuery?: RealtimeQuery<QuestionDoc>;
@@ -157,11 +157,11 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   ngOnInit(): void {
-    let projectDocPromise: Promise<SFProjectDoc>;
+    let projectDocPromise: Promise<SFProjectProfileDoc>;
     const projectId$ = this.activatedRoute.params.pipe(
       tap(params => {
         this.loadingStarted();
-        projectDocPromise = this.projectService.get(params['projectId']);
+        projectDocPromise = this.projectService.getProfile(params['projectId']);
       }),
       map(params => params['projectId'] as string)
     );
