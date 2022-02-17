@@ -171,6 +171,7 @@ class TestEnvironment {
         projectAdmin: SFProjectRole.ParatextAdministrator,
         checker: SFProjectRole.CommunityChecker
       },
+      paratextUsers: [{ sfUserId: 'projectAdmin', username: 'ptprojectAdmin', opaqueUserId: 'opaqueprojectAdmin' }],
       userPermissions: {}
     });
 

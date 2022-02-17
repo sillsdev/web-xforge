@@ -5,7 +5,7 @@ import { from, Observable, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { AuthGuard } from 'xforge-common/auth.guard';
 import { UserService } from 'xforge-common/user.service';
-import { SFProjectDoc } from '../core/models/sf-project-doc';
+import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { canAccessTranslateApp } from '../core/models/sf-project-role-info';
 import { SFProjectService } from '../core/sf-project.service';
 
@@ -21,14 +21,14 @@ abstract class RouterGuard implements CanActivate {
     return this.authGuard.allowTransition().pipe(
       switchMap(isLoggedIn => {
         if (isLoggedIn) {
-          return from(this.projectService.get(projectId)).pipe(map(projectDoc => this.check(projectDoc)));
+          return from(this.projectService.getProfile(projectId)).pipe(map(projectDoc => this.check(projectDoc)));
         }
         return of(false);
       })
     );
   }
 
-  abstract check(project: SFProjectDoc): boolean;
+  abstract check(project: SFProjectProfileDoc): boolean;
 }
 
 @Injectable({
@@ -39,7 +39,7 @@ export class SettingsAuthGuard extends RouterGuard {
     super(authGuard, projectService);
   }
 
-  check(projectDoc: SFProjectDoc): boolean {
+  check(projectDoc: SFProjectProfileDoc): boolean {
     return (
       projectDoc.data != null &&
       projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator
@@ -55,7 +55,7 @@ export class UsersAuthGuard extends RouterGuard {
     super(authGuard, projectService);
   }
 
-  check(projectDoc: SFProjectDoc): boolean {
+  check(projectDoc: SFProjectProfileDoc): boolean {
     return (
       projectDoc.data != null &&
       projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator
@@ -71,7 +71,7 @@ export class SyncAuthGuard extends RouterGuard {
     super(authGuard, projectService);
   }
 
-  check(projectDoc: SFProjectDoc): boolean {
+  check(projectDoc: SFProjectProfileDoc): boolean {
     return (
       projectDoc.data != null &&
       (projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator ||
@@ -88,7 +88,7 @@ export class CheckingAuthGuard extends RouterGuard {
     super(authGuard, projectService);
   }
 
-  check(projectDoc: SFProjectDoc): boolean {
+  check(projectDoc: SFProjectProfileDoc): boolean {
     if (projectDoc.data != null && projectDoc.data.checkingConfig.checkingEnabled) {
       return true;
     }
@@ -110,7 +110,7 @@ export class TranslateAuthGuard extends RouterGuard {
     super(authGuard, projectService);
   }
 
-  check(projectDoc: SFProjectDoc): boolean {
+  check(projectDoc: SFProjectProfileDoc): boolean {
     if (projectDoc.data != null) {
       const role = projectDoc.data.userRoles[this.userService.currentUserId] as SFProjectRole;
       if (canAccessTranslateApp(role)) {

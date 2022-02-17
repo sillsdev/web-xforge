@@ -89,7 +89,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     this.loadingStarted();
     const projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
     const projectUserConfig = projectUserConfigDoc.data;
-    const projectDoc = await this.projectService.get(projectId);
+    const projectDoc = await this.projectService.getProfile(projectId);
     const project = projectDoc.data;
     if (project == null || projectUserConfig == null) {
       return;

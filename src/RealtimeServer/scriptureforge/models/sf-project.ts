@@ -6,8 +6,8 @@ import { Sync } from './sync';
 import { TextInfo } from './text-info';
 import { TranslateConfig } from './translate-config';
 
-export const SF_PROJECTS_PROFILE_COLLECTION = 'sf_projects_profile';
-export const SF_PROJECTS_PROFILE_INDEX_PATHS: string[] = [];
+export const SF_PROJECT_PROFILES_COLLECTION = 'sf_projects_profile';
+export const SF_PROJECT_PROFILES_INDEX_PATHS: string[] = [];
 
 export const SF_PROJECTS_COLLECTION = 'sf_projects';
 export const SF_PROJECT_INDEX_PATHS: string[] = [];
@@ -24,5 +24,5 @@ export interface SFProjectProfile extends Project {
 }
 
 export interface SFProject extends SFProjectProfile {
-  paratextUsers?: ParatextUserProfile[];
+  paratextUsers: ParatextUserProfile[];
 }

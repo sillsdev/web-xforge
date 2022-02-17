@@ -7,8 +7,8 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { CookieService } from 'ngx-cookie-service';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { hasParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import * as RichText from 'rich-text';
@@ -22,18 +22,22 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AssignedUsers, NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
+import { UserService } from 'xforge-common/user.service';
+import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
-import { getTextDoc } from '../../../shared/test-utils';
+import { getTextDoc, paratextUsersFromRoles } from '../../../shared/test-utils';
 import { NoteThreadDoc } from '../../../core/models/note-thread-doc';
+import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { NoteDialogComponent, NoteDialogData } from './note-dialog.component';
 
 const mockedAuthService = mock(AuthService);
 const mockedCookieService = mock(CookieService);
 const mockedHttpClient = mock(HttpClient);
 const mockedProjectService = mock(SFProjectService);
+const mockedUserService = mock(UserService);
 
 describe('NoteDialogComponent', () => {
   configureTestingModule(() => ({
@@ -42,7 +46,8 @@ describe('NoteDialogComponent', () => {
       { provide: AuthService, useMock: mockedAuthService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: HttpClient, useMock: mockedHttpClient },
-      { provide: SFProjectService, useMock: mockedProjectService }
+      { provide: SFProjectService, useMock: mockedProjectService },
+      { provide: UserService, useMock: mockedUserService }
     ]
   }));
 
@@ -164,7 +169,16 @@ describe('NoteDialogComponent', () => {
   it('shows assigned user', fakeAsync(() => {
     env = new TestEnvironment();
     expect(env.threadAssignedUser.nativeElement.textContent).toContain('Team');
-    expect(env.notes[0].nativeElement.querySelector('.assigned-user').textContent).toContain('User 1');
+    expect(env.notes[0].nativeElement.querySelector('.assigned-user').textContent).toContain(
+      TestEnvironment.paratextUsers.find(u => u.sfUserId === 'user01')!.username
+    );
+    expect(env.notes[1].nativeElement.querySelector('.assigned-user').textContent).toContain('Team');
+  }));
+
+  it('hides assigned user for non-paratext users', fakeAsync(() => {
+    env = new TestEnvironment({ currentUserId: 'user02' });
+    expect(env.threadAssignedUser.nativeElement.textContent).toContain('Team');
+    expect(env.notes[0].nativeElement.querySelector('.assigned-user').textContent).toContain('Paratext user');
     expect(env.notes[1].nativeElement.querySelector('.assigned-user').textContent).toContain('Team');
   }));
 
@@ -219,6 +233,7 @@ interface TestEnvironmentConstructorArgs {
   includeSnapshots?: boolean;
   isRightToLeftProject?: boolean;
   reattachedContent?: string;
+  currentUserId?: string;
 }
 
 class TestEnvironment {
@@ -232,7 +247,11 @@ class TestEnvironment {
     ],
     permissions: {}
   };
-  static testProject: SFProject = {
+  static userRoles: { [userId: string]: string } = {
+    user01: SFProjectRole.ParatextAdministrator,
+    user02: SFProjectRole.Observer
+  };
+  static testProjectProfile: SFProjectProfile = {
     paratextId: 'pt01',
     shortName: 'P01',
     name: 'Project 01',
@@ -251,9 +270,12 @@ class TestEnvironment {
     },
     texts: [TestEnvironment.matthewText],
     sync: { queuedCount: 0 },
-    userRoles: {
-      user01: SFProjectRole.ParatextAdministrator
-    }
+    userRoles: TestEnvironment.userRoles
+  };
+  static paratextUsers: ParatextUserProfile[] = paratextUsersFromRoles(TestEnvironment.userRoles);
+  static testProject: SFProject = {
+    ...TestEnvironment.testProjectProfile,
+    paratextUsers: TestEnvironment.paratextUsers
   };
   static reattached: string = ['MAT 1:4', 'reattached text', '17', 'before selection ', ' after selection'].join(
     REATTACH_SEPARATOR
@@ -283,7 +305,7 @@ class TestEnvironment {
           tagIcon: 'flag02',
           dateCreated: '',
           dateModified: '',
-          assignedNoteUserRef: 'User 1'
+          assignedNoteUserRef: TestEnvironment.paratextUsers.find(u => u.sfUserId === 'user01')!.opaqueUserId
         },
         {
           dataId: 'note02',
@@ -362,7 +384,8 @@ class TestEnvironment {
   constructor({
     includeSnapshots = true,
     isRightToLeftProject,
-    reattachedContent
+    reattachedContent,
+    currentUserId = 'user01'
   }: TestEnvironmentConstructorArgs = {}) {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     const noteThread: NoteThread = TestEnvironment.getNoteThread(reattachedContent);
@@ -370,6 +393,7 @@ class TestEnvironment {
       projectId: TestEnvironment.PROJECT01,
       threadId: noteThread.dataId
     };
+    TestEnvironment.testProjectProfile.isRightToLeft = isRightToLeftProject;
     TestEnvironment.testProject.isRightToLeft = isRightToLeftProject;
     this.dialogRef = TestBed.inject(MatDialog).open(NoteDialogComponent, { data: configData });
     this.component = this.dialogRef.componentInstance;
@@ -379,6 +403,10 @@ class TestEnvironment {
       this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
         id: configData.projectId,
         data: TestEnvironment.testProject
+      });
+      this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
+        id: configData.projectId,
+        data: TestEnvironment.testProjectProfile
       });
       const textDocId = new TextDocId(TestEnvironment.PROJECT01, 40, 1);
       this.realtimeService.addSnapshot<TextData>(TextDoc.COLLECTION, {
@@ -396,13 +424,19 @@ class TestEnvironment {
       this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, id)
     );
 
-    when(mockedProjectService.get(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id)
+    when(mockedProjectService.getProfile(anything())).thenCall(id =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
     );
 
     when(mockedProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id)
     );
+
+    when(mockedProjectService.tryGetForRole(anything(), anything())).thenCall((id, role) =>
+      hasParatextRole(role) ? this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id) : undefined
+    );
+
+    when(mockedUserService.currentUserId).thenReturn(currentUserId);
 
     this.fixture.detectChanges();
     tick();

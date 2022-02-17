@@ -16,7 +16,7 @@ import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
-import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_SHARE_ROLE, SF_PROJECT_ROLES } from '../../core/models/sf-project-role-info';
 import { SFProjectService } from '../../core/sf-project.service';
 
@@ -44,7 +44,7 @@ export class ShareControlComponent extends SubscriptionDisposable {
   private _projectId?: string;
   private linkSharingKey: string = '';
   private projectId$: BehaviorSubject<string> = new BehaviorSubject<string>('');
-  private projectDoc?: SFProjectDoc;
+  private projectDoc?: SFProjectProfileDoc;
 
   constructor(
     readonly i18n: I18nService,
@@ -62,7 +62,7 @@ export class ShareControlComponent extends SubscriptionDisposable {
       }
       if (this.projectDoc == null || projectId !== this._projectId) {
         [this.projectDoc, this.isProjectAdmin] = await Promise.all([
-          this.projectService.get(projectId),
+          this.projectService.getProfile(projectId),
           this.projectService.isProjectAdmin(projectId, this.userService.currentUserId)
         ]);
         this.roleControl.setValue(this.defaultShareRole);

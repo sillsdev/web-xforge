@@ -1,16 +1,21 @@
 import ShareDB from 'sharedb';
+import { ProjectDomainConfig } from '../../common/services/project-data-service';
 import { RealtimeServer } from '../../common/realtime-server';
 import { ProjectService } from '../../common/services/project-service';
 import {
   SFProject,
   SF_PROJECTS_COLLECTION,
   SF_PROJECT_INDEX_PATHS,
-  SF_PROJECTS_PROFILE_COLLECTION
+  SF_PROJECT_PROFILES_COLLECTION
 } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from '../models/sf-project-rights';
+import { Operation } from '../../common/models/project-rights';
+import { ConnectSession } from '../../common/connect-session';
+import { SystemRole } from '../../common/models/system-role';
 import { SF_PROJECT_MIGRATIONS } from './sf-project-migrations';
 
-const SF_PROJECTS_PROFILE_FIELDS: ShareDB.ProjectionFields = {
+const SF_PROJECT_PROFILE_FIELDS: ShareDB.ProjectionFields = {
   name: true,
   userRoles: true,
   userPermissions: true,
@@ -47,7 +52,31 @@ export class SFProjectService extends ProjectService<SFProject> {
   }
 
   init(server: RealtimeServer): void {
-    server.addProjection(SF_PROJECTS_PROFILE_COLLECTION, this.collection, SF_PROJECTS_PROFILE_FIELDS);
+    server.addProjection(SF_PROJECT_PROFILES_COLLECTION, this.collection, SF_PROJECT_PROFILE_FIELDS);
     super.init(server);
+  }
+
+  protected allowRead(docId: string, doc: SFProject, session: ConnectSession): boolean {
+    if (session.isServer || session.role === SystemRole.SystemAdmin) {
+      return true;
+    }
+    if (this.hasRight(session.userId, doc, Operation.View)) {
+      return true;
+    }
+    for (const key of Object.keys(doc)) {
+      if (!Object.prototype.hasOwnProperty.call(SF_PROJECT_PROFILE_FIELDS, key)) {
+        return false;
+      }
+    }
+    return super.allowRead(docId, doc, session);
+  }
+
+  protected setupDomains(): ProjectDomainConfig[] {
+    return [{ projectDomain: SFProjectDomain.Project, pathTemplate: this.pathTemplate() }];
+  }
+
+  private hasRight(userId: string, doc: SFProject, operation: Operation): boolean {
+    const projectRole = doc.userRoles[userId];
+    return SF_PROJECT_RIGHTS.roleHasRight(projectRole, SFProjectDomain.Project, operation);
   }
 }

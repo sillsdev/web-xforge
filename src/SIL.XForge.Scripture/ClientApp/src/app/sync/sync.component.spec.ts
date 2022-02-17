@@ -238,6 +238,7 @@ class TestEnvironment {
         syncDisabled: isSyncDisabled,
         texts: [],
         userRoles: {},
+        paratextUsers: [],
         userPermissions: {}
       }
     });

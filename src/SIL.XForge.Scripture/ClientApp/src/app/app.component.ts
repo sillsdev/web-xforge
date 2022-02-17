@@ -35,7 +35,7 @@ import { UserService } from 'xforge-common/user.service';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
-import { SFProjectDoc } from './core/models/sf-project-doc';
+import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { canAccessTranslateApp } from './core/models/sf-project-role-info';
 import { SFProjectService } from './core/sf-project.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
@@ -64,7 +64,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   translateVisible: boolean = false;
   checkingVisible: boolean = false;
 
-  projectDocs?: SFProjectDoc[];
+  projectDocs?: SFProjectProfileDoc[];
   canSeeSettings$?: Observable<boolean>;
   canSeeUsers$?: Observable<boolean>;
   canSync$?: Observable<boolean>;
@@ -76,7 +76,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   private _projectSelect?: MdcSelect;
   private projectDeletedDialogRef: MdcDialogRef<ProjectDeletedDialogComponent> | null = null;
   private _topAppBar?: MdcTopAppBar;
-  private selectedProjectDoc?: SFProjectDoc;
+  private selectedProjectDoc?: SFProjectProfileDoc;
   private selectedProjectDeleteSub?: Subscription;
   private removedFromProjectSub?: Subscription;
   private _isDrawerPermanent: boolean = true;
@@ -597,18 +597,18 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.questionCountQueries.clear();
   }
 
-  private async getProjectDocs(): Promise<SFProjectDoc[]> {
+  private async getProjectDocs(): Promise<SFProjectProfileDoc[]> {
     if (this.currentUser == null) {
       return [];
     }
 
     this.loadingStarted();
     const projects = this.currentUser.sites[environment.siteId].projects;
-    const projectDocs: SFProjectDoc[] = new Array(projects.length);
+    const projectDocs: SFProjectProfileDoc[] = new Array(projects.length);
     const promises: Promise<any>[] = [];
     for (let i = 0; i < projects.length; i++) {
       const index = i;
-      promises.push(this.projectService.get(projects[index]).then(p => (projectDocs[index] = p)));
+      promises.push(this.projectService.getProfile(projects[index]).then(p => (projectDocs[index] = p)));
     }
     await Promise.all(promises);
     this.loadingFinished();

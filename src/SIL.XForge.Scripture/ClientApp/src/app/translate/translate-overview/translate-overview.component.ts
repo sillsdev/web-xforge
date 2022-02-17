@@ -13,7 +13,7 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
-import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
@@ -57,7 +57,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
 
   private trainingSub?: Subscription;
   private translationEngine?: RemoteTranslationEngine;
-  private projectDoc?: SFProjectDoc;
+  private projectDoc?: SFProjectProfileDoc;
   private projectDataChangesSub?: Subscription;
 
   constructor(
@@ -95,7 +95,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     this.subscribe(this.activatedRoute.params.pipe(map(params => params['projectId'])), async projectId => {
       this.loadingStarted();
       try {
-        this.projectDoc = await this.projectService.get(projectId);
+        this.projectDoc = await this.projectService.getProfile(projectId);
         this.setupTranslationEngine();
         await Promise.all([this.calculateProgress(), this.updateEngineStats()]);
       } finally {

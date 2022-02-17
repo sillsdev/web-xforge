@@ -12,6 +12,8 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { ProjectService } from 'xforge-common/project.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { TransceleratorQuestion } from '../checking/import-questions-dialog/import-questions-dialog.component';
 import { InviteeStatus } from '../users/collaborators/collaborators.component';
 import { NoteThreadDoc } from './models/note-thread-doc';
@@ -43,6 +45,13 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return (await this.onlineInvoke<string>('create', { settings }))!;
   }
 
+  async tryGetForRole(id: string, role: string): Promise<SFProjectDoc | undefined> {
+    if (SF_PROJECT_RIGHTS.roleHasRight(role, SFProjectDomain.Project, Operation.View)) {
+      return await this.get(id);
+    }
+    return undefined;
+  }
+
   getProfile(id: string): Promise<SFProjectProfileDoc> {
     return this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id);
   }
@@ -52,7 +61,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   async isProjectAdmin(projectId: string, userId: string): Promise<boolean> {
-    const projectDoc = await this.get(projectId);
+    const projectDoc = await this.getProfile(projectId);
     return (
       projectDoc != null &&
       projectDoc.data != null &&
