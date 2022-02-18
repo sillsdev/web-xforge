@@ -835,17 +835,18 @@ namespace SIL.XForge.Scripture.Services
                 Paratext.Data.ProjectComments.Comment info = thread.Comments[0];
                 CommentTag initialTag = GetCommentTag(thread, null, commentTags);
                 NoteThreadChange newThread = new NoteThreadChange(threadId, info.VerseRefStr,
-                    info.SelectedText, info.ContextBefore, info.ContextAfter, info.Status.InternalValue, initialTag.Icon);
+                    info.SelectedText, info.ContextBefore, info.ContextAfter, info.Status.InternalValue,
+                    initialTag.Icon);
                 newThread.Position = GetThreadTextAnchor(thread, chapterDeltas);
                 newThread.Status = thread.Status.InternalValue;
                 newThread.AssignedNoteUserRef = GetAssignedUserRef(thread.AssignedUser, ptProjectUsers);
                 foreach (var comm in thread.Comments)
                 {
                     CommentTag commentIconTag = GetCommentTag(thread, comm, commentTags);
-                    newThread.AddChange(CreateNoteFromComment(_guidService.NewObjectId(), comm, commentIconTag, ptProjectUsers),
-                        ChangeType.Added);
-                    Console.WriteLine($"created note on new thread: {newThread.NotesAdded[0].DataId}");
-
+                    newThread.AddChange(
+                        CreateNoteFromComment(_guidService.NewObjectId(), comm, commentIconTag, ptProjectUsers),
+                        ChangeType.Added
+                    );
                 }
                 changes.Add(newThread);
             }
@@ -1687,7 +1688,6 @@ namespace SIL.XForge.Scripture.Services
         private ParatextUserProfile FindOrCreateParatextUser(string paratextUsername,
             Dictionary<string, ParatextUserProfile> ptProjectUsers)
         {
-            Console.WriteLine($"returning ref for: {paratextUsername}");
             if (!ptProjectUsers.TryGetValue(paratextUsername, out ParatextUserProfile ptProjectUser))
             {
                 ptProjectUser = new ParatextUserProfile
@@ -1697,7 +1697,6 @@ namespace SIL.XForge.Scripture.Services
                 };
                 ptProjectUsers.Add(paratextUsername, ptProjectUser);
             }
-            Console.WriteLine(ptProjectUser.OpaqueUserId);
             return ptProjectUser;
         }
 
