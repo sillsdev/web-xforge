@@ -4,7 +4,7 @@ import sortBy from 'lodash-es/sortBy';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
-import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -21,7 +21,7 @@ import { CheckingUtils } from '../../checking.utils';
   styleUrls: ['./checking-questions.component.scss']
 })
 export class CheckingQuestionsComponent extends SubscriptionDisposable {
-  @Input() project?: SFProject;
+  @Input() project?: SFProjectProfile;
   @Input() projectUserConfigDoc?: SFProjectUserConfigDoc;
   @Input() isAllBooksShown: boolean = false;
   @Output() update = new EventEmitter<QuestionDoc>();
