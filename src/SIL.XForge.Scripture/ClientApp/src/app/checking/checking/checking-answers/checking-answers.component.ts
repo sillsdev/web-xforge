@@ -6,7 +6,7 @@ import { translate } from '@ngneat/transloco';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
-import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
@@ -67,7 +67,7 @@ enum LikeAnswerResponse {
 })
 export class CheckingAnswersComponent extends SubscriptionDisposable implements OnInit {
   @ViewChild(CheckingAudioCombinedComponent) audioCombinedComponent?: CheckingAudioCombinedComponent;
-  @Input() project?: SFProject;
+  @Input() project?: SFProjectProfile;
   @Input() projectId?: string;
   @Input() projectUserConfigDoc?: SFProjectUserConfigDoc;
   @Input() textsByBookId?: TextsByBookId;

@@ -45,6 +45,10 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return (await this.onlineInvoke<string>('create', { settings }))!;
   }
 
+  /**
+   * Returns the SF project if the user has a role that allows access (i.e. a paratext role),
+   * otherwise returns undefined.
+   */
   async tryGetForRole(id: string, role: string): Promise<SFProjectDoc | undefined> {
     if (SF_PROJECT_RIGHTS.roleHasRight(role, SFProjectDomain.Project, Operation.View)) {
       return await this.get(id);
@@ -52,6 +56,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return undefined;
   }
 
+  /** Returns the project profile with the project data that all project members can access. */
   getProfile(id: string): Promise<SFProjectProfileDoc> {
     return this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id);
   }
