@@ -83,8 +83,10 @@
     "configure_translation_suggestions": "Tərcümə təkliflərini irəli sürün",
     "project_data_out_of_sync": "Your project data is out of sync. Please synchronize your project to edit this text.",
     "swap_source_and_target": "Mənbə və hədəfi dəyişdirmək",
-    "training": "Təlim",
+    "text_doc_corrupted": "This chapter cannot be edited because the data has become corrupted.",
+    "to_report_issue_email": "Problemi bildirmək üçün {{ issueEmailLink }}-a e-poçt göndərin.",
     "training_completed_successfully": "Təlim uğurla başa çatdı",
+    "training": "Təlim",
     "verse_too_long_for_suggestions": "Bu ayə təkliflər irəli sürmək üçün çox uzundur."
   },
   "import_questions_confirmation_dialog": {

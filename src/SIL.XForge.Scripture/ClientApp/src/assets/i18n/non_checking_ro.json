@@ -83,8 +83,10 @@
     "configure_translation_suggestions": "Configurarea sugestiilor de traducere",
     "project_data_out_of_sync": "Datele proiectului nu sunt sincronizate. Vă rugăm să sincronizați proiectul pentru a edita acest text.",
     "swap_source_and_target": "Interchimbă sursa cu destinația",
-    "training": "Instruire",
+    "text_doc_corrupted": "This chapter cannot be edited because the data has become corrupted.",
+    "to_report_issue_email": "Pentru a raporta o problemă, trimiteți un e-mail la {{ issueEmailLink }}.",
     "training_completed_successfully": "Instruirea finalizată cu succes",
+    "training": "Instruire",
     "verse_too_long_for_suggestions": "Acest verset este prea lung pentru a se genera sugestii."
   },
   "import_questions_confirmation_dialog": {

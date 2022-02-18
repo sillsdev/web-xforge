@@ -83,8 +83,10 @@
     "configure_translation_suggestions": "Konfigurasikan saran terjemahan",
     "project_data_out_of_sync": "Your project data is out of sync. Please synchronize your project to edit this text.",
     "swap_source_and_target": "Tukar sumber dan target",
-    "training": "Pelatihan",
+    "text_doc_corrupted": "This chapter cannot be edited because the data has become corrupted.",
+    "to_report_issue_email": "Untuk melaporkan sebuah masalah, kirim surel {{ issueEmailLink }}.",
     "training_completed_successfully": "Pelatihan berhasil diselesaikan",
+    "training": "Pelatihan",
     "verse_too_long_for_suggestions": "Ayat ini terlalu panjang untuk membuat saran terjemahan."
   },
   "import_questions_confirmation_dialog": {
