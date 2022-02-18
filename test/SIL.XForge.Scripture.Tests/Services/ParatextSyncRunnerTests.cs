@@ -1221,6 +1221,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(thread02.Notes.Count, Is.EqualTo(1));
             Assert.That(thread02.Notes[0].Content, Is.EqualTo("New thread02 added."));
             Assert.That(thread02.Notes[0].OwnerRef, Is.EqualTo("user01"));
+            Assert.That(thread02.Notes[0].AssignedNoteUserRef, Is.EqualTo(CommentThread.teamUser));
             Assert.That(thread02.Status, Is.EqualTo(NoteStatus.Todo.InternalValue));
             Assert.That(thread02.AssignedNoteUserRef, Is.EqualTo(CommentThread.teamUser));
             SFProject project = env.GetProject();
