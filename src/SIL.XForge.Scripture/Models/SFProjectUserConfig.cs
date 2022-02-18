@@ -21,12 +21,13 @@ namespace SIL.XForge.Scripture.Models
         public bool TranslationSuggestionsEnabled { get; set; } = true;
         public string SelectedSegment { get; set; } = "";
         public int? SelectedSegmentChecksum { get; set; }
+        /// <summary>Ids of notes (not threads) which the user has read.</summary>
+        public List<string> NoteRefsRead { get; set; } = new List<string>();
 
         // checking
         public List<string> QuestionRefsRead { get; set; } = new List<string>();
         public List<string> AnswerRefsRead { get; set; } = new List<string>();
         public List<string> CommentRefsRead { get; set; } = new List<string>();
         public string SelectedQuestionRef { get; set; }
-        public List<string> NoteRefsRead { get; set; } = new List<string>();
     }
 }
