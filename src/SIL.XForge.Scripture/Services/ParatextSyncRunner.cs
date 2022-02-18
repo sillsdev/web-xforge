@@ -772,11 +772,13 @@ namespace SIL.XForge.Scripture.Services
         {
             if (change.ThreadRemoved)
             {
+                await RemoveSetOfHaveReadNoteRefsAsync(_projectDoc.Id,
+                    threadDoc.Data.Notes.Select((Note note) => note.DataId));
                 await threadDoc.DeleteAsync();
                 return;
             }
 
-            await threadDoc.SubmitJson0OpAsync(op =>
+            await threadDoc.SubmitJson0OpAsync(async op =>
             {
                 // Update thread details
                 if (change.ThreadUpdated)
@@ -834,11 +836,48 @@ namespace SIL.XForge.Scripture.Services
                     int index = threadDoc.Data.Notes.FindIndex(n => n.DataId == removedId);
                     if (index >= 0)
                         op.Remove(td => td.Notes, index);
+                    var sfProjectId = this._projectDoc.Id;
+                    await RemoveHaveReadNoteRefsAsync(sfProjectId, removedId);
                 }
 
                 if (change.Position != null)
                     op.Set(td => td.Position, change.Position);
             });
+        }
+
+        /// <summary>
+        /// Remove references to `noteDataId` from NoteRefsRead in SFProjectUserConfig documents associated with
+        /// `sfProjectId`. This helps to clean up references to a Note when it is removed from the DB.
+        /// </summary>
+        private async Task RemoveHaveReadNoteRefsAsync(string sfProjectId, string noteDataId)
+        {
+            var project = this._projectDoc.Data;
+            string[] usersOnProject = project.UserRoles.Keys.ToArray<string>();
+            foreach (string userId in usersOnProject)
+            {
+                IDocument<SFProjectUserConfig> pucDoc = await _conn.FetchAsync<SFProjectUserConfig>(SFProjectUserConfig.GetDocId(sfProjectId, userId));
+                if (!pucDoc.IsLoaded)
+                {
+                    // No such project-user.
+                    continue;
+                }
+                await pucDoc.SubmitJson0OpAsync(op =>
+                {
+                    int index = pucDoc.Data.NoteRefsRead.IndexOf(noteDataId);
+                    if (index >= 0)
+                    {
+                        op.Remove(puc => puc.NoteRefsRead, index);
+                    }
+                });
+            }
+        }
+
+        private async Task RemoveSetOfHaveReadNoteRefsAsync(string sfProjectId, IEnumerable<string> noteDataIds)
+        {
+            foreach (string noteDataId in noteDataIds)
+            {
+                await RemoveHaveReadNoteRefsAsync(_projectDoc.Id, noteDataId);
+            }
         }
 
         /// <summary>
@@ -892,7 +931,11 @@ namespace SIL.XForge.Scripture.Services
                 {
                     IDocument<NoteThread> noteThreadDoc = await _conn.FetchAsync<NoteThread>(noteThreadDocId);
                     if (noteThreadDoc.IsLoaded)
+                    {
+                        IEnumerable<string> ids = noteThreadDoc.Data.Notes.Select((Note note) => note.DataId);
+                        await RemoveSetOfHaveReadNoteRefsAsync(_projectDoc.Id, ids);
                         await noteThreadDoc.DeleteAsync();
+                    }
                 }
                 tasks.Add((deleteNoteThread()));
             }
