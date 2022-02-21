@@ -1,5 +1,5 @@
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
-import { SFProjectDomain } from '../models/sf-project-rights';
+import { SFProjectDomain } from '../models/sf-project-rights-mapping';
 import {
   SF_PROJECT_USER_CONFIG_INDEX_PATHS,
   SF_PROJECT_USER_CONFIGS_COLLECTION,

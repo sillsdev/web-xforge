@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 
 namespace SIL.XForge.Realtime
@@ -13,5 +14,6 @@ namespace SIL.XForge.Realtime
         void Start(object options);
         void Stop();
         Task<Snapshot<T>> SubmitOpAsync<T>(int handle, string collection, string id, object op);
+        Task<Object> GetRightsAsync();
     }
 }

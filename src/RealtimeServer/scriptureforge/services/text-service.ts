@@ -2,7 +2,8 @@ import { ConnectSession } from '../../common/connect-session';
 import { Project } from '../../common/models/project';
 import { Operation } from '../../common/models/project-rights';
 import { DocService } from '../../common/services/doc-service';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from '../models/sf-project-rights';
+import { SFProjectDomain } from '../models/sf-project-rights-mapping';
+import { SF_PROJECT_RIGHTS } from '../models/sf-project-rights';
 import { TextData, TEXTS_COLLECTION, TEXT_INDEX_PATHS } from '../models/text-data';
 import { TEXT_MIGRATIONS } from './text-migrations';
 

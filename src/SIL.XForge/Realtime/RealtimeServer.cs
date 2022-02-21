@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using Jering.Javascript.NodeJS;
@@ -67,6 +68,11 @@ namespace SIL.XForge.Realtime
         public Task<T> ApplyOpAsync<T>(string otTypeName, T data, object op)
         {
             return InvokeExportAsync<T>("applyOp", otTypeName, data, op);
+        }
+
+        public Task<Object> GetRightsAsync()
+        {
+            return InvokeExportAsync<Object>("getRights");
         }
 
         private Task<T> InvokeExportAsync<T>(string exportedFunctionName, params object[] args)

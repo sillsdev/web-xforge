@@ -39,13 +39,14 @@ namespace SIL.XForge.Scripture.Services
         private readonly ISecurityService _securityService;
         private readonly IStringLocalizer<SharedResource> _localizer;
         private readonly ITransceleratorService _transceleratorService;
+        private readonly ISFRightsService _rightsService;
 
         public SFProjectService(IRealtimeService realtimeService, IOptions<SiteOptions> siteOptions,
             IAudioService audioService, IEmailService emailService, IRepository<SFProjectSecret> projectSecrets,
             ISecurityService securityService, IFileSystemService fileSystemService, IEngineService engineService,
             ISyncService syncService, IParatextService paratextService, IRepository<UserSecret> userSecrets,
             IRepository<TranslateMetrics> translateMetrics, IStringLocalizer<SharedResource> localizer,
-            ITransceleratorService transceleratorService)
+            ITransceleratorService transceleratorService, ISFRightsService rightsService)
             : base(realtimeService, siteOptions, audioService, projectSecrets, fileSystemService)
         {
             _engineService = engineService;
@@ -57,6 +58,7 @@ namespace SIL.XForge.Scripture.Services
             _securityService = securityService;
             _localizer = localizer;
             _transceleratorService = transceleratorService;
+            _rightsService = rightsService;
         }
 
         protected override string ProjectAdminRole => SFProjectRole.Administrator;
