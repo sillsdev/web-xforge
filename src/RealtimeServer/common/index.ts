@@ -41,9 +41,9 @@ async function startServer(options: RealtimeServerOptions): Promise<void> {
   }
 
   const exceptionReporter = new ExceptionReporter(options.bugsnagApiKey, options.releaseStage, options.version);
-  function reportError(error: any) {
-    console.error(`Error from ShareDB server: ${error}`);
-    exceptionReporter.report(error);
+  function reportError(...args: unknown[]): void {
+    console.error('Error from ShareDB server: ', ...args);
+    exceptionReporter.report(args.toString());
   }
   // ShareDB sometimes reports errors as warnings
   ShareDB.logger.setMethods({ warn: reportError, error: reportError });
@@ -108,18 +108,18 @@ function getDoc(handle: number, collection: string, id: string): Doc | undefined
 }
 
 export = {
-  start: (callback: InteropCallback, options: RealtimeServerOptions) => {
+  start: (callback: InteropCallback, options: RealtimeServerOptions): void => {
     startServer(options)
       .then(() => callback(undefined, {}))
       .catch(err => callback(err));
   },
 
-  stop: (callback: InteropCallback) => {
+  stop: (callback: InteropCallback): void => {
     stopServer();
     callback(undefined, {});
   },
 
-  connect: (callback: InteropCallback, userId?: string) => {
+  connect: (callback: InteropCallback, userId?: string): void => {
     if (server == null) {
       callback(new Error('Server not started.'));
       return;
@@ -130,7 +130,7 @@ export = {
     callback(undefined, index);
   },
 
-  disconnect: (callback: InteropCallback, handle: number) => {
+  disconnect: (callback: InteropCallback, handle: number): void => {
     if (server == null) {
       callback(new Error('Server not started.'));
       return;
@@ -146,7 +146,7 @@ export = {
     id: string,
     data: any,
     typeName: OTType
-  ) => {
+  ): void => {
     if (server == null) {
       callback(new Error('Server not started.'));
       return;
@@ -159,7 +159,7 @@ export = {
     doc.create(data, typeName, err => callback(err, createSnapshot(doc)));
   },
 
-  fetchDoc: (callback: InteropCallback, handle: number, collection: string, id: string) => {
+  fetchDoc: (callback: InteropCallback, handle: number, collection: string, id: string): void => {
     if (server == null) {
       callback(new Error('Server not started.'));
       return;
@@ -172,7 +172,7 @@ export = {
     doc.fetch(err => callback(err, createSnapshot(doc)));
   },
 
-  submitOp: (callback: InteropCallback, handle: number, collection: string, id: string, ops: ShareDB.Op[]) => {
+  submitOp: (callback: InteropCallback, handle: number, collection: string, id: string, ops: ShareDB.Op[]): void => {
     if (server == null) {
       callback(new Error('Server not started.'));
       return;
@@ -185,7 +185,7 @@ export = {
     doc.submitOp(ops, undefined, err => callback(err, createSnapshot(doc)));
   },
 
-  deleteDoc: (callback: InteropCallback, handle: number, collection: string, id: string) => {
+  deleteDoc: (callback: InteropCallback, handle: number, collection: string, id: string): void => {
     if (server == null) {
       callback(new Error('Server not started.'));
       return;
@@ -198,7 +198,7 @@ export = {
     doc.del({}, err => callback(err, {}));
   },
 
-  applyOp: (callback: InteropCallback, typeName: string, data: any, ops: ShareDB.Op[]) => {
+  applyOp: (callback: InteropCallback, typeName: string, data: any, ops: ShareDB.Op[]): void => {
     const type = ShareDB.types.map[typeName];
     if (ops != null && type.normalize != null) {
       ops = type.normalize(ops);

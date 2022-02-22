@@ -5,7 +5,7 @@ export type DBConstructor<T extends ShareDB.DB = ShareDB.DB> = new (...args: any
 /**
  * This mixin extends ShareDB database adapters to return metadata when retrieving ops.
  */
-export function MetadataDB<T extends DBConstructor>(Base: T) {
+export function MetadataDB<T extends DBConstructor>(Base: T): T {
   return class extends Base {
     getOpsToSnapshot(
       collection: string,
