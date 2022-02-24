@@ -74,10 +74,11 @@ function removeAttribute(op: DeltaOperation, name: string): void {
 /** Provides information about a range of text that includes the embedded elements */
 export interface EditorRange {
   startEditorPosition: number;
-  endEditorPosition: number;
+  editorLength: number;
   embedsWithinRange: number;
+  /** Count of sequential embeds leading off the range */
   leadingEmbedCount: number;
-  // not counted in embedsWithinRange
+  /** Count of sequential embeds immediately following the range */
   trailingEmbedCount: number;
 }
 
@@ -394,7 +395,7 @@ export class TextViewModel {
   /** Returns editor range information that corresponds to a text position past an editor position. */
   getEditorContentRange(startEditorPosition: number, textPosPast: number): EditorRange {
     const embedEditorPositions = Array.from(this.embeddedElements.values());
-    const leadingEmbedCount = this.countEmbedsAtPosition(startEditorPosition);
+    const leadingEmbedCount = this.countSequentialEmbedsStartingAt(startEditorPosition);
     let resultingEditorPos = startEditorPosition + leadingEmbedCount;
     let textCharactersFound = 0;
     let embedsWithinRange = leadingEmbedCount;
@@ -407,17 +408,17 @@ export class TextViewModel {
       resultingEditorPos++;
     }
     // trailing embeds do not count towards embedsWithinRange
-    const trailingEmbedCount: number = this.countEmbedsAtPosition(resultingEditorPos);
+    const trailingEmbedCount: number = this.countSequentialEmbedsStartingAt(resultingEditorPos);
     return {
       startEditorPosition,
-      endEditorPosition: resultingEditorPos,
+      editorLength: resultingEditorPos - startEditorPosition,
       embedsWithinRange,
       leadingEmbedCount,
       trailingEmbedCount
     };
   }
 
-  private countEmbedsAtPosition(startEditorPosition: number): number {
+  private countSequentialEmbedsStartingAt(startEditorPosition: number): number {
     const embedEditorPositions = Array.from(this.embeddedElements.values());
     // add up the leading embeds
     let leadingEmbedCount = 0;
@@ -695,12 +696,14 @@ export class TextViewModel {
         const editorRange: EditorRange = this.getEditorContentRange(editorStartPos, cloneOp.retain);
         embedsUpToIndex += editorRange.embedsWithinRange;
         curIndex += cloneOp.retain;
-        // remove any embeds subsequent to the previous insert so they can be redrawn
-        if (editorRange.leadingEmbedCount > 0 && editorStartPos > 0 && previousOp === 'insert') {
+        let embedsToRetain: number = editorRange.embedsWithinRange;
+        // remove any embeds subsequent to the previous insert so they can be redrawn in the right place
+        if (editorRange.leadingEmbedCount > 0 && previousOp === 'insert') {
           (adjustedDelta as any).push({ delete: editorRange.leadingEmbedCount } as DeltaOperation);
+          embedsToRetain -= editorRange.leadingEmbedCount;
         }
         // add to the retain op the number of embedded elements contained in its content
-        cloneOp.retain += editorRange.embedsWithinRange - editorRange.leadingEmbedCount;
+        cloneOp.retain += embedsToRetain;
         previousOp = 'retain';
       } else if (cloneOp.delete != null) {
         const editorRange: EditorRange = this.getEditorContentRange(editorStartPos, cloneOp.delete);
@@ -721,7 +724,7 @@ export class TextViewModel {
 
     editorStartPos = curIndex + embedsUpToIndex;
     // remove any embeds subsequent the previous insert so they can be redrawn
-    const embedsAfterLastEdit = this.countEmbedsAtPosition(editorStartPos);
+    const embedsAfterLastEdit = this.countSequentialEmbedsStartingAt(editorStartPos);
     if (embedsAfterLastEdit > 0 && previousOp === 'insert') {
       (adjustedDelta as any).push({ delete: embedsAfterLastEdit } as DeltaOperation);
     }
