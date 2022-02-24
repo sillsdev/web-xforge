@@ -484,7 +484,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return segments;
   }
 
-  /** Embeds an element, with the specified format, into the editor, at the editor position that corresponds to
+  /**
+   * Embeds an element, with the specified format, into the editor, at an editor position that corresponds to
    * the beginning of textAnchor.
    */
   embedElementInline(
@@ -544,15 +545,12 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       editorPosOfSegmentToModify.index,
       startTextPosInVerse
     );
-    const embedInsertPos: number = editorRange.endEditorPosition + editorRange.trailingEmbedCount;
+    const embedInsertPos: number =
+      editorRange.startEditorPosition + editorRange.editorLength + editorRange.trailingEmbedCount;
 
     this.editor.insertEmbed(embedInsertPos, formatName, format, 'api');
-    const endPosition: number = this.viewModel.getEditorContentRange(
-      embedInsertPos,
-      textAnchor.length
-    ).endEditorPosition;
-    // add one to include the embed to underline
-    const formatLength: number = endPosition - embedInsertPos;
+    const textAnchorRange = this.viewModel.getEditorContentRange(embedInsertPos, textAnchor.length);
+    const formatLength: number = textAnchorRange.editorLength;
     this.editor.formatText(embedInsertPos, formatLength, 'text-anchor', 'true', 'api');
     this.updateSegment();
     return embedSegmentRef;
