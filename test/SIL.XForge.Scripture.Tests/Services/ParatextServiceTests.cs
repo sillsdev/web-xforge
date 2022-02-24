@@ -1090,6 +1090,30 @@ namespace SIL.XForge.Scripture.Services
             env.MockHgWrapper.ReceivedWithAnyArgs().MarkSharedChangeSetsPublic(default);
         }
 
+        [Test]
+        public void RestoreRepository_ExistingRestoredRepository_Success()
+        {
+            var env = new TestEnvironment();
+            string scrtextDir = "/srv/scriptureforge/projects";
+            ScrTextCollection.Initialize(scrtextDir);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            env.MockFileSystemService.FileExists(Arg.Any<string>()).Returns(true);
+            env.MockFileSystemService.DirectoryExists(Arg.Any<string>()).Returns(x => ((string)x[0]).Contains(ptProjectId));
+
+            // SUT
+            bool result = env.Service.RestoreRepository(user01Secret, ptProjectId);
+            Assert.IsTrue(result);
+            env.MockHgWrapper.ReceivedWithAnyArgs().RestoreRepository(default, default);
+            env.MockHgWrapper.ReceivedWithAnyArgs().MarkSharedChangeSetsPublic(default);
+            string projectRepository = Path.Combine(scrtextDir, "_Backups", ptProjectId);
+            string restoredRepository = projectRepository + "_Restored";
+            // Removes leftover folders from a failed previous restore
+            env.MockFileSystemService.Received().DeleteDirectory(projectRepository);
+            env.MockFileSystemService.Received().DeleteDirectory(restoredRepository);
+        }
+
         private class TestEnvironment
         {
             public readonly string ParatextUserId01 = "paratext01";
