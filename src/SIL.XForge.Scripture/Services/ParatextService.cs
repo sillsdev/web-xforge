@@ -929,6 +929,11 @@ namespace SIL.XForge.Scripture.Services
 
                 try
                 {
+                    if (_fileSystemService.DirectoryExists(restoredDestination))
+                    {
+                        _fileSystemService.DeleteDirectory(restoredDestination);
+                    }
+
                     // Remove the backup destination, if it exists
                     if (_fileSystemService.DirectoryExists(destination))
                     {
