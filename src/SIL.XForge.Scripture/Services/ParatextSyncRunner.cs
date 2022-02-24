@@ -87,16 +87,16 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         /// <remarks>
         /// Do not allow multiple sync jobs to run in parallel on the same project by creating a hangfire mutex on the
-        /// <param name="projectId"/> parameter, i.e. "{0}".
+        /// <param name="projectSFId"/> parameter, i.e. "{0}".
         /// </remarks>
         [Mutex("{0}")]
-        public async Task RunAsync(string projectId, string userId, bool trainEngine, CancellationToken token)
+        public async Task RunAsync(string projectSFId, string userId, bool trainEngine, CancellationToken token)
         {
             // Whether or not we can rollback Paratext
             bool canRollbackParatext = false;
             try
             {
-                if (!await InitAsync(projectId, userId, token))
+                if (!await InitAsync(projectSFId, userId, token))
                 {
                     await CompleteSync(false, canRollbackParatext, token);
                     return;
@@ -305,7 +305,7 @@ namespace SIL.XForge.Scripture.Services
                 if (TranslationSuggestionsEnabled && trainEngine)
                 {
                     // start training Machine engine
-                    await _engineService.StartBuildByProjectIdAsync(projectId);
+                    await _engineService.StartBuildByProjectIdAsync(projectSFId);
                 }
 
                 await CompleteSync(true, canRollbackParatext, token);
@@ -314,7 +314,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 if (!(e is TaskCanceledException))
                 {
-                    _logger.LogError(e, "Error occurred while executing Paratext sync for project '{Project}'", projectId);
+                    _logger.LogError(e, "Error occurred while executing Paratext sync for project with SF id '{Project}'", projectSFId);
                 }
 
                 await CompleteSync(false, canRollbackParatext, token);
