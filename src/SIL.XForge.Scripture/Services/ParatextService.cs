@@ -187,7 +187,7 @@ namespace SIL.XForge.Scripture.Services
                     _logger.LogWarning($"The project with PT ID {paratextId} did not have a full name available.");
                 }
             }
-            if (!ptProjectsAvailable.TryGetValue(paratextId, out ParatextProject ptProject))
+            if (!ptProjectsAvailable.TryGetValue(paratextId, out ParatextProject ptProject) || ptProject == null)
             {
                 throw new ArgumentException(
                     $"PT projects with the following PT ids were requested but without access or they don't exist: {paratextId}");
@@ -199,9 +199,17 @@ namespace SIL.XForge.Scripture.Services
             {
                 SharedProject sharedProj = SharingLogicWrapper.CreateSharedProject(paratextId,
                     ptProject.ShortName, source.AsInternetSharedRepositorySource(), repositories);
+                if (sharedProj == null)
+                {
+                    throw new Exception($"Failed to create SharedProject for PT project id {paratextId}");
+                }
                 string username = GetParatextUsername(userSecret);
                 // Specifically set the ScrText property of the SharedProject to indicate the project is available locally
                 using ScrText scrText = ScrTextCollection.FindById(username, paratextId);
+                if (scrText == null)
+                {
+                    throw new Exception($"Failed to fetch ScrText for PT project id {paratextId} using PT username {username}");
+                }
                 sharedProj.ScrText = scrText;
                 sharedProj.Permissions = sharedProj.ScrText.Permissions;
                 List<SharedProject> sharedPtProjectsToSr = new List<SharedProject> { sharedProj };
@@ -226,7 +234,17 @@ namespace SIL.XForge.Scripture.Services
                 bool noErrors = SharingLogicWrapper.HandleErrors(() => success = SharingLogicWrapper
                     .ShareChanges(sharedPtProjectsToSr, source.AsInternetSharedRepositorySource(),
                     out results, sharedPtProjectsToSr));
-                if (!noErrors || !success || results.Any(r => r.Result == SendReceiveResultEnum.Failed))
+                if (results == null)
+                {
+                    _logger.LogWarning($"SendReceive results are unexpectedly null.");
+                }
+                if (results != null && results.Any(r => r == null))
+                {
+                    _logger.LogWarning($"SendReceive results unexpectedly contained a null result.");
+                }
+                if (!noErrors || !success ||
+                    (results != null &&
+                        results.Any(r => r != null && r.Result == SendReceiveResultEnum.Failed)))
                     throw new InvalidOperationException(
                         "Failed: Errors occurred while performing the sync with the Paratext Server.");
             }
