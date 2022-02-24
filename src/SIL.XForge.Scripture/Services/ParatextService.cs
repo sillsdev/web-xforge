@@ -242,6 +242,13 @@ namespace SIL.XForge.Scripture.Services
                 {
                     _logger.LogWarning($"SendReceive results unexpectedly contained a null result.");
                 }
+                string srResultDescriptions = string.Join(";",
+                    results?.Select((SendReceiveResult r) =>
+                        $"Revisions sent: {string.Join(",", r.RevisionsSent ?? Enumerable.Empty<string>())}, " +
+                        $"Revisions received: {string.Join(",", r.RevisionsReceived ?? Enumerable.Empty<string>())}, " +
+                        $"Failure message: {r.FailureMessage}.")
+                    ?? Enumerable.Empty<string>());
+                _logger.LogInformation($"SendReceive results: {srResultDescriptions}");
                 if (!noErrors || !success ||
                     (results != null &&
                         results.Any(r => r != null && r.Result == SendReceiveResultEnum.Failed)))
