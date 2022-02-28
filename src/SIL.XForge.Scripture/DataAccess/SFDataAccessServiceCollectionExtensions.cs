@@ -11,7 +11,6 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             services.AddDataAccess(configuration);
 
-            DataAccessClassMap.RegisterClass<SyncUser>(cm => cm.SetIdMember(null));
             DataAccessClassMap.RegisterClass<ParatextUserProfile>(
                 cm => cm.GetMemberMap(c => c.SFUserId).SetElementName("sfUserId"));
 

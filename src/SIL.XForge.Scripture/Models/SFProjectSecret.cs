@@ -15,10 +15,5 @@ namespace SIL.XForge.Scripture.Models
         /// The <see cref="List{T}.Count">Count</see> should correspond to <see cref="QueuedCount" />.
         /// </remarks>
         public List<string> JobIds { get; set; } = new List<string>();
-
-        /// <summary>
-        /// Keeps track of all Paratext usernames that have been used to sync notes with Paratext
-        /// </summary>
-        public List<SyncUser> SyncUsers { get; set; } = new List<SyncUser>();
     }
 }

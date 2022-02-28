@@ -1278,6 +1278,14 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(thread02.Assignment, Is.EqualTo(CommentThread.teamUser));
             SFProject project = env.GetProject();
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+
+            // Add a conflict note
+            env.SetupNewConflictNoteThreadChange("conflictthread01");
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+
+            Assert.That(env.ContainsNoteThread("project01", "conflictthread01"), Is.True);
+            project = env.GetProject();
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
         }
 
         [Test]
@@ -1920,10 +1928,7 @@ namespace SIL.XForge.Scripture.Services
                 var noteThreadChange = new NoteThreadChange(threadId, verseRef, $"{threadId} selected text.",
                     "Context before ", " context after", status, "icon1");
                 noteThreadChange.ThreadUpdated = true;
-                ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
-                    Arg.Any<IEnumerable<IDocument<NoteThread>>>(), Arg.Any<Dictionary<int, ChapterDelta>>(),
-                    Arg.Any<Dictionary<string, ParatextUserProfile>>())
-                    .Returns(new[] { noteThreadChange });
+                SetupNoteThreadChanges(new[] { noteThreadChange }, "target", 40);
             }
 
             public void SetupNewNoteThreadChange(string threadId, string syncUserId, string verseRef = "MAT 1:1")
@@ -1934,10 +1939,19 @@ namespace SIL.XForge.Scripture.Services
                 noteThreadChange.Assignment = CommentThread.teamUser;
                 noteThreadChange.AddChange(
                     GetNote(threadId, "n01", syncUserId, $"New {threadId} added.", ChangeType.Added), ChangeType.Added);
-                ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
-                    Arg.Any<IEnumerable<IDocument<NoteThread>>>(), Arg.Any<Dictionary<int, ChapterDelta>>(),
-                    Arg.Any<Dictionary<string, ParatextUserProfile>>())
-                    .Returns(new[] { noteThreadChange });
+                SetupNoteThreadChanges(new[] { noteThreadChange }, "target", 40);
+            }
+
+            public void SetupNewConflictNoteThreadChange(string threadId, string verseRef = "MAT 1:1")
+            {
+                var noteThreadChange = new NoteThreadChange(threadId, verseRef, null, null, null,
+                    NoteStatus.Todo.InternalValue, "conflict1");
+                noteThreadChange.Position = new TextAnchor { Start = 0, Length = 0 };
+                noteThreadChange.AddChange(
+                    GetNote(threadId, "conflict1", "", "Conflict on note.", ChangeType.Added, "conflict1"),
+                    ChangeType.Added
+                );
+                SetupNoteThreadChanges(new[] { noteThreadChange }, "target", 40);
             }
 
             public void SetupNoteRemovedChange(string threadId, string noteId, string verseRef = "MAT 1:1")
@@ -1948,10 +1962,7 @@ namespace SIL.XForge.Scripture.Services
                     noteThreadChange.ThreadRemoved = true;
                 else
                     noteThreadChange.NoteIdsRemoved.Add(noteId);
-                ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
-                    Arg.Any<IEnumerable<IDocument<NoteThread>>>(), Arg.Any<Dictionary<int, ChapterDelta>>(),
-                    Arg.Any<Dictionary<string, ParatextUserProfile>>())
-                    .Returns(new[] { noteThreadChange });
+                SetupNoteThreadChanges(new[] { noteThreadChange }, "target", 40);
             }
 
             public void SetupNoteReattachedChange(string threadId, string verseRef)
@@ -2085,6 +2096,14 @@ namespace SIL.XForge.Scripture.Services
             private static string GetBookText(string paratextId, string bookId, int version)
             {
                 return $"<usx version=\"2.5\"><book code=\"{bookId}\" style=\"id\">{paratextId}</book><content version=\"{version}\"/></usx>";
+            }
+
+            private void SetupNoteThreadChanges(NoteThreadChange[] noteThreadChanges, string projectId, int bookNum)
+            {
+                ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), projectId, bookNum,
+                    Arg.Any<IEnumerable<IDocument<NoteThread>>>(), Arg.Any<Dictionary<int, ChapterDelta>>(),
+                    Arg.Any<Dictionary<string, ParatextUserProfile>>())
+                    .Returns(noteThreadChanges);
             }
 
             private Note GetNote(string threadId, string noteId, string user, string content, ChangeType type, string tagIcon = null)
