@@ -14,7 +14,9 @@ namespace SIL.XForge.Scripture.Models
         public CheckingConfig CheckingConfig { get; set; } = new CheckingConfig();
         public List<TextInfo> Texts { get; set; } = new List<TextInfo>();
         public Sync Sync { get; set; } = new Sync();
-        // Paratext users on this SF project that are associated with a project component (e.g. a note)
+        /// <summary>
+        /// Paratext users on this SF project that are associated with a project component (e.g. a note)
+        /// </summary>
         public List<ParatextUserProfile> ParatextUsers { get; set; } = new List<ParatextUserProfile>();
         public bool Editable { get; set; } = true;
     }

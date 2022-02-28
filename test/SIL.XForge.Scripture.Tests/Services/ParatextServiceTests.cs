@@ -709,7 +709,7 @@ namespace SIL.XForge.Scripture.Services
                 new ThreadComponents { threadNum = 2, noteCount = 1, username = env.Username01, isDeleted = true },
                 new ThreadComponents { threadNum = 3, noteCount = 1, username = env.Username02 },
                 new ThreadComponents { threadNum = 4, noteCount = 1, username = env.Username01 },
-                new ThreadComponents { threadNum = 6, noteCount = 1, username = env.Username01, isConflict = true },
+                new ThreadComponents { threadNum = 6, noteCount = 1, isConflict = true },
                 new ThreadComponents { threadNum = 7, noteCount = 2, username = env.Username01 },
                 new ThreadComponents { threadNum = 8, noteCount = 1, username = env.Username01 },
                 new ThreadComponents { threadNum = 9, noteCount = 3, username = env.Username01 }
@@ -772,7 +772,7 @@ namespace SIL.XForge.Scripture.Services
                 NoteThreadChange change06 = changes.Where(c => c.ThreadId == "thread6").Single();
                 Assert.That(change06.ThreadChangeToString(),
                     Is.EqualTo("Context before Text selected thread6 context after.-Start:15-Length:21-MAT 1:6-conflict1"));
-                string expected6 = "thread6-syncuser01-user02-<p>thread6 note 1.</p>-conflict1";
+                string expected6 = "thread6--user02-<p>thread6 note 1.</p>-conflict1";
                 Assert.That(change06.NotesAdded[0].NoteToString(), Is.EqualTo(expected6));
 
                 // Added comment on existing thread
@@ -786,6 +786,9 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(change08.NotesUpdated[0].TagIcon, Is.EqualTo(null));
                 Assert.That(change08.NotesUpdated[1].DataId, Is.EqualTo("n3onthread9"));
                 Assert.That(change08.NotesUpdated[1].TagIcon, Is.EqualTo(null));
+
+                // User 02 is added to the list of Paratext Users
+                Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { env.Username01, env.Username02 }));
             }
         }
 
@@ -923,7 +926,8 @@ namespace SIL.XForge.Scripture.Services
                 new ThreadComponents { threadNum = 5, noteCount = 1, username = env.Username01, notes = threadNotes5 },
                 new ThreadComponents { threadNum = 6, noteCount = 1, username = env.Username01 },
                 new ThreadComponents { threadNum = 7, noteCount = 1, username = env.Username01, notes = threadNotes7 },
-                new ThreadComponents { threadNum = 8, noteCount = 1, username = env.Username01 }
+                new ThreadComponents { threadNum = 8, noteCount = 1, username = env.Username01 },
+                new ThreadComponents { threadNum = 9, noteCount = 1 }
             });
 
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
@@ -936,7 +940,7 @@ namespace SIL.XForge.Scripture.Services
                 IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret, ptProjectId, 40,
                     noteThreadDocs, deltas, ptProjectUsers);
 
-                Assert.That(changes.Count, Is.EqualTo(7));
+                Assert.That(changes.Count, Is.EqualTo(8));
                 Assert.That(changes.Any(c => c.ThreadId == "thread6"), Is.False);
                 // Note added and user assigned
                 NoteThreadChange change1 = changes.Single(c => c.ThreadId == "thread1");
@@ -982,6 +986,9 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(change8.Assignment, Is.EqualTo(unassignedUserString));
                 Assert.That(change8.NotesUpdated.Count, Is.EqualTo(1));
                 Assert.That(change8.NotesUpdated[0].Assignment, Is.EqualTo(unassignedUserString));
+
+                // User 02 is added to the list of Paratext Users
+                Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { env.Username01, env.Username02 }));
             }
         }
 
@@ -2327,7 +2334,7 @@ namespace SIL.XForge.Scripture.Services
                 foreach (ThreadComponents comp in components)
                 {
                     string threadId = "thread" + comp.threadNum;
-                    var associatedPtUser = new SFParatextUser(comp.username);
+                    var associatedPtUser = new SFParatextUser(comp.username ?? "");
                     string before = ContextBefore;
                     string after = ContextAfter;
                     string text = "Text selected " + threadId;

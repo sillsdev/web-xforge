@@ -829,8 +829,9 @@ namespace SIL.XForge.Scripture.Services
                 foreach (Note added in change.NotesAdded)
                 {
                     string ownerRef = null;
-                    string username = _currentPtSyncUsers.Values
-                        .Single(u => u.OpaqueUserId == added.SyncUserRef).Username;
+                    string username = string.IsNullOrEmpty(added.SyncUserRef)
+                        ? null
+                        : _currentPtSyncUsers.Values.Single(u => u.OpaqueUserId == added.SyncUserRef).Username;
                     if (username != null)
                         usernamesToUserIds.TryGetValue(username, out ownerRef);
                     added.OwnerRef = string.IsNullOrEmpty(ownerRef) ? _userSecret.Id : ownerRef;

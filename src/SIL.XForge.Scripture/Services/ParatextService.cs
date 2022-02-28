@@ -1628,7 +1628,7 @@ namespace SIL.XForge.Scripture.Services
                 ExtUserId = comment.ExternalUser,
                 // The owner is unknown at this point and is determined when submitting the ops to the note thread docs
                 OwnerRef = "",
-                SyncUserRef = FindOrCreateParatextUser(comment.User, ptProjectUsers).OpaqueUserId,
+                SyncUserRef = FindOrCreateParatextUser(comment.User, ptProjectUsers)?.OpaqueUserId,
                 Content = comment.Contents?.InnerXml,
                 DateCreated = DateTime.Parse(comment.Date),
                 DateModified = DateTime.Parse(comment.Date),
@@ -1738,6 +1738,8 @@ namespace SIL.XForge.Scripture.Services
         private ParatextUserProfile FindOrCreateParatextUser(string paratextUsername,
             Dictionary<string, ParatextUserProfile> ptProjectUsers)
         {
+            if (string.IsNullOrEmpty(paratextUsername))
+                return null;
             if (!ptProjectUsers.TryGetValue(paratextUsername, out ParatextUserProfile ptProjectUser))
             {
                 ptProjectUser = new ParatextUserProfile
