@@ -26,7 +26,7 @@ import { NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { VERSE_REGEX } from '../utils';
 import { registerScripture } from './quill-scripture';
 import { Segment } from './segment';
-import { TextViewModel } from './text-view-model';
+import { EditorRange, TextViewModel } from './text-view-model';
 
 const EDITORS = new Set<Quill>();
 
@@ -484,7 +484,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return segments;
   }
 
-  /** Embeds an element, with the specified format, into the editor, at the editor position that corresponds to
+  /**
+   * Embeds an element, with the specified format, into the editor, at an editor position that corresponds to
    * the beginning of textAnchor.
    */
   embedElementInline(
@@ -540,19 +541,16 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       return;
     }
 
-    const embedInsertPos: number = this.viewModel.getEditorPositionPlusTextPosition(
+    const editorRange: EditorRange = this.viewModel.getEditorContentRange(
       editorPosOfSegmentToModify.index,
       startTextPosInVerse
     );
+    const embedInsertPos: number =
+      editorRange.startEditorPosition + editorRange.editorLength + editorRange.trailingEmbedCount;
 
     this.editor.insertEmbed(embedInsertPos, formatName, format, 'api');
-    const anchorEndPosition: number = startTextPosInVerse + textAnchor.length - 1;
-    const endPosition: number = this.viewModel.getEditorPositionPlusTextPosition(
-      editorPosOfSegmentToModify.index,
-      anchorEndPosition
-    );
-    // add one to include the embed to underline
-    const formatLength: number = endPosition - embedInsertPos + 1;
+    const textAnchorRange = this.viewModel.getEditorContentRange(embedInsertPos, textAnchor.length);
+    const formatLength: number = textAnchorRange.editorLength;
     this.editor.formatText(embedInsertPos, formatLength, 'text-anchor', 'true', 'api');
     this.updateSegment();
     return embedSegmentRef;
@@ -613,6 +611,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
   }
 
+  /**
+   * Remove embedded elements that are not part of the text data. This may be necessary to preserve the cursor
+   * location when switching between texts.
+   */
   removeEmbeddedElements(): void {
     if (this.editor == null) {
       return;
@@ -620,9 +622,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     let previousEmbedIndex = -1;
     const deleteDelta = new Delta();
     for (const embedIndex of this.viewModel.embeddedElements.values()) {
-      // retain elements other than notes between the previous and current embed
-      if (embedIndex > previousEmbedIndex + 1) {
-        deleteDelta.retain(embedIndex - (previousEmbedIndex + 1));
+      const lengthBetweenEmbeds: number = embedIndex - (previousEmbedIndex + 1);
+      if (lengthBetweenEmbeds > 0) {
+        // retain elements other than notes between the previous and current embed
+        deleteDelta.retain(lengthBetweenEmbeds);
       }
       deleteDelta.delete(1);
       previousEmbedIndex = embedIndex;

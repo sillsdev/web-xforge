@@ -505,11 +505,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     if (delta != null) {
-      // only recreate note embeds if the delta has productive edits
-      this.recreateDeletedNoteThreadEmbeds();
-      if (segment != null) {
-        this.subscribeClickEvents([segment.ref]);
-      }
+      // wait 20 ms so that note thread docs have time to receive the updated note positions
+      setTimeout(() => {
+        this.recreateDeletedNoteThreadEmbeds();
+        if (segment != null) {
+          this.subscribeClickEvents([segment.ref]);
+        }
+      }, 20);
     }
   }
 
