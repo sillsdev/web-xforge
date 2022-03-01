@@ -1227,8 +1227,8 @@ describe('EditorComponent', () => {
       env.wait();
 
       const note7Position = env.getNoteThreadEditorPosition('thread07');
-      const adjacentNoteLength = 1;
-      expect(note7Position).toEqual(env.component.target!.getSegmentRange('verse_1_4/p_1')!.index + adjacentNoteLength);
+      const note4EmbedLength = 1;
+      expect(note7Position).toEqual(env.component.target!.getSegmentRange('verse_1_4/p_1')!.index + note4EmbedLength);
       env.dispose();
     }));
 
@@ -1777,11 +1777,11 @@ describe('EditorComponent', () => {
       env.wait();
 
       const noteThread1Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
-      const noteThread3Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread04');
+      const noteThread4Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread04');
       const originalNoteThread1TextPos: TextAnchor = noteThread1Doc.data!.position;
-      const originalNoteThread3TextPos: TextAnchor = noteThread3Doc.data!.position;
+      const originalNoteThread4TextPos: TextAnchor = noteThread4Doc.data!.position;
       expect(originalNoteThread1TextPos).toEqual({ start: 8, length: 9 });
-      expect(originalNoteThread3TextPos).toEqual({ start: 20, length: 5 });
+      expect(originalNoteThread4TextPos).toEqual({ start: 20, length: 5 });
 
       // simulate text changes at current segment
       let notePosition: number = env.getNoteThreadEditorPosition('thread04');
@@ -1804,7 +1804,7 @@ describe('EditorComponent', () => {
       // SUT 1
       env.wait();
       expect(env.component.target!.getSegmentText('verse_1_3')).toEqual('target: chapter 1, v' + insert + 'erse 3.');
-      expect(noteThread3Doc.data!.position).toEqual(originalNoteThread3TextPos);
+      expect(noteThread4Doc.data!.position).toEqual(originalNoteThread4TextPos);
 
       // simulate text changes at a different segment
       notePosition = env.getNoteThreadEditorPosition('thread01');
@@ -1820,6 +1820,7 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.component.target!.getSegmentText('verse_1_1')).toEqual('target: c' + insert + 'hapter 1, verse 1.');
       expect(noteThread1Doc.data!.position).toEqual(originalNoteThread1TextPos);
+      expect(noteThread4Doc.data!.position).toEqual(originalNoteThread4TextPos);
 
       // simulate text changes just before a note embed
       remoteEditPositionAfterNote = -1;
