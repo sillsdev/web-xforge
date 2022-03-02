@@ -24,7 +24,7 @@ export class Paginator extends MatPaginatorIntl implements OnDestroy {
   }
 
   // It needs to be a member property, not a member function, in order to compile
-  getRangeLabel = (page: number, pageSize: number, length: number) => {
+  getRangeLabel = (page: number, pageSize: number, length: number): string => {
     // The logic for this function is copied from the docs and then modified for the sake of internationalization
     length = Math.max(length, 0);
     const startIndex = page * pageSize;

@@ -12,8 +12,11 @@ export function nameof<T>(name: Extract<keyof T, string>): string {
   return name;
 }
 
+/**
+ * Returns a valid 24 character `ObjectID` hex string.
+ */
 export function objectId(): string {
-  return ObjectID.generate();
+  return new ObjectID().toHexString();
 }
 
 export function supportedBrowser(): boolean {
@@ -48,8 +51,8 @@ export function getBrowserEngine(): string {
 
 export function issuesEmailTemplate(errorId?: string): string {
   const bowser = Bowser.getParser(window.navigator.userAgent);
-  const subject = translate('issue_email.subject', { siteName: environment.siteName });
-  const body = translate('issue_email.body', {
+  const subject: string = translate('issue_email.subject', { siteName: environment.siteName });
+  const body: string = translate('issue_email.body', {
     siteName: environment.siteName,
     siteVersion: versionData.version,
     browserName: bowser.getBrowserName(),

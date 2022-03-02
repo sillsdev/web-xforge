@@ -210,7 +210,7 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
     // some rejection objects from Auth0 use errorDescription or error_description for the rejection message
     const messageKeys = ['message', 'errorDescription', 'error_description'];
     const messageKey = messageKeys.find(key => typeof error[key] === 'string');
-    let message =
+    let message: string =
       messageKey == null
         ? translate('exception_handling_service.unknown_error')
         : (error[messageKey] as string).split('\n')[0];
