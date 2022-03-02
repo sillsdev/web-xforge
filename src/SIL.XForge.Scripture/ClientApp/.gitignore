@@ -33,10 +33,6 @@
 npm-debug.log
 testem.log
 
-# e2e
-/e2e/src/*.js
-/e2e/src/*.map
-
 # System Files
 .DS_Store
 Thumbs.db
