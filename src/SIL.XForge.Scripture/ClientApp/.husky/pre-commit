@@ -1,0 +1,5 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+cd src/SIL.XForge.Scripture/ClientApp
+npx --no-install lint-staged

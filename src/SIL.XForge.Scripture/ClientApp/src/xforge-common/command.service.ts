@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import uuidv1 from 'uuid/v1';
+import { v1 as uuidv1 } from 'uuid';
 import { BugsnagService } from './bugsnag.service';
 import { COMMAND_API_NAMESPACE } from './url-constants';
 
