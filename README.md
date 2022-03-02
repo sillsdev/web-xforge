@@ -43,8 +43,6 @@ The rest of this document discusses the development of the underlying software.
   - [Angular Unit Testing](#angular-unit-testing)
     - [Debugging Unit Tests](#debugging-unit-tests-1)
     - [Filtering Unit Tests](#filtering-unit-tests)
-  - [Angular End-To-End (E2E) Testing](#angular-end-to-end-e2e-testing)
-    - [Debugging E2E Tests](#debugging-e2e-tests)
   - [PWA Testing](#pwa-testing)
   - [Physical Device Testing](#physical-device-testing)
 - [Backend Development](#backend-development)
@@ -74,9 +72,9 @@ For error reporting:
 
 Status of builds from our continuous integration (CI) [server](https://build.palaso.org):
 
-| Site            | Master Unit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Master E2E          | QA                                                                                                                                                                                                                                                       | Live                                                                                                                                                                                                                                                |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Scripture Forge | [![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:SFv2_ScriptureForgeMasterUnitTests)/statusIcon>)](https://build.palaso.org/viewType.html?buildTypeId=SFv2_ScriptureForgeMasterUnitTests) [![Total alerts](https://img.shields.io/lgtm/alerts/g/sillsdev/web-xforge.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/sillsdev/web-xforge/alerts/) [![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/sillsdev/web-xforge.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/sillsdev/web-xforge/context:javascript) [![Codecov](https://img.shields.io/codecov/c/github/sillsdev/web-xforge.svg?style=flat)](https://app.codecov.io/gh/sillsdev/web-xforge) | not yet operational | ![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:xForgeDeploy_ScriptureForgeQa)/statusIcon>) ![Website](https://img.shields.io/website?down_message=offline&up_message=online&url=https%3A%2F%2Fqa.scriptureforge.org) | ![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:xForgeDeploy_ScriptureForgeLive)/statusIcon>) ![Website](https://img.shields.io/website?down_message=offline&up_message=online&url=https%3A%2F%2Fscriptureforge.org) |
+| Site            | Master Unit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | QA                                                                                                                                                                                                                                                       | Live                                                                                                                                                                                                                                                |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Scripture Forge | [![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:SFv2_ScriptureForgeMasterUnitTests)/statusIcon>)](https://build.palaso.org/viewType.html?buildTypeId=SFv2_ScriptureForgeMasterUnitTests) [![Total alerts](https://img.shields.io/lgtm/alerts/g/sillsdev/web-xforge.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/sillsdev/web-xforge/alerts/) [![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/sillsdev/web-xforge.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/sillsdev/web-xforge/context:javascript) [![Codecov](https://img.shields.io/codecov/c/github/sillsdev/web-xforge.svg?style=flat)](https://app.codecov.io/gh/sillsdev/web-xforge) | ![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:xForgeDeploy_ScriptureForgeQa)/statusIcon>) ![Website](https://img.shields.io/website?down_message=offline&up_message=online&url=https%3A%2F%2Fqa.scriptureforge.org) | ![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:xForgeDeploy_ScriptureForgeLive)/statusIcon>) ![Website](https://img.shields.io/website?down_message=offline&up_message=online&url=https%3A%2F%2Fscriptureforge.org) |
 
 Successful builds from our CI server deploy to:
 
@@ -403,49 +401,6 @@ by clicking the `Restart` button in the Debug toolbar.
 To run (or not to run) specific tests or fixtures, you can use the prefixes `f`ocus and e`x`clude, as in `fdescribe` or `fit` to run only the specified functions, or `xdescribe` and `xit` to skip running the specified functions (but all functions will still be built). To skip building extra tests, use the `--include` option when running `ng test`. See the [Angular CLI docs](https://angular.io/cli/test) for more info.
 
 See documentation for [running tests](https://github.com/angular/angular-cli/wiki/test) and [writing tests](https://angular.io/guide/testing#testing).
-
-### Angular End-To-End (E2E) Testing
-
-To run E2E tests, make sure you are serving the app. From the repo root
-
-```bash
-cd src/SIL.XForge.Scripture/
-dotnet run --environment "Testing"
-```
-
-In another terminal, from the repo root
-
-```bash
-cd src/SIL.XForge.Scripture/ClientApp/
-./rune2e.sh
-```
-
-#### Debugging E2E Tests
-
-To debug E2E tests, from the repo root
-
-```bash
-cd src/SIL.XForge.Scripture/
-dotnet run --environment "Testing"
-```
-
-In another terminal, from the repo root
-
-```bash
-cd src/SIL.XForge.Scripture/ClientApp/
-ng serve
-```
-
-Add a new line of `debugger;` to the `*.e2e-spec.ts` where you want it to break.
-
-In another terminal, from the repo root
-
-```bash
-cd src/SIL.XForge.Scripture/ClientApp/
-./rune2e.sh debug
-```
-
-Open `chrome://inspect/#devices` in Chromium and click **inspect**. This opens an instance of DevTools and immediately breaks the code at the top of the ng module. Click the continue button (or press F8) in your debugger to run your e2e tests, and hit any `debugger` statements in your code. Close the DevTools window to finish the tests.
 
 ### PWA Testing
 
