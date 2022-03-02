@@ -1,0 +1,12 @@
+// This script drops any database not in the whitelist
+const dbWhitelist = ['admin', 'config', 'local', 'sf_jobs', 'xforge', 'xforge_machine'];
+
+const dbs = db.adminCommand({ listDatabases: 1 }).databases;
+const dropDBs = dbs.filter(db => !dbWhitelist.includes(db.name));
+console.log('Dropping dbs:');
+dropDBs.forEach(dropDB => {
+  console.log(` - ${dropDB.name}`);
+  use(dropDB.name);
+  db.dropDatabase();
+});
+dbs;
