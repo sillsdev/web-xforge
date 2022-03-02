@@ -136,7 +136,7 @@ describe('CheckingComponent', () => {
       FontSizeComponent
     ],
     imports: [
-      AngularSplitModule.forRoot(),
+      AngularSplitModule,
       ngfModule,
       NoopAnimationsModule,
       RouterTestingModule.withRoutes(ROUTES),
