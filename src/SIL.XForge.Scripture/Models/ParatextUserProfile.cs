@@ -1,13 +1,16 @@
 namespace SIL.XForge.Scripture.Models
 {
     /// <summary>
-    /// The paratext users on a project including users that do not have an sf account.
+    /// Describes a Paratext user on a project (those with and without an SF account)
     /// </summary>
     public class ParatextUserProfile
     {
+        // The user's Paratext username
         public string Username { get; set; }
-        // A unique id that can be used to associate an project component (e.g. a note) to this paratext user
+        /// <summary>
+        /// A unique id that can be used to associate a project component (e.g. a note) to this paratext user
+        /// </summary>
         public string OpaqueUserId { get; set; }
-        public string SfUserId { get; set; }
+        public string SFUserId { get; set; }
     }
 }

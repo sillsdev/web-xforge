@@ -20,9 +20,7 @@
     <div class="notes">
       <div *ngFor="let note of notes" class="note">
         <div class="content">
-          <div *ngIf="note.assignedNoteUserRef != null" class="assigned-user">
-            >{{ getAssignedUserString(note.assignedNoteUserRef) }}
-          </div>
+          <div *ngIf="note.assignment != null" class="assigned-user">>{{ getAssignedUserString(note.assignment) }}</div>
           <div *ngIf="note.reattached" class="verse-reattached">{{ reattachedVerse(note) }}</div>
           <div *ngIf="note.reattached" class="text" [innerHTML]="reattachedText(note)"></div>
           <div class="note-content" [innerHTML]="parseNote(note.content)"></div>

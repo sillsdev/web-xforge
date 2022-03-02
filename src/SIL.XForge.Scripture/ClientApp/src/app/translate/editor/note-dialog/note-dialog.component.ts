@@ -55,7 +55,7 @@ export class NoteDialogComponent implements OnInit {
   }
 
   get noteThreadAssignedUserRef(): string | undefined {
-    return this.threadDoc?.data?.assignedNoteUserRef;
+    return this.threadDoc?.data?.assignment;
   }
 
   get flagIcon(): string {

@@ -341,7 +341,7 @@ namespace SIL.XForge.Scripture.Services
             Dictionary<int, IReadOnlyList<IDocument<Question>>> questionDocsByBook, HashSet<int> targetBooks,
             HashSet<int> sourceBooks, CancellationToken token)
         {
-            Dictionary<string, string> usernamesToUserIds = await GetParatextUsernameToUserIdsAsync(token);
+            Dictionary<string, string> ptUsernamesToSFUserIds = await GetPTUsernameToSFUserIdsAsync(token);
             // update source and target real-time docs
             foreach (int bookNum in targetBooks)
             {
@@ -374,7 +374,7 @@ namespace SIL.XForge.Scripture.Services
                     await FetchNoteThreadDocsAsync(text.BookNum);
                 Dictionary<int, ChapterDelta> chapterDeltas = GetDeltasByChapter(text, targetParatextId);
 
-                await UpdateNoteThreadDocsAsync(text, noteThreadDocs, token, chapterDeltas, usernamesToUserIds);
+                await UpdateNoteThreadDocsAsync(text, noteThreadDocs, token, chapterDeltas, ptUsernamesToSFUserIds);
 
                 // update project metadata
                 await _projectDoc.SubmitJson0OpAsync(op =>
@@ -668,7 +668,7 @@ namespace SIL.XForge.Scripture.Services
                             TagIcon = change.TagIcon,
                             Position = change.Position,
                             Status = change.Status,
-                            AssignedNoteUserRef = change.AssignedNoteUserRef
+                            Assignment = change.AssignedNoteUserRef
                         });
                         await SubmitChangesOnNoteThreadDocAsync(doc, change, usernamesToUserIds);
                     }
@@ -782,8 +782,8 @@ namespace SIL.XForge.Scripture.Services
                         op.Set(td => td.Status, change.Status);
                     if (threadDoc.Data.TagIcon != change.TagIcon)
                         op.Set(td => td.TagIcon, change.TagIcon);
-                    if (threadDoc.Data.AssignedNoteUserRef != change.AssignedNoteUserRef)
-                        op.Set(td => td.AssignedNoteUserRef, change.AssignedNoteUserRef);
+                    if (threadDoc.Data.Assignment != change.AssignedNoteUserRef)
+                        op.Set(td => td.Assignment, change.AssignedNoteUserRef);
                 }
                 // Update content for updated notes
                 foreach (Note updated in change.NotesUpdated)
@@ -797,8 +797,8 @@ namespace SIL.XForge.Scripture.Services
                             op.Set(td => td.Notes[index].Status, updated.Status);
                         if (threadDoc.Data.Notes[index].TagIcon != updated.TagIcon)
                             op.Set(td => td.Notes[index].TagIcon, updated.TagIcon);
-                        if (threadDoc.Data.Notes[index].AssignedNoteUserRef != updated.AssignedNoteUserRef)
-                            op.Set(td => td.Notes[index].AssignedNoteUserRef, updated.AssignedNoteUserRef);
+                        if (threadDoc.Data.Notes[index].Assignment != updated.Assignment)
+                            op.Set(td => td.Notes[index].Assignment, updated.Assignment);
                     }
                     else
                     {
@@ -1050,7 +1050,7 @@ namespace SIL.XForge.Scripture.Services
                 await _projectService.RemoveUserAsync(_userSecret.Id, _projectDoc.Id, userId);
 
 
-            Dictionary<string, string> usernamesToUserIds = await GetParatextUsernameToUserIdsAsync(token);
+            Dictionary<string, string> ptUsernamesToSFUserIds = await GetPTUsernameToSFUserIdsAsync(token);
             await _projectDoc.SubmitJson0OpAsync(op =>
             {
                 foreach (ParatextUserProfile activePtSyncUser in _currentPtSyncUsers.Values)
@@ -1059,15 +1059,15 @@ namespace SIL.XForge.Scripture.Services
                         _projectDoc.Data.ParatextUsers.SingleOrDefault(u => u.Username == activePtSyncUser.Username);
                     if (existingUser == null)
                     {
-                        if (usernamesToUserIds.TryGetValue(activePtSyncUser.Username, out string userId))
-                            activePtSyncUser.SfUserId = userId;
+                        if (ptUsernamesToSFUserIds.TryGetValue(activePtSyncUser.Username, out string userId))
+                            activePtSyncUser.SFUserId = userId;
                         op.Add(pd => pd.ParatextUsers, activePtSyncUser);
                     }
-                    else if (existingUser.SfUserId == null &&
-                        usernamesToUserIds.TryGetValue(existingUser.Username, out string userId))
+                    else if (existingUser.SFUserId == null &&
+                        ptUsernamesToSFUserIds.TryGetValue(existingUser.Username, out string userId))
                     {
                         int index = _projectDoc.Data.ParatextUsers.FindIndex(u => u.Username == activePtSyncUser.Username);
-                        op.Set(pd => pd.ParatextUsers[index].SfUserId, userId);
+                        op.Set(pd => pd.ParatextUsers[index].SFUserId, userId);
                     }
                 }
             });
@@ -1105,7 +1105,7 @@ namespace SIL.XForge.Scripture.Services
             Log($"CompleteSync: Finished. Sync was {(successful ? "successful" : "unsuccessful")}.");
         }
 
-        private async Task<Dictionary<string, string>> GetParatextUsernameToUserIdsAsync(CancellationToken token)
+        private async Task<Dictionary<string, string>> GetPTUsernameToSFUserIdsAsync(CancellationToken token)
         {
             IReadOnlyDictionary<string, string> idsToUsernames =
                 await _paratextService.GetParatextUsernameMappingAsync(_userSecret, _projectDoc.Data, token);

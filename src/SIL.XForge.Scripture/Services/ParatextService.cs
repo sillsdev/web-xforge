@@ -793,7 +793,7 @@ namespace SIL.XForge.Scripture.Services
                     threadChange.Status = existingThread.Status.InternalValue;
                     threadChange.ThreadUpdated = true;
                 }
-                if (GetAssignedUserRef(existingThread.AssignedUser, ptProjectUsers) != threadDoc.Data.AssignedNoteUserRef)
+                if (GetAssignedUserRef(existingThread.AssignedUser, ptProjectUsers) != threadDoc.Data.Assignment)
                 {
                     threadChange.AssignedNoteUserRef = GetAssignedUserRef(existingThread.AssignedUser, ptProjectUsers);
                     threadChange.ThreadUpdated = true;
@@ -814,7 +814,6 @@ namespace SIL.XForge.Scripture.Services
                     CommentTag commentIconTag = GetCommentTag(existingThread, comment, commentTags);
                     threadChange.AddChange(CreateNoteFromComment(
                         _guidService.NewObjectId(), comment, commentIconTag, ptProjectUsers), ChangeType.Added);
-                    Console.WriteLine($"created note: {threadChange.NotesAdded[0].DataId}");
                 }
                 if (existingThread.Comments.Count > 0)
                 {
@@ -1543,7 +1542,7 @@ namespace SIL.XForge.Scripture.Services
             bool statusChanged = comment.Status.InternalValue != note.Status;
             bool contentChanged = comment.Contents?.InnerXml != note.Content;
             bool tagChanged = commentTag?.Icon != note.TagIcon;
-            bool assignedUserChanged = GetAssignedUserRef(comment.AssignedUser, ptProjectUsers) != note.AssignedNoteUserRef;
+            bool assignedUserChanged = GetAssignedUserRef(comment.AssignedUser, ptProjectUsers) != note.Assignment;
             if (contentChanged || statusChanged || tagChanged || assignedUserChanged)
                 return ChangeType.Updated;
             return ChangeType.None;
@@ -1586,20 +1585,20 @@ namespace SIL.XForge.Scripture.Services
                 Status = comment.Status.InternalValue,
                 TagIcon = commentTag?.Icon,
                 Reattached = comment.Reattached,
-                AssignedNoteUserRef = GetAssignedUserRef(comment.AssignedUser, ptProjectUsers)
+                Assignment = GetAssignedUserRef(comment.AssignedUser, ptProjectUsers)
             };
         }
 
-        private string GetAssignedUserRef(string assignedUser, Dictionary<string, ParatextUserProfile> ptProjectUsers)
+        private string GetAssignedUserRef(string assignedPTUser, Dictionary<string, ParatextUserProfile> ptProjectUsers)
         {
-            switch (assignedUser)
+            switch (assignedPTUser)
             {
                 case Paratext.Data.ProjectComments.CommentThread.teamUser:
                 case Paratext.Data.ProjectComments.CommentThread.unassignedUser:
                 case null:
-                    return assignedUser;
+                    return assignedPTUser;
             }
-            return FindOrCreateParatextUser(assignedUser, ptProjectUsers).OpaqueUserId;
+            return FindOrCreateParatextUser(assignedPTUser, ptProjectUsers).OpaqueUserId;
         }
 
         private CommentTag GetCommentTag(Paratext.Data.ProjectComments.CommentThread thread,

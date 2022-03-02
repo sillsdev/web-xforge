@@ -292,7 +292,7 @@ class TestEnvironment {
       tagIcon: 'flag02',
       verseRef: { bookNum: 40, chapterNum: 1, verseNum: 7 },
       status: NoteStatus.Todo,
-      assignedNoteUserRef: AssignedUsers.TeamUser,
+      assignment: AssignedUsers.TeamUser,
       notes: [
         {
           dataId: 'note01',
@@ -305,7 +305,7 @@ class TestEnvironment {
           tagIcon: 'flag02',
           dateCreated: '',
           dateModified: '',
-          assignedNoteUserRef: TestEnvironment.paratextUsers.find(u => u.sfUserId === 'user01')!.opaqueUserId
+          assignment: TestEnvironment.paratextUsers.find(u => u.sfUserId === 'user01')!.opaqueUserId
         },
         {
           dataId: 'note02',
@@ -318,7 +318,7 @@ class TestEnvironment {
           tagIcon: 'flag02',
           dateCreated: '',
           dateModified: '',
-          assignedNoteUserRef: AssignedUsers.TeamUser
+          assignment: AssignedUsers.TeamUser
         },
         {
           dataId: 'note03',

@@ -2816,7 +2816,7 @@ class TestEnvironment {
         deleted: false,
         status: NoteStatus.Todo,
         tagIcon: `01flag${i + 1}`,
-        assignedNoteUserRef: assignedUser?.opaqueUserId
+        assignment: assignedUser?.opaqueUserId
       };
       notes.push(note);
     }
@@ -2836,7 +2836,7 @@ class TestEnvironment {
         originalContextAfter: ', verse 1.',
         position,
         status: status,
-        assignedNoteUserRef: assignedUser?.opaqueUserId
+        assignment: assignedUser?.opaqueUserId
       }
     });
   }

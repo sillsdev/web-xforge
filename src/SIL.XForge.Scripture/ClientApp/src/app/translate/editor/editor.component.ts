@@ -1332,14 +1332,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private isAssignedToOtherUser(thread: NoteThreadDoc): boolean {
-    switch (thread.data?.assignedNoteUserRef) {
+    switch (thread.data?.assignment) {
       case AssignedUsers.TeamUser:
       case AssignedUsers.Unspecified:
       case undefined:
         return false;
     }
     const ptUser: ParatextUserProfile | undefined = this.paratextUsers?.find(
-      user => user.opaqueUserId === thread.data?.assignedNoteUserRef
+      user => user.opaqueUserId === thread.data?.assignment
     );
     return ptUser?.sfUserId !== this.userService.currentUserId;
   }

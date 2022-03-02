@@ -257,7 +257,6 @@ namespace SIL.XForge.Scripture.Services
         private ParatextUserProfile FindOrCreateParatextUser(string paratextUsername,
             Dictionary<string, ParatextUserProfile> ptProjectUsers)
         {
-            Console.WriteLine($"returning (note mapper) for: {paratextUsername}");
             if (!ptProjectUsers.TryGetValue(paratextUsername, out ParatextUserProfile ptProjectUser))
             {
                 // the PT user has never been associated with a comment, so generate a new sync user id and add it

@@ -1158,11 +1158,11 @@ namespace SIL.XForge.Scripture.Services
                 "Context before Scripture text in project context after-Start:0-Length:0-MAT 1:1-" + expectedThreadTagIcon;
             Assert.That(thread01.NoteThreadToString(), Is.EqualTo(threadExpected));
             Assert.That(thread01.TagIcon, Is.EqualTo(expectedThreadTagIcon));
-            Assert.That(thread01.AssignedNoteUserRef, Is.EqualTo(CommentThread.teamUser));
+            Assert.That(thread01.Assignment, Is.EqualTo(CommentThread.teamUser));
             env.DeltaUsxMapper.ReceivedWithAnyArgs(2).ToChapterDeltas(default);
             Assert.That(thread01.Notes.Count, Is.EqualTo(3));
             Assert.That(thread01.Notes[0].Content, Is.EqualTo("thread01 updated."));
-            Assert.That(thread01.Notes[0].AssignedNoteUserRef, Is.EqualTo(CommentThread.teamUser));
+            Assert.That(thread01.Notes[0].Assignment, Is.EqualTo(CommentThread.teamUser));
             Assert.That(thread01.Notes[1].Deleted, Is.True);
             Assert.That(thread01.Notes[2].Content, Is.EqualTo("thread01 added."));
             string expected = "thread01-syncuser03--thread01 added.-" + expectedNoteTagIcon;
@@ -1174,8 +1174,8 @@ namespace SIL.XForge.Scripture.Services
             // User 3 was added as a sync user
             Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(
                 new[] { "User 1", "User 2", "User 3" }));
-            Assert.That(project.ParatextUsers.Single(u => u.Username == "User 1").SfUserId, Is.EqualTo("user01"));
-            Assert.That(project.ParatextUsers.Single(u => u.Username == "User 3").SfUserId, Is.EqualTo("user03"));
+            Assert.That(project.ParatextUsers.Single(u => u.Username == "User 1").SFUserId, Is.EqualTo("user01"));
+            Assert.That(project.ParatextUsers.Single(u => u.Username == "User 3").SFUserId, Is.EqualTo("user03"));
             Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
         }
@@ -1221,9 +1221,9 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(thread02.Notes.Count, Is.EqualTo(1));
             Assert.That(thread02.Notes[0].Content, Is.EqualTo("New thread02 added."));
             Assert.That(thread02.Notes[0].OwnerRef, Is.EqualTo("user01"));
-            Assert.That(thread02.Notes[0].AssignedNoteUserRef, Is.EqualTo(CommentThread.teamUser));
+            Assert.That(thread02.Notes[0].Assignment, Is.EqualTo(CommentThread.teamUser));
             Assert.That(thread02.Status, Is.EqualTo(NoteStatus.Todo.InternalValue));
-            Assert.That(thread02.AssignedNoteUserRef, Is.EqualTo(CommentThread.teamUser));
+            Assert.That(thread02.Assignment, Is.EqualTo(CommentThread.teamUser));
             SFProject project = env.GetProject();
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
         }
@@ -2040,7 +2040,7 @@ namespace SIL.XForge.Scripture.Services
                     DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc),
                     Deleted = type == ChangeType.Deleted,
                     TagIcon = tagIcon ?? "icon1",
-                    AssignedNoteUserRef = CommentThread.teamUser
+                    Assignment = CommentThread.teamUser
                 };
             }
         }

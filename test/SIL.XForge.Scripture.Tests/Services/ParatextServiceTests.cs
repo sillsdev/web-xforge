@@ -954,14 +954,14 @@ namespace SIL.XForge.Scripture.Services
                 NoteThreadChange change3 = changes.Single(c => c.ThreadId == "thread3");
                 Assert.That(change3.AssignedNoteUserRef, Is.EqualTo(ptUser02.OpaqueUserId));
                 Assert.That(change3.NotesUpdated.Count, Is.EqualTo(1));
-                Assert.That(change3.NotesUpdated[0].AssignedNoteUserRef, Is.EqualTo(ptUser02.OpaqueUserId));
+                Assert.That(change3.NotesUpdated[0].Assignment, Is.EqualTo(ptUser02.OpaqueUserId));
 
                 // Note updated with team assigned
                 NoteThreadChange change4 = changes.Single(c => c.ThreadId == "thread4");
                 Assert.That(change4.AssignedNoteUserRef,
                     Is.EqualTo(Paratext.Data.ProjectComments.CommentThread.teamUser));
                 Assert.That(change4.NotesUpdated.Count, Is.EqualTo(1));
-                Assert.That(change4.NotesUpdated[0].AssignedNoteUserRef,
+                Assert.That(change4.NotesUpdated[0].Assignment,
                     Is.EqualTo(Paratext.Data.ProjectComments.CommentThread.teamUser));
 
                 // Note tagsAdded updated but assigned user unchanged
@@ -969,19 +969,19 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(change5.TagIcon, Is.EqualTo("icon2"));
                 Assert.That(change5.AssignedNoteUserRef, Is.Null);
                 Assert.That(change5.NotesUpdated.Count, Is.EqualTo(1));
-                Assert.That(change5.NotesUpdated[0].AssignedNoteUserRef, Is.EqualTo(unassignedUserString));
+                Assert.That(change5.NotesUpdated[0].Assignment, Is.EqualTo(unassignedUserString));
 
                 // Note assigned to user 02 updated to null
                 NoteThreadChange change7 = changes.Single(c => c.ThreadId == "thread7");
                 Assert.That(change7.AssignedNoteUserRef, Is.EqualTo(unassignedUserString));
                 Assert.That(change7.NotesUpdated.Count, Is.EqualTo(1));
-                Assert.That(change7.NotesUpdated[0].AssignedNoteUserRef, Is.Null);
+                Assert.That(change7.NotesUpdated[0].Assignment, Is.Null);
 
                 // Note assigned to user 02 is unassigned
                 NoteThreadChange change8 = changes.Single(c => c.ThreadId == "thread8");
                 Assert.That(change8.AssignedNoteUserRef, Is.EqualTo(unassignedUserString));
                 Assert.That(change8.NotesUpdated.Count, Is.EqualTo(1));
-                Assert.That(change8.NotesUpdated[0].AssignedNoteUserRef, Is.EqualTo(unassignedUserString));
+                Assert.That(change8.NotesUpdated[0].Assignment, Is.EqualTo(unassignedUserString));
             }
         }
 
@@ -2137,7 +2137,7 @@ namespace SIL.XForge.Scripture.Services
                         OriginalContextAfter = comp.appliesToVerse ? "" : ContextAfter,
                         Status = NoteStatus.Todo.InternalValue,
                         TagIcon = threadIcon,
-                        AssignedNoteUserRef = comp.notes == null
+                        Assignment = comp.notes == null
                             ? Paratext.Data.ProjectComments.CommentThread.unassignedUser
                             : comp.notes[comp.notes.Count() - 1].assignedPTUser
                     };
@@ -2164,7 +2164,7 @@ namespace SIL.XForge.Scripture.Services
                             TagIcon = $"icon{noteComponent.tagsAdded[0]}",
                             Deleted = comp.isDeleted,
                             Status = noteComponent.status.InternalValue,
-                            AssignedNoteUserRef = noteComponent.assignedPTUser
+                            Assignment = noteComponent.assignedPTUser
                         });
                     }
                     if (comp.reattachedVerseStr != null)
