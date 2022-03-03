@@ -942,23 +942,23 @@ namespace SIL.XForge.Scripture.Services
                 NoteThreadChange change1 = changes.Single(c => c.ThreadId == "thread1");
                 // User 2 is added to ptProjectUsers
                 Assert.That(ptProjectUsers.TryGetValue(env.Username02, out ParatextUserProfile ptUser02), Is.True);
-                Assert.That(change1.AssignedNoteUserRef, Is.EqualTo(ptUser02.OpaqueUserId));
+                Assert.That(change1.Assignment, Is.EqualTo(ptUser02.OpaqueUserId));
                 Assert.That(change1.NotesAdded.Count, Is.EqualTo(1));
 
                 // Note thread added and user assigned
                 NoteThreadChange change2 = changes.Single(c => c.ThreadId == "thread2");
-                Assert.That(change2.AssignedNoteUserRef, Is.EqualTo(ptUser02.OpaqueUserId));
+                Assert.That(change2.Assignment, Is.EqualTo(ptUser02.OpaqueUserId));
                 Assert.That(change2.NotesAdded.Count, Is.EqualTo(1));
 
                 // Note updated with new user assigned
                 NoteThreadChange change3 = changes.Single(c => c.ThreadId == "thread3");
-                Assert.That(change3.AssignedNoteUserRef, Is.EqualTo(ptUser02.OpaqueUserId));
+                Assert.That(change3.Assignment, Is.EqualTo(ptUser02.OpaqueUserId));
                 Assert.That(change3.NotesUpdated.Count, Is.EqualTo(1));
                 Assert.That(change3.NotesUpdated[0].Assignment, Is.EqualTo(ptUser02.OpaqueUserId));
 
                 // Note updated with team assigned
                 NoteThreadChange change4 = changes.Single(c => c.ThreadId == "thread4");
-                Assert.That(change4.AssignedNoteUserRef,
+                Assert.That(change4.Assignment,
                     Is.EqualTo(Paratext.Data.ProjectComments.CommentThread.teamUser));
                 Assert.That(change4.NotesUpdated.Count, Is.EqualTo(1));
                 Assert.That(change4.NotesUpdated[0].Assignment,
@@ -967,19 +967,19 @@ namespace SIL.XForge.Scripture.Services
                 // Note tagsAdded updated but assigned user unchanged
                 NoteThreadChange change5 = changes.Single(c => c.ThreadId == "thread5");
                 Assert.That(change5.TagIcon, Is.EqualTo("icon2"));
-                Assert.That(change5.AssignedNoteUserRef, Is.Null);
+                Assert.That(change5.Assignment, Is.Null);
                 Assert.That(change5.NotesUpdated.Count, Is.EqualTo(1));
                 Assert.That(change5.NotesUpdated[0].Assignment, Is.EqualTo(unassignedUserString));
 
                 // Note assigned to user 02 updated to null
                 NoteThreadChange change7 = changes.Single(c => c.ThreadId == "thread7");
-                Assert.That(change7.AssignedNoteUserRef, Is.EqualTo(unassignedUserString));
+                Assert.That(change7.Assignment, Is.EqualTo(unassignedUserString));
                 Assert.That(change7.NotesUpdated.Count, Is.EqualTo(1));
                 Assert.That(change7.NotesUpdated[0].Assignment, Is.Null);
 
                 // Note assigned to user 02 is unassigned
                 NoteThreadChange change8 = changes.Single(c => c.ThreadId == "thread8");
-                Assert.That(change8.AssignedNoteUserRef, Is.EqualTo(unassignedUserString));
+                Assert.That(change8.Assignment, Is.EqualTo(unassignedUserString));
                 Assert.That(change8.NotesUpdated.Count, Is.EqualTo(1));
                 Assert.That(change8.NotesUpdated[0].Assignment, Is.EqualTo(unassignedUserString));
             }

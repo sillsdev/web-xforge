@@ -17,6 +17,7 @@ import { SF_PROJECT_MIGRATIONS } from './sf-project-migrations';
 
 const SF_PROJECT_PROFILE_FIELDS: ShareDB.ProjectionFields = {
   name: true,
+  paratextId: true,
   userRoles: true,
   userPermissions: true,
   shortName: true,
@@ -24,7 +25,9 @@ const SF_PROJECT_PROFILE_FIELDS: ShareDB.ProjectionFields = {
   isRightToLeft: true,
   translateConfig: true,
   checkingConfig: true,
-  texts: true
+  texts: true,
+  syncDisabled: true,
+  sync: true
 };
 
 /**
@@ -42,6 +45,7 @@ export class SFProjectService extends ProjectService<SFProject> {
     const immutableProps = [
       this.pathTemplate(p => p.sync),
       this.pathTemplate(p => p.paratextId),
+      this.pathTemplate(p => p.paratextUsers),
       this.pathTemplate(p => p.texts),
       this.pathTemplate(p => p.translateConfig),
       this.pathTemplate(p => p.checkingConfig),

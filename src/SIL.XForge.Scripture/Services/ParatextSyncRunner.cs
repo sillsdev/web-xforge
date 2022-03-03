@@ -668,7 +668,7 @@ namespace SIL.XForge.Scripture.Services
                             TagIcon = change.TagIcon,
                             Position = change.Position,
                             Status = change.Status,
-                            Assignment = change.AssignedNoteUserRef
+                            Assignment = change.Assignment
                         });
                         await SubmitChangesOnNoteThreadDocAsync(doc, change, usernamesToUserIds);
                     }
@@ -782,8 +782,8 @@ namespace SIL.XForge.Scripture.Services
                         op.Set(td => td.Status, change.Status);
                     if (threadDoc.Data.TagIcon != change.TagIcon)
                         op.Set(td => td.TagIcon, change.TagIcon);
-                    if (threadDoc.Data.Assignment != change.AssignedNoteUserRef)
-                        op.Set(td => td.Assignment, change.AssignedNoteUserRef);
+                    if (threadDoc.Data.Assignment != change.Assignment)
+                        op.Set(td => td.Assignment, change.Assignment);
                 }
                 // Update content for updated notes
                 foreach (Note updated in change.NotesUpdated)

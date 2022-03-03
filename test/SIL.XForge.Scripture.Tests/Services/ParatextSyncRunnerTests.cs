@@ -1821,7 +1821,7 @@ namespace SIL.XForge.Scripture.Services
                         "Context before ", " context after", NoteStatus.Todo.InternalValue, "tag02");
                     noteThreadChange.ThreadUpdated = true;
                     noteThreadChange.Position = new TextAnchor { Start = 0, Length = 0 };
-                    noteThreadChange.AssignedNoteUserRef = CommentThread.teamUser;
+                    noteThreadChange.Assignment = CommentThread.teamUser;
                     noteThreadChange.AddChange(
                         GetNote(threadId, "n01", "syncuser01", $"{threadId} updated.", ChangeType.Updated), ChangeType.Updated);
                     noteThreadChange.AddChange(
@@ -1872,7 +1872,7 @@ namespace SIL.XForge.Scripture.Services
                 var noteThreadChange = new NoteThreadChange(threadId, verseRef, $"Scripture text in project",
                     "Context before ", " context after", NoteStatus.Todo.InternalValue, "icon1");
                 noteThreadChange.Position = new TextAnchor { Start = 0, Length = 0 };
-                noteThreadChange.AssignedNoteUserRef = CommentThread.teamUser;
+                noteThreadChange.Assignment = CommentThread.teamUser;
                 noteThreadChange.AddChange(
                     GetNote(threadId, "n01", syncUserId, $"New {threadId} added.", ChangeType.Added), ChangeType.Added);
                 ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,

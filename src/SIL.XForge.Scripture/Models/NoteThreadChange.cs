@@ -25,7 +25,7 @@ namespace SIL.XForge.Scripture.Models
         public TextAnchor Position { get; set; }
         public string TagIcon { get; set; }
         public string Status { get; set; }
-        public string AssignedNoteUserRef { get; set; }
+        public string Assignment { get; set; }
         /// <summary> True if the thread has been permanently removed. </summary>
         public bool ThreadRemoved { get; set; }
         public bool ThreadUpdated { get; set; }

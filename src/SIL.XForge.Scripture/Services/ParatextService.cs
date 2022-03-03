@@ -795,7 +795,7 @@ namespace SIL.XForge.Scripture.Services
                 }
                 if (GetAssignedUserRef(existingThread.AssignedUser, ptProjectUsers) != threadDoc.Data.Assignment)
                 {
-                    threadChange.AssignedNoteUserRef = GetAssignedUserRef(existingThread.AssignedUser, ptProjectUsers);
+                    threadChange.Assignment = GetAssignedUserRef(existingThread.AssignedUser, ptProjectUsers);
                     threadChange.ThreadUpdated = true;
                 }
                 CommentTag defaultThreadIconTag = GetCommentTag(existingThread, null, commentTags);
@@ -838,7 +838,7 @@ namespace SIL.XForge.Scripture.Services
                     initialTag.Icon);
                 newThread.Position = GetThreadTextAnchor(thread, chapterDeltas);
                 newThread.Status = thread.Status.InternalValue;
-                newThread.AssignedNoteUserRef = GetAssignedUserRef(thread.AssignedUser, ptProjectUsers);
+                newThread.Assignment = GetAssignedUserRef(thread.AssignedUser, ptProjectUsers);
                 foreach (var comm in thread.Comments)
                 {
                     CommentTag commentIconTag = GetCommentTag(thread, comm, commentTags);
