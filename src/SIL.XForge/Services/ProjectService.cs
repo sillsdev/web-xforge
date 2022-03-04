@@ -75,6 +75,21 @@ namespace SIL.XForge.Services
             }
         }
 
+        /// <summary>
+        /// Disassociate user projectUserId from project projectId. No permissions check is performed.
+        /// </summary>
+        public async Task RemoveUserWithoutPermissionsCheckAsync(string curUserId, string projectId, string projectUserId)
+        {
+            if (curUserId == null || projectId == null || projectUserId == null)
+            {
+                throw new ArgumentNullException();
+            }
+            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+            {
+                await RemoveUserCoreAsync(conn, curUserId, projectId, projectUserId);
+            }
+        }
+
         public async Task<string> GetProjectRoleAsync(string curUserId, string projectId)
         {
             TModel project;
