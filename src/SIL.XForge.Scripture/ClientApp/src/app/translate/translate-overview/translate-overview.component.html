@@ -41,13 +41,12 @@
     </mdc-card>
 
     <mdc-card *ngIf="translationSuggestionsEnabled && canEditTexts" class="engine-card">
-      <mdc-linear-progress
+      <mat-progress-bar
         id="training-progress"
-        [determinate]="trainingPercentage > 0"
-        [class.mdc-linear-progress--closed]="!isTraining"
-        [progress]="trainingPercentage"
-        [buffer]="1"
-      ></mdc-linear-progress>
+        [mode]="trainingPercentage > 0 ? 'determinate' : 'indeterminate'"
+        [class.mat-progress-bar--closed]="!isTraining"
+        [value]="trainingPercentage"
+      ></mat-progress-bar>
       <div class="engine-card-title" mdcHeadline6>{{ t("suggestion_engine") }}</div>
       <div class="engine-card-content">
         <div class="engine-card-quality">
