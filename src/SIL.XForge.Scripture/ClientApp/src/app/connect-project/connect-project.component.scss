@@ -66,15 +66,22 @@
       margin-top: 32px;
 
       .card-title {
-        margin: 8px 16px 0 16px;
+        margin-top: 16px;
       }
 
       .card-content {
         padding: 16px;
+        margin-bottom: 0;
       }
 
-      mdc-list-divider {
-        margin-left: 22px;
+      mat-checkbox {
+        padding-bottom: 12px;
+      }
+
+      mat-divider {
+        margin-left: 16px;
+        position: initial;
+        width: initial;
       }
     }
 
@@ -93,7 +100,6 @@
     }
 
     .helper-text {
-      color: var(--mdc-theme-text-hint-on-background);
       margin: 0;
       font-size: 14px;
     }
@@ -102,12 +108,6 @@
     mat-error {
       font-size: 14px;
       margin-top: 10px;
-    }
-
-    .invalid-feedback {
-      color: var(--mdc-theme-error);
-      font-size: 12px;
-      margin-left: 32px;
     }
   }
 }

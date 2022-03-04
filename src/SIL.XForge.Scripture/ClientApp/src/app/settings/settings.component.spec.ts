@@ -573,10 +573,6 @@ class TestEnvironment {
     return this.fixture.nativeElement.parentElement.querySelector('.cdk-overlay-container');
   }
 
-  get atLeastOneError(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.invalid-feedback'));
-  }
-
   get translationSuggestionsCheckbox(): DebugElement {
     return this.fixture.debugElement.query(By.css('#checkbox-translation-suggestions'));
   }
