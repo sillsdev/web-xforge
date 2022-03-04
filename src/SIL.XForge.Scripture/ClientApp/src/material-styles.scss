@@ -63,6 +63,7 @@ $material-app-theme: mat.define-light-theme(
 
 @include mat.autocomplete-theme($material-app-theme);
 @include mat.button-theme($material-app-theme);
+@include mat.card-theme($material-app-theme);
 @include mat.checkbox-theme($material-app-theme);
 @include mat.optgroup-theme($material-app-theme);
 @include mat.option-theme($material-app-theme);
@@ -73,3 +74,8 @@ $material-app-theme: mat.define-light-theme(
 @include mat.select-theme($material-app-theme);
 @include mat.slider-theme($material-app-theme);
 @include mat.table-theme($material-app-theme);
+
+.card-outline {
+  @include mat.elevation(0);
+  border: 1px solid #e0e0e0;
+}

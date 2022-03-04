@@ -4,12 +4,12 @@
     <span *ngIf="!isAppOnline" class="offline-text"> {{ t("connect_network_to_synchronize") }} </span>
     <span *ngIf="syncDisabled" id="syncDisabled-message" class="syncDisabled-text" [innerHTML]="syncDisabledMessage">
     </span>
-    <mdc-card [outlined]="true" class="sync-card">
+    <mat-card class="sync-card">
       <div fxLayout="column" class="card-content">
         <button
           *ngIf="showParatextLogin && isAppOnline"
           class="action-button"
-          mdc-button
+          mat-flat-button
           type="button"
           (click)="logInWithParatext()"
           id="btn-log-in"
@@ -22,19 +22,19 @@
           <button
             *ngIf="!syncActive"
             class="action-button"
-            mdc-button
-            [unelevated]="true"
+            mat-flat-button
+            color="primary"
             type="button"
             (click)="syncProject()"
             [disabled]="isLoading || !isAppOnline || syncDisabled"
             id="btn-sync"
           >
-            <mdc-icon>sync</mdc-icon>
+            <mat-icon>sync</mat-icon>
             {{ t("synchronize") }}
           </button>
-          <span *ngIf="syncActive" id="sync-message" class="sync-info">{{
+          <mat-hint *ngIf="syncActive" id="sync-message" class="sync-info">{{
             t("your_project_is_being_synchronized")
-          }}</span>
+          }}</mat-hint>
           <app-sync-progress
             *ngIf="syncActive"
             [projectDoc]="projectDoc"
@@ -43,7 +43,7 @@
           <button
             *ngIf="syncActive"
             class="action-button"
-            mdc-button
+            mat-flat-button
             type="button"
             (click)="cancelSync()"
             [disabled]="isLoading || !isAppOnline || syncDisabled"
@@ -51,11 +51,11 @@
           >
             {{ t("cancel") }}
           </button>
-          <span *ngIf="!syncActive" [title]="lastSyncDisplayDate" id="date-last-sync" class="sync-info">
+          <mat-hint *ngIf="!syncActive" [title]="lastSyncDisplayDate" id="date-last-sync" class="sync-info">
             {{ lastSyncNotice }}
-          </span>
+          </mat-hint>
         </ng-container>
       </div>
-    </mdc-card>
+    </mat-card>
   </div>
 </ng-container>
