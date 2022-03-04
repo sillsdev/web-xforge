@@ -27,7 +27,6 @@
 @use '@material/form-field/mdc-form-field';
 @use '@material/radio/mdc-radio';
 @use '@material/switch/mdc-switch';
-@use '@material/linear-progress/mdc-linear-progress';
 @use '@material/data-table/mdc-data-table';
 @use '@material/ripple/mdc-ripple';
 
@@ -137,10 +136,6 @@ button.mdc-icon-button {
   }
 }
 
-.mat-tooltip {
-  font-size: 1em;
-}
-
 .mdc-list-item--disabled {
   opacity: theme-variables.text-emphasis(disabled);
 }
@@ -151,4 +146,13 @@ button.mdc-icon-button {
 
 .locale-fonts mat-option {
   font-family: $languageFonts;
+}
+
+.mat-tooltip {
+  font-size: 1em;
+}
+
+.mat-progress-bar--closed {
+  opacity: 0;
+  animation: none;
 }
