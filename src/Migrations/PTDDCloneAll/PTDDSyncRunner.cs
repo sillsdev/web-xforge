@@ -207,8 +207,7 @@ namespace PTDDCloneAll
                                 await _paratextService.GetResourcePermissionAsync(sourceParatextId, uid);
                             if (permission == TextInfoPermission.None)
                             {
-                                // As resource projects don't have administrators, connect as the user we are to remove
-                                await _projectService.RemoveUserAsync(uid, sourceProjectRef, uid);
+                                await _projectService.RemoveUserWithoutPermissionsCheckAsync(uid, sourceProjectRef, uid);
                             }
                         }
                     }

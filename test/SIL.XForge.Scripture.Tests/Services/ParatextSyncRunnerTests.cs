@@ -377,7 +377,7 @@ namespace SIL.XForge.Scripture.Services
 
             SFProject project = env.VerifyProjectSync(true);
             Assert.That(project.UserRoles["user01"], Is.EqualTo(SFProjectRole.Translator));
-            await env.SFProjectService.Received().RemoveUserAsync("user01", "project01", "user02");
+            await env.SFProjectService.Received().RemoveUserWithoutPermissionsCheckAsync("user01", "project01", "user02");
         }
 
         [Test]
