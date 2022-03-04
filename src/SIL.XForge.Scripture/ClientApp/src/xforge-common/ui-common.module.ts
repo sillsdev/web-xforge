@@ -1,6 +1,5 @@
 import { MDCDataTableModule } from '@angular-mdc/web';
 import { MdcButtonModule } from '@angular-mdc/web/button';
-import { MdcCardModule } from '@angular-mdc/web/card';
 import { MdcCheckboxModule } from '@angular-mdc/web/checkbox';
 import { MdcDialogModule } from '@angular-mdc/web/dialog';
 import { MdcDrawerModule } from '@angular-mdc/web/drawer';
@@ -72,7 +71,6 @@ const modules = [
   MatTableModule,
   MatTooltipModule,
   MdcButtonModule,
-  MdcCardModule,
   MdcCheckboxModule,
   MdcDialogModule,
   MdcDrawerModule,

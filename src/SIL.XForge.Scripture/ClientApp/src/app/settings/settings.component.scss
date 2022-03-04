@@ -9,7 +9,13 @@
   max-width: 800px;
 }
 
+.card {
+  box-shadow: initial;
+  padding: 0;
+}
+
 .card-content {
+  box-shadow: initial;
   padding: 16px;
 }
 
