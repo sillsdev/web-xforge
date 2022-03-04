@@ -1,43 +1,42 @@
 <ng-container *transloco="let t; read: 'settings'">
   <div fxLayout="column" fxLayoutGap="2rem" class="container">
-    <div mdcHeadline4>{{ t("settings") }}</div>
+    <div class="mat-display-1">{{ t("settings") }}</div>
     <span *ngIf="!isAppOnline" class="offline-text"> {{ t("connect_network_to_change_settings") }} </span>
     <div>
-      <div mdcHeadline6>{{ t("tools") }}</div>
-      <p mdcBody2>{{ t("select_additional_tools_and_features") }}</p>
+      <div class="mat-title">{{ t("tools") }}</div>
+      <p class="mat-body">{{ t("select_additional_tools_and_features") }}</p>
       <mat-card class="card card-outline">
         <form [formGroup]="form">
           <div class="card-content">
             <div class="tool-setting">
-              <mdc-form-field>
-                <mdc-checkbox [disabled]="true" [checked]="true" class="checkbox-placeholder"></mdc-checkbox>
-                <label mdcSubtitle1>{{ t("translate") }}</label>
-              </mdc-form-field>
-              <div class="helper-text checkbox-helper-text">{{ t("translate_tool_is_always_available") }}</div>
+              <div class="tool-setting-field checkbox-field">
+                <mat-checkbox [disabled]="true" [checked]="true" class="checkbox-placeholder">
+                  {{ t("translate") }}
+                </mat-checkbox>
+              </div>
+              <mat-hint class="helper-text checkbox-helper-text">
+                {{ t("translate_tool_is_always_available") }}
+              </mat-hint>
             </div>
             <div class="tool-setting indent">
               <div class="tool-setting-field checkbox-field">
-                <mdc-form-field>
-                  <mdc-checkbox
-                    formControlName="translationSuggestionsEnabled"
-                    id="checkbox-translation-suggestions"
-                  ></mdc-checkbox>
-                  <label>{{ t("translation_suggestions") }}</label>
-                </mdc-form-field>
+                <mat-checkbox formControlName="translationSuggestionsEnabled" id="checkbox-translation-suggestions">
+                  {{ t("translation_suggestions") }}
+                </mat-checkbox>
                 <app-write-status
                   [state]="getControlState('translationSuggestionsEnabled')"
                   [formGroup]="form"
                   id="translation-suggestions-status"
                 ></app-write-status>
               </div>
-              <div
+              <mat-hint
                 class="helper-text checkbox-helper-text"
                 [innerHTML]="i18n.translateAndInsertTags('settings.translations_will_be_suggested')"
-              ></div>
+              ></mat-hint>
               <div *ngIf="!isLoading && !isLoggedInToParatext && isAppOnline" class="paratext-login-container">
                 <button
                   class="action-button"
-                  mdc-button
+                  mat-flat-button
                   type="button"
                   (click)="logInWithParatext()"
                   id="btn-log-in-settings"
@@ -78,27 +77,28 @@
                   <mat-error *ngIf="resourceLoadingFailed && !projectLoadingFailed">
                     {{ t("error_fetching_resources") }}
                   </mat-error>
-                  <div class="helper-text select-helper-text">{{ t("choose_the_paratext_project") }}</div>
+                  <mat-hint class="helper-text select-helper-text">{{ t("choose_the_paratext_project") }}</mat-hint>
                 </div>
               </ng-container>
+            </div>
+            <div class="tool-setting indent">
               <div class="tool-setting-field checkbox-field">
-                <mdc-form-field>
-                  <mdc-checkbox formControlName="translateShareEnabled" id="checkbox-translate-share"></mdc-checkbox>
-                  <label>{{ t("share") }}</label>
-                </mdc-form-field>
+                <mat-checkbox formControlName="translateShareEnabled" id="checkbox-translate-share">
+                  {{ t("share") }}
+                </mat-checkbox>
                 <app-write-status
                   [state]="getControlState('translateShareEnabled')"
                   [formGroup]="form"
                   id="translate-share-status"
                 ></app-write-status>
               </div>
-              <div class="helper-text checkbox-helper-text" fxLayout="row">
+              <mat-hint class="helper-text checkbox-helper-text" fxLayout="row">
                 <span>
                   <span [innerHTML]="shareDescription?.before"></span>
                   <a [appRouterLink]="['/projects', projectId, 'users']">{{ shareDescription?.templateTagText }}</a>
                   <span>{{ shareDescription?.after }}</span>
                 </span>
-              </div>
+              </mat-hint>
               <mat-radio-group
                 id="translate-share-level-radio-group"
                 formControlName="translateShareLevel"
@@ -120,59 +120,55 @@
               </mat-radio-group>
             </div>
           </div>
-          <mdc-list-divider></mdc-list-divider>
+          <mat-divider></mat-divider>
           <div class="card-content">
             <div class="tool-setting">
               <div class="tool-setting-field checkbox-field">
-                <mdc-form-field>
-                  <mdc-checkbox formControlName="checkingEnabled" id="checkbox-community-checking"></mdc-checkbox>
-                  <label mdcSubtitle1>{{ t("community_checking") }}</label>
-                </mdc-form-field>
+                <mat-checkbox formControlName="checkingEnabled" id="checkbox-community-checking">
+                  {{ t("community_checking") }}
+                </mat-checkbox>
                 <app-write-status
                   [state]="getControlState('checkingEnabled')"
                   [formGroup]="form"
                   id="checking-status"
                 ></app-write-status>
               </div>
-              <div class="helper-text checkbox-helper-text">{{ t("engage_the_wider_community") }}</div>
+              <mat-hint class="helper-text checkbox-helper-text">{{ t("engage_the_wider_community") }}</mat-hint>
             </div>
             <ng-container *ngIf="isCheckingEnabled">
               <div class="tool-setting indent">
                 <div class="tool-setting-field checkbox-field">
-                  <mdc-form-field>
-                    <mdc-checkbox
-                      formControlName="usersSeeEachOthersResponses"
-                      id="checkbox-see-others-responses"
-                    ></mdc-checkbox>
-                    <label>{{ t("see_others_answers_and_comments") }}</label>
-                  </mdc-form-field>
+                  <mat-checkbox formControlName="usersSeeEachOthersResponses" id="checkbox-see-others-responses">{{
+                    t("see_others_answers_and_comments")
+                  }}</mat-checkbox>
                   <app-write-status
                     [state]="getControlState('usersSeeEachOthersResponses')"
                     [formGroup]="form"
                     id="see-others-responses-status"
                   ></app-write-status>
                 </div>
-                <div class="helper-text checkbox-helper-text">{{ t("users_can_interact_with_each_other") }}</div>
+                <mat-hint class="helper-text checkbox-helper-text">
+                  {{ t("users_can_interact_with_each_other") }}
+                </mat-hint>
               </div>
               <div class="tool-setting indent">
                 <div class="tool-setting-field checkbox-field">
-                  <mdc-form-field>
-                    <mdc-checkbox formControlName="checkingShareEnabled" id="checkbox-checking-share"></mdc-checkbox>
-                    <label>{{ t("share") }}</label>
-                  </mdc-form-field>
+                  <mat-checkbox formControlName="checkingShareEnabled" id="checkbox-checking-share">
+                    {{ t("share") }}
+                  </mat-checkbox>
                   <app-write-status
                     [state]="getControlState('checkingShareEnabled')"
                     [formGroup]="form"
                     id="checking-share-status"
                   ></app-write-status>
                 </div>
-                <div class="helper-text checkbox-helper-text" fxLayout="row">
+                <mat-hint class="helper-text checkbox-helper-text" fxLayout="row">
                   <span>
                     <span [innerHTML]="shareDescription?.before"></span>
                     <a [appRouterLink]="['/projects', projectId, 'users']">{{ shareDescription?.templateTagText }}</a>
                     <span>{{ shareDescription?.after }}</span>
                   </span>
-                </div>
+                </mat-hint>
                 <mat-radio-group
                   id="checking-share-level-radio-group"
                   formControlName="checkingShareLevel"
@@ -200,7 +196,7 @@
     </div>
 
     <div id="danger-zone">
-      <div mdcHeadline6>{{ t("danger_zone") }}</div>
+      <div class="mat-title">{{ t("danger_zone") }}</div>
       <mat-card class="card-content" id="delete-project">
         <h4>{{ t("delete_this_project") }}</h4>
         <p *ngIf="isActiveSourceProject; else deleteMessage" class="source-project-msg">
@@ -217,9 +213,9 @@
         <div fxLayout="row" fxLayoutAlign="end stretch">
           <button
             id="delete-btn"
-            mdc-button
-            [unelevated]="true"
+            mat-flat-button
             type="button"
+            color="warn"
             (click)="openDeleteProjectDialog()"
             [class.enabled]="!deleteButtonDisabled"
             [disabled]="deleteButtonDisabled"

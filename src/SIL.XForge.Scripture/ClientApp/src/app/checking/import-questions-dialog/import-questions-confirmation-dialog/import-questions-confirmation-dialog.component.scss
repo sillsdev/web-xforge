@@ -1,5 +1,5 @@
-th:first-child {
-  padding-left: 0;
+tr td:first-child {
+  padding-left: 16px;
 }
 
 tr td:not(:last-child) {
