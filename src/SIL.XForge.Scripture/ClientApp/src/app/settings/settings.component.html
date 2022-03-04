@@ -5,7 +5,7 @@
     <div>
       <div mdcHeadline6>{{ t("tools") }}</div>
       <p mdcBody2>{{ t("select_additional_tools_and_features") }}</p>
-      <mdc-card class="card" [outlined]="true">
+      <mat-card class="card card-outline">
         <form [formGroup]="form">
           <div class="card-content">
             <div class="tool-setting">
@@ -196,12 +196,12 @@
             </ng-container>
           </div>
         </form>
-      </mdc-card>
+      </mat-card>
     </div>
 
     <div id="danger-zone">
       <div mdcHeadline6>{{ t("danger_zone") }}</div>
-      <mdc-card class="card-content" id="delete-project">
+      <mat-card class="card-content" id="delete-project">
         <h4>{{ t("delete_this_project") }}</h4>
         <p *ngIf="isActiveSourceProject; else deleteMessage" class="source-project-msg">
           {{ t("source_projects_cannot_be_deleted") }}
@@ -227,7 +227,7 @@
             {{ t("delete_this_project") }}
           </button>
         </div>
-      </mdc-card>
+      </mat-card>
     </div>
   </div>
 </ng-container>

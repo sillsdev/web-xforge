@@ -60,7 +60,9 @@
       align-self: center;
     }
 
-    mdc-card {
+    mat-card {
+      box-shadow: initial;
+      padding: 0;
       margin-top: 32px;
 
       .card-title {
