@@ -1,4 +1,4 @@
-import { MDCDataTableRowSelectionChangedEvent, MdcDialogRef, MDC_DIALOG_DATA } from '@angular-mdc/web';
+import { MdcDialogRef, MDC_DIALOG_DATA } from '@angular-mdc/web';
 import { Component, Inject } from '@angular/core';
 
 export interface ImportQuestionsConfirmationDialogData {
@@ -19,6 +19,7 @@ export interface EditedQuestion {
   styleUrls: ['./import-questions-confirmation-dialog.component.scss']
 })
 export class ImportQuestionsConfirmationDialogComponent {
+  allSelected: boolean = false;
   questions: EditedQuestion[];
 
   constructor(
@@ -29,10 +30,15 @@ export class ImportQuestionsConfirmationDialogComponent {
     >
   ) {
     this.questions = data.questions;
+    this.updateAllSelected();
   }
 
-  onSelectionChanged(event: MDCDataTableRowSelectionChangedEvent): void {
-    this.questions[event.index].checked = event.selected;
+  updateAllSelected() {
+    this.allSelected = this.questions.every(question => question.checked);
+  }
+
+  someSelected(): boolean {
+    return this.questions.filter(question => question.checked).length > 0 && !this.allSelected;
   }
 
   selectAll(checked: boolean): void {
