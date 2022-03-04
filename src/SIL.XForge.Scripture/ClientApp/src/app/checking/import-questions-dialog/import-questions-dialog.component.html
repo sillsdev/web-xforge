@@ -19,8 +19,8 @@
             <mat-card-content>
               <ng-container *ngFor="let i of i18n.interpolate('import_questions_dialog.transcelerator_paratext')">
                 {{ i.id == null ? i.text : "" }}
-                <a *ngIf="i.id == 1" [href]="urls.transcelerator" target="_blank">{{ i.text }}</a>
-                <a *ngIf="i.id == 3" [href]="urls.paratext" target="_blank">{{ i.text }}</a>
+                <a *ngIf="i.id === 1" [href]="urls.transcelerator" target="_blank">{{ i.text }}</a>
+                <a *ngIf="i.id === 3" [href]="urls.paratext" target="_blank">{{ i.text }}</a>
               </ng-container>
 
               <ol>
@@ -104,33 +104,29 @@
 
       <form *ngIf="status === 'filter'" [formGroup]="filterForm" autocomplete="off">
         <div class="filter-references">
-          <mdc-form-field>
-            <mdc-text-field formControlName="from" label="{{ t('reference_from') }}" [outlined]="true">
-              <mdc-icon
-                #fromRef
-                mdcTextFieldIcon
-                [trailing]="true"
-                [clickable]="true"
-                (click)="openScriptureChooser(fromControl)"
-              >
-                expand_more
-              </mdc-icon>
-            </mdc-text-field>
-            <mdc-helper-text [validation]="true">{{ t("must_be_valid_reference") }}</mdc-helper-text>
-          </mdc-form-field>
-          <mdc-form-field>
-            <mdc-text-field formControlName="to" label="{{ t('reference_to') }}" [outlined]="true">
-              <mdc-icon mdcTextFieldIcon [trailing]="true" [clickable]="true" (click)="openScriptureChooser(toControl)">
-                expand_more
-              </mdc-icon>
-            </mdc-text-field>
-            <mdc-helper-text [validation]="true">{{ t("must_be_valid_reference") }}</mdc-helper-text>
-          </mdc-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t("reference_from") }}</mat-label>
+            <input matInput type="text" formControlName="from" />
+            <button mat-icon-button matSuffix #fromRef id="from-btn" (click)="openScriptureChooser(fromControl)">
+              <mat-icon>expand_more</mat-icon>
+            </button>
+            <mat-error *ngIf="fromControl.invalid">{{ t("must_be_valid_reference") }}</mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ t("reference_to") }}</mat-label>
+            <input matInput type="text" formControlName="to" />
+            <button mat-icon-button matSuffix (click)="openScriptureChooser(toControl)">
+              <mat-icon>expand_more</mat-icon>
+            </button>
+            <mat-error *ngIf="toControl.invalid">{{ t("must_be_valid_reference") }}</mat-error>
+          </mat-form-field>
         </div>
         <div colspan="2" class="filter-text">
           <div>
-            <mdc-text-field formControlName="filter" placeholder="{{ t('filter_questions') }}"></mdc-text-field>
-            <button mdc-button type="button" (click)="clearFilters()">{{ t("show_all") }}</button>
+            <mat-form-field appearance="fill">
+              <input matInput type="text" formControlName="filter" placeholder="{{ t('filter_questions') }}" />
+            </mat-form-field>
+            <button mat-flat-button type="button" (click)="clearFilters()">{{ t("show_all") }}</button>
           </div>
         </div>
         <table mat-table [dataSource]="questionsForDisplay" class="question-list">
