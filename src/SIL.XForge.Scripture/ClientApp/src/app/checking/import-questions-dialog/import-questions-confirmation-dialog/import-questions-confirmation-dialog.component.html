@@ -5,15 +5,17 @@
         <mdc-dialog-title>{{ t("some_questions_edited") }}</mdc-dialog-title>
         <mdc-dialog-content>
           {{ t("edited_questions_explanation") }}
-          <mdc-data-table
-            (selectionChanged)="onSelectionChanged($event)"
-            (selectedAll)="selectAll(true)"
-            (unselectedAll)="selectAll(false)"
-          >
+          <mdc-data-table>
             <table mdcDataTableTable>
               <thead>
                 <tr mdcDataTableHeaderRow>
-                  <th mdcDataTableHeaderCell><mdc-checkbox></mdc-checkbox></th>
+                  <th mdcDataTableHeaderCell>
+                    <mat-checkbox
+                      [checked]="allSelected"
+                      [indeterminate]="someSelected()"
+                      (change)="selectAll($event.checked)"
+                    ></mat-checkbox>
+                  </th>
                   <th>{{ t("scripture_forge") }}</th>
                   <th>{{ t("transcelerator") }}</th>
                   <th>{{ t("number_answers") }}</th>
@@ -21,7 +23,13 @@
               </thead>
               <tbody mdcDataTableContent>
                 <tr mdcDataTableRow *ngFor="let listItem of questions" [selected]="listItem.checked">
-                  <td><mdc-checkbox [checked]="listItem.checked"></mdc-checkbox></td>
+                  <td>
+                    <mat-checkbox
+                      color="primary"
+                      [(ngModel)]="listItem.checked"
+                      (ngModelChange)="updateAllSelected()"
+                    ></mat-checkbox>
+                  </td>
                   <td>{{ listItem.before }}</td>
                   <td>{{ listItem.after }}</td>
                   <td>{{ listItem.answerCount }}</td>

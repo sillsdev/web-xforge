@@ -106,9 +106,7 @@ class TestEnvironment {
     const configData: ImportQuestionsConfirmationDialogData = { questions: this.getQuestions(questionCount) };
     this.dialogRef = TestBed.inject(MdcDialog).open(ImportQuestionsConfirmationDialogComponent, { data: configData });
     this.component = this.dialogRef.componentInstance;
-    tick();
-    this.fixture.detectChanges();
-    flush();
+    this.update();
   }
 
   get overlayContainerElement(): HTMLElement {
@@ -124,7 +122,7 @@ class TestEnvironment {
   }
 
   get selectAllCheckbox(): HTMLInputElement {
-    return this.table.querySelector('thead tr th mdc-checkbox input') as HTMLInputElement;
+    return this.table.querySelector('thead tr th mat-checkbox input') as HTMLInputElement;
   }
 
   get questionRows(): HTMLElement[] {
@@ -132,7 +130,7 @@ class TestEnvironment {
   }
 
   get rowCheckboxes(): HTMLInputElement[] {
-    return Array.from(this.table.querySelectorAll('tbody tr td mdc-checkbox input'));
+    return Array.from(this.table.querySelectorAll('tbody tr td mat-checkbox input'));
   }
 
   get closeButton(): HTMLInputElement {
@@ -145,8 +143,7 @@ class TestEnvironment {
 
   click(element: HTMLElement) {
     element.click();
-    tick();
-    this.fixture.detectChanges();
+    this.update();
   }
 
   getQuestions(count: number): EditedQuestion[] {
@@ -162,5 +159,11 @@ class TestEnvironment {
     const promiseForResult = this.dialogRef.afterClosed().toPromise();
     this.click(this.closeButton);
     return promiseForResult;
+  }
+
+  private update() {
+    tick();
+    this.fixture.detectChanges();
+    flush();
   }
 }
