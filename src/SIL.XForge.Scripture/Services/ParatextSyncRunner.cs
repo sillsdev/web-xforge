@@ -285,8 +285,7 @@ namespace SIL.XForge.Scripture.Services
                                 await _paratextService.GetResourcePermissionAsync(sourceParatextId, uid, token);
                             if (permission == TextInfoPermission.None)
                             {
-                                // As resource projects don't have administrators, connect as the user we are to remove
-                                await _projectService.RemoveUserAsync(uid, sourceProjectRef, uid);
+                                await _projectService.RemoveUserWithoutPermissionsCheckAsync(uid, sourceProjectRef, uid);
                             }
                         }
                     }
@@ -846,7 +845,7 @@ namespace SIL.XForge.Scripture.Services
                 }
             });
             foreach (var userId in userIdsToRemove)
-                await _projectService.RemoveUserAsync(_userSecret.Id, _projectDoc.Id, userId);
+                await _projectService.RemoveUserWithoutPermissionsCheckAsync(_userSecret.Id, _projectDoc.Id, userId);
             if (_notesMapper.NewSyncUsers.Count > 0)
             {
                 await _projectSecrets.UpdateAsync(_projectSecret.Id, u =>
