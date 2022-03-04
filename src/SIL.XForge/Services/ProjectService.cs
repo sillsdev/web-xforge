@@ -90,21 +90,6 @@ namespace SIL.XForge.Services
             }
         }
 
-        public async Task<string> GetProjectRoleAsync(string curUserId, string projectId)
-        {
-            TModel project;
-            try
-            {
-                project = await GetProjectAsync(projectId);
-            }
-            catch (DataNotFoundException)
-            {
-                return null;
-            }
-            Attempt<string> attempt = await TryGetProjectRoleAsync(project, curUserId);
-            return attempt.Result;
-        }
-
         /// <summary>
         /// Disassociate user projectUserId from project projectId, without checking permissions.
         /// </summary>
@@ -141,6 +126,21 @@ namespace SIL.XForge.Services
                     await task;
                 }
             }
+        }
+
+        public async Task<string> GetProjectRoleAsync(string curUserId, string projectId)
+        {
+            TModel project;
+            try
+            {
+                project = await GetProjectAsync(projectId);
+            }
+            catch (DataNotFoundException)
+            {
+                return null;
+            }
+            Attempt<string> attempt = await TryGetProjectRoleAsync(project, curUserId);
+            return attempt.Result;
         }
 
         public async Task UpdateRoleAsync(string curUserId, string systemRole, string projectId, string projectRole)
