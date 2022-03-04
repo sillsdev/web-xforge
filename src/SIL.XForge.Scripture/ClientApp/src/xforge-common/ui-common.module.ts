@@ -8,7 +8,6 @@ import { MdcElevationModule } from '@angular-mdc/web/elevation';
 import { MdcFormFieldModule } from '@angular-mdc/web/form-field';
 import { MdcIconModule } from '@angular-mdc/web/icon';
 import { MdcIconButtonModule } from '@angular-mdc/web/icon-button';
-import { MdcLinearProgressModule } from '@angular-mdc/web/linear-progress';
 import { MdcListModule } from '@angular-mdc/web/list';
 import { MdcMenuModule } from '@angular-mdc/web/menu';
 import { MdcMenuSurfaceModule } from '@angular-mdc/web/menu-surface';
@@ -79,7 +78,6 @@ const modules = [
   MdcFormFieldModule,
   MdcIconModule,
   MdcIconButtonModule,
-  MdcLinearProgressModule,
   MdcListModule,
   MdcMenuModule,
   MdcMenuSurfaceModule,

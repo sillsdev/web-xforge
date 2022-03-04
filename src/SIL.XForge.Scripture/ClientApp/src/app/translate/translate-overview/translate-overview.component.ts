@@ -201,7 +201,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
       retryWhen(errors => errors.pipe(delayWhen(() => timer(30000))))
     );
     this.trainingSub = trainingStatus$.subscribe(async progress => {
-      this.trainingPercentage = progress.percentCompleted;
+      this.trainingPercentage = progress.percentCompleted * 100;
       this.isTraining = true;
     });
   }
