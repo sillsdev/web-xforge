@@ -114,6 +114,10 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
   width: unset;
 }
 
+.mdc-button {
+  text-transform: initial; // no uppercase labels as we move to @angular/material
+}
+
 .mdc-button--unelevated,
 .mat-flat-button {
   transition: background-color 0.15s, color 0.15s;

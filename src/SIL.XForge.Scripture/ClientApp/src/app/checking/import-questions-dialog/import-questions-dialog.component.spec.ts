@@ -626,9 +626,7 @@ class TestEnvironment {
   }
 
   openFromScriptureChooser(): void {
-    this.click(
-      this.overlayContainerElement.querySelector('mdc-text-field[formControlName="from"] mdc-icon') as HTMLInputElement
-    );
+    this.click(this.overlayContainerElement.querySelector('#from-btn') as HTMLInputElement);
   }
 
   setOnline(value: boolean) {

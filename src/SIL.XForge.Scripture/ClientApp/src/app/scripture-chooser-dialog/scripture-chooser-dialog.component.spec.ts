@@ -522,11 +522,11 @@ describe('ScriptureChooserDialog', () => {
     }
 
     get bookEphesians(): DebugElement {
-      return this.buttonWithText('EPHESIANS');
+      return this.buttonWithText('Ephesians');
     }
 
     get bookRomans(): DebugElement {
-      return this.buttonWithText('ROMANS');
+      return this.buttonWithText('Romans');
     }
 
     get chapter3(): DebugElement {

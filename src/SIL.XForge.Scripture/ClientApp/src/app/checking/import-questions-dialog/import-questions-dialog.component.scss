@@ -1,5 +1,3 @@
-@use '@material/textfield/mixins' as textfield;
-
 @import 'src/variables';
 @import 'bootstrap/scss/mixins/breakpoints';
 
@@ -99,23 +97,51 @@
   width: 100%;
 }
 
-.filter-text {
+::ng-deep .filter-text {
   padding: 0;
 
   div {
     display: flex;
     align-items: center;
-    mdc-text-field {
+    mat-form-field {
       flex: 1;
-      height: 2.5em;
+      @include media-breakpoint-up(sm) {
+        max-width: unset;
+      }
+      max-width: 70%;
+      // below is to make denser
+      .mat-form-field-wrapper {
+        padding-bottom: 0;
+        .mat-form-field-infix {
+          border: 0;
+          padding: 0 0 0.75em 0;
+        }
+      }
+      .mat-form-field-underline {
+        bottom: 0;
+      }
+      .mat-form-field-subscript-wrapper {
+        display: none;
+      }
     }
   }
 }
 
-mdc-text-field ::ng-deep {
-  @include textfield.outlined-density(-4);
-  label.mdc-floating-label {
-    display: inline-block !important;
+// below is to make denser
+::ng-deep {
+  mat-form-field.mat-form-field.mat-form-field-appearance-outline
+    > div.mat-form-field-wrapper
+    > div.mat-form-field-flex
+    > div.mat-form-field-infix {
+    padding: 0.4em 0px;
+    top: -0.2em;
+    > span.mat-form-field-label-wrapper {
+      top: -1.2em;
+    }
+  }
+  .mat-form-field-appearance-outline.mat-form-field-can-float.mat-form-field-should-float .mat-form-field-label {
+    transform: translateY(-1.1em) scale(0.75);
+    width: 133.33333%;
   }
 }
 
@@ -124,13 +150,11 @@ mdc-text-field ::ng-deep {
   @include media-breakpoint-up(sm) {
     display: flex;
     ::ng-deep {
-      mdc-form-field:first-child .mdc-notched-outline__trailing {
-        border-radius: 0 !important;
+      mat-form-field:first-child .mat-form-field-outline-end {
+        border-radius: 0;
       }
-      mdc-form-field:last-child {
-        .mdc-notched-outline__leading {
-          border-radius: 0 !important;
-        }
+      mat-form-field:last-child .mat-form-field-outline-start {
+        border-radius: 0;
       }
     }
   }
