@@ -10,10 +10,10 @@
         }}
       </button>
     </div>
-    <mdc-card [outlined]="true" *ngSwitchCase="'connecting'" class="progress-container">
+    <mat-card *ngSwitchCase="'connecting'" class="progress-container card-outline">
       <div class="progress-label" mdcBody1>{{ t("connecting_to_project", { projectName: connectProjectName }) }}</div>
       <app-sync-progress [projectDoc]="projectDoc" (inProgress)="updateStatus($event)"></app-sync-progress>
-    </mdc-card>
+    </mat-card>
     <form *ngSwitchDefault [formGroup]="connectProjectForm" (ngSubmit)="submit()">
       <ng-container *ngIf="projects.length > 0 || state === 'offline'; else noProjectMsg">
         <p *ngIf="hasNonAdministratorProject && !showSettings && isAppOnline" id="connect-non-admin-msg">
@@ -52,7 +52,7 @@
           [innerHtml]="i18n.translateAndInsertTags('connect_project.no_connectable_projects')"
         ></p>
       </ng-template>
-      <mdc-card id="settings-card" *ngIf="showSettings" [outlined]="true" formGroupName="settings">
+      <mat-card id="settings-card" *ngIf="showSettings" class="card-outline" formGroupName="settings">
         <div class="card-title">
           <div mdcHeadline6>{{ t("additional_settings") }}</div>
           <div mdcBody2>{{ t("you_can_change_later") }}</div>
@@ -108,7 +108,7 @@
             <p fxFlex class="helper-text">{{ t("engage_the_wider_community_to_check_scripture") }}</p>
           </div>
         </div>
-      </mdc-card>
+      </mat-card>
       <button mat-flat-button type="submit" id="connect-submit-button" [disabled]="submitDisabled">
         {{ t("connect") }}
       </button>

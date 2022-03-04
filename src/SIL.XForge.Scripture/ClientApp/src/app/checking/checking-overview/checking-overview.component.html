@@ -1,6 +1,6 @@
 <ng-container *transloco="let t; read: 'checking_overview'">
   <div fxLayout="row" fxLayoutAlign="start center" [ngClass]="{ 'reviewer-panels': !canCreateQuestion }">
-    <mdc-icon fxFlex="32px">library_books</mdc-icon>
+    <mat-icon fxFlex="32px">library_books</mat-icon>
     <h2 fxFlex>{{ t("texts_with_questions") }}</h2>
     <div fxFlexAlign="center" *ngIf="canCreateQuestion; else overallProgressChart" class="primary-actions">
       <button mdc-button type="button" *ngIf="showImportButton" (click)="importDialog()" id="import-btn">
@@ -14,7 +14,7 @@
         (click)="questionDialog()"
         id="add-question-button"
       >
-        <mdc-icon>post_add</mdc-icon> <span fxHide.xs>{{ t("add_question") }}</span>
+        <mat-icon>post_add</mat-icon> <span fxHide.xs>{{ t("add_question") }}</span>
       </button>
     </div>
     <ng-template #overallProgressChart>
@@ -32,9 +32,9 @@
           (selectionChange)="itemVisible[getBookId(text)] = !itemVisible[getBookId(text)]"
         >
           <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
-            <mdc-icon fxFlex="24px" mdcListItemMeta>
+            <mat-icon fxFlex="24px" mdcListItemMeta>
               keyboard_arrow_{{ itemVisible[getBookId(text)] ? "down" : "right" }}
-            </mdc-icon>
+            </mat-icon>
             <span fxFlex>{{ getBookName(text) }}</span>
             <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center">
               {{ questionCountLabel(bookQuestionCount(text)) }}
@@ -56,9 +56,9 @@
             >
               <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
                 <span fxFlex="16px" class="indent"></span>
-                <mdc-icon fxFlex="24px" mdcListItemMeta>
+                <mat-icon fxFlex="24px" mdcListItemMeta>
                   keyboard_arrow_{{ itemVisible[getTextDocId(text.bookNum, chapter.number)] ? "down" : "right" }}
-                </mdc-icon>
+                </mat-icon>
                 <span fxFlex>{{ getBookName(text) + " " + chapter?.number }}</span>
                 <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center">
                   {{ questionCountLabel(questionCount(text.bookNum, chapter.number)) }}
@@ -76,10 +76,10 @@
                 <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
                   <span fxFlex="16px" class="indent"></span>
                   <button fxFlex="64px" mdc-button type="button" (click)="questionDialog(questionDoc)" class="edit-btn">
-                    <mdc-icon>edit</mdc-icon>
+                    <mat-icon>edit</mat-icon>
                   </button>
                   v{{ questionDoc.data?.verseRef?.verseNum }} -&nbsp;
-                  <mdc-icon class="audio-icon" *ngIf="questionDoc.data?.audioUrl">headset</mdc-icon>
+                  <mat-icon class="audio-icon" *ngIf="questionDoc.data?.audioUrl">headset</mat-icon>
                   <span fxFlex class="no-overflow-ellipsis">
                     <span *ngIf="questionDoc.data?.text">{{ questionDoc.data?.text }}</span>
                   </span>
@@ -94,7 +94,7 @@
                       title="{{ t('archive') }}"
                       class="archive-btn"
                     >
-                      <mdc-icon>archive</mdc-icon>
+                      <mat-icon>archive</mat-icon>
                     </button>
                   </span>
                 </div>
@@ -145,46 +145,38 @@
   </ng-template>
 
   <div fxLayout="row wrap" fxLayoutAlign="space-between" class="reviewer-panels stat-panels">
-    <mdc-card class="card" [outlined]="true">
-      <div class="card-content-question">
-        <span fxFlex>
-          <div class="stat-total">{{ allQuestionsCount }}</div>
-          <div class="stat-label">{{ t("questions") }}</div>
-        </span>
-        <span fxLayoutAlign="start center"> <mdc-icon>help</mdc-icon> </span>
-      </div>
-    </mdc-card>
-    <mdc-card class="card" [outlined]="true">
-      <div class="card-content-answer">
-        <span fxFlex>
-          <div class="stat-total">{{ myAnswerCount }}</div>
-          <div class="stat-label">{{ t("answers") }}</div>
-        </span>
-        <span fxLayoutAlign="start center"> <mdc-icon>question_answer</mdc-icon> </span>
-      </div>
-    </mdc-card>
-    <mdc-card class="card" [outlined]="true">
-      <div class="card-content-comment">
-        <span fxFlex>
-          <div class="stat-total">{{ myCommentCount }}</div>
-          <div class="stat-label">{{ t("comments") }}</div>
-        </span>
-        <span fxLayoutAlign="start center"> <mdc-icon>comment</mdc-icon> </span>
-      </div>
-    </mdc-card>
-    <mdc-card *ngIf="canSeeOtherUserResponses" class="card" [outlined]="true">
-      <div class="card-content-like">
-        <span fxFlex>
-          <div class="stat-total">{{ myLikeCount }}</div>
-          <div class="stat-label">{{ t("likes") }}</div>
-        </span>
-        <span fxLayoutAlign="start center"> <mdc-icon>thumb_up</mdc-icon> </span>
-      </div>
-    </mdc-card>
+    <mat-card class="card card-content-question">
+      <span fxFlex>
+        <div class="stat-total">{{ allQuestionsCount }}</div>
+        <div class="stat-label">{{ t("questions") }}</div>
+      </span>
+      <span fxLayoutAlign="start center"> <mat-icon>help</mat-icon> </span>
+    </mat-card>
+    <mat-card class="card card-content-answer">
+      <span fxFlex>
+        <div class="stat-total">{{ myAnswerCount }}</div>
+        <div class="stat-label">{{ t("answers") }}</div>
+      </span>
+      <span fxLayoutAlign="start center"> <mat-icon>question_answer</mat-icon> </span>
+    </mat-card>
+    <mat-card class="card card-content-comment">
+      <span fxFlex>
+        <div class="stat-total">{{ myCommentCount }}</div>
+        <div class="stat-label">{{ t("comments") }}</div>
+      </span>
+      <span fxLayoutAlign="start center"> <mat-icon>comment</mat-icon> </span>
+    </mat-card>
+    <mat-card *ngIf="canSeeOtherUserResponses" class="card card-content-like">
+      <span fxFlex>
+        <div class="stat-total">{{ myLikeCount }}</div>
+        <div class="stat-label">{{ t("likes") }}</div>
+      </span>
+      <span fxLayoutAlign="start center"> <mat-icon>thumb_up</mat-icon> </span>
+    </mat-card>
   </div>
 
   <div fxLayout="row" fxLayoutAlign="start center" *ngIf="canEditQuestion">
-    <mdc-icon fxFlex="32px">archive</mdc-icon>
+    <mat-icon fxFlex="32px">archive</mat-icon>
     <h2 fxFlex>{{ t("archived_questions") }}</h2>
   </div>
 
@@ -196,8 +188,8 @@
           (selectionChange)="itemVisibleArchived[getBookId(text)] = !itemVisibleArchived[getBookId(text)]"
         >
           <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
-            <mdc-icon fxFlex="24px" mdcListItemMeta
-              >keyboard_arrow_{{ itemVisibleArchived[getBookId(text)] ? "down" : "right" }}</mdc-icon
+            <mat-icon fxFlex="24px" mdcListItemMeta
+              >keyboard_arrow_{{ itemVisibleArchived[getBookId(text)] ? "down" : "right" }}</mat-icon
             ><span fxFlex>{{ getBookName(text) }}</span>
             <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center" class="archived-questions-count">
               {{ questionCountLabel(bookQuestionCount(text, true)) }}
@@ -215,10 +207,10 @@
               "
               ><div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
                 <span fxFlex="16px" class="indent"></span>
-                <mdc-icon fxFlex="24px" mdcListItemMeta
+                <mat-icon fxFlex="24px" mdcListItemMeta
                   >keyboard_arrow_{{
                     itemVisibleArchived[getTextDocId(text.bookNum, chapter.number)] ? "down" : "right"
-                  }}</mdc-icon
+                  }}</mat-icon
                 >
                 <span fxFlex>{{ getBookName(text) + " " + chapter?.number }}</span>
               </div>
@@ -229,7 +221,7 @@
               >
                 <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
                   <span fxFlex="40px" class="indent"></span> v{{ questionDoc.data?.verseRef?.verseNum }} -&nbsp;
-                  <mdc-icon class="audio-icon" *ngIf="questionDoc.data?.audioUrl">headset</mdc-icon>
+                  <mat-icon class="audio-icon" *ngIf="questionDoc.data?.audioUrl">headset</mat-icon>
                   <span fxFlex class="no-overflow-ellipsis">
                     <span *ngIf="questionDoc.data?.text">{{ questionDoc.data?.text }}</span>
                   </span>
@@ -244,7 +236,7 @@
                       title="{{ t('republish') }}"
                       class="publish-btn"
                     >
-                      <mdc-icon>public</mdc-icon>
+                      <mat-icon>public</mat-icon>
                     </button>
                   </span>
                 </div>

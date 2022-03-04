@@ -210,7 +210,7 @@ class TestEnvironment {
   }
 
   get qualityStarIcons(): string[] {
-    const stars = this.qualityStars.queryAll(By.css('mdc-icon'));
+    const stars = this.qualityStars.queryAll(By.css('mat-icon'));
     return stars.map(s => s.nativeElement.textContent);
   }
 

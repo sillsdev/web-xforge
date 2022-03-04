@@ -876,7 +876,7 @@ class TestEnvironment {
   }
 
   get likePanel(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.reviewer-panels .card .card-content-like'));
+    return this.fixture.debugElement.query(By.css('.reviewer-panels .card-content-like'));
   }
 
   set onlineStatus(isOnline: boolean) {
