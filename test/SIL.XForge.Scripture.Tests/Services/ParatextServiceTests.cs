@@ -816,6 +816,20 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task TryGetProjectRoleAsync_BadArguments()
+        {
+            var env = new TestEnvironment();
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+            var attempt = await env.Service.TryGetProjectRoleAsync(null, "paratextIdHere", CancellationToken.None);
+            Assert.That(attempt.Success, Is.False);
+            Assert.That(attempt.Result, Is.Null);
+
+            attempt = await env.Service.TryGetProjectRoleAsync(userSecret, null, CancellationToken.None);
+            Assert.That(attempt.Success, Is.False);
+            Assert.That(attempt.Result, Is.Null);
+        }
+
+        [Test]
         public async Task TryGetProjectRoleAsync_UsesTheRepositoryForUnregisteredProjects()
         {
             var env = new TestEnvironment();

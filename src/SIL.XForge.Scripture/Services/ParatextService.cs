@@ -286,6 +286,10 @@ namespace SIL.XForge.Scripture.Services
         public async Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId,
             CancellationToken token)
         {
+            if (userSecret == null || string.IsNullOrEmpty(paratextId))
+            {
+                return Attempt.Failure((string)null);
+            }
             // Ensure the user has the paratext access tokens, and this is not a resource
             if (userSecret.ParatextTokens == null || IsResource(paratextId))
             {
