@@ -1,0 +1,10 @@
+// Find projects that have a text doc that is "invalid" (not the same as corrupted)
+use("xforge");
+
+const invalidProjects = db.sf_projects.countDocuments({
+  texts: { $elemMatch: { chapters: { $elemMatch: { isValid: false } } } }
+});
+
+const totalProjects = db.sf_projects.countDocuments();
+
+console.log(`${invalidProjects} of ${totalProjects} projects have at least one doc that is marked invalid.`);
