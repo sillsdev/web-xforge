@@ -201,6 +201,8 @@ namespace SIL.XForge.Scripture.Services
                     ptProject.ShortName, source.AsInternetSharedRepositorySource(), repositories);
                 if (sharedProj == null)
                 {
+                    LogSharedProjectResources(paratextId, ptProject.ShortName,
+                        source.AsInternetSharedRepositorySource(), repositories);
                     throw new Exception($"Failed to create SharedProject for PT project id {paratextId}");
                 }
                 string username = GetParatextUsername(userSecret);
@@ -1372,6 +1374,33 @@ namespace SIL.XForge.Scripture.Services
                 _logger.LogInformation("{0} updated chapter {1} of {2} in {3}.", userId,
                     chapterNum, Canon.BookNumberToEnglishName(bookNum), scrText.Name);
             }
+        }
+
+        private void LogSharedProjectResources(string projId, string projShortName, SharedRepositorySource source,
+            IEnumerable<SharedRepository> sourceRepositories)
+        {
+            _logger.LogInformation($"Creating ShareProject: {projId}");
+            _logger.LogInformation($"Short name is: {projShortName}");
+            if (source.Type != SRSourceTypes.Internet)
+                _logger.LogInformation("The source type was not an internet source");
+            SharedRepository project = sourceRepositories?.FirstOrDefault(p => p.SendReceiveId == HexId.FromStr(projId));
+            if (project == null)
+            {
+                _logger.LogInformation("The source repository is null");
+                return;
+            }
+            if (project.SourceUsers == null)
+            {
+                _logger.LogInformation("The source repository SourceUsers property is null");
+                return;
+            }
+            if (!project.SourceUsers.HasPermissionsDefined)
+                _logger.LogInformation("Permission is not defined");
+            UserRoles role = project.SourceUsers.GetRole();
+            if (role == UserRoles.None)
+                _logger.LogInformation("The user does not have a role on the project");
+            if (project.License == null)
+                _logger.LogInformation("The source project license is null");
         }
     }
 
