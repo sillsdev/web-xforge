@@ -201,7 +201,7 @@ namespace SIL.XForge.Scripture.Services
                     ptProject.ShortName, source.AsInternetSharedRepositorySource(), repositories);
                 if (sharedProj == null)
                 {
-                    LogSharedProjectResources(paratextId, ptProject.ShortName,
+                    LogFailedSharedProject(paratextId, ptProject.ShortName,
                         source.AsInternetSharedRepositorySource(), repositories);
                     throw new Exception($"Failed to create SharedProject for PT project id {paratextId}");
                 }
@@ -1376,10 +1376,10 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        private void LogSharedProjectResources(string projId, string projShortName, SharedRepositorySource source,
+        private void LogFailedSharedProject(string projId, string projShortName, SharedRepositorySource source,
             IEnumerable<SharedRepository> sourceRepositories)
         {
-            _logger.LogInformation($"Creating ShareProject: {projId}");
+            _logger.LogInformation($"*** Creating SharedProject failed for: {projId} ***");
             _logger.LogInformation($"Short name is: {projShortName}");
             if (source.Type != SRSourceTypes.Internet)
                 _logger.LogInformation("The source type was not an internet source");
