@@ -201,6 +201,6 @@ export class NoteDialogComponent implements OnInit {
     const paratextUser: ParatextUserProfile | undefined = this.paratextProjectUsers?.find(
       u => u.opaqueUserId === assignedNoteUserRef
     );
-    return paratextUser?.username || translate('note_dialog.paratext_user');
+    return paratextUser?.username ?? translate('note_dialog.paratext_user');
   }
 }
