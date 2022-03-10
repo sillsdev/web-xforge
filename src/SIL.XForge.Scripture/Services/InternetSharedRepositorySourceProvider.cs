@@ -35,7 +35,7 @@ namespace SIL.XForge.Scripture.Services
             string ptUsername = _jwtTokenHelper.GetParatextUsername(userSecret);
             if (string.IsNullOrEmpty(ptUsername))
             {
-                throw new Exception($"Failed to get a PT username for userSecret id {userSecret.Id}.");
+                throw new Exception($"Failed to get a PT username for SF user id {userSecret.Id}.");
             }
             var ptUser = new SFParatextUser(ptUsername);
             JwtRestClient jwtClient = GenerateParatextRegistryJwtClient(userSecret, registryServerUri);
