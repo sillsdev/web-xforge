@@ -174,7 +174,7 @@ namespace SIL.XForge.Scripture.Services
                             string userName = this._jwtTokenHelper.GetParatextUsername(this._userSecret);
                             if (userName == null)
                             {
-                                throw new Exception($"Failed to get a PT username for userSecret id {_userSecret.Id}.");
+                                throw new Exception($"Failed to get a PT username for SF user id {_userSecret.Id}.");
                             }
                             var ptUser = new SFParatextUser(userName);
                             var passwordProvider = new ParatextZippedResourcePasswordProvider(this._paratextOptions);
