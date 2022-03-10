@@ -1087,7 +1087,8 @@ namespace SIL.XForge.Scripture.Services
                     LanguageTag = correspondingSfProject?.WritingSystem.Tag,
                     ProjectId = correspondingSfProject?.Id,
                     IsConnectable = ptProjectIsConnectable,
-                    IsConnected = sfProjectExists && sfUserIsOnSfProject
+                    IsConnected = sfProjectExists && sfUserIsOnSfProject,
+                    CanSynchronize = remotePtProject.License != null && !remotePtProject.License.IsLimited
                 });
             }
             return paratextProjects.OrderBy(project => project.Name, StringComparer.InvariantCulture).ToArray();

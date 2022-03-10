@@ -19,6 +19,9 @@
         <p *ngIf="hasNonAdministratorProject && !showSettings && isAppOnline" id="connect-non-admin-msg">
           {{ t("only_paratext_admins_can_start") }}
         </p>
+        <p *ngIf="hasProjectWithoutSyncPermission" id="sync-not-allowed-msg">
+          {{ t("cannot_synchronize_project") }}
+        </p>
         <mdc-form-field>
           <mdc-select
             #projectSelect
@@ -32,13 +35,16 @@
                 <mdc-list-item
                   *ngFor="let project of projects"
                   [value]="project.paratextId"
-                  [disabled]="!project.isConnectable"
+                  [disabled]="!project.isConnectable || (!project.canSynchronize && !project.isConnected)"
                 >
                   {{ projectLabel(project) }}
                   <ng-container *ngIf="!project.isConnectable && project.isConnected">
                     &nbsp;{{ t("already_connected") }}
                   </ng-container>
                   <ng-container *ngIf="!project.isConnectable && !project.isConnected">&nbsp;**</ng-container>
+                  <ng-container *ngIf="project.isConnectable && !project.isConnected && !project.canSynchronize">
+                    &nbsp;***
+                  </ng-container>
                 </mdc-list-item>
               </mdc-list>
             </mdc-menu>

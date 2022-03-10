@@ -94,6 +94,17 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     return this.checkingEnabled.value;
   }
 
+  get hasProjectWithoutSyncPermission(): boolean {
+    if (!this._isAppOnline || this.projects == null) {
+      return false;
+    }
+    return this.projects.filter(p => !p.canSynchronize).length > 0;
+  }
+
+  get syncNotAllowedMessage(): string {
+    return this.i18n.translateAndInsertTags('connect_project.cannot_synchronize_project');
+  }
+
   get projectId(): string {
     return this.projectDoc?.id || '';
   }
@@ -369,7 +380,9 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       (this.projects?.find(p => p.paratextId === source.paratextId) ||
         this.resources?.find(r => r.paratextId === source.paratextId)) == null
     ) {
-      this.nonSelectableProjects = [{ paratextId: source.paratextId, shortName: source.shortName, name: source.name }];
+      this.nonSelectableProjects = [
+        { paratextId: source.paratextId, shortName: source.shortName, name: source.name, canSynchronize: true }
+      ];
     } else {
       this.nonSelectableProjects = [];
     }

@@ -17,8 +17,17 @@ describe('ProjectSelectComponent', () => {
     expect(env.groupLabels.length).toBe(2);
     expect(env.groupLabels[0]).toBe('Projects');
     expect(env.groupLabels[1]).toBe('Resources');
-    expect(env.optionsText(0)).toEqual(['P1 - Project 1', 'P3 - Project 3']);
+    expect(env.optionsText(0)[0]).toEqual('P1 - Project 1');
+    expect(env.optionsText(0)[1]).toContain('P3 - Project 3');
     expect(env.optionsText(1)).toEqual(['R1 - Resource 1', 'R2 - Resource 2']);
+  }));
+
+  it('disables projects that a user cannot synchronize', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.clickInput();
+    expect(env.isOptionDisabled(0, 0)).toBe(false);
+    expect(env.isOptionDisabled(0, 1)).toBe(false);
+    expect(env.isOptionDisabled(0, 2)).toBe(true);
   }));
 
   it('it only lists groups with menu items', fakeAsync(() => {
@@ -75,7 +84,8 @@ describe('ProjectSelectComponent', () => {
     const resources = [...Array(100).keys()].map(key => ({
       paratextId: 'r' + key,
       name: 'Resource ' + (key + 1),
-      shortName: 'R' + key
+      shortName: 'R' + key,
+      canSynchronize: true
     }));
     const env = new TestEnvironment('p03', undefined, resources);
     env.clickInput();
@@ -131,15 +141,17 @@ class HostComponent {
   isDisabled: boolean = false;
 
   projects: SelectableProject[] = [
-    { name: 'Project 1', paratextId: 'p01', shortName: 'P1' },
-    { name: 'Project 2', paratextId: 'p02', shortName: 'P2' },
-    { name: 'Project 3', paratextId: 'p03', shortName: 'P3' }
+    { name: 'Project 1', paratextId: 'p01', shortName: 'P1', canSynchronize: true },
+    { name: 'Project 2', paratextId: 'p02', shortName: 'P2', canSynchronize: true },
+    { name: 'Project 3', paratextId: 'p03', shortName: 'P3', canSynchronize: false }
   ];
   resources: SelectableProject[] = [
-    { name: 'Resource 1', paratextId: 'r01', shortName: 'R1' },
-    { name: 'Resource 2', paratextId: 'r02', shortName: 'R2' }
+    { name: 'Resource 1', paratextId: 'r01', shortName: 'R1', canSynchronize: true },
+    { name: 'Resource 2', paratextId: 'r02', shortName: 'R2', canSynchronize: true }
   ];
-  nonSelectableProjects: SelectableProject[] = [{ name: 'Project 1', paratextId: 'p01', shortName: 'P1' }];
+  nonSelectableProjects: SelectableProject[] = [
+    { name: 'Project 1', paratextId: 'p01', shortName: 'P1', canSynchronize: true }
+  ];
   hideProjectId: string = '';
 }
 
@@ -189,7 +201,11 @@ class TestEnvironment {
   }
 
   optionsText(group: number): string[] {
-    return this.options(group).map(option => option.textContent || '');
+    return this.options(group).map(option => option.textContent?.trim() || '');
+  }
+
+  isOptionDisabled(group: number, item: number): boolean {
+    return (this.options(group)[item] as HTMLElement).classList.contains('mat-option-disabled');
   }
 
   clickOption(group: number, item: number) {

@@ -78,7 +78,12 @@
                   <mat-error *ngIf="resourceLoadingFailed && !projectLoadingFailed">
                     {{ t("error_fetching_resources") }}
                   </mat-error>
-                  <div class="helper-text select-helper-text">{{ t("choose_the_paratext_project") }}</div>
+                  <div class="helper-text select-helper-text">
+                    <div>{{ t("choose_the_paratext_project") }}</div>
+                    <div class="project-sync-helper-text" *ngIf="hasProjectWithoutSyncPermission">
+                      {{ syncNotAllowedMessage }}
+                    </div>
+                  </div>
                 </div>
               </ng-container>
               <div class="tool-setting-field checkbox-field">

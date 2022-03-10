@@ -259,7 +259,8 @@ describe('SettingsComponent', () => {
             shortName: 'PT2',
             languageTag: 'qaa',
             isConnectable: true,
-            isConnected: false
+            isConnected: false,
+            canSynchronize: true
           }
         ]);
         when(mockedParatextService.getResources()).thenResolve([]);
@@ -271,6 +272,16 @@ describe('SettingsComponent', () => {
         expect(env.basedOnSelectValue).toBe('ParatextP1');
         expect(env.basedOnSelectProjectsResources.length).toEqual(1);
         expect(env.basedOnSelectProjectsResources[0].name).toBe('ParatextP2');
+        expect(env.translationProjectSyncMessage).toBeNull();
+      }));
+
+      it('shows sync not allowed message', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        env.wait();
+
+        expect(env.component.hasProjectWithoutSyncPermission).toBe(true);
+        expect(env.translationProjectSyncMessage).not.toBeNull();
       }));
 
       it('should display projects then resources', fakeAsync(() => {
@@ -543,7 +554,8 @@ class TestEnvironment {
         shortName: 'PT1',
         languageTag: 'qaa',
         isConnectable: true,
-        isConnected: false
+        isConnected: false,
+        canSynchronize: true
       },
       {
         paratextId: 'paratextId02',
@@ -551,17 +563,24 @@ class TestEnvironment {
         shortName: 'PT2',
         languageTag: 'qaa',
         isConnectable: true,
-        isConnected: false
+        isConnected: false,
+        canSynchronize: false
       }
     ]);
     when(mockedParatextService.getResources()).thenResolve([
-      { paratextId: 'e01f11e9b4b8e338', name: 'Sob Jonah and Luke', shortName: 'SJL' },
+      { paratextId: 'e01f11e9b4b8e338', name: 'Sob Jonah and Luke', shortName: 'SJL', canSynchronize: true },
       {
         paratextId: '5e51f89e89947acb',
         name: 'Aruamu New Testament [msy] Papua New Guinea 2004 DBL',
-        shortName: 'ANT'
+        shortName: 'ANT',
+        canSynchronize: true
       },
-      { paratextId: '9bb76cd3e5a7f9b4', name: 'Revised Version with Apocrypha 1885, 1895', shortName: 'RVA' }
+      {
+        paratextId: '9bb76cd3e5a7f9b4',
+        name: 'Revised Version with Apocrypha 1885, 1895',
+        shortName: 'RVA',
+        canSynchronize: true
+      }
     ]);
 
     this.fixture = TestBed.createComponent(SettingsComponent);
@@ -583,6 +602,10 @@ class TestEnvironment {
 
   get translationSuggestionsStatus(): DebugElement {
     return this.fixture.debugElement.query(By.css('#translation-suggestions-status'));
+  }
+
+  get translationProjectSyncMessage(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.project-sync-helper-text'));
   }
 
   get basedOnSelect(): DebugElement {

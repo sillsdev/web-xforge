@@ -100,6 +100,13 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     return this._projects.filter(p => !p.isConnected && !p.isConnectable).length > 0;
   }
 
+  get hasProjectWithoutSyncPermission(): boolean {
+    if (!this.isAppOnline || this._projects == null) {
+      return false;
+    }
+    return this._projects.filter(p => !p.isConnected && p.isConnectable && !p.canSynchronize).length > 0;
+  }
+
   get projects(): ParatextProject[] {
     return this._projects != null ? this._projects : [];
   }

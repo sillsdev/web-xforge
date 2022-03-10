@@ -21,6 +21,8 @@ namespace SIL.XForge.Scripture.Models
         /// If the requesting user has access to both the PT project and the corresponding SF project.
         /// </summary>
         public bool IsConnected { get; set; }
+        /// <summary> Indicates whether a user can send/receive the project based having a valid license. </summary>
+        public bool CanSynchronize { get; set; }
 
         /// <summary> Descriptive string of object's properties, for debugging. </summary>
         public override string ToString()

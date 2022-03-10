@@ -144,6 +144,7 @@ describe('ConnectProjectComponent', () => {
     env.setupDefaultProjectData();
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
+    expect(env.syncNotAllowedMessage).toBeNull();
 
     // Simulate touching the control
     env.component.paratextIdControl.markAsTouched();
@@ -173,6 +174,27 @@ describe('ConnectProjectComponent', () => {
     expect(env.nonAdminMessage).not.toBeNull();
   }));
 
+  it('should display sync-not-allowed projects disabled', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProjectsResources([
+      {
+        paratextId: 'pt05',
+        projectId: 'project05',
+        name: 'French',
+        shortName: 'FRA',
+        languageTag: 'fr',
+        isConnectable: true,
+        isConnected: false,
+        canSynchronize: false
+      }
+    ]);
+    env.waitForProjectsResponse();
+    expect(env.component.state).toEqual('input');
+    expect(env.component.hasProjectWithoutSyncPermission).toBe(true);
+    expect(env.isMenuItemDisabled(env.projectSelect, 0)).toBe(true);
+    expect(env.syncNotAllowedMessage).not.toBeNull();
+  }));
+
   it('should not display non-administrator message', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupProjectsResources(
@@ -183,7 +205,8 @@ describe('ConnectProjectComponent', () => {
           shortName: 'TA1',
           languageTag: 'en',
           isConnectable: true,
-          isConnected: false
+          isConnected: false,
+          canSynchronize: true
         },
         {
           paratextId: 'pt02',
@@ -192,7 +215,8 @@ describe('ConnectProjectComponent', () => {
           shortName: 'TA2',
           languageTag: 'mri',
           isConnectable: false,
-          isConnected: true
+          isConnected: true,
+          canSynchronize: true
         },
         {
           paratextId: 'pt03',
@@ -201,7 +225,8 @@ describe('ConnectProjectComponent', () => {
           shortName: 'TA3',
           languageTag: 'th',
           isConnectable: true,
-          isConnected: true
+          isConnected: true,
+          canSynchronize: true
         }
       ],
       []
@@ -476,6 +501,10 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#connect-non-admin-msg'));
   }
 
+  get syncNotAllowedMessage(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#sync-not-allowed-msg'));
+  }
+
   get projectsMenu(): DebugElement {
     return this.fixture.debugElement.query(By.css('#projects-menu'));
   }
@@ -523,7 +552,7 @@ class TestEnvironment {
       'mat-optgroup'
     );
     const [projects, resources] = [groups[0], groups[1]].map(group =>
-      Array.from(group.querySelectorAll('mat-option')).map(option => option.textContent || '')
+      Array.from(group.querySelectorAll('mat-option')).map(option => option.textContent?.trim() || '')
     );
     return { projects, resources };
   }
@@ -609,7 +638,8 @@ class TestEnvironment {
           shortName: 'ENG',
           languageTag: 'en',
           isConnectable: true,
-          isConnected: false
+          isConnected: false,
+          canSynchronize: true
         },
         {
           paratextId: 'pt02',
@@ -618,7 +648,8 @@ class TestEnvironment {
           shortName: 'MRI',
           languageTag: 'mri',
           isConnectable: false,
-          isConnected: true
+          isConnected: true,
+          canSynchronize: true
         },
         {
           paratextId: 'pt04',
@@ -626,7 +657,8 @@ class TestEnvironment {
           shortName: 'ESP',
           languageTag: 'es',
           isConnectable: false,
-          isConnected: false
+          isConnected: false,
+          canSynchronize: true
         },
         {
           paratextId: 'pt03',
@@ -635,17 +667,24 @@ class TestEnvironment {
           shortName: 'THA',
           languageTag: 'th',
           isConnectable: true,
-          isConnected: true
+          isConnected: true,
+          canSynchronize: true
         }
       ],
       [
-        { paratextId: 'e01f11e9b4b8e338', name: 'Sob Jonah and Luke', shortName: 'SJL' },
+        { paratextId: 'e01f11e9b4b8e338', name: 'Sob Jonah and Luke', shortName: 'SJL', canSynchronize: true },
         {
           paratextId: '5e51f89e89947acb',
           name: 'Aruamu New Testament [msy] Papua New Guinea 2004 DBL',
-          shortName: 'ANT'
+          shortName: 'ANT',
+          canSynchronize: true
         },
-        { paratextId: '9bb76cd3e5a7f9b4', name: 'Revised Version with Apocrypha 1885, 1895', shortName: 'RVA' }
+        {
+          paratextId: '9bb76cd3e5a7f9b4',
+          name: 'Revised Version with Apocrypha 1885, 1895',
+          shortName: 'RVA',
+          canSynchronize: true
+        }
       ]
     );
   }

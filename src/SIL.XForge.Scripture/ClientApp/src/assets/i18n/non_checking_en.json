@@ -48,6 +48,7 @@
     "additional_settings": "Additional Settings",
     "already_connected": "(already connected)",
     "based_on": "Based on",
+    "cannot_synchronize_project": "*** One or more projects cannot be selected because you do not have send/receive permission. If this Paratext project is derived from another Paratext project, you must have permission to send/receive on both.",
     "choose_the_mother_project": "Choose the Paratext project that your project is based on.",
     "community_checking": "Community Checking",
     "connect_network_to_connect_project": "Please connect to the internet to enable connecting to a project",
