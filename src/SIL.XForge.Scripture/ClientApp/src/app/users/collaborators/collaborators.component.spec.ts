@@ -12,7 +12,6 @@ import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scri
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, of } from 'rxjs';
-import { paratextUsersFromRoles } from 'src/app/shared/test-utils';
 import { anything, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
@@ -28,7 +27,9 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, emptyHammerLoader, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { paratextUsersFromRoles } from '../../shared/test-utils';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_PROJECT_ROLES } from '../../core/models/sf-project-role-info';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -481,7 +482,7 @@ class TestEnvironment {
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId)
     );
     when(mockedProjectService.getProfile(anything())).thenCall(projectId =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId)
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
     );
     when(mockedProjectService.onlineGetLinkSharingKey(this.project01Id, anything())).thenResolve('linkSharingKey01');
     when(mockedProjectService.onlineSetUserProjectPermissions(this.project01Id, 'user02', anything())).thenCall(

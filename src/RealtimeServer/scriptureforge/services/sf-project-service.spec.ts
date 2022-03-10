@@ -8,6 +8,7 @@ import { clientConnect, createDoc, fetchDoc } from '../../common/utils/test-util
 import { CheckingShareLevel } from '../models/checking-config';
 import { TranslateShareLevel } from '../models/translate-config';
 import { SystemRole } from '../../common/models/system-role';
+import { ParatextUserProfile } from '../models/paratext-user-profile';
 import { SFProjectService } from './sf-project-service';
 
 describe('SFProjectService', () => {
@@ -37,6 +38,7 @@ describe('SFProjectService', () => {
 
   it('allows system admin user to see project', async () => {
     const env = new TestEnvironment();
+    expect(env.paratextUsers.find(u => u.sfUserId === 'sys_admin')).toBeUndefined();
     await env.createData();
 
     const conn = clientConnect(env.server, 'sys_admin', SystemRole.SystemAdmin);
@@ -59,6 +61,11 @@ class TestEnvironment {
   readonly server: RealtimeServer;
   readonly db: ShareDBMingo;
   readonly mockedSchemaVersionRepository = mock(SchemaVersionRepository);
+  readonly paratextUsers: ParatextUserProfile[] = [
+    { sfUserId: 'projectAdmin', username: 'ptprojectAdmin', opaqueUserId: 'opaqueprojectAdmin' },
+    { sfUserId: 'translator', username: 'pttranslator', opaqueUserId: 'opaquetranslator' }
+  ];
+
   constructor() {
     this.service = new SFProjectService();
     const ShareDBMingoType = ShareDBMingo.extendMemoryDB(ShareDB.MemoryDB);
@@ -85,10 +92,7 @@ class TestEnvironment {
         translator: 'pt_translator',
         observer: 'sf_observer'
       },
-      paratextUsers: [
-        { sfUserId: 'projectAdmin', username: 'ptprojectAdmin', opaqueUserId: 'opaqueprojectAdmin' },
-        { sfUserId: 'translator', username: 'pttranslator', opaqueUserId: 'opaquetranslator' }
-      ],
+      paratextUsers: this.paratextUsers,
       userPermissions: {},
       sync: {
         queuedCount: 0

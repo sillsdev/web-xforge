@@ -2794,11 +2794,11 @@ class TestEnvironment {
     position: TextAnchor,
     userIds: string[],
     status: NoteStatus = NoteStatus.Todo,
-    assignedUserRef?: string
+    assignedSFUserRef?: string
   ): void {
     const threadId: string = `thread0${threadNum}`;
     const assignedUser: ParatextUserProfile | undefined = this.paratextUsersOnProject.find(
-      u => u.sfUserId === assignedUserRef
+      u => u.sfUserId === assignedSFUserRef
     );
     const notes: Note[] = [];
     for (let i = 0; i < userIds.length; i++) {

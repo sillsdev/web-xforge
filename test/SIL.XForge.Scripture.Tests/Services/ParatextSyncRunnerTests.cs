@@ -1175,6 +1175,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(
                 new[] { "User 1", "User 2", "User 3" }));
             Assert.That(project.ParatextUsers.Single(u => u.Username == "User 1").SFUserId, Is.EqualTo("user01"));
+            Assert.That(project.ParatextUsers.Single(u => u.Username == "User 2").SFUserId, Is.EqualTo("user02"));
             Assert.That(project.ParatextUsers.Single(u => u.Username == "User 3").SFUserId, Is.EqualTo("user03"));
             Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
