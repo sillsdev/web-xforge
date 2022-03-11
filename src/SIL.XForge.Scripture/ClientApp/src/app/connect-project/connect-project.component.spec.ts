@@ -672,17 +672,13 @@ class TestEnvironment {
         }
       ],
       [
-        { paratextId: 'e01f11e9b4b8e338', name: 'Sob Jonah and Luke', shortName: 'SJL', canSynchronize: true },
+        { paratextId: 'e01f11e9b4b8e338', name: 'Sob Jonah and Luke', shortName: 'SJL' },
         {
           paratextId: '5e51f89e89947acb',
           name: 'Aruamu New Testament [msy] Papua New Guinea 2004 DBL',
           shortName: 'ANT'
         },
-        {
-          paratextId: '9bb76cd3e5a7f9b4',
-          name: 'Revised Version with Apocrypha 1885, 1895',
-          shortName: 'RVA'
-        }
+        { paratextId: '9bb76cd3e5a7f9b4', name: 'Revised Version with Apocrypha 1885, 1895', shortName: 'RVA' }
       ]
     );
   }
