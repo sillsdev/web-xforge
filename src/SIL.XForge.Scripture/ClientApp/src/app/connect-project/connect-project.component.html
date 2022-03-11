@@ -42,7 +42,9 @@
                     &nbsp;{{ t("already_connected") }}
                   </ng-container>
                   <ng-container *ngIf="!project.isConnectable && !project.isConnected">&nbsp;**</ng-container>
-                  <ng-container *ngIf="project.isConnectable && !project.isConnected && !project.canSynchronize">
+                  <ng-container
+                    *ngIf="project.isConnectable && !project.isConnected && project.canSynchronize === false"
+                  >
                     &nbsp;***
                   </ng-container>
                 </mdc-list-item>

@@ -9,7 +9,7 @@ export interface SelectableProject {
   name: string;
   shortName: string;
   paratextId: string;
-  canSynchronize: boolean;
+  canSynchronize?: boolean;
 }
 
 @Injectable({
@@ -42,8 +42,7 @@ export class ParatextService {
           : Object.entries(result).map(([paratextId, [shortName, projectName]]) => ({
               paratextId,
               shortName,
-              name: projectName,
-              canSynchronize: true
+              name: projectName
             }))
       );
   }

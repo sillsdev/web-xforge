@@ -17,9 +17,13 @@
       class="project-select"
     >
       <mat-optgroup label="{{ t('projects') }}" *ngIf="nullableLength(projects$ | async) > 0">
-        <mat-option *ngFor="let project of projects$ | async" [value]="project" [disabled]="!project.canSynchronize">
+        <mat-option
+          *ngFor="let project of projects$ | async"
+          [value]="project"
+          [disabled]="project.canSynchronize === false"
+        >
           {{ projectLabel(project) }}
-          <ng-container *ngIf="!project.canSynchronize">&nbsp;***</ng-container>
+          <ng-container *ngIf="project.canSynchronize === false">&nbsp;***</ng-container>
         </mat-option>
       </mat-optgroup>
       <mat-optgroup label="{{ t('resources') }}" *ngIf="nullableLength(resources$ | async) > 0">

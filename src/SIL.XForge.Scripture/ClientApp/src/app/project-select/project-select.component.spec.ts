@@ -141,17 +141,15 @@ class HostComponent {
   isDisabled: boolean = false;
 
   projects: SelectableProject[] = [
-    { name: 'Project 1', paratextId: 'p01', shortName: 'P1', canSynchronize: true },
-    { name: 'Project 2', paratextId: 'p02', shortName: 'P2', canSynchronize: true },
+    { name: 'Project 1', paratextId: 'p01', shortName: 'P1' },
+    { name: 'Project 2', paratextId: 'p02', shortName: 'P2' },
     { name: 'Project 3', paratextId: 'p03', shortName: 'P3', canSynchronize: false }
   ];
   resources: SelectableProject[] = [
-    { name: 'Resource 1', paratextId: 'r01', shortName: 'R1', canSynchronize: true },
-    { name: 'Resource 2', paratextId: 'r02', shortName: 'R2', canSynchronize: true }
+    { name: 'Resource 1', paratextId: 'r01', shortName: 'R1' },
+    { name: 'Resource 2', paratextId: 'r02', shortName: 'R2' }
   ];
-  nonSelectableProjects: SelectableProject[] = [
-    { name: 'Project 1', paratextId: 'p01', shortName: 'P1', canSynchronize: true }
-  ];
+  nonSelectableProjects: SelectableProject[] = [{ name: 'Project 1', paratextId: 'p01', shortName: 'P1' }];
   hideProjectId: string = '';
 }
 

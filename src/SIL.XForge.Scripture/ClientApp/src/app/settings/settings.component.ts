@@ -98,7 +98,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     if (!this._isAppOnline || this.projects == null) {
       return false;
     }
-    return this.projects.filter(p => !p.canSynchronize).length > 0;
+    return this.projects.filter(p => p.canSynchronize === false).length > 0;
   }
 
   get syncNotAllowedMessage(): string {
