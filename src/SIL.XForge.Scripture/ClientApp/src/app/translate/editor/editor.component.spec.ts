@@ -841,6 +841,19 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('user cannot edit a text that is not editable', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject({ editable: false });
+      env.setProjectUserConfig();
+      // env.updateParams({ projectId: 'notEditableProj', bookId: 'GEN' });
+      env.wait();
+
+      expect(env.bookName).toEqual('Matthew');
+      expect(env.component.projectTextNotEditable).toBe(true);
+      expect(env.component.canEdit).toBe(false);
+      env.dispose();
+    }));
+
     it('user has no resource access', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setupProject({
@@ -1274,6 +1287,7 @@ class TestEnvironment {
       shareLevel: CheckingShareLevel.Specific
     },
     sync: { queuedCount: 0, dataInSync: true },
+    editable: true,
     texts: [
       {
         bookNum: 40,
@@ -1573,6 +1587,9 @@ class TestEnvironment {
     }
     if (data.isRightToLeft != null) {
       projectData.isRightToLeft = data.isRightToLeft;
+    }
+    if (data.editable != null) {
+      projectData.editable = data.editable;
     }
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
       id: 'project01',
