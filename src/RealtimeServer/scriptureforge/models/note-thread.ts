@@ -7,14 +7,18 @@ export const NOTE_THREAD_COLLECTION = 'note_threads';
 export const NOTE_THREAD_INDEX_PATHS = PROJECT_DATA_INDEX_PATHS;
 
 /**
- * Paratext used to record notes as deleted when completed but then changed to display them as resolved
- * Done is also a backwards compatible status that could also be treated as deleted/resolved
+ * Paratext used to record notes as deleted when completed but then changed to display them as resolved.
+ * Done is also a backwards compatible status that could also be treated as deleted/resolved.
  */
 export enum NoteStatus {
   Unspecified = '',
   Todo = 'todo',
   Done = 'done',
   Resolved = 'deleted'
+}
+
+export function getNoteThreadDocId(projectId: string, noteThreadId: string): string {
+  return `${projectId}:${noteThreadId}`;
 }
 
 export enum AssignedUsers {
