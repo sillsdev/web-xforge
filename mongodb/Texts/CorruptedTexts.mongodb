@@ -1,16 +1,20 @@
 // This script searches for text documents that have been corrupted in the same manner as we have seen in the past.
-// At the time of writing the only known way of causing this corruption is to drag and drop text into the editor.
-// Dragging and dropping text was temporarily disabled as a result, while waiting for a fix for drag and drop.
-// However, it's a good idea to run this query occasionally in order to make sure our fix works and there isn't another
-// way of corrupting data that has yet to be discovered.
+// It's a good idea to run this query occasionally in order to make sure our fix works and there isn't another way of
+// corrupting data that has yet to be discovered.
 
 use('xforge');
 
-console.log(db.texts.count({ops: {$elemMatch: {'insert.verse': true}}}));
-
-console.log(db.texts.count({ops: {$elemMatch: {'attributes.segment': {$regex: 'undefined'}}}}));
-
-console.log(db.texts.count({ops: {$elemMatch: {'attributes.segment': {$regex: 'null'}}}}));
-
-// This will match delete and retain ops, which should not exist, but have been found in production
-console.log(db.texts.count({ops: {$elemMatch: {insert: {$exists: false}}}}));
+console.log(
+  db.texts.countDocuments({
+    ops: {
+      $elemMatch: {
+        $or: [
+          { 'insert.verse': true },
+          { 'attributes.segment': /(?:null|undefined)/ },
+          // This will match delete and retain ops, which should not exist, but have been found in production
+          { insert: { $exists: false } }
+        ]
+      }
+    }
+  })
+);

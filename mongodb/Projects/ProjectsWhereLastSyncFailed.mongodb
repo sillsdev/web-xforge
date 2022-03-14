@@ -1,5 +1,10 @@
 // This script searches for projects that failed the most recent sync
 
+// This script is designed to be run either by mongosh on the command line (logging results), or by the MongoDB VS Code
+// extension (showing projects in the results pane).
+
 use('xforge')
 
-db.sf_projects.find({'sync.lastSyncSuccessful': false}, {texts: 0})
+const projects = db.sf_projects.find({'sync.lastSyncSuccessful': false}, {texts: 0}).toArray();
+console.log(projects.map(project => project.shortName).join('\n'));
+projects
