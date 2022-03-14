@@ -192,6 +192,7 @@ class TestEnvironment {
     },
     texts: [this.matthewText],
     sync: { queuedCount: 0 },
+    editable: true,
     userRoles: {
       [this.adminUser.id]: this.adminUser.role
     },
