@@ -608,25 +608,16 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        /// <summary> Determine if a specific project is in a right to left language. </summary>
-        public bool IsProjectLanguageRightToLeft(UserSecret userSecret, string paratextId)
+        /// <summary> Gets basic settings for a Paratext project. </summary>
+        public ParatextSettings GetParatextSettings(UserSecret userSecret, string paratextId)
         {
             using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
-            return scrText == null ? false : scrText.RightToLeft;
-        }
-
-        /// <summary>
-        /// Gets the full name of the project from the local repository.
-        /// </summary>
-        /// <param name="userSecret">The user secret.</param>
-        /// <param name="paratextId">The paratext identifier.</param>
-        /// <returns>
-        /// The full name of the project.
-        /// </returns>
-        public string GetProjectFullName(UserSecret userSecret, string paratextId)
-        {
-            using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
-            return scrText?.FullName;
+            return new ParatextSettings
+            {
+                FullName = scrText.FullName,
+                IsRightToLeft = scrText?.RightToLeft ?? false,
+                Editable = scrText.Settings.Editable
+            };
         }
 
         /// <summary> Get list of book numbers in PT project. </summary>
@@ -657,6 +648,11 @@ namespace SIL.XForge.Scripture.Services
             {
                 string username = GetParatextUsername(userSecret);
                 ScrText scrText = ScrTextCollection.FindById(username, projectId);
+                if (!scrText.Settings.Editable)
+                {
+                    // do not push changes if the project is not editable
+                    return;
+                }
 
                 // We add this here so we can dispose in the finally
                 scrTexts.Add(userSecret.Id, scrText);

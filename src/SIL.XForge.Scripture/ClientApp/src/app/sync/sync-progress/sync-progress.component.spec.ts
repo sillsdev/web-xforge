@@ -159,6 +159,7 @@ class TestEnvironment {
           lastSyncSuccessful: true,
           dateLastSuccessfulSync: date.toJSON()
         },
+        editable: true,
         texts: [],
         userRoles: this.userRoleTarget,
         userPermissions: {}
@@ -191,6 +192,7 @@ class TestEnvironment {
             lastSyncSuccessful: true,
             dateLastSuccessfulSync: date.toJSON()
           },
+          editable: true,
           texts: [],
           userRoles: this.userRoleSource,
           userPermissions: {}

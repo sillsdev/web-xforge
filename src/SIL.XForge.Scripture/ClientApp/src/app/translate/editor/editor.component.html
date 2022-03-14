@@ -58,6 +58,9 @@
             <mdc-icon>error</mdc-icon> {{ t("text_doc_corrupted") }}
             <span [innerHTML]="t('to_report_issue_email', { issueEmailLink: issueEmailLink })"></span>
           </div>
+          <div *ngIf="projectTextNotEditable" class="project-text-not-editable">
+            {{ t("project_text_not_editable") }}
+          </div>
         </ng-container>
         <div #targetContainer class="text-container" [style.height]="textHeight">
           <app-text

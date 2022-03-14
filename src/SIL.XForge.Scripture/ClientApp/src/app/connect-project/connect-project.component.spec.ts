@@ -431,6 +431,7 @@ class TestEnvironment {
           usersSeeEachOthersResponses: true
         },
         sync: { queuedCount: 1 },
+        editable: true,
         texts: [],
         userRoles: {
           user01: SFProjectRole.ParatextAdministrator

@@ -405,6 +405,32 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task SyncAsync_ProjectTextSetToNotEditable()
+        {
+            var env = new TestEnvironment();
+            Book[] books = { new Book("MAT", 1) };
+            env.SetupSFData(true, true, false, books);
+            env.SetupPTData(books);
+            SFProject project = env.GetProject("project01");
+            Assert.That(project.Editable, Is.True, "setup");
+            var ptUserRoles = new Dictionary<string, string>
+            {
+                { "pt01", SFProjectRole.Administrator }
+            };
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(),
+                Arg.Is((SFProject project) => project.ParatextId == "target"), Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
+
+            env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
+                .Returns(new ParatextSettings { Editable = false });
+
+            // SUT
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            project = env.VerifyProjectSync(true);
+            Assert.That(project.Editable, Is.False);
+        }
+
+        [Test]
         public async Task SyncAsync_CheckerWithPTAccountNotRemoved()
         {
             var env = new TestEnvironment();
@@ -436,13 +462,13 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, false, false, books);
             env.SetupPTData(books);
 
-            env.ParatextService.IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), "target")
-                .Returns(true);
+            env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), "target")
+                .Returns(new ParatextSettings { IsRightToLeft = true });
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             SFProject project = env.GetProject();
-            env.ParatextService.Received().IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), "target");
-            env.ParatextService.Received().IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), "source");
+            env.ParatextService.Received().GetParatextSettings(Arg.Any<UserSecret>(), "target");
+            env.ParatextService.Received().GetParatextSettings(Arg.Any<UserSecret>(), "source");
             Assert.That(project.IsRightToLeft, Is.True);
             Assert.That(project.TranslateConfig.Source.IsRightToLeft, Is.False);
         }
@@ -455,14 +481,14 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, false, false, books);
             env.SetupPTData(books);
 
-            env.ParatextService.GetProjectFullName(Arg.Any<UserSecret>(), "target")
-                .Returns((string)null);
+            env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), "target")
+                .Returns(new ParatextSettings());
 
             // SUT
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             SFProject project = env.GetProject();
-            env.ParatextService.Received().GetProjectFullName(Arg.Any<UserSecret>(), "target");
+            env.ParatextService.Received().GetParatextSettings(Arg.Any<UserSecret>(), "target");
             Assert.That(project.Name, Is.EqualTo("project01"));
         }
 
@@ -475,14 +501,14 @@ namespace SIL.XForge.Scripture.Services
             env.SetupPTData(books);
 
             string newFullName = "New Full Name";
-            env.ParatextService.GetProjectFullName(Arg.Any<UserSecret>(), "target")
-                .Returns(newFullName);
+            env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), "target")
+                .Returns(new ParatextSettings { FullName = newFullName });
 
             // SUT
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             SFProject project = env.GetProject();
-            env.ParatextService.Received().GetProjectFullName(Arg.Any<UserSecret>(), "target");
+            env.ParatextService.Received().GetParatextSettings(Arg.Any<UserSecret>(), "target");
             Assert.That(project.Name, Is.EqualTo(newFullName));
         }
 
@@ -1175,8 +1201,14 @@ namespace SIL.XForge.Scripture.Services
                                 .Returns("afterSR");
                         }
                     );
-                ParatextService.IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), Arg.Any<string>())
-                    .Returns(false);
+                ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
+                    .Returns(x => new ParatextSettings
+                    {
+                        FullName = (string)x[1],
+                        IsRightToLeft = false,
+                        Editable = true
+                    }
+                    );
                 ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target")
                     .Returns("beforeSR");
                 ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "source")

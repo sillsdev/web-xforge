@@ -534,6 +534,37 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task PutBookText_SkipsUpdatingReadonlyText()
+        {
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            // should be able to edit the book text even if the admin user does not have permission
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser, false, false);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+            int ruthBookNum = 8;
+            string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere" +
+                "</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />" +
+                "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
+            var chapterAuthors = new Dictionary<int, string>
+            {
+                { 1, env.User01 },
+                { 2, env.User01 },
+            };
+
+            // SUT
+            await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, ruthBookUsx, chapterAuthors);
+
+            // Make sure only one ScrText was loaded
+            env.MockScrTextCollection.Received(1).FindById(env.Username01, ptProjectId);
+
+            // See if there is a message for the user updating the book
+            string logMessage = string.Format("{0} updated {1} in {2}.", env.User01,
+                    Canon.BookNumberToEnglishName(ruthBookNum), env.ProjectScrText.Name);
+            env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent != null);
+        }
+
+        [Test]
         public void GetNotes_RetrievesNotes()
         {
             int ruthBookNum = 8;
@@ -1477,10 +1508,11 @@ namespace SIL.XForge.Scripture.Services
                 return notesElem.ToString();
             }
 
-            public string SetupProject(string baseId, ParatextUser associatedPtUser, bool hasEditPermission = true)
+            public string SetupProject(string baseId, ParatextUser associatedPtUser, bool hasEditPermission = true,
+                bool editable = true)
             {
                 string ptProjectId = PTProjectIds[baseId].Id;
-                ProjectScrText = GetScrText(associatedPtUser, ptProjectId, hasEditPermission);
+                ProjectScrText = GetScrText(associatedPtUser, ptProjectId, hasEditPermission, editable);
 
                 // We set the file manager her so we can track file manager operations after
                 // the ScrText object has been disposed in ParatextService.
@@ -1494,7 +1526,7 @@ namespace SIL.XForge.Scripture.Services
             }
 
             public MockScrText GetScrText(ParatextUser associatedPtUser, string projectId,
-                bool hasEditPermission = true)
+                bool hasEditPermission = true, bool editable = true)
             {
                 string scrtextDir = Path.Combine(SyncDir, projectId, "target");
                 ProjectName projectName = new ProjectName() { ProjectPath = scrtextDir, ShortName = "Proj" };
@@ -1505,6 +1537,8 @@ namespace SIL.XForge.Scripture.Services
                 scrText.Settings.BooksPresentSet = new BookSet("RUT");
                 if (!hasEditPermission)
                     scrText.Permissions.SetPermission(null, 8, PermissionSet.Manual, false);
+                if (!editable)
+                    scrText.Settings.Editable = editable;
                 return scrText;
             }
 

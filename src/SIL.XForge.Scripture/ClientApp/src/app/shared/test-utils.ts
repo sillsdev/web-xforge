@@ -65,6 +65,7 @@ export function getSFProject(id: string): SFProject {
       shareLevel: CheckingShareLevel.Specific
     },
     sync: { queuedCount: 0 },
+    editable: true,
     texts: [
       {
         bookNum: 40,

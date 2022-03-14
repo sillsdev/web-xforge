@@ -662,6 +662,7 @@ class TestEnvironment {
         shareEnabled: false,
         shareLevel: CheckingShareLevel.Specific
       },
+      editable: true,
       userRoles,
       userPermissions: {}
     };

@@ -1551,6 +1551,7 @@ class TestEnvironment {
         writingSystem: { tag: 'qaa' }
       }
     },
+    editable: true,
     texts: [
       {
         bookNum: 43,
