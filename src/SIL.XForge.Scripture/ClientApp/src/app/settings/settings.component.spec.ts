@@ -754,7 +754,8 @@ class TestEnvironment {
         sync: { queuedCount: 0 },
         texts: [],
         userRoles: {},
-        userPermissions: {}
+        userPermissions: {},
+        paratextUsers: []
       }
     });
   }

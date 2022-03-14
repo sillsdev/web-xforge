@@ -67,10 +67,10 @@ namespace SIL.XForge.Scripture.Services
         }
 
         public async Task<XElement> GetNotesChangelistAsync(XElement oldNotesElem,
-            IEnumerable<IDocument<Question>> questionsDocs, Dictionary<string, SyncUser> syncUsers)
+            IEnumerable<IDocument<Question>> questionsDocs, Dictionary<string, ParatextUserProfile> ptProjectUsers)
         {
             var version = (string)oldNotesElem.Attribute("version");
-            Dictionary<string, XElement> oldCommentElems = GetOldCommentElements(oldNotesElem, syncUsers);
+            Dictionary<string, XElement> oldCommentElems = GetOldCommentElements(oldNotesElem, ptProjectUsers);
 
             var notesElem = new XElement("notes", new XAttribute("version", version));
             foreach (IDocument<Question> questionDoc in questionsDocs)
@@ -100,7 +100,7 @@ namespace SIL.XForge.Scripture.Services
                             scriptureText));
                     }
                     string answerSyncUserId = await AddCommentIfChangedAsync(oldCommentElems, threadElem,
-                        answer, syncUsers, answerPrefixContents);
+                        answer, ptProjectUsers, answerPrefixContents);
                     if (answer.SyncUserRef == null)
                         answerSyncUserIds.Add((j, answerSyncUserId));
 
@@ -108,7 +108,7 @@ namespace SIL.XForge.Scripture.Services
                     {
                         Comment comment = answer.Comments[k];
                         string commentSyncUserId = await AddCommentIfChangedAsync(oldCommentElems, threadElem,
-                            comment, syncUsers);
+                            comment, ptProjectUsers);
                         if (comment.SyncUserRef == null)
                             commentSyncUserIds.Add((j, k, commentSyncUserId));
                     }
@@ -133,7 +133,8 @@ namespace SIL.XForge.Scripture.Services
         /// <summar>
         /// Get the Paratext Comment elements from a project that are associated with Community Checking answers.
         /// </summary>
-        private Dictionary<string, XElement> GetOldCommentElements(XElement ptNotesElement, Dictionary<string, SyncUser> syncUsers)
+        private Dictionary<string, XElement> GetOldCommentElements(XElement ptNotesElement,
+            Dictionary<string, ParatextUserProfile> ptProjectUsers)
         {
             var oldCommentElems = new Dictionary<string, XElement>();
             // collect already pushed Paratext notes
@@ -147,7 +148,7 @@ namespace SIL.XForge.Scripture.Services
                         var deleted = (bool?)commentElem.Attribute("deleted") ?? false;
                         if (!deleted)
                         {
-                            string key = GetCommentKey(threadId, commentElem, syncUsers);
+                            string key = GetCommentKey(threadId, commentElem, ptProjectUsers);
                             oldCommentElems[key] = commentElem;
                         }
                     }
@@ -157,10 +158,11 @@ namespace SIL.XForge.Scripture.Services
         }
 
         private async Task<string> AddCommentIfChangedAsync(Dictionary<string, XElement> oldCommentElems,
-            XElement threadElem, Comment comment, Dictionary<string, SyncUser> syncUsers, IReadOnlyList<object> prefixContent = null)
+            XElement threadElem, Comment comment, Dictionary<string, ParatextUserProfile> ptProjectUsers,
+            IReadOnlyList<object> prefixContent = null)
         {
             (string syncUserId, string user, bool canWritePTNoteOnProject) = await GetSyncUserAsync(comment.SyncUserRef,
-                comment.OwnerRef, syncUsers);
+                comment.OwnerRef, ptProjectUsers);
 
             var commentElem = new XElement("comment");
             commentElem.Add(new XAttribute("user", user));
@@ -185,7 +187,7 @@ namespace SIL.XForge.Scripture.Services
             commentElem.Add(contentElem);
 
             var threadId = (string)threadElem.Attribute("id");
-            string key = GetCommentKey(threadId, commentElem, syncUsers);
+            string key = GetCommentKey(threadId, commentElem, ptProjectUsers);
             if (IsCommentNewOrChanged(oldCommentElems, key, commentElem))
                 threadElem.Add(commentElem);
             oldCommentElems.Remove(key);
@@ -217,7 +219,7 @@ namespace SIL.XForge.Scripture.Services
         /// Gets the Paratext user for a comment from the specified sync user id and owner id.
         /// </summary>
         private async Task<(string SyncUserId, string ParatextUsername, bool CanWritePTNoteOnProject)> GetSyncUserAsync(
-            string syncUserRef, string ownerRef, Dictionary<string, SyncUser> syncUsers)
+            string syncUserRef, string ownerRef, Dictionary<string, ParatextUserProfile> ptProjectUsers)
         {
             // if the owner is a PT user who can write notes, then get the PT username
             string paratextUsername = null;
@@ -230,19 +232,19 @@ namespace SIL.XForge.Scripture.Services
 
             bool canWritePTNoteOnProject = paratextUsername != null;
 
-            SyncUser syncUser = syncUserRef == null
+            ParatextUserProfile ptProjectUser = syncUserRef == null
                 ? null
-                : syncUsers.Values.SingleOrDefault(s => s.Id == syncUserRef);
+                : ptProjectUsers.Values.SingleOrDefault(s => s.OpaqueUserId == syncUserRef);
             // check if comment has already been synced before
-            if (syncUser == null)
+            if (ptProjectUser == null)
             {
                 // the comment has never been synced before (or syncUser is missing)
                 // if the owner is not a PT user on the project, then use the current user's PT username
                 if (paratextUsername == null)
                     paratextUsername = _currentParatextUsername;
-                syncUser = FindOrCreateSyncUser(paratextUsername, syncUsers);
+                ptProjectUser = FindOrCreateParatextUser(paratextUsername, ptProjectUsers);
             }
-            return (syncUser.Id, syncUser.ParatextUsername, canWritePTNoteOnProject);
+            return (ptProjectUser.OpaqueUserId, ptProjectUser.Username, canWritePTNoteOnProject);
         }
 
         private bool IsCommentNewOrChanged(Dictionary<string, XElement> oldCommentElems, string key,
@@ -252,30 +254,33 @@ namespace SIL.XForge.Scripture.Services
                 || !XNode.DeepEquals(oldCommentElem.Element("content"), commentElem.Element("content"));
         }
 
-        private SyncUser FindOrCreateSyncUser(string paratextUsername, Dictionary<string, SyncUser> syncUsers)
+        private ParatextUserProfile FindOrCreateParatextUser(string paratextUsername,
+            Dictionary<string, ParatextUserProfile> ptProjectUsers)
         {
-            if (!syncUsers.TryGetValue(paratextUsername, out SyncUser syncUser))
+            if (!ptProjectUsers.TryGetValue(paratextUsername, out ParatextUserProfile ptProjectUser))
             {
                 // the PT user has never been associated with a comment, so generate a new sync user id and add it
                 // to the NewSyncUsers property
-                syncUser = new SyncUser
+                ptProjectUser = new ParatextUserProfile
                 {
-                    Id = _guidService.NewObjectId(),
-                    ParatextUsername = paratextUsername
+                    OpaqueUserId = _guidService.NewObjectId(),
+                    Username = paratextUsername
                 };
                 // Add the sync user to the dictionary
-                syncUsers.Add(paratextUsername, syncUser);
+                ptProjectUsers.Add(paratextUsername, ptProjectUser);
             }
-            return syncUser;
+            Console.WriteLine(ptProjectUser.OpaqueUserId);
+            return ptProjectUser;
         }
 
-        private string GetCommentKey(string threadId, XElement commentElem, Dictionary<string, SyncUser> syncUsers)
+        private string GetCommentKey(string threadId, XElement commentElem,
+            Dictionary<string, ParatextUserProfile> ptProjectUsers)
         {
             var user = (string)commentElem.Attribute("user");
-            SyncUser syncUser = FindOrCreateSyncUser(user, syncUsers);
+            ParatextUserProfile ptProjectUser = FindOrCreateParatextUser(user, ptProjectUsers);
             var extUser = (string)commentElem.Attribute("extUser") ?? "";
             var date = (string)commentElem.Attribute("date");
-            return $"{threadId}|{syncUser.Id}|{extUser}|{date}";
+            return $"{threadId}|{ptProjectUser.OpaqueUserId}|{extUser}|{date}";
         }
 
         /// <summary> Formats a DateTime object to a string that is compatible with a Paratext Comment. </summary>

@@ -12,6 +12,8 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddDataAccess(configuration);
 
             DataAccessClassMap.RegisterClass<SyncUser>(cm => cm.SetIdMember(null));
+            DataAccessClassMap.RegisterClass<ParatextUserProfile>(
+                cm => cm.GetMemberMap(c => c.SFUserId).SetElementName("sfUserId"));
 
             services.AddMongoRepository<TranslateMetrics>("translate_metrics", cm => cm.MapIdProperty(tm => tm.Id));
             services.AddMongoRepository<SFProjectSecret>("sf_project_secrets");

@@ -4,7 +4,7 @@ import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { TranslocoService } from '@ngneat/transloco';
 import Quill, { RangeStatic } from 'quill';
-import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
@@ -19,7 +19,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -2079,7 +2079,7 @@ class TestEnvironment {
 
     const matTextDocId = new TextDocId('project01', 40, 1);
     const mrkTextDocId = new TextDocId('project01', 41, 1);
-    this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
+    this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
       id: 'project01',
       data: getSFProject('project01')
     });
@@ -2099,8 +2099,8 @@ class TestEnvironment {
     when(mockedProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
-    when(mockedProjectService.get(anything())).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
+    when(mockedProjectService.getProfile(anything())).thenCall(() =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01')
     );
 
     this.fixture = TestBed.createComponent(HostComponent);

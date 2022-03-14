@@ -17,7 +17,7 @@ import {
   Question,
   QUESTIONS_COLLECTION
 } from 'realtime-server/lib/esm/scriptureforge/models/question';
-import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
@@ -38,7 +38,7 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
-import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDocId } from '../../core/models/text-doc';
@@ -505,7 +505,7 @@ class TestEnvironment {
     commentRefsRead: [],
     noteRefsRead: []
   };
-  private testProject: SFProject = {
+  private testProject: SFProjectProfile = {
     name: 'Project 01',
     paratextId: 'pt01',
     shortName: 'P01',
@@ -755,7 +755,7 @@ class TestEnvironment {
         }
       ]);
     }
-    this.realtimeService.addSnapshots<SFProject>(SFProjectDoc.COLLECTION, [
+    this.realtimeService.addSnapshots<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, [
       {
         id: 'project01',
         data: this.testProject
@@ -780,8 +780,8 @@ class TestEnvironment {
     when(mockedQuestionDialogService.questionDialog(anything())).thenResolve();
     when(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).thenReturn(instance(this.mockedAnsweredDialogRef));
     when(this.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('accept'));
-    when(mockedProjectService.get(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id)
+    when(mockedProjectService.getProfile(anything())).thenCall(id =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
     );
     when(mockedProjectService.getUserConfig(anything(), anything())).thenCall((id, userId) =>
       this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, getSFProjectUserConfigDocId(id, userId))
@@ -877,7 +877,7 @@ class TestEnvironment {
   }
 
   setSeeOtherUserResponses(isEnabled: boolean): void {
-    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01');
+    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, 'project01');
     projectDoc.submitJson0Op(
       op => op.set<boolean>(p => p.checkingConfig.usersSeeEachOthersResponses, isEnabled),
       false
@@ -888,7 +888,7 @@ class TestEnvironment {
 
   setCheckingEnabled(isEnabled: boolean): void {
     this.ngZone.run(() => {
-      const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01');
+      const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, 'project01');
       projectDoc.submitJson0Op(op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, isEnabled), false);
     });
     tick();

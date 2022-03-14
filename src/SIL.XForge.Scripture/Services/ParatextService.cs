@@ -383,8 +383,8 @@ namespace SIL.XForge.Scripture.Services
 
                 // Get the mapping of Scripture Forge user IDs to Paratext usernames
                 return await this._realtimeService.QuerySnapshots<User>()
-                        .Where(u => paratextMapping.Keys.Contains(u.ParatextId))
-                        .ToDictionaryAsync(u => u.Id, u => paratextMapping[u.ParatextId]);
+                    .Where(u => paratextMapping.Keys.Contains(u.ParatextId))
+                    .ToDictionaryAsync(u => u.Id, u => paratextMapping[u.ParatextId]);
             }
             else
             {
@@ -744,7 +744,7 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         public IEnumerable<NoteThreadChange> GetNoteThreadChanges(UserSecret userSecret, string projectId,
             int bookNum, IEnumerable<IDocument<NoteThread>> noteThreadDocs,
-            Dictionary<int, ChapterDelta> chapterDeltas, Dictionary<string, SyncUser> syncUsers)
+            Dictionary<int, ChapterDelta> chapterDeltas, Dictionary<string, ParatextUserProfile> ptProjectUsers)
         {
             IEnumerable<CommentThread> commentThreads = GetCommentThreads(userSecret, projectId, bookNum);
             CommentTags commentTags = GetCommentTags(userSecret, projectId);
@@ -771,17 +771,18 @@ namespace SIL.XForge.Scripture.Services
                 foreach (Note note in threadDoc.Data.Notes)
                 {
                     Paratext.Data.ProjectComments.Comment matchedComment =
-                        GetMatchingCommentFromNote(note, existingThread, syncUsers);
+                        GetMatchingCommentFromNote(note, existingThread, ptProjectUsers);
                     if (matchedComment != null)
                     {
                         matchedCommentIds.Add(matchedComment.Id);
                         CommentTag commentIconTag = GetCommentTag(existingThread, matchedComment, commentTags);
-                        ChangeType changeType = GetCommentChangeType(matchedComment, note, commentIconTag);
+                        ChangeType changeType = GetCommentChangeType(matchedComment, note, commentIconTag, ptProjectUsers);
                         if (changeType != ChangeType.None)
                         {
-                            SyncUser syncUser = FindOrCreateSyncUser(matchedComment.User, syncUsers);
                             threadChange.AddChange(
-                                CreateNoteFromComment(note.DataId, matchedComment, commentIconTag, syncUser), changeType);
+                                CreateNoteFromComment(note.DataId, matchedComment, commentIconTag, ptProjectUsers),
+                                changeType
+                            );
                         }
                     }
                     else
@@ -790,6 +791,11 @@ namespace SIL.XForge.Scripture.Services
                 if (existingThread.Status.InternalValue != threadDoc.Data.Status)
                 {
                     threadChange.Status = existingThread.Status.InternalValue;
+                    threadChange.ThreadUpdated = true;
+                }
+                if (GetAssignedUserRef(existingThread.AssignedUser, ptProjectUsers) != threadDoc.Data.Assignment)
+                {
+                    threadChange.Assignment = GetAssignedUserRef(existingThread.AssignedUser, ptProjectUsers);
                     threadChange.ThreadUpdated = true;
                 }
                 CommentTag defaultThreadIconTag = GetCommentTag(existingThread, null, commentTags);
@@ -805,10 +811,9 @@ namespace SIL.XForge.Scripture.Services
                 {
                     Paratext.Data.ProjectComments.Comment comment =
                         existingThread.Comments.Single(c => c.Id == commentId);
-                    SyncUser syncUser = FindOrCreateSyncUser(comment.User, syncUsers);
                     CommentTag commentIconTag = GetCommentTag(existingThread, comment, commentTags);
                     threadChange.AddChange(CreateNoteFromComment(
-                        _guidService.NewObjectId(), comment, commentIconTag, syncUser), ChangeType.Added);
+                        _guidService.NewObjectId(), comment, commentIconTag, ptProjectUsers), ChangeType.Added);
                 }
                 if (existingThread.Comments.Count > 0)
                 {
@@ -829,15 +834,18 @@ namespace SIL.XForge.Scripture.Services
                 Paratext.Data.ProjectComments.Comment info = thread.Comments[0];
                 CommentTag initialTag = GetCommentTag(thread, null, commentTags);
                 NoteThreadChange newThread = new NoteThreadChange(threadId, info.VerseRefStr,
-                    info.SelectedText, info.ContextBefore, info.ContextAfter, info.Status.InternalValue, initialTag.Icon);
+                    info.SelectedText, info.ContextBefore, info.ContextAfter, info.Status.InternalValue,
+                    initialTag.Icon);
                 newThread.Position = GetThreadTextAnchor(thread, chapterDeltas);
                 newThread.Status = thread.Status.InternalValue;
+                newThread.Assignment = GetAssignedUserRef(thread.AssignedUser, ptProjectUsers);
                 foreach (var comm in thread.Comments)
                 {
-                    SyncUser syncUser = FindOrCreateSyncUser(comm.User, syncUsers);
                     CommentTag commentIconTag = GetCommentTag(thread, comm, commentTags);
-                    newThread.AddChange(CreateNoteFromComment(_guidService.NewObjectId(), comm, commentIconTag, syncUser),
-                        ChangeType.Added);
+                    newThread.AddChange(
+                        CreateNoteFromComment(_guidService.NewObjectId(), comm, commentIconTag, ptProjectUsers),
+                        ChangeType.Added
+                    );
                 }
                 changes.Add(newThread);
             }
@@ -845,14 +853,15 @@ namespace SIL.XForge.Scripture.Services
         }
 
         public async Task UpdateParatextCommentsAsync(UserSecret userSecret, string projectId, int bookNum,
-            IEnumerable<IDocument<NoteThread>> noteThreadDocs, Dictionary<string, SyncUser> syncUsers)
+            IEnumerable<IDocument<NoteThread>> noteThreadDocs, Dictionary<string, ParatextUserProfile> ptProjectUsers)
         {
             CommentTags commentTags = GetCommentTags(userSecret, projectId);
             string username = GetParatextUsername(userSecret);
             IEnumerable<CommentThread> commentThreads =
                 GetCommentThreads(userSecret, projectId, bookNum);
             List<List<Paratext.Data.ProjectComments.Comment>> noteThreadChangeList =
-                await SFNotesToCommentChangeListAsync(noteThreadDocs, commentThreads, username, commentTags, syncUsers);
+                await SFNotesToCommentChangeListAsync(noteThreadDocs, commentThreads, username, commentTags,
+                    ptProjectUsers);
 
             PutCommentThreads(userSecret, projectId, noteThreadChangeList);
         }
@@ -1423,17 +1432,17 @@ namespace SIL.XForge.Scripture.Services
 
         /// <summary> Get the corresponding Comment from a note. </summary>
         private Paratext.Data.ProjectComments.Comment GetMatchingCommentFromNote(Note note, CommentThread thread,
-            Dictionary<string, SyncUser> syncUsers)
+            Dictionary<string, ParatextUserProfile> ptProjectUsers)
         {
-            SyncUser syncUser = note.SyncUserRef == null
+            ParatextUserProfile ptUser = note.SyncUserRef == null
                 ? null
-                : syncUsers.Values.SingleOrDefault(u => u.Id == note.SyncUserRef);
-            if (syncUser == null)
+                : ptProjectUsers.Values.SingleOrDefault(u => u.OpaqueUserId == note.SyncUserRef);
+            if (ptUser == null)
                 return null;
             string date = new DateTimeOffset(note.DateCreated).ToString("o");
             // Comment ids are generated using the Paratext username. Since we do not want to transparently
             // store a username to a note in SF we construct the intended Comment id at runtime.
-            string commentId = string.Format("{0}/{1}/{2}", note.ThreadId, syncUser.ParatextUsername, date);
+            string commentId = string.Format("{0}/{1}/{2}", note.ThreadId, ptUser.Username, date);
             Paratext.Data.ProjectComments.Comment matchingComment =
                 thread.Comments.SingleOrDefault(c => c.Id == commentId);
             if (matchingComment != null)
@@ -1443,7 +1452,7 @@ namespace SIL.XForge.Scripture.Services
             DateTime noteTime = note.DateCreated.ToUniversalTime();
             return thread.Comments
                 .Where(c => DateTime.Equals(noteTime, DateTime.Parse(c.Date, null, DateTimeStyles.AdjustToUniversal)))
-                .SingleOrDefault(c => c.User == syncUser.ParatextUsername);
+                .SingleOrDefault(c => c.User == ptUser.Username);
         }
 
         /// <summary>
@@ -1451,7 +1460,7 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         private async Task<List<List<Paratext.Data.ProjectComments.Comment>>> SFNotesToCommentChangeListAsync(
             IEnumerable<IDocument<NoteThread>> noteThreadDocs, IEnumerable<CommentThread> commentThreads,
-            string defaultUsername, CommentTags commentTags, Dictionary<string, SyncUser> syncUsers)
+            string defaultUsername, CommentTags commentTags, Dictionary<string, ParatextUserProfile> ptProjectUsers)
         {
             List<List<Paratext.Data.ProjectComments.Comment>> changes =
                 new List<List<Paratext.Data.ProjectComments.Comment>>();
@@ -1460,13 +1469,13 @@ namespace SIL.XForge.Scripture.Services
             {
                 List<Paratext.Data.ProjectComments.Comment> thread = new List<Paratext.Data.ProjectComments.Comment>();
                 CommentThread existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
-                List<(int, string)> threadNoteSyncUserIds = new List<(int, string)>();
+                List<(int, string)> threadNoteParatextUserRefs = new List<(int, string)>();
                 for (int i = 0; i < threadDoc.Data.Notes.Count; i++)
                 {
                     Note note = threadDoc.Data.Notes[i];
                     Paratext.Data.ProjectComments.Comment matchedComment = existingThread == null
                         ? null
-                        : GetMatchingCommentFromNote(note, existingThread, syncUsers);
+                        : GetMatchingCommentFromNote(note, existingThread, ptProjectUsers);
                     if (matchedComment != null)
                     {
                         var comment = (Paratext.Data.ProjectComments.Comment)matchedComment.Clone();
@@ -1491,14 +1500,14 @@ namespace SIL.XForge.Scripture.Services
                     else
                     {
                         // new comment added
-                        SyncUser syncUser;
+                        ParatextUserProfile ptProjectUser;
                         UserSecret userSecret = _userSecretRepository.Query().FirstOrDefault(s => s.Id == note.OwnerRef);
                         if (userSecret == null)
-                            syncUser = FindOrCreateSyncUser(defaultUsername, syncUsers);
+                            ptProjectUser = FindOrCreateParatextUser(defaultUsername, ptProjectUsers);
                         else
-                            syncUser = FindOrCreateSyncUser(GetParatextUsername(userSecret), syncUsers);
+                            ptProjectUser = FindOrCreateParatextUser(GetParatextUsername(userSecret), ptProjectUsers);
 
-                        SFParatextUser ptUser = new SFParatextUser(syncUser.ParatextUsername);
+                        SFParatextUser ptUser = new SFParatextUser(ptProjectUser.Username);
                         var comment = new Paratext.Data.ProjectComments.Comment(ptUser)
                         {
                             VerseRefStr = threadDoc.Data.VerseRef.ToString(),
@@ -1510,7 +1519,7 @@ namespace SIL.XForge.Scripture.Services
                         thread.Add(comment);
                         if (note.SyncUserRef == null)
                         {
-                            threadNoteSyncUserIds.Add((i, syncUser.Id));
+                            threadNoteParatextUserRefs.Add((i, ptProjectUser.OpaqueUserId));
                         }
                     }
                 }
@@ -1518,14 +1527,14 @@ namespace SIL.XForge.Scripture.Services
                 {
                     changes.Add(thread);
                     // Set the sync user ref on the notes in the SF Mongo DB
-                    await UpdateNoteSyncUserAsync(threadDoc, threadNoteSyncUserIds);
+                    await UpdateNoteSyncUserAsync(threadDoc, threadNoteParatextUserRefs);
                 }
             }
             return changes;
         }
 
         private ChangeType GetCommentChangeType(Paratext.Data.ProjectComments.Comment comment, Note note,
-            CommentTag commentTag)
+            CommentTag commentTag, Dictionary<string, ParatextUserProfile> ptProjectUsers)
         {
             if (comment.Deleted != note.Deleted)
                 return ChangeType.Deleted;
@@ -1533,7 +1542,8 @@ namespace SIL.XForge.Scripture.Services
             bool statusChanged = comment.Status.InternalValue != note.Status;
             bool contentChanged = comment.Contents?.InnerXml != note.Content;
             bool tagChanged = commentTag?.Icon != note.TagIcon;
-            if (contentChanged || statusChanged || tagChanged)
+            bool assignedUserChanged = GetAssignedUserRef(comment.AssignedUser, ptProjectUsers) != note.Assignment;
+            if (contentChanged || statusChanged || tagChanged || assignedUserChanged)
                 return ChangeType.Updated;
             return ChangeType.None;
         }
@@ -1558,7 +1568,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         private Note CreateNoteFromComment(string noteId, Paratext.Data.ProjectComments.Comment comment,
-            CommentTag commentTag, SyncUser syncUser)
+            CommentTag commentTag, Dictionary<string, ParatextUserProfile> ptProjectUsers)
         {
             return new Note
             {
@@ -1567,15 +1577,28 @@ namespace SIL.XForge.Scripture.Services
                 ExtUserId = comment.ExternalUser,
                 // The owner is unknown at this point and is determined when submitting the ops to the note thread docs
                 OwnerRef = "",
-                SyncUserRef = syncUser.Id,
+                SyncUserRef = FindOrCreateParatextUser(comment.User, ptProjectUsers).OpaqueUserId,
                 Content = comment.Contents?.InnerXml,
                 DateCreated = DateTime.Parse(comment.Date),
                 DateModified = DateTime.Parse(comment.Date),
                 Deleted = comment.Deleted,
                 Status = comment.Status.InternalValue,
                 TagIcon = commentTag?.Icon,
-                Reattached = comment.Reattached
+                Reattached = comment.Reattached,
+                Assignment = GetAssignedUserRef(comment.AssignedUser, ptProjectUsers)
             };
+        }
+
+        private string GetAssignedUserRef(string assignedPTUser, Dictionary<string, ParatextUserProfile> ptProjectUsers)
+        {
+            switch (assignedPTUser)
+            {
+                case Paratext.Data.ProjectComments.CommentThread.teamUser:
+                case Paratext.Data.ProjectComments.CommentThread.unassignedUser:
+                case null:
+                    return assignedPTUser;
+            }
+            return FindOrCreateParatextUser(assignedPTUser, ptProjectUsers).OpaqueUserId;
         }
 
         private CommentTag GetCommentTag(Paratext.Data.ProjectComments.CommentThread thread,
@@ -1584,8 +1607,7 @@ namespace SIL.XForge.Scripture.Services
             // Use the main to do tag as default
             CommentTag tagInUse = commentTags.Get(CommentTag.toDoTagId);
             CommentTag lastTodoTagUsed = null;
-            List<Paratext.Data.ProjectComments.Comment> threadComments = thread.Comments.ToList();
-            foreach (Paratext.Data.ProjectComments.Comment threadComment in threadComments)
+            foreach (Paratext.Data.ProjectComments.Comment threadComment in thread.Comments)
             {
                 bool tagAddedInUse = threadComment.TagsAdded != null && threadComment.TagsAdded.Length > 0;
                 if (tagAddedInUse)
@@ -1662,26 +1684,27 @@ namespace SIL.XForge.Scripture.Services
             return new TextAnchor { Start = startPos, Length = posJustPastLastCharacter - startPos };
         }
 
-        private SyncUser FindOrCreateSyncUser(string paratextUsername, Dictionary<string, SyncUser> syncUsers)
+        private ParatextUserProfile FindOrCreateParatextUser(string paratextUsername,
+            Dictionary<string, ParatextUserProfile> ptProjectUsers)
         {
-            if (!syncUsers.TryGetValue(paratextUsername, out SyncUser syncUser))
+            if (!ptProjectUsers.TryGetValue(paratextUsername, out ParatextUserProfile ptProjectUser))
             {
-                syncUser = new SyncUser
+                ptProjectUser = new ParatextUserProfile
                 {
-                    Id = _guidService.NewObjectId(),
-                    ParatextUsername = paratextUsername
+                    OpaqueUserId = _guidService.NewObjectId(),
+                    Username = paratextUsername
                 };
-                syncUsers.Add(paratextUsername, syncUser);
+                ptProjectUsers.Add(paratextUsername, ptProjectUser);
             }
-            return syncUser;
+            return ptProjectUser;
         }
 
         private async Task UpdateNoteSyncUserAsync(IDocument<NoteThread> noteThreadDoc,
-            List<(int, string)> syncUserByNoteIndex)
+            List<(int, string)> paratextUserByNoteIndex)
         {
             await noteThreadDoc.SubmitJson0OpAsync(op =>
             {
-                foreach ((int index, string syncuser) in syncUserByNoteIndex)
+                foreach ((int index, string syncuser) in paratextUserByNoteIndex)
                     op.Set(t => t.Notes[index].SyncUserRef, syncuser);
             });
         }

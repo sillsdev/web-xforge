@@ -1578,7 +1578,11 @@ class TestEnvironment {
       [CLEAN_CHECKER_USER.id]: CLEAN_CHECKER_USER.role,
       [OBSERVER_USER.id]: OBSERVER_USER.role
     },
-    userPermissions: {}
+    userPermissions: {},
+    paratextUsers: [
+      { sfUserId: ADMIN_USER.id, username: ADMIN_USER.user.name, opaqueUserId: `opaque${ADMIN_USER.id}` },
+      { sfUserId: OBSERVER_USER.id, username: OBSERVER_USER.user.name, opaqueUserId: `opaque${OBSERVER_USER.id}` }
+    ]
   };
 
   constructor(user: UserInfo, projectBookRoute: string = 'JHN', hasConnection: boolean = true) {
@@ -2116,7 +2120,7 @@ class TestEnvironment {
         data: this.testProject
       }
     ]);
-    when(mockedProjectService.get(anything())).thenCall(id =>
+    when(mockedProjectService.getProfile(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id)
     );
 

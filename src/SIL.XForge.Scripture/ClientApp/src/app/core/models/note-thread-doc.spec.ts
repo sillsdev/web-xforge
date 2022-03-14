@@ -57,6 +57,20 @@ describe('NoteThreadDoc', () => {
     expect(noteThreadDoc.iconResolved).toEqual(expectedIconResolved);
   });
 
+  it('should use grayed out icon', async () => {
+    const noteThreadDoc = await env.setupDoc([]);
+    const expectedIcon: NoteThreadIcon = {
+      cssVar: '--icon-file: url(/assets/icons/TagIcons/01flag1.png);',
+      url: '/assets/icons/TagIcons/01flag1.png'
+    };
+    const expectedIconGrayedOut: NoteThreadIcon = {
+      cssVar: '--icon-file: url(/assets/icons/TagIcons/01flag4.png);',
+      url: '/assets/icons/TagIcons/01flag4.png'
+    };
+    expect(noteThreadDoc.icon).toEqual(expectedIcon);
+    expect(noteThreadDoc.iconGrayed).toEqual(expectedIconGrayedOut);
+  });
+
   it('should use the last icon specified in a threads note list based on date ', async () => {
     const notes = [
       {

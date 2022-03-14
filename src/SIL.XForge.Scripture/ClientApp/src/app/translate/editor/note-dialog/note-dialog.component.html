@@ -1,6 +1,9 @@
 <ng-container *transloco="let t; read: 'note_dialog'">
   <h1 mat-dialog-title>
     <img [src]="flagIcon" alt="" /> <span>{{ verseRef }}</span>
+    <div *ngIf="noteThreadAssignedUserRef != null" id="assignedUser" class="assigned-user">
+      >{{ getAssignedUserString(noteThreadAssignedUserRef) }}
+    </div>
     <button mat-icon-button [matMenuTriggerFor]="menu"><mat-icon>more_vert</mat-icon></button>
     <mat-menu #menu="matMenu">
       <button mat-menu-item (click)="toggleSegmentText()">
@@ -17,6 +20,7 @@
     <div class="notes">
       <div *ngFor="let note of notes" class="note">
         <div class="content">
+          <div *ngIf="note.assignment != null" class="assigned-user">>{{ getAssignedUserString(note.assignment) }}</div>
           <div *ngIf="note.reattached" class="verse-reattached">{{ reattachedVerse(note) }}</div>
           <div *ngIf="note.reattached" class="text" [innerHTML]="reattachedText(note)"></div>
           <div class="note-content" [innerHTML]="parseNote(note.content)"></div>

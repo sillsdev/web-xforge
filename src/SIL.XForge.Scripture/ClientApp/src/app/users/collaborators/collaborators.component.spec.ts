@@ -27,7 +27,9 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, emptyHammerLoader, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { paratextUsersFromRoles } from '../../shared/test-utils';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_PROJECT_ROLES } from '../../core/models/sf-project-role-info';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -479,6 +481,9 @@ class TestEnvironment {
     when(mockedProjectService.get(anything())).thenCall(projectId =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId)
     );
+    when(mockedProjectService.getProfile(anything())).thenCall(projectId =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
+    );
     when(mockedProjectService.onlineGetLinkSharingKey(this.project01Id, anything())).thenResolve('linkSharingKey01');
     when(mockedProjectService.onlineSetUserProjectPermissions(this.project01Id, 'user02', anything())).thenCall(
       (projectId: string, userId: string, permissions: string[]) => {
@@ -663,6 +668,7 @@ class TestEnvironment {
         shareLevel: CheckingShareLevel.Specific
       },
       userRoles,
+      paratextUsers: paratextUsersFromRoles(userRoles),
       userPermissions: {}
     };
   }

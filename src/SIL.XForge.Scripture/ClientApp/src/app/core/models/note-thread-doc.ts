@@ -27,6 +27,15 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
     return this.iconProperties(iconTag);
   }
 
+  get iconReattached(): NoteThreadIcon {
+    return this.iconProperties('ReattachNote');
+  }
+
+  get iconGrayed(): NoteThreadIcon {
+    const iconTag = this.getGrayedOutTag(this.getTag());
+    return this.iconProperties(iconTag);
+  }
+
   getNoteIcon(note: Note): NoteThreadIcon {
     return this.iconProperties(note.tagIcon ? note.tagIcon : '');
   }
@@ -34,10 +43,6 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
   getNoteResolvedIcon(note: Note): NoteThreadIcon {
     const iconTag = this.getResolvedTag(note.tagIcon ? note.tagIcon : '');
     return this.iconProperties(iconTag);
-  }
-
-  get iconReattached(): NoteThreadIcon {
-    return this.iconProperties('ReattachNote');
   }
 
   currentVerseRef(): VerseRef | undefined {
@@ -77,6 +82,14 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
     if (iconTag !== '') {
       // Resolved tags use 5 in the filename instead of the current number suffix
       iconTag = iconTag.slice(0, iconTag.length - 1) + '5';
+    }
+    return iconTag;
+  }
+
+  private getGrayedOutTag(iconTag: string): string {
+    if (iconTag !== '') {
+      // Grayed out tags use 4 in the filename instead of the current number suffix
+      iconTag = iconTag.slice(0, iconTag.length - 1) + '4';
     }
     return iconTag;
   }

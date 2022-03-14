@@ -120,10 +120,13 @@
     "close": "Close",
     "hide_changes": "Hide changes",
     "note_reattached": "Note reattached",
+    "paratext_user": "Paratext user",
     "reattached": "(Re-attached)",
     "show_changes": "Show changes",
     "status_resolved": "Resolved",
-    "status_to_do": "To do"
+    "status_to_do": "To do",
+    "team": "(Team)",
+    "unassigned": "(Unassigned)"
   },
   "paginator": {
     "items_per_page": "Items per page",

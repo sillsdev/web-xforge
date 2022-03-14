@@ -9,5 +9,10 @@ namespace SIL.XForge.Scripture.Models
         public string Status { get; set; }
         public string TagIcon { get; set; }
         public string Reattached { get; set; }
+        /// <summary>
+        /// Who this note is assigned to. This may be a <see cref="ParatextUserProfile" /> OpaqueUserId,
+        /// or a category such as team or unassigned.
+        /// </summary>
+        public string Assignment { get; set; }
     }
 }

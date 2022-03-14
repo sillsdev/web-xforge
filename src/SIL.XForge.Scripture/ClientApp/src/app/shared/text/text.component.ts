@@ -1035,7 +1035,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       return;
     }
 
-    const project = (await this.projectService.get(this.id.projectId)).data;
+    const project = (await this.projectService.getProfile(this.id.projectId)).data;
     if (project == null) {
       return;
     }

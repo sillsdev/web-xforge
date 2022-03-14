@@ -19,6 +19,8 @@ import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
+import { AssignedUsers } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
+import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
@@ -38,6 +40,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
 import XRegExp from 'xregexp';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { environment } from '../../../environments/environment';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -93,12 +96,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private readonly ecm = new ErrorCorrectionModel();
   private insertSuggestionEnd: number = -1;
   private currentUserDoc?: UserDoc;
-  private projectDoc?: SFProjectDoc;
+  private projectDoc?: SFProjectProfileDoc;
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
+  private paratextUsers: ParatextUserProfile[] = [];
   private projectUserConfigChangesSub?: Subscription;
   private text?: TextInfo;
   private sourceText?: TextInfo;
-  private sourceProjectDoc?: SFProjectDoc;
+  private sourceProjectDoc?: SFProjectProfileDoc;
   private sourceLoaded: boolean = false;
   private targetLoaded: boolean = false;
   private _chapter?: number;
@@ -323,7 +327,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
         const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
         if (projectId !== prevProjectId) {
-          this.projectDoc = await this.projectService.get(projectId);
+          this.projectDoc = await this.projectService.getProfile(projectId);
+          const userRole: string | undefined = this.projectDoc.data?.userRoles[this.userService.currentUserId];
+          if (userRole != null) {
+            const projectDoc: SFProjectDoc | undefined = await this.projectService.tryGetForRole(projectId, userRole);
+            if (projectDoc?.data?.paratextUsers != null) {
+              this.paratextUsers = projectDoc.data.paratextUsers;
+            }
+          }
           this.isProjectAdmin = await this.projectService.isProjectAdmin(projectId, this.userService.currentUserId);
           this.projectUserConfigDoc = await this.projectService.getUserConfig(
             projectId,
@@ -334,7 +345,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           if (sourceId != null) {
             const userOnProject: boolean = !!this.currentUser?.sites[environment.siteId].projects.includes(sourceId);
             // Only get the project doc if the user is on the project to avoid an error.
-            this.sourceProjectDoc = userOnProject ? await this.projectService.get(sourceId) : undefined;
+            this.sourceProjectDoc = userOnProject ? await this.projectService.getProfile(sourceId) : undefined;
             if (this.sourceProjectDoc != null && this.sourceProjectDoc.data != null) {
               this.sourceText = this.sourceProjectDoc.data.texts.find(t => t.bookNum === bookNum);
             }
@@ -1023,7 +1034,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       verseRef,
       id: threadDoc.data.dataId,
       preview,
-      icon: threadDoc.icon,
+      icon: this.isAssignedToOtherUser(threadDoc) ? threadDoc.iconGrayed : threadDoc.icon,
       textAnchor: threadDoc.data.position,
       highlight: hasNewContent
     };
@@ -1318,6 +1329,19 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return false;
     }
     return !this.projectUserConfigDoc.data.noteRefsRead.includes(noteId);
+  }
+
+  private isAssignedToOtherUser(thread: NoteThreadDoc): boolean {
+    switch (thread.data?.assignment) {
+      case AssignedUsers.TeamUser:
+      case AssignedUsers.Unspecified:
+      case undefined:
+        return false;
+    }
+    const ptUser: ParatextUserProfile | undefined = this.paratextUsers?.find(
+      user => user.opaqueUserId === thread.data?.assignment
+    );
+    return ptUser?.sfUserId !== this.userService.currentUserId;
   }
 
   private syncScroll(): void {
