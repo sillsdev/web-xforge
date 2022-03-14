@@ -134,6 +134,21 @@ describe('SFProjectMigrations', () => {
       expect(projectDoc.data.translateConfig.shareLevel).toBe('specific');
     });
   });
+
+  describe('version 6', () => {
+    it('adds editable property', async () => {
+      const env = new TestEnvironment(5);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {});
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.editable).not.toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.editable).toBe(true);
+    });
+  });
 });
 
 class TestEnvironment {

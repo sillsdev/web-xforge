@@ -165,6 +165,7 @@ class TestEnvironment {
       },
       texts: [],
       sync: { queuedCount: 0 },
+      editable: true,
       userRoles: {
         projectAdmin: SFProjectRole.ParatextAdministrator,
         checker: SFProjectRole.CommunityChecker
