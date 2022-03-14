@@ -128,6 +128,7 @@ class TestEnvironment {
       },
       texts: [],
       sync: { queuedCount: 0 },
+      editable: true,
       userRoles: {
         translator: SFProjectRole.ParatextTranslator,
         observer: SFProjectRole.ParatextObserver
