@@ -164,7 +164,7 @@
   white-space: initial;
 }
 
-.mat-error {
+:not(mat-form-field) > .mat-error {
   margin-top: 10px;
   font-size: 14px;
 }
