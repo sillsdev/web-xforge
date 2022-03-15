@@ -126,7 +126,7 @@
             <mat-form-field appearance="fill">
               <input matInput type="text" formControlName="filter" placeholder="{{ t('filter_questions') }}" />
             </mat-form-field>
-            <button mat-flat-button type="button" (click)="clearFilters()">{{ t("show_all") }}</button>
+            <button mat-button type="button" (click)="clearFilters()">{{ t("show_all") }}</button>
           </div>
         </div>
         <table mat-table [dataSource]="questionsForDisplay" class="question-list">

@@ -43,7 +43,7 @@
           <button
             *ngIf="syncActive"
             class="action-button"
-            mat-flat-button
+            mat-button
             type="button"
             (click)="cancelSync()"
             [disabled]="isLoading || !isAppOnline || syncDisabled"

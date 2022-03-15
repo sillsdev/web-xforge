@@ -120,18 +120,13 @@
   background-color: rgba(0, 0, 0, 0.12);
   color: rgba(0, 0, 0, 0.38);
 }
+#delete-btn:not(:disabled):hover {
+  background-color: red;
+}
 
 #based-on-select {
   width: 100%;
   max-width: 200px;
-  ::ng-deep .mdc-select__selected-text {
-    min-width: 150px;
-  }
-}
-
-mdc-list-item {
-  height: unset;
-  min-height: 48px;
 }
 
 mat-radio-group.tool-setting {
