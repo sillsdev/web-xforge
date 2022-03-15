@@ -30,12 +30,12 @@ namespace SIL.XForge.Scripture
                 .ConfigureAppConfiguration((context, config) =>
                     {
                         IWebHostEnvironment env = context.HostingEnvironment;
-                        if (env.IsDevelopment() || env.IsEnvironment("DevelopmentBeta") || env.IsEnvironment("Testing") || env.IsEnvironment("TestingBeta"))
+                        if (env.IsDevelopment() || env.IsEnvironment("Testing"))
                             config.AddJsonFile("appsettings.user.json", true);
                         else
                             config.AddJsonFile("secrets.json", true, true);
                         // Manually read in secrets for development-related environments that aren't specifically "Development".
-                        if (env.IsEnvironment("Testing") || env.IsEnvironment("TestingBeta") || env.IsEnvironment("DevelopmentBeta"))
+                        if (env.IsEnvironment("Testing"))
                         {
                             var appAssembly = Assembly.Load(new AssemblyName(env.ApplicationName));
                             if (appAssembly != null)

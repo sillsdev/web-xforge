@@ -8,7 +8,6 @@ import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { of, Subscription, timer } from 'rxjs';
 import { filter, mergeMap } from 'rxjs/operators';
-import { BetaMigrationMessage } from 'xforge-common/beta-migration/beta-migration.component';
 import { PwaService } from 'xforge-common/pwa.service';
 import { environment } from '../environments/environment';
 import { Auth0Service } from './auth0.service';
@@ -171,9 +170,6 @@ export class AuthService {
       authOptions.mode = 'signUp';
       authOptions.login_hint = locale ?? ui_locales;
     }
-    if (environment.beta) {
-      window.parent.postMessage(<BetaMigrationMessage>{ message: 'login_required' }, environment.masterUrl);
-    }
     this.unscheduleRenewal();
     this.auth0.authorize(authOptions);
   }
@@ -301,7 +297,7 @@ export class AuthService {
             this.locationService.reload();
           });
       }
-    } else if (!environment.production && !environment.beta) {
+    } else if (!environment.production) {
       try {
         await this.commandService.onlineInvoke(USERS_URL, 'pullAuthUserProfile');
       } catch (err) {

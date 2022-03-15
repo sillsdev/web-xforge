@@ -58,9 +58,7 @@ namespace SIL.XForge.Scripture
             "projects",
             "system-administration",
             "favicon.ico",
-            "assets",
-
-            "migration" // TODO: remove when migrations to non-beta are done - IJH 2021-03-16
+            "assets"
         };
 
         private static readonly HashSet<string> DevelopmentSpaPostRoutes = new HashSet<string>
@@ -115,8 +113,8 @@ namespace SIL.XForge.Scripture
             }
         }
 
-        private bool IsDevelopmentEnvironment => Environment.IsDevelopment() || Environment.IsEnvironment("DevelopmentBeta");
-        private bool IsTestingEnvironment => Environment.IsEnvironment("Testing") || Environment.IsEnvironment("TestingBeta");
+        private bool IsDevelopmentEnvironment => Environment.IsDevelopment();
+        private bool IsTestingEnvironment => Environment.IsEnvironment("Testing");
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public IServiceProvider ConfigureServices(IServiceCollection services)
@@ -228,21 +226,13 @@ namespace SIL.XForge.Scripture
             app.UseAuthentication();
             app.UseAuthorization();
 
-            // Allow beta to enable the realtime server for testing purposes
-            // Non-beta environments will always load the realtime server
-            if (!siteOptions.Value.Beta ||
-                (siteOptions.Value.Beta && Configuration.GetValue<string>("enable-beta-realtime-server") == "yes")
-                )
-            {
-                app.UseRealtimeServer();
+            app.UseRealtimeServer();
 
-                app.UseMachine();
+            app.UseMachine();
 
-                app.UseSFServices();
+            app.UseSFServices();
 
-            }
-
-            app.UseSFDataAccess(siteOptions.Value.Beta);
+            app.UseSFDataAccess();
 
             app.UsePing();
 
@@ -269,20 +259,12 @@ namespace SIL.XForge.Scripture
                     {
                         case SpaDevServerStartup.Start:
                             string npmScript = "start";
-                            if (Environment.IsEnvironment("DevelopmentBeta"))
-                            {
-                                npmScript = "startBeta";
-                            }
                             Console.WriteLine($"Info: SF is serving angular using script {npmScript}.");
                             spa.UseAngularCliServer(npmScript);
                             break;
 
                         case SpaDevServerStartup.Listen:
                             int port = 4200;
-                            if (Environment.IsEnvironment("DevelopmentBeta"))
-                            {
-                                port = 9200;
-                            }
                             string ngServeUri = $"http://localhost:{port}";
                             Console.WriteLine($"Info: SF will use an existing angular server at {ngServeUri}.");
                             spa.UseProxyToSpaDevelopmentServer(ngServeUri);

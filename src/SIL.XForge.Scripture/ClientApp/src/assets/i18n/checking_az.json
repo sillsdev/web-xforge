@@ -26,19 +26,6 @@
     "scripture_checking_not_available": "Bu layihədə Kəlamın yoxlanması mövcud deyil. ",
     "update_is_available": "Yeniləmə mümkündür Xahiş edirəm səhifəni yeniləyin."
   },
-  "beta_migration": {
-    "checking_for_data": "Oflayn məlumatların yoxlanılması",
-    "cleaning_up": "Təmizləmə",
-    "close": "Bağla",
-    "completed": "Miqrasiya tamamlandı - bu informasiya qutusu artıq bağlanacaq",
-    "data_migration": "Məlumat köçü",
-    "fetching_data": "Məlumat götürülür",
-    "loading": "Yükləməkdədir...",
-    "loading_retry": "Yüklənir - yenidən cəhd edilir ({{attempt}})",
-    "login_required": "Giriş tələb olunur",
-    "please_wait": "Scripture Forge artıq Beta - dan çıxdı! Ura Hesabınızı yeni tam buraxılış versiyasına sürətlə köçürdükdə gözləyin.",
-    "recourse": "Gizli/xüsusi veb brauzer pəncərəsindən istifadə etmədiyinizə və İnternetə qoşulduğunuzdan əmin olun. Əgər problem ilə rastlaşmağa davam etsəniz, {{ templateTagBoundary }}kömək üçün müraciət edin {{ templateTagBoundary }}."
-  },
   "canon": {
     "book_names": {
       "GEN": "Yaradılış",
