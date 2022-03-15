@@ -26,19 +26,6 @@
     "scripture_checking_not_available": "La verificación de las Escrituras no está disponible en este proyecto.",
     "update_is_available": "Hay una actualización disponible. Por favor, actualice la página."
   },
-  "beta_migration": {
-    "checking_for_data": "Comprobación de los datos fuera de línea",
-    "cleaning_up": "Limpiando",
-    "close": "Cerrar",
-    "completed": "Migración completada - este diálogo se cerrará",
-    "data_migration": "Migración de datos",
-    "fetching_data": "Obteniendo datos",
-    "loading": "Cargando",
-    "loading_retry": "Cargando - reintentando ({{ attempt }})",
-    "login_required": "Es necesario iniciar sesión",
-    "please_wait": "Scripture Forge ha salido de la fase Beta: ¡espere aún! mientras migramos su cuenta a la nueva versión completa.",
-    "recourse": "Asegúrese de que no está utilizando una ventana de navegador de incógnito/privado y de que está conectado a Internet. Si sigues teniendo problemas, por favor {{ templateTagBoundary }}pide ayuda{{ templateTagBoundary }}."
-  },
   "canon": {
     "book_names": {
       "GEN": "Génesis",

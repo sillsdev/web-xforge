@@ -1,5 +1,0 @@
-// This script counts how many users still need migrating away from Beta to Stable.
-
-use('xforge');
-
-db.users_beta_migration.count();

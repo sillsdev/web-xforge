@@ -2,7 +2,7 @@ import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
 import { MdcList, MdcListItem } from '@angular-mdc/web/list';
 import { CommonModule, Location } from '@angular/common';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { Component, DebugElement, EventEmitter, NgModule, NgZone } from '@angular/core';
+import { Component, DebugElement, NgModule, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Route, Router } from '@angular/router';
@@ -18,10 +18,9 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, of, Subject } from 'rxjs';
-import { anyString, anything, instance, mock, verify, when } from 'ts-mockito';
+import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
-import { BetaMigrationDialogComponent } from 'xforge-common/beta-migration/beta-migration-dialog/beta-migration-dialog.component';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FileService } from 'xforge-common/file.service';
@@ -59,7 +58,6 @@ const mockedPwaService = mock(PwaService);
 const mockedFileService = mock(FileService);
 const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedMdcDialog = mock(MdcDialog);
-const mockedBetaMigrationDialogComponent = mock(BetaMigrationDialogComponent);
 
 @Component({
   template: `<div>Mock</div>`
@@ -376,103 +374,6 @@ describe('AppComponent', () => {
     expect().nothing();
   }));
 
-  it('non-beta site does not navigate to non-beta site', fakeAsync(() => {
-    environment.beta = false;
-    // SUT is in component constructor()
-    new TestEnvironment('online');
-    verify(mockedLocationService.go(anyString())).never();
-    expect().nothing();
-  }));
-
-  it('beta site navigates to non-beta site', fakeAsync(() => {
-    environment.beta = true;
-    // SUT is in component constructor()
-    new TestEnvironment('online');
-    verify(mockedLocationService.go(anyString())).once();
-    environment.beta = false;
-    expect().nothing();
-  }));
-
-  it('does not show beta migration dialog on beta server', fakeAsync(() => {
-    environment.beta = true;
-    const env = new TestEnvironment('online');
-    when(mockedUserService.checkUserNeedsMigrating()).thenResolve(false);
-    expect(env.component.isAppOnline).toBe(true);
-    // SUT is in ngOnInit()
-    env.init();
-    verify(mockedMdcDialog.open(BetaMigrationDialogComponent, anything())).never();
-    environment.beta = false;
-  }));
-
-  it('shows beta migration dialog on non-beta server, if migration needed and online', fakeAsync(() => {
-    environment.beta = false;
-    const env = new TestEnvironment('online');
-    when(mockedUserService.checkUserNeedsMigrating()).thenResolve(true);
-    expect(env.component.isAppOnline).toBe(true);
-    // SUT is in ngOnInit()
-    env.init();
-    verify(mockedMdcDialog.open(BetaMigrationDialogComponent, anything())).once();
-  }));
-
-  it('does not show beta migration dialog on non-beta server, if migration is not needed and online', fakeAsync(() => {
-    environment.beta = false;
-    const env = new TestEnvironment('online');
-    when(mockedUserService.checkUserNeedsMigrating()).thenResolve(false);
-    expect(env.component.isAppOnline).toBe(true);
-    // SUT is in ngOnInit()
-    env.init();
-    verify(mockedMdcDialog.open(BetaMigrationDialogComponent, anything())).never();
-  }));
-
-  it(
-    'does not show beta migration dialog on non-beta server, if offline, ' +
-      "and doesn't do the online-only checkUserNeedsMigrating check",
-    fakeAsync(() => {
-      environment.beta = false;
-      const env = new TestEnvironment('offline');
-      expect(env.component.isAppOnline).toBe(false);
-      // SUT is in ngOnInit()
-      env.init();
-      verify(mockedMdcDialog.open(BetaMigrationDialogComponent, anything())).never();
-      verify(mockedUserService.checkUserNeedsMigrating()).never();
-    })
-  );
-
-  it('waits for the user to be online and then migrates data', fakeAsync(() => {
-    environment.beta = false;
-    const env = new TestEnvironment('offline');
-    when(mockedUserService.checkUserNeedsMigrating()).thenResolve(true);
-    // SUT1 is in ngOnInit()
-    env.init();
-    tick();
-    verify(mockedMdcDialog.open(BetaMigrationDialogComponent, anything())).never();
-    env.comesOnline$.next();
-    // SUT2 is in ngOnInit()
-    tick();
-    verify(mockedMdcDialog.open(BetaMigrationDialogComponent, anything())).once();
-    expect().nothing();
-  }));
-
-  it('beta url is available (for template)', fakeAsync(() => {
-    environment.beta = false;
-    environment.betaUrl = 'https://beta/url';
-    const locationWhenTesting = '/context.html';
-    const env = new TestEnvironment();
-    env.init();
-    expect(env.component.correspondingBetaUrl).toEqual(environment.betaUrl + locationWhenTesting);
-  }));
-
-  it('isBeta is available (for template)', fakeAsync(() => {
-    environment.beta = false;
-    const env = new TestEnvironment();
-    env.init();
-    expect(env.component.isBeta).toEqual(environment.beta);
-
-    environment.beta = true;
-    expect(env.component.isBeta).toEqual(environment.beta);
-    environment.beta = false;
-  }));
-
   it('isLive is available (for template)', fakeAsync(() => {
     environment.releaseStage = 'dev';
     const env = new TestEnvironment();
@@ -484,30 +385,6 @@ describe('AppComponent', () => {
 
     environment.releaseStage = 'live';
     expect(env.component.isLive).toEqual(true);
-    environment.releaseStage = 'dev';
-  }));
-
-  it('beta site link shows when appropriate', fakeAsync(() => {
-    // In help menu on stable site, but never at Live.
-
-    const testCases: { isBeta: boolean; releaseStage: 'dev' | 'qa' | 'live'; showLink: boolean }[] = [
-      { isBeta: true, releaseStage: 'dev', showLink: false },
-      { isBeta: false, releaseStage: 'dev', showLink: true },
-      { isBeta: true, releaseStage: 'qa', showLink: false },
-      { isBeta: false, releaseStage: 'qa', showLink: true },
-      { isBeta: true, releaseStage: 'live', showLink: false },
-      { isBeta: false, releaseStage: 'live', showLink: false }
-    ];
-    for (const testCase of testCases) {
-      environment.beta = testCase.isBeta;
-      environment.releaseStage = testCase.releaseStage;
-      const env = new TestEnvironment();
-      env.init();
-      env.fixture.debugElement.query(By.css('#helpMenuIcon')).nativeElement.click();
-      env.fixture.detectChanges();
-      expect(env.someHelpMenuItemContains('beta site')).toBe(testCase.showLink);
-    }
-    environment.beta = false;
     environment.releaseStage = 'dev';
   }));
 
@@ -714,14 +591,6 @@ class TestEnvironment {
     when(mockedPwaService.hasUpdate).thenReturn(this.hasUpdate$);
     when(mockedMdcDialog.open(ProjectDeletedDialogComponent)).thenReturn(instance(this.mockedProjectDeletedDialogRef));
     when(this.mockedProjectDeletedDialogRef.afterClosed()).thenReturn(this.projectDeletedDialogRefAfterClosed$);
-    const mockedBetaMigrationDialogRef = mock<MdcDialogRef<BetaMigrationDialogComponent>>(MdcDialogRef);
-    when(mockedMdcDialog.open(BetaMigrationDialogComponent, anything())).thenReturn(
-      instance(mockedBetaMigrationDialogRef)
-    );
-
-    when(mockedBetaMigrationDialogRef.componentInstance).thenReturn(instance(mockedBetaMigrationDialogComponent));
-    when(mockedBetaMigrationDialogComponent.onProgress).thenReturn(new EventEmitter<number>());
-    when(mockedBetaMigrationDialogRef.afterClosed()).thenReturn(of());
 
     this.router = TestBed.inject(Router);
     this.location = TestBed.inject(Location);

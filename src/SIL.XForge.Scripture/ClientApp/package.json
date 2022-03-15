@@ -6,7 +6,6 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "startBeta": "ng serve --configuration=developmentBeta",
     "start:no-progress": "ng serve --progress=false",
     "start:no-reload": "ng serve --liveReload=false",
     "build": "ng build",

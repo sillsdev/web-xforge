@@ -40,7 +40,6 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton(sp => sp.GetService<IMongoClient>().GetDatabase(options.MongoDatabaseName));
 
             services.AddMongoRepository<UserSecret>("user_secrets", cm => cm.MapIdProperty(us => us.Id));
-            services.AddMongoRepository<BetaMigration>("users_beta_migration");
 
             return services;
         }
