@@ -17,7 +17,6 @@ import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/ca
 import { combineLatest, from, merge, Observable, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, switchMap, tap } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
-import { BetaMigrationDialogComponent } from 'xforge-common/beta-migration/beta-migration-dialog/beta-migration-dialog.component';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
@@ -119,10 +118,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       // Check authentication when coming back online
       // This is also run on first load when the websocket connects for the first time
       if (this.isAppOnline && !this.isAppLoading) {
-        // Redirect to the master site unless operating in the migration iframe
-        if (environment.beta && (window.self === window.top || this.locationService.pathname !== '/migration')) {
-          this.locationService.go(environment.masterUrl + window.location.pathname);
-        }
         this.authService.checkOnlineAuth();
       }
     });
@@ -156,15 +151,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   get issueMailTo(): string {
     return issuesEmailTemplate();
-  }
-
-  get correspondingBetaUrl(): string {
-    return environment.betaUrl + window.location.pathname;
-  }
-
-  /** @remarks Helps template get at the value. */
-  get isBeta(): boolean {
-    return environment.beta;
   }
 
   /** If is production server. */
@@ -303,31 +289,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       if (isNewlyLoggedIn && !isBrowserSupported) {
         this.dialog.open(SupportedBrowsersDialogComponent, { autoFocus: false, data: BrowserIssue.Upgrade });
       }
-
-      this.pwaService.online.then(async () => {
-        if (!environment.beta && (await this.checkUserNeedsMigrating())) {
-          const migrationDialog: MdcDialogRef<BetaMigrationDialogComponent> = this.dialog.open(
-            BetaMigrationDialogComponent,
-            {
-              autoFocus: false,
-              clickOutsideToClose: false,
-              escapeToClose: false
-            }
-          );
-          const migrationDialogSub: Subscription = migrationDialog.componentInstance.onProgress.subscribe(
-            (progress: number) => {
-              if (progress === 100) {
-                // Automatically close the dialog after 5 seconds
-                // The close button will also be available for manual close
-                setTimeout(() => migrationDialog.close(), 5000);
-              }
-            }
-          );
-          migrationDialog.afterClosed().subscribe(() => {
-            migrationDialogSub.unsubscribe();
-          });
-        }
-      });
 
       const projectDocs$ = this.currentUserDoc.remoteChanges$.pipe(
         startWith(null),
@@ -582,10 +543,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         }
       });
     });
-  }
-
-  private async checkUserNeedsMigrating(): Promise<boolean> {
-    return (await this.userService.checkUserNeedsMigrating()) ?? false;
   }
 
   private disposeQuestionQueries(): void {

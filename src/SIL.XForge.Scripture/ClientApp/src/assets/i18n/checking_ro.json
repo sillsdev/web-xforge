@@ -26,19 +26,6 @@
     "scripture_checking_not_available": "Verificarea textului Scripturii nu este disponibilă în acest proiect.",
     "update_is_available": "Este disponibilă o actualizare. Vă rugăm, reîncărcați pagina."
   },
-  "beta_migration": {
-    "checking_for_data": "Se caută date offline",
-    "cleaning_up": "Se curăță",
-    "close": "Închide",
-    "completed": "Migrarea este completă - acestă ferastră dialog se va închide acum",
-    "data_migration": "Migrarea datelor",
-    "fetching_data": "Preluarea datelor",
-    "loading": "Se încarcă",
-    "loading_retry": "Încărcare - reîncercare ({{ attempt }})",
-    "login_required": "Autentificare necesară",
-    "please_wait": "Scripture Forge tocmai a ieșit din versiunea beta. Ura! Țineți-vă bine, în timp ce vă migrăm rapid contul la noua versiune completă.",
-    "recourse": "Asigurați-vă că nu utilizați o fereastră incognito/privată a browserului web și că sunteți conectat la internet. Dacă aveți în continuare probleme, vă rugăm {{ templateTagBoundary }}cereți ajutor{{ templateTagBoundary }}."
-  },
   "canon": {
     "book_names": {
       "GEN": "Geneza",

@@ -237,7 +237,6 @@ namespace SIL.XForge.Services
             public IAuthService AuthService = Substitute.For<IAuthService>();
             public DateTime IssuedAt => DateTime.UtcNow;
             public IProjectService ProjectService = Substitute.For<IProjectService>();
-            public MemoryRepository<BetaMigration> BetaMigration = new MemoryRepository<BetaMigration>();
 
             public TestEnvironment()
             {
@@ -280,8 +279,7 @@ namespace SIL.XForge.Services
                     Origin = new Uri("http://localhost")
                 });
 
-                Service = new UserService(RealtimeService, options, UserSecrets, AuthService, ProjectService,
-                    BetaMigration);
+                Service = new UserService(RealtimeService, options, UserSecrets, AuthService, ProjectService);
             }
 
             public User GetUser(string id)

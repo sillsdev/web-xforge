@@ -2,8 +2,6 @@ export const environment = {
   releaseStage: 'dev',
   pwaTest: true,
   production: false,
-  beta: false,
-  betaUrl: 'http://beta.localhost:9000',
   masterUrl: 'http://localhost:5000',
   issueEmail: 'scriptureforgeissues@sil.org',
   siteName: 'Scripture Forge',

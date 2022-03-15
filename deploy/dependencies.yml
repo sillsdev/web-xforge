@@ -1,5 +1,5 @@
 ---
-- name: Deploy development environment for beta.scriptureforge.org
+- name: Deploy development environment for scriptureforge.org
   hosts: all
   become: yes
   vars_files:

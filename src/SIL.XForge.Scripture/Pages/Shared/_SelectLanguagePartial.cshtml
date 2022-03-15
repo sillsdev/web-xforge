@@ -10,29 +10,39 @@
 @inject IWebHostEnvironment env
 
 @{
+
     var requestCulture = Context.Features.Get<IRequestCultureFeature>();
+
     var cultureItems = LocOptions.Value.SupportedUICultures
-        .Where(c => SharedResource.Cultures[c.IetfLanguageTag].Production || !env.IsStaging() &&
-            !env.IsEnvironment("StagingBeta") && !env.IsProduction() && !env.IsEnvironment("Beta"))
-        .Select(c => new SelectListItem
-            {
-                Value = c.Name,
-                Text = SharedResource.Cultures[c.IetfLanguageTag].LocalName +
-                (SharedResource.Cultures[c.IetfLanguageTag].Production ? "" : " *")
-            }
-        )
-        .ToList();
+
+    .Where(c => SharedResource.Cultures[c.IetfLanguageTag].Production || !env.IsStaging() &&
+
+    !env.IsProduction())
+
+    .Select(c => new SelectListItem
+
+    {
+
+        Value = c.Name,
+
+        Text = SharedResource.Cultures[c.IetfLanguageTag].LocalName +
+
+    (SharedResource.Cultures[c.IetfLanguageTag].Production ? "" : " *")
+
+    }
+
+    )
+
+    .ToList();
 }
 
 <div title="@SharedLocalizer[SharedResource.Keys.Language]">
-    <form id="selectLanguage" asp-controller="Language"
-          asp-action="SetLanguage" method="post" class="form-horizontal" role="form">
-        <input type="hidden" name="returnUrl" value="@Context.Request.Path"/>
+    <form id="selectLanguage" asp-controller="Language" asp-action="SetLanguage" method="post" class="form-horizontal"
+        role="form">
+        <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
         <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-            <select name="culture"
-                    class="mdl-textfield__input"
-                    onchange="this.form.submit();"
-                    asp-for="@requestCulture.RequestCulture.UICulture.Name" asp-items="cultureItems">
+            <select name="culture" class="mdl-textfield__input" onchange="this.form.submit();"
+                asp-for="@requestCulture.RequestCulture.UICulture.Name" asp-items="cultureItems">
             </select>
         </div>
     </form>
