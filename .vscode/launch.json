@@ -39,6 +39,20 @@
       },
     },
     {
+      "name": "Run and debug RealtimeServer tests",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/RealtimeServer/node_modules/.bin/jest",
+      "args": ["--runInBand"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "disableOptimisticBPs": true,
+      "cwd": "${workspaceFolder}/src/RealtimeServer",
+      "windows": {
+        "program": "${workspaceFolder}/src/RealtimeServer/node_modules/jest/bin/jest"
+      }
+    },
+    {
       "name": "Launch Chromium and debug the running frontend",
       "type": "pwa-chrome",
       "request": "launch",
@@ -96,20 +110,6 @@
       "request": "attach",
       "name": "Node",
       "port": 9230
-    },
-    {
-      "name": "vscode-jest-tests",
-      "type": "node",
-      "request": "launch",
-      "program": "${workspaceFolder}/src/RealtimeServer/node_modules/.bin/jest",
-      "args": ["--runInBand"],
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "disableOptimisticBPs": true,
-      "cwd": "${workspaceFolder}/src/RealtimeServer",
-      "windows": {
-        "program": "${workspaceFolder}/src/RealtimeServer/node_modules/jest/bin/jest"
-      }
     },
     {
       "name": "Launch Chromium and run and debug current spec",
