@@ -164,15 +164,15 @@ namespace SIL.XForge.Scripture.Services
 
                 ParatextSettings settings =
                     _paratextService.GetParatextSettings(_userSecret, _projectDoc.Data.ParatextId);
-                if (settings == null && _projectDoc.Data.Texts.Count > 0)
-                {
-                    Log($"FAILED: Attempting to write to a project repository that does not exist.");
-                    await CompleteSync(false, canRollbackParatext, token);
-                    return;
-                }
                 // update target Paratext books and notes
                 foreach (TextInfo text in _projectDoc.Data.Texts)
                 {
+                    if (settings == null)
+                    {
+                        Log($"FAILED: Attempting to write to a project repository that does not exist.");
+                        await CompleteSync(false, canRollbackParatext, token);
+                        return;
+                    }
                     SortedList<int, IDocument<TextData>> targetTextDocs = await FetchTextDocsAsync(text);
                     targetTextDocsByBook[text.BookNum] = targetTextDocs;
                     if (isDataInSync && settings.Editable)

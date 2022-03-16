@@ -617,9 +617,9 @@ namespace SIL.XForge.Scripture.Services
                 return null;
             return new ParatextSettings
             {
-                FullName = scrText?.FullName,
-                IsRightToLeft = scrText?.RightToLeft ?? false,
-                Editable = scrText?.Settings.Editable ?? true
+                FullName = scrText.FullName,
+                IsRightToLeft = scrText.RightToLeft,
+                Editable = scrText.Settings.Editable
             };
         }
 
