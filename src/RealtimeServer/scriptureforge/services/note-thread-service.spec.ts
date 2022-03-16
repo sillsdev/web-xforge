@@ -7,7 +7,15 @@ import { SystemRole } from '../../common/models/system-role';
 import { User, USERS_COLLECTION } from '../../common/models/user';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
-import { allowAll, clientConnect, createDoc, flushPromises, submitJson0Op } from '../../common/utils/test-utils';
+import {
+  allowAll,
+  clientConnect,
+  createDoc,
+  deleteDoc,
+  flushPromises,
+  hasDoc,
+  submitJson0Op
+} from '../../common/utils/test-utils';
 import { CheckingShareLevel } from '../models/checking-config';
 import { SFProject, SF_PROJECTS_COLLECTION } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
@@ -37,15 +45,7 @@ describe('NoteThreadService', () => {
     // Assert that data is set up as expected for testing.
     const noteThread01: NoteThread =
       env.db.docs[NOTE_THREAD_COLLECTION][getNoteThreadDocId('project01', 'noteThread01')].data;
-    const noteThread01noteIds: string[] = noteThread01.notes.map((note: Note) => note.dataId);
-    expect(noteThread01noteIds).toContain('noteThread01note01');
-    expect(noteThread01noteIds).toContain('noteThread01note02');
-    expect(noteThread01noteIds).toContain('noteThread01note03');
-    expect(noteThread01noteIds).toContain('noteThread01note04');
-    const noteThread02: NoteThread =
-      env.db.docs[NOTE_THREAD_COLLECTION][getNoteThreadDocId('project01', 'noteThread02')].data;
-    const noteThread02noteIds: string[] = noteThread02.notes.map((note: Note) => note.dataId);
-    expect(noteThread02noteIds).toContain('noteThread02note01');
+    env.assertHaveReadNotes();
 
     let adminProjectUserConfig: SFProjectUserConfig =
       env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][getSFProjectUserConfigDocId('project01', 'projectAdmin')].data;
@@ -96,6 +96,43 @@ describe('NoteThreadService', () => {
     expect(checkerProjectUserConfig.noteRefsRead).not.toContain('noteThread01note03');
     // This have-read should not have been removed because the note was not removed.
     expect(checkerProjectUserConfig.noteRefsRead).toContain('noteThread01note04');
+  });
+
+  it('removes have-read note refs when thread deleted', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+    const conn: Connection = clientConnect(env.server, 'projectAdmin');
+    await env.setHaveReadNoteRefs(conn);
+
+    // Assert that data is set up as expected for testing.
+    expect(await hasDoc(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', 'noteThread01'))).toEqual(true);
+    env.assertHaveReadNotes();
+    let adminProjectUserConfig: SFProjectUserConfig =
+      env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][getSFProjectUserConfigDocId('project01', 'projectAdmin')].data;
+    expect(adminProjectUserConfig.noteRefsRead).toContain('noteThread01note01');
+    expect(adminProjectUserConfig.noteRefsRead).toContain('noteThread01note03');
+    expect(adminProjectUserConfig.noteRefsRead).toContain('noteThread02note01');
+    let checkerProjectUserConfig: SFProjectUserConfig =
+      env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][getSFProjectUserConfigDocId('project01', 'checker')].data;
+    expect(checkerProjectUserConfig.noteRefsRead).toContain('noteThread01note03');
+
+    // SUT
+    await deleteDoc(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', 'noteThread01'));
+    await flushPromises();
+
+    // Doc should be gone.
+    expect(await hasDoc(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', 'noteThread01'))).toEqual(false);
+    adminProjectUserConfig =
+      env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][getSFProjectUserConfigDocId('project01', 'projectAdmin')].data;
+    // Have-read note references to notes in the thread that was removed should be gone.
+    expect(adminProjectUserConfig.noteRefsRead).not.toContain('noteThread01note01');
+    expect(adminProjectUserConfig.noteRefsRead).not.toContain('noteThread01note03');
+    // Have-read note references to notes in a thread that was not removed should not have disappeared.
+    expect(adminProjectUserConfig.noteRefsRead).toContain('noteThread02note01');
+    checkerProjectUserConfig =
+      env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][getSFProjectUserConfigDocId('project01', 'checker')].data;
+    // Also for other users, the have-read note references to notes in the removed thread, should be gone.
+    expect(checkerProjectUserConfig.noteRefsRead).not.toContain('noteThread01note03');
   });
 });
 
@@ -321,5 +358,19 @@ class TestEnvironment {
       }
     );
     await flushPromises();
+  }
+
+  assertHaveReadNotes(): void {
+    const noteThread01: NoteThread =
+      this.db.docs[NOTE_THREAD_COLLECTION][getNoteThreadDocId('project01', 'noteThread01')].data;
+    const noteThread01noteIds: string[] = noteThread01.notes.map((note: Note) => note.dataId);
+    expect(noteThread01noteIds).toContain('noteThread01note01');
+    expect(noteThread01noteIds).toContain('noteThread01note02');
+    expect(noteThread01noteIds).toContain('noteThread01note03');
+    expect(noteThread01noteIds).toContain('noteThread01note04');
+    const noteThread02: NoteThread =
+      this.db.docs[NOTE_THREAD_COLLECTION][getNoteThreadDocId('project01', 'noteThread02')].data;
+    const noteThread02noteIds: string[] = noteThread02.notes.map((note: Note) => note.dataId);
+    expect(noteThread02noteIds).toContain('noteThread02note01');
   }
 }

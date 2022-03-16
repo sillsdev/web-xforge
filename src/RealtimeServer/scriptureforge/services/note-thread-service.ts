@@ -49,6 +49,14 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
     return Promise.resolve();
   }
 
+  protected onBeforeDelete(userId: string, docId: string, projectDomain: string, entity: OwnedData): Promise<void> {
+    // Process an incoming deletion for a NoteThread before it happens so we can look at its list of notes.
+    if (projectDomain === SFProjectDomain.NoteThreads) {
+      this.removeEntityHaveReadRefs(userId, docId, projectDomain, entity);
+    }
+    return Promise.resolve();
+  }
+
   private async removeEntityHaveReadRefs(
     userId: string,
     docId: string,
@@ -65,10 +73,18 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
       .results;
     const promises: Promise<boolean>[] = [];
     for (const doc of pucDocs) {
-      promises.push(this.removeNoteHaveReadRefs(doc, entity as Note));
+      switch (projectDomain) {
+        case SFProjectDomain.NoteThreads:
+          (entity as NoteThread).notes.forEach((note: Note) => promises.push(this.removeNoteHaveReadRefs(doc, note)));
+          break;
+        case SFProjectDomain.Notes:
+          promises.push(this.removeNoteHaveReadRefs(doc, entity as Note));
+          break;
+      }
     }
     await Promise.all(promises);
   }
+
   private removeNoteHaveReadRefs(sfProjectUserConfigDoc: Doc, note: Note): Promise<boolean> {
     return docSubmitJson0Op<SFProjectUserConfig>(sfProjectUserConfigDoc, ops => {
       const data: SFProjectUserConfig = sfProjectUserConfigDoc.data;
