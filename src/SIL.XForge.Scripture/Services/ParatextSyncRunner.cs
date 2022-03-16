@@ -164,6 +164,12 @@ namespace SIL.XForge.Scripture.Services
 
                 ParatextSettings settings =
                     _paratextService.GetParatextSettings(_userSecret, _projectDoc.Data.ParatextId);
+                if (settings == null && _projectDoc.Data.Texts.Count > 0)
+                {
+                    Log($"FAILED: Attempting to write to a project repository that does not exist.");
+                    await CompleteSync(false, canRollbackParatext, token);
+                    return;
+                }
                 // update target Paratext books and notes
                 foreach (TextInfo text in _projectDoc.Data.Texts)
                 {
@@ -828,23 +834,26 @@ namespace SIL.XForge.Scripture.Services
 
                 ParatextSettings settings =
                     _paratextService.GetParatextSettings(_userSecret, _projectDoc.Data.ParatextId);
-                // See if the full name of the project needs updating
-                if (!string.IsNullOrEmpty(settings.FullName))
+                if (settings != null)
                 {
-                    op.Set(pd => pd.Name, settings.FullName);
+                    // See if the full name of the project needs updating
+                    if (!string.IsNullOrEmpty(settings.FullName))
+                    {
+                        op.Set(pd => pd.Name, settings.FullName);
+                    }
+
+                    // Set the right-to-left language flag
+                    op.Set(pd => pd.IsRightToLeft, settings.IsRightToLeft);
+                    op.Set(pd => pd.Editable, settings.Editable);
                 }
-
-                // Set the right-to-left language flag
-                op.Set(pd => pd.IsRightToLeft, settings.IsRightToLeft);
-                op.Set(pd => pd.Editable, settings.Editable);
-
                 // The source can be null if there was an error getting a resource from the DBL
                 if (TranslationSuggestionsEnabled
                     && _projectDoc.Data.TranslateConfig.Source != null)
                 {
                     ParatextSettings sourceSettings = _paratextService.GetParatextSettings(_userSecret,
                         _projectDoc.Data.TranslateConfig.Source.ParatextId);
-                    op.Set(pd => pd.TranslateConfig.Source.IsRightToLeft, sourceSettings.IsRightToLeft);
+                    if (sourceSettings != null)
+                        op.Set(pd => pd.TranslateConfig.Source.IsRightToLeft, sourceSettings.IsRightToLeft);
                 }
             });
             foreach (var userId in userIdsToRemove)

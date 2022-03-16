@@ -433,6 +433,29 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task SyncAsync_ProjectSettingsIsNull_SyncFailsAndTextNotUpdated()
+        {
+            var env = new TestEnvironment();
+            Book[] books = { new Book("MAT", 1) };
+            env.SetupSFData(true, true, true, books);
+            env.SetupPTData(books);
+
+            var ptUserRoles = new Dictionary<string, string>
+            {
+                { "pt01", SFProjectRole.Administrator }
+            };
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(),
+                Arg.Is((SFProject project) => project.ParatextId == "target"), Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
+            env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(x => null);
+
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            env.VerifyProjectSync(false);
+            await env.ParatextService.DidNotReceiveWithAnyArgs()
+                .PutBookText(default, default, default, default, default);
+        }
+
+        [Test]
         public async Task SyncAsync_CheckerWithPTAccountNotRemoved()
         {
             var env = new TestEnvironment();

@@ -609,9 +609,12 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary> Gets basic settings for a Paratext project. </summary>
+        /// <returns> The Paratext project settings, or null if the project repository does not exist locally </returns>
         public ParatextSettings GetParatextSettings(UserSecret userSecret, string paratextId)
         {
             using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
+            if (scrText == null)
+                return null;
             return new ParatextSettings
             {
                 FullName = scrText?.FullName,
