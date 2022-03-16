@@ -845,12 +845,12 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setupProject({ editable: false });
       env.setProjectUserConfig();
-      // env.updateParams({ projectId: 'notEditableProj', bookId: 'GEN' });
       env.wait();
 
       expect(env.bookName).toEqual('Matthew');
       expect(env.component.projectTextNotEditable).toBe(true);
       expect(env.component.canEdit).toBe(false);
+      expect(env.fixture.debugElement.query(By.css('.text-area .project-text-not-editable'))).not.toBeNull();
       env.dispose();
     }));
 

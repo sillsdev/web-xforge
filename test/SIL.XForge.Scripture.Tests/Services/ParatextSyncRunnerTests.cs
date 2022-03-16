@@ -409,7 +409,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             Book[] books = { new Book("MAT", 1) };
-            env.SetupSFData(true, true, false, books);
+            env.SetupSFData(true, true, true, books);
             env.SetupPTData(books);
             SFProject project = env.GetProject("project01");
             Assert.That(project.Editable, Is.True, "setup");
@@ -426,6 +426,8 @@ namespace SIL.XForge.Scripture.Services
 
             // SUT
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.ParatextService.DidNotReceiveWithAnyArgs()
+                .PutBookText(default, default, default, default, default);
             project = env.VerifyProjectSync(true);
             Assert.That(project.Editable, Is.False);
         }

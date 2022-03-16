@@ -614,9 +614,9 @@ namespace SIL.XForge.Scripture.Services
             using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
             return new ParatextSettings
             {
-                FullName = scrText.FullName,
+                FullName = scrText?.FullName,
                 IsRightToLeft = scrText?.RightToLeft ?? false,
-                Editable = scrText.Settings.Editable
+                Editable = scrText?.Settings.Editable ?? true
             };
         }
 
@@ -647,12 +647,7 @@ namespace SIL.XForge.Scripture.Services
             try
             {
                 string username = GetParatextUsername(userSecret);
-                ScrText scrText = ScrTextCollection.FindById(username, projectId);
-                if (!scrText.Settings.Editable)
-                {
-                    // do not push changes if the project is not editable
-                    return;
-                }
+                using ScrText scrText = ScrTextCollection.FindById(username, projectId);
 
                 // We add this here so we can dispose in the finally
                 scrTexts.Add(userSecret.Id, scrText);

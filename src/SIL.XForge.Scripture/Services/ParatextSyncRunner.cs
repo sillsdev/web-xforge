@@ -162,12 +162,14 @@ namespace SIL.XForge.Scripture.Services
                     Log($"RunAsync: Considering that data is not in sync. The local PT repo last shared revision is '{lastSharedVersion}'. The SF DB project Sync.SyncedToRepositoryVersion is '{_projectDoc.Data.Sync.SyncedToRepositoryVersion}'. canRollbackParatext is '{canRollbackParatext}'.");
                 }
 
+                ParatextSettings settings =
+                    _paratextService.GetParatextSettings(_userSecret, _projectDoc.Data.ParatextId);
                 // update target Paratext books and notes
                 foreach (TextInfo text in _projectDoc.Data.Texts)
                 {
                     SortedList<int, IDocument<TextData>> targetTextDocs = await FetchTextDocsAsync(text);
                     targetTextDocsByBook[text.BookNum] = targetTextDocs;
-                    if (isDataInSync)
+                    if (isDataInSync && settings.Editable)
                         await UpdateParatextBook(text, targetParatextId, targetTextDocs);
 
                     IReadOnlyList<IDocument<Question>> questionDocs = await FetchQuestionDocsAsync(text);
