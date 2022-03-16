@@ -640,6 +640,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary> Write up-to-date book text from mongo database to Paratext project folder. </summary>
+        /// <remarks> It is up to the caller to determine whether the project text is editable. </remarks>
         public async Task PutBookText(UserSecret userSecret, string projectId, int bookNum, string usx,
             Dictionary<int, string> chapterAuthors = null)
         {
