@@ -946,6 +946,7 @@ class TestEnvironment {
           usersSeeEachOthersResponses: true
         },
         sync: { queuedCount: 0 },
+        editable: true,
         userRoles,
         userPermissions: {},
         texts

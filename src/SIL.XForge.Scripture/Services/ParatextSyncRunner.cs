@@ -162,12 +162,20 @@ namespace SIL.XForge.Scripture.Services
                     Log($"RunAsync: Considering that data is not in sync. The local PT repo last shared revision is '{lastSharedVersion}'. The SF DB project Sync.SyncedToRepositoryVersion is '{_projectDoc.Data.Sync.SyncedToRepositoryVersion}'. canRollbackParatext is '{canRollbackParatext}'.");
                 }
 
+                ParatextSettings settings =
+                    _paratextService.GetParatextSettings(_userSecret, _projectDoc.Data.ParatextId);
                 // update target Paratext books and notes
                 foreach (TextInfo text in _projectDoc.Data.Texts)
                 {
+                    if (settings == null)
+                    {
+                        Log($"FAILED: Attempting to write to a project repository that does not exist.");
+                        await CompleteSync(false, canRollbackParatext, token);
+                        return;
+                    }
                     SortedList<int, IDocument<TextData>> targetTextDocs = await FetchTextDocsAsync(text);
                     targetTextDocsByBook[text.BookNum] = targetTextDocs;
-                    if (isDataInSync)
+                    if (isDataInSync && settings.Editable)
                         await UpdateParatextBook(text, targetParatextId, targetTextDocs);
 
                     IReadOnlyList<IDocument<Question>> questionDocs = await FetchQuestionDocsAsync(text);
@@ -824,24 +832,28 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
 
-                // See if the full name of the project needs updating
-                string fullName = _paratextService.GetProjectFullName(_userSecret, _projectDoc.Data.ParatextId);
-                if (!string.IsNullOrEmpty(fullName))
+                ParatextSettings settings =
+                    _paratextService.GetParatextSettings(_userSecret, _projectDoc.Data.ParatextId);
+                if (settings != null)
                 {
-                    op.Set(pd => pd.Name, fullName);
+                    // See if the full name of the project needs updating
+                    if (!string.IsNullOrEmpty(settings.FullName))
+                    {
+                        op.Set(pd => pd.Name, settings.FullName);
+                    }
+
+                    // Set the right-to-left language flag
+                    op.Set(pd => pd.IsRightToLeft, settings.IsRightToLeft);
+                    op.Set(pd => pd.Editable, settings.Editable);
                 }
-
-                // Set the right-to-left language flag
-                bool isRtl = _paratextService.IsProjectLanguageRightToLeft(_userSecret, _projectDoc.Data.ParatextId);
-                op.Set(pd => pd.IsRightToLeft, isRtl);
-
                 // The source can be null if there was an error getting a resource from the DBL
                 if (TranslationSuggestionsEnabled
                     && _projectDoc.Data.TranslateConfig.Source != null)
                 {
-                    bool sourceIsRtl = _paratextService
-                        .IsProjectLanguageRightToLeft(_userSecret, _projectDoc.Data.TranslateConfig.Source.ParatextId);
-                    op.Set(pd => pd.TranslateConfig.Source.IsRightToLeft, sourceIsRtl);
+                    ParatextSettings sourceSettings = _paratextService.GetParatextSettings(_userSecret,
+                        _projectDoc.Data.TranslateConfig.Source.ParatextId);
+                    if (sourceSettings != null)
+                        op.Set(pd => pd.TranslateConfig.Source.IsRightToLeft, sourceSettings.IsRightToLeft);
                 }
             });
             foreach (var userId in userIdsToRemove)

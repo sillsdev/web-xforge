@@ -17,4 +17,5 @@ export interface SFProject extends Project {
   checkingConfig: CheckingConfig;
   texts: TextInfo[];
   sync: Sync;
+  editable: boolean;
 }

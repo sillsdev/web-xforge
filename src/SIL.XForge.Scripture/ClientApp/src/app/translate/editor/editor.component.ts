@@ -245,11 +245,21 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get canEdit(): boolean {
-    return this.isUsfmValid && this.hasEditRight && this.dataInSync && !this.target?.areOpsCorrupted;
+    return (
+      this.isUsfmValid &&
+      this.hasEditRight &&
+      this.dataInSync &&
+      !this.target?.areOpsCorrupted &&
+      !this.projectTextNotEditable
+    );
   }
 
   get canShare(): boolean {
     return this.isProjectAdmin || this.projectDoc?.data?.translateConfig.shareEnabled === true;
+  }
+
+  get projectTextNotEditable(): boolean {
+    return this.projectDoc?.data?.editable === false;
   }
 
   get isSourceRightToLeft(): boolean {

@@ -523,6 +523,7 @@ class TestEnvironment {
       shareLevel: TranslateShareLevel.Specific
     },
     sync: { queuedCount: 0 },
+    editable: true,
     texts: [
       {
         bookNum: 40,

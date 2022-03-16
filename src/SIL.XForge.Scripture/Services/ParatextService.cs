@@ -608,25 +608,19 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        /// <summary> Determine if a specific project is in a right to left language. </summary>
-        public bool IsProjectLanguageRightToLeft(UserSecret userSecret, string paratextId)
+        /// <summary> Gets basic settings for a Paratext project. </summary>
+        /// <returns> The Paratext project settings, or null if the project repository does not exist locally </returns>
+        public ParatextSettings GetParatextSettings(UserSecret userSecret, string paratextId)
         {
             using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
-            return scrText == null ? false : scrText.RightToLeft;
-        }
-
-        /// <summary>
-        /// Gets the full name of the project from the local repository.
-        /// </summary>
-        /// <param name="userSecret">The user secret.</param>
-        /// <param name="paratextId">The paratext identifier.</param>
-        /// <returns>
-        /// The full name of the project.
-        /// </returns>
-        public string GetProjectFullName(UserSecret userSecret, string paratextId)
-        {
-            using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
-            return scrText?.FullName;
+            if (scrText == null)
+                return null;
+            return new ParatextSettings
+            {
+                FullName = scrText.FullName,
+                IsRightToLeft = scrText.RightToLeft,
+                Editable = scrText.Settings.Editable
+            };
         }
 
         /// <summary> Get list of book numbers in PT project. </summary>
@@ -649,6 +643,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary> Write up-to-date book text from mongo database to Paratext project folder. </summary>
+        /// <remarks> It is up to the caller to determine whether the project text is editable. </remarks>
         public async Task PutBookText(UserSecret userSecret, string projectId, int bookNum, string usx,
             Dictionary<int, string> chapterAuthors = null)
         {
@@ -656,7 +651,7 @@ namespace SIL.XForge.Scripture.Services
             try
             {
                 string username = GetParatextUsername(userSecret);
-                ScrText scrText = ScrTextCollection.FindById(username, projectId);
+                using ScrText scrText = ScrTextCollection.FindById(username, projectId);
 
                 // We add this here so we can dispose in the finally
                 scrTexts.Add(userSecret.Id, scrText);

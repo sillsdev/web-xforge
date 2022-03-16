@@ -16,8 +16,7 @@ namespace SIL.XForge.Scripture.Services
         Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId, CancellationToken token);
         Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(UserSecret userSecret, SFProject project,
             CancellationToken token);
-        bool IsProjectLanguageRightToLeft(UserSecret userSecret, string paratextId);
-        string GetProjectFullName(UserSecret userSecret, string paratextId);
+        ParatextSettings GetParatextSettings(UserSecret userSecret, string paratextId);
 
         Task<IReadOnlyList<ParatextResource>> GetResourcesAsync(string userId);
         bool IsResource(string paratextId);

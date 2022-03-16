@@ -236,6 +236,7 @@ class TestEnvironment {
           dateLastSuccessfulSync: date.toJSON()
         },
         syncDisabled: isSyncDisabled,
+        editable: true,
         texts: [],
         userRoles: {},
         userPermissions: {}
