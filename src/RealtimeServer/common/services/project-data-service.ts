@@ -50,6 +50,16 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
   init(server: RealtimeServer): void {
     super.init(server);
     if (this.listenForUpdates) {
+      // Middleware actions are described at https://github.com/share/sharedb/blob/master/docs/middleware/actions.md
+      server.use('apply', (context, callback) => {
+        if (context.collection === this.collection) {
+          this.handleApply(context)
+            .then(() => callback())
+            .catch(err => callback(err));
+        } else {
+          callback();
+        }
+      });
       server.use('afterWrite', (context, callback) => {
         if (context.collection === this.collection) {
           this.handleAfterSubmit(context)
@@ -222,6 +232,19 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
     return Promise.resolve();
   }
 
+  /**
+   * Can be overriden to respond just before an entity is deleted. The "listenForUpdates" property must be set to
+   * "true" in order for this method to get called.
+   *
+   * @param {string} _userId The user id.
+   * @param {string} _docId The doc id.
+   * @param {string} _projectDomain The project domain of the deleted entity.
+   * @param {OwnedData} _entity The deleted entity.
+   */
+  protected onBeforeDelete(_userId: string, _docId: string, _projectDomain: string, _entity: OwnedData): Promise<void> {
+    return Promise.resolve();
+  }
+
   private getUpdatedDomain(path: ShareDB.Path): ProjectDomainConfig | undefined {
     const index = this.getMatchingPathTemplate(
       this.domains.map(dc => dc.pathTemplate),
@@ -253,6 +276,16 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
       curValue = curValue[part];
     }
     return curValue;
+  }
+
+  private async handleApply(context: ShareDB.middleware.SubmitContext): Promise<void> {
+    const connectSession = context.agent.connectSession as ConnectSession;
+    if (context.op.del != null) {
+      const domain = this.getUpdatedDomain([]);
+      if (domain != null) {
+        await this.onBeforeDelete(connectSession.userId, context.id, domain.projectDomain, context.snapshot!.data);
+      }
+    }
   }
 
   private async handleAfterSubmit(context: ShareDB.middleware.SubmitContext): Promise<void> {
