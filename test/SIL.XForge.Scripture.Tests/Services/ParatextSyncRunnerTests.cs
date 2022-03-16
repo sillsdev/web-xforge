@@ -358,7 +358,25 @@ namespace SIL.XForge.Scripture.Services
             // Need to make sure we have notes BEFORE the sync
             env.AddParatextNoteThreadData(new Book("MRK", 2));
 
+            // Expectations of setup
+            Assert.That(env.ContainsText("project01", "MRK", 1), Is.True);
+            Assert.That(env.ContainsText("project01", "MRK", 2), Is.True);
+            Assert.That(env.ContainsText("project01", "LUK", 1), Is.False);
+            Assert.That(env.ContainsText("project01", "LUK", 2), Is.False);
+
+            Assert.That(env.ContainsText("project02", "MRK", 1), Is.True);
+            Assert.That(env.ContainsText("project02", "MRK", 2), Is.True);
+            Assert.That(env.ContainsText("project02", "LUK", 1), Is.False);
+            Assert.That(env.ContainsText("project02", "LUK", 2), Is.False);
+
+            Assert.That(env.ContainsQuestion("MRK", 1), Is.True);
+            Assert.That(env.ContainsQuestion("MRK", 2), Is.True);
+            Assert.That(env.ContainsQuestion("MAT", 1), Is.True);
+            Assert.That(env.ContainsQuestion("MAT", 2), Is.True);
+
             Assert.That(env.ContainsNote(2), Is.True);
+
+            // SUT
             await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
@@ -1218,8 +1236,14 @@ namespace SIL.XForge.Scripture.Services
             var book = new Book("MAT", 1, true);
             env.SetupSFData(true, false, false, true, book);
             env.SetupPTData(book);
+            NoteThread thread01Before = env.GetNoteThread("project01", "thread01");
+            int startingNoteCount = 2;
+            Assert.That(thread01Before.Notes.Count, Is.EqualTo(startingNoteCount), "setup");
             env.SetupNoteChanges("thread01");
+            // One note is added. One note is marked as Deleted but not actually removed.
+            int expectedNoteCountChange = 1;
 
+            // SUT
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             NoteThread thread01 = env.GetNoteThread("project01", "thread01");
@@ -1232,7 +1256,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(thread01.TagIcon, Is.EqualTo(expectedThreadTagIcon));
             Assert.That(thread01.Assignment, Is.EqualTo(CommentThread.teamUser));
             env.DeltaUsxMapper.ReceivedWithAnyArgs(2).ToChapterDeltas(default);
-            Assert.That(thread01.Notes.Count, Is.EqualTo(3));
+            Assert.That(thread01.Notes.Count, Is.EqualTo(startingNoteCount + expectedNoteCountChange));
             Assert.That(thread01.Notes[0].Content, Is.EqualTo("thread01 updated."));
             Assert.That(thread01.Notes[0].Assignment, Is.EqualTo(CommentThread.teamUser));
             Assert.That(thread01.Notes[1].Deleted, Is.True);
@@ -1313,25 +1337,43 @@ namespace SIL.XForge.Scripture.Services
         public async Task SyncAsync_RemovesParatextNoteThreadDoc()
         {
             var env = new TestEnvironment();
+            string sfProjectId = "project01";
+            string threadId = "thread01";
             var book = new Book("MAT", 1, true);
             env.SetupSFData(true, false, false, true, book);
+            List<Note> beginningNoteSet = env.GetNoteThread(sfProjectId, threadId).Notes;
+            beginningNoteSet.Add(
+                new Note
+                {
+                    DataId = "n03",
+                    ThreadId = threadId,
+                    SyncUserRef = "syncuser02",
+                    ExtUserId = "user03",
+                    Content = "Paratext note 3.",
+                    DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc)
+                }
+            );
+            await env.SetThreadNotesAsync(sfProjectId, threadId, beginningNoteSet);
             env.SetupPTData(book);
-            env.SetupNoteRemovedChange("thread01", "n02");
-            NoteThread thread01 = env.GetNoteThread("project01", "thread01");
-            Assert.That(thread01.Notes.Select(n => n.DataId), Is.EquivalentTo(new[] { "n01", "n02" }));
+            env.SetupNoteRemovedChange(threadId, "n02");
+            NoteThread thread01 = env.GetNoteThread(sfProjectId, threadId);
+            Assert.That(thread01.Notes.Select(n => n.DataId), Is.EquivalentTo(new[] { "n01", "n02", "n03" }),
+                "setup: expecting several notes in doc");
 
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            // SUT 1
+            await env.Runner.RunAsync(sfProjectId, "user01", false, CancellationToken.None);
 
-            thread01 = env.GetNoteThread("project01", "thread01");
-            Assert.That(thread01.Notes.Select(n => n.DataId), Is.EquivalentTo(new[] { "n01" }));
+            thread01 = env.GetNoteThread(sfProjectId, threadId);
+            Assert.That(thread01.Notes.Select(n => n.DataId), Is.EquivalentTo(new[] { "n01", "n03" }));
             SFProject project = env.GetProject();
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
 
             // Remove the entire thread
-            env.SetupNoteRemovedChange("thread01", null);
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            env.SetupNoteRemovedChange(threadId, null);
+            // SUT 2
+            await env.Runner.RunAsync(sfProjectId, "user01", false, CancellationToken.None);
 
-            Assert.That(env.ContainsNoteThread("project01", "thread01"), Is.False);
+            Assert.That(env.ContainsNoteThread(sfProjectId, threadId), Is.False);
             project = env.GetProject();
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
         }
@@ -1549,6 +1591,12 @@ namespace SIL.XForge.Scripture.Services
                 return _projectSecrets.Get(projectId);
             }
 
+            public SFProjectUserConfig GetProjectUserConfig(string projectId, string userId)
+            {
+                return RealtimeService.GetRepository<SFProjectUserConfig>()
+                    .Get(SFProjectUserConfig.GetDocId(projectId, userId));
+            }
+
             public bool ContainsText(string projectId, string bookId, int chapter)
             {
                 return RealtimeService.GetRepository<TextData>()
@@ -1673,6 +1721,20 @@ namespace SIL.XForge.Scripture.Services
                         ParatextId = "pt02"
                     }
                 }));
+                // It is expected that if a user is on a project, there is a corresponding project-user-config doc.
+                RealtimeService.AddRepository("sf_project_user_configs", OTType.Json0,
+                    new MemoryRepository<SFProjectUserConfig>(
+                    new[]
+                    {
+                        new SFProjectUserConfig
+                        {
+                            Id = SFProjectUserConfig.GetDocId("project01", "user01"),
+                        },
+                        new SFProjectUserConfig
+                        {
+                            Id = SFProjectUserConfig.GetDocId("project01", "user02"),
+                        }
+                    }));
                 RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(
                     new[]
                     {
@@ -2165,6 +2227,13 @@ namespace SIL.XForge.Scripture.Services
                         }
                     })
                 );
+            }
+
+            public async Task SetThreadNotesAsync(string sfProjectId, string threadId, List<Note> notes)
+            {
+                string threadDocId = NoteThread.GetDocId(sfProjectId, threadId);
+                await RealtimeService.GetRepository<NoteThread>().UpdateAsync(thread => thread.Id == threadDocId,
+                    update => update.Set(thread => thread.Notes, notes));
             }
 
             public void SetupEmptyNoteThreads()
