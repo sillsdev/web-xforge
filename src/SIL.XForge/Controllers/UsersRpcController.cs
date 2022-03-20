@@ -82,5 +82,11 @@ namespace SIL.XForge.Controllers
                 return ForbiddenError();
             }
         }
+
+        [Obsolete("Only here for clients still running a front end that still calls it")]
+        public IRpcMethodResult CheckUserNeedsMigrating(string userId)
+        {
+            return Ok(false);
+        }
     }
 }
