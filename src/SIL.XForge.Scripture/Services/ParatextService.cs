@@ -170,50 +170,32 @@ namespace SIL.XForge.Scripture.Services
             IEnumerable<SharedRepository> repositories = source.GetRepositories();
             IEnumerable<ProjectMetadata> projectsMetadata = source.GetProjectsMetaData();
             IEnumerable<string> projectGuids = projectsMetadata.Select(pmd => pmd.ProjectGuid.Id);
-            Dictionary<string, ParatextProject> ptProjectsAvailable =
-                GetProjects(userSecret, repositories, projectsMetadata).ToDictionary(ptProject => ptProject.ParatextId);
-            if (!projectGuids.Contains(paratextId))
+            SharedRepository sendReceiveRepository = repositories.FirstOrDefault(r => r.SendReceiveId.Id == paratextId);
+            ParatextProject ptProject;
+            if (TryGetProject(userSecret, sendReceiveRepository, projectsMetadata, out ptProject))
+            {
+                if (!projectGuids.Contains(paratextId))
+                    _logger.LogWarning($"The project with PT ID {paratextId} did not have a full name available.");
+            }
+            else
             {
                 // See if this is a resource
                 IReadOnlyList<ParatextResource> resources =
                     await this.GetResourcesInternalAsync(userSecret.Id, true, token);
-                ParatextResource resource = resources.SingleOrDefault(r => r.ParatextId == paratextId);
-                if (resource != null)
-                {
-                    ptProjectsAvailable.Add(resource.ParatextId, resource);
-                }
-                else
-                {
-                    _logger.LogWarning($"The project with PT ID {paratextId} did not have a full name available.");
-                }
+                ptProject = resources.SingleOrDefault(r => r.ParatextId == paratextId);
             }
-            if (!ptProjectsAvailable.TryGetValue(paratextId, out ParatextProject ptProject) || ptProject == null)
+
+            if (ptProject == null)
             {
                 throw new ArgumentException(
                     $"PT projects with the following PT ids were requested but without access or they don't exist: {paratextId}");
             }
-
             EnsureProjectReposExists(userSecret, ptProject, source);
             StartProgressReporting(progress);
             if (!(ptProject is ParatextResource))
             {
-                SharedProject sharedProj = SharingLogicWrapper.CreateSharedProject(paratextId,
-                    ptProject.ShortName, source.AsInternetSharedRepositorySource(), repositories);
-                if (sharedProj == null)
-                {
-                    LogFailedSharedProject(paratextId, ptProject.ShortName,
-                        source.AsInternetSharedRepositorySource(), repositories);
-                    throw new Exception($"Failed to create SharedProject for PT project id {paratextId}");
-                }
-                string username = GetParatextUsername(userSecret);
-                // Specifically set the ScrText property of the SharedProject to indicate the project is available locally
-                using ScrText scrText = ScrTextCollection.FindById(username, paratextId);
-                if (scrText == null)
-                {
-                    throw new Exception($"Failed to fetch ScrText for PT project id {paratextId} using PT username {username}");
-                }
-                sharedProj.ScrText = scrText;
-                sharedProj.Permissions = sharedProj.ScrText.Permissions;
+                SharedProject sharedProj = CreateSharedProject(userSecret, paratextId,
+                    ptProject.ShortName, source.AsInternetSharedRepositorySource(), sendReceiveRepository);
                 List<SharedProject> sharedPtProjectsToSr = new List<SharedProject> { sharedProj };
 
                 // If we are in development, unlock the repo before we begin,
@@ -1095,6 +1077,20 @@ namespace SIL.XForge.Scripture.Services
             return paratextProjects.OrderBy(project => project.Name, StringComparer.InvariantCulture).ToArray();
         }
 
+        private bool TryGetProject(UserSecret userSecret, SharedRepository sharedRepository,
+            IEnumerable<ProjectMetadata> metadata, out ParatextProject ptProject)
+        {
+            if (sharedRepository != null)
+            {
+                ptProject = GetProjects(userSecret, new SharedRepository[] { sharedRepository }, metadata)
+                    .FirstOrDefault();
+                if (ptProject != null)
+                    return true;
+            }
+            ptProject = null;
+            return false;
+        }
+
         /// <summary>
         /// Determines whether the specified project is registered with the Registry.
         /// </summary>
@@ -1208,6 +1204,30 @@ namespace SIL.XForge.Scripture.Services
             {
                 _logger.LogWarning($"The installable resource is not available for {resource.ParatextId}");
             }
+        }
+
+        /// <summary> Create a shared project object for a given project. </summary>
+        private SharedProject CreateSharedProject(UserSecret userSecret, string paratextId, string proj,
+            SharedRepositorySource source, SharedRepository sharedRepository)
+        {
+            string username = GetParatextUsername(userSecret);
+            // Specifically set the ScrText property of the SharedProject to indicate the project is available locally
+            using ScrText scrText = ScrTextCollection.FindById(username, paratextId);
+            if (scrText == null)
+                throw new Exception(
+                    $"Failed to fetch ScrText for PT project id {paratextId} using PT username {username}");
+
+            // Previously we used the CreateSharedProject method of SharingLogic but it would
+            // result in null if the user did not have a license to the repo which happens
+            // if the project is derived from another. This ensures the SharedProject is available
+            return new SharedProject
+            {
+                ScrTextName = proj,
+                Repository = sharedRepository,
+                SendReceiveId = HexId.FromStr(paratextId),
+                ScrText = scrText,
+                Permissions = scrText.Permissions
+            };
         }
 
         private void CloneProjectRepo(IInternetSharedRepositorySource source, string projectId, SharedRepository repo)
@@ -1374,33 +1394,6 @@ namespace SIL.XForge.Scripture.Services
                 _logger.LogInformation("{0} updated chapter {1} of {2} in {3}.", userId,
                     chapterNum, Canon.BookNumberToEnglishName(bookNum), scrText.Name);
             }
-        }
-
-        private void LogFailedSharedProject(string projId, string projShortName, SharedRepositorySource source,
-            IEnumerable<SharedRepository> sourceRepositories)
-        {
-            _logger.LogInformation($"*** Creating SharedProject failed for: {projId} ***");
-            _logger.LogInformation($"Short name is: {projShortName}");
-            if (source.Type != SRSourceTypes.Internet)
-                _logger.LogInformation("The source type was not an internet source");
-            SharedRepository project = sourceRepositories?.FirstOrDefault(p => p.SendReceiveId == HexId.FromStr(projId));
-            if (project == null)
-            {
-                _logger.LogInformation("The source repository is null");
-                return;
-            }
-            if (project.SourceUsers == null)
-            {
-                _logger.LogInformation("The source repository SourceUsers property is null");
-                return;
-            }
-            if (!project.SourceUsers.HasPermissionsDefined)
-                _logger.LogInformation("Permission is not defined");
-            UserRoles role = project.SourceUsers.GetRole();
-            if (role == UserRoles.None)
-                _logger.LogInformation("The user does not have a role on the project");
-            if (project.License == null)
-                _logger.LogInformation("The source project license is null");
         }
     }
 
