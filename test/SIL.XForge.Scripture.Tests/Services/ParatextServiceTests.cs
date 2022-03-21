@@ -630,6 +630,22 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void SendReceiveAsync_NoMatchingSourceRepository_Throws()
+        {
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string projectId = env.SetupProject(env.Project01, associatedPtUser);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+            IInternetSharedRepositorySource mockSource =
+                env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+
+            ArgumentException ex = Assert.ThrowsAsync<ArgumentException>(() =>
+                env.Service.SendReceiveAsync(user01Secret, "badProjectId", null));
+            Assert.That(ex.Message, Does.Contain("PT projects with the following PT ids were requested"));
+        }
+
+        [Test]
         public void SendReceiveAsync_ShareChangesErrors_InResultsOnly()
         {
             var env = new TestEnvironment();
@@ -1510,16 +1526,6 @@ namespace SIL.XForge.Scripture.Services
 
             public void SetupSuccessfulSendReceive()
             {
-                MockSharingLogicWrapper.CreateSharedProject(Arg.Any<string>(), Arg.Any<string>(),
-                    Arg.Any<SharedRepositorySource>(), Arg.Any<IEnumerable<SharedRepository>>())
-                    .Returns(callInfo => new SharedProject()
-                    {
-                        SendReceiveId = HexId.FromStr(callInfo.ArgAt<string>(0)),
-                        Repository = new SharedRepository
-                        {
-                            SendReceiveId = HexId.FromStr(callInfo.ArgAt<string>(0)),
-                        },
-                    });
                 MockSharingLogicWrapper.ShareChanges(Arg.Any<List<SharedProject>>(), Arg.Any<SharedRepositorySource>(),
                     out Arg.Any<List<SendReceiveResult>>(), Arg.Any<List<SharedProject>>()).Returns(true);
                 // Have the HandleErrors method run its first argument, which would be the ShareChanges() call.
