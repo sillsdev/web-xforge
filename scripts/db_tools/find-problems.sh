@@ -31,7 +31,7 @@ function runChecks() {
   # mongosh is the replacement for the deprecated mongo shell
   mongosh --port "$1" --file ../../mongodb/Projects/ProjectsInSyncState.mongodb --quiet
   echo
-  echo PROJECTS WERE LAST SYNC FAILED
+  echo PROJECTS WHERE LAST SYNC FAILED
   mongosh --port "$1" --file ../../mongodb/Projects/ProjectsWhereLastSyncFailed.mongodb --quiet
   echo
   echo CORRUPTED TEXTS

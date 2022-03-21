@@ -3,8 +3,33 @@
 // This script is designed to be run either by mongosh on the command line (logging results), or by the MongoDB VS Code
 // extension (showing projects in the results pane).
 
-use('xforge')
+use("xforge");
 
-const projects = db.sf_projects.find({'sync.lastSyncSuccessful': false}, {texts: 0}).toArray();
-console.log(projects.map(project => project.shortName).join('\n'));
-projects
+function projectLastSyncTime(projectId) {
+  const syncFinishOp = db.o_sf_projects
+    .find({
+      d: projectId,
+      op: {
+        $elemMatch: {
+          p: ["sync", "percentCompleted"],
+          od: { $exists: true }
+        }
+      }
+    })
+    .sort({ v: -1 })
+    .limit(1)
+    .toArray()[0];
+  return syncFinishOp.m.ts;
+}
+
+const projects = db.sf_projects.find({ "sync.lastSyncSuccessful": false }, { texts: 0 }).toArray();
+for (const project of projects) {
+  project.lastSyncTime = projectLastSyncTime(project._id);
+}
+projects.sort((a, b) => b.lastSyncTime - a.lastSyncTime);
+
+console.log(projects.length + " projects:");
+for (const project of projects) {
+  console.log(new Date(project.lastSyncTime).toUTCString() + ' ' + project.shortName)
+}
+projects;
