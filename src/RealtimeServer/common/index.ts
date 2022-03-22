@@ -22,6 +22,7 @@ interface RealtimeServerOptions {
   audience: string;
   scope: string;
   authority: string;
+  origin: string;
   bugsnagApiKey: string;
   releaseStage: string;
   migrationsDisabled: boolean;
@@ -68,6 +69,7 @@ async function startServer(options: RealtimeServerOptions): Promise<void> {
       options.scope,
       options.authority,
       options.port,
+      options.origin,
       exceptionReporter
     );
     streamListener.listen(server);
