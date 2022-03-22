@@ -80,12 +80,6 @@ namespace SyncUserToPTUser
                         }
                         if (projectDoc.Data.ParatextUsers == null)
                             op.Set(pd => pd.ParatextUsers, ptUsers);
-                        else
-                        {
-                            _logger.Log($"      {Program.Bullet3} Some Paratext users already exist. Adding to the list.");
-                            foreach (ParatextUserProfile user in ptUsers)
-                                op.Add(pd => pd.ParatextUsers, user);
-                        }
                     });
                     await _projectSecretRepo.UpdateAsync(projectSecret.Id, u =>
                     {
