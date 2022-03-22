@@ -48,14 +48,8 @@ export class WebSocketStreamListener {
     });
 
     wss.on('connection', (webSocket: WebSocket, req: http.IncomingMessage) => {
-      this.verifyToken(req, (res: boolean, code = 200, message?: string) => {
-        if (res) {
-          const stream = new WebSocketJSONStream(webSocket);
-          backend.listen(stream, req);
-        } else {
-          webSocket.close(4000 + code, message);
-        }
-      });
+      const stream = new WebSocketJSONStream(webSocket);
+      backend.listen(stream, req);
     });
   }
 
