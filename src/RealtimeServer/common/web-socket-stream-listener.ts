@@ -8,7 +8,7 @@ import ws from 'ws';
 import { ExceptionReporter } from './exception-reporter';
 
 function isLocalRequest(request: http.IncomingMessage): boolean {
-  const addr = request.connection.remoteAddress;
+  const addr = request.socket.remoteAddress;
   return addr === '127.0.0.1' || addr === '::ffff:127.0.0.1' || addr === '::1';
 }
 
@@ -21,6 +21,7 @@ export class WebSocketStreamListener {
     private readonly scope: string,
     authority: string,
     private readonly port: number,
+    private readonly origin: string,
     private exceptionReporter: ExceptionReporter
   ) {
     // Create web servers to serve files and listen to WebSocket connections
@@ -42,18 +43,13 @@ export class WebSocketStreamListener {
   listen(backend: ShareDB): void {
     // Connect any incoming WebSocket connection to ShareDB
     const wss = new ws.Server({
-      server: this.httpServer
+      server: this.httpServer,
+      verifyClient: this.verifyClient
     });
 
     wss.on('connection', (webSocket: WebSocket, req: http.IncomingMessage) => {
-      this.verifyToken(req, (res: boolean, code = 200, message?: string) => {
-        if (res) {
-          const stream = new WebSocketJSONStream(webSocket);
-          backend.listen(stream, req);
-        } else {
-          webSocket.close(4000 + code, message);
-        }
-      });
+      const stream = new WebSocketJSONStream(webSocket);
+      backend.listen(stream, req);
     });
   }
 
@@ -118,4 +114,15 @@ export class WebSocketStreamListener {
       .then(key => done(null, key.getPublicKey()))
       .catch(done);
   }
+
+  private verifyClient: ws.VerifyClientCallbackAsync = (
+    info: { origin: string; secure: boolean; req: http.IncomingMessage },
+    callback: (res: boolean, code?: number, message?: string, headers?: http.OutgoingHttpHeaders) => void
+  ): void => {
+    if (info.origin !== this.origin) {
+      callback(false, 401, 'Unauthorized');
+    } else {
+      this.verifyToken(info.req, callback);
+    }
+  };
 }
