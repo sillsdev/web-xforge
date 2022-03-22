@@ -1,10 +1,13 @@
 import { Injectable } from '@angular/core';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { NoteThread, NoteStatus } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProject, SF_PROJECTS_COLLECTION } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getSFProjectUserConfigDocId } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { Subject } from 'rxjs';
 import { CommandService } from 'xforge-common/command.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
@@ -12,8 +15,7 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { ProjectService } from 'xforge-common/project.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { RetryingRequest, RetryingRequestService } from 'xforge-common/retrying-request.service';
 import { TransceleratorQuestion } from '../checking/import-questions-dialog/import-questions-dialog.component';
 import { InviteeStatus } from '../users/collaborators/collaborators.component';
 import { NoteThreadDoc } from './models/note-thread-doc';
@@ -36,9 +38,10 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   constructor(
     realtimeService: RealtimeService,
     commandService: CommandService,
-    private readonly fileService: FileService
+    private readonly fileService: FileService,
+    protected readonly retryingRequestService: RetryingRequestService
   ) {
-    super(realtimeService, commandService, SF_PROJECT_ROLES);
+    super(realtimeService, commandService, retryingRequestService, SF_PROJECT_ROLES);
   }
 
   async onlineCreate(settings: SFProjectCreateSettings): Promise<string> {
@@ -188,12 +191,8 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return (await this.onlineInvoke<string>('linkSharingKey', { projectId, role })) ?? '';
   }
 
-  async transceleratorQuestions(projectId: string): Promise<TransceleratorQuestion[]> {
-    return (await this.onlineInvoke<TransceleratorQuestion[]>('transceleratorQuestions', { projectId }))!;
-  }
-
-  async hasTransceleratorQuestions(projectId: string): Promise<boolean> {
-    return (await this.onlineInvoke<boolean>('hasTransceleratorQuestions', { projectId }))!;
+  transceleratorQuestions(projectId: string, cancel: Subject<void>): RetryingRequest<TransceleratorQuestion[]> {
+    return this.onlineRetryInvoke<TransceleratorQuestion[]>('transceleratorQuestions', cancel, { projectId });
   }
 
   async onlineSetUserProjectPermissions(projectId: string, userId: string, permissions: string[]): Promise<void> {

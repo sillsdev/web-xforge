@@ -1,0 +1,46 @@
+{
+  "ts-node": {
+    "require": [],
+    "compilerOptions": {
+      "module": "commonjs"
+    }
+
+  },
+  "compilerOptions": {
+    "baseUrl": "./",
+    "outDir": "./.ts-node",
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "sourceMap": true,
+    "declaration": false,
+    "downlevelIteration": true,
+    "experimentalDecorators": true,
+    "moduleResolution": "node",
+    "importHelpers": true,
+    "target": "ES6",
+    "module": "ES2020",
+    "allowSyntheticDefaultImports": true,
+    "allowJs": true,
+    "lib": [
+      "es2018",
+      "dom"
+    ],
+    "emitDecoratorMetadata": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "esModuleInterop": true,
+    "typeRoots": ["node_modules/@types", "../../src/RealtimeServer/typings",
+    ],
+    "resolveJsonModule": true,
+    "paths": {
+      "xforge-common/*": [
+        "../../src/SIL.XForge.Scripture/ClientApp/src/xforge-common/*"
+      ],
+      "*": [ "../../src/RealtimeServer/typings/*"]
+    },
+    "inlineSourceMap": false,
+    "inlineSources": true,
+    "noEmit": false,
+  }
+}

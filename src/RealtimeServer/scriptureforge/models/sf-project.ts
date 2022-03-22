@@ -21,6 +21,7 @@ export interface SFProjectProfile extends Project {
   checkingConfig: CheckingConfig;
   texts: TextInfo[];
   sync: Sync;
+  editable: boolean;
 }
 
 export interface SFProject extends SFProjectProfile {

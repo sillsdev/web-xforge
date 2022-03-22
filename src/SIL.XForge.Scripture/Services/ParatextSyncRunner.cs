@@ -90,16 +90,16 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         /// <remarks>
         /// Do not allow multiple sync jobs to run in parallel on the same project by creating a hangfire mutex on the
-        /// <param name="projectId"/> parameter, i.e. "{0}".
+        /// <param name="projectSFId"/> parameter, i.e. "{0}".
         /// </remarks>
         [Mutex("{0}")]
-        public async Task RunAsync(string projectId, string userId, bool trainEngine, CancellationToken token)
+        public async Task RunAsync(string projectSFId, string userId, bool trainEngine, CancellationToken token)
         {
             // Whether or not we can rollback Paratext
             bool canRollbackParatext = false;
             try
             {
-                if (!await InitAsync(projectId, userId, token))
+                if (!await InitAsync(projectSFId, userId, token))
                 {
                     await CompleteSync(false, canRollbackParatext, token);
                     return;
@@ -165,12 +165,20 @@ namespace SIL.XForge.Scripture.Services
                     Log($"RunAsync: Considering that data is not in sync. The local PT repo last shared revision is '{lastSharedVersion}'. The SF DB project Sync.SyncedToRepositoryVersion is '{_projectDoc.Data.Sync.SyncedToRepositoryVersion}'. canRollbackParatext is '{canRollbackParatext}'.");
                 }
 
+                ParatextSettings settings =
+                    _paratextService.GetParatextSettings(_userSecret, _projectDoc.Data.ParatextId);
                 // update target Paratext books and notes
                 foreach (TextInfo text in _projectDoc.Data.Texts)
                 {
+                    if (settings == null)
+                    {
+                        Log($"FAILED: Attempting to write to a project repository that does not exist.");
+                        await CompleteSync(false, canRollbackParatext, token);
+                        return;
+                    }
                     SortedList<int, IDocument<TextData>> targetTextDocs = await FetchTextDocsAsync(text);
                     targetTextDocsByBook[text.BookNum] = targetTextDocs;
-                    if (isDataInSync)
+                    if (isDataInSync && settings.Editable)
                         await UpdateParatextBook(text, targetParatextId, targetTextDocs);
 
                     IReadOnlyList<IDocument<Question>> questionDocs = await FetchQuestionDocsAsync(text);
@@ -295,8 +303,7 @@ namespace SIL.XForge.Scripture.Services
                                 await _paratextService.GetResourcePermissionAsync(sourceParatextId, uid, token);
                             if (permission == TextInfoPermission.None)
                             {
-                                // As resource projects don't have administrators, connect as the user we are to remove
-                                await _projectService.RemoveUserAsync(uid, sourceProjectRef, uid);
+                                await _projectService.RemoveUserWithoutPermissionsCheckAsync(uid, sourceProjectRef, uid);
                             }
                         }
                     }
@@ -316,7 +323,7 @@ namespace SIL.XForge.Scripture.Services
                 if (TranslationSuggestionsEnabled && trainEngine)
                 {
                     // start training Machine engine
-                    await _engineService.StartBuildByProjectIdAsync(projectId);
+                    await _engineService.StartBuildByProjectIdAsync(projectSFId);
                 }
 
                 await CompleteSync(true, canRollbackParatext, token);
@@ -325,7 +332,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 if (!(e is TaskCanceledException))
                 {
-                    _logger.LogError(e, "Error occurred while executing Paratext sync for project '{Project}'", projectId);
+                    _logger.LogError(e, "Error occurred while executing Paratext sync for project with SF id '{Project}'", projectSFId);
                 }
 
                 await CompleteSync(false, canRollbackParatext, token);
@@ -1025,30 +1032,33 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
 
-                // See if the full name of the project needs updating
-                string fullName = _paratextService.GetProjectFullName(_userSecret, _projectDoc.Data.ParatextId);
-                if (!string.IsNullOrEmpty(fullName))
+                ParatextSettings settings =
+                    _paratextService.GetParatextSettings(_userSecret, _projectDoc.Data.ParatextId);
+                if (settings != null)
                 {
-                    op.Set(pd => pd.Name, fullName);
+                    // See if the full name of the project needs updating
+                    if (!string.IsNullOrEmpty(settings.FullName))
+                    {
+                        op.Set(pd => pd.Name, settings.FullName);
+                    }
+
+                    // Set the right-to-left language flag
+                    op.Set(pd => pd.IsRightToLeft, settings.IsRightToLeft);
+                    op.Set(pd => pd.Editable, settings.Editable);
                 }
-
-                // Set the right-to-left language flag
-                bool isRtl = _paratextService.IsProjectLanguageRightToLeft(_userSecret, _projectDoc.Data.ParatextId);
-                op.Set(pd => pd.IsRightToLeft, isRtl);
-
                 // The source can be null if there was an error getting a resource from the DBL
                 if (TranslationSuggestionsEnabled
                     && _projectDoc.Data.TranslateConfig.Source != null)
                 {
-                    bool sourceIsRtl = _paratextService
-                        .IsProjectLanguageRightToLeft(_userSecret, _projectDoc.Data.TranslateConfig.Source.ParatextId);
-                    op.Set(pd => pd.TranslateConfig.Source.IsRightToLeft, sourceIsRtl);
+                    ParatextSettings sourceSettings = _paratextService.GetParatextSettings(_userSecret,
+                        _projectDoc.Data.TranslateConfig.Source.ParatextId);
+                    if (sourceSettings != null)
+                        op.Set(pd => pd.TranslateConfig.Source.IsRightToLeft, sourceSettings.IsRightToLeft);
                 }
             });
 
             foreach (var userId in userIdsToRemove)
-                await _projectService.RemoveUserAsync(_userSecret.Id, _projectDoc.Id, userId);
-
+                await _projectService.RemoveUserWithoutPermissionsCheckAsync(_userSecret.Id, _projectDoc.Id, userId);
 
             Dictionary<string, string> ptUsernamesToSFUserIds = await GetPTUsernameToSFUserIdsAsync(token);
             await _projectDoc.SubmitJson0OpAsync(op =>

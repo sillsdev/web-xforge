@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AboutCheckingTool" xml:space="preserve">
-    <value>Nuestra herramienta de comprobación de la comunidad facilita campañas de comprobación de las Escrituras, para proporcionar más rápido comentarios más amplios al comité de traducción.</value>
+    <value>Nuestra herramienta de comprobación de la comunidad facilita campañas de comprobación de las Escrituras, para que el comité de traducción reciba comentarios más amplios y con mayor rapidez.</value>
   </data>
   <data name="AboutEngaging" xml:space="preserve">
     <value>Los proyectos de escritura involucran a grupos de hablantes que son cada vez más diversos geográficamente.</value>

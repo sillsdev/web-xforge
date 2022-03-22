@@ -13,6 +13,7 @@
     "raagh.angular-karma-test-explorer",
     "streetsidesoftware.code-spell-checker",
     "yzhang.markdown-all-in-one",
-    "ms-azuretools.vscode-cosmosdb"
+    "ms-azuretools.vscode-cosmosdb",
+    "mongodb.mongodb-vscode"
   ]
 }

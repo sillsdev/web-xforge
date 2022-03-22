@@ -27,9 +27,15 @@ namespace UpdateHelp
         ///     cd ~/src/web-sf-helps/src/en/
         ///     aws s3 sync s3://help.scriptureforge.org/en . --exact-timestamps
         /// </code>
+        /// If changes exist, this means the English helps have been updated and the changed HTML files
+        ///     will need to be uploaded to Crowdin
+        ///
+        /// Delete the contents of <c>targetDir</c> except for the Google search console file (google<number>.html)
+        ///     where targetDir is the target language folder e.g. /es/
         /// Copy /en/ to <c>targetDir</c> folder
         /// Copy Google search console site verification HTML file to <c>targetDir</c> folder
-        /// Copy translated target HTMl files and menu_[target].json from Crowdin to the <c>targetDir</c> folder
+        ///     if it does not already exist in <c>targetDir</c>
+        /// Copy translated target HTML files and menu_[target].json from Crowdin to the <c>targetDir</c> folder
         /// Run this program, <c>dotnet run es write</c> (change 'es' for a different language)
         /// Push to help AWS S3:
         /// <code>

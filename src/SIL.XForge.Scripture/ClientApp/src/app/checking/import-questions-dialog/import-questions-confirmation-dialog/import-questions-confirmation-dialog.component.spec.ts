@@ -47,14 +47,7 @@ describe('ImportQuestionsConfirmationDialogComponent', () => {
     expect(env.selectAllCheckbox.checked).toBe(true);
     expect(env.rowCheckboxes[0].checked).toBe(true);
     const dialogResult: ImportQuestionsConfirmationDialogResult = await env.closeDialog();
-    expect(dialogResult.questions).toEqual([
-      {
-        before: 'Original question 1',
-        after: 'Edited question 1',
-        answerCount: 0,
-        checked: true
-      }
-    ]);
+    expect(dialogResult).toEqual([true]);
   }));
 
   it('Allows selecting a subset of questions', fakeAsync(async () => {
@@ -71,26 +64,7 @@ describe('ImportQuestionsConfirmationDialogComponent', () => {
     expect(env.selectAllCheckbox.indeterminate).toBe(true);
 
     const dialogResult: ImportQuestionsConfirmationDialogResult = await env.closeDialog();
-    expect(dialogResult.questions).toEqual([
-      {
-        before: 'Original question 1',
-        after: 'Edited question 1',
-        answerCount: 0,
-        checked: false
-      },
-      {
-        before: 'Original question 2',
-        after: 'Edited question 2',
-        answerCount: 0,
-        checked: false
-      },
-      {
-        before: 'Original question 3',
-        after: 'Edited question 3',
-        answerCount: 0,
-        checked: true
-      }
-    ]);
+    expect(dialogResult).toEqual([false, false, true]);
   }));
 });
 

@@ -232,6 +232,7 @@ namespace SIL.XForge.Realtime
                 Authority = $"https://{_authOptions.Value.Domain}/",
                 Audience = _authOptions.Value.Audience,
                 Scope = _authOptions.Value.Scope,
+                Origin = this._configuration.GetValue<string>("Site:Origin"),
                 BugsnagApiKey = this._configuration.GetValue<string>("Bugsnag:ApiKey"),
                 ReleaseStage = this._configuration.GetValue<string>("Bugsnag:ReleaseStage"),
                 MigrationsDisabled = this._realtimeOptions.Value.MigrationsDisabled,

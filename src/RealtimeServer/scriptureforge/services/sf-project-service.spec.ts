@@ -111,6 +111,7 @@ class TestEnvironment {
       writingSystem: {
         tag: 'en'
       },
+      editable: true,
       texts: [
         {
           bookNum: 1,

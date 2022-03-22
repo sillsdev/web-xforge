@@ -42,6 +42,23 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(source, Is.Not.Null);
         }
 
+        [Test]
+        public void GetSource_TroubleWithFetchingUsername()
+        {
+            var env = new TestEnvironment();
+            var userSecret = new UserSecret
+            {
+                Id = "user01",
+                ParatextTokens = new Tokens
+                {
+                    AccessToken = TokenHelper.CreateNewAccessToken(),
+                    RefreshToken = "refresh_token01"
+                }
+            };
+            env.MockJwtTokenHelper.GetParatextUsername(Arg.Any<UserSecret>()).Returns((string)null);
+            Assert.Throws<Exception>(() => env.Provider.GetSource(userSecret, "srServer", "regServer"));
+        }
+
         private class TestEnvironment
         {
             public IJwtTokenHelper MockJwtTokenHelper;
@@ -51,6 +68,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 MockJwtTokenHelper = Substitute.For<IJwtTokenHelper>();
                 MockJwtTokenHelper.GetJwtTokenFromUserSecret(Arg.Any<UserSecret>()).Returns("token_1234");
+                MockJwtTokenHelper.GetParatextUsername(Arg.Any<UserSecret>()).Returns("ptUsernameHere");
                 RegistryU.Implementation = new DotNetCoreRegistry();
                 InternetAccess.RawStatus = InternetUse.Enabled;
                 var siteOptions = Substitute.For<IOptions<SiteOptions>>();

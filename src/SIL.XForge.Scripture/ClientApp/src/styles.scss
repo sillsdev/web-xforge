@@ -117,9 +117,10 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
   width: unset;
 }
 
-.mdc-button {
+.mdc-button--unelevated,
+.mat-flat-button {
   transition: background-color 0.15s, color 0.15s;
-  &.mdc-button--unelevated:not(:disabled):hover {
+  &:not(:disabled):hover {
     background-color: variables.$greenLight;
     color: variables.$sf_grey;
   }
@@ -145,4 +146,8 @@ button.mdc-icon-button {
 
 .offline-text {
   color: var(--mdc-theme-error);
+}
+
+.locale-fonts mat-option {
+  font-family: $languageFonts;
 }

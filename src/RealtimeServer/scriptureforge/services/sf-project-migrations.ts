@@ -129,10 +129,27 @@ class SFProjectMigration5 implements Migration {
   }
 }
 
+class SFProjectMigration6 implements Migration {
+  static readonly VERSION = 6;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    const ops = [];
+    if (doc.data.editable == null) {
+      ops.push({ p: ['editable'], oi: true });
+    }
+    await submitMigrationOp(SFProjectMigration6.VERSION, doc, ops);
+  }
+
+  migrateOp(_op: RawOp): void {
+    //do nothing
+  }
+}
+
 export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration1,
   SFProjectMigration2,
   SFProjectMigration3,
   SFProjectMigration4,
-  SFProjectMigration5
+  SFProjectMigration5,
+  SFProjectMigration6
 ];

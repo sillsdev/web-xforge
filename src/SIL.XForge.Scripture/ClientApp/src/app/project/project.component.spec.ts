@@ -340,6 +340,7 @@ class TestEnvironment {
             shareLevel: CheckingShareLevel.Specific
           },
           sync: { queuedCount: 0 },
+          editable: true,
           texts:
             args.hasTexts == null || args.hasTexts
               ? [

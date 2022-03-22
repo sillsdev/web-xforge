@@ -1,6 +1,6 @@
 {
   "app": {
-    "action_not_available_offline": "Esta acción no está disponible mientras esté desconectado.",
+    "action_not_available_offline": "Esta acción no está disponible mientras esté fuera de línea.",
     "all_questions": "Todas las preguntas",
     "announcements": "Anuncios",
     "cannot_change_password": "No se puede cambiar la contraseña en este momento. Inténtalo de nuevo más tarde o informe de un problema en el menú Ayuda.",
@@ -12,7 +12,7 @@
     "language": "Idioma",
     "log_out": "Cerrar sesión",
     "logged_in_as": "Conectado como",
-    "offline": "Sin conexión",
+    "offline": "Fuera de línea",
     "online": "Conectado",
     "overview": "Panorama general",
     "page_not_found": "No se encontró la página",
@@ -36,7 +36,7 @@
     "loading": "Cargando",
     "loading_retry": "Cargando - reintentando ({{ attempt }})",
     "login_required": "Es necesario iniciar sesión",
-    "please_wait": "Scripture Forge ahora está fuera de la Beta: ¡aún! espere mientras migramos su cuenta a la nueva versión completa.",
+    "please_wait": "Scripture Forge ha salido de la fase Beta: ¡espere aún! mientras migramos su cuenta a la nueva versión completa.",
     "recourse": "Asegúrese de que no está utilizando una ventana de navegador de incógnito/privado y de que está conectado a Internet. Si sigues teniendo problemas, por favor {{ templateTagBoundary }}pide ayuda{{ templateTagBoundary }}."
   },
   "canon": {
@@ -140,9 +140,9 @@
       "XXE": "Extra E",
       "XXF": "Extra F",
       "XXG": "Extra G",
-      "FRT": "Materia frontal",
-      "BAK": "Materia dorsal",
-      "OTH": "Otra materia",
+      "FRT": "Páginas iniciales",
+      "BAK": "Páginas finales",
+      "OTH": "Otros materiales",
       "3ES": "3 Esdras *obsoleto*",
       "EZA": "Apocalipsis de Esdras",
       "5EZ": "5 Esdras (Prólogo en Latín)",
@@ -202,7 +202,7 @@
   "checking_audio_player": {
     "audio_unavailable": "El audio no está disponible.",
     "audio_cannot_be_accessed": "Hubo un error al intentar acceder al archivo de audio. Si esto persiste, por favor carga un nuevo archivo.",
-    "audio_cannot_be_played": "Este audio no puede ser reproducido mientras esté desconectado porque no ha sido descargado. Conéctese a Internet para reproducirlo.",
+    "audio_cannot_be_played": "Este audio no puede ser reproducido mientras esté fuera de línea porque no ha sido descargado. Conéctese a Internet para reproducirlo.",
     "audio_cannot_be_previewed": "El audio está en un formato que no se puede previsualizar. Guarda cualquier cambio y conéctate a Internet para reproducirlo."
   },
   "checking_audio_recorder": {
@@ -305,14 +305,14 @@
     "invitation_sent": "Se ha enviado un correo electrónico de invitación a {{ email }}",
     "invite_people": "Invitar a otras personas",
     "link_copied": "Enlace copiado al portapapeles",
-    "link_sharing_not_available_offline": "Invitar a los usuarios mediante el compartimiento de enlaces no está disponible mientras se está fuera de línea.",
+    "link_sharing_not_available_offline": "Invitar a los usuarios mediante enlaces compartidos no está disponible mientras se está fuera de línea.",
     "link_sharing": "Compartir enlaces",
     "not_inviting_already_member": "No se invitó: El usuario ya es miembro de este proyecto",
     "resend": "Reenviar",
     "select_invitation_language": "Seleccione un idioma para el correo electrónico de invitación",
     "select_invitation_role": "Seleccione un rol para el usuario invitado",
     "send": "Enviar",
-    "share_by_email_not_available_offline": "Invitar usuarios por correo electrónico no está disponible cuando no se está en línea."
+    "share_by_email_not_available_offline": "Invitar usuarios por correo electrónico no está disponible cuando está fuera de línea."
   },
   "share_dialog": {
     "done": "Terminado",

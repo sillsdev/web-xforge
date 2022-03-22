@@ -9,9 +9,7 @@
           <label>{{ t(label, { attempt: attempts }) }}</label>
           <p *ngIf="attempts > 2">
             {{ recourseMessage?.before
-            }}<a href="https://community.scripture.software.sil.org/c/scripture-forge" target="_blank">{{
-              recourseMessage?.templateTagText
-            }}</a
+            }}<a [href]="urls.communitySupport" target="_blank">{{ recourseMessage?.templateTagText }}</a
             >{{ recourseMessage?.after }}
           </p>
           <mdc-linear-progress [determinate]="true" [progress]="progress" [buffer]="1"></mdc-linear-progress>

@@ -591,6 +591,7 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
+        [Obsolete("Only here for clients still running a front end that still calls it")]
         public async Task<bool> HasTransceleratorQuestions(string curUserId, string projectId)
         {
             using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
