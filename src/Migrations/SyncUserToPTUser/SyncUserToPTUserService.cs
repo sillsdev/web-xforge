@@ -39,7 +39,7 @@ namespace SyncUserToPTUser
             List<SFProject> sfProjects = _realtimeService.QuerySnapshots<SFProject>().ToList<SFProject>();
             if (sfProjectIdsToUpdate != null)
             {
-                sfProjects.RemoveAll((SFProject sfProject) => !sfProjectIdsToUpdate.Contains(sfProject.Id));
+                sfProjects = sfProjects.Where((SFProject p) => sfProjectIdsToUpdate.Contains(p.Id)).ToList();
                 string ids = string.Join(' ', sfProjects.Select((SFProject sfProject) => sfProject.Id));
                 int count = sfProjects.Count;
                 _logger.Log($"Only working on the subset of projects (count {count}) with these SF project ids: {ids}");
@@ -66,16 +66,26 @@ namespace SyncUserToPTUser
                     List<ParatextUserProfile> ptUsers = new List<ParatextUserProfile>();
                     await projectDoc.SubmitJson0OpAsync(op =>
                     {
-                        foreach (SyncUser syncUser in projectSecret.SyncUsers)
+                        if (projectSecret.SyncUsers != null)
                         {
-                            var paratextUser = new ParatextUserProfile
+                            foreach (SyncUser syncUser in projectSecret.SyncUsers)
                             {
-                                Username = syncUser.ParatextUsername,
-                                OpaqueUserId = syncUser.Id,
-                            };
-                            ptUsers.Add(paratextUser);
+                                var paratextUser = new ParatextUserProfile
+                                {
+                                    Username = syncUser.ParatextUsername,
+                                    OpaqueUserId = syncUser.Id,
+                                };
+                                ptUsers.Add(paratextUser);
+                            }
                         }
-                        op.Set(pd => pd.ParatextUsers, ptUsers);
+                        if (projectDoc.Data.ParatextUsers == null)
+                            op.Set(pd => pd.ParatextUsers, ptUsers);
+                        else
+                        {
+                            _logger.Log($"      {Program.Bullet3} Some Paratext users already exist. Adding to the list.");
+                            foreach (ParatextUserProfile user in ptUsers)
+                                op.Add(pd => pd.ParatextUsers, user);
+                        }
                     });
                     await _projectSecretRepo.UpdateAsync(projectSecret.Id, u =>
                     {
