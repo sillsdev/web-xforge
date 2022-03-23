@@ -117,6 +117,14 @@ export function registerScripture(): string[] {
       const verseSpan = document.createElement('span');
       verseSpan.innerText = value.number;
       containerSpan.appendChild(verseSpan);
+
+      if (value.altnumber != null) {
+        const verseAltSpan: HTMLSpanElement = document.createElement('span');
+        verseAltSpan.setAttribute(customAttributeName('style'), 'va');
+        verseAltSpan.innerText = value.altnumber;
+        verseSpan.appendChild(verseAltSpan);
+      }
+
       node.appendChild(containerSpan);
       setUsxValue(node, value);
       return node;
