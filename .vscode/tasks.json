@@ -119,6 +119,17 @@
       },
       "problemMatcher": "$msCompile"
     },
+    {
+      "label": "build-migrator-sync-user-to-pt-user",
+      "command": "dotnet",
+      "args": ["build", "/property:GenerateFullPaths=true"],
+      "type": "shell",
+      "group": "build",
+      "options": {
+        "cwd": "${workspaceRoot}/src/Migrations/SyncUserToPTUser"
+      },
+      "problemMatcher": "$msCompile"
+    }
     // {
     //   "label": "build-migrator-foo",
     //   "command": "dotnet",

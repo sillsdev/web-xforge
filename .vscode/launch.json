@@ -127,6 +127,22 @@
         "runtimeExecutable": "/usr/bin/chromium-browser"
       }
     },
+    {
+      "name": "Migration Sync User",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-migrator-sync-user-to-pt-user",
+      "program": "${workspaceRoot}/src/Migrations/SyncUserToPTUser/bin/Debug/netcoreapp3.1/SyncUserToPTUser.dll",
+      "cwd": "${workspaceRoot}/src/Migrations/SyncUserToPTUser",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "args": ["--start-ng-serve=listen"],
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "SYNC_USER_PROJECT_IDS": "6201831c0e13de5c38e0ed7d",
+        "SYNC_USER_MODE_RUN": "true"
+      }
+    }
     // {
     //   "name": "Migration Foo",
     //   "type": "coreclr",
