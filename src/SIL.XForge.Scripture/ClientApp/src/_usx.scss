@@ -332,6 +332,13 @@ usx-char {
   &[data-style='it'] {
     font-style: italic;
   }
+
+  &[data-style='va'] {
+    font-size: 70%;
+    color: #5faa5f;
+    top: -0.5em;
+    position: relative;
+  }
 }
 
 usx-chapter {
@@ -356,6 +363,12 @@ usx-verse {
     border-radius: 8px;
     white-space: nowrap;
     margin: 0 0.2em 0 0.3em;
+    span[data-style='va'] {
+      font-size: 65%;
+      color: #5faa5f;
+      top: -0.5em;
+      position: relative;
+    }
   }
 }
 
