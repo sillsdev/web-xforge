@@ -1267,6 +1267,22 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void SendReceiveAsync_NoMatchingSourceRepository_Throws()
+        {
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string projectId = env.SetupProject(env.Project01, associatedPtUser);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+            IInternetSharedRepositorySource mockSource =
+                env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+
+            ArgumentException ex = Assert.ThrowsAsync<ArgumentException>(() =>
+                env.Service.SendReceiveAsync(user01Secret, "badProjectId", null));
+            Assert.That(ex.Message, Does.Contain("PT projects with the following PT ids were requested"));
+        }
+
+        [Test]
         public void SendReceiveAsync_ShareChangesErrors_InResultsOnly()
         {
             var env = new TestEnvironment();
@@ -1450,6 +1466,20 @@ namespace SIL.XForge.Scripture.Services
             string resourceId = env.Resource3Id; // See the XML in SetRestClientFactory for this
             await env.Service.SendReceiveAsync(user01Secret, ptProjectId);
             await env.Service.SendReceiveAsync(user01Secret, resourceId);
+        }
+
+        [Test]
+        public async Task TryGetProjectRoleAsync_BadArguments()
+        {
+            var env = new TestEnvironment();
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+            var attempt = await env.Service.TryGetProjectRoleAsync(null, "paratextIdHere", CancellationToken.None);
+            Assert.That(attempt.Success, Is.False);
+            Assert.That(attempt.Result, Is.Null);
+
+            attempt = await env.Service.TryGetProjectRoleAsync(userSecret, null, CancellationToken.None);
+            Assert.That(attempt.Success, Is.False);
+            Assert.That(attempt.Result, Is.Null);
         }
 
         [Test]
@@ -1749,6 +1779,30 @@ namespace SIL.XForge.Scripture.Services
             Assert.IsTrue(result);
             env.MockHgWrapper.ReceivedWithAnyArgs().RestoreRepository(default, default);
             env.MockHgWrapper.ReceivedWithAnyArgs().MarkSharedChangeSetsPublic(default);
+        }
+
+        [Test]
+        public void RestoreRepository_ExistingRestoredRepository_Success()
+        {
+            var env = new TestEnvironment();
+            string scrtextDir = "/srv/scriptureforge/projects";
+            ScrTextCollection.Initialize(scrtextDir);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            env.MockFileSystemService.FileExists(Arg.Any<string>()).Returns(true);
+            env.MockFileSystemService.DirectoryExists(Arg.Any<string>()).Returns(x => ((string)x[0]).Contains(ptProjectId));
+
+            // SUT
+            bool result = env.Service.RestoreRepository(user01Secret, ptProjectId);
+            Assert.IsTrue(result);
+            env.MockHgWrapper.ReceivedWithAnyArgs().RestoreRepository(default, default);
+            env.MockHgWrapper.ReceivedWithAnyArgs().MarkSharedChangeSetsPublic(default);
+            string projectRepository = Path.Combine(scrtextDir, "_Backups", ptProjectId);
+            string restoredRepository = projectRepository + "_Restored";
+            // Removes leftover folders from a failed previous restore
+            env.MockFileSystemService.Received().DeleteDirectory(projectRepository);
+            env.MockFileSystemService.Received().DeleteDirectory(restoredRepository);
         }
 
         private class TestEnvironment
@@ -2375,16 +2429,6 @@ namespace SIL.XForge.Scripture.Services
 
             public void SetupSuccessfulSendReceive()
             {
-                MockSharingLogicWrapper.CreateSharedProject(Arg.Any<string>(), Arg.Any<string>(),
-                    Arg.Any<SharedRepositorySource>(), Arg.Any<IEnumerable<SharedRepository>>())
-                    .Returns(callInfo => new SharedProject()
-                    {
-                        SendReceiveId = HexId.FromStr(callInfo.ArgAt<string>(0)),
-                        Repository = new SharedRepository
-                        {
-                            SendReceiveId = HexId.FromStr(callInfo.ArgAt<string>(0)),
-                        },
-                    });
                 MockSharingLogicWrapper.ShareChanges(Arg.Any<List<SharedProject>>(), Arg.Any<SharedRepositorySource>(),
                     out Arg.Any<List<SendReceiveResult>>(), Arg.Any<List<SharedProject>>()).Returns(true);
                 // Have the HandleErrors method run its first argument, which would be the ShareChanges() call.

@@ -270,6 +270,7 @@ class TestEnvironment {
     },
     texts: [TestEnvironment.matthewText],
     sync: { queuedCount: 0 },
+    editable: true,
     userRoles: TestEnvironment.userRoles
   };
   static paratextUsers: ParatextUserProfile[] = paratextUsersFromRoles(TestEnvironment.userRoles);

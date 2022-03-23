@@ -16,5 +16,6 @@ namespace SIL.XForge.Scripture.Models
         public Sync Sync { get; set; } = new Sync();
         // Paratext users on this SF project that are associated with a project component (e.g. a note)
         public List<ParatextUserProfile> ParatextUsers { get; set; } = new List<ParatextUserProfile>();
+        public bool Editable { get; set; } = true;
     }
 }

@@ -14,7 +14,7 @@ export class ExceptionReporter {
     });
   }
 
-  report(error: NotifiableError) {
+  report(error: NotifiableError): void {
     this.bugsnagClient.notify(error);
   }
 }

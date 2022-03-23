@@ -3,7 +3,7 @@ import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } f
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { Subscription } from 'rxjs';
 import { Delta, TextDoc } from '../../core/models/text-doc';
-import { VERSE_FROM_SEGMENT_REF_REGEX } from '../utils';
+import { containsInvalidOp, VERSE_FROM_SEGMENT_REF_REGEX } from '../utils';
 import { USFM_STYLE_DESCRIPTIONS } from './usfm-style-descriptions';
 
 const PARA_STYLES: Set<string> = new Set<string>([
@@ -134,6 +134,12 @@ export class TextViewModel {
     }
     const textData = this.textDoc.data;
     return textData.ops == null || textData.ops.length === 0;
+  }
+
+  get areOpsCorrupted(): boolean {
+    return (
+      this.textDoc?.isLoaded === true && this.textDoc.data?.ops != null && containsInvalidOp(this.textDoc.data.ops)
+    );
   }
 
   bind(textDoc: TextDoc, subscribeToUpdates: boolean): void {

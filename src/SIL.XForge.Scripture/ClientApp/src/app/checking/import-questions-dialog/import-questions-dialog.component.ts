@@ -1,20 +1,20 @@
-import {
-  MdcCheckboxChange,
-  MDCDataTable,
-  MdcDialog,
-  MdcDialogConfig,
-  MdcDialogRef,
-  MDC_DIALOG_DATA
-} from '@angular-mdc/web';
-import { MdcCheckbox } from '@angular-mdc/web/checkbox';
-import { Component, Inject, ViewChild } from '@angular/core';
+import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
+import { Component, ElementRef, Inject, NgZone, OnDestroy, ViewChild } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
-import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
-import { first } from 'rxjs/operators';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { objectId } from 'xforge-common/utils';
+import { TranslocoService } from '@ngneat/transloco';
+import { I18nService } from 'xforge-common/i18n.service';
+import { ExternalUrlService } from 'xforge-common/external-url.service';
+import { CsvService } from 'xforge-common/csv-service.service';
+import { RetryingRequest } from 'xforge-common/retrying-request.service';
+import { environment } from '../../../environments/environment';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -29,10 +29,6 @@ import {
   ImportQuestionsConfirmationDialogData,
   ImportQuestionsConfirmationDialogResult
 } from './import-questions-confirmation-dialog/import-question-confirmation-dialog.component';
-import {
-  ImportQuestionsProgressDialogComponent,
-  ImportQuestionsProgressDialogData
-} from './import-questions-progress-dialog/import-questions-progress-dialog.component';
 
 export interface TransceleratorQuestion {
   book: string;
@@ -44,6 +40,12 @@ export interface TransceleratorQuestion {
   id: string;
 }
 
+export interface SourceQuestion {
+  verseRef: VerseRef;
+  text: string;
+  id?: string;
+}
+
 export interface ImportQuestionsDialogData {
   projectId: string;
   userId: string;
@@ -51,24 +53,38 @@ export interface ImportQuestionsDialogData {
 }
 
 interface DialogListItem {
-  question: TransceleratorQuestion;
+  question: SourceQuestion;
   checked: boolean;
   matchesFilter: boolean;
-  sfVersionOfQuestion: QuestionDoc | null;
+  sfVersionOfQuestion?: QuestionDoc;
 }
+
+type DialogErrorState = 'update_transcelerator' | 'file_import_errors';
+type DialogStatus = 'initial' | 'no_questions' | 'filter' | 'loading' | 'progress' | DialogErrorState;
 
 @Component({
   templateUrl: './import-questions-dialog.component.html',
   styleUrls: ['./import-questions-dialog.component.scss']
 })
-export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
+export class ImportQuestionsDialogComponent extends SubscriptionDisposable implements OnDestroy {
+  questionSource: null | 'transcelerator' | 'csv_file' = null;
+
   questionList: DialogListItem[] = [];
   filteredList: DialogListItem[] = [];
-  statusMessageKey: string | null = 'loading';
+  invalidRows: string[][] = [];
+  errorState?: DialogErrorState;
+  transceleratorOutdated = false;
+  loading = false;
   importClicked: boolean = false;
+  maxListItemsToDisplay = 100;
 
-  @ViewChild('selectAllCheckbox') selectAllCheckbox!: MdcCheckbox;
-  @ViewChild(MDCDataTable) dataTable?: MDCDataTable;
+  importing: boolean = false;
+  importedCount: number = 0;
+  toImportCount: number = 0;
+  importCanceled: boolean = false;
+
+  @ViewChild('selectAllCheckbox') selectAllCheckbox!: MatCheckbox;
+  @ViewChild('dialogContentBody') dialogContentBody!: ElementRef;
 
   fromControl = new FormControl('', [SFValidators.verseStr()]);
   toControl = new FormControl('', [SFValidators.verseStr()]);
@@ -79,13 +95,23 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
     filter: this.filterControl
   });
 
+  transceleratorRequest: RetryingRequest<TransceleratorQuestion[]>;
+  promiseForTransceleratorQuestions: Promise<TransceleratorQuestion[] | undefined>;
+  promiseForQuestionDocQuery: Promise<RealtimeQuery<QuestionDoc>>;
+
   constructor(
+    @Inject(MAT_DIALOG_DATA) public readonly data: ImportQuestionsDialogData,
     private readonly projectService: SFProjectService,
-    @Inject(MDC_DIALOG_DATA) private readonly data: ImportQuestionsDialogData,
-    private readonly dialogRef: MdcDialogRef<ImportQuestionsDialogComponent>,
-    readonly dialog: MdcDialog
+    private readonly dialogRef: MatDialogRef<ImportQuestionsDialogComponent>,
+    private readonly transloco: TranslocoService,
+    private readonly mdcDialog: MdcDialog,
+    private readonly zone: NgZone,
+    private readonly csvService: CsvService,
+    readonly i18n: I18nService,
+    readonly urls: ExternalUrlService
   ) {
     super();
+
     this.subscribe(this.filterForm.valueChanges, () => {
       const searchTerm: string = (this.filterControl.value || '').toLowerCase();
       const fromRef = VerseRef.tryParse(this.fromControl.value || '');
@@ -94,7 +120,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
         listItem.matchesFilter =
           listItem.question.text.toLowerCase().includes(searchTerm) &&
           this.isBetweenRefs(
-            this.verseRefFromQuestion(listItem.question),
+            listItem.question.verseRef,
             fromRef.success ? fromRef.verseRef : null,
             toRef.success ? toRef.verseRef : null
           );
@@ -102,53 +128,107 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
       this.updateListOfFilteredQuestions();
       this.updateSelectAllCheckbox();
     });
-    this.setUpQuestionList();
+
+    this.transceleratorRequest = projectService.transceleratorQuestions(this.data.projectId, this.ngUnsubscribe);
+
+    this.promiseForTransceleratorQuestions = this.transceleratorRequest.promiseForResult.catch((error: unknown) => {
+      if (typeof error === 'object' && /Transcelerator version unsupported/.test(error?.['message'])) {
+        this.transceleratorOutdated = true;
+        return [];
+      } else {
+        throw error;
+      }
+    });
+
+    this.promiseForQuestionDocQuery = projectService.queryQuestions(this.data.projectId);
   }
 
-  get selectedCount() {
+  get status(): DialogStatus {
+    if (this.errorState) {
+      return this.errorState;
+    }
+    if (this.loading) {
+      return 'loading';
+    }
+    if (this.importing) {
+      return 'progress';
+    }
+    if (this.invalidRows.length !== 0) {
+      return 'file_import_errors';
+    }
+    if (this.questionSource != null) {
+      return this.questionList.length === 0 ? 'no_questions' : 'filter';
+    } else {
+      return 'initial';
+    }
+  }
+
+  get selectedCount(): number {
     return this.filteredList.filter(question => question.checked).length;
   }
 
-  async setUpQuestionList() {
-    try {
-      await this.fetchQuestions();
-      this.updateListOfFilteredQuestions();
-      this.statusMessageKey = this.questionList.length === 0 ? 'no_questions_available' : null;
-    } catch (err) {
-      if (/Transcelerator version unsupported/.test(err.message)) {
-        this.statusMessageKey = 'update_transcelerator';
-      } else {
-        throw err;
+  get issueEmail(): string {
+    return environment.issueEmail;
+  }
+
+  get invalidRowsForDisplay(): string[][] {
+    return this.invalidRows.slice(0, this.maxListItemsToDisplay);
+  }
+
+  get questionsForDisplay(): DialogListItem[] {
+    return this.filteredList.slice(0, this.maxListItemsToDisplay);
+  }
+
+  get transceleratorInstructions(): string[] {
+    const importFromTranscelerator = this.transloco.translate('import_questions_dialog.import_from_transcelerator');
+    return this.i18n
+      .translateAndInsertTags('import_questions_dialog.transcelerator_instructions', { importFromTranscelerator })
+      .split('\n');
+  }
+
+  get csvInstructions(): string[] {
+    const importFromCsvFile = this.transloco.translate('import_questions_dialog.import_from_csv_file');
+    return this.i18n
+      .translateAndInsertTags('import_questions_dialog.csv_instructions', { importFromCsvFile })
+      .split('\n');
+  }
+
+  get showDuplicateImportNote(): boolean {
+    return this.filteredList.some(item => item.checked && item.sfVersionOfQuestion != null);
+  }
+
+  ngOnDestroy(): void {
+    super.ngOnDestroy();
+    this.promiseForQuestionDocQuery.then(query => query.dispose());
+  }
+
+  dialogScroll(): void {
+    if (this.status === 'file_import_errors' || this.status === 'filter') {
+      const element = this.dialogContentBody.nativeElement;
+      // add more list items if the user has scrolled to within 1000 pixels of the bottom of the list
+      if (element.scrollHeight <= element.scrollTop + element.clientHeight + 1000) {
+        const list = this.status === 'file_import_errors' ? this.invalidRows : this.filteredList;
+        this.maxListItemsToDisplay = Math.min(list.length, this.maxListItemsToDisplay + 25);
       }
     }
   }
 
-  async fetchQuestions() {
-    const [transceleratorQuestions, questionQuery] = await Promise.all([
-      this.projectService.transceleratorQuestions(this.data.projectId),
-      this.projectService.queryQuestions(this.data.projectId)
-    ]);
+  async setUpQuestionList(questions: SourceQuestion[], useQuestionIds: boolean) {
+    const questionQuery = await this.promiseForQuestionDocQuery;
 
-    if (!questionQuery.ready) {
-      await questionQuery.ready$.pipe(first()).toPromise();
-    }
-    questionQuery.dispose();
+    questions.sort((a, b) => a.verseRef.BBBCCCVVV - b.verseRef.BBBCCCVVV);
 
-    transceleratorQuestions.sort(
-      (a, b) => this.verseRefFromQuestion(a).BBBCCCVVV - this.verseRefFromQuestion(b).BBBCCCVVV
-    );
-
-    for (const question of transceleratorQuestions.filter(q => this.data.textsByBookId[q.book] != null)) {
-      const sfVersionOfQuestion =
-        questionQuery.docs.find(
-          doc =>
-            doc.data != null &&
-            doc.data.transceleratorQuestionId != null &&
-            doc.data.transceleratorQuestionId === question.id &&
-            // The id should be unique for a given verse, but not across different verses
-            // Transcelerator does not allow changing the reference for a question, as of 2021-03-09
-            !this.verseRefDataDiffers(doc.data.verseRef, this.verseRefData(question))
-        ) || null;
+    for (const question of questions.filter(q => this.data.textsByBookId[q.verseRef.book] != null)) {
+      // Questions imported from Transcelerator are considered duplicates if the ID and verse ref is the same. The
+      // version in SF should be updated if the text is different from the version being imported. Transcelerator does
+      // not allow changing the reference for a question, as of 2021-03-09
+      // Questions imported from a file should be skipped only if they are exactly the same as what is currently in SF.
+      const sfVersionOfQuestion: QuestionDoc | undefined = questionQuery.docs.find(
+        doc =>
+          doc.data != null &&
+          !this.verseRefDataDiffers(doc.data.verseRef, fromVerseRef(question.verseRef)) &&
+          (useQuestionIds ? doc.data.transceleratorQuestionId === question.id : doc.data.text === question.text)
+      );
 
       this.questionList.push({
         question,
@@ -160,9 +240,8 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
     this.updateListOfFilteredQuestions();
   }
 
-  referenceForDisplay(q: TransceleratorQuestion): string {
-    const endPart = (q.endChapter ? `${q.endChapter}:` : '') + (q.endVerse || '');
-    return `${q.book} ${q.startChapter}:${q.startVerse}${endPart ? '-' + endPart : ''}`;
+  referenceForDisplay(q: SourceQuestion): string {
+    return q.verseRef.toString();
   }
 
   clearFilters() {
@@ -181,7 +260,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
       autoFocus: false
     };
 
-    const dialogRef = this.dialog.open(ScriptureChooserDialogComponent, dialogConfig) as MdcDialogRef<
+    const dialogRef = this.mdcDialog.open(ScriptureChooserDialogComponent, dialogConfig) as MdcDialogRef<
       ScriptureChooserDialogComponent,
       VerseRef | 'close'
     >;
@@ -192,33 +271,28 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
     });
   }
 
-  checkboxChanged(event: MdcCheckboxChange, listItem: DialogListItem) {
-    listItem.checked = event.checked;
+  checkboxChanged(listItem: DialogListItem) {
     this.updateSelectAllCheckbox();
-    if (event.checked) {
+    if (listItem.checked) {
       this.confirmEditsIfNecessary([listItem]);
     }
   }
 
-  async selectAllChanged(event: MdcCheckboxChange) {
+  async selectAllChanged(selectAllChecked: boolean) {
     const editsToConfirm: DialogListItem[] = [];
     for (const listItem of this.filteredList) {
-      if (event.checked && !listItem.checked) {
+      if (selectAllChecked && !listItem.checked) {
         editsToConfirm.push(listItem);
       }
-      listItem.checked = event.checked;
+      listItem.checked = selectAllChecked;
     }
     this.confirmEditsIfNecessary(editsToConfirm);
   }
 
   updateSelectAllCheckbox() {
     const checkedCount = this.filteredList.filter(item => item.checked).length;
-    if (checkedCount > 0 && checkedCount < this.filteredList.length) {
-      this.selectAllCheckbox.indeterminate = true;
-    } else {
-      this.selectAllCheckbox.checked = checkedCount !== 0;
-      this.selectAllCheckbox.indeterminate = false;
-    }
+    this.selectAllCheckbox.checked = checkedCount === this.filteredList.length;
+    this.selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < this.filteredList.length;
   }
 
   async importQuestions(): Promise<void> {
@@ -228,27 +302,18 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
       return;
     }
 
+    this.dialogRef.disableClose = true;
+    this.importing = true;
+
     const listItems = this.filteredList.filter(listItem => listItem.checked);
-    let cancelImport = false;
-    const dialogData: ImportQuestionsProgressDialogData = {
-      count: listItems.length,
-      completed: 0,
-      cancel: () => (cancelImport = true)
-    };
-    const config: MdcDialogConfig<ImportQuestionsProgressDialogData> = {
-      clickOutsideToClose: false,
-      escapeToClose: false,
-      autoFocus: false,
-      data: dialogData
-    };
-    const progressDialog = this.dialog.open(ImportQuestionsProgressDialogComponent, config);
+    this.toImportCount = listItems.length;
 
     // Using Promise.all seems like a better choice than awaiting promises in a loop, but experimentally it appears to
     // take the same amount of time or significantly longer, especially with large numbers of questions, possibly due to
     // queuing too many tasks simultaneously. Additionally, running in series makes it much easier to track progress.
     for (const listItem of listItems) {
       const currentDate = new Date().toJSON();
-      const verseRefData = this.verseRefData(listItem.question);
+      const verseRefData = fromVerseRef(listItem.question.verseRef);
       if (listItem.sfVersionOfQuestion == null) {
         const newQuestion: Question = {
           dataId: objectId(),
@@ -263,7 +328,9 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
           dateModified: currentDate,
           transceleratorQuestionId: listItem.question.id
         };
-        await this.projectService.createQuestion(this.data.projectId, newQuestion, undefined, undefined);
+        await this.zone.runOutsideAngular(() =>
+          this.projectService.createQuestion(this.data.projectId, newQuestion, undefined, undefined)
+        );
       } else if (this.questionsDiffer(listItem)) {
         await listItem.sfVersionOfQuestion.submitJson0Op(op =>
           op
@@ -272,29 +339,82 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
             .set(q => q.dateModified, currentDate)
         );
       }
-      dialogData.completed++;
-      if (cancelImport) {
+      this.importedCount++;
+      if (this.importCanceled) {
         break;
       }
     }
 
-    progressDialog.close();
     this.dialogRef.close();
   }
 
-  private verseRefData(q: TransceleratorQuestion): VerseRefData {
-    const verse = this.verseRefFromQuestion(q);
-    const verseRefData: VerseRefData = {
-      bookNum: verse.bookNum,
-      chapterNum: verse.chapterNum,
-      verseNum: verse.verseNum
-    };
-    // TODO Right now ignoring end chapter and verse if it's in a different chapter, since we don't yet support that
-    const sameChapter = q.endChapter == null || q.endChapter === q.startChapter;
-    if (sameChapter && q.endVerse != null && q.endVerse !== q.startVerse) {
-      verseRefData.verse = q.startVerse + '-' + q.endVerse;
+  async importFromTranscelerator() {
+    this.loading = true;
+
+    await this.promiseForTransceleratorQuestions;
+
+    if (this.transceleratorOutdated) {
+      this.errorState = 'update_transcelerator';
+    } else {
+      const transceleratorQuestions: TransceleratorQuestion[] = this.transceleratorRequest.result || [];
+      const sourceQuestions: SourceQuestion[] = transceleratorQuestions.map(q => {
+        let verse = q.startVerse;
+        if (
+          q.endVerse != null &&
+          q.endVerse !== q.startVerse &&
+          (q.endChapter == null || q.endChapter === q.startChapter)
+        ) {
+          verse += '-' + q.endVerse;
+        }
+        return {
+          verseRef: new VerseRef(q.book, q.startChapter, verse),
+          text: q.text,
+          id: q.id
+        };
+      });
+      await this.setUpQuestionList(sourceQuestions, true);
     }
-    return verseRefData;
+    this.questionSource = 'transcelerator';
+    this.loading = false;
+  }
+
+  async fileSelected(file: File) {
+    this.loading = true;
+
+    const result = await this.csvService.parse(file);
+
+    let invalidRows: string[][] = [];
+    const questions: SourceQuestion[] = [];
+
+    for (const [index, row] of result.entries()) {
+      // skip rows where every cell is the empty string
+      if (!row.some(cell => cell !== '')) {
+        continue;
+      }
+      const rowNumber: string = index + 1 + '';
+      const reference: string = (row[0] || '').trim();
+      const questionText: string = (row[1] || '').trim();
+      if (row.length < 2 || reference === '' || questionText === '') {
+        invalidRows.push([rowNumber].concat(row));
+        continue;
+      }
+      try {
+        questions.push({
+          verseRef: VerseRef.parse(reference),
+          text: questionText
+        });
+      } catch {
+        invalidRows.push([rowNumber].concat(row));
+      }
+    }
+
+    if (invalidRows.length > 0) {
+      this.invalidRows = invalidRows;
+    }
+
+    await this.setUpQuestionList(questions, false);
+    this.questionSource = 'csv_file';
+    this.loading = false;
   }
 
   // TODO should consider verse ranges, rather than just starting verse
@@ -327,12 +447,12 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
       escapeToClose: false,
       clickOutsideToClose: false
     };
-    const dialogRef = this.dialog.open(ImportQuestionsConfirmationDialogComponent, data) as MdcDialogRef<
+    const dialogRef = this.mdcDialog.open(ImportQuestionsConfirmationDialogComponent, data) as MdcDialogRef<
       ImportQuestionsConfirmationDialogComponent,
       ImportQuestionsConfirmationDialogResult
     >;
-    (await dialogRef.afterClosed().toPromise())!.questions.forEach(
-      (result, index) => (changesToConfirm[index].checked = result.checked)
+    (await dialogRef.afterClosed().toPromise())!.forEach(
+      (checked, index) => (changesToConfirm[index].checked = checked)
     );
     this.updateSelectAllCheckbox();
   }
@@ -340,14 +460,10 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable {
   private questionsDiffer(listItem: DialogListItem) {
     const doc = listItem.sfVersionOfQuestion?.data;
     const q = listItem.question;
-    return doc != null && (doc.text !== q.text || this.verseRefDataDiffers(doc.verseRef, this.verseRefData(q)));
+    return doc != null && (doc.text !== q.text || this.verseRefDataDiffers(doc.verseRef, fromVerseRef(q.verseRef)));
   }
 
   private verseRefDataDiffers(a: VerseRefData, b: VerseRefData): boolean {
     return !toVerseRef(a).equals(toVerseRef(b));
-  }
-
-  private verseRefFromQuestion(question: TransceleratorQuestion): VerseRef {
-    return new VerseRef(question.book, question.startChapter, question.startVerse);
   }
 }

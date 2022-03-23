@@ -238,6 +238,7 @@ class TestEnvironment {
         shareLevel: CheckingShareLevel.Specific
       },
       texts: [],
+      editable: true,
       sync: { queuedCount: 0 },
       userRoles: {
         projectAdmin: SFProjectRole.ParatextAdministrator,

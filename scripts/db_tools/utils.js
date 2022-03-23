@@ -1,8 +1,8 @@
 /**
- * @param {string} package The name of the package to import
+ * @param {string} packageName The name of the package to import
  */
-function requireFromRealTimeServer(package) {
-  return require('../../src/RealtimeServer/node_modules/' + package);
+function requireFromRealTimeServer(packageName) {
+  return require('../../src/RealtimeServer/node_modules/' + packageName);
 }
 
 /**
@@ -95,21 +95,63 @@ function fetchSnapshotByTimestamp(conn, collection, docId, time) {
   });
 }
 
+let shouldUseColor = true;
+
+/** Specify if `colored()` should use colouring. Nice for output to a dark terminal. Not nice in log files. */
+function useColor(ifUseColor) {
+  shouldUseColor = ifUseColor;
+}
+
+function setColor(colorCode) {
+  return `\x1b[38;5;${colorCode}m`;
+}
+
+function endColor() {
+  return '\x1b[0m';
+}
+
+function colored(colorCode, textToColor) {
+  if (shouldUseColor) {
+    return setColor(colorCode) + textToColor + endColor();
+  } else {
+    return textToColor;
+  }
+}
+
+/** Enum of colors and their bash 256-colour values. */
+const colors = Object.freeze({
+  darkGrey: 241,
+  red: 196,
+  lightBlue: 39,
+  lightGreen: 48,
+  yellow: 190,
+  orange: 208
+});
+
 /**
  * @param {Object[]} ops List of operations, where an operation can be any object for the purposes of this function
  * (though in practice the definition of an operation should be much more limited; this function is just flexible).
+ * @param {showAttributes} Describe some op attributes inline.
  */
-function visualizeOps(ops) {
+function visualizeOps(ops, showAttributes = false) {
   const result = ops
     .map(op => {
       if (typeof op.insert === 'undefined') {
-        return '[ invalid op ' + JSON.stringify(op) + ' ]';
+        return colored(colors.red, '[ invalid op ' + JSON.stringify(op) + ' ]');
       } else if (typeof op.insert === 'string') {
-        return op.insert;
+        let output = op.insert;
+        if (showAttributes) {
+          output = colored(colors.darkGrey, JSON.stringify(op.attributes)) + output;
+        }
+        return output;
+      } else if (op.insert.blank === true) {
+        if (showAttributes) {
+          return colored(colors.darkGrey, '(blank)');
+        }
       } else if (op.insert.verse) {
-        return op.insert.verse.number + ' ';
+        return colored(colors.lightBlue, op.insert.verse.number + ' ');
       } else if (op.insert.chapter) {
-        return 'Chapter ' + op.insert.chapter.number + '\n';
+        return colored(colors.lightGreen, 'Chapter ' + op.insert.chapter.number) + '\n';
       } else return '';
     })
     .join('');
@@ -131,6 +173,11 @@ const liveConfig = {
   wsConnectionString: 'ws://127.0.0.1:3003/?server=true'
 };
 
+const databaseConfigs = new Map();
+databaseConfigs.set('dev', devConfig);
+databaseConfigs.set('qa', qaConfig);
+databaseConfigs.set('live', liveConfig);
+
 module.exports = {
   requireFromRealTimeServer,
   fetchDoc,
@@ -140,7 +187,11 @@ module.exports = {
   fetchSnapshotByVersion,
   fetchSnapshotByTimestamp,
   visualizeOps,
+  useColor,
+  colored,
+  colors,
   devConfig,
   qaConfig,
-  liveConfig
+  liveConfig,
+  databaseConfigs
 };

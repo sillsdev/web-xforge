@@ -391,6 +391,7 @@ class TestEnvironment {
     },
     texts: [TestEnvironment.matthewText],
     sync: { queuedCount: 0 },
+    editable: true,
     userRoles: {
       user01: SFProjectRole.ParatextAdministrator
     },

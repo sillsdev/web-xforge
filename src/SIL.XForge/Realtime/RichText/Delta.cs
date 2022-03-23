@@ -7,6 +7,10 @@ using System.Text;
 
 namespace SIL.XForge.Realtime.RichText
 {
+    /// <summary>
+    /// Represents the current state of rich text data, or represents changes to be applied to rich text data.
+    /// Rich text data includes the plain text and associated formatting.
+    /// </summary>
     public class Delta
     {
         private static readonly Lazy<DeltaEqualityComparer> _equalityComparer = new Lazy<DeltaEqualityComparer>();
@@ -160,8 +164,12 @@ namespace SIL.XForge.Realtime.RichText
             List<Diff> diffResult = Differ.diff_main(thisStr, otherStr);
             var thisIter = new OpIterator(this.Ops);
             var otherIter = new OpIterator(other.Ops);
-            // If the strings are identical, then we retain the char IDs except on ops with formatting changes
+
+            // If the two deltas have differences in text content, include character IDs in the diff output (thus causing all cids to be changed when applying the diff later).
+            // If the two deltas have identical text content, don't produce a diff of character IDs, except on ops with formatting changes where we will report cid differences.
             bool retainCharIds = thisStr == otherStr;
+
+            // Note that when the text content is identical, the list of Diff results to process here will contain just one item.
             foreach (Diff component in diffResult)
             {
                 int length = component.text.Length;
@@ -354,7 +362,7 @@ namespace SIL.XForge.Realtime.RichText
             if (b == null)
                 return false;
             // If the token is not an object, it will not have a char property
-            if (a?.Type != JTokenType.Object || b?.Type != JTokenType.Object)
+            if (a?.Type != JTokenType.Object || b.Type != JTokenType.Object)
                 return JToken.DeepEquals(a, b);
             JObject aClone = (JObject)a.DeepClone();
             JObject bClone = (JObject)b.DeepClone();
@@ -363,7 +371,7 @@ namespace SIL.XForge.Realtime.RichText
             return JToken.DeepEquals(aClone, bClone);
         }
 
-        static JToken DiffAttributes(JToken a, JToken b, bool retainCharIds)
+        static JToken DiffAttributes(JToken a, JToken b, bool ignoreCharIdDifferences)
         {
             JObject aObj = a?.Type == JTokenType.Object ? (JObject)a : new JObject();
             JObject bObj = b?.Type == JTokenType.Object ? (JObject)b : new JObject();
@@ -371,12 +379,14 @@ namespace SIL.XForge.Realtime.RichText
             // to be the cid for the new object
             JObject aClone = (JObject)aObj.DeepClone();
             JObject bClone = (JObject)bObj.DeepClone();
-            if (retainCharIds)
+            if (ignoreCharIdDifferences)
             {
                 StripCharId(aClone);
                 StripCharId(bClone);
             }
-            JObject attributes = aClone.Properties().Select(p => p.Name).Concat(bClone.Properties().Select(p => p.Name))
+            // Make a list of all attributes and their values in b, that are changed, new, or removed in b.
+            JObject attributes = aClone.Properties().Select(p => p.Name)
+                .Concat(bClone.Properties().Select(p => p.Name))
                 .Aggregate(new JObject(), (attrs, key) =>
                 {
                     if (!JToken.DeepEquals(aClone[key], bClone[key]))
@@ -502,7 +512,7 @@ namespace SIL.XForge.Realtime.RichText
             }
         }
 
-        // Provides methods to process ops for text that may have attribute changes
+        /// <summary>Provides methods to process ops for text that may have attribute changes</summary>
         private class DeltaOpsAttributeHelper
         {
             private List<int> opLengths = new List<int>();
@@ -524,7 +534,7 @@ namespace SIL.XForge.Realtime.RichText
                 newDeltaOps.Add(newOpObject);
             }
 
-            // Adds the ops to the given delta based on the ops added the instance of this class
+            /// <summary>Adds the ops to the given delta based on the ops added to the instance of this class</summary>
             public void AddOpsToDelta(Delta delta)
             {
                 // To retain cid properties in this diff, we check whether there is a change in

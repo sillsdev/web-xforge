@@ -97,6 +97,7 @@ class TestEnvironment {
       sync: {
         queuedCount: 0
       },
+      editable: true,
       checkingConfig: {
         checkingEnabled: false,
         shareEnabled: false,
