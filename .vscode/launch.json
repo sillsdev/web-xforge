@@ -139,7 +139,7 @@
       "args": ["--start-ng-serve=listen"],
       "env": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "SYNC_USER_PROJECT_IDS": "6201831c0e13de5c38e0ed7d",
+        // "SYNC_USER_PROJECT_IDS": "6201831c0e13de5c38e0ed7d",
         "SYNC_USER_MODE_RUN": "true"
       }
     }
