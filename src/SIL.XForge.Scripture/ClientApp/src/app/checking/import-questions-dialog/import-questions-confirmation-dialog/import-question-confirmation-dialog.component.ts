@@ -5,9 +5,7 @@ export interface ImportQuestionsConfirmationDialogData {
   questions: EditedQuestion[];
 }
 
-export interface ImportQuestionsConfirmationDialogResult {
-  questions: EditedQuestion[];
-}
+export type ImportQuestionsConfirmationDialogResult = boolean[];
 
 export interface EditedQuestion {
   before: string;
@@ -42,6 +40,6 @@ export class ImportQuestionsConfirmationDialogComponent {
   }
 
   submit() {
-    this.dialogRef.close({ questions: this.questions });
+    this.dialogRef.close(this.questions.map(question => question.checked));
   }
 }

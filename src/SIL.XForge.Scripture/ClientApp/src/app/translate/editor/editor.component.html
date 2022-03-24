@@ -48,12 +48,21 @@
         ngClass.xs="text-area-full-width"
       >
         <div class="language-label" [fxShow.gt-xs]="showSource" fxHide.xs mdcSubtitle1>{{ targetLabel }}</div>
-        <div *ngIf="!isValid && hasEditRight" class="invalid-warning">
-          {{ t("cannot_edit_chapter_formatting_invalid") }}
-        </div>
-        <div *ngIf="!dataInSync && hasEditRight" class="out-of-sync-warning">
-          {{ t("project_data_out_of_sync") }}
-        </div>
+        <ng-container *ngIf="hasEditRight">
+          <div *ngIf="!isUsfmValid" class="formatting-invalid-warning">
+            <mdc-icon>warning</mdc-icon> {{ t("cannot_edit_chapter_formatting_invalid") }}
+          </div>
+          <div *ngIf="!dataInSync" class="out-of-sync-warning">
+            <mdc-icon>warning</mdc-icon> {{ t("project_data_out_of_sync") }}
+          </div>
+          <div *ngIf="target.areOpsCorrupted" class="doc-corrupted-warning">
+            <mdc-icon>error</mdc-icon> {{ t("text_doc_corrupted") }}
+            <span [innerHTML]="t('to_report_issue_email', { issueEmailLink: issueEmailLink })"></span>
+          </div>
+          <div *ngIf="projectTextNotEditable" class="project-text-not-editable">
+            {{ t("project_text_not_editable") }}
+          </div>
+        </ng-container>
         <div #targetContainer class="text-container" [style.height]="textHeight">
           <app-text
             #target

@@ -1,5 +1,6 @@
 import { MdcDialog } from '@angular-mdc/web/dialog';
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -7,13 +8,12 @@ import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scri
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
-import { combineLatest, merge, Subscription } from 'rxjs';
-import { filter, map, tap } from 'rxjs/operators';
+import { merge, Subscription } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
-import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -41,7 +41,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   texts: TextInfo[] = [];
   projectId?: string;
 
-  private _hasTransceleratorQuestions = false;
   private questionDocs = new Map<string, QuestionDoc[]>();
   private textsByBookId?: TextsByBookId;
   private projectDoc?: SFProjectProfileDoc;
@@ -51,69 +50,75 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
-    private readonly dialog: MdcDialog,
+    private readonly mdcDialog: MdcDialog,
+    private readonly matDialog: MatDialog,
     noticeService: NoticeService,
     readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
     private readonly questionDialogService: QuestionDialogService,
-    private readonly pwaService: PwaService,
     private readonly router: Router
   ) {
     super(noticeService);
   }
 
-  get allQuestionsCount(): string {
-    return '' + this.allPublishedQuestions.length;
+  get allQuestionsCount(): number {
+    return this.allPublishedQuestions.length;
   }
 
-  get myAnswerCount(): string {
+  get myAnswerCount(): number {
     let count: number = 0;
+    const canCreateQuestion = this.canCreateQuestion;
+    const currentUserId = this.userService.currentUserId;
     for (const questionDoc of this.allPublishedQuestions) {
       if (questionDoc.data != null) {
-        if (this.canCreateQuestion) {
+        if (canCreateQuestion) {
           count += questionDoc.data.answers.length;
         } else {
-          count += questionDoc.data.answers.filter(a => a.ownerRef === this.userService.currentUserId).length;
+          count += questionDoc.data.answers.filter(a => a.ownerRef === currentUserId).length;
         }
       }
     }
 
-    return '' + count;
+    return count;
   }
 
-  get myLikeCount(): string {
+  get myLikeCount(): number {
     let count: number = 0;
+    const canCreateQuestion = this.canCreateQuestion;
+    const currentUserId = this.userService.currentUserId;
     for (const questionDoc of this.allPublishedQuestions) {
       if (questionDoc.data != null) {
         for (const answer of questionDoc.data.answers) {
-          if (this.canCreateQuestion) {
+          if (canCreateQuestion) {
             count += answer.likes.length;
           } else {
-            count += answer.likes.filter(l => l.ownerRef === this.userService.currentUserId).length;
+            count += answer.likes.filter(l => l.ownerRef === currentUserId).length;
           }
         }
       }
     }
 
-    return '' + count;
+    return count;
   }
 
-  get myCommentCount(): string {
+  get myCommentCount(): number {
     let count: number = 0;
+    const canCreateQuestion = this.canCreateQuestion;
+    const currentUserId = this.userService.currentUserId;
     for (const questionDoc of this.allPublishedQuestions) {
       if (questionDoc.data != null) {
         for (const answer of questionDoc.data.answers) {
-          if (this.canCreateQuestion) {
+          if (canCreateQuestion) {
             count += answer.comments.length;
           } else {
-            count += answer.comments.filter(c => c.ownerRef === this.userService.currentUserId).length;
+            count += answer.comments.filter(c => c.ownerRef === currentUserId).length;
           }
         }
       }
     }
 
-    return '' + count;
+    return count;
   }
 
   get canSeeOtherUserResponses(): boolean {
@@ -121,13 +126,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   get showImportButton(): boolean {
-    return (
-      this._hasTransceleratorQuestions &&
-      this.pwaService.isOnline &&
-      this.projectDoc != null &&
-      this.textsByBookId != null &&
-      Object.keys(this.textsByBookId).length > 0
-    );
+    return this.projectDoc != null && this.textsByBookId != null && Object.keys(this.textsByBookId).length > 0;
   }
 
   get canCreateQuestion(): boolean {
@@ -201,14 +200,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
         }
       });
     });
-    this.subscribe(
-      combineLatest([projectId$, this.pwaService.onlineStatus]).pipe(filter(([_, isOnline]) => isOnline)),
-      async ([projectId, _]) => {
-        await projectDocPromise;
-        this._hasTransceleratorQuestions =
-          this.canCreateQuestion && (await this.projectService.hasTransceleratorQuestions(projectId));
-      }
-    );
   }
 
   ngOnDestroy(): void {
@@ -246,14 +237,9 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     if (textDocId == null) {
       return [];
     }
-    const textQuestionDocs = this.questionDocs.get(textDocId.toString());
-    if (textQuestionDocs == null) {
-      return [];
-    }
-    if (fromArchive) {
-      return textQuestionDocs.filter(qd => qd.data != null && qd.data.isArchived);
-    }
-    return textQuestionDocs.filter(qd => qd.data != null && !qd.data.isArchived);
+    return (this.questionDocs.get(textDocId.toString()) || [])
+      .filter(qd => qd.data?.isArchived === fromArchive)
+      .sort((a, b) => a.data!.verseRef.verseNum - b.data!.verseRef.verseNum);
   }
 
   bookQuestionCount(text: TextInfo, fromArchive = false): number {
@@ -368,7 +354,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     }
     if (questionDoc != null && questionDoc.data != null) {
       if (questionDoc.data.answers.length > 0) {
-        const answeredDialogRef = this.dialog.open(QuestionAnsweredDialogComponent);
+        const answeredDialogRef = this.mdcDialog.open(QuestionAnsweredDialogComponent);
         const response = (await answeredDialogRef.afterClosed().toPromise()) as string;
         if (response === 'close') {
           return;
@@ -395,7 +381,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       userId: this.userService.currentUserId,
       textsByBookId: this.textsByBookId
     };
-    this.dialog.open(ImportQuestionsDialogComponent, { data });
+    this.matDialog.open(ImportQuestionsDialogComponent, { data });
   }
 
   getBookName(text: TextInfo): string {

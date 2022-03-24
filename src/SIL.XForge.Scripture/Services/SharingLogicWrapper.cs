@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using Paratext.Data;
 using Paratext.Data.Repository;
@@ -14,12 +15,6 @@ namespace SIL.XForge.Scripture.Services
             out List<SendReceiveResult> results, IList<SharedProject> reviewProjects)
         {
             return SharingLogic.ShareChanges(sharedProjects, source, out results, reviewProjects);
-        }
-
-        public SharedProject CreateSharedProject(string projId, string proj, SharedRepositorySource source,
-            IEnumerable<SharedRepository> sourceRepositories)
-        {
-            return SharingLogic.CreateSharedProject(HexId.FromStr(projId), proj, source, sourceRepositories);
         }
 
         public bool HandleErrors(Action action, bool throwExceptions = false)

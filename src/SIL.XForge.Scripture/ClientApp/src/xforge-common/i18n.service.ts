@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Translation, TranslocoLoader } from '@ngneat/transloco';
+import { HashMap, Translation, TranslocoLoader } from '@ngneat/transloco';
 import { TranslocoConfig, TranslocoService } from '@ngneat/transloco';
 import merge from 'lodash-es/merge';
 import { CookieService } from 'ngx-cookie-service';
@@ -84,6 +84,8 @@ export class I18nService {
   }
 
   private currentLocale: Locale = I18nService.defaultLocale;
+
+  private interpolationCache: { [key: string]: { text: string; id?: number }[] } = {};
 
   constructor(
     locationService: LocationService,
@@ -210,5 +212,53 @@ export class I18nService {
       return { before: textParts[0], templateTagText: textParts[1], after: textParts[2] };
     }
     return undefined;
+  }
+
+  /**
+   * Looks up a given translation and then breaks it up into chunks according it its numbered tags. For example, a
+   * translation of 'A quick brown { 1 }fox{ 2 } jumps over the lazy { 3 }dog{ 4 }.'
+   * would result in an array of items as shown below:
+   * [
+   *   {text: 'A quick brown '},
+   *   {text: 'fox', id: 1},
+   *   {text: ' jumps over the lazy '},
+   *   {text: 'dog', id: 3},
+   *   {text: '.'}
+   * ]
+   * This array can then be iterated in the view and based on the value of the id, either a plain string added to the,
+   * view, or a link for the text "fox" or "dog". This system has the advantage of being able to handle translations
+   * that reorder "fox" and "dog".
+   */
+  interpolate(key: string, params?: HashMap): { text: string; id?: number }[] {
+    const hashKey = this.localeCode + ' ' + key;
+    if (this.interpolationCache[hashKey] != null) {
+      return this.interpolationCache[hashKey];
+    }
+
+    const translation: string = this.transloco.translate(key, params);
+    // find instances of "{ 1 } text { 2 }"
+    const regex = /\{\s*\d+\s*\}(.*?)\{\s*\d+\s*\}/g;
+    const matches: RegExpExecArray[] = [];
+
+    // ES2020 introduces string.matchAll(regex), but as of the time of writing SF is using ES2018
+    let match: RegExpExecArray | null;
+    while ((match = regex.exec(translation)) !== null) {
+      matches.push(match);
+    }
+
+    const sections: { text: string; id?: number }[] = [];
+    let i = 0;
+    for (const match of matches) {
+      const fullMatchText = match[0];
+      const matchInnerText = match[1];
+      sections.push({ text: translation.substring(i, match.index) });
+      const id = Number.parseInt(fullMatchText.match(/\d+/)![0], 10);
+      sections.push({ text: matchInnerText, id });
+      i = match.index + fullMatchText.length;
+    }
+    sections.push({ text: translation.substring(i) });
+
+    this.interpolationCache[hashKey] = sections.filter(section => !(section.text === '' && section.id == null));
+    return this.interpolationCache[hashKey];
   }
 }

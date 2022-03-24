@@ -752,6 +752,7 @@ class TestEnvironment {
         translateConfig,
         checkingConfig,
         sync: { queuedCount: 0 },
+        editable: true,
         texts: [],
         userRoles: {},
         userPermissions: {},

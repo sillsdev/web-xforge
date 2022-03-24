@@ -7,7 +7,7 @@ import { takeUntil } from 'rxjs/operators';
 @Directive()
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
 export abstract class SubscriptionDisposable implements OnDestroy {
-  private ngUnsubscribe: Subject<void> = new Subject<void>();
+  protected ngUnsubscribe: Subject<void> = new Subject<void>();
 
   ngOnDestroy(): void {
     this.dispose();

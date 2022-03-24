@@ -2,7 +2,7 @@ import merge from 'lodash-es/merge';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { ProjectRole } from 'realtime-server/lib/esm/common/models/project-role';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
-import { combineLatest, Observable } from 'rxjs';
+import { combineLatest, Observable, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import XRegExp from 'xregexp';
 import { CommandService } from './command.service';
@@ -11,6 +11,7 @@ import { NONE_ROLE, ProjectRoleInfo } from './models/project-role-info';
 import { RealtimeQuery } from './models/realtime-query';
 import { Filters, QueryParameters } from './query-parameters';
 import { RealtimeService } from './realtime.service';
+import { RetryingRequest, RetryingRequestService } from './retrying-request.service';
 import { SubscriptionDisposable } from './subscription-disposable';
 import { PROJECTS_URL } from './url-constants';
 
@@ -23,6 +24,7 @@ export abstract class ProjectService<
   constructor(
     protected readonly realtimeService: RealtimeService,
     protected readonly commandService: CommandService,
+    protected readonly retryingRequestService: RetryingRequestService,
     roles: ProjectRoleInfo[]
   ) {
     super();
@@ -93,5 +95,9 @@ export abstract class ProjectService<
 
   protected onlineInvoke<T>(method: string, params?: any): Promise<T | undefined> {
     return this.commandService.onlineInvoke<T>(PROJECTS_URL, method, params);
+  }
+
+  protected onlineRetryInvoke<T>(method: string, cancel: Subject<void>, params?: any): RetryingRequest<T> {
+    return this.retryingRequestService.invoke<T>({ url: PROJECTS_URL, method, params }, cancel);
   }
 }

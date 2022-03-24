@@ -667,6 +667,7 @@ class TestEnvironment {
         shareEnabled: false,
         shareLevel: CheckingShareLevel.Specific
       },
+      editable: true,
       userRoles,
       paratextUsers: paratextUsersFromRoles(userRoles),
       userPermissions: {}

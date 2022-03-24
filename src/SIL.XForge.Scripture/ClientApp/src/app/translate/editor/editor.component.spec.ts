@@ -887,6 +887,19 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('user cannot edit a text that is not editable', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject({ editable: false });
+      env.setProjectUserConfig();
+      env.wait();
+
+      expect(env.bookName).toEqual('Matthew');
+      expect(env.component.projectTextNotEditable).toBe(true);
+      expect(env.component.canEdit).toBe(false);
+      expect(env.fixture.debugElement.query(By.css('.text-area .project-text-not-editable'))).not.toBeNull();
+      env.dispose();
+    }));
+
     it('user has no resource access', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setupProject({
@@ -961,6 +974,54 @@ describe('EditorComponent', () => {
       env.setupProject({ isRightToLeft: true });
       env.wait();
       expect(env.component.target!.isRtl).toBe(true);
+      env.dispose();
+    }));
+
+    it('backspace and delete disabled for non-text elements and at segment boundaries', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+      expect(env.targetEditor.history['stack']['undo'].length).withContext('setup').toEqual(0);
+      let range = env.component.target!.getSegmentRange('verse_1_2')!;
+      let contents = env.targetEditor.getContents(range.index, 1);
+      expect(contents.ops![0].insert.blank).toBeDefined();
+
+      // set selection on a blank segment
+      env.targetEditor.setSelection(range.index, 'user');
+      env.wait();
+      // the selection is programmatically set to after the blank
+      expect(env.targetEditor.getSelection()!.index).toEqual(range.index + 1);
+      expect(env.targetEditor.history['stack']['undo'].length).toEqual(0);
+
+      env.pressKey('backspace');
+      expect(env.targetEditor.history['stack']['undo'].length).toEqual(0);
+      env.pressKey('delete');
+      expect(env.targetEditor.history['stack']['undo'].length).toEqual(0);
+      contents = env.targetEditor.getContents(range.index, 1);
+      expect(contents.ops![0].insert.blank).toBeDefined();
+
+      // set selection at segment boundaries
+      range = env.component.target!.getSegmentRange('verse_1_4')!;
+      env.targetEditor.setSelection(range.index + range.length, 'user');
+      env.wait();
+      env.pressKey('delete');
+      expect(env.targetEditor.history['stack']['undo'].length).toEqual(0);
+      env.targetEditor.setSelection(range.index, 'user');
+      env.wait();
+      env.pressKey('backspace');
+      expect(env.targetEditor.history['stack']['undo'].length).toEqual(0);
+
+      // other non-text elements
+      range = env.component.target!.getSegmentRange('verse_1_1')!;
+      env.targetEditor.insertEmbed(range.index, 'note', { caller: 'a', style: 'ft' }, 'api');
+      env.wait();
+      contents = env.targetEditor.getContents(range.index, 1);
+      expect(contents.ops![0].insert.note).toBeDefined();
+      env.targetEditor.setSelection(range.index + 1, 'user');
+      env.pressKey('backspace');
+      expect(env.targetEditor.history['stack']['undo'].length).toEqual(0);
+      contents = env.targetEditor.getContents(range.index, 1);
+      expect(contents.ops![0].insert.note).toBeDefined();
       env.dispose();
     }));
 
@@ -2171,6 +2232,18 @@ describe('EditorComponent', () => {
       expect(env.invalidWarning).not.toBeNull();
       env.dispose();
     }));
+
+    it('prevents editing and informs user when text doc is corrupted', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject({ translateConfig: defaultTranslateConfig });
+      env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 3 });
+      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.wait();
+      expect(env.component.hasEditRight).toBe(true);
+      expect(env.component.canEdit).toBe(false);
+      expect(env.corruptedWarning).not.toBeNull();
+      env.dispose();
+    }));
   });
 });
 
@@ -2231,6 +2304,7 @@ class TestEnvironment {
       shareLevel: CheckingShareLevel.Specific
     },
     sync: { queuedCount: 0, dataInSync: true },
+    editable: true,
     texts: [
       {
         bookNum: 40,
@@ -2282,6 +2356,12 @@ class TestEnvironment {
               user02: TextInfoPermission.None,
               user03: TextInfoPermission.Write
             }
+          },
+          {
+            number: 3,
+            lastVerse: 3,
+            isValid: true,
+            permissions: this.textInfoPermissions
           }
         ],
         hasSource: false,
@@ -2326,6 +2406,7 @@ class TestEnvironment {
     this.addTextDoc(new TextDocId('project01', 41, 1, 'target'));
     this.addCombinedVerseTextDoc(new TextDocId('project01', 42, 1, 'target'));
     this.addCombinedVerseTextDoc(new TextDocId('project01', 42, 2, 'target'));
+    this.addTextDoc(new TextDocId('project01', 42, 3, 'target'), 'target', true);
     this.addEmptyTextDoc(new TextDocId('project01', 43, 1, 'target'));
 
     when(mockedActivatedRoute.params).thenReturn(this.params$);
@@ -2427,7 +2508,11 @@ class TestEnvironment {
   }
 
   get invalidWarning(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.invalid-warning'));
+    return this.fixture.debugElement.query(By.css('.formatting-invalid-warning'));
+  }
+
+  get corruptedWarning(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.doc-corrupted-warning'));
   }
 
   get outOfSyncWarning(): DebugElement {
@@ -2541,6 +2626,9 @@ class TestEnvironment {
     }
     if (data.isRightToLeft != null) {
       projectProfileData.isRightToLeft = data.isRightToLeft;
+    }
+    if (data.editable != null) {
+      projectProfileData.editable = data.editable;
     }
     this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
       id: 'project01',
@@ -2733,6 +2821,15 @@ class TestEnvironment {
     return selection.index;
   }
 
+  pressKey(key: string): void {
+    const keyCodes = { backspace: 8, delete: 46 };
+    if (keyCodes[key] == null) {
+      throw new Error('key code does not exist');
+    }
+    this.targetEditor.root.dispatchEvent(new KeyboardEvent('keydown', { keyCode: keyCodes[key] }));
+    this.wait();
+  }
+
   triggerUndo(): void {
     this.targetEditor.history.undo();
     this.wait();
@@ -2748,7 +2845,7 @@ class TestEnvironment {
     this.component.metricsSession!.dispose();
   }
 
-  addTextDoc(id: TextDocId, textType: TextType = 'target'): void {
+  addTextDoc(id: TextDocId, textType: TextType = 'target', corrupt = false): void {
     const delta = new Delta();
     delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
     delta.insert({ blank: true }, { segment: 'p_1' });
@@ -2780,6 +2877,11 @@ class TestEnvironment {
         break;
     }
     delta.insert('\n', { para: { style: 'p' } });
+    if (corrupt) {
+      delta.insert('this doc is corrupt');
+      delta.delete(100);
+      delta.retain(1);
+    }
     this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
       id: id.toString(),
       type: RichText.type.name,

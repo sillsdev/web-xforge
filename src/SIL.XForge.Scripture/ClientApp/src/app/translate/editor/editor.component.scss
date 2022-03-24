@@ -24,7 +24,7 @@
   margin-bottom: 10px;
   border-width: 1px;
   border-style: solid;
-  border-color: #e0e0e0;
+  border-color: $border-color;
   padding: 5px 10px;
 
   @include media-breakpoint-only(xs) {
@@ -39,7 +39,7 @@
 }
 
 .toolbar-separator {
-  border-left: 1px solid #e0e0e0;
+  border-left: 1px solid $border-color;
   margin: 0px 4px;
   height: 36px;
   width: 0;
@@ -111,14 +111,22 @@ app-text {
   overflow: hidden;
 }
 
-.invalid-warning,
-.out-of-sync-warning {
+.formatting-invalid-warning,
+.out-of-sync-warning,
+.doc-corrupted-warning,
+.project-text-not-editable {
   color: #ff4118;
-  margin-bottom: 3px;
+  border: 1px solid $border-color;
+  padding: 5px 10px;
+  margin-bottom: 10px;
 
   @include media-breakpoint-only(xs) {
     margin-left: 10px;
     margin-right: 10px;
+  }
+
+  mdc-icon {
+    vertical-align: bottom;
   }
 }
 

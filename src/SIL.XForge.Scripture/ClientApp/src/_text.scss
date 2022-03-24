@@ -1,5 +1,6 @@
 @use '@material/typography/mixins' as typography;
 
+@import 'src/variables';
 @import 'quill/dist/quill.snow.css';
 @import 'usx';
 
@@ -15,6 +16,10 @@ quill-editor {
       text-align: start;
     }
   }
+}
+
+.ql-container.ql-snow {
+  border: 1px solid $border-color;
 }
 
 .read-only-editor > .ql-container {

@@ -160,6 +160,7 @@ class TestEnvironment {
           lastSyncSuccessful: true,
           dateLastSuccessfulSync: date.toJSON()
         },
+        editable: true,
         texts: [],
         userRoles: this.userRoleTarget,
         paratextUsers: paratextUsersFromRoles(this.userRoleTarget),
@@ -193,6 +194,7 @@ class TestEnvironment {
             lastSyncSuccessful: true,
             dateLastSuccessfulSync: date.toJSON()
           },
+          editable: true,
           texts: [],
           userRoles: this.userRoleSource,
           paratextUsers: paratextUsersFromRoles(this.userRoleSource),

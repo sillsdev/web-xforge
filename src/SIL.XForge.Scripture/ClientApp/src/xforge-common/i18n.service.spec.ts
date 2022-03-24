@@ -21,14 +21,7 @@ describe('I18nService', () => {
   });
 
   it('should set locale', () => {
-    const service = new I18nService(
-      instance(mockedLocationService),
-      instance(mockedBugsnagService),
-      instance(mockedAuthService),
-      instance(mockedTranslocoService),
-      instance(mockedCookieService),
-      instance(mockedErrorReportingService)
-    );
+    const service = getI18nService();
     expect(service).toBeTruthy();
     service.setLocale('zh-CN');
     verify(mockedTranslocoService.setActiveLang('zh-CN')).called();
@@ -38,14 +31,7 @@ describe('I18nService', () => {
 
   it('should wrap text with HTML tags', () => {
     when(mockedTranslocoService.translate<string>(anything(), anything())).thenReturn('translated key');
-    const service = new I18nService(
-      instance(mockedLocationService),
-      instance(mockedBugsnagService),
-      instance(mockedAuthService),
-      instance(mockedTranslocoService),
-      instance(mockedCookieService),
-      instance(mockedErrorReportingService)
-    );
+    const service = getI18nService();
     expect(
       service.translateAndInsertTags('namespace.key', {
         value: 2,
@@ -74,14 +60,7 @@ describe('I18nService', () => {
     when(mockedTranslocoService.translate<string>(anything(), anything())).thenReturn(
       'translated key with {{ boundary }}tag text{{ boundary }} in template'
     );
-    const service = new I18nService(
-      instance(mockedLocationService),
-      instance(mockedBugsnagService),
-      instance(mockedAuthService),
-      instance(mockedTranslocoService),
-      instance(mockedCookieService),
-      instance(mockedErrorReportingService)
-    );
+    const service = getI18nService();
     expect(service.translateTextAroundTemplateTags('namespace.key')).toEqual({
       before: 'translated key with ',
       templateTagText: 'tag text',
@@ -91,21 +70,43 @@ describe('I18nService', () => {
 
   it('should localize dates', () => {
     const date = new Date('November 25, 1991 17:28');
-    const service = new I18nService(
-      instance(mockedLocationService),
-      instance(mockedBugsnagService),
-      instance(mockedAuthService),
-      instance(mockedTranslocoService),
-      instance(mockedCookieService),
-      instance(mockedErrorReportingService)
-    );
+    const service = getI18nService();
     expect(service.formatDate(date)).toEqual('Nov 25, 1991, 5:28 PM');
+
     service.setLocale('en-GB');
     expect(service.formatDate(date)).toEqual('25 Nov 1991, 5:28 pm');
+
+    // As of Chromium 98 for zh-CN it's changed from using characters to indicate AM/PM, to using a 24 hour clock. It's
+    // unclear whether the cause is Chromium itself or a localization library. The tests should pass with either version
     service.setLocale('zh-CN');
-    // Chromium 88 stopped including a space. This removal of spaces could be removed once everyone is on v88.
-    expect(service.formatDate(date).replace(' ', '')).toEqual('1991/11/25下午5:28');
+    expect(['1991/11/25 17:28', '1991/11/25下午5:28']).toContain(service.formatDate(date));
+
     service.setLocale('az');
     expect(service.formatDate(date)).toEqual('25.11.1991 17:28');
   });
+
+  it('should interpolate translations', () => {
+    when(mockedTranslocoService.translate<string>('sentence', anything())).thenReturn(
+      'A quick brown { 1 }fox{ 2 } jumps over the lazy { 3 }dog{ 4 }.'
+    );
+    const service = getI18nService();
+    expect(service.interpolate('sentence')).toEqual([
+      { text: 'A quick brown ' },
+      { text: 'fox', id: 1 },
+      { text: ' jumps over the lazy ' },
+      { text: 'dog', id: 3 },
+      { text: '.' }
+    ]);
+  });
 });
+
+function getI18nService(): I18nService {
+  return new I18nService(
+    instance(mockedLocationService),
+    instance(mockedBugsnagService),
+    instance(mockedAuthService),
+    instance(mockedTranslocoService),
+    instance(mockedCookieService),
+    instance(mockedErrorReportingService)
+  );
+}
