@@ -81,6 +81,7 @@
     "cannot_edit_chapter_formatting_invalid": "Bu fəsil redaktə oluna bilməz, çünki formatlaşdırma yanlışdır. Zəhmət olmazsa, formatlaşdırmanı Paratextdə düzəldin.",
     "completed_successfully": "Uğurla tamamlandı",
     "configure_translation_suggestions": "Tərcümə təkliflərini irəli sürün",
+    "project_text_not_editable": "Text in this project is not editable. This setting can be changed in Paratext.",
     "project_data_out_of_sync": "Your project data is out of sync. Please synchronize your project to edit this text.",
     "swap_source_and_target": "Mənbə və hədəfi dəyişdirmək",
     "text_doc_corrupted": "This chapter cannot be edited because the data has become corrupted.",

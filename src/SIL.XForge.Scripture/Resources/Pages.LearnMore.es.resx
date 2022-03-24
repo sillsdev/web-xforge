@@ -190,7 +190,7 @@
     <value>Aceptar una sugerencia de traducción</value>
   </data>
   <data name="LearnSliderSuggestionAcceptLearn" xml:space="preserve">
-    <value>El {0}motor de sugerencias aprende{1} y ofrece mejores sugerencias a medida que se traduce cada verso.</value>
+    <value>El {0}motor de sugerencias aprende{1} y ofrece mejores sugerencias a medida que se traduce cada versículo.</value>
   </data>
   <data name="LearnSliderSuggestionAcceptReceive" xml:space="preserve">
     <value>{0}Los traductores{1} pueden {2}recibir sugerencias{3} sobre cómo traducir la siguiente palabra o frase, mientras escriben.</value>

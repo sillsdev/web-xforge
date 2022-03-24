@@ -81,6 +81,7 @@
     "cannot_edit_chapter_formatting_invalid": "Ce chapitre ne peut pas être modifié car le formatage n'est pas valide. Veuillez corriger le formatage dans Paratext.",
     "completed_successfully": "Terminé avec succès",
     "configure_translation_suggestions": "Configurer les suggestions de traduction",
+    "project_text_not_editable": "Text in this project is not editable. This setting can be changed in Paratext.",
     "project_data_out_of_sync": "Les données de votre projet ne sont pas synchronisées. Veuillez synchroniser votre projet pour modifier ce texte.",
     "swap_source_and_target": "Intervertir la source et la cible",
     "text_doc_corrupted": "This chapter cannot be edited because the data has become corrupted.",
