@@ -1,7 +1,16 @@
 import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { MdcList } from '@angular-mdc/web/list';
 import { MdcMenuSelectedEvent } from '@angular-mdc/web/menu';
-import { Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  HostBinding,
+  OnDestroy,
+  OnInit,
+  ViewChild
+} from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SplitComponent } from 'angular-split';
@@ -53,7 +62,8 @@ interface Summary {
 @Component({
   selector: 'app-checking',
   templateUrl: './checking.component.html',
-  styleUrls: ['./checking.component.scss']
+  styleUrls: ['./checking.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CheckingComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   @ViewChild('answerPanelContainer') set answersPanelElement(answersPanelContainerElement: ElementRef) {
@@ -108,7 +118,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     private readonly router: Router,
     private readonly questionDialogService: QuestionDialogService,
     private readonly i18n: I18nService,
-    private readonly pwaService: PwaService
+    private readonly pwaService: PwaService,
+    private readonly changeDetector: ChangeDetectorRef
   ) {
     super(noticeService);
   }
@@ -396,6 +407,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
               qd.updateAnswerFileCache();
             }
           }
+          this.changeDetector.markForCheck();
         });
         if (this.questionsSub != null) {
           this.questionsSub.unsubscribe();
@@ -409,7 +421,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
             this.questionsQuery.localChanges$,
             this.questionsQuery.remoteDocChanges$
           ),
-          () => this.updateQuestionRefsOrRedirect()
+          () => {
+            this.updateQuestionRefsOrRedirect();
+            this.changeDetector.markForCheck();
+          }
         );
         this.userDoc = await this.userService.getCurrentUser();
         // refresh the summary when switching between all questions and the current book
@@ -422,7 +437,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       if (this.projectRemoteChangesSub != null) {
         this.projectRemoteChangesSub.unsubscribe();
       }
-      this.projectRemoteChangesSub = this.subscribe(this.projectDoc.remoteChanges$, () => {
+      this.projectRemoteChangesSub = this.subscribe(this.projectDoc.changes$, () => {
         if (this.projectDoc != null && this.projectDoc.data != null) {
           if (!(this.userService.currentUserId in this.projectDoc.data.userRoles)) {
             this.onRemovedFromProject();
@@ -444,16 +459,22 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
             }
           }
         }
+        this.changeDetector.markForCheck();
       });
       if (this.projectDeleteSub != null) {
         this.projectDeleteSub.unsubscribe();
       }
-      this.projectDeleteSub = this.subscribe(this.projectDoc.delete$, () => this.onRemovedFromProject());
+      this.projectDeleteSub = this.subscribe(this.projectDoc.delete$, () => {
+        this.onRemovedFromProject();
+        this.changeDetector.markForCheck();
+      });
       this.isProjectAdmin = await this.projectService.isProjectAdmin(projectId, this.userService.currentUserId);
+      this.changeDetector.markForCheck();
     });
     this.subscribe(this.media.media$, (change: MediaChange) => {
       this.calculateScriptureSliderPosition();
       this.isDrawerPermanent = ['xl', 'lt-xl', 'lg', 'lt-lg', 'md', 'lt-md'].includes(change.mqAlias);
+      this.changeDetector.markForCheck();
     });
   }
 
