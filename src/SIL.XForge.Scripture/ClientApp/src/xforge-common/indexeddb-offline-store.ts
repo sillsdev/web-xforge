@@ -12,18 +12,9 @@ function getAllFromCursor<T extends OfflineData>(
   query?: IDBValidKey | IDBKeyRange
 ): Promise<T[]> {
   return new Promise<T[]>((resolve, reject) => {
-    const results: T[] = [];
-    const request = store.openCursor(query);
+    const request = store.getAll(query);
     request.onerror = () => reject(request.error);
-    request.onsuccess = () => {
-      const cursor = request.result;
-      if (cursor != null) {
-        results.push(cursor.value);
-        cursor.continue();
-      } else {
-        resolve(results);
-      }
-    };
+    request.onsuccess = () => resolve(request.result);
   });
 }
 

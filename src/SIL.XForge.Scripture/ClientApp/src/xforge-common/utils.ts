@@ -21,7 +21,7 @@ export function supportedBrowser(): boolean {
   const isSupportedBrowser = BROWSER.satisfies({
     chrome: '>=58',
     chromium: '>=58',
-    edge: '>=76',
+    edge: '>=79',
     firefox: '>=51',
     safari: '>=11.1',
 
