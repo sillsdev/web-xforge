@@ -123,13 +123,9 @@
                 </div>
                 <mdc-list-divider></mdc-list-divider>
                 <div class="online-status">
-                  <div *ngIf="isAppOnline" fxLayout="row" fxLayoutAlign="center center">
-                    <mdc-icon>cloud</mdc-icon>
-                    {{ t("online") }}
-                  </div>
-                  <div *ngIf="!isAppOnline" fxLayout="row" fxLayoutAlign="center center">
-                    <mdc-icon mdcListItemGraphic>cloud_off</mdc-icon>
-                    {{ t("offline") }}
+                  <div fxLayout="row" fxLayoutAlign="center center">
+                    <mdc-icon>{{ (onlineStatus$ | async)?.icon }}</mdc-icon>
+                    {{ t((onlineStatus$ | async)?.text) }}
                   </div>
                 </div>
               </mdc-list-group>

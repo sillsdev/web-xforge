@@ -60,6 +60,7 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
   readonly remoteChanges$ = new Subject<any>();
   readonly create$ = new Subject<void>();
   readonly delete$ = new Subject<void>();
+  readonly beforeLocalChanges$ = new Subject<any>();
   readonly idle$ = EMPTY;
 
   constructor(
@@ -105,6 +106,7 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
     if (op != null && this.type.normalize != null) {
       op = this.type.normalize(op);
     }
+    this.emitBeforeOp();
     this.data = this.type.apply(this.data, op);
     this.version++;
     if (!source) {
@@ -143,6 +145,10 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
 
   emitDelete(): void {
     this.delete$.next();
+  }
+
+  emitBeforeOp(): void {
+    this.beforeOp$.next();
   }
 }
 

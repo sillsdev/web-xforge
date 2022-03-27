@@ -27,6 +27,7 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
+import { SaveStatusService } from 'xforge-common/save-status.service';
 import {
   BrowserIssue,
   SupportedBrowsersDialogComponent
@@ -82,6 +83,38 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   private _isDrawerPermanent: boolean = true;
   private readonly questionCountQueries = new Map<number, RealtimeQuery>();
 
+  readonly onlineStatus$ = combineLatest([
+    this.saveStatusService.uiSaving$,
+    this.saveStatusService.uiJustFinishedSaving$
+  ]).pipe(
+    map(([savingStatus, finishedSavingStatus]) => {
+      const icon = savingStatus.saving
+        ? savingStatus.online
+          ? 'cloud'
+          : 'cloud_off'
+        : finishedSavingStatus.finishedSaving
+        ? finishedSavingStatus.online
+          ? 'cloud'
+          : 'cloud_off'
+        : this.isAppOnline
+        ? 'cloud'
+        : 'cloud_off';
+      const text = savingStatus.saving
+        ? savingStatus.online
+          ? 'saving_to_cloud'
+          : 'saving_to_device'
+        : finishedSavingStatus.finishedSaving
+        ? finishedSavingStatus.online
+          ? 'saved_to_cloud'
+          : 'saved_to_device'
+        : this.isAppOnline
+        ? 'online'
+        : 'offline';
+
+      return { icon, text };
+    })
+  );
+
   constructor(
     private readonly router: Router,
     private readonly authService: AuthService,
@@ -100,7 +133,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     readonly media: MediaObserver,
     private readonly pwaService: PwaService,
     iconRegistry: MdcIconRegistry,
-    sanitizer: DomSanitizer
+    sanitizer: DomSanitizer,
+    private readonly saveStatusService: SaveStatusService
   ) {
     super(noticeService);
     this.subscribe(media.media$, (change: MediaChange) => {

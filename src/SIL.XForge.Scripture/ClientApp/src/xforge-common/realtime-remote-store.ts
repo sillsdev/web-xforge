@@ -30,6 +30,8 @@ export interface RealtimeDocAdapter {
   /** Fires when underlying data is recreated. */
   readonly create$: Observable<void>;
   readonly delete$: Observable<void>;
+  /** Fire before changes are made to underlying data */
+  readonly beforeOp$: Observable<any>;
   /** Fires when there are changes to underlying data. */
   readonly remoteChanges$: Observable<any>;
 

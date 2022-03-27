@@ -3,7 +3,7 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import * as RichText from 'rich-text';
 import { fromEvent, Observable, Subject } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
+import { filter, map, tap } from 'rxjs/operators';
 import { Connection, Doc, OTType, Query, Snapshot, types } from 'sharedb/lib/client';
 import { PwaService } from 'xforge-common/pwa.service';
 import { environment } from '../environments/environment';
@@ -89,13 +89,18 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
   readonly idle$: Observable<void>;
   readonly create$: Observable<void>;
   readonly delete$: Observable<void>;
+  readonly beforeLocalChanges$: Observable<any>;
   readonly remoteChanges$: Observable<any>;
 
   constructor(private readonly doc: Doc) {
-    this.idle$ = fromEvent(this.doc, 'no write pending');
+    this.idle$ = fromEvent<void>(this.doc, 'no write pending').pipe(tap(() => console.log('idle', doc.id)));
     this.create$ = fromEvent(this.doc, 'create');
     this.delete$ = fromEvent(this.doc, 'del');
-    this.remoteChanges$ = fromEvent<[any, any]>(this.doc, 'op').pipe(
+    this.beforeLocalChanges$ = fromEvent<[any, boolean]>(this.doc, 'before op').pipe(
+      tap(([, source]) => console.log('before-op', doc.id, source)),
+      filter(([, source]) => source)
+    );
+    this.remoteChanges$ = fromEvent<[any, boolean]>(this.doc, 'op').pipe(
       filter(([, source]) => !source),
       map(([ops]) => ops)
     );

@@ -1,4 +1,5 @@
 import { Injectable, Optional } from '@angular/core';
+import { SaveStatusService } from 'xforge-common/save-status.service';
 import { AppError } from 'xforge-common/exception-handling-service';
 import { FileService } from './file.service';
 import { RealtimeDoc } from './models/realtime-doc';
@@ -29,6 +30,7 @@ export class RealtimeService {
     private readonly typeRegistry: TypeRegistry,
     public readonly remoteStore: RealtimeRemoteStore,
     public readonly offlineStore: OfflineStore,
+    public readonly saveStatusService: SaveStatusService,
     @Optional() public readonly fileService?: FileService,
     @Optional() public readonly pwaService?: PwaService
   ) {
