@@ -726,6 +726,8 @@ namespace SIL.XForge.Scripture.Services
                     .ToDictionary(u => u.Username);
                 Dictionary<int, ChapterDelta> chapterDeltas =
                     env.GetChapterDeltasByBook(env.Project01, 40, 1, "Context before ", "Text selected");
+
+                // SUT
                 IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
                     userSecret, ptProjectId, 40, noteThreadDocs, chapterDeltas, ptProjectUsers);
                 Assert.That(changes.Count, Is.EqualTo(8));
@@ -754,7 +756,6 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(change03.NotesAdded.Count, Is.EqualTo(1));
                 string expected3 = "thread3-syncuser04-user02-<p>thread3 note 1.</p>-icon1";
                 Assert.That(change03.NotesAdded[0].NoteToString(), Is.EqualTo(expected3));
-                Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { env.Username01, env.Username02 }));
 
                 // Permanently removed comment
                 NoteThreadChange change04 = changes.Where(c => c.ThreadId == "thread4").Single();
@@ -986,6 +987,12 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(change8.Assignment, Is.EqualTo(unassignedUserString));
                 Assert.That(change8.NotesUpdated.Count, Is.EqualTo(1));
                 Assert.That(change8.NotesUpdated[0].Assignment, Is.EqualTo(unassignedUserString));
+
+                // Note created with no Paratext user
+                NoteThreadChange change9 = changes.Single(c => c.ThreadId == "thread9");
+                Assert.That(change9.NotesAdded.Count, Is.EqualTo(1));
+                Assert.That(change9.NotesAdded[0].SyncUserRef, Is.Null);
+                Assert.That(change9.Assignment, Is.EqualTo(unassignedUserString));
 
                 // User 02 is added to the list of Paratext Users
                 Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { env.Username01, env.Username02 }));
