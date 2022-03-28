@@ -977,6 +977,25 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('does not highlight read-only text editor', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setCurrentUser('user02');
+      env.wait();
+      const segmentRange = env.component.target!.getSegmentRange('verse_1_1')!;
+      env.targetEditor.setSelection(segmentRange.index);
+      env.wait();
+      let element: HTMLElement = env.targetTextEditor.nativeElement.querySelector(
+        'usx-segment[data-segment="verse_1_1"]'
+      );
+      expect(element.classList).not.toContain('highlight-segment');
+
+      env.setCurrentUser('user01');
+      env.wait();
+      element = env.targetTextEditor.nativeElement.querySelector('usx-segment[data-segment="verse_1_1"]');
+      expect(element.classList).toContain('highlight-segment');
+      env.dispose();
+    }));
+
     it('backspace and delete disabled for non-text elements and at segment boundaries', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
