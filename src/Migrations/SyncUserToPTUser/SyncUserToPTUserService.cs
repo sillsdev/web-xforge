@@ -78,7 +78,8 @@ namespace SyncUserToPTUser
                                 ptUsers.Add(paratextUser);
                             }
                         }
-                        if (projectDoc.Data.ParatextUsers == null)
+                        // Since ParatextUsers initializes to an empty list check that the list is empty
+                        if (projectDoc.Data.ParatextUsers.Count < 1)
                             op.Set(pd => pd.ParatextUsers, ptUsers);
                     });
                     await _projectSecretRepo.UpdateAsync(projectSecret.Id, u =>
