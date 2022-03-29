@@ -62,7 +62,8 @@ namespace SIL.XForge.Scripture.Services
             // TODO Make PT repos in data that should not be returned.
             foreach (string projectName in new string[] { env.Project01, env.Project03, env.Project02 })
             {
-                Assert.That(repos.Single(project => project.ParatextId == env.PTProjectIds[projectName].Id), Is.Not.Null);
+                Assert.That(repos.Single(project => project.ParatextId == env.PTProjectIds[projectName].Id),
+                    Is.Not.Null);
             }
 
             // Properties of one of the returned repos have the correct values.
@@ -105,7 +106,8 @@ namespace SIL.XForge.Scripture.Services
             // Repos returned are the ones we expect.
             foreach (string projectName in new string[] { env.Project01, env.Project02, env.Project03, env.Project04 })
             {
-                Assert.That(repos.Single(project => project.ParatextId == env.PTProjectIds[projectName].Id), Is.Not.Null);
+                Assert.That(repos.Single(project => project.ParatextId == env.PTProjectIds[projectName].Id),
+                    Is.Not.Null);
             }
         }
 
@@ -345,7 +347,8 @@ namespace SIL.XForge.Scripture.Services
             ISFRestClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
 
             var paratextId = "resid_is_16_char";
-            var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01, CancellationToken.None);
+            var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01,
+                CancellationToken.None);
             Assert.That(permission, Is.EqualTo(TextInfoPermission.None));
         }
 
@@ -357,7 +360,8 @@ namespace SIL.XForge.Scripture.Services
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             env.SetRestClientFactory(user01Secret);
             var paratextId = env.Resource2Id;
-            var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01, CancellationToken.None);
+            var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01,
+                CancellationToken.None);
             Assert.That(permission, Is.EqualTo(TextInfoPermission.Read));
         }
 
@@ -544,7 +548,11 @@ namespace SIL.XForge.Scripture.Services
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             env.ProjectCommentManager.AddComment(
-                new Paratext.Data.ProjectComments.Comment(associatedPtUser) { Thread = "Answer_dataId0123", VerseRefStr = "RUT 1:1" });
+                new Paratext.Data.ProjectComments.Comment(associatedPtUser)
+                {
+                    Thread = "Answer_dataId0123",
+                    VerseRefStr = "RUT 1:1"
+                });
             string notes = env.Service.GetNotes(userSecret, ptProjectId, ruthBookNum);
             string expected = $"<notes version=\"1.1\">{Environment.NewLine}  <thread id=\"Answer_dataId0123\">";
             Assert.True(notes.StartsWith(expected));
@@ -1834,7 +1842,8 @@ namespace SIL.XForge.Scripture.Services
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             env.MockFileSystemService.FileExists(Arg.Any<string>()).Returns(true);
-            env.MockFileSystemService.DirectoryExists(Arg.Any<string>()).Returns(x => ((string)x[0]).Contains(ptProjectId));
+            env.MockFileSystemService.DirectoryExists(Arg.Any<string>())
+                .Returns(x => ((string)x[0]).Contains(ptProjectId));
 
             // SUT
             bool result = env.Service.RestoreRepository(user01Secret, ptProjectId);
@@ -2129,7 +2138,8 @@ namespace SIL.XForge.Scripture.Services
 
                 // An HttpException means that the repo is already unlocked, so any code should be OK with this
                 mockSource.When(s => s.UnlockRemoteRepository(Arg.Any<SharedRepository>()))
-                    .Do(x => throw HttpException.Create(new WebException(), GenericRequest.Create(new Uri("http://localhost/"))));
+                    .Do(x => throw HttpException.Create(new WebException(),
+                        GenericRequest.Create(new Uri("http://localhost/"))));
                 MockInternetSharedRepositorySourceProvider.GetSource(Arg.Is<UserSecret>(s => s.Id == userSecret.Id),
                         Arg.Any<string>(), Arg.Any<string>()).Returns(mockSource);
                 return mockSource;
