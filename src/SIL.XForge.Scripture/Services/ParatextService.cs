@@ -595,7 +595,15 @@ namespace SIL.XForge.Scripture.Services
                 IEnumerable<SharedRepository> remotePtProjects =
                     GetRepositories(ptRepoSource, $"For {moreInformation}");
                 SharedRepository remotePtProject =
-                    remotePtProjects.Single(p => p.SendReceiveId.Id == project.ParatextId);
+                    remotePtProjects.SingleOrDefault(p => p.SendReceiveId.Id == project.ParatextId);
+                if (remotePtProject == null)
+                {
+                    string projects = string.Join(",", remotePtProjects
+                        .Select((SharedRepository r) => r.SendReceiveId.Id));
+                    string message = $"Failed to find project, when looking in permissible set of repositories "
+                        + $"of PT ids '{projects}', for {moreInformation}";
+                    throw new ForbiddenException(message);
+                }
 
                 // Build a dictionary of user IDs mapped to roles using the user secrets
                 var userMapping = new Dictionary<string, string>();

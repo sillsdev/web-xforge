@@ -7,5 +7,10 @@ namespace SIL.XForge.Services
             : base("The user does not have permission to perform this operation.")
         {
         }
+
+        public ForbiddenException(string message)
+            : base($"The user does not have permission to perform this operation. {message}")
+        {
+        }
     }
 }
