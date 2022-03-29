@@ -172,7 +172,8 @@ namespace SIL.XForge.Scripture.Services
             if (userSecret == null || paratextId == null) { throw new ArgumentNullException(); }
 
             IInternetSharedRepositorySource source = await GetInternetSharedRepositorySource(userSecret.Id, token);
-            IEnumerable<SharedRepository> repositories = source.GetRepositories();
+            IEnumerable<SharedRepository> repositories = GetRepositories(source,
+                $"For SF user id {userSecret.Id}, while attempting to sync PT project id {paratextId}.");
             IEnumerable<ProjectMetadata> projectsMetadata = source.GetProjectsMetaData();
             IEnumerable<string> projectGuids = projectsMetadata.Select(pmd => pmd.ProjectGuid.Id);
             SharedRepository sendReceiveRepository = repositories.FirstOrDefault(r => r.SendReceiveId.Id == paratextId);
@@ -251,7 +252,8 @@ namespace SIL.XForge.Scripture.Services
         {
             IInternetSharedRepositorySource ptRepoSource = await GetInternetSharedRepositorySource(userSecret.Id,
                 CancellationToken.None);
-            IEnumerable<SharedRepository> remotePtProjects = ptRepoSource.GetRepositories();
+            IEnumerable<SharedRepository> remotePtProjects = GetRepositories(ptRepoSource,
+                $"Using SF user id {userSecret.Id}");
             return GetProjects(userSecret, remotePtProjects, ptRepoSource.GetProjectsMetaData());
         }
 
@@ -309,7 +311,8 @@ namespace SIL.XForge.Scripture.Services
                 // base project registration, so are not in the registry.
                 IInternetSharedRepositorySource ptRepoSource = await GetInternetSharedRepositorySource(userSecret.Id,
                     CancellationToken.None);
-                IEnumerable<SharedRepository> remotePtProjects = ptRepoSource.GetRepositories();
+                IEnumerable<SharedRepository> remotePtProjects = GetRepositories(ptRepoSource,
+                    $"For SF user id {userSecret.Id} for unregistered PT project id {paratextId}");
                 string username = GetParatextUsername(userSecret);
                 string role =
                     ConvertFromUserRole(remotePtProjects.SingleOrDefault(p => p.SendReceiveId.Id == paratextId)
@@ -404,7 +407,14 @@ namespace SIL.XForge.Scripture.Services
                 // Get the list of users from the repository
                 IInternetSharedRepositorySource ptRepoSource = await GetInternetSharedRepositorySource(userSecret.Id,
                     CancellationToken.None);
-                IEnumerable<SharedRepository> remotePtProjects = ptRepoSource.GetRepositories();
+
+                bool hasRole = project.UserRoles.TryGetValue(userSecret.Id, out string userRole);
+                string contextInformation = $"For SF user id '{userSecret.Id}', "
+                    + $"while interested in unregistered PT project id '{project.ParatextId}' "
+                    + $"(SF project id {project.Id}). "
+                    + $"On SF project, user has {(hasRole ? $"role '{userRole}'." : "no role.")}";
+
+                IEnumerable<SharedRepository> remotePtProjects = GetRepositories(ptRepoSource, contextInformation);
                 SharedRepository remotePtProject =
                     remotePtProjects.Single(p => p.SendReceiveId.Id == project.ParatextId);
 
@@ -524,6 +534,25 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>
+        /// Helper method to fetch repositories, and log when there is a problem. The available contextual information
+        /// varies among usages, so it is passed in via string.
+        /// </summary>
+        private IEnumerable<SharedRepository> GetRepositories(IInternetSharedRepositorySource ptRepoSource,
+            string contextInformation)
+        {
+            try
+            {
+                return ptRepoSource.GetRepositories();
+            }
+            catch (HttpException e)
+            {
+                string message = $"Problem fetching repositories: {contextInformation}";
+                _logger.LogWarning(e, message);
+                throw;
+            }
+        }
+
+        /// <summary>
         /// Gets the project roles asynchronously.
         /// </summary>
         /// <param name="userSecret">The user secret.</param>
@@ -556,7 +585,15 @@ namespace SIL.XForge.Scripture.Services
                 // Get the list of users from the repository
                 IInternetSharedRepositorySource ptRepoSource = await GetInternetSharedRepositorySource(userSecret.Id,
                     CancellationToken.None);
-                IEnumerable<SharedRepository> remotePtProjects = ptRepoSource.GetRepositories();
+
+                bool hasRole = project.UserRoles.TryGetValue(userSecret.Id, out string userRole);
+                string moreInformation = $"SF user id '{userSecret.Id}', "
+                    + $"while interested in unregistered PT project id '{project.ParatextId}' "
+                    + $"(SF project id {project.Id}). "
+                    + $"On SF project, user has {(hasRole ? $"role '{userRole}'." : "no role.")}";
+
+                IEnumerable<SharedRepository> remotePtProjects =
+                    GetRepositories(ptRepoSource, $"For {moreInformation}");
                 SharedRepository remotePtProject =
                     remotePtProjects.Single(p => p.SendReceiveId.Id == project.ParatextId);
 
