@@ -62,7 +62,8 @@ namespace SIL.XForge.Scripture.Services
         private readonly IInternetSharedRepositorySourceProvider _internetSharedRepositorySourceProvider;
         private readonly ISFRestClientFactory _restClientFactory;
         /// <summary> Map user IDs to semaphores </summary>
-        private readonly ConcurrentDictionary<string, SemaphoreSlim> _tokenRefreshSemaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
+        private readonly ConcurrentDictionary<string, SemaphoreSlim> _tokenRefreshSemaphores =
+            new ConcurrentDictionary<string, SemaphoreSlim>();
         private readonly IHgWrapper _hgHelper;
         private readonly IWebHostEnvironment _env;
 
@@ -131,8 +132,10 @@ namespace SIL.XForge.Scripture.Services
         /// <summary> Prepare access to Paratext.Data library, authenticate, and prepare Mercurial. </summary>
         public void Init()
         {
-            // Uncomment to output more info to the Terminal from ParatextData.dll for investigating. Note that without Clear()ing, the output would show in Debug Console while debugging.
-            // The output is using System.Diagnostics.Trace and so is not managed by the ILogging LogLevel filtering settings.
+            // Uncomment to output more info to the Terminal from ParatextData.dll for investigating. Note that without
+            // Clear()ing, the output would show in Debug Console while debugging.
+            // The output is using System.Diagnostics.Trace and so is not managed by the ILogging LogLevel filtering
+            // settings.
             // System.Diagnostics.Trace.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(Console.Out));
             // System.Diagnostics.Trace.AutoFlush = true;
 
@@ -189,7 +192,8 @@ namespace SIL.XForge.Scripture.Services
             if (ptProject == null)
             {
                 throw new ArgumentException(
-                    $"PT projects with the following PT ids were requested but without access or they don't exist: {paratextId}");
+                    "PT projects with the following PT ids were requested but without access or they don't exist: "
+                        + $"{paratextId}");
             }
             EnsureProjectReposExists(userSecret, ptProject, source);
             StartProgressReporting(progress);
@@ -976,7 +980,8 @@ namespace SIL.XForge.Scripture.Services
             {
                 string source = scrText.Directory;
                 string destination =
-                    Path.Combine(Paratext.Data.ScrTextCollection.SettingsDirectory, "_Backups", scrText.Guid.ToString());
+                    Path.Combine(Paratext.Data.ScrTextCollection.SettingsDirectory, "_Backups",
+                        scrText.Guid.ToString());
                 string restoredDestination = destination + "_Restored";
                 string backupPath = destination + ".bndl";
 
@@ -1077,7 +1082,8 @@ namespace SIL.XForge.Scripture.Services
             catch (Exception e)
             {
                 // An error occurred
-                _logger.LogError(e, $"Problem when checking if a local PT repo backup exists for scrText id '{scrText.Guid}'.");
+                _logger.LogError(e,
+                    $"Problem when checking if a local PT repo backup exists for scrText id '{scrText.Guid}'.");
                 return false;
             }
         }
@@ -1393,14 +1399,16 @@ namespace SIL.XForge.Scripture.Services
                     Tokens refreshedUserTokens =
                         await _jwtTokenHelper.RefreshAccessTokenAsync(_paratextOptions.Value, userSecret.ParatextTokens,
                             _registryClient, token);
-                    userSecret = await _userSecretRepository.UpdateAsync(userId, b => b.Set(u => u.ParatextTokens, refreshedUserTokens));
+                    userSecret = await _userSecretRepository
+                        .UpdateAsync(userId, b => b.Set(u => u.ParatextTokens, refreshedUserTokens));
                 }
                 return new ParatextAccessLock(semaphore, userSecret);
             }
             catch
             {
                 // If an exception is thrown between awaiting the semaphore and returning the ParatextAccessLock, the
-                // caller of the method will not get a reference to a ParatextAccessLock and can't release the semaphore.
+                // caller of the method will not get a reference to a ParatextAccessLock and can't release
+                // the semaphore.
                 semaphore.Release();
                 throw;
             }
