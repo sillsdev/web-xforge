@@ -749,7 +749,7 @@ namespace SIL.XForge.Scripture.Services
                 string expected2 = "thread2-syncuser01-user02-<p>thread2 note 1.</p>-deleted-icon1";
                 Assert.That(change02.NotesDeleted[0].NoteToString(), Is.EqualTo(expected2));
 
-                // Added comment on new thread
+                // Added comment on new thread and User 02 added as new pt user
                 NoteThreadChange change03 = changes.Where(c => c.ThreadId == "thread3").Single();
                 Assert.That(change03.ThreadChangeToString(),
                     Is.EqualTo("Context before Text selected thread3 context after.-Start:15-Length:21-MAT 1:3-icon1"));
@@ -773,7 +773,7 @@ namespace SIL.XForge.Scripture.Services
                 NoteThreadChange change06 = changes.Where(c => c.ThreadId == "thread6").Single();
                 Assert.That(change06.ThreadChangeToString(),
                     Is.EqualTo("Context before Text selected thread6 context after.-Start:15-Length:21-MAT 1:6-conflict1"));
-                string expected6 = "thread6--user02-<p>thread6 note 1.</p>-conflict1";
+                string expected6 = "thread6---<p>thread6 note 1.</p>-conflict1";
                 Assert.That(change06.NotesAdded[0].NoteToString(), Is.EqualTo(expected6));
 
                 // Added comment on existing thread
@@ -788,7 +788,8 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(change08.NotesUpdated[1].DataId, Is.EqualTo("n3onthread9"));
                 Assert.That(change08.NotesUpdated[1].TagIcon, Is.EqualTo(null));
 
-                // User 02 is added to the list of Paratext Users
+                // User 02 is added to the list of Paratext Users when thread3 is added to note thread docs
+                // No users should be added from the new thread6 change which has no paratext user
                 Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { env.Username01, env.Username02 }));
             }
         }
@@ -994,7 +995,9 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(change9.NotesAdded[0].SyncUserRef, Is.Null);
                 Assert.That(change9.Assignment, Is.EqualTo(unassignedUserString));
 
-                // User 02 is added to the list of Paratext Users
+                // User 02 is added to the list of Paratext Users on thread1 as an assigned user
+                // No users should be added from the new thread9 change which has no paratext user
+                // or through null assignment on thread7
                 Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { env.Username01, env.Username02 }));
             }
         }
@@ -2395,7 +2398,7 @@ namespace SIL.XForge.Scripture.Services
                         comment.Date = date;
                         comment.Deleted = comp.isDeleted;
                         comment.Status = note.status;
-                        comment.ExternalUser = "user02";
+                        comment.ExternalUser = comp.isConflict ? "" : "user02";
                         comment.TagsAdded = comp.isConflict ? null : note.tagsAdded == null ? null : note.tagsAdded;
                         comment.Type = comp.isConflict ? NoteType.Conflict : NoteType.Normal;
                         comment.AssignedUser = note.assignedPTUser;
