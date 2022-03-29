@@ -25,18 +25,15 @@ namespace SIL.XForge.Services
         private readonly IRepository<UserSecret> _userSecrets;
         private readonly IAuthService _authService;
         private readonly IProjectService _projectService;
-        private readonly IRepository<BetaMigration> _betaMigration;
 
         public UserService(IRealtimeService realtimeService, IOptions<SiteOptions> siteOptions,
-            IRepository<UserSecret> userSecrets, IAuthService authService, IProjectService projectService,
-            IRepository<BetaMigration> betaMigration)
+            IRepository<UserSecret> userSecrets, IAuthService authService, IProjectService projectService)
         {
             _realtimeService = realtimeService;
             _siteOptions = siteOptions;
             _userSecrets = userSecrets;
             _authService = authService;
             _projectService = projectService;
-            _betaMigration = betaMigration;
         }
 
         public async Task UpdateUserFromProfileAsync(string curUserId, string userProfileJson)
@@ -162,26 +159,6 @@ namespace SIL.XForge.Services
             }
             // Remove the actual docs.
             await _realtimeService.DeleteUserAsync(userId);
-        }
-
-        /// <summary>
-        /// Check if a given user needs to be migrated from beta - only the master domain can query this
-        /// </summary>
-        public async Task<bool> CheckUserNeedsMigratingAsync(string userId)
-        {
-            if (_siteOptions.Value.Beta) return false;
-            var user = await _betaMigration.Query().FirstOrDefaultAsync((BetaMigration bm) => bm.Id == userId);
-            return user != null;
-
-        }
-
-        /// <summary>
-        /// Mark a user as completing their data migration from beta - this must be called from the beta domain
-        /// </summary>
-        public async Task UserMigrationCompleteAsync(string userId)
-        {
-            if (!_siteOptions.Value.Beta) return;
-            await _betaMigration.DeleteAsync((BetaMigration bm) => bm.Id == userId);
         }
 
         /// <summary>

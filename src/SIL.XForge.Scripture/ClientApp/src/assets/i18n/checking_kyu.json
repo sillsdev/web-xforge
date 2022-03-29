@@ -26,19 +26,6 @@
     "scripture_checking_not_available": "ꤙꤤ project ꤛꤢꤩ꤭ ꤢ꤬ꤊꤢꤨ꤭ ꤗꤢ꤬ ꤒꤟꤢꤧ꤬ꤓꤢꤦꤡꤢꤩ꤭ ꤜꤤ꤬ꤡꤢ꤭ꤏꤢꤧ꤭ ꤔꤌꤣ꤬ ꤢ꤬ꤔꤟꤤ ꤒꤥ꤬꤯",
     "update_is_available": "An update is available. Please refresh the page."
   },
-  "beta_migration": {
-    "checking_for_data": "Checking for offline data",
-    "cleaning_up": "Cleaning up",
-    "close": "ꤗꤟꤢꤩ꤬ꤙꤤ",
-    "completed": "Migration complete — this dialog will now close",
-    "data_migration": "Data migration",
-    "fetching_data": "Fetching data",
-    "loading": "Loading",
-    "loading_retry": "Loading - retrying ({{ attempt }})",
-    "login_required": "Login required",
-    "please_wait": "Scripture Forge is now out of Beta — yay! Hold tight while we quickly migrate your account to the new full release version.",
-    "recourse": "Make sure you aren't using an incognito/private web browser window, and are connected to the Internet. If you continue to have trouble, please {{ templateTagBoundary }}ask for help{{ templateTagBoundary }}."
-  },
   "canon": {
     "book_names": {
       "GEN": "ꤟꤢꤩ꤬ꤋꤢꤨ꤬ꤓꤝꤟꤥ꤭ꤜꤢꤨ",

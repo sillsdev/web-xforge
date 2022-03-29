@@ -4,9 +4,9 @@ namespace Microsoft.AspNetCore.Builder
 {
     public static class SFDataAccessApplicationBuilderExtensions
     {
-        public static void UseSFDataAccess(this IApplicationBuilder app, bool isBeta)
+        public static void UseSFDataAccess(this IApplicationBuilder app)
         {
-            app.UseDataAccess(isBeta);
+            app.UseDataAccess();
 
             app.InitRepository<TranslateMetrics>();
             app.InitRepository<SFProjectSecret>();

@@ -6,8 +6,6 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { TranslocoModule } from '@ngneat/transloco';
 import { CookieService } from 'ngx-cookie-service';
-import { BetaMigrationDialogComponent } from 'xforge-common/beta-migration/beta-migration-dialog/beta-migration-dialog.component';
-import { BetaMigrationComponent } from 'xforge-common/beta-migration/beta-migration.component';
 import { EditNameDialogComponent } from 'xforge-common/edit-name-dialog/edit-name-dialog.component';
 import { ErrorComponent } from 'xforge-common/error/error.component';
 import { ExceptionHandlingService } from 'xforge-common/exception-handling-service';
@@ -35,8 +33,6 @@ import { UsersModule } from './users/users.module';
 @NgModule({
   declarations: [
     AppComponent,
-    BetaMigrationComponent,
-    BetaMigrationDialogComponent,
     ConnectProjectComponent,
     DeleteProjectDialogComponent,
     ProjectComponent,
