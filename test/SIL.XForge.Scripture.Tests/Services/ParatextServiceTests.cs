@@ -1548,6 +1548,32 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task GetProjectRolesAsync_MoreInfoWhenHttpException()
+        {
+            var env = new TestEnvironment();
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+            env.MakeUserSecret(env.User02, env.Username02, env.ParatextUserId02);
+            env.AddProjectRepository();
+            IInternetSharedRepositorySource source = env.SetSharedRepositorySource(userSecret, UserRoles.Administrator);
+            var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
+            SFProject project = projects.First();
+
+            source.GetRepositories().Returns(x =>
+            {
+                throw HttpException.Create(new WebException("401: Unauthorized"), (HttpWebRequest)null);
+            });
+
+            // SUT
+            HttpException thrown = Assert.ThrowsAsync<HttpException>(() =>
+                env.Service.GetProjectRolesAsync(userSecret, project, CancellationToken.None));
+
+            // Various pieces of significant data are reported when a 401 Unauthorized goes thru.
+            string[] notes = { "unregistered", project.ParatextId, project.Id, userSecret.Id, "role" };
+            env.MockLogger.AssertHasEvent((LogEvent logEvent) =>
+                notes.All((string note) => logEvent.Message.Contains(note)));
+        }
+
+        [Test]
         public async Task GetParatextUsernameMappingAsync_UsesTheRepositoryForUnregisteredProjects()
         {
             var env = new TestEnvironment();
