@@ -1,10 +1,11 @@
 import { MdcSelect } from '@angular-mdc/web';
-import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web/dialog';
 import { MdcSlider } from '@angular-mdc/web/slider';
 import { CommonModule } from '@angular/common';
 import { Component, DebugElement, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import cloneDeep from 'lodash-es/cloneDeep';
 import {
   getSFProjectUserConfigDocId,
@@ -16,7 +17,7 @@ import { mock, when } from 'ts-mockito';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, matDialogCloseDelay, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -30,7 +31,7 @@ const mockedPwaService = mock(PwaService);
 
 describe('SuggestionsSettingsDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [DialogTestModule, NoopAnimationsModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [{ provide: PwaService, useMock: mockedPwaService }]
   }));
 
@@ -43,7 +44,7 @@ describe('SuggestionsSettingsDialogComponent', () => {
     expect(env.component!.confidenceThreshold).toEqual(60);
     const userConfigDoc = env.getProjectUserConfigDoc();
     expect(userConfigDoc.data!.confidenceThreshold).toEqual(0.6);
-    env.click(env.closeButton);
+    env.closeDialog();
   }));
 
   it('update suggestions enabled', fakeAsync(() => {
@@ -55,7 +56,7 @@ describe('SuggestionsSettingsDialogComponent', () => {
     expect(env.component!.translationSuggestionsUserEnabled).toBe(false);
     const userConfigDoc = env.getProjectUserConfigDoc();
     expect(userConfigDoc.data!.translationSuggestionsEnabled).toBe(false);
-    env.click(env.closeButton);
+    env.closeDialog();
   }));
 
   it('update num suggestions', fakeAsync(() => {
@@ -67,14 +68,14 @@ describe('SuggestionsSettingsDialogComponent', () => {
     expect(env.component!.numSuggestions).toEqual('2');
     const userConfigDoc = env.getProjectUserConfigDoc();
     expect(userConfigDoc.data!.numSuggestions).toEqual(2);
-    env.click(env.closeButton);
+    env.closeDialog();
   }));
 
   it('shows correct confidence threshold even when suggestions disabled', fakeAsync(() => {
     const env = new TestEnvironment(false);
     env.openDialog();
     expect(env.confidenceThresholdSlider.value).toEqual(50);
-    env.click(env.closeButton);
+    env.closeDialog();
   }));
 
   it('disables settings when offline', fakeAsync(() => {
@@ -92,7 +93,7 @@ describe('SuggestionsSettingsDialogComponent', () => {
     expect(env.suggestionsEnabledSwitch.disabled).toBe(true);
     expect(env.confidenceThresholdSlider.disabled).toBe(true);
     expect(env.mdcNumSuggestionsSelect.disabled).toBe(true);
-    env.click(env.closeButton);
+    env.closeDialog();
   }));
 
   it('the suggestions toggle is switched on when the dialog opens while offline', fakeAsync(() => {
@@ -102,7 +103,7 @@ describe('SuggestionsSettingsDialogComponent', () => {
 
     expect(env.suggestionsEnabledSwitch.disabled).toBe(true);
     expect(env.suggestionsEnabledSwitch.checked).toBe(true);
-    env.click(env.closeButton);
+    env.closeDialog();
   }));
 });
 
@@ -179,13 +180,18 @@ class TestEnvironment {
   }
 
   get closeButton(): HTMLElement {
-    return this.overlayContainerElement.querySelector('button[mdcdialogaction="close"]') as HTMLElement;
+    return this.overlayContainerElement.querySelector('button[mat-dialog-close]') as HTMLElement;
   }
 
   set isOnline(value: boolean) {
     this.onlineStatus.next(value);
     this.fixture.detectChanges();
     tick();
+  }
+
+  closeDialog(): void {
+    this.click(this.closeButton);
+    tick(matDialogCloseDelay);
   }
 
   openDialog(): void {
@@ -196,11 +202,11 @@ class TestEnvironment {
       )
       .then(projectUserConfigDoc => {
         const viewContainerRef = this.fixture.componentInstance.childViewContainer;
-        const config: MdcDialogConfig<SuggestionsSettingsDialogData> = {
+        const config: MatDialogConfig<SuggestionsSettingsDialogData> = {
           data: { projectUserConfigDoc },
           viewContainerRef
         };
-        const dialogRef = TestBed.inject(MdcDialog).open(SuggestionsSettingsDialogComponent, config);
+        const dialogRef = TestBed.inject(MatDialog).open(SuggestionsSettingsDialogComponent, config);
         this.component = dialogRef.componentInstance;
       });
     this.wait();

@@ -4,6 +4,8 @@ import { SelectableProject } from '../core/paratext.service';
 
 // Regular expression for getting the verse from a segment ref
 export const VERSE_FROM_SEGMENT_REF_REGEX = /verse_\d+_(\d+-?\d*)/;
+// Regular expression for the verse segment ref of scripture content
+export const VERSE_REGEX = /verse_[0-9]+_[0-9]+/;
 
 export function combineVerseRefStrs(startStr?: string, endStr?: string): VerseRef | undefined {
   if (!startStr) {
@@ -42,8 +44,35 @@ export function combineVerseRefStrs(startStr?: string, endStr?: string): VerseRe
   return range.verseRef;
 }
 
-export function verseSlug(verse: VerseRef): string {
+export function verseSlug(verse: VerseRef) {
   return 'verse_' + verse.chapterNum + '_' + (verse.verse == null ? verse.verseNum : verse.verse);
+}
+
+export function verseRefFromMouseEvent(event: MouseEvent, bookNum: number): VerseRef | undefined {
+  const clickSegment = attributeFromMouseEvent(event, 'USX-SEGMENT', 'data-segment');
+  if (clickSegment == null) {
+    return;
+  }
+  const segmentParts = clickSegment.split('_', 3);
+  return new VerseRef(bookNum, segmentParts[1], segmentParts[2]);
+}
+
+export function threadIdFromMouseEvent(event: MouseEvent): string | undefined {
+  return attributeFromMouseEvent(event, 'DISPLAY-NOTE', 'data-thread-id');
+}
+
+function attributeFromMouseEvent(event: MouseEvent, nodeName: string, attribute: string): string | undefined {
+  let target = event.target;
+  if (target == null) {
+    return;
+  }
+  if (target['offsetParent']['nodeName'] === nodeName) {
+    target = target['offsetParent'] as EventTarget;
+  }
+  if (target['nodeName'] === nodeName) {
+    return target['attributes'][attribute].value;
+  }
+  return;
 }
 
 export function projectLabel(project: SelectableProject | undefined): string {

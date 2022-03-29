@@ -10,19 +10,23 @@ import {
   ViewChild
 } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
+import { clone } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import merge from 'lodash-es/merge';
-import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
+import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources } from 'quill';
+import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { fromEvent } from 'rxjs';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { getBrowserEngine } from 'xforge-common/utils';
-import { TextDocId } from '../../core/models/text-doc';
+import { Delta, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
+import { NoteThreadIcon } from '../../core/models/note-thread-doc';
+import { VERSE_REGEX } from '../utils';
 import { registerScripture } from './quill-scripture';
 import { Segment } from './segment';
-import { TextViewModel } from './text-view-model';
+import { EditorRange, TextViewModel } from './text-view-model';
 
 const EDITORS = new Set<Quill>();
 
@@ -53,6 +57,21 @@ export interface TextUpdatedEvent {
   delta?: DeltaStatic;
   prevSegment?: Segment;
   segment?: Segment;
+  oldVerseEmbeds?: Map<string, number>;
+  isLocalUpdate?: boolean;
+}
+
+/**
+ * Info to annotate and draw attention to a verse using a distinguishing mark, such as a community checking question or
+ * a note.
+ */
+export interface FeaturedVerseRefInfo {
+  verseRef: VerseRef;
+  id: string;
+  textAnchor?: TextAnchor;
+  icon: NoteThreadIcon;
+  preview?: string;
+  highlight?: boolean;
 }
 
 /** View of an editable text document. Used for displaying Scripture. */
@@ -69,6 +88,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   @Output() updated = new EventEmitter<TextUpdatedEvent>(true);
   @Output() segmentRefChange = new EventEmitter<string>();
   @Output() loaded = new EventEmitter(true);
+  @Output() focused = new EventEmitter<boolean>(true);
   lang: string = '';
   // only use USX formats and not default Quill formats
   readonly allowedFormats: string[] = USX_FORMATS;
@@ -326,6 +346,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return 'auto';
   }
 
+  get embeddedElements(): Readonly<Map<string, number>> {
+    return this.viewModel.embeddedElements;
+  }
+
   private get contentShowing(): boolean {
     return this.id != null && this.viewModel.isLoaded && !this.viewModel.isEmpty;
   }
@@ -381,6 +405,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       this.initialSegmentFocus = focus;
       return true;
     }
+
     const prevSegment = this.segment;
     if (this.tryChangeSegment(segmentRef, checksum, focus, end)) {
       this.updated.emit({ prevSegment, segment: this._segment });
@@ -401,6 +426,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return this.viewModel.getSegmentText(ref);
   }
 
+  getSegmentContents(ref: string): DeltaStatic | undefined {
+    return this.viewModel.getSegmentContents(ref);
+  }
+
   hasSegmentRange(ref: string): boolean {
     return this.viewModel.hasSegmentRange(ref);
   }
@@ -409,13 +438,146 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return this.viewModel.getVerseSegments(verseRef);
   }
 
+  getSegmentElement(segment: string): Element | null {
+    return this.editor == null ? null : this.editor.container.querySelector(`usx-segment[data-segment="${segment}"]`);
+  }
+
+  toggleFeaturedVerseRefs(
+    value: boolean,
+    featureVerseRefs: VerseRef[],
+    featureName: 'question' | 'note-thread'
+  ): string[] {
+    if (this.editor == null || this.id == null) {
+      return [];
+    }
+    const segments: string[] = [];
+    const verseFeatureCount = new Map<string, number>();
+    const chapterFeaturedVerseRefs: VerseRef[] = featureVerseRefs.filter(fvr => fvr.chapterNum === this.id!.chapterNum);
+    for (const verseRef of chapterFeaturedVerseRefs) {
+      const featuredVerseSegments: string[] = this.viewModel.getVerseSegments(verseRef);
+      if (featuredVerseSegments.length === 0) {
+        continue;
+      }
+      const featureStartSegmentRef: string = featuredVerseSegments[0];
+      const count: number = verseFeatureCount.get(featureStartSegmentRef) ?? 0;
+      verseFeatureCount.set(featureStartSegmentRef, count + 1);
+      for (const segment of featuredVerseSegments) {
+        if (!segments.includes(segment)) {
+          segments.push(segment);
+        }
+      }
+    }
+
+    // Format the featured verse refs
+    for (const segment of segments) {
+      const range = this.getSegmentRange(segment);
+      const element = this.getSegmentElement(segment);
+      if (range == null || element == null) {
+        continue;
+      }
+      const formatSegment: string = `${featureName}-segment`;
+      const formats: any = { [formatSegment]: value };
+      const count = verseFeatureCount.get(segment);
+      const formatCount: string = `${featureName}-count`;
+
+      if (count != null) {
+        formats[formatCount] = value ? count : false;
+      }
+      this.editor.formatText(range.index, range.length, formats, 'api');
+    }
+    return segments;
+  }
+
+  /**
+   * Embeds an element, with the specified format, into the editor, at an editor position that corresponds to
+   * the beginning of textAnchor.
+   */
+  embedElementInline(
+    verseRef: VerseRef,
+    id: string,
+    textAnchor: TextAnchor,
+    formatName: string,
+    format: any
+  ): string | undefined {
+    if (this.editor == null) {
+      return;
+    }
+
+    // A single verse can be associated with multiple segments (e.g verse_1_1, verse_1_1/p_1)
+    const verseSegments: string[] = this.viewModel.getVerseSegments(verseRef);
+    if (verseSegments.length === 0) {
+      return;
+    }
+    let editorPosOfSegmentToModify: RangeStatic | undefined = this.getSegmentRange(verseSegments[0]);
+    let startTextPosInVerse: number = textAnchor.start;
+    if (Array.from(this.viewModel.embeddedElements.keys()).includes(id)) {
+      return;
+    }
+
+    let embedSegmentRef: string = verseSegments[0];
+    for (const vs of verseSegments) {
+      const editorPosOfSomeSegment: RangeStatic | undefined = this.getSegmentRange(vs);
+      if (editorPosOfSomeSegment == null) {
+        break;
+      }
+      const skipBlankSegment: boolean = this.isSegmentBlank(vs) && textAnchor.length > 0;
+      if (skipBlankSegment) {
+        startTextPosInVerse--;
+        continue;
+      }
+
+      const segmentTextLength: number =
+        editorPosOfSomeSegment.length -
+        this.getEmbedCountInRange(editorPosOfSomeSegment.index, editorPosOfSomeSegment.length);
+      // Does the textAnchor begin in this segment?
+      if (segmentTextLength > startTextPosInVerse) {
+        editorPosOfSegmentToModify = editorPosOfSomeSegment;
+        embedSegmentRef = vs;
+        break;
+      } else {
+        // The embed starts in a later segment. Subtract the text-only length of this segment from the start index.
+        startTextPosInVerse -= segmentTextLength;
+        continue;
+      }
+    }
+
+    if (editorPosOfSegmentToModify == null) {
+      return;
+    }
+
+    const editorRange: EditorRange = this.viewModel.getEditorContentRange(
+      editorPosOfSegmentToModify.index,
+      startTextPosInVerse
+    );
+    const embedInsertPos: number =
+      editorRange.startEditorPosition + editorRange.editorLength + editorRange.trailingEmbedCount;
+
+    this.editor.insertEmbed(embedInsertPos, formatName, format, 'api');
+    const textAnchorRange = this.viewModel.getEditorContentRange(embedInsertPos, textAnchor.length);
+    const formatLength: number = textAnchorRange.editorLength;
+    this.editor.formatText(embedInsertPos, formatLength, 'text-anchor', 'true', 'api');
+    this.updateSegment();
+    return embedSegmentRef;
+  }
+
+  formatEmbed(embedId: string, embedName: string, format: any) {
+    const position: number | undefined = this.embeddedElements.get(embedId);
+    if (position != null && this.editor != null) {
+      this.editor.formatText(position, 1, embedName, format, 'api');
+    }
+  }
+
   /** Respond to text changes in the quill editor. */
   onContentChanged(delta: DeltaStatic, source: string): void {
+    if ((source as Sources) === 'user') {
+      this.deleteDuplicateNoteIcons(delta);
+    }
     this.viewModel.update(delta, source as Sources);
     this.updatePlaceholderText();
     // skip updating when only formatting changes occurred
     if (delta.ops != null && delta.ops.some(op => op.insert != null || op.delete != null)) {
-      this.update(delta);
+      const isUserEdit: boolean = source === 'user';
+      this.update(delta, isUserEdit);
     }
   }
 
@@ -451,6 +613,44 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         this.highlightMarker.style.visibility = 'hidden';
       }
     }
+  }
+
+  /**
+   * Remove embedded elements that are not part of the text data. This may be necessary to preserve the cursor
+   * location when switching between texts.
+   */
+  removeEmbeddedElements(): void {
+    if (this.editor == null) {
+      return;
+    }
+    let previousEmbedIndex = -1;
+    const deleteDelta = new Delta();
+    for (const embedIndex of this.viewModel.embeddedElements.values()) {
+      const lengthBetweenEmbeds: number = embedIndex - (previousEmbedIndex + 1);
+      if (lengthBetweenEmbeds > 0) {
+        // retain elements other than notes between the previous and current embed
+        deleteDelta.retain(lengthBetweenEmbeds);
+      }
+      deleteDelta.delete(1);
+      previousEmbedIndex = embedIndex;
+    }
+    deleteDelta.chop();
+    if (deleteDelta.ops != null && deleteDelta.ops.length > 0) {
+      this.editor.updateContents(deleteDelta, 'api');
+    }
+  }
+
+  isSegmentBlank(ref: string): boolean {
+    const segmentDelta: DeltaStatic | undefined = this.getSegmentContents(ref);
+    if (segmentDelta?.ops == null) {
+      return false;
+    }
+    for (const op of segmentDelta.ops) {
+      if (op.insert != null && op.insert.blank != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private applyEditorStyles() {
@@ -553,7 +753,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
   }
 
-  private update(delta?: DeltaStatic): void {
+  private update(delta?: DeltaStatic, isUserEdit?: boolean): void {
     let segmentRef: string | undefined;
     let checksum: number | undefined;
     let focus: boolean | undefined;
@@ -569,6 +769,25 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     if (this._editor != null && segmentRef == null) {
+      if (
+        this.segment != null &&
+        this.segment.text === '' &&
+        delta?.ops != null &&
+        delta.ops.length > 2 &&
+        delta.ops[0].retain != null &&
+        delta.ops[1].insert != null &&
+        delta.ops[1].insert['note-thread-embed'] != null
+      ) {
+        // Embedding notes into quill makes quill emit deltas when it registers that content has changed
+        // but quill incorrectly interprets the change when the selection is within the updated segment.
+        // Content coming after the selection gets moved before the selection. This moves the selection back.
+        const curSegmentRange: RangeStatic = this.segment.range;
+        const insertionPoint: number = delta.ops[0].retain;
+        const segmentEndPoint: number = curSegmentRange.index + curSegmentRange.length - 1;
+        if (insertionPoint >= curSegmentRange.index && insertionPoint <= segmentEndPoint) {
+          this._editor.setSelection(segmentEndPoint);
+        }
+      }
       // get currently selected segment ref
       const selection = this._editor.getSelection();
       if (selection != null) {
@@ -577,11 +796,14 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     const prevSegment = this._segment;
+    let oldVerseEmbedsToUpdate: Map<string, number> | undefined;
     if (segmentRef != null) {
       // update/switch current segment
       if (!this.tryChangeSegment(segmentRef, checksum, focus) && this._segment != null) {
         // the selection has not changed to a different segment, so update existing segment
+        const oldVerseEmbeds: Map<string, number> = clone(this._segment.embeddedElements);
         this.updateSegment();
+        oldVerseEmbedsToUpdate = oldVerseEmbeds;
         if (this._highlightSegment) {
           // ensure that the currently selected segment is highlighted
           this.highlight();
@@ -591,7 +813,13 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     Promise.resolve().then(() => this.adjustSelection());
-    this.updated.emit({ delta, prevSegment, segment: this._segment });
+    this.updated.emit({
+      delta,
+      prevSegment,
+      segment: this._segment,
+      oldVerseEmbeds: oldVerseEmbedsToUpdate,
+      isLocalUpdate: isUserEdit
+    });
   }
 
   private tryChangeSegment(
@@ -659,11 +887,32 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (this._segment == null) {
       return;
     }
-    const range = this.viewModel.getSegmentRange(this._segment.ref);
-    if (range != null) {
-      const text = this.viewModel.getSegmentText(this._segment.ref);
-      this._segment.update(text, range);
+
+    const matchArray: RegExpExecArray | null = VERSE_REGEX.exec(this._segment.ref);
+    const baseVerse = matchArray == null ? this._segment.ref : matchArray[0];
+    const startSegmentRange: RangeStatic | undefined = this.viewModel.getSegmentRange(baseVerse);
+    const segmentRange: RangeStatic | undefined = this.viewModel.getSegmentRange(this._segment.ref);
+    if (segmentRange == null) {
+      return;
     }
+
+    const endIndex: number = this.getVerseEndIndex(baseVerse) ?? segmentRange.index + segmentRange.length;
+    const startIndex: number = startSegmentRange?.index ?? segmentRange.index;
+    const text = this.viewModel.getSegmentText(this._segment.ref);
+    const verseEmbeddedElements: Map<string, number> = new Map<string, number>();
+    for (const [threadId, index] of this.embeddedElements.entries()) {
+      if (index >= startIndex && index < endIndex) {
+        verseEmbeddedElements.set(threadId, index);
+      }
+    }
+    this._segment.update(text, segmentRange, verseEmbeddedElements);
+  }
+
+  private getVerseEndIndex(baseRef: string): number | undefined {
+    // Look for the related segments of the base verse, and use the final related verse to determine the end index
+    const relatedRefs: string[] = this.viewModel.getRelatedSegmentRefs(baseRef);
+    const rangeLast: RangeStatic | undefined = this.viewModel.getSegmentRange(relatedRefs[relatedRefs.length - 1]);
+    return rangeLast == null ? undefined : rangeLast.index + rangeLast.length;
   }
 
   private adjustSelection(): void {
@@ -677,17 +926,66 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     let newSel: RangeStatic | undefined;
     if (this._segment.text === '') {
       // always select at the end of blank so the cursor is inside the segment and not between the segment and verse
-      newSel = { index: this._segment.range.index + 1, length: 0 };
+      newSel = { index: this._segment.range.index + this._segment.range.length, length: 0 };
     } else if (!this.multiSegmentSelection) {
       // selections outside of the text chooser dialog are not permitted to extend across segments
-      const newStart = Math.max(sel.index, this._segment.range.index);
+      let newStart = Math.max(sel.index, this._segment.range.index);
       const oldEnd = sel.index + sel.length;
       const segEnd = this._segment.range.index + this._segment.range.length;
       const newEnd = Math.min(oldEnd, segEnd);
+
+      const embedIndices: number[] = Array.from(this._segment.embeddedElements.values()).sort();
+      if (newStart === this._segment.range.index || embedIndices.includes(newStart - 1)) {
+        // if the selection is before an embed at the start of the segment or
+        // the selection is between embeds, move the selection behind it
+        while (embedIndices.includes(newStart)) {
+          newStart++;
+        }
+      }
       newSel = { index: newStart, length: Math.max(0, newEnd - newStart) };
     }
     if (newSel != null && (sel.index !== newSel.index || sel.length !== newSel.length)) {
       this._editor.setSelection(newSel, 'user');
+    }
+  }
+
+  /** Returns the number of embedded elements that are located at or after editorStartPos, through length of editor
+   * positions to check.
+   */
+  private getEmbedCountInRange(editorStartPos: number, length: number): number {
+    const embedPositions: number[] = Array.from(this.embeddedElements.values());
+    return embedPositions.filter((pos: number) => pos >= editorStartPos && pos < editorStartPos + length).length;
+  }
+
+  /**
+   * Notes that get inserted by the delta are removed from the editor to clean up duplicates.
+   * i.e. The user triggers an undo after deleting a note.
+   */
+  private deleteDuplicateNoteIcons(delta: DeltaStatic): void {
+    if (this.editor == null || delta.ops == null) {
+      return;
+    }
+    // Delta for the removal of notes that were re-created
+    let notesDeletionDelta: DeltaStatic | undefined;
+    for (const op of delta.ops) {
+      if (op.insert != null && op.insert['note-thread-embed'] != null) {
+        const embedId: string = op.insert['note-thread-embed']['threadid'];
+        let deletePosition = this.embeddedElements.get(embedId);
+        if (deletePosition != null) {
+          const noteDeleteOps: DeltaOperation[] = [{ retain: deletePosition }, { delete: 1 }];
+          const noteDeleteOpDelta = new Delta(noteDeleteOps);
+          notesDeletionDelta =
+            notesDeletionDelta == null ? noteDeleteOpDelta : noteDeleteOpDelta.compose(notesDeletionDelta);
+        }
+      }
+    }
+
+    if (notesDeletionDelta != null) {
+      notesDeletionDelta.chop();
+      // Defer the update so that the current delta can be processed
+      Promise.resolve(notesDeletionDelta).then(deleteDelta => {
+        this.editor?.updateContents(deleteDelta, 'api');
+      });
     }
   }
 
@@ -747,7 +1045,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       return;
     }
 
-    const project = (await this.projectService.get(this.id.projectId)).data;
+    const project = (await this.projectService.getProfile(this.id.projectId)).data;
     if (project == null) {
       return;
     }

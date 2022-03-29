@@ -10,10 +10,9 @@ namespace SIL.XForge.Scripture.Services
 {
     public interface IParatextNotesMapper
     {
-        List<SyncUser> NewSyncUsers { get; }
-
         Task InitAsync(UserSecret currentUserSecret, SFProjectSecret projectSecret, List<User> ptUsers,
             SFProject project, CancellationToken token);
-        Task<XElement> GetNotesChangelistAsync(XElement oldNotesElem, IEnumerable<IDocument<Question>> questionsDocs);
+        Task<XElement> GetNotesChangelistAsync(XElement oldNotesElem, IEnumerable<IDocument<Question>> questionsDocs,
+            Dictionary<string, ParatextUserProfile> ptProjectUsers);
     }
 }

@@ -2083,6 +2083,25 @@ namespace SIL.XForge.Scripture.Services
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project03, User02) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(DisabledSource, User01) }
                     }));
+
+                RealtimeService.AddRepository("paratext_note_threads", OTType.Json0,
+                    new MemoryRepository<NoteThread>(new[]
+                    {
+                        new NoteThread { Id = "project01:thread01", DataId = "thread01",
+                            Notes = new List<Note>()
+                            {
+                                new Note { DataId = "thread01:PT01", SyncUserRef = "PT01" },
+                                new Note { DataId = "thread01:PT01", SyncUserRef = "PT02" }
+                            }
+                        },
+                        new NoteThread { Id = "project01:thread02", DataId = "thread02",
+                            Notes = new List<Note>()
+                            {
+                                new Note { DataId = "thread02:PT01", SyncUserRef = "PT01" },
+                                new Note { DataId = "thread02:PT02", SyncUserRef = "PT02" }
+                            }
+                        },
+                    }));
                 var siteOptions = Substitute.For<IOptions<SiteOptions>>();
                 siteOptions.Value.Returns(new SiteOptions
                 {

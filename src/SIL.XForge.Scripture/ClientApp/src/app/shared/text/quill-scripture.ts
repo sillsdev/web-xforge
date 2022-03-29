@@ -36,6 +36,13 @@ interface Chapter extends UsxStyle {
   eid?: string;
 }
 
+interface NoteThread {
+  iconsrc: string;
+  preview: string;
+  threadid: string;
+  highlight?: boolean;
+}
+
 interface Verse extends UsxStyle {
   number: string;
   altnumber?: string;
@@ -174,6 +181,7 @@ export function registerScripture(): string[] {
   }
   formats.push(EmptyEmbed);
 
+  /** Span of characters or elements, that can have formatting. */
   class CharInline extends Inline {
     static blotName = 'char';
     static tagName = 'usx-char';
@@ -269,6 +277,45 @@ export function registerScripture(): string[] {
     }
   }
   formats.push(NoteEmbed);
+
+  class NoteThreadEmbed extends Embed {
+    static blotName = 'note-thread-embed';
+    static tagName = 'display-note';
+
+    static create(value: NoteThread) {
+      const node = super.create(value) as HTMLElement;
+      node.setAttribute('style', value.iconsrc);
+      node.setAttribute('title', value.preview);
+      node.setAttribute(customAttributeName('thread-id'), value.threadid);
+      if (value.highlight) {
+        node.classList.add('note-thread-highlight');
+      }
+      return node;
+    }
+
+    static formats(node: HTMLElement): NoteThread {
+      return NoteThreadEmbed.value(node);
+    }
+
+    static value(node: HTMLElement): NoteThread {
+      return {
+        iconsrc: node.getAttribute('style')!,
+        preview: node.getAttribute('title')!,
+        threadid: node.getAttribute(customAttributeName('thread-id'))!
+      };
+    }
+
+    format(name: string, value: any): void {
+      if (name === NoteThreadEmbed.blotName && value != null) {
+        const ref = value as NoteThread;
+        const elem = this.domNode as HTMLElement;
+        ref.highlight ? elem.classList.add('note-thread-highlight') : elem.classList.remove('note-thread-highlight');
+      } else {
+        super.format(name, value);
+      }
+    }
+  }
+  formats.push(NoteThreadEmbed);
 
   class OptBreakEmbed extends Embed {
     static blotName = 'optbreak';
@@ -448,6 +495,13 @@ export function registerScripture(): string[] {
   }
   formats.push(SegmentInline);
 
+  class TextAnchorInline extends Inline {
+    static blotName = 'text-anchor';
+    static tagName = 'display-text-anchor';
+  }
+  formats.push(TextAnchorInline);
+
+  (Inline as any).order.push('text-anchor');
   (Inline as any).order.push('segment');
   (Inline as any).order.push('para-contents');
 
@@ -470,7 +524,6 @@ export function registerScripture(): string[] {
     }
   }
   formats.push(ChapterEmbed);
-
   Scroll.allowedChildren.push(ParaBlock);
   Scroll.allowedChildren.push(ChapterEmbed);
 
@@ -530,6 +583,24 @@ export function registerScripture(): string[] {
   );
   formats.push(ParaStyleDescriptionAttribute);
 
+  const NoteThreadSegmentClass = new ClassAttributor('note-thread-segment', 'note-thread-segment', {
+    scope: Parchment.Scope.INLINE
+  });
+  formats.push(NoteThreadSegmentClass);
+  const NoteThreadHighlightClass = new ClassAttributor('note-thread-highlight', 'note-thread-highlight', {
+    scope: Parchment.Scope.INLINE
+  });
+  formats.push(NoteThreadHighlightClass);
+
+  const NoteThreadCountAttribute = new QuillParchment.Attributor.Attribute(
+    'note-thread-count',
+    'data-note-thread-count',
+    {
+      scope: Parchment.Scope.INLINE
+    }
+  );
+  formats.push(NoteThreadCountAttribute);
+
   const InvalidBlockClass = new ClassAttributor('invalid-block', 'invalid-block', {
     scope: Parchment.Scope.BLOCK
   });
@@ -586,7 +657,7 @@ export function registerScripture(): string[] {
       this.lastRecorded = 0;
       this.ignoreChange = true;
       // during undo/redo, segments can be incorrectly highlighted, so explicitly remove incorrect highlighting
-      this.quill.updateContents(removeSegmentHighlight(delta[source]), 'user');
+      this.quill.updateContents(removeObsoleteSegmentAttrs(delta[source]), 'user');
       this.ignoreChange = false;
       const index = getLastChangeIndex(delta[source]);
       this.quill.setSelection(index);
@@ -595,8 +666,9 @@ export function registerScripture(): string[] {
 
   /**
    * Updates delta to remove segment highlights from segments that are not explicitly highlighted
+   * and strips off formatting from note thread embeds.
    */
-  function removeSegmentHighlight(delta: DeltaStatic): DeltaStatic {
+  function removeObsoleteSegmentAttrs(delta: DeltaStatic): DeltaStatic {
     const updatedDelta = new Delta();
     if (delta.ops != null) {
       for (const op of delta.ops) {
@@ -604,6 +676,10 @@ export function registerScripture(): string[] {
         const attrs = modelOp.attributes;
         if (attrs != null && attrs['segment'] != null && attrs['highlight-segment'] == null) {
           attrs['highlight-segment'] = false;
+        }
+        if (typeof modelOp.insert === 'object') {
+          // clear the formatting attributes on embeds to prevent dom elements from being corrupted
+          modelOp.attributes = undefined;
         }
         (updatedDelta as any).push(modelOp);
       }

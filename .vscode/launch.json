@@ -39,6 +39,20 @@
       },
     },
     {
+      "name": "Run and debug RealtimeServer tests",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/RealtimeServer/node_modules/.bin/jest",
+      "args": ["--runInBand"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "disableOptimisticBPs": true,
+      "cwd": "${workspaceFolder}/src/RealtimeServer",
+      "windows": {
+        "program": "${workspaceFolder}/src/RealtimeServer/node_modules/jest/bin/jest"
+      }
+    },
+    {
       "name": "Launch Chromium and debug the running frontend",
       "type": "pwa-chrome",
       "request": "launch",
@@ -98,20 +112,6 @@
       "port": 9230
     },
     {
-      "name": "vscode-jest-tests",
-      "type": "node",
-      "request": "launch",
-      "program": "${workspaceFolder}/src/RealtimeServer/node_modules/.bin/jest",
-      "args": ["--runInBand"],
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "disableOptimisticBPs": true,
-      "cwd": "${workspaceFolder}/src/RealtimeServer",
-      "windows": {
-        "program": "${workspaceFolder}/src/RealtimeServer/node_modules/jest/bin/jest"
-      }
-    },
-    {
       "name": "Launch Chromium and run and debug current spec",
       "type": "chrome",
       "request": "launch",
@@ -127,6 +127,22 @@
         "runtimeExecutable": "/usr/bin/chromium-browser"
       }
     },
+    {
+      "name": "Migration Sync User",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-migrator-sync-user-to-pt-user",
+      "program": "${workspaceRoot}/src/Migrations/SyncUserToPTUser/bin/Debug/netcoreapp3.1/SyncUserToPTUser.dll",
+      "cwd": "${workspaceRoot}/src/Migrations/SyncUserToPTUser",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "args": ["--start-ng-serve=listen"],
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        // "SYNC_USER_PROJECT_IDS": "6201831c0e13de5c38e0ed7d",
+        "SYNC_USER_MODE_RUN": "true"
+      }
+    }
     // {
     //   "name": "Migration Foo",
     //   "type": "coreclr",

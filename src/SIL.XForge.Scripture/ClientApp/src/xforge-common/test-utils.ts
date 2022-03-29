@@ -67,6 +67,9 @@ export const emptyHammerLoader = {
   useValue: () => new Promise(() => {})
 };
 
+// Just closing the material dialog can leave residue of the overlay backdrop so wait for it to finish closing
+export const matDialogCloseDelay = 701;
+
 export function getAudioBlob(): Blob {
   const base64 =
     'UklGRlgAAFdBVkVmbXQgEAAAAAEAAQBAHwAAPgAAAgAQAGRhdGFYAAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAg' +

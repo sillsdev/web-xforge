@@ -19,7 +19,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -340,7 +340,7 @@ class TestEnvironment {
     };
     args = { ...defaultArgs, ...args };
     const shareLevel = args.isLinkSharingEnabled ? TranslateShareLevel.Anyone : TranslateShareLevel.Specific;
-    this.realtimeService.addSnapshot(SFProjectDoc.COLLECTION, {
+    this.realtimeService.addSnapshot(SFProjectProfileDoc.COLLECTION, {
       id: args.projectId,
       data: {
         userRoles: {
@@ -352,8 +352,8 @@ class TestEnvironment {
         checkingConfig: { checkingEnabled: args.checkingEnabled, shareEnabled: true, shareLevel }
       }
     });
-    when(mockedProjectService.get(anything())).thenCall(projectId =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId)
+    when(mockedProjectService.getProfile(anything())).thenCall(projectId =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
     );
     when(mockedPwaService.onlineStatus).thenReturn(this._onlineStatus.asObservable());
     when(mockedPwaService.isOnline).thenCall(() => this._onlineStatus.getValue());
@@ -461,13 +461,13 @@ class TestEnvironment {
   }
 
   updateCheckingProperties(config: CheckingConfig): Promise<boolean> {
-    const projectDoc: SFProjectDoc = this.realtimeService.get(SFProjectDoc.COLLECTION, 'project01');
+    const projectDoc: SFProjectProfileDoc = this.realtimeService.get(SFProjectProfileDoc.COLLECTION, 'project01');
     return projectDoc.submitJson0Op(op => op.set(p => p.checkingConfig, config));
   }
 
   setCheckingShareLevel(value: CheckingShareLevel): void {
     this.realtimeService
-      .get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01')
+      .get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, 'project01')
       .submitJson0Op(op => op.set<CheckingShareLevel>(p => p.checkingConfig.shareLevel, value));
     this.wait();
   }

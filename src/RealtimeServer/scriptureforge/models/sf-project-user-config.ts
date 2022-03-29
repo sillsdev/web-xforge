@@ -18,6 +18,7 @@ export interface SFProjectUserConfig extends ProjectData {
   numSuggestions: number;
   selectedSegment: string;
   selectedSegmentChecksum?: number;
+  noteRefsRead: string[];
   questionRefsRead: string[];
   answerRefsRead: string[];
   commentRefsRead: string[];

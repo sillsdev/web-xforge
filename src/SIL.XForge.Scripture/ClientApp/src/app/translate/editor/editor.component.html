@@ -34,7 +34,7 @@
           <app-text
             #source
             [isReadOnly]="true"
-            [highlightSegment]="target.hasFocus"
+            [highlightSegment]="targetFocused"
             (loaded)="onTextLoaded('source')"
             (updated)="onSourceUpdated($event.delta != null)"
             [isRightToLeft]="isSourceRightToLeft"
@@ -42,6 +42,7 @@
         </div>
       </div>
       <div
+        id="target-text-area"
         class="text-area"
         [ngClass.gt-xs]="{ 'text-area-full-width': !showSource }"
         ngClass.xs="text-area-full-width"
@@ -66,9 +67,18 @@
           <app-text
             #target
             [isReadOnly]="!canEdit"
-            (updated)="onTargetUpdated($event.segment, $event.delta, $event.prevSegment)"
+            (updated)="
+              onTargetUpdated(
+                $event.segment,
+                $event.delta,
+                $event.prevSegment,
+                $event.oldVerseEmbeds,
+                $event.isLocalUpdate
+              )
+            "
             (loaded)="onTextLoaded('target')"
-            [highlightSegment]="target.hasFocus"
+            (focused)="targetFocused = $event"
+            [highlightSegment]="targetFocused"
             [markInvalid]="true"
             [isRightToLeft]="isTargetRightToLeft"
           ></app-text>

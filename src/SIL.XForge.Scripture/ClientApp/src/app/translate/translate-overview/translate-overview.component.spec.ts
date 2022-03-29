@@ -8,7 +8,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { ProgressStatus, RemoteTranslationEngine } from '@sillsdev/machine';
 import { CookieService } from 'ngx-cookie-service';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
@@ -23,7 +23,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDocId } from '../../core/models/text-doc';
 import { Delta, TextDoc } from '../../core/models/text-doc';
@@ -187,8 +187,8 @@ class TestEnvironment {
     when(mockedSFProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
-    when(mockedSFProjectService.get('project01')).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
+    when(mockedSFProjectService.getProfile('project01')).thenCall(() =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01')
     );
     this.setCurrentUser();
 
@@ -256,7 +256,7 @@ class TestEnvironment {
   }
 
   setupProjectData(translationSuggestionsEnabled: boolean = true): void {
-    this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
+    this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
       id: 'project01',
       data: {
         name: 'project 01',
@@ -362,7 +362,7 @@ class TestEnvironment {
   deleteText(bookNum: number, chapter: number): void {
     const textDoc = this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, getTextDocId('project01', bookNum, chapter));
     textDoc.delete();
-    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01');
+    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, 'project01');
     const textIndex = projectDoc.data!.texts.findIndex(t => t.bookNum === bookNum);
     const chapterIndex = projectDoc.data!.texts[textIndex].chapters.findIndex(c => c.number === chapter);
     projectDoc.submitJson0Op(ops => ops.remove(p => p.texts[textIndex].chapters, chapterIndex), false);
@@ -370,7 +370,7 @@ class TestEnvironment {
   }
 
   simulateTranslateSuggestionsEnabled(enabled: boolean = true) {
-    const projectDoc = <SFProjectDoc>this.realtimeService.get(SFProjectDoc.COLLECTION, 'project01');
+    const projectDoc = <SFProjectProfileDoc>this.realtimeService.get(SFProjectProfileDoc.COLLECTION, 'project01');
     projectDoc.submitJson0Op(
       op => op.set<boolean>(p => p.translateConfig.translationSuggestionsEnabled, enabled),
       false

@@ -14,6 +14,12 @@ export async function fetchDoc(conn: Connection, collection: string, id: string)
   return doc;
 }
 
+export async function hasDoc(conn: Connection, collection: string, id: string): Promise<boolean> {
+  const doc = conn.get(collection, id);
+  await docFetch(doc);
+  return doc.data != null;
+}
+
 export function createDoc<T>(conn: Connection, collection: string, id: string, data: T, type?: OTType): Promise<void> {
   return docCreate(conn.get(collection, id), data, type);
 }

@@ -1,16 +1,16 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
-import { I18nService } from 'xforge-common/i18n.service';
-import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
-import { UserService } from 'xforge-common/user.service';
+import { I18nService } from '../i18n.service';
+import { UserProfileDoc } from '../models/user-profile-doc';
+import { UserService } from '../user.service';
 
 @Component({
-  selector: 'app-checking-owner',
-  templateUrl: './checking-owner.component.html',
-  styleUrls: ['./checking-owner.component.scss']
+  selector: 'app-owner',
+  templateUrl: './owner.component.html',
+  styleUrls: ['./owner.component.scss']
 })
-export class CheckingOwnerComponent implements OnInit {
+export class OwnerComponent implements OnInit {
   @Input() ownerRef?: string;
   @Input() includeAvatar: boolean = false;
   @Input() dateTime: string = '';
