@@ -114,7 +114,8 @@ class TestEnvironment {
         selectedSegment: '',
         questionRefsRead: ['question01'],
         answerRefsRead: ['answer01'],
-        commentRefsRead: ['comment01']
+        commentRefsRead: ['comment01'],
+        noteRefsRead: []
       }
     );
 
@@ -143,7 +144,8 @@ class TestEnvironment {
         selectedSegment: '',
         questionRefsRead: ['question01'],
         answerRefsRead: ['answer01'],
-        commentRefsRead: ['comment01']
+        commentRefsRead: ['comment01'],
+        noteRefsRead: []
       }
     );
 
@@ -170,6 +172,7 @@ class TestEnvironment {
         projectAdmin: SFProjectRole.ParatextAdministrator,
         checker: SFProjectRole.CommunityChecker
       },
+      paratextUsers: [{ sfUserId: 'projectAdmin', username: 'ptprojectAdmin', opaqueUserId: 'opaqueprojectAdmin' }],
       userPermissions: {}
     });
 

@@ -13,7 +13,6 @@ import { CheckingRoutingModule } from './checking-routing.module';
 import { CheckingAnswersComponent } from './checking/checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking/checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking/checking-answers/checking-comments/checking-comments.component';
-import { CheckingOwnerComponent } from './checking/checking-answers/checking-owner/checking-owner.component';
 import { CheckingAudioCombinedComponent } from './checking/checking-audio-combined/checking-audio-combined.component';
 import {
   AudioTimePipe,
@@ -40,7 +39,6 @@ import { QuestionDialogComponent } from './question-dialog/question-dialog.compo
     ImportQuestionsDialogComponent,
     ImportQuestionsConfirmationDialogComponent,
     FontSizeComponent,
-    CheckingOwnerComponent,
     CheckingCommentsComponent,
     CheckingCommentFormComponent,
     CheckingAudioRecorderComponent,

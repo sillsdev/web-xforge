@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using SIL.XForge.Models;
+using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Utils;
 
@@ -31,8 +32,13 @@ namespace SIL.XForge.Scripture.Services
         string GetBookText(UserSecret userSecret, string paratextId, int bookNum);
         Task PutBookText(UserSecret userSecret, string paratextId, int bookNum, string usx,
             Dictionary<int, string> chapterAuthors = null);
-        string GetNotes(UserSecret userSecret, string paratextId, int bookNum);
-        void PutNotes(UserSecret userSecret, string paratextId, string notesText);
+        string GetNotes(UserSecret userSecret, string ptProjectId, int bookNum);
+        void PutNotes(UserSecret userSecret, string ptProjectId, string notesText);
+        Task UpdateParatextCommentsAsync(UserSecret userSecret, string projectId, int bookNum,
+            IEnumerable<IDocument<NoteThread>> noteThreadDocs, Dictionary<string, ParatextUserProfile> ptProjectUsers);
+        IEnumerable<NoteThreadChange> GetNoteThreadChanges(UserSecret userSecret, string projectId, int bookNum,
+            IEnumerable<IDocument<NoteThread>> noteThreadDocs, Dictionary<int, ChapterDelta> chapterDeltas,
+            Dictionary<string, ParatextUserProfile> ptProjectUsers);
         string GetLatestSharedVersion(UserSecret userSecret, string paratextId);
         bool BackupExists(UserSecret userSecret, string paratextId);
         bool BackupRepository(UserSecret userSecret, string paratextId);

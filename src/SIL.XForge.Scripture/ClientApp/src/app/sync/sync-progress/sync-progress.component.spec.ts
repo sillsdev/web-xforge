@@ -4,6 +4,7 @@ import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/model
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { paratextUsersFromRoles } from 'src/app/shared/test-utils';
 import { mock, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -162,6 +163,7 @@ class TestEnvironment {
         editable: true,
         texts: [],
         userRoles: this.userRoleTarget,
+        paratextUsers: paratextUsersFromRoles(this.userRoleTarget),
         userPermissions: {}
       }
     });
@@ -195,6 +197,7 @@ class TestEnvironment {
           editable: true,
           texts: [],
           userRoles: this.userRoleSource,
+          paratextUsers: paratextUsersFromRoles(this.userRoleSource),
           userPermissions: {}
         }
       });

@@ -196,6 +196,9 @@ class TestEnvironment {
     userRoles: {
       [this.adminUser.id]: this.adminUser.role
     },
+    paratextUsers: [
+      { sfUserId: this.adminUser.id, username: `pt${this.adminUser.id}`, opaqueUserId: `opaque${this.adminUser.id}` }
+    ],
     userPermissions: {}
   };
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);

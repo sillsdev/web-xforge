@@ -1,7 +1,10 @@
 import { Injectable } from '@angular/core';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
+import { NoteThread, NoteStatus } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProject, SF_PROJECTS_COLLECTION } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getSFProjectUserConfigDocId } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { Subject } from 'rxjs';
@@ -15,12 +18,14 @@ import { RealtimeService } from 'xforge-common/realtime.service';
 import { RetryingRequest, RetryingRequestService } from 'xforge-common/retrying-request.service';
 import { TransceleratorQuestion } from '../checking/import-questions-dialog/import-questions-dialog.component';
 import { InviteeStatus } from '../users/collaborators/collaborators.component';
+import { NoteThreadDoc } from './models/note-thread-doc';
 import { QuestionDoc } from './models/question-doc';
 import { SFProjectCreateSettings } from './models/sf-project-create-settings';
 import { SFProjectDoc } from './models/sf-project-doc';
 import { SF_PROJECT_ROLES } from './models/sf-project-role-info';
 import { SFProjectSettings } from './models/sf-project-settings';
 import { SFProjectUserConfigDoc } from './models/sf-project-user-config-doc';
+import { SFProjectProfileDoc } from './models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from './models/text-doc';
 import { TranslateMetrics } from './models/translate-metrics';
 
@@ -43,12 +48,28 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return (await this.onlineInvoke<string>('create', { settings }))!;
   }
 
+  /**
+   * Returns the SF project if the user has a role that allows access (i.e. a paratext role),
+   * otherwise returns undefined.
+   */
+  async tryGetForRole(id: string, role: string): Promise<SFProjectDoc | undefined> {
+    if (SF_PROJECT_RIGHTS.roleHasRight(role, SFProjectDomain.Project, Operation.View)) {
+      return await this.get(id);
+    }
+    return undefined;
+  }
+
+  /** Returns the project profile with the project data that all project members can access. */
+  getProfile(id: string): Promise<SFProjectProfileDoc> {
+    return this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id);
+  }
+
   getUserConfig(id: string, userId: string): Promise<SFProjectUserConfigDoc> {
     return this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, getSFProjectUserConfigDocId(id, userId));
   }
 
   async isProjectAdmin(projectId: string, userId: string): Promise<boolean> {
-    const projectDoc = await this.get(projectId);
+    const projectDoc = await this.getProfile(projectId);
     return (
       projectDoc != null &&
       projectDoc.data != null &&
@@ -68,6 +89,10 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
 
   getText(textId: TextDocId | string): Promise<TextDoc> {
     return this.realtimeService.subscribe(TextDoc.COLLECTION, textId instanceof TextDocId ? textId.toString() : textId);
+  }
+
+  getNoteThread(threadId: string): Promise<NoteThreadDoc> {
+    return this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, threadId);
   }
 
   queryQuestions(
@@ -113,6 +138,14 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
       question.audioUrl = audioUrl;
     }
     return this.realtimeService.create<QuestionDoc>(QuestionDoc.COLLECTION, docId, question);
+  }
+
+  queryNoteThreads(id: string): Promise<RealtimeQuery<NoteThreadDoc>> {
+    const queryParams: QueryParameters = {
+      [obj<NoteThread>().pathStr(t => t.projectRef)]: id,
+      [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo
+    };
+    return this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, queryParams);
   }
 
   onlineSync(id: string): Promise<void> {

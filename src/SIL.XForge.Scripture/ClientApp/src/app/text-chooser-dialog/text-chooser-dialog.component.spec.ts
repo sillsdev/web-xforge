@@ -4,7 +4,7 @@ import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@an
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { CookieService } from 'ngx-cookie-service';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
@@ -22,7 +22,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { CheckingModule } from '../checking/checking.module';
-import { SFProjectDoc } from '../core/models/sf-project-doc';
+import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { Delta, TextDoc } from '../core/models/text-doc';
 import { SFProjectService } from '../core/sf-project.service';
@@ -373,7 +373,7 @@ class TestEnvironment {
     permissions: {}
   };
   static textsByBookId = { ['MAT']: TestEnvironment.matthewText };
-  static testProject: SFProject = {
+  static testProject: SFProjectProfile = {
     paratextId: 'pt01',
     shortName: 'P01',
     name: 'Project 01',
@@ -472,13 +472,13 @@ class TestEnvironment {
 
     this.addTextDoc(config.bookNum);
 
-    this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
+    this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
       id: TestEnvironment.PROJECT01,
       data: TestEnvironment.testProject
     });
 
-    when(mockedProjectService.get(anything())).thenCall(id =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id)
+    when(mockedProjectService.getProfile(anything())).thenCall(id =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
     );
     when(mockedProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())

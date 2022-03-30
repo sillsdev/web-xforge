@@ -71,10 +71,22 @@ function removeAttribute(op: DeltaOperation, name: string): void {
   }
 }
 
+/** Provides information about a range of text that includes the embedded elements */
+export interface EditorRange {
+  startEditorPosition: number;
+  editorLength: number;
+  embedsWithinRange: number;
+  /** Count of sequential embeds leading off the range */
+  leadingEmbedCount: number;
+  /** Count of sequential embeds immediately following the range */
+  trailingEmbedCount: number;
+}
+
 class SegmentInfo {
   length: number = 0;
   origRef?: string;
   containsBlank: boolean = false;
+  notesCount: number = 0;
   isVerseNext: boolean = false;
   hasInitialFormat: boolean = false;
 
@@ -97,11 +109,19 @@ export class TextViewModel {
   private remoteChangesSub?: Subscription;
   private onCreateSub?: Subscription;
   private textDoc?: TextDoc;
-
+  /**
+   * A mapping of IDs of elements embedded into the quill editor to their positions.
+   * These elements are in addition to the text data i.e. Note threads
+   */
+  private _embeddedElements: Map<string, number> = new Map<string, number>();
   constructor() {}
 
   get segments(): IterableIterator<[string, RangeStatic]> {
     return this._segments.entries();
+  }
+
+  get embeddedElements(): Map<string, number> {
+    return this._embeddedElements;
   }
 
   get isLoaded(): boolean {
@@ -132,7 +152,10 @@ export class TextViewModel {
     editor.setContents(this.textDoc.data as DeltaStatic);
     editor.history.clear();
     if (subscribeToUpdates) {
-      this.remoteChangesSub = this.textDoc.remoteChanges$.subscribe(ops => editor.updateContents(ops as DeltaStatic));
+      this.remoteChangesSub = this.textDoc.remoteChanges$.subscribe(ops => {
+        const deltaWithEmbeds: DeltaStatic = this.addEmbeddedElementsToDelta(ops as DeltaStatic);
+        editor.updateContents(deltaWithEmbeds, 'api');
+      });
     }
     this.onCreateSub = this.textDoc.create$.subscribe(() => {
       if (textDoc.data != null) {
@@ -154,6 +177,7 @@ export class TextViewModel {
       this.editor.setText('', 'silent');
     }
     this._segments.clear();
+    this._embeddedElements.clear();
   }
 
   /**
@@ -280,6 +304,12 @@ export class TextViewModel {
     return Array.from(this._segments.keys()).filter(r => r.indexOf(ref + '/') === 0);
   }
 
+  /** Get the segments that fall within a given verse reference. A segment is considered
+   * to be in the reference if (1) its ref is in the format verse_c_v or verse_c_v-w, and that
+   * ref is within the given verse reference, or (2) its ref is not in that format, but the
+   * first preceding segment with a ref in that format is within the given verse reference.
+   * For example, the result for MAT 1:1 can be as follows: [verse_1_1, verse_1_1/p_1, s_1]
+   */
   getVerseSegments(verseRef?: VerseRef): string[] {
     const segmentsInVerseRef: string[] = [];
     if (verseRef == null) {
@@ -288,14 +318,16 @@ export class TextViewModel {
     const verses: VerseRef[] = verseRef.allVerses();
     const startVerseNum: number = verses[0].verseNum;
     const lastVerseNum: number = verses[verses.length - 1].verseNum;
+    let matchStartNum = 0;
+    let matchLastNum = 0;
     for (const segment of this._segments.keys()) {
       const match: RegExpExecArray | null = VERSE_FROM_SEGMENT_REF_REGEX.exec(segment);
-      if (match == null) {
-        continue;
+      if (match != null) {
+        // update numbers for the new verse
+        const verseParts: string[] = match[1].split('-');
+        matchStartNum = +verseParts[0];
+        matchLastNum = +verseParts[verseParts.length - 1];
       }
-      const verseParts: string[] = match[1].split('-');
-      const matchStartNum: number = +verseParts[0];
-      const matchLastNum: number = +verseParts[verseParts.length - 1];
       const matchStartsWithin = matchStartNum >= startVerseNum && matchStartNum <= lastVerseNum;
       const matchEndsWithin = matchLastNum >= startVerseNum && matchLastNum <= lastVerseNum;
       if (matchStartsWithin || matchEndsWithin) {
@@ -313,6 +345,12 @@ export class TextViewModel {
     const editor = this.checkEditor();
     const range = this.getSegmentRange(ref);
     return range == null ? '' : editor.getText(range.index, range.length);
+  }
+
+  getSegmentContents(ref: string): DeltaStatic | undefined {
+    const editor: Quill = this.checkEditor();
+    const range: RangeStatic | undefined = this.getSegmentRange(ref);
+    return range == null ? undefined : editor.getContents(range.index, range.length);
   }
 
   getSegmentRef(range: RangeStatic): string | undefined {
@@ -360,8 +398,44 @@ export class TextViewModel {
     return undefined;
   }
 
+  /** Returns editor range information that corresponds to a text position past an editor position. */
+  getEditorContentRange(startEditorPosition: number, textPosPast: number): EditorRange {
+    const embedEditorPositions = Array.from(this.embeddedElements.values());
+    const leadingEmbedCount = this.countSequentialEmbedsStartingAt(startEditorPosition);
+    let resultingEditorPos = startEditorPosition + leadingEmbedCount;
+    let textCharactersFound = 0;
+    let embedsWithinRange = leadingEmbedCount;
+    while (textCharactersFound < textPosPast) {
+      if (!embedEditorPositions.includes(resultingEditorPos)) {
+        textCharactersFound++;
+      } else {
+        embedsWithinRange++;
+      }
+      resultingEditorPos++;
+    }
+    // trailing embeds do not count towards embedsWithinRange
+    const trailingEmbedCount: number = this.countSequentialEmbedsStartingAt(resultingEditorPos);
+    return {
+      startEditorPosition,
+      editorLength: resultingEditorPos - startEditorPosition,
+      embedsWithinRange,
+      leadingEmbedCount,
+      trailingEmbedCount
+    };
+  }
+
+  private countSequentialEmbedsStartingAt(startEditorPosition: number): number {
+    const embedEditorPositions = Array.from(this.embeddedElements.values());
+    // add up the leading embeds
+    let leadingEmbedCount = 0;
+    while (embedEditorPositions.includes(startEditorPosition + leadingEmbedCount)) {
+      leadingEmbedCount++;
+    }
+    return leadingEmbedCount;
+  }
+
   private viewToData(delta: DeltaStatic): DeltaStatic {
-    const modelDelta = new Delta();
+    let modelDelta = new Delta();
     if (delta.ops != null) {
       for (const op of delta.ops) {
         const modelOp: DeltaOperation = cloneDeep(op);
@@ -371,6 +445,9 @@ export class TextViewModel {
           'para-contents',
           'question-segment',
           'question-count',
+          'note-thread-segment',
+          'note-thread-count',
+          'text-anchor',
           'initial',
           'direction-segment',
           'direction-block',
@@ -380,6 +457,8 @@ export class TextViewModel {
         }
         (modelDelta as any).push(modelOp);
       }
+      // Remove Paratext notes from model delta
+      modelDelta = this.removeEmbeddedElementsFromDelta(modelDelta);
     }
     return modelDelta.chop();
   }
@@ -394,6 +473,7 @@ export class TextViewModel {
     let fixOffset = 0;
     const delta = editor.getContents();
     this._segments.clear();
+    this._embeddedElements.clear();
     if (delta.ops == null) {
       return convertDelta;
     }
@@ -496,6 +576,11 @@ export class TextViewModel {
           if (op.attributes != null && op.attributes['initial'] === true) {
             curSegment.hasInitialFormat = true;
           }
+        } else if (op.insert['note-thread-embed'] != null) {
+          // record the presence of an embedded note in the segment
+          const id = op.attributes != null && op.attributes['threadid'];
+          this._embeddedElements.set(id, curIndex + curSegment.length - 1);
+          curSegment.notesCount++;
         }
       }
       convertDelta.retain(len, attrs);
@@ -512,10 +597,11 @@ export class TextViewModel {
     fixDelta: DeltaStatic,
     fixOffset: number
   ): [DeltaStatic, number] {
-    if (segment.length === 0) {
+    if (segment.length - segment.notesCount === 0) {
       // insert blank
       const delta = new Delta();
-      delta.retain(segment.index + fixOffset);
+      // insert blank after any existing notes
+      delta.retain(segment.index + segment.notesCount + fixOffset);
       const attrs: any = { segment: segment.ref, 'para-contents': true, 'direction-segment': 'auto' };
       if (segment.isInitial) {
         attrs.initial = true;
@@ -523,9 +609,10 @@ export class TextViewModel {
       delta.insert({ blank: true }, attrs);
       fixDelta = fixDelta.compose(delta);
       fixOffset++;
-    } else if (segment.containsBlank && segment.length > 1) {
+    } else if (segment.containsBlank && segment.length - segment.notesCount > 1) {
+      // The segment contains a blank and there is text other than translation notes
       // delete blank
-      const delta = new Delta().retain(segment.index + fixOffset).delete(1);
+      const delta = new Delta().retain(segment.index + fixOffset + segment.notesCount).delete(1);
       fixDelta = fixDelta.compose(delta);
       fixOffset--;
       const sel = editor.getSelection();
@@ -555,5 +642,121 @@ export class TextViewModel {
       throw new Error('The editor has not been assigned.');
     }
     return this.editor;
+  }
+
+  /**
+   * Strip off the embedded elements displayed in quill from the delta. This can be used to convert a delta from
+   * user edits to apply to a text doc.
+   */
+  private removeEmbeddedElementsFromDelta(modelDelta: DeltaStatic): DeltaStatic {
+    if (modelDelta.ops == null || modelDelta.ops.length < 1) {
+      return new Delta();
+    }
+    const adjustedDelta = new Delta();
+    let curIndex: number = 0;
+    for (const op of modelDelta.ops) {
+      let cloneOp: DeltaOperation | undefined = cloneDeep(op);
+      if (cloneOp.retain != null) {
+        const embedsInRange: number = this.getEmbedsInEditorRange(curIndex, cloneOp.retain);
+        curIndex += cloneOp.retain;
+        // remove from the retain op the number of embedded elements contained in its content
+        cloneOp.retain -= embedsInRange;
+      } else if (cloneOp.delete != null) {
+        const embedsInRange: number = this.getEmbedsInEditorRange(curIndex, cloneOp.delete);
+        curIndex += cloneOp.delete;
+        // remove from the delete op the number of embedded elements contained in its content
+        cloneOp.delete -= embedsInRange;
+        if (cloneOp.delete < 1) {
+          cloneOp = undefined;
+        }
+      } else if (cloneOp.insert != null && cloneOp.insert['note-thread-embed'] != null) {
+        cloneOp = undefined;
+      }
+
+      if (cloneOp != null) {
+        (adjustedDelta as any).push(cloneOp);
+      }
+    }
+
+    return adjustedDelta;
+  }
+
+  /**
+   * Add in the embedded elements displayed in quill to the delta. This can be used to convert a delta from a remote
+   * edit to apply to the current editor content.
+   */
+  private addEmbeddedElementsToDelta(modelDelta: DeltaStatic): DeltaStatic {
+    if (modelDelta.ops == null || modelDelta.ops.length < 1) {
+      return new Delta();
+    }
+    const adjustedDelta = new Delta();
+    let curIndex: number = 0;
+    let embedsUpToIndex: number = 0;
+    let previousOp: 'retain' | 'insert' | 'delete' | undefined;
+    let editorStartPos: number = 0;
+    for (const op of modelDelta.ops) {
+      let cloneOp: DeltaOperation = cloneDeep(op);
+      editorStartPos = curIndex + embedsUpToIndex;
+      if (cloneOp.retain != null) {
+        // editorStartPos must be the current index plus the number of embeds previous
+        const editorRange: EditorRange = this.getEditorContentRange(editorStartPos, cloneOp.retain);
+        embedsUpToIndex += editorRange.embedsWithinRange;
+        curIndex += cloneOp.retain;
+        let embedsToRetain: number = editorRange.embedsWithinRange;
+        // remove any embeds subsequent to the previous insert so they can be redrawn in the right place
+        if (editorRange.leadingEmbedCount > 0 && previousOp === 'insert') {
+          (adjustedDelta as any).push({ delete: editorRange.leadingEmbedCount } as DeltaOperation);
+          embedsToRetain -= editorRange.leadingEmbedCount;
+        }
+        // add to the retain op the number of embedded elements contained in its content
+        cloneOp.retain += embedsToRetain;
+        previousOp = 'retain';
+      } else if (cloneOp.delete != null) {
+        const editorRange: EditorRange = this.getEditorContentRange(editorStartPos, cloneOp.delete);
+        curIndex += cloneOp.delete;
+        embedsUpToIndex += editorRange.embedsWithinRange;
+        // add to the delete op the number of embedded elements contained in its content
+        cloneOp.delete += editorRange.embedsWithinRange;
+        if (cloneOp.delete < 1) {
+          continue;
+        }
+        previousOp = 'delete';
+      } else if (cloneOp.insert != null) {
+        cloneOp.attributes = this.getAttributesAtPosition(editorStartPos);
+        previousOp = 'insert';
+      }
+      (adjustedDelta as any).push(cloneOp);
+    }
+
+    editorStartPos = curIndex + embedsUpToIndex;
+    // remove any embeds subsequent the previous insert so they can be redrawn
+    const embedsAfterLastEdit = this.countSequentialEmbedsStartingAt(editorStartPos);
+    if (embedsAfterLastEdit > 0 && previousOp === 'insert') {
+      (adjustedDelta as any).push({ delete: embedsAfterLastEdit } as DeltaOperation);
+    }
+
+    return adjustedDelta;
+  }
+
+  /** Gets the number of embeds in a given range displayed in the quill editor. */
+  private getEmbedsInEditorRange(startIndex: number, length: number): number {
+    const indices: IterableIterator<number> = this._embeddedElements.values();
+    const opEndIndex: number = startIndex + length;
+    let embeddedElementsCount: number = 0;
+    for (const embedIndex of indices) {
+      if (embedIndex < startIndex) {
+        continue;
+      } else if (embedIndex >= startIndex && embedIndex < opEndIndex) {
+        embeddedElementsCount++;
+      } else {
+        break;
+      }
+    }
+    return embeddedElementsCount;
+  }
+
+  private getAttributesAtPosition(editorPosition: number) {
+    const editor: Quill = this.checkEditor();
+    return editor.getFormat(editorPosition);
   }
 }

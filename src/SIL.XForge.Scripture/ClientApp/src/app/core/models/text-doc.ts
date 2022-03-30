@@ -66,11 +66,10 @@ export class TextDoc extends RealtimeDoc<TextData, TextData> {
     if (this.data == null || this.data.ops == null) {
       return '';
     }
-
     let text = '';
     let inSegment = false;
     for (const op of this.data.ops) {
-      if (op.attributes != null && op.attributes.segment === ref) {
+      if (op.attributes?.segment != null && op.attributes.segment === ref) {
         if (op.insert != null && typeof op.insert === 'string') {
           text += op.insert;
           inSegment = true;
@@ -80,6 +79,42 @@ export class TextDoc extends RealtimeDoc<TextData, TextData> {
       }
     }
 
+    return text;
+  }
+
+  getSegmentTextIncludingRelated(ref: string): string {
+    if (this.data == null || this.data.ops == null) {
+      return '';
+    }
+    let text = '';
+    // Keep track of insert text even if not initially used as some inserts, like blank lines,
+    // can appear between related segments.
+    let textBetweenRelatedSegments = '';
+
+    for (const i in this.data.ops) {
+      if (!this.data.ops.hasOwnProperty(i)) {
+        continue;
+      }
+      const index = parseInt(i, 10);
+      const op = this.data.ops[index];
+      if (op.insert == null || typeof op.insert !== 'string') {
+        continue;
+      }
+      // Locate range of ops that match the verse segments
+      if (
+        op.attributes?.segment != null &&
+        (op.attributes.segment === ref || op.attributes.segment.indexOf(ref + '/') === 0)
+      ) {
+        text += textBetweenRelatedSegments + op.insert;
+        // Reset text so no double-ups
+        textBetweenRelatedSegments = '';
+      } else {
+        // Only track text once an initial segment has been found
+        if (text !== '') {
+          textBetweenRelatedSegments += op.insert;
+        }
+      }
+    }
     return text;
   }
 

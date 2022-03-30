@@ -239,6 +239,7 @@ class TestEnvironment {
         editable: true,
         texts: [],
         userRoles: {},
+        paratextUsers: [],
         userPermissions: {}
       }
     });

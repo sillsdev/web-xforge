@@ -4,7 +4,7 @@ import { TranslocoService } from '@ngneat/transloco';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
   getSFProjectUserConfigDocId,
@@ -22,7 +22,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { SFProjectDoc } from '../core/models/sf-project-doc';
+import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { SFProjectService } from '../core/sf-project.service';
@@ -314,11 +314,12 @@ class TestEnvironment {
           selectedSegment: '',
           questionRefsRead: [],
           answerRefsRead: [],
-          commentRefsRead: []
+          commentRefsRead: [],
+          noteRefsRead: []
         }
       });
 
-      this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
+      this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
         id: projectId,
         data: {
           name: projectId,
@@ -395,8 +396,8 @@ class TestEnvironment {
         getSFProjectUserConfigDocId(projectId, 'user01')
       )
     );
-    when(mockedSFProjectService.get(projectId)).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId)
+    when(mockedSFProjectService.getProfile(projectId)).thenCall(() =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
     );
   }
 }

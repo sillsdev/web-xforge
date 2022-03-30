@@ -1,6 +1,6 @@
-import { MdcDialog } from '@angular-mdc/web/dialog';
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, ViewChild } from '@angular/core';
 import { MediaObserver } from '@angular/flex-layout';
+import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import {
@@ -18,23 +18,32 @@ import isEqual from 'lodash-es/isEqual';
 import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
+import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
+import { AssignedUsers } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
+import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
-import { fromEvent, Subject, Subscription, timer } from 'rxjs';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { DeltaOperation } from 'rich-text';
+import { BehaviorSubject, fromEvent, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, delayWhen, filter, repeat, retryWhen, tap } from 'rxjs/operators';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
 import { getLinkHTML, issuesEmailTemplate } from 'xforge-common/utils';
 import XRegExp from 'xregexp';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { environment } from '../../../environments/environment';
+import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -43,7 +52,9 @@ import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { Segment } from '../../shared/text/segment';
-import { TextComponent } from '../../shared/text/text.component';
+import { FeaturedVerseRefInfo, TextComponent } from '../../shared/text/text.component';
+import { threadIdFromMouseEvent } from '../../shared/utils';
+import { NoteDialogComponent, NoteDialogData } from './note-dialog/note-dialog.component';
 import {
   SuggestionsSettingsDialogComponent,
   SuggestionsSettingsDialogData
@@ -71,6 +82,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   trainingMessage: string = '';
   showTrainingProgress: boolean = false;
   textHeight: string = '';
+  targetFocused = false;
 
   @ViewChild('targetContainer') targetContainer?: ElementRef;
   @ViewChild('source') source?: TextComponent;
@@ -85,12 +97,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private readonly ecm = new ErrorCorrectionModel();
   private insertSuggestionEnd: number = -1;
   private currentUserDoc?: UserDoc;
-  private projectDoc?: SFProjectDoc;
+  private projectDoc?: SFProjectProfileDoc;
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
+  private paratextUsers: ParatextUserProfile[] = [];
   private projectUserConfigChangesSub?: Subscription;
   private text?: TextInfo;
   private sourceText?: TextInfo;
-  private sourceProjectDoc?: SFProjectDoc;
+  private sourceProjectDoc?: SFProjectProfileDoc;
   private sourceLoaded: boolean = false;
   private targetLoaded: boolean = false;
   private _chapter?: number;
@@ -100,13 +113,18 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private projectDataChangesSub?: Subscription;
   private trainingProgressClosed: boolean = false;
   private trainingCompletedTimeout: any;
+  private clickSubs: Map<string, Subscription[]> = new Map<string, Subscription[]>();
+  private noteThreadQuery?: RealtimeQuery<NoteThreadDoc>;
+  private toggleNoteThreadVerseRefs$: BehaviorSubject<void> = new BehaviorSubject<void>(undefined);
+  private toggleNoteThreadSub?: Subscription;
+  private shouldNoteThreadsRespondToEdits: boolean = false;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
     noticeService: NoticeService,
-    private readonly dialog: MdcDialog,
+    private readonly dialog: MatDialog,
     private readonly mediaObserver: MediaObserver,
     private readonly pwaService: PwaService,
     private readonly translationEngineService: TranslationEngineService,
@@ -178,8 +196,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   set chapter(value: number | undefined) {
     if (this._chapter !== value) {
       this.showSuggestions = false;
+      this.toggleNoteThreadVerses(false);
       this._chapter = value;
       this.changeText();
+      this.toggleNoteThreadVerses(true);
     }
   }
 
@@ -322,7 +342,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
         const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
         if (projectId !== prevProjectId) {
-          this.projectDoc = await this.projectService.get(projectId);
+          this.projectDoc = await this.projectService.getProfile(projectId);
+          const userRole: string | undefined = this.projectDoc.data?.userRoles[this.userService.currentUserId];
+          if (userRole != null) {
+            const projectDoc: SFProjectDoc | undefined = await this.projectService.tryGetForRole(projectId, userRole);
+            if (projectDoc?.data?.paratextUsers != null) {
+              this.paratextUsers = projectDoc.data.paratextUsers;
+            }
+          }
           this.isProjectAdmin = await this.projectService.isProjectAdmin(projectId, this.userService.currentUserId);
           this.projectUserConfigDoc = await this.projectService.getUserConfig(
             projectId,
@@ -333,7 +360,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           if (sourceId != null) {
             const userOnProject: boolean = !!this.currentUser?.sites[environment.siteId].projects.includes(sourceId);
             // Only get the project doc if the user is on the project to avoid an error.
-            this.sourceProjectDoc = userOnProject ? await this.projectService.get(sourceId) : undefined;
+            this.sourceProjectDoc = userOnProject ? await this.projectService.getProfile(sourceId) : undefined;
             if (this.sourceProjectDoc != null && this.sourceProjectDoc.data != null) {
               this.sourceText = this.sourceProjectDoc.data.texts.find(t => t.bookNum === bookNum);
             }
@@ -349,6 +376,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         if (this.projectDoc == null || this.projectDoc.data == null) {
           return;
         }
+        await this.loadNoteThreadDocs(this.projectDoc.id);
         this.text = this.projectDoc.data.texts.find(t => t.bookNum === bookNum);
         this.chapters = this.text == null ? [] : this.text.chapters.map(c => c.number);
 
@@ -420,7 +448,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.trainingProgressClosed = true;
   }
 
-  async onTargetUpdated(segment?: Segment, delta?: DeltaStatic, prevSegment?: Segment): Promise<void> {
+  async onTargetUpdated(
+    segment?: Segment,
+    delta?: DeltaStatic,
+    prevSegment?: Segment,
+    oldVerseEmbeds?: Map<string, number>,
+    isLocalUpdate?: boolean
+  ): Promise<void> {
     if (this.target == null || this.target.editor == null) {
       return;
     }
@@ -480,7 +514,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.insertSuggestionEnd = -1;
           this.target.editor.setSelection(selectIndex, 0, 'user');
         }
+        if (segment != null && oldVerseEmbeds != null && this.shouldNoteThreadsRespondToEdits && !!isLocalUpdate) {
+          // only update the note anchors if the update is local, otherwise remote edits will mess up the note anchors
+          await this.updateVerseNoteThreadAnchors(oldVerseEmbeds, delta);
+        }
       }
+
       if (this.insertSuggestionEnd !== -1) {
         const selection = this.target.editor.getSelection();
         if (selection == null || selection.length > 0 || selection.index !== this.insertSuggestionEnd) {
@@ -489,6 +528,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       }
       this.segmentUpdated$.next();
       this.syncScroll();
+    }
+
+    if (delta != null) {
+      // wait 20 ms so that note thread docs have time to receive the updated note positions
+      setTimeout(() => {
+        this.recreateDeletedNoteThreadEmbeds();
+        if (segment != null) {
+          this.subscribeClickEvents([segment.ref]);
+        }
+      }, 20);
     }
   }
 
@@ -519,6 +568,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         break;
       case 'target':
         this.targetLoaded = true;
+        this.toggleNoteThreadVerseRefs$.next();
+        this.shouldNoteThreadsRespondToEdits = true;
         break;
     }
     if ((!this.hasSource || this.sourceLoaded) && this.targetLoaded) {
@@ -582,8 +633,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const dialogRef = this.dialog.open<SuggestionsSettingsDialogComponent, SuggestionsSettingsDialogData>(
       SuggestionsSettingsDialogComponent,
       {
-        clickOutsideToClose: true,
-        escapeToClose: true,
         autoFocus: false,
         data: { projectUserConfigDoc: this.projectUserConfigDoc }
       }
@@ -595,6 +644,74 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       }
       this.updateSuggestions();
     });
+  }
+
+  removeEmbeddedElements(): void {
+    this.shouldNoteThreadsRespondToEdits = false;
+    this.target?.removeEmbeddedElements();
+    // Un-subscribe from all segment click events as these all get setup again
+    for (const segmentEvents of this.clickSubs.values()) {
+      for (const event of segmentEvents) {
+        event.unsubscribe();
+      }
+    }
+  }
+
+  private toggleNoteThreadVerses(value: boolean): void {
+    if (this.target?.editor == null || this.noteThreadQuery == null || this.bookNum == null || this._chapter == null) {
+      return;
+    }
+    const chapterNoteThreadDocs: NoteThreadDoc[] = this.currentChapterNoteThreadDocs();
+    const featureVerseRefInfo: FeaturedVerseRefInfo[] = [];
+    for (const noteThreadDoc of chapterNoteThreadDocs) {
+      const featured: FeaturedVerseRefInfo | undefined = this.getFeaturedVerseRefInfo(noteThreadDoc);
+      if (featured != null) {
+        featureVerseRefInfo.push(featured);
+      }
+    }
+    const noteThreadVerseRefs: VerseRef[] = featureVerseRefInfo.map(f => f.verseRef);
+
+    if (value) {
+      const segments: string[] = this.target.toggleFeaturedVerseRefs(value, noteThreadVerseRefs, 'note-thread');
+      for (const featured of featureVerseRefInfo) {
+        this.embedNoteThread(featured);
+      }
+      this.subscribeClickEvents(segments);
+    } else {
+      this.removeEmbeddedElements();
+    }
+  }
+
+  private showNoteThread(threadId: string): void {
+    this.dialog.open(NoteDialogComponent, {
+      autoFocus: false,
+      width: '600px',
+      data: {
+        projectId: this.projectDoc!.id,
+        threadId: threadId
+      } as NoteDialogData
+    });
+  }
+
+  private updateReadNotes(threadId: string) {
+    const noteThread: NoteThreadDoc | undefined = this.noteThreadQuery?.docs.find(d => d.data?.dataId === threadId);
+    if (noteThread?.data != null && this.projectUserConfigDoc?.data != null) {
+      const notesRead: string[] = [];
+      for (const note of noteThread.data.notes) {
+        if (!this.projectUserConfigDoc.data.noteRefsRead.includes(note.dataId)) {
+          notesRead.push(note.dataId);
+        }
+      }
+
+      if (notesRead.length == 0) {
+        return;
+      }
+      this.projectUserConfigDoc.submitJson0Op(op => {
+        for (const noteId of notesRead) {
+          op.add(puc => puc.noteRefsRead, noteId);
+        }
+      });
+    }
   }
 
   private setupTranslationEngine(): void {
@@ -673,12 +790,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const bounds = elem.getBoundingClientRect();
     // add bottom padding
     const top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
-    if (this.target.editor != null && this.target.hasFocus) {
+    if (this.target.editor != null && this.targetFocused) {
       // reset scroll position
       this.target.editor.scrollingContainer.scrollTop = 0;
     }
     this.textHeight = `calc(100vh - ${top}px)`;
-    if (this.target.hasFocus) {
+    if (this.targetFocused) {
       setTimeout(() => {
         // reset focus, which causes Quill to scroll to the selection
         this.target!.blur();
@@ -696,13 +813,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (this.target == null) {
       return;
     }
-
     let selectedSegment: string | undefined;
     let selectedSegmentChecksum: number | undefined;
     if (
       this.projectUserConfigDoc != null &&
       this.projectUserConfigDoc.data != null &&
-      this.text != null &&
       this.projectUserConfigDoc.data.selectedBookNum === this.text.bookNum &&
       this.projectUserConfigDoc.data.selectedChapterNum === this._chapter &&
       this.projectUserConfigDoc.data.selectedSegment !== ''
@@ -865,6 +980,41 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return segment.range.length > 0 && segment.text !== '' && segment.isChanged;
   }
 
+  private subscribeClickEvents(segments: string[]): void {
+    if (this.target == null) {
+      return;
+    }
+    for (const segment of segments) {
+      const elements = this.target.getSegmentElement(segment)?.querySelectorAll('display-note');
+      if (elements == null) {
+        continue;
+      }
+      this.clickSubs.get(segment)?.forEach(s => s.unsubscribe());
+      this.clickSubs.set(
+        segment,
+        Array.from(elements).map((element: Element) =>
+          this.subscribe(fromEvent<MouseEvent>(element, 'click'), event => {
+            if (this.bookNum == null) {
+              return;
+            }
+            const threadId = threadIdFromMouseEvent(event);
+            if (threadId != null) {
+              this.showNoteThread(threadId);
+              this.target?.formatEmbed(threadId, 'note-thread-embed', { ['highlight']: false });
+              this.updateReadNotes(threadId);
+            }
+          })
+        )
+      );
+    }
+  }
+
+  private async loadNoteThreadDocs(projectId: string): Promise<void> {
+    this.noteThreadQuery = await this.projectService.queryNoteThreads(projectId);
+    this.toggleNoteThreadSub?.unsubscribe();
+    this.toggleNoteThreadSub = this.subscribe(this.toggleNoteThreadVerseRefs$, () => this.toggleNoteThreadVerses(true));
+  }
+
   private loadProjectUserConfig() {
     let chapter = 1;
     if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
@@ -876,8 +1026,337 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         }
       }
     }
+    this.toggleNoteThreadVerses(false);
     this._chapter = chapter;
     this.changeText();
+    this.toggleNoteThreadVerses(true);
+  }
+
+  /** Gets the information needed to format a particular featured verse. */
+  private getFeaturedVerseRefInfo(threadDoc: NoteThreadDoc): FeaturedVerseRefInfo | undefined {
+    const notes: Note[] = threadDoc.notesInOrderClone(threadDoc.data!.notes);
+    let preview: string = notes[0].content != null ? this.stripXml(notes[0].content.trim()) : '';
+    if (notes.length > 1) {
+      preview += '\n' + translate('editor.more_notes', { count: notes.length - 1 });
+    }
+    const verseRef: VerseRef | undefined = threadDoc.currentVerseRef();
+    if (threadDoc.data == null || verseRef == null) {
+      return;
+    }
+    const hasNewContent: boolean = this.hasNewContent(threadDoc);
+
+    return {
+      verseRef,
+      id: threadDoc.data.dataId,
+      preview,
+      icon: this.isAssignedToOtherUser(threadDoc) ? threadDoc.iconGrayed : threadDoc.icon,
+      textAnchor: threadDoc.data.position,
+      highlight: hasNewContent
+    };
+  }
+
+  private stripXml(xmlContent: string): string {
+    return xmlContent.replace(/<[^>]+>/g, '');
+  }
+
+  /** Update the text anchors for the note threads in the current segment. */
+  private async updateVerseNoteThreadAnchors(oldVerseEmbeds: Map<string, number>, delta: DeltaStatic): Promise<void> {
+    if (this.target == null || this.noteThreadQuery == null || this.noteThreadQuery.docs.length < 1) {
+      return;
+    }
+    if (delta.ops == null || delta.ops.length < 2) {
+      // If the length is less than two, it can be skipped since productive ops have a minimum length of two
+      return;
+    }
+
+    const updatePromises: Promise<boolean>[] = [];
+    const editOpIndex: number | undefined = delta.ops[0].retain;
+    if (editOpIndex == null) {
+      return;
+    }
+
+    // a user initiated delta with ops that include inserting a note embed can only be undo deleting a note icon
+    const reinsertedNoteEmbeds: DeltaOperation[] = delta.filter(
+      op => op.insert != null && op.insert['note-thread-embed'] != null
+    );
+    const reinsertedNoteIds: string[] = [];
+    reinsertedNoteEmbeds.forEach(n => {
+      if (n.attributes != null && n.attributes['threadid'] != null) {
+        reinsertedNoteIds.push(n.attributes['threadid']);
+      }
+    });
+    const textInsertOps: DeltaOperation[] = delta.filter(
+      ops => ops.insert != null && ops.insert['note-thread-embed'] == null
+    );
+    const textDeleteOps: DeltaOperation[] = delta.filter(ops => ops.delete != null);
+    const hasTextEditOp: boolean = textInsertOps.length > 0 || textDeleteOps.length > 0;
+    for (const [threadId, noteIndex] of oldVerseEmbeds.entries()) {
+      const noteThreadDoc: NoteThreadDoc | undefined = this.noteThreadQuery.docs.find(n => n.data?.dataId === threadId);
+      if (noteThreadDoc?.data == null) {
+        continue;
+      }
+
+      const noteCountInTextAnchor: number = this.getEmbedCountInAnchorRange(
+        oldVerseEmbeds,
+        noteIndex,
+        noteThreadDoc.data.position.length
+      );
+      const noteAnchorEndIndex: number = noteIndex + noteThreadDoc.data.position.length + noteCountInTextAnchor;
+      // A note anchor is only affected by the undo operation if the delta includes inserting the note embed, or
+      // if the edit op occurs before the note text anchor last character
+      // i.e. note anchors are unaffected if the edit index comes after the note and anchor
+      const noteIsAffected: boolean = noteAnchorEndIndex >= editOpIndex || reinsertedNoteIds.includes(threadId);
+      if (reinsertedNoteEmbeds.length > 0 && noteIsAffected && hasTextEditOp) {
+        updatePromises.push(
+          noteThreadDoc
+            .previousSnapshot()
+            .then(s => noteThreadDoc.submitJson0Op(op => op.set(n => n.position, s.data.position)))
+        );
+        continue;
+      }
+      const oldNotePosition: TextAnchor = noteThreadDoc.data.position ?? { start: 0, length: 0 };
+
+      const newSelection: TextAnchor | undefined = this.getUpdatedTextAnchor(
+        oldNotePosition,
+        oldVerseEmbeds,
+        noteIndex,
+        editOpIndex,
+        delta
+      );
+      if (isEqual(oldNotePosition, newSelection)) {
+        continue;
+      }
+      updatePromises.push(noteThreadDoc.submitJson0Op(op => op.set(n => n.position, newSelection)));
+    }
+    await Promise.all(updatePromises);
+
+    // Re-apply the underline style to notes that were re-inserted
+    const embedPositions: Readonly<Map<string, number>> = this.target.embeddedElements;
+    for (const id of reinsertedNoteIds) {
+      const index: number | undefined = embedPositions.get(id);
+      if (index != null) {
+        this.target.editor?.formatText(index, 1, 'text-anchor', 'true', 'api');
+      }
+    }
+  }
+
+  /** Determine the number of embeds that are within an anchoring.
+   * @param embeds Positions of embeds to consider.
+   * @param embedIndex The position of an embed at the beginning of the anchoring, included in the resulting count.
+   * @param anchorLength The text character count in the anchoring range, excludes length of embeds.
+   */
+  private getEmbedCountInAnchorRange(embeds: Map<string, number>, embedIndex: number, anchorLength: number): number {
+    let embedCount = 0;
+    let endIndex = embedIndex + anchorLength;
+    // sort the indices so we count the segment embeds in ascending order
+    const embedIndices: number[] = Array.from(embeds.values()).sort();
+    for (const index of embedIndices) {
+      if (index >= embedIndex) {
+        if (index < endIndex) {
+          embedCount++;
+          // add the embed to the length to search
+          endIndex++;
+        } else {
+          break;
+        }
+      }
+    }
+    return embedCount;
+  }
+
+  /** Gets the updated text anchor for a note thread given the positions of the old embeds and the text edit applied. */
+  private getUpdatedTextAnchor(
+    oldTextAnchor: TextAnchor,
+    oldVerseEmbedPositions: Map<string, number>,
+    noteIndex: number,
+    editIndex: number,
+    delta: DeltaStatic
+  ): TextAnchor | undefined {
+    if (oldTextAnchor.start === 0 && oldTextAnchor.length === 0) {
+      return oldTextAnchor;
+    }
+    const noteCount: number = this.getEmbedCountInAnchorRange(oldVerseEmbedPositions, noteIndex, oldTextAnchor.length);
+    const noteAnchorEndIndex: number = noteIndex + oldTextAnchor.length + noteCount;
+    const verseNotePositions = new Set(oldVerseEmbedPositions.values());
+    let [startChange, lengthChange] = this.getAnchorChanges(
+      noteIndex,
+      noteAnchorEndIndex,
+      editIndex,
+      delta,
+      verseNotePositions
+    );
+
+    if (oldTextAnchor.length > 0 && oldTextAnchor.length + lengthChange <= 0) {
+      return { start: 0, length: 0 };
+    }
+
+    return { start: oldTextAnchor.start + startChange, length: oldTextAnchor.length + lengthChange };
+  }
+
+  private getAnchorChanges(
+    embedIndex: number,
+    noteAnchorEndIndex: number,
+    editIndex: number,
+    delta: DeltaStatic,
+    embedPositions: Set<number>
+  ): [number, number] {
+    let startChange: number = 0;
+    let lengthChange: number = 0;
+    if (delta.ops == null || delta.ops.length < 2) {
+      return [0, 0];
+    }
+    // get the length that was inserted or deleted to apply to the verse text anchors
+    for (let i = 1; i < delta.ops.length; i++) {
+      const insertOp: any = delta.ops[i].insert;
+      const deleteOp: number | undefined = delta.ops[i].delete;
+      if (insertOp != null) {
+        let length = 0;
+        if (typeof insertOp === 'string') {
+          length = insertOp.length;
+        } else if (insertOp['note-thread-embed'] != null) {
+          const embedId = insertOp['note-thread-embed']['threadid'];
+          if (embedId != null) {
+            continue;
+          }
+        } else {
+          // the non-text insert always has a length of 1
+          length = 1;
+        }
+
+        if (editIndex <= embedIndex) {
+          startChange += length;
+        } else if (editIndex > embedIndex && editIndex <= noteAnchorEndIndex) {
+          // Note that if the user inserted text at the end of this note anchor, we consider
+          // this inside the text anchor because the user could be expanding the last text anchor word.
+          lengthChange += length;
+        }
+      } else if (deleteOp != null) {
+        let [deleteBefore, deleteWithin] = this.calculateDeletionUpdate(
+          editIndex,
+          embedIndex,
+          noteAnchorEndIndex,
+          deleteOp,
+          embedPositions
+        );
+        startChange -= deleteBefore;
+        lengthChange -= deleteWithin;
+      }
+    }
+
+    return [startChange, lengthChange];
+  }
+
+  private calculateDeletionUpdate(
+    editIndex: number,
+    embedIndex: number,
+    noteAnchorEndIndex: number,
+    deleteLength: number,
+    embedPositions: Set<number>
+  ): [number, number] {
+    let deleteBeforeLength = 0;
+    let deleteWithinLength = 0;
+    for (let charIndex = editIndex; charIndex < editIndex + deleteLength; charIndex++) {
+      if (embedPositions.has(charIndex)) {
+        // The edit involves deleting an embed icon. It neither counts as length within nor before
+        continue;
+      }
+      if (charIndex === embedIndex) {
+        console.warn(
+          `Warning: getUpdatedTextAnchor: embedIndex ${embedIndex} unexpectedly was not contained in embedPositions:`,
+          embedPositions
+        );
+      }
+      if (charIndex < embedIndex) {
+        deleteBeforeLength++;
+      } else if (charIndex > embedIndex && charIndex < noteAnchorEndIndex) {
+        deleteWithinLength++;
+      } else {
+        break;
+      }
+    }
+    return [deleteBeforeLength, deleteWithinLength];
+  }
+
+  private currentChapterNoteThreadDocs(): NoteThreadDoc[] {
+    if (
+      this.noteThreadQuery?.docs == null ||
+      this.noteThreadQuery.docs.length < 1 ||
+      this.bookNum == null ||
+      this._chapter == null
+    ) {
+      return [];
+    }
+    return this.noteThreadQuery.docs.filter(
+      nt =>
+        nt.data != null &&
+        nt.data.verseRef.bookNum === this.bookNum &&
+        nt.data.verseRef.chapterNum === this.chapter &&
+        nt.data.notes.length > 0
+    );
+  }
+
+  /** Re-create any note embeds that have been deleted by the user. */
+  private recreateDeletedNoteThreadEmbeds(): void {
+    if (this.target == null || !this.shouldNoteThreadsRespondToEdits) {
+      return;
+    }
+    const currentNotes: Readonly<Map<string, number>> = this.target.embeddedElements;
+    const segmentsToSubscribe: Set<string> = new Set<string>();
+    const noteThreadDocs: NoteThreadDoc[] = this.currentChapterNoteThreadDocs();
+    for (const noteThreadDoc of noteThreadDocs) {
+      if (noteThreadDoc?.data?.dataId == null || currentNotes.has(noteThreadDoc.data.dataId)) {
+        continue;
+      }
+
+      const featured: FeaturedVerseRefInfo | undefined = this.getFeaturedVerseRefInfo(noteThreadDoc);
+      if (featured == null) {
+        continue;
+      }
+      const segment: string | undefined = this.embedNoteThread(featured);
+      if (segment != null && !segmentsToSubscribe.has(segment)) {
+        segmentsToSubscribe.add(segment);
+      }
+    }
+    this.subscribeClickEvents(Array.from(segmentsToSubscribe.values()));
+  }
+
+  private embedNoteThread(featured: FeaturedVerseRefInfo): string | undefined {
+    if (this.target == null) {
+      return;
+    }
+
+    const format = { iconsrc: featured.icon.cssVar, preview: featured.preview, threadid: featured.id };
+    if (featured.highlight) {
+      format['highlight'] = featured.highlight;
+    }
+    return this.target.embedElementInline(
+      featured.verseRef,
+      featured.id,
+      featured.textAnchor ?? { start: 0, length: 0 },
+      'note-thread-embed',
+      format
+    );
+  }
+
+  private hasNewContent(thread: NoteThreadDoc): boolean {
+    const noteId: string | undefined = thread.data?.notes[thread.data?.notes.length - 1].dataId;
+    if (noteId == null || this.projectUserConfigDoc?.data == null) {
+      return false;
+    }
+    return !this.projectUserConfigDoc.data.noteRefsRead.includes(noteId);
+  }
+
+  private isAssignedToOtherUser(thread: NoteThreadDoc): boolean {
+    switch (thread.data?.assignment) {
+      case AssignedUsers.TeamUser:
+      case AssignedUsers.Unspecified:
+      case undefined:
+        return false;
+    }
+    const ptUser: ParatextUserProfile | undefined = this.paratextUsers?.find(
+      user => user.opaqueUserId === thread.data?.assignment
+    );
+    return ptUser?.sfUserId !== this.userService.currentUserId;
   }
 
   private syncScroll(): void {
@@ -889,7 +1368,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.target == null ||
       this.target.segment == null ||
       this.target.editor == null ||
-      !this.target.hasFocus
+      !this.targetFocused
     ) {
       return;
     }

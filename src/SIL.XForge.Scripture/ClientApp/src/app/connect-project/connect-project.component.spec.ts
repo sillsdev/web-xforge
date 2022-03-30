@@ -436,6 +436,7 @@ class TestEnvironment {
         userRoles: {
           user01: SFProjectRole.ParatextAdministrator
         },
+        paratextUsers: [{ sfUserId: 'user01', username: 'ptuser01', opaqueUserId: 'opaqueuser01' }],
         userPermissions: {}
       };
       this.realtimeService.create(SFProjectDoc.COLLECTION, 'project01', newProject);

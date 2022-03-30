@@ -7,6 +7,7 @@ import { fromEvent, Subscription } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { TextDocId } from '../../../core/models/text-doc';
 import { TextComponent } from '../../../shared/text/text.component';
+import { verseRefFromMouseEvent } from '../../../shared/utils';
 
 @Component({
   selector: 'app-checking-text',
@@ -87,27 +88,15 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     if (!this.isEditorLoaded || this.questionVerses == null) {
       return;
     }
-
-    const segments: string[] = [];
-    const questionCounts = new Map<string, number>();
-    for (const verse of this.questionVerses) {
-      const referenceSegments = this.textComponent.getVerseSegments(verse);
-      if (referenceSegments.length > 0) {
-        const count = questionCounts.get(referenceSegments[0]);
-        if (count != null) {
-          questionCounts.set(referenceSegments[0], count + 1);
-        } else {
-          questionCounts.set(referenceSegments[0], 1);
-        }
-
-        for (const segment of referenceSegments) {
-          if (!segments.includes(segment)) {
-            segments.push(segment);
-          }
-        }
+    const segments = this.textComponent.toggleFeaturedVerseRefs(value, this.questionVerses, 'question');
+    if (value) {
+      this.subscribeClickEvents(segments);
+    } else {
+      // Un-subscribe from all segment click events as these all get setup again
+      for (const event of this.clickSubs) {
+        event.unsubscribe();
       }
     }
-    this.toggleQuestionSegments(questionCounts, segments, value);
   }
 
   private highlightActiveVerse(): void {
@@ -119,49 +108,23 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     this.textComponent.highlight(refs);
   }
 
-  private toggleQuestionSegments(questionCounts: Map<string, number>, segments: string[], value: boolean): void {
-    if (this.textComponent.editor == null) {
-      return;
-    }
-
+  private subscribeClickEvents(segments: string[]): void {
     for (const segment of segments) {
-      const range = this.textComponent.getSegmentRange(segment);
-      const element = this.getSegmentElement(segment);
-      if (range == null || element == null) {
+      const element: Element | null = this.textComponent.getSegmentElement(segment);
+      if (element == null) {
         continue;
       }
-      const formats: any = {
-        'question-segment': value
-      };
-      const count = questionCounts.get(segment);
-      if (count != null) {
-        formats['question-count'] = value ? count : false;
-      }
-      this.textComponent.editor.formatText(range.index, range.length, formats, 'silent');
-      if (value) {
-        this.clickSubs.push(
-          this.subscribe(fromEvent<MouseEvent>(element, 'click'), event => {
-            if (this._id == null || event.target == null) {
-              return;
-            }
-            let target = event.target;
-            if (target['offsetParent']['nodeName'] === 'USX-SEGMENT') {
-              target = target['offsetParent'] as EventTarget;
-            }
-            if (target['nodeName'] === 'USX-SEGMENT') {
-              const clickSegment = target['attributes']['data-segment'].value;
-              const segmentParts = clickSegment.split('_', 3);
-              const verseRef = new VerseRef(this._id.bookNum, segmentParts[1], segmentParts[2]);
-              this.questionVerseSelected.emit(verseRef);
-            }
-          })
-        );
-      } else {
-        // Un-subscribe from all segment click events as these all get setup again
-        for (const event of this.clickSubs) {
-          event.unsubscribe();
-        }
-      }
+      this.clickSubs.push(
+        this.subscribe(fromEvent<MouseEvent>(element, 'click'), event => {
+          if (this._id == null) {
+            return;
+          }
+          const verseRef = verseRefFromMouseEvent(event, this._id.bookNum);
+          if (verseRef != null) {
+            this.questionVerseSelected.emit(verseRef);
+          }
+        })
+      );
     }
   }
 
@@ -170,17 +133,11 @@ export class CheckingTextComponent extends SubscriptionDisposable {
       const firstSegment = this.textComponent.getVerseSegments(this.activeVerse)[0];
       const editor = this.textComponent.editor.container.querySelector('.ql-editor');
       if (firstSegment != null && editor != null) {
-        const element = this.getSegmentElement(firstSegment) as HTMLElement;
+        const element = this.textComponent.getSegmentElement(firstSegment) as HTMLElement;
         if (element != null) {
           editor.scrollTo({ top: element.offsetTop - 20, behavior: 'smooth' });
         }
       }
     }
-  }
-
-  private getSegmentElement(segment: string): Element | null {
-    return this.textComponent.editor == null
-      ? null
-      : this.textComponent.editor.container.querySelector(`usx-segment[data-segment="${segment}"]`);
   }
 }

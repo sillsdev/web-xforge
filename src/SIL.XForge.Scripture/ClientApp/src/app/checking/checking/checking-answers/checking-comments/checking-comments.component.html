@@ -9,7 +9,7 @@
       "
     >
       <span class="comment-text">{{ comment.text }}</span> <span class="divider">-</span>
-      <app-checking-owner [ownerRef]="comment.ownerRef" [dateTime]="comment.dateCreated"></app-checking-owner>
+      <app-owner [ownerRef]="comment.ownerRef" [dateTime]="comment.dateCreated"></app-owner>
       <div class="actions">
         <button
           *ngIf="canEditComment(comment)"

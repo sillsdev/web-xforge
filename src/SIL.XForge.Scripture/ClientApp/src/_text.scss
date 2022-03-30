@@ -92,7 +92,6 @@ quill-editor.ltr {
     &:before {
       left: -2.25em;
     }
-
     &:after {
       left: -1.5em;
     }
@@ -104,9 +103,38 @@ quill-editor.rtl {
     &:before {
       right: -2.25em;
     }
+
     &:after {
       right: -1.5em;
     }
+  }
+}
+
+.ql-editor .note-thread-segment {
+  position: relative;
+  & display-note {
+    &:before {
+      cursor: pointer;
+      content: '';
+      width: 1.25em;
+      height: 1.25em;
+      display: inline-block;
+      background: var(--icon-file) no-repeat;
+      margin: 0 0.1em;
+      border: solid 1px transparent;
+    }
+    &.note-thread-highlight {
+      &:before {
+        border: solid 1px #a9ca25;
+      }
+    }
+  }
+  & display-text-anchor {
+    background-image: linear-gradient(to right, gray 75%, transparent 75%);
+    background-position: bottom left;
+    background-repeat: repeat-x;
+    background-size: 7px 1px;
+    position: relative;
   }
 }
 

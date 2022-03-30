@@ -17,4 +17,22 @@ class SFProjectUserConfigMigration1 implements Migration {
   }
 }
 
-export const SF_PROJECT_USER_CONFIG_MIGRATIONS: MigrationConstructor[] = [SFProjectUserConfigMigration1];
+class SFProjectUserConfigMigration2 implements Migration {
+  static readonly VERSION = 2;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    if (doc.data.noteRefsRead === undefined) {
+      const op: ObjectInsertOp = { p: ['noteRefsRead'], oi: [] };
+      await submitMigrationOp(SFProjectUserConfigMigration1.VERSION, doc, [op]);
+    }
+  }
+
+  migrateOp(_op: RawOp): void {
+    // do nothing
+  }
+}
+
+export const SF_PROJECT_USER_CONFIG_MIGRATIONS: MigrationConstructor[] = [
+  SFProjectUserConfigMigration1,
+  SFProjectUserConfigMigration2
+];

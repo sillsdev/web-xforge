@@ -41,6 +41,7 @@ import { Snapshot } from 'xforge-common/models/snapshot';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
+import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -63,7 +64,6 @@ import { QuestionDialogService } from '../question-dialog/question-dialog.servic
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking-answers/checking-comments/checking-comments.component';
-import { CheckingOwnerComponent } from './checking-answers/checking-owner/checking-owner.component';
 import { CheckingAudioCombinedComponent } from './checking-audio-combined/checking-audio-combined.component';
 import { AudioTimePipe, CheckingAudioPlayerComponent } from './checking-audio-player/checking-audio-player.component';
 import {
@@ -134,7 +134,7 @@ describe('CheckingComponent', () => {
       CheckingCommentFormComponent,
       CheckingCommentsComponent,
       CheckingComponent,
-      CheckingOwnerComponent,
+      OwnerComponent,
       CheckingQuestionsComponent,
       CheckingTextComponent,
       FontSizeComponent
@@ -1477,7 +1477,8 @@ class TestEnvironment {
     selectedSegment: '',
     questionRefsRead: [],
     answerRefsRead: [],
-    commentRefsRead: []
+    commentRefsRead: [],
+    noteRefsRead: []
   };
 
   private readonly checkerProjectUserConfig: SFProjectUserConfig = {
@@ -1491,7 +1492,8 @@ class TestEnvironment {
     selectedQuestionRef: 'project01:q5Id',
     questionRefsRead: [],
     answerRefsRead: ['a0Id', 'a1Id'],
-    commentRefsRead: []
+    commentRefsRead: [],
+    noteRefsRead: []
   };
 
   private readonly cleanCheckerProjectUserConfig: SFProjectUserConfig = {
@@ -1504,7 +1506,8 @@ class TestEnvironment {
     selectedSegment: '',
     questionRefsRead: [],
     answerRefsRead: [],
-    commentRefsRead: []
+    commentRefsRead: [],
+    noteRefsRead: []
   };
 
   private readonly observerProjectUserConfig: SFProjectUserConfig = {
@@ -1518,7 +1521,8 @@ class TestEnvironment {
     selectedSegment: '',
     questionRefsRead: [],
     answerRefsRead: [],
-    commentRefsRead: []
+    commentRefsRead: [],
+    noteRefsRead: []
   };
 
   private projectBookRoute: string = 'JHN';
@@ -1575,7 +1579,11 @@ class TestEnvironment {
       [CLEAN_CHECKER_USER.id]: CLEAN_CHECKER_USER.role,
       [OBSERVER_USER.id]: OBSERVER_USER.role
     },
-    userPermissions: {}
+    userPermissions: {},
+    paratextUsers: [
+      { sfUserId: ADMIN_USER.id, username: ADMIN_USER.user.name, opaqueUserId: `opaque${ADMIN_USER.id}` },
+      { sfUserId: OBSERVER_USER.id, username: OBSERVER_USER.user.name, opaqueUserId: `opaque${OBSERVER_USER.id}` }
+    ]
   };
 
   constructor(user: UserInfo, projectBookRoute: string = 'JHN', hasConnection: boolean = true) {
@@ -2113,7 +2121,7 @@ class TestEnvironment {
         data: this.testProject
       }
     ]);
-    when(mockedProjectService.get(anything())).thenCall(id =>
+    when(mockedProjectService.getProfile(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id)
     );
 
