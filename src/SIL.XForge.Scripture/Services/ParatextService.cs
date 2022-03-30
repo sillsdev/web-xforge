@@ -1348,7 +1348,6 @@ namespace SIL.XForge.Scripture.Services
             if (scrText == null)
                 throw new DataNotFoundException("Can't get access to cloned project.");
             CommentManager manager = CommentManager.Get(scrText);
-            var ptUser = new SFParatextUser(username);
 
             // Algorithm sourced from Paratext DataAccessServer
             foreach (List<Paratext.Data.ProjectComments.Comment> thread in changeList)
