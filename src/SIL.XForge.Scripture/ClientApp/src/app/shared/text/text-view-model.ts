@@ -755,8 +755,18 @@ export class TextViewModel {
     return embeddedElementsCount;
   }
 
-  private getAttributesAtPosition(editorPosition: number) {
+  private getAttributesAtPosition(editorPosition: number): StringMap {
     const editor: Quill = this.checkEditor();
-    return editor.getFormat(editorPosition);
+    // The format of the insertion point lacks some properties that we have to get from the following editor position
+    const insertionFormat: StringMap = editor.getFormat(editorPosition);
+    const characterFormat: StringMap = editor.getFormat(editorPosition, 1);
+    if (characterFormat['segment'] != null) {
+      for (const key of Object.keys(characterFormat)) {
+        if (key !== 'text-anchor') {
+          insertionFormat[key] = characterFormat[key];
+        }
+      }
+    }
+    return insertionFormat;
   }
 }

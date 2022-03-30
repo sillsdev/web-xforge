@@ -2002,6 +2002,40 @@ describe('EditorComponent', () => {
       expect(contents.ops![0].insert.blank).toBeDefined();
       expect(contents.ops![1].insert['verse']).toBeDefined();
       expect(contents.ops![2].insert['note-thread-embed']).toBeDefined();
+    }));
+
+    it('remote edits next to note on verse applied correctly', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      let verse3Element: HTMLElement = env.getSegmentElement('verse_1_3')!;
+      let noteThreadIcon = verse3Element.querySelector('.note-thread-segment display-note');
+      expect(noteThreadIcon).not.toBeNull();
+      // Insert text next to thread02 icon
+      const notePosition: number = env.getNoteThreadEditorPosition('thread02');
+      const remoteEditPositionAfterNote: number = 0;
+      const noteCountBeforePosition = 2;
+      // $|*target: chapter 1, $$verse 3.
+      const remoteEditTextPos: number = env.getRemoteEditPosition(
+        notePosition,
+        remoteEditPositionAfterNote,
+        noteCountBeforePosition
+      );
+      const insert: string = 'abc';
+      const deltaOps: DeltaOperation[] = [{ retain: remoteEditTextPos }, { insert: insert }];
+      const textDoc: TextDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
+      textDoc.submit(new Delta(deltaOps));
+
+      env.wait();
+      expect(env.getNoteThreadEditorPosition('thread02')).toEqual(notePosition);
+      verse3Element = env.getSegmentElement('verse_1_3')!;
+      noteThreadIcon = verse3Element.querySelector('.note-thread-segment display-note');
+      expect(noteThreadIcon).not.toBeNull();
+      // check that the note thread underline does not get applied
+      const insertTextDelta = env.targetEditor.getContents(notePosition + 1, 3);
+      expect(insertTextDelta.ops![0].insert).toEqual('abc');
+      expect(insertTextDelta.ops![0].attributes!['text-anchor']).toBeUndefined();
       env.dispose();
     }));
 
