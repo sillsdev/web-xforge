@@ -18,5 +18,5 @@ if (environment.production || environment.pwaTest) {
 ExceptionHandlingService.initBugsnag();
 
 platformBrowserDynamic(providers)
-  .bootstrapModule(AppModule)
+  .bootstrapModule(AppModule, { ngZoneEventCoalescing: true })
   .catch(err => console.log(err));
