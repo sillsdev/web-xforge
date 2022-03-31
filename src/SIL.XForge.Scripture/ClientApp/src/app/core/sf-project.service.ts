@@ -109,7 +109,12 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
       queryParams[obj<Question>().pathStr(q => q.isArchived)] = false;
     }
     if (options.sort != null) {
-      queryParams.$sort = { [obj<Question>().pathStr(q => q.dateCreated)]: 1 };
+      queryParams.$sort = {
+        [obj<Question>().pathStr(q => q.verseRef.bookNum)]: 1,
+        [obj<Question>().pathStr(q => q.verseRef.chapterNum)]: 1,
+        [obj<Question>().pathStr(q => q.verseRef.verseNum)]: 1,
+        [obj<Question>().pathStr(q => q.dateCreated)]: 1
+      };
     }
     return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams);
   }

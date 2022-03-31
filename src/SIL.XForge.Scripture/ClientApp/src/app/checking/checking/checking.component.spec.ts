@@ -2304,7 +2304,8 @@ class TestEnvironment {
         'project01',
         deepEqual({
           bookNum: this.projectBookRoute === 'ALL' ? undefined : Canon.bookIdToNumber(this.projectBookRoute),
-          sort: true
+          sort: true,
+          activeOnly: true
         })
       )
     ).thenCall(() =>
