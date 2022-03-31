@@ -130,19 +130,19 @@ export class RealtimeService {
     return query;
   }
 
-  onQuerySubscribe(query: RealtimeQuery): void {
+  onQuerySubscribe<T extends RealtimeDoc>(query: RealtimeQuery<T>): void {
     let collectionQueries = this.subscribeQueries.get(query.collection);
     if (collectionQueries == null) {
       collectionQueries = new Set<RealtimeQuery>();
       this.subscribeQueries.set(query.collection, collectionQueries);
     }
-    collectionQueries.add(query);
+    collectionQueries.add(query as any as RealtimeQuery);
   }
 
-  onQueryUnsubscribe(query: RealtimeQuery): void {
+  onQueryUnsubscribe<T extends RealtimeDoc>(query: RealtimeQuery<T>): void {
     const collectionQueries = this.subscribeQueries.get(query.collection);
     if (collectionQueries != null) {
-      collectionQueries.delete(query);
+      collectionQueries.delete(query as any as RealtimeQuery);
     }
   }
 

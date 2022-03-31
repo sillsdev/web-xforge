@@ -1,45 +1,96 @@
 import { MdcList, MdcListItem } from '@angular-mdc/web';
-import { Component, EventEmitter, Input, Output, ViewChild, ViewChildren } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  ViewChild,
+  ViewChildren
+} from '@angular/core';
 import sortBy from 'lodash-es/sortBy';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { Subject } from 'rxjs';
+import { Observable, Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
+import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { TranslationEngineService } from '../../../core/translation-engine.service';
 import { CheckingUtils } from '../../checking.utils';
 
+// For performance reasons, this component uses the OnPush change detection strategy rather than the default change
+// detection strategy. This means when change detection runs, this component will be skipped during change detection
+// until:
+// 1. One of the @Input values is no longer equal to its previous value. Primitives are compared by value, objects by
+// reference. So an array that has elements added or an observable that has emitted a value is not changed.
+// 2. An event originates from the component or its children
+// 3. The component calls changeDetector.markForCheck()
+// There are a few other things that can trigger it. See the Angular documentation for details.
+// Calling markForCheck() does not trigger change detection like detectChanges(). It merely indicates that at the next
+// time change detection is run, this component should be checked for changes instead of being skipped.
+
 @Component({
   selector: 'app-checking-questions',
   templateUrl: './checking-questions.component.html',
-  styleUrls: ['./checking-questions.component.scss']
+  styleUrls: ['./checking-questions.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CheckingQuestionsComponent extends SubscriptionDisposable {
-  @Input() project?: SFProjectProfile;
-  @Input() projectUserConfigDoc?: SFProjectUserConfigDoc;
   @Input() isAllBooksShown: boolean = false;
   @Output() update = new EventEmitter<QuestionDoc>();
   @Output() changed = new EventEmitter<QuestionDoc>();
-  _questionDocs: Readonly<QuestionDoc[]> = [];
+  questionDocs: Readonly<QuestionDoc[]> = [];
   activeQuestionDoc?: QuestionDoc;
   activeQuestionDoc$ = new Subject<QuestionDoc>();
   @ViewChild(MdcList, { static: true }) mdcList!: MdcList;
 
+  private project?: SFProjectProfile;
+  private _projectUserConfigDoc?: SFProjectUserConfigDoc;
+
+  private projectProfileDocChangesSubscription?: Subscription;
+  private projectUserConfigDocChangesSubscription?: Subscription;
+  private questionDocsSubscription?: Subscription;
+
   constructor(
     private readonly userService: UserService,
-    private readonly translationEngineService: TranslationEngineService
+    private readonly translationEngineService: TranslationEngineService,
+    private readonly changeDetector: ChangeDetectorRef
   ) {
     super();
     // Only mark as read if it has been viewed for a set period of time and not an accidental click
     this.subscribe(this.activeQuestionDoc$.pipe(debounceTime(2000)), questionDoc => {
       this.updateElementsRead(questionDoc);
     });
+  }
+
+  @Input()
+  set projectProfileDoc(projectProfileDoc: SFProjectProfileDoc | undefined) {
+    this.projectProfileDocChangesSubscription?.unsubscribe();
+    this.project = projectProfileDoc?.data;
+    if (projectProfileDoc != null) {
+      this.projectProfileDocChangesSubscription = this.subscribe(projectProfileDoc?.changes$, () => {
+        this.changeDetector.markForCheck();
+      });
+    }
+  }
+
+  @Input()
+  set projectUserConfigDoc(projectUserConfigDoc: SFProjectUserConfigDoc | undefined) {
+    this.projectUserConfigDocChangesSubscription?.unsubscribe();
+    this._projectUserConfigDoc = projectUserConfigDoc;
+    if (projectUserConfigDoc != null) {
+      this.projectUserConfigDocChangesSubscription = this.subscribe(projectUserConfigDoc.changes$, () => {
+        this.changeDetector.markForCheck();
+      });
+    }
   }
 
   get activeQuestionBook(): number | undefined {
@@ -62,17 +113,18 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     return this.questionDocs.findIndex(question => question.id === activeQuestionDocId);
   }
 
-  get questionDocs(): Readonly<QuestionDoc[]> {
-    return this._questionDocs;
-  }
-
-  @Input() set questionDocs(questionDocs: Readonly<QuestionDoc[]>) {
-    if (questionDocs.length > 0) {
-      this.activateStoredQuestion(questionDocs);
-    } else {
-      this.activeQuestionDoc = undefined;
-    }
-    this._questionDocs = questionDocs;
+  @Input()
+  set questionDocs$(questionDocs$: Observable<Readonly<QuestionDoc[]>>) {
+    this.questionDocsSubscription?.unsubscribe();
+    this.questionDocsSubscription = this.subscribe(questionDocs$, docs => {
+      if (docs.length > 0) {
+        this.activateStoredQuestion(docs);
+      } else {
+        this.activeQuestionDoc = undefined;
+      }
+      this.questionDocs = docs;
+      this.changeDetector.markForCheck();
+    });
   }
 
   // When the list of questions is hidden it has display: none applied, which prevents scrolling to the active question
@@ -134,6 +186,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     }
     return unread;
   }
+
   /**
    * Activates the question that a user has most recently viewed if available
    */
@@ -144,8 +197,8 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
       activeQuestionDocId = this.activeQuestionDoc.id;
     }
     if (activeQuestionDocId == null || !questionDocs.some(question => question.id === activeQuestionDocId)) {
-      if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
-        const lastQuestionDocId = this.projectUserConfigDoc.data.selectedQuestionRef;
+      if (this._projectUserConfigDoc?.data != null) {
+        const lastQuestionDocId = this._projectUserConfigDoc.data.selectedQuestionRef;
         if (lastQuestionDocId != null) {
           questionToActivate = questionDocs.find(qd => qd.id === lastQuestionDocId);
         }
@@ -161,11 +214,11 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   updateElementsRead(questionDoc: QuestionDoc): void {
-    if (this.projectUserConfigDoc == null) {
+    if (this._projectUserConfigDoc == null) {
       return;
     }
 
-    this.projectUserConfigDoc
+    this._projectUserConfigDoc
       .submitJson0Op(op => {
         if (questionDoc != null && questionDoc.data != null && !this.hasUserReadQuestion(questionDoc)) {
           op.add(puc => puc.questionRefsRead, questionDoc.data.dataId);
@@ -209,24 +262,17 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   hasUserReadQuestion(questionDoc: QuestionDoc): boolean {
-    return (
-      this.projectUserConfigDoc != null &&
-      CheckingUtils.hasUserReadQuestion(questionDoc.data, this.projectUserConfigDoc.data)
-    );
+    return CheckingUtils.hasUserReadQuestion(questionDoc.data, this._projectUserConfigDoc?.data);
   }
 
   hasUserReadAnswer(answer: Answer): boolean {
-    return this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null
-      ? this.projectUserConfigDoc.data.answerRefsRead.includes(answer.dataId) ||
-          this.projectUserConfigDoc.data.ownerRef === answer.ownerRef
-      : false;
+    const config: Readonly<SFProjectUserConfig> | undefined = this._projectUserConfigDoc?.data;
+    return config != null && (config.answerRefsRead.includes(answer.dataId) || config.ownerRef === answer.ownerRef);
   }
 
   hasUserReadComment(comment: Comment): boolean {
-    return this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null
-      ? this.projectUserConfigDoc.data.commentRefsRead.includes(comment.dataId) ||
-          this.projectUserConfigDoc.data.ownerRef === comment.ownerRef
-      : false;
+    const config: Readonly<SFProjectUserConfig> | undefined = this._projectUserConfigDoc?.data;
+    return config != null && (config.commentRefsRead.includes(comment.dataId) || config.ownerRef === comment.ownerRef);
   }
 
   nextQuestion(): void {
@@ -270,7 +316,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   private async storeMostRecentQuestion(bookNum: number): Promise<void> {
-    if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
+    if (this._projectUserConfigDoc != null && this._projectUserConfigDoc.data != null) {
       const activeQuestionDoc = this.activeQuestionDoc;
       if (activeQuestionDoc != null && activeQuestionDoc.data != null) {
         if (
@@ -279,11 +325,11 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
           this.project.translateConfig.source !== undefined
         ) {
           await this.translationEngineService.trainSelectedSegment(
-            this.projectUserConfigDoc.data,
+            this._projectUserConfigDoc.data,
             this.project.translateConfig.source.projectRef
           );
         }
-        await this.projectUserConfigDoc.submitJson0Op(op => {
+        await this._projectUserConfigDoc.submitJson0Op(op => {
           op.set<string>(puc => puc.selectedTask!, 'checking');
           op.set(puc => puc.selectedQuestionRef!, activeQuestionDoc.id);
           this.isAllBooksShown ? op.unset(puc => puc.selectedBookNum!) : op.set(puc => puc.selectedBookNum!, bookNum);

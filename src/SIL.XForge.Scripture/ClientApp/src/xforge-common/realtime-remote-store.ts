@@ -32,6 +32,8 @@ export interface RealtimeDocAdapter {
   readonly create$: Observable<void>;
   readonly delete$: Observable<void>;
   /** Fires when there are changes to underlying data. */
+  readonly changes$: Observable<any>;
+  /** Fires when there are changes to underlying data that came from a different client. */
   readonly remoteChanges$: Observable<any>;
 
   create(data: any, type?: string): Promise<void>;

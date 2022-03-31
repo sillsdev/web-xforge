@@ -35,6 +35,7 @@ import { UserService } from 'xforge-common/user.service';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
+import { QuestionDoc } from './core/models/question-doc';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { canAccessTranslateApp } from './core/models/sf-project-role-info';
 import { SFProjectService } from './core/sf-project.service';
@@ -80,7 +81,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   private selectedProjectDeleteSub?: Subscription;
   private removedFromProjectSub?: Subscription;
   private _isDrawerPermanent: boolean = true;
-  private readonly questionCountQueries = new Map<number, RealtimeQuery>();
+  private readonly questionCountQueries = new Map<number, RealtimeQuery<QuestionDoc>>();
 
   constructor(
     private readonly router: Router,
@@ -533,7 +534,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       );
     }
     await Promise.all(promises);
-    this.questionCountQueries.forEach((query: RealtimeQuery, bookNum: number) => {
+    this.questionCountQueries.forEach((query: RealtimeQuery<QuestionDoc>, bookNum: number) => {
       this.subscribe(merge(query.remoteChanges$, query.localChanges$, query.ready$), () => {
         if (this.selectedProjectDoc == null) {
           return;
