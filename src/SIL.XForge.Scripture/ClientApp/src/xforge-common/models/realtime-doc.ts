@@ -80,6 +80,10 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
     return this.adapter.remoteChanges$;
   }
 
+  get changes$(): Observable<Ops> {
+    return this.adapter.changes$;
+  }
+
   /**
    * Subscribes to remote changes for the realtime data.
    * For this record, update the RealtimeDoc cache, if any, from IndexedDB.

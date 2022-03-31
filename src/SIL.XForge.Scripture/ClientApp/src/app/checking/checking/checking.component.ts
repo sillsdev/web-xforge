@@ -15,7 +15,7 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
-import { merge, Subscription } from 'rxjs';
+import { merge, NEVER, Observable, Subscription } from 'rxjs';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
@@ -172,6 +172,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   get questionDocs(): Readonly<QuestionDoc[]> {
     return this.questionsQuery?.docs || [];
+  }
+
+  get questionDocs$(): Observable<Readonly<QuestionDoc[]>> {
+    return this.questionsQuery?.docs$ || NEVER;
   }
 
   get textsByBookId(): TextsByBookId {

@@ -1,5 +1,5 @@
 import arrayDiff, { InsertDiff, MoveDiff, RemoveDiff } from 'arraydiff';
-import { Observable, Subject, Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { RealtimeQueryAdapter } from '../realtime-remote-store';
 import { RealtimeService } from '../realtime.service';
@@ -19,6 +19,7 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
   private readonly _ready$ = new Subject<void>();
   private readonly docSubscriptions = new Map<string, Subscription>();
   private readonly _remoteDocChanges$ = new Subject<any>();
+  private readonly _docs$ = new BehaviorSubject<T[]>([]);
 
   constructor(private readonly realtimeService: RealtimeService, public readonly adapter: RealtimeQueryAdapter) {
     this.adapter.ready$.pipe(takeUntil(this.unsubscribe$)).subscribe(() => this.onReady());
@@ -37,6 +38,14 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
 
   get docs(): Readonly<T[]> {
     return this._docs;
+  }
+
+  /**
+   * Observable for the docs that match the query. Emits whenever a doc is added or removed from the results, or one of
+   * the docs is modified.
+   */
+  get docs$(): Observable<Readonly<T[]>> {
+    return this._docs$;
   }
 
   get count(): number {
@@ -171,8 +180,11 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
     }
     this._unpagedCount = unpagedCount;
 
-    if (emitRemoteChanges && changed && this.adapter.ready) {
-      this._remoteChanges$.next();
+    if (this.adapter.ready) {
+      this._docs$.next(this._docs);
+      if (changed && emitRemoteChanges) {
+        this._remoteChanges$.next();
+      }
     }
   }
 
@@ -185,6 +197,7 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
       newDocs.push(newDoc);
       const docSubscription = newDoc.remoteChanges$.subscribe(() => {
         this._remoteDocChanges$.next(newDoc);
+        this._docs$.next(this._docs);
       });
       this.docSubscriptions.set(newDoc.id, docSubscription);
     }

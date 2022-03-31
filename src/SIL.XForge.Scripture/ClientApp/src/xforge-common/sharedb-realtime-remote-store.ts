@@ -90,12 +90,14 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
   readonly idle$: Observable<void>;
   readonly create$: Observable<void>;
   readonly delete$: Observable<void>;
+  readonly changes$: Observable<any>;
   readonly remoteChanges$: Observable<any>;
 
   constructor(private readonly doc: Doc) {
     this.idle$ = fromEvent(this.doc, 'no write pending');
     this.create$ = fromEvent(this.doc, 'create');
     this.delete$ = fromEvent(this.doc, 'del');
+    this.changes$ = fromEvent<[any, any]>(this.doc, 'op').pipe(map(([ops]) => ops));
     this.remoteChanges$ = fromEvent<[any, any]>(this.doc, 'op').pipe(
       filter(([, source]) => !source),
       map(([ops]) => ops)

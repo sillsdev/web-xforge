@@ -63,6 +63,7 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
   readonly pendingOps: any[] = [];
   subscribed: boolean = false;
   version: number = -1;
+  readonly changes$ = new Subject<any>();
   readonly remoteChanges$ = new Subject<any>();
   readonly create$ = new Subject<void>();
   readonly delete$ = new Subject<void>();
@@ -116,6 +117,7 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
     }
     this.data = this.type.apply(this.data, op);
     this.version++;
+    this.emitChange(op);
     if (!source) {
       this.emitRemoteChange(op);
     }
@@ -144,6 +146,10 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
 
   destroy(): Promise<void> {
     return Promise.resolve();
+  }
+
+  emitChange(op?: any): void {
+    this.changes$.next(op);
   }
 
   emitRemoteChange(op?: any): void {
