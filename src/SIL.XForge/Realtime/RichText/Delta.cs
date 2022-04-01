@@ -258,8 +258,7 @@ namespace SIL.XForge.Realtime.RichText
                     else if (((JObject)op[InsertType]).Property("chapter")?.Value.Type == JTokenType.Object)
                         continue;
                 }
-                bool isNewLine = op[InsertType]?.Type == JTokenType.String && (string)op[InsertType] == "\n";
-                if (isTargetVerse && !isNewLine)
+                if (isTargetVerse)
                     verseOps.Add(op);
             }
             Delta verseDeltaOps = new Delta(verseOps);

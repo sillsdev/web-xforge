@@ -1170,11 +1170,12 @@ describe('EditorComponent', () => {
         9,
         'LUK 1:2-3',
         'section heading',
-        { start: 37, length: 15 },
+        { start: 38, length: 15 },
         ['user01'],
         NoteStatus.Todo,
         AssignedUsers.TeamUser
       );
+      env.addParatextNoteThread(10, 'MAT 1:4', '', { start: 27, length: 0 }, ['user01']);
       env.setProjectUserConfig();
       env.wait();
       const verse1Segment: HTMLElement = env.getSegmentElement('verse_1_1')!;
@@ -1193,6 +1194,9 @@ describe('EditorComponent', () => {
       const blankSegmentNote = env.getSegmentElement('verse_1_2')!.querySelector('display-note') as HTMLElement;
       expect(blankSegmentNote.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
       expect(blankSegmentNote.getAttribute('title')).toEqual('Note from user01');
+
+      const segmentEndNote = env.getSegmentElement('verse_1_4')!.querySelector('display-note') as HTMLElement;
+      expect(segmentEndNote).not.toBeNull();
 
       env.updateParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
@@ -1258,8 +1262,7 @@ describe('EditorComponent', () => {
         'para-contents': true,
         'text-anchor': true,
         segment: 'verse_1_1',
-        'note-thread-segment': true,
-        'note-thread-count': '1'
+        'note-thread-segment': true
       });
       expect(contents.ops![verse2SegmentIndex]!.insert).toBe('t');
       env.dispose();
@@ -1298,8 +1301,7 @@ describe('EditorComponent', () => {
       // Add 2 for the two previous embeds
       const noteStart4 = env.component.target!.getSegmentRange('verse_1_3')!.index + doc.data!.position.start + 2;
       doc = env.getNoteThreadDoc('project01', 'thread05');
-      // Add 1 to the position to account for the new line
-      const noteStart5 = env.component.target!.getSegmentRange('verse_1_4')!.index + doc.data!.position.start + 1;
+      const noteStart5 = env.component.target!.getSegmentRange('verse_1_4')!.index + doc.data!.position.start;
       // positions are 11, 34, 55, 56, 94
       const expected = [noteStart1, noteStart2, noteStart3, noteStart4, noteStart5];
       expect(Array.from(env.component.target!.embeddedElements.values())).toEqual(expected);
@@ -1330,7 +1332,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.addParatextNoteThread(6, 'MAT 1:4', 'target', { start: 0, length: 6 }, ['user01']);
       // Note 7 should be at position 0 on segment 1_4/p_1
-      env.addParatextNoteThread(7, 'MAT 1:4', '', { start: 27, length: 0 }, ['user01']);
+      env.addParatextNoteThread(7, 'MAT 1:4', '', { start: 28, length: 0 }, ['user01']);
       env.setProjectUserConfig();
       env.wait();
 
@@ -1567,12 +1569,12 @@ describe('EditorComponent', () => {
       env.wait();
 
       const noteThreadDoc = env.getNoteThreadDoc('project01', 'thread05');
-      expect(noteThreadDoc.data!.position).toEqual({ start: 27, length: 9 });
+      expect(noteThreadDoc.data!.position).toEqual({ start: 28, length: 9 });
       env.targetEditor.setSelection(86, 0, 'user');
       const text = ' new text ';
       const length = text.length;
       env.typeCharacters(text);
-      expect(noteThreadDoc.data!.position).toEqual({ start: 27 + length, length: 9 });
+      expect(noteThreadDoc.data!.position).toEqual({ start: 28 + length, length: 9 });
       env.dispose();
     }));
 
@@ -1759,14 +1761,14 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.wait();
       const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread05');
-      expect(noteThreadDoc.data!.position).toEqual({ start: 27, length: 9 });
+      expect(noteThreadDoc.data!.position).toEqual({ start: 28, length: 9 });
       let verse4p1Index = env.component.target!.getSegmentRange('verse_1_4/p_1')!.index;
       expect(env.getNoteThreadEditorPosition('thread05')).toEqual(verse4p1Index);
       // user deletes all of the text in segment before
       const range = env.component.target!.getSegmentRange('verse_1_4')!;
       env.targetEditor.setSelection(range.index, range.length, 'user');
       env.deleteCharacters();
-      expect(noteThreadDoc.data!.position).toEqual({ start: 1, length: 9 });
+      expect(noteThreadDoc.data!.position).toEqual({ start: 2, length: 9 });
 
       // switch to a new book and back
       env.updateParams({ projectId: 'project01', bookId: 'MRK' });
@@ -1783,14 +1785,15 @@ describe('EditorComponent', () => {
       env.wait();
       const text = 'abc';
       env.typeCharacters(text);
-      expect(noteThreadDoc.data!.position).toEqual({ start: text.length, length: 9 });
+      const nextSegmentLength = 1;
+      expect(noteThreadDoc.data!.position).toEqual({ start: nextSegmentLength + text.length, length: 9 });
 
       // switch to a new book and back
       env.updateParams({ projectId: 'project01', bookId: 'MRK' });
       env.wait();
       env.updateParams({ projectId: 'project01', bookId: 'MAT' });
       env.wait();
-      expect(noteThreadDoc.data!.position).toEqual({ start: text.length, length: 9 });
+      expect(noteThreadDoc.data!.position).toEqual({ start: nextSegmentLength + text.length, length: 9 });
       verse4p1Index = env.component.target!.getSegmentRange('verse_1_4/p_1')!.index;
       note5Index = env.getNoteThreadEditorPosition('thread05');
       expect(note5Index).toEqual(verse4p1Index);
@@ -2442,7 +2445,7 @@ class TestEnvironment {
     this.addParatextNoteThread(2, 'MAT 1:3', 'target: chapter 1, verse 3.', { start: 0, length: 0 }, ['user01']);
     this.addParatextNoteThread(3, 'MAT 1:3', 'verse 3', { start: 20, length: 7 }, ['user01']);
     this.addParatextNoteThread(4, 'MAT 1:3', 'verse', { start: 20, length: 5 }, ['user01']);
-    this.addParatextNoteThread(5, 'MAT 1:4', 'Paragraph', { start: 27, length: 9 }, ['user01']);
+    this.addParatextNoteThread(5, 'MAT 1:4', 'Paragraph', { start: 28, length: 9 }, ['user01']);
     this.addParatextNoteThread(6, 'MAT 1:5', 'resolved note', { start: 0, length: 0 }, ['user01'], NoteStatus.Resolved);
     when(this.mockedRemoteTranslationEngine.getWordGraph(anything())).thenCall(segment =>
       Promise.resolve(this.createWordGraph(segment))
