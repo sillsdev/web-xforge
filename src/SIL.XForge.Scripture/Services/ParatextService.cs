@@ -1779,6 +1779,7 @@ namespace SIL.XForge.Scripture.Services
                 return new TextAnchor();
 
             string verseText = GetVerseText(chapterDelta.Delta, verseRef);
+            verseText = verseText.Replace("\n", "\0");
             PtxUtils.StringUtils.MatchContexts(verseText, contextBefore, selectedText, contextAfter, null, ref startPos,
                 out int posJustPastLastCharacter);
             // The text anchor is relative to the text in the verse

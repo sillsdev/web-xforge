@@ -2188,8 +2188,8 @@ class TestEnvironment {
     const iconSource: string = '--icon-file: url(/assets/icons/TagIcons/01flag1.png)';
     const text: string = `text message on ${id}`;
     const format = { iconsrc: iconSource, preview: text, threadid: id };
-    this.component.toggleFeaturedVerseRefs(true, [verseRef], 'note-thread');
     this.component.embedElementInline(verseRef, id, textAnchor, 'note-thread-embed', format);
+    this.component.toggleFeaturedVerseRefs(true, [verseRef], 'note-thread');
   }
 
   /** Helper method to perform a drag-and-drop and check expectations on resulting data, elements, and

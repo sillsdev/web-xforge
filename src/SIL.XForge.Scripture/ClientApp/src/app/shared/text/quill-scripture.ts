@@ -603,15 +603,6 @@ export function registerScripture(): string[] {
   });
   formats.push(NoteThreadHighlightClass);
 
-  const NoteThreadCountAttribute = new QuillParchment.Attributor.Attribute(
-    'note-thread-count',
-    'data-note-thread-count',
-    {
-      scope: Parchment.Scope.INLINE
-    }
-  );
-  formats.push(NoteThreadCountAttribute);
-
   const InvalidBlockClass = new ClassAttributor('invalid-block', 'invalid-block', {
     scope: Parchment.Scope.BLOCK
   });

@@ -1022,6 +1022,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 new ThreadComponents { threadNum = 1, noteCount = 1, username = env.Username01, alternateText = SelectionType.RelatedVerse },
                 new ThreadComponents { threadNum = 8, noteCount = 1, username = env.Username01, alternateText = SelectionType.Section },
+                new ThreadComponents { threadNum = 9, noteCount = 1, username = env.Username01, alternateText = SelectionType.SectionEnd },
                 new ThreadComponents { threadNum = 10, noteCount = 1, username = env.Username01, alternateText = SelectionType.RelatedVerse }
             });
 
@@ -1036,7 +1037,7 @@ namespace SIL.XForge.Scripture.Services
                 IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret, ptProjectId, 40,
                     new IDocument<NoteThread>[0], deltas, ptProjectUsers);
 
-                Assert.That(changes.Count, Is.EqualTo(3));
+                Assert.That(changes.Count, Is.EqualTo(4));
                 NoteThreadChange thread1Change = changes.Single(c => c.ThreadId == "thread1");
                 // The full matching text of thread1Change.SelectedText is not found. The best match is a substring.
                 // This test also verifies that fetching verse text for verse 1 will fetch text from segment
@@ -1047,13 +1048,19 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(thread1Change.Position.Length, Is.LessThan("other text in verse".Length));
 
                 NoteThreadChange thread8Change = changes.Single(c => c.ThreadId == "thread8");
-                string textBefore8 = "Context before Text selected thread8 context after.";
+                string textBefore8 = "Context before Text selected thread8 context after.\n";
                 int thread8AnchoringLength = "Section heading text".Length;
                 TextAnchor expected8 = new TextAnchor { Start = textBefore8.Length, Length = thread8AnchoringLength };
                 Assert.That(thread8Change.Position, Is.EqualTo(expected8));
 
+                NoteThreadChange thread9Change = changes.Single(c => c.ThreadId == "thread9");
+                string textBefore9 = "Context before Text selected thread9 context after.\nSection heading text";
+                int thread9AnchorLength = 0;
+                TextAnchor expected9 = new TextAnchor { Start = textBefore9.Length, Length = thread9AnchorLength };
+                Assert.That(thread9Change.Position, Is.EqualTo(expected9));
+
                 NoteThreadChange thread10Change = changes.Single(c => c.ThreadId == "thread10");
-                string textBefore10 = "Context before Text selected thread10 context after.*";
+                string textBefore10 = "Context before Text selected thread10 context after.\n*";
                 int thread10AnchoringLength = "other text in verse".Length;
                 TextAnchor expected10 = new TextAnchor { Start = textBefore10.Length, Length = thread10AnchoringLength };
                 // This test also verifies that fetching verse text for verse 10 will fetch text from both segments
@@ -1613,7 +1620,8 @@ namespace SIL.XForge.Scripture.Services
         {
             Standard,
             RelatedVerse,
-            Section
+            Section,
+            SectionEnd
         }
 
         struct ThreadComponents
@@ -2386,19 +2394,27 @@ namespace SIL.XForge.Scripture.Services
                     string text = "Text selected " + threadId;
                     string selectedText = comp.appliesToVerse ? ContextBefore + text + ContextAfter : text;
                     string verseStr = $"MAT 1:{comp.threadNum}";
+                    string sectionHeading = "Section heading text";
 
-                    if (comp.alternateText == SelectionType.RelatedVerse)
+                    switch (comp.alternateText)
                     {
-                        // The alternate text is in a subsequent paragraph with a footnote represented by '*'
-                        before = before + text + after + "\n*";
-                        after = "";
-                        selectedText = "other text in verse";
-                    }
-                    else if (comp.alternateText == SelectionType.Section)
-                    {
-                        before = before + text + after;
-                        after = "";
-                        selectedText = "Section heading text";
+                        case SelectionType.RelatedVerse:
+                            // The alternate text is in a subsequent paragraph with a footnote represented by '*'
+                            before = before + text + after + "\n*";
+                            after = "";
+                            selectedText = "other text in verse";
+                            break;
+                        case SelectionType.Section:
+                            before = before + text + after;
+                            after = "";
+                            selectedText = sectionHeading;
+                            break;
+                        case SelectionType.SectionEnd:
+                            before = before + text + after + sectionHeading;
+                            after = " \\p";
+                            selectedText = "";
+                            break;
+
                     }
 
                     Paratext.Data.ProjectComments.Comment getThreadComment()
@@ -2533,7 +2549,7 @@ namespace SIL.XForge.Scripture.Services
                         "{ \"insert\": { \"verse\": { \"number\": \"" + i + "\" } }}, " +
                         "{ \"insert\": \"" + before + noteSelectedText + after + "\", " +
                         "\"attributes\": { \"segment\": \"verse_" + chapterNum + "_" + i + "\" } }";
-                    if (i == 8)
+                    if (i == 8 || i == 9)
                     {
                         // create a new section heading after verse 8
                         chapterText = chapterText + " ," +
