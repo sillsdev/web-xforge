@@ -171,16 +171,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   get questionDocs(): Readonly<QuestionDoc[]> {
-    return (this.questionsQuery?.docs || [])
-      .filter(qd => qd.data != null && qd.data.isArchived === false)
-      .sort((docA, docB) => {
-        const a = docA.data!;
-        const b = docB.data!;
-        const diff =
-          VerseRef.getBBBCCCVVV(a.verseRef.bookNum, a.verseRef.chapterNum, a.verseRef.verseNum) -
-          VerseRef.getBBBCCCVVV(b.verseRef.bookNum, b.verseRef.chapterNum, b.verseRef.verseNum);
-        return diff !== 0 ? diff : Date.parse(a.dateCreated) - Date.parse(b.dateCreated);
-      });
+    return this.questionsQuery?.docs || [];
   }
 
   get textsByBookId(): TextsByBookId {
@@ -379,7 +370,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         this.showAllBooks = bookId === 'ALL';
         this.questionsQuery = await this.projectService.queryQuestions(projectId, {
           bookNum: this.showAllBooks ? undefined : bookNum,
-          sort: true
+          sort: true,
+          activeOnly: true
         });
         // TODO: check for remote changes to file data more generically
         if (this.questionsRemoteChangesSub != null) {
