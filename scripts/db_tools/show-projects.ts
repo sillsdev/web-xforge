@@ -156,12 +156,13 @@ class ProjectInquirer {
     if (this.connectionConfig == null) {
       throw new Error('null connection config');
     }
-    console.log(`Connecting to ${this.server}`);
+    console.log(`Connecting to ${this.server}.`);
     const ws = new WebSocket(this.connectionConfig.wsConnectionString);
     const conn: Connection = new Connection(ws);
     const client: MongoClient = await MongoClient.connect(this.connectionConfig.dbLocation, {
       useUnifiedTopology: true
     });
+    console.log(`Connected.`);
     try {
       const db: Db = client.db();
       const textsCollection: Collection<any> = db.collection('texts');
