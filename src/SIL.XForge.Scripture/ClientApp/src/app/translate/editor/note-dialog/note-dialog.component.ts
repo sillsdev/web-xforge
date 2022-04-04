@@ -154,7 +154,8 @@ export class NoteDialogComponent implements OnInit {
       case NoteStatus.Resolved:
         return this.threadDoc.getNoteResolvedIcon(note).url;
     }
-    return note.reattached != null ? this.threadDoc.iconReattached.url : this.threadDoc.getNoteIcon(note).url;
+    const noteIcon: string = this.threadDoc.getNoteIcon(note).url;
+    return note.reattached != null && noteIcon == '' ? this.threadDoc.iconReattached.url : noteIcon;
   }
 
   noteTitle(note: Note) {

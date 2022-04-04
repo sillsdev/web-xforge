@@ -158,16 +158,27 @@ describe('NoteDialogComponent', () => {
   }));
 
   it('reattached note with content', fakeAsync(() => {
-    const content: string = 'Reattached content text.';
+    let content: string = 'Reattached content text.';
     env = new TestEnvironment({ reattachedContent: content });
+
+    // Check note with status set
     const verseText = 'before selection reattached text after selection';
-    const expectedSrc = '/assets/icons/TagIcons/flag02.png';
-    const reattachNote = env.notes[4].nativeElement as HTMLElement;
+    let expectedSrc = '/assets/icons/TagIcons/flag02.png';
+    let reattachNote = env.notes[4].nativeElement as HTMLElement;
     expect(reattachNote.querySelector('.content .text')!.textContent).toContain(verseText);
     expect(reattachNote.querySelector('.content .verse-reattached')!.textContent).toContain('Matthew 1:4');
     expect(reattachNote.querySelector('.content .note-content')!.textContent).toContain(content);
     expect(reattachNote.querySelector('img')?.getAttribute('src')).toEqual(expectedSrc);
     expect(reattachNote.querySelector('img')?.getAttribute('title')).toEqual('To do');
+
+    // Check note with no status set
+    content = 'reattached02';
+    expectedSrc = '/assets/icons/TagIcons/flag03.png';
+    reattachNote = env.notes[5].nativeElement as HTMLElement;
+    expect(reattachNote.querySelector('.content .verse-reattached')!.textContent).toContain('Matthew 1:4');
+    expect(reattachNote.querySelector('.content .note-content')!.textContent).toContain(content);
+    expect(reattachNote.querySelector('img')?.getAttribute('src')).toEqual(expectedSrc);
+    expect(reattachNote.querySelector('img')?.getAttribute('title')).toEqual('Note reattached');
   }));
 
   it('shows assigned user', fakeAsync(() => {
@@ -372,6 +383,19 @@ class TestEnvironment {
         ownerRef: 'user01',
         status: reattachedContent === '' ? NoteStatus.Unspecified : NoteStatus.Todo,
         tagIcon: reattachedContent === '' ? undefined : 'flag02',
+        dateCreated: '',
+        dateModified: '',
+        reattached: TestEnvironment.reattached
+      });
+      noteThread.notes.push({
+        dataId: 'reattached02',
+        threadId: 'thread01',
+        content: 'reattached02',
+        extUserId: 'user01',
+        deleted: false,
+        ownerRef: 'user01',
+        status: NoteStatus.Unspecified,
+        tagIcon: 'flag03',
         dateCreated: '',
         dateModified: '',
         reattached: TestEnvironment.reattached
