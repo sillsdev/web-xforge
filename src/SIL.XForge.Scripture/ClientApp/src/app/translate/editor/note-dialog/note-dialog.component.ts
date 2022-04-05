@@ -130,6 +130,11 @@ export class NoteDialogComponent implements OnInit {
 
   parseNote(content: string | undefined): string {
     const replace = new Map<RegExp, string>();
+    replace.set(/<bold><color name="red">(.*?)<\/color><\/bold>/gim, '<span class="conflict-text-newer">$1</span>');
+    replace.set(
+      /<strikethrough><color name="red">(.*?)<\/color><\/strikethrough>/gim,
+      '<span class="conflict-text-older">$1</span>'
+    );
     replace.set(/<bold>(.*)<\/bold>/gim, '<b>$1</b>'); // Bold style
     replace.set(/<italic>(.*)<\/italic>/gim, '<i>$1</i>'); // Italic style
     replace.set(/<p>(.*)<\/p>/gim, '$1<br />'); // Turn paragraphs into line breaks
