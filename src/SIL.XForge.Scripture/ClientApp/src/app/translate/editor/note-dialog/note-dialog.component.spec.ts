@@ -82,6 +82,10 @@ describe('NoteDialogComponent', () => {
         expected: 'turn <i>text italic</i>'
       },
       {
+        text: 'Alpha <unknown><bold>Bravo</bold></unknown> Charlie',
+        expected: 'Alpha <b>Bravo</b> Charlie'
+      },
+      {
         text: '<p>this is a paragraph</p>',
         expected: 'this is a paragraph<br />'
       },
