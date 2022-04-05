@@ -94,6 +94,26 @@ describe('NoteDialogComponent', () => {
         expected: 'check unknown <i>text</i>'
       },
       {
+        text: 'Alpha <strikethrough><color name="red">Bravo</color></strikethrough> Charlie',
+        expected: 'Alpha <span class="conflict-text-older">Bravo</span> Charlie'
+      },
+      {
+        text: 'Alpha <bold><color name="red">Bravo</color></bold> Charlie',
+        expected: 'Alpha <span class="conflict-text-newer">Bravo</span> Charlie'
+      },
+      {
+        // The following is derived from data from Paratext 9.
+        text: '<language name="en">Alpha <strikethrough><color name="red">original </color></strikethrough><bold><color name="red">one-option </color></bold>Bravo</language>',
+        expected:
+          'Alpha <span class="conflict-text-older">original </span><span class="conflict-text-newer">one-option </span>Bravo'
+      },
+      {
+        // The following is derived from data from Paratext 9.
+        text: 'Preamble Before <strikethrough><color name="red">Older text </color></strikethrough><bold><color name="red">Newer text</color></bold><bold><color name="red">\\x - </color></bold><bold><color name="red">\\xo </color></bold><bold><color name="red">3.16 </color></bold><bold><color name="red">\\xt </color></bold><bold><color name="red">cross reference here </color></bold><bold><color name="red">\\x*</color></bold><bold><color name="red"> </color></bold>After ',
+        expected:
+          'Preamble Before <span class="conflict-text-older">Older text </span><span class="conflict-text-newer">Newer text</span><span class="conflict-text-newer">\\x - </span><span class="conflict-text-newer">\\xo </span><span class="conflict-text-newer">3.16 </span><span class="conflict-text-newer">\\xt </span><span class="conflict-text-newer">cross reference here </span><span class="conflict-text-newer">\\x*</span><span class="conflict-text-newer"> </span>After '
+      },
+      {
         text: '',
         expected: ''
       },
