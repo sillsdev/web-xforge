@@ -81,6 +81,7 @@
     "cannot_edit_chapter_formatting_invalid": "Эта глава не может быть изменена, так как форматирование неверно. Пожалуйста, исправьте форматирование в Paratext.",
     "completed_successfully": "Успешно завершено",
     "configure_translation_suggestions": "Настройка предложений по переводу",
+    "more_notes": "--- {{ count }} more note(s) ---",
     "project_text_not_editable": "Text in this project is not editable. This setting can be changed in Paratext.",
     "project_data_out_of_sync": "Your project data is out of sync. Please synchronize your project to edit this text.",
     "swap_source_and_target": "Поменять местами источник и цель",
@@ -135,6 +136,18 @@
     "transcelerator_paratext": "{1}Transcelerator{2} is a plugin for {3}Paratext{4} to aid with creating and translating scripture checking questions.",
     "transcelerator_some_questions_already_imported": "Note: Some selected questions have already been imported. Questions that have been edited in Transcelerator will be updated in Scripture Forge, and exact duplicates will be skipped.",
     "update_transcelerator": "The version of Transcelerator used in this project is not supported. Please update to at least Transcelerator version 1.5.3."
+  },
+  "note_dialog": {
+    "close": "Закрыть",
+    "hide_changes": "Hide changes",
+    "note_reattached": "Note reattached",
+    "paratext_user": "Paratext user",
+    "reattached": "(Re-attached)",
+    "show_changes": "Show changes",
+    "status_resolved": "Resolved",
+    "status_to_do": "To do",
+    "team": "(Team)",
+    "unassigned": "(Unassigned)"
   },
   "paginator": {
     "items_per_page": "Элементов на странице",
