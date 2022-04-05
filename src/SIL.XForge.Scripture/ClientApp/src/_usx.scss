@@ -398,3 +398,13 @@ usx-ref {
 usx-unmatched {
   display: none;
 }
+
+.note-content {
+  .conflict-text-older {
+    background-color: #ffc0cb;
+  }
+  .conflict-text-newer {
+    background-color: #90ee90;
+    font-weight: bold;
+  }
+}
