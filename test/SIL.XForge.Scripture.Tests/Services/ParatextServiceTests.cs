@@ -1908,6 +1908,7 @@ namespace SIL.XForge.Scripture.Services
             public IParatextDataHelper MockParatextDataHelper;
             public IInternetSharedRepositorySourceProvider MockInternetSharedRepositorySourceProvider;
             public ISFRestClientFactory MockRestClientFactory;
+            public IGuidService MockGuidService;
             public ParatextService Service;
 
             public TestEnvironment()
@@ -1925,6 +1926,7 @@ namespace SIL.XForge.Scripture.Services
                 MockParatextDataHelper = Substitute.For<IParatextDataHelper>();
                 MockInternetSharedRepositorySourceProvider = Substitute.For<IInternetSharedRepositorySourceProvider>();
                 MockRestClientFactory = Substitute.For<ISFRestClientFactory>();
+                MockGuidService = Substitute.For<IGuidService>();
 
                 DateTime aSecondAgo = DateTime.Now - TimeSpan.FromSeconds(1);
                 string accessToken1 =
@@ -1953,10 +1955,16 @@ namespace SIL.XForge.Scripture.Services
 
                 RealtimeService = new SFMemoryRealtimeService();
 
+                int guidServiceCharId = 1;
+                MockGuidService.Generate().Returns(_ => $"{guidServiceCharId++}");
+                string guidServiceGuidPrefix = "syncuser0";
+                int guidServiceObjectId = 2;
+                MockGuidService.NewObjectId().Returns(_ => guidServiceGuidPrefix + guidServiceObjectId++);
+
                 Service = new ParatextService(MockWebHostEnvironment, MockParatextOptions, MockRepository,
                     RealtimeService, MockExceptionHandler, MockSiteOptions, MockFileSystemService,
                     MockLogger, MockJwtTokenHelper, MockParatextDataHelper, MockInternetSharedRepositorySourceProvider,
-                    new TestGuidService(), MockRestClientFactory, MockHgWrapper);
+                    MockGuidService, MockRestClientFactory, MockHgWrapper);
                 Service.ScrTextCollection = MockScrTextCollection;
                 Service.SharingLogicWrapper = MockSharingLogicWrapper;
                 Service.SyncDir = SyncDir;
