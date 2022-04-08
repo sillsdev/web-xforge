@@ -166,8 +166,10 @@ export class DragAndDrop {
 
     let startPositionInTargetNode: number = 0;
     let nodeDroppedInto: Node | undefined;
+    // eslint-disable-next-line deprecation/deprecation
     if (document.caretRangeFromPoint !== undefined) {
       // Chromium/Chrome, Edge, and Safari browsers
+      // eslint-disable-next-line deprecation/deprecation
       const range: Range = document.caretRangeFromPoint(targetX, targetY);
       startPositionInTargetNode = range.startOffset;
       nodeDroppedInto = range.startContainer;
