@@ -105,9 +105,15 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     sanitizer: DomSanitizer
   ) {
     super(noticeService);
-    this.subscribe(media.media$, (change: MediaChange) => {
-      this.isDrawerPermanent = ['xl', 'lt-xl', 'lg', 'lt-lg'].includes(change.mqAlias);
-    });
+    this.subscribe(
+      media.asObservable().pipe(
+        filter((changes: MediaChange[]) => changes.length > 0),
+        map((changes: MediaChange[]) => changes[0])
+      ),
+      (change: MediaChange) => {
+        this.isDrawerPermanent = ['xl', 'lt-xl', 'lg', 'lt-lg'].includes(change.mqAlias);
+      }
+    );
 
     // Check online status changes
     this.isAppOnline = pwaService.isOnline;

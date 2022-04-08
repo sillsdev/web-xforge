@@ -16,6 +16,7 @@ import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { merge, NEVER, Observable, Subscription } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
@@ -447,10 +448,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       this.projectDeleteSub = this.subscribe(this.projectDoc.delete$, () => this.onRemovedFromProject());
       this.isProjectAdmin = await this.projectService.isProjectAdmin(projectId, this.userService.currentUserId);
     });
-    this.subscribe(this.media.media$, (change: MediaChange) => {
-      this.calculateScriptureSliderPosition();
-      this.isDrawerPermanent = ['xl', 'lt-xl', 'lg', 'lt-lg', 'md', 'lt-md'].includes(change.mqAlias);
-    });
+    this.subscribe(
+      this.media.asObservable().pipe(
+        filter((changes: MediaChange[]) => changes.length > 0),
+        map((changes: MediaChange[]) => changes[0])
+      ),
+      (change: MediaChange) => {
+        this.calculateScriptureSliderPosition();
+        this.isDrawerPermanent = ['xl', 'lt-xl', 'lg', 'lt-lg', 'md', 'lt-md'].includes(change.mqAlias);
+      }
+    );
   }
 
   ngOnDestroy(): void {
