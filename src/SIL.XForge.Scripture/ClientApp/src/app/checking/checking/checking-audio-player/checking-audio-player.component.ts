@@ -1,5 +1,5 @@
-import { MdcSlider, MdcSliderChange } from '@angular-mdc/web/slider';
 import { Component, Input, OnDestroy, Pipe, PipeTransform, ViewChild } from '@angular/core';
+import { MatSlider, MatSliderChange } from '@angular/material/slider';
 import { formatFileSource, isLocalBlobUrl } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -24,7 +24,7 @@ export enum AudioStatus {
 export class CheckingAudioPlayerComponent extends SubscriptionDisposable implements OnDestroy {
   static lastPlayedAudio: HTMLAudioElement;
 
-  @ViewChild(MdcSlider) slider?: MdcSlider;
+  @ViewChild(MatSlider) slider?: MatSlider;
 
   seek: number = 0;
   audioStatus: AudioStatus = AudioStatus.Init;
@@ -151,9 +151,6 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
     if (CheckingAudioPlayerComponent.lastPlayedAudio) {
       CheckingAudioPlayerComponent.lastPlayedAudio.pause();
     }
-    if (this.slider != null) {
-      this.slider.layout();
-    }
     if (!this.audioDataLoaded) {
       this.audio.load();
     }
@@ -161,8 +158,8 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
     CheckingAudioPlayerComponent.lastPlayedAudio = this.audio;
   }
 
-  seeking(event: MdcSliderChange) {
-    this.seek = event.value;
+  seeking(event: MatSliderChange) {
+    this.seek = event.value ?? 0;
     this.audio.currentTime = this.seek > 0 ? this.duration * (this.seek / 100) : 0;
     this._currentTime = this.audio.currentTime;
   }

@@ -1,7 +1,7 @@
-import { MdcSlider } from '@angular-mdc/web/slider';
 import { Component, Inject, ViewChild } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatSlider } from '@angular/material/slider';
 import { BehaviorSubject } from 'rxjs';
 import { debounceTime, map, skip } from 'rxjs/operators';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -19,7 +19,7 @@ export interface SuggestionsSettingsDialogData {
   styleUrls: ['./suggestions-settings-dialog.component.scss']
 })
 export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
-  @ViewChild('confidenceThresholdSlider') confidenceThresholdSlider?: MdcSlider;
+  @ViewChild('confidenceThresholdSlider') confidenceThresholdSlider?: MatSlider;
   open: boolean = false;
 
   suggestionsEnabledSwitch = new FormControl();
@@ -40,7 +40,6 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
 
     dialogRef.afterOpened().subscribe(() => {
       if (this.confidenceThresholdSlider != null) {
-        this.confidenceThresholdSlider.layout();
         this.confidenceThresholdSlider.disabled = false; // cannot set value when slider is disabled
         this.confidenceThresholdSlider.value = this.projectUserConfigDoc.data!.confidenceThreshold * 100;
         this.confidenceThresholdSlider.disabled = this.settingsDisabled;
@@ -49,8 +48,8 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
     });
 
     if (this.projectUserConfigDoc.data != null) {
-      const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
-      this.confidenceThreshold$.next(pcnt);
+      const percent = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
+      this.confidenceThreshold$.next(percent);
     }
 
     this.subscribe(
@@ -70,12 +69,6 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
     });
     this.subscribe(this.pwaService.onlineStatus, isOnline => {
       isOnline ? this.suggestionsSwitchFormGroup.enable() : this.suggestionsEnabledSwitch.disable();
-      // Dialog width changes when offline message is shown, causing slider to need to run layout again
-      setTimeout(() => {
-        if (this.confidenceThresholdSlider != null) {
-          this.confidenceThresholdSlider.layout();
-        }
-      });
     });
   }
 

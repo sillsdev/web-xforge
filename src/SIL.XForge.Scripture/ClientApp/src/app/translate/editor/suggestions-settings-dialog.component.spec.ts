@@ -1,9 +1,9 @@
 import { MdcSelect } from '@angular-mdc/web';
-import { MdcSlider } from '@angular-mdc/web/slider';
 import { CommonModule } from '@angular/common';
 import { Component, DebugElement, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
+import { MatSlider } from '@angular/material/slider';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -159,7 +159,7 @@ class TestEnvironment {
     return this.fixture.nativeElement.parentElement.querySelector('.cdk-overlay-container');
   }
 
-  get confidenceThresholdSlider(): MdcSlider {
+  get confidenceThresholdSlider(): MatSlider {
     return this.component!.confidenceThresholdSlider!;
   }
 

@@ -14,3 +14,13 @@ mat-dialog-content.content-padding {
 #num-suggestions-select ::ng-deep .mdc-select__anchor {
   width: 100%;
 }
+
+mat-slider.mat-slider-horizontal ::ng-deep {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  > .mat-slider-wrapper {
+    left: 0;
+    right: 0;
+  }
+}
