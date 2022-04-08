@@ -43,7 +43,14 @@
               "includePaths": ["node_modules"]
             },
             "allowedCommonJsDependencies": ["@bugsnag/js"],
-            "scripts": []
+            "scripts": [],
+            "aot": false,
+            "vendorChunk": true,
+            "extractLicenses": false,
+            "buildOptimizer": false,
+            "sourceMap": true,
+            "optimization": false,
+            "namedChunks": true
           },
           "configurations": {
             "production": {
@@ -61,7 +68,6 @@
               ],
               "optimization": true,
               "outputHashing": "all",
-              "sourceMap": true,
               "namedChunks": false,
               "aot": true,
               "extractLicenses": true,
@@ -84,7 +90,6 @@
               ],
               "optimization": true,
               "outputHashing": "all",
-              "sourceMap": true,
               "namedChunks": false,
               "aot": true,
               "extractLicenses": true,
@@ -99,28 +104,28 @@
                   "with": "src/environments/environment.pwa-test.ts"
                 }
               ],
-              "optimization": false,
               "outputHashing": "all",
-              "sourceMap": true,
               "namedChunks": false,
-              "aot": false,
               "extractLicenses": true,
               "vendorChunk": false,
-              "buildOptimizer": false,
               "serviceWorker": true
-            }
-          }
+            },
+            "development": {}
+          },
+          "defaultConfiguration": "production"
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
-          "options": {
-            "browserTarget": "SIL.XForge.Scripture:build"
-          },
+          "options": {},
           "configurations": {
             "production": {
               "browserTarget": "SIL.XForge.Scripture:build:production"
+            },
+            "development": {
+              "browserTarget": "SIL.XForge.Scripture:build:development"
             }
-          }
+          },
+          "defaultConfiguration": "development"
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
@@ -166,7 +171,8 @@
           "options": {
             "protractorConfig": "./e2e/protractor.conf.js",
             "devServerTarget": "SIL.XForge.Scripture:serve"
-          }
+          },
+          "configurations": {}
         },
         "lint": {
           "builder": "@angular-eslint/builder:lint",
