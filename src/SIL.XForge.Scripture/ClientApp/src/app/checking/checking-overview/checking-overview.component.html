@@ -110,7 +110,7 @@
     fxLayout="row"
     fxLayoutAlign="space-around"
     class="reviewer-panels"
-    *ngIf="allQuestionsCount === 0"
+    *ngIf="showNoQuestionsMessage"
     id="no-questions-label"
   >
     <p>
@@ -121,6 +121,8 @@
       ></span>
     </p>
   </div>
+
+  <p id="loading-questions-message" *ngIf="showQuestionsLoadingMessage">{{ t("loading_questions") }}</p>
 
   <ng-template #reviewerQuestionPanel>
     <div fxLayout="column" fxLayoutAlign="space-around" class="reviewer-panels" id="reviewer-question-panel">
@@ -256,10 +258,13 @@
       fxLayout="row"
       fxLayoutAlign="space-around"
       class="reviewer-panels"
-      *ngIf="allArchivedQuestionsCount === 0"
+      *ngIf="showNoArchivedQuestionsMessage"
       id="no-archived-questions-label"
     >
       <p>{{ t("no_archived_questions") }}</p>
     </div>
   </div>
+  <p *ngIf="showArchivedQuestionsLoadingMessage" id="loading-archived-questions-message">
+    {{ t("loading_questions") }}
+  </p>
 </ng-container>

@@ -38,7 +38,10 @@ app-donut-chart {
 }
 
 #no-questions-label,
-#no-archived-questions-label {
+#no-archived-questions-label,
+#loading-questions-message,
+#loading-archived-questions-message {
+  text-align: center;
   color: var(--mdc-theme-text-hint-on-background);
 }
 
