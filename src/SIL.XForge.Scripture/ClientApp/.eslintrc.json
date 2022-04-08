@@ -51,6 +51,7 @@
           }
         ],
         "brace-style": ["error", "1tbs"],
+        "eqeqeq": ["error", "always", { "null": "ignore" }],
         "id-blacklist": "off",
         "id-match": "off",
         "import/order": "error",
