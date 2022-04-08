@@ -1,16 +1,16 @@
+@use '~@angular/material' as mat;
 @import 'variables';
-@import '~@angular/material/theming';
 
-@include mat-core();
+@include mat.core();
 
 $mat-sf-purple: (
   200: $purpleLight,
   500: $purpleMedium,
   800: $purpleDark,
   contrast: (
-    200: $dark-primary-text,
-    500: $light-primary-text,
-    800: $light-primary-text
+    200: rgba(black, 0.87),
+    500: white,
+    800: white
   )
 );
 
@@ -18,8 +18,8 @@ $mat-sf-grey: (
   200: $greyLight,
   800: $greyDark,
   contrast: (
-    200: $dark-primary-text,
-    800: $light-primary-text
+    200: rgba(black, 0.87),
+    800: white
   )
 );
 
@@ -28,31 +28,31 @@ $mat-sf-green: (
   500: $greenLight,
   800: $greenDark,
   contrast: (
-    200: $dark-primary-text,
-    500: $dark-primary-text,
-    800: $light-primary-text
+    200: rgba(black, 0.87),
+    500: rgba(black, 0.87),
+    800: white
   )
 );
 
 $mat-sf-blue: (
   500: $blueMedium,
   contrast: (
-    500: $light-primary-text
+    500: white
   )
 );
 
 $mat-sf-orange: (
   500: #ff7300,
   contrast: (
-    500: $light-primary-text
+    500: white
   )
 );
 
 // Styles for angular material components. Refer to https://material.angular.io/guide/theming
-$matGrey: mat-palette($mat-sf-grey, 800);
-$matGreenLight: mat-palette($mat-sf-green, 500, 200);
+$matGrey: mat.define-palette($mat-sf-grey, 800);
+$matGreenLight: mat.define-palette($mat-sf-green, 500, 200);
 
-$material-app-theme: mat-light-theme(
+$material-app-theme: mat.define-light-theme(
   (
     color: (
       primary: $matGrey,
@@ -61,13 +61,13 @@ $material-app-theme: mat-light-theme(
   )
 );
 
-@include mat-autocomplete-theme($material-app-theme);
-@include mat-button-theme($material-app-theme);
-@include mat-checkbox-theme($material-app-theme);
-@include mat-optgroup-theme($material-app-theme);
-@include mat-option-theme($material-app-theme);
-@include mat-paginator-theme($material-app-theme);
-@include mat-progress-bar-theme($material-app-theme);
-@include mat-progress-spinner-theme($material-app-theme);
-@include mat-select-theme($material-app-theme);
-@include mat-table-theme($material-app-theme);
+@include mat.autocomplete-theme($material-app-theme);
+@include mat.button-theme($material-app-theme);
+@include mat.checkbox-theme($material-app-theme);
+@include mat.optgroup-theme($material-app-theme);
+@include mat.option-theme($material-app-theme);
+@include mat.paginator-theme($material-app-theme);
+@include mat.progress-bar-theme($material-app-theme);
+@include mat.progress-spinner-theme($material-app-theme);
+@include mat.select-theme($material-app-theme);
+@include mat.table-theme($material-app-theme);

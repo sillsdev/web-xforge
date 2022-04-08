@@ -24,7 +24,7 @@ async function run() {
   console.log(`Connecting...`);
   const ws = new WebSocket(connectionConfig.wsConnectionString);
   const conn = new ShareDB.Connection(ws);
-  const client = await MongoClient.connect(connectionConfig.dbLocation, { useUnifiedTopology: true });
+  const client = await MongoClient.connect(connectionConfig.dbLocation);
   try {
     const db = client.db();
     const projectCollection = db.collection('sf_projects');
