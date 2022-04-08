@@ -13,7 +13,6 @@ import { MdcMenuModule } from '@angular-mdc/web/menu';
 import { MdcMenuSurfaceModule } from '@angular-mdc/web/menu-surface';
 import { MdcRadioModule } from '@angular-mdc/web/radio';
 import { MdcSelectModule } from '@angular-mdc/web/select';
-import { MdcSliderModule } from '@angular-mdc/web/slider';
 import { MdcSnackbarModule } from '@angular-mdc/web/snackbar';
 import { MdcSwitchModule } from '@angular-mdc/web/switch';
 import { MdcTabBarModule } from '@angular-mdc/web/tab-bar';
@@ -38,6 +37,7 @@ import { MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginato
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSliderModule } from '@angular/material/slider';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoService } from '@ngneat/transloco';
@@ -67,6 +67,7 @@ const modules = [
   MatProgressBarModule,
   MatProgressSpinnerModule,
   MatSelectModule,
+  MatSliderModule,
   MatTableModule,
   MatTooltipModule,
   MdcButtonModule,
@@ -83,7 +84,6 @@ const modules = [
   MdcMenuSurfaceModule,
   MdcRadioModule,
   MdcSelectModule,
-  MdcSliderModule,
   MdcSnackbarModule,
   MdcSwitchModule,
   MdcTabBarModule,
