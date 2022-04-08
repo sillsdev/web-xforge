@@ -32,4 +32,4 @@ jobs:
       - name: Build Realtime server dependencies for Angular
         run: cd src/RealtimeServer && npm ci
       - name: Angular Frontend Production Build
-        run: cd src/SIL.XForge.Scripture/ClientApp && npm ci && npx ng build --prod
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm ci && npm run build
