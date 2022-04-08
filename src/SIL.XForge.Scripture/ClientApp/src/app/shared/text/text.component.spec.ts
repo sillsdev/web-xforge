@@ -90,8 +90,8 @@ describe('TextComponent', () => {
     env.id = new TextDocId('project01', 40, 1);
     tick();
     env.fixture.detectChanges();
-    expect(env.component.editor?.getText()).toContain('chapter 1, verse 6.', 'setup');
-    expect(env.component.editor?.getContents().ops?.length).toEqual(25, 'setup');
+    expect(env.component.editor?.getText()).withContext('setup').toContain('chapter 1, verse 6.');
+    expect(env.component.editor?.getContents().ops?.length).withContext('setup').toEqual(25);
 
     env.component.editor?.updateContents(new Delta().retain(109).retain(31, { para: null }));
 
@@ -176,8 +176,8 @@ describe('TextComponent', () => {
       const textToDropIn = 'Hello\nHello\r\nHello';
       const expectedFinalText = 'target: chapterHello Hello Hello 1, verse 4.';
       const targetSegmentRef: string = 'verse_1_4';
-      expect(env.component.getSegmentText(targetSegmentRef)).toEqual(initialTextInDoc, 'setup');
-      expect(env.component.editor!.getText()).toContain(initialTextInDoc, 'setup');
+      expect(env.component.getSegmentText(targetSegmentRef)).withContext('setup').toEqual(initialTextInDoc);
+      expect(env.component.editor!.getText()).withContext('setup').toContain(initialTextInDoc);
 
       // When the user drops text into their browser, a DropEvent gives details on the data being dropped, as well as
       // the element that it was dropped onto.
@@ -197,9 +197,10 @@ describe('TextComponent', () => {
 
       // How far into the initialTextInDoc the user is trying to drop the new text
       const desiredIndexInSegment = 'target: chapter'.length;
-      // Override the Chromium point-to-index method behaviour, since the unit test isn't really dragging the mouse
+      // Override the Chromium point-to-index method behavior, since the unit test isn't really dragging the mouse
       // to an element.
       const startContainer: Node = targetElement!.childNodes[0] as Node;
+      // eslint-disable-next-line deprecation/deprecation
       document.caretRangeFromPoint = (_x: number, _y: number) =>
         ({ startOffset: desiredIndexInSegment, startContainer } as Range);
 
@@ -262,6 +263,7 @@ describe('TextComponent', () => {
       const dropTextNodeBeginningText: string = ` 1, `;
       // The length into this text node that will be returned by caretRangeFromPoint
       const textNodeIndex: number = dropTextNodeBeginningText.length;
+      // eslint-disable-next-line deprecation/deprecation
       document.caretRangeFromPoint = (_x: number, _y: number) =>
         ({ startOffset: textNodeIndex, startContainer } as Range);
 
@@ -296,8 +298,8 @@ describe('TextComponent', () => {
       const textToDropIn = 'Hello\nHello\r\nHello';
       const expectedFinalText = 'target: chapterHello Hello Hello 1, verse 4.';
       const targetSegmentRef: string = 'verse_1_4';
-      expect(env.component.getSegmentText(targetSegmentRef)).toEqual(initialTextInDoc, 'setup');
-      expect(env.component.editor!.getText()).toContain(initialTextInDoc, 'setup');
+      expect(env.component.getSegmentText(targetSegmentRef)).withContext('setup').toEqual(initialTextInDoc);
+      expect(env.component.editor!.getText()).withContext('setup').toContain(initialTextInDoc);
 
       const dataTransfer = new DataTransfer();
       dataTransfer.setData('text/plain', textToDropIn);
@@ -416,8 +418,8 @@ describe('TextComponent', () => {
       const expectedFinalText = 'target: , verchapter 1se 4.';
       //                                      ---------
       const targetSegmentRef: string = 'verse_1_4';
-      expect(env.component.getSegmentText(targetSegmentRef)).toEqual(initialTextInDoc, 'setup');
-      expect(env.component.editor!.getText()).toContain(initialTextInDoc, 'setup');
+      expect(env.component.getSegmentText(targetSegmentRef)).withContext('setup').toEqual(initialTextInDoc);
+      expect(env.component.editor!.getText()).withContext('setup').toContain(initialTextInDoc);
 
       const originSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(targetSegmentRef);
       if (originSegmentRange == null) {
@@ -445,6 +447,7 @@ describe('TextComponent', () => {
       // Override the point-to-index method behaviour, since the unit test isn't really dragging the mouse to an
       // element.
       const startContainer: Node = targetElement!.childNodes[0] as Node;
+      // eslint-disable-next-line deprecation/deprecation
       document.caretRangeFromPoint = (_x: number, _y: number) =>
         ({ startOffset: desiredIndexInSegment, startContainer } as Range);
 
@@ -455,7 +458,7 @@ describe('TextComponent', () => {
 
       // Setup. The drag-and-drop activity should not start out with the custom note on the event objects.
       expect(dragstartEvent.dataTransfer?.types.includes(DragAndDrop.quillIsSourceToken)).toBeFalse();
-      expect(DragAndDrop.quillIsSourceToken.length).toBeGreaterThan(0, 'setup');
+      expect(DragAndDrop.quillIsSourceToken.length).withContext('setup').toBeGreaterThan(0);
 
       // SUT 1
       env.component.editor?.container.dispatchEvent(dragstartEvent);
@@ -529,6 +532,7 @@ describe('TextComponent', () => {
       // Override the point-to-index method behaviour, since the unit test isn't really dragging the mouse to an
       // element.
       const startContainer: Node = targetElement!.childNodes[0] as Node;
+      // eslint-disable-next-line deprecation/deprecation
       document.caretRangeFromPoint = (_x: number, _y: number) =>
         ({ startOffset: desiredIndexInSegment, startContainer } as Range);
 
@@ -572,8 +576,8 @@ describe('TextComponent', () => {
       const expectedFinalText = 'target: chapter 1, verchapter 1se 4.';
       //                                               ---------
       const targetSegmentRef: string = 'verse_1_4';
-      expect(env.component.getSegmentText(targetSegmentRef)).toEqual(initialTextInDoc, 'setup');
-      expect(env.component.editor!.getText()).toContain(initialTextInDoc, 'setup');
+      expect(env.component.getSegmentText(targetSegmentRef)).withContext('setup').toEqual(initialTextInDoc);
+      expect(env.component.editor!.getText()).withContext('setup').toContain(initialTextInDoc);
 
       const originSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(targetSegmentRef);
       if (originSegmentRange == null) {
@@ -603,6 +607,7 @@ describe('TextComponent', () => {
       // Override the point-to-index method behaviour, since the unit test isn't really dragging the mouse to an
       // element.
       const startContainer: Node = targetElement!.childNodes[0] as Node;
+      // eslint-disable-next-line deprecation/deprecation
       document.caretRangeFromPoint = (_x: number, _y: number) =>
         ({ startOffset: desiredIndexInSegment, startContainer } as Range);
 
@@ -613,7 +618,7 @@ describe('TextComponent', () => {
 
       // Setup. The drag-and-drop activity should not start out with the custom note on the event objects.
       expect(dragstartEvent.dataTransfer?.types.includes(DragAndDrop.quillIsSourceToken)).toBeFalse();
-      expect(DragAndDrop.quillIsSourceToken.length).toBeGreaterThan(0, 'setup');
+      expect(DragAndDrop.quillIsSourceToken.length).withContext('setup').toBeGreaterThan(0);
 
       // SUT 1
       env.component.editor?.container.dispatchEvent(dragstartEvent);
@@ -658,13 +663,13 @@ describe('TextComponent', () => {
       const initialTextInDoc = 'target: chapter 1, verse 4.';
       //                                ---------     ^
       const initialSelection = 'chapter 1';
-      expect(initialTextInDoc).toContain(initialSelection, 'setup');
+      expect(initialTextInDoc).withContext('setup').toContain(initialSelection);
       const textToIntroduce = 'FromAnotherWindow';
       const expectedFinalText = 'target: chapter 1, verFromAnotherWindowse 4.';
       //                                 ---------     -----------------
       const targetSegmentRef: string = 'verse_1_4';
-      expect(env.component.getSegmentText(targetSegmentRef)).toEqual(initialTextInDoc, 'setup');
-      expect(env.component.editor!.getText()).toContain(initialTextInDoc, 'setup');
+      expect(env.component.getSegmentText(targetSegmentRef)).withContext('setup').toEqual(initialTextInDoc);
+      expect(env.component.editor!.getText()).withContext('setup').toContain(initialTextInDoc);
 
       const rangeOfSegmentWithSelection: RangeStatic | undefined = env.component.getSegmentRange(targetSegmentRef);
       if (rangeOfSegmentWithSelection == null) {
@@ -692,6 +697,7 @@ describe('TextComponent', () => {
       // Override the point-to-index method behaviour, since the unit test isn't really dragging the mouse to an
       // element.
       const startContainer: Node = targetElement!.childNodes[0] as Node;
+      // eslint-disable-next-line deprecation/deprecation
       document.caretRangeFromPoint = (_x: number, _y: number) =>
         ({ startOffset: desiredIndexInSegment, startContainer } as Range);
 
@@ -738,8 +744,8 @@ describe('TextComponent', () => {
       const textToMove = 'chapter 1';
       const originalAllText: string = env.component.editor!.getText();
       const targetSegmentRef: string = 'verse_1_4';
-      expect(env.component.getSegmentText(targetSegmentRef)).toEqual(initialTextInDoc, 'setup');
-      expect(env.component.editor!.getText()).toContain(initialTextInDoc, 'setup');
+      expect(env.component.getSegmentText(targetSegmentRef)).withContext('setup').toEqual(initialTextInDoc);
+      expect(env.component.editor!.getText()).withContext('setup').toContain(initialTextInDoc);
 
       const originSegmentRange: RangeStatic | undefined = env.component.getSegmentRange(targetSegmentRef);
       if (originSegmentRange == null) {
@@ -755,7 +761,7 @@ describe('TextComponent', () => {
       const targetElement: Element | null = env.component.editor!.container.querySelector(
         `usx-segment[data-segment="${targetSegmentRef}"]`
       )!.parentElement;
-      expect(targetElement!.localName).toEqual('usx-para-contents', 'setup');
+      expect(targetElement!.localName).withContext('setup').toEqual('usx-para-contents');
 
       const dataTransfer = new DataTransfer();
       dataTransfer.setData('text/plain', textToMove);
@@ -772,6 +778,7 @@ describe('TextComponent', () => {
       // Override the point-to-index method behaviour, since the unit test isn't really dragging the mouse to an
       // element.
       const startContainer: Node = targetElement!.childNodes[0] as Node;
+      // eslint-disable-next-line deprecation/deprecation
       document.caretRangeFromPoint = (_x: number, _y: number) =>
         ({ startOffset: desiredIndexInSegment, startContainer } as Range);
 
@@ -787,11 +794,13 @@ describe('TextComponent', () => {
       // No change to text. No insert or delete.
       expect(env.component.getSegmentText(targetSegmentRef)).toEqual(initialTextInDoc);
       expect(env.component.editor?.getText()).toContain(initialTextInDoc);
-      expect(env.component.editor!.getText()).toEqual(originalAllText, 'should be unchanged');
+      expect(env.component.editor!.getText()).withContext('should be unchanged').toEqual(originalAllText);
       // event.preventDefault() should have been called as normal to prevent the browser from doing its own
       // drag-and-drop.
       expect(cancelled).toBeTrue();
-      expect(env.component.editor!.getSelection()).toEqual(selection, 'selection should not have been changed');
+      expect(env.component.editor!.getSelection())
+        .withContext('selection should not have been changed')
+        .toEqual(selection);
       mockedConsole.verify();
     }));
 
@@ -817,8 +826,8 @@ describe('TextComponent', () => {
       // segment 1 2 - user drags to another segment, which is blank
       const textLeadingUpToTargetLocation_1_2 = '';
       const expectedTextInDoc_1_2 = 'chapter 1';
-      expect(env.component.getSegmentText('verse_1_1')).toEqual(initialTextInDoc_1_1, 'setup');
-      expect(env.component.editor!.getText()).toContain(initialTextInDoc_1_1, 'setup');
+      expect(env.component.getSegmentText('verse_1_1')).withContext('setup').toEqual(initialTextInDoc_1_1);
+      expect(env.component.editor!.getText()).withContext('setup').toContain(initialTextInDoc_1_1);
       const initialCountBlankElements = (env.component.editor?.root as HTMLDivElement).getElementsByTagName(
         'usx-blank'
       ).length;
@@ -859,6 +868,7 @@ describe('TextComponent', () => {
       const valueThatShouldBeIgnored: number = 9876;
       // Override the point-to-index method behaviour, since the unit test isn't really dragging the mouse to an
       // element.
+      // eslint-disable-next-line deprecation/deprecation
       document.caretRangeFromPoint = (_x: number, _y: number) =>
         ({ startOffset: valueThatShouldBeIgnored, startContainer: blankElementTarget as Node } as Range);
 
@@ -969,21 +979,21 @@ describe('TextComponent', () => {
       const endingCountBlankElements = (env.component.editor?.root as HTMLDivElement).getElementsByTagName(
         'usx-blank'
       ).length;
-      expect(endingCountBlankElements).toEqual(
-        expectedCountBlankElements,
-        'a usx-blank element should have been removed'
-      );
+      expect(endingCountBlankElements)
+        .withContext('a usx-blank element should have been removed')
+        .toEqual(expectedCountBlankElements);
       const endingCountVerseElements = (env.component.editor?.root as HTMLDivElement).getElementsByTagName(
         'usx-verse'
       ).length;
-      expect(endingCountVerseElements).toEqual(initialCountVerseElements, 'no change to count of usx-verse elements');
+      expect(endingCountVerseElements)
+        .withContext('no change to count of usx-verse elements')
+        .toEqual(initialCountVerseElements);
       const endingCountSegmentElements = (env.component.editor?.root as HTMLDivElement).getElementsByTagName(
         'usx-segment'
       ).length;
-      expect(endingCountSegmentElements).toEqual(
-        initialCountSegmentElements,
-        'no change to count of usx-segment elements'
-      );
+      expect(endingCountSegmentElements)
+        .withContext('no change to count of usx-segment elements')
+        .toEqual(initialCountSegmentElements);
 
       // After text is dragged, the new selection should be the inserted text.
       expect(resultingSelection.index).toEqual(desiredSelectionStart);
@@ -1067,6 +1077,7 @@ describe('TextComponent', () => {
       const dropDistanceIn: number = textNodeTextLeadingUpToTargetLocationAfterEvent_1_1.length;
       expect(specificNodeDropTarget.nodeName).withContext('setup').toEqual('#text');
       expect(specificNodeDropTarget.nodeValue).withContext('setup').toEqual(textNodeTextBeforeEvent_1_1);
+      // eslint-disable-next-line deprecation/deprecation
       document.caretRangeFromPoint = (_x: number, _y: number) =>
         ({ startOffset: dropDistanceIn, startContainer: specificNodeDropTarget as Node } as Range);
 
@@ -1221,6 +1232,7 @@ describe('TextComponent', () => {
       const dropDistanceIn: number = textNodeTextLeadingUpToTargetLocationBeforeEvent_1_1.length;
       expect(specificNodeDropTarget.nodeName).withContext('setup').toEqual('#text');
       expect(specificNodeDropTarget.nodeValue).withContext('setup').toEqual(thread2TextNodeTextBeforeEvent_1_1);
+      // eslint-disable-next-line deprecation/deprecation
       document.caretRangeFromPoint = (_x: number, _y: number) =>
         ({ startOffset: dropDistanceIn, startContainer: specificNodeDropTarget as Node } as Range);
 
@@ -1647,6 +1659,7 @@ describe('TextComponent', () => {
       const dropDistanceIn: number = textInTargetTextNodeLeadingUpToDropLocation.length;
       expect(specificNodeDropTarget.nodeName).withContext('setup').toEqual('#text');
       expect(specificNodeDropTarget.nodeValue).withContext('setup').toEqual(textInTargetTextNodeBeforeEvent);
+      // eslint-disable-next-line deprecation/deprecation
       document.caretRangeFromPoint = (_x: number, _y: number) =>
         ({ startOffset: dropDistanceIn, startContainer: specificNodeDropTarget as Node } as Range);
 
@@ -1860,7 +1873,9 @@ describe('TextComponent', () => {
       const startingTextInQuillSegment_1_4 = 'target: chapter 1, verse 4.';
       const textRequestedToInsert = 'Hello';
       const targetSegmentRef: string = 'verse_1_4';
-      expect(env.component.getSegmentText(targetSegmentRef)).toEqual(startingTextInQuillSegment_1_4, 'setup');
+      expect(env.component.getSegmentText(targetSegmentRef))
+        .withContext('setup')
+        .toEqual(startingTextInQuillSegment_1_4);
       const originalAllText: string = env.component.editor!.getText();
 
       const dataTransfer = new DataTransfer();
@@ -1879,6 +1894,7 @@ describe('TextComponent', () => {
       const desiredIndexInSegment = 'target: chapter'.length;
       // Override the point-to-index method behaviour, since the unit test isn't really dragging the mouse
       // to an element.
+      // eslint-disable-next-line deprecation/deprecation
       document.caretRangeFromPoint = (_x: number, _y: number) => ({ startOffset: desiredIndexInSegment } as Range);
 
       // Quill is not the origin of the drag for this test.
@@ -1902,11 +1918,13 @@ describe('TextComponent', () => {
 
       // No change to text. No insert or delete.
       expect(env.component.getSegmentText(targetSegmentRef)).toEqual(startingTextInQuillSegment_1_4);
-      expect(env.component.editor!.getText()).toEqual(originalAllText, 'should be unchanged');
+      expect(env.component.editor!.getText()).withContext('should be unchanged').toEqual(originalAllText);
       // event.preventDefault() should have been called as normal to prevent the browser from doing its own
       // drag-and-drop.
       expect(cancelled).toBeTrue();
-      expect(env.component.editor!.getSelection()).toEqual(selection, 'selection should not have been changed');
+      expect(env.component.editor!.getSelection())
+        .withContext('selection should not have been changed')
+        .toEqual(selection);
     }
 
     it('skips problem: the drag event has a null target element.', fakeAsync(() => {
@@ -1922,7 +1940,7 @@ describe('TextComponent', () => {
       mockedConsole.expectAndHideOnly(/never found a needed usx-segment ancestor for drop target/);
       skipProblemTest((env: TestEnvironment, dropEvent: MockDragEvent) => {
         const targetElement: Element = document.createElement('usx-blank');
-        expect(targetElement.parentElement).toBeNull('setup');
+        expect(targetElement.parentElement).withContext('setup').toBeNull();
         dropEvent.setTarget(targetElement);
       });
       mockedConsole.verify();
@@ -1962,7 +1980,7 @@ describe('TextComponent', () => {
       mockedConsole.expectAndHideOnly(/Invalid segment specification/);
       skipProblemTest((env: TestEnvironment, dropEvent: MockDragEvent) => {
         const targetSegmentRef = 'not_findable';
-        expect(env.component!.getSegmentRange(targetSegmentRef)).not.toBeDefined('setup');
+        expect(env.component!.getSegmentRange(targetSegmentRef)).withContext('setup').not.toBeDefined();
         // An Element was written into the event target, so just cast target back to an Element.
         const targetElement: Element = dropEvent.target as Element;
         targetElement!.attributes['data-segment'].value = targetSegmentRef;
@@ -1994,6 +2012,7 @@ describe('TextComponent', () => {
       mockedConsole.expectAndHideOnly(/Could not get the node that the text was dropped into/);
       skipProblemTest((_env: TestEnvironment, _dropEvent: MockDragEvent) => {
         // the start container of the range for the browser's point-to-index method is unavailable.
+        // eslint-disable-next-line deprecation/deprecation
         document.caretRangeFromPoint = (_x: number, _y: number) => ({ startOffset: 0 } as Range);
       });
       mockedConsole.verify();
@@ -2237,6 +2256,7 @@ class TestEnvironment {
     });
     dropEvent.setTarget(elementDropTarget);
 
+    // eslint-disable-next-line deprecation/deprecation
     document.caretRangeFromPoint = (_x: number, _y: number) =>
       ({ startOffset: dropDistanceIn, startContainer: specificNodeDropTarget as Node } as Range);
 

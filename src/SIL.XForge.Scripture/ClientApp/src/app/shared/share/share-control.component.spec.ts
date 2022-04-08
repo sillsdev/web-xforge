@@ -139,12 +139,12 @@ describe('ShareControlComponent', () => {
 
     // Invite
     env.setTextFieldValue(env.emailTextField, 'unknown-address@example.com');
-    expect(env.getTextFieldValue(env.emailTextField)).toEqual('unknown-address@example.com', 'test setup');
+    expect(env.getTextFieldValue(env.emailTextField)).withContext('test setup').toEqual('unknown-address@example.com');
     env.click(env.sendButton);
     verify(mockedProjectService.onlineInvite(anything(), anything(), anything(), anything())).once();
 
     // Can not immediately request an invite to a blank email address
-    expect(env.getTextFieldValue(env.emailTextField)).toEqual('', 'test setup');
+    expect(env.getTextFieldValue(env.emailTextField)).withContext('test setup').toEqual('');
     env.click(env.sendButton);
     // Not called a second time
     verify(mockedProjectService.onlineInvite(anything(), anything(), anything(), anything())).once();

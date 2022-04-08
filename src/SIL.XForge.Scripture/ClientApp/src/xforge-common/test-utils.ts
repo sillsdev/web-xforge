@@ -51,15 +51,15 @@ export const configureTestingModule = (createModuleDef: () => TestModuleMetadata
   });
 };
 
-export const TestTranslocoModule = TranslocoTestingModule.withLangs(
-  { en },
-  {
+export const TestTranslocoModule = TranslocoTestingModule.forRoot({
+  langs: { en },
+  translocoConfig: {
     availableLangs: ['en'],
     reRenderOnLangChange: true,
     fallbackLang: 'en',
     defaultLang: 'en'
   }
-);
+});
 
 // used to prevent Angular from complaining that HammerJS isn't available
 export const emptyHammerLoader = {
