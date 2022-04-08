@@ -43,8 +43,8 @@ export class RouterDirective {
 
   @HostListener('mouseup', ['$event'])
   onMouseUp(event: MouseEvent) {
-    // if it's the middle mouse button (but not an a tag, because preventDefault doesn't stop it from opening a new tab)
-    if (event.which === 2 && !this.isLink) {
+    // if it's the middle mouse button (but not a tag, because preventDefault doesn't stop it from opening a new tab)
+    if (event.button === 1 && !this.isLink) {
       event.preventDefault();
       this.window.open(this.url, '_blank', 'noopener');
     }

@@ -14,24 +14,24 @@ describe('WriteStatusComponent', () => {
 
   it('should display done, spinner and error icons', () => {
     const env = new TestEnvironment();
-    expect(env.statusDone).toBeNull('InSync-done');
-    expect(env.statusError).toBeNull('InSync-error');
-    expect(env.statusSubmitting).toBeNull('InSync-spinner');
+    expect(env.statusDone).withContext('InSync-done').toBeNull();
+    expect(env.statusError).withContext('InSync-error').toBeNull();
+    expect(env.statusSubmitting).withContext('InSync-spinner').toBeNull();
 
     env.setControlState(ElementState.Submitted);
-    expect(env.statusDone).not.toBeNull('Submitted-done');
-    expect(env.statusError).toBeNull('Submitted-error');
-    expect(env.statusSubmitting).toBeNull('Submitted-spinner');
+    expect(env.statusDone).withContext('Submitted-done').not.toBeNull();
+    expect(env.statusError).withContext('Submitted-error').toBeNull();
+    expect(env.statusSubmitting).withContext('Submitted-spinner').toBeNull();
 
     env.setControlState(ElementState.Error);
-    expect(env.statusError).not.toBeNull('Error-error');
-    expect(env.statusDone).toBeNull('Error-done');
-    expect(env.statusSubmitting).toBeNull('Error-spinner');
+    expect(env.statusError).withContext('Error-error').not.toBeNull();
+    expect(env.statusDone).withContext('Error-done').toBeNull();
+    expect(env.statusSubmitting).withContext('Error-spinner').toBeNull();
 
     env.setControlState(ElementState.Submitting);
-    expect(env.statusSubmitting).not.toBeNull('Submitting-spinner');
-    expect(env.statusDone).toBeNull('Submitting-done');
-    expect(env.statusError).toBeNull('Submitting-error');
+    expect(env.statusSubmitting).withContext('Submitting-spinner').not.toBeNull();
+    expect(env.statusDone).withContext('Submitting-done').toBeNull();
+    expect(env.statusError).withContext('Submitting-error').toBeNull();
   });
 });
 
