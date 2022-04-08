@@ -23,12 +23,6 @@
     display: flex;
     align-items: center;
 
-    // Same font size and padding as mdc-button to match Play button
-    mdc-icon {
-      font-size: 24px;
-      padding: 12px;
-    }
-
     .audio-unavailable-message {
       // Same left padding as .player.current-time
       padding-left: 10px;
@@ -38,7 +32,7 @@
       color: $blueMedium;
       cursor: pointer;
 
-      mdc-icon {
+      mat-icon {
         font-size: 1.3em;
         padding: 6px;
       }

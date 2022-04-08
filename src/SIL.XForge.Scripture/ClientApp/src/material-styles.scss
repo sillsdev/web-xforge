@@ -70,4 +70,5 @@ $material-app-theme: mat.define-light-theme(
 @include mat.progress-bar-theme($material-app-theme);
 @include mat.progress-spinner-theme($material-app-theme);
 @include mat.select-theme($material-app-theme);
+@include mat.slider-theme($material-app-theme);
 @include mat.table-theme($material-app-theme);
