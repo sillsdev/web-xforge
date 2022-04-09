@@ -1,6 +1,7 @@
 import { Component, HostBinding, OnInit } from '@angular/core';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { BehaviorSubject } from 'rxjs';
 import { DataLoadingComponent } from '../data-loading-component';
 import { ProjectDoc } from '../models/project-doc';
@@ -78,13 +79,19 @@ export class SaProjectsComponent extends DataLoadingComponent implements OnInit 
 
   ngOnInit() {
     this.loadingStarted();
-    this.subscribe(this.projectService.onlineQuery(this.searchTerm$, this.queryParameters$), searchResults => {
-      this.loadingStarted();
-      this.projectDocs = searchResults.docs;
-      this.length = searchResults.unpagedCount;
-      this.generateRows();
-      this.loadingFinished();
-    });
+    this.subscribe(
+      this.projectService.onlineQuery(this.searchTerm$, this.queryParameters$, [
+        obj<Project>().pathStr(p => p.name),
+        obj<SFProject>().pathStr(p => p.shortName)
+      ]),
+      searchResults => {
+        this.loadingStarted();
+        this.projectDocs = searchResults.docs;
+        this.length = searchResults.unpagedCount;
+        this.generateRows();
+        this.loadingFinished();
+      }
+    );
   }
 
   updateSearchTerm(target: EventTarget | null): void {

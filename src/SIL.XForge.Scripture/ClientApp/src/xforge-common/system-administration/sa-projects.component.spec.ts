@@ -207,7 +207,7 @@ class TestEnvironment {
     when(mockedProjectService.onlineAddCurrentUser(anything(), anything())).thenResolve();
     when(mockedProjectService.onlineRemoveUser(anything(), 'user01')).thenResolve();
     when(mockedProjectService.onlineUpdateCurrentUserRole(anything(), anything())).thenResolve();
-    when(mockedProjectService.onlineQuery(anything(), anything())).thenCall(
+    when(mockedProjectService.onlineQuery(anything(), anything(), anything())).thenCall(
       (term$: Observable<string>, parameters$: Observable<QueryParameters>) =>
         combineLatest([term$, parameters$]).pipe(
           switchMap(([term, queryParameters]) => {

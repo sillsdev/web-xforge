@@ -76,7 +76,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     this.projectProfileDocChangesSubscription?.unsubscribe();
     this.project = projectProfileDoc?.data;
     if (projectProfileDoc != null) {
-      this.projectProfileDocChangesSubscription = this.subscribe(projectProfileDoc?.changes$, () => {
+      this.projectProfileDocChangesSubscription = this.subscribe(projectProfileDoc.changes$, () => {
         this.changeDetector.markForCheck();
       });
     }
