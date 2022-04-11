@@ -81,6 +81,7 @@
     "cannot_edit_chapter_formatting_invalid": "Este capítulo no puede ser editado porque el formato no es válido. Por favor, arregle el formato en Paratext.",
     "completed_successfully": "Completado con éxito",
     "configure_translation_suggestions": "Configurar sugerencias de traducción",
+    "more_notes": "--- {{ count }} nota(s) más ---",
     "project_text_not_editable": "El texto de este proyecto no es editable. Esta configuración se puede cambiar en Paratext.",
     "project_data_out_of_sync": "Los datos de su proyecto no están sincronizados. Por favor, sincronice su proyecto para editar este texto.",
     "swap_source_and_target": "Intercambio de origen y destino",
@@ -135,6 +136,18 @@
     "transcelerator_paratext": "{1}Transcelerator{2} es un complemento para {3}Paratext{4} para ayudar a crear y traducir las preguntas de comprobación de la escritura.",
     "transcelerator_some_questions_already_imported": "Nota: Algunas preguntas seleccionadas ya han sido importadas. Las preguntas que se han editado en Transcelerator se actualizarán en Scripture Forge, y se omitirán los duplicados idénticos.",
     "update_transcelerator": "La versión de Transcelerator utilizada en este proyecto no está soportada. Por favor, actualice al menos a la versión 1.5.3 de Transcelerator."
+  },
+  "note_dialog": {
+    "close": "Cerrar",
+    "hide_changes": "Ocultar los cambios",
+    "note_reattached": "Note reattached",
+    "paratext_user": "Usuario de Paratext",
+    "reattached": "(Re-attached)",
+    "show_changes": "Mostrar cambios",
+    "status_resolved": "Resueltas",
+    "status_to_do": "Por hacer",
+    "team": "(Equipo)",
+    "unassigned": "(Sin asignar)"
   },
   "paginator": {
     "items_per_page": "Elementos por página",
