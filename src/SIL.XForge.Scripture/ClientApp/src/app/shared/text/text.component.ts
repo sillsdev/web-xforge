@@ -999,6 +999,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   /**
    * Trims out the unproductive ops from a delta emitted by Quill's onContentChanged event.
+   * This is used to determine which ops accurately represents the change applied to the editor,
+   * more specifically, trim out object inserts like note thread embeds that did not truly get inserted.
    */
   private trimUnproductiveOps(delta: DeltaStatic): DeltaStatic {
     // The quill way of determining changes applied to its content doesn't work perfectly on non-text objects
@@ -1014,7 +1016,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     const opCount: number = productiveOps.ops.length;
     // find the trailing delete op
     const lastDeleteOp: number | undefined = productiveOps.ops[opCount - 1].delete;
-    let deleteCount: number = lastDeleteOp == null ? 0 : lastDeleteOp;
+    let deleteCount: number = lastDeleteOp ?? 0;
     if (deleteCount === 0) {
       return delta;
     }
