@@ -2002,6 +2002,7 @@ describe('EditorComponent', () => {
       expect(contents.ops![0].insert.blank).toBeDefined();
       expect(contents.ops![1].insert['verse']).toBeDefined();
       expect(contents.ops![2].insert['note-thread-embed']).toBeDefined();
+      env.dispose();
     }));
 
     it('remote edits next to note on verse applied correctly', fakeAsync(() => {

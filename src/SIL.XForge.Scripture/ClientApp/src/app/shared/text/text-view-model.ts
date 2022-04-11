@@ -757,11 +757,13 @@ export class TextViewModel {
 
   private getAttributesAtPosition(editorPosition: number): StringMap {
     const editor: Quill = this.checkEditor();
-    // The format of the insertion point lacks some properties that we have to get from the following editor position
+    // The format of the insertion point may only contain the block level formatting,
+    // the format classes and other information we get from the character following the insertion point
     const insertionFormat: StringMap = editor.getFormat(editorPosition);
     const characterFormat: StringMap = editor.getFormat(editorPosition, 1);
     if (characterFormat['segment'] != null) {
       for (const key of Object.keys(characterFormat)) {
+        // we ignore text anchor formatting because we cannot depend on the character format to tell us if it is needed
         if (key !== 'text-anchor') {
           insertionFormat[key] = characterFormat[key];
         }
