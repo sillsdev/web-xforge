@@ -509,7 +509,10 @@ export function registerScripture(): string[] {
   }
   formats.push(TextAnchorInline);
 
+  // Lower index means deeper in the DOM tree i.e. text-anchor will be nested inside of char. If char doesn't exist
+  // then it will nest inside the next available element higher up the DOM
   (Inline as any).order.push('text-anchor');
+  (Inline as any).order.push('char');
   (Inline as any).order.push('segment');
   (Inline as any).order.push('para-contents');
 

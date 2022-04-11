@@ -329,7 +329,8 @@ usx-segment:first-child usx-blank {
 }
 
 usx-char {
-  &[data-style='it'] {
+  &[data-style='it'],
+  &[data-style='em'] {
     font-style: italic;
   }
 
