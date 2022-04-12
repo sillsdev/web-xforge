@@ -1641,10 +1641,19 @@ namespace SIL.XForge.Scripture.Services
                 return ChangeType.Deleted;
             // Check if fields have been updated in Paratext
             bool statusChanged = comment.Status.InternalValue != note.Status;
+            bool typeChanged = comment.Type.InternalValue != note.Type;
+            bool conflictTypeChanged = comment.ConflictType.InternalValue != note.ConflictType;
+            bool acceptedChangeXmlChanged = comment.AcceptedChangeXmlStr != note.AcceptedChangeXml;
             bool contentChanged = comment.Contents?.InnerXml != note.Content;
             bool tagChanged = commentTag?.Icon != note.TagIcon;
             bool assignedUserChanged = GetAssignedUserRef(comment.AssignedUser, ptProjectUsers) != note.Assignment;
-            if (contentChanged || statusChanged || tagChanged || assignedUserChanged)
+            if (contentChanged ||
+                statusChanged ||
+                tagChanged ||
+                typeChanged ||
+                conflictTypeChanged ||
+                assignedUserChanged ||
+                acceptedChangeXmlChanged)
                 return ChangeType.Updated;
             return ChangeType.None;
         }
@@ -1675,11 +1684,14 @@ namespace SIL.XForge.Scripture.Services
             {
                 DataId = noteId,
                 ThreadId = comment.Thread,
+                Type = comment.Type.InternalValue,
+                ConflictType = comment.ConflictType.InternalValue,
                 ExtUserId = comment.ExternalUser,
                 // The owner is unknown at this point and is determined when submitting the ops to the note thread docs
                 OwnerRef = "",
                 SyncUserRef = FindOrCreateParatextUser(comment.User, ptProjectUsers)?.OpaqueUserId,
                 Content = comment.Contents?.InnerXml,
+                AcceptedChangeXml = comment.AcceptedChangeXmlStr,
                 DateCreated = DateTime.Parse(comment.Date),
                 DateModified = DateTime.Parse(comment.Date),
                 Deleted = comment.Deleted,
