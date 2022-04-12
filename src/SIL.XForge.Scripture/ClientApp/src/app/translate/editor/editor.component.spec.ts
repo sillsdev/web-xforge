@@ -23,7 +23,13 @@ import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
-import { AssignedUsers, NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
+import {
+  AssignedUsers,
+  NoteConflictType,
+  NoteStatus,
+  NoteThread,
+  NoteType
+} from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { hasParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
@@ -2953,8 +2959,12 @@ class TestEnvironment {
       const id = userIds[i];
       const date = new Date('2021-03-01T12:00:00');
       date.setHours(date.getHours() + i);
+      const type: NoteType = NoteType.Normal;
+      const conflictType: NoteConflictType = NoteConflictType.DefaultValue;
       const note: Note = {
         threadId: threadId,
+        type,
+        conflictType,
         ownerRef: id,
         dataId: `${threadId}_note${i}`,
         dateCreated: date.toJSON(),
@@ -2996,8 +3006,12 @@ class TestEnvironment {
     const contextAfter: string = ` ${verseRef.verseNum}.`;
     const reattachParts: string[] = [verseStr, 'verse', position.start.toString(), 'target: chapter 1, ', contextAfter];
     const reattached: string = reattachParts.join(REATTACH_SEPARATOR);
+    const type: NoteType = NoteType.Normal;
+    const conflictType: NoteConflictType = NoteConflictType.DefaultValue;
     const note: Note = {
       dataId: 'reattach01',
+      type,
+      conflictType,
       threadId: template.threadId,
       content: template.content,
       deleted: false,

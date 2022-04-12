@@ -19,7 +19,13 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, matDialogCloseDelay, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { AssignedUsers, NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
+import {
+  AssignedUsers,
+  NoteConflictType,
+  NoteStatus,
+  NoteThread,
+  NoteType
+} from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { UserService } from 'xforge-common/user.service';
@@ -317,6 +323,8 @@ class TestEnvironment {
     REATTACH_SEPARATOR
   );
   static getNoteThread(reattachedContent?: string): NoteThread {
+    const type: NoteType = NoteType.Normal;
+    const conflictType: NoteConflictType = NoteConflictType.DefaultValue;
     const noteThread: NoteThread = {
       originalContextBefore: 'before selection ',
       originalContextAfter: ' after selection',
@@ -332,6 +340,8 @@ class TestEnvironment {
       notes: [
         {
           dataId: 'note01',
+          type,
+          conflictType,
           threadId: 'thread01',
           content: 'note',
           extUserId: 'user01',
@@ -345,6 +355,8 @@ class TestEnvironment {
         },
         {
           dataId: 'note02',
+          type,
+          conflictType,
           threadId: 'thread01',
           content: 'note02',
           extUserId: 'user01',
@@ -358,6 +370,8 @@ class TestEnvironment {
         },
         {
           dataId: 'note03',
+          type,
+          conflictType,
           threadId: 'thread01',
           content: 'note03',
           extUserId: 'user01',
@@ -370,6 +384,8 @@ class TestEnvironment {
         },
         {
           dataId: 'note04',
+          type,
+          conflictType,
           threadId: 'thread01',
           content: 'note04',
           extUserId: 'user01',
@@ -381,6 +397,8 @@ class TestEnvironment {
         },
         {
           dataId: 'note05',
+          type,
+          conflictType,
           threadId: 'thread01',
           content: 'note05',
           extUserId: 'user01',
@@ -396,6 +414,8 @@ class TestEnvironment {
     if (reattachedContent != null) {
       noteThread.notes.push({
         dataId: 'reattached01',
+        type,
+        conflictType,
         threadId: 'thread01',
         content: reattachedContent,
         extUserId: 'user01',
@@ -409,6 +429,8 @@ class TestEnvironment {
       });
       noteThread.notes.push({
         dataId: 'reattached02',
+        type,
+        conflictType,
         threadId: 'thread01',
         content: 'reattached02',
         extUserId: 'user01',
