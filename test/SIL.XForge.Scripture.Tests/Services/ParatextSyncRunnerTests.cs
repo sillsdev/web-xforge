@@ -1348,6 +1348,57 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(thread02.Status, Is.EqualTo(NoteStatus.Todo.InternalValue));
         }
 
+        [Test]
+        public async Task SyncAsync_NoteChange_None()
+        {
+            var env = new TestEnvironment();
+            // Set up some PT and SF project data, including a Note.
+            string projectId = "project01";
+            var book = new Book("MAT", 3, true);
+            env.SetupSFData(true, false, false, true, book);
+            env.SetupPTData(book);
+            string threadId = $"thread03";
+            NoteThread thread03 = env.GetNoteThread(projectId, threadId);
+            Note note = thread03.Notes[0];
+            string origNoteData = note.NoteToString();
+
+            // Not setting up any actual changes. This test partly shows that the helper method does not create changes
+            // when the input is null.
+            env.SetupThreadAndNoteChange(threadId, null, null);
+
+            // SUT
+            await env.Runner.RunAsync(projectId, "user01", false, CancellationToken.None);
+
+            thread03 = env.GetNoteThread(projectId, threadId);
+            note = thread03.Notes[0];
+            // No incoming note changes mean no changes to the SF DB Notes.
+            // This is not a particularly thorough check, but is showing at least that a few pieces have not changed.
+            Assert.That(note.NoteToString(), Is.EqualTo(origNoteData), "Note data should not have been changed");
+        }
+
+        [Test]
+        public async Task SyncAsync_NoteChanges_SavedToSFDB()
+        {
+            var env = new TestEnvironment();
+            // Various changes to note properties, coming from PT, are recorded into the SF DB. For this to happen, the changes will need to be both detected, as well as saved.
+            // A PT Comment Content property was updated, which is detected and saved to SF DB.
+            await env.SimpleNoteChangeAppliedCheckerAsync<string>(
+                (Note note) => note.Content, (Note note, string newValue) => note.Content = newValue,
+                "new contents");
+            // A PT Comment Type property was updated, which is detected and saved to SF DB.
+            await env.SimpleNoteChangeAppliedCheckerAsync<string>(
+                (Note note) => note.Type, (Note note, string newValue) => note.Type = newValue,
+                NoteType.Conflict.InternalValue);
+            // ConflictType property
+            await env.SimpleNoteChangeAppliedCheckerAsync<string>(
+                (Note note) => note.ConflictType, (Note note, string newValue) => note.ConflictType = newValue,
+                NoteConflictType.VerseTextConflict.InternalValue);
+            // AcceptedChangeXml property
+            await env.SimpleNoteChangeAppliedCheckerAsync<string>(
+                (Note note) => note.AcceptedChangeXml, (Note note, string newValue) => note.AcceptedChangeXml = newValue,
+                "some xml");
+        }
+
         private class Book
         {
             public Book(string bookId, int highestChapter, bool hasSource = true)
@@ -1986,6 +2037,64 @@ namespace SIL.XForge.Scripture.Services
                     .Returns(new[] { noteThreadChange });
             }
 
+            /// <summary>Prepare a change report to be provided when thread changes are asked for.</summary>
+            public void SetupThreadAndNoteChange(string threadId, Action<NoteThreadChange> modifyNoteThreadChange,
+                Action<Note> modifyNoteChange)
+            {
+                string status = NoteStatus.Todo.InternalValue;
+                string verseRef = "MAT 1:1";
+                // Create a NoteThreadChange, and allow client to adjust it.
+                var noteThreadChange = new NoteThreadChange(threadId, verseRef, null,
+                    null, null, status, "icon1");
+                if (modifyNoteThreadChange != null)
+                {
+                    modifyNoteThreadChange(noteThreadChange);
+                }
+                Note note = CreateNoteSimple(threadId, "n01");
+                if (modifyNoteChange != null)
+                {
+                    modifyNoteChange(note);
+                    ChangeType changeType = ChangeType.Updated;
+                    noteThreadChange.AddChange(note, changeType);
+                }
+
+                // Cause the created NoteThreadChange to be what is given when changes are asked for.
+                SetupNoteThreadChanges(new[] { noteThreadChange }, "target", 40);
+            }
+
+            /// <summary>
+            /// Helper method to test the simple case of a note property change being received from PT, and getting
+            /// applied to the SF DB.
+            /// </summary>>
+            public async Task SimpleNoteChangeAppliedCheckerAsync<T>(Func<Note, T> datumGetter,
+                Action<Note, T> datumSetter, T newData)
+            {
+                // Set up some PT and SF project data, including a note.
+                string projectId = "project01";
+                var book = new Book("MAT", 3, true);
+                SetupSFData(true, false, false, true, book);
+                SetupPTData(book);
+                string threadId = $"thread03";
+                NoteThread thread03 = GetNoteThread(projectId, threadId);
+                Note note = thread03.Notes[0];
+                // Check that the updated data that we will be checking for, is not already set in SF DB.
+                Assert.That(datumGetter(note), Is.Not.EqualTo(newData), "setup");
+
+                // Let the client code define the incoming note change from PT.
+                SetupThreadAndNoteChange(threadId, null, (Note note) =>
+                {
+                    datumSetter(note, newData);
+                });
+
+                // SUT
+                await Runner.RunAsync(projectId, "user01", false, CancellationToken.None);
+
+                thread03 = GetNoteThread(projectId, threadId);
+                note = thread03.Notes[0];
+                // The Note in SF DB should have been updated as a result of the incoming change from PT.
+                Assert.That(datumGetter(note), Is.EqualTo(newData));
+            }
+
             public void AddParatextNoteThreadData(Book book)
             {
                 int chapter = book.HighestTargetChapter;
@@ -2119,6 +2228,17 @@ namespace SIL.XForge.Scripture.Services
                     Deleted = type == ChangeType.Deleted,
                     TagIcon = tagIcon ?? "icon1",
                     Assignment = CommentThread.teamUser
+                };
+            }
+
+            private Note CreateNoteSimple(string threadId, string noteId)
+            {
+                return new Note
+                {
+                    DataId = noteId,
+                    ThreadId = threadId,
+                    OwnerRef = "",
+                    DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc),
                 };
             }
         }

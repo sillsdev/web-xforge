@@ -1,6 +1,11 @@
 import { mock } from 'ts-mockito';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
+import {
+  NoteConflictType,
+  NoteStatus,
+  NoteThread,
+  NoteType
+} from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { TestBed } from '@angular/core/testing';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -72,9 +77,14 @@ describe('NoteThreadDoc', () => {
   });
 
   it('should use the last icon specified in a threads note list based on date ', async () => {
+    const type: NoteType = NoteType.Normal;
+    const conflictType: NoteConflictType = NoteConflictType.DefaultValue;
+
     const notes = [
       {
         dataId: 'note01',
+        type,
+        conflictType,
         threadId: 'thread01',
         content: 'note content',
         deleted: false,
@@ -87,6 +97,8 @@ describe('NoteThreadDoc', () => {
       },
       {
         dataId: 'note03',
+        type,
+        conflictType,
         threadId: 'thread01',
         content: 'note content',
         deleted: false,
@@ -99,6 +111,8 @@ describe('NoteThreadDoc', () => {
       },
       {
         dataId: 'note02',
+        type,
+        conflictType,
         threadId: 'thread01',
         content: 'note content',
         deleted: false,
@@ -123,9 +137,13 @@ describe('NoteThreadDoc', () => {
   it('reports the reattached verse reference', async () => {
     const reattachParts: string[] = ['MAT 1:2', 'reattached selected text', '0', '', ''];
     const reattached: string = reattachParts.join(REATTACH_SEPARATOR);
+    const type: NoteType = NoteType.Normal;
+    const conflictType: NoteConflictType = NoteConflictType.DefaultValue;
     const notes = [
       {
         dataId: 'note01',
+        type,
+        conflictType,
         threadId: 'thread01',
         content: 'note content',
         deleted: false,
@@ -138,6 +156,8 @@ describe('NoteThreadDoc', () => {
       },
       {
         dataId: 'reattach01',
+        type,
+        conflictType,
         threadId: 'thread01',
         content: '',
         deleted: false,
