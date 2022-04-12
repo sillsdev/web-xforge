@@ -802,10 +802,16 @@ namespace SIL.XForge.Scripture.Services
                             op.Set(td => td.Notes[index].Content, updated.Content);
                         if (threadDoc.Data.Notes[index].Status != updated.Status)
                             op.Set(td => td.Notes[index].Status, updated.Status);
+                        if (threadDoc.Data.Notes[index].Type != updated.Type)
+                            op.Set(td => td.Notes[index].Type, updated.Type);
+                        if (threadDoc.Data.Notes[index].ConflictType != updated.ConflictType)
+                            op.Set(td => td.Notes[index].ConflictType, updated.ConflictType);
                         if (threadDoc.Data.Notes[index].TagIcon != updated.TagIcon)
                             op.Set(td => td.Notes[index].TagIcon, updated.TagIcon);
                         if (threadDoc.Data.Notes[index].Assignment != updated.Assignment)
                             op.Set(td => td.Notes[index].Assignment, updated.Assignment);
+                        if (threadDoc.Data.Notes[index].AcceptedChangeXml != updated.AcceptedChangeXml)
+                            op.Set(td => td.Notes[index].AcceptedChangeXml, updated.AcceptedChangeXml);
                     }
                     else
                     {

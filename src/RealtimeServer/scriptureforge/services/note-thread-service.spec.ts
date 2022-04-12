@@ -24,7 +24,14 @@ import {
   SFProjectUserConfig,
   SF_PROJECT_USER_CONFIGS_COLLECTION
 } from '../models/sf-project-user-config';
-import { getNoteThreadDocId, NoteThread, NOTE_THREAD_COLLECTION, NoteStatus } from '../models/note-thread';
+import {
+  getNoteThreadDocId,
+  NoteThread,
+  NOTE_THREAD_COLLECTION,
+  NoteStatus,
+  NoteType,
+  NoteConflictType
+} from '../models/note-thread';
 import { Note } from '../models/note';
 import { VerseRefData } from '../models/verse-ref-data';
 import { TextAnchor } from '../models/text-anchor';
@@ -255,6 +262,8 @@ class TestEnvironment {
     };
     const position: TextAnchor = { start: 0, length: 0 };
     const status: NoteStatus = NoteStatus.Todo;
+    const type: NoteType = NoteType.Normal;
+    const conflictType: NoteConflictType = NoteConflictType.DefaultValue;
     await createDoc<NoteThread>(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', 'noteThread01'), {
       projectRef: 'project01',
       ownerRef: 'some-owner',
@@ -263,6 +272,8 @@ class TestEnvironment {
       notes: [
         {
           dataId: 'noteThread01note01',
+          type,
+          conflictType,
           threadId: 'noteThread01',
           extUserId: 'some-ext-user-id',
           deleted: false,
@@ -273,6 +284,8 @@ class TestEnvironment {
         },
         {
           dataId: 'noteThread01note02',
+          type,
+          conflictType,
           threadId: 'noteThread01',
           extUserId: 'some-ext-user-id',
           deleted: false,
@@ -283,6 +296,8 @@ class TestEnvironment {
         },
         {
           dataId: 'noteThread01note03',
+          type,
+          conflictType,
           threadId: 'noteThread01',
           extUserId: 'some-ext-user-id',
           deleted: false,
@@ -293,6 +308,8 @@ class TestEnvironment {
         },
         {
           dataId: 'noteThread01note04',
+          type,
+          conflictType,
           threadId: 'noteThread01',
           extUserId: 'some-ext-user-id',
           deleted: false,
@@ -318,6 +335,8 @@ class TestEnvironment {
       notes: [
         {
           dataId: 'noteThread02note01',
+          type,
+          conflictType,
           threadId: 'noteThread02',
           extUserId: 'some-ext-user-id',
           deleted: false,

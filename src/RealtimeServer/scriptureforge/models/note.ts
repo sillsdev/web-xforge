@@ -5,11 +5,14 @@ export const REATTACH_SEPARATOR = '\uFFFC';
 
 export interface Note extends Comment {
   threadId: string;
-  content?: string;
+  type: string;
+  conflictType: string;
   extUserId: string;
   deleted: boolean;
-  tagIcon?: string;
   status: NoteStatus;
+  tagIcon?: string;
   reattached?: string;
   assignment?: string;
+  content?: string;
+  acceptedChangeXml?: string;
 }
