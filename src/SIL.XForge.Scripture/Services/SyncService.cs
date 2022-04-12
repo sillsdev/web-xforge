@@ -61,7 +61,8 @@ namespace SIL.XForge.Scripture.Services
                     else
                     {
                         // Load the source project secrets, so we can store the job id
-                        if (!(await _projectSecrets.TryGetAsync(sourceProjectId)).TryResult(out SFProjectSecret sourceProjectSecret))
+                        if (!(await _projectSecrets.TryGetAsync(sourceProjectId))
+                            .TryResult(out SFProjectSecret sourceProjectSecret))
                         {
                             throw new ArgumentException("The source project secret cannot be found.");
                         }
