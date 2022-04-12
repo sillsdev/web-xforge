@@ -138,6 +138,9 @@
     "update_transcelerator": "The version of Transcelerator used in this project is not supported. Please update to at least Transcelerator version 1.5.3."
   },
   "note_dialog": {
+    "declare_conflict": "There is a conflict. Red/green corresponds to older/newer text.",
+    "accepted_change_heading": "The following change is tentatively automatically accepted:",
+    "rejected_change_heading": "The following change is tentatively automatically rejected:",
     "close": "Close",
     "hide_changes": "Hide changes",
     "note_reattached": "Note reattached",

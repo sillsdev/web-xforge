@@ -4,7 +4,7 @@ import { sortBy } from 'lodash-es';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { I18nService } from 'xforge-common/i18n.service';
-import { AssignedUsers, NoteStatus } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
+import { AssignedUsers, NoteStatus, NoteType } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
@@ -72,6 +72,11 @@ export class NoteDialogComponent implements OnInit {
     return this.projectProfileDoc.data.isRightToLeft ?? false;
   }
 
+  /** Does the note thread represent a conflict? */
+  get isConflict(): boolean {
+    return this.notes.some((note: Note) => note.type === NoteType.Conflict);
+  }
+
   get notes(): Note[] {
     if (this.threadDoc?.data == null) {
       return [];
@@ -111,6 +116,27 @@ export class NoteDialogComponent implements OnInit {
     return this.textDoc.getSegmentTextIncludingRelated(`verse_${verseRef.chapter}_${verseRef.verse}`);
   }
 
+  /** What to display for note content. Will be transformed for display, especially for a conflict note. */
+  contentForDisplay(content: string | undefined): string {
+    if (content == null) {
+      return '';
+    }
+    if (this.isConflict) {
+      // Process only the data in the language tag, not the preceding description (so don't report
+      // "Bob edited this verse on two different machines.").
+      // The XML parser won't process the text if it starts with text outside of a tag. So manually surround
+      // it in tags first, like a span.
+      const parser = new DOMParser();
+      const tree: Document = parser.parseFromString(`<span>${content}</span>`, 'application/xml');
+      const conflictContents = tree.querySelector('language p');
+      if (conflictContents != null) {
+        return this.parseNote(conflictContents.innerHTML);
+      }
+    }
+
+    return this.parseNote(content);
+  }
+
   private get projectId(): string {
     return this.data.projectId;
   }
@@ -129,6 +155,9 @@ export class NoteDialogComponent implements OnInit {
   }
 
   parseNote(content: string | undefined): string {
+    // See also PT CommentEditHelper.cs and CommentEditHelperTests.cs for info and examples on how conflict
+    // information is interpreted.
+
     const replace = new Map<RegExp, string>();
     replace.set(/<bold><color name="red">(.*?)<\/color><\/bold>/gim, '<span class="conflict-text-newer">$1</span>');
     replace.set(

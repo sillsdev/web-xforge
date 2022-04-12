@@ -399,12 +399,21 @@ usx-unmatched {
   display: none;
 }
 
-.note-content {
-  .conflict-text-older {
-    background-color: #ffc0cb;
-  }
-  .conflict-text-newer {
-    background-color: #90ee90;
-    font-weight: bold;
+.notes {
+  .content {
+    .note-content {
+      .conflict-text-older {
+        background-color: #ffc0cb;
+      }
+      .conflict-text-newer {
+        background-color: #90ee90;
+        font-weight: bold;
+      }
+    }
+    .note-conflict-explanation {
+      color: gray;
+      margin-top: 0.5em;
+      margin-bottom: 0.5em;
+    }
   }
 }
