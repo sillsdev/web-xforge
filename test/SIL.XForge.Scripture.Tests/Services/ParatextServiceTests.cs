@@ -803,6 +803,188 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task GetNoteThreadChanges_AddsNoteProperties()
+        {
+            var env = new TestEnvironment();
+            string sfProjectId = env.Project01;
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(sfProjectId, associatedPtUser);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+            env.AddTextDoc(40, 1);
+            string threadId = "thread01";
+            string threadOwner = env.User01;
+
+            env.MockGuidService.NewObjectId().Returns("thread01note01");
+
+            // There is a PT Comment.
+            var comment = new Paratext.Data.ProjectComments.Comment(associatedPtUser)
+            {
+                Thread = threadId,
+                VerseRefStr = "MAT 1:1",
+                SelectedText = "",
+                ContextBefore = "",
+                ContextAfter = "",
+                StartPosition = 0,
+                Contents = null,
+                Date = $"2019-12-31T08:00:00.0000000+00:00",
+                Deleted = false,
+                Status = NoteStatus.Todo,
+                Type = NoteType.Normal,
+                ConflictType = NoteConflictType.None,
+                AssignedUser = Paratext.Data.ProjectComments.CommentThread.unassignedUser,
+                AcceptedChangeXmlStr = "some xml",
+            };
+            env.AddParatextComment(comment);
+
+            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            {
+                // But we have no SF notes.
+                IEnumerable<IDocument<NoteThread>> noteThreadDocs =
+                    await env.GetNoteThreadDocsAsync(conn,
+                        new string[] { /* empty */ }
+                );
+                Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
+                    { new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 } }
+                    .ToDictionary(u => u.Username);
+                Dictionary<int, ChapterDelta> chapterDeltas =
+                    env.GetChapterDeltasByBook(env.Project01, 40, 1, "Context before ", "Text selected");
+
+                // SUT
+                IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
+                    userSecret, ptProjectId, 40, noteThreadDocs, chapterDeltas, ptProjectUsers);
+                // We fetched a single change, of one new note to create.
+
+                Assert.That(changes.Count, Is.EqualTo(1));
+                NoteThreadChange change = changes.First();
+                Assert.That(change.ThreadId, Is.EqualTo(threadId));
+                Assert.That(change.NotesAdded.Count, Is.EqualTo(1));
+                Note newNote = change.NotesAdded[0];
+                Assert.That(newNote.ThreadId, Is.EqualTo(threadId));
+                Assert.That(newNote.Type, Is.EqualTo(NoteType.Normal.InternalValue));
+                Assert.That(newNote.ConflictType, Is.EqualTo(NoteConflictType.None.InternalValue));
+                Assert.That(newNote.AcceptedChangeXml, Is.EqualTo("some xml"));
+            }
+        }
+
+        [Test]
+        public async Task GetNoteThreadChanges_NoChangeTriggersNoUpdate()
+        {
+            var env = new TestEnvironment();
+            IEnumerable<NoteThreadChange> changes =
+                await env.PrepareChangeOnSingleCommentAsync((Paratext.Data.ProjectComments.Comment comment) =>
+                {
+                    // Not modifying comment.
+                });
+            // There is one PT Comment and one SF Note. No changes were made. So no changes should be reported.
+            Assert.That(changes.Count, Is.Zero);
+        }
+
+        [Test]
+        public async Task GetNoteThreadChanges_UpdateTriggeredFromTypeChange()
+        {
+            var env = new TestEnvironment();
+            IEnumerable<NoteThreadChange> changes =
+                await env.PrepareChangeOnSingleCommentAsync((Paratext.Data.ProjectComments.Comment comment) =>
+            {
+                // The incoming PT Comment Type is updated.
+                Assert.That(comment.Type, Is.Not.EqualTo(NoteType.Conflict), "setup");
+                comment.Type = NoteType.Conflict;
+            }, (NoteThread noteThread) =>
+            {
+                // Setting a comment type to conflict also changes the tag icon (such as from "icon1" to "conflict1").
+                // That would make the test pass, because the SF note would have a TagIcon change. But the test would
+                // not be passing for the desired reason here, which is noticing a change specifically to the type. So
+                // set the thread and note icons ahead of time, on the SF Note in the SF DB, to "conflict1" so there is
+                // no change triggered on a change to their icon. The trigger for change should  be from the update to
+                // the PT Comment Type.
+                noteThread.TagIcon = "conflict1";
+                noteThread.Notes[0].TagIcon = "conflict1";
+            });
+
+            Assert.That(changes.Count, Is.EqualTo(1));
+
+            NoteThreadChange change = changes.First();
+            Assert.That(change.ThreadId, Is.EqualTo("thread01"));
+            Assert.That(change.NotesAdded.Count, Is.Zero);
+            Assert.That(change.NotesDeleted.Count, Is.Zero);
+            Assert.That(change.NotesUpdated.Count, Is.EqualTo(1));
+            Note note = change.NotesUpdated[0];
+            Assert.That(note.ThreadId, Is.EqualTo("thread01"));
+            Assert.That(note.Type, Is.EqualTo(NoteType.Conflict.InternalValue));
+        }
+
+
+        [Test]
+        public async Task GetNoteThreadChanges_UpdateTriggeredFromConflictTypeChange()
+        {
+            var env = new TestEnvironment();
+            IEnumerable<NoteThreadChange> changes =
+                await env.PrepareChangeOnSingleCommentAsync((Paratext.Data.ProjectComments.Comment comment) =>
+            {
+                // Already, the PT Comment and SF Note (below) will have Type 'Conflict'.
+                comment.Type = NoteType.Conflict;
+                // But the incoming PT Comment ConflictType is updated.
+                comment.ConflictType = NoteConflictType.VerseTextConflict;
+            }, (NoteThread noteThread) =>
+            {
+                noteThread.Notes[0].Type = NoteType.Conflict.InternalValue;
+                // (And set icon to match the note being a conflict note.)
+                noteThread.TagIcon = "conflict1";
+                noteThread.Notes[0].TagIcon = "conflict1";
+                // SF Note ConflictType is something other than what the PT Comment ConflictType is. This is what gets
+                // changed from.
+                noteThread.Notes[0].ConflictType = NoteConflictType.VerseBridgeDifferences.InternalValue;
+            });
+
+            Assert.That(changes.Count, Is.EqualTo(1));
+
+            NoteThreadChange change = changes.First();
+            Assert.That(change.ThreadId, Is.EqualTo("thread01"));
+            Assert.That(change.NotesAdded.Count, Is.Zero);
+            Assert.That(change.NotesDeleted.Count, Is.Zero);
+            Assert.That(change.NotesUpdated.Count, Is.EqualTo(1));
+            Note note = change.NotesUpdated[0];
+            Assert.That(note.ThreadId, Is.EqualTo("thread01"));
+            Assert.That(note.ConflictType, Is.EqualTo(NoteConflictType.VerseTextConflict.InternalValue));
+        }
+
+        [Test]
+        public async Task GetNoteThreadChanges_UpdateTriggeredFromAcceptedChangeXmlChange()
+        {
+            var env = new TestEnvironment();
+            IEnumerable<NoteThreadChange> changes =
+                await env.PrepareChangeOnSingleCommentAsync((Paratext.Data.ProjectComments.Comment comment) =>
+            {
+                // Already, the PT Comment and SF Note (below) will have Type 'Conflict' and
+                // ConflictType 'VerseTextConflict'.
+                comment.Type = NoteType.Conflict;
+                comment.ConflictType = NoteConflictType.VerseTextConflict;
+                // But the incoming PT Comment AcceptedChangeXmlStr is updated.
+                comment.AcceptedChangeXmlStr = "new data";
+            }, (NoteThread noteThread) =>
+            {
+                noteThread.Notes[0].Type = NoteType.Conflict.InternalValue;
+                // (And set icon to match the note being a conflict note.)
+                noteThread.TagIcon = "conflict1";
+                noteThread.Notes[0].TagIcon = "conflict1";
+                noteThread.Notes[0].ConflictType = NoteConflictType.VerseTextConflict.InternalValue;
+                // The SF Note AcceptedChangeXml is different. This is what gets changed from.
+                noteThread.Notes[0].AcceptedChangeXml = "old data";
+            });
+
+            Assert.That(changes.Count, Is.EqualTo(1));
+
+            NoteThreadChange change = changes.First();
+            Assert.That(change.ThreadId, Is.EqualTo("thread01"));
+            Assert.That(change.NotesAdded.Count, Is.Zero);
+            Assert.That(change.NotesDeleted.Count, Is.Zero);
+            Assert.That(change.NotesUpdated.Count, Is.EqualTo(1));
+            Note note = change.NotesUpdated[0];
+            Assert.That(note.ThreadId, Is.EqualTo("thread01"));
+            Assert.That(note.AcceptedChangeXml, Is.EqualTo("new data"));
+        }
+
+        [Test]
         public async Task GetNoteThreadChanges_UseCorrectTagIcon()
         {
             var env = new TestEnvironment();
@@ -2234,6 +2416,14 @@ namespace SIL.XForge.Scripture.Services
                 RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>(texts));
             }
 
+            public void AddTextDoc(int bookNum, int chapterNum)
+            {
+                TextData[] texts = new TextData[1];
+                Delta chapterDelta = Delta.New().Insert("In the beginning");
+                texts[0] = new TextData(chapterDelta) { Id = TextData.GetTextDocId(Project01, bookNum, chapterNum) };
+                RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>(texts));
+            }
+
             public void AddNoteThreadData(ThreadComponents[] threadComponents)
             {
                 IEnumerable<NoteThread> threads = new NoteThread[0];
@@ -2279,6 +2469,8 @@ namespace SIL.XForge.Scripture.Services
                         {
                             DataId = $"n{i}on{threadId}",
                             ThreadId = threadId,
+                            Type = NoteType.Normal.InternalValue,
+                            ConflictType = Note.NoConflictType,
                             OwnerRef = "user02",
                             ExtUserId = "user02",
                             Content = comp.isEdited ? $"<p>{threadId} note {i}: EDITED.</p>" : $"<p>{threadId} note {i}.</p>",
@@ -2297,6 +2489,8 @@ namespace SIL.XForge.Scripture.Services
                         {
                             DataId = $"reattached{threadId}",
                             ThreadId = threadId,
+                            Type = NoteType.Normal.InternalValue,
+                            ConflictType = Note.NoConflictType,
                             OwnerRef = "user02",
                             ExtUserId = "user02",
                             SyncUserRef = "syncuser01",
@@ -2316,6 +2510,14 @@ namespace SIL.XForge.Scripture.Services
                 }
                 RealtimeService.AddRepository("note_threads", OTType.Json0,
                     new MemoryRepository<NoteThread>(threads));
+            }
+
+            public void AddThread(NoteThread thread)
+            {
+                var threads = new NoteThread[1];
+                threads[0] = thread;
+                RealtimeService.AddRepository("note_threads", OTType.Json0,
+                   new MemoryRepository<NoteThread>(threads));
             }
 
             public Dictionary<int, ChapterDelta> GetChapterDeltasByBook(string projectId, int bookNum,
@@ -2477,6 +2679,12 @@ namespace SIL.XForge.Scripture.Services
                 }
             }
 
+            public void AddParatextComment(Paratext.Data.ProjectComments.Comment comment)
+            {
+                ProjectCommentManager.AddComment(comment);
+
+            }
+
             public MockScrText GetScrText(ParatextUser associatedPtUser, string projectId,
                 bool hasEditPermission = true)
             {
@@ -2535,6 +2743,112 @@ namespace SIL.XForge.Scripture.Services
                 string[] reattachParts = new[] {
                     rnt.verseStr, rnt.selectedText, rnt.startPos, rnt.contextBefore, rnt.contextAfter };
                 return string.Join(StringUtils.orcCharacter, reattachParts);
+            }
+
+            /// <summary>
+            /// Helper method for testing changes detected when comparing incoming Paratext Comments to
+            /// existing SF Notes. `modifyComment` and `modifyNoteThread` allow adjustment to the incoming Paratext
+            /// Comment and the existing SF note thread (and its notes) before they are examined for differences.
+            /// </summary>
+            public async Task<IEnumerable<NoteThreadChange>> PrepareChangeOnSingleCommentAsync(
+                Action<Paratext.Data.ProjectComments.Comment> modifyComment, Action<NoteThread> modifyNoteThread = null)
+            {
+                var env = this;
+                string sfProjectId = env.Project01;
+                var associatedPtUser = new SFParatextUser(env.Username01);
+                string ptProjectId = env.SetupProject(sfProjectId, associatedPtUser);
+                UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+                env.AddTextDoc(40, 1);
+                env.MockGuidService.NewObjectId().Returns("thread01note01");
+
+                string threadId = "thread01";
+                string threadOwner = env.User01;
+
+                // Put into the SF DB a NoteThread and a Note, that will need to be updated with new PT Comment data.
+
+                var thread01 = new NoteThread
+                {
+                    Id = "project01:" + threadId,
+                    DataId = threadId,
+                    ProjectRef = sfProjectId,
+                    OwnerRef = threadOwner,
+                    VerseRef = new VerseRefData(40, 1, 1),
+                    OriginalSelectedText = "",
+                    OriginalContextBefore = "",
+                    Position = new TextAnchor(),
+                    OriginalContextAfter = "",
+                    Status = NoteStatus.Todo.InternalValue,
+                    TagIcon = "icon1",
+                    Assignment = Paratext.Data.ProjectComments.CommentThread.unassignedUser,
+                    Notes = {
+                    new Note {
+                        DataId = $"{threadId}note01",
+                            ThreadId = threadId,
+                            Type = NoteType.Normal.InternalValue,
+                            ConflictType = Note.NoConflictType,
+                            OwnerRef = threadOwner,
+                            ExtUserId = "user02",
+                            SyncUserRef = "syncuser01",
+                            DateCreated = new DateTime(2019, 12, 31, 8, 0, 0, DateTimeKind.Utc),
+                            TagIcon = $"icon1",
+                            Deleted = false,
+                            Status = NoteStatus.Todo.InternalValue,
+                            Assignment = Paratext.Data.ProjectComments.CommentThread.unassignedUser,
+                            Content = $"<p>Note content.</p>",
+                            AcceptedChangeXml = null,
+                    }
+                }
+                };
+                if (modifyNoteThread != null)
+                {
+                    modifyNoteThread(thread01);
+                }
+
+                env.AddThread(thread01);
+
+                // Create a PT Comment with updated data that SF will consider when composing a change report.
+
+                XmlDocument doc = new XmlDocument();
+                XmlElement commentContents = doc.CreateElement("Contents");
+                commentContents.InnerXml = $"<p>Note content.</p>";
+                var comment = new Paratext.Data.ProjectComments.Comment(associatedPtUser)
+                {
+                    Thread = threadId,
+                    VerseRefStr = "MAT 1:1",
+                    SelectedText = "",
+                    ContextBefore = "",
+                    ContextAfter = "",
+                    StartPosition = 0,
+                    Date = $"2019-12-31T08:00:00.0000000+00:00",
+                    Deleted = false,
+                    Status = NoteStatus.Todo,
+                    Type = NoteType.Normal,
+                    // ConflictType = (unset / default)
+                    AssignedUser = Paratext.Data.ProjectComments.CommentThread.unassignedUser,
+                    Contents = commentContents,
+                    AcceptedChangeXmlStr = null,
+                };
+                modifyComment(comment);
+                env.AddParatextComment(comment);
+
+                using (IConnection conn = await env.RealtimeService.ConnectAsync())
+                {
+                    IEnumerable<IDocument<NoteThread>> noteThreadDocs =
+                        await env.GetNoteThreadDocsAsync(conn,
+                            new[] { "thread01" }
+                    );
+                    Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
+                        { new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 } }
+                        .ToDictionary(u => u.Username);
+                    Dictionary<int, ChapterDelta> chapterDeltas =
+                        env.GetChapterDeltasByBook(env.Project01, 40, 1, "Context before ", "Text selected");
+
+                    // SUT
+                    IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
+                        userSecret, ptProjectId, 40, noteThreadDocs, chapterDeltas, ptProjectUsers);
+
+                    return changes;
+                }
             }
 
             private Delta GetChapterDelta(int chapterNum, int verses, string contextBefore, string selectedText,
