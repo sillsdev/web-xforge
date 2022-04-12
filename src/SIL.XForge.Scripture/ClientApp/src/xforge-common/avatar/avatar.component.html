@@ -1,4 +1,4 @@
 <ngx-avatar [src]="avatarUrl" [name]="name" [size]="size" [round]="round" [cornerRadius]="3"></ngx-avatar>
 <div *ngIf="showOnlineStatus" class="online-status">
-  <mdc-icon *ngIf="(pwaService.onlineStatus | async) !== true">cloud_off</mdc-icon>
+  <mdc-icon *ngIf="statusIcon$ | async as icon">{{ icon }}</mdc-icon>
 </div>

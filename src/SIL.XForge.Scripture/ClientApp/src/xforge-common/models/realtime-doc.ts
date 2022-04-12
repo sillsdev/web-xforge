@@ -1,4 +1,5 @@
 import { merge, Observable, Subject, Subscription } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { RealtimeDocAdapter } from '../realtime-remote-store';
 import { Snapshot } from './snapshot';
@@ -19,8 +20,9 @@ export interface RealtimeDocConstructor {
  * @template Ops The operations data type.
  */
 export abstract class RealtimeDoc<T = any, Ops = any> {
-  private updateOfflineDataSub: Subscription;
-  private onDeleteSub: Subscription;
+  private readonly updateOfflineDataSub: Subscription;
+  private readonly onDeleteSub: Subscription;
+  private readonly saveNotificationSub: Subscription;
   private offlineSnapshotVersion?: number;
   private subscribePromise?: Promise<void>;
   private localDelete$ = new Subject<void>();
@@ -40,6 +42,10 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
       }
     );
     this.onDeleteSub = this.adapter.delete$.subscribe(() => this.onDelete());
+    this.saveNotificationSub = merge(
+      this.adapter.beforeOp$.pipe(tap(() => this.realtimeService.saveStatusService.startedSavingDocOnline(this.id))),
+      this.adapter.idle$.pipe(tap(() => this.realtimeService.saveStatusService.finishedSavingDocOnline(this.id)))
+    ).subscribe();
   }
 
   get id(): string {
@@ -156,6 +162,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
     }
     this.updateOfflineDataSub.unsubscribe();
     this.onDeleteSub.unsubscribe();
+    this.saveNotificationSub.unsubscribe();
     await this.adapter.destroy();
     this.subscribedState = false;
     await this.realtimeService.onLocalDocDispose(this);
@@ -208,7 +215,12 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
       type: this.adapter.type.name,
       pendingOps
     };
-    await this.realtimeService.offlineStore.put(this.collection, offlineData);
+    this.realtimeService.saveStatusService.startedSavingDocOffline(this.id);
+    await this.realtimeService.offlineStore.put(this.collection, offlineData).finally(() => {
+      if (this.adapter.version === this.offlineSnapshotVersion) {
+        this.realtimeService.saveStatusService.finishedSavingDocOffline(this.id);
+      }
+    });
   }
 
   private async loadOfflineData(): Promise<void> {
