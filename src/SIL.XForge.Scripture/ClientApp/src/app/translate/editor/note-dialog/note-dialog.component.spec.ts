@@ -133,6 +133,90 @@ describe('NoteDialogComponent', () => {
     });
   }));
 
+  it('conflict preamble is transformed', fakeAsync(() => {
+    env = new TestEnvironment();
+    const conflictNote = env.component.notes[0];
+    conflictNote.type = NoteType.Conflict;
+    conflictNote.conflictType = NoteConflictType.VerseTextConflict;
+    const normalNote = env.component.notes[1];
+    normalNote.type = NoteType.Normal;
+    normalNote.conflictType = NoteConflictType.DefaultValue;
+
+    // A non-conflict note contains contents that will be more-so passed thru.
+    normalNote.content = 'some content here';
+    expect(env.component.contentForDisplay(normalNote)).toEqual(normalNote.content);
+    const notConflictContent =
+      'Bob edited this verse on two different machines.<p><language name="en"><p>How impressive.</p></language></p>';
+    normalNote.content = notConflictContent;
+    expect(env.component.contentForDisplay(normalNote))
+      .withContext('Text like the conflict preamble should not be removed from a non-conflict note, though.')
+      .toContain('Bob edited this verse on two different machines.');
+    expect(env.component.contentForDisplay(normalNote)).toContain('impressive.');
+
+    // But a conflict note contains a description at the beginning that we can transform.
+    conflictNote.content =
+      'Bob edited this verse on two different machines.<p><language name="en"><p>Alpha <strikethrough><color name="red">Orig </color></strikethrough><bold><color name="red">OneNewOption </color></bold>Bravo</p></language></p>';
+    const transformed: string = env.component.contentForDisplay(conflictNote);
+    const required: string[] = ['Alpha', 'Orig', 'OneNewOption', 'Bravo'];
+    const forbidden: string[] = ['Bob', 'two different machines', 'language'];
+    // It will contain the conflict diff data.
+    required.forEach((item: string) =>
+      expect(transformed).withContext('required item was not in the output').toContain(item)
+    );
+    // But it won't contain the conflict preamble.
+    forbidden.forEach((item: string) =>
+      expect(transformed).withContext('forbidden item was in the output').not.toContain(item)
+    );
+
+    // Conflict notes are marked as such. If a conflict note doesn't have the expected language tag, we can let it pass
+    // thru without as much transformation. This might never happen with real data.
+    // Unexpected conflict content with no language element:
+    const unexpectedContent: string = 'unexpected note content here';
+    conflictNote.content = unexpectedContent;
+    const output: string = env.component.contentForDisplay(conflictNote);
+    expect(output)
+      .withContext('unexpectedly formatted conflict note. Parse like a normal note.')
+      .toEqual(unexpectedContent);
+  }));
+
+  it('isConflictNote detects', fakeAsync(() => {
+    env = new TestEnvironment();
+    // A non-conflict note is detected.
+    env.component.notes[0].type = NoteType.Normal;
+    env.component.notes[0].conflictType = NoteConflictType.DefaultValue;
+    expect(env.component.isConflictNote(env.component.notes[0])).toBeFalse();
+    // A conflict note is detected.
+    env.component.notes[0].type = NoteType.Conflict;
+    env.component.notes[0].conflictType = NoteConflictType.VerseTextConflict;
+    expect(env.component.isConflictNote(env.component.notes[0])).toBeTrue();
+    // If a thread starts with a conflict note, human-written followup notes are also set with type
+    // 'conflict'. But detect that they aren't actually conflict notes.
+    env.component.notes[1].type = NoteType.Conflict;
+    env.component.notes[1].conflictType = NoteConflictType.DefaultValue;
+    expect(env.component.isConflictNote(env.component.notes[1])).toBeFalse();
+  }));
+
+  it('non-conflict notes in a thread with one conflict, are not displayed as conflict notes', fakeAsync(() => {
+    env = new TestEnvironment();
+    // In this note thread, the first note is a conflict note, and the second note is a human-written note.
+    // The conflict note should display conflict information, but the following note should not.
+    env.component.notes[0].type = NoteType.Conflict;
+    env.component.notes[0].conflictType = NoteConflictType.VerseTextConflict;
+    // (And the human-written followup note also has type 'conflict' in this situation.)
+    env.component.notes[1].type = NoteType.Conflict;
+    env.component.notes[1].conflictType = NoteConflictType.DefaultValue;
+    env.fixture.detectChanges();
+
+    const conflictNoteDialogContentDivs = env.notes[0].children[0].children;
+    expect(conflictNoteDialogContentDivs.some((div: DebugElement) => div.classes['note-conflict-explanation']))
+      .withContext('The conflict note should be displayed with conflict information.')
+      .toBeTrue();
+    const normalNoteDialogContentDivs = env.notes[1].children[0].children;
+    expect(normalNoteDialogContentDivs.some((div: DebugElement) => div.classes['note-conflict-explanation']))
+      .withContext('The non-conflict note should not display conflict information.')
+      .toBeFalse();
+  }));
+
   it('produce correct default note icon', fakeAsync(() => {
     env = new TestEnvironment();
     expect(env.component.flagIcon).toEqual('/assets/icons/TagIcons/flag02.png');
@@ -207,6 +291,64 @@ describe('NoteDialogComponent', () => {
     expect(reattachNote.querySelector('img')?.getAttribute('title')).toEqual('Note reattached');
   }));
 
+  it('conflict note displays accepted and rejected changes', fakeAsync(() => {
+    // Make a conflict note to be displayed.
+    const noteThread: NoteThread = {
+      originalContextBefore: '',
+      originalContextAfter: '',
+      originalSelectedText: '',
+      dataId: 'thread01',
+      ownerRef: 'user01',
+      position: { start: 0, length: 0 },
+      projectRef: TestEnvironment.PROJECT01,
+      tagIcon: 'flag02',
+      verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 },
+      status: NoteStatus.Todo,
+      assignment: AssignedUsers.TeamUser,
+      notes: [
+        {
+          dataId: 'note01',
+          type: NoteType.Conflict,
+          conflictType: NoteConflictType.VerseTextConflict,
+          threadId: 'thread01',
+          content:
+            '<strikethru><color>His name was</color></strikethru><bold><color>He was called</color></bold> Elimelech',
+          // The acceptedChangeXml property has its lt and gt symbols encoded.
+          acceptedChangeXml:
+            '<strikethru><color>His name was</color></strikethru><bold><color>He was known by the name</color></bold> Elimelech'
+              .replace('<', '&lt;')
+              .replace('>', '&gt;'),
+          extUserId: 'user01',
+          deleted: false,
+          ownerRef: 'user01',
+          status: NoteStatus.Todo,
+          tagIcon: 'flag02',
+          dateCreated: '',
+          dateModified: '',
+          assignment: TestEnvironment.paratextUsers.find(u => u.sfUserId === 'user01')!.opaqueUserId
+        }
+      ]
+    };
+
+    // SUT
+    env = new TestEnvironment({ noteThread });
+
+    const note = env.notes[0].nativeElement as HTMLElement;
+
+    // Various labels and data should appear in the dialog when the note is presented as a conflict note.
+    const expectedItems: string[] = [
+      'Accepted',
+      'Rejected',
+      'His name was',
+      'He was called',
+      'He was known by',
+      'Elimelech'
+    ];
+    expectedItems.forEach((expected: string) =>
+      expect(note.querySelector('.content')!.textContent).toContain(expected)
+    );
+  }));
+
   it('shows assigned user', fakeAsync(() => {
     env = new TestEnvironment();
     expect(env.threadAssignedUser.nativeElement.textContent).toContain('Team');
@@ -275,6 +417,7 @@ interface TestEnvironmentConstructorArgs {
   isRightToLeftProject?: boolean;
   reattachedContent?: string;
   currentUserId?: string;
+  noteThread?: NoteThread;
 }
 
 class TestEnvironment {
@@ -456,10 +599,13 @@ class TestEnvironment {
     includeSnapshots = true,
     isRightToLeftProject,
     reattachedContent,
-    currentUserId = 'user01'
+    currentUserId = 'user01',
+    noteThread
   }: TestEnvironmentConstructorArgs = {}) {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
-    const noteThread: NoteThread = TestEnvironment.getNoteThread(reattachedContent);
+    if (noteThread == null) {
+      noteThread = TestEnvironment.getNoteThread(reattachedContent);
+    }
     const configData: NoteDialogData = {
       projectId: TestEnvironment.PROJECT01,
       threadId: noteThread.dataId
