@@ -1024,6 +1024,7 @@ namespace SIL.XForge.Scripture.Services
                 }
                 else
                 {
+                    Log($"CompleteSync: Warning: SF project id {_projectDoc.Id} QueuedCount is unexpectedly {_projectDoc.Data.Sync.QueuedCount}. Setting to 0 instead of decrementing.");
                     op.Set(pd => pd.Sync.QueuedCount, 0);
                 }
 

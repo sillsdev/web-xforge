@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Hangfire;
 using Hangfire.States;
 using SIL.XForge.DataAccess;
@@ -20,15 +21,18 @@ namespace SIL.XForge.Scripture.Services
         private readonly IBackgroundJobClient _backgroundJobClient;
         private readonly IRepository<SFProjectSecret> _projectSecrets;
         private readonly IRealtimeService _realtimeService;
+        private readonly ILogger<SyncService> _logger;
 
         public SyncService(
             IBackgroundJobClient backgroundJobClient,
             IRepository<SFProjectSecret> projectSecrets,
-            IRealtimeService realtimeService)
+            IRealtimeService realtimeService,
+            ILogger<SyncService> logger)
         {
             _backgroundJobClient = backgroundJobClient;
             _projectSecrets = projectSecrets;
             _realtimeService = realtimeService;
+            _logger = logger;
         }
 
         public async Task SyncAsync(string curUserId, string projectId, bool trainEngine)
@@ -84,10 +88,14 @@ namespace SIL.XForge.Scripture.Services
                             {
                                 op.Inc(pd => pd.Sync.QueuedCount);
                             });
+                            WarnIfAnomalousQueuedCount(sourceProjectDoc.Data.Sync.QueuedCount,
+                                $"For parent SF project id {sourceProjectDoc.Id} after inc.");
                             await projectDoc.SubmitJson0OpAsync(op =>
                             {
                                 op.Inc(pd => pd.Sync.QueuedCount);
                             });
+                            WarnIfAnomalousQueuedCount(projectDoc.Data.Sync.QueuedCount,
+                                $"For daughter SF project id {projectDoc.Id} after inc.");
 
                             // Store the source job id so we can cancel the job later if needed
                             await _projectSecrets.UpdateAsync(sourceProjectSecret.Id, u =>
@@ -127,6 +135,8 @@ namespace SIL.XForge.Scripture.Services
                     {
                         op.Inc(pd => pd.Sync.QueuedCount);
                     });
+                    WarnIfAnomalousQueuedCount(projectDoc.Data.Sync.QueuedCount,
+                        $"For SF project id {projectDoc.Id} after inc.");
 
                     // Store the job id so we can cancel the job later if needed
                     await _projectSecrets.UpdateAsync(projectSecret.Id, u =>
@@ -171,6 +181,23 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
+        /// <summary>
+        /// Helper method to warn when QueuedCount is an unexpected value, to assist in investigating problems.
+        /// </summary>
+        internal void WarnIfAnomalousQueuedCount(int queuedCount, string details)
+        {
+            if (queuedCount == 0 || queuedCount == 1)
+            {
+                return;
+            }
+            string message = $"SyncService: Project has unexpected QueuedCount of {queuedCount}.";
+            if (!string.IsNullOrEmpty(details))
+            {
+                message += $" {details}";
+            }
+            _logger.LogWarning(message);
+        }
+
         private async Task CancelProjectDocumentSyncAsync(IDocument<SFProject> projectDoc)
         {
             // Load the project secrets, so we can get any job ids
@@ -188,6 +215,8 @@ namespace SIL.XForge.Scripture.Services
                     u.Set(p => p.JobIds, new List<string>());
                 });
 
+                WarnIfAnomalousQueuedCount(projectDoc.Data.Sync.QueuedCount,
+                    $"For SF project id {projectDoc.Id} before setting QueuedCount to 0 as part of cancelling.");
                 // Mark sync as cancelled
                 await projectDoc.SubmitJson0OpAsync(op =>
                 {
