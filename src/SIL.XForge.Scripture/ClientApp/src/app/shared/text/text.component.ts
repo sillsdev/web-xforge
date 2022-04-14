@@ -368,6 +368,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return this.viewModel.embeddedElements;
   }
 
+  get embeddedPositions(): number[] {
+    return this.viewModel.embeddedPositions;
+  }
+
   get localPresence(): LocalPresence<PresenceData> | undefined {
     return this.viewModel.localPresence;
   }
@@ -690,7 +694,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
     let previousEmbedIndex = -1;
     const deleteDelta = new Delta();
-    for (const embedIndex of this.viewModel.embeddedElements.values()) {
+    for (const embedIndex of this.viewModel.embeddedPositions) {
       const lengthBetweenEmbeds: number = embedIndex - (previousEmbedIndex + 1);
       if (lengthBetweenEmbeds > 0) {
         // retain elements other than notes between the previous and current embed
@@ -1151,6 +1155,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
           newStart++;
         }
       }
+
+      // while (embedIndices.includes(newStart - 1)) {
+      //   newStart--;
+      // }
       newSel = { index: newStart, length: Math.max(0, newEnd - newStart) };
     } else {
       return null;
@@ -1177,7 +1185,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
    * positions to check.
    */
   private getEmbedCountInRange(editorStartPos: number, length: number): number {
-    const embedPositions: number[] = Array.from(this.embeddedElements.values());
+    const embedPositions: number[] = this.viewModel.embeddedPositions;
     return embedPositions.filter((pos: number) => pos >= editorStartPos && pos < editorStartPos + length).length;
   }
 

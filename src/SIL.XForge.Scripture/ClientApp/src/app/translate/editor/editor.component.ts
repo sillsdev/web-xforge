@@ -14,7 +14,7 @@ import {
   TranslationSuggester
 } from '@sillsdev/machine';
 import isEqual from 'lodash-es/isEqual';
-import Quill, { DeltaStatic, RangeStatic } from 'quill';
+import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
@@ -132,6 +132,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private toggleNoteThreadVerseRefs$: BehaviorSubject<void> = new BehaviorSubject<void>(undefined);
   private toggleNoteThreadSub?: Subscription;
   private shouldNoteThreadsRespondToEdits: boolean = false;
+  private noteThreadPositionSubscriptions: Subscription[] = [];
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -487,6 +488,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (this.metricsSession != null) {
       this.metricsSession.dispose();
     }
+    this.noteThreadPositionSubscriptions.forEach(sub => sub.unsubscribe());
   }
 
   closeTrainingProgress(): void {
@@ -584,6 +586,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (delta != null) {
       // wait 20 ms so that note thread docs have time to receive the updated note positions
       setTimeout(() => {
+        this.console.log(delta);
         this.recreateDeletedNoteThreadEmbeds();
         if (segment != null) {
           this.subscribeClickEvents([segment.ref]);
@@ -735,10 +738,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
     const chapterNoteThreadDocs: NoteThreadDoc[] = this.currentChapterNoteThreadDocs();
     const featureVerseRefInfo: FeaturedVerseRefInfo[] = [];
+    this.noteThreadPositionSubscriptions.forEach(sub => sub.unsubscribe());
     for (const noteThreadDoc of chapterNoteThreadDocs) {
       const featured: FeaturedVerseRefInfo | undefined = this.getFeaturedVerseRefInfo(noteThreadDoc);
       if (featured != null) {
         featureVerseRefInfo.push(featured);
+        const subscription = this.subscribe(noteThreadDoc.changes$, ops => {
+          this.console.log('note thread updated');
+          this.console.log(ops);
+          this.resetNoteThread(featured.id, 'api');
+        });
+        this.noteThreadPositionSubscriptions.push(subscription);
       }
     }
     const noteThreadVerseRefs: VerseRef[] = featureVerseRefInfo.map(f => f.verseRef);
@@ -1440,6 +1450,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       }
     }
     this.subscribeClickEvents(Array.from(segmentsToSubscribe.values()));
+  }
+
+  private resetNoteThread(threadId: string, source: Sources): void {
+    if (this.target == null) {
+      return;
+    }
+    Promise.resolve(this.target).then(t => t.removeEmbeddedElement(threadId, source));
   }
 
   private embedNoteThread(featured: FeaturedVerseRefInfo): string | undefined {
