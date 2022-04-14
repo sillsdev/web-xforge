@@ -1169,7 +1169,7 @@ describe('EditorComponent', () => {
     }));
   });
 
-  describe('Note threads', () => {
+  fdescribe('Note threads', () => {
     it('embeds note on verse segments', fakeAsync(() => {
       const env = new TestEnvironment();
       env.addParatextNoteThread(6, 'MAT 1:2', '', { start: 0, length: 0 }, ['user01']);
@@ -1321,7 +1321,7 @@ describe('EditorComponent', () => {
       const noteStart5 = env.component.target!.getSegmentRange('verse_1_4')!.index + doc.data!.position.start;
       // positions are 11, 34, 55, 56, 94
       const expected = [noteStart1, noteStart2, noteStart3, noteStart4, noteStart5];
-      expect(Array.from(env.component.target!.embeddedElements.values())).toEqual(expected);
+      expect(Array.from(env.component.target!.embeddedPositions)).toEqual(expected);
       env.dispose();
     }));
 
@@ -1531,12 +1531,12 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
-      expect(Array.from(env.component.target!.embeddedElements.values())).toEqual([11, 34, 55, 56, 94]);
+      expect(Array.from(env.component.target!.embeddedPositions)).toEqual([11, 34, 55, 56, 94]);
 
       // deletes just the note icon
       env.targetEditor.setSelection(11, 1, 'user');
       env.deleteCharacters();
-      expect(Array.from(env.component.target!.embeddedElements.values())).toEqual([11, 34, 55, 56, 94]);
+      expect(Array.from(env.component.target!.embeddedPositions)).toEqual([11, 34, 55, 56, 94]);
       const textDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
       expect(textDoc.data!.ops![3].insert).toBe('target: chapter 1, verse 1.');
 
@@ -1546,7 +1546,7 @@ describe('EditorComponent', () => {
       expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
       env.typeCharacters('t');
       // 4 characters deleted and 1 character inserted
-      expect(Array.from(env.component.target!.embeddedElements.values())).toEqual([10, 31, 52, 53, 91]);
+      expect(Array.from(env.component.target!.embeddedPositions)).toEqual([10, 31, 52, 53, 91]);
       expect(noteThreadDoc.data!.position).toEqual({ start: 7, length: 7 });
       expect(textDoc.data!.ops![3].insert).toBe('targettapter 1, verse 1.');
 
@@ -1557,7 +1557,7 @@ describe('EditorComponent', () => {
 
       env.updateParams({ projectId: 'project01', bookId: 'MAT' });
       env.wait();
-      expect(Array.from(env.component!.target!.embeddedElements.values())).toEqual([10, 31, 52, 53, 91]);
+      expect(Array.from(env.component!.target!.embeddedPositions)).toEqual([10, 31, 52, 53, 91]);
       env.dispose();
     }));
 
@@ -1814,6 +1814,95 @@ describe('EditorComponent', () => {
       verse4p1Index = env.component.target!.getSegmentRange('verse_1_4/p_1')!.index;
       note5Index = env.getNoteThreadEditorPosition('thread05');
       expect(note5Index).toEqual(verse4p1Index);
+      env.dispose();
+    }));
+
+    it('updates note anchors when drag and drop between multiple verses', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      const originalThread1Pos: TextAnchor = { start: 8, length: 9 };
+      const originalThread3Pos: TextAnchor = { start: 20, length: 7 };
+      const noteThread1Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      expect(noteThread1Doc.data!.position).toEqual(originalThread1Pos);
+      const noteThread3Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread03');
+      expect(noteThread3Doc.data!.position).toEqual(originalThread3Pos);
+      // // simulate a drag and drop event
+      const dragStart: number = env.getNoteThreadEditorPosition('thread01') + 1;
+      const dragText = 'chapter 1';
+      const dropStart: number = env.getNoteThreadEditorPosition('thread03') - 5;
+      const spaceBetweenEdits: number = dropStart - (dragStart + dragText.length);
+
+      // \v 1 target: $chapter 1, verse 1. \v 2  \v 3 target: chapter 1, $$verse 3.
+      // drag this    ---------                        drop here   ^
+      const changes: DeltaOperation[] = [
+        { retain: dragStart },
+        { delete: dragText.length },
+        { retain: spaceBetweenEdits },
+        { insert: dragText }
+      ];
+
+      // SUT 1
+      env.targetEditor.setSelection(dragStart, dragText.length, 'user');
+      env.targetEditor.updateContents(new Delta(changes), 'user');
+      env.wait();
+
+      const expectedThread1Pos: TextAnchor = { start: 0, length: originalThread1Pos.length - dragText.length };
+      expect(noteThread1Doc.data!.position).toEqual(expectedThread1Pos);
+      let verse1Range: RangeStatic = env.component.target!.getSegmentRange('verse_1_1')!;
+      expect(env.getNoteThreadEditorPosition('thread01')).toEqual(verse1Range.index);
+
+      const expectedThread3Pos: TextAnchor = {
+        start: originalThread3Pos.start + dragText.length,
+        length: originalThread3Pos.length
+      };
+      expect(noteThread3Doc.data!.position).toEqual(expectedThread3Pos);
+      env.wait();
+
+      // SUT 2
+      env.triggerUndo();
+      env.wait();
+      expect(noteThread1Doc.data!.position).toEqual(expectedThread1Pos);
+      verse1Range = env.component.target!.getSegmentRange('verse_1_1')!;
+      expect(env.getNoteThreadEditorPosition('thread01')).toEqual(verse1Range.index);
+      expect(noteThread3Doc.data!.position).toEqual(originalThread3Pos);
+      env.dispose();
+    }));
+
+    it('updated note thread anchors when drag and drop within verse', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      const originalNoteAnchor: TextAnchor = { start: 8, length: 9 };
+      expect(noteThreadDoc.data!.position).toEqual(originalNoteAnchor);
+
+      const notePosition: number = env.getNoteThreadEditorPosition('thread01');
+      const dragStart: number = notePosition + 1;
+      const dragText = 'chapter';
+      const dropStart: number = notePosition + 16;
+      const spaceBetweenEdits: number = dropStart - (dragStart + dragText.length);
+
+      // target: $chapter 1, verse 1.
+      //    drag  -------   drop ^
+      const updateOps: DeltaOperation[] = [
+        { retain: dragStart },
+        { delete: dragText.length },
+        { retain: spaceBetweenEdits },
+        { insert: dragText }
+      ];
+      const updateDelta = new Delta(updateOps);
+      env.targetEditor.setSelection(dragStart, dragText.length);
+      env.targetEditor.updateContents(updateDelta, 'user');
+      env.wait();
+
+      const expectedNoteAnchor: TextAnchor = {
+        start: originalNoteAnchor.start,
+        length: originalNoteAnchor.length - dragText.length
+      };
+      expect(noteThreadDoc.data!.position).toEqual(expectedNoteAnchor);
       env.dispose();
     }));
 
@@ -2151,7 +2240,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('note dialog appears after undo delete-a-note', fakeAsync(() => {
+    fit('note dialog appears after undo delete-a-note', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
@@ -2841,7 +2930,7 @@ class TestEnvironment {
 
   /** Editor position of note thread. */
   getNoteThreadEditorPosition(threadId: string): number {
-    return this.component.target!.embeddedElements.get(threadId)!;
+    return this.component.target!.embeddedElements.get(threadId)!.position;
   }
 
   getRemoteEditPosition(notePosition: number, positionAfter: number, noteCount: number): number {

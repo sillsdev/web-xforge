@@ -45,6 +45,17 @@ const PARA_STYLES: Set<string> = new Set<string>([
   'lim'
 ]);
 
+export function embeddedElementPositions(embeds: EmbedPosition[]): number[] {
+  let result: number[] = [];
+  Array.from(embeds.values()).forEach(e => {
+    result.push(e.position);
+    if (e.duplicatePosition != null) {
+      result.push(e.duplicatePosition);
+    }
+  });
+  return result;
+}
+
 function canParaContainVerseText(style: string): boolean {
   if (style === '') {
     return true;
@@ -98,6 +109,11 @@ export interface RemotePresences {
   [id: string]: PresenceData;
 }
 
+export interface EmbedPosition {
+  position: number;
+  duplicatePosition?: number;
+}
+
 class SegmentInfo {
   length: number = 0;
   origRef?: string;
@@ -135,8 +151,7 @@ export class TextViewModel {
    * A mapping of IDs of elements embedded into the quill editor to their positions.
    * These elements are in addition to the text data i.e. Note threads
    */
-  private _embeddedElements: Map<string, number> = new Map<string, number>();
-
+  private _embeddedElements: Map<string, EmbedPosition> = new Map<string, EmbedPosition>();
   private onPresenceReceive = (_presenceId: string, _presenceData: PresenceData | null) => {};
 
   constructor(private presenceChange?: EventEmitter<RemotePresences | undefined>) {
@@ -150,11 +165,15 @@ export class TextViewModel {
   }
 
   get segments(): IterableIterator<[string, RangeStatic]> {
-    return this._segments.entries();
+    return cloneDeep(this._segments).entries();
   }
 
-  get embeddedElements(): Map<string, number> {
+  get embeddedElements(): Map<string, EmbedPosition> {
     return this._embeddedElements;
+  }
+
+  get embeddedPositions(): number[] {
+    return embeddedElementPositions(Array.from(this._embeddedElements.values()));
   }
 
   get isLoaded(): boolean {
@@ -463,7 +482,7 @@ export class TextViewModel {
 
   /** Returns editor range information that corresponds to a text position past an editor position. */
   getEditorContentRange(startEditorPosition: number, textPosPast: number): EditorRange {
-    const embedEditorPositions = Array.from(this.embeddedElements.values());
+    const embedEditorPositions = this.embeddedPositions;
     const leadingEmbedCount = this.countSequentialEmbedsStartingAt(startEditorPosition);
     let resultingEditorPos = startEditorPosition + leadingEmbedCount;
     let textCharactersFound = 0;
@@ -488,7 +507,7 @@ export class TextViewModel {
   }
 
   private countSequentialEmbedsStartingAt(startEditorPosition: number): number {
-    const embedEditorPositions = Array.from(this.embeddedElements.values());
+    const embedEditorPositions = this.embeddedPositions;
     // add up the leading embeds
     let leadingEmbedCount = 0;
     while (embedEditorPositions.includes(startEditorPosition + leadingEmbedCount)) {
@@ -642,7 +661,14 @@ export class TextViewModel {
         } else if (op.insert['note-thread-embed'] != null) {
           // record the presence of an embedded note in the segment
           const id = op.attributes != null && op.attributes['threadid'];
-          this._embeddedElements.set(id, curIndex + curSegment.length - 1);
+          let embedPosition: EmbedPosition | undefined = this._embeddedElements.get(id);
+          const position: number = curIndex + curSegment.length - 1;
+          if (embedPosition == null) {
+            embedPosition = { position };
+          } else {
+            embedPosition.duplicatePosition = position;
+          }
+          this._embeddedElements.set(id, embedPosition);
           curSegment.notesCount++;
         }
       }
@@ -803,13 +829,15 @@ export class TextViewModel {
 
   /** Gets the number of embeds in a given range displayed in the quill editor. */
   private getEmbedsInEditorRange(startIndex: number, length: number): number {
-    const indices: IterableIterator<number> = this._embeddedElements.values();
+    const embedPositions: IterableIterator<EmbedPosition> = this._embeddedElements.values();
     const opEndIndex: number = startIndex + length;
     let embeddedElementsCount: number = 0;
-    for (const embedIndex of indices) {
-      if (embedIndex < startIndex) {
+    for (const pos of embedPositions) {
+      if (pos.position < startIndex && (pos.duplicatePosition == null || pos.duplicatePosition < startIndex)) {
         continue;
-      } else if (embedIndex >= startIndex && embedIndex < opEndIndex) {
+      } else if (pos.position >= startIndex && pos.position < opEndIndex) {
+        embeddedElementsCount++;
+      } else if (pos.duplicatePosition && pos.duplicatePosition >= startIndex && pos.duplicatePosition < opEndIndex) {
         embeddedElementsCount++;
       } else {
         break;
