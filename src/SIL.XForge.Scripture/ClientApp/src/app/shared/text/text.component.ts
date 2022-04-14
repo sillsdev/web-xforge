@@ -478,9 +478,9 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       const formatSegment: string = `${featureName}-segment`;
       const formats: any = { [formatSegment]: value };
       const count = verseFeatureCount.get(segment);
-      const formatCount: string = `${featureName}-count`;
 
       if (featureName === 'question' && count != null) {
+        const formatCount: string = `${featureName}-count`;
         formats[formatCount] = value ? count : false;
       }
       this.editor.formatText(range.index, range.length, formats, 'api');
