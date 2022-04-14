@@ -216,8 +216,32 @@ namespace SIL.XForge.Scripture.Services
             Assert.ThrowsAsync<ForbiddenException>(() => env.Service.SyncAsync("userid", Project02, false));
         }
 
+        [Test]
+        public void SyncAsync_WarnIfAnomalousQueuedCount()
+        {
+            var env = new TestEnvironment();
+
+            env.Service.WarnIfAnomalousQueuedCount(0, "");
+            env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.Message.Contains("QueuedCount"),
+                "No warning should have been logged for reasonable queued count 0.");
+
+            env.Service.WarnIfAnomalousQueuedCount(1, "");
+            env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.Message.Contains("QueuedCount"),
+                "No warning should have been logged for reasonable queued count 1.");
+
+            env.Service.WarnIfAnomalousQueuedCount(-1, "");
+            env.MockLogger.AssertHasEvent((LogEvent logEvent) => logEvent.Message.Contains("QueuedCount"),
+                "Warn for unexpected queued count -1.");
+
+            env.Service.WarnIfAnomalousQueuedCount(2, "");
+            env.MockLogger.AssertHasEvent((LogEvent logEvent) => logEvent.Message.Contains("QueuedCount"),
+                "Warn for less expected queued count 2.");
+        }
+
         private class TestEnvironment
         {
+            public MockLogger<SyncService> MockLogger { get; }
+
             public TestEnvironment()
             {
                 BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
@@ -282,7 +306,9 @@ namespace SIL.XForge.Scripture.Services
                         }
                 }));
 
-                Service = new SyncService(BackgroundJobClient, ProjectSecrets, RealtimeService);
+                MockLogger = new MockLogger<SyncService>();
+
+                Service = new SyncService(BackgroundJobClient, ProjectSecrets, RealtimeService, MockLogger);
             }
 
             public SyncService Service { get; }
