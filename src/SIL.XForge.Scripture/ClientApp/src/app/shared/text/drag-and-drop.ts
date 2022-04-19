@@ -145,10 +145,10 @@ export class DragAndDrop {
     }
 
     let element: Element = targetElement;
-    while (element.localName != 'usx-segment' && element.parentElement != null) {
+    while (element.localName !== 'usx-segment' && element.parentElement != null) {
       element = element.parentElement;
     }
-    if (element == null || element.localName != 'usx-segment') {
+    if (element == null || element.localName !== 'usx-segment') {
       console.warn('Warning: DragEvent never found a needed usx-segment ancestor for drop target:', targetElement);
       return [null, droppingIntoBlankSegment];
     }

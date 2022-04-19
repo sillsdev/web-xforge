@@ -684,7 +684,7 @@ class TestEnvironment {
 
   private simulateTransceleratorQuestionsAlreadyExisting(ids: number[]): void {
     ids.forEach(id => {
-      const doc: TransceleratorQuestion = this.questions.find(question => question.id == id + '')!;
+      const doc: TransceleratorQuestion = this.questions.find(question => question.id === id + '')!;
       const verse = doc.endVerse && !doc.endChapter ? doc.startVerse + '-' + doc.endVerse : doc.startVerse;
       this.existingQuestions.push({
         data: {
