@@ -10,7 +10,7 @@ import {
   ViewChild
 } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
-import { clone } from 'lodash-es';
+import { clone, cloneDeep } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import merge from 'lodash-es/merge';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources } from 'quill';
@@ -971,10 +971,14 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
     // Delta for the removal of notes that were re-created
     let notesDeletionDelta: DeltaStatic | undefined;
-    for (const op of delta.ops) {
+    const productiveOps = this.trimUnproductiveOps(delta);
+    if (productiveOps.ops == null) {
+      return;
+    }
+    for (const op of productiveOps.ops) {
       if (op.insert != null && op.insert['note-thread-embed'] != null) {
         const embedId: string = op.insert['note-thread-embed']['threadid'];
-        let deletePosition = this.embeddedElements.get(embedId);
+        const deletePosition = this.embeddedElements.get(embedId);
         if (deletePosition != null) {
           const noteDeleteOps: DeltaOperation[] = [{ retain: deletePosition }, { delete: 1 }];
           const noteDeleteOpDelta = new Delta(noteDeleteOps);
@@ -991,6 +995,44 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         this.editor?.updateContents(deleteDelta, 'api');
       });
     }
+  }
+
+  /**
+   * Trims out the unproductive ops from a delta emitted by Quill's onContentChanged event.
+   * This is used to determine which ops accurately represents the change applied to the editor,
+   * more specifically, trim out object inserts like note thread embeds that did not truly get inserted.
+   */
+  private trimUnproductiveOps(delta: DeltaStatic): DeltaStatic {
+    // The quill way of determining changes applied to its content doesn't work perfectly on non-text objects
+    // and the result in the delta is a series of object inserts followed by a delete op that removes
+    // the original object inserts. This trims out those ops from this delta so the delta is a true representation
+    // of the changes applied to the text.
+    // For example, a delta may contain [ retain: 10, insert: blank, insert: verse, insert: note, delete: 2 ]
+    // where the delete: 2 op deletes the original verse and note inserts that get replaced in this delta
+    const productiveOps: DeltaStatic = cloneDeep(delta);
+    if (productiveOps.ops == null || productiveOps.ops.length < 2) {
+      return delta;
+    }
+    const opCount: number = productiveOps.ops.length;
+    // find the trailing delete op
+    const lastDeleteOp: number | undefined = productiveOps.ops[opCount - 1].delete;
+    let deleteCount: number = lastDeleteOp ?? 0;
+    if (deleteCount === 0) {
+      return delta;
+    }
+
+    for (let i = 0; i < deleteCount; i++) {
+      const curIndex: number = opCount - i - 2;
+      const insertObj = productiveOps.ops[curIndex].insert;
+      if (insertObj != null && typeof insertObj !== 'string') {
+        // the object insert may be a false op
+        continue;
+      }
+      // the op is productive, so keep the entire delta
+      return delta;
+    }
+    productiveOps.ops.splice(opCount - 1 - deleteCount);
+    return productiveOps;
   }
 
   private setHighlightMarkerPosition(): void {

@@ -1975,6 +1975,30 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('can backspace the last character in a segment', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      const range: RangeStatic = env.component.target!.getSegmentRange('verse_1_2')!;
+      env.targetEditor.setSelection(range.index);
+      env.wait();
+      env.typeCharacters('t');
+      let contents: DeltaStatic = env.targetEditor.getContents(range.index, 3);
+      expect(contents.length()).toEqual(3);
+      expect(contents.ops![0].insert).toEqual('t');
+      expect(contents.ops![1].insert['verse']).toBeDefined();
+      expect(contents.ops![2].insert['note-thread-embed']).toBeDefined();
+
+      env.backspace();
+      contents = env.targetEditor.getContents(range.index, 3);
+      expect(contents.length()).toEqual(3);
+      expect(contents.ops![0].insert.blank).toBeDefined();
+      expect(contents.ops![1].insert['verse']).toBeDefined();
+      expect(contents.ops![2].insert['note-thread-embed']).toBeDefined();
+      env.dispose();
+    }));
+
     it('undo delete-a-note-icon removes the duplicate recreated icon', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
