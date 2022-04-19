@@ -33,7 +33,7 @@ import {
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { UserService } from 'xforge-common/user.service';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
-import { version } from '../../../version.json';
+import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
 import { QuestionDoc } from './core/models/question-doc';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
@@ -58,7 +58,7 @@ export interface QuestionQuery {
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent extends DataLoadingComponent implements OnInit, OnDestroy {
-  version: string = version;
+  version: string = versionData.version;
   issueEmail: string = environment.issueEmail;
   isAppOnline: boolean = false;
   isExpanded: boolean = false;

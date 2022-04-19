@@ -5,7 +5,7 @@ import Bugsnag, { Breadcrumb, BrowserConfig } from '@bugsnag/js';
 import { BugsnagErrorHandler } from '@bugsnag/plugin-angular';
 import { translate } from '@ngneat/transloco';
 import { MACHINE_API_BASE_URL } from '../app/core/machine-http-client';
-import { version } from '../../../version.json';
+import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
 import { CONSOLE } from './browser-globals';
 import { ErrorReportingService } from './error-reporting.service';
@@ -33,7 +33,7 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
   static initBugsnag() {
     const config: BrowserConfig = {
       apiKey: environment.bugsnagApiKey,
-      appVersion: version,
+      appVersion: versionData.version,
       appType: 'angular',
       enabledReleaseStages: ['live', 'qa'],
       releaseStage: environment.releaseStage,
