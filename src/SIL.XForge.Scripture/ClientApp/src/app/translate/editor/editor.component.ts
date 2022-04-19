@@ -718,7 +718,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         }
       }
 
-      if (notesRead.length == 0) {
+      if (notesRead.length === 0) {
         return;
       }
       this.projectUserConfigDoc.submitJson0Op(op => {
