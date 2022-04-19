@@ -478,9 +478,9 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       const formatSegment: string = `${featureName}-segment`;
       const formats: any = { [formatSegment]: value };
       const count = verseFeatureCount.get(segment);
-      const formatCount: string = `${featureName}-count`;
 
-      if (count != null) {
+      if (featureName === 'question' && count != null) {
+        const formatCount: string = `${featureName}-count`;
         formats[formatCount] = value ? count : false;
       }
       this.editor.formatText(range.index, range.length, formats, 'api');
@@ -515,6 +515,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     let embedSegmentRef: string = verseSegments[0];
+    const nextSegmentMarkerLength = 1;
+    const blankSegmentLength = 1;
     for (const vs of verseSegments) {
       const editorPosOfSomeSegment: RangeStatic | undefined = this.getSegmentRange(vs);
       if (editorPosOfSomeSegment == null) {
@@ -522,7 +524,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       }
       const skipBlankSegment: boolean = this.isSegmentBlank(vs) && textAnchor.length > 0;
       if (skipBlankSegment) {
-        startTextPosInVerse--;
+        startTextPosInVerse -= blankSegmentLength + nextSegmentMarkerLength;
         continue;
       }
 
@@ -530,13 +532,13 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         editorPosOfSomeSegment.length -
         this.getEmbedCountInRange(editorPosOfSomeSegment.index, editorPosOfSomeSegment.length);
       // Does the textAnchor begin in this segment?
-      if (segmentTextLength > startTextPosInVerse) {
+      if (segmentTextLength >= startTextPosInVerse) {
         editorPosOfSegmentToModify = editorPosOfSomeSegment;
         embedSegmentRef = vs;
         break;
       } else {
         // The embed starts in a later segment. Subtract the text-only length of this segment from the start index.
-        startTextPosInVerse -= segmentTextLength;
+        startTextPosInVerse -= segmentTextLength + nextSegmentMarkerLength;
         continue;
       }
     }
@@ -551,11 +553,13 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     );
     const embedInsertPos: number =
       editorRange.startEditorPosition + editorRange.editorLength + editorRange.trailingEmbedCount;
+    const insertFormat = this.editor.getFormat(embedInsertPos);
 
     this.editor.insertEmbed(embedInsertPos, formatName, format, 'api');
     const textAnchorRange = this.viewModel.getEditorContentRange(embedInsertPos, textAnchor.length);
     const formatLength: number = textAnchorRange.editorLength;
-    this.editor.formatText(embedInsertPos, formatLength, 'text-anchor', 'true', 'api');
+    insertFormat['text-anchor'] = 'true';
+    this.editor.formatText(embedInsertPos, formatLength, insertFormat, 'api');
     this.updateSegment();
     return embedSegmentRef;
   }

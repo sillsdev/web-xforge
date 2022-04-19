@@ -672,10 +672,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const noteThreadVerseRefs: VerseRef[] = featureVerseRefInfo.map(f => f.verseRef);
 
     if (value) {
-      const segments: string[] = this.target.toggleFeaturedVerseRefs(value, noteThreadVerseRefs, 'note-thread');
       for (const featured of featureVerseRefInfo) {
         this.embedNoteThread(featured);
       }
+      // add the formatting to mark featured verses after notes are embedded
+      const segments: string[] = this.target.toggleFeaturedVerseRefs(value, noteThreadVerseRefs, 'note-thread');
       this.subscribeClickEvents(segments);
     } else {
       this.removeEmbeddedElements();
