@@ -106,10 +106,6 @@ function createUser(id: string, role: string, nameConfirmed: boolean = true): Us
   };
 }
 
-function flushPromises(): Promise<void> {
-  return new Promise(resolve => setImmediate(resolve));
-}
-
 const ADMIN_USER: UserInfo = createUser('01', SFProjectRole.ParatextAdministrator);
 const CHECKER_USER: UserInfo = createUser('02', SFProjectRole.CommunityChecker);
 const CLEAN_CHECKER_USER: UserInfo = createUser('03', SFProjectRole.CommunityChecker, false);
@@ -397,7 +393,7 @@ describe('CheckingComponent', () => {
       expect().nothing();
     }));
 
-    it('should move highlight and question icon when question is edited to move verses', fakeAsync(async () => {
+    it('should move highlight and question icon when question is edited to move verses', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER);
       env.selectQuestion(1);
       env.waitForSliderUpdate();
@@ -414,7 +410,7 @@ describe('CheckingComponent', () => {
 
       env.clickButton(env.editQuestionButton);
       env.realtimeService.updateAllSubscribeQueries();
-      await flushPromises();
+      tick();
 
       expect(env.segmentHasQuestion(1, 1)).toBe(true);
       expect(env.isSegmentHighlighted(1, 1)).toBe(false);
