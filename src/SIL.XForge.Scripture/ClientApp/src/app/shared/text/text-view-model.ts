@@ -755,8 +755,20 @@ export class TextViewModel {
     return embeddedElementsCount;
   }
 
-  private getAttributesAtPosition(editorPosition: number) {
+  private getAttributesAtPosition(editorPosition: number): StringMap {
     const editor: Quill = this.checkEditor();
-    return editor.getFormat(editorPosition);
+    // The format of the insertion point may only contain the block level formatting,
+    // the format classes and other information we get from the character following the insertion point
+    const insertionFormat: StringMap = editor.getFormat(editorPosition);
+    const characterFormat: StringMap = editor.getFormat(editorPosition, 1);
+    if (characterFormat['segment'] != null) {
+      for (const key of Object.keys(characterFormat)) {
+        // we ignore text anchor formatting because we cannot depend on the character format to tell us if it is needed
+        if (key !== 'text-anchor') {
+          insertionFormat[key] = characterFormat[key];
+        }
+      }
+    }
+    return insertionFormat;
   }
 }
