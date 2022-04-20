@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Params } from '@angular/router';
@@ -44,7 +44,7 @@ import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/vers
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
-import { BehaviorSubject, defer, of, Subject } from 'rxjs';
+import { BehaviorSubject, defer, Observable, of, Subject } from 'rxjs';
 import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { CONSOLE } from 'xforge-common/browser-globals';
@@ -2171,6 +2171,29 @@ describe('EditorComponent', () => {
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).times(4);
       env.dispose();
     }));
+
+    it('selection position on editor is kept when note dialog is opened and editor loses focus', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+      const segmentRef = 'verse_1_3';
+      const segmentRange = env.component.target!.getSegmentRange(segmentRef)!;
+      env.targetEditor.setSelection(segmentRange.index);
+      expect(document.activeElement?.classList).toContain('ql-editor');
+      const iconElement: HTMLElement = env.getNoteThreadIconElement(segmentRef, 'thread02')!;
+      iconElement.click();
+      const element = env.targetTextEditor.nativeElement.querySelector(
+        'usx-segment[data-segment="' + segmentRef + '"]'
+      );
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
+      env.wait();
+      expect(document.activeElement?.tagName).toBe('INPUT');
+      expect(element.classList).withContext('dialog opened').toContain('highlight-segment');
+      mockedMatDialog.closeAll();
+      env.wait();
+      expect(element.classList).withContext('dialog closed').toContain('highlight-segment');
+      env.dispose();
+    }));
   });
 
   describe('Translation Suggestions disabled', () => {
@@ -2551,8 +2574,15 @@ class TestEnvironment {
     );
     when(mockedPwaService.isOnline).thenReturn(true);
     when(mockedPwaService.onlineStatus).thenReturn(of(true));
-    const mockedNoteDialogRef = mock<MatDialogRef<NoteDialogComponent>>(MatDialogRef);
-    when(mockedMatDialog.open(NoteDialogComponent, anything())).thenReturn(instance(mockedNoteDialogRef));
+
+    const openNoteDialogs: MockNoteDialogRef[] = [];
+    when(mockedMatDialog.openDialogs).thenCall(() => openNoteDialogs);
+    when(mockedMatDialog.open(NoteDialogComponent, anything())).thenCall(() => {
+      const noteDialog = new MockNoteDialogRef(this.fixture.nativeElement);
+      openNoteDialogs.push(noteDialog);
+      return noteDialog;
+    });
+    when(mockedMatDialog.closeAll()).thenCall(() => openNoteDialogs.forEach(dialog => dialog.close()));
 
     this.fixture = TestBed.createComponent(EditorComponent);
     this.component = this.fixture.componentInstance;
@@ -3125,5 +3155,23 @@ class TestEnvironment {
       }
     }
     return new WordGraph(arcs, [segment.length]);
+  }
+}
+
+class MockNoteDialogRef {
+  close$ = new Subject<void>();
+
+  constructor(element: Element) {
+    // steal the focus to simulate a dialog stealing the focus
+    element.appendChild(document.createElement('input')).focus();
+  }
+
+  close() {
+    this.close$.next();
+    this.close$.complete();
+  }
+
+  afterClosed(): Observable<void> {
+    return this.close$;
   }
 }
