@@ -2179,7 +2179,7 @@ describe('EditorComponent', () => {
       const segmentRef = 'verse_1_3';
       const segmentRange = env.component.target!.getSegmentRange(segmentRef)!;
       env.targetEditor.setSelection(segmentRange.index);
-      expect(document.activeElement?.classList).toContain('ql-editor');
+      expect(env.activeElementClasses).toContain('ql-editor');
       const iconElement: HTMLElement = env.getNoteThreadIconElement(segmentRef, 'thread02')!;
       iconElement.click();
       const element = env.targetTextEditor.nativeElement.querySelector(
@@ -2187,10 +2187,9 @@ describe('EditorComponent', () => {
       );
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
       env.wait();
-      expect(document.activeElement?.tagName).toBe('INPUT');
+      expect(env.activeElementTagName).toBe('INPUT');
       expect(element.classList).withContext('dialog opened').toContain('highlight-segment');
       mockedMatDialog.closeAll();
-      env.wait();
       expect(element.classList).withContext('dialog closed').toContain('highlight-segment');
       env.dispose();
     }));
@@ -2586,6 +2585,13 @@ class TestEnvironment {
 
     this.fixture = TestBed.createComponent(EditorComponent);
     this.component = this.fixture.componentInstance;
+  }
+
+  get activeElementClasses(): DOMTokenList | undefined {
+    return document.activeElement?.classList;
+  }
+  get activeElementTagName(): string | undefined {
+    return document.activeElement?.tagName;
   }
 
   get bookName(): string {
