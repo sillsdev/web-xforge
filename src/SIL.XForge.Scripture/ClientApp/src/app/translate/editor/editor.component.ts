@@ -153,9 +153,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this._targetFocused;
   }
 
-  set targetFocused(event: boolean) {
-    event = this.dialog.openDialogs.length > 0 ? true : event;
-    this._targetFocused = event;
+  set targetFocused(focused: boolean) {
+    focused = this.dialog.openDialogs.length > 0 ? true : focused;
+    this._targetFocused = focused;
   }
 
   get targetLabel(): string {
@@ -704,7 +704,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     dialogRef.afterClosed().subscribe(() => {
       // Ensure cursor selection remains at the position of the note in case the focus was lost when the dialog was open
       const selectIndex = this.target!.segment!.range.index;
-      this.target!.editor!.setSelection(selectIndex, 0, 'user');
+      this.target!.editor!.setSelection(selectIndex, 0, 'silent');
     });
   }
 
