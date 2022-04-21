@@ -82,7 +82,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   trainingMessage: string = '';
   showTrainingProgress: boolean = false;
   textHeight: string = '';
-  targetFocused = false;
 
   @ViewChild('targetContainer') targetContainer?: ElementRef;
   @ViewChild('source') source?: TextComponent;
@@ -106,6 +105,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private sourceProjectDoc?: SFProjectProfileDoc;
   private sourceLoaded: boolean = false;
   private targetLoaded: boolean = false;
+  private _targetFocused: boolean = false;
   private _chapter?: number;
   private lastShownSuggestions: Suggestion[] = [];
   private readonly segmentUpdated$: Subject<void>;
@@ -147,6 +147,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.projectDoc.data.translateConfig.source == null
       ? ''
       : this.projectDoc.data.translateConfig.source.shortName;
+  }
+
+  get targetFocused(): boolean {
+    return this._targetFocused;
+  }
+
+  set targetFocused(focused: boolean) {
+    focused = this.dialog.openDialogs.length > 0 ? true : focused;
+    this._targetFocused = focused;
   }
 
   get targetLabel(): string {
@@ -684,13 +693,18 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private showNoteThread(threadId: string): void {
-    this.dialog.open(NoteDialogComponent, {
+    const dialogRef = this.dialog.open(NoteDialogComponent, {
       autoFocus: false,
       width: '600px',
       data: {
         projectId: this.projectDoc!.id,
         threadId: threadId
       } as NoteDialogData
+    });
+    dialogRef.afterClosed().subscribe(() => {
+      // Ensure cursor selection remains at the position of the note in case the focus was lost when the dialog was open
+      const selectIndex = this.target!.segment!.range.index;
+      this.target!.editor!.setSelection(selectIndex, 0, 'silent');
     });
   }
 
