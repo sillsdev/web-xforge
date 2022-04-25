@@ -16,11 +16,13 @@ mat-dialog-content.content-padding {
 }
 
 mat-slider.mat-slider-horizontal ::ng-deep {
-  display: flex;
-  flex-direction: column;
-  padding: 0;
+  width: 100%;
   > .mat-slider-wrapper {
     left: 0;
     right: 0;
   }
+}
+
+mdc-list-item {
+  height: 2.5em;
 }
