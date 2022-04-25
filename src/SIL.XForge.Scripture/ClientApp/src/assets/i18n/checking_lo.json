@@ -216,6 +216,7 @@
     "answers": "ຄຳຕອບ",
     "comments": "ຄຳເຫັນ",
     "likes": "Likes",
+    "loading_questions": "Loading questions...",
     "questions": "ຄຳຖາມ",
     "texts_with_questions": "Texts with Questions"
   },

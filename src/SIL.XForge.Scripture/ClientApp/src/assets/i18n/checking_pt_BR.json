@@ -216,6 +216,7 @@
     "answers": "Respostas",
     "comments": "Comentários",
     "likes": "Curtidas",
+    "loading_questions": "Loading questions...",
     "questions": "Perguntas",
     "texts_with_questions": "Textos com Perguntas"
   },

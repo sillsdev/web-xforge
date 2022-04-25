@@ -216,6 +216,7 @@
     "answers": "Ответы",
     "comments": "Комментарии",
     "likes": "Отметки «Нравиться»",
+    "loading_questions": "Loading questions...",
     "questions": "Вопросы",
     "texts_with_questions": "Тексты с вопросами"
   },

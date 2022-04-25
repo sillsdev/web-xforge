@@ -216,6 +216,7 @@
     "answers": "回答",
     "comments": "注解",
     "likes": "赞",
+    "loading_questions": "Loading questions...",
     "questions": "问题",
     "texts_with_questions": "具有问题的文件"
   },

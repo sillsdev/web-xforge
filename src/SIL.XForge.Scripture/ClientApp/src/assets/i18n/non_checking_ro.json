@@ -138,6 +138,9 @@
     "update_transcelerator": "Versiunea de Transcelerator utilizată în acest proiect nu este suportată. Vă rugăm să actualizați cel puțin la versiunea Transcelerator 1.5.3."
   },
   "note_dialog": {
+    "declare_conflict": "There is a conflict. Colors correspond to older (red) and newer (green) text.",
+    "acceptance_change_heading": "Changes Paratext Accepted (current text):",
+    "rejection_change_heading": "Changes Paratext Rejected:",
     "close": "Închide",
     "hide_changes": "Hide changes",
     "note_reattached": "Note reattached",
