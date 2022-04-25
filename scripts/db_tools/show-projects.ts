@@ -159,9 +159,7 @@ class ProjectInquirer {
     console.log(`Connecting to ${this.server}.`);
     const ws = new WebSocket(this.connectionConfig.wsConnectionString);
     const conn: Connection = new Connection(ws);
-    const client: MongoClient = await MongoClient.connect(this.connectionConfig.dbLocation, {
-      useUnifiedTopology: true
-    });
+    const client: MongoClient = await MongoClient.connect(this.connectionConfig.dbLocation);
     console.log(`Connected.`);
     try {
       const db: Db = client.db();
