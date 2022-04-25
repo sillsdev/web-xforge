@@ -373,6 +373,20 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
+        private void WarnIfNonuniqueValues(Dictionary<string, string> sfUserIdToPTUsernameMap, string context)
+        {
+            IEnumerable<KeyValuePair<string, string>> recordsWithNonuniqueValues =
+                sfUserIdToPTUsernameMap.Where((KeyValuePair<string, string> record) =>
+                    sfUserIdToPTUsernameMap.Values.Count(val => val == record.Value) > 1);
+            if (recordsWithNonuniqueValues.Count() > 0)
+            {
+                string display = string.Join(", ",
+                    recordsWithNonuniqueValues.Select(record => $"{record.Key}: {record.Value}"));
+                _logger.LogWarning(
+                    $"Warning: The PT Username mapping contains multiple records with duplicate values. The following records have values that occur more than once: {display}. {context}");
+            }
+        }
+
         /// <summary>
         /// Queries the ParatextRegistry for the project and builds a dictionary of SF user id
         /// to paratext user names for members of the project.
@@ -402,9 +416,13 @@ namespace SIL.XForge.Scripture.Services
                     .ToDictionary(m => (string)m["userId"], m => (string)m["username"]);
 
                 // Get the mapping of Scripture Forge user IDs to Paratext usernames
-                return await this._realtimeService.QuerySnapshots<User>()
+                Dictionary<string, string> userMapping = await this._realtimeService.QuerySnapshots<User>()
                     .Where(u => paratextMapping.Keys.Contains(u.ParatextId))
                     .ToDictionaryAsync(u => u.Id, u => paratextMapping[u.ParatextId]);
+
+                WarnIfNonuniqueValues(userMapping,
+                    $"This occurred while SF user id '{userSecret.Id}' was querying registered PT project id '{project.ParatextId}' (SF project id '{project.Id}').");
+                return userMapping;
             }
             else
             {
@@ -443,6 +461,8 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
 
+                WarnIfNonuniqueValues(userMapping,
+                    $"This occurred while SF user id '{userSecret.Id}' was querying unregistered PT project id '{project.ParatextId}' (SF project id '{project.Id}').");
                 return userMapping;
             }
         }
