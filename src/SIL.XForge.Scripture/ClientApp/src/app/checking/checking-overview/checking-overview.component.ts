@@ -62,6 +62,28 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     super(noticeService);
   }
 
+  get showQuestionsLoadingMessage(): boolean {
+    return this.questionsQuery?.ready !== true && this.allQuestionsCount === 0;
+  }
+
+  get showArchivedQuestionsLoadingMessage(): boolean {
+    return (
+      this.questionsQuery?.ready !== true &&
+      (this.questionsQuery?.docs || []).filter(qd => qd.data?.isArchived).length === 0
+    );
+  }
+
+  get showNoQuestionsMessage(): boolean {
+    return this.questionsQuery?.ready === true && this.allQuestionsCount === 0;
+  }
+
+  get showNoArchivedQuestionsMessage(): boolean {
+    return (
+      this.questionsQuery?.ready === true &&
+      this.questionsQuery?.docs.filter(qd => qd.data != null && qd.data.isArchived).length === 0
+    );
+  }
+
   get allQuestionsCount(): number {
     return this.allPublishedQuestions.length;
   }
@@ -139,13 +161,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     const project = this.projectDoc?.data;
     const userId = this.userService.currentUserId;
     return project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.Questions, Operation.Edit);
-  }
-
-  get allArchivedQuestionsCount(): number {
-    if (this.questionsQuery == null) {
-      return 0;
-    }
-    return this.questionsQuery.docs.filter(qd => qd.data != null && qd.data.isArchived).length;
   }
 
   private get allPublishedQuestions(): QuestionDoc[] {

@@ -90,11 +90,13 @@ describe('CheckingOverviewComponent', () => {
 
   describe('Add Question', () => {
     it('should display "No question" message', fakeAsync(() => {
-      const env = new TestEnvironment();
+      const env = new TestEnvironment(false);
       env.fixture.detectChanges();
-      expect(env.noQuestionsLabel).not.toBeNull();
-      env.waitForQuestions();
+      expect(env.loadingQuestionsLabel).not.toBeNull();
       expect(env.noQuestionsLabel).toBeNull();
+      env.waitForQuestions();
+      expect(env.loadingQuestionsLabel).toBeNull();
+      expect(env.noQuestionsLabel).not.toBeNull();
     }));
 
     it('should not display "Add question" button for community checker', fakeAsync(() => {
@@ -296,12 +298,14 @@ describe('CheckingOverviewComponent', () => {
 
   describe('for Reviewer', () => {
     it('should display "No question" message', fakeAsync(() => {
-      const env = new TestEnvironment();
+      const env = new TestEnvironment(false);
       env.setCurrentUser(env.checkerUser);
       env.fixture.detectChanges();
-      expect(env.noQuestionsLabel).not.toBeNull();
-      env.waitForQuestions();
+      expect(env.loadingQuestionsLabel).not.toBeNull();
       expect(env.noQuestionsLabel).toBeNull();
+      env.waitForQuestions();
+      expect(env.loadingQuestionsLabel).toBeNull();
+      expect(env.noQuestionsLabel).not.toBeNull();
     }));
 
     it('should not display progress for project admin', fakeAsync(() => {
@@ -385,12 +389,16 @@ describe('CheckingOverviewComponent', () => {
     it('should display "No archived question" message', fakeAsync(() => {
       const env = new TestEnvironment();
       const id = new TextDocId('project01', 40, 1);
+      env.fixture.detectChanges();
+      expect(env.loadingArchivedQuestionsLabel).not.toBeNull();
       env.waitForQuestions();
+      expect(env.loadingArchivedQuestionsLabel).toBeNull();
       expect(env.noArchivedQuestionsLabel).toBeNull();
 
       env.simulateRowClick(0, undefined, true);
       env.simulateRowClick(1, id, true);
       env.clickElement(env.questionPublishButtons[0]);
+      expect(env.loadingArchivedQuestionsLabel).toBeNull();
       expect(env.noArchivedQuestionsLabel).not.toBeNull();
     }));
 
@@ -815,6 +823,10 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#import-btn'));
   }
 
+  get loadingQuestionsLabel(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#loading-questions-message'));
+  }
+
   get noQuestionsLabel(): DebugElement {
     return this.fixture.debugElement.query(By.css('#no-questions-label'));
   }
@@ -841,6 +853,10 @@ class TestEnvironment {
 
   get questionPublishButtons(): DebugElement[] {
     return this.archivedQuestions.queryAll(By.css('mdc-list-item .publish-btn'));
+  }
+
+  get loadingArchivedQuestionsLabel(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#loading-archived-questions-message'));
   }
 
   get noArchivedQuestionsLabel(): DebugElement {

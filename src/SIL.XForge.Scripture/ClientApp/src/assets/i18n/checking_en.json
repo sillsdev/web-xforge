@@ -216,6 +216,7 @@
     "answers": "Answers",
     "comments": "Comments",
     "likes": "Likes",
+    "loading_questions": "Loading questions...",
     "questions": "Questions",
     "texts_with_questions": "Texts with Questions"
   },
