@@ -107,9 +107,7 @@ class ProblemCidFinder {
     }
     const ws = new WebSocket(this.connectionConfig.wsConnectionString);
     const conn: Connection = new Connection(ws);
-    const client: MongoClient = await MongoClient.connect(this.connectionConfig.dbLocation, {
-      useUnifiedTopology: true
-    });
+    const client: MongoClient = await MongoClient.connect(this.connectionConfig.dbLocation);
     try {
       const db: Db = client.db();
       const projectCollection: Collection<any> = db.collection('sf_projects');
