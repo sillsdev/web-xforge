@@ -138,6 +138,9 @@
     "update_transcelerator": "Bu layihədə istifadə olunan Transcelerator versiyası dəstəklənmir. Xahiş edirəm ən azı Transcelerator 1.5.3 versiyasına yeniləyin."
   },
   "note_dialog": {
+    "declare_conflict": "There is a conflict. Colors correspond to older (red) and newer (green) text.",
+    "acceptance_change_heading": "Changes Paratext Accepted (current text):",
+    "rejection_change_heading": "Changes Paratext Rejected:",
     "close": "Bağla",
     "hide_changes": "Hide changes",
     "note_reattached": "Note reattached",
