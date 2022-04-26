@@ -1,4 +1,4 @@
-const WebSocket = utils.requireFromRealTimeServer('ws');
+const WebSocket = requireFromRealTimeServer('ws');
 
 /**
  * @param {string} packageName The name of the package to import
