@@ -1849,6 +1849,30 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(mapping.Count, Is.EqualTo(0));
         }
 
+        [Test]
+        public async Task GetParatextUsernameMappingAsync_WarnsWhenDuplicatePTUsernamesInUnregisteredProject()
+        {
+            var env = new TestEnvironment();
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+            // Note that the following user secret has same PT username and id as the other user. This presumably
+            // represents a bad DB state.
+            var dos = env.MakeUserSecret(env.User02, env.Username01, env.ParatextUserId01);
+            env.MockJwtTokenHelper.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == env.User02)).Returns(env.Username01);
+
+            env.AddProjectRepository();
+            env.SetSharedRepositorySource(userSecret, UserRoles.Administrator);
+            var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
+            var project = projects.First();
+            // SUT
+            var mapping = await env.Service.GetParatextUsernameMappingAsync(userSecret, project, CancellationToken.None);
+            string[] requiredLogWords = { "unregistered", env.Username01, "duplicate" };
+            // Warn about the situation.
+            env.MockLogger.AssertHasEvent((LogEvent ev) =>
+                requiredLogWords.All((string requiredWord) => ev.Message.Contains(requiredWord)));
+            // And still return the data.
+            Assert.That(mapping.Count, Is.EqualTo(2));
+        }
+
         enum SelectionType
         {
             Standard,
