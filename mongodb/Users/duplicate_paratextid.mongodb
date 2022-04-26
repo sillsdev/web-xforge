@@ -1,0 +1,31 @@
+use('xforge');
+
+const duplicates = db.users
+  .aggregate([
+    {
+      $match: {
+        paratextId: { $exists: true }
+      }
+    },
+    {
+      $group: {
+        _id: '$paratextId',
+        userIds: { $addToSet: '$_id' },
+        count: { $sum: 1 }
+      }
+    },
+    {
+      $match: {
+        count: { $gte: 2 }
+      }
+    }
+  ])
+  .toArray();
+
+for (const duplicate of duplicates) {
+  console.log(`Paratext user id ${duplicate._id} is associated with ${duplicate.count} users:`);
+  const users = db.users.find({ _id: { $in: duplicate.userIds } }, { email: 1, name: 1, sites: 1 }).toArray();
+  for (const user of users) {
+    console.log(`  ${user._id} ${user.email} ${user.name}`);
+  }
+}
