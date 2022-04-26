@@ -186,10 +186,11 @@ namespace SIL.XForge.Scripture.Services
                     if (isDataInSync)
                     {
                         await UpdateParatextNotesAsync(text, questionDocs);
-                        IEnumerable<IDocument<NoteThread>> noteThreadDocs =
-                            (await FetchNoteThreadDocsAsync(text.BookNum)).Values;
-                        await _paratextService.UpdateParatextCommentsAsync(_userSecret, targetParatextId, text.BookNum,
-                            noteThreadDocs, _currentPtSyncUsers);
+                        // TODO: Sync Note changes back to Paratext
+                        // IEnumerable<IDocument<NoteThread>> noteThreadDocs =
+                        //     (await FetchNoteThreadDocsAsync(text.BookNum)).Values;
+                        // await _paratextService.UpdateParatextCommentsAsync(_userSecret, targetParatextId, text.BookNum,
+                        //     noteThreadDocs, _currentPtSyncUsers);
                     }
                 }
 
