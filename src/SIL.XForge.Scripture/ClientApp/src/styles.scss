@@ -1,13 +1,10 @@
 @use 'variables';
 
-@use '@material/theme' with (
-  $primary: variables.$mdc-theme-primary,
-  $secondary: variables.$mdc-theme-secondary
-);
+@use '@material/theme' with ($primary: variables.$mdc-theme-primary, $secondary: variables.$mdc-theme-secondary);
 
-@use "@material/theme/variables" as theme-variables;
+@use '@material/theme/variables' as theme-variables;
 
-@use "@material/theme/mdc-theme";
+@use '@material/theme/mdc-theme';
 @use '@material/dialog/mdc-dialog';
 @use '@material/list/mdc-list';
 @use '@material/menu/mdc-menu';
@@ -17,10 +14,7 @@
 @use '@material/select/mdc-select';
 @use '@material/top-app-bar/mdc-top-app-bar';
 @use '@material/textfield/mdc-text-field';
-@use '@material/card/mdc-card';
-@use '@material/checkbox/mdc-checkbox';
 @use '@material/typography/mdc-typography';
-@use '@material/slider/mdc-slider';
 @use '@material/snackbar/mdc-snackbar';
 @use '@material/tab-bar/mdc-tab-bar';
 @use '@material/tab-scroller/mdc-tab-scroller';
@@ -28,9 +22,7 @@
 @use '@material/tab/mdc-tab';
 @use '@material/drawer/mdc-drawer';
 @use '@material/form-field/mdc-form-field';
-@use '@material/radio/mdc-radio';
 @use '@material/switch/mdc-switch';
-@use '@material/linear-progress/mdc-linear-progress';
 @use '@material/data-table/mdc-data-table';
 @use '@material/ripple/mdc-ripple';
 
@@ -117,6 +109,10 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
   width: unset;
 }
 
+.mdc-button {
+  text-transform: initial; // no uppercase labels as we move to @angular/material
+}
+
 .mdc-button--unelevated,
 .mat-flat-button {
   transition: background-color 0.15s, color 0.15s;
@@ -125,19 +121,12 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
     color: variables.$sf_grey;
   }
 }
-.mat-button {
-  text-transform: uppercase;
-}
 mdc-icon.ngx-mdc-icon--clickable,
 button.mdc-icon-button {
   transition: color 0.15s;
   &:hover {
     color: variables.$greenLight !important;
   }
-}
-
-.mat-tooltip {
-  font-size: 1em;
 }
 
 .mdc-list-item--disabled {
@@ -150,4 +139,13 @@ button.mdc-icon-button {
 
 .locale-fonts mat-option {
   font-family: $languageFonts;
+}
+
+.mat-tooltip {
+  font-size: 1em;
+}
+
+.mat-progress-bar--closed {
+  opacity: 0;
+  animation: none;
 }

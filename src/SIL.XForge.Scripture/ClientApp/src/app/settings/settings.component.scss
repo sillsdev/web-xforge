@@ -1,5 +1,3 @@
-@use '@material/button/mixins' as button;
-
 @import 'src/variables';
 @import 'bootstrap/scss/mixins/breakpoints';
 
@@ -9,21 +7,33 @@
   max-width: 800px;
 }
 
+.card {
+  box-shadow: initial;
+  padding: 0;
+}
+
 .card-content {
+  box-shadow: initial;
   padding: 16px;
 }
 
 .tool-setting {
   display: flex;
   flex-direction: column;
+  &.mat-radio-group.indent {
+    margin-left: 16px;
+  }
   &.indent {
     margin-top: 16px;
-    margin-left: 34px;
+    margin-left: 24px;
   }
 
   &.select-indent {
     margin-top: 16px;
-    margin-left: 44px;
+    margin-left: 24px;
+    > .tool-setting-field {
+      padding-bottom: 0 !important;
+    }
   }
 
   > .checkbox-field {
@@ -31,6 +41,9 @@
   }
 
   > .tool-setting-field {
+    &:not(:last-child) {
+      padding-bottom: 16px;
+    }
     @include media-breakpoint-up(sm) {
       display: flex;
     }
@@ -45,9 +58,8 @@
 
   > .helper-text {
     font-size: 14px;
-    color: var(--mdc-theme-text-hint-on-background);
     &.checkbox-helper-text {
-      margin: 0 0 0 44px;
+      margin: 0 0 0 24px;
     }
   }
   .select-helper-text,
@@ -73,11 +85,11 @@
 
 .paratext-login-container {
   margin-top: 16px;
-  margin-left: 44px;
+  margin-left: 24px;
 
   .paratext-logo {
-    width: 32px;
-    height: 32px;
+    width: 24px;
+    height: 24px;
     margin-right: 8px;
   }
 
@@ -86,39 +98,40 @@
   }
 }
 
-.checkbox-placeholder {
-  visibility: hidden;
-}
+::ng-deep .checkbox-placeholder {
+  .mat-checkbox-inner-container {
+    visibility: hidden;
+  }
 
-.invalid-feedback {
-  color: var(--mdc-theme-error);
+  .mat-checkbox-label {
+    color: initial;
+  }
 }
 
 #delete-project {
   border: 2px solid red;
   .source-project-msg {
-    color: var(--mdc-theme-error);
+    color: red;
   }
 }
 
 // Use enabled class to work around changing styles while loading
-#delete-btn.enabled {
-  @include button.container-fill-color(red);
-}
 #delete-btn:not(.enabled) {
   background-color: rgba(0, 0, 0, 0.12);
   color: rgba(0, 0, 0, 0.38);
+}
+#delete-btn:not(:disabled):hover {
+  background-color: red;
 }
 
 #based-on-select {
   width: 100%;
   max-width: 200px;
-  ::ng-deep .mdc-select__selected-text {
-    min-width: 150px;
-  }
 }
 
-mdc-list-item {
-  height: unset;
-  min-height: 48px;
+mat-radio-group.tool-setting {
+  display: initial;
+  mat-radio-button {
+    margin: 0.5em;
+  }
 }

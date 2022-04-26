@@ -5,13 +5,10 @@
   fxLayoutGap.xs="16px"
   class="projects-controls"
 >
-  <mdc-form-field fxFlex fxFlexAlign="start">
-    <mdc-text-field
-      label="Filter projects..."
-      (keyup)="updateSearchTerm($event.target)"
-      id="project-filter"
-    ></mdc-text-field>
-  </mdc-form-field>
+  <mat-form-field appearance="fill">
+    <mat-label>Filter projects...</mat-label>
+    <input matInput (keyup)="updateSearchTerm($event.target)" id="project-filter" />
+  </mat-form-field>
 </div>
 <div *ngIf="!isLoading">
   <div *ngIf="length > 0">
@@ -45,13 +42,9 @@
       </ng-container>
       <ng-container matColumnDef="syncDisabled">
         <td mat-cell *matCellDef="let row">
-          <div fxLayoutAlign="start center">
-            <mdc-checkbox
-              [checked]="row.syncDisabled"
-              (change)="onUpdateSyncDisabled(row, $event.checked)"
-            ></mdc-checkbox>
-            <label>Sync Disabled</label>
-          </div>
+          <mat-checkbox [checked]="row.syncDisabled" (change)="onUpdateSyncDisabled(row, $event.checked)">
+            Sync Disabled
+          </mat-checkbox>
         </td>
       </ng-container>
 

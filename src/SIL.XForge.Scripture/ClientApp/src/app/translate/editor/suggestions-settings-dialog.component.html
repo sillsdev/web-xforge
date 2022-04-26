@@ -26,13 +26,14 @@
         <span mdcCaption>{{ t("more") }}</span> <span mdcCaption>{{ confidenceThreshold }}%</span>
         <span mdcCaption>{{ t("better") }}</span>
       </div>
-      <mdc-slider
+      <mat-slider
         #confidenceThresholdSlider
         [disabled]="settingsDisabled"
         [min]="0"
         [max]="100"
         [(ngModel)]="confidenceThreshold"
-      ></mdc-slider>
+        (input)="confidenceThreshold = $event.value ?? 0"
+      ></mat-slider>
     </mdc-form-field>
   </mat-dialog-content>
   <mat-dialog-actions fxLayoutAlign="end">

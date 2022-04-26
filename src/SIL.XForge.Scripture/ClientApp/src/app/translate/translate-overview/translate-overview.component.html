@@ -1,26 +1,28 @@
 <ng-container *transloco="let t; read: 'translate_overview'">
-  <div class="title" mdcHeadline4>{{ t("translate_overview") }}</div>
+  <div class="title mat-display-1">{{ t("translate_overview") }}</div>
   <div fxLayout="row wrap" fxLayoutAlign="start start">
-    <mdc-card class="books-card">
-      <div id="translate-overview-title" class="books-card-title" fxLayout="row" fxLayoutAlign="space-between center">
-        <div mdcHeadline6 fxLayout="row" fxLayoutAlign="start center">{{ t("progress") }}</div>
-        <div class="progress" [title]="overallProgress.percentage + '%'">
-          <app-donut-chart
-            [colors]="['#b8d332', 'transparent']"
-            [data]="[overallProgress.translated, overallProgress.blank]"
-            backgroundColor="#ececec"
-            [innerThicknessDelta]="0"
-            [thickness]="22"
-          ></app-donut-chart>
-        </div>
-      </div>
-      <mdc-list-divider></mdc-list-divider>
+    <mat-card class="books-card">
+      <mat-card-header id="translate-overview-title" class="books-card-title">
+        <mat-card-title fxLayout="row" fxLayoutAlign="space-between center"
+          >{{ t("progress") }}
+          <div class="progress" [title]="overallProgress.percentage + '%'">
+            <app-donut-chart
+              [colors]="['#b8d332', 'transparent']"
+              [data]="[overallProgress.translated, overallProgress.blank]"
+              backgroundColor="#ececec"
+              [innerThicknessDelta]="0"
+              [thickness]="22"
+            ></app-donut-chart>
+          </div>
+        </mat-card-title>
+      </mat-card-header>
+      <mat-divider></mat-divider>
       <mdc-list *ngIf="texts != null" [twoLine]="true" [interactive]="false">
         <mdc-list-item
           *ngFor="let textProgress of texts; trackBy: trackTextByBookNum"
           [appRouterLink]="['./', getBookId(textProgress.text)]"
         >
-          <mdc-icon mdcListItemGraphic>book</mdc-icon>
+          <mat-icon mdcListItemGraphic>book</mat-icon>
           <mdc-list-item-text
             [secondaryText]="
               t('translated_segments', { translatedSegments: textProgress.translated, total: textProgress.total })
@@ -38,46 +40,38 @@
           </div>
         </mdc-list-item>
       </mdc-list>
-    </mdc-card>
+    </mat-card>
 
-    <mdc-card *ngIf="translationSuggestionsEnabled && canEditTexts" class="engine-card">
-      <mdc-linear-progress
+    <mat-card *ngIf="translationSuggestionsEnabled && canEditTexts" class="engine-card">
+      <mat-progress-bar
         id="training-progress"
-        [determinate]="trainingPercentage > 0"
-        [class.mdc-linear-progress--closed]="!isTraining"
-        [progress]="trainingPercentage"
-        [buffer]="1"
-      ></mdc-linear-progress>
-      <div class="engine-card-title" mdcHeadline6>{{ t("suggestion_engine") }}</div>
-      <div class="engine-card-content">
+        [mode]="trainingPercentage > 0 ? 'determinate' : 'indeterminate'"
+        [class.mat-progress-bar--closed]="!isTraining"
+        [value]="trainingPercentage"
+      ></mat-progress-bar>
+      <mat-card-header>
+        <mat-card-title class="engine-card-title">{{ t("suggestion_engine") }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content class="engine-card-content">
         <div class="engine-card-quality">
           <div class="engine-card-quality-stars" [title]="engineConfidence + ' BLEU'">
-            <mdc-icon *ngFor="let star of engineQualityStars">{{
+            <mat-icon *ngFor="let star of engineQualityStars">{{
               engineQuality >= star + 1 ? "star" : engineQuality === star + 0.5 ? "star_half" : "star_border"
-            }}</mdc-icon>
+            }}</mat-icon>
           </div>
-          <div class="engine-card-quality-subtitle" mdcBody2>{{ t("quality") }}</div>
+          <div class="engine-card-quality-subtitle">{{ t("quality") }}</div>
         </div>
         <div class="engine-card-segments">
           <span class="engine-card-segments-count">{{ trainedSegmentCount }}</span
-          ><span mdcBody2>{{ t("trained_segments") }}</span>
+          ><span>{{ t("trained_segments") }}</span>
         </div>
-      </div>
-      <mdc-list-divider></mdc-list-divider>
-      <mdc-card-actions>
-        <mdc-card-action-buttons>
-          <button
-            id="retrain-button"
-            mdc-button
-            mdcCardAction="button"
-            [disabled]="isTraining"
-            type="button"
-            (click)="startTraining()"
-          >
-            {{ isTraining ? t("training") : t("retrain") }}
-          </button>
-        </mdc-card-action-buttons>
-      </mdc-card-actions>
-    </mdc-card>
+      </mat-card-content>
+      <mat-divider></mat-divider>
+      <mat-card-actions>
+        <button id="retrain-button" mat-button [disabled]="isTraining" type="button" (click)="startTraining()">
+          {{ isTraining ? t("training") : t("retrain") }}
+        </button>
+      </mat-card-actions>
+    </mat-card>
   </div>
 </ng-container>

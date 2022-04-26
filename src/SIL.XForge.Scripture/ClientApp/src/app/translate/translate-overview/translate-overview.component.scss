@@ -6,8 +6,12 @@
   margin-bottom: 20px;
 }
 
-mdc-card {
-  min-height: 282px;
+mat-card {
+  min-height: 278px;
+  padding: 0;
+  mat-card-actions {
+    margin: 0;
+  }
 }
 
 .books-card {
@@ -15,8 +19,14 @@ mdc-card {
   margin-right: 40px;
   margin-bottom: 20px;
 
-  .books-card-title {
-    padding: 8px 16px;
+  .books-card-title ::ng-deep {
+    margin-top: 8px;
+    > .mat-card-header-text {
+      width: 100%;
+      mat-card-title {
+        margin-bottom: 8px;
+      }
+    }
   }
 
   mdc-list {
@@ -41,24 +51,27 @@ mdc-card {
   overflow: hidden;
 
   .engine-card-title {
-    padding: 4px 16px 8px 16px;
+    margin-top: 8px;
   }
 
   .engine-card-content {
     display: flex;
     flex-direction: column;
+    margin-bottom: 0;
 
     .engine-card-quality {
       display: flex;
       flex-direction: column;
       align-self: stretch;
-      background-color: $mdc-theme-secondary;
+      background-color: $greenLight;
       padding: 26px 16px 15px 16px;
 
       .engine-card-quality-stars {
         align-self: center;
-        mdc-icon {
-          font-size: 3em;
+        mat-icon {
+          font-size: 3.5em;
+          height: unset;
+          width: unset;
         }
       }
 
@@ -73,7 +86,7 @@ mdc-card {
       padding: 15px 16px;
 
       .engine-card-segments-count {
-        font-size: 2em;
+        font-size: 2.25em;
         margin-right: 8px;
       }
     }

@@ -9,7 +9,7 @@
   @include media-breakpoint-only(xs) {
     min-width: 48px;
   }
-  mdc-icon {
+  mat-icon {
     font-size: 24px;
     height: 24px;
   }
@@ -25,7 +25,7 @@ app-donut-chart {
   .audio-icon {
     margin-right: 5px;
   }
-  mdc-icon {
+  mat-icon {
     margin-left: 0;
     margin-right: 0;
   }
@@ -55,13 +55,6 @@ app-donut-chart {
 
 .card {
   margin: 8px 0;
-}
-
-.card-content-question,
-.card-content-answer,
-.card-content-comment,
-.card-content-like {
-  padding: 16px;
   width: 130px;
 }
 
@@ -75,28 +68,28 @@ app-donut-chart {
 
 .card-content-question {
   .stat-total,
-  mdc-icon {
+  mat-icon {
     color: $questions;
   }
 }
 
 .card-content-answer {
   .stat-total,
-  mdc-icon {
-    color: var(--mdc-theme-secondary);
+  mat-icon {
+    color: $answers;
   }
 }
 
 .card-content-comment {
   .stat-total,
-  mdc-icon {
+  mat-icon {
     color: $comments;
   }
 }
 
 .card-content-like {
   .stat-total,
-  mdc-icon {
+  mat-icon {
     color: $likes;
   }
 }

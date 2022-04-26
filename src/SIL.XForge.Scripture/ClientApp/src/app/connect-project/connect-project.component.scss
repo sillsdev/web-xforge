@@ -1,5 +1,3 @@
-@use '@material/button/mixins' as button;
-
 @import 'src/variables';
 
 :host {
@@ -31,9 +29,9 @@
       color: white;
       height: 40px;
 
-      > .paratext-logo {
-        width: 32px;
-        height: 32px;
+      .paratext-logo {
+        width: 24px;
+        height: 24px;
         margin-right: 8px;
       }
     }
@@ -62,26 +60,38 @@
       align-self: center;
     }
 
-    mdc-card {
+    mat-card {
+      box-shadow: initial;
+      padding: 0;
       margin-top: 32px;
 
       .card-title {
-        margin: 8px 16px 0 16px;
+        margin-top: 16px;
       }
 
       .card-content {
         padding: 16px;
+        margin-bottom: 0;
       }
 
-      mdc-list-divider {
-        margin-left: 22px;
+      mat-checkbox {
+        padding-bottom: 12px;
+      }
+
+      mat-divider {
+        margin-left: 16px;
+        position: initial;
+        width: initial;
       }
     }
 
     #connect-submit-button {
       align-self: center;
       margin: 32px 0;
-      @include button.filled-accessible($pt-button-green);
+      &:not(:disabled) {
+        background-color: $pt-button-green;
+        color: white;
+      }
     }
 
     p.helper-select,
@@ -90,7 +100,6 @@
     }
 
     .helper-text {
-      color: var(--mdc-theme-text-hint-on-background);
       margin: 0;
       font-size: 14px;
     }
@@ -99,12 +108,6 @@
     mat-error {
       font-size: 14px;
       margin-top: 10px;
-    }
-
-    .invalid-feedback {
-      color: var(--mdc-theme-error);
-      font-size: 12px;
-      margin-left: 32px;
     }
   }
 }

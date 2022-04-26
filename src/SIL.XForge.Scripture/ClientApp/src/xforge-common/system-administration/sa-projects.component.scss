@@ -26,3 +26,7 @@ mat-form-field {
 .small-form-field {
   width: 130px;
 }
+
+td > mat-checkbox {
+  margin: 0 1em;
+}

@@ -1,19 +1,19 @@
 <ng-container *transloco="let t; read: 'connect_project'">
-  <div mdcHeadline4 class="title">{{ t("connect_paratext_project") }}</div>
+  <div class="title mat-display-1">{{ t("connect_paratext_project") }}</div>
   <span *ngIf="!isAppOnline" class="offline-text"> {{ t("connect_network_to_connect_project") }} </span>
   <div class="content" [ngSwitch]="state">
     <div *ngSwitchCase="'login'" class="paratext-login-container">
-      <div mdcBody1>{{ t("you_must_be_logged_in_to_paratext") }}</div>
-      <button mdc-button id="paratext-login-button" type="button" (click)="logInWithParatext()">
+      <div>{{ t("you_must_be_logged_in_to_paratext") }}</div>
+      <button mat-flat-button id="paratext-login-button" type="button" (click)="logInWithParatext()">
         <img src="/assets/images/logo-pt9.png" alt="Paratext Logo" class="paratext-logo" />{{
           t("log_in_with_paratext")
         }}
       </button>
     </div>
-    <mdc-card [outlined]="true" *ngSwitchCase="'connecting'" class="progress-container">
-      <div class="progress-label" mdcBody1>{{ t("connecting_to_project", { projectName: connectProjectName }) }}</div>
+    <mat-card *ngSwitchCase="'connecting'" class="progress-container card-outline">
+      <div class="progress-label">{{ t("connecting_to_project", { projectName: connectProjectName }) }}</div>
       <app-sync-progress [projectDoc]="projectDoc" (inProgress)="updateStatus($event)"></app-sync-progress>
-    </mdc-card>
+    </mat-card>
     <form *ngSwitchDefault [formGroup]="connectProjectForm" (ngSubmit)="submit()">
       <ng-container *ngIf="projects.length > 0 || state === 'offline'; else noProjectMsg">
         <p *ngIf="hasNonAdministratorProject && !showSettings && isAppOnline" id="connect-non-admin-msg">
@@ -52,28 +52,24 @@
           [innerHtml]="i18n.translateAndInsertTags('connect_project.no_connectable_projects')"
         ></p>
       </ng-template>
-      <mdc-card id="settings-card" *ngIf="showSettings" [outlined]="true" formGroupName="settings">
-        <div class="card-title">
-          <div mdcHeadline6>{{ t("additional_settings") }}</div>
-          <div mdcBody2>{{ t("you_can_change_later") }}</div>
-        </div>
-        <div class="card-content">
+      <mat-card id="settings-card" *ngIf="showSettings" class="card-outline" formGroupName="settings">
+        <mat-card-header class="card-title">
+          <mat-card-title>{{ t("additional_settings") }}</mat-card-title>
+          <mat-card-subtitle>{{ t("you_can_change_later") }}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content class="card-content">
           <div>
-            <mdc-form-field>
-              <mdc-checkbox
-                formControlName="translationSuggestions"
-                id="translation-suggestions-checkbox"
-              ></mdc-checkbox>
-              <label>{{ t("translation_suggestions") }}</label>
-            </mdc-form-field>
+            <mat-checkbox formControlName="translationSuggestions" id="translation-suggestions-checkbox">
+              {{ t("translation_suggestions") }}
+            </mat-checkbox>
           </div>
           <div>
-            <div fxFlex="44px" class="indent"></div>
-            <p
+            <div fxFlex="24px" class="indent"></div>
+            <mat-hint
               fxFlex
               class="helper-text"
               [innerHTML]="i18n.translateAndInsertTags('connect_project.translations_will_be_suggested_as_you_edit')"
-            ></p>
+            ></mat-hint>
           </div>
           <div
             *ngIf="translationSuggestionsEnabled"
@@ -81,7 +77,7 @@
             fxLayoutAlign="start center"
             class="indented-field-row"
           >
-            <div fxFlex="44px" class="indent"></div>
+            <div fxFlex="24px" class="indent"></div>
             <div fxLayout="column" fxFlex="grow">
               <app-project-select
                 formControlName="sourceParatextId"
@@ -91,25 +87,24 @@
                 [hideProjectId]="paratextIdControl.value"
               ></app-project-select>
               <mat-error *ngIf="showResourcesLoadingFailedMessage">{{ t("error_fetching_resources") }}</mat-error>
-              <div class="helper-text select-helper-text">{{ t("choose_the_mother_project") }}</div>
+              <mat-hint class="helper-text select-helper-text">{{ t("choose_the_mother_project") }}</mat-hint>
             </div>
           </div>
-        </div>
-        <mdc-list-divider></mdc-list-divider>
-        <div class="card-content">
+        </mat-card-content>
+        <mat-divider></mat-divider>
+        <mat-card-content class="card-content">
           <div>
-            <mdc-form-field>
-              <mdc-checkbox formControlName="checking" id="checking-checkbox"></mdc-checkbox>
-              <label>{{ t("community_checking") }}</label>
-            </mdc-form-field>
+            <mat-checkbox formControlName="checking" id="checking-checkbox">
+              {{ t("community_checking") }}
+            </mat-checkbox>
           </div>
           <div>
-            <div fxFlex="44px" class="indent"></div>
-            <p fxFlex class="helper-text">{{ t("engage_the_wider_community_to_check_scripture") }}</p>
+            <div fxFlex="24px" class="indent"></div>
+            <mat-hint fxFlex class="helper-text">{{ t("engage_the_wider_community_to_check_scripture") }}</mat-hint>
           </div>
-        </div>
-      </mdc-card>
-      <button mdc-button [unelevated]="true" type="submit" id="connect-submit-button" [disabled]="submitDisabled">
+        </mat-card-content>
+      </mat-card>
+      <button mat-flat-button type="submit" id="connect-submit-button" [disabled]="submitDisabled">
         {{ t("connect") }}
       </button>
     </form>

@@ -1,7 +1,7 @@
-import { MdcLinearProgress } from '@angular-mdc/web/linear-progress';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { MatProgressBar } from '@angular/material/progress-bar';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -158,10 +158,10 @@ describe('TranslateOverviewComponent', () => {
       verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
       env.clickRetrainButton();
       expect(env.trainingProgressShown).toBe(true);
-      expect(env.trainingProgress.determinate).toBe(false);
+      expect(env.trainingProgress.mode).toBe('indeterminate');
       expect(env.component.isTraining).toBe(true);
       env.updateTrainingProgress(0.1);
-      expect(env.trainingProgress.determinate).toBe(true);
+      expect(env.trainingProgress.mode).toBe('determinate');
     }));
   });
 });
@@ -210,7 +210,7 @@ class TestEnvironment {
   }
 
   get qualityStarIcons(): string[] {
-    const stars = this.qualityStars.queryAll(By.css('mdc-icon'));
+    const stars = this.qualityStars.queryAll(By.css('mat-icon'));
     return stars.map(s => s.nativeElement.textContent);
   }
 
@@ -218,13 +218,13 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('.engine-card-segments-count'));
   }
 
-  get trainingProgress(): MdcLinearProgress {
+  get trainingProgress(): MatProgressBar {
     return this.fixture.debugElement.query(By.css('#training-progress')).componentInstance;
   }
 
   get trainingProgressShown(): boolean {
-    return !(this.trainingProgress.elementRef.nativeElement as HTMLElement).classList.contains(
-      'mdc-linear-progress--closed'
+    return !(this.trainingProgress._elementRef.nativeElement as HTMLElement).classList.contains(
+      'mat-progress-bar--closed'
     );
   }
 

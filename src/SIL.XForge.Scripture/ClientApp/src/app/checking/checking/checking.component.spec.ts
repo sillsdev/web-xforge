@@ -106,10 +106,6 @@ function createUser(id: string, role: string, nameConfirmed: boolean = true): Us
   };
 }
 
-function flushPromises(): Promise<void> {
-  return new Promise(resolve => setImmediate(resolve));
-}
-
 const ADMIN_USER: UserInfo = createUser('01', SFProjectRole.ParatextAdministrator);
 const CHECKER_USER: UserInfo = createUser('02', SFProjectRole.CommunityChecker);
 const CLEAN_CHECKER_USER: UserInfo = createUser('03', SFProjectRole.CommunityChecker, false);
@@ -140,7 +136,7 @@ describe('CheckingComponent', () => {
       FontSizeComponent
     ],
     imports: [
-      AngularSplitModule.forRoot(),
+      AngularSplitModule,
       ngfModule,
       NoopAnimationsModule,
       RouterTestingModule.withRoutes(ROUTES),
@@ -397,7 +393,7 @@ describe('CheckingComponent', () => {
       expect().nothing();
     }));
 
-    it('should move highlight and question icon when question is edited to move verses', fakeAsync(async () => {
+    it('should move highlight and question icon when question is edited to move verses', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER);
       env.selectQuestion(1);
       env.waitForSliderUpdate();
@@ -414,7 +410,7 @@ describe('CheckingComponent', () => {
 
       env.clickButton(env.editQuestionButton);
       env.realtimeService.updateAllSubscribeQueries();
-      await flushPromises();
+      tick();
 
       expect(env.segmentHasQuestion(1, 1)).toBe(true);
       expect(env.isSegmentHighlighted(1, 1)).toBe(false);
@@ -656,16 +652,17 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment(CHECKER_USER);
       // Open up question where user already has an answer
       env.selectQuestion(9);
-      expect(env.answers.length).toBeGreaterThan(1, 'setup problem');
-      expect(env.component.answersPanel!.answers.some(answer => answer.ownerRef === CHECKER_USER.id)).toBe(
-        true,
-        'setup problem'
-      );
+      expect(env.answers.length).withContext('setup problem').toBeGreaterThan(1);
+      expect(env.component.answersPanel!.answers.some(answer => answer.ownerRef === CHECKER_USER.id))
+        .withContext('setup problem')
+        .toBe(true);
       const myAnswerIndex = 0;
       const otherAnswerIndex = 1;
-      expect(env.getAnswerText(myAnswerIndex)).toEqual('Answer 0 on question', 'setup problem');
+      expect(env.getAnswerText(myAnswerIndex)).withContext('setup problem').toEqual('Answer 0 on question');
       expect(env.getAnswer(myAnswerIndex).classes['attention']).toBeUndefined();
-      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeUndefined('have already read this answer');
+      expect(env.getAnswer(otherAnswerIndex).classes['attention'])
+        .withContext('have already read this answer')
+        .toBeUndefined();
 
       // Edit, save
       env.clickButton(env.getAnswerEditButton(myAnswerIndex));
@@ -681,11 +678,11 @@ describe('CheckingComponent', () => {
       env.setTextFieldValue(env.yourAnswerField, 'Different edit, to cancel');
       env.clickButton(env.cancelAnswerButton);
       env.waitForSliderUpdate();
-      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBeUndefined(
-        "don't spotlight own answer on cancelled edit"
-      );
+      expect(env.getAnswer(myAnswerIndex).classes['attention'])
+        .withContext("don't spotlight own answer on cancelled edit")
+        .toBeUndefined();
       expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeUndefined();
-      expect(env.getAnswerText(myAnswerIndex)).toEqual('Edited answer', 'should not have been changed');
+      expect(env.getAnswerText(myAnswerIndex)).withContext('should not have been changed').toEqual('Edited answer');
     }));
 
     it('highlights remotely edited answer', fakeAsync(() => {
@@ -733,7 +730,7 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment(CHECKER_USER);
       env.selectQuestion(7);
       env.answerQuestion('My answer');
-      expect(env.answers.length).toBeGreaterThan(1, 'setup problem');
+      expect(env.answers.length).withContext('setup problem').toBeGreaterThan(1);
       const myAnswerIndex = 0;
       const otherAnswerIndex = 1;
       expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(true);
@@ -951,9 +948,9 @@ describe('CheckingComponent', () => {
       env.clickButton(env.addAnswerButton);
       env.clickButton(env.saveAnswerButton);
       // Have not given any answer yet, so clicking Save should show a validation error.
-      expect(env.component.answersPanel!.answerForm.invalid).toBe(true, 'setup');
-      expect(env.answerFormErrors.length).toEqual(1, 'setup');
-      expect(env.answerFormErrors[0].nativeElement.textContent).toContain('record', 'setup');
+      expect(env.component.answersPanel!.answerForm.invalid).withContext('setup').toBe(true);
+      expect(env.answerFormErrors.length).withContext('setup').toEqual(1);
+      expect(env.answerFormErrors[0].nativeElement.textContent).withContext('setup').toContain('record');
       env.clickButton(env.audioTab);
 
       // SUT
@@ -968,15 +965,15 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment(CHECKER_USER);
 
       env.selectQuestion(7);
-      expect(env.totalAnswersMessageCount).toBeNull('setup');
+      expect(env.totalAnswersMessageCount).withContext('setup').toBeNull();
       env.answerQuestion('New answer from current user');
 
       // Answers count as displayed in HTML.
       expect(env.totalAnswersMessageCount).toEqual(2);
       // Individual answers in HTML.
-      expect(env.answers.length).toEqual(2, 'setup');
+      expect(env.answers.length).withContext('setup').toEqual(2);
       // Answers in code.
-      expect(env.component.answersPanel!.answers.length).toEqual(2, 'setup');
+      expect(env.component.answersPanel!.answers.length).withContext('setup').toEqual(2);
 
       expect(env.showUnreadAnswersButton).toBeNull();
 
@@ -1008,8 +1005,8 @@ describe('CheckingComponent', () => {
       // authored by the project admin since that was hindering this test.
       env.selectQuestion(6);
 
-      expect(env.answers.length).toEqual(1, 'setup');
-      expect(env.component.answersPanel!.answers.length).toEqual(1, 'setup');
+      expect(env.answers.length).withContext('setup').toEqual(1);
+      expect(env.component.answersPanel!.answers.length).withContext('setup').toEqual(1);
       expect(env.showUnreadAnswersButton).toBeNull();
       expect(env.totalAnswersMessageCount).toEqual(1);
 
@@ -1043,8 +1040,8 @@ describe('CheckingComponent', () => {
       // authored by the project admin, in case that hinders this test.
       env.selectQuestion(6);
 
-      expect(env.answers.length).toEqual(1, 'setup');
-      expect(env.component.answersPanel!.answers.length).toEqual(1, 'setup');
+      expect(env.answers.length).withContext('setup').toEqual(1);
+      expect(env.component.answersPanel!.answers.length).withContext('setup').toEqual(1);
       expect(env.showUnreadAnswersButton).toBeNull();
       expect(env.totalAnswersMessageCount).toEqual(1);
       // Delete only answer on question.
@@ -1062,14 +1059,14 @@ describe('CheckingComponent', () => {
     it("new remote answers and banner don't show, if user has not yet answered the question", fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       env.selectQuestion(7);
-      expect(env.answers.length).toEqual(0, 'setup (no answers in DOM yet)');
-      expect(env.component.answersPanel!.answers.length).toEqual(1, 'setup');
+      expect(env.answers.length).withContext('setup (no answers in DOM yet)').toEqual(0);
+      expect(env.component.answersPanel!.answers.length).withContext('setup').toEqual(1);
       expect(env.totalAnswersMessageCount).toBeNull();
 
       // Another user adds an answer, but with no impact on the current user's screen yet.
       env.simulateNewRemoteAnswer();
       expect(env.showUnreadAnswersButton).toBeNull();
-      expect(env.answers.length).toEqual(0, 'broken unrelated functionality');
+      expect(env.answers.length).withContext('broken unrelated functionality').toEqual(0);
       // Incoming remote answer should have been absorbed into the set of i
       // answers pending to show, since user was looking at the Add Answer button
       expect(env.component.answersPanel!.answers.length).toEqual(2);
@@ -1088,8 +1085,8 @@ describe('CheckingComponent', () => {
       env.selectQuestion(7);
       // User answers a question
       env.answerQuestion('New answer from current user');
-      expect(env.answers.length).toEqual(2, 'setup');
-      expect(env.component.answersPanel!.answers.length).toEqual(2, 'setup');
+      expect(env.answers.length).withContext('setup').toEqual(2);
+      expect(env.component.answersPanel!.answers.length).withContext('setup').toEqual(2);
       expect(env.showUnreadAnswersButton).toBeNull();
 
       // A remote answer is added, but the current user does not click the banner to show the remote answer.
@@ -1135,8 +1132,8 @@ describe('CheckingComponent', () => {
       env.selectQuestion(7);
       // User answers a question
       env.answerQuestion('New answer from current user');
-      expect(env.answers.length).toEqual(2, 'setup');
-      expect(env.component.answersPanel!.answers.length).toEqual(2, 'setup');
+      expect(env.answers.length).withContext('setup').toEqual(2);
+      expect(env.component.answersPanel!.answers.length).withContext('setup').toEqual(2);
       expect(env.showUnreadAnswersButton).toBeNull();
       expect(env.totalAnswersMessageCount).toEqual(2);
 
@@ -1156,11 +1153,11 @@ describe('CheckingComponent', () => {
       env.selectQuestion(7);
       // User answers a question
       env.answerQuestion('New answer from current user');
-      expect(env.showUnreadAnswersButton).toBeNull('setup');
-      expect(env.answers.length).toEqual(2, 'setup');
+      expect(env.showUnreadAnswersButton).withContext('setup').toBeNull();
+      expect(env.answers.length).withContext('setup').toEqual(2);
       // A remote answer is added, but the current user does not click the banner to show the remote answer.
       env.simulateNewRemoteAnswer();
-      expect(env.showUnreadAnswersButton).not.toBeNull('setup');
+      expect(env.showUnreadAnswersButton).withContext('setup').not.toBeNull();
       // The current user edits their own answer.
       env.clickButton(env.getAnswerEditButton(0));
       //  They should not see the show-more banner.
@@ -1180,11 +1177,13 @@ describe('CheckingComponent', () => {
     it('show-remote-answer banner not shown to user if see-others-answers is disabled', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       env.setSeeOtherUserResponses(false);
-      expect(env.component.projectDoc!.data!.checkingConfig.usersSeeEachOthersResponses).toBe(false, 'setup');
+      expect(env.component.projectDoc!.data!.checkingConfig.usersSeeEachOthersResponses)
+        .withContext('setup')
+        .toBe(false);
       env.selectQuestion(7);
       // User answers a question
       env.answerQuestion('New answer from current user');
-      expect(env.totalAnswersMessageText).toEqual('Your answer', 'setup');
+      expect(env.totalAnswersMessageText).withContext('setup').toEqual('Your answer');
 
       // A remote answer is added.
       env.simulateNewRemoteAnswer();
@@ -1196,10 +1195,12 @@ describe('CheckingComponent', () => {
     it('show-remote-answer banner still shown to proj admin if see-others-answers is disabled', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER);
       env.setSeeOtherUserResponses(false);
-      expect(env.component.projectDoc!.data!.checkingConfig.usersSeeEachOthersResponses).toBe(false, 'setup');
+      expect(env.component.projectDoc!.data!.checkingConfig.usersSeeEachOthersResponses)
+        .withContext('setup')
+        .toBe(false);
       // Select a question with no answers authored by the project admin, in case that hinders this test.
       env.selectQuestion(6);
-      expect(env.totalAnswersMessageCount).toEqual(1, 'setup');
+      expect(env.totalAnswersMessageCount).withContext('setup').toEqual(1);
 
       // A remote answer is added.
       env.simulateNewRemoteAnswer();

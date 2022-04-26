@@ -1,4 +1,5 @@
-import mingo from 'mingo';
+import { Query } from 'mingo';
+import { Cursor } from 'mingo/cursor';
 import { Snapshot } from './models/snapshot';
 import { nameof } from './utils';
 
@@ -47,12 +48,12 @@ export interface QueryResults<T> {
 }
 
 export function performQuery<T>(parameters: QueryParameters, snapshots: T[]): QueryResults<T> {
-  const query = new mingo.Query(toMingoCriteria(parameters));
+  const query = new Query(toMingoCriteria(parameters));
   const cursor = query.find(snapshots);
   if (parameters.$sort != null) {
     cursor.sort(toMingoSort(parameters.$sort));
   }
-  let unpagedCursor: mingo.Cursor<T>;
+  let unpagedCursor: Cursor;
   if (parameters.$skip != null || parameters.$limit != null) {
     unpagedCursor = query.find(snapshots);
 
@@ -69,7 +70,7 @@ export function performQuery<T>(parameters: QueryParameters, snapshots: T[]): Qu
   if (parameters.$count != null) {
     return { results: cursor.count(), unpagedCount: unpagedCursor.count() };
   }
-  return { results: cursor.all(), unpagedCount: unpagedCursor.count() };
+  return { results: cursor.all() as T[], unpagedCount: unpagedCursor.count() };
 }
 
 function toMingoCriteria(filters: QueryParameters | Filters): any {

@@ -145,10 +145,10 @@ export class DragAndDrop {
     }
 
     let element: Element = targetElement;
-    while (element.localName != 'usx-segment' && element.parentElement != null) {
+    while (element.localName !== 'usx-segment' && element.parentElement != null) {
       element = element.parentElement;
     }
-    if (element == null || element.localName != 'usx-segment') {
+    if (element == null || element.localName !== 'usx-segment') {
       console.warn('Warning: DragEvent never found a needed usx-segment ancestor for drop target:', targetElement);
       return [null, droppingIntoBlankSegment];
     }
@@ -166,8 +166,10 @@ export class DragAndDrop {
 
     let startPositionInTargetNode: number = 0;
     let nodeDroppedInto: Node | undefined;
+    // eslint-disable-next-line deprecation/deprecation
     if (document.caretRangeFromPoint !== undefined) {
       // Chromium/Chrome, Edge, and Safari browsers
+      // eslint-disable-next-line deprecation/deprecation
       const range: Range = document.caretRangeFromPoint(targetX, targetY);
       startPositionInTargetNode = range.startOffset;
       nodeDroppedInto = range.startContainer;

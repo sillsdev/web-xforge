@@ -1,6 +1,6 @@
-import { MdcCheckbox } from '@angular-mdc/web';
 import { DebugElement, getDebugNode } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { MatCheckbox } from '@angular/material/checkbox';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -265,12 +265,12 @@ class TestEnvironment {
   }
 
   isSyncDisabled(row: number): boolean {
-    return (this.cell(row, this.syncDisabledColumn).query(By.css('mdc-checkbox')).componentInstance as MdcCheckbox)
+    return (this.cell(row, this.syncDisabledColumn).query(By.css('mat-checkbox')).componentInstance as MatCheckbox)
       .checked;
   }
 
   syncDisabledControl(row: number): DebugElement {
-    return this.cell(row, this.syncDisabledColumn).query(By.css('mdc-checkbox')).query(By.css('input'));
+    return this.cell(row, this.syncDisabledColumn).query(By.css('mat-checkbox')).query(By.css('input'));
   }
 
   changeSelectValue(select: DebugElement, option: number): void {

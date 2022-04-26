@@ -2,6 +2,8 @@ import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web/dialog';
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -32,6 +34,9 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   usersSeeEachOthersResponses = new FormControl(false);
   checkingShareEnabled = new FormControl(false);
   checkingShareLevel = new FormControl(undefined);
+
+  TranslateShareLevel = TranslateShareLevel;
+  CheckingShareLevel = CheckingShareLevel;
 
   form = new FormGroup({
     translationSuggestionsEnabled: this.translationSuggestionsEnabled,

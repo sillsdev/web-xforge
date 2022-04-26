@@ -1,6 +1,5 @@
 import { MDCDataTableModule } from '@angular-mdc/web';
 import { MdcButtonModule } from '@angular-mdc/web/button';
-import { MdcCardModule } from '@angular-mdc/web/card';
 import { MdcCheckboxModule } from '@angular-mdc/web/checkbox';
 import { MdcDialogModule } from '@angular-mdc/web/dialog';
 import { MdcDrawerModule } from '@angular-mdc/web/drawer';
@@ -8,13 +7,10 @@ import { MdcElevationModule } from '@angular-mdc/web/elevation';
 import { MdcFormFieldModule } from '@angular-mdc/web/form-field';
 import { MdcIconModule } from '@angular-mdc/web/icon';
 import { MdcIconButtonModule } from '@angular-mdc/web/icon-button';
-import { MdcLinearProgressModule } from '@angular-mdc/web/linear-progress';
 import { MdcListModule } from '@angular-mdc/web/list';
 import { MdcMenuModule } from '@angular-mdc/web/menu';
 import { MdcMenuSurfaceModule } from '@angular-mdc/web/menu-surface';
-import { MdcRadioModule } from '@angular-mdc/web/radio';
 import { MdcSelectModule } from '@angular-mdc/web/select';
-import { MdcSliderModule } from '@angular-mdc/web/slider';
 import { MdcSnackbarModule } from '@angular-mdc/web/snackbar';
 import { MdcSwitchModule } from '@angular-mdc/web/switch';
 import { MdcTabBarModule } from '@angular-mdc/web/tab-bar';
@@ -38,7 +34,9 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSliderModule } from '@angular/material/slider';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoService } from '@ngneat/transloco';
@@ -67,11 +65,12 @@ const modules = [
   MatPaginatorModule,
   MatProgressBarModule,
   MatProgressSpinnerModule,
+  MatRadioModule,
   MatSelectModule,
+  MatSliderModule,
   MatTableModule,
   MatTooltipModule,
   MdcButtonModule,
-  MdcCardModule,
   MdcCheckboxModule,
   MdcDialogModule,
   MdcDrawerModule,
@@ -79,13 +78,10 @@ const modules = [
   MdcFormFieldModule,
   MdcIconModule,
   MdcIconButtonModule,
-  MdcLinearProgressModule,
   MdcListModule,
   MdcMenuModule,
   MdcMenuSurfaceModule,
-  MdcRadioModule,
   MdcSelectModule,
-  MdcSliderModule,
   MdcSnackbarModule,
   MdcSwitchModule,
   MdcTabBarModule,
