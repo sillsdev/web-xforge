@@ -7,7 +7,6 @@ const utils = require('./utils.js');
 const RichText = utils.requireFromRealTimeServer('rich-text');
 const OTJson0 = utils.requireFromRealTimeServer('ot-json0');
 const ShareDB = utils.requireFromRealTimeServer('sharedb/lib/client');
-const WebSocket = utils.requireFromRealTimeServer('ws');
 
 // Edit these settings to specify which doc to show
 const docId = '';
@@ -18,7 +17,7 @@ ShareDB.types.register(RichText.type);
 ShareDB.types.register(OTJson0.type);
 
 async function run() {
-  const ws = new WebSocket(connectionConfig.wsConnectionString);
+  const ws = utils.createWS(connectionConfig);
   const conn = new ShareDB.Connection(ws);
   try {
     const doc = conn.get(collection, docId);

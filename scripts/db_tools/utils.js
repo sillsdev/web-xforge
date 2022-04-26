@@ -1,3 +1,5 @@
+const WebSocket = utils.requireFromRealTimeServer('ws');
+
 /**
  * @param {string} packageName The name of the package to import
  */
@@ -158,19 +160,26 @@ function visualizeOps(ops, showAttributes = false) {
   console.log(result);
 }
 
+function createWS(connectionConfig) {
+  return new WebSocket(connectionConfig.wsConnectionString, [], { origin: connectionConfig.origin });
+}
+
 const devConfig = {
   dbLocation: 'mongodb://localhost:27017/xforge',
-  wsConnectionString: 'ws://127.0.0.1:5003/?server=true'
+  wsConnectionString: 'ws://127.0.0.1:5003/?server=true',
+  origin: 'http://localhost:5000'
 };
 
 const qaConfig = {
   dbLocation: 'mongodb://localhost:4017/xforge',
-  wsConnectionString: 'ws://127.0.0.1:4003/?server=true'
+  wsConnectionString: 'ws://127.0.0.1:4003/?server=true',
+  origin: 'https://qa.scriptureforge.org'
 };
 
 const liveConfig = {
   dbLocation: 'mongodb://localhost:3017/xforge',
-  wsConnectionString: 'ws://127.0.0.1:3003/?server=true'
+  wsConnectionString: 'ws://127.0.0.1:3003/?server=true',
+  origin: 'https://scriptureforge.org'
 };
 
 const databaseConfigs = new Map();
@@ -189,6 +198,7 @@ module.exports = {
   visualizeOps,
   useColor,
   colored,
+  createWS,
   colors,
   devConfig,
   qaConfig,

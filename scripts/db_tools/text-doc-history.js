@@ -6,7 +6,6 @@
 const utils = require('./utils');
 const RichText = utils.requireFromRealTimeServer('rich-text');
 const ShareDB = utils.requireFromRealTimeServer('sharedb/lib/client');
-const WebSocket = utils.requireFromRealTimeServer('ws');
 const MongoClient = utils.requireFromRealTimeServer('mongodb');
 const OTJson0 = utils.requireFromRealTimeServer('ot-json0');
 
@@ -22,7 +21,7 @@ ShareDB.types.register(OTJson0.type);
 
 async function run() {
   console.log(`Connecting...`);
-  const ws = new WebSocket(connectionConfig.wsConnectionString);
+  const ws = utils.createWS(connectionConfig);
   const conn = new ShareDB.Connection(ws);
   const client = await MongoClient.connect(connectionConfig.dbLocation);
   try {

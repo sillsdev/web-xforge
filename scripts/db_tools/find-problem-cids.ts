@@ -14,7 +14,6 @@
 import * as RichText from 'rich-text';
 import { MongoClient, Db, Collection } from 'mongodb';
 import OTJson0 from 'ot-json0';
-import WebSocket from 'ws';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import ShareDB, { Snapshot } from 'sharedb';
@@ -26,7 +25,8 @@ import {
   databaseConfigs,
   fetchSnapshotByVersion,
   useColor,
-  visualizeOps
+  visualizeOps,
+  createWS
 } from './utils';
 import { Canon } from '../../src/RealtimeServer/scriptureforge/scripture-utils/canon';
 
@@ -105,7 +105,7 @@ class ProblemCidFinder {
     if (this.connectionConfig == null) {
       throw new Error('null connection config');
     }
-    const ws = new WebSocket(this.connectionConfig.wsConnectionString);
+    const ws = createWS(this.connectionConfig);
     const conn: Connection = new Connection(ws);
     const client: MongoClient = await MongoClient.connect(this.connectionConfig.dbLocation);
     try {

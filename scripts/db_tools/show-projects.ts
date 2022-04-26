@@ -14,11 +14,10 @@
 //   Show a textdoc: ./show-projects.ts --proj ABC --book RUT --chapter 1 --text --no-color > out.json
 
 import { MongoClient, Db, Collection } from 'mongodb';
-import WebSocket from 'ws';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { Connection } from 'sharedb/lib/client';
-import { colored, colors, ConnectionSettings, databaseConfigs, useColor } from './utils';
+import { colored, colors, ConnectionSettings, databaseConfigs, useColor, createWS } from './utils';
 import { Canon } from '../../src/RealtimeServer/scriptureforge/scripture-utils/canon';
 
 type ProgArgs = {
@@ -157,7 +156,7 @@ class ProjectInquirer {
       throw new Error('null connection config');
     }
     console.log(`Connecting to ${this.server}.`);
-    const ws = new WebSocket(this.connectionConfig.wsConnectionString);
+    const ws = createWS(this.connectionConfig);
     const conn: Connection = new Connection(ws);
     const client: MongoClient = await MongoClient.connect(this.connectionConfig.dbLocation);
     console.log(`Connected.`);
