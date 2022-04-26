@@ -1545,7 +1545,7 @@ namespace SIL.XForge.Scripture.Services
             // store a username to a note in SF we construct the intended Comment id at runtime.
             string commentId = string.Format("{0}/{1}/{2}", note.ThreadId, ptUser.Username, date);
             Paratext.Data.ProjectComments.Comment matchingComment =
-                thread.Comments.SingleOrDefault(c => c.Id == commentId);
+                thread.Comments.LastOrDefault(c => c.Id == commentId);
             if (matchingComment != null)
                 return matchingComment;
 
@@ -1553,7 +1553,7 @@ namespace SIL.XForge.Scripture.Services
             DateTime noteTime = note.DateCreated.ToUniversalTime();
             return thread.Comments
                 .Where(c => DateTime.Equals(noteTime, DateTime.Parse(c.Date, null, DateTimeStyles.AdjustToUniversal)))
-                .SingleOrDefault(c => c.User == ptUser.Username);
+                .LastOrDefault(c => c.User == ptUser.Username);
         }
 
         /// <summary>
