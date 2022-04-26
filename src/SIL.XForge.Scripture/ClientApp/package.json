@@ -1,6 +1,6 @@
 {
   "name": "sil.xforge.scripture",
-  "version": "3.0.0",
+  "version": "4.x.x",
   "description": "SIL.XForge.Scripture - Scripture Forge",
   "license": "MIT",
   "scripts": {
@@ -30,11 +30,11 @@
     "@angular/material": "~12.2.13",
     "@angular/platform-browser": "~12.2.16",
     "@angular/platform-browser-dynamic": "~12.2.16",
-    "@angular/pwa": "~12.2.16",
+    "@angular/pwa": "~12.2.17",
     "@angular/router": "~12.2.16",
     "@angular/service-worker": "~12.2.16",
-    "@bugsnag/js": "^7.16.1",
-    "@bugsnag/plugin-angular": "^7.16.1",
+    "@bugsnag/js": "^7.16.2",
+    "@bugsnag/plugin-angular": "^7.16.2",
     "@ngneat/transloco": "^3.0.2",
     "@ngneat/transloco-locale": "^3.0.1",
     "@sillsdev/machine": "^2.2.3",
@@ -69,13 +69,13 @@
     "zone.js": "~0.11.4"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "~12.2.16",
+    "@angular-devkit/build-angular": "~12.2.17",
     "@angular-eslint/builder": "^12.7.0",
     "@angular-eslint/eslint-plugin": "^12.7.0",
     "@angular-eslint/eslint-plugin-template": "^12.7.0",
     "@angular-eslint/schematics": "12.7.0",
     "@angular-eslint/template-parser": "^12.7.0",
-    "@angular/cli": "~12.2.16",
+    "@angular/cli": "~12.2.17",
     "@angular/compiler": "~12.2.16",
     "@angular/compiler-cli": "~12.2.16",
     "@angular/language-service": "~12.2.16",
