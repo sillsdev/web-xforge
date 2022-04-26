@@ -7,7 +7,6 @@
 const utils = require('./utils.js');
 const RichText = utils.requireFromRealTimeServer('rich-text');
 const ShareDB = utils.requireFromRealTimeServer('sharedb/lib/client');
-const WebSocket = utils.requireFromRealTimeServer('ws');
 
 // Edit these settings to specify what doc to import to where
 const fromDocId = '';
@@ -20,8 +19,8 @@ const dryRun = true;
 ShareDB.types.register(RichText.type);
 
 async function run() {
-  const fromWs = new WebSocket(fromConfig.wsConnectionString);
-  const toWs = new WebSocket(toConfig.wsConnectionString);
+  const fromWs = utils.createWS(fromConfig);
+  const toWs = utils.createWS(toConfig);
   const fromConn = new ShareDB.Connection(fromWs);
   const toConn = new ShareDB.Connection(toWs);
   try {
