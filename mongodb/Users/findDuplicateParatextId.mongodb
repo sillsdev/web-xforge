@@ -1,5 +1,7 @@
 use('xforge');
 
+// Find instances in SF DB where more than one user has the same paratextId.
+
 const duplicates = db.users
   .aggregate([
     {
