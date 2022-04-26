@@ -22,19 +22,19 @@ export function objectId(): string {
 export function supportedBrowser(): boolean {
   // See https://caniuse.com/#feat=indexeddb2 for browsers supporting IndexedDB 2.0
   const isSupportedBrowser = BROWSER.satisfies({
-    chrome: '>=58',
-    chromium: '>=58',
+    chrome: '>=64',
+    chromium: '>=64',
     edge: '>=79',
-    firefox: '>=51',
+    firefox: '>=78',
     safari: '>=11.1',
 
     mobile: {
       chrome: '>=78',
-      firefox: '>=68',
-      opera: '>=46',
+      firefox: '>=79',
+      opera: '>=47',
       safari: '>=11.3',
       'android browser': '>=76',
-      'samsung internet': '>=7.2'
+      'samsung internet': '>=9.0'
     }
   });
   return isSupportedBrowser ? true : false;
