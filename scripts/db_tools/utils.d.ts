@@ -3,7 +3,8 @@
 // Copyright 2021 SIL International. MIT License.
 
 import { Snapshot } from 'sharedb';
-import { Connection } from 'sharedb/lib/client';
+import { Connection, Doc } from 'sharedb/lib/client';
+import WebSocket from 'ws';
 
 export function visualizeOps(ops: any, showAttributes: boolean): void;
 export function fetchSnapshotByVersion(
@@ -12,6 +13,8 @@ export function fetchSnapshotByVersion(
   docId: string,
   version: number
 ): Promise<Snapshot>;
+export function fetchDoc(doc: Doc): Promise<void>;
+export function submitDocOp(doc: Doc, op: any): Promise<void>;
 export function colored(colorCode: number, textToColor: string): string;
 export type ConnectionSettings = { dbLocation: string; wsConnectionString: string; origin: string };
 export function createWS(connectionConfig: ConnectionSettings): WebSocket;
