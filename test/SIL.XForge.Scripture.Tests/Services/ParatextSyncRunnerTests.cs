@@ -1207,6 +1207,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        [Ignore("Not ready to sync notes back to paratext.")]
         public async Task SyncAsync_UpdatesParatextComments()
         {
             var env = new TestEnvironment();
