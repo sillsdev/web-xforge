@@ -913,6 +913,57 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(note.Type, Is.EqualTo(NoteType.Conflict.InternalValue));
         }
 
+        [Test]
+        public async Task GetNoteThreadChanges_DuplicateComments()
+        {
+            var env = new TestEnvironment();
+            var associatedPTUser = new SFParatextUser(env.Username01);
+            string projectId = env.SetupProject(env.Project01, associatedPTUser);
+            var userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+            ThreadNoteComponents[] noteComponents = new[]
+            {
+                new ThreadNoteComponents
+                {
+                    status = NoteStatus.Todo,
+                    tagsAdded = new[] { "1" },
+                    assignedPTUser = Paratext.Data.ProjectComments.CommentThread.unassignedUser,
+                    // tests that if duplicate project notes exist, the sync succeeds
+                    duplicate = true
+                }
+            };
+            env.AddNoteThreadData(new[]
+            {
+                new ThreadComponents { threadNum = 1, noteCount = 1, notes = noteComponents }
+            });
+
+            env.AddParatextComments(new[]
+            {
+                new ThreadComponents { threadNum = 1, noteCount = 1, notes = noteComponents, username = env.Username01 }
+            });
+
+            var commentThread = env.ProjectCommentManager.FindThread("thread1");
+            string commentId = commentThread.Comments[0].Id;
+            Assert.That(commentThread.Comments.Where(c => c.Id == commentId).Count, Is.EqualTo(2));
+
+
+            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            {
+                IEnumerable<IDocument<NoteThread>> noteThreadDocs =
+                    await env.GetNoteThreadDocsAsync(conn, new[] { "thread1" });
+                Dictionary<int, ChapterDelta> chapterDeltas =
+                env.GetChapterDeltasByBook(projectId, 40, 1, env.ContextBefore, "Text selected");
+                Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
+                    { new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 } }
+                    .ToDictionary(u => u.Username);
+                IEnumerable<NoteThreadChange> changes =
+                    env.Service.GetNoteThreadChanges(userSecret, projectId, 40, noteThreadDocs, chapterDeltas, ptProjectUsers);
+
+                Assert.That(changes.Count(), Is.Zero);
+            }
+
+        }
+
 
         [Test]
         public async Task GetNoteThreadChanges_UpdateTriggeredFromConflictTypeChange()
@@ -1835,6 +1886,7 @@ namespace SIL.XForge.Scripture.Services
             public Enum<NoteStatus> status;
             public string[] tagsAdded;
             public string assignedPTUser;
+            public bool duplicate;
         }
 
         [Test]
@@ -2465,7 +2517,7 @@ namespace SIL.XForge.Scripture.Services
                         };
                         if (comp.notes != null)
                             noteComponent = comp.notes[i - 1];
-                        notes.Add(new Note
+                        Note note = new Note
                         {
                             DataId = $"n{i}on{threadId}",
                             ThreadId = threadId,
@@ -2480,7 +2532,10 @@ namespace SIL.XForge.Scripture.Services
                             Deleted = comp.isDeleted,
                             Status = noteComponent.status.InternalValue,
                             Assignment = noteComponent.assignedPTUser
-                        });
+                        };
+                        notes.Add(note);
+                        if (noteComponent.duplicate)
+                            notes.Add(note);
                     }
                     if (comp.reattachedVerseStr != null)
                     {
@@ -2663,8 +2718,11 @@ namespace SIL.XForge.Scripture.Services
                         comment.ExternalUser = comp.isConflict ? "" : "user02";
                         comment.TagsAdded = comp.isConflict ? null : note.tagsAdded == null ? null : note.tagsAdded;
                         comment.Type = comp.isConflict ? NoteType.Conflict : NoteType.Normal;
+                        comment.ConflictType = NoteConflictType.None;
                         comment.AssignedUser = note.assignedPTUser;
                         ProjectCommentManager.AddComment(comment);
+                        if (note.duplicate)
+                            ProjectCommentManager.AddComment(comment);
                     }
 
                     if (comp.reattachedVerseStr != null)
