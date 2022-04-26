@@ -13,7 +13,8 @@ export function fetchSnapshotByVersion(
   version: number
 ): Promise<Snapshot>;
 export function colored(colorCode: number, textToColor: string): string;
-export type ConnectionSettings = { dbLocation: string; wsConnectionString: string };
+export type ConnectionSettings = { dbLocation: string; wsConnectionString: string; origin: string };
+export function createWS(connectionConfig: ConnectionSettings): WebSocket;
 export var databaseConfigs: Map<string, ConnectionSettings>;
 export var devConfig: { dbLocation: string; wsConnectionString: string };
 export function useColor(ifUseColor: boolean): void;
