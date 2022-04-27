@@ -19,7 +19,6 @@ import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
-import { AssignedUsers } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -1064,7 +1063,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       verseRef,
       id: threadDoc.data.dataId,
       preview,
-      icon: this.isAssignedToOtherUser(threadDoc) ? threadDoc.iconGrayed : threadDoc.icon,
+      icon: threadDoc.isAssignedToOtherUser(this.userService.currentUserId, this.paratextUsers)
+        ? threadDoc.iconGrayed
+        : threadDoc.icon,
       textAnchor: threadDoc.data.position,
       highlight: hasNewContent
     };
@@ -1359,19 +1360,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return false;
     }
     return !this.projectUserConfigDoc.data.noteRefsRead.includes(noteId);
-  }
-
-  private isAssignedToOtherUser(thread: NoteThreadDoc): boolean {
-    switch (thread.data?.assignment) {
-      case AssignedUsers.TeamUser:
-      case AssignedUsers.Unspecified:
-      case undefined:
-        return false;
-    }
-    const ptUser: ParatextUserProfile | undefined = this.paratextUsers?.find(
-      user => user.opaqueUserId === thread.data?.assignment
-    );
-    return ptUser?.sfUserId !== this.userService.currentUserId;
   }
 
   private syncScroll(): void {

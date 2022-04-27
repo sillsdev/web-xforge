@@ -8,6 +8,8 @@ import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge
 import { clone } from 'lodash-es';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { AssignedUsers } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
+import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 
 export interface NoteThreadIcon {
   cssVar: string;
@@ -58,6 +60,19 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
 
     const verseStr: string = lastReattach.reattached.split(REATTACH_SEPARATOR)[0];
     return VerseRef.parse(verseStr);
+  }
+
+  isAssignedToOtherUser(currentUserId: string, paratextProjectUsers: ParatextUserProfile[]): boolean {
+    switch (this.data?.assignment) {
+      case AssignedUsers.TeamUser:
+      case AssignedUsers.Unspecified:
+      case undefined:
+        return false;
+    }
+    const ptUser: ParatextUserProfile | undefined = paratextProjectUsers?.find(
+      user => user.opaqueUserId === this.data?.assignment
+    );
+    return ptUser?.sfUserId !== currentUserId;
   }
 
   notesInOrderClone(notes: Note[]): Note[] {
