@@ -34,6 +34,7 @@ export interface NoteDialogData {
 })
 export class NoteDialogComponent implements OnInit {
   showSegmentText: boolean = false;
+  private isAssignedToOtherUser: boolean = false;
   private threadDoc?: NoteThreadDoc;
   private projectProfileDoc?: SFProjectProfileDoc;
   private textDoc?: TextDoc;
@@ -55,6 +56,10 @@ export class NoteDialogComponent implements OnInit {
       const projectDoc: SFProjectDoc | undefined = await this.projectService.tryGetForRole(this.projectId, userRole);
       if (projectDoc != null && projectDoc.data?.paratextUsers != null) {
         this.paratextProjectUsers = projectDoc.data.paratextUsers;
+        this.isAssignedToOtherUser = this.threadDoc.isAssignedToOtherUser(
+          this.userService.currentUserId,
+          this.paratextProjectUsers
+        );
       }
     }
   }
@@ -67,7 +72,7 @@ export class NoteDialogComponent implements OnInit {
     if (this.threadDoc?.data == null) {
       return '';
     }
-    return this.threadDoc.icon.url;
+    return this.isAssignedToOtherUser ? this.threadDoc.iconGrayed.url : this.threadDoc.icon.url;
   }
 
   get isRtl(): boolean {
