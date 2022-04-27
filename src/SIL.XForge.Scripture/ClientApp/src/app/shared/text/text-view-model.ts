@@ -4,6 +4,7 @@ import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils
 import { Subscription } from 'rxjs';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { containsInvalidOp, VERSE_FROM_SEGMENT_REF_REGEX } from '../utils';
+import { getAttributesAtPosition } from './quill-scripture';
 import { USFM_STYLE_DESCRIPTIONS } from './usfm-style-descriptions';
 
 const PARA_STYLES: Set<string> = new Set<string>([
@@ -722,7 +723,7 @@ export class TextViewModel {
         }
         previousOp = 'delete';
       } else if (cloneOp.insert != null) {
-        cloneOp.attributes = this.getAttributesAtPosition(editorStartPos);
+        cloneOp.attributes = getAttributesAtPosition(this.checkEditor(), editorStartPos);
         previousOp = 'insert';
       }
       (adjustedDelta as any).push(cloneOp);
@@ -753,22 +754,5 @@ export class TextViewModel {
       }
     }
     return embeddedElementsCount;
-  }
-
-  private getAttributesAtPosition(editorPosition: number): StringMap {
-    const editor: Quill = this.checkEditor();
-    // The format of the insertion point may only contain the block level formatting,
-    // the format classes and other information we get from the character following the insertion point
-    const insertionFormat: StringMap = editor.getFormat(editorPosition);
-    const characterFormat: StringMap = editor.getFormat(editorPosition, 1);
-    if (characterFormat['segment'] != null) {
-      for (const key of Object.keys(characterFormat)) {
-        // we ignore text anchor formatting because we cannot depend on the character format to tell us if it is needed
-        if (key !== 'text-anchor') {
-          insertionFormat[key] = characterFormat[key];
-        }
-      }
-    }
-    return insertionFormat;
   }
 }

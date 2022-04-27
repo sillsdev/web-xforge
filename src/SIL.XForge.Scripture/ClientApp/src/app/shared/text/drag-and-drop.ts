@@ -1,4 +1,6 @@
-import Quill, { RangeStatic } from 'quill';
+import Quill, { DeltaOperation, RangeStatic, StringMap } from 'quill';
+import { Delta } from '../../core/models/text-doc';
+import { getAttributesAtPosition } from './quill-scripture';
 import { TextComponent } from './text.component';
 
 export interface DragAndDropOptions {
@@ -104,7 +106,15 @@ export class DragAndDrop {
       setTimeout(() => {
         quill.setSelection(insertionPositionInDocument, 0);
         setTimeout(() => {
-          quill.insertText(insertionPositionInDocument, newText, 'user');
+          const attr: StringMap = getAttributesAtPosition(quill, insertionPositionInDocument);
+          const insertionOps: DeltaOperation[] = [
+            { retain: insertionPositionInDocument },
+            { insert: newText, attributes: attr }
+          ];
+          const insertionDelta = new Delta(insertionOps);
+          // use updateContents() instead of insertText() to ensure that we do not mistakenly include underline format
+          // when dropping text before a note emb
+          quill.updateContents(insertionDelta, 'user');
           setTimeout(() => {
             // If we inserted into a blank segment, and let SF respond by removing the blank in between our quill
             // changes, then the position needs to move back by 1 to select the inserted text.
