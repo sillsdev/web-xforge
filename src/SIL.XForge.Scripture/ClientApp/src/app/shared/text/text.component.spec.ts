@@ -884,13 +884,13 @@ describe('TextComponent', () => {
       // Watch insert, delete, and set selction activity and record their call counts.
       const setSelectionSpy: jasmine.Spy<any> = spyOn<any>(env.component.editor!, 'setSelection').and.callThrough();
       const deleteTextSpy: jasmine.Spy<any> = spyOn<any>(env.component.editor!, 'deleteText').and.callThrough();
-      const insertTextSpy: jasmine.Spy<any> = spyOn<any>(env.component.editor!, 'insertText').and.callThrough();
+      const updateContentSpy: jasmine.Spy<any> = spyOn<any>(env.component.editor!, 'updateContents').and.callThrough();
 
       // Call counts of various quill methods, at times when TextComponent.updated emits are received by subscribers.
       const quillCallCountsAtUpdateFirings: {
         setSelectionCalls: number;
         deleteTextCalls: number;
-        insertTextCalls: number;
+        updateContentsCalls: number;
       }[] = [];
       const updatedSubscription: Subscription = env.component.updated.subscribe(() => {
         // Record call counts at the time of the 'updated' event.
@@ -899,7 +899,7 @@ describe('TextComponent', () => {
         quillCallCountsAtUpdateFirings.push({
           setSelectionCalls: setSelectionSpy.calls.count(),
           deleteTextCalls: deleteTextSpy.calls.count(),
-          insertTextCalls: insertTextSpy.calls.count()
+          updateContentsCalls: updateContentSpy.calls.count()
         });
       });
 
@@ -929,31 +929,31 @@ describe('TextComponent', () => {
 
       // For the following expect, setSelection may have been called before we get to our deleteText, or
       // maybe as part of processing it. But significantly in the following expect() is that TextComponent.updated
-      // fired after delete and before more setSelection or insertText calls.
+      // fired after delete and before more setSelection or updateContents calls.
       expect(quillCallCountsAtUpdateFirings).toContain({
         setSelectionCalls: 1,
         deleteTextCalls: 1,
-        insertTextCalls: 0
+        updateContentsCalls: 0
       });
       // Then setSelection is called.
       expect(quillCallCountsAtUpdateFirings).toContain({
         setSelectionCalls: 2,
         deleteTextCalls: 1,
-        insertTextCalls: 0
+        updateContentsCalls: 0
       });
       // Then insertText is called. Also setSelection must be getting called elsewhere as well. But importantly,
-      // insertTextCalls increased.
+      // updateContentsCalls increased.
       expect(quillCallCountsAtUpdateFirings).toContain({
-        setSelectionCalls: 5,
+        setSelectionCalls: 4,
         deleteTextCalls: 1,
-        insertTextCalls: 1
+        updateContentsCalls: 2
       });
       // Then setSelection is called. It may not be as significant that the selecting of the inserted text is
       // interleaved with TextComponent.updated events, but it is in case.
       expect(quillCallCountsAtUpdateFirings).toContain({
-        setSelectionCalls: 6,
+        setSelectionCalls: 5,
         deleteTextCalls: 1,
-        insertTextCalls: 1
+        updateContentsCalls: 2
       });
 
       // origin segment lost the text
@@ -1281,6 +1281,44 @@ describe('TextComponent', () => {
       // After text is dragged, the new selection should be the inserted text.
       expect(resultingSelection.index).toEqual(desiredSelectionStart);
       expect(resultingSelection.length).toEqual(desiredSelectionLength);
+    }));
+
+    it('only underlines text inserted within text anchor', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+      env.embedNoteAtVerse(1);
+      tick();
+
+      let verse1Segment = env.component.editor!.container.querySelector('usx-segment[data-segment="verse_1_1"]')!;
+      let textAnchorContent: string = verse1Segment.querySelector('display-text-anchor')!.textContent!;
+      const expected = 'chapter';
+      expect(textAnchorContent.trim()).toEqual(expected);
+
+      const elementDropTarget: Element = env.component.editor!.container.querySelector(
+        'usx-segment[data-segment="verse_1_1"'
+      )!;
+      const specificNodeDropTarget: ChildNode = elementDropTarget.childNodes[0]!;
+      const insertText = 'abc';
+      const dataTransfer = new DataTransfer();
+      dataTransfer.setData('text/plain', insertText);
+      dataTransfer.setData('text/html', `<span background="white">${insertText}</span>`);
+
+      const dropEvent = new MockDragEvent('drop', { dataTransfer, cancelable: true });
+      dropEvent.setTarget(elementDropTarget);
+      const textBeforeDrop = 'target: ';
+      const dropDistanceIn = textBeforeDrop.length;
+
+      document.caretRangeFromPoint = (_x: number, _y: number) =>
+        ({ startOffset: dropDistanceIn, startContainer: specificNodeDropTarget as Node } as Range);
+      env.component.editor!.container.dispatchEvent(dropEvent);
+      flush();
+      env.fixture.detectChanges();
+
+      verse1Segment = env.component.editor!.container.querySelector('usx-segment[data-segment="verse_1_1"]')!;
+      textAnchorContent = verse1Segment.querySelector('display-text-anchor')!.textContent!;
+      expect(textAnchorContent.trim()).toEqual(expected);
     }));
 
     it('can drag-and-drop correctly near figure', fakeAsync(() => {
@@ -1793,10 +1831,7 @@ describe('TextComponent', () => {
         startEditorPosInSegment: editorLengthOfThreadIcon,
         editorLength: textToMove.length
       };
-      // It would make sense to here expect `['display-text-anchor', '#text']`, but initially, the target usx-segment
-      // element will be left with the display-text-anchor element alone, and a new usx-segment will be
-      // created with the text node.
-      const expectedTopLevelNodeSeriesAfterEvent: string[] = ['display-text-anchor'];
+      const expectedTopLevelNodeSeriesAfterEvent: string[] = ['display-text-anchor', '#text'];
 
       const env = new TestEnvironment({ chapterNum, textDoc });
 
