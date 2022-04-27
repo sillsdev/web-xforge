@@ -33,7 +33,7 @@ export class AuthHttpInterceptor implements HttpInterceptor {
     }
     // Add access token to the request header
     const authReq = req.clone({
-      headers: req.headers.set('Authorization', 'Bearer ' + this.authService.accessToken)
+      headers: req.headers.set('Authorization', 'Bearer ' + (await this.authService.getAccessToken()))
     });
     return await next.handle(authReq).toPromise();
   }
