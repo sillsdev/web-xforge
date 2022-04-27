@@ -58,7 +58,11 @@ describe('NoteDialogComponent', () => {
   }));
 
   let env: TestEnvironment;
-  afterEach(fakeAsync(() => env.closeDialog()));
+  afterEach(fakeAsync(() => {
+    if (env.dialogContentArea != null) {
+      env.closeDialog();
+    }
+  }));
 
   it('show selected text and toggle visibility of related segment', fakeAsync(() => {
     env = new TestEnvironment();
@@ -356,6 +360,70 @@ describe('NoteDialogComponent', () => {
       TestEnvironment.paratextUsers.find(u => u.sfUserId === 'user01')!.username
     );
     expect(env.notes[1].nativeElement.querySelector('.assigned-user').textContent).toContain('Team');
+  }));
+
+  it('shows correct coloured icon based on assignment', fakeAsync(() => {
+    const currentUserId = 'user01';
+    const defaultIcon = 'flag02.png';
+    const grayIcon = 'flag04.png';
+    const assigned: { assigned?: AssignedUsers | string; expectedIcon: string }[] = [
+      {
+        assigned: undefined,
+        expectedIcon: defaultIcon
+      },
+      {
+        assigned: AssignedUsers.TeamUser,
+        expectedIcon: defaultIcon
+      },
+      {
+        assigned: AssignedUsers.Unspecified,
+        expectedIcon: defaultIcon
+      },
+      {
+        assigned: 'opaqueuser01', // Current user
+        expectedIcon: defaultIcon
+      },
+      {
+        assigned: 'opaqueuser02', // Another user
+        expectedIcon: grayIcon
+      }
+    ];
+    const noteThread: NoteThread = {
+      originalContextBefore: '',
+      originalContextAfter: '',
+      originalSelectedText: '',
+      dataId: 'thread01',
+      ownerRef: 'user01',
+      position: { start: 0, length: 0 },
+      projectRef: TestEnvironment.PROJECT01,
+      tagIcon: 'flag02',
+      verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 },
+      status: NoteStatus.Todo,
+      assignment: AssignedUsers.TeamUser,
+      notes: [
+        {
+          dataId: 'note01',
+          type: NoteType.Normal,
+          conflictType: NoteConflictType.DefaultValue,
+          threadId: 'thread01',
+          content: 'thread01',
+          extUserId: 'user01',
+          deleted: false,
+          ownerRef: 'user01',
+          status: NoteStatus.Todo,
+          dateCreated: '',
+          dateModified: ''
+        }
+      ]
+    };
+    for (const assignment of assigned) {
+      noteThread.assignment = assignment.assigned;
+      env = new TestEnvironment({ noteThread, currentUserId });
+      expect(env.component.flagIcon)
+        .withContext(assignment.assigned ?? 'Unassigned')
+        .toEqual('/assets/icons/TagIcons/' + assignment.expectedIcon);
+      env.closeDialog();
+    }
   }));
 
   it('hides assigned user for non-paratext users', fakeAsync(() => {
