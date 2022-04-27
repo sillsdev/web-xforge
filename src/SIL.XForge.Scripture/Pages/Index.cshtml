@@ -4,22 +4,20 @@
 @inject IHtmlLocalizer<SharedResource> SharedLocalizer
 @model IndexModel
 @section scripts {
-<script src="https://cdn.auth0.com/js/auth0/9.16/auth0.min.js"></script>
+<script src="https://cdn.auth0.com/js/auth0-spa-js/1.12/auth0-spa-js.production.js"></script>
 <script type="text/javascript">
-    var webAuth = new auth0.WebAuth({
-        clientID: '@ViewData["ClientId"]',
+    var webAuth = new Auth0Client({
+        client_id: '@ViewData["ClientId"]',
         domain: '@ViewData["Domain"]',
-        responseType: 'token id_token',
-        redirectUri: window.location.origin + '/projects',
+        redirect_uri: window.location.origin + '/callback',
         scope: 'openid profile email @ViewData["Scope"]',
-        audience: '@ViewData["Audience"]'
+        audience: '@ViewData["Audience"]',
+        cacheLocation: 'localstorage',
+        useRefreshTokens: true
     });
-    webAuth.checkSession({}, function (err, authResult) {
-        if (!err) {
-            var options = { state: JSON.stringify({}) };
-            webAuth.authorize(options);
-        }
-    });
+    webAuth.getTokenSilently().then(() => {
+        window.location.href = "/projects";
+    }).catch(() => { });
 </script>
 }
 
@@ -82,7 +80,7 @@
                             "</span>",
                             "<a href=\"https://paratext.org/\" rel=\"noopener noreferrer\" target=\"_blank\">", "</a>",
                             "<a href=\"https://paratext.org/features/translation-notes-and-comments/\" " +
-                                "rel=\"noopener noreferrer\" target=\"_blank\">"
+                            "rel=\"noopener noreferrer\" target=\"_blank\">"
                             ]))</p>
                     </div>
                     <div class="about-feature">

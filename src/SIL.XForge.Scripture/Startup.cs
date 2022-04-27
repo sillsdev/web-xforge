@@ -53,6 +53,7 @@ namespace SIL.XForge.Scripture
         };
         private static readonly HashSet<string> SpaGetRoutes = new HashSet<string>
         {
+            "callback",
             "connect-project",
             "login",
             "projects",
