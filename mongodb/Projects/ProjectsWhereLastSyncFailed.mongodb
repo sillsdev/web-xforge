@@ -30,6 +30,7 @@ projects.sort((a, b) => b.lastSyncTime - a.lastSyncTime);
 
 console.log(projects.length + " projects:");
 for (const project of projects) {
-  console.log(new Date(project.lastSyncTime).toUTCString() + ' ' + project.shortName)
+  const time = new Date(project.lastSyncTime).toUTCString();
+  console.log(`${time} ${project._id} ${project.shortName}`);
 }
 projects;
