@@ -1,7 +1,6 @@
 import merge from 'lodash-es/merge';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { ProjectRole } from 'realtime-server/lib/esm/common/models/project-role';
-import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { combineLatest, Observable, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import XRegExp from 'xregexp';
@@ -43,7 +42,8 @@ export abstract class ProjectService<
 
   onlineQuery(
     term$: Observable<string>,
-    queryParameters$: Observable<QueryParameters>
+    queryParameters$: Observable<QueryParameters>,
+    termMatchProperties: string[]
   ): Observable<RealtimeQuery<TDoc>> {
     const debouncedTerm$ = term$.pipe(debounceTime(400), distinctUntilChanged());
 
@@ -53,7 +53,7 @@ export abstract class ProjectService<
         let filters: Filters = {};
         if (term.length > 0) {
           filters = {
-            [obj<Project>().pathStr(p => p.name)]: { $regex: `.*${term}.*`, $options: 'i' }
+            $or: termMatchProperties.map(prop => ({ [prop]: { $regex: term, $options: 'i' } }))
           };
         }
         return this.realtimeService.onlineQuery<TDoc>(this.collection, merge(filters, queryParameters));
