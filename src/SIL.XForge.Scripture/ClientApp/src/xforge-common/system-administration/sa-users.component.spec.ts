@@ -4,6 +4,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
+import { escapeRegExp } from 'lodash-es';
 import merge from 'lodash-es/merge';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
@@ -14,7 +15,6 @@ import { switchMap } from 'rxjs/operators';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
-import XRegExp from 'xregexp';
 import { environment } from '../../environments/environment';
 import { AvatarTestingModule } from '../avatar/avatar-testing.module';
 import { ProjectDoc } from '../models/project-doc';
@@ -179,7 +179,7 @@ class TestEnvironment {
         combineLatest([term$, parameters$, reload$]).pipe(
           switchMap(([term, queryParameters]) => {
             const filters: Filters = {
-              [obj<User>().pathStr(u => u.name)]: { $regex: `.*${XRegExp.escape(term)}.*`, $options: 'i' }
+              [obj<User>().pathStr(u => u.name)]: { $regex: `.*${escapeRegExp(term)}.*`, $options: 'i' }
             };
             return from(this.realtimeService.onlineQuery<UserDoc>(UserDoc.COLLECTION, merge(filters, queryParameters)));
           })
