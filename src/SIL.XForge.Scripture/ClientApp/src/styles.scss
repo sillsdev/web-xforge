@@ -1,6 +1,9 @@
 @use 'variables';
 
-@use '@material/theme' with ($primary: variables.$mdc-theme-primary, $secondary: variables.$mdc-theme-secondary);
+@use '@material/theme' with (
+  $primary: variables.$mdc-theme-primary,
+  $secondary: variables.$mdc-theme-secondary
+);
 
 @use '@material/theme/variables' as theme-variables;
 
