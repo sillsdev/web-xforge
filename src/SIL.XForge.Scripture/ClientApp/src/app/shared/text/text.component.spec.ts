@@ -941,7 +941,7 @@ describe('TextComponent', () => {
         deleteTextCalls: 1,
         updateContentsCalls: 0
       });
-      // Then insertText is called. Also setSelection must be getting called elsewhere as well. But importantly,
+      // Then updateContents is called. Also setSelection must be getting called elsewhere as well. But importantly,
       // updateContentsCalls increased.
       expect(quillCallCountsAtUpdateFirings).toContain({
         setSelectionCalls: 4,
@@ -1283,7 +1283,7 @@ describe('TextComponent', () => {
       expect(resultingSelection.length).toEqual(desiredSelectionLength);
     }));
 
-    it('only underlines text inserted within text anchor', fakeAsync(() => {
+    it('dropped text does not acquire underline formatting from a following anchor', fakeAsync(() => {
       const env = new TestEnvironment();
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
@@ -1297,7 +1297,7 @@ describe('TextComponent', () => {
       expect(textAnchorContent.trim()).toEqual(expected);
 
       const elementDropTarget: Element = env.component.editor!.container.querySelector(
-        'usx-segment[data-segment="verse_1_1"'
+        'usx-segment[data-segment="verse_1_1"]'
       )!;
       const specificNodeDropTarget: ChildNode = elementDropTarget.childNodes[0]!;
       const insertText = 'abc';
@@ -1743,12 +1743,6 @@ describe('TextComponent', () => {
       // Some segments contain only a usx-blank. But usx-blank elements can also be accompanied by other pieces of
       // data in the text doc or in the DOM, such as a newline character or a display-text-anchor element (anchored
       // over an empty string).
-      // It is possible for segment containing a display-text-anchor and usx-blank to be represented in the
-      // DOM as children in the same usx-segment element, or as children in distinct usx-segment elements
-      // (both with the same data-segment segment ref value). This test is for the case of the
-      // display-text-anchor and usx-blank being in the same usx-segment element. The resulting DOM after
-      // the drop will be two usx-segment elements, one with the display-text-anchor and one with a text node
-      // containing the dropped text.
 
       // The user drags to the usx-blank element. Text is dropped immediately after the usx-blank element (which
       // then disappears).

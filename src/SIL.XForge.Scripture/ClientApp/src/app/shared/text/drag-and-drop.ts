@@ -113,7 +113,7 @@ export class DragAndDrop {
           ];
           const insertionDelta = new Delta(insertionOps);
           // use updateContents() instead of insertText() to ensure that we do not mistakenly include underline format
-          // when dropping text before a note emb
+          // when dropping text before a note embed
           quill.updateContents(insertionDelta, 'user');
           setTimeout(() => {
             // If we inserted into a blank segment, and let SF respond by removing the blank in between our quill
