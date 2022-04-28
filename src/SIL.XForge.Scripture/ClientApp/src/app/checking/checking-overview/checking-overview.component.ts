@@ -396,7 +396,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       userId: this.userService.currentUserId,
       textsByBookId: this.textsByBookId
     };
-    this.matDialog.open(ImportQuestionsDialogComponent, { data });
+    this.matDialog.open(ImportQuestionsDialogComponent, { data, autoFocus: false });
   }
 
   getBookName(text: TextInfo): string {
