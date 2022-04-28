@@ -197,6 +197,10 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
     return this.filteredList.some(item => item.checked && item.sfVersionOfQuestion != null);
   }
 
+  get showCloseIcon(): boolean {
+    return this.status === 'initial' || this.status === 'loading';
+  }
+
   ngOnDestroy(): void {
     super.ngOnDestroy();
     this.promiseForQuestionDocQuery.then(query => query.dispose());

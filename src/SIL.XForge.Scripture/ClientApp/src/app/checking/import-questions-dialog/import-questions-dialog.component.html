@@ -5,6 +5,7 @@
         ? t("import_questions")
         : t("import_progress", { completed: importedCount, total: toImportCount })
     }}
+    <button *ngIf="showCloseIcon" mat-icon-button mat-dialog-close><mat-icon>close</mat-icon></button>
   </h2>
   <mat-dialog-content class="mat-typography">
     <div *ngIf="status === 'file_import_errors'" class="dialog-content-header">

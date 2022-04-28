@@ -398,6 +398,13 @@ describe('ImportQuestionsDialogComponent', () => {
     env.click(env.importFromTransceleratorButton);
     env.click(env.cancelButton);
   }));
+
+  it('has a close button on the initial view', fakeAsync(() => {
+    const env = new TestEnvironment();
+    expect(env.overlayContainerElement.hasChildNodes()).toBeTrue();
+    env.click(env.closeButton);
+    expect(env.overlayContainerElement.hasChildNodes()).withContext('close button closes dialog').toBeFalse();
+  }));
 });
 
 @Directive({
