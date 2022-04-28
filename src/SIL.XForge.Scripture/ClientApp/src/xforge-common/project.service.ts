@@ -1,9 +1,8 @@
-import merge from 'lodash-es/merge';
+import { escapeRegExp, merge } from 'lodash-es';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { ProjectRole } from 'realtime-server/lib/esm/common/models/project-role';
 import { combineLatest, Observable, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
-import XRegExp from 'xregexp';
 import { CommandService } from './command.service';
 import { ProjectDoc } from './models/project-doc';
 import { NONE_ROLE, ProjectRoleInfo } from './models/project-role-info';
@@ -49,7 +48,7 @@ export abstract class ProjectService<
 
     return combineLatest([debouncedTerm$, queryParameters$]).pipe(
       switchMap(([term, queryParameters]) => {
-        term = XRegExp.escape(term.trim());
+        term = escapeRegExp(term.trim());
         let filters: Filters = {};
         if (term.length > 0) {
           filters = {
