@@ -1,11 +1,11 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Injectable } from '@angular/core';
+import { escapeRegExp } from 'lodash-es';
 import merge from 'lodash-es/merge';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { combineLatest, from, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
-import XRegExp from 'xregexp';
 import { AuthService } from './auth.service';
 import { CommandService } from './command.service';
 import { EditNameDialogComponent, EditNameDialogResult } from './edit-name-dialog/edit-name-dialog.component';
@@ -72,7 +72,7 @@ export class UserService {
 
     return combineLatest([debouncedTerm$, queryParameters$, reload$]).pipe(
       switchMap(([term, queryParameters]) => {
-        term = XRegExp.escape(term.trim());
+        term = escapeRegExp(term.trim());
         let filters: Filters = {};
         if (term.length > 0) {
           filters = {
