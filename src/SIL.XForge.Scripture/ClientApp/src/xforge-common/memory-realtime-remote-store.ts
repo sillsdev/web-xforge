@@ -3,6 +3,7 @@ import isEqual from 'lodash-es/isEqual';
 import * as OTJson0 from 'ot-json0';
 import { EMPTY, Subject } from 'rxjs';
 import { OTType, types } from 'sharedb/lib/client';
+import { Callback, LocalPresence, Presence } from 'sharedb/lib/sharedb';
 import { Snapshot } from './models/snapshot';
 import { performQuery, QueryParameters } from './query-parameters';
 import { RealtimeDocAdapter, RealtimeQueryAdapter, RealtimeRemoteStore } from './realtime-remote-store';
@@ -61,13 +62,24 @@ export class MemoryRealtimeRemoteStore extends RealtimeRemoteStore {
  */
 export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
   readonly pendingOps: any[] = [];
-  subscribed: boolean = false;
-  version: number = -1;
   readonly changes$ = new Subject<any>();
   readonly remoteChanges$ = new Subject<any>();
   readonly create$ = new Subject<void>();
   readonly delete$ = new Subject<void>();
   readonly idle$ = EMPTY;
+  readonly docPresence: Presence = {
+    subscribe: (_callback?: Callback) => {},
+    unsubscribe: (_callback?: Callback) => {},
+    create: (_id?: string) =>
+      ({
+        submit: (_value: any, _callback?: Callback) => {}
+      } as LocalPresence),
+    destroy: (_callback?: Callback) => {},
+    on: (_event: string, _handler: Function) => {},
+    off: (_event: string, _handler: Function) => {}
+  } as Presence;
+  subscribed: boolean = false;
+  version: number = -1;
   private _previousSnapshot: Snapshot;
 
   constructor(

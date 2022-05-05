@@ -1305,6 +1305,7 @@ describe('CheckingComponent', () => {
         );
         tick(env.questionReadTimer);
         env.fixture.detectChanges();
+        flush();
         expect(env.getAnswerComments(0).length).toEqual(1);
         expect(env.component.projectUserConfigDoc!.data!.commentRefsRead.includes(commentId)).toBe(true);
       }));
@@ -1817,6 +1818,7 @@ class TestEnvironment {
     button.nativeElement.click();
     flush();
     this.fixture.detectChanges();
+    flush();
   }
 
   commentOnAnswer(answerIndex: number, comment: string): void {
@@ -1973,6 +1975,7 @@ class TestEnvironment {
   waitForSliderUpdate(): void {
     tick(100);
     this.fixture.detectChanges();
+    flush();
   }
 
   insertQuestion(newQuestion: Question): void {
@@ -2021,8 +2024,8 @@ class TestEnvironment {
       answer => answer.ownerRef === userId
     )[0];
     this.component.answersPanel!.deleteAnswer(usersAnswer);
-    flush();
     this.fixture.detectChanges();
+    flush();
   }
 
   /** Delete answer by id behind the scenes */
@@ -2033,8 +2036,8 @@ class TestEnvironment {
 
     questionDoc.submitJson0Op(op => op.remove(q => q.answers, answerIndex));
 
-    flush();
     this.fixture.detectChanges();
+    flush();
   }
 
   simulateNewRemoteAnswer(dataId: string = 'newAnswer1', text: string = 'new answer from another user') {
@@ -2062,6 +2065,7 @@ class TestEnvironment {
     );
     tick(this.questionReadTimer);
     this.fixture.detectChanges();
+    flush();
   }
 
   simulateRemoteEditQuestionAudio(filename?: string, questionId?: string): void {
@@ -2082,6 +2086,7 @@ class TestEnvironment {
     const questionDoc = this.getQuestionDoc(questionId);
     questionDoc.submitJson0Op(op => op.remove(q => q.answers, answerIndex), false);
     this.fixture.detectChanges();
+    flush();
   }
 
   simulateRemoteEditAnswer(index: number, text: string): void {
@@ -2092,6 +2097,7 @@ class TestEnvironment {
     }, false);
     tick(this.questionReadTimer);
     this.fixture.detectChanges();
+    flush();
   }
 
   simulateSync(index: number): void {
@@ -2101,6 +2107,7 @@ class TestEnvironment {
     }, false);
     tick(this.questionReadTimer);
     this.fixture.detectChanges();
+    flush();
   }
 
   private setRouteSnapshot(bookId: string) {

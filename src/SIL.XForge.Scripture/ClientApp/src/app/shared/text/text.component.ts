@@ -17,6 +17,7 @@ import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources } from 'quill'
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { fromEvent } from 'rxjs';
+import { LocalPresence } from 'sharedb/lib/sharedb';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -352,6 +353,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   get embeddedElements(): Readonly<Map<string, number>> {
     return this.viewModel.embeddedElements;
+  }
+
+  get localPresence(): LocalPresence<PresenceData> | undefined {
+    return this.viewModel.localPresence;
   }
 
   private get contentShowing(): boolean {
