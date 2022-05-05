@@ -4,13 +4,14 @@ import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { TranslocoService } from '@ngneat/transloco';
 import Quill, { RangeStatic } from 'quill';
+import QuillCursors from 'quill-cursors';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, Subscription } from 'rxjs';
-import { anything, mock, when } from 'ts-mockito';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -19,20 +20,23 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { MockConsole } from 'xforge-common/mock-console';
+import { UserDoc } from 'xforge-common/models/user-doc';
+import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../shared.module';
 import { getCombinedVerseTextDoc, getSFProject, getTextDoc } from '../test-utils';
-import { MockConsole } from '../../../xforge-common/mock-console';
 import { DragAndDrop } from './drag-and-drop';
 import { TextComponent } from './text.component';
 
 const mockedBugsnagService = mock(BugsnagService);
-const mockedTranslocoService = mock(TranslocoService);
 const mockedPwaService = mock(PwaService);
 const mockedProjectService = mock(SFProjectService);
+const mockedTranslocoService = mock(TranslocoService);
+const mockedUserService = mock(UserService);
 const mockedConsole: MockConsole = MockConsole.install();
 
 describe('TextComponent', () => {
@@ -49,8 +53,9 @@ describe('TextComponent', () => {
     ],
     providers: [
       { provide: BugsnagService, useMock: mockedBugsnagService },
+      { provide: PwaService, useMock: mockedPwaService },
       { provide: TranslocoService, useMock: mockedTranslocoService },
-      { provide: PwaService, useMock: mockedPwaService }
+      { provide: UserService, useMock: mockedUserService }
     ]
   }));
   beforeEach(() => {
@@ -94,6 +99,7 @@ describe('TextComponent', () => {
     expect(env.component.editor?.getContents().ops?.length).withContext('setup').toEqual(25);
 
     env.component.editor?.updateContents(new Delta().retain(109).retain(31, { para: null }));
+    flush();
 
     const ops = env.component.editor?.getContents().ops;
     if (ops != null) {
@@ -163,6 +169,66 @@ describe('TextComponent', () => {
     expect(titleSegment.getAttribute('data-style-description')).toEqual('s - Heading - Section Level 1');
     expect(window.getComputedStyle(titleSegment, '::before').content).toEqual('none');
   }));
+
+  describe('MultiCursor Presence', () => {
+    it('should not update presence if something other than the user moves the cursor', fakeAsync(() => {
+      const env: TestEnvironment = new TestEnvironment();
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+      env.fixture.detectChanges();
+      const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
+      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresence, 'submit').and.callThrough();
+
+      env.component.editor?.setSelection(1, 1, 'api');
+
+      tick();
+      expect(onSelectionChangedSpy).toHaveBeenCalledTimes(1);
+      expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(0);
+      verify(mockedUserService.getCurrentUser()).never();
+    }));
+
+    it('should update presence if the user moves the cursor', fakeAsync(() => {
+      const env: TestEnvironment = new TestEnvironment();
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+      env.fixture.detectChanges();
+      const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
+      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresence, 'submit').and.callThrough();
+
+      env.component.editor?.setSelection(1, 1, 'user');
+
+      tick();
+      expect(onSelectionChangedSpy).toHaveBeenCalledTimes(1);
+      expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(1);
+      verify(mockedUserService.getCurrentUser()).once();
+    }));
+
+    it('should clear presence on blur', fakeAsync(() => {
+      const env: TestEnvironment = new TestEnvironment();
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+      env.fixture.detectChanges();
+      const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
+      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresence, 'submit').and.callThrough();
+
+      env.component.onSelectionChanged({ index: 0, length: 0 }, 'user');
+
+      tick();
+      expect(onSelectionChangedSpy).toHaveBeenCalledTimes(1);
+      expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(1);
+      verify(mockedUserService.getCurrentUser()).once();
+
+      env.component.onSelectionChanged(null as unknown as RangeStatic, 'user');
+
+      tick();
+      expect(onSelectionChangedSpy).toHaveBeenCalledTimes(2);
+      expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(2);
+      verify(mockedUserService.getCurrentUser()).once();
+    }));
+  });
 
   describe('drag-and-drop', () => {
     it('inserts externally introduced data in the right place, without formatting or line breaks', fakeAsync(() => {
@@ -881,7 +947,7 @@ describe('TextComponent', () => {
       tick();
       expect(dropEvent.dataTransfer?.types.includes(DragAndDrop.quillIsSourceToken)).toBeTrue();
 
-      // Watch insert, delete, and set selction activity and record their call counts.
+      // Watch insert, delete, and set selection activity and record their call counts.
       const setSelectionSpy: jasmine.Spy<any> = spyOn<any>(env.component.editor!, 'setSelection').and.callThrough();
       const deleteTextSpy: jasmine.Spy<any> = spyOn<any>(env.component.editor!, 'deleteText').and.callThrough();
       const updateContentSpy: jasmine.Spy<any> = spyOn<any>(env.component.editor!, 'updateContents').and.callThrough();
@@ -1310,6 +1376,7 @@ describe('TextComponent', () => {
       const textBeforeDrop = 'target: ';
       const dropDistanceIn = textBeforeDrop.length;
 
+      // eslint-disable-next-line deprecation/deprecation
       document.caretRangeFromPoint = (_x: number, _y: number) =>
         ({ startOffset: dropDistanceIn, startContainer: specificNodeDropTarget as Node } as Range);
       env.component.editor!.container.dispatchEvent(dropEvent);
@@ -2119,7 +2186,13 @@ class MockDragEvent extends DragEvent {
   }
 }
 
-class MockQuill extends Quill {}
+class MockQuill extends Quill {
+  getModule(name: string): any {
+    if (name === 'cursors') {
+      return new QuillCursors(this);
+    }
+  }
+}
 
 @Component({
   selector: 'app-host',
@@ -2179,6 +2252,7 @@ class TestEnvironment {
     when(mockedProjectService.getProfile(anything())).thenCall(() =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01')
     );
+    when(mockedUserService.getCurrentUser()).thenResolve({ data: { displayName: 'name' } } as UserDoc);
 
     this.fixture = TestBed.createComponent(HostComponent);
     this.fixture.detectChanges();
