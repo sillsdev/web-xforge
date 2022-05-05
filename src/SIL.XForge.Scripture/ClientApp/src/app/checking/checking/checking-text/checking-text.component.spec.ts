@@ -10,6 +10,7 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
@@ -18,8 +19,9 @@ import { SharedModule } from '../../../shared/shared.module';
 import { getCombinedVerseTextDoc, getSFProject, getTextDoc } from '../../../shared/test-utils';
 import { CheckingTextComponent } from './checking-text.component';
 
-const mockedSFProjectService = mock(SFProjectService);
 const mockedPwaService = mock(PwaService);
+const mockedSFProjectService = mock(SFProjectService);
+const mockedUserService = mock(UserService);
 
 describe('CheckingTextComponent', () => {
   configureTestingModule(() => ({
@@ -32,8 +34,9 @@ describe('CheckingTextComponent', () => {
       TestTranslocoModule
     ],
     providers: [
+      { provide: PwaService, useMock: mockedPwaService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
-      { provide: PwaService, useMock: mockedPwaService }
+      { provide: UserService, useMock: mockedUserService }
     ]
   }));
 

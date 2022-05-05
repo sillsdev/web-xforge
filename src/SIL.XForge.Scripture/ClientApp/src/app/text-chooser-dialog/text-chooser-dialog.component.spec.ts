@@ -21,6 +21,7 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { UserService } from 'xforge-common/user.service';
 import { CheckingModule } from '../checking/checking.module';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
@@ -28,21 +29,23 @@ import { Delta, TextDoc } from '../core/models/text-doc';
 import { SFProjectService } from '../core/sf-project.service';
 import { TextChooserDialogComponent, TextChooserDialogData, TextSelection } from './text-chooser-dialog.component';
 
-const mockedProjectService = mock(SFProjectService);
 const mockedDocument = mock(Document);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedPwaService = mock(PwaService);
+const mockedProjectService = mock(SFProjectService);
+const mockedUserService = mock(UserService);
 
 describe('TextChooserDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [DialogTestModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: AuthService, useMock: mock(AuthService) },
-      { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: DOCUMENT, useMock: mockedDocument },
       { provide: BugsnagService, useMock: mockedBugsnagService },
+      { provide: DOCUMENT, useMock: mockedDocument },
       { provide: CookieService, useMock: mock(CookieService) },
-      { provide: PwaService, useMock: mockedPwaService }
+      { provide: PwaService, useMock: mockedPwaService },
+      { provide: SFProjectService, useMock: mockedProjectService },
+      { provide: UserService, useMock: mockedUserService }
     ]
   }));
 
