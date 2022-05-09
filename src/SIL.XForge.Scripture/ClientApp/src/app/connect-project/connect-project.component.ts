@@ -11,7 +11,7 @@ import { SFProjectCreateSettings } from '../core/models/sf-project-create-settin
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { ParatextService, SelectableProject } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
-import { projectLabel } from '../shared/utils';
+import { compareProjectsForSorting, projectLabel } from '../shared/utils';
 
 interface ConnectProjectFormValues {
   paratextId: string;
@@ -216,11 +216,12 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     this.state = 'loading';
     this.loadingStarted();
     const resourceFetchPromise = this.fetchResources();
-    this._projects = await this.paratextService.getProjects();
+    const projects = await this.paratextService.getProjects();
 
-    if (this._projects == null) {
+    if (projects == null) {
       this.state = 'login';
     } else {
+      this._projects = projects.sort(compareProjectsForSorting);
       this.targetProjects = this._projects.filter(p => p.isConnectable);
       this.state = 'input';
       await resourceFetchPromise;

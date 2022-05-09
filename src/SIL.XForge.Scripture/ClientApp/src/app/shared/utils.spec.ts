@@ -1,6 +1,7 @@
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DeltaOperation } from 'rich-text';
 import { SelectableProject } from '../core/paratext.service';
-import { containsInvalidOp, projectLabel } from './utils';
+import { compareProjectsForSorting, containsInvalidOp, projectLabel } from './utils';
 
 describe('shared utils', () => {
   describe('projectLabel function', () => {
@@ -66,5 +67,11 @@ describe('shared utils', () => {
       expect(containsInvalidOp([{ insert: 'text', attributes: { segment: 'verse_1_null' } }])).toBeTrue();
       expect(containsInvalidOp([{ insert: 'text', attributes: { segment: 'verse_1_undefined' } }])).toBeTrue();
     });
+  });
+
+  it('compares projects for sorting', () => {
+    const projects = [{ shortName: 'BBB' }, { shortName: 'AAA' }] as SFProject[];
+    projects.sort(compareProjectsForSorting);
+    expect(projects[0].shortName).toBe('AAA');
   });
 });

@@ -110,3 +110,7 @@ export function containsInvalidOp(ops: DeltaOperation[]): boolean {
       (typeof op.attributes?.segment === 'string' && /(?:undefined|null)/.test(op.attributes.segment))
   );
 }
+
+export function compareProjectsForSorting(a: { shortName: string }, b: { shortName: string }): 1 | -1 {
+  return a.shortName < b.shortName ? -1 : 1;
+}
