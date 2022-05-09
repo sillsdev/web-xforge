@@ -1,5 +1,5 @@
-import { MdcDialog } from '@angular-mdc/web/dialog';
 import { Component, Input, OnInit } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { map } from 'rxjs/operators';
@@ -15,7 +15,7 @@ export class ShareComponent implements OnInit {
 
   private projectId?: string;
 
-  constructor(private readonly dialog: MdcDialog, private readonly activatedRoute: ActivatedRoute) {}
+  constructor(private readonly dialog: MatDialog, private readonly activatedRoute: ActivatedRoute) {}
 
   ngOnInit(): void {
     this.activatedRoute.params.pipe(map(params => params['projectId'] as string)).subscribe(async projectId => {
