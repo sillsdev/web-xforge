@@ -574,7 +574,9 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     }
     await Promise.all(promises);
     this.loadingFinished();
-    return projectDocs;
+    return projectDocs.sort((a, b) =>
+      a.data == null || b.data == null ? 0 : SFProjectService.compareProjectsForSorting(a.data, b.data)
+    );
   }
 
   private showProjectDeletedDialog(): void {

@@ -203,4 +203,8 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   async onlineSetUserProjectPermissions(projectId: string, userId: string, permissions: string[]): Promise<void> {
     return (await this.onlineInvoke<void>('setUserProjectPermissions', { projectId, userId, permissions }))!;
   }
+
+  static compareProjectsForSorting(a: { shortName: string }, b: { shortName: string }): 1 | -1 {
+    return a.shortName < b.shortName ? -1 : 1;
+  }
 }

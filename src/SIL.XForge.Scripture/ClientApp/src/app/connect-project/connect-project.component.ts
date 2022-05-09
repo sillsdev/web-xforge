@@ -216,11 +216,12 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     this.state = 'loading';
     this.loadingStarted();
     const resourceFetchPromise = this.fetchResources();
-    this._projects = await this.paratextService.getProjects();
+    const projects = await this.paratextService.getProjects();
 
-    if (this._projects == null) {
+    if (projects == null) {
       this.state = 'login';
     } else {
+      this._projects = projects.sort(SFProjectService.compareProjectsForSorting);
       this.targetProjects = this._projects.filter(p => p.isConnectable);
       this.state = 'input';
       await resourceFetchPromise;
