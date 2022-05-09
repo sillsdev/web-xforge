@@ -104,7 +104,7 @@ export function getI18nLocales(): Locale[] {
     ...locale,
     canonicalTag: locale.tags[0],
     production: !!locale.production,
-    direction: locale['direction'] || 'ltr'
+    direction: locale['direction'] === 'rtl' ? 'rtl' : 'ltr'
   }));
 }
 

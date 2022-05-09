@@ -27,6 +27,12 @@
     "helps": "es"
   },
   {
+    "localName": "العربية",
+    "englishName": "Arabic",
+    "tags": ["ar", "ar-SA"],
+    "direction": "rtl"
+  },
+  {
     "localName": "Русский",
     "englishName": "Russian",
     "tags": ["ru", "ru-RU"],
