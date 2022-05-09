@@ -7,6 +7,7 @@ import {
   TEXT_INDEX_PATHS
 } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { RealtimeDoc } from 'xforge-common/models/realtime-doc';
+import { PresenceData } from '../../shared/text/text-view-model';
 
 export const Delta: new (ops?: DeltaOperation[] | { ops: DeltaOperation[] }) => DeltaStatic = Quill.import('delta');
 
@@ -31,7 +32,7 @@ export class TextDocId {
  * This is the real-time doc for a text doc. Texts contain the textual data for one particular Scripture book
  * and chapter.
  */
-export class TextDoc extends RealtimeDoc<TextData, TextData> {
+export class TextDoc extends RealtimeDoc<TextData, TextData, PresenceData> {
   static readonly COLLECTION = TEXTS_COLLECTION;
   static readonly INDEX_PATHS = TEXT_INDEX_PATHS;
 

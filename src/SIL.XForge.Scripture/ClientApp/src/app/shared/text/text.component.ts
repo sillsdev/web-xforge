@@ -19,6 +19,7 @@ import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils
 import { fromEvent } from 'rxjs';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { UserService } from 'xforge-common/user.service';
 import { getBrowserEngine } from 'xforge-common/utils';
 import { Delta, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -26,7 +27,7 @@ import { NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { VERSE_REGEX } from '../utils';
 import { registerScripture } from './quill-scripture';
 import { Segment } from './segment';
-import { EditorRange, TextViewModel } from './text-view-model';
+import { EditorRange, PresenceData, TextViewModel } from './text-view-model';
 
 const EDITORS = new Set<Quill>();
 
@@ -178,6 +179,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         }
       }
     },
+    cursors: true,
     history: {
       userOnly: true
     },
@@ -201,10 +203,11 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private displayMessage: string = '';
 
   constructor(
+    private readonly changeDetector: ChangeDetectorRef,
     private readonly projectService: SFProjectService,
-    private readonly transloco: TranslocoService,
     private readonly pwaService: PwaService,
-    private readonly changeDetector: ChangeDetectorRef
+    private readonly transloco: TranslocoService,
+    private readonly userService: UserService
   ) {
     super();
   }
@@ -585,8 +588,28 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
   }
 
-  onSelectionChanged(): void {
+  async onSelectionChanged(range: RangeStatic | null, source: string): Promise<void> {
     this.update();
+
+    // We only need to send presence updates if the user moves the cursor themselves. Cursor updates as a result of text
+    // changes will automatically be handled by the remote client.
+    if ((source as Sources) !== 'user') return;
+    // Clear the cursor on blurring.
+    if (!range) {
+      this.viewModel.localPresence?.submit(null as unknown as PresenceData);
+      return;
+    }
+    // In this particular instance, we can send extra information on the presence object. This ability will vary
+    // depending on type.
+    const currentUserDoc = await this.userService.getCurrentUser();
+    const presenceData: PresenceData = {
+      displayName: currentUserDoc.data?.displayName || this.transloco.translate('editor.anonymous'),
+      cursorColor: this.viewModel.cursorColor,
+      range
+    };
+    this.viewModel.localPresence?.submit(presenceData, error => {
+      if (error) throw error;
+    });
   }
 
   clearHighlight(): void {

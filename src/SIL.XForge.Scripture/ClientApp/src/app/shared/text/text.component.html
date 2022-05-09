@@ -8,7 +8,7 @@
   [modules]="modules"
   (onEditorCreated)="onEditorCreated($event)"
   (onContentChanged)="onContentChanged($event.delta, $event.source)"
-  (onSelectionChanged)="onSelectionChanged()"
+  (onSelectionChanged)="onSelectionChanged($event.range, $event.source)"
   [ngClass]="{
     'read-only-editor': readOnlyEnabled,
     'template-editor': !readOnlyEnabled,
