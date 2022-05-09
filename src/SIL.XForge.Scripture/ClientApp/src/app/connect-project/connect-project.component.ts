@@ -6,6 +6,7 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
+import { compareProjectsForSorting } from 'xforge-common/utils';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectCreateSettings } from '../core/models/sf-project-create-settings';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
@@ -216,11 +217,12 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     this.state = 'loading';
     this.loadingStarted();
     const resourceFetchPromise = this.fetchResources();
-    this._projects = await this.paratextService.getProjects();
+    const projects = await this.paratextService.getProjects();
 
-    if (this._projects == null) {
+    if (projects == null) {
       this.state = 'login';
     } else {
+      this._projects = projects.sort(compareProjectsForSorting);
       this.targetProjects = this._projects.filter(p => p.isConnectable);
       this.state = 'input';
       await resourceFetchPromise;

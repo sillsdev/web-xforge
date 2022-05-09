@@ -123,3 +123,7 @@ export function getLinkHTML(text: string, href: string) {
   a.textContent = text;
   return a.outerHTML;
 }
+
+export function compareProjectsForSorting(a: { shortName: string }, b: { shortName: string }): 1 | -1 {
+  return a.shortName < b.shortName ? -1 : 1;
+}

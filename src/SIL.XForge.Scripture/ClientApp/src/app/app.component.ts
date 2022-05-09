@@ -32,7 +32,7 @@ import {
   SupportedBrowsersDialogComponent
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { UserService } from 'xforge-common/user.service';
-import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
+import { compareProjectsForSorting, issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
 import { QuestionDoc } from './core/models/question-doc';
@@ -574,7 +574,9 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     }
     await Promise.all(promises);
     this.loadingFinished();
-    return projectDocs;
+    return projectDocs.sort((a, b) =>
+      a.data == null || b.data == null ? 0 : compareProjectsForSorting(a.data, b.data)
+    );
   }
 
   private showProjectDeletedDialog(): void {
