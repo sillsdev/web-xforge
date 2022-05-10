@@ -9,6 +9,7 @@ import { MetadataDB } from './metadata-db';
 import { RealtimeServer, RealtimeServerConstructor } from './realtime-server';
 import { SchemaVersionRepository } from './schema-version-repository';
 import { WebSocketStreamListener } from './web-socket-stream-listener';
+import './diagnostics';
 
 ShareDB.types.register(RichText.type);
 ShareDB.types.register(OTJson0.type);
