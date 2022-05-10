@@ -1,0 +1,45 @@
+use('xforge');
+
+const minAnswers = 10;
+
+db.questions.aggregate([
+  // find questions that have the answers property
+  {$match: {
+    answers: { $exists: true }
+  }},
+  // strip out all fields except projectRef, and add an answerCount property
+  {$project: {
+    answerCount: { $size: '$answers' },
+    projectRef: 1
+  }},
+  // group the questions by projectRef, and sum the total answers from each project
+  {$group: {
+    _id: '$projectRef',
+    totalAnswers: { $sum: '$answerCount' }
+  }},
+  // filter out any projects that have fewer than minAnswers
+  {$match: {
+    totalAnswers: {$gte: minAnswers}
+  }},
+  // sort by the number of answers, descending
+  {$sort: {
+    totalAnswers: -1
+  }},
+  // lookup the project associated with the project id, and add it as a property
+  {$lookup: {
+    from: 'sf_projects',
+    localField: '_id',
+    foreignField: '_id',
+    as: 'project'
+  }},
+  // $lookup adds an array of projects with one result; change from an array to a single property
+  {$unwind: {
+    path: '$project'
+  }},
+  // only keep the values we're looking for
+  {$project: {
+    shortName: '$project.shortName',
+    name: '$project.name',
+    totalAnswers: 1,
+  }}
+]);
