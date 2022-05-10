@@ -1,0 +1,32 @@
+use("xforge");
+
+// Find projects that have a text that has had at least 100 edits over all time, and has been edited in the last 30 days
+
+const daysAgo = 30;
+const minEdits = 100;
+
+const startTime = new Date().getTime() - (daysAgo * 60 * 60 * 24 * 1000);
+
+const texts = db.texts.find({ "_m.mtime": { $gt: startTime }, _v: { $gte: minEdits } }, { _id: 1 }).toArray();
+
+const unique = [];
+
+let projectIds = texts.map(text => text._id.split(":")[0]);
+
+for (const id of projectIds) {
+  if (!unique.includes(id)) {
+    unique.push(id);
+  }
+}
+
+console.log(unique.join("\n"));
+
+// Once the server reaches Mongo 5 we can just do:
+// db.texts.aggregate([
+//   {$match: {
+//     '_m.mtime': { $gt: startTime }, _v: { $gte: minEdits }
+//   }},
+//   {$group: {
+//     _id: {$first: { $split: ["$_id", ":"] } }
+//   }}
+// ])
