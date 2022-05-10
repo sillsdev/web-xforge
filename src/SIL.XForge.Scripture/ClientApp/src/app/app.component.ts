@@ -41,7 +41,7 @@ import { canAccessTranslateApp } from './core/models/sf-project-role-info';
 import { SFProjectService } from './core/sf-project.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
 import { SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
-import { projectLabel } from './shared/utils';
+import { compareProjectsForSorting, projectLabel } from './shared/utils';
 
 declare function gtag(...args: any): void;
 
@@ -574,7 +574,9 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     }
     await Promise.all(promises);
     this.loadingFinished();
-    return projectDocs;
+    return projectDocs.sort((a, b) =>
+      a.data == null || b.data == null ? 0 : compareProjectsForSorting(a.data, b.data)
+    );
   }
 
   private showProjectDeletedDialog(): void {
