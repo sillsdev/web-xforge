@@ -110,6 +110,7 @@ export interface RealtimeServer extends ShareDB, shareDBAccess.AccessControlBack
  */
 export class RealtimeServer extends ShareDB {
   private readonly docServices = new Map<string, DocService>();
+  private defaultConnection?: Connection;
 
   constructor(
     private readonly siteId: string,
@@ -166,6 +167,8 @@ export class RealtimeServer extends ShareDB {
       delete context.op.c;
       done();
     });
+
+    this.defaultConnection = this.connect();
   }
 
   async createIndexes(db: Db): Promise<void> {
@@ -206,8 +209,7 @@ export class RealtimeServer extends ShareDB {
   }
 
   async getProject(projectId: string): Promise<Project | undefined> {
-    const conn = this.connect();
-    const projectDoc = conn.get(this.projectsCollection, projectId);
+    const projectDoc = this.defaultConnection!.get(this.projectsCollection, projectId);
     await docFetch(projectDoc);
     return projectDoc.data as Project | undefined;
   }
@@ -220,7 +222,6 @@ export class RealtimeServer extends ShareDB {
     for (const schemaVersion of await this.schemaVersions.getAll()) {
       versionMap.set(schemaVersion.collection, schemaVersion.version);
     }
-    const conn = this.connect();
     for (const docService of this.docServices.values()) {
       let curVersion = versionMap.get(docService.collection);
       if (curVersion == null) {
@@ -230,7 +231,7 @@ export class RealtimeServer extends ShareDB {
       if (curVersion === version) {
         continue;
       }
-      const query = await createFetchQuery(conn, docService.collection, {});
+      const query = await createFetchQuery(this.defaultConnection!, docService.collection, {});
       while (curVersion < version) {
         curVersion++;
         const promises: Promise<void>[] = [];
