@@ -11,6 +11,7 @@ export class AvatarComponent {
   @Input() round: boolean = false;
   @Input() size: number = 32;
   @Input() user?: UserProfile;
+  @Input() borderColor?: string;
   @Input() showOnlineStatus: boolean = false;
 
   constructor(readonly pwaService: PwaService) {}

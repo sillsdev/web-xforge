@@ -31,6 +31,7 @@ import { SharedModule } from '../shared.module';
 import { getCombinedVerseTextDoc, getSFProject, getTextDoc } from '../test-utils';
 import { DragAndDrop } from './drag-and-drop';
 import { TextComponent } from './text.component';
+import { PresenceData, RemotePresences } from './text-view-model';
 
 const mockedBugsnagService = mock(BugsnagService);
 const mockedPwaService = mock(PwaService);
@@ -227,6 +228,70 @@ describe('TextComponent', () => {
       expect(onSelectionChangedSpy).toHaveBeenCalledTimes(2);
       expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(2);
       verify(mockedUserService.getCurrentUser()).once();
+    }));
+
+    it('should use "Anonymous" when the displayName is undefined', fakeAsync(() => {
+      const env: TestEnvironment = new TestEnvironment();
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+      env.fixture.detectChanges();
+      when(mockedUserService.getCurrentUser()).thenResolve({ data: undefined } as UserDoc);
+
+      env.component.onSelectionChanged({ index: 0, length: 0 }, 'user');
+
+      tick();
+      verify(mockedUserService.getCurrentUser()).once();
+      verify(mockedTranslocoService.translate('editor.anonymous')).once();
+      expect().nothing();
+    }));
+
+    it('should emit on blur', fakeAsync(() => {
+      const env: TestEnvironment = new TestEnvironment();
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+      env.fixture.detectChanges();
+      const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
+      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresence, 'submit').and.callFake(
+        // This is not strictly what happens as the other user would receive the presence change that this user makes.
+        (presenceData: PresenceData) => {
+          (env.component as any).viewModel.onPresenceReceive('presenceId1', presenceData);
+        }
+      );
+      expect(env.hostComponent.remotePresences).withContext('setup').toBeUndefined();
+
+      env.component.onSelectionChanged(null as unknown as RangeStatic, 'user');
+
+      tick();
+      expect(onSelectionChangedSpy).toHaveBeenCalledTimes(1);
+      expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(1);
+      verify(mockedUserService.getCurrentUser()).never();
+      expect(env.hostComponent.remotePresences).toBeDefined();
+    }));
+
+    it('should emit on cursor move', fakeAsync(() => {
+      const env: TestEnvironment = new TestEnvironment();
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+      env.fixture.detectChanges();
+      const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
+      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresence, 'submit').and.callFake(
+        // This is not strictly what happens as the other user would receive the presence change that this user makes.
+        (presenceData: PresenceData) => {
+          (env.component as any).viewModel.onPresenceReceive('presenceId1', presenceData);
+        }
+      );
+      expect(env.hostComponent.remotePresences).withContext('setup').toBeUndefined();
+
+      env.component.onSelectionChanged({ index: 0, length: 0 }, 'user');
+
+      tick();
+      expect(onSelectionChangedSpy).toHaveBeenCalledTimes(1);
+      expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(1);
+      verify(mockedUserService.getCurrentUser()).once();
+      expect(env.hostComponent.remotePresences).toBeDefined();
     }));
   });
 
@@ -2201,6 +2266,7 @@ class MockQuill extends Quill {
     [id]="id"
     [isRightToLeft]="isTextRightToLeft"
     [isReadOnly]="isReadOnly"
+    (presenceChange)="onPresenceChange($event)"
   ></app-text>`
 })
 class HostComponent {
@@ -2210,6 +2276,11 @@ class HostComponent {
   isTextRightToLeft: boolean = false;
   isReadOnly: boolean = false;
   id?: TextDocId;
+  remotePresences?: RemotePresences;
+
+  onPresenceChange(remotePresences?: RemotePresences): void {
+    this.remotePresences = remotePresences;
+  }
 }
 
 class TestEnvironment {

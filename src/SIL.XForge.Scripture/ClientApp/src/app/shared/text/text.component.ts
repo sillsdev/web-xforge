@@ -14,6 +14,7 @@ import { clone, cloneDeep } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import merge from 'lodash-es/merge';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources } from 'quill';
+import { AuthType, getAuthType } from 'realtime-server/lib/esm/common/models/user';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { fromEvent } from 'rxjs';
@@ -29,7 +30,7 @@ import { NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { VERSE_REGEX } from '../utils';
 import { registerScripture } from './quill-scripture';
 import { Segment } from './segment';
-import { EditorRange, PresenceData, TextViewModel } from './text-view-model';
+import { EditorRange, PresenceData, RemotePresences, TextViewModel } from './text-view-model';
 
 const EDITORS = new Set<Quill>();
 
@@ -92,6 +93,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   @Output() segmentRefChange = new EventEmitter<string>();
   @Output() loaded = new EventEmitter(true);
   @Output() focused = new EventEmitter<boolean>(true);
+  @Output() presenceChange = new EventEmitter<RemotePresences | undefined>(true);
   lang: string = '';
   // only use USX formats and not default Quill formats
   readonly allowedFormats: string[] = USX_FORMATS;
@@ -191,7 +193,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private _isRightToLeft: boolean = false;
   private _modules: any = this.DEFAULT_MODULES;
   private _editor?: Quill;
-  private viewModel = new TextViewModel();
+  private viewModel = new TextViewModel(this.presenceChange);
   private _segment?: Segment;
   private initialTextFetched: boolean = false;
   private initialSegmentRef?: string;
@@ -214,17 +216,16 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     super();
   }
 
+  get areOpsCorrupted(): boolean {
+    return this.viewModel.areOpsCorrupted;
+  }
+
   get placeholder() {
     if (this._id == null && this._placeholder != null) {
       return this._placeholder;
     }
     return this.displayMessage;
   }
-
-  get areOpsCorrupted(): boolean {
-    return this.viewModel.areOpsCorrupted;
-  }
-
   @Input() set placeholder(value: string) {
     this._placeholder = value;
   }
@@ -232,9 +233,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   get id(): TextDocId | undefined {
     return this._id;
   }
-
-  @Input()
-  set id(value: TextDocId | undefined) {
+  @Input() set id(value: TextDocId | undefined) {
     if (!isEqual(this._id, value)) {
       this._id = value;
       this.initialSegmentRef = undefined;
@@ -258,18 +257,14 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   get modules(): any {
     return this._modules;
   }
-
-  @Input()
-  set modules(value: any) {
+  @Input() set modules(value: any) {
     this._modules = merge(value, this.DEFAULT_MODULES);
   }
 
   get highlightSegment(): boolean {
     return this._highlightSegment;
   }
-
-  @Input()
-  set highlightSegment(value: boolean) {
+  @Input() set highlightSegment(value: boolean) {
     if (this._highlightSegment !== value) {
       this._highlightSegment = value;
       if (value) {
@@ -286,9 +281,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
     return this._segment.ref;
   }
-
-  @Input()
-  set segmentRef(value: string) {
+  @Input() set segmentRef(value: string) {
     if (value !== this.segmentRef) {
       this.setSegment(value);
     }
@@ -317,9 +310,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   get editorStyles(): object {
     return this._editorStyles;
   }
-
-  @Input()
-  set editorStyles(styles: object) {
+  @Input() set editorStyles(styles: object) {
     this._editorStyles = styles;
     this.applyEditorStyles();
   }
@@ -608,9 +599,14 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     // In this particular instance, we can send extra information on the presence object. This ability will vary
     // depending on type.
     const currentUserDoc: UserDoc = await this.userService.getCurrentUser();
+    // If the avatar src is empty ('') then it generates one with the same background and cursor color
+    // Do this for email/password accounts
+    const authType = getAuthType(currentUserDoc.data?.authId ?? '');
+    const avatarUrl = authType === AuthType.Account ? '' : currentUserDoc.data?.avatarUrl ?? '';
     const presenceData: PresenceData = {
       viewer: {
         displayName: currentUserDoc.data?.displayName || this.transloco.translate('editor.anonymous'),
+        avatarUrl,
         cursorColor: this.viewModel.cursorColor
       },
       range

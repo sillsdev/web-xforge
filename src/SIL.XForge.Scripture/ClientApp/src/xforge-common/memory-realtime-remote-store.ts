@@ -68,6 +68,7 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
   readonly delete$ = new Subject<void>();
   readonly idle$ = EMPTY;
   readonly docPresence: Presence = {
+    remotePresences: {},
     subscribe: (_callback?: Callback) => {},
     unsubscribe: (_callback?: Callback) => {},
     create: (_id?: string) =>
