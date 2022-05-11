@@ -1,3 +1,4 @@
+import { EventEmitter } from '@angular/core';
 import cloneDeep from 'lodash-es/cloneDeep';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
 import QuillCursors from 'quill-cursors';
@@ -7,6 +8,7 @@ import { LocalPresence, Presence } from 'sharedb/lib/sharedb';
 import tinyColor from 'tinycolor2';
 import { objectId } from 'xforge-common/utils';
 import { Delta, TextDoc } from '../../core/models/text-doc';
+import { MultiCursorViewer } from '../../translate/editor/multi-viewer/multi-viewer.component';
 import { containsInvalidOp, VERSE_FROM_SEGMENT_REF_REGEX } from '../utils';
 import { getAttributesAtPosition } from './quill-scripture';
 import { USFM_STYLE_DESCRIPTIONS } from './usfm-style-descriptions';
@@ -88,11 +90,12 @@ export interface EditorRange {
 }
 
 export interface PresenceData {
-  viewer: {
-    displayName: string;
-    cursorColor: string;
-  };
+  viewer: MultiCursorViewer;
   range: RangeStatic;
+}
+
+export interface RemotePresences {
+  [id: string]: PresenceData;
 }
 
 class SegmentInfo {
@@ -135,7 +138,7 @@ export class TextViewModel {
 
   private onPresenceReceive = (_presenceId: string, _presenceData: PresenceData | null) => {};
 
-  constructor() {
+  constructor(private presenceChange?: EventEmitter<RemotePresences | undefined>) {
     let localCursorColor = localStorage.getItem(this.cursorColorStorageKey);
     if (localCursorColor == null) {
       localCursorColor = tinyColor.random().toHexString();
@@ -202,11 +205,13 @@ export class TextViewModel {
     this.onPresenceReceive = (presenceId: string, presenceData: PresenceData | null) => {
       if (presenceData == null) {
         cursors.removeCursor(presenceId);
+        this.presenceChange?.emit(this.presence?.remotePresences);
         return;
       }
 
       cursors.createCursor(presenceId, presenceData.viewer.displayName, presenceData.viewer.cursorColor);
       cursors.moveCursor(presenceId, presenceData.range);
+      this.presenceChange?.emit(this.presence?.remotePresences);
     };
     this.presence.on('receive', this.onPresenceReceive);
   }
@@ -224,14 +229,15 @@ export class TextViewModel {
       if (error) throw error;
     });
     this.presence?.off('receive', this.onPresenceReceive);
-    this.presence = undefined;
     this.localPresence?.submit(null as unknown as PresenceData);
 
     if (this.editor != null) {
       this.editor.setText('', 'silent');
       const cursors: QuillCursors = this.editor.getModule('cursors');
       cursors.clearCursors();
+      this.presenceChange?.emit(this.presence?.remotePresences);
     }
+    this.presence = undefined;
     this._segments.clear();
     this._embeddedElements.clear();
   }

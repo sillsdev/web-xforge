@@ -1,0 +1,31 @@
+<div fxLayout="row" fxLayoutAlign="start center">
+  <ng-container *ngFor="let viewer of avatarViewers">
+    <div class="app-avatar-container" [title]="viewer.displayName" style="width: 36px; height: 36px">
+      <app-avatar [user]="viewer" [size]="32" [round]="true" [borderColor]="viewer.cursorColor"></app-avatar>
+    </div>
+  </ng-container>
+  <ng-container *ngIf="viewers.length > maxAvatars">
+    <div class="app-avatar-container" style="width: 36px; height: 36px">
+      <button
+        mat-mini-fab
+        [matMenuTriggerFor]="menu"
+        class="mat-elevation-z"
+        [title]="otherViewersLabel"
+        (click)="toggleMenu()"
+        style="width: 32px; height: 32px"
+      >
+        <span *ngIf="!isMenuOpen"><span *ngIf="maxAvatars > 1">+</span>{{ viewers.length - maxAvatars + 1 }}</span>
+        <mat-icon *ngIf="isMenuOpen">arrow_drop_up</mat-icon>
+      </button>
+      <mat-menu #menu="matMenu" (closed)="closeMenu()">
+        <button mat-menu-item disabled>{{ otherViewersLabel }}</button>
+        <ng-container *ngFor="let viewer of viewers">
+          <button mat-menu-item (click)="closeMenu()">
+            <app-avatar [user]="viewer" [size]="32" [round]="true" [borderColor]="viewer.cursorColor"></app-avatar>
+            <span fxFlex>{{ viewer.displayName }}</span>
+          </button>
+        </ng-container>
+      </mat-menu>
+    </div>
+  </ng-container>
+</div>
