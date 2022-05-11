@@ -121,6 +121,7 @@ export class RealtimeServer extends ShareDB {
   ) {
     super({
       db,
+      presence: true,
       disableDocAction: true,
       disableSpaceDelimitedActions: true
     });

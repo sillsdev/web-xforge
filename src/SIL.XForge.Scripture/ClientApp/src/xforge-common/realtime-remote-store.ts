@@ -1,5 +1,6 @@
 import { Observable } from 'rxjs';
 import { OTType } from 'sharedb/lib/client';
+import { Presence } from 'sharedb/lib/sharedb';
 import { Snapshot } from './models/snapshot';
 import { QueryParameters } from './query-parameters';
 
@@ -26,6 +27,7 @@ export interface RealtimeDocAdapter {
   readonly pendingOps: any[];
   readonly subscribed: boolean;
   readonly collection: string;
+  readonly docPresence: Presence;
 
   readonly idle$: Observable<void>;
   /** Fires when underlying data is recreated. */
