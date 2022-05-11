@@ -1,5 +1,5 @@
-import { Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { Component, Inject, ViewEncapsulation } from '@angular/core';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 
 export interface ShareDialogData {
@@ -9,8 +9,14 @@ export interface ShareDialogData {
 
 @Component({
   templateUrl: './share-dialog.component.html',
-  styleUrls: ['./share-dialog.component.scss']
+  styleUrls: ['./share-dialog.component.scss'],
+  encapsulation: ViewEncapsulation.None
 })
 export class ShareDialogComponent {
-  constructor(@Inject(MAT_DIALOG_DATA) public readonly data: ShareDialogData) {}
+  constructor(
+    readonly dialogRef: MatDialogRef<ShareDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public readonly data: ShareDialogData
+  ) {
+    dialogRef.addPanelClass('share-dialog-component-panel');
+  }
 }
