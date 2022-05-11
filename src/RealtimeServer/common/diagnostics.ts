@@ -2,7 +2,7 @@ import fs from 'fs';
 import inspector from 'inspector';
 import path from 'path';
 
-const secondsToProfile = 5;
+const secondsToProfile = 30;
 
 // POSIX defines SIGUSR1 and SIGUSR2 as user-defined signals, but SIGUSR1 is reserved by Node.js to start the debugger.
 // Send the signal using e.g. kill -USR2 <node process id>
