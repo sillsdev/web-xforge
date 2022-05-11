@@ -1,6 +1,7 @@
 import cloneDeep from 'lodash-es/cloneDeep';
 import Parchment from 'parchment';
 import Quill, { Clipboard, DeltaOperation, DeltaStatic, History, HistoryStackType, StringMap } from 'quill';
+import QuillCursors from 'quill-cursors';
 import { DragAndDrop } from './drag-and-drop';
 
 const Delta: new () => DeltaStatic = Quill.import('delta');
@@ -775,6 +776,7 @@ export function registerScripture(): string[] {
   Quill.register('blots/scroll', Scroll, true);
   Quill.register('blots/text', NotNormalizedText, true);
   Quill.register('modules/clipboard', DisableHtmlClipboard, true);
+  Quill.register('modules/cursors', QuillCursors);
   Quill.register('modules/history', FixSelectionHistory, true);
   Quill.register('modules/dragAndDrop', DragAndDrop);
 

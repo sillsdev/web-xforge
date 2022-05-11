@@ -5,6 +5,7 @@ import * as RichText from 'rich-text';
 import { fromEvent, Observable, Subject } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { Connection, Doc, OTType, Query, Snapshot, types } from 'sharedb/lib/client';
+import { Presence } from 'sharedb/lib/sharedb';
 import { PwaService } from 'xforge-common/pwa.service';
 import { Snapshot as DataSnapshot } from 'xforge-common/models/snapshot';
 import { environment } from '../environments/environment';
@@ -126,6 +127,10 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
 
   get collection(): string {
     return this.doc.collection;
+  }
+
+  get docPresence(): Presence {
+    return this.doc.connection.getDocPresence(this.collection, this.id);
   }
 
   get pendingOps(): any[] {

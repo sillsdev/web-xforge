@@ -1,4 +1,5 @@
 import { merge, Observable, Subject, Subscription } from 'rxjs';
+import { Presence } from 'sharedb/lib/sharedb';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { RealtimeDocAdapter } from '../realtime-remote-store';
 import { Snapshot } from './snapshot';
@@ -17,8 +18,9 @@ export interface RealtimeDocConstructor {
  *
  * @template T The actual data type.
  * @template Ops The operations data type.
+ * @template P The presence data type.
  */
-export abstract class RealtimeDoc<T = any, Ops = any> {
+export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
   private updateOfflineDataSub: Subscription;
   private onDeleteSub: Subscription;
   private offlineSnapshotVersion?: number;
@@ -60,6 +62,10 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
 
   get collection(): string {
     return this.adapter.collection;
+  }
+
+  get docPresence(): Presence<P> {
+    return this.adapter.docPresence;
   }
 
   /** Fires when underlying data is recreated. */

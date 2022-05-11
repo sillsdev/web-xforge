@@ -25,10 +25,10 @@
     "jwks-rsa": "^2.1.0",
     "mongodb": "^4.5.0",
     "ot-json0": "^1.1.0",
-    "rich-text": "^3.1.0",
-    "sharedb": "1.0.0-beta.31",
+    "rich-text": "^4.1.0",
+    "sharedb": "^1.9.2",
     "sharedb-access": "^5.0.0",
-    "sharedb-mongo": "1.0.0-beta.21",
+    "sharedb-mongo": "^1.0.0",
     "ts-object-path": "^0.1.2",
     "websocket-json-stream": "^0.0.3",
     "ws": "^8.5.0"
