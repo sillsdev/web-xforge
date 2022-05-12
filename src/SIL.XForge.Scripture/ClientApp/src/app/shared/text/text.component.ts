@@ -609,8 +609,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     // depending on type.
     const currentUserDoc: UserDoc = await this.userService.getCurrentUser();
     const presenceData: PresenceData = {
-      displayName: currentUserDoc.data?.displayName || this.transloco.translate('editor.anonymous'),
-      cursorColor: this.viewModel.cursorColor,
+      viewer: {
+        displayName: currentUserDoc.data?.displayName || this.transloco.translate('editor.anonymous'),
+        cursorColor: this.viewModel.cursorColor
+      },
       range
     };
     this.viewModel.localPresence?.submit(presenceData, error => {

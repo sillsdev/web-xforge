@@ -88,8 +88,10 @@ export interface EditorRange {
 }
 
 export interface PresenceData {
-  displayName: string;
-  cursorColor: string;
+  viewer: {
+    displayName: string;
+    cursorColor: string;
+  };
   range: RangeStatic;
 }
 
@@ -203,7 +205,7 @@ export class TextViewModel {
         return;
       }
 
-      cursors.createCursor(presenceId, presenceData.displayName, presenceData.cursorColor);
+      cursors.createCursor(presenceId, presenceData.viewer.displayName, presenceData.viewer.cursorColor);
       cursors.moveCursor(presenceId, presenceData.range);
     };
     this.presence.on('receive', this.onPresenceReceive);
