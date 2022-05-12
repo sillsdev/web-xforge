@@ -1,0 +1,40 @@
+#!/bin/bash
+#
+# Fetch SF project data on disk (as opposed to data in mongodb) from another machine to the local machine.
+#
+# Copyright 2022 SIL International. MIT License.
+#
+# Usage info: ./fetch-disk-data --help
+
+set -ueo pipefail
+
+function usage() {
+  echo "originMachine should be a host, perhaps possible via configuration in ~/.ssh/config."
+  echo "Usage: $0 --originMachine scriptureforge-live --originProjectSFId 12345 --projectPTId abc123"
+  exit 0
+}
+
+if (( $# == 0 )); then
+  usage
+fi
+
+while (( $# > 0 )); do
+  case "$1" in
+    --help ) usage; shift ;;
+    --originMachine ) originMachine="$2"; shift 2 ;;
+    --originProjectSFId ) originProjectSFId="$2"; shift 2 ;;
+    --projectPTId ) projectPTId="$2"; shift 2 ;;
+    * ) echo >&2 "Error: Unrecognized option: $1"; exit 2 ;;
+  esac
+done
+
+sf_disk_data_dir="/var/lib/scriptureforge"
+
+if ssh "${originMachine}" "[[ ! -d "${sf_disk_data_dir}/audio/${originProjectSFId}" ]]"; then
+  echo "Not fetching audio directory since directory not present at origin: ${sf_disk_data_dir}/audio/${originProjectSFId}"
+else
+  rsync -av "${originMachine}":"${sf_disk_data_dir}/audio/${originProjectSFId}" "${sf_disk_data_dir}/audio/"
+fi
+echo "It is probably okay if there is an error trying to transfer a file called .hg/wcache/checkisexec"
+rsync -av "${originMachine}":"${sf_disk_data_dir}/sync/${projectPTId}" "${sf_disk_data_dir}/sync/"
+
