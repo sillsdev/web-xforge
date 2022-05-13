@@ -138,7 +138,7 @@ export class TextViewModel {
   constructor() {
     let localCursorColor = localStorage.getItem(this.cursorColorStorageKey);
     if (localCursorColor == null) {
-      localCursorColor = tinyColor.random().toHexString();
+      localCursorColor = tinyColor({ s: 0.7, l: 0.5, h: Math.random() * 360 }).toHexString();
       localStorage.setItem(this.cursorColorStorageKey, localCursorColor);
     }
     this.cursorColor = localCursorColor;
