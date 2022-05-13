@@ -59,9 +59,7 @@ class Program {
     const ws: WebSocket = createWS(this.connectionConfig);
     const conn: Connection = new Connection(ws);
 
-    const client: MongoClient = await MongoClient.connect(this.connectionConfig.dbLocation, {
-      useUnifiedTopology: true
-    });
+    const client: MongoClient = await MongoClient.connect(this.connectionConfig.dbLocation);
     try {
       const db: Db = client.db();
       await activity(conn, db);
