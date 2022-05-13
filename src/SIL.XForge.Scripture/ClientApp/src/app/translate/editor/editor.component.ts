@@ -50,7 +50,7 @@ import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { Segment } from '../../shared/text/segment';
-import { RemotePresences } from '../../shared/text/text-view-model';
+import { PresenceData, RemotePresences } from '../../shared/text/text-view-model';
 import { FeaturedVerseRefInfo, TextComponent } from '../../shared/text/text.component';
 import { threadIdFromMouseEvent } from '../../shared/utils';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
@@ -593,7 +593,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   onPresenceChange(remotePresences?: RemotePresences): void {
     if (remotePresences != null) {
-      const uniquePresences = Object.values(remotePresences).filter(
+      const uniquePresences: PresenceData[] = Object.values(remotePresences).filter(
         (a, index, self) =>
           index ===
           self.findIndex(
@@ -601,9 +601,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           )
       );
       const multiCursorViewers: MultiCursorViewer[] = [];
-      const currentUser = this.currentUserDoc?.data;
+      const currentUser: User | undefined = this.currentUserDoc?.data;
       for (const presence of uniquePresences) {
-        const viewer = presence.viewer;
+        const viewer: MultiCursorViewer = presence.viewer;
         if (viewer.displayName !== currentUser?.displayName && viewer.avatarUrl !== currentUser?.avatarUrl) {
           multiCursorViewers.push(viewer);
         }
