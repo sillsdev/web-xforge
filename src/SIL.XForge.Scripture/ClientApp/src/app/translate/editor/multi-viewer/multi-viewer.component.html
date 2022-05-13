@@ -1,18 +1,17 @@
 <div fxLayout="row" fxLayoutAlign="start center">
   <ng-container *ngFor="let viewer of avatarViewers">
-    <div class="app-avatar-container" [title]="viewer.displayName" style="width: 36px; height: 36px">
+    <div class="app-avatar-container" [title]="viewer.displayName">
       <app-avatar [user]="viewer" [size]="32" [round]="true" [borderColor]="viewer.cursorColor"></app-avatar>
     </div>
   </ng-container>
   <ng-container *ngIf="viewers.length > maxAvatars">
-    <div class="app-avatar-container" style="width: 36px; height: 36px">
+    <div class="app-avatar-container">
       <button
         mat-mini-fab
         [matMenuTriggerFor]="menu"
         class="mat-elevation-z"
         [title]="otherViewersLabel"
         (click)="toggleMenu()"
-        style="width: 32px; height: 32px"
       >
         <span *ngIf="!isMenuOpen"><span *ngIf="maxAvatars > 1">+</span>{{ viewers.length - maxAvatars + 1 }}</span>
         <mat-icon *ngIf="isMenuOpen">arrow_drop_up</mat-icon>

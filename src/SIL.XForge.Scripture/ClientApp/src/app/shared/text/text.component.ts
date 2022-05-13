@@ -601,8 +601,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     const currentUserDoc: UserDoc = await this.userService.getCurrentUser();
     // If the avatar src is empty ('') then it generates one with the same background and cursor color
     // Do this for email/password accounts
-    const authType = getAuthType(currentUserDoc.data?.authId ?? '');
-    const avatarUrl = authType === AuthType.Account ? '' : currentUserDoc.data?.avatarUrl ?? '';
+    const authType: AuthType = getAuthType(currentUserDoc.data?.authId ?? '');
+    const avatarUrl: string = authType === AuthType.Account ? '' : currentUserDoc.data?.avatarUrl ?? '';
     const presenceData: PresenceData = {
       viewer: {
         displayName: currentUserDoc.data?.displayName || this.transloco.translate('editor.anonymous'),

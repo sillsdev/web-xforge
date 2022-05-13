@@ -31,7 +31,7 @@ export class MultiViewerComponent extends SubscriptionDisposable implements OnIn
   }
 
   get otherViewersLabel(): string {
-    return translate('editor.other_viewers', { count: this.viewers.length });
+    return translate('multi_viewer.other_viewers', { count: this.viewers.length });
   }
 
   ngOnInit(): void {
@@ -41,9 +41,9 @@ export class MultiViewerComponent extends SubscriptionDisposable implements OnIn
         map((changes: MediaChange[]) => changes[0])
       ),
       (change: MediaChange) => {
-        const isViewportBigger = ['xl', 'lt-xl', 'lg', 'lt-lg', 'md', 'lt-md'].includes(change.mqAlias);
+        const isViewportBigger: boolean = ['xl', 'lt-xl', 'lg', 'lt-lg', 'md', 'lt-md'].includes(change.mqAlias);
         this.maxAvatars = isViewportBigger ? 6 : 3;
-        const isViewportXS = ['xs'].includes(change.mqAlias);
+        const isViewportXS: boolean = ['xs'].includes(change.mqAlias);
         this.maxAvatars = isViewportXS ? 1 : this.maxAvatars;
       }
     );
