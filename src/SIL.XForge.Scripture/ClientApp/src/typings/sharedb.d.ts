@@ -1,5 +1,6 @@
 declare module 'sharedb/lib/client' {
   import { EventEmitter } from 'events';
+  import { Presence } from 'sharedb/lib/sharedb';
 
   export type OTTypeName = 'text' | 'json0' | 'rich-text';
 
@@ -58,6 +59,8 @@ declare module 'sharedb/lib/client' {
       version: number | null,
       callback?: (err: Error, snapshot: Snapshot) => void
     ): Snapshot;
+    getPresence(channel: string): Presence;
+    getDocPresence(collection: string, id: string): Presence;
     close(): void;
   }
 

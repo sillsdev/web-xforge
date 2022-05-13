@@ -31,6 +31,7 @@ declare class ShareDB {
   constructor(options?: {
     db?: any;
     pubsub?: ShareDB.PubSub;
+    presence?: boolean;
     disableDocAction?: boolean;
     disableSpaceDelimitedActions?: boolean;
   });
