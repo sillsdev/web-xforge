@@ -95,8 +95,9 @@ export function projectLabel(project: SelectableProject | undefined): string {
  * several rules to see if any of them are violated.
  * @param ops An array of ops to check.
  */
-export function containsInvalidOp(ops: DeltaOperation[]): boolean {
-  return ops.some(
+export function isBadDelta(ops: DeltaOperation[]): boolean {
+  const chapterInsertsCount = ops.filter(op => op.insert?.chapter != null).length;
+  const containsBadOp = ops.some(
     op =>
       // insert must be defined for any op, and can't be nullish
       op.insert == null ||
@@ -109,6 +110,7 @@ export function containsInvalidOp(ops: DeltaOperation[]): boolean {
       // the segment identifier should not have null or undefined in it, like we've seen in the past
       (typeof op.attributes?.segment === 'string' && /(?:undefined|null)/.test(op.attributes.segment))
   );
+  return chapterInsertsCount > 1 || containsBadOp;
 }
 
 export function compareProjectsForSorting(a: { shortName: string }, b: { shortName: string }): 1 | -1 {

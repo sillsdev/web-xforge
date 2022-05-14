@@ -1,7 +1,7 @@
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DeltaOperation } from 'rich-text';
 import { SelectableProject } from '../core/paratext.service';
-import { compareProjectsForSorting, containsInvalidOp, projectLabel } from './utils';
+import { compareProjectsForSorting, isBadDelta, projectLabel } from './utils';
 
 describe('shared utils', () => {
   describe('projectLabel function', () => {
@@ -34,38 +34,45 @@ describe('shared utils', () => {
     });
   });
 
-  describe('isDocCorrupted function', () => {
+  describe('isBadDelta function', () => {
     it('requires op.insert to be a string or object', () => {
-      expect(containsInvalidOp([{}])).toBeTrue();
-      expect(containsInvalidOp([{ insert: null }])).toBeTrue();
-      expect(containsInvalidOp([{ insert: 1 }])).toBeTrue();
-      // this isn't actually a good op, but isDocCorrupted won't see a problem with it
+      expect(isBadDelta([{}])).toBeTrue();
+      expect(isBadDelta([{ insert: null }])).toBeTrue();
+      expect(isBadDelta([{ insert: 1 }])).toBeTrue();
+      // this isn't actually a good op, but isBadDelta won't see a problem with it
       // it's looking for known issues, not proving validity
-      expect(containsInvalidOp([{ insert: {} }])).toBeFalse();
+      expect(isBadDelta([{ insert: {} }])).toBeFalse();
     });
 
     it('requires that there be an insert', () => {
-      expect(containsInvalidOp([{ thisIsNotAnInsert: 1 } as DeltaOperation])).toBeTrue();
+      expect(isBadDelta([{ thisIsNotAnInsert: 1 } as DeltaOperation])).toBeTrue();
     });
 
     it('rejects delete and retain ops', () => {
-      expect(containsInvalidOp([{ insert: 'text' }, { delete: 100 }])).toBeTrue();
-      expect(containsInvalidOp([{ insert: 'text' }, { retain: 1 }])).toBeTrue();
-      expect(containsInvalidOp([{ insert: 'text' }, { delete: 100 }, { retain: 1 }])).toBeTrue();
+      expect(isBadDelta([{ insert: 'text' }, { delete: 100 }])).toBeTrue();
+      expect(isBadDelta([{ insert: 'text' }, { retain: 1 }])).toBeTrue();
+      expect(isBadDelta([{ insert: 'text' }, { delete: 100 }, { retain: 1 }])).toBeTrue();
     });
 
     it('does not allow op.insert.verse to be a non object', () => {
       // op.insert.verse does not have to exist
-      expect(containsInvalidOp([{ insert: {} }])).toBeFalse();
+      expect(isBadDelta([{ insert: {} }])).toBeFalse();
       // but if it does, it has to be an object
-      expect(containsInvalidOp([{ insert: { verse: true } }])).toBeTrue();
-      expect(containsInvalidOp([{ insert: { verse: { number: '2', style: 'v' } } }])).toBeFalse();
+      expect(isBadDelta([{ insert: { verse: true } }])).toBeTrue();
+      expect(isBadDelta([{ insert: { verse: { number: '2', style: 'v' } } }])).toBeFalse();
     });
 
     it('requires attributes.segment to not contain null or undefined', () => {
-      expect(containsInvalidOp([{ insert: 'text', attributes: { segment: 'verse_1_1' } }])).toBeFalse();
-      expect(containsInvalidOp([{ insert: 'text', attributes: { segment: 'verse_1_null' } }])).toBeTrue();
-      expect(containsInvalidOp([{ insert: 'text', attributes: { segment: 'verse_1_undefined' } }])).toBeTrue();
+      expect(isBadDelta([{ insert: 'text', attributes: { segment: 'verse_1_1' } }])).toBeFalse();
+      expect(isBadDelta([{ insert: 'text', attributes: { segment: 'verse_1_null' } }])).toBeTrue();
+      expect(isBadDelta([{ insert: 'text', attributes: { segment: 'verse_1_undefined' } }])).toBeTrue();
+    });
+
+    it('does not allow multiple chapter inserts', () => {
+      const chapterInsert = { insert: { chapter: { number: '1', style: 'c' } } };
+      expect(isBadDelta([])).toBeFalse();
+      expect(isBadDelta([chapterInsert])).toBeFalse();
+      expect(isBadDelta([chapterInsert, chapterInsert])).toBeTrue();
     });
   });
 
