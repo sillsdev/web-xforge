@@ -78,6 +78,7 @@
     "project_name": "Nombre del proyecto"
   },
   "editor": {
+    "anonymous": "Anónimo",
     "cannot_edit_chapter_formatting_invalid": "Este capítulo no puede ser editado porque el formato no es válido. Por favor, arregle el formato en Paratext.",
     "completed_successfully": "Completado con éxito",
     "configure_translation_suggestions": "Configurar sugerencias de traducción",
@@ -143,9 +144,9 @@
     "rejection_change_heading": "Cambios rechazados por Paratext:",
     "close": "Cerrar",
     "hide_changes": "Ocultar los cambios",
-    "note_reattached": "Note reattached",
+    "note_reattached": "Nota reajustada",
     "paratext_user": "Usuario de Paratext",
-    "reattached": "(Re-attached)",
+    "reattached": "(Reajustada)",
     "show_changes": "Mostrar cambios",
     "status_resolved": "Resueltas",
     "status_to_do": "Por hacer",
