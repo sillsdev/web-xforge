@@ -9,7 +9,7 @@ import tinyColor from 'tinycolor2';
 import { objectId } from 'xforge-common/utils';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { MultiCursorViewer } from '../../translate/editor/multi-viewer/multi-viewer.component';
-import { containsInvalidOp, VERSE_FROM_SEGMENT_REF_REGEX } from '../utils';
+import { isBadDelta, VERSE_FROM_SEGMENT_REF_REGEX } from '../utils';
 import { getAttributesAtPosition } from './quill-scripture';
 import { USFM_STYLE_DESCRIPTIONS } from './usfm-style-descriptions';
 
@@ -169,9 +169,7 @@ export class TextViewModel {
   }
 
   get areOpsCorrupted(): boolean {
-    return (
-      this.textDoc?.isLoaded === true && this.textDoc.data?.ops != null && containsInvalidOp(this.textDoc.data.ops)
-    );
+    return this.textDoc?.isLoaded === true && this.textDoc.data?.ops != null && isBadDelta(this.textDoc.data.ops);
   }
 
   bind(textDoc: TextDoc, subscribeToUpdates: boolean): void {
