@@ -1,0 +1,24 @@
+use('xforge');
+
+db.texts.aggregate([
+  // filter out texts with no ops, as these will cause the next stage to encounter errors
+  {$match: {
+    ops: { $exists: true }
+  }},
+  // count the number of ops where op.insert.chapter exists
+  {$project: {
+    chapterInsertsCount: {
+      $size: {
+        $filter: {
+          input: '$ops', as:'op', cond: {
+            $ifNull: ['$$op.insert.chapter', false]
+          }
+        }
+      }
+    }
+  }},
+  // return only the texts that have more than one chapter insert
+  {$match: {
+    chapterInsertsCount: {$gt: 1}
+  }}
+]);
