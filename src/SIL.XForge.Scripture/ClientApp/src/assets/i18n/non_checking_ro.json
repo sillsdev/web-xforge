@@ -78,6 +78,7 @@
     "project_name": "Numele proiectului"
   },
   "editor": {
+    "anonymous": "Anonymous",
     "cannot_edit_chapter_formatting_invalid": "Acest capitol nu poate fi editat deoarece formatarea nu este validă. Vă rugăm să remediați formatarea în Paratext.",
     "completed_successfully": "Finalizat cu succes",
     "configure_translation_suggestions": "Configurarea sugestiilor de traducere",

@@ -78,6 +78,7 @@
     "project_name": "Nom du projet"
   },
   "editor": {
+    "anonymous": "Anonymous",
     "cannot_edit_chapter_formatting_invalid": "Ce chapitre ne peut pas être modifié car le formatage n'est pas valide. Veuillez corriger le formatage dans Paratext.",
     "completed_successfully": "Terminé avec succès",
     "configure_translation_suggestions": "Configurer les suggestions de traduction",

@@ -78,6 +78,7 @@
     "project_name": "Nama Proyek"
   },
   "editor": {
+    "anonymous": "Anonymous",
     "cannot_edit_chapter_formatting_invalid": "Pasal ini tidak dapat disunting karena pemformatan tidak valid. Harap perbaiki pemformatan di Paratext.",
     "completed_successfully": "Berhasil diselesaikan",
     "configure_translation_suggestions": "Konfigurasikan saran terjemahan",

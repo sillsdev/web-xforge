@@ -78,6 +78,7 @@
     "project_name": "Название проекта"
   },
   "editor": {
+    "anonymous": "Anonymous",
     "cannot_edit_chapter_formatting_invalid": "Эта глава не может быть изменена, так как форматирование неверно. Пожалуйста, исправьте форматирование в Paratext.",
     "completed_successfully": "Успешно завершено",
     "configure_translation_suggestions": "Настройка предложений по переводу",
