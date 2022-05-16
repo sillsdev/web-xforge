@@ -6,7 +6,7 @@
 const utils = require('./utils');
 const RichText = utils.requireFromRealTimeServer('rich-text');
 const ShareDB = utils.requireFromRealTimeServer('sharedb/lib/client');
-const MongoClient = utils.requireFromRealTimeServer('mongodb');
+const { MongoClient } = utils.requireFromRealTimeServer('mongodb');
 const OTJson0 = utils.requireFromRealTimeServer('ot-json0');
 
 // Edit these settings to specify which doc to visualize
