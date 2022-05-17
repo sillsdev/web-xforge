@@ -8,7 +8,9 @@
 // Usage info: ./manipulate-sharedb.ts --help
 // Example: ./manipulate-sharedb.ts --server live
 
+import * as RichText from 'rich-text';
 import { Db, MongoClient } from 'mongodb';
+import ShareDB from 'sharedb';
 import { Connection } from 'sharedb/lib/client';
 import WebSocket from 'ws';
 import yargs from 'yargs';
@@ -51,6 +53,7 @@ class Program {
     this.connectionConfig = databaseConfigs.get(this.server);
   }
 
+  /** Run the lambda with a connection to the db. */
   async withDB(activity: (conn: Connection, db: Db) => Promise<void>): Promise<void> {
     if (this.connectionConfig == null) {
       throw new Error('null connection config');
@@ -70,7 +73,8 @@ class Program {
   }
 
   async main() {
-    this.withDB(async (conn: Connection, db: Db) => {
+    ShareDB.types.register(RichText.type);
+    await this.withDB(async (conn: Connection, db: Db) => {
       // Here, manipulate sharedb or mongodb.
       // For example:
       // const userDoc: Doc = conn.get('users', '1234');
@@ -80,6 +84,12 @@ class Program {
       //   p: ['paratextId'],
       //   od: 'abc123'
       // });
+      // Example by applying a diff:
+      // const origOps: DeltaOperation[] = textDoc.data.ops.slice();
+      // const updatedOps: DeltaOperation[] = textDoc.data.ops.splice(1, 7);
+      // const diff = textDoc.type.diff(origOps, updatedOps);
+      // await submitDocOp(textDoc, diff);
+
     });
   }
 }
