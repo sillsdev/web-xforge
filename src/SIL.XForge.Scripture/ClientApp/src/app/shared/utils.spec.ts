@@ -70,8 +70,8 @@ describe('shared utils', () => {
   });
 
   it('compares projects for sorting', () => {
-    const projects = [{ shortName: 'BBB' }, { shortName: 'AAA' }] as SFProject[];
+    const projects = [{ shortName: 'bbb' }, { shortName: 'CCC' }, { shortName: 'AAA' }] as SFProject[];
     projects.sort(compareProjectsForSorting);
-    expect(projects[0].shortName).toBe('AAA');
+    expect(projects.map(project => project.shortName)).toEqual(['AAA', 'bbb', 'CCC']);
   });
 });
