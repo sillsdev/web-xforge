@@ -8,12 +8,16 @@
 // Usage info: ./manipulate-sharedb.ts --help
 // Example: ./manipulate-sharedb.ts --server live
 
-import { Db, MongoClient } from 'mongodb';
-import { Connection } from 'sharedb/lib/client';
+import * as RichText from 'rich-text';
+import { DeltaOperation } from 'rich-text';
+import { Collection, Db, MongoClient } from 'mongodb';
+import ShareDB, { Snapshot } from 'sharedb';
+import { Connection, Doc, OTType } from 'sharedb/lib/client';
 import WebSocket from 'ws';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { ConnectionSettings, createWS, databaseConfigs, useColor } from './utils';
+import { ConnectionSettings, createWS, databaseConfigs, fetchDoc, submitDocOp, useColor } from './utils';
+import * as fs from 'fs/promises';
 
 type ProgArgs = {
   server: string;
@@ -51,6 +55,7 @@ class Program {
     this.connectionConfig = databaseConfigs.get(this.server);
   }
 
+  /** Run the lambda with a connection to the db. */
   async withDB(activity: (conn: Connection, db: Db) => Promise<void>): Promise<void> {
     if (this.connectionConfig == null) {
       throw new Error('null connection config');
@@ -70,7 +75,8 @@ class Program {
   }
 
   async main() {
-    this.withDB(async (conn: Connection, db: Db) => {
+    ShareDB.types.register(RichText.type);
+    await this.withDB(async (conn: Connection, db: Db) => {
       // Here, manipulate sharedb or mongodb.
       // For example:
       // const userDoc: Doc = conn.get('users', '1234');
@@ -80,6 +86,12 @@ class Program {
       //   p: ['paratextId'],
       //   od: 'abc123'
       // });
+      // Example by applying a diff:
+      // const origOps: DeltaOperation[] = textDoc.data.ops.slice();
+      // const updatedOps: DeltaOperation[] = textDoc.data.ops.splice(1, 7);
+      // const diff = textDoc.type.diff(origOps, updatedOps);
+      // await submitDocOp(textDoc, diff);
+
     });
   }
 }
