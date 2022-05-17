@@ -112,5 +112,5 @@ export function containsInvalidOp(ops: DeltaOperation[]): boolean {
 }
 
 export function compareProjectsForSorting(a: { shortName: string }, b: { shortName: string }): 1 | -1 {
-  return a.shortName < b.shortName ? -1 : 1;
+  return a.shortName.toLowerCase() < b.shortName.toLowerCase() ? -1 : 1;
 }
