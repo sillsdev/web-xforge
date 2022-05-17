@@ -1,0 +1,29 @@
+.app-avatar-container {
+  border-radius: 50%;
+  border: 2px solid white;
+  margin-left: -8px;
+  height: 36px;
+  width: 36px;
+}
+
+.app-avatar-container > button,
+::ng-deep div.avatar-content {
+  height: 32px;
+  width: 32px;
+}
+
+.mat-mini-fab {
+  background-color: #eaeaea;
+}
+
+::ng-deep .mat-mini-fab span.mat-button-wrapper {
+  padding: 0;
+}
+
+.mat-menu-item app-avatar {
+  margin: auto;
+}
+
+.mat-menu-item span {
+  margin: auto 10px;
+}

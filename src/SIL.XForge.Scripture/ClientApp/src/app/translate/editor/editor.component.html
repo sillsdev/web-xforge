@@ -1,30 +1,37 @@
 <ng-container *transloco="let t; read: 'editor'">
   <div class="content" mdcMenuSurfaceAnchor #trainingProgressAnchor fxLayout="column">
-    <div class="toolbar" fxLayout="row wrap" fxLayoutAlign="start center">
-      <app-chapter-nav [bookNum]="bookNum" [(chapter)]="chapter" [chapters]="chapters"></app-chapter-nav>
-      <ng-container *ngIf="showSource">
-        <div class="toolbar-separator">&nbsp;</div>
-        <button
-          mdc-icon-button
-          appBlurOnClick
-          icon="swap_horiz"
-          type="button"
-          (click)="isTargetTextRight = !isTargetTextRight"
-          title="{{ t('swap_source_and_target') }}"
-          fxHide.xs
-        ></button>
-        <button
-          mdc-icon-button
-          appBlurOnClick
-          icon="settings"
-          type="button"
-          (click)="openSuggestionsSettings()"
-          title="{{ t('configure_translation_suggestions') }}"
-        ></button>
-      </ng-container>
-      <ng-container *ngIf="canShare">
-        <div class="toolbar-separator">&nbsp;</div>
-        <app-share [defaultRole]="defaultShareRole"></app-share>
+    <div class="toolbar" fxLayout="row" fxLayoutAlign="start center">
+      <div fxFlex fxLayout="row wrap">
+        <app-chapter-nav [bookNum]="bookNum" [(chapter)]="chapter" [chapters]="chapters"></app-chapter-nav>
+        <ng-container *ngIf="showSource">
+          <div class="toolbar-separator">&nbsp;</div>
+          <button
+            mdc-icon-button
+            appBlurOnClick
+            icon="swap_horiz"
+            type="button"
+            (click)="isTargetTextRight = !isTargetTextRight"
+            title="{{ t('swap_source_and_target') }}"
+            fxHide.xs
+          ></button>
+          <button
+            mdc-icon-button
+            appBlurOnClick
+            icon="settings"
+            type="button"
+            (click)="openSuggestionsSettings()"
+            title="{{ t('configure_translation_suggestions') }}"
+          ></button>
+        </ng-container>
+        <ng-container *ngIf="canShare">
+          <div class="toolbar-separator">&nbsp;</div>
+          <app-share [defaultRole]="defaultShareRole"></app-share>
+        </ng-container>
+      </div>
+      <ng-container *ngIf="showMultiViewers">
+        <div fxFlexAlign="center">
+          <app-multi-viewer [viewers]="multiCursorViewers"></app-multi-viewer>
+        </div>
       </ng-container>
     </div>
     <div [fxLayout]="isTargetTextRight ? 'row' : 'row-reverse'" fxLayoutGap="5px">
@@ -78,6 +85,7 @@
             "
             (loaded)="onTextLoaded('target')"
             (focused)="targetFocused = $event"
+            (presenceChange)="onPresenceChange($event)"
             [highlightSegment]="targetFocused && canEdit"
             [markInvalid]="true"
             [isRightToLeft]="isTargetRightToLeft"

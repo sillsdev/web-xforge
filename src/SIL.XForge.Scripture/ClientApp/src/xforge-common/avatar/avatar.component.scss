@@ -7,3 +7,7 @@
     text-shadow: 0 0 2px #000;
   }
 }
+
+::ng-deep .avatar-content {
+  border-width: 2px !important;
+}
