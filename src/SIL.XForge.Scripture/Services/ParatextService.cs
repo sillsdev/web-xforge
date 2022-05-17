@@ -236,18 +236,16 @@ namespace SIL.XForge.Scripture.Services
                 {
                     _logger.LogWarning($"SendReceive results unexpectedly contained a null result.");
                 }
-                string srResultDescriptions = string.Join(";",
-                    results?.Select((SendReceiveResult r) =>
-                        $"Revisions sent: {string.Join(",", r.RevisionsSent ?? Enumerable.Empty<string>())}, " +
-                        $"Revisions received: {string.Join(",", r.RevisionsReceived ?? Enumerable.Empty<string>())}, " +
-                        $"Failure message: {r.FailureMessage}.")
-                    ?? Enumerable.Empty<string>());
+                string srResultDescriptions = ExplainSRResults(results);
                 _logger.LogInformation($"SendReceive results: {srResultDescriptions}");
                 if (!noErrors || !success ||
                     (results != null &&
                         results.Any(r => r != null && r.Result == SendReceiveResultEnum.Failed)))
+                {
+                    string resultsInfo = ExplainSRResults(results);
                     throw new InvalidOperationException(
-                        "Failed: Errors occurred while performing the sync with the Paratext Server.");
+                        $"Failed: Errors occurred while performing the sync with the Paratext Server. More information: noErrors: {noErrors}. success: {success}. null results: {results == null}. results: {resultsInfo}");
+                }
             }
         }
 
@@ -371,6 +369,17 @@ namespace SIL.XForge.Scripture.Services
                         _dblServerUri);
                 return canRead ? TextInfoPermission.Read : TextInfoPermission.None;
             }
+        }
+
+        private string ExplainSRResults(IEnumerable<SendReceiveResult> srResults)
+        {
+            return string.Join(";",
+                srResults?.Select((SendReceiveResult r) =>
+                    $"SR result: {r.Result.ToString()}, " +
+                    $"Revisions sent: {string.Join(",", r.RevisionsSent ?? Enumerable.Empty<string>())}, " +
+                    $"Revisions received: {string.Join(",", r.RevisionsReceived ?? Enumerable.Empty<string>())}, " +
+                    $"Failure message: {r.FailureMessage}.")
+                ?? Enumerable.Empty<string>());
         }
 
         private void WarnIfNonuniqueValues(Dictionary<string, string> sfUserIdToPTUsernameMap, string context)
