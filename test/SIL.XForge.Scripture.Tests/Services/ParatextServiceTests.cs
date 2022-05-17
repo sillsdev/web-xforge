@@ -1052,7 +1052,7 @@ namespace SIL.XForge.Scripture.Services
                 new ThreadNoteComponents { status = NoteStatus.Todo, tagsAdded = new [] { "2" } },
                 new ThreadNoteComponents { status = NoteStatus.Unspecified },
                 new ThreadNoteComponents { status = NoteStatus.Unspecified },
-                new ThreadNoteComponents { status = NoteStatus.Deleted },
+                new ThreadNoteComponents { status = NoteStatus.Resolved },
                 new ThreadNoteComponents { status = NoteStatus.Todo, tagsAdded = new [] { "3" } },
                 new ThreadNoteComponents { status = NoteStatus.Unspecified },
                 new ThreadNoteComponents { status = NoteStatus.Done },

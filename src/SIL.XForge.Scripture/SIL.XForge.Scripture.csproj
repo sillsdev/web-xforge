@@ -20,7 +20,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.2" />
     <!-- When using a new major or minor version of ParatextData, update where dependencies.yml copies the
          InternetSettings.xml file. Also update server config scriptureforge.org_v2.yml. -->
-    <PackageReference Include="ParatextData" Version="9.2.4-alpha8" />
+    <PackageReference Include="ParatextData" Version="9.2.6.2" />
     <PackageReference Include="SIL.Machine.WebApi" Version="$(MachineVersion)" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="4.7.0" />
   </ItemGroup>

@@ -1403,7 +1403,8 @@ namespace SIL.XForge.Scripture.Services
                 return null;
 
             CommentManager manager = CommentManager.Get(scrText);
-            var threads = manager.FindThreads((commentThread) =>
+            manager.LoadIfChanged();
+            IEnumerable<CommentThread> threads = manager.FindThreads((commentThread) =>
                 { return commentThread.VerseRef.BookNum == bookNum; }, false);
             return threads.Where(t => !t.Id.StartsWith("ANSWER_"));
         }
@@ -1775,7 +1776,7 @@ namespace SIL.XForge.Scripture.Services
                 // Keep track of the last used to do status so we can avoid any repeats
                 if (threadComment.Status == NoteStatus.Todo)
                     lastTodoTagUsed = tagInUse;
-                else if (threadComment.Status == NoteStatus.Deleted || threadComment.Status == NoteStatus.Done)
+                else if (threadComment.Status == NoteStatus.Resolved || threadComment.Status == NoteStatus.Done)
                     lastTodoTagUsed = null;
             }
             // If we reach this far then the request is for the last used tag which is applied to the thread

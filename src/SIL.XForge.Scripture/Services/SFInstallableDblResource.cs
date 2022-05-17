@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text;
 using Ionic.Zip;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -364,7 +363,8 @@ namespace SIL.XForge.Scripture.Services
                 throw new ArgumentNullException(nameof(this.Name));
             }
 
-            string resourceFile = ScrTextCollection.GetResourcePath(this.ExistingScrText, this.Name, this.DBLEntryUid);
+            string resourceFile = ScrTextCollection.GetResourcePath(this.ExistingScrText, this.Name, this.DBLEntryUid,
+                ProjectFileManager.resourceFileExtension);
             if (RobustFile.Exists(resourceFile))
             {
                 using var zipFile = ZipFile.Read(resourceFile);

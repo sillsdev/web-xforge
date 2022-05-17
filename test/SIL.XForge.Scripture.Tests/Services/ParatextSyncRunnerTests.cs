@@ -1396,12 +1396,12 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(thread02.Status, Is.EqualTo(NoteStatus.Todo.InternalValue));
 
             // Change resolve status to true
-            env.SetupNoteStatusChange("thread02", NoteStatus.Deleted.InternalValue);
+            env.SetupNoteStatusChange("thread02", NoteStatus.Resolved.InternalValue);
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             thread02 = env.GetNoteThread("project01", "thread02");
             Assert.That(thread02.VerseRef.ToString(), Is.EqualTo("MAT 1:1"));
-            Assert.That(thread02.Status, Is.EqualTo(NoteStatus.Deleted.InternalValue));
+            Assert.That(thread02.Status, Is.EqualTo(NoteStatus.Resolved.InternalValue));
 
             // Change status back to false - happens if the note becomes unresolved again in Paratext
             env.SetupNoteStatusChange("thread02", NoteStatus.Todo.InternalValue);
@@ -2099,7 +2099,7 @@ namespace SIL.XForge.Scripture.Services
             public void SetupNoteRemovedChange(string threadId, string noteId, string verseRef = "MAT 1:1")
             {
                 var noteThreadChange = new NoteThreadChange(threadId, verseRef, $"{threadId} selected text.",
-                    "Context before ", " context after", NoteStatus.Deleted.InternalValue, "icon1");
+                    "Context before ", " context after", NoteStatus.Resolved.InternalValue, "icon1");
                 if (noteId == null)
                     noteThreadChange.ThreadRemoved = true;
                 else
