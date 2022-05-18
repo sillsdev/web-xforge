@@ -2,8 +2,6 @@
 //
 // Show project metadata and data
 //
-// Copyright 2021 SIL International. MIT License.
-//
 // Display data and metadata about projects.
 //
 // This script needs ts-node and must be run from the containing directory. Setup: npm ci

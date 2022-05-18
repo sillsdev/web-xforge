@@ -2,8 +2,6 @@
 //
 // Manipulate sharedb
 //
-// Copyright 2022 SIL International. MIT License.
-//
 // This script needs ts-node and must be run from the containing directory. Setup: npm ci
 // Usage info: ./manipulate-sharedb.ts --help
 // Example: ./manipulate-sharedb.ts --server live
