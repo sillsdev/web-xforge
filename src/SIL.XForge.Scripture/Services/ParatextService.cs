@@ -709,14 +709,26 @@ namespace SIL.XForge.Scripture.Services
 
         /// <summary> Write up-to-date book text from mongo database to Paratext project folder. </summary>
         /// <remarks> It is up to the caller to determine whether the project text is editable. </remarks>
-        public async Task PutBookText(UserSecret userSecret, string projectId, int bookNum, string usx,
-            Dictionary<int, string> chapterAuthors = null)
+        public async Task PutBookText(UserSecret userSecret, string projectPTId, int bookNum, string usx,
+            Dictionary<int, string> chapNumToAuthorUserSFIdMap = null)
         {
+            if (userSecret == null)
+            {
+                throw new ArgumentNullException(nameof(userSecret));
+            }
+            if (String.IsNullOrWhiteSpace(projectPTId))
+            {
+                throw new ArgumentException(nameof(projectPTId));
+            }
+
+            StringBuilder log = new StringBuilder($"ParatextService.PutBookText(userSecret, projectPTId {projectPTId}, bookNum {bookNum}, usx {usx}, chapterAuthors: {(chapNumToAuthorUserSFIdMap == null ? "null" : ($"count {chapNumToAuthorUserSFIdMap.Count}"))})");
             Dictionary<string, ScrText> scrTexts = new Dictionary<string, ScrText>();
             try
             {
+                log.AppendLine($"Querying userSecret (id {userSecret.Id}, tokens null: {userSecret.ParatextTokens == null}) for username.");
                 string username = GetParatextUsername(userSecret);
-                using ScrText scrText = ScrTextCollection.FindById(username, projectId);
+                log.AppendLine($"Acquired username: {(username == null ? "is null" : (username.Length == 0 ? "zero length" : "yes"))}");
+                using ScrText scrText = ScrTextCollection.FindById(username, projectPTId);
 
                 // We add this here so we can dispose in the finally
                 scrTexts.Add(userSecret.Id, scrText);
@@ -725,27 +737,38 @@ namespace SIL.XForge.Scripture.Services
                     PreserveWhitespace = true
                 };
                 doc.LoadXml(usx);
+                log.AppendLine($"Imported string as XmlDocument with {doc.ChildNodes.Count} child nodes.");
                 UsxFragmenter.FindFragments(scrText.ScrStylesheet(bookNum), doc.CreateNavigator(),
                     XPathExpression.Compile("*[false()]"), out string usfm);
+                log.AppendLine($"Created usfm of {usfm}");
                 usfm = UsfmToken.NormalizeUsfm(scrText.ScrStylesheet(bookNum), usfm, false,
                     scrText.RightToLeft, scrText);
+                log.AppendLine($"Normalized usfm to {usfm}");
 
-                if (chapterAuthors == null || chapterAuthors.Count == 0)
+                if (chapNumToAuthorUserSFIdMap == null || chapNumToAuthorUserSFIdMap.Count == 0)
                 {
+                    log.AppendLine($"Using current user ({userSecret.Id}) to write book to {scrText.Name}.");
                     // If we don't have chapter authors, update book as current user
                     WriteChapterToScrText(scrText, userSecret.Id, bookNum, 0, usfm);
                 }
                 else
                 {
                     // As we have a list of chapter authors, build a dictionary of ScrTexts for each of them
-                    foreach (string userId in chapterAuthors.Values.Distinct())
+                    foreach (string userSFId in chapNumToAuthorUserSFIdMap.Values.Distinct())
                     {
-                        if (userId != userSecret.Id)
+                        if (userSFId != userSecret.Id)
                         {
                             // Get their user secret, so we can get their username, and create their ScrText
-                            UserSecret authorUserSecret = await _userSecretRepository.GetAsync(userId);
+                            log.AppendLine($"Fetching user secret for user SF id '{userSFId}'.");
+                            UserSecret authorUserSecret = await _userSecretRepository.GetAsync(userSFId);
+                            log.AppendLine($"Received user secret: {(authorUserSecret == null ? "null" : (authorUserSecret.ParatextTokens == null ? "with null tokens" : "with tokens"))}");
+                            log.AppendLine($"Fetching PT username from secret.");
                             string authorUserName = GetParatextUsername(authorUserSecret);
-                            scrTexts.Add(userId, ScrTextCollection.FindById(authorUserName, projectId));
+                            log.AppendLine($"Received username: {(authorUserName == null ? "null" : (authorUserName.Length == 0 ? "empty" : "non-empty"))}");
+                            log.AppendLine($"Fetching scrtext using this authorUserName for PT project.");
+                            ScrText item = ScrTextCollection.FindById(authorUserName, projectPTId);
+                            log.AppendLine($"Received ScrText: {(item == null ? "null" : (item.Name))}");
+                            scrTexts.Add(userSFId, item);
                         }
                     }
 
@@ -754,39 +777,62 @@ namespace SIL.XForge.Scripture.Services
                     {
                         try
                         {
-                            WriteChapterToScrText(scrTexts.Values.First(), scrTexts.Keys.First(), bookNum, 0, usfm);
+                            ScrText target = scrTexts.Values.First();
+                            string authorUserSFId = scrTexts.Keys.First();
+                            log.AppendLine($"Using single author (user SF id '{authorUserSFId}') to write to {target.Name} book.");
+                            WriteChapterToScrText(target, authorUserSFId, bookNum, 0, usfm);
                         }
-                        catch (SafetyCheckException)
+                        catch (SafetyCheckException e)
                         {
+                            log.AppendLine($"There was trouble writing ({e.Message}). Trying again, but using user sf id '{userSecret.Id}' to write to {scrText.Name}");
                             // If the author does not have permission, attempt to run as the current user
                             WriteChapterToScrText(scrText, userSecret.Id, bookNum, 0, usfm);
                         }
                     }
                     else
                     {
+                        log.AppendLine($"There are multiple authors. Splitting USFM into chapters.");
                         // Split the usfm into chapters
                         List<string> chapters = ScrText.SplitIntoChapters(scrText.Name, bookNum, usfm);
+                        log.AppendLine($"Received chapters: {(chapters == null ? "null" : ($"count {chapters.Count}"))}");
 
                         // Put the individual chapters
-                        foreach ((int chapterNum, string authorUserId) in chapterAuthors)
+                        foreach ((int chapterNum, string authorUserSFId) in chapNumToAuthorUserSFIdMap)
                         {
                             if ((chapterNum - 1) < chapters.Count)
                             {
                                 try
                                 {
+                                    ScrText target = scrTexts[authorUserSFId];
+                                    string payloadUsfm = chapters[chapterNum - 1];
+                                    log.AppendLine($"Writing to {target.Name}, chapter {chapterNum}, using author user SF id {authorUserSFId}, the usfm: {payloadUsfm}");
                                     // The ScrText permissions will be the same as the last sync's permissions
-                                    WriteChapterToScrText(scrTexts[authorUserId], authorUserId, bookNum, chapterNum,
-                                        chapters[chapterNum - 1]);
+                                    WriteChapterToScrText(target, authorUserSFId, bookNum, chapterNum,
+                                        payloadUsfm);
                                 }
-                                catch (SafetyCheckException)
+                                catch (SafetyCheckException e)
                                 {
+                                    log.AppendLine($"There was trouble writing ({e.Message}). Trying again, but using user SF id '{userSecret.Id}' to write to {scrText.Name}. Also now writing the whole book, not just the single chapter.");
                                     // If the author does not have permission, attempt to run as the current user
                                     WriteChapterToScrText(scrText, userSecret.Id, bookNum, 0, usfm);
                                 }
                             }
+                            else
+                            {
+                                log.AppendLine($"Not processing erroneous chapter number '{chapterNum}'");
+                            }
                         }
                     }
                 }
+            }
+            catch (Exception e)
+            {
+                log.AppendLine($"An exception occurred while processing: {e}");
+                string scrTextProjects = string.Join(",", scrTexts.Values.Select((ScrText scrTextItem) => scrTextItem.Name));
+                log.AppendLine($"ScrTexts contained projects: {scrTextProjects}");
+                string uniqueCode = $"ParatextService.PutBookText.{DateTime.UtcNow}";
+                e.Data.Add(uniqueCode, log.ToString());
+                throw;
             }
             finally
             {
