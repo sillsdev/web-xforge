@@ -1,0 +1,15 @@
+version: "3"
+services:
+  web:
+    image: sf_dotnet:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "5000:5000"
+      - "5000:5000"
+    networks:
+      - webnet
+networks:
+  webnet:

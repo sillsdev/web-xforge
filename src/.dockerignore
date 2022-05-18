@@ -1,2 +1,10 @@
-RealtimeServer/node_modules
+SIL.XForge/bin
+SIL.XForge/obj
+
+SIL.XForge.Scripture/bin
+SIL.XForge.Scripture/obj
 SIL.XForge.Scripture/ClientApp/node_modules
+SIL.XForge.Scripture/ClientApp/dist
+
+RealtimeServer/node_modules
+RealtimeServer/lib
