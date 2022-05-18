@@ -4,27 +4,33 @@
 h1 {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   margin: -10px 0 10px;
 
   span {
     flex: 1;
-    margin-left: 10px;
+    margin: 0 10px;
+    white-space: nowrap;
   }
   > button {
     margin-right: -15px;
   }
 }
-.text {
-  color: $greenDark;
-  background: rgba(0, 0, 0, 0.05);
-  padding: 6px;
-  border-radius: 4px;
-  font-size: 0.9em;
-  .segment-text {
-    padding-top: 6px;
-    border-top: 2px solid $greenDark;
-    margin-top: 6px;
-    white-space: pre-wrap;
+.text-row {
+  display: flex;
+  .text {
+    color: $greenDark;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 6px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    flex: 1;
+    .segment-text {
+      padding-top: 6px;
+      border-top: 2px solid $greenDark;
+      margin-top: 6px;
+      white-space: pre-wrap;
+    }
   }
 }
 .notes {
