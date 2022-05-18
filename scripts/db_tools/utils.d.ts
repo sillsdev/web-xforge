@@ -1,6 +1,4 @@
 // Type definitions for utils
-//
-// Copyright 2021 SIL International. MIT License.
 
 import { Snapshot } from 'sharedb';
 import { Connection, Doc } from 'sharedb/lib/client';
