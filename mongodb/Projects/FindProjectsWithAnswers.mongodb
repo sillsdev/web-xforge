@@ -7,23 +7,37 @@ db.questions.aggregate([
   {$match: {
     answers: { $exists: true }
   }},
-  // strip out all fields except projectRef, and add an answerCount property
+  // strip out all unneeded field and count up the properties of interest
   {$project: {
-    answerCount: { $size: '$answers' },
+    answers: { $size: '$answers' },
+    audioAnswers: {
+      $size: {
+        $filter: {
+          input: '$answers',
+          as: 'answer',
+          cond: { $ifNull: ['$$answer.audioUrl', false] }
+        }
+      }
+    },
+    // set hasAudio to 1 or 0, so that we can count questions with audio in the next step by summing this value
+    hasAudio: { $cond: { if: '$audioUrl', then: 1, else: 0 } },
     projectRef: 1
   }},
-  // group the questions by projectRef, and sum the total answers from each project
+  // group the questions by projectRef, and sum the values of interest
   {$group: {
     _id: '$projectRef',
-    totalAnswers: { $sum: '$answerCount' }
+    questions: { $sum: 1 },
+    audioQuestions: { $sum: '$hasAudio' },
+    answers: { $sum: '$answers' },
+    audioAnswers: { $sum: '$audioAnswers' }
   }},
   // filter out any projects that have fewer than minAnswers
   {$match: {
-    totalAnswers: {$gte: minAnswers}
+    answers: { $gte: minAnswers }
   }},
   // sort by the number of answers, descending
   {$sort: {
-    totalAnswers: -1
+    answers: -1
   }},
   // lookup the project associated with the project id, and add it as a property
   {$lookup: {
@@ -40,6 +54,9 @@ db.questions.aggregate([
   {$project: {
     shortName: '$project.shortName',
     name: '$project.name',
-    totalAnswers: 1,
+    questions: 1,
+    audioQuestions: 1,
+    answers: 1,
+    audioAnswers: 1
   }}
 ]);
