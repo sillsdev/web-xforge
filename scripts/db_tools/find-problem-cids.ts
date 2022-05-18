@@ -2,8 +2,6 @@
 //
 // Find problem cids
 //
-// Copyright 2021 SIL International. MIT License.
-//
 // Find potentially problematic usages of character ids (cids) in op inserts in a text doc, which could indicate poor
 // handling of character styling.
 // This script needs ts-node and must be run from the containing directory. Setup: npm ci
