@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -333,7 +334,12 @@ namespace SIL.XForge.Scripture.Services
             {
                 if (!(e is TaskCanceledException))
                 {
-                    _logger.LogError(e, "Error occurred while executing Paratext sync for project with SF id '{Project}'", projectSFId);
+                    StringBuilder additionalInformation = new StringBuilder();
+                    foreach (var key in e.Data.Keys)
+                    {
+                        additionalInformation.AppendLine($"{key}: {e.Data[key]}");
+                    }
+                    _logger.LogError(e, $"Error occurred while executing Paratext sync for project with SF id '{projectSFId}'. {(additionalInformation.Length == 0 ? string.Empty : ($"Additional information: {additionalInformation.ToString()}"))}");
                 }
 
                 await CompleteSync(false, canRollbackParatext, token);
@@ -481,50 +487,50 @@ namespace SIL.XForge.Scripture.Services
                 int chapterNum = chapter.Number;
 
                 // Attempt to find the last user who modified this chapter
-                string userId = null;
+                string userSFId = null;
                 if (textDocs.TryGetValue(chapterNum, out IDocument<TextData> textDoc))
                 {
                     // The Id is the value from TextData.GetTextDocId()
                     string textId = textDoc.Id;
                     int version = textDoc.Version;
-                    userId = await _realtimeService.GetLastModifiedUserIdAsync<TextData>(textId, version);
+                    userSFId = await _realtimeService.GetLastModifiedUserIdAsync<TextData>(textId, version);
 
                     // Check that this user still has write permissions
-                    if (string.IsNullOrEmpty(userId)
-                        || !chapter.Permissions.TryGetValue(userId, out string permission)
+                    if (string.IsNullOrEmpty(userSFId)
+                        || !chapter.Permissions.TryGetValue(userSFId, out string permission)
                         || permission != TextInfoPermission.Write)
                     {
                         // They no longer have write access, so reset the user id, and find it below
-                        userId = null;
+                        userSFId = null;
                     }
                 }
 
                 // If we do not have a record of the last user to modify this chapter
-                if (string.IsNullOrEmpty(userId))
+                if (string.IsNullOrEmpty(userSFId))
                 {
                     // See if the current user has permissions
                     if (chapter.Permissions.TryGetValue(_userSecret.Id, out string permission)
                         && permission == TextInfoPermission.Write)
                     {
-                        userId = _userSecret.Id;
+                        userSFId = _userSecret.Id;
                     }
                     else
                     {
                         // Get the first user with write permission
                         // NOTE: As a KeyValuePair is a struct, we do not need a null-conditional (key will be null)
-                        userId = chapter.Permissions.FirstOrDefault(p => p.Value == TextInfoPermission.Write).Key;
+                        userSFId = chapter.Permissions.FirstOrDefault(p => p.Value == TextInfoPermission.Write).Key;
 
                         // If the userId is still null, find a project administrator, as they can escalate privilege
-                        if (string.IsNullOrEmpty(userId))
+                        if (string.IsNullOrEmpty(userSFId))
                         {
-                            userId = _projectDoc.Data.UserRoles
+                            userSFId = _projectDoc.Data.UserRoles
                                 .FirstOrDefault(p => p.Value == SFProjectRole.Administrator).Key;
                         }
                     }
                 }
 
                 // Set the author for the chapter
-                chapterAuthors.Add(chapterNum, userId);
+                chapterAuthors.Add(chapterNum, userSFId);
             }
 
             return chapterAuthors;
