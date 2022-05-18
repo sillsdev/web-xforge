@@ -39,6 +39,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
 import { getLinkHTML, issuesEmailTemplate } from 'xforge-common/utils';
+import { DEFAULT_FONT_SIZE } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { environment } from '../../../environments/environment';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
@@ -108,6 +109,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private targetLoaded: boolean = false;
   private _targetFocused: boolean = false;
   private _chapter?: number;
+  private _fontSize: number = DEFAULT_FONT_SIZE;
   private lastShownSuggestions: Suggestion[] = [];
   private readonly segmentUpdated$: Subject<void>;
   private trainingSub?: Subscription;
@@ -306,6 +308,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return false;
   }
 
+  get fontSize(): string {
+    // Paratext allows a font size between 8 and 32. We roughly convert that to a scale between 1-3rem
+    let remSize: number = Math.min(3, this._fontSize / 10);
+    remSize = Math.max(1, remSize);
+    return `${remSize}rem`;
+  }
+
   get isUsfmValid(): boolean {
     if (this.text == null) {
       return true;
@@ -357,6 +366,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
         if (projectId !== prevProjectId) {
           this.projectDoc = await this.projectService.getProfile(projectId);
+          this._fontSize = this.projectDoc.data?.defaultFontSize ?? DEFAULT_FONT_SIZE;
           const userRole: string | undefined = this.projectDoc.data?.userRoles[this.userService.currentUserId];
           if (userRole != null) {
             const projectDoc: SFProjectDoc | undefined = await this.projectService.tryGetForRole(projectId, userRole);

@@ -684,7 +684,9 @@ namespace SIL.XForge.Scripture.Services
             {
                 FullName = scrText.FullName,
                 IsRightToLeft = scrText.RightToLeft,
-                Editable = scrText.Settings.Editable
+                Editable = scrText.Settings.Editable,
+                DefaultFontSize = scrText.Settings.DefaultFontSize,
+                DefaultFont = scrText.Settings.DefaultFont
             };
         }
 

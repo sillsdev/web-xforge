@@ -13,7 +13,7 @@ import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
-import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { DEFAULT_FONT, DEFAULT_FONT_SIZE, SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
@@ -817,6 +817,8 @@ class TestEnvironment {
         },
         sync: { queuedCount: 0 },
         editable: true,
+        defaultFontSize: DEFAULT_FONT_SIZE,
+        defaultFont: DEFAULT_FONT,
         userRoles,
         userPermissions: {},
         texts,

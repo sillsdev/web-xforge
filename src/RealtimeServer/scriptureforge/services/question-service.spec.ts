@@ -168,6 +168,8 @@ class TestEnvironment {
       texts: [],
       sync: { queuedCount: 0 },
       editable: true,
+      defaultFontSize: 10,
+      defaultFont: 'Arial',
       userRoles: {
         projectAdmin: SFProjectRole.ParatextAdministrator,
         checker: SFProjectRole.CommunityChecker

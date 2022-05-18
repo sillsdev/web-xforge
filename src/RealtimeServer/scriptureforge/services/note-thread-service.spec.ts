@@ -246,6 +246,8 @@ class TestEnvironment {
       },
       texts: [],
       editable: true,
+      defaultFontSize: 10,
+      defaultFont: 'Arial',
       sync: { queuedCount: 0 },
       userRoles: {
         projectAdmin: SFProjectRole.ParatextAdministrator,

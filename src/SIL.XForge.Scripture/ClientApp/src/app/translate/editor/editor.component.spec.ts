@@ -30,7 +30,12 @@ import {
   NoteThread,
   NoteType
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
-import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import {
+  DEFAULT_FONT,
+  DEFAULT_FONT_SIZE,
+  SFProject,
+  SFProjectProfile
+} from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { hasParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
   getSFProjectUserConfigDocId,
@@ -903,6 +908,16 @@ describe('EditorComponent', () => {
       expect(env.component.projectTextNotEditable).toBe(true);
       expect(env.component.canEdit).toBe(false);
       expect(env.fixture.debugElement.query(By.css('.text-area .project-text-not-editable'))).not.toBeNull();
+      env.dispose();
+    }));
+
+    it('uses default font size', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject({ defaultFontSize: 16 });
+      env.setProjectUserConfig();
+      env.wait();
+
+      expect(env.component.fontSize).toEqual('1.6rem');
       env.dispose();
     }));
 
@@ -2414,6 +2429,8 @@ class TestEnvironment {
     },
     sync: { queuedCount: 0, dataInSync: true },
     editable: true,
+    defaultFontSize: DEFAULT_FONT_SIZE,
+    defaultFont: DEFAULT_FONT,
     texts: [
       {
         bookNum: 40,
@@ -2752,6 +2769,9 @@ class TestEnvironment {
     }
     if (data.editable != null) {
       projectProfileData.editable = data.editable;
+    }
+    if (data.defaultFontSize != null) {
+      projectProfileData.defaultFontSize = data.defaultFontSize;
     }
     this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
       id: 'project01',

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Paratext.Data.ProjectSettingsAccess;
 using SIL.XForge.Models;
 
 namespace SIL.XForge.Scripture.Models
@@ -19,5 +20,7 @@ namespace SIL.XForge.Scripture.Models
         /// </summary>
         public List<ParatextUserProfile> ParatextUsers { get; set; } = new List<ParatextUserProfile>();
         public bool Editable { get; set; } = true;
+        public int DefaultFontSize { get; set; } = 10;
+        public string DefaultFont { get; set; } = ProjectSettings.defaultFontName;
     }
 }

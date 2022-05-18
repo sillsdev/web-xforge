@@ -315,6 +315,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     this.applyEditorStyles();
   }
 
+  @Input() set fontSize(size: string) {
+    this.editorStyles = { fontSize: size };
+  }
+
   get isLtr(): boolean {
     return !this._isRightToLeft && this.contentShowing;
   }
