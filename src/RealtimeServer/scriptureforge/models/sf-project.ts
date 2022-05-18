@@ -11,6 +11,8 @@ export const SF_PROJECT_PROFILES_INDEX_PATHS: string[] = [];
 
 export const SF_PROJECTS_COLLECTION = 'sf_projects';
 export const SF_PROJECT_INDEX_PATHS: string[] = [];
+export const DEFAULT_FONT = 'Arial';
+export const DEFAULT_FONT_SIZE = 10;
 
 export interface SFProjectProfile extends Project {
   paratextId: string;
@@ -22,6 +24,8 @@ export interface SFProjectProfile extends Project {
   texts: TextInfo[];
   sync: Sync;
   editable: boolean;
+  defaultFontSize: number;
+  defaultFont: string;
 }
 
 export interface SFProject extends SFProjectProfile {

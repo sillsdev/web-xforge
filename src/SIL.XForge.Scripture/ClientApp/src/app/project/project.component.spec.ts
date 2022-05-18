@@ -4,7 +4,11 @@ import { TranslocoService } from '@ngneat/transloco';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import {
+  DEFAULT_FONT,
+  DEFAULT_FONT_SIZE,
+  SFProjectProfile
+} from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
   getSFProjectUserConfigDocId,
@@ -341,6 +345,8 @@ class TestEnvironment {
           },
           sync: { queuedCount: 0 },
           editable: true,
+          defaultFontSize: DEFAULT_FONT_SIZE,
+          defaultFont: DEFAULT_FONT,
           texts:
             args.hasTexts == null || args.hasTexts
               ? [

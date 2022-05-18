@@ -149,6 +149,23 @@ describe('SFProjectMigrations', () => {
       expect(projectDoc.data.editable).toBe(true);
     });
   });
+
+  describe('version 7', () => {
+    it('adds default font and font size', async () => {
+      const env = new TestEnvironment(6);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {});
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.defaultFontSize).toBeUndefined();
+      expect(projectDoc.data.defaultFont).toBeUndefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.defaultFontSize).toBe(10);
+      expect(projectDoc.data.defaultFont).toBe('Arial');
+    });
+  });
 });
 
 class TestEnvironment {

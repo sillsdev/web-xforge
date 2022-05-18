@@ -38,7 +38,7 @@ const mockedAuthService = mock(AuthService);
 const mockedCookieService = mock(CookieService);
 const mockedMdcDialog = mock(MdcDialog);
 const mockedCsvService = mock(CsvService);
-const mockedRealtimeQuery = mock(RealtimeQuery);
+const mockedRealtimeQuery: RealtimeQuery<QuestionDoc> = mock(RealtimeQuery);
 
 describe('ImportQuestionsDialogComponent', () => {
   configureTestingModule(() => ({

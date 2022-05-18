@@ -7,7 +7,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { DEFAULT_FONT, DEFAULT_FONT_SIZE, SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
@@ -668,6 +668,8 @@ class TestEnvironment {
         shareLevel: CheckingShareLevel.Specific
       },
       editable: true,
+      defaultFontSize: DEFAULT_FONT_SIZE,
+      defaultFont: DEFAULT_FONT,
       userRoles,
       paratextUsers: paratextUsersFromRoles(userRoles),
       userPermissions: {}
