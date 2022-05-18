@@ -9,19 +9,19 @@
   "main": "lib/cjs/common/index.js",
   "types": "lib/cjs/common/index.d.ts",
   "dependencies": {
-    "mongodb": "^4.5.0",
+    "mongodb": "^4.6.0",
     "ot-json0": "^1.1.0",
     "rich-text": "^4.1.0",
     "sharedb": "^1.9.2",
     "sharedb-access": "^5.0.0",
     "sharedb-mongo": "^1.0.0",
-    "ws": "^8.5.0",
-    "yargs": "^17.2.1"
+    "ws": "^8.6.0",
+    "yargs": "^17.5.1"
   },
   "devDependencies": {
-    "@types/mongodb": "^3.3.11",
+    "@types/mongodb": "^3.6.20",
     "@types/ws": "^8.5.3",
-    "@types/yargs": "^17.0.7",
+    "@types/yargs": "^17.0.10",
     "sharedb-mingo-memory": "^1.2.0",
     "ts-node": "^10.7.0",
     "tslib": "^2.4.0"
