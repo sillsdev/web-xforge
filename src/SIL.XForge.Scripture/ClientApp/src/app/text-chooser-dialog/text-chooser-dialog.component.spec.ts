@@ -4,7 +4,11 @@ import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@an
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { CookieService } from 'ngx-cookie-service';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import {
+  DEFAULT_FONT,
+  DEFAULT_FONT_SIZE,
+  SFProjectProfile
+} from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
@@ -395,6 +399,8 @@ class TestEnvironment {
     texts: [TestEnvironment.matthewText],
     sync: { queuedCount: 0 },
     editable: true,
+    defaultFontSize: DEFAULT_FONT_SIZE,
+    defaultFont: DEFAULT_FONT,
     userRoles: {
       user01: SFProjectRole.ParatextAdministrator
     },

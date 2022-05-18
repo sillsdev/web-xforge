@@ -26,7 +26,7 @@ import { UserService } from '../user.service';
 import { SaProjectsComponent } from './sa-projects.component';
 
 const mockedNoticeService = mock(NoticeService);
-const mockedProjectService = mock(ProjectService);
+const mockedProjectService: ProjectService = mock(ProjectService);
 const mockedUserService = mock(UserService);
 
 describe('SaProjectsComponent', () => {

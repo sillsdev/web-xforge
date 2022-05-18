@@ -1,6 +1,10 @@
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
-import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import {
+  DEFAULT_FONT,
+  DEFAULT_FONT_SIZE,
+  SFProjectProfile
+} from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { hasParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
@@ -78,6 +82,8 @@ export function getSFProject(id: string): SFProjectProfile {
     },
     sync: { queuedCount: 0 },
     editable: true,
+    defaultFontSize: DEFAULT_FONT_SIZE,
+    defaultFont: DEFAULT_FONT,
     texts: [
       {
         bookNum: 40,

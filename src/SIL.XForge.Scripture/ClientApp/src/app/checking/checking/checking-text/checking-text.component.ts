@@ -25,6 +25,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
   private _id?: TextDocId;
   private _questionVerses?: VerseRef[];
   private _placeholder?: string;
+  private _fontSize: string = '';
 
   @Input() set placeholder(value: string) {
     this._placeholder = value;
@@ -74,7 +75,11 @@ export class CheckingTextComponent extends SubscriptionDisposable {
   }
 
   @Input() set fontSize(fontSize: string) {
-    this.textComponent.editorStyles = { fontSize };
+    this._fontSize = fontSize;
+  }
+
+  get fontSize(): string {
+    return this._fontSize;
   }
 
   onLoaded(): void {
