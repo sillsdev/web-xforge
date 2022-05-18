@@ -4,18 +4,20 @@
     <div *ngIf="noteThreadAssignedUserRef != null" id="assignedUser" class="assigned-user">
       >{{ getAssignedUserString(noteThreadAssignedUserRef) }}
     </div>
-    <button mat-icon-button [matMenuTriggerFor]="menu"><mat-icon>more_vert</mat-icon></button>
-    <mat-menu #menu="matMenu">
-      <button mat-menu-item (click)="toggleSegmentText()">
-        <mat-icon>compare</mat-icon>
-        <span>{{ showSegmentText ? t("hide_changes") : t("show_changes") }}</span>
-      </button>
-    </mat-menu>
   </h1>
   <mat-dialog-content class="content-padding" [ngClass]="{ rtl: isRtl, ltr: !isRtl }">
-    <div class="text">
-      <div class="note-text" [innerHTML]="noteContextText"></div>
-      <div *ngIf="showSegmentText" class="segment-text" [innerHTML]="segmentText"></div>
+    <div class="text-row">
+      <div class="text">
+        <div class="note-text" [innerHTML]="noteContextText"></div>
+        <div *ngIf="showSegmentText" class="segment-text" [innerHTML]="segmentText"></div>
+      </div>
+      <button mat-icon-button [matMenuTriggerFor]="menu"><mat-icon>more_vert</mat-icon></button>
+      <mat-menu #menu="matMenu">
+        <button mat-menu-item (click)="toggleSegmentText()">
+          <mat-icon>compare</mat-icon>
+          <span>{{ showSegmentText ? t("hide_changes") : t("show_changes") }}</span>
+        </button>
+      </mat-menu>
     </div>
     <div class="notes">
       <div *ngFor="let note of notes" class="note">
