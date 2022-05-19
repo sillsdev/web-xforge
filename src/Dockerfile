@@ -7,20 +7,33 @@ RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-p
   && dpkg -i packages-microsoft-prod.deb \
   && rm packages-microsoft-prod.deb \
   && apt-get update \
+  && apt-get upgrade -y \
   && apt-get install -y --no-install-recommends \
   dotnet-sdk-6.0 \
   mercurial \
   && rm -rf /var/lib/apt/lists/*
 
 RUN ln -s /usr/bin/hg /usr/local/bin/hg
+RUN mkdir -p ~/.local/share/Paratext92/
+RUN echo '<?xml version="1.0" encoding="utf-8"?>\
+  <InternetSettingsMemento>\
+  <SelectedServer>Development</SelectedServer>\
+  <PermittedInternetUse>Enabled</PermittedInternetUse>\
+  <ProxyPort>0</ProxyPort>\
+  </InternetSettingsMemento>' > ~/.local/share/Paratext92/InternetSettings.xml
 
 COPY SIL.XForge ./SIL.XForge
 COPY SIL.XForge.Scripture ./SIL.XForge.Scripture
 COPY RealtimeServer ./RealtimeServer
 
-WORKDIR /usr/src/app/SIL.XForge.Scripture
+# WORKDIR /usr/src/app/RealtimeServer
+# RUN npm ci
+# WORKDIR /usr/src/app/SIL.XForge.Scripture/ClientApp
+# RUN npm ci
+# RUN npm run build
 
 # Mark the project as ready for .NET 6
+WORKDIR /usr/src/app/SIL.XForge.Scripture
 RUN sed -i -e 's/<TargetFramework>netcoreapp3.1<\/TargetFramework>/<TargetFramework>net6.0<\/TargetFramework>/g' SIL.XForge.Scripture.csproj
 RUN dotnet build
 
