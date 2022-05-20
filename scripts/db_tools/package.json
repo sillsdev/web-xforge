@@ -20,6 +20,7 @@
   },
   "devDependencies": {
     "@types/mongodb": "^3.6.20",
+    "@types/node": "^16.11.36",
     "@types/ws": "^8.5.3",
     "@types/yargs": "^17.0.10",
     "sharedb-mingo-memory": "^1.2.0",
