@@ -609,6 +609,7 @@ namespace SIL.XForge.Scripture.Services
             }
             else
             {
+                string value = null;
                 // Get the scripture text so we can retrieve the permissions from the XML
                 using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), project.ParatextId);
 
@@ -617,7 +618,8 @@ namespace SIL.XForge.Scripture.Services
                 {
                     // See if the user is in the project members list
                     if (!ptUsernameMapping.TryGetValue(uid, out string userName) || string.IsNullOrWhiteSpace(userName)
-                        || scrText.Permissions.GetRole(userName) == Paratext.Data.Users.UserRoles.None)
+                        || scrText.Permissions.GetRole(userName) == Paratext.Data.Users.UserRoles.None &&
+                        value.Length > 1)
                     {
                         permissions.Add(uid, TextInfoPermission.None);
                     }
