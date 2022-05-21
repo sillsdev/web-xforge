@@ -17,11 +17,13 @@ import { MdcTabBarModule } from '@angular-mdc/web/tab-bar';
 import { MdcTextFieldModule } from '@angular-mdc/web/textfield';
 import { MdcTopAppBarModule } from '@angular-mdc/web/top-app-bar';
 import { MdcTypographyModule } from '@angular-mdc/web/typography';
+import { BidiModule } from '@angular/cdk/bidi';
 import { NgModule } from '@angular/core';
 import { BREAKPOINT, FlexLayoutModule } from '@angular/flex-layout';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
+import { MatListModule } from '@angular/material/list';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatOptionModule } from '@angular/material/core';
@@ -51,6 +53,7 @@ const modules = [
   DonutChartModule,
   FlexLayoutModule,
   FormsModule,
+  BidiModule,
   MatAutocompleteModule,
   MatButtonModule,
   MatCardModule,
@@ -60,6 +63,7 @@ const modules = [
   MatFormFieldModule,
   MatIconModule,
   MatInputModule,
+  MatListModule,
   MatMenuModule,
   MatOptionModule,
   MatPaginatorModule,

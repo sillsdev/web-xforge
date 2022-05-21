@@ -34,7 +34,7 @@
         </div>
       </ng-container>
     </div>
-    <div [fxLayout]="isTargetTextRight ? 'row' : 'row-reverse'" fxLayoutGap="5px">
+    <div [fxLayout]="isTargetTextRight ? 'row' : 'row-reverse'" class="both-editors-wrapper">
       <div id="source-text-area" [fxShow.gt-xs]="showSource" fxHide.xs class="text-area">
         <div class="language-label" mdcSubtitle1>{{ sourceLabel }}</div>
         <div #sourceContainer class="text-container" [style.height]="textHeight">

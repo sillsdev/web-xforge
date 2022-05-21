@@ -1,6 +1,6 @@
 <ng-container *transloco="let t; read: 'scripture_chooser_dialog'">
   <mdc-dialog>
-    <mdc-dialog-container class="dialogContainer">
+    <mdc-dialog-container class="dialogContainer" [dir]="i18n.direction">
       <mdc-dialog-surface id="bookPane" *ngIf="showing === 'books'">
         <mdc-dialog-title>
           <button mdcIconButton class="backout-button" (click)="onClickBackoutButton()" (focus)="onCloseFocus($event)">
