@@ -26,17 +26,18 @@ COPY SIL.XForge ./SIL.XForge
 COPY SIL.XForge.Scripture ./SIL.XForge.Scripture
 COPY RealtimeServer ./RealtimeServer
 
-WORKDIR /usr/src/app/RealtimeServer
-RUN npm ci
-WORKDIR /usr/src/app/SIL.XForge.Scripture/ClientApp
-RUN npm ci
-RUN npm run build
+# WORKDIR /usr/src/app/RealtimeServer
+# RUN npm ci
+# WORKDIR /usr/src/app/SIL.XForge.Scripture/ClientApp
+# RUN npm ci
+# RUN npm run build
 
 # Mark the project as ready for .NET 6
 WORKDIR /usr/src/app/SIL.XForge.Scripture
 # RUN sed -i -e 's/<TargetFramework>netcoreapp3.1<\/TargetFramework>/<TargetFramework>net6.0<\/TargetFramework>/g' SIL.XForge.Scripture.csproj
-RUN dotnet publish SIL.XForge.Scripture.csproj -c Release \
-  -r linux-x64 /p:Version=9.9.9 /p:AngularConfig=production
+RUN dotnet build
+# RUN dotnet publish SIL.XForge.Scripture.csproj -c Release \
+#   -r linux-x64 /p:Version=9.9.9 /p:AngularConfig=production
 
 
 RUN mkdir -p /var/lib/scriptureforge/audio/
@@ -44,5 +45,5 @@ RUN mkdir -p /var/lib/scriptureforge/audio/
 EXPOSE 5000
 EXPOSE 5003
 
-CMD cd bin/Release/netcoreapp3.1/linux-x64/publish && ./SIL.XForge.Scripture
-
+# CMD cd bin/Release/netcoreapp3.1/linux-x64/publish && ./SIL.XForge.Scripture
+CMD ["dotnet", "run"]

@@ -1,9 +1,21 @@
 version: '3.7'
 services:
+  mongodb:
+    image: mongo:5.0
+    command: mongod
+    volumes:
+      - /data/db
   scriptureforge:
+    depends_on:
+      - 'mongodb'
     image: scriptureforge
-    network_mode: host
+    command: dotnet run
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
     volumes:
-    - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets
+      - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets
+    links:
+      - mongodb
+    ports:
+      - "5000:5000"
+      - "5003:5003"
