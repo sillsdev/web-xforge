@@ -35,32 +35,6 @@
           height: unset;
           min-height: 48px;
         }
-        .mdc-list-divider {
-          margin: 8px 0;
-        }
-      }
-    }
-  }
-
-  .mdc-list-item {
-    cursor: pointer;
-    &:hover,
-    &.mdc-list-item--activated {
-      mdc-icon {
-        color: $purpleLight;
-        fill: $purpleLight;
-      }
-    }
-    mdc-icon {
-      color: $purpleMedium;
-      fill: $purpleMedium;
-      transition: color 0.15s;
-    }
-    mdc-icon:first-child {
-      margin-right: 24px;
-      &.ngx-mdc-icon {
-        width: 24px;
-        height: 24px;
       }
     }
   }
@@ -79,7 +53,7 @@
     mdc-top-app-bar-section {
       mdc-menu {
         min-width: 200px;
-        text-align: left; // Needed for some menu items in Chrome but not Firefox
+        text-align: start; // Needed for some menu items in Chrome but not Firefox
         a {
           width: 100%;
           color: var(--mdc-theme-text-primary-on-background);
@@ -172,21 +146,20 @@ a {
   mdc-list-item:not(.active-locale) mdc-icon {
     visibility: hidden;
   }
-  mdc-icon {
-    margin-right: 0.5em;
-  }
 }
 
 .locale-menu .mdc-list-item {
   white-space: nowrap;
   font-family: $languageFonts;
+  column-gap: 0.5em;
 }
 
 .online-status {
+  display: flex;
+  column-gap: 10px;
+  justify-content: center;
+  align-items: center;
   padding-bottom: 8px;
-  mdc-icon {
-    margin-right: 10px;
-  }
 }
 
 :host,
@@ -198,4 +171,47 @@ a {
       fill: var(--mdc-theme-text-disabled-on-background);
     }
   }
+}
+
+.translate-icon {
+  width: 24px;
+  height: 24px;
+}
+
+mat-nav-list .mat-list-item {
+  height: 48px;
+  font-weight: 500;
+  font-size: 14px;
+
+  mat-icon,
+  mdc-icon {
+    color: $purpleMedium;
+    fill: $purpleMedium;
+    transition: color 0.15s;
+    padding: 0;
+  }
+  &.activated-nav-item,
+  &:hover {
+    mat-icon,
+    mdc-icon {
+      color: $purpleLight;
+      fill: $purpleLight;
+    }
+  }
+
+  mat-icon:last-child {
+    margin-left: auto;
+  }
+
+  ::ng-deep .mat-list-item-content {
+    column-gap: 16px;
+  }
+}
+
+.mat-list-item.activated-nav-item {
+  background-color: #e7e8e7;
+}
+
+#menu-list {
+  padding-top: 6px;
 }

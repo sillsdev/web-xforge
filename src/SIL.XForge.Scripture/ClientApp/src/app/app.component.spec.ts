@@ -1,5 +1,4 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
-import { MdcList, MdcListItem } from '@angular-mdc/web/list';
 import { CommonModule, Location } from '@angular/common';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, NgModule, NgZone } from '@angular/core';
@@ -434,7 +433,7 @@ describe('AppComponent', () => {
       env.remoteAddQuestion(env.questions[1]);
       // Expect: Community Checking | Overview | All Questions | Luke | John | Synchronize | Settings | Users
       expect(env.menuLength).toEqual(8);
-      expect(env.menuList.getListItemByIndex(2)!.getListItemElement().textContent).toContain('All Questions');
+      expect(env.menuListItems[2].nativeElement.textContent).toContain('All Questions');
     }));
 
     it('books displayed in canonical order', fakeAsync(() => {
@@ -634,14 +633,12 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#menu-drawer'));
   }
 
-  get menuList(): MdcList {
-    const listElem = this.fixture.debugElement.query(By.css('#menu-list'));
-    return listElem.componentInstance;
+  get menuListItems(): DebugElement[] {
+    return this.fixture.debugElement.queryAll(By.css('#menu-list .mat-list-item'));
   }
 
-  get helpMenuList(): MdcList {
-    const listElem = this.fixture.debugElement.query(By.css('#help-menu-list'));
-    return listElem.componentInstance;
+  get helpMenuList(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#help-menu-list'));
   }
 
   get navBar(): DebugElement {
@@ -657,7 +654,7 @@ class TestEnvironment {
   }
 
   get menuLength(): number {
-    return this.menuList.items.length;
+    return this.menuListItems.length;
   }
 
   get isDrawerVisible(): boolean {
@@ -673,18 +670,15 @@ class TestEnvironment {
   }
 
   getMenuItemText(index: number): string {
-    const menuItem = this.fixture.debugElement.query(By.css('#menu-list div mdc-list-item:nth-child(' + index + ')'));
-    return menuItem.nativeElement.textContent;
+    return this.menuListItems[index].nativeElement.textContent;
   }
 
-  getMenuItemContaining(substring: string): MdcListItem | undefined {
-    return this.menuList.items.find((item: MdcListItem) => item.elementRef.nativeElement.innerText.includes(substring));
+  getMenuItemContaining(substring: string): DebugElement | undefined {
+    return this.menuListItems.find((item: DebugElement) => item.nativeElement.innerText.includes(substring));
   }
 
-  getHelpMenuItemContaining(substring: string): MdcListItem | undefined {
-    return this.helpMenuList.items.find((item: MdcListItem) =>
-      item.elementRef.nativeElement.innerText.includes(substring)
-    );
+  getHelpMenuItemContaining(substring: string): DebugElement | undefined {
+    return this.helpMenuList.children.find((item: DebugElement) => item.nativeElement.innerText.includes(substring));
   }
 
   someMenuItemContains(substring: string): boolean {
@@ -748,7 +742,7 @@ class TestEnvironment {
   }
 
   selectItem(index: number): void {
-    const elem = this.menuList.getListItemByIndex(index)!.getListItemElement();
+    const elem = this.menuListItems[index].nativeElement;
     elem.click();
     this.wait();
   }

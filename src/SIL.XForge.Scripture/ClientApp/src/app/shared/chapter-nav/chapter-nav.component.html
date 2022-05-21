@@ -14,7 +14,7 @@
   <button
     mdc-icon-button
     appBlurOnClick
-    icon="keyboard_arrow_left"
+    icon="keyboard_arrow_{{ i18n.backwardDirectionWord }}"
     type="button"
     (click)="prevChapter()"
     [disabled]="isPrevChapterDisabled()"
@@ -24,7 +24,7 @@
   <button
     mdc-icon-button
     appBlurOnClick
-    icon="keyboard_arrow_right"
+    icon="keyboard_arrow_{{ i18n.forwardDirectionWord }}"
     type="button"
     (click)="nextChapter()"
     [disabled]="isNextChapterDisabled()"

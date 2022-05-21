@@ -1,8 +1,15 @@
 @import 'src/variables';
 @import 'bootstrap/scss/mixins/breakpoints';
 
-.primary-actions .mdc-button:not(:first-child) {
-  margin-left: $button-spacing;
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  column-gap: 8px;
+  h2 {
+    flex-grow: 1;
+  }
 }
 
 #add-question-button {

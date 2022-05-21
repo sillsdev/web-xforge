@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { HashMap, Translation, TranslocoLoader } from '@ngneat/transloco';
 import { TranslocoConfig, TranslocoService } from '@ngneat/transloco';
 import merge from 'lodash-es/merge';
@@ -13,6 +13,7 @@ import enChecking from '../assets/i18n/checking_en.json';
 import enNonChecking from '../assets/i18n/non_checking_en.json';
 import { environment } from '../environments/environment';
 import { AuthService } from './auth.service';
+import { DOCUMENT } from './browser-globals';
 import { BugsnagService } from './bugsnag.service';
 import { LocationService } from './location.service';
 import { Locale } from './models/i18n-locale';
@@ -93,7 +94,8 @@ export class I18nService {
     private readonly authService: AuthService,
     private readonly transloco: TranslocoService,
     private readonly cookieService: CookieService,
-    private readonly reportingService: ErrorReportingService
+    private readonly reportingService: ErrorReportingService,
+    @Inject(DOCUMENT) private readonly document: Document
   ) {
     // Note that if the user is already logged in, and the user has a different interface language specified in their
     // Auth0 profile, then the locale from the URL will end up being overridden.
@@ -114,6 +116,18 @@ export class I18nService {
 
   get localeCode() {
     return this.currentLocale.canonicalTag;
+  }
+
+  get direction(): 'ltr' | 'rtl' {
+    return this.currentLocale.direction;
+  }
+
+  get forwardDirectionWord(): 'right' | 'left' {
+    return this.currentLocale.direction === 'ltr' ? 'right' : 'left';
+  }
+
+  get backwardDirectionWord(): 'right' | 'left' {
+    return this.currentLocale.direction === 'ltr' ? 'left' : 'right';
   }
 
   get locales() {
@@ -159,6 +173,7 @@ export class I18nService {
       'log'
     );
     this.reportingService.addMeta({ localeId: this.localeCode });
+    this.document.body.setAttribute('dir', this.direction);
   }
 
   localizeBook(book: number | string) {

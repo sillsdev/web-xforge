@@ -1,6 +1,6 @@
 <ng-container *transloco="let t; read: 'question_dialog'">
   <mdc-dialog>
-    <mdc-dialog-container>
+    <mdc-dialog-container [dir]="i18n.direction">
       <mdc-dialog-surface class="dialog-size">
         <mdc-dialog-title fxLayoutAlign="start center">
           <i class="material-icons">live_help</i> {{ modeLabel }}
