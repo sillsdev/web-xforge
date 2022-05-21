@@ -116,14 +116,8 @@
                 </div>
                 <mdc-list-divider></mdc-list-divider>
                 <div class="online-status">
-                  <div *ngIf="isAppOnline" fxLayout="row" fxLayoutAlign="center center">
-                    <mdc-icon>cloud</mdc-icon>
-                    {{ t("online") }}
-                  </div>
-                  <div *ngIf="!isAppOnline" fxLayout="row" fxLayoutAlign="center center">
-                    <mdc-icon mdcListItemGraphic>cloud_off</mdc-icon>
-                    {{ t("offline") }}
-                  </div>
+                  <ng-container *ngIf="isAppOnline"><mdc-icon>cloud</mdc-icon> {{ t("online") }}</ng-container>
+                  <ng-container *ngIf="!isAppOnline"><mdc-icon>cloud_off</mdc-icon> {{ t("offline") }}</ng-container>
                 </div>
               </mdc-list-group>
             </mdc-menu>
@@ -165,100 +159,108 @@
       </mdc-select>
     </mdc-drawer-header>
     <mdc-drawer-content>
-      <mdc-list id="menu-list">
-        <mdc-list-item
+      <mat-nav-list id="menu-list">
+        <a
+          mat-list-item
           class="translate-nav-item"
           *ngIf="isTranslateEnabled"
-          (selectionChange)="translateVisible = !translateVisible"
+          (click)="translateVisible = !translateVisible"
         >
-          <mdc-icon svgIcon="translate"></mdc-icon>
+          <mdc-icon svgIcon="translate" class="translate-icon"></mdc-icon>
           {{ t("translate") }}
-          <mdc-icon *ngIf="!hasSingleAppEnabled" mdcListItemMeta>
-            keyboard_arrow_{{ translateVisible ? "down" : "right" }}
-          </mdc-icon>
-        </mdc-list-item>
+          <mat-icon *ngIf="!hasSingleAppEnabled">
+            keyboard_arrow_{{ translateVisible ? "down" : i18n.forwardDirectionWord }}
+          </mat-icon>
+        </a>
         <div *ngIf="isTranslateEnabled && (translateVisible || hasSingleAppEnabled)">
-          <mdc-list-item [appRouterLink]="getRouterLink('translate')" (selectionChange)="itemSelected()">
-            <mdc-icon mdcListItemGraphic>apps</mdc-icon>
+          <a mat-list-item [appRouterLink]="getRouterLink('translate')" (click)="itemSelected()">
+            <mat-icon matListIcon>apps</mat-icon>
             {{ t("overview") }}
-          </mdc-list-item>
-          <mdc-list-item
+          </a>
+          <a
+            mat-list-item
             *ngFor="let text of texts"
             [appRouterLink]="getRouterLink('translate', getBookId(text))"
-            (selectionChange)="itemSelected()"
+            (click)="itemSelected()"
           >
-            <mdc-icon mdcListItemGraphic>book</mdc-icon>
+            <mat-icon matListIcon>book</mat-icon>
             {{ getBookName(text) }}
-          </mdc-list-item>
+          </a>
         </div>
-        <mdc-list-divider *ngIf="isTranslateEnabled"></mdc-list-divider>
-        <mdc-list-item
+        <mat-divider *ngIf="isTranslateEnabled"></mat-divider>
+        <a
+          mat-list-item
           class="community-checking-nav-item"
           *ngIf="isCheckingEnabled"
-          (selectionChange)="checkingVisible = !checkingVisible"
+          (click)="checkingVisible = !checkingVisible"
         >
-          <mdc-icon mdcListItemGraphic>question_answer</mdc-icon>
+          <mat-icon mat-list-icon>question_answer</mat-icon>
           {{ t("community_checking") }}
-          <mdc-icon *ngIf="!hasSingleAppEnabled" mdcListItemMeta>
-            keyboard_arrow_{{ checkingVisible ? "down" : "right" }}
-          </mdc-icon>
-        </mdc-list-item>
+          <mat-icon *ngIf="!hasSingleAppEnabled">
+            keyboard_arrow_{{ checkingVisible ? "down" : i18n.forwardDirectionWord }}
+          </mat-icon>
+        </a>
         <div *ngIf="isCheckingEnabled && (checkingVisible || hasSingleAppEnabled)">
-          <mdc-list-item [appRouterLink]="getRouterLink('checking')" (selectionChange)="itemSelected()">
-            <mdc-icon mdcListItemGraphic>apps</mdc-icon>
+          <a mat-list-item [appRouterLink]="getRouterLink('checking')" (click)="itemSelected()">
+            <mat-icon mat-list-icon>apps</mat-icon>
             {{ t("overview") }}
-          </mdc-list-item>
-          <mdc-list-item
+          </a>
+          <a
+            mat-list-item
             *ngIf="showAllQuestions"
             [appRouterLink]="getRouterLink('checking', 'ALL')"
-            (selectionChange)="itemSelected()"
+            (click)="itemSelected()"
           >
-            <mdc-icon mdcListItemGraphic>bookmarks</mdc-icon>
+            <mat-icon mat-list-icon>bookmarks</mat-icon>
             {{ t("all_questions") }}
-          </mdc-list-item>
+          </a>
           <ng-container *ngFor="let text of texts">
-            <mdc-list-item
+            <a
+              mat-list-item
               *ngIf="hasQuestions(text)"
               [appRouterLink]="getRouterLink('checking', getBookId(text))"
-              (selectionChange)="itemSelected()"
+              (click)="itemSelected()"
             >
-              <mdc-icon mdcListItemGraphic>book</mdc-icon>
+              <mat-icon mat-list-icon>book</mat-icon>
               {{ getBookName(text) }}
-            </mdc-list-item>
+            </a>
           </ng-container>
         </div>
         <div *ngIf="canSync$ | async">
-          <mdc-list-divider *ngIf="isCheckingEnabled"></mdc-list-divider>
-          <mdc-list-item
+          <mat-divider *ngIf="isCheckingEnabled"></mat-divider>
+          <a
+            mat-list-item
             [appRouterLink]="getRouterLink('sync')"
             [class.list-item-disabled]="!isAppOnline"
-            (selectionChange)="itemSelected()"
+            (click)="itemSelected()"
           >
-            <mdc-icon mdcListItemGraphic>sync</mdc-icon>
+            <mat-icon mat-list-icon>sync</mat-icon>
             {{ t("synchronize") }}
-          </mdc-list-item>
+          </a>
         </div>
         <div *ngIf="canSeeSettings$ | async">
-          <mdc-list-item
+          <a
+            mat-list-item
             [appRouterLink]="getRouterLink('settings')"
             [class.list-item-disabled]="!isAppOnline"
-            (selectionChange)="itemSelected()"
+            (click)="itemSelected()"
           >
-            <mdc-icon mdcListItemGraphic>settings</mdc-icon>
+            <mat-icon mat-list-icon>settings</mat-icon>
             {{ t("settings") }}
-          </mdc-list-item>
+          </a>
         </div>
         <div *ngIf="canSeeUsers$ | async">
-          <mdc-list-item
+          <a
+            mat-list-item
             [appRouterLink]="getRouterLink('users')"
             [class.list-item-disabled]="!isAppOnline"
-            (selectionChange)="itemSelected()"
+            (click)="itemSelected()"
           >
-            <mdc-icon mdcListItemGraphic>people</mdc-icon>
+            <mat-icon mat-list-icon>people</mat-icon>
             {{ t("users") }}
-          </mdc-list-item>
+          </a>
         </div>
-      </mdc-list>
+      </mat-nav-list>
     </mdc-drawer-content>
   </mdc-drawer>
   <!-- The cdkScrollable attribute is needed so the CDK can listen to scroll events within this container -->

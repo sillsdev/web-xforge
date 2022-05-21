@@ -108,7 +108,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     noticeService: NoticeService,
     private readonly router: Router,
     private readonly questionDialogService: QuestionDialogService,
-    private readonly i18n: I18nService,
+    readonly i18n: I18nService,
     private readonly pwaService: PwaService
   ) {
     super(noticeService);

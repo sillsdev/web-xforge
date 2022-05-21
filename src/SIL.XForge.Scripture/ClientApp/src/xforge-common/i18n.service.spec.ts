@@ -13,6 +13,7 @@ const mockedAuthService = mock(AuthService);
 const mockedTranslocoService = mock(TranslocoService);
 const mockedCookieService = mock(CookieService);
 const mockedErrorReportingService = mock(ErrorReportingService);
+const mockedDocument = mock(Document);
 
 describe('I18nService', () => {
   it('should be able to get a locale', () => {
@@ -107,6 +108,7 @@ function getI18nService(): I18nService {
     instance(mockedAuthService),
     instance(mockedTranslocoService),
     instance(mockedCookieService),
-    instance(mockedErrorReportingService)
+    instance(mockedErrorReportingService),
+    instance(mockedDocument)
   );
 }
