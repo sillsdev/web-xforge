@@ -32,7 +32,10 @@
 
     .mdc-select__selected-text {
       min-width: 140px;
-      padding: 8px 2em 8px 8px !important;
+      padding-top: 8px !important;
+      padding-bottom: 8px !important;
+      padding-inline-start: 8px !important;
+      padding-inline-end: 2em !important;
     }
 
     .mdc-select__dropdown-icon {

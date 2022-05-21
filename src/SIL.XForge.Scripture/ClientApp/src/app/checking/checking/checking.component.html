@@ -11,7 +11,7 @@
         <div class="d-flex flex-max" id="questions-panel">
           <div class="flex-max">
             <div class="panel">
-              <div class="panel-heading">
+              <div class="panel-heading heading-with-icon">
                 <mdc-icon>help</mdc-icon>
                 <h2>{{ t("questions", { count: totalQuestions() }) }}</h2>
                 <button mdc-icon-button class="collapse-question-menu" (click)="collapseDrawer()" icon="clear"></button>
@@ -37,7 +37,7 @@
           <div class="panel">
             <div class="panel-heading">
               <div class="panel-nav">
-                <div>
+                <div class="heading-with-icon">
                   <mdc-icon fxHide.lt-md>library_books</mdc-icon>
                   <div #textNameAnchor mdcMenuSurfaceAnchor>
                     <h2
@@ -144,7 +144,8 @@
               [disabled]="!questionsPanel.checkCanChangeQuestion(-1)"
               class="prev-question"
             >
-              <mdc-icon>chevron_left</mdc-icon>{{ t("previous") }}
+              <mdc-icon>chevron_{{ i18n.backwardDirectionWord }}</mdc-icon
+              >{{ t("previous") }}
             </button>
             <button
               mdc-button
@@ -154,7 +155,7 @@
               [disabled]="!questionsPanel.checkCanChangeQuestion(1)"
               class="next-question"
             >
-              {{ t("next") }}<mdc-icon>chevron_right</mdc-icon>
+              {{ t("next") }}<mdc-icon>chevron_{{ i18n.forwardDirectionWord }}</mdc-icon>
             </button>
             <button
               mdc-icon-button
@@ -163,7 +164,7 @@
               (click)="questionsPanel.previousQuestion()"
               [disabled]="!questionsPanel.checkCanChangeQuestion(-1)"
               class="prev-question"
-              icon="chevron_left"
+              icon="chevron_{{ i18n.backwardDirectionWord }}"
             ></button>
             <button
               mdc-icon-button
@@ -172,7 +173,7 @@
               (click)="questionsPanel.nextQuestion()"
               [disabled]="!questionsPanel.checkCanChangeQuestion(1)"
               class="next-question"
-              icon="chevron_right"
+              icon="chevron_{{ i18n.forwardDirectionWord }}"
             ></button>
             <a [appRouterLink]="routerLink" id="project-summary">
               <app-donut-chart
