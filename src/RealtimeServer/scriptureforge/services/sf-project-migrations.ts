@@ -152,4 +152,4 @@ export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration4,
   SFProjectMigration5,
   SFProjectMigration6
-]
+];

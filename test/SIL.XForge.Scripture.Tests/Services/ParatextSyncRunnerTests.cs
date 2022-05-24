@@ -1788,6 +1788,8 @@ namespace SIL.XForge.Scripture.Services
                             },
                             ParatextId = "target",
                             IsRightToLeft = false,
+                            DefaultFontSize = 10,
+                            DefaultFont = ProjectSettings.defaultFontName,
                             TranslateConfig = new TranslateConfig
                             {
                                 TranslationSuggestionsEnabled = translationSuggestionsEnabled,

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Paratext.Data.ProjectSettingsAccess;
 using SIL.XForge.Models;
 
 namespace SIL.XForge.Scripture.Models
