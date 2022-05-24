@@ -496,6 +496,18 @@ describe('AuthService', () => {
     expect(env.service['scheduleRenewal']).toHaveBeenCalledTimes(1);
     env.discardTokenExpiryTimer();
   }));
+
+  it('should retrieve a fresh token silently if online, logged in, but expired', fakeAsync(() => {
+    const callback = (env: TestEnvironment) => {
+      env.resetTokenExpireAt();
+    };
+    const env = new TestEnvironment({ isOnline: true, isLoggedIn: true, callback });
+    verify(mockedPwaService.checkOnline()).once();
+    verify(mockedWebAuth.getTokenSilently(anything())).once();
+    expect(env.isAuthenticated).toBe(true);
+    expect(env.service.expiresAt).toBeGreaterThan(0);
+    env.discardTokenExpiryTimer();
+  }));
 });
 
 interface TestEnvironmentConstructorArgs {
@@ -650,6 +662,10 @@ class TestEnvironment {
   logOut() {
     this.service.logOut();
     this.setLoginRequiredResponse();
+  }
+
+  resetTokenExpireAt() {
+    this.localSettings.set(EXPIRES_AT_SETTING, 0);
   }
 
   setLocalLoginData({ idToken, userId, role, expiresAt }: LocalSettings = {}) {
