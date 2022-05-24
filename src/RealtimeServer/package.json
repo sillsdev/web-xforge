@@ -19,11 +19,11 @@
   "types": "lib/cjs/common/index.d.ts",
   "private": true,
   "dependencies": {
-    "@bugsnag/js": "^7.16.2",
-    "express": "^4.18.0",
+    "@bugsnag/js": "^7.16.5",
+    "express": "^4.18.1",
     "jsonwebtoken": "^8.5.1",
-    "jwks-rsa": "^2.1.0",
-    "mongodb": "^4.5.0",
+    "jwks-rsa": "^2.1.2",
+    "mongodb": "^4.6.0",
     "ot-json0": "^1.1.0",
     "rich-text": "^4.1.0",
     "sharedb": "^1.9.2",
@@ -31,12 +31,13 @@
     "sharedb-mongo": "^1.0.0",
     "ts-object-path": "^0.1.2",
     "websocket-json-stream": "^0.0.3",
-    "ws": "^8.5.0"
+    "ws": "^8.6.0"
   },
   "devDependencies": {
-    "@types/jest": "^27.4.1",
+    "@types/jest": "^27.5.1",
     "@types/jest-expect-message": "^1.0.3",
     "@types/jsonwebtoken": "^8.5.8",
+    "@types/node": "^16.11.36",
     "@types/ws": "^8.5.3",
     "@typescript-eslint/eslint-plugin": "^4.33.0",
     "@typescript-eslint/parser": "^4.33.0",
@@ -51,7 +52,7 @@
     "jest-teamcity-reporter": "^0.9.0",
     "prettier": "^2.6.2",
     "sharedb-mingo-memory": "^1.2.0",
-    "ts-jest": "^27.1.4",
+    "ts-jest": "^27.1.5",
     "ts-mockito": "^2.6.1",
     "typescript": "~4.3.5"
   }
