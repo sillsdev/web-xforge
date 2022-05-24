@@ -206,6 +206,24 @@ describe('TextComponent', () => {
       verify(mockedUserService.getCurrentUser()).once();
     }));
 
+    it('should not update presence if readonly', fakeAsync(() => {
+      const env: TestEnvironment = new TestEnvironment();
+      env.hostComponent.isReadOnly = true;
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+      env.fixture.detectChanges();
+      const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
+      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresence, 'submit').and.callThrough();
+
+      env.component.editor?.setSelection(1, 1, 'user');
+
+      tick();
+      expect(onSelectionChangedSpy).toHaveBeenCalledTimes(1);
+      expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(0);
+      verify(mockedUserService.getCurrentUser()).never();
+    }));
+
     it('should clear presence on blur', fakeAsync(() => {
       const env: TestEnvironment = new TestEnvironment();
       env.fixture.detectChanges();
@@ -292,6 +310,31 @@ describe('TextComponent', () => {
       expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(1);
       verify(mockedUserService.getCurrentUser()).once();
       expect(env.hostComponent.remotePresences).toBeDefined();
+    }));
+
+    it('should not emit if readonly', fakeAsync(() => {
+      const env: TestEnvironment = new TestEnvironment();
+      env.hostComponent.isReadOnly = true;
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+      env.fixture.detectChanges();
+      const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
+      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresence, 'submit').and.callFake(
+        // This is not strictly what happens as the other user would receive the presence change that this user makes.
+        (presenceData: PresenceData) => {
+          (env.component as any).viewModel.onPresenceReceive('presenceId1', presenceData);
+        }
+      );
+      expect(env.hostComponent.remotePresences).withContext('setup').toBeUndefined();
+
+      env.component.onSelectionChanged({ index: 0, length: 0 }, 'user');
+
+      tick();
+      expect(onSelectionChangedSpy).toHaveBeenCalledTimes(1);
+      expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(0);
+      verify(mockedUserService.getCurrentUser()).never();
+      expect(env.hostComponent.remotePresences).toBeUndefined();
     }));
   });
 
