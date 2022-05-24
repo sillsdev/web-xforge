@@ -8,5 +8,7 @@ namespace SIL.XForge.Scripture.Models
         public bool IsRightToLeft { get; set; }
         /// <summary> Indicates if the text in the project is editable. </summary>
         public bool Editable { get; set; }
+        public int DefaultFontSize { get; set; }
+        public string DefaultFont { get; set; }
     }
 }

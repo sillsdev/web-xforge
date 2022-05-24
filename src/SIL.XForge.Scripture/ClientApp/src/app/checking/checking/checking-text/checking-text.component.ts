@@ -18,6 +18,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
   @ViewChild(TextComponent, { static: true }) textComponent!: TextComponent;
   @Output() questionVerseSelected = new EventEmitter<VerseRef>();
   @Input() isRightToLeft: boolean = false;
+  @Input() fontSize?: string;
 
   private clickSubs: Subscription[] = [];
   private _activeVerse?: VerseRef;
@@ -71,10 +72,6 @@ export class CheckingTextComponent extends SubscriptionDisposable {
 
   get questionVerses(): VerseRef[] | undefined {
     return this._questionVerses;
-  }
-
-  @Input() set fontSize(fontSize: string) {
-    this.textComponent.editorStyles = { fontSize };
   }
 
   onLoaded(): void {

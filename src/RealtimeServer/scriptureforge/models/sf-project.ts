@@ -22,6 +22,8 @@ export interface SFProjectProfile extends Project {
   texts: TextInfo[];
   sync: Sync;
   editable: boolean;
+  defaultFontSize?: number;
+  defaultFont?: string;
 }
 
 export interface SFProject extends SFProjectProfile {

@@ -19,5 +19,7 @@ namespace SIL.XForge.Scripture.Models
         /// </summary>
         public List<ParatextUserProfile> ParatextUsers { get; set; } = new List<ParatextUserProfile>();
         public bool Editable { get; set; } = true;
+        public int? DefaultFontSize { get; set; }
+        public string DefaultFont { get; set; }
     }
 }

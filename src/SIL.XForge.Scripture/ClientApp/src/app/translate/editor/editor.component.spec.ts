@@ -906,6 +906,17 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('uses default font size', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject({ defaultFontSize: 16 });
+      env.setProjectUserConfig();
+      env.wait();
+
+      const ptToRem = 12;
+      expect(env.component.fontSize).toEqual(16 / ptToRem + 'rem');
+      env.dispose();
+    }));
+
     it('user has no resource access', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setupProject({
@@ -2752,6 +2763,9 @@ class TestEnvironment {
     }
     if (data.editable != null) {
       projectProfileData.editable = data.editable;
+    }
+    if (data.defaultFontSize != null) {
+      projectProfileData.defaultFontSize = data.defaultFontSize;
     }
     this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
       id: 'project01',

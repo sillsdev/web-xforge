@@ -33,7 +33,7 @@ import { SaUsersComponent } from './sa-users.component';
 const mockedMdcDialog = mock(MdcDialog);
 const mockedNoticeService = mock(NoticeService);
 const mockedUserService = mock(UserService);
-const mockedProjectService = mock(ProjectService);
+const mockedProjectService: ProjectService = mock(ProjectService);
 
 describe('SaUsersComponent', () => {
   configureTestingModule(() => ({

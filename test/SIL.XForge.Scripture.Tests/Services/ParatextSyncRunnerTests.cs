@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NUnit.Framework;
 using Paratext.Data.ProjectComments;
+using Paratext.Data.ProjectSettingsAccess;
 using SIL.Machine.WebApi.Services;
 using SIL.Scripture;
 using SIL.XForge.DataAccess;
@@ -472,6 +473,42 @@ namespace SIL.XForge.Scripture.Services
                 .PutBookText(default, default, default, default, default);
             project = env.VerifyProjectSync(true);
             Assert.That(project.Editable, Is.False);
+        }
+
+        [Test]
+        public async Task SyncAsync_SetsProjectFontAndFontSize()
+        {
+            var env = new TestEnvironment();
+            Book[] books = { new Book("MAT", 1) };
+            env.SetupSFData(true, true, true, false, books);
+            env.SetupPTData(books);
+
+            var ptUserRoles = new Dictionary<string, string>
+            {
+                { "pt01", SFProjectRole.Administrator }
+            };
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>(project => project.ParatextId == "target"), Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
+            int fontSize = 10;
+            string font = ProjectSettings.defaultFontName;
+            SFProject project = env.GetProject();
+            Assert.That(project.DefaultFontSize, Is.EqualTo(fontSize));
+            Assert.That(project.DefaultFont, Is.EqualTo(font));
+            int newFontSize = 16;
+            string newFont = "Doulos SIL";
+            env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), "target")
+                .Returns(new ParatextSettings
+                {
+                    DefaultFontSize = newFontSize,
+                    DefaultFont = newFont
+                });
+
+            // SUT
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            project = env.VerifyProjectSync(true);
+            Assert.That(project.DefaultFontSize, Is.EqualTo(newFontSize));
+            Assert.That(project.DefaultFont, Is.EqualTo(newFont));
         }
 
         [Test]
@@ -1751,6 +1788,8 @@ namespace SIL.XForge.Scripture.Services
                             },
                             ParatextId = "target",
                             IsRightToLeft = false,
+                            DefaultFontSize = 10,
+                            DefaultFont = ProjectSettings.defaultFontName,
                             TranslateConfig = new TranslateConfig
                             {
                                 TranslationSuggestionsEnabled = translationSuggestionsEnabled,
