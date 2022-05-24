@@ -18,11 +18,7 @@ import {
   Question,
   QUESTIONS_COLLECTION
 } from 'realtime-server/lib/esm/scriptureforge/models/question';
-import {
-  DEFAULT_FONT,
-  DEFAULT_FONT_SIZE,
-  SFProjectProfile
-} from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
@@ -539,8 +535,6 @@ class TestEnvironment {
     },
     sync: { queuedCount: 0 },
     editable: true,
-    defaultFontSize: DEFAULT_FONT_SIZE,
-    defaultFont: DEFAULT_FONT,
     texts: [
       {
         bookNum: 40,

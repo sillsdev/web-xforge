@@ -311,11 +311,13 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return this._editorStyles;
   }
   @Input() set editorStyles(styles: object) {
-    this._editorStyles = styles;
+    for (const style of Object.keys(styles)) {
+      this._editorStyles[style] = styles[style];
+    }
     this.applyEditorStyles();
   }
 
-  @Input() set fontSize(size: string) {
+  @Input() set fontSize(size: string | undefined) {
     this.editorStyles = { fontSize: size };
   }
 

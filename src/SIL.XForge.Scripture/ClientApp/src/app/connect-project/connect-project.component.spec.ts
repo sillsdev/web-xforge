@@ -7,7 +7,7 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { DEFAULT_FONT, DEFAULT_FONT_SIZE, SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject } from 'rxjs';
@@ -432,8 +432,6 @@ class TestEnvironment {
         },
         sync: { queuedCount: 1 },
         editable: true,
-        defaultFontSize: DEFAULT_FONT_SIZE,
-        defaultFont: DEFAULT_FONT,
         texts: [],
         userRoles: {
           user01: SFProjectRole.ParatextAdministrator

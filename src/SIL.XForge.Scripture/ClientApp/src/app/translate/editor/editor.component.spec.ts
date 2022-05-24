@@ -30,12 +30,7 @@ import {
   NoteThread,
   NoteType
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
-import {
-  DEFAULT_FONT,
-  DEFAULT_FONT_SIZE,
-  SFProject,
-  SFProjectProfile
-} from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { hasParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
   getSFProjectUserConfigDocId,
@@ -917,7 +912,8 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.wait();
 
-      expect(env.component.fontSize).toEqual('1.6rem');
+      const ptToRem = 12;
+      expect(env.component.fontSize).toEqual(16 / ptToRem + 'rem');
       env.dispose();
     }));
 
@@ -2429,8 +2425,6 @@ class TestEnvironment {
     },
     sync: { queuedCount: 0, dataInSync: true },
     editable: true,
-    defaultFontSize: DEFAULT_FONT_SIZE,
-    defaultFont: DEFAULT_FONT,
     texts: [
       {
         bookNum: 40,

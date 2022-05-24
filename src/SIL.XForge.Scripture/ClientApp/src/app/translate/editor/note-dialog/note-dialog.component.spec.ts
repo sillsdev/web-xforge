@@ -7,12 +7,7 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { CookieService } from 'ngx-cookie-service';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import {
-  DEFAULT_FONT,
-  DEFAULT_FONT_SIZE,
-  SFProject,
-  SFProjectProfile
-} from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { hasParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
@@ -528,8 +523,6 @@ class TestEnvironment {
     texts: [TestEnvironment.matthewText],
     sync: { queuedCount: 0 },
     editable: true,
-    defaultFontSize: DEFAULT_FONT_SIZE,
-    defaultFont: DEFAULT_FONT,
     userRoles: TestEnvironment.userRoles
   };
   static paratextUsers: ParatextUserProfile[] = paratextUsersFromRoles(TestEnvironment.userRoles);

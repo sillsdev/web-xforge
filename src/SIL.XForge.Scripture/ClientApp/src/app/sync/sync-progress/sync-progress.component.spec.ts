@@ -1,7 +1,7 @@
 import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { DEFAULT_FONT, DEFAULT_FONT_SIZE, SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { paratextUsersFromRoles } from 'src/app/shared/test-utils';
@@ -161,8 +161,6 @@ class TestEnvironment {
           dateLastSuccessfulSync: date.toJSON()
         },
         editable: true,
-        defaultFontSize: DEFAULT_FONT_SIZE,
-        defaultFont: DEFAULT_FONT,
         texts: [],
         userRoles: this.userRoleTarget,
         paratextUsers: paratextUsersFromRoles(this.userRoleTarget),
@@ -197,8 +195,6 @@ class TestEnvironment {
             dateLastSuccessfulSync: date.toJSON()
           },
           editable: true,
-          defaultFontSize: DEFAULT_FONT_SIZE,
-          defaultFont: DEFAULT_FONT,
           texts: [],
           userRoles: this.userRoleSource,
           paratextUsers: paratextUsersFromRoles(this.userRoleSource),

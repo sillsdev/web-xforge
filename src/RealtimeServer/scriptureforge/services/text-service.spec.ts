@@ -129,8 +129,6 @@ class TestEnvironment {
       texts: [],
       sync: { queuedCount: 0 },
       editable: true,
-      defaultFontSize: 10,
-      defaultFont: 'Arial',
       userRoles: {
         translator: SFProjectRole.ParatextTranslator,
         observer: SFProjectRole.ParatextObserver

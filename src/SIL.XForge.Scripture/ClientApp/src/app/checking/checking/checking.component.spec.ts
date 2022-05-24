@@ -17,7 +17,7 @@ import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
-import { DEFAULT_FONT, DEFAULT_FONT_SIZE, SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
   getSFProjectUserConfigDocId,
@@ -1553,8 +1553,6 @@ class TestEnvironment {
       }
     },
     editable: true,
-    defaultFont: DEFAULT_FONT,
-    defaultFontSize: DEFAULT_FONT_SIZE,
     texts: [
       {
         bookNum: 43,

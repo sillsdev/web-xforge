@@ -5,7 +5,7 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { DEFAULT_FONT, DEFAULT_FONT_SIZE, SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, of } from 'rxjs';
 import { anyString, anything, mock, verify, when } from 'ts-mockito';
@@ -236,8 +236,6 @@ class TestEnvironment {
           dateLastSuccessfulSync: date.toJSON()
         },
         syncDisabled: isSyncDisabled,
-        defaultFontSize: DEFAULT_FONT_SIZE,
-        defaultFont: DEFAULT_FONT,
         editable: true,
         texts: [],
         userRoles: {},

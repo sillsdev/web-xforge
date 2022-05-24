@@ -98,8 +98,6 @@ class TestEnvironment {
         queuedCount: 0
       },
       editable: true,
-      defaultFontSize: 10,
-      defaultFont: 'Arial',
       checkingConfig: {
         checkingEnabled: false,
         shareEnabled: false,

@@ -8,11 +8,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { ProgressStatus, RemoteTranslationEngine } from '@sillsdev/machine';
 import { CookieService } from 'ngx-cookie-service';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import {
-  DEFAULT_FONT,
-  DEFAULT_FONT_SIZE,
-  SFProjectProfile
-} from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
@@ -282,8 +278,6 @@ class TestEnvironment {
         },
         sync: { queuedCount: 0 },
         editable: true,
-        defaultFontSize: DEFAULT_FONT_SIZE,
-        defaultFont: DEFAULT_FONT,
         userRoles: {
           user01: SFProjectRole.ParatextTranslator,
           user02: SFProjectRole.ParatextConsultant

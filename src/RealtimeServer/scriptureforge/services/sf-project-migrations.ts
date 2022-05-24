@@ -1,5 +1,4 @@
 import { Doc, Op, RawOp } from 'sharedb/lib/client';
-import { DEFAULT_FONT, DEFAULT_FONT_SIZE } from '../models/sf-project';
 import { Migration, MigrationConstructor } from '../../common/migration';
 import { submitMigrationOp } from '../../common/realtime-server';
 import { SFProjectRole } from '../models/sf-project-role';
@@ -146,31 +145,11 @@ class SFProjectMigration6 implements Migration {
   }
 }
 
-class SFProjectMigration7 implements Migration {
-  static readonly VERSION = 7;
-
-  async migrateDoc(doc: Doc): Promise<void> {
-    const ops = [];
-    if (doc.data.defaultFontSize == null) {
-      ops.push({ p: ['defaultFontSize'], oi: DEFAULT_FONT_SIZE });
-    }
-    if (doc.data.defaultFont == null) {
-      ops.push({ p: ['defaultFont'], oi: DEFAULT_FONT });
-    }
-    await submitMigrationOp(SFProjectMigration7.VERSION, doc, ops);
-  }
-
-  migrateOp(_op: RawOp): void {
-    // do nothing
-  }
-}
-
 export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration1,
   SFProjectMigration2,
   SFProjectMigration3,
   SFProjectMigration4,
   SFProjectMigration5,
-  SFProjectMigration6,
-  SFProjectMigration7
-];
+  SFProjectMigration6
+]

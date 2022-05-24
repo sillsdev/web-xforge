@@ -6,7 +6,7 @@ import {
   Question,
   QUESTIONS_COLLECTION
 } from 'realtime-server/lib/esm/scriptureforge/models/question';
-import { DEFAULT_FONT, DEFAULT_FONT_SIZE, SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
@@ -193,8 +193,6 @@ class TestEnvironment {
     texts: [this.matthewText],
     sync: { queuedCount: 0 },
     editable: true,
-    defaultFontSize: DEFAULT_FONT_SIZE,
-    defaultFont: DEFAULT_FONT,
     userRoles: {
       [this.adminUser.id]: this.adminUser.role
     },

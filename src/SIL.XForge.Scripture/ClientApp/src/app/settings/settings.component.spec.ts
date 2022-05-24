@@ -9,7 +9,7 @@ import { ActivatedRoute, Route } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CookieService } from 'ngx-cookie-service';
 import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { DEFAULT_FONT, DEFAULT_FONT_SIZE, SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateConfig, TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
@@ -749,8 +749,6 @@ class TestEnvironment {
         checkingConfig,
         sync: { queuedCount: 0 },
         editable: true,
-        defaultFontSize: DEFAULT_FONT_SIZE,
-        defaultFont: DEFAULT_FONT,
         texts: [],
         userRoles: {},
         userPermissions: {},
