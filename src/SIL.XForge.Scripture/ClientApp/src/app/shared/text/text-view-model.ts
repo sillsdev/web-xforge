@@ -120,6 +120,7 @@ class SegmentInfo {
  */
 export class TextViewModel {
   readonly cursorColor: string;
+  enablePresenceReceive: boolean = false;
   editor?: Quill;
   localPresence?: LocalPresence<PresenceData>;
 
@@ -207,6 +208,7 @@ export class TextViewModel {
         this.presenceChange?.emit(this.presence?.remotePresences);
         return;
       }
+      if (!this.enablePresenceReceive) return;
 
       cursors.createCursor(presenceId, presenceData.viewer.displayName, presenceData.viewer.cursorColor);
       cursors.moveCursor(presenceId, presenceData.range);
