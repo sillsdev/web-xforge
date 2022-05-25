@@ -127,6 +127,10 @@ export class AuthService {
     return this.tryLogInPromise.then(result => result.newlyLoggedIn);
   }
 
+  private get isLoginUrl(): boolean {
+    return this.locationService.pathname === '/login';
+  }
+
   changePassword(email: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       this.auth0Service
@@ -228,14 +232,18 @@ export class AuthService {
 
   private async tryLogIn(): Promise<LoginResult> {
     try {
-      const accessToken = await this.getAccessToken();
+      // If logging in then send them straight to auth0
+      if (this.isLoginUrl) {
+        return { loggedIn: false, newlyLoggedIn: false };
+      }
       // If we have no valid auth0 data then we have to validate online first
-      if (
-        accessToken == null ||
-        this.idToken == null ||
-        this.expiresAt == null ||
-        (this.pwaService.isOnline && (await this.hasExpired()))
-      ) {
+      if (this.idToken == null || this.expiresAt == null || (this.pwaService.isOnline && (await this.hasExpired()))) {
+        return await this.tryOnlineLogIn();
+      }
+      // We don't want to check for an access token unless we know it is likely to be there
+      // - When not logged in there can be a delay waiting on auth0
+      const accessToken = await this.getAccessToken();
+      if (accessToken == null) {
         return await this.tryOnlineLogIn();
       }
       await this.remoteStore.init(() => accessToken);
