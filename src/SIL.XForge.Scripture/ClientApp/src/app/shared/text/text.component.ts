@@ -85,7 +85,6 @@ export interface FeaturedVerseRefInfo {
 })
 export class TextComponent extends SubscriptionDisposable implements AfterViewInit, OnDestroy {
   @ViewChild('quillEditor', { static: true, read: ElementRef }) quill!: ElementRef;
-  @Input() isReadOnly: boolean = true;
   @Input() markInvalid: boolean = false;
   @Input() multiSegmentSelection = false;
   @Input() subscribeToUpdates = true;
@@ -100,6 +99,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   // allow for different CSS based on the browser engine
   readonly browserEngine: string = getBrowserEngine();
 
+  private _isReadOnly: boolean = true;
   private _editorStyles: any = { fontSize: '1rem' };
   private readonly DEFAULT_MODULES: any = {
     toolbar: false,
@@ -214,6 +214,11 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     private readonly userService: UserService
   ) {
     super();
+  }
+
+  @Input() set isReadOnly(value: boolean) {
+    this._isReadOnly = value;
+    this.viewModel.enablePresenceReceive = !this._isReadOnly;
   }
 
   get areOpsCorrupted(): boolean {
@@ -338,7 +343,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   get readOnlyEnabled(): boolean {
-    return this.isReadOnly || this.viewModel.isEmpty;
+    return this._isReadOnly || this.viewModel.isEmpty;
   }
 
   get textDirection(): 'ltr' | 'rtl' | 'auto' {
@@ -602,6 +607,9 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       this.viewModel.localPresence?.submit(null as unknown as PresenceData);
       return;
     }
+    // no multi-cursors if readonly
+    if (this._isReadOnly) return;
+
     // In this particular instance, we can send extra information on the presence object. This ability will vary
     // depending on type.
     const currentUserDoc: UserDoc = await this.userService.getCurrentUser();
@@ -643,7 +651,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       });
     }
 
-    if (!this.isReadOnly && this._id.textType === 'target' && this.highlightMarker != null) {
+    if (!this._isReadOnly && this._id.textType === 'target' && this.highlightMarker != null) {
       if (segmentRefs != null && segmentRefs.length > 0) {
         this.highlightMarker.style.visibility = '';
       } else {
