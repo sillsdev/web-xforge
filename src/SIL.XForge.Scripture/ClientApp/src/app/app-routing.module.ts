@@ -12,7 +12,7 @@ import { StartComponent } from './start/start.component';
 import { SyncComponent } from './sync/sync.component';
 
 const routes: Routes = [
-  { path: 'callback', component: StartComponent, canActivate: [AuthGuard] },
+  { path: 'callback/auth0', component: StartComponent, canActivate: [AuthGuard] },
   { path: 'connect-project', component: ConnectProjectComponent, canActivate: [AuthGuard] },
   { path: 'login', redirectTo: 'projects', pathMatch: 'full' },
   { path: 'projects/:projectId/settings', component: SettingsComponent, canActivate: [SettingsAuthGuard] },
