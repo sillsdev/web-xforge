@@ -571,6 +571,9 @@ class TestEnvironment {
       if (isLoggedIn && !isNewlyLoggedIn) {
         this.setLocalLoginData();
       }
+      if (isNewlyLoggedIn) {
+        when(mockedWebAuth.handleRedirectCallback()).thenResolve(this.auth0Response!.loginResult);
+      }
     } else {
       this.setLoginRequiredResponse();
     }
@@ -584,7 +587,11 @@ class TestEnvironment {
       this.localSettings.clear();
     });
     when(mockedLocationService.origin).thenReturn('http://localhost:5000');
-    when(mockedLocationService.href).thenReturn('http://localhost:5000/callback?code=1234&state=abcd');
+    if (isNewlyLoggedIn) {
+      when(mockedLocationService.href).thenReturn('http://localhost:5000/callback/auth0?code=1234&state=abcd');
+    } else {
+      when(mockedLocationService.href).thenReturn('http://localhost:5000/projects');
+    }
     when(mockedNoticeService.showMessageDialog(anything(), anything())).thenResolve();
     when(mockedAuth0Service.init(anything())).thenReturn(instance(mockedWebAuth));
     when(mockedAuth0Service.changePassword(anything())).thenReturn(new Promise(r => r));
@@ -693,7 +700,6 @@ class TestEnvironment {
       };
     }
     this.auth0Response = auth0Response;
-    when(mockedWebAuth.handleRedirectCallback()).thenResolve(this.auth0Response!.loginResult);
     when(mockedWebAuth.getTokenSilently()).thenResolve(this.auth0Response!.token.access_token);
     when(mockedWebAuth.getTokenSilently(anything())).thenResolve(this.auth0Response!.token);
     when(mockedWebAuth.getIdTokenClaims()).thenResolve(this.auth0Response!.idToken);

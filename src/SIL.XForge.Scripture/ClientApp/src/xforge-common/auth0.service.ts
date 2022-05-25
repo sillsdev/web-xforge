@@ -16,7 +16,7 @@ export class Auth0Service {
     return new Auth0Client(options);
   }
 
-  changePassword(email: string): Promise<any> {
+  changePassword(email: string): Promise<string> {
     const url = `https://${environment.authDomain}/dbconnections/change_password`;
     const body = { connection: 'Username-Password-Authentication', email };
     return this.http

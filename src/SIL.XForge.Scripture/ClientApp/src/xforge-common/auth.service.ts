@@ -64,7 +64,7 @@ export class AuthService {
   private readonly auth0 = this.auth0Service.init({
     client_id: environment.authClientId,
     domain: environment.authDomain,
-    redirect_uri: this.locationService.origin + '/callback',
+    redirect_uri: this.locationService.origin + '/callback/auth0',
     scope: 'openid profile email ' + environment.scope,
     audience: environment.audience,
     cacheLocation: 'localstorage',
@@ -364,7 +364,7 @@ export class AuthService {
       callbackUrl = this.locationService.origin + callbackUrl;
     }
     const url = new URL(callbackUrl);
-    return url.origin + url.pathname === this.locationService.origin + '/callback';
+    return url.origin + url.pathname === this.locationService.origin + '/callback/auth0';
   }
 
   private scheduleRenewal(): void {
