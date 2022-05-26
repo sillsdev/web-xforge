@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import {
+  Auth0Client,
   GetTokenSilentlyVerboseResponse,
   IdToken,
   LogoutOptions,
@@ -61,7 +62,7 @@ export class AuthService {
   private refreshSubscription?: Subscription;
   private renewTokenPromise?: Promise<void>;
   private checkSessionPromise?: Promise<GetTokenSilentlyVerboseResponse | null>;
-  private readonly auth0 = this.auth0Service.init({
+  private readonly auth0: Auth0Client = this.auth0Service.init({
     client_id: environment.authClientId,
     domain: environment.authDomain,
     redirect_uri: this.locationService.origin + '/callback/auth0',
@@ -160,7 +161,7 @@ export class AuthService {
 
   async getAccessToken(): Promise<string | undefined> {
     try {
-      return await this.auth0!.getTokenSilently();
+      return await this.auth0?.getTokenSilently();
     } catch {
       return undefined;
     }
@@ -334,6 +335,7 @@ export class AuthService {
             () => translate('connect_project.proceed')
           )
           .then(async () => {
+            // Strip out the state so that we don't process linking again
             const withoutState = clone(authDetails);
             if (withoutState != null) {
               withoutState.loginResult.appState = undefined;
