@@ -2224,6 +2224,51 @@ describe('TextComponent', () => {
 
     // End drag-and-drop section of tests.
   });
+
+  it('lists multiple character formatting', fakeAsync(() => {
+    const chapterNum = 2;
+    const originSegmentRef = `verse_${chapterNum}_1`;
+    const textDocOps: RichText.DeltaOperation[] = [
+      { insert: { chapter: { number: chapterNum.toString(), style: 'c' } } },
+      { insert: { verse: { number: '1', style: 'v' } } },
+      {
+        insert: `quick brown fox`,
+        attributes: {
+          segment: originSegmentRef,
+          char: {
+            style: 'wj',
+            cid: '1111'
+          }
+        }
+      },
+      {
+        insert: 'jumped over',
+        attributes: {
+          segment: originSegmentRef,
+          char: [
+            {
+              style: 'wj',
+              cid: '1111'
+            },
+            {
+              style: 'w',
+              cid: '2222'
+            }
+          ]
+        }
+      }
+    ];
+
+    const env = new TestEnvironment({ chapterNum, textDoc: textDocOps });
+    const usxCharElements: NodeListOf<Element> = env.component.editor!.container.querySelectorAll('usx-char');
+    expect(usxCharElements.length).withContext('unexpected number of formatted character runs').toEqual(2);
+    expect(usxCharElements[0].attributes.getNamedItem('data-style')?.value)
+      .withContext('first run should just have style wj')
+      .toEqual('wj');
+    expect(usxCharElements[1].attributes.getNamedItem('data-style')?.value)
+      .withContext('second run should have two styles')
+      .toEqual('wj w');
+  }));
 });
 
 /** Represents both what the TextComponent understand to be the text in a segment, and what the editor

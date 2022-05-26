@@ -32,6 +32,7 @@ function getUsxValue<T>(node: HTMLElement): T {
   return node[USX_VALUE];
 }
 
+/** Record textdoc data that was used to make this node, to help later write back to the textdoc. */
 function setUsxValue(node: HTMLElement, value: any): void {
   node[USX_VALUE] = value;
 }
@@ -211,12 +212,29 @@ export function registerScripture(): string[] {
     static blotName = 'char';
     static tagName = 'usx-char';
 
-    static create(value: UsxStyle): Node {
+    static create(value: UsxStyle | UsxStyle[]): Node {
       const node = super.create(value) as HTMLElement;
-      if (value != null && value.style != null) {
-        node.setAttribute(customAttributeName('style'), value.style);
-        setUsxValue(node, value);
+      if (value == null) {
+        return node;
       }
+
+      let characterStyles: string = '';
+      if (Array.isArray(value)) {
+        // Transform an array of styles to a space-delimited list
+        characterStyles = value.map((styleItem: UsxStyle) => styleItem.style).join(' ');
+        if (characterStyles.trim() === '') {
+          return node;
+        }
+      } else {
+        if (value.style == null) {
+          return node;
+        }
+        characterStyles = value.style;
+      }
+
+      node.setAttribute(customAttributeName('style'), characterStyles);
+      setUsxValue(node, value);
+
       return node;
     }
 
