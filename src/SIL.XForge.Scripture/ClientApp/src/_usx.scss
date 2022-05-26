@@ -329,12 +329,14 @@ usx-segment:first-child usx-blank {
 }
 
 usx-char {
-  &[data-style='it'],
-  &[data-style='em'] {
+  // The data-style attribute is a space-delimited list of styles.
+
+  &[data-style~='it'],
+  &[data-style~='em'] {
     font-style: italic;
   }
 
-  &[data-style='va'] {
+  &[data-style~='va'] {
     font-size: 70%;
     color: #5faa5f;
     top: -0.5em;
