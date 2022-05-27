@@ -238,7 +238,12 @@ export class AuthService {
         return { loggedIn: false, newlyLoggedIn: false };
       }
       // If we have no valid auth0 data then we have to validate online first
-      if (this.idToken == null || this.expiresAt == null || (this.pwaService.isOnline && (await this.hasExpired()))) {
+      if (
+        this.idToken == null ||
+        this.expiresAt == null ||
+        (this.pwaService.isOnline && (await this.hasExpired())) ||
+        this.isCallbackUrl()
+      ) {
         return await this.tryOnlineLogIn();
       }
       // We don't want to check for an access token unless we know it is likely to be there
@@ -259,7 +264,7 @@ export class AuthService {
     try {
       if (await this.pwaService.checkOnline()) {
         // Check if this is a valid callback from auth0
-        if (!this.isCallbackUrl(this.locationService.href)) {
+        if (!this.isCallbackUrl()) {
           // Check session with auth0 as it may be able to renew silently
           const token = await this.checkSession();
           if (token == null) {
@@ -366,7 +371,7 @@ export class AuthService {
     return !(returnUrl == null || this.isCallbackUrl(returnUrl) || returnUrl === '/login');
   }
 
-  private isCallbackUrl(callbackUrl: string | undefined): boolean {
+  private isCallbackUrl(callbackUrl: string | undefined = undefined): boolean {
     if (callbackUrl == null) {
       callbackUrl = this.locationService.href;
     }
