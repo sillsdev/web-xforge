@@ -241,7 +241,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 // Paratext throws an HttpException instead of a WebException
                 // If you need it, the WebException is the InnerException
-                if (ex is HttpException httpException)
+                if (ex is Paratext.Data.HttpException httpException)
                 {
                     if (httpException.Response.StatusCode == HttpStatusCode.Unauthorized)
                     {

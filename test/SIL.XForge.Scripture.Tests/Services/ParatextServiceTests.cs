@@ -1808,11 +1808,11 @@ namespace SIL.XForge.Scripture.Services
 
             source.GetRepositories().Returns(x =>
             {
-                throw HttpException.Create(new WebException("401: Unauthorized"), (HttpWebRequest)null);
+                throw Paratext.Data.HttpException.Create(new WebException("401: Unauthorized"), (HttpWebRequest)null);
             });
 
             // SUT
-            HttpException thrown = Assert.ThrowsAsync<HttpException>(() =>
+            Paratext.Data.HttpException thrown = Assert.ThrowsAsync<Paratext.Data.HttpException>(() =>
                 env.Service.GetProjectRolesAsync(userSecret, project, CancellationToken.None));
 
             // Various pieces of significant data are reported when a 401 Unauthorized goes thru.
@@ -2412,7 +2412,7 @@ namespace SIL.XForge.Scripture.Services
 
                 // An HttpException means that the repo is already unlocked, so any code should be OK with this
                 mockSource.When(s => s.UnlockRemoteRepository(Arg.Any<SharedRepository>()))
-                    .Do(x => throw HttpException.Create(new WebException(),
+                    .Do(x => throw Paratext.Data.HttpException.Create(new WebException(),
                         GenericRequest.Create(new Uri("http://localhost/"))));
                 MockInternetSharedRepositorySourceProvider.GetSource(Arg.Is<UserSecret>(s => s.Id == userSecret.Id),
                         Arg.Any<string>(), Arg.Any<string>()).Returns(mockSource);
