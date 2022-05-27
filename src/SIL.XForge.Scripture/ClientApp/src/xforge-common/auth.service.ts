@@ -340,12 +340,11 @@ export class AuthService {
             () => translate('connect_project.proceed')
           )
           .then(async () => {
-            // Strip out the state so that we don't process linking again
-            const withoutState = clone(authDetails);
-            if (withoutState != null) {
-              withoutState.loginResult.appState = undefined;
-            }
-            await this.handleOnlineAuth(withoutState);
+            // Strip out the linking state so that we don't process linking again
+            const withoutLinkingState = clone(authDetails);
+            delete state.linking;
+            withoutLinkingState.loginResult.appState = JSON.stringify(state);
+            await this.handleOnlineAuth(withoutLinkingState);
             // Reload the app for the new current user id to take effect
             this.locationService.reload();
           });
