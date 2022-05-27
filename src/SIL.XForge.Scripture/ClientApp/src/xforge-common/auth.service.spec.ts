@@ -409,6 +409,10 @@ describe('AuthService', () => {
     });
     expect(env.isAuthenticated).toBe(true);
     verify(mockedLocationService.reload()).once();
+    verify(mockedNoticeService.showMessageDialog(anything(), anything())).once();
+    // handleOnlineAuth gets called a second time after the dialog is closed
+    verify(mockedRouter.navigateByUrl('/projects', anything())).twice();
+
     env.discardTokenExpiryTimer();
   }));
 
