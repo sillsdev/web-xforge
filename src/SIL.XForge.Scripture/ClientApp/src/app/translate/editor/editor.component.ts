@@ -95,6 +95,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   showTrainingProgress: boolean = false;
   textHeight: string = '';
   multiCursorViewers: MultiCursorViewer[] = [];
+  // Paratext allows a font size between 8 and 32. 12pt font is equivalent to 1rem
+  fontSize?: string;
+  sourceFontSize?: string;
 
   @ViewChild('targetContainer') targetContainer?: ElementRef;
   @ViewChild('source') source?: TextComponent;
@@ -120,11 +123,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private targetLoaded: boolean = false;
   private _targetFocused: boolean = false;
   private _chapter?: number;
-  private _fontSize?: number;
   private lastShownSuggestions: Suggestion[] = [];
   private readonly segmentUpdated$: Subject<void>;
   private trainingSub?: Subscription;
   private projectDataChangesSub?: Subscription;
+  private sourceProjectDataChangeSub?: Subscription;
   private trainingProgressClosed: boolean = false;
   private trainingCompletedTimeout: any;
   private clickSubs: Map<string, Subscription[]> = new Map<string, Subscription[]>();
@@ -319,11 +322,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return false;
   }
 
-  get fontSize(): string | undefined {
-    // Paratext allows a font size between 8 and 32. 12pt font is equivalent to 1rem
-    return this._fontSize == null ? undefined : `${this._fontSize / 12}rem`;
-  }
-
   get isUsfmValid(): boolean {
     if (this.text == null) {
       return true;
@@ -375,7 +373,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
         if (projectId !== prevProjectId) {
           this.projectDoc = await this.projectService.getProfile(projectId);
-          this._fontSize = this.projectDoc.data?.defaultFontSize;
           const userRole: string | undefined = this.projectDoc.data?.userRoles[this.userService.currentUserId];
           if (userRole != null) {
             const projectDoc: SFProjectDoc | undefined = await this.projectService.tryGetForRole(projectId, userRole);
@@ -409,6 +406,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         if (this.projectDoc == null || this.projectDoc.data == null) {
           return;
         }
+        this.updateFontSizes();
         await this.loadNoteThreadDocs(this.projectDoc.id);
         this.text = this.projectDoc.data.texts.find(t => t.bookNum === bookNum);
         this.chapters = this.text == null ? [] : this.text.chapters.map(c => c.number);
@@ -437,8 +435,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             if (this.translationEngine == null || !this.translationSuggestionsProjectEnabled) {
               this.setupTranslationEngine();
             }
+            this.updateFontSizes();
             setTimeout(() => this.setTextHeight());
           });
+          if (this.sourceProjectDoc != null) {
+            this.sourceProjectDataChangeSub?.unsubscribe();
+            this.sourceProjectDataChangeSub = this.sourceProjectDoc.remoteChanges$.subscribe(() => {
+              this.updateFontSizes();
+            });
+          }
 
           if (this.metricsSession != null) {
             this.metricsSession.dispose();
@@ -470,6 +475,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
     if (this.projectDataChangesSub != null) {
       this.projectDataChangesSub.unsubscribe();
+    }
+    if (this.sourceProjectDataChangeSub != null) {
+      this.sourceProjectDataChangeSub.unsubscribe();
     }
     if (this.metricsSession != null) {
       this.metricsSession.dispose();
@@ -1067,6 +1075,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         )
       );
     }
+  }
+
+  private updateFontSizes(): void {
+    // Paratext allows a font size between 8 and 32. 12pt font is equivalent to 1rem
+    const fontSize: number | undefined = this.projectDoc?.data?.defaultFontSize;
+    this.fontSize = fontSize == null ? undefined : `${fontSize / 12}rem`;
+    const sourceFontSize: number | undefined = this.sourceProjectDoc?.data?.defaultFontSize;
+    this.sourceFontSize = sourceFontSize == null ? undefined : `${sourceFontSize / 12}rem`;
   }
 
   private async loadNoteThreadDocs(projectId: string): Promise<void> {

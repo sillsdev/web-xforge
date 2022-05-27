@@ -908,12 +908,21 @@ describe('EditorComponent', () => {
 
     it('uses default font size', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setupProject({ defaultFontSize: 16 });
+      env.setupProject({ defaultFontSize: 18 });
       env.setProjectUserConfig();
       env.wait();
 
       const ptToRem = 12;
-      expect(env.component.fontSize).toEqual(16 / ptToRem + 'rem');
+      expect(env.targetTextEditor.nativeElement.style.fontSize).toEqual(18 / ptToRem + 'rem');
+      let sourceTextEditor: HTMLElement = env.sourceTextArea.nativeElement.querySelector('.ql-container')!;
+      expect(sourceTextEditor.style.fontSize).toEqual(18 / ptToRem + 'rem');
+
+      env.updateFontSize('project01', 24);
+      expect(env.component.fontSize).toEqual(24 / ptToRem + 'rem');
+      expect(env.targetTextEditor.nativeElement.style.fontSize).toEqual(24 / ptToRem + 'rem');
+      env.updateFontSize('project02', 24);
+      sourceTextEditor = env.sourceTextArea.nativeElement.querySelector('.ql-container')!;
+      expect(sourceTextEditor.style.fontSize).toEqual(24 / ptToRem + 'rem');
       env.dispose();
     }));
 
@@ -2773,7 +2782,7 @@ class TestEnvironment {
     });
     this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
       id: 'project02',
-      data: projectProfileData
+      data: cloneDeep(projectProfileData)
     });
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
       id: 'project01',
@@ -2861,6 +2870,16 @@ class TestEnvironment {
       projectId
     );
     projectDoc.submitJson0Op(op => op.set(p => p.sync.dataInSync!, isInSync));
+    tick();
+    this.fixture.detectChanges();
+  }
+
+  updateFontSize(projectId: string, size: number): void {
+    const projectDoc: SFProjectProfileDoc = this.realtimeService.get<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      projectId
+    );
+    projectDoc.submitJson0Op(op => op.set(p => p.defaultFontSize, size), false);
     tick();
     this.fixture.detectChanges();
   }
