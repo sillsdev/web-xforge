@@ -14,6 +14,7 @@ import { clone, cloneDeep } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import merge from 'lodash-es/merge';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources } from 'quill';
+import QuillCursors from 'quill-cursors';
 import { AuthType, getAuthType } from 'realtime-server/lib/esm/common/models/user';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
@@ -218,7 +219,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   @Input() set isReadOnly(value: boolean) {
     this._isReadOnly = value;
-    this.viewModel.enablePresenceReceive = !this._isReadOnly;
+    this.viewModel.enablePresenceReceive = this.isPresenceEnabled;
   }
 
   get areOpsCorrupted(): boolean {
@@ -361,6 +362,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return this.viewModel.localPresence;
   }
 
+  private get isPresenceEnabled(): boolean {
+    return !this._isReadOnly && this.pwaService.isOnline;
+  }
+
   private get contentShowing(): boolean {
     return this.id != null && this.viewModel.isLoaded && !this.viewModel.isEmpty;
   }
@@ -369,6 +374,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     this.subscribe(this.pwaService.onlineStatus, isOnline => {
       this.updatePlaceholderText(isOnline);
       this.changeDetector.detectChanges();
+      if (!isOnline && this._editor != null) {
+        const cursors: QuillCursors = this._editor.getModule('cursors');
+        cursors.clearCursors();
+      }
     });
   }
 
@@ -607,8 +616,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       this.viewModel.localPresence?.submit(null as unknown as PresenceData);
       return;
     }
-    // no multi-cursors if readonly
-    if (this._isReadOnly) return;
+    if (!this.isPresenceEnabled) return;
 
     // In this particular instance, we can send extra information on the presence object. This ability will vary
     // depending on type.
