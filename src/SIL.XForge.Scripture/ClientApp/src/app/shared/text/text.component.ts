@@ -607,9 +607,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   /** Respond to text changes in the quill editor. */
   onContentChanged(delta: DeltaStatic, source: string): void {
-    if ((source as Sources) === 'user') {
-      // this.deleteDuplicateNoteIcons(delta);
-    }
     const segmentsBeforeDelta: IterableIterator<[string, RangeStatic]> = this.viewModel.segments;
     const embedsBeforeDelta: Readonly<Map<string, EmbedPosition>> = cloneDeep(this.embeddedElements);
     this.viewModel.update(delta, source as Sources);
@@ -717,41 +714,46 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       return;
     }
 
-    console.log('removing embed: ' + embedId);
-    console.log(this._editor!.getContents());
     const position: EmbedPosition | undefined = this.embeddedElements.get(embedId);
-    console.log('position: ' + position);
     if (position != null) {
       const deltaOps: DeltaOperation[] = [{ retain: position.position }, { delete: 1 }];
       this.editor.updateContents(new Delta(deltaOps), source);
     }
   }
 
+  /**
+   * Detect and remove embed instances where the duplicate position exists.
+   * Note that this removes all instances of the embed.
+   */
   removeDuplicateEmbeddedElements(): void {
     if (this.editor == null) {
       return;
     }
 
-    const elementsWithDuplicates: EmbedPosition[] = Array.from(this.embeddedElements.values())
-      .filter(e => e.duplicatePosition != null)
-      .sort((a, b) => a.duplicatePosition! - b.duplicatePosition!);
-    const clearDuplicateOps: DeltaOperation[] = [];
-    let curIndex = 0;
-    for (const element of elementsWithDuplicates) {
-      // The space between is the length to retain between the last delete and the current delete positions
-      const spaceLength: number = element.duplicatePosition! - curIndex;
-      if (spaceLength > 0) {
-        clearDuplicateOps.push({ retain: spaceLength });
-        curIndex += spaceLength;
+    const embedPositionsToRemove: Set<number> = new Set<number>();
+    for (const embed of this.embeddedElements.values()) {
+      if (embed.duplicatePosition != null) {
+        embedPositionsToRemove.add(embed.position);
+        embedPositionsToRemove.add(embed.duplicatePosition);
+      }
+    }
+    const deletePositions: number[] = Array.from(embedPositionsToRemove).sort((a, b) => a - b);
+    if (deletePositions.length < 1) {
+      return;
+    }
+    let curIndex = deletePositions[0];
+    const clearDuplicateOps: DeltaOperation[] = [{ retain: curIndex }];
+    for (const position of deletePositions) {
+      // The length to retain is the character length between the last delete and the current delete positions
+      const retainLength: number = position - curIndex - 1;
+      if (retainLength > 0) {
+        clearDuplicateOps.push({ retain: retainLength });
       }
       clearDuplicateOps.push({ delete: 1 });
-      curIndex++;
+      curIndex = position;
     }
-    console.log('delete delta for duplicates');
-    console.log(clearDuplicateOps);
     const removedDuplicateDelta = new Delta(clearDuplicateOps);
     this.editor.updateContents(removedDuplicateDelta, 'api');
-    console.log('duplicates removed');
   }
 
   isSegmentBlank(ref: string): boolean {
@@ -932,14 +934,11 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     const prevSegment = this._segment;
-    // let oldVerseEmbedsToUpdate: Map<string, number> | undefined;
     if (segmentRef != null) {
       // update/switch current segment
       if (!this.tryChangeSegment(segmentRef, checksum, focus) && this._segment != null) {
         // the selection has not changed to a different segment, so update existing segment
-        // const oldVerseEmbeds: Map<string, number> = clone(this._segment.embeddedElements);
         this.updateSegment();
-        // oldVerseEmbedsToUpdate = oldVerseEmbeds;
         if (this._highlightSegment) {
           // ensure that the currently selected segment is highlighted
           this.highlight();
@@ -1101,31 +1100,13 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (this._segment == null) {
       return;
     }
-
-    const baseVerse: string = this.getBaseVerse(this._segment.ref);
-    const startSegmentRange: RangeStatic | undefined = this.viewModel.getSegmentRange(baseVerse);
     const segmentRange: RangeStatic | undefined = this.viewModel.getSegmentRange(this._segment.ref);
     if (segmentRange == null) {
       return;
     }
 
-    const endIndex: number = this.getVerseEndIndex(baseVerse) ?? segmentRange.index + segmentRange.length;
-    const startIndex: number = startSegmentRange?.index ?? segmentRange.index;
     const text = this.viewModel.getSegmentText(this._segment.ref);
-    const verseEmbeddedElements: Map<string, EmbedPosition> = new Map<string, EmbedPosition>();
-    for (const [threadId, embedPosition] of this.embeddedElements.entries()) {
-      if (embedPosition.position >= startIndex && embedPosition.position < endIndex) {
-        verseEmbeddedElements.set(threadId, embedPosition);
-      }
-    }
-    this._segment.update(text, segmentRange, verseEmbeddedElements);
-  }
-
-  private getVerseEndIndex(baseRef: string): number | undefined {
-    // Look for the related segments of the base verse, and use the final related verse to determine the end index
-    const relatedRefs: string[] = this.viewModel.getRelatedSegmentRefs(baseRef);
-    const rangeLast: RangeStatic | undefined = this.viewModel.getSegmentRange(relatedRefs[relatedRefs.length - 1]);
-    return rangeLast == null ? undefined : rangeLast.index + rangeLast.length;
+    this._segment.update(text, segmentRange);
   }
 
   private getBaseVerse(segmentRef: string): string {
@@ -1182,9 +1163,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         }
       }
 
-      // while (embedIndices.includes(newStart - 1)) {
-      //   newStart--;
-      // }
       newSel = { index: newStart, length: Math.max(0, newEnd - newStart) };
     } else {
       return null;
@@ -1213,82 +1191,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private getEmbedCountInRange(editorStartPos: number, length: number): number {
     const embedPositions: number[] = this.viewModel.embeddedPositions;
     return embedPositions.filter((pos: number) => pos >= editorStartPos && pos < editorStartPos + length).length;
-  }
-
-  /**
-   * Notes that get inserted by the delta are removed from the editor to clean up duplicates.
-   * i.e. The user triggers an undo after deleting a note.
-   */
-  private deleteDuplicateNoteIcons(delta: DeltaStatic): void {
-    if (this.editor == null || delta.ops == null) {
-      return;
-    }
-    /*
-    // Delta for the removal of notes that were re-created
-    let notesDeletionDelta: DeltaStatic | undefined;
-    const productiveOps = this.trimUnproductiveOps(delta);
-    if (productiveOps.ops == null) {
-      return;
-    }
-    for (const op of productiveOps.ops) {
-      if (op.insert != null && op.insert['note-thread-embed'] != null) {
-        const embedId: string = op.insert['note-thread-embed']['threadid'];
-        const deletePosition = this.embeddedElements.get(embedId);
-        if (deletePosition != null) {
-          const noteDeleteOps: DeltaOperation[] = [{ retain: deletePosition.position }, { delete: 1 }];
-          const noteDeleteOpDelta = new Delta(noteDeleteOps);
-          notesDeletionDelta =
-            notesDeletionDelta == null ? noteDeleteOpDelta : noteDeleteOpDelta.compose(notesDeletionDelta);
-        }
-      }
-    }
-
-    if (notesDeletionDelta != null) {
-      notesDeletionDelta.chop();
-      // Defer the update so that the current delta can be processed
-      // Promise.resolve(notesDeletionDelta).then(deleteDelta => {
-      //   this.editor?.updateContents(deleteDelta, 'api');
-      // });
-    }
-    */
-  }
-
-  /**
-   * Trims out the unproductive ops from a delta emitted by Quill's onContentChanged event.
-   * This is used to determine which ops accurately represents the change applied to the editor,
-   * more specifically, trim out object inserts like note thread embeds that did not truly get inserted.
-   */
-  private trimUnproductiveOps(delta: DeltaStatic): DeltaStatic {
-    // The quill way of determining changes applied to its content doesn't work perfectly on non-text objects
-    // and the result in the delta is a series of object inserts followed by a delete op that removes
-    // the original object inserts. This trims out those ops from this delta so the delta is a true representation
-    // of the changes applied to the text.
-    // For example, a delta may contain [ retain: 10, insert: blank, insert: verse, insert: note, delete: 2 ]
-    // where the delete: 2 op deletes the original verse and note inserts that get replaced in this delta
-    const productiveOps: DeltaStatic = cloneDeep(delta);
-    if (productiveOps.ops == null || productiveOps.ops.length < 2) {
-      return delta;
-    }
-    const opCount: number = productiveOps.ops.length;
-    // find the trailing delete op
-    const lastDeleteOp: number | undefined = productiveOps.ops[opCount - 1].delete;
-    let deleteCount: number = lastDeleteOp ?? 0;
-    if (deleteCount === 0) {
-      return delta;
-    }
-
-    for (let i = 0; i < deleteCount; i++) {
-      const curIndex: number = opCount - i - 2;
-      const insertObj = productiveOps.ops[curIndex].insert;
-      if (insertObj != null && typeof insertObj !== 'string') {
-        // the object insert may be a false op
-        continue;
-      }
-      // the op is productive, so keep the entire delta
-      return delta;
-    }
-    productiveOps.ops.splice(opCount - 1 - deleteCount);
-    return productiveOps;
   }
 
   private setHighlightMarkerPosition(): void {
