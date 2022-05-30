@@ -1,6 +1,5 @@
 import * as crc from 'crc-32';
 import { RangeStatic } from 'quill';
-import { EmbedPosition } from './text-view-model';
 
 export class Segment {
   initialChecksum?: number;
@@ -9,8 +8,6 @@ export class Segment {
   private _range: RangeStatic = { index: 0, length: 0 };
   private _checksum?: number;
   private initialTextLen: number = -1;
-  /** Mapping of embed ids to their position in the editor. Enables processing changes to embeds after text edits. */
-  private _segmentVerseEmbeddedElements: Map<string, EmbedPosition> = new Map<string, EmbedPosition>();
 
   constructor(public readonly bookNum: number, public readonly chapter: number, public readonly ref: string) {}
 
@@ -37,19 +34,14 @@ export class Segment {
     return this._text.length - this.initialTextLen;
   }
 
-  get embeddedElements(): Map<string, EmbedPosition> {
-    return this._segmentVerseEmbeddedElements;
-  }
-
   acceptChanges(): void {
     this.initialTextLen = this._text.length;
     this.initialChecksum = this.checksum;
   }
 
-  update(text: string, range: RangeStatic, embeddedElementIndices: Map<string, EmbedPosition>): void {
+  update(text: string, range: RangeStatic): void {
     this._text = text;
     this._range = range;
-    this._segmentVerseEmbeddedElements = embeddedElementIndices;
     this._checksum = undefined;
     if (this.initialTextLen === -1) {
       this.initialTextLen = text.length;
