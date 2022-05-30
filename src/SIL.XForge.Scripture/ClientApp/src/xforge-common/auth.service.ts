@@ -40,6 +40,7 @@ export const EXPIRES_AT_SETTING = 'expires_at';
 export interface AuthState {
   returnUrl?: string;
   linking?: boolean;
+  currentSub?: string;
 }
 
 export interface AuthDetails {
@@ -161,7 +162,7 @@ export class AuthService {
 
   async getAccessToken(): Promise<string | undefined> {
     try {
-      return await this.auth0?.getTokenSilently();
+      return await this.auth0.getTokenSilently();
     } catch {
       return undefined;
     }
@@ -192,11 +193,12 @@ export class AuthService {
       authOptions.login_hint = locale ?? ui_locales;
     }
     this.unscheduleRenewal();
-    await this.auth0!.loginWithRedirect(authOptions);
+    await this.auth0.loginWithRedirect(authOptions);
   }
 
   async linkParatext(returnUrl: string): Promise<void> {
-    const state: AuthState = { returnUrl, linking: true };
+    const idToken: IdToken | undefined = await this.auth0.getIdTokenClaims();
+    const state: AuthState = { returnUrl, linking: true, currentSub: idToken?.sub };
     const language: string = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME));
     const options: RedirectLoginOptions = {
       connection: 'paratext',
@@ -204,14 +206,14 @@ export class AuthService {
       language,
       login_hint: language
     };
-    await this.auth0!.loginWithRedirect(options);
+    await this.auth0.loginWithRedirect(options);
   }
 
   async logOut(): Promise<void> {
     await this.offlineStore.deleteDB();
     this.localSettings.clear();
     this.unscheduleRenewal();
-    this.auth0!.logout({ returnTo: this.locationService.origin + '/' } as LogoutOptions);
+    this.auth0.logout({ returnTo: this.locationService.origin + '/' } as LogoutOptions);
   }
 
   async updateInterfaceLanguage(language: string): Promise<void> {
@@ -221,7 +223,7 @@ export class AuthService {
   }
 
   private async getTokenDetails(): Promise<GetTokenSilentlyVerboseResponse> {
-    return await this.auth0!.getTokenSilently({ detailedResponse: true });
+    return await this.auth0.getTokenSilently({ detailedResponse: true });
   }
 
   private async hasExpired(): Promise<boolean> {
@@ -276,7 +278,7 @@ export class AuthService {
           return { loggedIn: true, newlyLoggedIn: false };
         }
         // Handle the callback response from auth0
-        const loginResult: RedirectLoginResult = await this.auth0!.handleRedirectCallback();
+        const loginResult: RedirectLoginResult = await this.auth0.handleRedirectCallback();
         const token = await this.checkSession();
         if (token == null) {
           this.clearState();
@@ -285,7 +287,7 @@ export class AuthService {
         const authDetails: AuthDetails = {
           loginResult,
           token,
-          idToken: await this.auth0!.getIdTokenClaims()
+          idToken: await this.auth0.getIdTokenClaims()
         };
         if (!(await this.handleOnlineAuth(authDetails))) {
           this.clearState();
@@ -312,20 +314,25 @@ export class AuthService {
       return false;
     }
 
+    let primaryId: string | undefined;
     let secondaryId: string | undefined;
     const state: AuthState = JSON.parse(authDetails.loginResult.appState);
     if (state.linking != null && state.linking) {
       if (!(await this.isAuthenticated()) || authDetails.idToken == null) {
         return false;
       }
+      primaryId = state.currentSub;
       secondaryId = authDetails.idToken.sub;
     } else {
       await this.localLogIn(authDetails.token.access_token, authDetails.token.id_token, authDetails.token.expires_in);
     }
     await this.remoteStore.init(() => authDetails.token.access_token);
-    if (secondaryId != null) {
+    if (primaryId != null && secondaryId != null) {
       try {
-        await this.commandService.onlineInvoke(USERS_URL, 'linkParatextAccount', { authId: secondaryId });
+        await this.commandService.onlineInvoke(USERS_URL, 'linkParatextAccount', { primaryId, secondaryId });
+        // Trigger the login phase again so that local auth0 switches back its understanding to the primary account
+        // await this.logIn(state.returnUrl ?? '');
+        await this.auth0.checkSession({ ignoreCache: true });
       } catch (err) {
         if (!(err instanceof CommandError) || !err.message.includes(this.ptLinkedToAnotherUserKey)) {
           console.error(err);
@@ -366,6 +373,9 @@ export class AuthService {
     return true;
   }
 
+  /**
+   * Check to help avoid redirect loops where sometimes the return URL can end up as the login page or auth0 callback
+   */
   private isValidReturnUrl(returnUrl: string | undefined): boolean {
     return !(returnUrl == null || this.isCallbackUrl(returnUrl) || returnUrl === '/login');
   }

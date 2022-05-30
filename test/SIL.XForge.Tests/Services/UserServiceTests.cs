@@ -92,7 +92,7 @@ namespace SIL.XForge.Services
             JObject ptProfile = env.CreateUserProfile("newPtProfile", "paratext|paratext01", env.IssuedAt);
             env.AuthService.GetUserAsync("paratext|paratext01").Returns(Task.FromResult(ptProfile.ToString()));
 
-            await env.Service.LinkParatextAccountAsync("user02", "auth02", "paratext|paratext01");
+            await env.Service.LinkParatextAccountAsync("auth02", "paratext|paratext01");
             User user2 = env.GetUser("user02");
             Assert.That(user2.ParatextId, Is.EqualTo("paratext01"));
             UserSecret userSecret = env.UserSecrets.Get("user02");
@@ -107,7 +107,7 @@ namespace SIL.XForge.Services
             env.AuthService.GetUserAsync("notPt03").Returns(Task.FromResult(userProfile.ToString()));
 
             Assert.ThrowsAsync<ArgumentException>(() =>
-                env.Service.LinkParatextAccountAsync("user02", "auth02", "notPt03")
+                env.Service.LinkParatextAccountAsync("auth02", "notPt03")
             );
         }
 

@@ -95,7 +95,7 @@ namespace SIL.XForge.Services
         /// <summary>
         /// Links the secondary Auth0 account (Paratext account) to the primary Auth0 account for the specified user.
         /// </summary>
-        public async Task LinkParatextAccountAsync(string curUserId, string primaryAuthId, string paratextAuthId)
+        public async Task LinkParatextAccountAsync(string primaryAuthId, string paratextAuthId)
         {
             if (!await CheckIsParatextProfileAndFirstLogin(paratextAuthId))
             {
@@ -104,6 +104,7 @@ namespace SIL.XForge.Services
             }
             await _authService.LinkAccounts(primaryAuthId, paratextAuthId);
             JObject userProfile = JObject.Parse(await _authService.GetUserAsync(primaryAuthId));
+            var primaryUserId = (string)userProfile["app_metadata"]["xf_user_id"];
             var identities = (JArray)userProfile["identities"];
             JObject ptIdentity = identities.OfType<JObject>()
                 .First(i => (string)i["connection"] == "paratext");
@@ -113,11 +114,11 @@ namespace SIL.XForge.Services
                 AccessToken = (string)ptIdentity["access_token"],
                 RefreshToken = (string)ptIdentity["refresh_token"]
             };
-            await _userSecrets.UpdateAsync(curUserId, update => update.Set(us => us.ParatextTokens, ptTokens), true);
+            await _userSecrets.UpdateAsync(primaryUserId, update => update.Set(us => us.ParatextTokens, ptTokens), true);
 
-            using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
+            using (IConnection conn = await _realtimeService.ConnectAsync(primaryUserId))
             {
-                IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
+                IDocument<User> userDoc = await conn.FetchAsync<User>(primaryUserId);
                 await userDoc.SubmitJson0OpAsync(op => op.Set(u => u.ParatextId, GetIdpIdFromAuthId(ptId)));
             }
         }

@@ -51,11 +51,11 @@ namespace SIL.XForge.Controllers
             return Ok();
         }
 
-        public async Task<IRpcMethodResult> LinkParatextAccount(string authId)
+        public async Task<IRpcMethodResult> LinkParatextAccount(string primaryId, string secondaryId)
         {
             try
             {
-                await _userService.LinkParatextAccountAsync(UserId, AuthId, authId);
+                await _userService.LinkParatextAccountAsync(primaryId, secondaryId);
                 return Ok();
             }
             catch (ArgumentException e)

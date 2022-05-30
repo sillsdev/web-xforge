@@ -286,10 +286,11 @@ describe('AuthService', () => {
   }));
 
   it('should link with Paratext', fakeAsync(() => {
-    const env = new TestEnvironment();
+    const env = new TestEnvironment({ isOnline: true, isLoggedIn: true });
     const returnUrl = 'test-returnUrl';
 
     env.service.linkParatext(returnUrl);
+    tick();
 
     verify(mockedWebAuth.loginWithRedirect(anything())).once();
     const authOptions: RedirectLoginOptions | undefined = capture<RedirectLoginOptions | undefined>(
@@ -304,6 +305,7 @@ describe('AuthService', () => {
       expect(authOptions.language).toEqual(env.language);
       expect(authOptions.login_hint).toEqual(env.language);
     }
+    env.discardTokenExpiryTimer();
   }));
 
   it('should update interface language if logged in', fakeAsync(() => {
@@ -390,7 +392,8 @@ describe('AuthService', () => {
       isOnline: true,
       isNewlyLoggedIn: true,
       loginState: {
-        linking: true
+        linking: true,
+        currentSub: 'user01'
       }
     });
     expect(env.isAuthenticated).toBe(true);
@@ -403,7 +406,8 @@ describe('AuthService', () => {
       isOnline: true,
       isNewlyLoggedIn: true,
       loginState: {
-        linking: true
+        linking: true,
+        currentSub: 'user01'
       },
       accountLinkingResponse: new CommandError(CommandErrorCode.Other, 'paratext-linked-to-another-user')
     });
@@ -604,8 +608,8 @@ class TestEnvironment {
         if (accountLinkingResponse != null) {
           throw accountLinkingResponse;
         }
-        if (params?.authId != null) {
-          this._loginLinkedAccountId = params.authId;
+        if (params?.secondaryId != null) {
+          this._loginLinkedAccountId = params.secondaryId;
         }
       }
     );
