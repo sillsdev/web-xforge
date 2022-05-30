@@ -50,7 +50,12 @@ import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { Segment } from '../../shared/text/segment';
-import { embeddedElementPositions, EmbedPosition, PresenceData, RemotePresences } from '../../shared/text/text-view-model';
+import {
+  embeddedElementPositions,
+  EmbedPosition,
+  PresenceData,
+  RemotePresences
+} from '../../shared/text/text-view-model';
 import { EditedVerseEmbeds, FeaturedVerseRefInfo, TextComponent } from '../../shared/text/text.component';
 import { threadIdFromMouseEvent } from '../../shared/utils';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
@@ -561,7 +566,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (delta != null) {
       // wait 20 ms so that note thread docs have time to receive the updated note positions
       setTimeout(() => {
-        this.console.log(delta);
         this.recreateDeletedNoteThreadEmbeds();
         if (segment != null) {
           this.subscribeClickEvents([segment.ref]);
@@ -718,9 +722,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       const featured: FeaturedVerseRefInfo | undefined = this.getFeaturedVerseRefInfo(noteThreadDoc);
       if (featured != null) {
         featureVerseRefInfo.push(featured);
-        const subscription = this.subscribe(noteThreadDoc.changes$, ops => {
-          this.console.log('note thread updated');
-          this.console.log(ops);
+        const subscription = this.subscribe(noteThreadDoc.changes$, () => {
           this.resetNoteThread(featured.id, 'api');
         });
         this.noteThreadPositionSubscriptions.push(subscription);
@@ -1133,10 +1135,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       // If the length is less than two, it can be skipped since productive ops have a minimum length of two
       return;
     }
-    this.console.log('updating note thread anchors');
-    this.console.log(delta);
-    const updatePromises: Promise<boolean>[] = [];
 
+    const updatePromises: Promise<boolean>[] = [];
     // a user initiated delta with ops that include inserting a note embed can only be undo deleting a note icon
     const reinsertedNoteEmbeds: DeltaOperation[] = delta.filter(
       op => op.insert != null && op.insert['note-thread-embed'] != null
@@ -1176,7 +1176,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         const noteIsAffected: boolean =
           (editPosition != null && noteAnchorEndIndex >= editPosition) || reinsertedNoteIds.includes(threadId);
         if (reinsertedNoteEmbeds.length > 0 && noteIsAffected && hasTextEditOps) {
-          console.log('reverting anchor for: ' + threadId);
           updatePromises.push(
             noteThreadDoc
               .previousSnapshot()
@@ -1261,7 +1260,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       delta,
       verseNotePositions
     );
-    this.console.log(`startChange: ${startChange}, lengthChange: ${lengthChange}`);
 
     if (oldTextAnchor.length > 0 && oldTextAnchor.length + lengthChange <= 0) {
       return { start: 0, length: 0 };
@@ -1337,6 +1335,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return [startChange, lengthChange];
   }
 
+  /** Gets the first edit position within the given range. */
   private getEditPositionWithinRange(range: RangeStatic, delta: DeltaStatic): number | undefined {
     if (delta.ops == null) {
       return;
@@ -1412,9 +1411,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const currentNotes: Readonly<Map<string, EmbedPosition>> = this.target.embeddedElements;
     const segmentsToSubscribe: Set<string> = new Set<string>();
     const noteThreadDocs: NoteThreadDoc[] = this.currentChapterNoteThreadDocs();
-    this.console.log(this.target.embeddedElements);
     for (const noteThreadDoc of noteThreadDocs) {
-      this.console.log('flagging note for recreate: ' + noteThreadDoc?.data?.dataId);
       if (noteThreadDoc?.data?.dataId == null || currentNotes.has(noteThreadDoc.data.dataId)) {
         continue;
       }
@@ -1423,8 +1420,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       if (featured == null) {
         continue;
       }
-      this.console.log('recreating: ' + featured.id);
-      this.console.log(featured.textAnchor);
       const segment: string | undefined = this.embedNoteThread(featured);
       if (segment != null && !segmentsToSubscribe.has(segment)) {
         segmentsToSubscribe.add(segment);
