@@ -95,9 +95,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   showTrainingProgress: boolean = false;
   textHeight: string = '';
   multiCursorViewers: MultiCursorViewer[] = [];
-  // Paratext allows a font size between 8 and 32. 12pt font is equivalent to 1rem
-  fontSize?: string;
-  sourceFontSize?: string;
 
   @ViewChild('targetContainer') targetContainer?: ElementRef;
   @ViewChild('source') source?: TextComponent;
@@ -127,7 +124,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private readonly segmentUpdated$: Subject<void>;
   private trainingSub?: Subscription;
   private projectDataChangesSub?: Subscription;
-  private sourceProjectDataChangeSub?: Subscription;
   private trainingProgressClosed: boolean = false;
   private trainingCompletedTimeout: any;
   private clickSubs: Map<string, Subscription[]> = new Map<string, Subscription[]>();
@@ -304,6 +300,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.isProjectAdmin || this.projectDoc?.data?.translateConfig.shareEnabled === true;
   }
 
+  get fontSize(): string | undefined {
+    // Paratext allows a font size between 8 and 32. 12pt font is equivalent to 1rem
+    const fontSize: number | undefined = this.projectDoc?.data?.defaultFontSize;
+    return fontSize == null ? undefined : `${fontSize / 12}rem`;
+  }
+
+  get sourceFontSize(): string | undefined {
+    const fontSizeSource: number | undefined = this.sourceProjectDoc?.data?.defaultFontSize;
+    return fontSizeSource == null ? undefined : `${fontSizeSource / 12}rem`;
+  }
+
   get projectTextNotEditable(): boolean {
     return this.projectDoc?.data?.editable === false;
   }
@@ -406,7 +413,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         if (this.projectDoc == null || this.projectDoc.data == null) {
           return;
         }
-        this.updateFontSizes();
         await this.loadNoteThreadDocs(this.projectDoc.id);
         this.text = this.projectDoc.data.texts.find(t => t.bookNum === bookNum);
         this.chapters = this.text == null ? [] : this.text.chapters.map(c => c.number);
@@ -435,15 +441,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             if (this.translationEngine == null || !this.translationSuggestionsProjectEnabled) {
               this.setupTranslationEngine();
             }
-            this.updateFontSizes();
             setTimeout(() => this.setTextHeight());
           });
-          if (this.sourceProjectDoc != null) {
-            this.sourceProjectDataChangeSub?.unsubscribe();
-            this.sourceProjectDataChangeSub = this.sourceProjectDoc.remoteChanges$.subscribe(() => {
-              this.updateFontSizes();
-            });
-          }
 
           if (this.metricsSession != null) {
             this.metricsSession.dispose();
@@ -475,9 +474,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
     if (this.projectDataChangesSub != null) {
       this.projectDataChangesSub.unsubscribe();
-    }
-    if (this.sourceProjectDataChangeSub != null) {
-      this.sourceProjectDataChangeSub.unsubscribe();
     }
     if (this.metricsSession != null) {
       this.metricsSession.dispose();
@@ -1075,14 +1071,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         )
       );
     }
-  }
-
-  private updateFontSizes(): void {
-    // Paratext allows a font size between 8 and 32. 12pt font is equivalent to 1rem
-    const fontSize: number | undefined = this.projectDoc?.data?.defaultFontSize;
-    this.fontSize = fontSize == null ? undefined : `${fontSize / 12}rem`;
-    const sourceFontSize: number | undefined = this.sourceProjectDoc?.data?.defaultFontSize;
-    this.sourceFontSize = sourceFontSize == null ? undefined : `${sourceFontSize / 12}rem`;
   }
 
   private async loadNoteThreadDocs(projectId: string): Promise<void> {
