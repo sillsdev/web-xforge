@@ -161,7 +161,7 @@ export class AuthService {
 
   async getAccessToken(): Promise<string | undefined> {
     try {
-      return await this.auth0?.getTokenSilently();
+      return await this.auth0.getTokenSilently();
     } catch {
       return undefined;
     }
@@ -192,7 +192,7 @@ export class AuthService {
       authOptions.login_hint = locale ?? ui_locales;
     }
     this.unscheduleRenewal();
-    await this.auth0!.loginWithRedirect(authOptions);
+    await this.auth0.loginWithRedirect(authOptions);
   }
 
   async linkParatext(returnUrl: string): Promise<void> {
@@ -204,14 +204,14 @@ export class AuthService {
       language,
       login_hint: language
     };
-    await this.auth0!.loginWithRedirect(options);
+    await this.auth0.loginWithRedirect(options);
   }
 
   async logOut(): Promise<void> {
     await this.offlineStore.deleteDB();
     this.localSettings.clear();
     this.unscheduleRenewal();
-    this.auth0!.logout({ returnTo: this.locationService.origin + '/' } as LogoutOptions);
+    this.auth0.logout({ returnTo: this.locationService.origin + '/' } as LogoutOptions);
   }
 
   async updateInterfaceLanguage(language: string): Promise<void> {
@@ -221,7 +221,7 @@ export class AuthService {
   }
 
   private async getTokenDetails(): Promise<GetTokenSilentlyVerboseResponse> {
-    return await this.auth0!.getTokenSilently({ detailedResponse: true });
+    return await this.auth0.getTokenSilently({ detailedResponse: true });
   }
 
   private async hasExpired(): Promise<boolean> {
@@ -276,7 +276,7 @@ export class AuthService {
           return { loggedIn: true, newlyLoggedIn: false };
         }
         // Handle the callback response from auth0
-        const loginResult: RedirectLoginResult = await this.auth0!.handleRedirectCallback();
+        const loginResult: RedirectLoginResult = await this.auth0.handleRedirectCallback();
         const token = await this.checkSession();
         if (token == null) {
           this.clearState();
@@ -285,7 +285,7 @@ export class AuthService {
         const authDetails: AuthDetails = {
           loginResult,
           token,
-          idToken: await this.auth0!.getIdTokenClaims()
+          idToken: await this.auth0.getIdTokenClaims()
         };
         if (!(await this.handleOnlineAuth(authDetails))) {
           this.clearState();
@@ -366,6 +366,9 @@ export class AuthService {
     return true;
   }
 
+  /**
+   * Check to help avoid redirect loops where sometimes the return URL can end up as the login page or auth0 callback
+   */
   private isValidReturnUrl(returnUrl: string | undefined): boolean {
     return !(returnUrl == null || this.isCallbackUrl(returnUrl) || returnUrl === '/login');
   }
