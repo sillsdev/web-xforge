@@ -305,20 +305,19 @@ describe('EditorComponent', () => {
       env.deleteCharacters();
       segmentRange = env.component.target!.segment!.range;
       segmentContents = env.targetEditor.getContents(segmentRange.index, segmentRange.length);
-
-      // The note remains, the blank returns
+      // the blank returns
       op = segmentContents.ops![0];
-      expect(op.insert).toEqual({
+      expect(op.insert.blank).toBe(true);
+      expect(op.attributes!.segment).toEqual('verse_1_4/p_1');
+      // the note is reset to the start of the verse
+      const verseSegment = env.component.target!.getSegmentContents('verse_1_4')!;
+      expect(verseSegment.ops![0].insert).toEqual({
         'note-thread-embed': {
           iconsrc: '--icon-file: url(/assets/icons/TagIcons/01flag1.png);',
           preview: 'Note from user01',
           threadid: 'thread05'
         }
       });
-      op = segmentContents.ops![1];
-      expect(op.insert.blank).toBe(true);
-      expect(op.attributes!.segment).toEqual('verse_1_4/p_1');
-
       env.dispose();
     }));
 
@@ -1225,7 +1224,7 @@ describe('EditorComponent', () => {
     }));
   });
 
-  fdescribe('Note threads', () => {
+  describe('Note threads', () => {
     it('embeds note on verse segments', fakeAsync(() => {
       const env = new TestEnvironment();
       env.addParatextNoteThread(6, 'MAT 1:2', '', { start: 0, length: 0 }, ['user01']);
@@ -2361,7 +2360,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    fit('note dialog appears after undo delete-a-note', fakeAsync(() => {
+    it('note dialog appears after undo delete-a-note', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();

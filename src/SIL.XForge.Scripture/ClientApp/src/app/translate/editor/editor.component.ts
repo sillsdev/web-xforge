@@ -586,7 +586,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (delta != null) {
       // wait 20 ms so that note thread docs have time to receive the updated note positions
       setTimeout(() => {
-        this.console.log(delta);
         this.recreateDeletedNoteThreadEmbeds();
         if (segment != null) {
           this.subscribeClickEvents([segment.ref]);
@@ -743,9 +742,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       const featured: FeaturedVerseRefInfo | undefined = this.getFeaturedVerseRefInfo(noteThreadDoc);
       if (featured != null) {
         featureVerseRefInfo.push(featured);
-        const subscription = this.subscribe(noteThreadDoc.changes$, ops => {
-          this.console.log('note thread updated');
-          this.console.log(ops);
+        const subscription = this.subscribe(noteThreadDoc.changes$, () => {
           this.resetNoteThread(featured.id, 'api');
         });
         this.noteThreadPositionSubscriptions.push(subscription);
@@ -1164,7 +1161,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     const updatePromises: Promise<boolean>[] = [];
-
     // a user initiated delta with ops that include inserting a note embed can only be undo deleting a note icon
     const reinsertedNoteEmbeds: DeltaOperation[] = delta.filter(
       op => op.insert != null && op.insert['note-thread-embed'] != null

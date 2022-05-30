@@ -709,6 +709,18 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
   }
 
+  removeEmbeddedElement(embedId: string, source: Sources): void {
+    if (this.editor == null) {
+      return;
+    }
+
+    const position: EmbedPosition | undefined = this.embeddedElements.get(embedId);
+    if (position != null) {
+      const deltaOps: DeltaOperation[] = [{ retain: position.position }, { delete: 1 }];
+      this.editor.updateContents(new Delta(deltaOps), source);
+    }
+  }
+
   isSegmentBlank(ref: string): boolean {
     const segmentDelta: DeltaStatic | undefined = this.getSegmentContents(ref);
     if (segmentDelta?.ops == null) {
@@ -1156,9 +1168,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         }
       }
 
-      // while (embedIndices.includes(newStart - 1)) {
-      //   newStart--;
-      // }
       newSel = { index: newStart, length: Math.max(0, newEnd - newStart) };
     } else {
       return null;
