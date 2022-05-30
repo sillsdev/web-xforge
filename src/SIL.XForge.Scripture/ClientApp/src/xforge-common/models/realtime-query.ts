@@ -180,11 +180,9 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
     }
     this._unpagedCount = unpagedCount;
 
-    if (this.adapter.ready) {
-      this._docs$.next(this._docs);
-      if (changed && emitRemoteChanges) {
-        this._remoteChanges$.next();
-      }
+    this._docs$.next(this._docs);
+    if (changed && this.adapter.ready && emitRemoteChanges) {
+      this._remoteChanges$.next();
     }
   }
 
