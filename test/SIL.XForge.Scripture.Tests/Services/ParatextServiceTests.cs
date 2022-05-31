@@ -1069,6 +1069,66 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task GetNoteThreadChanges_LineBreak_TextAnchorUpdated()
+        {
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            string threadId = "thread1";
+            string text1 = "Text in first verse ";
+            string text2 = "text after ";
+            string selected = "stanza";
+            string text3 = " break";
+
+            var comment = new Paratext.Data.ProjectComments.Comment(associatedPtUser)
+            {
+                Thread = threadId,
+                VerseRefStr = "MAT 1:1",
+                SelectedText = "stanza",
+                ContextBefore = text1 + "\\b \\q" + text2 + selected,
+                ContextAfter = text3,
+                StartPosition = text1.Length + text2.Length,
+                Contents = null,
+                Date = $"2019-12-31T08:00:00.0000000+00:00",
+                Deleted = false,
+                Status = NoteStatus.Todo,
+                Type = NoteType.Normal,
+                ConflictType = NoteConflictType.None,
+                AssignedUser = Paratext.Data.ProjectComments.CommentThread.unassignedUser,
+            };
+            env.AddParatextComment(comment);
+
+            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            {
+                IEnumerable<IDocument<NoteThread>> noteThreadDocs = new IDocument<NoteThread>[0];
+                Dictionary<int, ChapterDelta> chapterDeltas = new Dictionary<int, ChapterDelta>();
+                string chapterText = "[ { \"insert\": { \"chapter\": { \"style\": \"c\", \"number\": \"1\" } } }, " +
+                    "{ \"insert\": { \"blank\": true }, \"attributes\": { \"segment\": \"q_1\" } }," +
+                    "{ \"insert\": { \"verse\": { \"style\": \"v\", \"number\": \"1\" } } }, " +
+                    "{ \"insert\": \"" + text1 + "\", \"attributes\": { \"segment\": \"verse_1_1\" } }, " +
+                    "{ \"insert\": \"\n\", \"attributes\": { \"para\": { \"style\": \"q\" } } }, " +
+                    "{ \"insert\": \"\n\", \"attributes\": { \"para\": { \"style\": \"b\" } } }, " +
+                    "{ \"insert\": \"" + text2 + selected + text3 + "\", \"attributes\": { \"segment\": \"verse_1_1/q_1\" } } ]";
+                var delta = new Delta(JToken.Parse(chapterText));
+                ChapterDelta chapterDelta = new ChapterDelta(1, 1, true, delta);
+                chapterDeltas.Add(1, chapterDelta);
+                Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
+                    { new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 } }
+                    .ToDictionary(u => u.Username);
+                IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret, ptProjectId, 40,
+                    noteThreadDocs, chapterDeltas, ptProjectUsers);
+                Assert.That(changes.Count, Is.EqualTo(1));
+                NoteThreadChange change = changes.First();
+                int startPos = text1.Length + "\n".Length + text2.Length;
+                TextAnchor expected = new TextAnchor { Start = startPos, Length = selected.Length };
+                Console.WriteLine($"Expected: start: {expected.Start}, length: {expected.Length}");
+                Console.WriteLine($"Actual: start: {change.Position.Start}, length: {change.Position.Length}");
+                Assert.That(change.Position, Is.EqualTo(expected));
+            }
+        }
+
+        [Test]
         public async Task GetNoteThreadChanges_NoChangeTriggersNoUpdate()
         {
             var env = new TestEnvironment();

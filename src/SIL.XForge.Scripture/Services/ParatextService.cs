@@ -2255,7 +2255,7 @@ namespace SIL.XForge.Scripture.Services
         private string GetVerseText(Delta delta, VerseRef verseRef)
         {
             string vref = string.IsNullOrEmpty(verseRef.Verse) ? verseRef.VerseNum.ToString() : verseRef.Verse;
-            return delta.TryConcatenateInserts(out string verseText, vref) ? verseText : string.Empty;
+            return delta.TryConcatenateInserts(out string verseText, vref, DeltaUsxMapper.CanParaContainVerseText) ? verseText : string.Empty;
         }
 
         private TextAnchor GetThreadTextAnchor(CommentThread thread, Dictionary<int, ChapterDelta> chapterDeltas)

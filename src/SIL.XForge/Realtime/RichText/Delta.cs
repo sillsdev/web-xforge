@@ -241,7 +241,8 @@ namespace SIL.XForge.Realtime.RichText
         /// <param name="verseRef">
         /// The reference to the verse. For example: "1". If the verses in the text data is combined, "1-2".
         /// </param>
-        public bool TryConcatenateInserts(out string opStr, string verseRef)
+        /// <param name="includeParaWithStyle">Function to determine if the paragraph break should be included.</param>
+        public bool TryConcatenateInserts(out string opStr, string verseRef, Func<string, bool> includeParaWithStyle)
         {
             List<JToken> verseOps = new List<JToken>();
             bool isTargetVerse = verseRef == "0";
@@ -262,6 +263,17 @@ namespace SIL.XForge.Realtime.RichText
                     else if (((JObject)op[InsertType]).Property("chapter")?.Value.Type == JTokenType.Object)
                         continue;
                 }
+                else if (op[Attributes]?.Type == JTokenType.Object)
+                {
+                    var paragraphObj = ((JObject)op[Attributes]).Property("para")?.Value;
+                    if (paragraphObj?.Type == JTokenType.Object)
+                    {
+                        string style = (string)((JObject)paragraphObj).Property("style").Value;
+                        if (!includeParaWithStyle(style))
+                            continue;
+                    }
+                }
+
                 if (isTargetVerse)
                     verseOps.Add(op);
             }
