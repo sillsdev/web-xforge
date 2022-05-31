@@ -216,7 +216,7 @@ namespace SIL.XForge.Scripture.Services
                     {
                         source.UnlockRemoteRepository(sharedProj.Repository);
                     }
-                    catch (HttpException)
+                    catch (Paratext.Data.HttpException)
                     {
                         // A 403 error will be thrown if the repo is not locked
                     }
@@ -577,7 +577,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 return ptRepoSource.GetRepositories();
             }
-            catch (HttpException e)
+            catch (Paratext.Data.HttpException e)
             {
                 string message = $"Problem fetching repositories: {contextInformation}";
                 _logger.LogWarning(e, message);
