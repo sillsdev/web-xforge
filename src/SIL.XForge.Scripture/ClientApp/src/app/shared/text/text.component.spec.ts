@@ -31,7 +31,7 @@ import { SharedModule } from '../shared.module';
 import { getCombinedVerseTextDoc, getSFProject, getTextDoc } from '../test-utils';
 import { DragAndDrop } from './drag-and-drop';
 import { TextComponent } from './text.component';
-import { PresenceData, RemotePresences } from './text-view-model';
+import { PresenceData, RemotePresences, TextViewModel } from './text-view-model';
 
 const mockedBugsnagService = mock(BugsnagService);
 const mockedPwaService = mock(PwaService);
@@ -226,7 +226,7 @@ describe('TextComponent', () => {
 
     it('should not update presence if offline', fakeAsync(() => {
       const env: TestEnvironment = new TestEnvironment();
-      when(mockedPwaService.isOnline).thenReturn(false);
+      env.onlineStatus = false;
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
       tick();
@@ -289,21 +289,15 @@ describe('TextComponent', () => {
       tick();
       env.fixture.detectChanges();
       const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
-      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresence, 'submit').and.callFake(
-        // This is not strictly what happens as the other user would receive the presence change that this user makes.
-        (presenceData: PresenceData) => {
-          (env.component as any).viewModel.onPresenceReceive('presenceId1', presenceData);
-        }
-      );
-      expect(env.hostComponent.remotePresences).withContext('setup').toBeUndefined();
+      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresence, 'submit');
 
+      // SUT
       env.component.onSelectionChanged(null as unknown as RangeStatic, 'user');
 
       tick();
       expect(onSelectionChangedSpy).toHaveBeenCalledTimes(1);
       expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(1);
       verify(mockedUserService.getCurrentUser()).never();
-      expect(env.hostComponent.remotePresences).toBeDefined();
     }));
 
     it('should emit on cursor move', fakeAsync(() => {
@@ -313,71 +307,101 @@ describe('TextComponent', () => {
       tick();
       env.fixture.detectChanges();
       const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
-      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresence, 'submit').and.callFake(
-        // This is not strictly what happens as the other user would receive the presence change that this user makes.
-        (presenceData: PresenceData) => {
-          (env.component as any).viewModel.onPresenceReceive('presenceId1', presenceData);
-        }
-      );
-      expect(env.hostComponent.remotePresences).withContext('setup').toBeUndefined();
+      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresence, 'submit');
 
+      // SUT
       env.component.onSelectionChanged({ index: 0, length: 0 }, 'user');
 
       tick();
       expect(onSelectionChangedSpy).toHaveBeenCalledTimes(1);
       expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(1);
       verify(mockedUserService.getCurrentUser()).once();
-      expect(env.hostComponent.remotePresences).toBeDefined();
     }));
 
-    it('should not emit if readonly', fakeAsync(() => {
+    it('should not emit if readonly, when learn remote presence', fakeAsync(() => {
       const env: TestEnvironment = new TestEnvironment();
       env.hostComponent.isReadOnly = true;
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
       tick();
       env.fixture.detectChanges();
-      const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
-      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresence, 'submit').and.callFake(
-        // This is not strictly what happens as the other user would receive the presence change that this user makes.
-        (presenceData: PresenceData) => {
-          (env.component as any).viewModel.onPresenceReceive('presenceId1', presenceData);
-        }
+      const presenceChangeEmitSpy: jasmine.Spy<any> = spyOn<any>(
+        (env.component as any).viewModel.presenceChange,
+        'emit'
       );
-      expect(env.hostComponent.remotePresences).withContext('setup').toBeUndefined();
 
-      env.component.onSelectionChanged({ index: 0, length: 0 }, 'user');
+      expect(Object.keys((env.component as any).viewModel.presence.remotePresences).length)
+        .withContext('setup: sharedb presence info should start off empty')
+        .toEqual(0);
+
+      // SUT
+      env.addRemotePresence('remote-person-1');
+
+      expect(Object.keys((env.component as any).viewModel.presence.remotePresences).length)
+        .withContext('setup: sharedb presence info should contain remote person(s)')
+        .toEqual(1);
 
       tick();
-      expect(onSelectionChangedSpy).toHaveBeenCalledTimes(1);
-      expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(0);
+      expect(presenceChangeEmitSpy).withContext('should not have announced any persons').toHaveBeenCalledTimes(0);
       verify(mockedUserService.getCurrentUser()).never();
-      expect(env.hostComponent.remotePresences).toBeUndefined();
     }));
 
-    it('should not emit if offline', fakeAsync(() => {
+    it('should not emit if offline, when learn remote presence', fakeAsync(() => {
       const env: TestEnvironment = new TestEnvironment();
-      when(mockedPwaService.isOnline).thenReturn(false);
+      env.onlineStatus = false;
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
       tick();
       env.fixture.detectChanges();
-      const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
-      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresence, 'submit').and.callFake(
-        // This is not strictly what happens as the other user would receive the presence change that this user makes.
-        (presenceData: PresenceData) => {
-          (env.component as any).viewModel.onPresenceReceive('presenceId1', presenceData);
-        }
+      const presenceChangeEmitSpy: jasmine.Spy<any> = spyOn<any>(
+        (env.component as any).viewModel.presenceChange,
+        'emit'
       );
-      expect(env.hostComponent.remotePresences).withContext('setup').toBeUndefined();
 
-      env.component.onSelectionChanged({ index: 0, length: 0 }, 'user');
+      expect(Object.keys((env.component as any).viewModel.presence.remotePresences).length)
+        .withContext('setup: sharedb presence info should start off empty')
+        .toEqual(0);
+
+      // SUT
+      env.addRemotePresence('remote-person-1');
+
+      expect(Object.keys((env.component as any).viewModel.presence.remotePresences).length)
+        .withContext('setup: sharedb presence info should contain remote person(s)')
+        .toEqual(1);
 
       tick();
-      expect(onSelectionChangedSpy).toHaveBeenCalledTimes(1);
-      expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(0);
+      expect(presenceChangeEmitSpy).withContext('should not have announced any persons').toHaveBeenCalledTimes(0);
       verify(mockedUserService.getCurrentUser()).never();
-      expect(env.hostComponent.remotePresences).toBeUndefined();
+    }));
+
+    it('should learn and announce about new remote presences', fakeAsync(() => {
+      const env: TestEnvironment = new TestEnvironment();
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+      env.fixture.detectChanges();
+      const presenceChangeEmitSpy: jasmine.Spy<any> = spyOn<any>(
+        (env.component as any).viewModel.presenceChange,
+        'emit'
+      );
+
+      expect(Object.keys((env.component as any).viewModel.presence.remotePresences).length)
+        .withContext('setup: sharedb presence info should start off empty')
+        .toEqual(0);
+
+      // SUT
+      env.addRemotePresence('remote-person-1');
+      env.addRemotePresence('remote-person-2');
+      const numberRemotePersons: number = 2;
+
+      expect(Object.keys((env.component as any).viewModel.presence.remotePresences).length)
+        .withContext('setup: sharedb presence info should contain remote person(s)')
+        .toEqual(numberRemotePersons);
+
+      tick();
+      expect(presenceChangeEmitSpy)
+        .withContext('should have announced persons')
+        .toHaveBeenCalledTimes(numberRemotePersons);
     }));
 
     it('should clear remote presences when unload textdoc', fakeAsync(() => {
@@ -387,19 +411,11 @@ describe('TextComponent', () => {
       tick();
       env.fixture.detectChanges();
 
-      const presenceData: PresenceData = mock<PresenceData>();
-      const remotePresences: Record<string, PresenceData> | undefined = (env.component as any).viewModel.presence
-        .remotePresences;
-      remotePresences!['remote-person-1'] = presenceData;
-      // A remote presence is learned about.
-      (env.component as any).viewModel.onPresenceReceive('remote-person-1', presenceData);
-
-      tick();
-
+      env.addRemotePresence('remote-person-1');
+      env.addRemotePresence('remote-person-2');
       expect(Object.keys(env.hostComponent.remotePresences!).length)
         .withContext('some remote person(s) should have been reported')
-        .toBeGreaterThan(0);
-      tick();
+        .toEqual(2);
 
       // Disassociate the quill editor from its current textdoc.
       (env.component as any).viewModel.unbind();
@@ -2457,7 +2473,7 @@ class TestEnvironment {
 
   constructor({ textDoc, chapterNum }: TestEnvCtorArgs = {}) {
     when(mockedPwaService.onlineStatus).thenReturn(this._onlineStatus.asObservable());
-    when(mockedPwaService.isOnline).thenReturn(this.isOnline);
+    when(mockedPwaService.isOnline).thenCall(() => this.isOnline);
     when(mockedTranslocoService.translate<string>(anything())).thenCall(
       (translationStringKey: string) => translationStringKey
     );
@@ -2635,6 +2651,19 @@ class TestEnvironment {
     expect(resultingSelection.length).toEqual(desiredSelectionLength);
 
     this.assertNodeOrder(segmentElementDropTarget, expectedTopLevelNodeSeriesAfterEvent);
+  }
+
+  /** Write a presence into the sharedb remote presence list, and notify TextViewModel that a new remote presence has
+   * appeared on the textdoc. */
+  addRemotePresence(remotePresenceId: string) {
+    const viewModel: TextViewModel = (this.component as any).viewModel;
+    const presenceData: PresenceData = mock<PresenceData>();
+    const remotePresences: Record<string, PresenceData> | undefined = (viewModel as any).presence.remotePresences;
+    // Write the presence right into the area that would be being provided by the sharedb.
+    remotePresences![remotePresenceId] = presenceData;
+    // A remote presence is learned about.
+    (viewModel as any).onPresenceReceive(remotePresenceId, presenceData);
+    tick();
   }
 
   /** Assert that in `parentNode`, there are only immediate children with name and order specified in
