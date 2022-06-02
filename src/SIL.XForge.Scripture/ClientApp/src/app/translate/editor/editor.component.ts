@@ -66,7 +66,19 @@ export const UPDATE_SUGGESTIONS_TIMEOUT = 100;
 
 const PUNCT_SPACE_REGEX = /^(?:\p{P}|\p{S}|\p{Cc}|\p{Z})+$/u;
 
-/** Scripture editing area. Used for Translate task. */
+/** Scripture editing area. Used for Translate task.
+ * ```
+ * ┌─────────────────────────────────────┐
+ * │           editor.component          │
+ * │                                     │
+ * │  ┌──────────────┐  ┌──────────────┐ │
+ * │  │   source     │  │    target    │ │
+ * │  │text.component│  │text.component│ │
+ * │  └──────────────┘  └──────────────┘ │
+ * │                                     │
+ * └─────────────────────────────────────┘
+ * ```
+ */
 @Component({
   selector: 'app-editor',
   templateUrl: './editor.component.html',

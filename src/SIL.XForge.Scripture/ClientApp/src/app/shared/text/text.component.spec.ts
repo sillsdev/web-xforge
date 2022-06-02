@@ -1886,7 +1886,7 @@ describe('TextComponent', () => {
         args.nuggetTextDocText +
         textBetweenNuggetAndDropLocation +
         textAfterDropLocation;
-      // For example: `The  brown fox quickjumps over the lazy dog.`;
+      // For example: `The  brown fox quickjumps over the lazy dog.`
       const expectedTextInDoc =
         textLeadingUpToSelectionBeforeEvent +
         textBetweenSelectionAndNugget +
