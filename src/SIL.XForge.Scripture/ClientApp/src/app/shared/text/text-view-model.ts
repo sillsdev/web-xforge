@@ -117,6 +117,7 @@ class SegmentInfo {
  * This class is responsible for keeping the the data model and the view model for a text in sync. This class currently
  * only supports differences in attributes between the data model and the view model. It also helps to keep the models
  * consistent and correct.
+ * See text.component.spec.ts for some unit tests.
  */
 export class TextViewModel {
   readonly cursorColor: string;
