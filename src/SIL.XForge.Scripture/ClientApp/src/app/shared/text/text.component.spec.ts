@@ -379,6 +379,39 @@ describe('TextComponent', () => {
       verify(mockedUserService.getCurrentUser()).never();
       expect(env.hostComponent.remotePresences).toBeUndefined();
     }));
+
+    it('should clear remote presences when unload textdoc', fakeAsync(() => {
+      const env: TestEnvironment = new TestEnvironment();
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+      env.fixture.detectChanges();
+
+      const presenceData: PresenceData = mock<PresenceData>();
+      const remotePresences: Record<string, PresenceData> | undefined = (env.component as any).viewModel.presence
+        .remotePresences;
+      remotePresences!['remote-person-1'] = presenceData;
+      // A remote presence is learned about.
+      (env.component as any).viewModel.onPresenceReceive('remote-person-1', presenceData);
+
+      tick();
+
+      expect(Object.keys(env.hostComponent.remotePresences!).length)
+        .withContext('some remote person(s) should have been reported')
+        .toBeGreaterThan(0);
+      tick();
+
+      // Disassociate the quill editor from its current textdoc.
+      (env.component as any).viewModel.unbind();
+      tick();
+
+      expect(Object.keys(env.hostComponent.remotePresences!).length)
+        .withContext('the remote persons list should be empty')
+        .toEqual(0);
+      expect((env.component as any).presence)
+        .withContext('presence info should be absent')
+        .toBeUndefined();
+    }));
   });
 
   describe('drag-and-drop', () => {
