@@ -1,34 +1,26 @@
 <ng-container *transloco="let t; read: 'chapter_nav'">
-  <mdc-select
-    #chapterSelect
-    class="chapter-select"
-    [(ngModel)]="chapterString"
-    (selectionChange)="chapterSelect._selectedText.elementRef.nativeElement.blur()"
-  >
-    <mdc-menu>
-      <mdc-list>
-        <mdc-list-item *ngFor="let cs of chapterStrings" [value]="cs">{{ cs }}</mdc-list-item>
-      </mdc-list>
-    </mdc-menu>
-  </mdc-select>
+  <mat-form-field appearance="fill" id="chapter-select">
+    <mat-select [(value)]="chapter" (valueChange)="chapterChanged()" panelClass="chapter-select-menu">
+      <mat-option *ngFor="let c of chapters" [value]="c">{{ bookName }} {{ c }}</mat-option>
+    </mat-select>
+  </mat-form-field>
   <button
-    mdc-icon-button
-    appBlurOnClick
-    icon="keyboard_arrow_left"
-    type="button"
+    mat-icon-button
     (click)="prevChapter()"
     [disabled]="isPrevChapterDisabled()"
     title="{{ t('previous_chapter') }}"
     fxHide.xs
-  ></button>
+  >
+    <mat-icon>keyboard_arrow_left</mat-icon>
+  </button>
   <button
-    mdc-icon-button
-    appBlurOnClick
+    mat-icon-button
     icon="keyboard_arrow_right"
-    type="button"
     (click)="nextChapter()"
     [disabled]="isNextChapterDisabled()"
     title="{{ t('next_chapter') }}"
     fxHide.xs
-  ></button>
+  >
+    <mat-icon>keyboard_arrow_right</mat-icon>
+  </button>
 </ng-container>
