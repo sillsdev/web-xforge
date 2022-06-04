@@ -4,17 +4,25 @@
 
 use('xforge');
 
-console.log(
-  db.texts.countDocuments({
-    ops: {
-      $elemMatch: {
-        $or: [
-          { 'insert.verse': true },
-          { 'attributes.segment': /(?:null|undefined)/ },
-          // This will match delete and retain ops, which should not exist, but have been found in production
-          { insert: { $exists: false } }
-        ]
-      }
+const texts = db.texts.find({
+  ops: {
+    $elemMatch: {
+      $or: [
+        { 'insert.verse': true },
+        { 'attributes.segment': /(?:null|undefined)/ },
+        // This will match delete and retain ops, which should not exist, but have been found in production
+        { insert: { $exists: false } }
+      ]
     }
-  })
-);
+  }
+}, {
+  _id: 1
+}).toArray();
+
+if (texts.length > 0) {
+  console.log(texts.map(text => text._id).join('\n'));
+} else {
+  console.log('none');
+}
+
+texts
