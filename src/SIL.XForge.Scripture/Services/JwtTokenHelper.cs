@@ -1,6 +1,7 @@
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Text;
@@ -61,7 +62,7 @@ namespace SIL.XForge.Scripture.Services
                     new JProperty("refresh_token", paratextTokens.RefreshToken));
                 request.Content = new StringContent(requestObj.ToString(), Encoding.Default, "application/json");
                 HttpResponseMessage response = await client.SendAsync(request, token);
-                await _exceptionHandler.EnsureSuccessStatusCode(response);
+                await EnsureSuccessStatusCode(response);
 
                 string responseJson = await response.Content.ReadAsStringAsync();
                 JObject responseObj = JObject.Parse(responseJson);
@@ -70,6 +71,21 @@ namespace SIL.XForge.Scripture.Services
                     AccessToken = (string)responseObj["access_token"],
                     RefreshToken = (string)responseObj["refresh_token"]
                 };
+            }
+        }
+
+        private async static Task EnsureSuccessStatusCode(HttpResponseMessage response)
+        {
+            if (!response.IsSuccessStatusCode)
+            {
+                string message = await ExceptionHandler.CreateHttpRequestErrorMessage(response);
+                bool isBadToken = response.StatusCode == HttpStatusCode.BadRequest
+                                  && message.Contains("invalid_grant")
+                                  && message.Contains("invalid or revoked refresh token");
+                ParatextAccessRejectionReason reason = isBadToken
+                                                       ? ParatextAccessRejectionReason.InvalidOrRevokedRefreshToken
+                                                       : ParatextAccessRejectionReason.UnknownReason;
+                throw new ParatextAccessException(new HttpRequestException(message), reason);
             }
         }
     }

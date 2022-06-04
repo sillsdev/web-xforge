@@ -175,7 +175,15 @@ export class AuthService {
   }
 
   linkParatext(returnUrl: string): void {
-    const state: AuthState = { returnUrl, linking: true };
+    this.authWithParatext(returnUrl, true);
+  }
+
+  getNewTokens(returnUrl: string): void {
+    this.authWithParatext(returnUrl, false);
+  }
+
+  authWithParatext(returnUrl: string, linking: boolean) {
+    const state: AuthState = { returnUrl, linking };
     const language: string = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME));
     const ui_locales: string = language;
     const options: AuthorizeOptions = {

@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
@@ -581,7 +582,9 @@ namespace SIL.XForge.Scripture.Services
             {
                 string message = $"Problem fetching repositories: {contextInformation}";
                 _logger.LogWarning(e, message);
-                throw;
+                if (e.Code == HttpStatusCode.Unauthorized && e.Body.Contains("Invalid authorization token"))
+                    throw new ParatextAccessException(e, ParatextAccessRejectionReason.InvalidAuthorizationToken);
+                else throw;
             }
         }
 
