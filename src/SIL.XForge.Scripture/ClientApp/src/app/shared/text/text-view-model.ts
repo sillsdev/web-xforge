@@ -127,6 +127,7 @@ export class TextViewModel {
   private readonly _segments: Map<string, RangeStatic> = new Map<string, RangeStatic>();
   private readonly presenceId: string = objectId();
   private readonly cursorColorStorageKey = 'cursor_color';
+  /** The sharedb presence information for the textdoc that the quill is bound to. */
   private presence?: Presence<PresenceData>;
   private remoteChangesSub?: Subscription;
   private onCreateSub?: Subscription;
@@ -173,6 +174,7 @@ export class TextViewModel {
     return this.textDoc?.isLoaded === true && this.textDoc.data?.ops != null && isBadDelta(this.textDoc.data.ops);
   }
 
+  /** Associate the existing editor to a (single) specific textdoc. */
   bind(textDoc: TextDoc, subscribeToUpdates: boolean): void {
     const editor = this.checkEditor();
     if (this.textDoc != null) {
@@ -194,7 +196,10 @@ export class TextViewModel {
       }
       editor.history.clear();
     });
+    this.attachPresences(textDoc, editor);
+  }
 
+  attachPresences(textDoc: TextDoc, editor: Quill): void {
     this.presence = textDoc.docPresence;
     this.presence.subscribe(error => {
       if (error) throw error;
@@ -217,6 +222,7 @@ export class TextViewModel {
     this.presence.on('receive', this.onPresenceReceive);
   }
 
+  /** Break the association of the editor with the currently associated textdoc. */
   unbind(): void {
     if (this.remoteChangesSub != null) {
       this.remoteChangesSub.unsubscribe();
@@ -226,21 +232,27 @@ export class TextViewModel {
     }
     this.textDoc = undefined;
 
+    if (this.editor != null) {
+      this.editor.setText('', 'silent');
+    }
+    this.dismissPresences();
+    this._segments.clear();
+    this._embeddedElements.clear();
+  }
+
+  dismissPresences(): void {
+    this.localPresence?.submit(null as unknown as PresenceData);
+    if (this.editor != null) {
+      const cursors: QuillCursors = this.editor.getModule('cursors');
+      cursors.clearCursors();
+    }
     this.presence?.unsubscribe(error => {
       if (error) throw error;
     });
     this.presence?.off('receive', this.onPresenceReceive);
-    this.localPresence?.submit(null as unknown as PresenceData);
-
-    if (this.editor != null) {
-      this.editor.setText('', 'silent');
-      const cursors: QuillCursors = this.editor.getModule('cursors');
-      cursors.clearCursors();
-      this.presenceChange?.emit(this.presence?.remotePresences);
-    }
     this.presence = undefined;
-    this._segments.clear();
-    this._embeddedElements.clear();
+    const noRemotePresences: RemotePresences = {};
+    this.presenceChange?.emit(noRemotePresences);
   }
 
   /**

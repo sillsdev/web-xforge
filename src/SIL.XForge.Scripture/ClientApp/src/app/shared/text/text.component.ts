@@ -378,6 +378,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         const cursors: QuillCursors = this._editor.getModule('cursors');
         cursors.clearCursors();
       }
+      this.viewModel.enablePresenceReceive = this.isPresenceEnabled;
     });
   }
 
