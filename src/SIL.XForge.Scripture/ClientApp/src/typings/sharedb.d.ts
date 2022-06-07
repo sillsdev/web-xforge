@@ -60,7 +60,7 @@ declare module 'sharedb/lib/client' {
       callback?: (err: Error, snapshot: Snapshot) => void
     ): Snapshot;
     getPresence(channel: string): Presence;
-    getDocPresence(collection: string, id: string): Presence;
+    // getDocPresence(collection: string, id: string): Presence;
     close(): void;
   }
 

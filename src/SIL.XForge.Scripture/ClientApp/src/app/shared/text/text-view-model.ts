@@ -6,7 +6,7 @@ import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils
 import { Subscription } from 'rxjs';
 import { LocalPresence, Presence } from 'sharedb/lib/sharedb';
 import tinyColor from 'tinycolor2';
-import { objectId } from 'xforge-common/utils';
+// import { objectId } from 'xforge-common/utils';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { MultiCursorViewer } from '../../translate/editor/multi-viewer/multi-viewer.component';
 import { isBadDelta, VERSE_FROM_SEGMENT_REF_REGEX } from '../utils';
@@ -125,7 +125,7 @@ export class TextViewModel {
   localPresence?: LocalPresence<PresenceData>;
 
   private readonly _segments: Map<string, RangeStatic> = new Map<string, RangeStatic>();
-  private readonly presenceId: string = objectId();
+  // private readonly presenceId: string = objectId();
   private readonly cursorColorStorageKey = 'cursor_color';
   private presence?: Presence<PresenceData>;
   private remoteChangesSub?: Subscription;
@@ -137,7 +137,7 @@ export class TextViewModel {
    */
   private _embeddedElements: Map<string, number> = new Map<string, number>();
 
-  private onPresenceReceive = (_presenceId: string, _presenceData: PresenceData | null) => {};
+  // private onPresenceReceive = (_presenceId: string, _presenceData: PresenceData | null) => {};
 
   constructor(private presenceChange?: EventEmitter<RemotePresences | undefined>) {
     let localCursorColor = localStorage.getItem(this.cursorColorStorageKey);
@@ -194,7 +194,7 @@ export class TextViewModel {
       }
       editor.history.clear();
     });
-
+    /*
     this.presence = textDoc.docPresence;
     this.presence.subscribe(error => {
       if (error) throw error;
@@ -215,6 +215,7 @@ export class TextViewModel {
       this.presenceChange?.emit(this.presence?.remotePresences);
     };
     this.presence.on('receive', this.onPresenceReceive);
+    */
   }
 
   unbind(): void {
@@ -226,19 +227,19 @@ export class TextViewModel {
     }
     this.textDoc = undefined;
 
-    this.presence?.unsubscribe(error => {
-      if (error) throw error;
-    });
-    this.presence?.off('receive', this.onPresenceReceive);
-    this.localPresence?.submit(null as unknown as PresenceData);
+    // this.presence?.unsubscribe(error => {
+    //   if (error) throw error;
+    // });
+    // this.presence?.off('receive', this.onPresenceReceive);
+    // this.localPresence?.submit(null as unknown as PresenceData);
 
     if (this.editor != null) {
       this.editor.setText('', 'silent');
       const cursors: QuillCursors = this.editor.getModule('cursors');
       cursors.clearCursors();
-      this.presenceChange?.emit(this.presence?.remotePresences);
+      // this.presenceChange?.emit(this.presence?.remotePresences);
     }
-    this.presence = undefined;
+    // this.presence = undefined;
     this._segments.clear();
     this._embeddedElements.clear();
   }

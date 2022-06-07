@@ -64,8 +64,9 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
     return this.adapter.collection;
   }
 
-  get docPresence(): Presence<P> {
-    return this.adapter.docPresence;
+  get docPresence(): Presence<P> | undefined {
+    // return this.adapter.docPresence;
+    return undefined;
   }
 
   /** Fires when underlying data is recreated. */
