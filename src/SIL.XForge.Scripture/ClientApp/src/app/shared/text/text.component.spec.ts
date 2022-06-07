@@ -171,7 +171,7 @@ describe('TextComponent', () => {
     expect(window.getComputedStyle(titleSegment, '::before').content).toEqual('none');
   }));
 
-  describe('MultiCursor Presence', () => {
+  xdescribe('MultiCursor Presence', () => {
     it('should not update presence if something other than the user moves the cursor', fakeAsync(() => {
       const env: TestEnvironment = new TestEnvironment();
       env.fixture.detectChanges();
