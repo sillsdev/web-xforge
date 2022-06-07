@@ -359,7 +359,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   get localPresence(): LocalPresence<PresenceData> | undefined {
-    return this.viewModel.localPresence;
+    // return this.viewModel.localPresence;
+    return undefined;
   }
 
   private get isPresenceEnabled(): boolean {
