@@ -62,7 +62,7 @@
     "recordrtc": "^5.6.2",
     "rich-text": "^3.1.0",
     "rxjs": "^6.6.7",
-    "sharedb": "1.8.3",
+    "sharedb": "1.9.0",
     "tslib": "^2.4.0",
     "uuid": "^8.3.2",
     "zone.js": "^0.11.5"
