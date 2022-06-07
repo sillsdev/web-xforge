@@ -591,22 +591,6 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        [Obsolete("Only here for clients still running a front end that still calls it")]
-        public async Task<bool> HasTransceleratorQuestions(string curUserId, string projectId)
-        {
-            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
-            {
-                IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
-                if (!projectDoc.IsLoaded)
-                    throw new DataNotFoundException("The project does not exist.");
-                // TODO Checking whether the permissions contains a particular string is not a very robust way to check
-                // permissions. A rights service needs to be created in C# land.
-                if (!IsProjectAdmin(projectDoc.Data, curUserId) && !projectDoc.Data.UserPermissions[curUserId].Contains("questions.create"))
-                    throw new ForbiddenException();
-                return _transceleratorService.HasQuestions(projectDoc.Data.ParatextId);
-            }
-        }
-
         protected override async Task AddUserToProjectAsync(IConnection conn, IDocument<SFProject> projectDoc,
             IDocument<User> userDoc, string projectRole, bool removeShareKeys = true)
         {
