@@ -2496,6 +2496,72 @@ describe('TextComponent', () => {
     expect(cancelled).withContext('event should have been cancelled when invalid selection').toBeTrue();
     expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
   }));
+
+  it('does not cancel paste when valid selection', fakeAsync(() => {
+    const { env }: { env: TestEnvironment; segmentRange: RangeStatic } = basicSimpleText();
+
+    const payload: string = 'abcd';
+    const clipboardData = new DataTransfer();
+    clipboardData.setData('text/plain', payload);
+    clipboardData.setData('text/html', `<span background="white">${payload}</span>`);
+
+    const pasteEvent: ClipboardEvent = new ClipboardEvent('paste', {
+      clipboardData,
+      cancelable: true
+    });
+
+    const quillUpdateContentsSpy: jasmine.Spy<any> = spyOn<any>(
+      env.component.editor,
+      'updateContents'
+    ).and.callThrough();
+    // When asked, the current selection will be called valid.
+    const isValidSpy: jasmine.Spy<any> = spyOn<any>(env.component, 'isValidSelectionForCurrentSegment').and.returnValue(
+      true
+    );
+
+    // I haven't been able to trigger quill's onPaste by dispatching a ClipboardEvent. So directly call it.
+
+    // SUT
+    (env.component.editor!.clipboard as any).onPaste(pasteEvent);
+    flush();
+    expect(pasteEvent.defaultPrevented).withContext('the quill onPaste cancels further processing').toBeTrue();
+
+    expect(quillUpdateContentsSpy).withContext('quill is edited').toHaveBeenCalled();
+    expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
+  }));
+
+  it('cancels paste when invalid selection', fakeAsync(() => {
+    const { env }: { env: TestEnvironment; segmentRange: RangeStatic } = basicSimpleText();
+
+    const payload: string = 'abcd';
+    const clipboardData = new DataTransfer();
+    clipboardData.setData('text/plain', payload);
+    clipboardData.setData('text/html', `<span background="white">${payload}</span>`);
+
+    const pasteEvent: ClipboardEvent = new ClipboardEvent('paste', {
+      clipboardData,
+      cancelable: true
+    });
+
+    const quillUpdateContentsSpy: jasmine.Spy<any> = spyOn<any>(
+      env.component.editor,
+      'updateContents'
+    ).and.callThrough();
+    // When asked, the current selection will be called invalid.
+    const isValidSpy: jasmine.Spy<any> = spyOn<any>(env.component, 'isValidSelectionForCurrentSegment').and.returnValue(
+      false
+    );
+
+    // I haven't been able to trigger quill's onPaste by dispatching a ClipboardEvent. So directly call it.
+
+    // SUT
+    (env.component.editor!.clipboard as any).onPaste(pasteEvent);
+    flush();
+    expect(pasteEvent.defaultPrevented).withContext('the quill onPaste cancels further processing').toBeTrue();
+
+    expect(quillUpdateContentsSpy).withContext('quill contents are not modified').not.toHaveBeenCalled();
+    expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
+  }));
 });
 
 /** Represents both what the TextComponent understand to be the text in a segment, and what the editor

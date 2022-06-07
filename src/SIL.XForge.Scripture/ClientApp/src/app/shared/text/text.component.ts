@@ -188,6 +188,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     history: {
       userOnly: true
     },
+    clipboard: { textComponent: this },
     dragAndDrop: { textComponent: this }
   };
   private _id?: TextDocId;
@@ -709,6 +710,15 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return false;
   }
 
+  /** Is a given selection range valid for editing the current segment? */
+  isValidSelectionForCurrentSegment(sel: RangeStatic): boolean {
+    const newSel: RangeStatic | null = this.conformToValidSelectionForCurrentSegment(sel);
+    if (newSel == null || sel.index !== newSel.index || sel.length !== newSel.length) {
+      return false;
+    }
+    return true;
+  }
+
   private applyEditorStyles() {
     if (this._editor != null) {
       const container = this._editor.container as HTMLElement;
@@ -1018,15 +1028,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     return newSel;
-  }
-
-  /** Is a given selection range valid for editing the current segment? */
-  private isValidSelectionForCurrentSegment(sel: RangeStatic): boolean {
-    const newSel: RangeStatic | null = this.conformToValidSelectionForCurrentSegment(sel);
-    if (newSel == null || sel.index !== newSel.index || sel.length !== newSel.length) {
-      return false;
-    }
-    return true;
   }
 
   /** Handler for beforeinput event on quill DOM element. */

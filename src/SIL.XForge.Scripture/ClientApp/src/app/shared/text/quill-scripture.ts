@@ -1,8 +1,17 @@
 import cloneDeep from 'lodash-es/cloneDeep';
 import Parchment from 'parchment';
-import Quill, { Clipboard, DeltaOperation, DeltaStatic, History, HistoryStackType, StringMap } from 'quill';
+import Quill, {
+  Clipboard,
+  DeltaOperation,
+  DeltaStatic,
+  History,
+  HistoryStackType,
+  StringMap,
+  QuillOptionsStatic
+} from 'quill';
 import QuillCursors from 'quill-cursors';
 import { DragAndDrop } from './drag-and-drop';
+import { TextComponent } from './text.component';
 
 const Delta: new () => DeltaStatic = Quill.import('delta');
 
@@ -649,12 +658,27 @@ export function registerScripture(): string[] {
   formats.push(InvalidInlineClass);
 
   class DisableHtmlClipboard extends QuillClipboard {
+    private _textComponent: TextComponent;
+
+    constructor(quill: Quill, options: QuillOptionsStatic) {
+      super(quill, options);
+      this._textComponent = (options as any).textComponent;
+    }
+
     onPaste(e: ClipboardEvent): void {
       if (e.defaultPrevented || !this.quill.isEnabled() || e.clipboardData == null) {
         return;
       }
+
+      // Prevent further handling by browser, which can cause the paste to
+      // happen anyway even if we stop processing here.
+      e.preventDefault();
+
       const range = this.quill.getSelection();
       if (range == null) {
+        return;
+      }
+      if (!this._textComponent.isValidSelectionForCurrentSegment(range)) {
         return;
       }
       let delta = new Delta().retain(range.index);
