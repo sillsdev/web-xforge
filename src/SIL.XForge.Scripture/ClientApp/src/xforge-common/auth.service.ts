@@ -330,8 +330,8 @@ export class AuthService {
     if (primaryId != null && secondaryId != null) {
       try {
         await this.commandService.onlineInvoke(USERS_URL, 'linkParatextAccount', { primaryId, secondaryId });
-        // Trigger the login phase again so that local auth0 switches back its understanding to the primary account
-        // await this.logIn(state.returnUrl ?? '');
+        // Trigger a session check with auth0 so that tokens are reversed back to the primary account and not
+        // the Paratext account that was just merged into the primary - this causes a redirect back to auth0
         await this.auth0.checkSession({ ignoreCache: true });
       } catch (err) {
         if (!(err instanceof CommandError) || !err.message.includes(this.ptLinkedToAnotherUserKey)) {
