@@ -24,7 +24,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
 
   private _syncActive: boolean = false;
   private isSyncCancelled = false;
-  private paratextUsername?: string;
+  private hasValidParatextConnection: boolean | undefined;
   private previousLastSyncDate?: Date;
 
   constructor(
@@ -39,7 +39,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
   }
 
   get isLoggedIntoParatext(): boolean {
-    return this.paratextUsername != null && this.paratextUsername.length > 0;
+    return this.hasValidParatextConnection === true;
   }
 
   // Todo: This may not be return the correct data on reconnect
@@ -107,11 +107,8 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
   ngOnInit() {
     this.subscribe(this.pwaService.onlineStatus, async isOnline => {
       this.isAppOnline = isOnline;
-      if (this.isAppOnline && this.paratextUsername == null) {
-        const username = await this.paratextService.getParatextUsername().toPromise();
-        if (username != null) {
-          this.paratextUsername = username;
-        }
+      if (this.isAppOnline && this.hasValidParatextConnection == null) {
+        this.hasValidParatextConnection = await this.paratextService.hasValidParatextConnection();
         // Explicit to prevent flashing the login button during page load
         this.showParatextLogin = !this.isLoggedIntoParatext;
       }
@@ -138,7 +135,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
       return;
     }
     const url = '/projects/' + this.projectDoc.id + '/sync';
-    this.paratextService.linkParatext(url);
+    this.paratextService.logInWithParatext(url);
   }
 
   syncProject(): void {

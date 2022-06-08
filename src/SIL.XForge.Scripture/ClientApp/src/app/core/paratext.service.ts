@@ -21,10 +21,18 @@ export class ParatextService {
     this.authService.linkParatext(returnUrl);
   }
 
+  logInWithParatext(returnUrl: string): void {
+    this.authService.getNewTokens(returnUrl);
+  }
+
   getParatextUsername(): Observable<string | undefined> {
     return this.http
       .get<string | null>('paratext-api/username', { headers: this.headers })
       .pipe(map(r => r ?? undefined));
+  }
+
+  async hasValidParatextConnection(): Promise<boolean> {
+    return (await this.getProjects()) != null;
   }
 
   getProjects(): Promise<ParatextProject[] | undefined> {
