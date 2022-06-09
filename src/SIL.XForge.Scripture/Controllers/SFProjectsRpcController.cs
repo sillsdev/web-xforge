@@ -362,23 +362,6 @@ namespace SIL.XForge.Scripture.Controllers
             }
         }
 
-        [Obsolete("To be removed soon. Only here for clients still running a front end that still calls it.")]
-        public async Task<IRpcMethodResult> HasTransceleratorQuestions(string projectId)
-        {
-            try
-            {
-                return Ok(await _projectService.HasTransceleratorQuestions(UserId, projectId));
-            }
-            catch (ForbiddenException)
-            {
-                return ForbiddenError();
-            }
-            catch (DataNotFoundException dnfe)
-            {
-                return NotFoundError(dnfe.Message);
-            }
-        }
-
         public async Task<IRpcMethodResult> SetUserProjectPermissions(string projectId, string userId, string[] permissions)
         {
             try

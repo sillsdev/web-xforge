@@ -25,8 +25,6 @@ namespace SIL.XForge.Scripture.Services
         Task<IReadOnlyList<InviteeStatus>> InvitedUsersAsync(string curUserId, string projectId);
         bool IsSourceProject(string projectId);
         Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestions(string curUserId, string projectId);
-        [Obsolete("Only here for clients still running a front end that still calls it")]
-        Task<bool> HasTransceleratorQuestions(string curUserId, string projectId);
         Task UpdatePermissionsAsync(string curUserId, IDocument<SFProject> projectDoc, CancellationToken token);
     }
 }
