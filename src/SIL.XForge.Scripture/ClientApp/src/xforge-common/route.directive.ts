@@ -26,9 +26,11 @@ export class RouterDirective {
     return this._route;
   }
 
-  @HostBinding('class.mdc-list-item--activated')
+  @HostBinding('class.activated-nav-item')
   get active(): boolean {
-    return (this.element.nativeElement as HTMLElement).tagName === 'MDC-LIST-ITEM' && this.router.url === this.url;
+    return (
+      (this.element.nativeElement as HTMLElement).classList.contains('mat-list-item') && this.router.url === this.url
+    );
   }
 
   @HostListener('click', ['$event'])

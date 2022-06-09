@@ -23,20 +23,24 @@ export function supportedBrowser(): boolean {
   // Minimum required versions are based largely on browser support data for the following features:
   // https://caniuse.com/indexeddb2
   // https://caniuse.com/mdn-javascript_builtins_regexp_property_escapes
+  // https://caniuse.com/mdn-css_properties_text-align_flow_relative_values_start_and_end
+  // https://caniuse.com/mdn-css_properties_column-gap_flex_context
+  // https://caniuse.com/mdn-css_properties_inset-inline-start
+  // https://developer.mozilla.org/en-US/docs/Web/CSS/margin-inline-start#browser_compatibility
   const isSupportedBrowser = BROWSER.satisfies({
-    chrome: '>=64',
-    chromium: '>=64',
-    edge: '>=79',
+    chrome: '>=87',
+    chromium: '>=87',
+    edge: '>=87',
     firefox: '>=78',
-    safari: '>=11.1',
+    safari: '>=14.1',
 
     mobile: {
-      chrome: '>=78',
+      chrome: '>=87',
       firefox: '>=79',
-      opera: '>=47',
-      safari: '>=11.3',
-      'android browser': '>=76',
-      'samsung internet': '>=9.0'
+      opera: '>=73',
+      safari: '>=14.5',
+      'android browser': '>=87',
+      'samsung internet': '>=14.0'
     }
   });
   return isSupportedBrowser ? true : false;

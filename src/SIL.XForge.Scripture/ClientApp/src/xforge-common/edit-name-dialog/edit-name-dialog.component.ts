@@ -1,6 +1,7 @@
 import { MdcDialogRef, MDC_DIALOG_DATA } from '@angular-mdc/web/dialog';
 import { Component, Inject } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
+import { I18nService } from 'xforge-common/i18n.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
 
 export interface EditNameDialogResult {
@@ -15,6 +16,7 @@ export class EditNameDialogComponent {
 
   constructor(
     public dialogRef: MdcDialogRef<EditNameDialogComponent, EditNameDialogResult | 'close'>,
+    public i18n: I18nService,
     @Inject(MDC_DIALOG_DATA) public data: { name: string; isConfirmation: boolean }
   ) {
     this.name.setValidators([Validators.required, XFValidators.someNonWhitespace]);

@@ -13,7 +13,7 @@ export class ChapterNavComponent {
 
   @Output() chapterChange = new EventEmitter<number>();
 
-  constructor(private i18n: I18nService) {}
+  constructor(readonly i18n: I18nService) {}
 
   get bookName(): string {
     return this.bookNum == null ? '' : this.i18n.localizeBook(this.bookNum);

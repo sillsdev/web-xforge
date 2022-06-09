@@ -14,10 +14,15 @@ mat-card {
   }
 }
 
+.card-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 20px 40px;
+}
+
 .books-card {
   width: 18rem;
-  margin-right: 40px;
-  margin-bottom: 20px;
 
   .books-card-title ::ng-deep {
     margin-top: 8px;

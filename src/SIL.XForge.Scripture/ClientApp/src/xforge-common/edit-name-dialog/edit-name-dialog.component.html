@@ -1,5 +1,5 @@
 <ng-container *transloco="let t; read: 'edit_name_dialog'">
-  <mdc-dialog>
+  <mdc-dialog [dir]="i18n.direction">
     <mdc-dialog-container>
       <mdc-dialog-surface>
         <mdc-dialog-title *ngIf="data.isConfirmation">{{ t("confirm_your_name") }}</mdc-dialog-title>

@@ -2,11 +2,19 @@ import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { CommonModule } from '@angular/common';
 import { Component, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { TestTranslocoModule } from 'xforge-common/test-utils';
+import { mock } from 'ts-mockito';
+import { I18nService } from 'xforge-common/i18n.service';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { EditNameDialogComponent, EditNameDialogResult } from './edit-name-dialog.component';
 
+const mockedI18nService = mock(I18nService);
+
 describe('EditNameDialogComponent', () => {
+  configureTestingModule(() => ({
+    providers: [{ provide: I18nService, useMock: mockedI18nService }]
+  }));
+
   it('should display name and cancel button', fakeAsync(() => {
     const env = new TestEnvironment();
     env.openDialog();

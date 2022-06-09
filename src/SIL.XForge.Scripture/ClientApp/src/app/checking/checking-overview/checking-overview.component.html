@@ -1,8 +1,8 @@
 <ng-container *transloco="let t; read: 'checking_overview'">
-  <div fxLayout="row" fxLayoutAlign="start center" [ngClass]="{ 'reviewer-panels': !canCreateQuestion }">
-    <mat-icon fxFlex="32px">library_books</mat-icon>
-    <h2 fxFlex>{{ t("texts_with_questions") }}</h2>
-    <div fxFlexAlign="center" *ngIf="canCreateQuestion; else overallProgressChart" class="primary-actions">
+  <div [ngClass]="{ 'reviewer-panels': !canCreateQuestion }" class="header">
+    <mat-icon>library_books</mat-icon>
+    <h2>{{ t("texts_with_questions") }}</h2>
+    <ng-container *ngIf="canCreateQuestion; else overallProgressChart" class="primary-actions">
       <button mdc-button type="button" *ngIf="showImportButton" (click)="importDialog()" id="import-btn">
         {{ t("import_questions") }}
       </button>
@@ -16,7 +16,7 @@
       >
         <mat-icon>post_add</mat-icon> <span fxHide.xs>{{ t("add_question") }}</span>
       </button>
-    </div>
+    </ng-container>
     <ng-template #overallProgressChart>
       <div id="overall-progress-chart">
         <app-donut-chart [colors]="['#3a3a3a', '#edecec', '#B8D332']" [data]="overallProgress()"></app-donut-chart>
@@ -33,7 +33,7 @@
         >
           <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
             <mat-icon fxFlex="24px" mdcListItemMeta>
-              keyboard_arrow_{{ itemVisible[getBookId(text)] ? "down" : "right" }}
+              keyboard_arrow_{{ itemVisible[getBookId(text)] ? "down" : i18n.forwardDirectionWord }}
             </mat-icon>
             <span fxFlex>{{ getBookName(text) }}</span>
             <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center">
@@ -57,7 +57,9 @@
               <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
                 <span fxFlex="16px" class="indent"></span>
                 <mat-icon fxFlex="24px" mdcListItemMeta>
-                  keyboard_arrow_{{ itemVisible[getTextDocId(text.bookNum, chapter.number)] ? "down" : "right" }}
+                  keyboard_arrow_{{
+                    itemVisible[getTextDocId(text.bookNum, chapter.number)] ? "down" : i18n.forwardDirectionWord
+                  }}
                 </mat-icon>
                 <span fxFlex>{{ getBookName(text) + " " + chapter?.number }}</span>
                 <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center">
@@ -175,9 +177,9 @@
     </mat-card>
   </div>
 
-  <div fxLayout="row" fxLayoutAlign="start center" *ngIf="canEditQuestion">
-    <mat-icon fxFlex="32px">archive</mat-icon>
-    <h2 fxFlex>{{ t("archived_questions") }}</h2>
+  <div *ngIf="canEditQuestion" class="header">
+    <mat-icon>archive</mat-icon>
+    <h2>{{ t("archived_questions") }}</h2>
   </div>
 
   <div fxLayout="column" *ngIf="canEditQuestion">
@@ -189,7 +191,7 @@
         >
           <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
             <mat-icon fxFlex="24px" mdcListItemMeta
-              >keyboard_arrow_{{ itemVisibleArchived[getBookId(text)] ? "down" : "right" }}</mat-icon
+              >keyboard_arrow_{{ itemVisibleArchived[getBookId(text)] ? "down" : i18n.forwardDirectionWord }}</mat-icon
             ><span fxFlex>{{ getBookName(text) }}</span>
             <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center" class="archived-questions-count">
               {{ questionCountLabel(bookQuestionCount(text, true)) }}
@@ -209,7 +211,7 @@
                 <span fxFlex="16px" class="indent"></span>
                 <mat-icon fxFlex="24px" mdcListItemMeta
                   >keyboard_arrow_{{
-                    itemVisibleArchived[getTextDocId(text.bookNum, chapter.number)] ? "down" : "right"
+                    itemVisibleArchived[getTextDocId(text.bookNum, chapter.number)] ? "down" : i18n.forwardDirectionWord
                   }}</mat-icon
                 >
                 <span fxFlex>{{ getBookName(text) + " " + chapter?.number }}</span>

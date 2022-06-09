@@ -1,8 +1,11 @@
+import { TestBed } from '@angular/core/testing';
 import { TranslocoService } from '@ngneat/transloco';
 import { CookieService } from 'ngx-cookie-service';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { AuthService } from './auth.service';
+import { DOCUMENT } from './browser-globals';
 import { BugsnagService } from './bugsnag.service';
 import { I18nService } from './i18n.service';
 import { LocationService } from './location.service';
@@ -13,8 +16,25 @@ const mockedAuthService = mock(AuthService);
 const mockedTranslocoService = mock(TranslocoService);
 const mockedCookieService = mock(CookieService);
 const mockedErrorReportingService = mock(ErrorReportingService);
+const mockedDocument = mock(Document);
+const mockedDocumentBody = mock(HTMLBodyElement);
 
 describe('I18nService', () => {
+  configureTestingModule(() => ({
+    declarations: [],
+    imports: [],
+    providers: [
+      { provide: LocationService, useMock: mockedLocationService },
+      { provide: BugsnagService, useMock: mockedBugsnagService },
+      { provide: AuthService, useMock: mockedAuthService },
+      { provide: TranslocoService, useMock: mockedTranslocoService },
+      { provide: CookieService, useMock: mockedCookieService },
+      { provide: ErrorReportingService, useMock: mockedErrorReportingService },
+      { provide: DOCUMENT, useMock: mockedDocument },
+      { provide: HTMLBodyElement, useMock: mockedDocumentBody }
+    ]
+  }));
+
   it('should be able to get a locale', () => {
     expect(I18nService.getLocale('en')).toBeDefined();
     expect(I18nService.getLocale('en')!.canonicalTag).toEqual('en');
@@ -98,15 +118,19 @@ describe('I18nService', () => {
       { text: '.' }
     ]);
   });
+
+  it('should set text direction on the body element', () => {
+    const service = getI18nService();
+    verify(mockedDocumentBody.setAttribute('dir', 'ltr')).never();
+    service.setLocale('zh-CN');
+    verify(mockedDocumentBody.setAttribute('dir', 'ltr')).once();
+    service.setLocale('ar');
+    verify(mockedDocumentBody.setAttribute('dir', 'rtl')).once();
+    expect().nothing();
+  });
 });
 
 function getI18nService(): I18nService {
-  return new I18nService(
-    instance(mockedLocationService),
-    instance(mockedBugsnagService),
-    instance(mockedAuthService),
-    instance(mockedTranslocoService),
-    instance(mockedCookieService),
-    instance(mockedErrorReportingService)
-  );
+  when(mockedDocument.body).thenReturn(instance(mockedDocumentBody));
+  return TestBed.inject(I18nService);
 }
