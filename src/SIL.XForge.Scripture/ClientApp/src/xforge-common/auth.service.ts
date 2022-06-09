@@ -1,7 +1,14 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
-import { Auth0DecodedHash, AuthorizeOptions } from 'auth0-js';
+import {
+  Auth0Client,
+  GetTokenSilentlyVerboseResponse,
+  IdToken,
+  LogoutOptions,
+  RedirectLoginOptions,
+  RedirectLoginResult
+} from '@auth0/auth0-spa-js';
 import jwtDecode from 'jwt-decode';
 import { clone } from 'lodash-es';
 import { CookieService } from 'ngx-cookie-service';
@@ -25,7 +32,6 @@ import { ASP_CULTURE_COOKIE_NAME, getAspCultureCookieLanguage } from './utils';
 export const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
 export const XF_ROLE_CLAIM = 'http://xforge.org/role';
 
-export const ACCESS_TOKEN_SETTING = 'access_token';
 export const ID_TOKEN_SETTING = 'id_token';
 export const USER_ID_SETTING = 'user_id';
 export const ROLE_SETTING = 'role';
@@ -34,6 +40,13 @@ export const EXPIRES_AT_SETTING = 'expires_at';
 export interface AuthState {
   returnUrl?: string;
   linking?: boolean;
+  currentSub?: string;
+}
+
+export interface AuthDetails {
+  idToken: IdToken | undefined;
+  loginResult: RedirectLoginResult;
+  token: GetTokenSilentlyVerboseResponse;
 }
 
 interface LoginResult {
@@ -49,20 +62,16 @@ export class AuthService {
   private tryLogInPromise: Promise<LoginResult>;
   private refreshSubscription?: Subscription;
   private renewTokenPromise?: Promise<void>;
-  private checkSessionPromise?: Promise<Auth0DecodedHash | null>;
-
-  private readonly auth0 = this.auth0Service.init({
-    clientID: environment.authClientId,
+  private checkSessionPromise?: Promise<GetTokenSilentlyVerboseResponse | null>;
+  private readonly auth0: Auth0Client = this.auth0Service.init({
+    client_id: environment.authClientId,
     domain: environment.authDomain,
-    responseType: 'token id_token',
-    redirectUri: this.locationService.origin + '/projects',
+    redirect_uri: this.locationService.origin + '/callback/auth0',
     scope: 'openid profile email ' + environment.scope,
-    audience: environment.audience
+    audience: environment.audience,
+    cacheLocation: 'localstorage',
+    useRefreshTokens: true
   });
-
-  private parsedHashPromise = new Promise<Auth0DecodedHash | null>((resolve, reject) =>
-    this.auth0.parseHash((err, authResult) => (err != null ? reject(err) : resolve(authResult)))
-  );
 
   constructor(
     private readonly auth0Service: Auth0Service,
@@ -104,10 +113,6 @@ export class AuthService {
     return this.localSettings.get(ROLE_SETTING);
   }
 
-  get accessToken(): string | undefined {
-    return this.localSettings.get(ACCESS_TOKEN_SETTING);
-  }
-
   get idToken(): string | undefined {
     return this.localSettings.get(ID_TOKEN_SETTING);
   }
@@ -124,15 +129,20 @@ export class AuthService {
     return this.tryLogInPromise.then(result => result.newlyLoggedIn);
   }
 
+  private get isLoginUrl(): boolean {
+    return this.locationService.pathname === '/login';
+  }
+
   changePassword(email: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
-      this.auth0.changePassword({ connection: 'Username-Password-Authentication', email }, (error, result) => {
-        if (error) {
-          reject(error);
-        } else {
+      this.auth0Service
+        .changePassword(email)
+        .then(result => {
           resolve(result);
-        }
-      });
+        })
+        .catch(error => {
+          reject(error);
+        });
     });
   }
 
@@ -150,6 +160,14 @@ export class AuthService {
     this.localSettings.set(EXPIRES_AT_SETTING, 0);
   }
 
+  async getAccessToken(): Promise<string | undefined> {
+    try {
+      return await this.auth0.getTokenSilently();
+    } catch {
+      return undefined;
+    }
+  }
+
   async isAuthenticated(): Promise<boolean> {
     if ((await this.hasExpired()) && this.pwaService.isOnline) {
       await this.renewTokens();
@@ -161,43 +179,51 @@ export class AuthService {
     return true;
   }
 
-  logIn(returnUrl: string, signUp?: boolean, locale?: string): void {
+  async logIn(returnUrl: string, signUp?: boolean, locale?: string): Promise<void> {
     const state: AuthState = { returnUrl };
     const language: string = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME));
     const ui_locales: string = language;
-    const authOptions: AuthorizeOptions = { state: JSON.stringify(state), language, login_hint: ui_locales };
+    const authOptions: RedirectLoginOptions = {
+      appState: JSON.stringify(state),
+      language,
+      login_hint: ui_locales
+    };
     if (signUp) {
       authOptions.mode = 'signUp';
       authOptions.login_hint = locale ?? ui_locales;
     }
     this.unscheduleRenewal();
-    this.auth0.authorize(authOptions);
+    await this.auth0.loginWithRedirect(authOptions);
   }
 
-  linkParatext(returnUrl: string): void {
-    const state: AuthState = { returnUrl, linking: true };
+  async linkParatext(returnUrl: string): Promise<void> {
+    const idToken: IdToken | undefined = await this.auth0.getIdTokenClaims();
+    const state: AuthState = { returnUrl, linking: true, currentSub: idToken?.sub };
     const language: string = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME));
-    const ui_locales: string = language;
-    const options: AuthorizeOptions = {
+    const options: RedirectLoginOptions = {
       connection: 'paratext',
-      state: JSON.stringify(state),
+      appState: JSON.stringify(state),
       language,
-      login_hint: ui_locales
+      login_hint: language
     };
-    this.auth0.authorize(options);
+    await this.auth0.loginWithRedirect(options);
   }
 
   async logOut(): Promise<void> {
     await this.offlineStore.deleteDB();
     this.localSettings.clear();
     this.unscheduleRenewal();
-    this.auth0.logout({ returnTo: this.locationService.origin + '/' });
+    this.auth0.logout({ returnTo: this.locationService.origin + '/' } as LogoutOptions);
   }
 
   async updateInterfaceLanguage(language: string): Promise<void> {
     if (await this.isLoggedIn) {
       await this.commandService.onlineInvoke(USERS_URL, 'updateInterfaceLanguage', { language });
     }
+  }
+
+  private async getTokenDetails(): Promise<GetTokenSilentlyVerboseResponse> {
+    return await this.auth0.getTokenSilently({ detailedResponse: true });
   }
 
   private async hasExpired(): Promise<boolean> {
@@ -209,16 +235,26 @@ export class AuthService {
 
   private async tryLogIn(): Promise<LoginResult> {
     try {
+      // If logging in then send them straight to auth0
+      if (this.isLoginUrl) {
+        return { loggedIn: false, newlyLoggedIn: false };
+      }
       // If we have no valid auth0 data then we have to validate online first
       if (
-        this.accessToken == null ||
         this.idToken == null ||
         this.expiresAt == null ||
-        (this.pwaService.isOnline && (await this.hasExpired()))
+        (this.pwaService.isOnline && (await this.hasExpired())) ||
+        this.isCallbackUrl()
       ) {
         return await this.tryOnlineLogIn();
       }
-      await this.remoteStore.init(() => this.accessToken);
+      // We don't want to check for an access token unless we know it is likely to be there
+      // - When not logged in there can be a delay waiting on auth0
+      const accessToken = await this.getAccessToken();
+      if (accessToken == null) {
+        return await this.tryOnlineLogIn();
+      }
+      await this.remoteStore.init(() => accessToken);
       return { loggedIn: true, newlyLoggedIn: false };
     } catch (error) {
       await this.handleLoginError('tryLogIn', error);
@@ -229,17 +265,34 @@ export class AuthService {
   private async tryOnlineLogIn(): Promise<LoginResult> {
     try {
       if (await this.pwaService.checkOnline()) {
-        // In online mode do the normal checks with auth0
-        let authResult = await this.parsedHashPromise;
-        if (!(await this.handleOnlineAuth(authResult))) {
-          authResult = await this.checkSession();
-          if (!(await this.handleOnlineAuth(authResult))) {
+        // Check if this is a valid callback from auth0
+        if (!this.isCallbackUrl()) {
+          // Check session with auth0 as it may be able to renew silently
+          const token = await this.checkSession();
+          if (token == null) {
             this.clearState();
             return { loggedIn: false, newlyLoggedIn: false };
           }
+          await this.localLogIn(token.access_token, token.id_token, token.expires_in);
+          await this.remoteStore.init(() => token.access_token);
+          return { loggedIn: true, newlyLoggedIn: false };
+        }
+        // Handle the callback response from auth0
+        const loginResult: RedirectLoginResult = await this.auth0.handleRedirectCallback();
+        const token = await this.checkSession();
+        if (token == null) {
+          this.clearState();
+          return { loggedIn: false, newlyLoggedIn: false };
+        }
+        const authDetails: AuthDetails = {
+          loginResult,
+          token,
+          idToken: await this.auth0.getIdTokenClaims()
+        };
+        if (!(await this.handleOnlineAuth(authDetails))) {
+          this.clearState();
+          return { loggedIn: false, newlyLoggedIn: false };
         } else {
-          // TODO newlyLoggedIn is incorrect the second time this is called, because a user cannot be "newly" logged in
-          // multiple times in a single session. The value is ignored though after the first time it's called.
           return { loggedIn: true, newlyLoggedIn: true };
         }
       }
@@ -250,30 +303,36 @@ export class AuthService {
     }
   }
 
-  private async handleOnlineAuth(authResult: auth0.Auth0DecodedHash | null): Promise<boolean> {
+  private async handleOnlineAuth(authDetails: AuthDetails): Promise<boolean> {
     if (
-      authResult == null ||
-      authResult.accessToken == null ||
-      authResult.idToken == null ||
-      authResult.expiresIn == null
+      authDetails == null ||
+      authDetails.token.access_token == null ||
+      authDetails.token.id_token == null ||
+      authDetails.token.expires_in == null ||
+      authDetails.loginResult.appState == null
     ) {
       return false;
     }
 
+    let primaryId: string | undefined;
     let secondaryId: string | undefined;
-    const state: AuthState = authResult.state == null ? {} : JSON.parse(authResult.state);
+    const state: AuthState = JSON.parse(authDetails.loginResult.appState);
     if (state.linking != null && state.linking) {
-      secondaryId = authResult.idTokenPayload.sub;
-      if (!(await this.isAuthenticated())) {
+      if (!(await this.isAuthenticated()) || authDetails.idToken == null) {
         return false;
       }
+      primaryId = state.currentSub;
+      secondaryId = authDetails.idToken.sub;
     } else {
-      await this.localLogIn(authResult.accessToken, authResult.idToken, authResult.expiresIn);
+      await this.localLogIn(authDetails.token.access_token, authDetails.token.id_token, authDetails.token.expires_in);
     }
-    await this.remoteStore.init(() => this.accessToken);
-    if (secondaryId != null) {
+    await this.remoteStore.init(() => authDetails.token.access_token);
+    if (primaryId != null && secondaryId != null) {
       try {
-        await this.commandService.onlineInvoke(USERS_URL, 'linkParatextAccount', { authId: secondaryId });
+        await this.commandService.onlineInvoke(USERS_URL, 'linkParatextAccount', { primaryId, secondaryId });
+        // Trigger a session check with auth0 so that tokens are reversed back to the primary account and not
+        // the Paratext account that was just merged into the primary - this causes a redirect back to auth0
+        await this.auth0.checkSession({ ignoreCache: true });
       } catch (err) {
         if (!(err instanceof CommandError) || !err.message.includes(this.ptLinkedToAnotherUserKey)) {
           console.error(err);
@@ -283,16 +342,16 @@ export class AuthService {
           .showMessageDialog(
             () =>
               translate('connect_project.paratext_account_linked_to_another_user', {
-                email: authResult.idTokenPayload.email
+                email: authDetails.idToken?.email
               }),
             () => translate('connect_project.proceed')
           )
           .then(async () => {
-            const parsedHash = clone(authResult);
-            if (parsedHash != null) {
-              parsedHash.state = undefined;
-            }
-            this.handleOnlineAuth(parsedHash);
+            // Strip out the linking state so that we don't process linking again
+            const withoutLinkingState = clone(authDetails);
+            delete state.linking;
+            withoutLinkingState.loginResult.appState = JSON.stringify(state);
+            await this.handleOnlineAuth(withoutLinkingState);
             // Reload the app for the new current user id to take effect
             this.locationService.reload();
           });
@@ -305,16 +364,31 @@ export class AuthService {
         return false;
       }
     }
-    // Clear auth0 processed hash so it isn't used for repeat login handling i.e. during offline/online state changes
-    if (this.parsedHashPromise != null) {
-      this.parsedHashPromise = Promise.resolve(null);
-    }
-    if (state.returnUrl != null) {
-      this.router.navigateByUrl(state.returnUrl, { replaceUrl: true });
-    } else if (this.locationService.hash !== '') {
-      this.router.navigateByUrl(this.locationService.pathname, { replaceUrl: true });
+    // Ensure the return URL is one we want to return the user to
+    if (this.isValidReturnUrl(state.returnUrl)) {
+      this.router.navigateByUrl(state.returnUrl!, { replaceUrl: true });
+    } else {
+      this.router.navigateByUrl('/projects', { replaceUrl: true });
     }
     return true;
+  }
+
+  /**
+   * Check to help avoid redirect loops where sometimes the return URL can end up as the login page or auth0 callback
+   */
+  private isValidReturnUrl(returnUrl: string | undefined): boolean {
+    return !(returnUrl == null || this.isCallbackUrl(returnUrl) || returnUrl === '/login');
+  }
+
+  private isCallbackUrl(callbackUrl: string | undefined = undefined): boolean {
+    if (callbackUrl == null) {
+      callbackUrl = this.locationService.href;
+    }
+    if (!callbackUrl.includes('://')) {
+      callbackUrl = this.locationService.origin + callbackUrl;
+    }
+    const url = new URL(callbackUrl);
+    return url.origin + url.pathname === this.locationService.origin + '/callback/auth0';
   }
 
   private scheduleRenewal(): void {
@@ -357,11 +431,11 @@ export class AuthService {
           const authResult = await this.checkSession();
           if (
             authResult != null &&
-            authResult.accessToken != null &&
-            authResult.idToken != null &&
-            authResult.expiresIn != null
+            authResult.access_token != null &&
+            authResult.id_token != null &&
+            authResult.expires_in != null
           ) {
-            await this.localLogIn(authResult.accessToken, authResult.idToken, authResult.expiresIn);
+            await this.localLogIn(authResult.access_token, authResult.id_token, authResult.expires_in);
             success = true;
             resolve();
           }
@@ -384,22 +458,22 @@ export class AuthService {
     return this.renewTokenPromise;
   }
 
-  private async checkSession(retryUponTimeout: boolean = true): Promise<Auth0DecodedHash | null> {
+  private async checkSession(retryUponTimeout: boolean = true): Promise<GetTokenSilentlyVerboseResponse | null> {
     if (this.checkSessionPromise == null) {
-      this.checkSessionPromise = new Promise<auth0.Auth0DecodedHash | null>((resolve, reject) => {
-        this.auth0.checkSession({ state: JSON.stringify({}) }, (err, authResult) => {
-          if (err != null) {
-            if (err.code === 'login_required') {
-              resolve(null);
-            } else if (retryUponTimeout && err.code === 'timeout') {
-              this.checkSession(false).then(resolve).catch(reject);
-            } else {
-              reject(err);
-            }
+      this.checkSessionPromise = new Promise<GetTokenSilentlyVerboseResponse | null>(async (resolve, reject) => {
+        try {
+          const tokenResponse = await this.getTokenDetails();
+          resolve(tokenResponse);
+        } catch (err) {
+          if (err.error === 'login_required') {
+            resolve(null);
+          } else if (retryUponTimeout && err.error === 'timeout') {
+            this.checkSessionPromise = undefined;
+            this.checkSession(false).then(resolve).catch(reject);
           } else {
-            resolve(authResult);
+            reject(err);
           }
-        });
+        }
       }).finally(() => {
         this.checkSessionPromise = undefined;
       });
@@ -418,7 +492,6 @@ export class AuthService {
 
     // Expiry 30 seconds sooner than the actual expiry date to avoid any inflight expiry issues
     const expiresAt = (expiresIn - 30) * 1000 + Date.now();
-    this.localSettings.set(ACCESS_TOKEN_SETTING, accessToken);
     this.localSettings.set(ID_TOKEN_SETTING, idToken);
     this.localSettings.set(EXPIRES_AT_SETTING, expiresAt);
     this.localSettings.set(USER_ID_SETTING, userId);
@@ -437,7 +510,6 @@ export class AuthService {
   }
 
   private clearState(): void {
-    this.localSettings.remove(ACCESS_TOKEN_SETTING);
     this.localSettings.remove(ID_TOKEN_SETTING);
     this.localSettings.remove(EXPIRES_AT_SETTING);
     this.localSettings.remove(USER_ID_SETTING);

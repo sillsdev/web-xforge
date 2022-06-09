@@ -149,6 +149,6 @@ class TestEnvironment {
     this.httpClient = TestBed.inject(HttpClient);
 
     when(mockedAuthService.isAuthenticated()).thenResolve(isAuthenticated);
-    when(mockedAuthService.accessToken).thenReturn(isAuthenticated === true ? TestEnvironment.accessToken : '');
+    when(mockedAuthService.getAccessToken()).thenResolve(isAuthenticated === true ? TestEnvironment.accessToken : '');
   }
 }
