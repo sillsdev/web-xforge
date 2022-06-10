@@ -913,16 +913,14 @@ describe('EditorComponent', () => {
       env.wait();
 
       const ptToRem = 12;
-      expect(env.targetTextEditor.nativeElement.style.fontSize).toEqual(18 / ptToRem + 'rem');
-      let sourceTextEditor: HTMLElement = env.sourceTextArea.nativeElement.querySelector('.ql-container')!;
-      expect(sourceTextEditor.style.fontSize).toEqual(18 / ptToRem + 'rem');
+      expect(env.targetTextEditor.style.fontSize).toEqual(18 / ptToRem + 'rem');
+      expect(env.sourceTextEditor.style.fontSize).toEqual(18 / ptToRem + 'rem');
 
       env.updateFontSize('project01', 24);
       expect(env.component.fontSize).toEqual(24 / ptToRem + 'rem');
-      expect(env.targetTextEditor.nativeElement.style.fontSize).toEqual(24 / ptToRem + 'rem');
+      expect(env.targetTextEditor.style.fontSize).toEqual(24 / ptToRem + 'rem');
       env.updateFontSize('project02', 24);
-      sourceTextEditor = env.sourceTextArea.nativeElement.querySelector('.ql-container')!;
-      expect(sourceTextEditor.style.fontSize).toEqual(24 / ptToRem + 'rem');
+      expect(env.sourceTextEditor.style.fontSize).toEqual(24 / ptToRem + 'rem');
       env.dispose();
     }));
 
@@ -1010,14 +1008,12 @@ describe('EditorComponent', () => {
       const segmentRange = env.component.target!.getSegmentRange('verse_1_1')!;
       env.targetEditor.setSelection(segmentRange.index);
       env.wait();
-      let element: HTMLElement = env.targetTextEditor.nativeElement.querySelector(
-        'usx-segment[data-segment="verse_1_1"]'
-      );
+      let element: HTMLElement = env.targetTextEditor.querySelector('usx-segment[data-segment="verse_1_1"]')!;
       expect(element.classList).not.toContain('highlight-segment');
 
       env.setCurrentUser('user01');
       env.wait();
-      element = env.targetTextEditor.nativeElement.querySelector('usx-segment[data-segment="verse_1_1"]');
+      element = env.targetTextEditor.querySelector('usx-segment[data-segment="verse_1_1"]')!;
       expect(element.classList).toContain('highlight-segment');
       env.dispose();
     }));
@@ -1124,9 +1120,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
-      const segment: HTMLElement = env.targetTextEditor.nativeElement.querySelector(
-        'usx-segment[data-segment=verse_1_5]'
-      )!;
+      const segment: HTMLElement = env.targetTextEditor.querySelector('usx-segment[data-segment=verse_1_5]')!;
       expect(segment).not.toBeNull();
       const note = segment.querySelector('display-note')! as HTMLElement;
       expect(note).toBeNull();
@@ -2202,9 +2196,9 @@ describe('EditorComponent', () => {
       expect(env.activeElementClasses).toContain('ql-editor');
       const iconElement: HTMLElement = env.getNoteThreadIconElement(segmentRef, 'thread02')!;
       iconElement.click();
-      const element = env.targetTextEditor.nativeElement.querySelector(
+      const element: HTMLElement = env.targetTextEditor.querySelector(
         'usx-segment[data-segment="' + segmentRef + '"]'
-      );
+      )!;
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
       env.wait();
       expect(env.activeElementTagName).toBe('INPUT');
@@ -2642,12 +2636,16 @@ class TestEnvironment {
     return this.trainingProgress.query(By.css('#training-close-button'));
   }
 
-  get targetTextEditor(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#target-text-area .ql-container'));
+  get targetTextEditor(): HTMLElement {
+    return this.fixture.debugElement.query(By.css('#target-text-area .ql-container')).nativeElement;
   }
 
   get sourceTextArea(): DebugElement {
     return this.fixture.debugElement.query(By.css('#source-text-area'));
+  }
+
+  get sourceTextEditor(): HTMLElement {
+    return this.sourceTextArea.query(By.css('.ql-container')).nativeElement;
   }
 
   get invalidWarning(): DebugElement {
@@ -2858,7 +2856,7 @@ class TestEnvironment {
   }
 
   isNoteIconHighlighted(threadId: string): boolean {
-    const thread: HTMLElement | null = this.targetTextEditor.nativeElement.querySelector(
+    const thread: HTMLElement | null = this.targetTextEditor.querySelector(
       `usx-segment display-note[data-thread-id="${threadId}"].note-thread-highlight`
     );
     return thread != null;

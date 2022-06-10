@@ -52,7 +52,7 @@ import { TranslationEngineService } from '../../core/translation-engine.service'
 import { Segment } from '../../shared/text/segment';
 import { PresenceData, RemotePresences } from '../../shared/text/text-view-model';
 import { FeaturedVerseRefInfo, TextComponent } from '../../shared/text/text.component';
-import { threadIdFromMouseEvent } from '../../shared/utils';
+import { formatFontSizeToRems, threadIdFromMouseEvent } from '../../shared/utils';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData } from './note-dialog/note-dialog.component';
 import {
@@ -301,14 +301,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get fontSize(): string | undefined {
-    // Paratext allows a font size between 8 and 32. 12pt font is equivalent to 1rem
-    const fontSize: number | undefined = this.projectDoc?.data?.defaultFontSize;
-    return fontSize == null ? undefined : `${fontSize / 12}rem`;
+    return formatFontSizeToRems(this.projectDoc?.data?.defaultFontSize);
   }
 
   get sourceFontSize(): string | undefined {
-    const fontSizeSource: number | undefined = this.sourceProjectDoc?.data?.defaultFontSize;
-    return fontSizeSource == null ? undefined : `${fontSizeSource / 12}rem`;
+    return formatFontSizeToRems(this.sourceProjectDoc?.data?.defaultFontSize);
   }
 
   get projectTextNotEditable(): boolean {
