@@ -19,21 +19,8 @@ export class ChapterNavComponent {
     return this.bookNum == null ? '' : this.i18n.localizeBook(this.bookNum);
   }
 
-  get chapterString(): string {
-    return this.chapter == null ? '' : `${this.bookName} ${this.chapter.toString()}`;
-  }
-
-  set chapterString(value: string) {
-    const numString = value.match(/\d+$/)![0];
-    const chapter = parseInt(numString, 10);
-    if (this.chapter !== chapter) {
-      this.chapter = chapter;
-      this.chapterChange.emit(this.chapter);
-    }
-  }
-
-  get chapterStrings(): string[] {
-    return this.chapters.map(c => `${this.bookName} ${c.toString()}`);
+  chapterChanged() {
+    this.chapterChange.emit(this.chapter);
   }
 
   prevChapter(): void {

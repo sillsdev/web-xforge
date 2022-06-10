@@ -3,47 +3,34 @@
 
 :host {
   display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: center;
 }
 
-.mdc-icon-button {
-  @include icon-button.icon-size(24px, 24px, 8px);
-}
-
-// Unfortunately, using Sass mixins to style the select was not successful at the current version of @angular-mdc/web
-// (5.1.1) and @angular/material (9.2.4). Consider reviewing this after upgrading dependencies.
-.chapter-select {
-  ::ng-deep {
-    &,
-    .mdc-select__anchor,
-    .mdc-select__selected-text {
-      height: 40px;
+// Unfortunately there doesn't appear to be a good way to style a mat-select
+// These styles were written by inspecting the elements using developer and then adding rules until it looked right
+#chapter-select ::ng-deep {
+  .mat-form-field-wrapper {
+    padding-bottom: 0;
+    .mat-form-field-flex {
+      padding-top: 0;
     }
-
-    .mdc-select__anchor {
+    .mat-form-field-flex:not(:hover) {
       background-color: transparent;
     }
-
-    .mdc-line-ripple {
-      display: none;
-    }
-
-    .mdc-select__selected-text {
-      min-width: 140px;
-      padding-top: 8px !important;
-      padding-bottom: 8px !important;
-      padding-inline-start: 8px !important;
-      padding-inline-end: 2em !important;
-    }
-
-    .mdc-select__dropdown-icon {
-      bottom: 8px;
-    }
+  }
+  .mat-form-field-underline {
+    display: none;
+  }
+  .mat-select-arrow-wrapper {
+    transform: unset;
+  }
+  .mat-form-field-infix {
+    // It appeared there was a transparent border being used as padding
+    border-top-width: 0;
+    padding-top: 12px;
+    padding-bottom: 10px;
   }
 }
 
-mdc-select mdc-list-item {
-  white-space: nowrap;
+::ng-deep .mat-select-panel.chapter-select-menu {
+  max-height: 85vh;
 }
