@@ -116,3 +116,8 @@ export function isBadDelta(ops: DeltaOperation[]): boolean {
 export function compareProjectsForSorting(a: { shortName: string }, b: { shortName: string }): 1 | -1 {
   return a.shortName.toLowerCase() < b.shortName.toLowerCase() ? -1 : 1;
 }
+
+export function formatFontSizeToRems(fontSize: number | undefined): string | undefined {
+  // Paratext allows a font size between 8 and 32. 12pt font is equivalent to 1rem
+  return fontSize == null ? undefined : `${fontSize / 12}rem`;
+}

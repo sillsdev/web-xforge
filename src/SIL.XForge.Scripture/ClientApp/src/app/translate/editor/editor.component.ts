@@ -52,7 +52,7 @@ import { TranslationEngineService } from '../../core/translation-engine.service'
 import { Segment } from '../../shared/text/segment';
 import { PresenceData, RemotePresences } from '../../shared/text/text-view-model';
 import { FeaturedVerseRefInfo, TextComponent } from '../../shared/text/text.component';
-import { threadIdFromMouseEvent } from '../../shared/utils';
+import { formatFontSizeToRems, threadIdFromMouseEvent } from '../../shared/utils';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData } from './note-dialog/note-dialog.component';
 import {
@@ -120,7 +120,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private targetLoaded: boolean = false;
   private _targetFocused: boolean = false;
   private _chapter?: number;
-  private _fontSize?: number;
   private lastShownSuggestions: Suggestion[] = [];
   private readonly segmentUpdated$: Subject<void>;
   private trainingSub?: Subscription;
@@ -301,6 +300,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.isProjectAdmin || this.projectDoc?.data?.translateConfig.shareEnabled === true;
   }
 
+  get fontSize(): string | undefined {
+    return formatFontSizeToRems(this.projectDoc?.data?.defaultFontSize);
+  }
+
+  get sourceFontSize(): string | undefined {
+    return formatFontSizeToRems(this.sourceProjectDoc?.data?.defaultFontSize);
+  }
+
   get projectTextNotEditable(): boolean {
     return this.projectDoc?.data?.editable === false;
   }
@@ -317,11 +324,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return this.projectDoc.data.isRightToLeft;
     }
     return false;
-  }
-
-  get fontSize(): string | undefined {
-    // Paratext allows a font size between 8 and 32. 12pt font is equivalent to 1rem
-    return this._fontSize == null ? undefined : `${this._fontSize / 12}rem`;
   }
 
   get isUsfmValid(): boolean {
@@ -375,7 +377,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
         if (projectId !== prevProjectId) {
           this.projectDoc = await this.projectService.getProfile(projectId);
-          this._fontSize = this.projectDoc.data?.defaultFontSize;
           const userRole: string | undefined = this.projectDoc.data?.userRoles[this.userService.currentUserId];
           if (userRole != null) {
             const projectDoc: SFProjectDoc | undefined = await this.projectService.tryGetForRole(projectId, userRole);
