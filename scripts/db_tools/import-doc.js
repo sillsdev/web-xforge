@@ -5,8 +5,8 @@
 // another given state.
 
 const utils = require('./utils.js');
-const RichText = utils.requireFromRealTimeServer('rich-text');
-const ShareDB = utils.requireFromRealTimeServer('sharedb/lib/client');
+const RichText = require('rich-text');
+const ShareDB = require('sharedb/lib/client');
 
 // Edit these settings to specify what doc to import to where
 const fromDocId = '';

@@ -4,10 +4,10 @@
 // Sequential edits by the same user are grouped together so the size of the history is manageable.
 
 const utils = require('./utils');
-const RichText = utils.requireFromRealTimeServer('rich-text');
-const ShareDB = utils.requireFromRealTimeServer('sharedb/lib/client');
-const { MongoClient } = utils.requireFromRealTimeServer('mongodb');
-const OTJson0 = utils.requireFromRealTimeServer('ot-json0');
+const RichText = require('rich-text');
+const ShareDB = require('sharedb/lib/client');
+const { MongoClient } = require('mongodb');
+const OTJson0 = require('ot-json0');
 
 // Edit these settings to specify which doc to visualize
 const projectShortName = 'AAA';

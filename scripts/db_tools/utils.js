@@ -1,11 +1,4 @@
-const WebSocket = requireFromRealTimeServer('ws');
-
-/**
- * @param {string} packageName The name of the package to import
- */
-function requireFromRealTimeServer(packageName) {
-  return require('../../src/RealtimeServer/node_modules/' + packageName);
-}
+const WebSocket = require('ws');
 
 /**
  * @param {ShareDB.Doc} doc The doc to fetch
@@ -188,7 +181,6 @@ databaseConfigs.set('qa', qaConfig);
 databaseConfigs.set('live', liveConfig);
 
 module.exports = {
-  requireFromRealTimeServer,
   fetchDoc,
   submitDocOp,
   deleteDoc,
