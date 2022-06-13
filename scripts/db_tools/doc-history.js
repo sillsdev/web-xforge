@@ -4,9 +4,9 @@
 // text-doc-history.js
 
 const utils = require('./utils.js');
-const RichText = utils.requireFromRealTimeServer('rich-text');
-const OTJson0 = utils.requireFromRealTimeServer('ot-json0');
-const ShareDB = utils.requireFromRealTimeServer('sharedb/lib/client');
+const RichText = require('rich-text');
+const OTJson0 = require('ot-json0');
+const ShareDB = require('sharedb/lib/client');
 
 // Edit these settings to specify which doc to show
 const docId = '';
