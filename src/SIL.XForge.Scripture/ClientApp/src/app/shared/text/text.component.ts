@@ -772,6 +772,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       return false;
     }
 
+    if (!this.isValidSelectionForCurrentSegment(range)) {
+      return false;
+    }
+
     if (range.length > 0) {
       const text = this._editor.getText(range.index, range.length);
       return text !== '';
@@ -784,6 +788,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   private isDeleteAllowed(range: RangeStatic): boolean {
     if (this._editor == null) {
+      return false;
+    }
+
+    if (!this.isValidSelectionForCurrentSegment(range)) {
       return false;
     }
 
