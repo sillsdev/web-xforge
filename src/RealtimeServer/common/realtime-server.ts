@@ -50,6 +50,8 @@ class MigrationConnection extends Connection {
 
 /**
  * This class extends the ShareDB agent class to preserve the migration version property from the request.
+ * Note: Because this overrides behavior of ShareDB.Agent, when there are changes to ShareDB.Agent
+ * this class may need to be updated.
  */
 class MigrationAgent extends ShareDB.Agent {
   _handleMessage(request: any, callback: any): void {
@@ -62,7 +64,7 @@ class MigrationAgent extends ShareDB.Agent {
 
       // src can be provided if it is not the same as the current agent,
       // such as a resubmission after a reconnect, but it usually isn't needed
-      const src = request.src || this.clientId;
+      const src = request.src || this._src();
       // c, d, and m arguments are intentionally undefined. These are set later
       const op: any = { src, seq: request.seq, v: request.v, mv: request.mv, c: undefined, d: undefined, m: undefined };
       if (request.op != null) {

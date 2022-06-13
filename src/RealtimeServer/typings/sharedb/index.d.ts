@@ -130,6 +130,7 @@ declare namespace ShareDB {
     _handleMessage(request: any, callback: (...args: any[]) => any): void;
     _checkRequest(request: any): string | undefined;
     _submit(collection: string, id: string, op: any, callback: (...args: any[]) => any): void;
+    _src(): string;
   }
 
   abstract class PubSub {
