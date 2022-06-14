@@ -1017,9 +1017,16 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       newSel = { index: this._segment.range.index + this._segment.range.length, length: 0 };
     } else if (!this.multiSegmentSelection) {
       // selections outside of the text chooser dialog are not permitted to extend across segments
-      let newStart: number = Math.max(sel.index, this._segment.range.index);
+
+      const oldStart: number = sel.index;
       const oldEnd: number = sel.index + sel.length;
+      const segStart: number = this._segment.range.index;
       const segEnd: number = this._segment.range.index + this._segment.range.length;
+
+      let newStart: number = Math.max(oldStart, segStart);
+      if (newStart > segEnd) {
+        newStart = segEnd;
+      }
       const newEnd: number = Math.min(oldEnd, segEnd);
 
       const embedIndices: number[] = Array.from(this._segment.embeddedElements.values()).sort();
