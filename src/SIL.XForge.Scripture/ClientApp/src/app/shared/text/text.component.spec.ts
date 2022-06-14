@@ -2622,6 +2622,48 @@ describe('TextComponent', () => {
     expect(quillUpdateContentsSpy).withContext('quill contents are not modified').not.toHaveBeenCalled();
     expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
   }));
+
+  it('does not cancel dragstart event when valid selection', fakeAsync(() => {
+    const { env }: { env: TestEnvironment; segmentRange: RangeStatic } = basicSimpleText();
+    // When asked, the current selection will be called valid.
+    const isValidSpy: jasmine.Spy<any> = spyOn<any>(env.component, 'isValidSelectionForCurrentSegment').and.returnValue(
+      true
+    );
+    const event: DragEvent = new DragEvent('dragstart', {
+      cancelable: true
+    });
+
+    // SUT
+    const cancelled: boolean = !env.component.editor?.container.dispatchEvent(event);
+    flush();
+
+    expect(cancelled).withContext('event should not have been cancelled when valid selection').toBeFalse();
+    expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
+  }));
+
+  it('cancels dragstart event when invalid selection', fakeAsync(() => {
+    // If a user makes a selection over a verse number, we shrink the selection to not go out of the bounds of a
+    // segment. But if that shrinking is bypassed, cancel the dragstart event so verse numbers can't be dragged away,
+    // messing up the data. The selection-shrinking can be bypassed if the user makes a selection, and
+    // before releasing the left mouse button, does one of the following (in Chromium): (1) Press F1.
+    // (2) Right-click. Release left mouse button. Left-click the browser title bar.
+
+    const { env }: { env: TestEnvironment; segmentRange: RangeStatic } = basicSimpleText();
+    // When asked, the current selection will be called invalid.
+    const isValidSpy: jasmine.Spy<any> = spyOn<any>(env.component, 'isValidSelectionForCurrentSegment').and.returnValue(
+      false
+    );
+    const event: DragEvent = new DragEvent('dragstart', {
+      cancelable: true
+    });
+
+    // SUT
+    const cancelled: boolean = !env.component.editor?.container.dispatchEvent(event);
+    flush();
+
+    expect(cancelled).withContext('event should have been cancelled when invalid selection').toBeTrue();
+    expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
+  }));
 });
 
 /** Represents both what the TextComponent understand to be the text in a segment, and what the editor

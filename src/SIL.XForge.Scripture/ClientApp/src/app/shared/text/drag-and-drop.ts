@@ -20,6 +20,13 @@ export class DragAndDrop {
       // way, we can differentiate between drag-and-drops that have their origin as quill or from elsewhere, such as
       // elsewhere in the same web page window or from another window or application.
       dragEvent.dataTransfer?.setData(DragAndDrop.quillIsSourceToken, '');
+      const selection: RangeStatic | null | undefined = options.textComponent.editor?.getSelection();
+      if (selection == null) {
+        return;
+      }
+      if (!options.textComponent.isValidSelectionForCurrentSegment(selection)) {
+        dragEvent.preventDefault();
+      }
     });
 
     quill.container.addEventListener('drop', (event: Event) => {
