@@ -425,12 +425,20 @@ namespace SIL.XForge.Scripture.Services
                     .ToDictionary(m => (string)m["userId"], m => (string)m["username"]);
 
                 // Get the mapping of Scripture Forge user IDs to Paratext usernames
-                Dictionary<string, string> userMapping = await this._realtimeService.QuerySnapshots<User>()
-                    .Where(u => paratextMapping.Keys.Contains(u.ParatextId))
-                    .ToDictionaryAsync(u => u.Id, u => paratextMapping[u.ParatextId]);
+                IQueryable<User> relevantUsers = this._realtimeService.QuerySnapshots<User>()
+                    .Where(u => paratextMapping.Keys.Contains(u.ParatextId));
+                string userSFIdToUserPTIdMap = string.Join(", ",
+                    relevantUsers.Select(
+                        (User userItem) => userItem.Id + ": " + userItem.ParatextId).ToArray<string>());
+                Dictionary<string, string> userMapping =
+                    await relevantUsers.ToDictionaryAsync(u => u.Id, u => paratextMapping[u.ParatextId]);
 
                 WarnIfNonuniqueValues(userMapping,
-                    $"This occurred while SF user id '{userSecret.Id}' was querying registered PT project id '{project.ParatextId}' (SF project id '{project.Id}').");
+                    $"This occurred while SF user id '{userSecret.Id}' was querying registered PT project id " +
+                    $"'{project.ParatextId}' (SF project id '{project.Id}').\n" +
+                    $"The project-member json info returned from the server was: {response}\n" +
+                    "The records of user sf ids and their corresponding user paratext ids that was taken from " +
+                    $"realtimeservice to further consider was: {userSFIdToUserPTIdMap}");
                 return userMapping;
             }
             else
