@@ -24,7 +24,8 @@ EOF
 
 rm -rf "${BUILD_OUTPUT}/app"/*
 dotnet publish "src/${PROJECT}/${PROJECT}.csproj" -c "${CONFIGURATION}" -r "${DEPLOY_RUNTIME}" \
-  -o "${BUILD_OUTPUT}/app" /p:Version="${BUILD_NUMBER}" /p:AngularConfig="${ANGULAR_CONFIG}"
+  -o "${BUILD_OUTPUT}/app" /p:Version="${BUILD_NUMBER}" /p:AngularConfig="${ANGULAR_CONFIG}" \
+  --self-contained
 
 cat <<EOF > "$BUILD_OUTPUT/app/secrets.json"
 {

@@ -47,7 +47,7 @@
     - name: install packages
       apt:
         name:
-          - "dotnet-sdk-3.1"
+          - "dotnet-sdk-6.0"
           - ffmpeg
           - "mongodb-org"
           - nodejs

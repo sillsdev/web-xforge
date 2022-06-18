@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using EdjCase.JsonRpc.Common;
 using EdjCase.JsonRpc.Router;
 using Microsoft.AspNetCore.Builder;
@@ -15,7 +16,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 config.JsonSerializerSettings = new JsonSerializerOptions
                 {
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                    IgnoreNullValues = true
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
                 };
 
                 config.OnInvokeException = context =>
