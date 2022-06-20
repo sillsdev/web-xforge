@@ -1,5 +1,5 @@
 import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
-import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
+import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
 import { LocationService } from './location.service';
@@ -28,7 +28,7 @@ describe('AuthGuard', () => {
 
     canActivate$.subscribe(canActivate => {
       expect(canActivate).toBe(true);
-      verify(mockedAuthService.logIn(anything(), anything(), anything())).never();
+      verify(mockedAuthService.logIn({ returnUrl: anything() })).never();
       done();
     });
   });
@@ -47,7 +47,7 @@ describe('AuthGuard', () => {
 
     canActivate$.subscribe(canActivate => {
       expect(canActivate).toBe(false);
-      verify(mockedAuthService.logIn(anything(), false, undefined)).once();
+      verify(mockedAuthService.logIn(anything())).once();
       done();
     });
   });
@@ -58,6 +58,8 @@ describe('AuthGuard', () => {
     expect(authGuard).toBeDefined();
     when(mockedAuthService.isLoggedIn).thenResolve(false);
     when(mockedActivatedRouteSnapshot.queryParams).thenReturn({ sharing: 'true', 'sign-up': 'false' });
+    when(mockedLocationService.pathname).thenReturn('/');
+    when(mockedLocationService.search).thenReturn('');
 
     const canActivate$ = authGuard.canActivate(
       instance(mockedActivatedRouteSnapshot),
@@ -66,7 +68,16 @@ describe('AuthGuard', () => {
 
     canActivate$.subscribe(canActivate => {
       expect(canActivate).toBe(false);
-      verify(mockedAuthService.logIn(anything(), true, undefined)).once();
+      verify(
+        mockedAuthService.logIn(
+          deepEqual({
+            returnUrl: anything(),
+            signUp: true,
+            locale: anything(),
+            promptPasswordlessLogin: true
+          })
+        )
+      ).once();
       done();
     });
   });
@@ -85,7 +96,16 @@ describe('AuthGuard', () => {
 
     canActivate$.subscribe(canActivate => {
       expect(canActivate).toBe(false);
-      verify(mockedAuthService.logIn(anything(), true, undefined)).once();
+      verify(
+        mockedAuthService.logIn(
+          deepEqual({
+            returnUrl: anything(),
+            signUp: true,
+            locale: undefined,
+            promptPasswordlessLogin: false
+          })
+        )
+      ).once();
       done();
     });
   });
@@ -105,7 +125,11 @@ describe('AuthGuard', () => {
 
     canActivate$.subscribe(canActivate => {
       expect(canActivate).toBe(false);
-      verify(mockedAuthService.logIn(anything(), false, locale)).once();
+      verify(
+        mockedAuthService.logIn(
+          deepEqual({ returnUrl: anything(), signUp: false, locale, promptPasswordlessLogin: false })
+        )
+      ).once();
       done();
     });
   });

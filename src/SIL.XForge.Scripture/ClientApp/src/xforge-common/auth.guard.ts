@@ -17,7 +17,12 @@ export class AuthGuard implements CanActivate {
         if (!isLoggedIn) {
           const signUp = route.queryParams['sharing'] === 'true' || route.queryParams['sign-up'] === 'true';
           const locale: string = route.queryParams['locale'];
-          this.authService.logIn(this.locationService.pathname + this.locationService.search, signUp, locale);
+          this.authService.logIn({
+            returnUrl: this.locationService.pathname + this.locationService.search,
+            signUp,
+            locale,
+            promptPasswordlessLogin: route.queryParams['sharing'] === 'true'
+          });
         }
       })
     );

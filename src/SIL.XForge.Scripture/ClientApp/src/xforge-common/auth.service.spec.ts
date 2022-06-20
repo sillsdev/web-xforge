@@ -211,7 +211,7 @@ describe('AuthService', () => {
     const env = new TestEnvironment();
     const returnUrl = 'test-returnUrl';
 
-    env.service.logIn(returnUrl);
+    env.service.logIn({ returnUrl });
 
     verify(mockedWebAuth.loginWithRedirect(anything())).once();
     const authOptions: RedirectLoginOptions | undefined = capture<RedirectLoginOptions | undefined>(
@@ -231,7 +231,7 @@ describe('AuthService', () => {
     const returnUrl = 'test-returnUrl';
     const signUp = false;
 
-    env.service.logIn(returnUrl, signUp);
+    env.service.logIn({ returnUrl, signUp });
 
     verify(mockedWebAuth.loginWithRedirect(anything())).once();
     const authOptions: RedirectLoginOptions | undefined = capture<RedirectLoginOptions | undefined>(
@@ -250,7 +250,7 @@ describe('AuthService', () => {
     const returnUrl = 'test-returnUrl';
     const signUp = true;
 
-    env.service.logIn(returnUrl, signUp);
+    env.service.logIn({ returnUrl, signUp });
 
     verify(mockedWebAuth.loginWithRedirect(anything())).once();
     const authOptions: RedirectLoginOptions | undefined = capture<RedirectLoginOptions | undefined>(
@@ -271,7 +271,7 @@ describe('AuthService', () => {
     const locale = 'es';
     expect(locale).withContext('setup').not.toEqual(env.language);
 
-    env.service.logIn(returnUrl, signUp, locale);
+    env.service.logIn({ returnUrl, signUp, locale });
 
     verify(mockedWebAuth.loginWithRedirect(anything())).once();
     const authOptions: RedirectLoginOptions | undefined = capture<RedirectLoginOptions | undefined>(
@@ -282,6 +282,40 @@ describe('AuthService', () => {
       expect(authOptions.language).toEqual(env.language);
       expect(authOptions.login_hint).toEqual(locale);
       expect(authOptions.mode).toEqual('signUp');
+    }
+  }));
+
+  it('should login with passwordless enabled', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const returnUrl = 'test-returnUrl';
+
+    env.service.logIn({ returnUrl });
+
+    verify(mockedWebAuth.loginWithRedirect(anything())).once();
+    const authOptions: RedirectLoginOptions | undefined = capture<RedirectLoginOptions | undefined>(
+      mockedWebAuth.loginWithRedirect
+    ).last()[0];
+    expect(authOptions).toBeDefined();
+    if (authOptions != null) {
+      expect(authOptions.enablePasswordless).toEqual(true);
+      expect(authOptions.promptPasswordlessLogin).toEqual(false);
+    }
+  }));
+
+  it('should login with passwordless enabled and prompt for passwordless login', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const returnUrl = 'test-returnUrl';
+
+    env.service.logIn({ returnUrl, promptPasswordlessLogin: true });
+
+    verify(mockedWebAuth.loginWithRedirect(anything())).once();
+    const authOptions: RedirectLoginOptions | undefined = capture<RedirectLoginOptions | undefined>(
+      mockedWebAuth.loginWithRedirect
+    ).last()[0];
+    expect(authOptions).toBeDefined();
+    if (authOptions != null) {
+      expect(authOptions.enablePasswordless).toEqual(true);
+      expect(authOptions.promptPasswordlessLogin).toEqual(true);
     }
   }));
 
