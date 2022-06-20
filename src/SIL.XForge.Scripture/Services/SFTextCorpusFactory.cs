@@ -30,8 +30,12 @@ namespace SIL.XForge.Scripture.Services
         private readonly IOptions<SiteOptions> _siteOptions;
         private readonly IFileSystemService _fileSystemService;
 
-        public SFTextCorpusFactory(IOptions<DataAccessOptions> dataAccessOptions, IRealtimeService realtimeService,
-            IOptions<SiteOptions> siteOptions, IFileSystemService fileSystemService)
+        public SFTextCorpusFactory(
+            IOptions<DataAccessOptions> dataAccessOptions,
+            IRealtimeService realtimeService,
+            IOptions<SiteOptions> siteOptions,
+            IFileSystemService fileSystemService
+        )
         {
             _dataAccessOptions = dataAccessOptions;
             _mongoClient = new MongoClient(dataAccessOptions.Value.ConnectionString);
@@ -45,13 +49,13 @@ namespace SIL.XForge.Scripture.Services
             return new DictionaryTextCorpus(await CreateTextsAsync(projects, type));
         }
 
-        private async Task<IReadOnlyList<IText>> CreateTextsAsync(IEnumerable<string> projects,
-            TextCorpusType type)
+        private async Task<IReadOnlyList<IText>> CreateTextsAsync(IEnumerable<string> projects, TextCorpusType type)
         {
             StringTokenizer wordTokenizer = new LatinWordTokenizer();
             IMongoDatabase database = _mongoClient.GetDatabase(_dataAccessOptions.Value.MongoDatabaseName);
             IMongoCollection<BsonDocument> textDataColl = database.GetCollection<BsonDocument>(
-                _realtimeService.GetCollectionName<TextData>());
+                _realtimeService.GetCollectionName<TextData>()
+            );
             var texts = new List<IText>();
             foreach (string projectId in projects)
             {
@@ -77,7 +81,6 @@ namespace SIL.XForge.Scripture.Services
 
                     default:
                         throw new InvalidEnumArgumentException(nameof(type), (int)type, typeof(TextCorpusType));
-
                 }
 
                 foreach (TextInfo text in project.Texts.Where(t => t.HasSource))
@@ -92,13 +95,21 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
 
-                string termRenderingsFileName = Path.Combine(_siteOptions.Value.SiteDir, "sync", paratextId,
-                    "target", "TermRenderings.xml");
+                string termRenderingsFileName = Path.Combine(
+                    _siteOptions.Value.SiteDir,
+                    "sync",
+                    paratextId,
+                    "target",
+                    "TermRenderings.xml"
+                );
                 if (_fileSystemService.FileExists(termRenderingsFileName))
                 {
                     using var stream = _fileSystemService.OpenFile(termRenderingsFileName, FileMode.Open);
-                    XDocument termRenderingsDoc = await XDocument.LoadAsync(stream, LoadOptions.None,
-                        CancellationToken.None);
+                    XDocument termRenderingsDoc = await XDocument.LoadAsync(
+                        stream,
+                        LoadOptions.None,
+                        CancellationToken.None
+                    );
                     texts.Add(new SFBiblicalTermsText(wordTokenizer, projectId, termRenderingsDoc));
                 }
             }

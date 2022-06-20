@@ -25,11 +25,32 @@ namespace SIL.XForge.Scripture.Services
         private static readonly HashSet<string> ParagraphPoetryListStyles = new HashSet<string>
         {
             // Paragraphs
-            "p", "m", "po", "pr", "cls", "pmo", "pm", "pmc", "pmr", "pi", "mi", "pc", "ph", "lit",
+            "p",
+            "m",
+            "po",
+            "pr",
+            "cls",
+            "pmo",
+            "pm",
+            "pmc",
+            "pmr",
+            "pi",
+            "mi",
+            "pc",
+            "ph",
+            "lit",
             // Poetry
-            "q", "qr", "qc", "qa", "qm", "qd",
+            "q",
+            "qr",
+            "qc",
+            "qa",
+            "qm",
+            "qd",
             // Lists
-            "lh", "li", "lf", "lim",
+            "lh",
+            "li",
+            "lf",
+            "lim",
         };
 
         private IGuidService GuidService;
@@ -53,8 +74,14 @@ namespace SIL.XForge.Scripture.Services
                         int dashIndex = value.IndexOf('-');
                         if (dashIndex != -1)
                             value = value.Substring(dashIndex + 1);
-                        if (int.TryParse(value, System.Globalization.NumberStyles.Integer, CultureInfo.InvariantCulture,
-                                out int _lastVerse))
+                        if (
+                            int.TryParse(
+                                value,
+                                System.Globalization.NumberStyles.Integer,
+                                CultureInfo.InvariantCulture,
+                                out int _lastVerse
+                            )
+                        )
                             lastVerse = _lastVerse;
                         LastVerse = lastVerse;
                     }
@@ -62,8 +89,11 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        public DeltaUsxMapper(IGuidService guidService, ILogger<DeltaUsxMapper> logger,
-            IExceptionHandler exceptionHandler)
+        public DeltaUsxMapper(
+            IGuidService guidService,
+            ILogger<DeltaUsxMapper> logger,
+            IExceptionHandler exceptionHandler
+        )
         {
             GuidService = guidService;
             Logger = logger;
@@ -89,7 +119,9 @@ namespace SIL.XForge.Scripture.Services
         public IEnumerable<ChapterDelta> ToChapterDeltas(XDocument usxDoc)
         {
             var invalidNodes = new HashSet<XNode>();
-            usxDoc.Validate(Schemas, (o, e) =>
+            usxDoc.Validate(
+                Schemas,
+                (o, e) =>
                 {
                     XNode node;
                     var attr = o as XAttribute;
@@ -98,7 +130,9 @@ namespace SIL.XForge.Scripture.Services
                     else
                         node = (XNode)o;
                     invalidNodes.Add(node);
-                }, true);
+                },
+                true
+            );
             var chapterDeltas = new List<ChapterDelta>();
             var chapterDelta = new Delta();
             bool isChapterValid = true;
@@ -129,7 +163,11 @@ namespace SIL.XForge.Scripture.Services
                                         int slashIndex = state.CurRef.IndexOf("/", StringComparison.Ordinal);
                                         if (slashIndex != -1)
                                             state.CurRef = state.CurRef.Substring(0, slashIndex);
-                                        state.CurRef = GetParagraphRef(nextIds, state.CurRef, state.CurRef + "/" + style);
+                                        state.CurRef = GetParagraphRef(
+                                            nextIds,
+                                            state.CurRef,
+                                            state.CurRef + "/" + style
+                                        );
                                     }
                                     else
                                     {
@@ -162,8 +200,11 @@ namespace SIL.XForge.Scripture.Services
                                 state.CurRef = null;
                                 state.LastVerse = 0;
                                 state.CurChapter = (string)elem.Attribute("number");
-                                chapterDelta.InsertEmbed("chapter", GetAttributes(elem),
-                                    attributes: AddInvalidBlockAttribute(invalidNodes, elem));
+                                chapterDelta.InsertEmbed(
+                                    "chapter",
+                                    GetAttributes(elem),
+                                    attributes: AddInvalidBlockAttribute(invalidNodes, elem)
+                                );
                                 break;
 
                             // according to the USX schema, a verse can only occur within a paragraph, but Paratext 8.0
@@ -182,8 +223,11 @@ namespace SIL.XForge.Scripture.Services
                         break;
 
                     case XText text:
-                        chapterDelta.InsertText(text.Value, state.CurRef,
-                            AddInvalidInlineAttribute(invalidNodes, text));
+                        chapterDelta.InsertText(
+                            text.Value,
+                            state.CurRef,
+                            AddInvalidInlineAttribute(invalidNodes, text)
+                        );
                         state.ImpliedParagraph = true;
                         break;
                 }
@@ -199,15 +243,25 @@ namespace SIL.XForge.Scripture.Services
             ProcessChildNodes(invalidNodes, newDelta, parentElem, new ParseState());
         }
 
-        private void ProcessChildNodes(HashSet<XNode> invalidNodes, Delta newDelta, XElement parentElem,
-            ParseState state, JObject attributes = null)
+        private void ProcessChildNodes(
+            HashSet<XNode> invalidNodes,
+            Delta newDelta,
+            XElement parentElem,
+            ParseState state,
+            JObject attributes = null
+        )
         {
             foreach (XNode node in parentElem.Nodes())
                 ProcessChildNode(invalidNodes, newDelta, node, state, attributes);
         }
 
-        private void ProcessChildNode(HashSet<XNode> invalidNodes, Delta newDelta, XNode node, ParseState state,
-            JObject attributes = null)
+        private void ProcessChildNode(
+            HashSet<XNode> invalidNodes,
+            Delta newDelta,
+            XNode node,
+            ParseState state,
+            JObject attributes = null
+        )
         {
             switch (node)
             {
@@ -267,7 +321,8 @@ namespace SIL.XForge.Scripture.Services
                             foreach (XElement row in elem.Elements("row"))
                             {
                                 var rowAttributes = new JObject(
-                                    new JProperty("id", $"row_{state.TableIndex}_{rowIndex}"));
+                                    new JProperty("id", $"row_{state.TableIndex}_{rowIndex}")
+                                );
                                 int cellIndex = 1;
                                 foreach (XElement cell in row.Elements())
                                 {
@@ -276,7 +331,8 @@ namespace SIL.XForge.Scripture.Services
                                     SegmentEnded(newDelta, state.CurRef);
                                     var attrs = new JObject(
                                         new JProperty("table", tableAttributes),
-                                        new JProperty("row", rowAttributes));
+                                        new JProperty("row", rowAttributes)
+                                    );
                                     if (cell.Name.LocalName == "cell")
                                         attrs.Add(new JProperty("cell", GetAttributes(cell)));
                                     attrs = AddInvalidBlockAttribute(invalidNodes, elem, attrs);
@@ -301,14 +357,21 @@ namespace SIL.XForge.Scripture.Services
                     break;
 
                 case XText text:
-                    newDelta.InsertText(text.Value, state.CurRef,
-                        AddInvalidInlineAttribute(invalidNodes, text, attributes));
+                    newDelta.InsertText(
+                        text.Value,
+                        state.CurRef,
+                        AddInvalidInlineAttribute(invalidNodes, text, attributes)
+                    );
                     break;
             }
         }
 
-        private void ChapterEnded(List<ChapterDelta> chapterDeltas, Delta chapterDelta, bool isChapterValid,
-            ParseState state)
+        private void ChapterEnded(
+            List<ChapterDelta> chapterDeltas,
+            Delta chapterDelta,
+            bool isChapterValid,
+            ParseState state
+        )
         {
             if (state.ImpliedParagraph)
             {
@@ -327,23 +390,34 @@ namespace SIL.XForge.Scripture.Services
             var verse = (string)elem.Attribute("number");
             SegmentEnded(newDelta, state.CurRef);
             state.CurRef = $"verse_{state.CurChapter}_{verse}";
-            newDelta.InsertEmbed("verse", GetAttributes(elem),
-                attributes: AddInvalidInlineAttribute(invalidNodes, elem));
+            newDelta.InsertEmbed(
+                "verse",
+                GetAttributes(elem),
+                attributes: AddInvalidInlineAttribute(invalidNodes, elem)
+            );
         }
 
-        private void InsertEmbed(HashSet<XNode> invalidNodes, Delta newDelta, XElement elem, string curRef,
-            JObject attributes)
+        private void InsertEmbed(
+            HashSet<XNode> invalidNodes,
+            Delta newDelta,
+            XElement elem,
+            string curRef,
+            JObject attributes
+        )
         {
             JObject obj = GetAttributes(elem);
             var contents = new Delta();
             ProcessChildNodes(invalidNodes, contents, elem);
             if (contents.Ops.Count > 0)
             {
-                obj.Add(new JProperty("contents",
-                    new JObject(new JProperty("ops", new JArray(contents.Ops)))));
+                obj.Add(new JProperty("contents", new JObject(new JProperty("ops", new JArray(contents.Ops)))));
             }
-            newDelta.InsertEmbed(elem.Name.LocalName, obj, curRef,
-                AddInvalidInlineAttribute(invalidNodes, elem, attributes));
+            newDelta.InsertEmbed(
+                elem.Name.LocalName,
+                obj,
+                curRef,
+                AddInvalidInlineAttribute(invalidNodes, elem, attributes)
+            );
         }
 
         private static void InsertPara(HashSet<XNode> invalidNodes, Delta newDelta, XElement elem)
@@ -368,9 +442,11 @@ namespace SIL.XForge.Scripture.Services
                     lastOpText = (string)lastOp[Delta.InsertType];
                 var embed = lastOp[Delta.InsertType] as JObject;
                 var attrs = (JObject)lastOp[Delta.Attributes];
-                if ((embed != null && (embed["verse"] != null || embed["chapter"] != null))
+                if (
+                    (embed != null && (embed["verse"] != null || embed["chapter"] != null))
                     || (attrs != null && (attrs["para"] != null || attrs["table"] != null))
-                    || lastOpText.EndsWith('\n'))
+                    || lastOpText.EndsWith('\n')
+                )
                 {
                     newDelta.InsertBlank(segRef);
                 }
@@ -403,8 +479,11 @@ namespace SIL.XForge.Scripture.Services
             return obj;
         }
 
-        private static JObject AddInvalidInlineAttribute(HashSet<XNode> invalidNodes, XNode node,
-            JObject attributes = null)
+        private static JObject AddInvalidInlineAttribute(
+            HashSet<XNode> invalidNodes,
+            XNode node,
+            JObject attributes = null
+        )
         {
             if (invalidNodes.Contains(node))
             {
@@ -414,8 +493,11 @@ namespace SIL.XForge.Scripture.Services
             return attributes;
         }
 
-        private static JObject AddInvalidBlockAttribute(HashSet<XNode> invalidNodes, XNode node,
-            JObject attributes = null)
+        private static JObject AddInvalidBlockAttribute(
+            HashSet<XNode> invalidNodes,
+            XNode node,
+            JObject attributes = null
+        )
         {
             if (invalidNodes.Contains(node))
             {
@@ -447,7 +529,8 @@ namespace SIL.XForge.Scripture.Services
                     // the SF DB.
                     if (usxChapterCount > 0)
                     {
-                        string errorExplanation = "ToUsx() received a chapterDeltas with no real chapters "
+                        string errorExplanation =
+                            "ToUsx() received a chapterDeltas with no real chapters "
                             + $"(just one 'chapter' with a Delta.Ops.Count of 0), and USX with {usxChapterCount} "
                             + "chapters. This may indicate corrupt data in the SF DB. Handling by ignoring "
                             + "chapterDeltas and returning the input USX.";
@@ -481,8 +564,11 @@ namespace SIL.XForge.Scripture.Services
                         }
                     }
 
-                    if (chapterDeltaArray[i].Number == curChapter && chapterDeltaArray[i].IsValid
-                        && !IsElement(curNode, "book"))
+                    if (
+                        chapterDeltaArray[i].Number == curChapter
+                        && chapterDeltaArray[i].IsValid
+                        && !IsElement(curNode, "book")
+                    )
                     {
                         curNode.Remove();
                     }
@@ -495,7 +581,8 @@ namespace SIL.XForge.Scripture.Services
             catch (Exception e)
             {
                 int usxChapterCount = oldUsxDoc.Root.Nodes().Count((XNode node) => IsElement(node, "chapter"));
-                string errorExplanation = $"ToUsx() had a problem ({e.Message}). SF DB corruption can cause "
+                string errorExplanation =
+                    $"ToUsx() had a problem ({e.Message}). SF DB corruption can cause "
                     + "IndexOutOfRangeException to be thrown here. Rethrowing. Diagnostic info: "
                     + $"chapterDeltas length is {chapterDeltaArray.Length}, "
                     + $"The first chapterDeltas Delta.Ops.Count is "
@@ -654,8 +741,6 @@ namespace SIL.XForge.Scripture.Services
                                 break;
                         }
                     }
-
-
                 }
             }
             while (curCharAttrs.Count > 0)
@@ -757,8 +842,11 @@ namespace SIL.XForge.Scripture.Services
             List<XNode> nextBlockNodes = null;
             if (childNodes.Count == 3)
                 nextBlockNodes = childNodes.Pop();
-            XElement rowElem = CreateContainerElement("row", new JObject(new JProperty("style", "tr")),
-                childNodes.Peek());
+            XElement rowElem = CreateContainerElement(
+                "row",
+                new JObject(new JProperty("style", "tr")),
+                childNodes.Peek()
+            );
             childNodes.Pop();
             childNodes.Peek().Add(rowElem);
             curRowAttrs = null;

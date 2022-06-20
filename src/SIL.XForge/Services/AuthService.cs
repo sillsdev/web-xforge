@@ -29,10 +29,7 @@ namespace SIL.XForge.Services
         {
             _authOptions = authOptions;
             _exceptionHandler = exceptionHandler;
-            _httpClient = new HttpClient
-            {
-                BaseAddress = new Uri($"https://{_authOptions.Value.Domain}")
-            };
+            _httpClient = new HttpClient { BaseAddress = new Uri($"https://{_authOptions.Value.Domain}") };
         }
 
         public bool ValidateWebhookCredentials(string username, string password)
@@ -48,18 +45,15 @@ namespace SIL.XForge.Services
 
         public Task LinkAccounts(string primaryAuthId, string secondaryAuthId)
         {
-            var content = new JObject(
-                new JProperty("provider", "oauth2"),
-                new JProperty("user_id", secondaryAuthId));
+            var content = new JObject(new JProperty("provider", "oauth2"), new JProperty("user_id", secondaryAuthId));
             return CallApiAsync(HttpMethod.Post, $"users/{primaryAuthId}/identities", content);
         }
 
         public Task UpdateInterfaceLanguage(string authId, string language)
         {
             var content = new JObject(
-                new JProperty("user_metadata", new JObject(
-                    new JProperty("interface_language", language))
-                ));
+                new JProperty("user_metadata", new JObject(new JProperty("interface_language", language)))
+            );
             // Since .NET Std 2.0 see https://stackoverflow.com/a/23600004/5501739
             return CallApiAsync(new HttpMethod("PATCH"), $"users/{authId}", content);
         }
@@ -105,7 +99,8 @@ namespace SIL.XForge.Services
                         new JProperty("grant_type", "client_credentials"),
                         new JProperty("client_id", options.BackendClientId),
                         new JProperty("client_secret", options.BackendClientSecret),
-                        new JProperty("audience", _authOptions.Value.ManagementAudience));
+                        new JProperty("audience", _authOptions.Value.ManagementAudience)
+                    );
                     request.Content = new StringContent(requestObj.ToString(), Encoding.UTF8, "application/json");
                     if (string.IsNullOrEmpty(options.BackendClientSecret))
                     {

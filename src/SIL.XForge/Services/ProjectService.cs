@@ -16,13 +16,19 @@ namespace SIL.XForge.Services
     /// <summary>
     /// This class contains the common functionality for managing xForge projects.
     /// </summary>
-    public abstract class ProjectService<TModel, TSecret> : IProjectService where TModel : Project, new()
+    public abstract class ProjectService<TModel, TSecret> : IProjectService
+        where TModel : Project, new()
         where TSecret : ProjectSecret
     {
         private readonly IAudioService _audioService;
 
-        public ProjectService(IRealtimeService realtimeService, IOptions<SiteOptions> siteOptions,
-            IAudioService audioService, IRepository<TSecret> projectSecrets, IFileSystemService fileSystemService)
+        public ProjectService(
+            IRealtimeService realtimeService,
+            IOptions<SiteOptions> siteOptions,
+            IAudioService audioService,
+            IRepository<TSecret> projectSecrets,
+            IFileSystemService fileSystemService
+        )
         {
             RealtimeService = realtimeService;
             SiteOptions = siteOptions;
@@ -78,7 +84,11 @@ namespace SIL.XForge.Services
         /// <summary>
         /// Disassociate user projectUserId from project projectId. No permissions check is performed.
         /// </summary>
-        public async Task RemoveUserWithoutPermissionsCheckAsync(string curUserId, string projectId, string projectUserId)
+        public async Task RemoveUserWithoutPermissionsCheckAsync(
+            string curUserId,
+            string projectId,
+            string projectUserId
+        )
         {
             if (curUserId == null || projectId == null || projectUserId == null)
             {
@@ -93,7 +103,12 @@ namespace SIL.XForge.Services
         /// <summary>
         /// Disassociate user projectUserId from project projectId, without checking permissions.
         /// </summary>
-        private async Task RemoveUserCoreAsync(IConnection conn, string curUserId, string projectId, string projectUserId)
+        private async Task RemoveUserCoreAsync(
+            IConnection conn,
+            string curUserId,
+            string projectId,
+            string projectUserId
+        )
         {
             if (curUserId == null || projectId == null || projectUserId == null)
             {
@@ -118,7 +133,8 @@ namespace SIL.XForge.Services
             {
                 IDocument<User> userDoc = await GetUserDocAsync(projectUserId, conn);
                 IEnumerable<Task> removalTasks = userDoc.Data.Sites[SiteOptions.Value.Id].Projects.Select(
-                    (string projectId) => RemoveUserCoreAsync(conn, curUserId, projectId, projectUserId));
+                    (string projectId) => RemoveUserCoreAsync(conn, curUserId, projectId, projectUserId)
+                );
                 // The removals can be processed in parallel in production, but for unit tests, MemoryRealtimeService
                 // does not fully implement concurrent editing of docs, so run them in a sequence.
                 foreach (Task task in removalTasks)
@@ -156,8 +172,13 @@ namespace SIL.XForge.Services
             }
         }
 
-        public async Task<Uri> SaveAudioAsync(string curUserId, string projectId, string dataId, string extension,
-            Stream inputStream)
+        public async Task<Uri> SaveAudioAsync(
+            string curUserId,
+            string projectId,
+            string dataId,
+            string extension,
+            Stream inputStream
+        )
         {
             if (!StringUtils.ValidateId(dataId))
                 throw new FormatException($"{nameof(dataId)} is not a valid id.");
@@ -192,8 +213,10 @@ namespace SIL.XForge.Services
                 }
             }
             string outputFileName = Path.GetFileName(outputPath);
-            var uri = new Uri(SiteOptions.Value.Origin,
-                $"assets/audio/{projectId}/{outputFileName}?t={DateTime.UtcNow.ToFileTime()}");
+            var uri = new Uri(
+                SiteOptions.Value.Origin,
+                $"assets/audio/{projectId}/{outputFileName}?t={DateTime.UtcNow.ToFileTime()}"
+            );
             return uri;
         }
 
@@ -225,7 +248,12 @@ namespace SIL.XForge.Services
             }
         }
 
-        public async Task SetUserProjectPermissions(string curUserId, string projectId, string userId, string[] permissions)
+        public async Task SetUserProjectPermissions(
+            string curUserId,
+            string projectId,
+            string userId,
+            string[] permissions
+        )
         {
             using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
@@ -246,21 +274,31 @@ namespace SIL.XForge.Services
             }
         }
 
-        protected virtual async Task AddUserToProjectAsync(IConnection conn, IDocument<TModel> projectDoc,
-            IDocument<User> userDoc, string projectRole, bool removeShareKeys = true)
+        protected virtual async Task AddUserToProjectAsync(
+            IConnection conn,
+            IDocument<TModel> projectDoc,
+            IDocument<User> userDoc,
+            string projectRole,
+            bool removeShareKeys = true
+        )
         {
             await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.UserRoles[userDoc.Id], projectRole));
             if (removeShareKeys)
             {
-                await ProjectSecrets.UpdateAsync(p => p.Id == projectDoc.Id,
-                    update => update.RemoveAll(p => p.ShareKeys, sk => sk.Email == userDoc.Data.Email));
+                await ProjectSecrets.UpdateAsync(
+                    p => p.Id == projectDoc.Id,
+                    update => update.RemoveAll(p => p.ShareKeys, sk => sk.Email == userDoc.Data.Email)
+                );
             }
             string siteId = SiteOptions.Value.Id;
             await userDoc.SubmitJson0OpAsync(op => op.Add(u => u.Sites[siteId].Projects, projectDoc.Id));
         }
 
-        internal protected virtual async Task RemoveUserFromProjectAsync(IConnection conn, IDocument<TModel> projectDoc,
-            IDocument<User> userDoc)
+        internal protected virtual async Task RemoveUserFromProjectAsync(
+            IConnection conn,
+            IDocument<TModel> projectDoc,
+            IDocument<User> userDoc
+        )
         {
             if (conn == null || projectDoc == null || userDoc == null)
             {

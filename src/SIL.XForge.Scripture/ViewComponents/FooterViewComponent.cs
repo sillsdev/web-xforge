@@ -16,7 +16,11 @@ namespace SIL.XForge.Scripture.ViewComponents
         private readonly IOptions<SiteOptions> siteOptions;
         private readonly IConfiguration configuration;
 
-        public FooterViewComponent(IOptions<AuthOptions> authOptions, IOptions<SiteOptions> siteOptions, IConfiguration configuration)
+        public FooterViewComponent(
+            IOptions<AuthOptions> authOptions,
+            IOptions<SiteOptions> siteOptions,
+            IConfiguration configuration
+        )
         {
             this.authOptions = authOptions;
             this.siteOptions = siteOptions;
@@ -30,16 +34,15 @@ namespace SIL.XForge.Scripture.ViewComponents
             appSettings.ProductVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(location).ProductVersion;
 
             var bugsnagConfig = new Dictionary<string, object>
-                {
-                    { "apiKey", configuration.GetValue<string>("Bugsnag:ApiKey") },
-                    { "appVersion", appSettings.ProductVersion },
-                    { "notifyReleaseStages", configuration.GetSection("Bugsnag:NotifyReleaseStages").Get<string[]>() },
-                    { "releaseStage", configuration.GetValue<string>("Bugsnag:ReleaseStage") }
-                };
+            {
+                { "apiKey", configuration.GetValue<string>("Bugsnag:ApiKey") },
+                { "appVersion", appSettings.ProductVersion },
+                { "notifyReleaseStages", configuration.GetSection("Bugsnag:NotifyReleaseStages").Get<string[]>() },
+                { "releaseStage", configuration.GetValue<string>("Bugsnag:ReleaseStage") }
+            };
             appSettings.BugsnagConfig = JsonConvert.SerializeObject(bugsnagConfig, Formatting.Indented);
 
             return View(appSettings);
         }
-
     }
 }

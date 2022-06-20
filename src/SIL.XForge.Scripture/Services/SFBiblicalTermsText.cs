@@ -9,8 +9,11 @@ namespace SIL.XForge.Scripture.Services
 {
     public class SFBiblicalTermsText : IText
     {
-        public SFBiblicalTermsText(ITokenizer<string, int, string> wordTokenizer, string projectId,
-            XDocument termRenderingsDoc)
+        public SFBiblicalTermsText(
+            ITokenizer<string, int, string> wordTokenizer,
+            string projectId,
+            XDocument termRenderingsDoc
+        )
         {
             Id = $"{projectId}_biblical_terms";
 
@@ -23,11 +26,16 @@ namespace SIL.XForge.Scripture.Services
 
         public IEnumerable<TextSegment> Segments { get; }
 
-        private static IEnumerable<TextSegment> GetSegments(ITokenizer<string, int, string> wordTokenizer,
-            XDocument termRenderingsDoc)
+        private static IEnumerable<TextSegment> GetSegments(
+            ITokenizer<string, int, string> wordTokenizer,
+            XDocument termRenderingsDoc
+        )
         {
-            foreach (XElement termRenderingElem in termRenderingsDoc.Root.Elements("TermRendering")
-                .Where(tre => !(bool)tre.Attribute("Guess")))
+            foreach (
+                XElement termRenderingElem in termRenderingsDoc.Root
+                    .Elements("TermRendering")
+                    .Where(tre => !(bool)tre.Attribute("Guess"))
+            )
             {
                 var id = (string)termRenderingElem.Attribute("Id");
                 var renderingsStr = (string)termRenderingElem.Element("Renderings");

@@ -10,8 +10,7 @@ namespace SIL.XForge.Realtime
     {
         private readonly MemoryRepository<T> _repo;
 
-        internal MemoryDocument(MemoryRepository<T> repo, string otTypeName, string collection,
-            string id)
+        internal MemoryDocument(MemoryRepository<T> repo, string otTypeName, string collection, string id)
         {
             _repo = repo;
             OTTypeName = otTypeName;
@@ -45,8 +44,10 @@ namespace SIL.XForge.Realtime
         {
             if (!_repo.Contains(Id))
             {
-                throw new Jering.Javascript.NodeJS.InvocationException("Document does not exist",
-                    "Would be received in production.");
+                throw new Jering.Javascript.NodeJS.InvocationException(
+                    "Document does not exist",
+                    "Would be received in production."
+                );
             }
             await _repo.DeleteAsync(Id);
             Data = default(T);

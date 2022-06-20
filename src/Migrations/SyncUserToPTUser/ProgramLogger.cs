@@ -8,10 +8,12 @@ namespace SyncUserToPTUser
     public class ProgramLogger : IProgramLogger
     {
         private readonly int _processId;
+
         public ProgramLogger(int processId)
         {
             _processId = processId;
         }
+
         /// <summary>
         /// Write message to standard output, prefixed by time and program name.
         /// </summary>

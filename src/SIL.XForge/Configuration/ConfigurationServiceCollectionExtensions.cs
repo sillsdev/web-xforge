@@ -5,8 +5,10 @@ namespace SIL.XForge.Configuration
 {
     public static class ConfigurationServiceCollectionExtensions
     {
-        public static IServiceCollection AddConfiguration(this IServiceCollection services,
-            IConfiguration configuration)
+        public static IServiceCollection AddConfiguration(
+            this IServiceCollection services,
+            IConfiguration configuration
+        )
         {
             services.AddOptions<DataAccessOptions>(configuration);
             services.AddOptions<SiteOptions>(configuration);
@@ -17,8 +19,8 @@ namespace SIL.XForge.Configuration
             return services;
         }
 
-        public static IServiceCollection AddOptions<T>(this IServiceCollection services,
-            IConfiguration configuration) where T : class
+        public static IServiceCollection AddOptions<T>(this IServiceCollection services, IConfiguration configuration)
+            where T : class
         {
             string sectionName = Options.GetSectionName<T>();
             services.Configure<T>(configuration.GetSection(sectionName));

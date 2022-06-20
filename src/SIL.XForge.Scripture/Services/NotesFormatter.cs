@@ -126,6 +126,7 @@ namespace SIL.XForge.Scripture.Services
             }
             return paraElem;
         }
+
         private static XElement FormatSelection(ScriptureSelection selection)
         {
             XElement selElem = new XElement("selection");
@@ -216,7 +217,6 @@ namespace SIL.XForge.Scripture.Services
                         bldr.Append($"<language name=\"{name}\">");
                         bldr.Append(elem.GetInnerText());
                         bldr.Append("</language>");
-
                     }
                 }
             }

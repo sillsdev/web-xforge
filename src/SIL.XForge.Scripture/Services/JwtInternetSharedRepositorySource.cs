@@ -15,9 +15,13 @@ namespace SIL.XForge.Scripture.Services
         private readonly JwtRestClient _registryClient;
         private readonly IHgWrapper _hgWrapper;
 
-        public JwtInternetSharedRepositorySource(string accessToken, JwtRestClient registryClient, IHgWrapper hgWrapper,
-            ParatextUser authenticationPtUser, string srServerUri)
-            : base(authenticationPtUser, srServerUri)
+        public JwtInternetSharedRepositorySource(
+            string accessToken,
+            JwtRestClient registryClient,
+            IHgWrapper hgWrapper,
+            ParatextUser authenticationPtUser,
+            string srServerUri
+        ) : base(authenticationPtUser, srServerUri)
         {
             _registryClient = registryClient;
             _hgWrapper = hgWrapper;
@@ -46,8 +50,17 @@ namespace SIL.XForge.Scripture.Services
 
             // Get bundle
             string guid = Guid.NewGuid().ToString();
-            List<string> query = new List<string> { "guid", guid, "proj", pullRepo.ScrTextName, "projid",
-                        pullRepo.SendReceiveId.Id, "type", "zstd-v2" };
+            List<string> query = new List<string>
+            {
+                "guid",
+                guid,
+                "proj",
+                pullRepo.ScrTextName,
+                "projid",
+                pullRepo.SendReceiveId.Id,
+                "type",
+                "zstd-v2"
+            };
             if (baseRev != null)
             {
                 query.Add("base1");
@@ -82,8 +95,20 @@ namespace SIL.XForge.Scripture.Services
 
             // Send bundle
             string guid = Guid.NewGuid().ToString();
-            client.PostStreaming(bundle, "pushbundle", "guid", guid, "proj", pushRepo.ScrTextName, "projid",
-                pushRepo.SendReceiveId.Id, "registered", "yes", "userschanged", "no");
+            client.PostStreaming(
+                bundle,
+                "pushbundle",
+                "guid",
+                guid,
+                "proj",
+                pushRepo.ScrTextName,
+                "projid",
+                pushRepo.SendReceiveId.Id,
+                "registered",
+                "yes",
+                "userschanged",
+                "no"
+            );
 
             _hgWrapper.MarkSharedChangeSetsPublic(repository);
         }

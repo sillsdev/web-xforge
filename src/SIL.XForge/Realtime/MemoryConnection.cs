@@ -29,9 +29,7 @@ namespace SIL.XForge.Realtime
         /// The <see cref="MemoryConnection" /> does not support transactions.
         /// No exception is thrown for compatibility reasons.
         /// </remarks>
-        public void BeginTransaction()
-        {
-        }
+        public void BeginTransaction() { }
 
         /// <summary>
         /// Commits the transaction.
@@ -67,9 +65,7 @@ namespace SIL.XForge.Realtime
             throw new NotImplementedException();
         }
 
-        public void Dispose()
-        {
-        }
+        public void Dispose() { }
 
         /// <summary>
         /// Excludes the field from the transaction.
@@ -79,9 +75,7 @@ namespace SIL.XForge.Realtime
         /// <remarks>
         /// The <see cref="MemoryConnection" /> does not support transactions.
         /// </remarks>
-        public void ExcludePropertyFromTransaction<T>(Expression<Func<T, object>> field)
-        {
-        }
+        public void ExcludePropertyFromTransaction<T>(Expression<Func<T, object>> field) { }
 
         /// <summary>
         /// Fetches a document asynchronously.
@@ -112,9 +106,7 @@ namespace SIL.XForge.Realtime
         /// <remarks>
         /// The <see cref="MemoryConnection" /> does not support transactions.
         /// </remarks>
-        public void RollbackTransaction()
-        {
-        }
+        public void RollbackTransaction() { }
 
         /// <summary>
         /// Submits an operation asynchronously.
@@ -122,8 +114,13 @@ namespace SIL.XForge.Realtime
         /// <exception cref="NotImplementedException">
         /// This is not supported by a <see cref="MemoryConnection" />.
         /// </exception>
-        public Task<Snapshot<T>> SubmitOpAsync<T>(string collection, string id, object op, T currentDoc,
-            int currentVersion)
+        public Task<Snapshot<T>> SubmitOpAsync<T>(
+            string collection,
+            string id,
+            object op,
+            T currentDoc,
+            int currentVersion
+        )
         {
             throw new NotImplementedException();
         }

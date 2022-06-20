@@ -17,8 +17,13 @@ namespace SIL.XForge.Scripture.Services
         /// { "insert": "In the beginning ...",
         ///   "attributes": { "segment": "verse_1_1" } }
         /// </remarks>
-        public SFScriptureText(ITokenizer<string, int, string> wordTokenizer, string projectId, int book, int chapter,
-            BsonDocument doc)
+        public SFScriptureText(
+            ITokenizer<string, int, string> wordTokenizer,
+            string projectId,
+            int book,
+            int chapter,
+            BsonDocument doc
+        )
         {
             if (doc == null)
                 throw new ArgumentNullException(nameof(doc));
@@ -36,8 +41,10 @@ namespace SIL.XForge.Scripture.Services
 
         public string SortKey => Id;
 
-        private static IEnumerable<TextSegment> GetSegments(ITokenizer<string, int, string> wordTokenizer,
-            BsonDocument doc)
+        private static IEnumerable<TextSegment> GetSegments(
+            ITokenizer<string, int, string> wordTokenizer,
+            BsonDocument doc
+        )
         {
             string prevRef = null;
             var sb = new StringBuilder();
@@ -71,8 +78,11 @@ namespace SIL.XForge.Scripture.Services
                 yield return CreateSegment(wordTokenizer, prevRef, sb.ToString());
         }
 
-        private static TextSegment CreateSegment(ITokenizer<string, int, string> wordTokenizer, string segRef,
-            string segmentStr)
+        private static TextSegment CreateSegment(
+            ITokenizer<string, int, string> wordTokenizer,
+            string segRef,
+            string segmentStr
+        )
         {
             var keys = new List<string>();
             foreach (string refPart in segRef.Split('/'))

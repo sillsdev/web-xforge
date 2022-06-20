@@ -14,8 +14,15 @@ namespace SIL.XForge.Scripture.Services
             _logger = logger;
         }
 
-        protected override AlertResult ShowInternal(IComponent owner, string text, string caption,
-            AlertButtons alertButtons, AlertLevel alertLevel, AlertDefaultButton defaultButton, bool showInTaskbar)
+        protected override AlertResult ShowInternal(
+            IComponent owner,
+            string text,
+            string caption,
+            AlertButtons alertButtons,
+            AlertLevel alertLevel,
+            AlertDefaultButton defaultButton,
+            bool showInTaskbar
+        )
         {
             _logger.LogInformation($"Alert: {text} : {caption}");
             return AlertResult.Positive;

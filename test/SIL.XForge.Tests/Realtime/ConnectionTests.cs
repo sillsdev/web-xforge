@@ -41,7 +41,8 @@ namespace SIL.XForge.Realtime
             Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
 
             // Verify that the call was passed to the underlying realtime server
-            await env.RealtimeService.Server.Received(1)
+            await env.RealtimeService.Server
+                .Received(1)
                 .DeleteDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>());
         }
 
@@ -65,25 +66,19 @@ namespace SIL.XForge.Realtime
             string otTypeName = OTType.Json0;
             var snapshot = new Snapshot<TestProject>
             {
-                Data = new TestProject()
-                {
-                    Id = id,
-                    SyncDisabled = false,
-                },
+                Data = new TestProject() { Id = id, SyncDisabled = false, },
                 Version = 1,
             };
             var builder = new Json0OpBuilder<TestProject>(snapshot.Data);
             builder.Set(p => p.SyncDisabled, true);
             List<Json0Op> op = builder.Op;
-            var updatedData = new TestProject()
-            {
-                Id = id,
-                SyncDisabled = true,
-            };
+            var updatedData = new TestProject() { Id = id, SyncDisabled = true, };
 
-            env.RealtimeService.Server.FetchDocAsync<TestProject>(Arg.Any<int>(), collection, id)
+            env.RealtimeService.Server
+                .FetchDocAsync<TestProject>(Arg.Any<int>(), collection, id)
                 .Returns(Task.FromResult(snapshot));
-            env.RealtimeService.Server.ApplyOpAsync(otTypeName, snapshot.Data, op)
+            env.RealtimeService.Server
+                .ApplyOpAsync(otTypeName, snapshot.Data, op)
                 .Returns(Task.FromResult(updatedData));
 
             // Setup Queue
@@ -101,12 +96,21 @@ namespace SIL.XForge.Realtime
             await env.Service.CommitTransactionAsync();
 
             // Verify Submit Operations
-            await env.RealtimeService.Server.Received(1).CreateDocAsync(Arg.Any<int>(), Arg.Any<string>(),
-                Arg.Any<string>(), Arg.Any<object>(), Arg.Any<string>());
-            await env.RealtimeService.Server.Received(1).DeleteDocAsync(Arg.Any<int>(), Arg.Any<string>(),
-                Arg.Any<string>());
-            await env.RealtimeService.Server.Received(1).SubmitOpAsync<object>(Arg.Any<int>(), Arg.Any<string>(),
-                Arg.Any<string>(), Arg.Any<object>());
+            await env.RealtimeService.Server
+                .Received(1)
+                .CreateDocAsync(
+                    Arg.Any<int>(),
+                    Arg.Any<string>(),
+                    Arg.Any<string>(),
+                    Arg.Any<object>(),
+                    Arg.Any<string>()
+                );
+            await env.RealtimeService.Server
+                .Received(1)
+                .DeleteDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>());
+            await env.RealtimeService.Server
+                .Received(1)
+                .SubmitOpAsync<object>(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<object>());
         }
 
         [Test]
@@ -116,11 +120,7 @@ namespace SIL.XForge.Realtime
             var env = new TestEnvironment();
             string collection = "test_project";
             string id = "id1";
-            var data = new TestProject
-            {
-                Id = id,
-                Name = "Test Project 1",
-            };
+            var data = new TestProject { Id = id, Name = "Test Project 1", };
             string otTypeName = OTType.Json0;
 
             // SUT
@@ -141,8 +141,15 @@ namespace SIL.XForge.Realtime
             Assert.AreEqual(queuedOperation.OtTypeName, otTypeName);
 
             // Verify that the call was not passed to the underlying realtime server
-            await env.RealtimeService.Server.Received(0).CreateDocAsync(Arg.Any<int>(), Arg.Any<string>(),
-                Arg.Any<string>(), Arg.Any<object>(), Arg.Any<string>());
+            await env.RealtimeService.Server
+                .Received(0)
+                .CreateDocAsync(
+                    Arg.Any<int>(),
+                    Arg.Any<string>(),
+                    Arg.Any<string>(),
+                    Arg.Any<object>(),
+                    Arg.Any<string>()
+                );
         }
 
         [Test]
@@ -152,11 +159,7 @@ namespace SIL.XForge.Realtime
             var env = new TestEnvironment();
             string collection = "test_project";
             string id = "id1";
-            var data = new TestProject
-            {
-                Id = id,
-                Name = "Test Project 1",
-            };
+            var data = new TestProject { Id = id, Name = "Test Project 1", };
             string otTypeName = OTType.Json0;
 
             // SUT
@@ -166,8 +169,15 @@ namespace SIL.XForge.Realtime
             Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
 
             // Verify that the call was not passed to the underlying realtime server
-            await env.RealtimeService.Server.Received(1).CreateDocAsync(Arg.Any<int>(), Arg.Any<string>(),
-                Arg.Any<string>(), Arg.Any<TestProject>(), Arg.Any<string>());
+            await env.RealtimeService.Server
+                .Received(1)
+                .CreateDocAsync(
+                    Arg.Any<int>(),
+                    Arg.Any<string>(),
+                    Arg.Any<string>(),
+                    Arg.Any<TestProject>(),
+                    Arg.Any<string>()
+                );
         }
 
         [Test]
@@ -190,7 +200,8 @@ namespace SIL.XForge.Realtime
             Assert.AreEqual(queuedOperation.Id, id);
 
             // Verify that the call was not passed to the underlying realtime server
-            await env.RealtimeService.Server.Received(0)
+            await env.RealtimeService.Server
+                .Received(0)
                 .DeleteDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>());
         }
 
@@ -209,7 +220,8 @@ namespace SIL.XForge.Realtime
             Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
 
             // Verify that the call was not passed to the underlying realtime server
-            await env.RealtimeService.Server.Received(1)
+            await env.RealtimeService.Server
+                .Received(1)
                 .DeleteDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>());
         }
 
@@ -236,7 +248,8 @@ namespace SIL.XForge.Realtime
 
             // SUT
             Assert.Throws<ArgumentException>(
-                () => env.Service.ExcludePropertyFromTransaction<TestProject>(op => op.SyncDisabled));
+                () => env.Service.ExcludePropertyFromTransaction<TestProject>(op => op.SyncDisabled)
+            );
         }
 
         [Test]
@@ -279,7 +292,8 @@ namespace SIL.XForge.Realtime
             Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
 
             // Verify that the call was not passed to the underlying realtime server
-            await env.RealtimeService.Server.Received(0)
+            await env.RealtimeService.Server
+                .Received(0)
                 .DeleteDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>());
         }
 
@@ -300,24 +314,17 @@ namespace SIL.XForge.Realtime
             var env = new TestEnvironment();
             string collection = "test_project";
             string id = "id1";
-            var data = new TestProject()
-            {
-                Id = id,
-                SyncDisabled = false,
-            };
+            var data = new TestProject() { Id = id, SyncDisabled = false, };
             var snapshot = new Snapshot<TestProject>
             {
-                Data = new TestProject()
-                {
-                    Id = id,
-                    SyncDisabled = true,
-                },
+                Data = new TestProject() { Id = id, SyncDisabled = true, },
                 Version = 2,
             };
             var builder = new Json0OpBuilder<TestProject>(data);
             builder.Set(p => p.SyncDisabled, true);
             List<Json0Op> op = builder.Op;
-            env.RealtimeService.Server.SubmitOpAsync<TestProject>(Arg.Any<int>(), collection, id, op)
+            env.RealtimeService.Server
+                .SubmitOpAsync<TestProject>(Arg.Any<int>(), collection, id, op)
                 .Returns(Task.FromResult(snapshot));
 
             // SUT
@@ -333,7 +340,8 @@ namespace SIL.XForge.Realtime
             Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
 
             // Verify that the call was passed to the underlying realtime server
-            await env.RealtimeService.Server.Received(1)
+            await env.RealtimeService.Server
+                .Received(1)
                 .SubmitOpAsync<TestProject>(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<object>());
         }
 
@@ -347,25 +355,19 @@ namespace SIL.XForge.Realtime
             string otTypeName = OTType.Json0;
             var snapshot = new Snapshot<TestProject>
             {
-                Data = new TestProject()
-                {
-                    Id = id,
-                    SyncDisabled = false,
-                },
+                Data = new TestProject() { Id = id, SyncDisabled = false, },
                 Version = 1,
             };
             var builder = new Json0OpBuilder<TestProject>(snapshot.Data);
             builder.Set(p => p.SyncDisabled, true);
             List<Json0Op> op = builder.Op;
-            var updatedData = new TestProject()
-            {
-                Id = id,
-                SyncDisabled = true,
-            };
+            var updatedData = new TestProject() { Id = id, SyncDisabled = true, };
 
-            env.RealtimeService.Server.FetchDocAsync<TestProject>(Arg.Any<int>(), collection, id)
+            env.RealtimeService.Server
+                .FetchDocAsync<TestProject>(Arg.Any<int>(), collection, id)
                 .Returns(Task.FromResult(snapshot));
-            env.RealtimeService.Server.ApplyOpAsync(otTypeName, snapshot.Data, op)
+            env.RealtimeService.Server
+                .ApplyOpAsync(otTypeName, snapshot.Data, op)
                 .Returns(Task.FromResult(updatedData));
 
             // SUT
@@ -384,7 +386,8 @@ namespace SIL.XForge.Realtime
             Assert.AreEqual(queuedOperation.Op, op);
 
             // Verify that the call was not passed to the underlying realtime server
-            await env.RealtimeService.Server.Received(0)
+            await env.RealtimeService.Server
+                .Received(0)
                 .SubmitOpAsync<TestProject>(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<object>());
         }
 
@@ -397,11 +400,7 @@ namespace SIL.XForge.Realtime
             string id = "id1";
             var snapshot = new Snapshot<TestProject>
             {
-                Data = new TestProject()
-                {
-                    Id = id,
-                    SyncDisabled = false,
-                },
+                Data = new TestProject() { Id = id, SyncDisabled = false, },
                 Version = 1,
             };
             var builder = new Json0OpBuilder<TestProject>(snapshot.Data);
@@ -415,7 +414,8 @@ namespace SIL.XForge.Realtime
             Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
 
             // Verify that the call was not passed to the underlying realtime server
-            await env.RealtimeService.Server.Received(1)
+            await env.RealtimeService.Server
+                .Received(1)
                 .SubmitOpAsync<TestProject>(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<object>());
         }
 
@@ -423,22 +423,32 @@ namespace SIL.XForge.Realtime
         {
             public Connection Service = null;
             public RealtimeService RealtimeService = null;
+
             public TestEnvironment()
             {
                 var realtimeServer = Substitute.For<IRealtimeServer>();
                 var siteOptions = Options.Create(Substitute.For<SiteOptions>());
                 var dataAccessOptions = Options.Create(Substitute.For<DataAccessOptions>());
-                var realtimeOptions = Options.Create(new RealtimeOptions()
-                {
-                    ProjectDoc = new DocConfig("some_projects", typeof(Project)),
-                    ProjectDataDocs = new List<DocConfig>(),
-                    UserDataDocs = new List<DocConfig>(),
-                });
+                var realtimeOptions = Options.Create(
+                    new RealtimeOptions()
+                    {
+                        ProjectDoc = new DocConfig("some_projects", typeof(Project)),
+                        ProjectDataDocs = new List<DocConfig>(),
+                        UserDataDocs = new List<DocConfig>(),
+                    }
+                );
                 var authOptions = Options.Create(Substitute.For<AuthOptions>());
                 var mongoClient = Substitute.For<IMongoClient>();
                 var configuration = Substitute.For<IConfiguration>();
-                RealtimeService = new RealtimeService(realtimeServer, siteOptions, dataAccessOptions, realtimeOptions,
-                    authOptions, mongoClient, configuration);
+                RealtimeService = new RealtimeService(
+                    realtimeServer,
+                    siteOptions,
+                    dataAccessOptions,
+                    realtimeOptions,
+                    authOptions,
+                    mongoClient,
+                    configuration
+                );
                 Service = new Connection(RealtimeService);
             }
         }

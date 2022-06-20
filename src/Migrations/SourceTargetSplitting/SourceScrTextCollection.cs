@@ -80,11 +80,10 @@ namespace SIL.XForge.Scripture.Services
             string? name = GetNameFromSettings(settingsFile);
             if (name != null)
             {
-                ScrText scrText = CreateScrText(ptUsername, new ProjectName()
-                {
-                    ProjectPath = fullProjectPath,
-                    ShortName = name
-                });
+                ScrText scrText = CreateScrText(
+                    ptUsername,
+                    new ProjectName() { ProjectPath = fullProjectPath, ShortName = name }
+                );
 
                 // Return the object
                 return scrText;

@@ -15,7 +15,10 @@ namespace SIL.XForge.Scripture.Services
         public EventId EventId { get; set; }
         public object State { get; set; }
         public Exception Exception { get; set; }
-        public string Message { get { return State.ToString(); } }
+        public string Message
+        {
+            get { return State.ToString(); }
+        }
 
         public override string ToString()
         {
@@ -38,10 +41,7 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         public readonly List<LogEvent> LogEvents = new List<LogEvent>();
 
-        public MockLogger()
-        {
-
-        }
+        public MockLogger() { }
 
         public IDisposable BeginScope<TState>(TState state)
         {
@@ -53,16 +53,23 @@ namespace SIL.XForge.Scripture.Services
             throw new NotImplementedException();
         }
 
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception,
-            Func<TState, Exception, string> formatter)
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception exception,
+            Func<TState, Exception, string> formatter
+        )
         {
-            LogEvents.Add(new LogEvent
-            {
-                LogLevel = logLevel,
-                EventId = eventId,
-                State = state,
-                Exception = exception
-            });
+            LogEvents.Add(
+                new LogEvent
+                {
+                    LogLevel = logLevel,
+                    EventId = eventId,
+                    State = state,
+                    Exception = exception
+                }
+            );
         }
 
         /// <summary>

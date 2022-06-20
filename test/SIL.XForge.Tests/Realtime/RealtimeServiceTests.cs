@@ -15,7 +15,6 @@ namespace SIL.XForge.Realtime
     [TestFixture]
     public class RealtimeServiceTests
     {
-
         [Test]
         public void DeleteProjectAsync_BadArguments()
         {
@@ -35,20 +34,26 @@ namespace SIL.XForge.Realtime
             // is defined in TestEnvironment.
             Dictionary<string, IMongoCollection<BsonDocument>> collectionsToBePruned =
                 new Dictionary<string, IMongoCollection<BsonDocument>>();
-            foreach (string collectionName in (new string[] {
-                "some_projects",
-                "favorite_numbers",
-                "favorite_things",
-                "favorite_verses",
-                "o_some_projects",
-                "o_favorite_numbers",
-                "o_favorite_things",
-                "o_favorite_verses",
-                }))
+            foreach (
+                string collectionName in (
+                    new string[]
+                    {
+                        "some_projects",
+                        "favorite_numbers",
+                        "favorite_things",
+                        "favorite_verses",
+                        "o_some_projects",
+                        "o_favorite_numbers",
+                        "o_favorite_things",
+                        "o_favorite_verses",
+                    }
+                )
+            )
             {
                 IMongoCollection<BsonDocument> collection = Substitute.For<IMongoCollection<BsonDocument>>();
                 collectionsToBePruned.Add(collectionName, collection);
-                env.MongoDatabase.GetCollection<BsonDocument>(collectionName)
+                env.MongoDatabase
+                    .GetCollection<BsonDocument>(collectionName)
                     .Returns<IMongoCollection<BsonDocument>>(collection);
             }
             // SUT
@@ -68,7 +73,6 @@ namespace SIL.XForge.Realtime
             Assert.ThrowsAsync<ArgumentException>(() => env.Service.DeleteUserAsync(""));
         }
 
-
         [Test]
         public async Task DeleteUserAsync_RequestsDocRemovalsInCollections()
         {
@@ -81,17 +85,13 @@ namespace SIL.XForge.Realtime
             // is defined in TestEnvironment.
             Dictionary<string, IMongoCollection<BsonDocument>> collectionsToBePruned =
                 new Dictionary<string, IMongoCollection<BsonDocument>>();
-            string[] collectionNames = new string[] {
-                "users",
-                "o_users",
-                "favorite_animals",
-                "o_favorite_animals",
-            };
+            string[] collectionNames = new string[] { "users", "o_users", "favorite_animals", "o_favorite_animals", };
             foreach (string collectionName in collectionNames)
             {
                 IMongoCollection<BsonDocument> collection = Substitute.For<IMongoCollection<BsonDocument>>();
                 collectionsToBePruned.Add(collectionName, collection);
-                env.MongoDatabase.GetCollection<BsonDocument>(collectionName)
+                env.MongoDatabase
+                    .GetCollection<BsonDocument>(collectionName)
                     .Returns<IMongoCollection<BsonDocument>>(collection);
             }
             // SUT
@@ -117,9 +117,12 @@ namespace SIL.XForge.Realtime
             var cursorMock = Substitute.For<IAsyncCursor<BsonDocument>>();
             cursorMock.MoveNextAsync().Returns(Task.FromResult(true), Task.FromResult(false));
             cursorMock.Current.Returns(new[] { doc });
-            env.MongoDatabase.GetCollection<BsonDocument>("o_users")
-                .FindAsync(Arg.Any<FilterDefinition<BsonDocument>>(),
-                    Arg.Any<FindOptions<BsonDocument, BsonDocument>>())
+            env.MongoDatabase
+                .GetCollection<BsonDocument>("o_users")
+                .FindAsync(
+                    Arg.Any<FilterDefinition<BsonDocument>>(),
+                    Arg.Any<FindOptions<BsonDocument, BsonDocument>>()
+                )
                 .Returns(Task.FromResult(cursorMock));
 
             // SUT
@@ -140,9 +143,12 @@ namespace SIL.XForge.Realtime
             var cursorMock = Substitute.For<IAsyncCursor<BsonDocument>>();
             cursorMock.MoveNextAsync().Returns(Task.FromResult(true), Task.FromResult(false));
             cursorMock.Current.Returns(new[] { doc });
-            env.MongoDatabase.GetCollection<BsonDocument>("o_users")
-                .FindAsync(Arg.Any<FilterDefinition<BsonDocument>>(),
-                    Arg.Any<FindOptions<BsonDocument, BsonDocument>>())
+            env.MongoDatabase
+                .GetCollection<BsonDocument>("o_users")
+                .FindAsync(
+                    Arg.Any<FilterDefinition<BsonDocument>>(),
+                    Arg.Any<FindOptions<BsonDocument, BsonDocument>>()
+                )
                 .Returns(Task.FromResult(cursorMock));
 
             // SUT
@@ -163,9 +169,12 @@ namespace SIL.XForge.Realtime
             var cursorMock = Substitute.For<IAsyncCursor<BsonDocument>>();
             cursorMock.MoveNextAsync().Returns(Task.FromResult(true), Task.FromResult(false));
             cursorMock.Current.Returns(new[] { doc });
-            env.MongoDatabase.GetCollection<BsonDocument>("o_users")
-                .FindAsync(Arg.Any<FilterDefinition<BsonDocument>>(),
-                    Arg.Any<FindOptions<BsonDocument, BsonDocument>>())
+            env.MongoDatabase
+                .GetCollection<BsonDocument>("o_users")
+                .FindAsync(
+                    Arg.Any<FilterDefinition<BsonDocument>>(),
+                    Arg.Any<FindOptions<BsonDocument, BsonDocument>>()
+                )
                 .Returns(Task.FromResult(cursorMock));
 
             // SUT
@@ -187,9 +196,12 @@ namespace SIL.XForge.Realtime
             var cursorMock = Substitute.For<IAsyncCursor<BsonDocument>>();
             cursorMock.MoveNextAsync().Returns(Task.FromResult(true), Task.FromResult(false));
             cursorMock.Current.Returns(new[] { doc2, doc1 });
-            env.MongoDatabase.GetCollection<BsonDocument>("o_users")
-                .FindAsync(Arg.Any<FilterDefinition<BsonDocument>>(),
-                    Arg.Any<FindOptions<BsonDocument, BsonDocument>>())
+            env.MongoDatabase
+                .GetCollection<BsonDocument>("o_users")
+                .FindAsync(
+                    Arg.Any<FilterDefinition<BsonDocument>>(),
+                    Arg.Any<FindOptions<BsonDocument, BsonDocument>>()
+                )
                 .Returns(Task.FromResult(cursorMock));
 
             // SUT
@@ -201,38 +213,44 @@ namespace SIL.XForge.Realtime
         {
             public RealtimeService Service = null;
             public IMongoDatabase MongoDatabase = Substitute.For<IMongoDatabase>();
+
             public TestEnvironment()
             {
                 IRealtimeServer realtimeServer = Substitute.For<IRealtimeServer>();
                 IOptions<SiteOptions> siteOptions = Substitute.For<IOptions<SiteOptions>>();
                 IOptions<DataAccessOptions> dataAccessOptions =
-                    Microsoft.Extensions.Options.Options.Create<DataAccessOptions>(new DataAccessOptions()
-                    {
-                        MongoDatabaseName = "mongoDatabaseName"
-                    });
+                    Microsoft.Extensions.Options.Options.Create<DataAccessOptions>(
+                        new DataAccessOptions() { MongoDatabaseName = "mongoDatabaseName" }
+                    );
                 IOptions<RealtimeOptions> realtimeOptions =
-                    Microsoft.Extensions.Options.Options.Create<RealtimeOptions>(new RealtimeOptions()
-                    {
-                        ProjectDoc = new DocConfig("some_projects", typeof(Project)),
-                        ProjectDataDocs = new List<DocConfig>
+                    Microsoft.Extensions.Options.Options.Create<RealtimeOptions>(
+                        new RealtimeOptions()
                         {
-                            new DocConfig("favorite_numbers", typeof(int)),
-                            new DocConfig("favorite_things", typeof(object)),
-                            new DocConfig("favorite_verses", typeof(string))
-                        },
-                        UserDataDocs = new List<DocConfig>
-                        {
-                            new DocConfig("favorite_animals", typeof(object)),
+                            ProjectDoc = new DocConfig("some_projects", typeof(Project)),
+                            ProjectDataDocs = new List<DocConfig>
+                            {
+                                new DocConfig("favorite_numbers", typeof(int)),
+                                new DocConfig("favorite_things", typeof(object)),
+                                new DocConfig("favorite_verses", typeof(string))
+                            },
+                            UserDataDocs = new List<DocConfig> { new DocConfig("favorite_animals", typeof(object)), }
                         }
-                    });
+                    );
                 IOptions<AuthOptions> authOptions = Substitute.For<IOptions<AuthOptions>>();
 
                 IMongoClient mongoClient = Substitute.For<IMongoClient>();
                 mongoClient.GetDatabase(Arg.Any<string>()).Returns(MongoDatabase);
                 IConfiguration configuration = Substitute.For<IConfiguration>();
 
-                Service = new RealtimeService(realtimeServer, siteOptions, dataAccessOptions, realtimeOptions,
-                    authOptions, mongoClient, configuration);
+                Service = new RealtimeService(
+                    realtimeServer,
+                    siteOptions,
+                    dataAccessOptions,
+                    realtimeOptions,
+                    authOptions,
+                    mongoClient,
+                    configuration
+                );
             }
         }
     }

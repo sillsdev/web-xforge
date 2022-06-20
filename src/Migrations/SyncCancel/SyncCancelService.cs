@@ -29,9 +29,13 @@ namespace SyncCancel
 
         private readonly IProgramLogger _logger;
 
-        public SyncCancelService(Func<IParatextSyncRunner> syncRunnerFactory, IRealtimeService realtimeService,
-             IParatextService paratextService,
-             IRepository<UserSecret> userSecretRepo, IProgramLogger logger)
+        public SyncCancelService(
+            Func<IParatextSyncRunner> syncRunnerFactory,
+            IRealtimeService realtimeService,
+            IParatextService paratextService,
+            IRepository<UserSecret> userSecretRepo,
+            IProgramLogger logger
+        )
         {
             _syncRunnerFactory = syncRunnerFactory;
             _realtimeService = realtimeService;
@@ -61,7 +65,9 @@ namespace SyncCancel
             {
                 try
                 {
-                    IDocument<SFProject> projectDoc = await _realtimeServiceConnection.FetchAsync<SFProject>(sfProject.Id);
+                    IDocument<SFProject> projectDoc = await _realtimeServiceConnection.FetchAsync<SFProject>(
+                        sfProject.Id
+                    );
                     if (projectDoc.Data.Sync.QueuedCount > 0)
                     {
                         // Clear the queued count.
@@ -76,14 +82,18 @@ namespace SyncCancel
                         // Potentially cancel individual jobs using localhost:5000/hangfire
 
                         cancelledProjects.Add(sfProject);
-                        _logger.Log($"  {Program.Bullet2} Synchronization cancelled for SF project {sfProject.Name} {sfProject.Id}.");
+                        _logger.Log(
+                            $"  {Program.Bullet2} Synchronization cancelled for SF project {sfProject.Name} {sfProject.Id}."
+                        );
                     }
                 }
                 catch (Exception e)
                 {
                     // We probably won't get here. But just in case.
-                    _logger.Log($"  {Program.Bullet2} There was a problem with cancelling sync. It might be "
-                        + $"tried next with another admin user. Exception is:{Environment.NewLine}{e}");
+                    _logger.Log(
+                        $"  {Program.Bullet2} There was a problem with cancelling sync. It might be "
+                            + $"tried next with another admin user. Exception is:{Environment.NewLine}{e}"
+                    );
                 }
             }
 
@@ -108,8 +118,10 @@ namespace SyncCancel
                 {
                     successOrFailure = "failure";
                 }
-                _logger.Log($"  {Program.Bullet2} SF Project id {sfProject.Id} last successful sync was on "
-                    + $"{sfProject.Sync.DateLastSuccessfulSync?.ToString("o")}. Last sync was {successOrFailure}.");
+                _logger.Log(
+                    $"  {Program.Bullet2} SF Project id {sfProject.Id} last successful sync was on "
+                        + $"{sfProject.Sync.DateLastSuccessfulSync?.ToString("o")}. Last sync was {successOrFailure}."
+                );
             }
         }
 

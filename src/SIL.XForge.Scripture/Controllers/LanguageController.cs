@@ -22,7 +22,7 @@ namespace SIL.XForge.Scripture.Controllers
             Response.Cookies.Append(
                 cookieName,
                 cookieValue,
-                new CookieOptions {Expires = DateTimeOffset.UtcNow.AddYears(1)}
+                new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1) }
             );
 
             return LocalRedirect(returnUrl);

@@ -66,8 +66,12 @@ namespace SIL.XForge.Realtime.Json0
             return Replace(field, index, newItem, EqualityComparer<TItem>.Default);
         }
 
-        public Json0OpBuilder<T> Replace<TItem>(Expression<Func<T, List<TItem>>> field, int index, TItem newItem,
-            IEqualityComparer<TItem> equalityComparer)
+        public Json0OpBuilder<T> Replace<TItem>(
+            Expression<Func<T, List<TItem>>> field,
+            int index,
+            TItem newItem,
+            IEqualityComparer<TItem> equalityComparer
+        )
         {
             var objectPath = new ObjectPath(field);
             if (!objectPath.TryGetValue(_data, out List<TItem> list) || list == null)
@@ -77,26 +81,49 @@ namespace SIL.XForge.Realtime.Json0
             {
                 List<object> path = objectPath.Items.ToList();
                 path.Add(index);
-                Op.Add(new Json0Op { Path = CreateJson0Path(path), DeleteItem = oldItem, InsertItem = newItem });
+                Op.Add(
+                    new Json0Op
+                    {
+                        Path = CreateJson0Path(path),
+                        DeleteItem = oldItem,
+                        InsertItem = newItem
+                    }
+                );
             }
             return this;
         }
 
-        public Json0OpBuilder<T> Replace<TItem>(Expression<Func<T, List<TItem>>> field, int index, TItem newItem,
-            TItem oldItem)
+        public Json0OpBuilder<T> Replace<TItem>(
+            Expression<Func<T, List<TItem>>> field,
+            int index,
+            TItem newItem,
+            TItem oldItem
+        )
         {
             return Replace(field, index, newItem, oldItem, EqualityComparer<TItem>.Default);
         }
 
-        public Json0OpBuilder<T> Replace<TItem>(Expression<Func<T, List<TItem>>> field, int index, TItem newItem,
-            TItem oldItem, IEqualityComparer<TItem> equalityComparer)
+        public Json0OpBuilder<T> Replace<TItem>(
+            Expression<Func<T, List<TItem>>> field,
+            int index,
+            TItem newItem,
+            TItem oldItem,
+            IEqualityComparer<TItem> equalityComparer
+        )
         {
             if (!equalityComparer.Equals(oldItem, newItem))
             {
                 var objectPath = new ObjectPath(field);
                 List<object> path = objectPath.Items.ToList();
                 path.Add(index);
-                Op.Add(new Json0Op { Path = CreateJson0Path(path), DeleteItem = oldItem, InsertItem = newItem });
+                Op.Add(
+                    new Json0Op
+                    {
+                        Path = CreateJson0Path(path),
+                        DeleteItem = oldItem,
+                        InsertItem = newItem
+                    }
+                );
             }
             return this;
         }
@@ -106,41 +133,51 @@ namespace SIL.XForge.Realtime.Json0
             return Set(field, value, EqualityComparer<TField>.Default);
         }
 
-        public Json0OpBuilder<T> Set<TField>(Expression<Func<T, TField>> field, TField value,
-            IEqualityComparer<TField> equalityComparer)
+        public Json0OpBuilder<T> Set<TField>(
+            Expression<Func<T, TField>> field,
+            TField value,
+            IEqualityComparer<TField> equalityComparer
+        )
         {
             var objectPath = new ObjectPath(field);
             bool hasOldValue = objectPath.TryGetValue(_data, out TField oldValue);
             if (!hasOldValue || !equalityComparer.Equals(value, oldValue))
             {
-                Op.Add(new Json0Op
-                {
-                    Path = CreateJson0Path(objectPath.Items),
-                    DeleteProp = hasOldValue ? (object)oldValue : null,
-                    InsertProp = value
-                });
+                Op.Add(
+                    new Json0Op
+                    {
+                        Path = CreateJson0Path(objectPath.Items),
+                        DeleteProp = hasOldValue ? (object)oldValue : null,
+                        InsertProp = value
+                    }
+                );
             }
             return this;
         }
 
-        public Json0OpBuilder<T> Set<TField>(Expression<Func<T, TField>> field, TField newValue,
-            TField oldValue)
+        public Json0OpBuilder<T> Set<TField>(Expression<Func<T, TField>> field, TField newValue, TField oldValue)
         {
             return Set(field, newValue, oldValue, EqualityComparer<TField>.Default);
         }
 
-        public Json0OpBuilder<T> Set<TField>(Expression<Func<T, TField>> field, TField newValue,
-            TField oldValue, IEqualityComparer<TField> equalityComparer)
+        public Json0OpBuilder<T> Set<TField>(
+            Expression<Func<T, TField>> field,
+            TField newValue,
+            TField oldValue,
+            IEqualityComparer<TField> equalityComparer
+        )
         {
             if (!equalityComparer.Equals(newValue, oldValue))
             {
                 var objectPath = new ObjectPath(field);
-                Op.Add(new Json0Op
-                {
-                    Path = CreateJson0Path(objectPath.Items),
-                    DeleteProp = oldValue,
-                    InsertProp = newValue
-                });
+                Op.Add(
+                    new Json0Op
+                    {
+                        Path = CreateJson0Path(objectPath.Items),
+                        DeleteProp = oldValue,
+                        InsertProp = newValue
+                    }
+                );
             }
             return this;
         }

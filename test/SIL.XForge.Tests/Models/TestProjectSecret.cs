@@ -1,6 +1,4 @@
 namespace SIL.XForge.Models
 {
-    public class TestProjectSecret : ProjectSecret
-    {
-    }
+    public class TestProjectSecret : ProjectSecret { }
 }

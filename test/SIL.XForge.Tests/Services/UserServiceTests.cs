@@ -106,9 +106,7 @@ namespace SIL.XForge.Services
             JObject userProfile = env.CreateUserProfile("user03", "notPt03", env.IssuedAt);
             env.AuthService.GetUserAsync("notPt03").Returns(Task.FromResult(userProfile.ToString()));
 
-            Assert.ThrowsAsync<ArgumentException>(() =>
-                env.Service.LinkParatextAccountAsync("auth02", "notPt03")
-            );
+            Assert.ThrowsAsync<ArgumentException>(() => env.Service.LinkParatextAccountAsync("auth02", "notPt03"));
         }
 
         [Test]
@@ -143,8 +141,9 @@ namespace SIL.XForge.Services
             string userIdToDelete = "user02";
             Assert.That(env.ContainsUser(userIdToDelete), Is.True);
             // SUT
-            Assert.ThrowsAsync<ForbiddenException>(() =>
-                env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete));
+            Assert.ThrowsAsync<ForbiddenException>(
+                () => env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete)
+            );
             Assert.That(env.RealtimeService.CallCountDeleteUserAsync, Is.EqualTo(0));
         }
 
@@ -240,44 +239,54 @@ namespace SIL.XForge.Services
 
             public TestEnvironment()
             {
-                UserSecrets = new MemoryRepository<UserSecret>(new[]
-                {
-                    new UserSecret
+                UserSecrets = new MemoryRepository<UserSecret>(
+                    new[]
                     {
-                        Id = "user01",
-                        ParatextTokens = new Tokens
+                        new UserSecret
                         {
-                            AccessToken = TokenHelper.CreateAccessToken(IssuedAt),
-                            RefreshToken = "refresh_token"
+                            Id = "user01",
+                            ParatextTokens = new Tokens
+                            {
+                                AccessToken = TokenHelper.CreateAccessToken(IssuedAt),
+                                RefreshToken = "refresh_token"
+                            }
                         }
                     }
-                });
+                );
 
                 RealtimeService = new MemoryRealtimeService();
-                RealtimeService.AddRepository("users", OTType.Json0, new MemoryRepository<User>(new[]
-                {
-                    new User
-                    {
-                        Id = "user01",
-                        AvatarUrl = "http://example.com/avatar.png",
-                        AuthId = "auth01",
-                        ParatextId = "paratext01"
-                    },
-                    new User
-                    {
-                        Id = "user02",
-                        AvatarUrl = "http://example.com/avatar2.png",
-                        AuthId = "auth02"
-                    }
-                }));
+                RealtimeService.AddRepository(
+                    "users",
+                    OTType.Json0,
+                    new MemoryRepository<User>(
+                        new[]
+                        {
+                            new User
+                            {
+                                Id = "user01",
+                                AvatarUrl = "http://example.com/avatar.png",
+                                AuthId = "auth01",
+                                ParatextId = "paratext01"
+                            },
+                            new User
+                            {
+                                Id = "user02",
+                                AvatarUrl = "http://example.com/avatar2.png",
+                                AuthId = "auth02"
+                            }
+                        }
+                    )
+                );
 
                 var options = Substitute.For<IOptions<SiteOptions>>();
-                options.Value.Returns(new SiteOptions
-                {
-                    Id = "xf",
-                    Name = "xForge",
-                    Origin = new Uri("http://localhost")
-                });
+                options.Value.Returns(
+                    new SiteOptions
+                    {
+                        Id = "xf",
+                        Name = "xForge",
+                        Origin = new Uri("http://localhost")
+                    }
+                );
 
                 Service = new UserService(RealtimeService, options, UserSecrets, AuthService, ProjectService);
             }
@@ -299,16 +308,23 @@ namespace SIL.XForge.Services
                     new JProperty("name", "New User Name"),
                     new JProperty("email", "usernew@example.com"),
                     new JProperty("picture", "http://example.com/new-avatar.png"),
-                    new JProperty("app_metadata", new JObject(
-                        new JProperty("xf_user_id", userId),
-                        new JProperty("xf_role", "user"))),
-                    new JProperty("identities", new JArray(
-                        new JObject(
-                            new JProperty("connection", "paratext"),
-                            new JProperty("user_id", "paratext|paratext01"),
-                            new JProperty("access_token", TokenHelper.CreateAccessToken(issuedAt)),
-                            new JProperty("refresh_token", "new_refresh_token")))),
-                    new JProperty("logins_count", 1));
+                    new JProperty(
+                        "app_metadata",
+                        new JObject(new JProperty("xf_user_id", userId), new JProperty("xf_role", "user"))
+                    ),
+                    new JProperty(
+                        "identities",
+                        new JArray(
+                            new JObject(
+                                new JProperty("connection", "paratext"),
+                                new JProperty("user_id", "paratext|paratext01"),
+                                new JProperty("access_token", TokenHelper.CreateAccessToken(issuedAt)),
+                                new JProperty("refresh_token", "new_refresh_token")
+                            )
+                        )
+                    ),
+                    new JProperty("logins_count", 1)
+                );
             }
         }
     }

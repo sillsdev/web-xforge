@@ -21,6 +21,7 @@ namespace SIL.XForge.Scripture.Models
         public string ParatextUser { get; set; }
         public string TagIcon { get; set; }
         public string Status { get; set; }
+
         /// <summary>
         /// Who this note thread is assigned to. This may be a <see cref="ParatextUserProfile" /> OpaqueUserId,
         /// or a category such as team or unassigned.

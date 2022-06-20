@@ -73,10 +73,19 @@ namespace PtdaSyncAll
         private int _stepCount;
         private int _step;
 
-        public PtdaSyncRunner(IOptions<SiteOptions> siteOptions, IRepository<UserSecret> userSecrets,
-            IRepository<SFProjectSecret> projectSecrets, ISFProjectService projectService, IEngineService engineService,
-            IParatextService paratextService, IRealtimeService realtimeService, IFileSystemService fileSystemService,
-            IDeltaUsxMapper deltaUsxMapper, IParatextNotesMapper notesMapper, ILogger<PtdaSyncRunner> logger)
+        public PtdaSyncRunner(
+            IOptions<SiteOptions> siteOptions,
+            IRepository<UserSecret> userSecrets,
+            IRepository<SFProjectSecret> projectSecrets,
+            ISFProjectService projectService,
+            IEngineService engineService,
+            IParatextService paratextService,
+            IRealtimeService realtimeService,
+            IFileSystemService fileSystemService,
+            IDeltaUsxMapper deltaUsxMapper,
+            IParatextNotesMapper notesMapper,
+            ILogger<PtdaSyncRunner> logger
+        )
         {
             _siteOptions = siteOptions;
             _userSecrets = userSecrets;
@@ -112,19 +121,27 @@ namespace PtdaSyncAll
                 string targetParatextId = _projectDoc.Data.ParatextId;
                 string sourceParatextId = _projectDoc.Data.TranslateConfig.Source?.ParatextId;
 
-                var targetBooks = new HashSet<int>((await _paratextService.GetBooksAsync(_userSecret,
-                    targetParatextId)).Select(bookId => Canon.BookIdToNumber(bookId)));
+                var targetBooks = new HashSet<int>(
+                    (await _paratextService.GetBooksAsync(_userSecret, targetParatextId)).Select(
+                        bookId => Canon.BookIdToNumber(bookId)
+                    )
+                );
 
-                var sourceBooks = new HashSet<int>(TranslationSuggestionsEnabled
-                    ? (await _paratextService.GetBooksAsync(_userSecret, sourceParatextId))
-                        .Select(bookId => Canon.BookIdToNumber(bookId))
-                    : Enumerable.Empty<int>());
+                var sourceBooks = new HashSet<int>(
+                    TranslationSuggestionsEnabled
+                        ? (await _paratextService.GetBooksAsync(_userSecret, sourceParatextId)).Select(
+                            bookId => Canon.BookIdToNumber(bookId)
+                        )
+                        : Enumerable.Empty<int>()
+                );
                 sourceBooks.IntersectWith(targetBooks);
 
                 var targetBooksToDelete = new HashSet<int>(GetBooksToDelete(TextType.Target, targetBooks));
-                var sourceBooksToDelete = new HashSet<int>(TranslationSuggestionsEnabled
-                    ? GetBooksToDelete(TextType.Source, sourceBooks)
-                    : Enumerable.Empty<int>());
+                var sourceBooksToDelete = new HashSet<int>(
+                    TranslationSuggestionsEnabled
+                        ? GetBooksToDelete(TextType.Source, sourceBooks)
+                        : Enumerable.Empty<int>()
+                );
 
                 _step = 0;
                 _stepCount = (targetBooks.Count * (CheckingEnabled ? 3 : 2)) + (sourceBooks.Count * 2);
@@ -162,15 +179,24 @@ namespace PtdaSyncAll
                     else
                         text = _projectDoc.Data.Texts[textIndex];
 
-                    List<Chapter> newChapters = await SyncOrCloneBookUsxAsync(text, TextType.Target, targetParatextId,
-                        false);
+                    List<Chapter> newChapters = await SyncOrCloneBookUsxAsync(
+                        text,
+                        TextType.Target,
+                        targetParatextId,
+                        false
+                    );
                     if (newChapters != null)
                     {
                         if (hasSource)
                         {
                             var chaptersToInclude = new HashSet<int>(newChapters.Select(c => c.Number));
-                            await SyncOrCloneBookUsxAsync(text, TextType.Source, sourceParatextId, true,
-                                chaptersToInclude);
+                            await SyncOrCloneBookUsxAsync(
+                                text,
+                                TextType.Source,
+                                sourceParatextId,
+                                true,
+                                chaptersToInclude
+                            );
                         }
                         await UpdateNotesData(text, newChapters);
                         await _projectDoc.SubmitJson0OpAsync(op =>
@@ -223,7 +249,8 @@ namespace PtdaSyncAll
             if (!(await _userSecrets.TryGetAsync(userId)).TryResult(out _userSecret))
                 return false;
 
-            List<User> paratextUsers = await _realtimeService.QuerySnapshots<User>()
+            List<User> paratextUsers = await _realtimeService
+                .QuerySnapshots<User>()
                 .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
                 .ToListAsync();
             await _notesMapper.InitAsync(_userSecret, _projectSecret, paratextUsers, _projectDoc.Data.ParatextId);
@@ -240,8 +267,13 @@ namespace PtdaSyncAll
             _conn?.Dispose();
         }
 
-        private async Task<List<Chapter>> SyncOrCloneBookUsxAsync(TextInfo text, TextType textType, string paratextId,
-            bool isReadOnly, ISet<int> chaptersToInclude = null)
+        private async Task<List<Chapter>> SyncOrCloneBookUsxAsync(
+            TextInfo text,
+            TextType textType,
+            string paratextId,
+            bool isReadOnly,
+            ISet<int> chaptersToInclude = null
+        )
         {
             string projectPath = GetProjectPath(textType);
             if (!_fileSystemService.DirectoryExists(projectPath))
@@ -252,10 +284,12 @@ namespace PtdaSyncAll
             bool fileExists = _fileSystemService.FileExists(fileName);
             if (fileExists && text.Chapters.Count < 1)
             {
-                Console.WriteLine($"SyncOrCloneBookUsxAsync: Warning: When processing textinfo booknum {text.BookNum}, "
-                    + $"chapters {text.Chapters.Count}, texttype {textType}, for paratext project id {paratextId}, "
-                    + $"the text chapter count was 0 but there was already a file at {fileName}. Perhaps indicating "
-                    + $"a prior failed clone. Going to try cloning it again, rather than syncing.");
+                Console.WriteLine(
+                    $"SyncOrCloneBookUsxAsync: Warning: When processing textinfo booknum {text.BookNum}, "
+                        + $"chapters {text.Chapters.Count}, texttype {textType}, for paratext project id {paratextId}, "
+                        + $"the text chapter count was 0 but there was already a file at {fileName}. Perhaps indicating "
+                        + $"a prior failed clone. Going to try cloning it again, rather than syncing."
+                );
             }
 
             if (fileExists && text.Chapters.Count > 0)
@@ -279,42 +313,60 @@ namespace PtdaSyncAll
             }
         }
 
-        public async Task<List<Chapter>> SyncBookUsxAsync(TextInfo text, TextType textType, string paratextId,
-            string fileName, bool isReadOnly, ISet<int> chaptersToInclude)
+        public async Task<List<Chapter>> SyncBookUsxAsync(
+            TextInfo text,
+            TextType textType,
+            string paratextId,
+            string fileName,
+            bool isReadOnly,
+            ISet<int> chaptersToInclude
+        )
         {
             if (text.Chapters.Count < 1)
             {
                 // The SF DB is corrupt. Also, the project doc in the SF DB has no record of any chapters that
                 // we could synchronize.
-                SortedList<int, IDocument<TextData>> allTextDocsForBook =
-                    await PessimisticallyFetchTextDocsAsync(text, textType);
+                SortedList<int, IDocument<TextData>> allTextDocsForBook = await PessimisticallyFetchTextDocsAsync(
+                    text,
+                    textType
+                );
                 if (allTextDocsForBook.Count < 1)
                 {
                     // We don't have any chapter text docs for the book in the SF DB.
-                    _logger.LogWarning("SyncBookUsxAsync() detected a corrupt SF DB for project with paratext id "
-                        + $"{paratextId}, for book {text.BookNum}, TextType {textType}, because the TextInfo has an "
-                        + $"invalid chapter count of {text.Chapters.Count}. There aren't any chapter text docs for "
-                        + $"this book in the DB anyway though. Returning null to skip fetching or syncing this book.");
+                    _logger.LogWarning(
+                        "SyncBookUsxAsync() detected a corrupt SF DB for project with paratext id "
+                            + $"{paratextId}, for book {text.BookNum}, TextType {textType}, because the TextInfo has an "
+                            + $"invalid chapter count of {text.Chapters.Count}. There aren't any chapter text docs for "
+                            + $"this book in the DB anyway though. Returning null to skip fetching or syncing this book."
+                    );
                     return null;
                 }
                 else
                 {
                     // We have chapter text docs for the book in the SF DB that the project doc did not know were there.
                     // Throw an error and there may need to be a manual investigation to know how to sync this project.
-                    throw new Exception("SyncBookUsxAsync() stopped because there are chapter text docs for a "
-                        + $"project's book that are not known about by the project doc. And the project doc has an "
-                        + $"invalid description of book chapters. TextInfo booknum is {text.BookNum}. "
-                        + $"Text type is {textType}. Paratext project id is {paratextId}. The project TextInfo knows "
-                        + $"about {text.Chapters.Count} chapters, but in the DB there are {allTextDocsForBook.Count} "
-                        + "chapters for the book.");
+                    throw new Exception(
+                        "SyncBookUsxAsync() stopped because there are chapter text docs for a "
+                            + $"project's book that are not known about by the project doc. And the project doc has an "
+                            + $"invalid description of book chapters. TextInfo booknum is {text.BookNum}. "
+                            + $"Text type is {textType}. Paratext project id is {paratextId}. The project TextInfo knows "
+                            + $"about {text.Chapters.Count} chapters, but in the DB there are {allTextDocsForBook.Count} "
+                            + "chapters for the book."
+                    );
                 }
             }
 
             SortedList<int, IDocument<TextData>> dbChapterDocs = await FetchTextDocsAsync(text, textType);
 
             string bookId = Canon.BookNumberToId(text.BookNum);
-            string ptBookText = await FetchFromAndUpdateParatextAsync(text,
-                paratextId, fileName, isReadOnly, bookId, dbChapterDocs);
+            string ptBookText = await FetchFromAndUpdateParatextAsync(
+                text,
+                paratextId,
+                fileName,
+                isReadOnly,
+                bookId,
+                dbChapterDocs
+            );
             if (ptBookText == null)
             {
                 return null;
@@ -323,12 +375,18 @@ namespace PtdaSyncAll
 
             XElement bookTextElem = ParseText(ptBookText);
             var usxDoc = new XDocument(bookTextElem.Element("usx"));
-            Dictionary<int, ChapterDelta> incomingChapters = _deltaUsxMapper.ToChapterDeltas(usxDoc)
+            Dictionary<int, ChapterDelta> incomingChapters = _deltaUsxMapper
+                .ToChapterDeltas(usxDoc)
                 .ToDictionary(cd => cd.Number);
 
             // Set SF DB to snapshot from Paratext.
-            List<Chapter> chapters = await ChangeDbToNewSnapshotAsync(text,
-                textType, chaptersToInclude, dbChapterDocs, incomingChapters);
+            List<Chapter> chapters = await ChangeDbToNewSnapshotAsync(
+                text,
+                textType,
+                chaptersToInclude,
+                dbChapterDocs,
+                incomingChapters
+            );
 
             // Save to disk
             await SaveXmlFileAsync(bookTextElem, fileName);
@@ -337,8 +395,14 @@ namespace PtdaSyncAll
             return chapters;
         }
 
-        private async Task<string> FetchFromAndUpdateParatextAsync(TextInfo text, string paratextId,
-            string fileName, bool isReadOnly, string bookId, SortedList<int, IDocument<TextData>> dbChapterDocs)
+        private async Task<string> FetchFromAndUpdateParatextAsync(
+            TextInfo text,
+            string paratextId,
+            string fileName,
+            bool isReadOnly,
+            string bookId,
+            SortedList<int, IDocument<TextData>> dbChapterDocs
+        )
         {
             XElement bookTextElem;
             string ptBookText;
@@ -351,8 +415,12 @@ namespace PtdaSyncAll
                 bookTextElem = await LoadXmlFileAsync(fileName);
 
                 var oldUsxDoc = new XDocument(bookTextElem.Element("usx"));
-                XDocument newUsxDoc = _deltaUsxMapper.ToUsx(oldUsxDoc, text.Chapters.OrderBy(c => c.Number)
-                    .Select(c => new ChapterDelta(c.Number, c.LastVerse, c.IsValid, dbChapterDocs[c.Number].Data)));
+                XDocument newUsxDoc = _deltaUsxMapper.ToUsx(
+                    oldUsxDoc,
+                    text.Chapters
+                        .OrderBy(c => c.Number)
+                        .Select(c => new ChapterDelta(c.Number, c.LastVerse, c.IsValid, dbChapterDocs[c.Number].Data))
+                );
 
                 var revision = (string)bookTextElem.Attribute("revision");
 
@@ -366,10 +434,12 @@ namespace PtdaSyncAll
                     }
                     catch (Exception e)
                     {
-                        _logger.LogWarning("PtdaSyncRunner FetchFromAndUpdateParatextAsync() failed to fetch PT book "
-                            + $"text (bookId {bookId}, textinfo BookNum {text.BookNum}, "
-                            + $"textinfo chapters count {text.Chapters.Count()}), but for a book with no SF changes "
-                            + $"to upload. Skipping. The exception message is: {e.Message}");
+                        _logger.LogWarning(
+                            "PtdaSyncRunner FetchFromAndUpdateParatextAsync() failed to fetch PT book "
+                                + $"text (bookId {bookId}, textinfo BookNum {text.BookNum}, "
+                                + $"textinfo chapters count {text.Chapters.Count()}), but for a book with no SF changes "
+                                + $"to upload. Skipping. The exception message is: {e.Message}"
+                        );
                         return null;
                     }
                 }
@@ -389,24 +459,28 @@ namespace PtdaSyncAll
                         File.WriteAllText(tempNewUsxFile, newWriter.ToString().Replace("<", "\n<"));
                     }
 
-                    using (Process diffProcess = new Process()
-                    {
-                        StartInfo = new ProcessStartInfo
+                    using (
+                        Process diffProcess = new Process()
                         {
-                            FileName = "/usr/bin/diff",
-                            Arguments = $"-u {tempOldUsxFile} {tempNewUsxFile}",
-                            UseShellExecute = false,
-                            CreateNoWindow = true,
-                            RedirectStandardOutput = true
+                            StartInfo = new ProcessStartInfo
+                            {
+                                FileName = "/usr/bin/diff",
+                                Arguments = $"-u {tempOldUsxFile} {tempNewUsxFile}",
+                                UseShellExecute = false,
+                                CreateNoWindow = true,
+                                RedirectStandardOutput = true
+                            }
                         }
-                    })
+                    )
                     {
                         diffProcess.Start();
                         string diff = diffProcess.StandardOutput.ReadToEnd();
                         diffProcess.WaitForExit();
-                        Console.WriteLine("FetchFromAndUpdateParatextAsync has some SF book text to send to PT "
-                            + $"pt project id {paratextId}, bookId {bookId}, dbChapterDocs count {dbChapterDocs.Count}. "
-                            + $"That diff is: \n{diff}");
+                        Console.WriteLine(
+                            "FetchFromAndUpdateParatextAsync has some SF book text to send to PT "
+                                + $"pt project id {paratextId}, bookId {bookId}, dbChapterDocs count {dbChapterDocs.Count}. "
+                                + $"That diff is: \n{diff}"
+                        );
                     }
 
                     var skipUpdate = Environment.GetEnvironmentVariable("SKIPSYNCBOOK");
@@ -414,14 +488,20 @@ namespace PtdaSyncAll
                     {
                         // Diffs will be recorded in the logs so we can evaluate if any changes were significant
                         // and need to be addressed post-migration
-                        Console.WriteLine($"Skip pushing edits from SF to Paratext."
-                            + $"BookId: {bookId} ParatextId: {paratextId}");
+                        Console.WriteLine(
+                            $"Skip pushing edits from SF to Paratext." + $"BookId: {bookId} ParatextId: {paratextId}"
+                        );
                         return null;
                     }
                     else
                     {
-                        ptBookText = await _paratextService.UpdateBookTextAsync(_userSecret, paratextId, bookId,
-                            revision, newUsxDoc.Root.ToString());
+                        ptBookText = await _paratextService.UpdateBookTextAsync(
+                            _userSecret,
+                            paratextId,
+                            bookId,
+                            revision,
+                            newUsxDoc.Root.ToString()
+                        );
                     }
                 }
             }
@@ -429,14 +509,18 @@ namespace PtdaSyncAll
         }
 
         public async Task<List<Chapter>> ChangeDbToNewSnapshotAsync(
-            TextInfo text, TextType textType, ISet<int> chaptersToInclude,
-            SortedList<int, IDocument<TextData>> dbChapterDocs, Dictionary<int,
-            ChapterDelta> incomingChapters)
+            TextInfo text,
+            TextType textType,
+            ISet<int> chaptersToInclude,
+            SortedList<int, IDocument<TextData>> dbChapterDocs,
+            Dictionary<int, ChapterDelta> incomingChapters
+        )
         {
-            Debug.Assert(dbChapterDocs.All(chapter => chapter.Value.IsLoaded),
-                "Docs must be loaded from the DB.");
-            Debug.Assert(incomingChapters.All(incomingChapter => incomingChapter.Value.Delta != null),
-                "Incoming chapter deltas cannot be null. Maybe DeltaUsxMapper.ToChapterDeltas() has a bug?");
+            Debug.Assert(dbChapterDocs.All(chapter => chapter.Value.IsLoaded), "Docs must be loaded from the DB.");
+            Debug.Assert(
+                incomingChapters.All(incomingChapter => incomingChapter.Value.Delta != null),
+                "Incoming chapter deltas cannot be null. Maybe DeltaUsxMapper.ToChapterDeltas() has a bug?"
+            );
 
             var tasks = new List<Task>();
             var chapters = new List<Chapter>();
@@ -457,12 +541,14 @@ namespace PtdaSyncAll
                     dbChapterDoc = GetTextDoc(text, incomingChapter.Key, textType);
                     tasks.Add(dbChapterDoc.CreateAsync(new TextData(incomingChapter.Value.Delta)));
                 }
-                chapters.Add(new Chapter
-                {
-                    Number = incomingChapter.Key,
-                    LastVerse = incomingChapter.Value.LastVerse,
-                    IsValid = incomingChapter.Value.IsValid
-                });
+                chapters.Add(
+                    new Chapter
+                    {
+                        Number = incomingChapter.Key,
+                        LastVerse = incomingChapter.Value.LastVerse,
+                        IsValid = incomingChapter.Value.IsValid
+                    }
+                );
             }
             foreach (KeyValuePair<int, IDocument<TextData>> dbChapterDoc in dbChapterDocs)
             {
@@ -475,8 +561,7 @@ namespace PtdaSyncAll
         /// <summary>
         /// Fetches all text docs from the database for a book.
         /// </summary>
-        public async Task<SortedList<int, IDocument<TextData>>> FetchTextDocsAsync(TextInfo text,
-            TextType textType)
+        public async Task<SortedList<int, IDocument<TextData>>> FetchTextDocsAsync(TextInfo text, TextType textType)
         {
             var textDocs = new SortedList<int, IDocument<TextData>>();
             var tasks = new List<Task>();
@@ -503,8 +588,10 @@ namespace PtdaSyncAll
         /// Tries to fetch text docs for a book, but for lots of chapters, ignoring the chapters that the
         /// TextInfo claims would be there.
         /// </summary>
-        private async Task<SortedList<int, IDocument<TextData>>> PessimisticallyFetchTextDocsAsync(TextInfo text,
-            TextType textType)
+        private async Task<SortedList<int, IDocument<TextData>>> PessimisticallyFetchTextDocsAsync(
+            TextInfo text,
+            TextType textType
+        )
         {
             int firstPossibleChapter = 1;
             int lastPossibleChapter = 150;
@@ -530,19 +617,28 @@ namespace PtdaSyncAll
             return textDocs;
         }
 
-        private async Task<List<Chapter>> CloneBookUsxAsync(TextInfo text, TextType textType, string paratextId,
-            string fileName, ISet<int> chaptersToInclude)
+        private async Task<List<Chapter>> CloneBookUsxAsync(
+            TextInfo text,
+            TextType textType,
+            string paratextId,
+            string fileName,
+            ISet<int> chaptersToInclude
+        )
         {
             // Remove any stale text_data records that may be in the way.
             await DeleteAllTextDocsForBookAsync(text, textType);
 
-            string bookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId,
-                Canon.BookNumberToId(text.BookNum));
+            string bookText = await _paratextService.GetBookTextAsync(
+                _userSecret,
+                paratextId,
+                Canon.BookNumberToId(text.BookNum)
+            );
             var bookTextElem = ParseText(bookText);
             await UpdateProgress();
 
             var usxDoc = new XDocument(bookTextElem.Element("usx"));
-            Dictionary<int, ChapterDelta> deltas = _deltaUsxMapper.ToChapterDeltas(usxDoc)
+            Dictionary<int, ChapterDelta> deltas = _deltaUsxMapper
+                .ToChapterDeltas(usxDoc)
                 .ToDictionary(cd => cd.Number);
             var tasks = new List<Task>();
             var chapters = new List<Chapter>();
@@ -557,22 +653,26 @@ namespace PtdaSyncAll
                     await textDataDoc.FetchAsync();
                     if (textDataDoc.IsLoaded)
                     {
-                        Console.WriteLine($"CloneBookUsxAsync: Going to delete text doc before re-creating it. "
-                            + $"FYI that it and its contents are: textinfo booknum {text.BookNum}, "
-                            + $"chapter count {text.Chapters.Count}, has source {text.HasSource}, "
-                            + $"int chapterNum: {chapterNum}, text type: {textType}, paratext project id {paratextId}. "
-                            + $"Contents: {textDataDoc.Data.ToString()} END_CONTENTS.");
+                        Console.WriteLine(
+                            $"CloneBookUsxAsync: Going to delete text doc before re-creating it. "
+                                + $"FYI that it and its contents are: textinfo booknum {text.BookNum}, "
+                                + $"chapter count {text.Chapters.Count}, has source {text.HasSource}, "
+                                + $"int chapterNum: {chapterNum}, text type: {textType}, paratext project id {paratextId}. "
+                                + $"Contents: {textDataDoc.Data.ToString()} END_CONTENTS."
+                        );
                         await textDataDoc.DeleteAsync();
                     }
                     await textDataDoc.CreateAsync(new TextData(delta));
                 }
                 tasks.Add(createText(kvp.Key, kvp.Value.Delta));
-                chapters.Add(new Chapter
-                {
-                    Number = kvp.Key,
-                    LastVerse = kvp.Value.LastVerse,
-                    IsValid = kvp.Value.IsValid
-                });
+                chapters.Add(
+                    new Chapter
+                    {
+                        Number = kvp.Key,
+                        LastVerse = kvp.Value.LastVerse,
+                        IsValid = kvp.Value.IsValid
+                    }
+                );
             }
             await Task.WhenAll(tasks);
 
@@ -620,8 +720,11 @@ namespace PtdaSyncAll
             if (CheckingEnabled)
             {
                 XElement oldNotesElem;
-                string oldNotesText = await _paratextService.GetNotesAsync(_userSecret, _projectDoc.Data.ParatextId,
-                    Canon.BookNumberToId(text.BookNum));
+                string oldNotesText = await _paratextService.GetNotesAsync(
+                    _userSecret,
+                    _projectDoc.Data.ParatextId,
+                    Canon.BookNumberToId(text.BookNum)
+                );
                 if (oldNotesText != "")
                     oldNotesElem = ParseText(oldNotesText);
                 else
@@ -631,8 +734,11 @@ namespace PtdaSyncAll
 
                 if (notesElem.Elements("thread").Any())
                 {
-                    await _paratextService.UpdateNotesAsync(_userSecret, _projectDoc.Data.ParatextId,
-                        notesElem.ToString());
+                    await _paratextService.UpdateNotesAsync(
+                        _userSecret,
+                        _projectDoc.Data.ParatextId,
+                        notesElem.ToString()
+                    );
                 }
 
                 await UpdateProgress();
@@ -641,7 +747,8 @@ namespace PtdaSyncAll
 
         private async Task<IReadOnlyList<IDocument<Question>>> FetchQuestionDocsAsync(TextInfo text)
         {
-            List<string> questionDocIds = await _realtimeService.QuerySnapshots<Question>()
+            List<string> questionDocIds = await _realtimeService
+                .QuerySnapshots<Question>()
                 .Where(q => q.ProjectRef == _projectDoc.Id && q.VerseRef.BookNum == text.BookNum)
                 .Select(q => q.Id)
                 .ToListAsync();
@@ -674,7 +781,8 @@ namespace PtdaSyncAll
         /// </summary>
         private async Task DeleteAllQuestionsDocsForBookAsync(TextInfo text)
         {
-            List<string> questionDocIds = await _realtimeService.QuerySnapshots<Question>()
+            List<string> questionDocIds = await _realtimeService
+                .QuerySnapshots<Question>()
                 .Where(q => q.ProjectRef == _projectDoc.Id && q.VerseRef.BookNum == text.BookNum)
                 .Select(q => q.Id)
                 .ToListAsync();
@@ -698,10 +806,13 @@ namespace PtdaSyncAll
         private IEnumerable<int> GetBooksToDelete(TextType textType, IEnumerable<int> existingBooks)
         {
             string projectPath = GetProjectPath(textType);
-            var booksToDelete = new HashSet<int>(_fileSystemService.DirectoryExists(projectPath)
-                ? _fileSystemService.EnumerateFiles(projectPath)
-                    .Select(p => Canon.BookIdToNumber(Path.GetFileNameWithoutExtension(p)))
-                : Enumerable.Empty<int>());
+            var booksToDelete = new HashSet<int>(
+                _fileSystemService.DirectoryExists(projectPath)
+                    ? _fileSystemService
+                        .EnumerateFiles(projectPath)
+                        .Select(p => Canon.BookIdToNumber(Path.GetFileNameWithoutExtension(p)))
+                    : Enumerable.Empty<int>()
+            );
             booksToDelete.ExceptWith(existingBooks);
             return booksToDelete;
         }
@@ -711,13 +822,16 @@ namespace PtdaSyncAll
             if (_projectDoc == null || _projectSecret == null)
                 return;
 
-            IReadOnlyDictionary<string, string> ptUserRoles = await _paratextService.GetProjectRolesAsync(_userSecret,
-                _projectDoc.Data.ParatextId);
+            IReadOnlyDictionary<string, string> ptUserRoles = await _paratextService.GetProjectRolesAsync(
+                _userSecret,
+                _projectDoc.Data.ParatextId
+            );
             var userIdsToRemove = new List<string>();
-            var projectUsers = await _realtimeService.QuerySnapshots<User>()
-                    .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
-                    .Select(u => new { UserId = u.Id, ParatextId = u.ParatextId })
-                    .ToListAsync();
+            var projectUsers = await _realtimeService
+                .QuerySnapshots<User>()
+                .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
+                .Select(u => new { UserId = u.Id, ParatextId = u.ParatextId })
+                .ToListAsync();
 
             await _projectDoc.SubmitJson0OpAsync(op =>
             {
@@ -743,11 +857,14 @@ namespace PtdaSyncAll
                 await _projectService.RemoveUserAsync(_userSecret.Id, _projectDoc.Id, userId);
             if (_notesMapper.NewSyncUsers.Count > 0)
             {
-                await _projectSecrets.UpdateAsync(_projectSecret.Id, u =>
-                {
-                    foreach (SyncUser syncUser in _notesMapper.NewSyncUsers)
-                        u.Add(p => p.SyncUsers, syncUser);
-                });
+                await _projectSecrets.UpdateAsync(
+                    _projectSecret.Id,
+                    u =>
+                    {
+                        foreach (SyncUser syncUser in _notesMapper.NewSyncUsers)
+                            u.Add(p => p.SyncUsers, syncUser);
+                    }
+                );
             }
         }
 

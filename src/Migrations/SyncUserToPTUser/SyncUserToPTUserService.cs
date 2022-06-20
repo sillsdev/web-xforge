@@ -24,8 +24,12 @@ namespace SyncUserToPTUser
 
         private readonly IProgramLogger _logger;
 
-        public SyncUserToPTUserService(IRealtimeService realtimeService, IParatextService paratextService,
-            IRepository<SFProjectSecret> projectSecretRepo, IProgramLogger logger)
+        public SyncUserToPTUserService(
+            IRealtimeService realtimeService,
+            IParatextService paratextService,
+            IRepository<SFProjectSecret> projectSecretRepo,
+            IProgramLogger logger
+        )
         {
             _realtimeService = realtimeService;
             _paratextService = paratextService;
@@ -51,8 +55,14 @@ namespace SyncUserToPTUser
             {
                 try
                 {
-                    IDocument<SFProject> projectDoc = await _realtimeServiceConnection.FetchAsync<SFProject>(sfProject.Id);
-                    if (!(await _projectSecretRepo.TryGetAsync(sfProject.Id)).TryResult(out SFProjectSecret projectSecret))
+                    IDocument<SFProject> projectDoc = await _realtimeServiceConnection.FetchAsync<SFProject>(
+                        sfProject.Id
+                    );
+                    if (
+                        !(await _projectSecretRepo.TryGetAsync(sfProject.Id)).TryResult(
+                            out SFProjectSecret projectSecret
+                        )
+                    )
                     {
                         _logger.Log($"Could not find project secret for project {sfProject.Id}.");
                         continue;
@@ -60,7 +70,9 @@ namespace SyncUserToPTUser
                     if (dryRun)
                     {
                         int syncUserCount = projectSecret.SyncUsers.Count;
-                        _logger.Log($"  {Program.Bullet2} Dry Run Mode: Expected to move {syncUserCount} sync users on project: {sfProject.Id}");
+                        _logger.Log(
+                            $"  {Program.Bullet2} Dry Run Mode: Expected to move {syncUserCount} sync users on project: {sfProject.Id}"
+                        );
                         continue;
                     }
                     List<ParatextUserProfile> ptUsers = new List<ParatextUserProfile>();
@@ -82,16 +94,21 @@ namespace SyncUserToPTUser
                         if (projectDoc.Data.ParatextUsers.Count < 1)
                             op.Set(pd => pd.ParatextUsers, ptUsers);
                     });
-                    await _projectSecretRepo.UpdateAsync(projectSecret.Id, u =>
-                    {
-                        u.Unset(projectSecret => projectSecret.SyncUsers);
-                    });
+                    await _projectSecretRepo.UpdateAsync(
+                        projectSecret.Id,
+                        u =>
+                        {
+                            u.Unset(projectSecret => projectSecret.SyncUsers);
+                        }
+                    );
                     _logger.Log($"  {Program.Bullet2} Sync users moved to SF project {sfProject.Name} {sfProject.Id}.");
                 }
                 catch (Exception e)
                 {
                     // We probably won't get here. But just in case.
-                    _logger.Log($"  {Program.Bullet2} There was a problem moving sync users - projectId: {sfProject.Id}");
+                    _logger.Log(
+                        $"  {Program.Bullet2} There was a problem moving sync users - projectId: {sfProject.Id}"
+                    );
                     _logger.Log($"  {Program.Bullet2} Exception was {e.Message}");
                 }
             }

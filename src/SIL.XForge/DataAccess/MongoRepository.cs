@@ -46,8 +46,11 @@ namespace SIL.XForge.DataAccess
         {
             try
             {
-                ReplaceOneResult result = await _collection.ReplaceOneAsync(e => e.Id == entity.Id, entity,
-                    new UpdateOptions { IsUpsert = upsert });
+                ReplaceOneResult result = await _collection.ReplaceOneAsync(
+                    e => e.Id == entity.Id,
+                    entity,
+                    new UpdateOptions { IsUpsert = upsert }
+                );
                 if (result.IsAcknowledged)
                     return upsert || result.MatchedCount > 0;
                 return false;
@@ -60,20 +63,22 @@ namespace SIL.XForge.DataAccess
             }
         }
 
-        public async Task<T> UpdateAsync(Expression<Func<T, bool>> filter, Action<IUpdateBuilder<T>> update,
-            bool upsert = false)
+        public async Task<T> UpdateAsync(
+            Expression<Func<T, bool>> filter,
+            Action<IUpdateBuilder<T>> update,
+            bool upsert = false
+        )
         {
             try
             {
                 var updateBuilder = new MongoUpdateBuilder<T>();
                 update(updateBuilder);
                 UpdateDefinition<T> updateDef = updateBuilder.Build();
-                return await _collection.FindOneAndUpdateAsync(filter, updateDef,
-                    new FindOneAndUpdateOptions<T>
-                    {
-                        IsUpsert = upsert,
-                        ReturnDocument = ReturnDocument.After
-                    });
+                return await _collection.FindOneAndUpdateAsync(
+                    filter,
+                    updateDef,
+                    new FindOneAndUpdateOptions<T> { IsUpsert = upsert, ReturnDocument = ReturnDocument.After }
+                );
             }
             catch (MongoWriteException e)
             {

@@ -9,6 +9,5 @@ namespace Microsoft.AspNetCore.Builder
         {
             app.ApplicationServices.GetService<IRealtimeService>().StartServer();
         }
-
     }
 }

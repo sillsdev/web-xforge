@@ -35,8 +35,13 @@ namespace SIL.XForge.Scripture.Services
             return delta.Insert(new { empty = true }, attributes);
         }
 
-        public static Delta InsertEmbed(this Delta delta, string type, JObject obj, string segRef = null,
-            JObject attributes = null)
+        public static Delta InsertEmbed(
+            this Delta delta,
+            string type,
+            JObject obj,
+            string segRef = null,
+            JObject attributes = null
+        )
         {
             var embed = new JObject(new JProperty(type, obj));
 
