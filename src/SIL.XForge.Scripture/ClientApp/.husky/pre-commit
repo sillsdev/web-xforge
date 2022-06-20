@@ -1,5 +1,7 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
+# Run npx in ClientApp.
 cd src/SIL.XForge.Scripture/ClientApp
-npx --no-install lint-staged
+# But specify a working directory to lint-staged to work from the root of the repository.
+npx --no-install lint-staged --cwd ../../..
