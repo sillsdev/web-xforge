@@ -2497,6 +2497,66 @@ describe('TextComponent', () => {
     expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
   }));
 
+  it('allows backspace when valid selection', fakeAsync(() => {
+    const { env, segmentRange }: { env: TestEnvironment; segmentRange: RangeStatic } = basicSimpleText();
+
+    // When asked, the current selection will be called valid.
+    const isValidSpy: jasmine.Spy<any> = spyOn<any>(env.component, 'isValidSelectionForCurrentSegment').and.returnValue(
+      true
+    );
+
+    // SUT
+    const allowed: boolean = env.quillHandleBackspace(segmentRange);
+
+    expect(allowed).withContext('should have been allowed when valid selection').toBeTrue();
+    expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
+  }));
+
+  it('disallows backspace when invalid selection', fakeAsync(() => {
+    const { env, segmentRange }: { env: TestEnvironment; segmentRange: RangeStatic } = basicSimpleText();
+
+    // When asked, the current selection will be called invalid.
+    const isValidSpy: jasmine.Spy<any> = spyOn<any>(env.component, 'isValidSelectionForCurrentSegment').and.returnValue(
+      false
+    );
+
+    // SUT
+    const allowed: boolean = env.quillHandleBackspace(segmentRange);
+
+    expect(allowed).withContext('should have been disallowed when invalid selection').toBeFalse();
+    expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
+  }));
+
+  it('allows delete when valid selection', fakeAsync(() => {
+    const { env, segmentRange }: { env: TestEnvironment; segmentRange: RangeStatic } = basicSimpleText();
+
+    // When asked, the current selection will be called valid.
+    const isValidSpy: jasmine.Spy<any> = spyOn<any>(env.component, 'isValidSelectionForCurrentSegment').and.returnValue(
+      true
+    );
+
+    // SUT
+    const allowed: boolean = env.quillHandleDelete(segmentRange);
+
+    expect(allowed).withContext('should have been allowed when valid selection').toBeTrue();
+    expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
+  }));
+
+  it('disallows delete when invalid selection', fakeAsync(() => {
+    const { env, segmentRange }: { env: TestEnvironment; segmentRange: RangeStatic } = basicSimpleText();
+
+    // When asked, the current selection will be called invalid.
+    const isValidSpy: jasmine.Spy<any> = spyOn<any>(env.component, 'isValidSelectionForCurrentSegment').and.returnValue(
+      false
+    );
+
+    // SUT
+    const allowed: boolean = env.quillHandleDelete(segmentRange);
+
+    expect(allowed).withContext('should have been disallowed when invalid selection').toBeFalse();
+    expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
+  }));
+
   it('does not cancel paste when valid selection', fakeAsync(() => {
     const { env }: { env: TestEnvironment; segmentRange: RangeStatic } = basicSimpleText();
 
@@ -2871,6 +2931,35 @@ class TestEnvironment {
     // A remote presence is learned about.
     (this.viewModel as any).onPresenceReceive(remotePresenceId, presenceData);
     tick();
+  }
+
+  /** Dispatching a 'keydown' KeyboardEvent in the test doesn't seem to
+   * trigger the quill backspace handler. Crudely go find the desired handler
+   * method in quill keyboard's list of handlers for backspace and call it.
+   * */
+  quillHandleBackspace(range: RangeStatic): boolean {
+    const backspaceKeyCode = 8;
+    const matchingBindings = (this.component.editor!.keyboard as any).bindings[backspaceKeyCode].filter(
+      (bindingItem: any) => bindingItem.handler.toString().includes('isBackspaceAllowed')
+    );
+    expect(matchingBindings.length)
+      .withContext('setup: should be grabbing a single, specific binding in quill with the desired handler')
+      .toEqual(1);
+    return matchingBindings[0].handler(range);
+  }
+
+  /** Crudely go find the desired handler
+   * method in quill keyboard's list of handlers for delete and call it.
+   * */
+  quillHandleDelete(range: RangeStatic): boolean {
+    const deleteKeyCode = 46;
+    const matchingBindings = (this.component.editor!.keyboard as any).bindings[deleteKeyCode].filter(
+      (bindingItem: any) => bindingItem.handler.toString().includes('isDeleteAllowed')
+    );
+    expect(matchingBindings.length)
+      .withContext('setup: should be grabbing a single, specific binding in quill with the desired handler')
+      .toEqual(1);
+    return matchingBindings[0].handler(range);
   }
 
   /** Assert that in `parentNode`, there are only immediate children with name and order specified in
