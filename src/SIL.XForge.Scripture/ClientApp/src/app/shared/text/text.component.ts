@@ -405,6 +405,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       this.bindQuill();
     }
     EDITORS.add(this._editor);
+
+    editor.container.addEventListener('beforeinput', (ev: Event) => this.onBeforeinput(ev));
   }
 
   focus(): void {
@@ -969,13 +971,27 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return rangeLast == null ? undefined : rangeLast.index + rangeLast.length;
   }
 
+  /** Modify the current selection, if needed, to make the selection valid for editing the current segment. */
   private adjustSelection(): void {
-    if (this._editor == null || this._segment == null) {
+    if (this._editor == null) {
       return;
     }
-    const sel = this._editor.getSelection();
+    const sel: RangeStatic | null = this._editor.getSelection();
     if (sel == null) {
       return;
+    }
+
+    const newSel: RangeStatic | null = this.conformToValidSelectionForCurrentSegment(sel);
+    if (newSel != null && (sel.index !== newSel.index || sel.length !== newSel.length)) {
+      this._editor.setSelection(newSel, 'user');
+    }
+  }
+
+  /** Given a selection, return a possibly modified selection that is a valid for editing the current segment.
+   * For example, a selection over a segment boundary is sometimes not valid. */
+  private conformToValidSelectionForCurrentSegment(sel: RangeStatic): RangeStatic | null {
+    if (this._editor == null || this._segment == null) {
+      return null;
     }
     let newSel: RangeStatic | undefined;
     if (this._segment.text === '') {
@@ -983,10 +999,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       newSel = { index: this._segment.range.index + this._segment.range.length, length: 0 };
     } else if (!this.multiSegmentSelection) {
       // selections outside of the text chooser dialog are not permitted to extend across segments
-      let newStart = Math.max(sel.index, this._segment.range.index);
-      const oldEnd = sel.index + sel.length;
-      const segEnd = this._segment.range.index + this._segment.range.length;
-      const newEnd = Math.min(oldEnd, segEnd);
+      let newStart: number = Math.max(sel.index, this._segment.range.index);
+      const oldEnd: number = sel.index + sel.length;
+      const segEnd: number = this._segment.range.index + this._segment.range.length;
+      const newEnd: number = Math.min(oldEnd, segEnd);
 
       const embedIndices: number[] = Array.from(this._segment.embeddedElements.values()).sort();
       if (newStart === this._segment.range.index || embedIndices.includes(newStart - 1)) {
@@ -997,9 +1013,33 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         }
       }
       newSel = { index: newStart, length: Math.max(0, newEnd - newStart) };
+    } else {
+      return null;
     }
-    if (newSel != null && (sel.index !== newSel.index || sel.length !== newSel.length)) {
-      this._editor.setSelection(newSel, 'user');
+
+    return newSel;
+  }
+
+  /** Is a given selection range valid for editing the current segment? */
+  private isValidSelectionForCurrentSegment(sel: RangeStatic): boolean {
+    const newSel: RangeStatic | null = this.conformToValidSelectionForCurrentSegment(sel);
+    if (newSel == null || sel.index !== newSel.index || sel.length !== newSel.length) {
+      return false;
+    }
+    return true;
+  }
+
+  /** Handler for beforeinput event on quill DOM element. */
+  private onBeforeinput(ev: Event): void {
+    if (this._editor == null) {
+      return;
+    }
+    const sel: RangeStatic | null = this._editor.getSelection();
+    if (sel == null) {
+      return;
+    }
+    if (!this.isValidSelectionForCurrentSegment(sel)) {
+      ev.preventDefault();
     }
   }
 

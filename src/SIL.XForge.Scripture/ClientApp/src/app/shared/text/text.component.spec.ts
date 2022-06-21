@@ -2352,6 +2352,150 @@ describe('TextComponent', () => {
       .withContext('second run should have two styles')
       .toEqual('wj w');
   }));
+
+  it('isValidSelectionForCurrentSegment', fakeAsync(() => {
+    const chapterNum = 2;
+    const segmentRef: string = `verse_${chapterNum}_1`;
+    const nextSegmentRef: string = `verse_${chapterNum}_2`;
+    const textDocOps: RichText.DeltaOperation[] = [
+      { insert: { chapter: { number: chapterNum.toString(), style: 'c' } } },
+      { insert: { verse: { number: '1', style: 'v' } } },
+      {
+        insert: `quick brown fox`,
+        attributes: {
+          segment: segmentRef
+        }
+      },
+      { insert: { verse: { number: '2', style: 'v' } } },
+      {
+        insert: 'jumped over',
+        attributes: {
+          segment: nextSegmentRef
+        }
+      }
+    ];
+
+    const env = new TestEnvironment({ chapterNum, textDoc: textDocOps });
+
+    env.fixture.detectChanges();
+    tick();
+    env.component.setSegment(segmentRef);
+    tick();
+    const segmentRange: RangeStatic | undefined = env.component.getSegmentRange(segmentRef);
+    if (segmentRange == null) {
+      fail('setup');
+      return;
+    }
+
+    // Is a given selection range valid for the current segment (segmentRef)?
+
+    const cases: { description: string; range: RangeStatic; shouldBeValid: boolean }[] = [
+      { description: 'entire segment', range: segmentRange, shouldBeValid: true },
+      { description: 'at first char', range: { index: segmentRange.index, length: 0 }, shouldBeValid: true },
+      { description: 'at second char', range: { index: segmentRange.index + 1, length: 0 }, shouldBeValid: true },
+      { description: 'over first char', range: { index: segmentRange.index, length: 1 }, shouldBeValid: true },
+      { description: 'over second char', range: { index: segmentRange.index + 1, length: 1 }, shouldBeValid: true },
+
+      {
+        description: 'after last char',
+        range: { index: segmentRange.index + segmentRange.length, length: 0 },
+        shouldBeValid: true
+      },
+      {
+        description: 'at last char',
+        range: { index: segmentRange.index + segmentRange.length - 1, length: 0 },
+        shouldBeValid: true
+      },
+      {
+        description: 'over last char',
+        range: { index: segmentRange.index + segmentRange.length - 1, length: 1 },
+        shouldBeValid: true
+      },
+
+      {
+        description: 'prior to first char (out of bounds)',
+        range: { index: segmentRange.index - 1, length: 0 },
+        shouldBeValid: false
+      },
+      {
+        description: 'range prior to first char (out of bounds)',
+        range: { index: segmentRange.index - 1, length: 1 },
+        shouldBeValid: false
+      },
+      {
+        description: 'range prior to and over first char (out of bounds)',
+        range: { index: segmentRange.index - 1, length: 2 },
+        shouldBeValid: false
+      },
+
+      {
+        description: 'range past end (out of bounds)',
+        range: { index: segmentRange.index + segmentRange.length + 1, length: 1 },
+        shouldBeValid: false
+      },
+      {
+        description: 'range over and past end (out of bounds)',
+        range: { index: segmentRange.index + segmentRange.length - 1, length: 2 },
+        shouldBeValid: false
+      },
+      {
+        description: 'range starting at and passing end (out of bounds)',
+        range: { index: segmentRange.index + segmentRange.length, length: 1 },
+        shouldBeValid: false
+      },
+
+      {
+        description: 'before segment thru after segment (out of bounds on both sides)',
+        range: { index: segmentRange.index - 1, length: segmentRange.length + 2 },
+        shouldBeValid: false
+      }
+    ];
+    cases.forEach((testCase: { description: string; range: RangeStatic; shouldBeValid: boolean }) => {
+      expect((env.component as any).isValidSelectionForCurrentSegment(testCase.range))
+        .withContext(testCase.description)
+        .toEqual(testCase.shouldBeValid);
+    });
+  }));
+
+  it('does not cancel in beforeinput when valid selection', fakeAsync(() => {
+    const { env }: { env: TestEnvironment; segmentRange: RangeStatic } = basicSimpleText();
+
+    const beforeinputEvent: InputEvent = new InputEvent('beforeinput', {
+      cancelable: true
+    });
+
+    // When asked, the current selection will be called valid.
+    const isValidSpy: jasmine.Spy<any> = spyOn<any>(env.component, 'isValidSelectionForCurrentSegment').and.returnValue(
+      true
+    );
+
+    // SUT
+    const cancelled: boolean = !env.component.editor?.container.dispatchEvent(beforeinputEvent);
+    flush();
+
+    expect(cancelled).withContext('event should not have been cancelled when valid selection').toBeFalse();
+    expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
+  }));
+
+  it('cancels in beforeinput when invalid selection', fakeAsync(() => {
+    const { env }: { env: TestEnvironment; segmentRange: RangeStatic } = basicSimpleText();
+
+    const beforeinputEvent: InputEvent = new InputEvent('beforeinput', {
+      cancelable: true
+    });
+
+    // When asked, the current selection will be called invalid.
+    const isValidSpy: jasmine.Spy<any> = spyOn<any>(env.component, 'isValidSelectionForCurrentSegment').and.returnValue(
+      false
+    );
+
+    // SUT
+    const cancelled: boolean = !env.component.editor?.container.dispatchEvent(beforeinputEvent);
+    flush();
+
+    expect(cancelled).withContext('event should have been cancelled when invalid selection').toBeTrue();
+    expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
+  }));
 });
 
 /** Represents both what the TextComponent understand to be the text in a segment, and what the editor
@@ -2671,4 +2815,36 @@ class TestEnvironment {
       .withContext(`not expected list of nodes: [${childNodes}] does not match expected [${nodeOrderings}]`)
       .toEqual(nodeOrderings);
   }
+}
+
+function basicSimpleText(): { env: TestEnvironment; segmentRange: RangeStatic } {
+  const chapterNum = 2;
+  const segmentRef: string = `verse_${chapterNum}_1`;
+  const textDocOps: RichText.DeltaOperation[] = [
+    { insert: { chapter: { number: chapterNum.toString(), style: 'c' } } },
+    { insert: { verse: { number: '1', style: 'v' } } },
+    {
+      insert: `quick brown fox`,
+      attributes: {
+        segment: segmentRef
+      }
+    }
+  ];
+
+  const env = new TestEnvironment({ chapterNum, textDoc: textDocOps });
+
+  env.fixture.detectChanges();
+  tick();
+  env.component.setSegment(segmentRef);
+  tick();
+  const segmentRange: RangeStatic | undefined = env.component.getSegmentRange(segmentRef);
+  if (segmentRange == null) {
+    fail('setup: problem with segment ref');
+    throw Error();
+  }
+  // Select the segment text.
+  env.component.editor?.setSelection(segmentRange.index, segmentRange.length);
+  env.fixture.detectChanges();
+  tick();
+  return { env, segmentRange };
 }
