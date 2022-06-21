@@ -238,17 +238,6 @@
             {{ t("synchronize") }}
           </a>
         </div>
-        <div *ngIf="canSeeSettings$ | async">
-          <a
-            mat-list-item
-            [appRouterLink]="getRouterLink('settings')"
-            [class.list-item-disabled]="!isAppOnline"
-            (click)="itemSelected()"
-          >
-            <mat-icon mat-list-icon>settings</mat-icon>
-            {{ t("settings") }}
-          </a>
-        </div>
         <div *ngIf="canSeeUsers$ | async">
           <a
             mat-list-item
@@ -258,6 +247,17 @@
           >
             <mat-icon mat-list-icon>people</mat-icon>
             {{ t("users") }}
+          </a>
+        </div>
+        <div *ngIf="canSeeSettings$ | async">
+          <a
+            mat-list-item
+            [appRouterLink]="getRouterLink('settings')"
+            [class.list-item-disabled]="!isAppOnline"
+            (click)="itemSelected()"
+          >
+            <mat-icon mat-list-icon>settings</mat-icon>
+            {{ t("settings") }}
           </a>
         </div>
       </mat-nav-list>
