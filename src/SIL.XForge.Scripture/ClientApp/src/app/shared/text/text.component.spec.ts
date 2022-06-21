@@ -2429,6 +2429,11 @@ describe('TextComponent', () => {
       },
 
       {
+        description: 'past end (out of bounds)',
+        range: { index: segmentRange.index + segmentRange.length + 1, length: 0 },
+        shouldBeValid: false
+      },
+      {
         description: 'range past end (out of bounds)',
         range: { index: segmentRange.index + segmentRange.length + 1, length: 1 },
         shouldBeValid: false
