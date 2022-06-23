@@ -6,6 +6,7 @@ using Paratext;
 using Paratext.Data.Repository;
 using Paratext.Data.Users;
 using Paratext.Data.RegistryServerAccess;
+using Paratext.Data;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -38,6 +39,19 @@ namespace SIL.XForge.Scripture.Services
         public InternetSharedRepositorySource AsInternetSharedRepositorySource()
         {
             return this;
+        }
+
+        public bool CanUserAuthenticateToPTArchives()
+        {
+            try
+            {
+                GetClient().Get("listrepos");
+                return true;
+            }
+            catch (Paratext.Data.HttpException)
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -137,6 +151,12 @@ namespace SIL.XForge.Scripture.Services
         {
             JArray projects = GetJsonArray("my/projects");
             return projects == null ? null : projects.Select(p => new ProjectMetadata((JObject)p)).ToList();
+        }
+
+        /// <remarks>Helps unit tests</remarks>
+        public virtual RESTClient GetClient()
+        {
+            return client;
         }
 
         /// <summary>
