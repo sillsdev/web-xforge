@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
@@ -27,7 +28,6 @@ using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
-using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
@@ -2121,6 +2121,105 @@ namespace SIL.XForge.Scripture.Services
             // Removes leftover folders from a failed previous restore
             env.MockFileSystemService.Received().DeleteDirectory(projectRepository);
             env.MockFileSystemService.Received().DeleteDirectory(restoredRepository);
+        }
+
+        [Test]
+        public async Task CanUserAuthenticateToPTRegistryAsync_Works()
+        {
+            var env = new TestEnvironment();
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+            // One SUT
+            Assert.ThrowsAsync<ArgumentNullException>(
+                () => env.Service.CanUserAuthenticateToPTRegistryAsync(null),
+                "throw on unacceptable input"
+            );
+
+            // One SUT
+            Assert.ThrowsAsync<ArgumentException>(
+                () =>
+                    env.Service.CanUserAuthenticateToPTRegistryAsync(
+                        new UserSecret() { Id = null, ParatextTokens = null }
+                    ),
+                "the user secret does not have usable content"
+            );
+
+            var unauthorizedHttpResponseMessage = new HttpResponseMessage(HttpStatusCode.Unauthorized)
+            {
+                RequestMessage = new HttpRequestMessage(HttpMethod.Get, "some-request-uri"),
+                Content = new ByteArrayContent(Encoding.UTF8.GetBytes("big problem"))
+            };
+
+            env.Service._registryClient = Substitute.For<HttpClient>();
+            env.Service._registryClient
+                .SendAsync(Arg.Any<HttpRequestMessage>(), Arg.Any<CancellationToken>())
+                .Returns(unauthorizedHttpResponseMessage);
+
+            // One SUT
+            Assert.That(
+                await env.Service.CanUserAuthenticateToPTRegistryAsync(user01Secret),
+                Is.False,
+                "authorization token is not accepted by server. unauthorized."
+            );
+
+            var okHttpResponseMessage = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                RequestMessage = new HttpRequestMessage(HttpMethod.Get, "some-request-uri"),
+                Content = new ByteArrayContent(
+                    Encoding.UTF8.GetBytes(
+                        @"{
+                            ""sub"": ""ptUserIdCode11111"",
+                        }"
+                    )
+                )
+            };
+
+            env.Service._registryClient
+                .SendAsync(Arg.Any<HttpRequestMessage>(), Arg.Any<CancellationToken>())
+                .Returns(okHttpResponseMessage);
+
+            // One SUT
+            Assert.That(
+                await env.Service.CanUserAuthenticateToPTRegistryAsync(user01Secret),
+                Is.True,
+                "authorization token is accepted by server"
+            );
+        }
+
+        [Test]
+        public async Task CanUserAuthenticateToPTArchivesAsync_Works()
+        {
+            var env = new TestEnvironment();
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+            string userSFId = env.User01;
+
+            // One SUT
+            Assert.ThrowsAsync<ArgumentException>(
+                () => env.Service.CanUserAuthenticateToPTArchivesAsync(null),
+                "unacceptable null input"
+            );
+
+            // One SUT
+            Assert.ThrowsAsync<ArgumentException>(
+                () => env.Service.CanUserAuthenticateToPTArchivesAsync(string.Empty),
+                "unacceptable empty input"
+            );
+
+            IInternetSharedRepositorySource mockSource = Substitute.For<IInternetSharedRepositorySource>();
+
+            env.MockInternetSharedRepositorySourceProvider
+                .GetSource(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<string>())
+                .Returns(mockSource);
+            mockSource.CanUserAuthenticateToPTArchives().Returns(false);
+
+            // One SUT
+            Assert.That(await env.Service.CanUserAuthenticateToPTArchivesAsync(userSFId), Is.False, "unauthorized");
+
+            mockSource.CanUserAuthenticateToPTArchives().Returns(true);
+
+            // One SUT
+            Assert.That(await env.Service.CanUserAuthenticateToPTArchivesAsync(userSFId), Is.True, "authorized");
         }
 
         private class TestEnvironment

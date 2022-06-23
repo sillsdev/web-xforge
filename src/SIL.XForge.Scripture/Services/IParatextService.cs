@@ -12,6 +12,8 @@ namespace SIL.XForge.Scripture.Services
     public interface IParatextService
     {
         void Init();
+        Task<bool> CanUserAuthenticateToPTRegistryAsync(UserSecret userSecret);
+        Task<bool> CanUserAuthenticateToPTArchivesAsync(string userSFId);
         Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret);
         string GetParatextUsername(UserSecret userSecret);
         Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId, CancellationToken token);

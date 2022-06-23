@@ -350,6 +350,13 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
+        private async Task PreflightAuthenticationReportAsync()
+        {
+            bool canAuthToRegistry = await _paratextService.CanUserAuthenticateToPTRegistryAsync(_userSecret);
+            bool canAuthToArchives = await _paratextService.CanUserAuthenticateToPTArchivesAsync(_userSecret.Id);
+            Log($"User can authenticate to PT Registry: {canAuthToRegistry}, to PT Archives: {canAuthToArchives}.");
+        }
+
         private async Task UpdateDocsAsync(string targetParatextId,
             Dictionary<int, SortedList<int, IDocument<TextData>>> targetTextDocsByBook,
             Dictionary<int, IReadOnlyList<IDocument<Question>>> questionDocsByBook, HashSet<int> targetBooks,
@@ -439,6 +446,10 @@ namespace SIL.XForge.Scripture.Services
             List<User> paratextUsers = await _realtimeService.QuerySnapshots<User>()
                 .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
                 .ToListAsync();
+
+            // Report on authentication success before other attempts.
+            await PreflightAuthenticationReportAsync();
+
             await _notesMapper.InitAsync(_userSecret, _projectSecret, paratextUsers, _projectDoc.Data, token);
 
             await _projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.Sync.PercentCompleted, 0));
