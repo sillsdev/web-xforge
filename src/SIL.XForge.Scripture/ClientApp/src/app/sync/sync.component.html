@@ -57,5 +57,11 @@
         </ng-container>
       </div>
     </mat-card>
+    <span
+      *ngIf="showSyncFailureSupportMessage"
+      id="syncFailureSupport-message"
+      class="syncFailureSupport-text"
+      [innerHTML]="syncFailureSupportMessage"
+    ></span>
   </div>
 </ng-container>
