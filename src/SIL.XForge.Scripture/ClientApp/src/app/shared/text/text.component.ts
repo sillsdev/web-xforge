@@ -12,7 +12,7 @@ import {
 import { TranslocoService } from '@ngneat/transloco';
 import isEqual from 'lodash-es/isEqual';
 import merge from 'lodash-es/merge';
-import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
+import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources } from 'quill';
 import QuillCursors from 'quill-cursors';
 import { AuthType, getAuthType } from 'realtime-server/lib/esm/common/models/user';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
@@ -714,9 +714,9 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       return;
     }
 
-    const position: EmbedPosition | undefined = this.embeddedElements.get(embedId);
+    const position: number | undefined = this.embeddedElements.get(embedId);
     if (position != null) {
-      const deltaOps: DeltaOperation[] = [{ retain: position.position }, { delete: 1 }];
+      const deltaOps: DeltaOperation[] = [{ retain: position }, { delete: 1 }];
       this.editor.updateContents(new Delta(deltaOps), source);
     }
   }
