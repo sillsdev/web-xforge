@@ -1088,7 +1088,7 @@ namespace SIL.XForge.Scripture.Services
         public bool BackupExists(UserSecret userSecret, string paratextId)
         {
             // We do not back up resources
-            if (paratextId == null || paratextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+            if (paratextId == null || this.IsResource(paratextId))
             {
                 return false;
             }
@@ -1109,7 +1109,7 @@ namespace SIL.XForge.Scripture.Services
         public bool BackupRepository(UserSecret userSecret, string paratextId)
         {
             // We do not back up resources
-            if (paratextId == null || paratextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+            if (paratextId == null || this.IsResource(paratextId))
             {
                 if (paratextId == null)
                 {
@@ -1161,13 +1161,13 @@ namespace SIL.XForge.Scripture.Services
         public bool RestoreRepository(UserSecret userSecret, string paratextId)
         {
             // We do not back up resources
-            if (paratextId == null || paratextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+            if (paratextId == null || this.IsResource(paratextId))
             {
                 if (paratextId == null)
                 {
                     _logger.LogInformation("Not restoring local PT repo for null paratextId.");
                 }
-                else if (paratextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+                else if (this.IsResource(paratextId))
                 {
                     _logger.LogInformation("Not restoring a DBL resource.");
                 }
