@@ -616,9 +616,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       const isUserEdit: boolean = source === 'user';
       this.update(delta, segmentsBeforeDelta, embedsBeforeDelta, isUserEdit);
     }
-    if ((source as Sources) === 'user') {
-      Promise.resolve().then(() => this.removeDuplicateEmbeddedElements());
-    }
   }
 
   async onSelectionChanged(range: RangeStatic | null, source: string): Promise<void> {
@@ -719,41 +716,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       const deltaOps: DeltaOperation[] = [{ retain: position.position }, { delete: 1 }];
       this.editor.updateContents(new Delta(deltaOps), source);
     }
-  }
-
-  /**
-   * Detect and remove embed instances where the duplicate position exists.
-   * Note that this removes all instances of the embed.
-   */
-  removeDuplicateEmbeddedElements(): void {
-    if (this.editor == null) {
-      return;
-    }
-
-    const embedPositionsToRemove: Set<number> = new Set<number>();
-    for (const embed of this.embeddedElements.values()) {
-      if (embed.duplicatePosition != null) {
-        embedPositionsToRemove.add(embed.position);
-        embedPositionsToRemove.add(embed.duplicatePosition);
-      }
-    }
-    const deletePositions: number[] = Array.from(embedPositionsToRemove).sort((a, b) => a - b);
-    if (deletePositions.length < 1) {
-      return;
-    }
-    let curIndex = deletePositions[0];
-    const clearDuplicateOps: DeltaOperation[] = [{ retain: curIndex }];
-    for (const position of deletePositions) {
-      // The length to retain is the character length between the last delete and the current delete positions
-      const retainLength: number = position - curIndex - 1;
-      if (retainLength > 0) {
-        clearDuplicateOps.push({ retain: retainLength });
-      }
-      clearDuplicateOps.push({ delete: 1 });
-      curIndex = position;
-    }
-    const removedDuplicateDelta = new Delta(clearDuplicateOps);
-    this.editor.updateContents(removedDuplicateDelta, 'api');
   }
 
   isSegmentBlank(ref: string): boolean {

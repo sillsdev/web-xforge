@@ -2192,7 +2192,7 @@ describe('EditorComponent', () => {
       env.targetEditor.setSelection(note1Position - beforeNoteLength, deleteLength, 'user');
       env.deleteCharacters();
       newNotePosition = env.getNoteThreadEditorPosition('thread01');
-      const range = env.component.target!.getSegmentRange('verse_1_1')!;
+      let range = env.component.target!.getSegmentRange('verse_1_1')!;
       // note moves to the beginning of the verse
       expect(newNotePosition).toEqual(range.index);
       env.triggerUndo();
@@ -2213,6 +2213,8 @@ describe('EditorComponent', () => {
       expect(noteThread6.data!.position).toEqual(noteThread6Anchor);
       expect(noteThread1.data!.position).toEqual(noteThread1Anchor);
       expect(textDoc.data!.ops![3].insert).toEqual('target: chapter 1, verse 1.');
+      range = env.component.target!.getSegmentRange('verse_1_1')!;
+      expect(env.targetEditor.getText(range.index, range.length)).toEqual('target: chapter 1, verse 1.');
 
       // undo deleting multiple notes
       const noteThread3: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread03');
@@ -2239,6 +2241,9 @@ describe('EditorComponent', () => {
       expect(noteThread3.data!.position).toEqual(noteThread3Anchor);
       expect(noteThread4.data!.position).toEqual(noteThread4Anchor);
       expect(textDoc.data!.ops![8].insert).toEqual('target: chapter 1, verse 3.');
+      range = env.component.target!.getSegmentRange('verse_1_3')!;
+      expect(env.targetEditor.getText(range.index, range.length)).toEqual('target: chapter 1, verse 3.');
+
       env.dispose();
     }));
 
