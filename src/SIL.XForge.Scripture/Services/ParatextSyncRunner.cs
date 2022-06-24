@@ -1124,7 +1124,7 @@ namespace SIL.XForge.Scripture.Services
                 await _conn.CommitTransactionAsync();
 
                 // Backup the repository
-                if (_projectDoc.Data.ParatextId.Length != SFInstallableDblResource.ResourceIdentifierLength)
+                if (!_paratextService.IsResource(_projectDoc.Data.ParatextId))
                 {
                     bool backupOutcome = _paratextService.BackupRepository(_userSecret, _projectDoc.Data.ParatextId);
                     if (!backupOutcome)
