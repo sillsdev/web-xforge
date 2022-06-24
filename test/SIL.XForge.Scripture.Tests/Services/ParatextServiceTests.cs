@@ -39,6 +39,21 @@ namespace SIL.XForge.Scripture.Services
     public class ParatextServiceTests
     {
         [Test]
+        public void AssemblyDirectory_DoesNotCrash()
+        {
+            string dir = null;
+            // SUT
+            Assert.DoesNotThrow(
+                () =>
+                {
+                    dir = ParatextService.AssemblyDirectory;
+                },
+                "does not crash"
+            );
+            Assert.That(string.IsNullOrWhiteSpace(dir), Is.False, "returns something");
+        }
+
+        [Test]
         public void GetProjectsAsync_BadArguments()
         {
             var env = new TestEnvironment();

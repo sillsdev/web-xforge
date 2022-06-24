@@ -122,9 +122,7 @@ namespace SIL.XForge.Scripture.Services
             get
             {
                 string location = Assembly.GetExecutingAssembly().Location;
-                UriBuilder uri = new UriBuilder(location);
-                string path = Uri.UnescapeDataString(uri.Path);
-                return Path.GetDirectoryName(path);
+                return Path.GetDirectoryName(location);
             }
         }
 
