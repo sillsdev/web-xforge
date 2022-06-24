@@ -2,13 +2,11 @@
   <div fxLayout="column" class="base-container">
     <h2 id="title">{{ t("synchronize_project", { projectName: projectName }) }}</h2>
     <span *ngIf="!isAppOnline" class="offline-text"> {{ t("connect_network_to_synchronize") }} </span>
-    <span *ngIf="syncDisabled" id="syncDisabled-message" class="syncDisabled-text" [innerHTML]="syncDisabledMessage">
-    </span>
+    <span *ngIf="syncDisabled" id="sync-disabled-message" [innerHTML]="syncDisabledMessage"> </span>
     <mat-card class="sync-card">
       <div fxLayout="column" class="card-content">
         <button
           *ngIf="showParatextLogin && isAppOnline"
-          class="action-button"
           mat-flat-button
           type="button"
           (click)="logInWithParatext()"
@@ -21,7 +19,6 @@
         <ng-container *ngIf="isLoggedIntoParatext || isLoading || !isAppOnline">
           <button
             *ngIf="!syncActive"
-            class="action-button"
             mat-flat-button
             color="primary"
             type="button"
@@ -32,9 +29,7 @@
             <mat-icon>sync</mat-icon>
             {{ t("synchronize") }}
           </button>
-          <mat-hint *ngIf="syncActive" id="sync-message" class="sync-info">{{
-            t("your_project_is_being_synchronized")
-          }}</mat-hint>
+          <mat-hint *ngIf="syncActive" id="sync-message">{{ t("your_project_is_being_synchronized") }}</mat-hint>
           <app-sync-progress
             *ngIf="syncActive"
             [projectDoc]="projectDoc"
@@ -42,7 +37,6 @@
           ></app-sync-progress>
           <button
             *ngIf="syncActive"
-            class="action-button"
             mat-button
             type="button"
             (click)="cancelSync()"
@@ -51,11 +45,16 @@
           >
             {{ t("cancel") }}
           </button>
-          <mat-hint *ngIf="!syncActive" [title]="lastSyncDisplayDate" id="date-last-sync" class="sync-info">
+          <mat-hint *ngIf="!syncActive" [title]="lastSyncDisplayDate" id="date-last-sync">
             {{ lastSyncNotice }}
           </mat-hint>
         </ng-container>
       </div>
     </mat-card>
+    <span
+      *ngIf="showSyncFailureSupportMessage"
+      id="sync-failure-support-message"
+      [innerHTML]="syncFailureSupportMessage"
+    ></span>
   </div>
 </ng-container>

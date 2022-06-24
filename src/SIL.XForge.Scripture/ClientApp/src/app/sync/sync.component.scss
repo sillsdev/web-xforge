@@ -1,57 +1,52 @@
-@import 'src/variables';
+@use 'src/variables';
 
-.sync-card {
-  padding: 0;
-  max-width: 37rem;
-  min-width: 18rem;
-  align-self: center;
-}
+.base-container {
+  align-items: center;
 
-h2 {
-  align-self: center;
-  text-align: center;
-}
+  .sync-card {
+    padding: 0;
+    max-width: 37rem;
+    min-width: 18rem;
+  }
 
-.card-content {
-  padding: 1rem;
-  align-self: center;
-}
+  .card-content {
+    padding: 1rem;
+    align-items: center;
+  }
 
-.action-button {
-  align-self: center;
-}
+  #btn-sync,
+  .progress-bar {
+    margin-bottom: 1rem;
+  }
 
-#btn-sync,
-.progress-bar {
-  margin-bottom: 1rem;
-}
+  #btn-log-in {
+    background-color: variables.$pt-button-green;
+    color: white;
+    height: 2.5rem;
+  }
 
-#btn-log-in {
-  background-color: $pt-button-green;
-  color: white;
-  height: 2.5rem;
-}
+  .paratext-logo {
+    width: 2rem;
+    height: 2rem;
+    margin-right: 0.5rem;
+  }
 
-.paratext-logo {
-  width: 2rem;
-  height: 2rem;
-  margin-right: 0.5rem;
-}
+  #sync-message {
+    margin-bottom: 1rem;
+  }
 
-#sync-message {
-  margin-bottom: 1rem;
-}
+  .offline-text {
+    padding-bottom: 1rem;
+  }
 
-.sync-info {
-  align-self: center;
-}
+  #sync-disabled-message {
+    padding-bottom: 1rem;
+    max-width: 40rem;
+  }
 
-.offline-text {
-  padding-bottom: 1rem;
-  text-align: center;
-}
-
-.syncDisabled-text {
-  padding-bottom: 1rem;
-  text-align: center;
+  #sync-failure-support-message {
+    padding: 1rem;
+    color: variables.$subtleTextColor;
+    max-width: 40rem;
+  }
 }

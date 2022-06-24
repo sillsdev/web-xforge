@@ -50,7 +50,7 @@ describe('SyncComponent', () => {
   }));
 
   it('should display Log In to Paratext', fakeAsync(() => {
-    const env = new TestEnvironment(false);
+    const env = new TestEnvironment({ isParatextAccountConnected: false });
     expect(env.title.textContent).toContain('Synchronize Sync Test Project with Paratext');
     expect(env.logInButton.nativeElement.textContent).toContain('Log in to Paratext');
     expect(env.syncButton).toBeNull();
@@ -61,7 +61,7 @@ describe('SyncComponent', () => {
   }));
 
   it('should redirect the user to Log In to Paratext', fakeAsync(() => {
-    const env = new TestEnvironment(false);
+    const env = new TestEnvironment({ isParatextAccountConnected: false });
 
     env.clickElement(env.logInButton);
 
@@ -78,7 +78,7 @@ describe('SyncComponent', () => {
   }));
 
   it('should disable button when offline', fakeAsync(() => {
-    const env = new TestEnvironment(true, false, false);
+    const env = new TestEnvironment({ isParatextAccountConnected: true, isInProgress: false, isOnline: false });
     expect(env.logInButton).toBeNull();
     expect(env.syncButton.nativeElement.disabled).toBe(true);
     expect(env.lastSyncDate.textContent).toContain('Last synced on');
@@ -126,13 +126,39 @@ describe('SyncComponent', () => {
   }));
 
   it('should show progress if in-progress when loaded', fakeAsync(() => {
-    const env = new TestEnvironment(true, true);
+    const env = new TestEnvironment({ isParatextAccountConnected: true, isInProgress: true });
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).not.toBeNull();
   }));
 
+  it('should direct to support if last sync was failure', fakeAsync(() => {
+    const env = new TestEnvironment({ lastSyncWasSuccessful: false });
+    expect(env.syncFailureSupportMessage).not.toBeNull();
+  }));
+
+  it('should not direct to support if last sync was not failure', fakeAsync(() => {
+    const env = new TestEnvironment({ lastSyncWasSuccessful: true });
+    expect(env.syncFailureSupportMessage).toBeNull();
+  }));
+
+  it('should not direct to support if last sync success has no record', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.component.projectDoc!.data!.sync.lastSyncSuccessful = undefined;
+    tick();
+    env.fixture.detectChanges();
+    expect(env.component.projectDoc?.data?.sync.lastSyncSuccessful).withContext('setup').toBeUndefined();
+    expect(env.syncFailureSupportMessage)
+      .withContext('do not show support message when the last sync success record is absent')
+      .toBeNull();
+  }));
+
   it('should explain and disable button when syncDisabled', fakeAsync(() => {
-    const env = new TestEnvironment(true, false, true, true);
+    const env = new TestEnvironment({
+      isParatextAccountConnected: true,
+      isInProgress: false,
+      isOnline: true,
+      isSyncDisabled: true
+    });
     expect(env.logInButton).toBeNull();
     expect(env.syncButton.nativeElement.disabled).toBe(true);
     expect(env.lastSyncDate.textContent).toContain('Last synced on');
@@ -140,7 +166,12 @@ describe('SyncComponent', () => {
   }));
 
   it('should not explain or disable button when not syncDisabled', fakeAsync(() => {
-    const env = new TestEnvironment(true, false, true, false);
+    const env = new TestEnvironment({
+      isParatextAccountConnected: true,
+      isInProgress: false,
+      isOnline: true,
+      isSyncDisabled: false
+    });
     expect(env.syncButton.nativeElement.disabled).toBe(false);
     expect(env.syncDisabledMessage).toBeNull();
   }));
@@ -180,6 +211,14 @@ describe('SyncComponent', () => {
   }));
 });
 
+interface SyncComponentTestConstructorArgs {
+  isParatextAccountConnected?: boolean;
+  isInProgress?: boolean;
+  isOnline?: boolean;
+  isSyncDisabled?: boolean;
+  lastSyncWasSuccessful?: boolean;
+}
+
 class TestEnvironment {
   readonly fixture: ComponentFixture<SyncComponent>;
   readonly component: SyncComponent;
@@ -189,12 +228,13 @@ class TestEnvironment {
   private isLoading: boolean = false;
   private isOnline: BehaviorSubject<boolean>;
 
-  constructor(
-    isParatextAccountConnected: boolean = true,
-    isInProgress: boolean = false,
-    isOnline: boolean = true,
-    isSyncDisabled: boolean = false
-  ) {
+  constructor(args: SyncComponentTestConstructorArgs = {}) {
+    const isParatextAccountConnected: boolean = args.isParatextAccountConnected ?? true;
+    const isInProgress: boolean = args.isInProgress ?? false;
+    const isOnline: boolean = args.isOnline ?? true;
+    const isSyncDisabled: boolean = args.isSyncDisabled ?? false;
+    const lastSyncWasSuccessful: boolean = args.lastSyncWasSuccessful ?? true;
+
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: this.projectId }));
     const ptUsername = isParatextAccountConnected ? 'Paratext User01' : '';
     when(mockedParatextService.getParatextUsername()).thenReturn(of(ptUsername));
@@ -232,7 +272,7 @@ class TestEnvironment {
         sync: {
           queuedCount: isInProgress ? 1 : 0,
           percentCompleted: isInProgress ? 0.1 : undefined,
-          lastSyncSuccessful: true,
+          lastSyncSuccessful: lastSyncWasSuccessful,
           dateLastSuccessfulSync: date.toJSON()
         },
         syncDisabled: isSyncDisabled,
@@ -284,7 +324,11 @@ class TestEnvironment {
   }
 
   get syncDisabledMessage(): HTMLElement {
-    return this.fixture.nativeElement.querySelector('#syncDisabled-message');
+    return this.fixture.nativeElement.querySelector('#sync-disabled-message');
+  }
+
+  get syncFailureSupportMessage(): HTMLElement {
+    return this.fixture.nativeElement.querySelector('#sync-failure-support-message');
   }
 
   get offlineMessage(): HTMLElement {
