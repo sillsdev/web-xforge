@@ -1,24 +1,18 @@
-@import 'src/variables';
+@use 'src/variables';
+
+.base-container {
+  align-items: center;
+}
 
 .sync-card {
   padding: 0;
   max-width: 37rem;
   min-width: 18rem;
-  align-self: center;
-}
-
-h2 {
-  align-self: center;
-  text-align: center;
 }
 
 .card-content {
   padding: 1rem;
-  align-self: center;
-}
-
-.action-button {
-  align-self: center;
+  align-items: center;
 }
 
 #btn-sync,
@@ -27,7 +21,7 @@ h2 {
 }
 
 #btn-log-in {
-  background-color: $pt-button-green;
+  background-color: variables.$pt-button-green;
   color: white;
   height: 2.5rem;
 }
@@ -42,16 +36,17 @@ h2 {
   margin-bottom: 1rem;
 }
 
-.sync-info {
-  align-self: center;
-}
-
 .offline-text {
   padding-bottom: 1rem;
-  text-align: center;
 }
 
-.syncDisabled-text {
+#sync-disabled-message {
   padding-bottom: 1rem;
-  text-align: center;
+  max-width: 40rem;
+}
+
+#sync-failure-support-message {
+  padding: 1rem;
+  color: variables.$lighterTextColor;
+  max-width: 40rem;
 }
