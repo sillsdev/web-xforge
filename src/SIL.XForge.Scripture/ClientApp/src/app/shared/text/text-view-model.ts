@@ -306,6 +306,11 @@ export class TextViewModel {
         // Clean up blanks in quill editor. This may result in re-entering the update() method.
         editor.updateContents(updateDelta, source);
       }
+
+      const removeDuplicateDelta: DeltaStatic = this.fixDeltaForDuplicateEmbeds();
+      if (removeDuplicateDelta.ops && removeDuplicateDelta.ops.length > 0) {
+        editor.updateContents(removeDuplicateDelta, 'api');
+      }
     });
   }
 
@@ -678,10 +683,10 @@ export class TextViewModel {
           const position: number = curIndex + curSegment.length - 1;
           if (embedPosition == null) {
             embedPosition = { position };
+            this._embeddedElements.set(id, embedPosition);
           } else {
             embedPosition.duplicatePosition = position;
           }
-          this._embeddedElements.set(id, embedPosition);
           curSegment.notesCount++;
         }
       }
@@ -737,6 +742,23 @@ export class TextViewModel {
       fixDelta = fixDelta.compose(delta);
     }
     return [fixDelta, fixOffset];
+  }
+
+  /**
+   * Computes a delta to remove embed instances where the duplicate position exists.
+   * Note that this removes all instances of the embed.
+   */
+  private fixDeltaForDuplicateEmbeds(): DeltaStatic {
+    let delta = new Delta();
+    const duplicatePositions: EmbedPosition[] = Array.from(this._embeddedElements.values()).filter(
+      e => e.duplicatePosition != null
+    );
+    const deletePositions: number[] = embeddedElementPositions(duplicatePositions).sort((a, b) => a - b);
+    for (const pos of deletePositions) {
+      const deleteDelta = new Delta().retain(pos).delete(1);
+      delta = deleteDelta.compose(delta);
+    }
+    return delta.chop();
   }
 
   private checkEditor(): Quill {
