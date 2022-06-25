@@ -29,6 +29,7 @@ namespace SIL.XForge.Scripture.Services
         Task<Dictionary<string, string>> GetPermissionsAsync(UserSecret userSecret, SFProject project,
             IReadOnlyDictionary<string, string> ptUsernameMapping, int book = 0, int chapter = 0,
             CancellationToken token = default);
+        Task<bool> ResourceDocsNeedUpdatingAsync(UserSecret userSecret, SFProject project, CancellationToken token);
 
         IReadOnlyList<int> GetBookList(UserSecret userSecret, string paratextId);
         string GetBookText(UserSecret userSecret, string paratextId, int bookNum);
