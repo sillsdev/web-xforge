@@ -8,7 +8,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
-using MongoDB.Bson;
 using SIL.Machine.WebApi.Services;
 using SIL.ObjectModel;
 using SIL.Scripture;
@@ -167,7 +166,7 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 ParatextSettings settings =
-                    _paratextService.GetParatextSettings(_userSecret, _projectDoc.Data.ParatextId);
+                    _paratextService.GetParatextSettings(_userSecret, targetParatextId);
                 // update target Paratext books and notes
                 foreach (TextInfo text in _projectDoc.Data.Texts)
                 {
@@ -179,12 +178,12 @@ namespace SIL.XForge.Scripture.Services
                     }
                     SortedList<int, IDocument<TextData>> targetTextDocs = await FetchTextDocsAsync(text);
                     targetTextDocsByBook[text.BookNum] = targetTextDocs;
-                    if (isDataInSync && settings.Editable)
+                    if (isDataInSync && settings.Editable && !_paratextService.IsResource(targetParatextId))
                         await UpdateParatextBook(text, targetParatextId, targetTextDocs);
 
                     IReadOnlyList<IDocument<Question>> questionDocs = await FetchQuestionDocsAsync(text);
                     questionDocsByBook[text.BookNum] = questionDocs;
-                    if (isDataInSync)
+                    if (isDataInSync && !_paratextService.IsResource(targetParatextId))
                     {
                         await UpdateParatextNotesAsync(text, questionDocs);
                         // TODO: Sync Note changes back to Paratext
@@ -309,8 +308,16 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
 
-                await UpdateDocsAsync(targetParatextId, targetTextDocsByBook, questionDocsByBook, targetBooks,
-                    sourceBooks, token);
+                if (!_paratextService.IsResource(targetParatextId) ||
+                    await _paratextService.ResourceDocsNeedUpdatingAsync(_userSecret, _projectDoc.Data, token))
+                {
+                    await UpdateDocsAsync(targetParatextId, targetTextDocsByBook, questionDocsByBook, targetBooks,
+                        sourceBooks, token);
+                }
+
+                // TODO: Update the resource configuration
+
+                // We will always update permissions, even if this is a resource project
                 await _projectService.UpdatePermissionsAsync(userId, _projectDoc, token);
 
                 // Check for cancellation
