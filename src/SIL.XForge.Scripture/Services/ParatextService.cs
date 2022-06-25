@@ -24,6 +24,7 @@ using Newtonsoft.Json.Linq;
 using Paratext.Data;
 using Paratext.Data.Languages;
 using Paratext.Data.ProjectComments;
+using Paratext.Data.ProjectFileAccess;
 using Paratext.Data.RegistryServerAccess;
 using Paratext.Data.Repository;
 using Paratext.Data.Users;
@@ -319,6 +320,91 @@ namespace SIL.XForge.Scripture.Services
         public bool IsResource(string paratextId)
         {
             return paratextId?.Length == SFInstallableDblResource.ResourceIdentifierLength;
+        }
+
+        /// <summary>
+        /// Determines whether a the <see cref="TextData"/> for a resource project requires updating.
+        /// </summary>
+        /// <param name="userSecret">The user secret.</param>
+        /// <param name="project">The resource project.</param>
+        /// <param name="token">The cancellation token.</param>
+        /// <returns>
+        /// <c>true</c> if the project's documents require updating; otherwise, <c>false</c>.
+        /// </returns>
+        /// <remarks>
+        /// If a non-resource project is specified, <c>true</c> is always returned.
+        /// If the <see cref="ScrText"/> could not be loaded, <c>false</c> is returned.
+        /// </remarks>
+        public async Task<bool> ResourceDocsNeedUpdatingAsync(UserSecret userSecret, SFProject project, CancellationToken token)
+        {
+            // Ensure that we are checking a resource. We will default to true if it is not a resource.
+            if (!this.IsResource(project.ParatextId))
+            {
+                return true;
+            }
+
+            // Get the resource's ScrText
+            IReadOnlyList<ParatextResource> resources =
+                await this.GetResourcesInternalAsync(userSecret.Id, true, token);
+            ScrText scrText = resources.SingleOrDefault(r => r.ParatextId == project.ParatextId)
+                    ?.InstallableResource.ExistingScrText;
+
+            // If we do not have a scripture text, return false, as something is wrong
+            if (scrText == null)
+            {
+                _logger.LogInformation($"The Paratext resource '{project.ParatextId}' could not be found.");
+                return false;
+            }
+
+            // If we do not have a ResourceConfig, return true, as we have not synced this data into the database
+            if (project.ResourceConfig == null)
+            {
+                _logger.LogInformation($"No resource configuration for '{project.ParatextId}' could be found.");
+                return true;
+            }
+
+            // Check for cancellation
+            if (token.IsCancellationRequested)
+            {
+                return false;
+            }
+
+            // Perform the appropriate checks, comparing the ScrText and the ResourceConfig
+            if (scrText.FileManager is ResourceProjectFileManager fileManager)
+            {
+                return ResourceIsNewerThanCurrentlyInstalled(project.ResourceConfig, fileManager);
+            }
+            else
+            {
+                _logger.LogInformation($"No resource file manager for '{project.ParatextId}' could be found.");
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Determines if a downloaded resource is newer than the resource current installed in the database
+        /// </summary>
+        /// <param name="resourceConfig">The resource configuration from the database.</param>
+        /// <param name="fileManager">The resource project file manager.</param>
+        /// <c>true</c> if the downloaded resource is newer; otherwise, <c>false</c>.
+        /// <remarks>
+        /// This method is an implementation of <see cref="Paratext.Data.Archiving.InstallableResource.IsNewerThanCurrentlyInstalled" />
+        /// specifically for comparing downloaded resources with the resource data in the Mongo database.
+        /// </remarks>
+        private static bool ResourceIsNewerThanCurrentlyInstalled(ResourceConfig resourceConfig, ResourceProjectFileManager fileManager)
+        {
+            if (fileManager.DBLResourceSettings.Revision > resourceConfig.Revision)
+            {
+                return true;
+            }
+
+            if (fileManager.DBLResourceSettings.PermissionsChecksum != resourceConfig.PermissionsChecksum)
+            {
+                return true;
+            }
+
+            return fileManager.DBLResourceSettings.ManifestChecksum != resourceConfig.ManifestChecksum
+                   && fileManager.DBLResourceSettings.CreatedTimestamp > resourceConfig.CreatedTimestamp;
         }
 
         /// <summary>
