@@ -19,6 +19,7 @@ export interface SFProjectProfile extends Project {
   isRightToLeft?: boolean;
   translateConfig: TranslateConfig;
   checkingConfig: CheckingConfig;
+  resourceConfig?: ResourceConfig;
   texts: TextInfo[];
   sync: Sync;
   editable: boolean;
@@ -28,4 +29,11 @@ export interface SFProjectProfile extends Project {
 
 export interface SFProject extends SFProjectProfile {
   paratextUsers: ParatextUserProfile[];
+}
+
+export interface ResourceConfig {
+  createdTimestamp: Date;
+  manifestChecksum: string;
+  permissionsChecksum: string;
+  revision: number;
 }
