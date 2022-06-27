@@ -87,6 +87,10 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     return this.i18n.translateTextAroundTemplateTags('settings.users_can_share_the_project');
   }
 
+  get isBasedOnProjectSet(): boolean {
+    return this.sourceParatextId.value != null;
+  }
+
   get isLoggedInToParatext(): boolean {
     return this.projects != null;
   }
@@ -228,32 +232,28 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       return;
     }
     // Set status and include values for changed form items
-    const sourceProjectChanged: boolean = newValue.sourceParatextId !== this.previousFormValues.sourceParatextId;
+    // Sometimes sourceParatextId is null | undefined for both new and previous values. A diff check needs to be made
+    // but they also both need to be null when no value is set
+    const sourceProjectChanged: boolean =
+      (newValue.sourceParatextId ?? null) !== (this.previousFormValues.sourceParatextId ?? null);
     if (
       newValue.translationSuggestionsEnabled !== this.previousFormValues.translationSuggestionsEnabled &&
       this.translationSuggestionsEnabled.enabled
     ) {
-      if (!newValue.translationSuggestionsEnabled || (newValue.sourceParatextId != null && !sourceProjectChanged)) {
-        // Translation suggestions is set to false or is re-enabled
-        this.updateSetting(newValue, 'translationSuggestionsEnabled');
-        return;
-      } else {
-        this.controlStates.set('translationSuggestionsEnabled', ElementState.InSync);
-      }
+      // Translation suggestions is set to false or is re-enabled
+      this.updateSetting(newValue, 'translationSuggestionsEnabled');
+      return;
     }
     // Check if the source project needs to be updated
-    if (newValue.translationSuggestionsEnabled && newValue.sourceParatextId != null && sourceProjectChanged) {
+    if (sourceProjectChanged) {
       const settings: SFProjectSettings = {
-        sourceParatextId: newValue.sourceParatextId
+        sourceParatextId: newValue.sourceParatextId != null ? newValue.sourceParatextId : 'unset'
       };
-      if (this.previousFormValues.sourceParatextId == null) {
-        settings.translationSuggestionsEnabled = true;
+      if (newValue.sourceParatextId == null) {
+        settings.translationSuggestionsEnabled = false;
       }
       const updateTaskPromise = this.projectService.onlineUpdateSettings(this.projectDoc.id, settings);
       this.checkUpdateStatus('sourceParatextId', updateTaskPromise);
-      if (this.previousFormValues.sourceParatextId == null) {
-        this.checkUpdateStatus('translationSuggestionsEnabled', updateTaskPromise);
-      }
       this.previousFormValues = newValue;
       return;
     }
