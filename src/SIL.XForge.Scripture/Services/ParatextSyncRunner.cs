@@ -228,9 +228,7 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 var targetBooks = new HashSet<int>(_paratextService.GetBookList(_userSecret, targetParatextId));
-                var sourceBooks = new HashSet<int>(TranslationSuggestionsEnabled
-                    ? _paratextService.GetBookList(_userSecret, sourceParatextId)
-                    : Enumerable.Empty<int>());
+                var sourceBooks = new HashSet<int>(_paratextService.GetBookList(_userSecret, sourceParatextId));
                 sourceBooks.IntersectWith(targetBooks);
 
                 var targetBooksToDelete = new HashSet<int>(_projectDoc.Data.Texts.Select(t => t.BookNum)
