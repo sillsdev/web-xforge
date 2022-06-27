@@ -239,7 +239,8 @@ namespace SIL.XForge.Scripture.Services
 
                 // Get the source - any creation or permission updates are handled in GetTranslateSourceAsync
                 TranslateSource source = null;
-                if (settings.SourceParatextId != null)
+                bool unsetSourceProject = settings.SourceParatextId == "unset";
+                if (settings.SourceParatextId != null && !unsetSourceProject)
                 {
                     Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
                     if (!userSecretAttempt.TryResult(out UserSecret userSecret))
@@ -259,7 +260,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     UpdateSetting(op, p => p.TranslateConfig.TranslationSuggestionsEnabled,
                         settings.TranslationSuggestionsEnabled);
-                    UpdateSetting(op, p => p.TranslateConfig.Source, source);
+                    UpdateSetting(op, p => p.TranslateConfig.Source, source, unsetSourceProject);
                     UpdateSetting(op, p => p.TranslateConfig.ShareEnabled, settings.TranslateShareEnabled);
                     UpdateSetting(op, p => p.TranslateConfig.ShareLevel, settings.TranslateShareLevel);
 
@@ -271,7 +272,7 @@ namespace SIL.XForge.Scripture.Services
                 });
 
                 bool suggestionsEnabledSet = settings.TranslationSuggestionsEnabled != null;
-                bool sourceParatextIdSet = settings.SourceParatextId != null;
+                bool sourceParatextIdSet = settings.SourceParatextId != null || unsetSourceProject;
                 bool checkingEnabledSet = settings.CheckingEnabled != null;
                 // check if a sync needs to be run
                 if (suggestionsEnabledSet || sourceParatextIdSet || checkingEnabledSet)
@@ -804,9 +805,9 @@ namespace SIL.XForge.Scripture.Services
         }
 
         private static void UpdateSetting<T>(Json0OpBuilder<SFProject> builder, Expression<Func<SFProject, T>> field,
-            T setting)
+            T setting, bool forceUpdate = false)
         {
-            if (setting != null)
+            if (setting != null || forceUpdate)
                 builder.Set(field, setting);
         }
 
