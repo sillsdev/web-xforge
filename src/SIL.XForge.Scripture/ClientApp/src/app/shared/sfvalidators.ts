@@ -58,9 +58,9 @@ export class SFValidators {
     };
   }
 
-  static selectableProject(): ValidatorFn {
+  static selectableProject(canBeBlank: boolean = false): ValidatorFn {
     return function validateProject(control: AbstractControl): ValidationErrors | null {
-      if (control.value == null) {
+      if (control.value == null || (canBeBlank && control.value === '')) {
         return null;
       }
       const selectedProject = control.value as SelectableProject;

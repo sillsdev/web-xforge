@@ -31,7 +31,7 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
   @ViewChild(MatAutocomplete) autocomplete!: MatAutocomplete;
   @ViewChild(MatAutocompleteTrigger) autocompleteTrigger!: MatAutocompleteTrigger;
 
-  readonly paratextIdControl = new FormControl('', [SFValidators.selectableProject()]);
+  readonly paratextIdControl = new FormControl('', [SFValidators.selectableProject(true)]);
   @Input() projects?: SelectableProject[];
   @Input() resources?: SelectableProject[];
   /** Projects that can be an already selected value, but not given as an option in the menu */
