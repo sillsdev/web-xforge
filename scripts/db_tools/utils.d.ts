@@ -18,5 +18,7 @@ export type ConnectionSettings = { dbLocation: string; wsConnectionString: strin
 export function createWS(connectionConfig: ConnectionSettings): WebSocket;
 export var databaseConfigs: Map<string, ConnectionSettings>;
 export var devConfig: { dbLocation: string; wsConnectionString: string };
+export var qaConfig: { dbLocation: string; wsConnectionString: string };
+export var liveConfig: { dbLocation: string; wsConnectionString: string };
 export function useColor(ifUseColor: boolean): void;
 export var colors: any;

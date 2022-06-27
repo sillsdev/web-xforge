@@ -9,6 +9,7 @@
   "main": "lib/cjs/common/index.js",
   "types": "lib/cjs/common/index.d.ts",
   "dependencies": {
+    "axios": "^0.27.2",
     "mongodb": "^4.6.0",
     "ot-json0": "^1.1.0",
     "rich-text": "^4.1.0",
