@@ -48,13 +48,13 @@ namespace SIL.XForge.Scripture.Services
     /// </summary>
     public class ParatextService : DisposableBase, IParatextService
     {
+        internal HttpClient _registryClient;
         private readonly IOptions<ParatextOptions> _paratextOptions;
         private readonly IRepository<UserSecret> _userSecretRepository;
         private readonly IRealtimeService _realtimeService;
         private readonly IOptions<SiteOptions> _siteOptions;
         private readonly IFileSystemService _fileSystemService;
         private readonly HttpClientHandler _httpClientHandler;
-        private readonly HttpClient _registryClient;
         private readonly IExceptionHandler _exceptionHandler;
         private readonly ILogger _logger;
         private readonly IJwtTokenHelper _jwtTokenHelper;
@@ -247,6 +247,56 @@ namespace SIL.XForge.Scripture.Services
                         $"Failed: Errors occurred while performing the sync with the Paratext Server. More information: noErrors: {noErrors}. success: {success}. null results: {results == null}. results: {resultsInfo}");
                 }
             }
+        }
+
+        /// <returns>
+        /// True if the user secret is able to access the PT Registry. PT Registry is a web service such as at
+        /// registry.paratext.org.
+        /// False if there is a problem with authorization or connecting to the PT Registry.
+        /// </returns>
+        public async Task<bool> CanUserAuthenticateToPTRegistryAsync(UserSecret userSecret)
+        {
+            if (userSecret == null)
+            {
+                throw new ArgumentNullException(nameof(userSecret));
+            }
+            if (userSecret.Id == null || userSecret.ParatextTokens == null)
+            {
+                throw new ArgumentException(nameof(userSecret));
+            }
+            try
+            {
+                await CallApiAsync(userSecret, HttpMethod.Get, "userinfo", content: null);
+                // If the server responds with code 200, then the user is authorized.
+                // They might not have a completed registration. And they might not be
+                // an "approved translator". But they are able to authorize to PT
+                // Registry.
+                return true;
+            }
+            catch (HttpRequestException)
+            {
+                return false;
+            }
+        }
+
+        /// <returns>
+        /// True if the user secret is able to access the PT Archives. PT Archives is a service such as at
+        /// archives.paratext.org, which provides Mercurial project repositores, and may sometimes be referred to as
+        /// "the Send and Receive server".
+        /// False if there is a problem with authorization or connecting to the PT Archives.
+        /// </returns>
+        public async Task<bool> CanUserAuthenticateToPTArchivesAsync(string userSFId)
+        {
+            if (string.IsNullOrWhiteSpace(userSFId))
+            {
+                throw new ArgumentException(nameof(userSFId));
+            }
+
+            IInternetSharedRepositorySource ptRepoSource = await GetInternetSharedRepositorySource(
+                userSFId,
+                CancellationToken.None
+            );
+            return ptRepoSource.CanUserAuthenticateToPTArchives();
         }
 
         /// <summary> Get Paratext projects that a user has access to. </summary>
