@@ -152,6 +152,8 @@ namespace UpdateHelp
                 string[] targetFiles = Directory.GetFiles(targetPath, "*.htm", SearchOption.AllDirectories);
                 foreach (string file in targetFiles)
                 {
+                    if (file.EndsWith("index1.htm"))
+                        continue;
                     string relativeFile = Path.GetRelativePath(targetPath, file);
                     string targetTitle = GetHtmlTitle(file);
                     if (targetTitle != "" && sourceFileToTitles.TryGetValue(relativeFile, out string sourceTitle))
@@ -296,11 +298,11 @@ namespace UpdateHelp
                 Func<string, string> bookTextInToc =
                     bookName => $"<book name=\\\"{SecurityElement.Escape(bookName)}\\\"";
                 Func<string, string> bookTextInTocNew =
-                    bookName => $"\"type\":\"book\",\"name\":\"{HttpUtility.JavaScriptStringEncode(bookName)}\"";
+                    bookName => $"\"name\":\"{HttpUtility.JavaScriptStringEncode(bookName)}\",\"type\":\"book\"";
                 Func<string, string> itemTextInToc =
                     itemName => $"<item name=\\\"{SecurityElement.Escape(itemName)}\\\"";
                 Func<string, string> itemTextInTocNew =
-                    itemName => $"\"type\":\"item\",\"name\":\"{HttpUtility.JavaScriptStringEncode(itemName)}\"";
+                    itemName => $"\"name\":\"{HttpUtility.JavaScriptStringEncode(itemName)}\",\"type\":\"item\"";
                 var bookSrcsByName = new Dictionary<string, string>();
                 var itemUrlsByName = new Dictionary<string, string>();
                 foreach (string file in files)
