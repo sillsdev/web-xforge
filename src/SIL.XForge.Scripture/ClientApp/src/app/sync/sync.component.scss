@@ -1,6 +1,10 @@
 @use 'src/variables';
 
-.base-container {
+.base-container,
+.card-content {
+  display: flex;
+  flex-direction: column;
+  row-gap: 1rem;
   align-items: center;
 }
 
@@ -12,16 +16,10 @@
 
 .card-content {
   padding: 1rem;
-  align-items: center;
 }
 
 app-sync-progress {
   width: 100%;
-}
-
-#btn-sync,
-.progress-bar {
-  margin-bottom: 1rem;
 }
 
 #btn-log-in {
@@ -36,21 +34,8 @@ app-sync-progress {
   margin-right: 0.5rem;
 }
 
-#sync-message {
-  margin-bottom: 1rem;
-}
-
-.offline-text {
-  padding-bottom: 1rem;
-}
-
-#sync-disabled-message {
-  padding-bottom: 1rem;
-  max-width: 40rem;
-}
-
+#sync-disabled-message,
 #sync-failure-support-message {
-  padding: 1rem;
-  color: variables.$lighterTextColor;
   max-width: 40rem;
+  color: variables.$lighterTextColor;
 }
