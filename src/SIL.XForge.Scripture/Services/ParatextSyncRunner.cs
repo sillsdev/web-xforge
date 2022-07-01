@@ -203,6 +203,7 @@ namespace SIL.XForge.Scripture.Services
 
                 // Use the new progress bar
                 var progress = new SyncProgress();
+                ParatextProject paratextProject;
                 try
                 {
                     // Create the handler
@@ -210,7 +211,7 @@ namespace SIL.XForge.Scripture.Services
 
                     Log($"RunAsync: Going to do ParatextData SendReceive.");
                     // perform Paratext send/receive
-                    await _paratextService.SendReceiveAsync(_userSecret, targetParatextId, progress, token);
+                    paratextProject = await _paratextService.SendReceiveAsync(_userSecret, targetParatextId, progress, token);
                     Log($"RunAsync: ParatextData SendReceive finished without throwing.");
                 }
                 finally
@@ -308,14 +309,27 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
 
-                if (!_paratextService.IsResource(targetParatextId) ||
-                    await _paratextService.ResourceDocsNeedUpdatingAsync(_userSecret, _projectDoc.Data, token))
+                bool resourceNeedsUpdating = paratextProject is ParatextResource paratextResource &&
+                                             _paratextService.ResourceDocsNeedUpdating(_projectDoc.Data, paratextResource);
+
+                if (!_paratextService.IsResource(targetParatextId) || resourceNeedsUpdating)
                 {
                     await UpdateDocsAsync(targetParatextId, targetTextDocsByBook, questionDocsByBook, targetBooks,
                         sourceBooks, token);
                 }
 
-                // TODO: Update the resource configuration
+                // Check for cancellation
+                if (token.IsCancellationRequested)
+                {
+                    await CompleteSync(false, canRollbackParatext, token);
+                    return;
+                }
+
+                // Update the resource configuration
+                if (resourceNeedsUpdating)
+                {
+                    await UpdateResourceConfig(paratextProject);
+                }
 
                 // We will always update permissions, even if this is a resource project
                 await _projectService.UpdatePermissionsAsync(userId, _projectDoc, token);
@@ -346,6 +360,45 @@ namespace SIL.XForge.Scripture.Services
             finally
             {
                 CloseConnection();
+            }
+        }
+
+        /// <summary>
+        /// Updates the resource configuration
+        /// </summary>
+        /// <param name="project">The SF project.</param>
+        /// <param name="paratextProject">The Paratext project. This should be a resource.</param>
+        /// <returns>The asynchronous task.</returns>
+        /// <remarks>Only call this if the config requires an update.</remarks>
+        private async Task UpdateResourceConfig(ParatextProject paratextProject)
+        {
+            // Update the resource configuration
+            if (paratextProject is ParatextResource paratextResource)
+            {
+                if (_projectDoc.Data.ResourceConfig == null)
+                {
+                    // Create the resource config
+                    await _projectDoc.SubmitJson0OpAsync(
+                        op => op.Set(pd => pd.ResourceConfig,
+                            new ResourceConfig
+                            {
+                                CreatedTimestamp = paratextResource.CreatedTimestamp,
+                                ManifestChecksum = paratextResource.ManifestChecksum,
+                                PermissionsChecksum = paratextResource.PermissionsChecksum,
+                                Revision = paratextResource.AvailableRevision,
+                            }));
+                }
+                else
+                {
+                    // Update the resource config
+                    await _projectDoc.SubmitJson0OpAsync(op =>
+                    {
+                        op.Set(pd => pd.ResourceConfig.CreatedTimestamp, paratextResource.CreatedTimestamp);
+                        op.Set(pd => pd.ResourceConfig.ManifestChecksum, paratextResource.ManifestChecksum);
+                        op.Set(pd => pd.ResourceConfig.PermissionsChecksum, paratextResource.PermissionsChecksum);
+                        op.Set(pd => pd.ResourceConfig.Revision, paratextResource.AvailableRevision);
+                    });
+                }
             }
         }
 
