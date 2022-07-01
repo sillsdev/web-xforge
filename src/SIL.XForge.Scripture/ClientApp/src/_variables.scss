@@ -17,6 +17,10 @@ $answers: $greenLight;
 $comments: #ff7300;
 $languageFonts: language_picker, language_picker_fallback, Arial, Helvetica, sans-serif;
 $border-color: rgba(0, 0, 0, 0.12);
+/* A text color that is somewhat muted compared to the primary text color. Note that #666666 is used to match
+ * how mat-hint looks on a white background.
+ */
+$lighterTextColor: #666666;
 
 $pt-button-green: $greenDark;
 

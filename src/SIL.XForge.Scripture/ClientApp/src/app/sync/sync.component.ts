@@ -104,6 +104,16 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     });
   }
 
+  get showSyncFailureSupportMessage(): boolean {
+    return this.projectDoc?.data?.sync.lastSyncSuccessful === false;
+  }
+
+  get syncFailureSupportMessage(): string {
+    return this.i18n.translateAndInsertTags('sync.sync_failure_support_message', {
+      email: `<a target="_blank" href="mailto:${environment.issueEmail}">${environment.issueEmail}</a>`
+    });
+  }
+
   ngOnInit() {
     this.subscribe(this.pwaService.onlineStatus, async isOnline => {
       this.isAppOnline = isOnline;
