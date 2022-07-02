@@ -634,7 +634,7 @@ class TestEnvironment {
   }
 
   get menuListItems(): DebugElement[] {
-    return this.fixture.debugElement.queryAll(By.css('#menu-list .mat-list-item'));
+    return this.fixture.debugElement.queryAll(By.css('#menu-drawer .mat-list-item'));
   }
 
   get helpMenuList(): DebugElement {
