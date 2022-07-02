@@ -1502,6 +1502,62 @@ namespace SIL.XForge.Scripture.Services
                 "some xml");
         }
 
+        [Test]
+        public async Task SyncAsync_ResourceChanged()
+        {
+            // Setup the environment so there will be Paratext changes
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, false, false,
+                new Book("MAT", 2), new Book("MRK", 2));
+            env.SetupPTData(new Book("MAT", 3), new Book("MRK", 1));
+
+            // Setup the environment so the Paratext service will return the the resource has changed
+            env.ParatextService.IsResource(Arg.Any<string>()).Returns(true);
+            env.ParatextService.ResourceDocsNeedUpdating(Arg.Any<SFProject>(), Arg.Any<ParatextResource>())
+                .Returns(true);
+            env.ParatextService.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
+                    Arg.Any<IProgress<ProgressState>>(), Arg.Any<CancellationToken>())
+                .Returns(new ParatextResource());
+
+            // SUT
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+
+            env.MockLogger.AssertEventCount((LogEvent logEvent) => logEvent.LogLevel == LogLevel.Information &&
+                                                                   Regex.IsMatch(logEvent.Message, "Starting"), 1);
+
+            Assert.IsNotNull(env.GetProject().ResourceConfig);
+            Assert.That(env.ContainsText("project01", "MAT", 3), Is.True);
+            Assert.That(env.ContainsText("project01", "MRK", 2), Is.False);
+        }
+
+        [Test]
+        public async Task SyncAsync_ResourceNotChanged()
+        {
+            // Setup the environment so there will be Paratext changes
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, false, false,
+                new Book("MAT", 2), new Book("MRK", 2));
+            env.SetupPTData(new Book("MAT", 3), new Book("MRK", 1));
+
+            // Setup the environment so the Paratext service will return the the resource has not changed
+            env.ParatextService.IsResource(Arg.Any<string>()).Returns(true);
+            env.ParatextService.ResourceDocsNeedUpdating(Arg.Any<SFProject>(), Arg.Any<ParatextResource>())
+                .Returns(false);
+            env.ParatextService.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
+                    Arg.Any<IProgress<ProgressState>>(), Arg.Any<CancellationToken>())
+                .Returns(new ParatextResource());
+
+            // SUT
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+
+            env.MockLogger.AssertEventCount((LogEvent logEvent) => logEvent.LogLevel == LogLevel.Information &&
+                Regex.IsMatch(logEvent.Message, "Starting"), 1);
+
+            Assert.IsNull(env.GetProject().ResourceConfig);
+            Assert.That(env.ContainsText("project01", "MAT", 3), Is.False);
+            Assert.That(env.ContainsText("project01", "MRK", 2), Is.True);
+        }
+
         private class Book
         {
             public Book(string bookId, int highestChapter, bool hasSource = true)

@@ -1675,8 +1675,10 @@ namespace SIL.XForge.Scripture.Services
             ComparableProjectPermissionManager targetScrTextPermissions
                 = (ComparableProjectPermissionManager)env.ProjectScrText.Permissions;
 
-            await env.Service.SendReceiveAsync(user01Secret, targetProjectId);
-            await env.Service.SendReceiveAsync(user01Secret, sourceProjectId);
+            ParatextProject targetProject = await env.Service.SendReceiveAsync(user01Secret, targetProjectId);
+            Assert.IsNotNull(targetProject);
+            ParatextProject sourceProject = await env.Service.SendReceiveAsync(user01Secret, sourceProjectId);
+            Assert.IsNotNull(sourceProject);
             // Below, we are checking also that the SharedProject has a
             // Permissions that is set from the SharedProject's ScrText.Permissions.
             // Better may be to assert that each SharedProject.Permissions.GetUser()
@@ -1705,8 +1707,10 @@ namespace SIL.XForge.Scripture.Services
                     .Returns(newSourceScrText);
             });
 
-            await env.Service.SendReceiveAsync(user01Secret, targetProjectId);
-            await env.Service.SendReceiveAsync(user01Secret, newSourceProjectId);
+            targetProject = await env.Service.SendReceiveAsync(user01Secret, targetProjectId);
+            Assert.IsNotNull(targetProject);
+            sourceProject = await env.Service.SendReceiveAsync(user01Secret, newSourceProjectId);
+            Assert.IsNotNull(sourceProject);
             env.MockFileSystemService.DidNotReceive().DeleteDirectory(Arg.Any<string>());
             env.MockFileSystemService.Received(1).CreateDirectory(sourcePath);
             mockSource.Received(1).Pull(sourcePath, Arg.Is<SharedRepository>(repo =>
@@ -1744,8 +1748,11 @@ namespace SIL.XForge.Scripture.Services
             env.SetRestClientFactory(user01Secret);
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
             string resourceId = env.Resource3Id; // See the XML in SetRestClientFactory for this
-            await env.Service.SendReceiveAsync(user01Secret, ptProjectId);
-            await env.Service.SendReceiveAsync(user01Secret, resourceId);
+            ParatextProject targetProject = await env.Service.SendReceiveAsync(user01Secret, ptProjectId);
+            Assert.IsNotNull(targetProject);
+            ParatextProject sourceProject = await env.Service.SendReceiveAsync(user01Secret, resourceId);
+            Assert.IsNotNull(sourceProject);
+            Assert.IsInstanceOf(typeof(ParatextResource), sourceProject);
         }
 
         [Test]
@@ -2235,6 +2242,218 @@ namespace SIL.XForge.Scripture.Services
 
             // One SUT
             Assert.That(await env.Service.CanUserAuthenticateToPTArchivesAsync(userSFId), Is.True, "authorized");
+        }
+
+        [Test]
+        public void ResourceDocsNeedUpdating_NotResource()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            var project = new SFProject
+            {
+                ParatextId = "not_a_resource",
+            };
+            var resource = new ParatextResource();
+
+            // SUT
+            var result = env.Service.ResourceDocsNeedUpdating(project, resource);
+            Assert.IsTrue(result);
+        }
+
+        [Test]
+        public void ResourceDocsNeedUpdating_NoResourceConfig()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            var project = new SFProject
+            {
+                ParatextId = "a_valid_resource",
+            };
+            var resource = new ParatextResource();
+
+            // SUT
+            var result = env.Service.ResourceDocsNeedUpdating(project, resource);
+            Assert.IsTrue(result);
+        }
+
+        [Test]
+        public void ResourceDocsNeedUpdating_NotChanged_SameTimestamp()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            var timestamp = DateTime.Now;
+            var project = new SFProject
+            {
+                ParatextId = "a_valid_resource",
+                ResourceConfig = new ResourceConfig
+                {
+                    CreatedTimestamp = timestamp,
+                    ManifestChecksum = "manifest1",
+                    PermissionsChecksum = "permissions1",
+                    Revision = 1,
+                },
+            };
+            var resource = new ParatextResource
+            {
+                AvailableRevision = 1,
+                CreatedTimestamp = timestamp,
+                ManifestChecksum = "manifest1",
+                PermissionsChecksum = "permissions1",
+            };
+
+            // SUT
+            var result = env.Service.ResourceDocsNeedUpdating(project, resource);
+            Assert.IsFalse(result);
+        }
+
+        [Test]
+        public void ResourceDocsNeedUpdating_NotChanged_DifferentTimestamp()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            var timestamp = DateTime.Now;
+            var project = new SFProject
+            {
+                ParatextId = "a_valid_resource",
+                ResourceConfig = new ResourceConfig
+                {
+                    CreatedTimestamp = timestamp,
+                    ManifestChecksum = "manifest1",
+                    PermissionsChecksum = "permissions1",
+                    Revision = 1,
+                },
+            };
+            var resource = new ParatextResource
+            {
+                AvailableRevision = 1,
+                CreatedTimestamp = timestamp.AddHours(1),
+                ManifestChecksum = "manifest1",
+                PermissionsChecksum = "permissions1",
+            };
+
+            // SUT
+            var result = env.Service.ResourceDocsNeedUpdating(project, resource);
+            Assert.IsFalse(result);
+        }
+
+        [Test]
+        public void ResourceDocsNeedUpdating_DifferentManifest_EarlierTimestamp()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            var timestamp = DateTime.Now;
+            var project = new SFProject
+            {
+                ParatextId = "a_valid_resource",
+                ResourceConfig = new ResourceConfig
+                {
+                    CreatedTimestamp = timestamp,
+                    ManifestChecksum = "manifest1",
+                    PermissionsChecksum = "permissions1",
+                    Revision = 1,
+                },
+            };
+            var resource = new ParatextResource
+            {
+                AvailableRevision = 1,
+                CreatedTimestamp = timestamp.AddHours(-1),
+                ManifestChecksum = "manifest2",
+                PermissionsChecksum = "permissions1",
+            };
+
+            // SUT
+            var result = env.Service.ResourceDocsNeedUpdating(project, resource);
+            Assert.IsFalse(result);
+        }
+
+        [Test]
+        public void ResourceDocsNeedUpdating_DifferentManifest_LaterTimestamp()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            var timestamp = DateTime.Now;
+            var project = new SFProject
+            {
+                ParatextId = "a_valid_resource",
+                ResourceConfig = new ResourceConfig
+                {
+                    CreatedTimestamp = timestamp,
+                    ManifestChecksum = "manifest1",
+                    PermissionsChecksum = "permissions1",
+                    Revision = 1,
+                },
+            };
+            var resource = new ParatextResource
+            {
+                AvailableRevision = 1,
+                CreatedTimestamp = timestamp.AddHours(1),
+                ManifestChecksum = "manifest2",
+                PermissionsChecksum = "permissions1",
+            };
+
+            // SUT
+            var result = env.Service.ResourceDocsNeedUpdating(project, resource);
+            Assert.IsTrue(result);
+        }
+
+        [Test]
+        public void ResourceDocsNeedUpdating_LaterRevision()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            var timestamp = DateTime.Now;
+            var project = new SFProject
+            {
+                ParatextId = "a_valid_resource",
+                ResourceConfig = new ResourceConfig
+                {
+                    CreatedTimestamp = timestamp,
+                    ManifestChecksum = "manifest1",
+                    PermissionsChecksum = "permissions1",
+                    Revision = 1,
+                },
+            };
+            var resource = new ParatextResource
+            {
+                AvailableRevision = 2,
+                CreatedTimestamp = timestamp,
+                ManifestChecksum = "manifest1",
+                PermissionsChecksum = "permissions1",
+            };
+
+            // SUT
+            var result = env.Service.ResourceDocsNeedUpdating(project, resource);
+            Assert.IsTrue(result);
+        }
+
+        [Test]
+        public void ResourceDocsNeedUpdating_ChangedPermissions()
+        {
+            // Setup test environment
+            var env = new TestEnvironment();
+            var timestamp = DateTime.Now;
+            var project = new SFProject
+            {
+                ParatextId = "a_valid_resource",
+                ResourceConfig = new ResourceConfig
+                {
+                    CreatedTimestamp = timestamp,
+                    ManifestChecksum = "manifest1",
+                    PermissionsChecksum = "permissions1",
+                    Revision = 1,
+                },
+            };
+            var resource = new ParatextResource
+            {
+                AvailableRevision = 1,
+                CreatedTimestamp = timestamp,
+                ManifestChecksum = "manifest1",
+                PermissionsChecksum = "permissions2",
+            };
+
+            // SUT
+            var result = env.Service.ResourceDocsNeedUpdating(project, resource);
+            Assert.IsTrue(result);
         }
 
         private class TestEnvironment

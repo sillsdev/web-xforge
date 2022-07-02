@@ -324,7 +324,6 @@ namespace SIL.XForge.Scripture.Services
             return paratextId?.Length == SFInstallableDblResource.ResourceIdentifierLength;
         }
 
-
         /// <summary>
         /// Determines whether a the <see cref="TextData"/> for a resource project requires updating.
         /// </summary>
