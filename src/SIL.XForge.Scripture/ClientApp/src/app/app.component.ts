@@ -69,6 +69,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   canSeeSettings$?: Observable<boolean>;
   canSeeUsers$?: Observable<boolean>;
   canSync$?: Observable<boolean>;
+  /** Whether the user can see at least one of settings, users, or sync page */
+  canSeeAdminPages$?: Observable<boolean>;
   hasUpdate: boolean = false;
 
   projectLabel = projectLabel;
@@ -334,6 +336,9 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
           this.canSeeSettings$ = this.settingsAuthGuard.allowTransition(projectId);
           this.canSeeUsers$ = this.usersAuthGuard.allowTransition(projectId);
           this.canSync$ = this.syncAuthGuard.allowTransition(projectId);
+          this.canSeeAdminPages$ = combineLatest([this.canSeeSettings$, this.canSeeUsers$, this.canSync$]).pipe(
+            map(([settings, users, sync]) => settings || users || sync)
+          );
           // the project deleted dialog should be closed by now, so we can reset its ref to null
           if (projectId == null) {
             this.projectDeletedDialogRef = null;
