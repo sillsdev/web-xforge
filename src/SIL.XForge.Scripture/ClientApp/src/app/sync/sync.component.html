@@ -1,10 +1,15 @@
 <ng-container *transloco="let t; read: 'sync'">
-  <div fxLayout="column" class="base-container">
+  <div class="base-container">
     <h2 id="title">{{ t("synchronize_project", { projectName: projectName }) }}</h2>
     <span *ngIf="!isAppOnline" class="offline-text"> {{ t("connect_network_to_synchronize") }} </span>
     <span *ngIf="syncDisabled" id="sync-disabled-message" [innerHTML]="syncDisabledMessage"> </span>
+    <span
+      *ngIf="showSyncFailureSupportMessage"
+      id="sync-failure-support-message"
+      [innerHTML]="syncFailureSupportMessage"
+    ></span>
     <mat-card class="sync-card">
-      <div fxLayout="column" class="card-content">
+      <div class="card-content">
         <button
           *ngIf="showParatextLogin && isAppOnline"
           mat-flat-button
@@ -51,10 +56,5 @@
         </ng-container>
       </div>
     </mat-card>
-    <span
-      *ngIf="showSyncFailureSupportMessage"
-      id="sync-failure-support-message"
-      [innerHTML]="syncFailureSupportMessage"
-    ></span>
   </div>
 </ng-container>
