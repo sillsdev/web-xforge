@@ -138,6 +138,9 @@
     "transcelerator_some_questions_already_imported": "Remarque : Certaines questions sélectionnées ont déjà été importées. Les questions qui ont été modifiées dans Transcelerator seront mises à jour dans Scripture Forge, et les doublons seront ignorés.",
     "update_transcelerator": "La version de Transcelerator utilisée dans ce projet n'est pas prise en charge. Veuillez mettre à jour Transcelerator, vers au moins la version 1.5.3."
   },
+  "multi_viewer": {
+    "other_viewers": "{{ count }} other viewers"
+  },
   "note_dialog": {
     "declare_conflict": "Il y a un conflit. Les couleurs correspondent au texte le plus ancien (en rouge) et le plus récent (en vert).",
     "acceptance_change_heading": "Modifications acceptées par Paratext (texte actuel) :",
@@ -248,7 +251,8 @@
     "synchronize": "Synchroniser",
     "synchronize_project": "Synchroniser {{ projectName }} avec Paratext",
     "your_project_is_being_synchronized": "Votre projet est en cours de synchronisation...",
-    "sync_is_disabled": "La synchronisation pour ce projet a dû être désactivée, elle n'est donc pas disponible pour le moment. Veuillez contacter {{ email }} pour discuter de ce qui doit être fait pour que la synchronisation du projet puisse être à nouveau activée."
+    "sync_is_disabled": "La synchronisation pour ce projet a dû être désactivée, elle n'est donc pas disponible pour le moment. Veuillez contacter {{ email }} pour discuter de ce qui doit être fait pour que la synchronisation du projet puisse être à nouveau activée.",
+    "sync_failure_support_message": "Something went wrong the last time Scripture Forge attempted to synchronize the project with Paratext. If it still doesn't work after you try again, please post a problem report about it by writing to {{email}}."
   },
   "text": {
     "book_does_not_exist": "Ce livre n'existe pas.",

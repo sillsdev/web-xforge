@@ -138,6 +138,9 @@
     "transcelerator_some_questions_already_imported": "Note: Some selected questions have already been imported. Questions that have been edited in Transcelerator will be updated in Scripture Forge, and exact duplicates will be skipped.",
     "update_transcelerator": "Bu layihədə istifadə olunan Transcelerator versiyası dəstəklənmir. Xahiş edirəm ən azı Transcelerator 1.5.3 versiyasına yeniləyin."
   },
+  "multi_viewer": {
+    "other_viewers": "{{ count }} other viewers"
+  },
   "note_dialog": {
     "declare_conflict": "There is a conflict. Colors correspond to older (red) and newer (green) text.",
     "acceptance_change_heading": "Changes Paratext Accepted (current text):",
@@ -145,7 +148,7 @@
     "close": "Bağla",
     "hide_changes": "Hide changes",
     "note_reattached": "Note reattached",
-    "paratext_user": "Paratext user",
+    "paratext_user": "Assigned to a Paratext user",
     "reattached": "(Re-attached)",
     "show_changes": "Show changes",
     "status_resolved": "Resolved",
@@ -248,7 +251,8 @@
     "synchronize": "Sinxronlaşdırmaq",
     "synchronize_project": "{{ projectName }} Paratext ilə sinxronlaşdırıldı",
     "your_project_is_being_synchronized": "Sizin layihəniz sinxronlaşdırılır...",
-    "sync_is_disabled": "Bu layihə üçün sinxronizasiyanın ləğv edilməsi lazım idi, buna görə də hazırda mövcud deyil. Layihə sinxronizasiyasının yenidən aktivləşdirilməsi üçün nələrin edilməsi lazım olduğunu müzakirə etmək üçün {{email}} ilə əlaqə saxlayın."
+    "sync_is_disabled": "Bu layihə üçün sinxronizasiyanın ləğv edilməsi lazım idi, buna görə də hazırda mövcud deyil. Layihə sinxronizasiyasının yenidən aktivləşdirilməsi üçün nələrin edilməsi lazım olduğunu müzakirə etmək üçün {{email}} ilə əlaqə saxlayın.",
+    "sync_failure_support_message": "Something went wrong the last time Scripture Forge attempted to synchronize the project with Paratext. If it still doesn't work after you try again, please post a problem report about it by writing to {{email}}."
   },
   "text": {
     "book_does_not_exist": "Bu kitab mövcud deyil.",

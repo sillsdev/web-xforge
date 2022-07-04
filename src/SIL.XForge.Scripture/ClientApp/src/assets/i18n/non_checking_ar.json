@@ -138,6 +138,9 @@
     "transcelerator_some_questions_already_imported": "Note: Some selected questions have already been imported. Questions that have been edited in Transcelerator will be updated in Scripture Forge, and exact duplicates will be skipped.",
     "update_transcelerator": "The version of Transcelerator used in this project is not supported. Please update to at least Transcelerator version 1.5.3."
   },
+  "multi_viewer": {
+    "other_viewers": "{{ count }} other viewers"
+  },
   "note_dialog": {
     "declare_conflict": "There is a conflict. Colors correspond to older (red) and newer (green) text.",
     "acceptance_change_heading": "Changes Paratext Accepted (current text):",
@@ -145,7 +148,7 @@
     "close": "Close",
     "hide_changes": "Hide changes",
     "note_reattached": "Note reattached",
-    "paratext_user": "Paratext user",
+    "paratext_user": "Assigned to a Paratext user",
     "reattached": "(Re-attached)",
     "show_changes": "Show changes",
     "status_resolved": "Resolved",
@@ -248,7 +251,8 @@
     "synchronize": "Synchronize",
     "synchronize_project": "Synchronize {{ projectName }} with Paratext",
     "your_project_is_being_synchronized": "Your project is being synchronized...",
-    "sync_is_disabled": "Synchronization for this project needed to be disabled, so it is not available at this time. Please contact {{ email }} to discuss what needs to be done so project synchronization can be enabled again."
+    "sync_is_disabled": "Synchronization for this project needed to be disabled, so it is not available at this time. Please contact {{ email }} to discuss what needs to be done so project synchronization can be enabled again.",
+    "sync_failure_support_message": "Something went wrong the last time Scripture Forge attempted to synchronize the project with Paratext. If it still doesn't work after you try again, please post a problem report about it by writing to {{email}}."
   },
   "text": {
     "book_does_not_exist": "This book does not exist.",

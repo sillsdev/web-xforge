@@ -138,6 +138,9 @@
     "transcelerator_some_questions_already_imported": "Note: Some selected questions have already been imported. Questions that have been edited in Transcelerator will be updated in Scripture Forge, and exact duplicates will be skipped.",
     "update_transcelerator": "A versão do Transcelerator usada neste projeto não é compatível. Por favor atualize pelo menos para a versão 1.5.3 do Transcelerator."
   },
+  "multi_viewer": {
+    "other_viewers": "{{ count }} other viewers"
+  },
   "note_dialog": {
     "declare_conflict": "There is a conflict. Colors correspond to older (red) and newer (green) text.",
     "acceptance_change_heading": "Changes Paratext Accepted (current text):",
@@ -145,7 +148,7 @@
     "close": "Fechar",
     "hide_changes": "Hide changes",
     "note_reattached": "Note reattached",
-    "paratext_user": "Paratext user",
+    "paratext_user": "Assigned to a Paratext user",
     "reattached": "(Re-attached)",
     "show_changes": "Show changes",
     "status_resolved": "Resolved",
@@ -248,7 +251,8 @@
     "synchronize": "Sincronizar",
     "synchronize_project": "Sincronizar {{ projectName }} com o Paratext",
     "your_project_is_being_synchronized": "Seu projeto está sendo sincronizado...",
-    "sync_is_disabled": "A sincronização para este projeto deveria ter sido desativada, por isso não está disponível no momento. Por favor, entre em contato com {{ email }} para discutir o que precisa ser feito para que a sincronização do projeto possa ser ativada novamente."
+    "sync_is_disabled": "A sincronização para este projeto deveria ter sido desativada, por isso não está disponível no momento. Por favor, entre em contato com {{ email }} para discutir o que precisa ser feito para que a sincronização do projeto possa ser ativada novamente.",
+    "sync_failure_support_message": "Something went wrong the last time Scripture Forge attempted to synchronize the project with Paratext. If it still doesn't work after you try again, please post a problem report about it by writing to {{email}}."
   },
   "text": {
     "book_does_not_exist": "Este livro não existe.",
