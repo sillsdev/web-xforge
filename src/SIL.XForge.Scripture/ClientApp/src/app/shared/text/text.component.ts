@@ -62,7 +62,7 @@ export interface TextUpdatedEvent {
   delta?: DeltaStatic;
   prevSegment?: Segment;
   segment?: Segment;
-  affectedEmbeds?: EditedVerseEmbeds[];
+  affectedEmbeds?: EmbedsInVerse[];
   isLocalUpdate?: boolean;
 }
 
@@ -79,10 +79,10 @@ export interface FeaturedVerseRefInfo {
   highlight?: boolean;
 }
 
-/** Represents information about embeds in a verse prior to a change being applied. */
-export interface EditedVerseEmbeds {
-  embeds: Map<string, EmbedPosition>;
+/** A verse's range and the embeds located within the range. */
+export interface EmbedsInVerse {
   verseRange: RangeStatic;
+  embeds: Map<string, EmbedPosition>;
 }
 
 /** View of an editable text document. Used for displaying Scripture. */
@@ -365,10 +365,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return this.viewModel.embeddedElements;
   }
 
-  get embeddedPositions(): number[] {
-    return this.viewModel.embeddedPositions;
-  }
-
   get localPresence(): LocalPresence<PresenceData> | undefined {
     return this.viewModel.localPresence;
   }
@@ -607,7 +603,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   /** Respond to text changes in the quill editor. */
   onContentChanged(delta: DeltaStatic, source: string): void {
-    const segmentsBeforeDelta: IterableIterator<[string, RangeStatic]> = this.viewModel.segments;
+    const segmentsBeforeDelta: IterableIterator<[string, RangeStatic]> = this.viewModel.segmentsSnapshot;
     const embedsBeforeDelta: Readonly<Map<string, EmbedPosition>> = cloneDeep(this.embeddedElements);
     this.viewModel.update(delta, source as Sources);
     this.updatePlaceholderText();
@@ -910,7 +906,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     Promise.resolve().then(() => this.adjustSelection());
-    const affectedEmbeds: EditedVerseEmbeds[] = !!isUserEdit
+    const affectedEmbeds: EmbedsInVerse[] = !!isUserEdit
       ? this.getEmbedsByEditPosition(delta, segmentsBeforeDelta, embedsBeforeDelta)
       : [];
     this.updated.emit({
@@ -988,7 +984,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     delta?: DeltaStatic,
     segmentsBeforeDelta?: IterableIterator<[string, RangeStatic]>,
     embedsBeforeDelta?: Readonly<Map<string, EmbedPosition>>
-  ): EditedVerseEmbeds[] {
+  ): EmbedsInVerse[] {
     if (delta?.ops == null || segmentsBeforeDelta == null || embedsBeforeDelta == null) {
       return [];
     }
@@ -1007,7 +1003,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       }
     }
 
-    const embedsByEditedVerse: EditedVerseEmbeds[] = [];
+    const embedsByEditedVerse: EmbedsInVerse[] = [];
     let verseEdited = false;
     let currentVerse: string = '';
     let currentVerseRange: RangeStatic = { index: 0, length: 0 };

@@ -56,7 +56,7 @@ import {
   PresenceData,
   RemotePresences
 } from '../../shared/text/text-view-model';
-import { EditedVerseEmbeds, FeaturedVerseRefInfo, TextComponent } from '../../shared/text/text.component';
+import { EmbedsInVerse, FeaturedVerseRefInfo, TextComponent } from '../../shared/text/text.component';
 import { formatFontSizeToRems, threadIdFromMouseEvent } from '../../shared/utils';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData } from './note-dialog/note-dialog.component';
@@ -493,7 +493,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     segment?: Segment,
     delta?: DeltaStatic,
     prevSegment?: Segment,
-    embedsBeforeDeltaInEditedVerses?: EditedVerseEmbeds[],
+    embedsBeforeDeltaInEditedVerses?: EmbedsInVerse[],
     isLocalUpdate?: boolean
   ): Promise<void> {
     if (this.target == null || this.target.editor == null) {
@@ -1140,7 +1140,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   /** Update the text anchors for the note threads in the current segment. */
-  private async updateVerseNoteThreadAnchors(affectedEmbeds: EditedVerseEmbeds[], delta: DeltaStatic): Promise<void> {
+  private async updateVerseNoteThreadAnchors(affectedEmbeds: EmbedsInVerse[], delta: DeltaStatic): Promise<void> {
     if (this.target == null || this.noteThreadQuery == null || this.noteThreadQuery.docs.length < 1) {
       return;
     }

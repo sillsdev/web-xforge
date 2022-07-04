@@ -109,8 +109,14 @@ export interface RemotePresences {
   [id: string]: PresenceData;
 }
 
+/** Represents the position of an embed. */
 export interface EmbedPosition {
+  /** The editor position of an embed. Consider this to be the canonical position. */
   position: number;
+  /**
+   * The editor position of an embed with the same embed id as the one located at position.
+   * When this is set it is necessary tp clean up duplicate embeds as early as possible.
+   */
   duplicatePosition?: number;
 }
 
@@ -167,6 +173,10 @@ export class TextViewModel {
   }
 
   get segments(): IterableIterator<[string, RangeStatic]> {
+    return this._segments.entries();
+  }
+
+  get segmentsSnapshot(): IterableIterator<[string, RangeStatic]> {
     return cloneDeep(this._segments).entries();
   }
 
@@ -685,6 +695,7 @@ export class TextViewModel {
             embedPosition = { position };
             this._embeddedElements.set(id, embedPosition);
           } else {
+            // This could happen via an undo. Record the duplicate position so it can can be cleaned up later.
             embedPosition.duplicatePosition = position;
           }
           curSegment.notesCount++;
