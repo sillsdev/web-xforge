@@ -2489,7 +2489,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertBlank("verse_1_2")
                 .InsertPara("p")
                 .InsertPara("b")
-                .InsertBlank("p_2")
+                .InsertBlank("verse_1_2/p_1")
                 .InsertVerse("3")
                 .InsertBlank("verse_1_3")
                 .InsertPara("p");
@@ -2691,6 +2691,40 @@ namespace SIL.XForge.Scripture.Services
 
             Assert.That(chapterDeltas.Count, Is.EqualTo(1));
             Assert.That(chapterDeltas[0].IsValid, Is.False);
+            Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
+        }
+
+        public void ToDelta_LineBreakWithinVerse()
+        {
+            XDocument usxDoc = Usx("PHM",
+                Chapter("1"),
+                Para("q",
+                    Verse("1"),
+                    "Poetry first line"),
+                Para("q", "Poetry second line"),
+                Para("b"),
+                Para("q", "Poetry third line"),
+                Para("q", "Poetry fourth line.")
+            );
+
+            var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
+            List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
+
+            var expected = new Delta()
+                .InsertChapter("1")
+                .InsertBlank("q_1")
+                .InsertVerse("1")
+                .InsertText("Poetry first line", "verse_1_1")
+                .InsertPara("q")
+                .InsertText("Poetry second line", "verse_1_1/q_1")
+                .InsertPara("q")
+                .InsertPara("b")
+                .InsertText("Poetry third line", "verse_1_1/q_2")
+                .InsertPara("q")
+                .InsertText("Poetry fourth line.", "verse_1_1/q_3")
+                .InsertPara("q");
+
+            Assert.That(chapterDeltas.Count, Is.EqualTo(1));
             Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
         }
 

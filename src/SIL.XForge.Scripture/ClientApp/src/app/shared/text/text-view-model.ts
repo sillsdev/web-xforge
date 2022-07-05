@@ -604,7 +604,10 @@ export class TextViewModel {
             curIndex += curSegment.length;
           }
           curIndex += len;
-          curSegment = undefined;
+          if (curSegment != null) {
+            // continue with the current segment at the current index
+            curSegment = new SegmentInfo(curSegment.ref, curIndex);
+          }
         } else {
           // title/header
           if (curSegment == null) {

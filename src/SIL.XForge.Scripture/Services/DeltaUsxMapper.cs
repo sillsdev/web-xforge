@@ -138,7 +138,9 @@ namespace SIL.XForge.Scripture.Services
                                 }
                                 else if (style == "b")
                                 {
-                                    state.CurRef = null;
+                                    // insert the line break and continue processing with the current verse ref
+                                    InsertPara(invalidNodes, chapterDelta, elem, state);
+                                    continue;
                                 }
                                 else
                                 {
