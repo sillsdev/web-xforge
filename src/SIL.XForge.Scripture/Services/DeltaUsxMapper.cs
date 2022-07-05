@@ -40,6 +40,7 @@ namespace SIL.XForge.Scripture.Services
         {
             public string CurRef { get; set; }
             public string CurChapter { get; set; }
+            public bool CurChapterIsValid { get; set; } = true;
             public int TableIndex { get; set; }
             public bool ImpliedParagraph { get; set; }
             public int LastVerse { get; set; }
@@ -60,11 +61,6 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
             }
-        }
-
-        private class ChapterStatus
-        {
-            public bool IsValid { get; set; } = true;
         }
 
         public DeltaUsxMapper(IGuidService guidService, ILogger<DeltaUsxMapper> logger,
@@ -94,7 +90,6 @@ namespace SIL.XForge.Scripture.Services
         public IEnumerable<ChapterDelta> ToChapterDeltas(XDocument usxDoc)
         {
             var invalidNodes = new HashSet<XNode>();
-            var chapterStatus = new ChapterStatus();
             usxDoc.Validate(Schemas, (o, e) =>
                 {
                     XNode node;
@@ -149,20 +144,20 @@ namespace SIL.XForge.Scripture.Services
                                 {
                                     state.CurRef = GetParagraphRef(nextIds, style, style);
                                 }
-                                ProcessChildNodes(invalidNodes, chapterDelta, elem, state, chapterStatus);
+                                ProcessChildNodes(invalidNodes, chapterDelta, elem, state);
                                 SegmentEnded(chapterDelta, state.CurRef);
                                 if (!canContainVerseText)
                                     state.CurRef = null;
-                                InsertPara(invalidNodes, chapterDelta, elem, chapterStatus);
+                                InsertPara(invalidNodes, chapterDelta, elem, state);
                                 break;
 
                             case "chapter":
                                 if (state.CurChapter != null)
                                 {
-                                    ChapterEnded(chapterDeltas, chapterDelta, chapterStatus, state);
+                                    ChapterEnded(chapterDeltas, chapterDelta, state);
                                     nextIds.Clear();
                                     chapterDelta = new Delta();
-                                    chapterStatus.IsValid = true;
+                                    state.CurChapterIsValid = true;
                                 }
                                 state.CurRef = null;
                                 state.LastVerse = 0;
@@ -174,16 +169,16 @@ namespace SIL.XForge.Scripture.Services
                             // according to the USX schema, a verse can only occur within a paragraph, but Paratext 8.0
                             // can still generate USX with verses at the top-level
                             case "verse":
-                                ProcessChildNode(invalidNodes, chapterDelta, elem, state, chapterStatus);
+                                ProcessChildNode(invalidNodes, chapterDelta, elem, state);
                                 state.ImpliedParagraph = true;
                                 break;
 
                             default:
-                                ProcessChildNode(invalidNodes, chapterDelta, elem, state, chapterStatus);
+                                ProcessChildNode(invalidNodes, chapterDelta, elem, state);
                                 break;
                         }
                         if (elem.GetSchemaInfo().Validity != XmlSchemaValidity.Valid)
-                            chapterStatus.IsValid = false;
+                            state.CurChapterIsValid = false;
                         break;
 
                     case XText text:
@@ -195,25 +190,24 @@ namespace SIL.XForge.Scripture.Services
             }
             if (state.CurChapter == null)
                 state.CurChapter = "1";
-            ChapterEnded(chapterDeltas, chapterDelta, chapterStatus, state);
+            ChapterEnded(chapterDeltas, chapterDelta, state);
             return chapterDeltas;
         }
 
-        private void ProcessChildNodes(HashSet<XNode> invalidNodes, Delta newDelta, XElement parentElem,
-            ChapterStatus chapterStatus)
+        private void ProcessChildNodes(HashSet<XNode> invalidNodes, Delta newDelta, XElement parentElem)
         {
-            ProcessChildNodes(invalidNodes, newDelta, parentElem, new ParseState(), chapterStatus);
+            ProcessChildNodes(invalidNodes, newDelta, parentElem, new ParseState());
         }
 
         private void ProcessChildNodes(HashSet<XNode> invalidNodes, Delta newDelta, XElement parentElem,
-            ParseState state, ChapterStatus chapterStatus, JObject attributes = null)
+            ParseState state, JObject attributes = null)
         {
             foreach (XNode node in parentElem.Nodes())
-                ProcessChildNode(invalidNodes, newDelta, node, state, chapterStatus, attributes);
+                ProcessChildNode(invalidNodes, newDelta, node, state, attributes);
         }
 
         private void ProcessChildNode(HashSet<XNode> invalidNodes, Delta newDelta, XNode node, ParseState state,
-            ChapterStatus chapterStatus, JObject attributes = null)
+            JObject attributes = null)
         {
             switch (node)
             {
@@ -221,8 +215,8 @@ namespace SIL.XForge.Scripture.Services
                     switch (elem.Name.LocalName)
                     {
                         case "para":
-                            ProcessChildNodes(invalidNodes, newDelta, elem, chapterStatus);
-                            InsertPara(invalidNodes, newDelta, elem, chapterStatus);
+                            ProcessChildNodes(invalidNodes, newDelta, elem);
+                            InsertPara(invalidNodes, newDelta, elem, state);
                             break;
 
                         case "verse":
@@ -262,7 +256,7 @@ namespace SIL.XForge.Scripture.Services
                             if (!elem.Nodes().Any() && elem.Value == "")
                                 newDelta.InsertEmpty(state.CurRef, newChildAttributes);
                             else
-                                ProcessChildNodes(invalidNodes, newDelta, elem, state, chapterStatus, newChildAttributes);
+                                ProcessChildNodes(invalidNodes, newDelta, elem, state, newChildAttributes);
                             break;
 
                         case "table":
@@ -278,7 +272,7 @@ namespace SIL.XForge.Scripture.Services
                                 foreach (XElement cell in row.Elements())
                                 {
                                     state.CurRef = $"cell_{state.TableIndex}_{rowIndex}_{cellIndex}";
-                                    ProcessChildNode(invalidNodes, newDelta, cell, state, chapterStatus);
+                                    ProcessChildNode(invalidNodes, newDelta, cell, state);
                                     SegmentEnded(newDelta, state.CurRef);
                                     var attrs = new JObject(
                                         new JProperty("table", tableAttributes),
@@ -297,11 +291,11 @@ namespace SIL.XForge.Scripture.Services
                             break;
 
                         case "cell":
-                            ProcessChildNodes(invalidNodes, newDelta, elem, state, chapterStatus);
+                            ProcessChildNodes(invalidNodes, newDelta, elem, state);
                             break;
 
                         default:
-                            InsertEmbed(invalidNodes, newDelta, elem, state.CurRef, attributes, chapterStatus);
+                            InsertEmbed(invalidNodes, newDelta, elem, state.CurRef, attributes);
                             break;
                     }
                     break;
@@ -313,8 +307,7 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        private void ChapterEnded(List<ChapterDelta> chapterDeltas, Delta chapterDelta, ChapterStatus chapterStatus,
-            ParseState state)
+        private void ChapterEnded(List<ChapterDelta> chapterDeltas, Delta chapterDelta, ParseState state)
         {
             if (state.ImpliedParagraph)
             {
@@ -325,7 +318,7 @@ namespace SIL.XForge.Scripture.Services
             if (!int.TryParse(state.CurChapter, out int chapterNum))
                 return;
 
-            chapterDeltas.Add(new ChapterDelta(chapterNum, state.LastVerse, chapterStatus.IsValid, chapterDelta));
+            chapterDeltas.Add(new ChapterDelta(chapterNum, state.LastVerse, state.CurChapterIsValid, chapterDelta));
         }
 
         private static void InsertVerse(HashSet<XNode> invalidNodes, Delta newDelta, XElement elem, ParseState state)
@@ -338,11 +331,11 @@ namespace SIL.XForge.Scripture.Services
         }
 
         private void InsertEmbed(HashSet<XNode> invalidNodes, Delta newDelta, XElement elem, string curRef,
-            JObject attributes, ChapterStatus chapterStatus)
+            JObject attributes)
         {
             JObject obj = GetAttributes(elem);
             var contents = new Delta();
-            ProcessChildNodes(invalidNodes, contents, elem, chapterStatus);
+            ProcessChildNodes(invalidNodes, contents, elem);
             if (contents.Ops.Count > 0)
             {
                 obj.Add(new JProperty("contents",
@@ -352,15 +345,14 @@ namespace SIL.XForge.Scripture.Services
                 AddInvalidInlineAttribute(invalidNodes, elem, attributes));
         }
 
-        private static void InsertPara(HashSet<XNode> invalidNodes, Delta newDelta, XElement elem,
-            ChapterStatus chapterStatus)
+        private static void InsertPara(HashSet<XNode> invalidNodes, Delta newDelta, XElement elem, ParseState state)
         {
             string style = elem.Attribute("style")?.Value;
             bool canContainVerseText = CanParaContainVerseText(style);
-            if (!canContainVerseText && elem.Element("verse") != null)
+            if (!canContainVerseText && elem.Descendants("verse").Any())
             {
                 invalidNodes.Add(elem);
-                chapterStatus.IsValid = false;
+                state.CurChapterIsValid = false;
             }
             newDelta.InsertPara(GetAttributes(elem), AddInvalidBlockAttribute(invalidNodes, elem));
         }
