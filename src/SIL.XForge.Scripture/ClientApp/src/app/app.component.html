@@ -159,7 +159,7 @@
       </mdc-select>
     </mdc-drawer-header>
     <mdc-drawer-content>
-      <mat-nav-list id="menu-list">
+      <mat-nav-list id="tools-menu-list">
         <a
           mat-list-item
           class="translate-nav-item"
@@ -187,7 +187,7 @@
             {{ getBookName(text) }}
           </a>
         </div>
-        <mat-divider *ngIf="isTranslateEnabled"></mat-divider>
+        <mat-divider *ngIf="isCheckingEnabled && isTranslateEnabled"></mat-divider>
         <a
           mat-list-item
           class="community-checking-nav-item"
@@ -226,8 +226,10 @@
             </a>
           </ng-container>
         </div>
+      </mat-nav-list>
+      <mat-nav-list id="admin-pages-menu-list" *ngIf="canSeeAdminPages$ | async">
+        <mat-divider></mat-divider>
         <div *ngIf="canSync$ | async">
-          <mat-divider *ngIf="isCheckingEnabled"></mat-divider>
           <a
             mat-list-item
             [appRouterLink]="getRouterLink('sync')"

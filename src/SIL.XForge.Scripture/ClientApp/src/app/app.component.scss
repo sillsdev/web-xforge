@@ -205,6 +205,7 @@ mat-nav-list .mat-list-item {
 
   ::ng-deep .mat-list-item-content {
     column-gap: 16px;
+    padding-inline-end: 8px;
   }
 }
 
@@ -212,6 +213,17 @@ mat-nav-list .mat-list-item {
   background-color: #e7e8e7;
 }
 
-#menu-list {
-  padding-top: 6px;
+mdc-drawer-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+#tools-menu-list,
+#admin-pages-menu-list {
+  padding-top: 0;
+}
+
+#tools-menu-list {
+  overflow-y: auto;
 }
