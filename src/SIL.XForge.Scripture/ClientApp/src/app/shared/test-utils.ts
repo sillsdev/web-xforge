@@ -57,6 +57,25 @@ export function getCombinedVerseTextDoc(id: TextDocId): TextData {
   return delta;
 }
 
+export function getPoetryVerseTextDoc(id: TextDocId): TextData {
+  const delta = new Delta();
+  delta.insert(`Title for chapter ${id.chapterNum}`, { segment: 's_1' });
+  delta.insert('\n', { para: { style: 's' } });
+  delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
+  delta.insert({ blank: true }, { segment: 'q_1' });
+  delta.insert({ verse: { number: '1', style: 'v' } });
+  delta.insert('Poetry first line', { segment: `verse_${id.chapterNum}_1/q_1` });
+  delta.insert('\n', { para: { style: 'q' } });
+  delta.insert('Poetry second line', { segment: `verse_${id.chapterNum}_1/q_2` });
+  delta.insert('\n', { para: { style: 'q' } });
+  delta.insert('\n', { para: { style: 'b' } });
+  delta.insert('Poetry third line', { segment: `verse_${id.chapterNum}_1/q_3` });
+  delta.insert('\n', { para: { style: 'q' } });
+  delta.insert('Poetry fourth line.', { segment: `verse_${id.chapterNum}_1/q_4` });
+  delta.insert('\n', { para: { style: 'q' } });
+  return delta;
+}
+
 export function getSFProject(id: string): SFProjectProfile {
   return {
     name: `${id} name`,

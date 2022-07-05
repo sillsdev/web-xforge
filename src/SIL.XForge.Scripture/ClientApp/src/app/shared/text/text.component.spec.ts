@@ -28,7 +28,7 @@ import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../shared.module';
-import { getCombinedVerseTextDoc, getSFProject, getTextDoc } from '../test-utils';
+import { getCombinedVerseTextDoc, getPoetryVerseTextDoc, getSFProject, getTextDoc } from '../test-utils';
 import { DragAndDrop } from './drag-and-drop';
 import { TextComponent } from './text.component';
 import { PresenceData, RemotePresences, TextViewModel } from './text-view-model';
@@ -169,6 +169,17 @@ describe('TextComponent', () => {
     // The title segment should still have its data attribute, but no pseudo element
     expect(titleSegment.getAttribute('data-style-description')).toEqual('s - Heading - Section Level 1');
     expect(window.getComputedStyle(titleSegment, '::before').content).toEqual('none');
+  }));
+
+  it('correctly labels verse segments after line breaks', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.fixture.detectChanges();
+    env.id = new TextDocId('project01', 42, 1);
+    tick();
+    env.fixture.detectChanges();
+
+    const verseSegments: string[] = env.component.getVerseSegments(VerseRef.parse('LUK 1:1'));
+    expect(verseSegments).toEqual(['verse_1_1', 'verse_1_1/q_1', 'verse_1_1/q_2', 'verse_1_1/q_3']);
   }));
 
   describe('MultiCursor Presence', () => {
@@ -2788,6 +2799,7 @@ class TestEnvironment {
 
     const matTextDocId = new TextDocId('project01', 40, 1);
     const mrkTextDocId = new TextDocId('project01', 41, 1);
+    const lukTextDocId = new TextDocId('project01', 42, 1);
     this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
       id: 'project01',
       data: getSFProject('project01')
@@ -2801,6 +2813,11 @@ class TestEnvironment {
       {
         id: mrkTextDocId.toString(),
         data: getCombinedVerseTextDoc(mrkTextDocId),
+        type: RichText.type.name
+      },
+      {
+        id: lukTextDocId.toString(),
+        data: getPoetryVerseTextDoc(lukTextDocId),
         type: RichText.type.name
       }
     ]);
