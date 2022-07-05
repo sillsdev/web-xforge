@@ -201,7 +201,7 @@ Although this setup is specifically written for **Windows**, the steps could be 
 
 3. Install [MongoDB v4](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/) as a service
 4. Install [.Net Core SDK-3.1](https://dotnet.microsoft.com/download/dotnet-core/3.1)
-5. Install [Node v12](https://nodejs.org/en/download/)
+5. Install [Node v16](https://nodejs.org/en/download/)
 6. Install [FFmpeg v4](https://ffmpeg.org/download.html) executable into the `C:\usr\bin\` directory.
 7. Install a developer editor, [VS Code](https://code.visualstudio.com/download) is recommended (the repo includes VS Code settings)
 8. Install [Mercurial v4.8](https://www.mercurial-scm.org/) (python 2) and copy contents into the `C:\usr\local\bin\ directory`.
