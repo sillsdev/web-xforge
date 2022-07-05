@@ -30,6 +30,7 @@ namespace SIL.XForge.Scripture.Services
         private static readonly IEqualityComparer<Dictionary<string, string>> _permissionDictionaryEqualityComparer =
             new DictionaryComparer<string, string>();
         public static readonly string ErrorAlreadyConnectedKey = "error-already-connected";
+        public static readonly string ProjectSettingValueUnset = "unset";
         private readonly IEngineService _engineService;
         private readonly ISyncService _syncService;
         private readonly IParatextService _paratextService;
@@ -239,7 +240,7 @@ namespace SIL.XForge.Scripture.Services
 
                 // Get the source - any creation or permission updates are handled in GetTranslateSourceAsync
                 TranslateSource source = null;
-                bool unsetSourceProject = settings.SourceParatextId == "unset";
+                bool unsetSourceProject = settings.SourceParatextId == ProjectSettingValueUnset;
                 if (settings.SourceParatextId != null && !unsetSourceProject)
                 {
                     Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
@@ -283,7 +284,7 @@ namespace SIL.XForge.Scripture.Services
                         if (projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled
                             && projectDoc.Data.TranslateConfig.Source != null)
                         {
-                            // translate task was enabled or source project changed
+                            // translation suggestions was enabled or source project changed
 
                             // recreate Machine project only if source project changed
                             if (!suggestionsEnabledSet && sourceParatextIdSet)
@@ -299,7 +300,7 @@ namespace SIL.XForge.Scripture.Services
                         }
                         else
                         {
-                            // translate task was disabled or source project set to null
+                            // translation suggestions was disabled or source project set to null
                             await _engineService.RemoveProjectAsync(projectId);
                         }
                     }

@@ -191,7 +191,7 @@ describe('SettingsComponent', () => {
         expect(env.basedOnSelect).not.toBeNull();
       }));
 
-      it('should hide Translation Suggestions when Based On  is not set', fakeAsync(() => {
+      it('should hide Translation Suggestions when Based On is not set', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject();
         env.wait();
