@@ -2671,6 +2671,30 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void ToDelta_InvalidParaContainingVerse()
+        {
+            XDocument usxDoc = Usx("PHM",
+                Chapter("1"),
+                Para("s",
+                    Verse("1"),
+                    "This verse should not exist within this paragraph style"));
+
+            var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
+            List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
+
+            var expected = Delta.New()
+                .InsertChapter("1")
+                .InsertBlank("s_1")
+                .InsertVerse("1")
+                .InsertText("This verse should not exist within this paragraph style", "verse_1_1")
+                .InsertPara("s", true);
+
+            Assert.That(chapterDeltas.Count, Is.EqualTo(1));
+            Assert.That(chapterDeltas[0].IsValid, Is.False);
+            Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
+        }
+
+        [Test]
         public void ToDelta_Unmatched()
         {
             XDocument usxDoc = Usx("PHM",
