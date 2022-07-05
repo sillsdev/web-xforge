@@ -58,6 +58,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   mainSettingsLoaded = false;
 
+  private static readonly projectSettingValueUnset = 'unset';
   private projectDoc?: SFProjectDoc;
   /** Elements in this component and their states. */
   private controlStates = new Map<Extract<keyof SFProjectSettings, string>, ElementState>();
@@ -247,7 +248,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     // Check if the source project needs to be updated
     if (sourceProjectChanged) {
       const settings: SFProjectSettings = {
-        sourceParatextId: newValue.sourceParatextId != null ? newValue.sourceParatextId : 'unset'
+        sourceParatextId:
+          newValue.sourceParatextId != null ? newValue.sourceParatextId : SettingsComponent.projectSettingValueUnset
       };
       if (newValue.sourceParatextId == null) {
         settings.translationSuggestionsEnabled = false;
