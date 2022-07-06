@@ -94,9 +94,7 @@ describe('ConnectProjectComponent', () => {
 
     env.clickElement(env.inputElement(env.checkingCheckbox));
 
-    env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
-    expect(env.sourceParatextIdControl.valid).toBe(true);
-    expect(env.sourceParatextIdControl.disabled).toBe(false);
+    expect(env.translationSuggestionsCheckbox).toBeNull();
     env.openSourceProjectAutocomplete();
     // NOTE: The source projects list excludes pt01 (as it is our selected project above)
     expect(env.selectableSourceProjectsAndResources.projects.length).toEqual(3);
@@ -238,49 +236,24 @@ describe('ConnectProjectComponent', () => {
     expect(env.component.state).toEqual('offline');
   }));
 
-  it('submit if user selects a source project then disables translation suggestions', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupDefaultProjectData();
-    env.waitForProjectsResponse();
-
-    env.changeSelectValue(env.projectSelect, 'pt01');
-    env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
-
-    // Simulate touching source project control
-    env.component.settings.controls.sourceParatextId.markAsTouched();
-    expect(env.component.settings.controls.sourceParatextId.valid).toBe(true);
-    env.clickElement(env.submitButton);
-    expect(env.component.settings.controls.sourceParatextId.errors!['required']).toBe(true);
-    // Uncheck the translation suggestions checkbox
-    env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
-    env.clickElement(env.submitButton);
-    env.emitSyncComplete();
-    const settings: SFProjectCreateSettings = {
-      paratextId: 'pt01',
-      checkingEnabled: true,
-      translationSuggestionsEnabled: false,
-      sourceParatextId: undefined
-    };
-    verify(mockedSFProjectService.onlineCreate(deepEqual(settings))).once();
-    verify(mockedRouter.navigate(deepEqual(['/projects', 'project01']))).once();
-  }));
-
   it('should create when non-existent project is selected', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupDefaultProjectData();
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
+    expect(env.translationSuggestionsCheckbox).toBeNull();
 
     env.changeSelectValue(env.projectSelect, 'pt01');
 
     env.clickElement(env.inputElement(env.checkingCheckbox));
 
-    env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
-    expect(env.sourceParatextIdControl.valid).toBe(true);
-    expect(env.sourceParatextIdControl.disabled).toBe(false);
-
     env.selectSourceProject('pt04');
     expect(env.component.connectProjectForm.valid).toBe(true);
+    expect(env.translationSuggestionsCheckbox).not.toBeNull();
+
+    env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
+    expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
+
     env.clickElement(env.submitButton);
 
     expect(env.component.state).toEqual('connecting');
@@ -305,7 +278,7 @@ describe('ConnectProjectComponent', () => {
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
     env.changeSelectValue(env.projectSelect, 'pt01');
-    expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(false);
+    expect(env.translationSuggestionsCheckbox).toBeNull();
     expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
 
     env.clickElement(env.submitButton);
@@ -320,7 +293,7 @@ describe('ConnectProjectComponent', () => {
       paratextId: 'pt01',
       checkingEnabled: true,
       translationSuggestionsEnabled: false,
-      sourceParatextId: undefined
+      sourceParatextId: null
     };
     verify(mockedSFProjectService.onlineCreate(deepEqual(project))).once();
     verify(mockedRouter.navigate(deepEqual(['/projects', 'project01']))).once();
@@ -337,7 +310,7 @@ describe('ConnectProjectComponent', () => {
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
     env.changeSelectValue(env.projectSelect, 'pt01');
-    expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(false);
+    expect(env.translationSuggestionsCheckbox).toBeNull();
     expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
     // Simulate someone else connecting the PT project to SF while we are working on the Connect Project form.
     when(mockedSFProjectService.onlineCreate(anything())).thenThrow(
@@ -369,15 +342,13 @@ describe('ConnectProjectComponent', () => {
 
     expect(env.component.state).toEqual('input');
     env.changeSelectValue(env.projectSelect, 'pt01');
-
-    expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(false);
-    env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
-    expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
+    expect(env.translationSuggestionsCheckbox).toBeNull();
 
     expect(env.resourceLoadingErrorMessage.nativeElement.textContent).toContain('error fetching');
 
     env.selectSourceProject('pt04');
     expect(env.component.connectProjectForm.valid).toBe(true);
+    expect(env.translationSuggestionsCheckbox).not.toBeNull();
     env.clickElement(env.submitButton);
 
     expect(env.component.state).toEqual('connecting');
@@ -387,7 +358,7 @@ describe('ConnectProjectComponent', () => {
     const settings: SFProjectCreateSettings = {
       paratextId: 'pt01',
       checkingEnabled: true,
-      translationSuggestionsEnabled: true,
+      translationSuggestionsEnabled: false,
       sourceParatextId: 'pt04'
     };
     verify(mockedSFProjectService.onlineCreate(deepEqual(settings))).once();
@@ -538,6 +509,7 @@ class TestEnvironment {
     this.sourceProjectSelectComponent.value = projectId;
     this.fixture.detectChanges();
     tick();
+    this.fixture.detectChanges();
   }
 
   openSourceProjectAutocomplete() {

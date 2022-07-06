@@ -111,6 +111,15 @@
     }
   }
 }
+::ng-deep .checkbox-placeholder {
+  .mat-checkbox-inner-container {
+    visibility: hidden;
+  }
+
+  .mat-checkbox-label {
+    color: initial;
+  }
+}
 
 #based-on-field {
   max-width: calc(100% - 44px);
@@ -132,4 +141,8 @@ mdc-select {
 mdc-list-item {
   height: unset;
   min-height: 48px;
+}
+
+app-project-select {
+  margin-top: 16px;
 }

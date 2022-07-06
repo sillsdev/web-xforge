@@ -1,6 +1,6 @@
 export interface SFProjectCreateSettings {
   paratextId: string;
   translationSuggestionsEnabled: boolean;
-  sourceParatextId?: string;
+  sourceParatextId: string | null;
   checkingEnabled: boolean;
 }

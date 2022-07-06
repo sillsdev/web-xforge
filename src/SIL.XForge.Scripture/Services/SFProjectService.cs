@@ -30,7 +30,7 @@ namespace SIL.XForge.Scripture.Services
         private static readonly IEqualityComparer<Dictionary<string, string>> _permissionDictionaryEqualityComparer =
             new DictionaryComparer<string, string>();
         public static readonly string ErrorAlreadyConnectedKey = "error-already-connected";
-        public static readonly string ProjectSettingValueUnset = "unset";
+        private static readonly string ProjectSettingValueUnset = "unset";
         private readonly IEngineService _engineService;
         private readonly ISyncService _syncService;
         private readonly IParatextService _paratextService;

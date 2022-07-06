@@ -100,6 +100,10 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     return this._projects.filter(p => !p.isConnected && !p.isConnectable).length > 0;
   }
 
+  get isBasedOnProjectSet(): boolean {
+    return this.settings.controls.sourceParatextId.value != null;
+  }
+
   get projects(): ParatextProject[] {
     return this._projects != null ? this._projects : [];
   }
@@ -122,21 +126,21 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       } else {
         this.settings.disable();
       }
-      if (!this.translationSuggestionsEnabled) {
-        const sourceParatextId = this.settings.controls.sourceParatextId;
-        sourceParatextId.reset();
-        sourceParatextId.disable();
+      if (!this.isBasedOnProjectSet) {
+        const translationSuggestions = this.settings.controls.translationSuggestions;
+        translationSuggestions.reset();
+        translationSuggestions.disable();
       }
     });
 
     this.state = 'loading';
-    this.subscribe(this.settings.controls.translationSuggestions.valueChanges, (value: boolean) => {
-      const sourceParatextId = this.settings.controls.sourceParatextId;
+    this.subscribe(this.settings.controls.sourceParatextId.valueChanges, (value: boolean) => {
+      const translationSuggestions = this.settings.controls.translationSuggestions;
       if (value) {
-        sourceParatextId.enable();
+        translationSuggestions.enable();
       } else {
-        sourceParatextId.reset();
-        sourceParatextId.disable();
+        translationSuggestions.reset();
+        translationSuggestions.disable();
       }
     });
 
@@ -163,10 +167,6 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     // when the user clicks it. Marking it untouched does not appear to work.
     this.paratextIdControl.setValidators(Validators.required);
     this.paratextIdControl.updateValueAndValidity();
-    if (this.translationSuggestionsEnabled) {
-      this.settings.controls.sourceParatextId.setValidators(Validators.required);
-      this.settings.controls.sourceParatextId.updateValueAndValidity();
-    }
     if (!this.connectProjectForm.valid || this._projects == null) {
       return;
     }
@@ -181,7 +181,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       const settings: SFProjectCreateSettings = {
         paratextId: project.paratextId,
         checkingEnabled: values.settings.checking,
-        translationSuggestionsEnabled: values.settings.translationSuggestions,
+        translationSuggestionsEnabled: values.settings.translationSuggestions ?? false,
         sourceParatextId: values.settings.sourceParatextId
       };
 
