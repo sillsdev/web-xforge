@@ -300,7 +300,7 @@ describe('SettingsComponent', () => {
         expect(env.basedOnSelectProjectsResources[2].name).toBe('Sob Jonah and Luke');
       }));
 
-      it('should not save Translation Suggestions when Based On is changed', fakeAsync(() => {
+      it('Translation Suggestions should remain unchanged when Based On is changed', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
           translationSuggestionsEnabled: false,
@@ -321,6 +321,13 @@ describe('SettingsComponent', () => {
         expect(env.basedOnSelectValue).toContain('ParatextP2');
         expect(env.statusDone(env.translationSuggestionsStatus)).toBeNull();
         expect(env.statusDone(env.basedOnStatus)).not.toBeNull();
+
+        env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
+        env.wait();
+        expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
+
+        env.setBasedOnValue('paratextId01');
+        expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
       }));
 
       it('should save Translation Suggestions only if Based On is set', fakeAsync(() => {
