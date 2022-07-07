@@ -37,7 +37,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="$(NuGetPackageRoot)sil.machine.webapi\$(MachineVersion)\contentFiles\any\net6.0\thot-new-model.zip">
+    <Content Update="$(NuGetPackageRoot)sil.machine.webapi\$(MachineVersion)\contentFiles\any\netcoreapp3.1\thot-new-model.zip">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
