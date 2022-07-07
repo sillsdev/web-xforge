@@ -59,13 +59,13 @@
         </mat-card-header>
         <mat-card-content class="card-content">
           <mat-checkbox [disabled]="true" [checked]="true" class="checkbox-placeholder">
-            {{ t("translate") }}
+            {{ translateFromSettings("translate") }}
           </mat-checkbox>
           <div fxLayout="row" fxLayoutAlign="start center">
             <div fxFlex="24px" class="indent"></div>
             <div fxLayout="column" fxFlex="grow">
               <mat-hint class="helper-text checkbox-helper-text">
-                {{ t("translate_tool_is_always_available") }}
+                {{ translateFromSettings("translate_tool_is_always_available") }}
               </mat-hint>
               <mat-hint
                 class="indented-field-row"
@@ -87,7 +87,7 @@
               <div fxLayout="column" fxFlex="grow">
                 <div class="indented-field-row">
                   <mat-checkbox formControlName="translationSuggestions" id="translation-suggestions-checkbox">
-                    {{ t("translation_suggestions") }}
+                    {{ translateFromSettings("translation_suggestions") }}
                   </mat-checkbox>
                 </div>
                 <div>
@@ -95,7 +95,7 @@
                   <mat-hint
                     fxFlex
                     class="helper-text"
-                    [innerHTML]="i18n.translateAndInsertTags('connect_project.translations_will_be_suggested')"
+                    [innerHTML]="i18n.translateAndInsertTags('settings.translations_will_be_suggested')"
                   ></mat-hint>
                 </div>
               </div>
