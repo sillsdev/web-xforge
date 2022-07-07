@@ -200,7 +200,7 @@ Although this setup is specifically written for **Windows**, the steps could be 
    `git clone --recurse-submodules https://github.com/sillsdev/web-xforge`.
 
 3. Install [MongoDB v4](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/) as a service
-4. Install [.Net Core SDK-3.1](https://dotnet.microsoft.com/download/dotnet-core/3.1)
+4. Install [.Net SDK 6.0](https://dotnet.microsoft.com/download/dotnet/6.0)
 5. Install [Node v16](https://nodejs.org/en/download/)
 6. Install [FFmpeg v4](https://ffmpeg.org/download.html) executable into the `C:\usr\bin\` directory.
 7. Install a developer editor, [VS Code](https://code.visualstudio.com/download) is recommended (the repo includes VS Code settings)
@@ -255,13 +255,13 @@ You can do a production build of the backend and frontend locally by running the
 
 ```bash
 dotnet publish src/SIL.XForge.Scripture/SIL.XForge.Scripture.csproj -c Release \
-  -r linux-x64 /p:Version=9.9.9 /p:AngularConfig=production
+  -r linux-x64 /p:Version=9.9.9 /p:AngularConfig=production --self-contained
 ```
 
 Then you can attempt to run it with:
 
 ```bash
-cd src/SIL.XForge.Scripture/bin/Release/netcoreapp3.1/linux-x64/publish
+cd src/SIL.XForge.Scripture/bin/Release/net6.0/linux-x64/publish
 ./SIL.XForge.Scripture
 ```
 
@@ -293,7 +293,7 @@ dotnet test
 
 .NET backend unit tests can also be run using the .NET Test Explorer area of the Test sidebar, or by clicking "Run Test" above a test in a code window. Clicking "Debug Test" will allow debugging.
 
-See documentation for [running tests](https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-test?tabs=netcore21) and [writing tests](https://docs.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-nunit).
+See documentation for [running tests](https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-test) and [writing tests](https://docs.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-nunit).
 
 ### Node Unit Testing
 

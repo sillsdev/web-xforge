@@ -26,7 +26,6 @@ namespace SIL.XForge.Scripture
                 .Build();
 
             return builder
-                .UseLibuv()
                 .ConfigureAppConfiguration((context, config) =>
                     {
                         IWebHostEnvironment env = context.HostingEnvironment;
