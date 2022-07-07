@@ -206,6 +206,10 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     }
   }
 
+  translateFromSettings(key: string): string {
+    return this.translocoService.translate(`settings.${key}`);
+  }
+
   updateStatus(inProgress: boolean): void {
     if (!inProgress && this.projectDoc != null) {
       this.router.navigate(['/projects', this.projectDoc.id]);
