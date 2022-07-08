@@ -388,6 +388,18 @@ describe('AppComponent', () => {
     environment.releaseStage = 'dev';
   }));
 
+  it('indicates when the last sync failed', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.navigate(['/projects', 'project01']);
+    env.init();
+
+    expect(env.lastSyncFailedBadge).toBeNull();
+
+    env.setLastSyncSuccessful('project02', false);
+    env.selectProject('project02');
+    expect(env.lastSyncFailedBadge).toBeTruthy();
+  }));
+
   describe('Community Checking', () => {
     it('no books showing in the menu', fakeAsync(() => {
       const env = new TestEnvironment();
@@ -669,6 +681,10 @@ class TestEnvironment {
     return this.realtimeService.get(UserDoc.COLLECTION, 'user01');
   }
 
+  get lastSyncFailedBadge(): DebugElement {
+    return this.menuDrawer.query(By.css('#sync-icon .mat-badge-active'));
+  }
+
   getMenuItemText(index: number): string {
     return this.menuListItems[index].nativeElement.textContent;
   }
@@ -778,6 +794,12 @@ class TestEnvironment {
     this.wait();
   }
 
+  setLastSyncSuccessful(projectId: string, lastSyncSuccessful: boolean): void {
+    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
+    projectDoc.submitJson0Op(op => op.set<boolean>(p => p.sync.lastSyncSuccessful!, lastSyncSuccessful));
+    this.wait();
+  }
+
   addUserToProject(projectId: string): void {
     const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.CommunityChecker), false);
@@ -809,7 +831,7 @@ class TestEnvironment {
           shareLevel: CheckingShareLevel.Specific,
           usersSeeEachOthersResponses: true
         },
-        sync: { queuedCount: 0 },
+        sync: { queuedCount: 0, lastSyncSuccessful: true },
         editable: true,
         userRoles,
         userPermissions: {},

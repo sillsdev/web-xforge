@@ -227,3 +227,11 @@ mdc-drawer-content {
 #tools-menu-list {
   overflow-y: auto;
 }
+
+::ng-deep #sync-icon .mat-badge-content {
+  font-family: 'Material Icons';
+  background: transparent;
+  color: var(--mdc-theme-error);
+  font-weight: normal;
+  font-size: 1.4rem;
+}

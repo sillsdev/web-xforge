@@ -528,6 +528,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.pwaService.activateUpdates();
   }
 
+  get lastSyncFailed(): boolean {
+    return this.selectedProjectDoc?.data?.sync.lastSyncSuccessful === false;
+  }
+
   private async checkCheckingBookQuestions(): Promise<void> {
     this.disposeQuestionQueries();
     if (!this.isCheckingEnabled || this.selectedProjectDoc === undefined) {
