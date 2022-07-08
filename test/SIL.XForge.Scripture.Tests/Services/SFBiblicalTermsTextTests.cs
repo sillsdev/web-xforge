@@ -15,7 +15,7 @@ namespace SIL.XForge.Scripture.Services
             var tokenizer = new LatinWordTokenizer();
             var doc = new XDocument(new XElement("TermRenderingsList"));
             var text = new SFBiblicalTermsText(tokenizer, "project01", doc);
-            Assert.That(text.Segments, Is.Empty);
+            Assert.That(text.GetSegments(), Is.Empty);
         }
 
         [Test]
@@ -26,7 +26,7 @@ namespace SIL.XForge.Scripture.Services
                 TermRendering("term1", guess: false),
                 TermRendering("term2", guess: false)));
             var text = new SFBiblicalTermsText(tokenizer, "project01", doc);
-            Assert.That(text.Segments, Is.Empty);
+            Assert.That(text.GetSegments(), Is.Empty);
         }
 
         [Test]
@@ -37,7 +37,7 @@ namespace SIL.XForge.Scripture.Services
                 TermRendering("term1", guess: true, "Term1"),
                 TermRendering("term2", guess: true, "Term2")));
             var text = new SFBiblicalTermsText(tokenizer, "project01", doc);
-            Assert.That(text.Segments, Is.Empty);
+            Assert.That(text.GetSegments(), Is.Empty);
         }
 
         [Test]
@@ -48,7 +48,7 @@ namespace SIL.XForge.Scripture.Services
                 TermRendering("term2", guess: false, "Term2"),
                 TermRendering("term1", guess: false, "Term1")));
             var text = new SFBiblicalTermsText(tokenizer, "project01", doc);
-            TextSegment[] segments = text.Segments.ToArray();
+            TextSegment[] segments = text.GetSegments().ToArray();
             Assert.That(segments.Length, Is.EqualTo(2));
             Assert.That(segments[0].SegmentRef.ToString(), Is.EqualTo("term1"));
             Assert.That(string.Join(" ", segments[0].Segment), Is.EqualTo("Term1"));
@@ -63,7 +63,7 @@ namespace SIL.XForge.Scripture.Services
                 TermRendering("term2", guess: false, "Term2-1", "Term2-2"),
                 TermRendering("term1", guess: false, "Term1")));
             var text = new SFBiblicalTermsText(tokenizer, "project01", doc);
-            TextSegment[] segments = text.Segments.ToArray();
+            TextSegment[] segments = text.GetSegments().ToArray();
             Assert.That(segments.Length, Is.EqualTo(3));
             Assert.That(string.Join(" ", segments[0].Segment), Is.EqualTo("Term1"));
             Assert.That(segments[1].SegmentRef.ToString(), Is.EqualTo("term2"));
