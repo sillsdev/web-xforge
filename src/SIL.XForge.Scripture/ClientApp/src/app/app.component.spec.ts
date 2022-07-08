@@ -388,6 +388,20 @@ describe('AppComponent', () => {
     environment.releaseStage = 'dev';
   }));
 
+  it('indicates when the last sync failed', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.navigate(['/projects', 'project01']);
+    env.init();
+
+    env.setLastSyncSuccessful('project01', true);
+    // SUT 1
+    expect(env.lastSyncFailedBadgeIsPresent).toBeFalse();
+
+    env.setLastSyncSuccessful('project01', false);
+    // SUT 2
+    expect(env.lastSyncFailedBadgeIsPresent).toBeTrue();
+  }));
+
   describe('Community Checking', () => {
     it('no books showing in the menu', fakeAsync(() => {
       const env = new TestEnvironment();
@@ -669,6 +683,14 @@ class TestEnvironment {
     return this.realtimeService.get(UserDoc.COLLECTION, 'user01');
   }
 
+  get lastSyncFailedBadgeIsPresent(): boolean {
+    const iconIfBadgeHidden = this.menuDrawer.query(By.css('#sync-icon.mat-badge-hidden'));
+    if (iconIfBadgeHidden != null) {
+      return false;
+    }
+    return true;
+  }
+
   getMenuItemText(index: number): string {
     return this.menuListItems[index].nativeElement.textContent;
   }
@@ -778,6 +800,12 @@ class TestEnvironment {
     this.wait();
   }
 
+  setLastSyncSuccessful(projectId: string, lastSyncSuccessful: boolean): void {
+    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
+    projectDoc.submitJson0Op(op => op.set<boolean>(p => p.sync.lastSyncSuccessful!, lastSyncSuccessful));
+    this.wait();
+  }
+
   addUserToProject(projectId: string): void {
     const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.CommunityChecker), false);
@@ -809,7 +837,7 @@ class TestEnvironment {
           shareLevel: CheckingShareLevel.Specific,
           usersSeeEachOthersResponses: true
         },
-        sync: { queuedCount: 0 },
+        sync: { queuedCount: 0, lastSyncSuccessful: true },
         editable: true,
         userRoles,
         userPermissions: {},
