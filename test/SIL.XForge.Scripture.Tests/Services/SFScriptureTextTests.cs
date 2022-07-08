@@ -69,7 +69,7 @@ namespace SIL.XForge.Scripture.Services
             var text = new SFScriptureText(tokenizer, projectId, bookNumber, chapterNumber, doc);
 
             Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
-            Assert.That(text.Segments.Count(), Is.EqualTo(numberSegments));
+            Assert.That(text.GetSegments().Count(), Is.EqualTo(numberSegments));
         }
 
         [Test]
@@ -122,7 +122,7 @@ namespace SIL.XForge.Scripture.Services
             var text = new SFScriptureText(tokenizer, projectId, bookNumber, chapterNumber, doc);
 
             Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
-            Assert.That(text.Segments.Count(), Is.EqualTo(numberSegments));
+            Assert.That(text.GetSegments().Count(), Is.EqualTo(numberSegments));
         }
 
         [Test]
@@ -149,7 +149,7 @@ namespace SIL.XForge.Scripture.Services
             var text = new SFScriptureText(tokenizer, projectId, bookNumber, chapterNumber, doc);
 
             Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
-            Assert.That(text.Segments.Count(), Is.EqualTo(numberSegments));
+            Assert.That(text.GetSegments().Count(), Is.EqualTo(numberSegments));
         }
 
         [Test]

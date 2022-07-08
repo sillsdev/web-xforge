@@ -5,12 +5,15 @@ using System.Text;
 using MongoDB.Bson;
 using SIL.Machine.Corpora;
 using SIL.Machine.Tokenization;
+using SIL.Machine.Utils;
 
 namespace SIL.XForge.Scripture.Services
 {
     /// <summary>Set of Scripture text segments.</summary>
     public class SFScriptureText : IText
     {
+        private IEnumerable<TextSegment> _segments;
+
         /// <remarks>Builds segments from texts and references.
         /// Will use ops in doc that have an insert and a segment attribute providing reference information.
         /// For example,
@@ -27,19 +30,26 @@ namespace SIL.XForge.Scripture.Services
                 throw new ArgumentException("Doc is missing ops, perhaps the doc was deleted.", nameof(doc));
 
             Id = $"{projectId}_{book}_{chapter}";
-            Segments = GetSegments(wordTokenizer, doc).OrderBy(s => s.SegmentRef).ToArray();
+            _segments = GetSegments(wordTokenizer, doc).OrderBy(s => s.SegmentRef).ToArray();
         }
 
         public string Id { get; }
 
-        public IEnumerable<TextSegment> Segments { get; }
 
         public string SortKey => Id;
 
-        private static IEnumerable<TextSegment> GetSegments(ITokenizer<string, int, string> wordTokenizer,
+        public IEnumerable<TextSegment> GetSegments(bool includeText = true, IText basedOn = null)
+        {
+            return _segments;
+        }
+
+        private IEnumerable<TextSegment> GetSegments(ITokenizer<string, int, string> wordTokenizer,
             BsonDocument doc)
         {
             string prevRef = null;
+            bool isSentenceStart = true;
+            bool isInRange = false;
+            bool isRangeStart = false;
             var sb = new StringBuilder();
             var ops = (BsonArray)doc["ops"];
             foreach (BsonDocument op in ops.Cast<BsonDocument>())
@@ -58,7 +68,12 @@ namespace SIL.XForge.Scripture.Services
                 string curRef = segmentValue.AsString;
                 if (prevRef != null && prevRef != curRef)
                 {
-                    yield return CreateSegment(wordTokenizer, prevRef, sb.ToString());
+                    bool inRange = curRef.IndexOf("/") != -1;
+                    isRangeStart = curRef.StartsWith(prevRef) && inRange;
+                    isInRange = isRangeStart || inRange;
+                    yield return CreateSegment(wordTokenizer, prevRef, sb.ToString(), isSentenceStart, isInRange,
+                        isRangeStart);
+                    isSentenceStart = sb.ToString().HasSentenceEnding();
                     sb.Clear();
                 }
 
@@ -68,11 +83,13 @@ namespace SIL.XForge.Scripture.Services
             }
 
             if (prevRef != null)
-                yield return CreateSegment(wordTokenizer, prevRef, sb.ToString());
+            {
+                yield return CreateSegment(wordTokenizer, prevRef, sb.ToString(), isSentenceStart, isInRange, false);
+            }
         }
 
-        private static TextSegment CreateSegment(ITokenizer<string, int, string> wordTokenizer, string segRef,
-            string segmentStr)
+        private TextSegment CreateSegment(ITokenizer<string, int, string> wordTokenizer, string segRef,
+            string segmentStr, bool isSentenceStart, bool isInRange, bool isRangeStart)
         {
             var keys = new List<string>();
             foreach (string refPart in segRef.Split('/'))
@@ -85,7 +102,8 @@ namespace SIL.XForge.Scripture.Services
                     keys.AddRange(partKeys);
             }
             string[] segment = wordTokenizer.Tokenize(segmentStr).ToArray();
-            return new TextSegment(new TextSegmentRef(keys), segment);
+            return new TextSegment(Id, new TextSegmentRef(keys), segment, isSentenceStart, isInRange, isRangeStart,
+                segment.Count() == 0);
         }
     }
 }
