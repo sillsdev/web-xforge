@@ -2500,6 +2500,37 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void ToDelta_BlankLineContainsText()
+        {
+            XDocument usxDoc = Usx("PHM",
+                Chapter("1"),
+                Para("p",
+                    Verse("1"),
+                    "Verse text."),
+                Para("b",
+                    "Text in line break"),
+                Para("p",
+                    "second segment in verse."));
+
+            var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
+            List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
+
+            var expected = new Delta()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertText("Verse text.", "verse_1_1")
+                .InsertPara("p")
+                .InsertText("Text in line break")
+                .InsertPara("b")
+                .InsertText("second segment in verse.", "verse_1_1/p_1")
+                .InsertPara("p");
+
+            Assert.That(chapterDeltas.Count(), Is.EqualTo(1));
+            Assert.That(chapterDeltas[0].Delta.DeepEquals(expected));
+        }
+
+        [Test]
         public void ToDelta_InvalidParaInFirstChapter()
         {
             XDocument usxDoc = Usx("PHM",
