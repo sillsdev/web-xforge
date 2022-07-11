@@ -35,7 +35,7 @@ namespace SIL.XForge.Models
             }
             var accessToken = new JwtSecurityToken(AccessToken);
             var now = DateTime.UtcNow;
-            return now >= accessToken.ValidFrom && now <= accessToken.ValidTo - TimeSpan.FromMinutes(1);
+            return now >= accessToken.ValidFrom && now <= accessToken.ValidTo - TimeSpan.FromMinutes(2);
         }
     }
 }
