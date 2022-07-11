@@ -48,7 +48,6 @@
     "additional_settings": "Configurações Adicionais",
     "already_connected": "(já conectado)",
     "based_on": "Baseado em",
-    "choose_the_mother_project": "Escolha o projeto do Paratext no qual seu projeto se baseia.",
     "community_checking": "Verificação da Comunidade",
     "connect_network_to_connect_project": "Por favor, conecte-se à internet para ativar a conexão a um projeto",
     "connect_paratext_project": "Conectar Projeto do Paratext",
@@ -63,8 +62,6 @@
     "paratext_project": "Projeto do Paratext",
     "problem_already_connected": "O projeto já está conectado. Talvez outro administrador de projeto tenha conectado o projeto ao mesmo tempo. Por favor, tente novamente. Se o problema persistir, por favor informe para que possamos corrigir o problema.",
     "proceed": "Continuar",
-    "translation_suggestions": "Sugestões de Tradução",
-    "translations_will_be_suggested_as_you_edit": "Traduções para palavras e frases serão sugeridas enquanto você edita o Texto Bíblico. É recomendável que seu projeto seja configurado como uma {{ boldStart }}Tradução Derivada{{ boldEnd }} no Paratext.",
     "you_can_change_later": "Você pode alterar isto depois.",
     "you_must_be_logged_in_to_paratext": "Você deve fazer login com sua conta do Paratext para se conectar a um projeto."
   },
@@ -203,7 +200,6 @@
   "settings": {
     "anyone_with_a_link": "Qualquer pessoa com um link",
     "based_on": "Baseado em",
-    "choose_the_paratext_project": "Escolha o projeto do Paratext no qual seu projeto se baseia.",
     "community_checking": "Verificação da Comunidade",
     "connect_network_to_change_settings": "As configurações do projeto não podem ser alteradas quando estiver offline. Por favor, conecte-se à internet para fazer alterações.",
     "danger_zone": "Zona de Perigo",
@@ -225,7 +221,8 @@
     "translate_tool_is_always_available": "A ferramenta de tradução está sempre disponível para colaborar com outros tradutores que trabalham com o mesmo texto.",
     "translate": "Traduzir",
     "translation_suggestions": "Sugestões de Tradução",
-    "translations_will_be_suggested": "Traduções para palavras e frases serão sugeridas enquanto você edita o Texto Bíblico. É recomendável que seu projeto seja configurado como uma {{ boldStart }}Tradução Derivada{{ boldEnd }} no Paratext.",
+    "translation_based_on": "If your Paratext project is based on another project or you want to compare it to a resource from the Digital Bible Library then you can select that below to enable a side by side comparison. It is recommended that your project is setup as a {{ boldStart }}Daughter Translation{{ boldEnd }} in Paratext only if your project is based on another Paratext project. It does not apply if your project is based on a resource.",
+    "translations_will_be_suggested": "Translations for words and phrases will be suggested as you edit Scripture based on the project or resource selected above.",
     "users_can_interact_with_each_other": "Os usuários podem ver as respostas e comentários uns dos outros para interagirem entre si.",
     "users_can_share_the_project": "Os usuários podem compartilhar, convidando um amigo a participar do projeto.{{ newLine }}{{ italicsStart }}Administradores{{ italicsEnd }} podem sempre convidar outros para o projecto em {{ templateTagBoundary }}Usuários{{ templateTagBoundary }}.",
     "will_not_delete_paratext_project": "Isso {{ boldStart }}não{{ boldEnd }} excluirá seu projeto do Paratext, mas excluirá todos os dados não sincronizados armazenados no Scripture Forge. É recomendável {{ templateTagBoundary }}Sincronizar{{ templateTagBoundary }} primeiro antes de excluir."

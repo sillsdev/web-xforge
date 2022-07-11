@@ -48,7 +48,6 @@
     "additional_settings": "Pengaturan Tambahan",
     "already_connected": "(Sudah terhubung)",
     "based_on": "Berdasarkan pada",
-    "choose_the_mother_project": "Pilih proyek Paratext yang menjadi dasar proyek Anda.",
     "community_checking": "Pemeriksaan Komunitas",
     "connect_network_to_connect_project": "Please connect to the internet to enable connecting to a project",
     "connect_paratext_project": "Hubungkan Proyek Paratext",
@@ -63,8 +62,6 @@
     "paratext_project": "Proyek Paratext",
     "problem_already_connected": "The project is already connected. Maybe another project administrator connected the project at the same time. Please try again. If it continues to be a problem, please report the issue so we can get it fixed.",
     "proceed": "Proceed",
-    "translation_suggestions": "Saran Terjemahan",
-    "translations_will_be_suggested_as_you_edit": "Terjemahan untuk kata dan frasa akan disarankan saat Anda menyunting Alkitab. Disarankan agar proyek Anda diatur sebagai {{ boldStart }}Daughter Translation{{ boldEnd }} di Paratext.",
     "you_can_change_later": "Anda dapat mengubahnya nanti.",
     "you_must_be_logged_in_to_paratext": "Anda harus masuk dengan akun Paratext Anda untuk menghubungkan ke proyek."
   },
@@ -203,7 +200,6 @@
   "settings": {
     "anyone_with_a_link": "Siapapun yang punya tautan",
     "based_on": "Berdasarkan pada",
-    "choose_the_paratext_project": "Pilih proyek Paratext yang menjadi dasar proyek Anda.",
     "community_checking": "Pemeriksaan Komunitas",
     "connect_network_to_change_settings": "Project settings cannot be changed while offline. Please connect to the internet to make changes.",
     "danger_zone": "Zona Bahaya",
@@ -225,7 +221,8 @@
     "translate_tool_is_always_available": "Alat terjemahan selalu tersedia untuk berkolaborasi dengan penerjemah lain yang mengerjakan teks yang sama.",
     "translate": "Menerjemahkan",
     "translation_suggestions": "Saran Terjemahan",
-    "translations_will_be_suggested": "Terjemahan untuk kata dan frasa akan disarankan saat Anda menyunting Alkitab. Disarankan agar proyek Anda diatur sebagai {{ boldStart }}Daughter Translation{{ boldEnd }} di Paratext.",
+    "translation_based_on": "If your Paratext project is based on another project or you want to compare it to a resource from the Digital Bible Library then you can select that below to enable a side by side comparison. It is recommended that your project is setup as a {{ boldStart }}Daughter Translation{{ boldEnd }} in Paratext only if your project is based on another Paratext project. It does not apply if your project is based on a resource.",
+    "translations_will_be_suggested": "Translations for words and phrases will be suggested as you edit Scripture based on the project or resource selected above.",
     "users_can_interact_with_each_other": "Pengguna dapat melihat jawaban dan komentar masing-masing untuk berinteraksi satu sama lain.",
     "users_can_share_the_project": "Pengguna dapat berbagi dengan mengundang teman untuk bergabung dengan proyek.{{ newLine }}{{ italicsStart }}Administrator{{ italicsEnd }} selalu dapat mengundang orang lain terlibat di {{ templateTagBoundary }}Pengguna{{ templateTagBoundary }}.",
     "will_not_delete_paratext_project": "Ini akan {{ boldStart }}tidak{{ boldEnd }} menghapus proyek Paratext anda, tetapi itu akan menghapus semua data yang tidak disinkronkan yang disimpan di dalam Scripture Forge. Disarankan untuk {{ templateTagBoundary }}Sinkronisasi{{ templateTagBoundary }} dahulu sebelum menghapus."

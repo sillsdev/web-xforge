@@ -159,7 +159,7 @@
     <value>You've been invited to the project {0} on {1}</value>
   </data>
   <data name="Language" xml:space="preserve">
-    <value>Language</value>
+    <value>اللغة</value>
     <comment>Tool tip for the language selector</comment>
   </data>
   <data name="LearnMore" xml:space="preserve">
