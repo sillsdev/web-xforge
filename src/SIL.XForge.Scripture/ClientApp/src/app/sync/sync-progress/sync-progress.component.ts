@@ -56,7 +56,7 @@ export class SyncProgressComponent extends SubscriptionDisposable {
     if (this._projectDoc?.data == null) {
       return;
     }
-    if (this._projectDoc?.data?.translateConfig.translationSuggestionsEnabled) {
+    if (this._projectDoc?.data?.translateConfig.source != null) {
       const sourceProjectId: string | undefined = this._projectDoc.data.translateConfig.source?.projectRef;
       if (sourceProjectId != null) {
         const role: string = await this.projectService.onlineGetProjectRole(sourceProjectId);
