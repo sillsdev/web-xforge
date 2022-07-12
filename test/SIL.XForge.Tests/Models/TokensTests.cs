@@ -37,7 +37,7 @@ namespace SIL.XForge.Models
         public void ValidateLifetime_FalseIfAboutToExpire()
         {
             var issuedAt = DateTime.Now;
-            var expiration = issuedAt + TimeSpan.FromSeconds(50);
+            var expiration = issuedAt + TimeSpan.FromSeconds(119);
             var tokens = new Tokens()
             {
                 AccessToken = TokenHelper.CreateAccessToken(issuedAt, expiration, "paratext01"),
@@ -52,7 +52,7 @@ namespace SIL.XForge.Models
         public void ValidateLifetime_TrueIfUnexpired()
         {
             var issuedAt = DateTime.Now;
-            var expiration = issuedAt + TimeSpan.FromSeconds(70);
+            var expiration = issuedAt + TimeSpan.FromSeconds(121);
             var tokens = new Tokens()
             {
                 AccessToken = TokenHelper.CreateAccessToken(issuedAt, expiration, "paratext01"),
