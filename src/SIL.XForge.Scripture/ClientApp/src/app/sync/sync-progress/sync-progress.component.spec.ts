@@ -30,7 +30,7 @@ describe('SyncProgressComponent', () => {
   }));
 
   it('does not initialize if projectDoc is undefined', fakeAsync(() => {
-    const env = new TestEnvironment('user01');
+    const env = new TestEnvironment({ userId: 'user01' });
     expect(env.host.projectDoc).toBeUndefined();
     verify(mockedProjectService.get('sourceProject02')).never();
     expect(env.host.syncProgress!.mode).toBe('indeterminate');
@@ -38,7 +38,7 @@ describe('SyncProgressComponent', () => {
 
   it('ignores source if source project is invalid', fakeAsync(() => {
     when(mockedProjectService.onlineGetProjectRole('invalid_source')).thenResolve(SFProjectRole.None);
-    const env = new TestEnvironment('user01', 'invalid_source');
+    const env = new TestEnvironment({ userId: 'user01', sourceProject: 'invalid_source' });
     env.setupProjectDoc();
     verify(mockedProjectService.onlineGetProjectRole('invalid_source')).once();
     env.emitSyncProgress(0.5, 'testProject01');
@@ -49,7 +49,7 @@ describe('SyncProgressComponent', () => {
   }));
 
   it('should show progress when sync is active', fakeAsync(() => {
-    const env = new TestEnvironment('user01');
+    const env = new TestEnvironment({ userId: 'user01' });
     env.setupProjectDoc();
     // Simulate sync starting
     env.emitSyncProgress(0, 'testProject01');
@@ -65,27 +65,27 @@ describe('SyncProgressComponent', () => {
   }));
 
   it('show progress as source and target combined', fakeAsync(() => {
-    const env = new TestEnvironment('user01', 'sourceProject02');
+    const env = new TestEnvironment({
+      userId: 'user01',
+      sourceProject: 'sourceProject02',
+      translationSuggestionsEnabled: true
+    });
     env.setupProjectDoc();
-    env.emitSyncProgress(0, 'testProject01');
-    env.emitSyncProgress(0, 'sourceProject02');
-    verify(mockedProjectService.onlineGetProjectRole('sourceProject02')).once();
-    verify(mockedProjectService.get('sourceProject02')).once();
-    expect(env.progressBar).not.toBeNull();
-    expect(env.host.syncProgress.mode).toBe('indeterminate');
-    env.emitSyncProgress(0.8, 'sourceProject02');
-    expect(env.host.syncProgress.syncProgressPercent).toEqual(40);
-    expect(env.host.syncProgress.mode).toBe('determinate');
-    env.emitSyncComplete(true, 'sourceProject02');
-    expect(env.host.syncProgress.syncProgressPercent).toEqual(50);
-    expect(env.host.syncProgress.mode).toBe('indeterminate');
-    env.emitSyncProgress(0.8, 'testProject01');
-    expect(env.host.syncProgress.syncProgressPercent).toEqual(90);
-    env.emitSyncComplete(true, 'testProject01');
+    env.checkCombinedProgress();
+  }));
+
+  it('show source and target progress combined when translation suggestions disabled', fakeAsync(() => {
+    const env = new TestEnvironment({
+      userId: 'user01',
+      sourceProject: 'sourceProject02',
+      translationSuggestionsEnabled: false
+    });
+    env.setupProjectDoc();
+    env.checkCombinedProgress();
   }));
 
   it('does not access source project if user does not have a paratext role', fakeAsync(() => {
-    const env = new TestEnvironment('user02', 'sourceProject02');
+    const env = new TestEnvironment({ userId: 'user01' });
     env.setupProjectDoc();
     env.emitSyncProgress(0, 'testProject01');
     env.emitSyncProgress(0, 'sourceProject02');
@@ -112,6 +112,13 @@ class HostComponent {
   }
 }
 
+interface TestEnvArgs {
+  userId: string;
+  sourceProject?: string;
+  translationSuggestionsEnabled?: boolean;
+  isInProgress?: boolean;
+}
+
 class TestEnvironment {
   readonly fixture: ComponentFixture<HostComponent>;
   readonly host: HostComponent;
@@ -120,7 +127,7 @@ class TestEnvironment {
   private userRoleTarget = { user01: SFProjectRole.ParatextAdministrator, user02: SFProjectRole.ParatextAdministrator };
   private userRoleSource = { user01: SFProjectRole.ParatextAdministrator };
 
-  constructor(userId: string, sourceProject?: string, isInProgress = false) {
+  constructor(args: TestEnvArgs) {
     const date = new Date();
     date.setMonth(date.getMonth() - 2);
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
@@ -132,22 +139,22 @@ class TestEnvironment {
         writingSystem: {
           tag: 'en'
         },
-        translateConfig:
-          sourceProject != null
-            ? {
-                translationSuggestionsEnabled: true,
-                shareEnabled: false,
-                shareLevel: TranslateShareLevel.Specific,
-                source: {
+        translateConfig: {
+          translationSuggestionsEnabled: !!args.translationSuggestionsEnabled,
+          shareEnabled: false,
+          shareLevel: TranslateShareLevel.Specific,
+          source:
+            args.sourceProject != null
+              ? {
                   paratextId: 'pt02',
-                  projectRef: sourceProject,
+                  projectRef: args.sourceProject,
                   isRightToLeft: false,
                   writingSystem: { tag: 'en' },
                   name: 'Sync Source Project',
                   shortName: 'P02'
                 }
-              }
-            : { translationSuggestionsEnabled: false, shareEnabled: false, shareLevel: TranslateShareLevel.Specific },
+              : undefined
+        },
         checkingConfig: {
           checkingEnabled: false,
           usersSeeEachOthersResponses: true,
@@ -155,8 +162,8 @@ class TestEnvironment {
           shareLevel: CheckingShareLevel.Specific
         },
         sync: {
-          queuedCount: isInProgress ? 1 : 0,
-          percentCompleted: isInProgress ? 0.1 : undefined,
+          queuedCount: !!args.isInProgress ? 1 : 0,
+          percentCompleted: !!args.isInProgress ? 0.1 : undefined,
           lastSyncSuccessful: true,
           dateLastSuccessfulSync: date.toJSON()
         },
@@ -168,7 +175,7 @@ class TestEnvironment {
       }
     });
 
-    if (sourceProject != null) {
+    if (args.sourceProject != null) {
       this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
         id: 'sourceProject02',
         data: {
@@ -208,7 +215,7 @@ class TestEnvironment {
     when(mockedProjectService.get('sourceProject02')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'sourceProject02')
     );
-    when(mockedProjectService.onlineGetProjectRole('sourceProject02')).thenResolve(this.userRoleSource[userId]);
+    when(mockedProjectService.onlineGetProjectRole('sourceProject02')).thenResolve(this.userRoleSource[args.userId]);
 
     this.fixture = TestBed.createComponent(HostComponent);
     this.host = this.fixture.componentInstance;
@@ -250,5 +257,23 @@ class TestEnvironment {
     tick();
     this.fixture.detectChanges();
     tick();
+  }
+
+  checkCombinedProgress(): void {
+    this.emitSyncProgress(0, 'testProject01');
+    this.emitSyncProgress(0, 'sourceProject02');
+    verify(mockedProjectService.onlineGetProjectRole('sourceProject02')).once();
+    verify(mockedProjectService.get('sourceProject02')).once();
+    expect(this.progressBar).not.toBeNull();
+    expect(this.host.syncProgress.mode).toBe('indeterminate');
+    this.emitSyncProgress(0.8, 'sourceProject02');
+    expect(this.host.syncProgress.syncProgressPercent).toEqual(40);
+    expect(this.host.syncProgress.mode).toBe('determinate');
+    this.emitSyncComplete(true, 'sourceProject02');
+    expect(this.host.syncProgress.syncProgressPercent).toEqual(50);
+    expect(this.host.syncProgress.mode).toBe('indeterminate');
+    this.emitSyncProgress(0.8, 'testProject01');
+    expect(this.host.syncProgress.syncProgressPercent).toEqual(90);
+    this.emitSyncComplete(true, 'testProject01');
   }
 }
