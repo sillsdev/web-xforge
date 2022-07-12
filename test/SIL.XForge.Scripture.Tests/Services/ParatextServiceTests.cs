@@ -2251,13 +2251,15 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             var project = new SFProject
             {
+                // Not a valid resource because its Paratext ID is not 16 characters
                 ParatextId = "not_a_resource",
             };
             var resource = new ParatextResource();
 
             // SUT
             var result = env.Service.ResourceDocsNeedUpdating(project, resource);
-            Assert.IsTrue(result);
+            Assert.That(env.Service.IsResource(project.ParatextId), Is.False);
+            Assert.That(result, Is.True);
         }
 
         [Test]
@@ -2267,13 +2269,15 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             var project = new SFProject
             {
+                // Valid, as a resource's Paratext ID is 16 characters long
                 ParatextId = "a_valid_resource",
             };
             var resource = new ParatextResource();
 
             // SUT
             var result = env.Service.ResourceDocsNeedUpdating(project, resource);
-            Assert.IsTrue(result);
+            Assert.That(env.Service.IsResource(project.ParatextId), Is.True);
+            Assert.That(result, Is.True);
         }
 
         [Test]
@@ -2284,6 +2288,7 @@ namespace SIL.XForge.Scripture.Services
             var timestamp = DateTime.Now;
             var project = new SFProject
             {
+                // Valid, as a resource's Paratext ID is 16 characters long
                 ParatextId = "a_valid_resource",
                 ResourceConfig = new ResourceConfig
                 {
@@ -2303,7 +2308,8 @@ namespace SIL.XForge.Scripture.Services
 
             // SUT
             var result = env.Service.ResourceDocsNeedUpdating(project, resource);
-            Assert.IsFalse(result);
+            Assert.That(env.Service.IsResource(project.ParatextId), Is.True);
+            Assert.That(result, Is.False);
         }
 
         [Test]
@@ -2314,6 +2320,7 @@ namespace SIL.XForge.Scripture.Services
             var timestamp = DateTime.Now;
             var project = new SFProject
             {
+                // Valid, as a resource's Paratext ID is 16 characters long
                 ParatextId = "a_valid_resource",
                 ResourceConfig = new ResourceConfig
                 {
@@ -2333,7 +2340,8 @@ namespace SIL.XForge.Scripture.Services
 
             // SUT
             var result = env.Service.ResourceDocsNeedUpdating(project, resource);
-            Assert.IsFalse(result);
+            Assert.That(env.Service.IsResource(project.ParatextId), Is.True);
+            Assert.That(result, Is.False);
         }
 
         [Test]
@@ -2344,6 +2352,7 @@ namespace SIL.XForge.Scripture.Services
             var timestamp = DateTime.Now;
             var project = new SFProject
             {
+                // Valid, as a resource's Paratext ID is 16 characters long
                 ParatextId = "a_valid_resource",
                 ResourceConfig = new ResourceConfig
                 {
@@ -2363,7 +2372,8 @@ namespace SIL.XForge.Scripture.Services
 
             // SUT
             var result = env.Service.ResourceDocsNeedUpdating(project, resource);
-            Assert.IsFalse(result);
+            Assert.That(env.Service.IsResource(project.ParatextId), Is.True);
+            Assert.That(result, Is.False);
         }
 
         [Test]
@@ -2374,6 +2384,7 @@ namespace SIL.XForge.Scripture.Services
             var timestamp = DateTime.Now;
             var project = new SFProject
             {
+                // Valid, as a resource's Paratext ID is 16 characters long
                 ParatextId = "a_valid_resource",
                 ResourceConfig = new ResourceConfig
                 {
@@ -2393,7 +2404,8 @@ namespace SIL.XForge.Scripture.Services
 
             // SUT
             var result = env.Service.ResourceDocsNeedUpdating(project, resource);
-            Assert.IsTrue(result);
+            Assert.That(env.Service.IsResource(project.ParatextId), Is.True);
+            Assert.That(result, Is.True);
         }
 
         [Test]
@@ -2404,6 +2416,7 @@ namespace SIL.XForge.Scripture.Services
             var timestamp = DateTime.Now;
             var project = new SFProject
             {
+                // Valid, as a resource's Paratext ID is 16 characters long
                 ParatextId = "a_valid_resource",
                 ResourceConfig = new ResourceConfig
                 {
@@ -2423,7 +2436,8 @@ namespace SIL.XForge.Scripture.Services
 
             // SUT
             var result = env.Service.ResourceDocsNeedUpdating(project, resource);
-            Assert.IsTrue(result);
+            Assert.That(env.Service.IsResource(project.ParatextId), Is.True);
+            Assert.That(result, Is.True);
         }
 
         [Test]
@@ -2434,6 +2448,7 @@ namespace SIL.XForge.Scripture.Services
             var timestamp = DateTime.Now;
             var project = new SFProject
             {
+                // Valid, as a resource's Paratext ID is 16 characters long
                 ParatextId = "a_valid_resource",
                 ResourceConfig = new ResourceConfig
                 {
@@ -2453,7 +2468,8 @@ namespace SIL.XForge.Scripture.Services
 
             // SUT
             var result = env.Service.ResourceDocsNeedUpdating(project, resource);
-            Assert.IsTrue(result);
+            Assert.That(env.Service.IsResource(project.ParatextId), Is.True);
+            Assert.That(result, Is.True);
         }
 
         private class TestEnvironment

@@ -325,9 +325,9 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>
-        /// Determines whether a the <see cref="TextData"/> for a resource project requires updating.
+        /// Determines whether the <see cref="TextData"/> for a resource project requires updating.
         /// </summary>
-        /// <param name="project">The resource project.</param>
+        /// <param name="project">The Scripture Forge project.</param>
         /// <param name="resource">The Paratext resource.</param>
         /// <returns>
         /// <c>true</c> if the project's documents require updating; otherwise, <c>false</c>.
@@ -340,7 +340,7 @@ namespace SIL.XForge.Scripture.Services
         public bool ResourceDocsNeedUpdating(SFProject project, ParatextResource resource)
         {
             // Ensure that we are checking a resource. We will default to true if it is not a resource.
-            if (!this.IsResource(project.ParatextId))
+            if (!IsResource(project.ParatextId))
             {
                 return true;
             }
@@ -1135,7 +1135,7 @@ namespace SIL.XForge.Scripture.Services
         public bool BackupExists(UserSecret userSecret, string paratextId)
         {
             // We do not back up resources
-            if (paratextId == null || this.IsResource(paratextId))
+            if (paratextId == null || IsResource(paratextId))
             {
                 return false;
             }
@@ -1156,7 +1156,7 @@ namespace SIL.XForge.Scripture.Services
         public bool BackupRepository(UserSecret userSecret, string paratextId)
         {
             // We do not back up resources
-            if (paratextId == null || this.IsResource(paratextId))
+            if (paratextId == null || IsResource(paratextId))
             {
                 if (paratextId == null)
                 {
@@ -1208,13 +1208,13 @@ namespace SIL.XForge.Scripture.Services
         public bool RestoreRepository(UserSecret userSecret, string paratextId)
         {
             // We do not back up resources
-            if (paratextId == null || this.IsResource(paratextId))
+            if (paratextId == null || IsResource(paratextId))
             {
                 if (paratextId == null)
                 {
                     _logger.LogInformation("Not restoring local PT repo for null paratextId.");
                 }
-                else if (this.IsResource(paratextId))
+                else if (IsResource(paratextId))
                 {
                     _logger.LogInformation("Not restoring a DBL resource.");
                 }
