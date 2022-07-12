@@ -1511,7 +1511,7 @@ namespace SIL.XForge.Scripture.Services
                 new Book("MAT", 2), new Book("MRK", 2));
             env.SetupPTData(new Book("MAT", 3), new Book("MRK", 1));
 
-            // Setup the environment so the Paratext service will return the the resource has changed
+            // Setup the environment so the Paratext service will return that the resource has changed
             env.ParatextService.IsResource(Arg.Any<string>()).Returns(true);
             env.ParatextService.ResourceDocsNeedUpdating(Arg.Any<SFProject>(), Arg.Any<ParatextResource>())
                 .Returns(true);
@@ -1525,6 +1525,12 @@ namespace SIL.XForge.Scripture.Services
             env.MockLogger.AssertEventCount((LogEvent logEvent) => logEvent.LogLevel == LogLevel.Information &&
                                                                    Regex.IsMatch(logEvent.Message, "Starting"), 1);
 
+            // The book text is retrieved from Paratext as the resource has changed
+            env.ParatextService.Received().GetBookText(
+                Arg.Any<UserSecret>(),
+                Arg.Any<string>(),
+                Arg.Any<int>());
+
             Assert.IsNotNull(env.GetProject().ResourceConfig);
             Assert.That(env.ContainsText("project01", "MAT", 3), Is.True);
             Assert.That(env.ContainsText("project01", "MRK", 2), Is.False);
@@ -1533,13 +1539,13 @@ namespace SIL.XForge.Scripture.Services
         [Test]
         public async Task SyncAsync_ResourceNotChanged()
         {
-            // Setup the environment so there will be Paratext changes
+            // Setup the environment so there will be no Paratext changes
             var env = new TestEnvironment();
             env.SetupSFData(true, true, false, false,
                 new Book("MAT", 2), new Book("MRK", 2));
-            env.SetupPTData(new Book("MAT", 3), new Book("MRK", 1));
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
 
-            // Setup the environment so the Paratext service will return the the resource has not changed
+            // Setup the environment so the Paratext service will return that the resource has not changed
             env.ParatextService.IsResource(Arg.Any<string>()).Returns(true);
             env.ParatextService.ResourceDocsNeedUpdating(Arg.Any<SFProject>(), Arg.Any<ParatextResource>())
                 .Returns(false);
@@ -1553,8 +1559,14 @@ namespace SIL.XForge.Scripture.Services
             env.MockLogger.AssertEventCount((LogEvent logEvent) => logEvent.LogLevel == LogLevel.Information &&
                 Regex.IsMatch(logEvent.Message, "Starting"), 1);
 
+            // The book text not is retrieved from Paratext as the resource did not change
+            env.ParatextService.DidNotReceive().GetBookText(
+                Arg.Any<UserSecret>(),
+                Arg.Any<string>(),
+                Arg.Any<int>());
+
             Assert.IsNull(env.GetProject().ResourceConfig);
-            Assert.That(env.ContainsText("project01", "MAT", 3), Is.False);
+            Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
             Assert.That(env.ContainsText("project01", "MRK", 2), Is.True);
         }
 
