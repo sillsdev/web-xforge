@@ -310,7 +310,7 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 bool resourceNeedsUpdating = paratextProject is ParatextResource paratextResource &&
-                                             _paratextService.ResourceDocsNeedUpdating(_projectDoc.Data, paratextResource);
+                    _paratextService.ResourceDocsNeedUpdating(_projectDoc.Data, paratextResource);
 
                 if (!_paratextService.IsResource(targetParatextId) || resourceNeedsUpdating)
                 {
