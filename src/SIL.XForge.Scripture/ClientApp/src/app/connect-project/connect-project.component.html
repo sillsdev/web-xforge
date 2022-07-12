@@ -53,43 +53,25 @@
         ></p>
       </ng-template>
       <mat-card id="settings-card" *ngIf="showSettings" class="card-outline" formGroupName="settings">
-        <mat-card-header class="card-title">
-          <mat-card-title>{{ t("additional_settings") }}</mat-card-title>
-          <mat-card-subtitle>{{ t("you_can_change_later") }}</mat-card-subtitle>
-        </mat-card-header>
+        <mat-card-title>{{ t("project_settings") }}</mat-card-title>
+        <mat-card-subtitle>{{ t("you_can_change_later") }}</mat-card-subtitle>
         <mat-card-content class="card-content">
-          <mat-checkbox [disabled]="true" [checked]="true" class="checkbox-placeholder">
-            {{ translateFromSettings("translate") }}
-          </mat-checkbox>
-          <div fxLayout="row" fxLayoutAlign="start center">
-            <div fxFlex="24px" class="indent"></div>
-            <div fxLayout="column" fxFlex="grow">
-              <mat-hint class="helper-text checkbox-helper-text">
-                {{ translateFromSettings("translate_tool_is_always_available") }}
-              </mat-hint>
-              <mat-hint
-                class="indented-field-row"
-                [innerHTML]="i18n.translateAndInsertTags('settings.translation_based_on')"
-              ></mat-hint>
-              <app-project-select
-                formControlName="sourceParatextId"
-                placeholder="{{ t('based_on') }}"
-                [projects]="projects"
-                [resources]="resources"
-                [hideProjectId]="paratextIdControl.value"
-              ></app-project-select>
-              <mat-error *ngIf="showResourcesLoadingFailedMessage">{{ t("error_fetching_resources") }}</mat-error>
-            </div>
-          </div>
+          <p>{{ t("select_project_or_resource") }}</p>
+          <p>{{ t("translation_suggestions_require_source_text") }}</p>
+          <app-project-select
+            formControlName="sourceParatextId"
+            placeholder="{{ t('source_text_placeholder') }}"
+            [projects]="projects"
+            [resources]="resources"
+            [hideProjectId]="paratextIdControl.value"
+          ></app-project-select>
+          <mat-error *ngIf="showResourcesLoadingFailedMessage">{{ t("error_fetching_resources") }}</mat-error>
           <ng-container *ngIf="isBasedOnProjectSet">
             <div fxLayout="row" fxLayoutAlign="start center">
-              <div fxFlex="24px" class="indent"></div>
               <div fxLayout="column" fxFlex="grow">
-                <div class="indented-field-row">
-                  <mat-checkbox formControlName="translationSuggestions" id="translation-suggestions-checkbox">
-                    {{ translateFromSettings("translation_suggestions") }}
-                  </mat-checkbox>
-                </div>
+                <mat-checkbox formControlName="translationSuggestions" id="translation-suggestions-checkbox">
+                  {{ t("enable_translation_suggestions") }}
+                </mat-checkbox>
                 <div>
                   <div fxFlex="24px" class="indent"></div>
                   <mat-hint
@@ -106,7 +88,7 @@
         <mat-card-content class="card-content">
           <div>
             <mat-checkbox formControlName="checking" id="checking-checkbox">
-              {{ t("community_checking") }}
+              {{ t("enable_community_checking") }}
             </mat-checkbox>
           </div>
           <div>
