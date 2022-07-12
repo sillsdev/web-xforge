@@ -61,27 +61,14 @@
     }
 
     mat-card {
-      box-shadow: initial;
-      padding: 0;
       margin-top: 32px;
 
-      .card-title {
-        margin-top: 16px;
-      }
-
-      .card-content {
-        padding: 16px;
-        margin-bottom: 0;
+      mat-divider + .card-content {
+        padding-top: 16px;
       }
 
       mat-checkbox {
         padding-bottom: 12px;
-      }
-
-      mat-divider {
-        margin-left: 16px;
-        position: initial;
-        width: initial;
       }
     }
 
