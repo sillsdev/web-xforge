@@ -1,0 +1,113 @@
+# Github Action to build and run tests
+
+name: Build
+
+on:
+  push:
+    branches: [develop, master, sf-qa, sf-live]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-development:
+    runs-on: [ubuntu-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: "Deps: System packages"
+        run: |
+          sudo apt-get install --assume-yes \
+            dotnet-sdk-6.0 \
+            nodejs \
+            npm
+      - name: Pre-build report
+        run: |
+          set -xueo pipefail
+          which dotnet
+          dotnet --version
+          dpkg -l dotnet\*
+          dotnet --list-sdks
+          dotnet --list-runtimes
+          which node
+          node --version
+          which npm
+          npm --version
+
+      - name: "Deps: reportgenerator tool"
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+      - name: "Deps: RealtimeServer npm"
+        run: cd src/RealtimeServer && npm ci
+      - name: "Deps: Backend nuget"
+        run: dotnet restore
+      - name: "Deps: Frontend npm"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm ci
+
+      - name: "Lint: Frontend ng"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run lint
+      - name: "Lint: Frontend Prettier"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run prettier:tc
+
+      - name: "Build: Backend, RealtimeServer"
+        run: dotnet build xForge.sln
+      - name: "Build: Frontend"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run build
+
+      - name: "Test: RealtimeServer"
+        run: cd src/RealtimeServer && npm run test:tc
+      - name: "Test: Backend"
+        run: |
+          dotnet test xForge.sln \
+            -p:CollectCoverage=true \
+            -p:CoverletOutputFormat=opencover \
+            -p:Exclude=\"[NUnit3.TestAdapter]*,[SIL.XForge.*.Views]*,[SIL.XForge.Tests]*\"
+      - name: "Test: Frontend"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run test:tc
+
+      - name: "Coverage: Backend"
+        run: |
+          reportgenerator \
+            -reports:test/*/coverage.opencover.xml \
+            -targetdir:coverage \
+            "-reporttypes:HTML;TeamCitySummary"
+      - name: "Coverage: Publish"
+        run: npx codecov --token=CODECOV_TOKEN
+
+  build-production:
+    runs-on: [ubuntu-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: "Deps: System packages"
+        run: |
+          sudo apt-get install --assume-yes \
+            dotnet-sdk-6.0 \
+            nodejs \
+            npm
+      - name: Pre-build report
+        run: |
+          set -xueo pipefail
+          which dotnet
+          dotnet --version
+          dpkg -l dotnet\*
+          dotnet --list-sdks
+          dotnet --list-runtimes
+          which node
+          node --version
+          which npm
+          npm --version
+
+      - name: "Production build"
+        run: scripts/local-production-build
+
+      - name: "Test: Backend"
+        run: |
+          dotnet test xForge.sln \
+            -p:CollectCoverage=true \
+            -p:CoverletOutputFormat=opencover \
+            -p:Exclude=\"[NUnit3.TestAdapter]*,[SIL.XForge.*.Views]*,[SIL.XForge.Tests]*\"
+      - name: "Test: RealtimeServer"
+        run: cd src/RealtimeServer && npm run test:tc
+      - name: "Test: Frontend"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run test:tc

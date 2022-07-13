@@ -1,0 +1,41 @@
+#!/bin/bash
+#
+# Do a production build of SF, for testing a production build on a workstation or CI.
+# Note that production SF won't run without some secrets, or changing or faking what remote servers it connects to.
+
+set -xueo pipefail
+
+APP_NAME="scriptureforge"
+APP_SUFFIX=""
+BUILD_NUMBER="9.9.9"
+PROJECT="SIL.XForge.Scripture"
+scriptDir="$(dirname "$0")"
+export NODE_OPTIONS="--max-old-space-size=4096"
+
+CONFIGURATION="${CONFIGURATION:-Release}"
+DEPLOY_RUNTIME="${DEPLOY_RUNTIME:-linux-x64}"
+ANGULAR_CONFIG="${ANGULAR_CONFIG:-production}"
+BUILD_OUTPUT="${XDG_RUNTIME_DIR}/sf-build"
+SERVICE_UNIT_SUFFIX=""
+if grep "beta" <<< "${APP_SUFFIX}"; then
+  SERVICE_UNIT_SUFFIX="_beta"
+fi
+# Relative to repo root
+ERROR_PAGES_PATH="src/SIL.XForge.Scripture/ErrorPages"
+
+cd "${scriptDir}/.."
+
+# Must be before `ng build` because the constant value is included during optimization.
+cat <<EOF > "src/SIL.XForge.Scripture/version.json"
+{
+  "version": "${BUILD_NUMBER}"
+}
+EOF
+
+rm -rf "${BUILD_OUTPUT}/app"/*
+dotnet publish "src/${PROJECT}/${PROJECT}.csproj" -c "${CONFIGURATION}" -r "${DEPLOY_RUNTIME}" \
+  -o "${BUILD_OUTPUT}/app" /p:Version="${BUILD_NUMBER}" /p:AngularConfig="${ANGULAR_CONFIG}"
+
+rsync -aSHAX "${ERROR_PAGES_PATH}" "${BUILD_OUTPUT}/htdocs"
+
+echo "Built SF. You can attempt to run it with: cd ${BUILD_OUTPUT}/app && ./${PROJECT}"
