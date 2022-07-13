@@ -1559,7 +1559,7 @@ namespace SIL.XForge.Scripture.Services
             env.MockLogger.AssertEventCount((LogEvent logEvent) => logEvent.LogLevel == LogLevel.Information &&
                 Regex.IsMatch(logEvent.Message, "Starting"), 1);
 
-            // The book text not is retrieved from Paratext as the resource did not change
+            // The book text is not retrieved from Paratext as the resource did not change
             env.ParatextService.DidNotReceive().GetBookText(
                 Arg.Any<UserSecret>(),
                 Arg.Any<string>(),

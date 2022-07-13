@@ -2251,8 +2251,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             var project = new SFProject
             {
-                // Not a valid resource because its Paratext ID is not 16 characters
-                ParatextId = "not_a_resource",
+                ParatextId = env.PTProjectIds[env.Project01].Id,
             };
             var resource = new ParatextResource();
 
@@ -2269,8 +2268,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             var project = new SFProject
             {
-                // Valid, as a resource's Paratext ID is 16 characters long
-                ParatextId = "a_valid_resource",
+                ParatextId = env.Resource1Id,
             };
             var resource = new ParatextResource();
 
@@ -2288,8 +2286,7 @@ namespace SIL.XForge.Scripture.Services
             var timestamp = DateTime.Now;
             var project = new SFProject
             {
-                // Valid, as a resource's Paratext ID is 16 characters long
-                ParatextId = "a_valid_resource",
+                ParatextId = env.Resource1Id,
                 ResourceConfig = new ResourceConfig
                 {
                     CreatedTimestamp = timestamp,
@@ -2320,8 +2317,7 @@ namespace SIL.XForge.Scripture.Services
             var timestamp = DateTime.Now;
             var project = new SFProject
             {
-                // Valid, as a resource's Paratext ID is 16 characters long
-                ParatextId = "a_valid_resource",
+                ParatextId = env.Resource1Id,
                 ResourceConfig = new ResourceConfig
                 {
                     CreatedTimestamp = timestamp,
@@ -2352,8 +2348,7 @@ namespace SIL.XForge.Scripture.Services
             var timestamp = DateTime.Now;
             var project = new SFProject
             {
-                // Valid, as a resource's Paratext ID is 16 characters long
-                ParatextId = "a_valid_resource",
+                ParatextId = env.Resource1Id,
                 ResourceConfig = new ResourceConfig
                 {
                     CreatedTimestamp = timestamp,
@@ -2384,8 +2379,7 @@ namespace SIL.XForge.Scripture.Services
             var timestamp = DateTime.Now;
             var project = new SFProject
             {
-                // Valid, as a resource's Paratext ID is 16 characters long
-                ParatextId = "a_valid_resource",
+                ParatextId = env.Resource1Id,
                 ResourceConfig = new ResourceConfig
                 {
                     CreatedTimestamp = timestamp,
@@ -2416,8 +2410,7 @@ namespace SIL.XForge.Scripture.Services
             var timestamp = DateTime.Now;
             var project = new SFProject
             {
-                // Valid, as a resource's Paratext ID is 16 characters long
-                ParatextId = "a_valid_resource",
+                ParatextId = env.Resource1Id,
                 ResourceConfig = new ResourceConfig
                 {
                     CreatedTimestamp = timestamp,
@@ -2448,8 +2441,7 @@ namespace SIL.XForge.Scripture.Services
             var timestamp = DateTime.Now;
             var project = new SFProject
             {
-                // Valid, as a resource's Paratext ID is 16 characters long
-                ParatextId = "a_valid_resource",
+                ParatextId = env.Resource1Id,
                 ResourceConfig = new ResourceConfig
                 {
                     CreatedTimestamp = timestamp,
