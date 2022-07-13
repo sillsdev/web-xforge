@@ -1,0 +1,147 @@
+# Github Action to build and run tests
+
+name: Build
+
+on:
+  push:
+    branches: [develop, master, sf-qa, sf-live]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-development:
+    name: "Build and test"
+    strategy:
+      matrix:
+        # Environments in which to run, such as those used in development and production, or which are candidates to
+        # move to.
+        os: ["ubuntu-20.04"]
+        dotnet_version: ["6.0.*"]
+        node_version: ["16.15.0"]
+        npm_version: ["8.10.0"]
+      # Continue building in other environments to see which are working.
+      fail-fast: false
+    runs-on: ${{matrix.os}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: "Deps: Node"
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{matrix.node_version}}
+      - name: "Deps: npm"
+        run: npm install --global npm@${{matrix.npm_version}}
+      - name: Pre-build report
+        run: |
+          set -xueo pipefail
+          lsb_release -a
+          which dotnet
+          dotnet --version
+          dpkg -l dotnet\*
+          dotnet --list-sdks
+          dotnet --list-runtimes
+          which node
+          node --version
+          which npm
+          npm --version
+      - name: "Ensure desired tool versions"
+        # The build machine may come with newer tools than we are ready for.
+        run: |
+          set -xueo pipefail
+          [[ $(dotnet --version) == ${{matrix.dotnet_version}} ]]
+          [[ $(node --version) == v${{matrix.node_version}} ]]
+          [[ $(npm --version) == ${{matrix.npm_version}} ]]
+
+      - name: "Deps: reportgenerator tool"
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+      - name: "Deps: RealtimeServer npm"
+        run: cd src/RealtimeServer && npm ci
+      - name: "Deps: Backend nuget"
+        run: dotnet restore
+      - name: "Deps: Frontend npm"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm ci
+
+      - name: "Lint: RealtimeServer ng"
+        run: cd src/RealtimeServer && npm run lint
+      - name: "Lint: RealtimeServer Prettier"
+        run: cd src/RealtimeServer && npm run prettier:tc
+      - name: "Lint: Frontend ng"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run lint
+      - name: "Lint: Frontend Prettier"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run prettier:tc
+
+      - name: "Build: Backend, RealtimeServer"
+        run: dotnet build xForge.sln
+      - name: "Build: Frontend"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run build
+
+      - name: "Test: RealtimeServer"
+        run: cd src/RealtimeServer && npm run test:tc
+      - name: "Test: Backend"
+        run: |
+          dotnet test xForge.sln \
+            -p:CollectCoverage=true \
+            -p:CoverletOutputFormat=opencover \
+            -p:Exclude=\"[NUnit3.TestAdapter]*,[SIL.XForge.*.Views]*,[SIL.XForge.Tests]*\"
+      - name: "Test: Frontend"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run test:tc
+
+      - name: "Coverage: Backend"
+        run: |
+          reportgenerator \
+            -reports:test/*/coverage.opencover.xml \
+            -targetdir:coverage \
+            "-reporttypes:HTML;TeamCitySummary"
+      - name: "Coverage: Publish to Codecov"
+        uses: codecov/codecov-action@v3
+
+  build-production:
+    name: "Production build and test"
+    strategy:
+      matrix:
+        os: ["ubuntu-20.04"]
+        dotnet_version: ["6.0.*"]
+        node_version: ["16.15.0"]
+        npm_version: ["8.10.0"]
+      fail-fast: false
+    runs-on: ${{matrix.os}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: "Deps: Node"
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{matrix.node_version}}
+      - name: "Deps: npm"
+        run: npm install --global npm@${{matrix.npm_version}}
+      - name: Pre-build report
+        run: |
+          set -xueo pipefail
+          lsb_release -a
+          which dotnet
+          dotnet --version
+          dpkg -l dotnet\*
+          dotnet --list-sdks
+          dotnet --list-runtimes
+          which node
+          node --version
+          which npm
+          npm --version
+      - name: "Ensure desired tool versions"
+        run: |
+          set -xueo pipefail
+          [[ $(dotnet --version) == ${{matrix.dotnet_version}} ]]
+          [[ $(node --version) == v${{matrix.node_version}} ]]
+          [[ $(npm --version) == ${{matrix.npm_version}} ]]
+
+      - name: "Production build"
+        run: scripts/build-production
+
+      - name: "Test: Backend"
+        run: dotnet test xForge.sln
+      - name: "Test: RealtimeServer"
+        run: cd src/RealtimeServer && npm run test:tc
+      - name: "Test: Frontend"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run test:tc

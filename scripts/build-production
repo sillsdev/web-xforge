@@ -1,0 +1,33 @@
+#!/bin/bash
+#
+# Build a production SF, such as for Live or QA.
+# Note that development and production SF connect to different servers using different secrets.
+
+set -xueo pipefail
+
+# Set some default values for when not called from TeamCity.
+APP_NAME="${APP_NAME-scriptureforge}"
+APP_SUFFIX="${APP_SUFFIX-}"
+BUILD_NUMBER="${BUILD_NUMBER-9.9.9}"
+PROJECT="${PROJECT-SIL.XForge.Scripture}"
+
+BUILD_OUTPUT="${BUILD_OUTPUT-artifacts}"
+
+CONFIGURATION="${CONFIGURATION:-Release}"
+DEPLOY_RUNTIME="${DEPLOY_RUNTIME:-linux-x64}"
+ANGULAR_CONFIG="${ANGULAR_CONFIG:-production}"
+
+scriptDir="$(dirname "$0")"
+cd "${scriptDir}"/..
+
+# Must be before `ng build` because the constant value is included during optimization.
+cat <<EOF > src/SIL.XForge.Scripture/version.json
+{
+  "version": "${BUILD_NUMBER}"
+}
+EOF
+
+rm -rf "${BUILD_OUTPUT}/app"/*
+dotnet publish "src/${PROJECT}/${PROJECT}.csproj" -c "${CONFIGURATION}" -r "${DEPLOY_RUNTIME}" \
+  -o "${BUILD_OUTPUT}/app" /p:Version="${BUILD_NUMBER}" /p:AngularConfig="${ANGULAR_CONFIG}" \
+  --self-contained
