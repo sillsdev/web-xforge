@@ -2,30 +2,18 @@
 #
 # Build SF for Live or QA. Upload to server to deploy.
 
-set -ueo pipefail
+set -xueo pipefail
 
-CONFIGURATION="${CONFIGURATION:-Release}"
-DEPLOY_RUNTIME="${DEPLOY_RUNTIME:-linux-x64}"
-ANGULAR_CONFIG="${ANGULAR_CONFIG:-production}"
 BUILD_OUTPUT="artifacts"
 DEPLOY_PATH="/var/www/${APP_NAME}.org${APP_SUFFIX}"
 SERVICE_UNIT_SUFFIX=""
 # Relative to repo root
 ERROR_PAGES_PATH="src/SIL.XForge.Scripture/ErrorPages"
 
+scriptDir="$(dirname "$0")"
+"${scriptDir}"/build-production "$@"
+
 cd ..
-
-# Must be before `ng build` because the constant value is included during optimization.
-cat <<EOF > src/SIL.XForge.Scripture/version.json
-{
-  "version": "${BUILD_NUMBER}"
-}
-EOF
-
-rm -rf "${BUILD_OUTPUT}/app"/*
-dotnet publish "src/${PROJECT}/${PROJECT}.csproj" -c "${CONFIGURATION}" -r "${DEPLOY_RUNTIME}" \
-  -o "${BUILD_OUTPUT}/app" /p:Version="${BUILD_NUMBER}" /p:AngularConfig="${ANGULAR_CONFIG}" \
-  --self-contained
 
 cat <<EOF > "$BUILD_OUTPUT/app/secrets.json"
 {
