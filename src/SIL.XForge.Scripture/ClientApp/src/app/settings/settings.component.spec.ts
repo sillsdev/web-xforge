@@ -12,7 +12,7 @@ import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/esm/scri
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateConfig, TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, of } from 'rxjs';
-import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { anything, capture, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -328,6 +328,9 @@ describe('SettingsComponent', () => {
 
         env.setBasedOnValue('paratextId01');
         expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const [_, secondArg] = capture(mockedSFProjectService.onlineUpdateSettings).last();
+        expect(secondArg).toEqual({ sourceParatextId: 'paratextId01', translationSuggestionsEnabled: true });
       }));
 
       it('should save Translation Suggestions only if Based On is set', fakeAsync(() => {
