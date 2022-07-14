@@ -7,7 +7,7 @@
     "change_password": "تغيير كلمة المرور",
     "community_checking": "تحقُّق المجتمع",
     "community_support": "دعم المجتمع",
-    "connect_project": "Connect project",
+    "connect_project": "الاتصال بالمشروع",
     "help": "المساعدة",
     "language": "اللغة",
     "log_out": "تسجيل الخروج",
@@ -24,7 +24,7 @@
     "report_issue_email": "البريد الإلكتروني {{ email }}",
     "report_issue": "الإبلاغ عن مشكلة",
     "scripture_checking_not_available": "التحقُّق من النصوص الكتابية غير متوفر في هذا المشروع.",
-    "update_is_available": "An update is available. Please refresh the page."
+    "update_is_available": "يتوفَّر تحديثٌ للبرنامج. يُرجى تحديث الصفحة."
   },
   "canon": {
     "book_names": {
@@ -154,7 +154,7 @@
     }
   },
   "checking": {
-    "me": "Me",
+    "me": "إجابتي",
     "unknown_author": "مؤلف غير معروف",
     "next": "التالي",
     "previous": "السابق",
@@ -307,7 +307,7 @@
     "share_with_others": "مشاركة مع الآخرين"
   },
   "start": {
-    "connect_project": "Connect project",
+    "connect_project": "الاتصال بالمشروع",
     "not_connected_to_any_projects": "يبدو أنك غير متصل بأي مشاريع حتى الآن."
   },
   "supported_browsers_dialog": {

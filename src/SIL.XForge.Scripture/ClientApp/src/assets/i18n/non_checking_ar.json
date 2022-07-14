@@ -45,14 +45,13 @@
     "share_with_others": "مشاركة مع الآخرين"
   },
   "connect_project": {
-    "additional_settings": "Additional Settings",
     "already_connected": "(already connected)",
-    "based_on": "Based on",
-    "community_checking": "تحقُّق المجتمع",
     "connect_network_to_connect_project": "Please connect to the internet to enable connecting to a project",
     "connect_paratext_project": "Connect Paratext Project",
     "connect": "Connect",
     "connecting_to_project": "Connecting to {{ projectName }}...",
+    "enable_community_checking": "Enable Community Checking",
+    "enable_translation_suggestions": "Enable translation suggestions",
     "engage_the_wider_community_to_check_scripture": "Engage the wider community to ensure that the translation is clear, accurate, and natural. Select verses, ask targeted questions, allow discussion of answers.",
     "error_fetching_resources": "There was an error fetching the Digital Bible Library resources. You will only be able to select projects.",
     "log_in_with_paratext": "Log in with Paratext",
@@ -62,6 +61,10 @@
     "paratext_project": "Paratext Project",
     "problem_already_connected": "The project is already connected. Maybe another project administrator connected the project at the same time. Please try again. If it continues to be a problem, please report the issue so we can get it fixed.",
     "proceed": "Proceed",
+    "project_settings": "Project Settings",
+    "select_project_or_resource": "Select the Paratext project or Digital Bible Library resource that your project is based on. If your project is based on a Paratext project, it's best to set it up as a daughter project in Paratext.",
+    "source_text_placeholder": "Source text (optional)",
+    "translation_suggestions_require_source_text": "Note: Translation suggestions are only available if you select a source text.",
     "you_can_change_later": "You can change these later.",
     "you_must_be_logged_in_to_paratext": "You must login with your Paratext account to connect to a project."
   },
