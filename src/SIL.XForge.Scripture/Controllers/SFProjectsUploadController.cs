@@ -16,13 +16,28 @@ namespace SIL.XForge.Scripture.Controllers
     [Route(UrlConstants.CommandApiNamespace + "/" + UrlConstants.Projects)]
     public class SFProjectsUploadController : ControllerBase
     {
+        private readonly Bugsnag.IClient _bugsnag;
         private readonly IUserAccessor _userAccessor;
         private readonly ISFProjectService _projectService;
 
-        public SFProjectsUploadController(IUserAccessor userAccessor, ISFProjectService projectService)
+        public SFProjectsUploadController(IUserAccessor userAccessor, ISFProjectService projectService,
+            Bugsnag.IClient client)
         {
             _userAccessor = userAccessor;
             _projectService = projectService;
+            _bugsnag = client;
+
+            // Report the user id to bugsnag for this request
+            if (!string.IsNullOrWhiteSpace(_userAccessor.UserId))
+            {
+                _bugsnag.BeforeNotify(report =>
+                {
+                    report.Event.User = new Bugsnag.Payload.User
+                    {
+                        Id = _userAccessor.UserId,
+                    };
+                });
+            }
         }
 
         [HttpPost("audio")]

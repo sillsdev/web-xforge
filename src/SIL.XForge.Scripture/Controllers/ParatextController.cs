@@ -18,6 +18,7 @@ namespace SIL.XForge.Scripture.Controllers
     [Authorize]
     public class ParatextController : ControllerBase
     {
+        private readonly Bugsnag.IClient _bugsnag;
         private readonly IRepository<UserSecret> _userSecrets;
         private readonly IParatextService _paratextService;
         private readonly IUserAccessor _userAccessor;
@@ -25,12 +26,26 @@ namespace SIL.XForge.Scripture.Controllers
         public ParatextController(
             IRepository<UserSecret> userSecrets,
             IParatextService paratextService,
-            IUserAccessor userAccessor
+            IUserAccessor userAccessor,
+            Bugsnag.IClient client
         )
         {
             _userSecrets = userSecrets;
             _paratextService = paratextService;
             _userAccessor = userAccessor;
+            _bugsnag = client;
+
+            // Report the user id to bugsnag for this request
+            if (!string.IsNullOrWhiteSpace(_userAccessor.UserId))
+            {
+                _bugsnag.BeforeNotify(report =>
+                {
+                    report.Event.User = new Bugsnag.Payload.User
+                    {
+                        Id = _userAccessor.UserId,
+                    };
+                });
+            }
         }
 
         [HttpGet("projects")]

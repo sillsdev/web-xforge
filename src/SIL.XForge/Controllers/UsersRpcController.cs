@@ -23,8 +23,9 @@ namespace SIL.XForge.Controllers
             IUserAccessor userAccessor,
             IUserService userService,
             IAuthService authService,
-            IWebHostEnvironment hostingEnv
-        ) : base(userAccessor)
+            IWebHostEnvironment hostingEnv,
+            Bugsnag.IClient client
+        ) : base(userAccessor, client)
         {
             _userService = userService;
             _authService = authService;
