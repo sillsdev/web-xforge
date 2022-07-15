@@ -102,7 +102,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 if (!await InitAsync(projectSFId, userId, token))
                 {
-                    await CompleteSync(false, canRollbackParatext, token);
+                    await CompleteSync(false, canRollbackParatext, trainEngine, token);
                     return;
                 }
 
@@ -174,7 +174,7 @@ namespace SIL.XForge.Scripture.Services
                     if (settings == null)
                     {
                         Log($"FAILED: Attempting to write to a project repository that does not exist.");
-                        await CompleteSync(false, canRollbackParatext, token);
+                        await CompleteSync(false, canRollbackParatext, trainEngine, token);
                         return;
                     }
                     SortedList<int, IDocument<TextData>> targetTextDocs = await FetchTextDocsAsync(text);
@@ -198,7 +198,7 @@ namespace SIL.XForge.Scripture.Services
                 // Check for cancellation
                 if (token.IsCancellationRequested)
                 {
-                    await CompleteSync(false, canRollbackParatext, token);
+                    await CompleteSync(false, canRollbackParatext, trainEngine, token);
                     return;
                 }
 
@@ -223,7 +223,7 @@ namespace SIL.XForge.Scripture.Services
                 // Check for cancellation
                 if (token.IsCancellationRequested)
                 {
-                    await CompleteSync(false, canRollbackParatext, token);
+                    await CompleteSync(false, canRollbackParatext, trainEngine, token);
                     return;
                 }
 
@@ -237,7 +237,7 @@ namespace SIL.XForge.Scripture.Services
                 // Check for cancellation
                 if (token.IsCancellationRequested)
                 {
-                    await CompleteSync(false, canRollbackParatext, token);
+                    await CompleteSync(false, canRollbackParatext, trainEngine, token);
                     return;
                 }
 
@@ -261,7 +261,7 @@ namespace SIL.XForge.Scripture.Services
                 // Check for cancellation
                 if (token.IsCancellationRequested)
                 {
-                    await CompleteSync(false, canRollbackParatext, token);
+                    await CompleteSync(false, canRollbackParatext, trainEngine, token);
                     return;
                 }
 
@@ -316,17 +316,11 @@ namespace SIL.XForge.Scripture.Services
                 // Check for cancellation
                 if (token.IsCancellationRequested)
                 {
-                    await CompleteSync(false, canRollbackParatext, token);
+                    await CompleteSync(false, canRollbackParatext, trainEngine, token);
                     return;
                 }
 
-                if (TranslationSuggestionsEnabled && trainEngine)
-                {
-                    // start training Machine engine
-                    await _engineService.StartBuildByProjectIdAsync(projectSFId);
-                }
-
-                await CompleteSync(true, canRollbackParatext, token);
+                await CompleteSync(true, canRollbackParatext, trainEngine, token);
             }
             catch (Exception e)
             {
@@ -340,7 +334,7 @@ namespace SIL.XForge.Scripture.Services
                     _logger.LogError(e, $"Error occurred while executing Paratext sync for project with SF id '{projectSFId}'. {(additionalInformation.Length == 0 ? string.Empty : ($"Additional information: {additionalInformation.ToString()}"))}");
                 }
 
-                await CompleteSync(false, canRollbackParatext, token);
+                await CompleteSync(false, canRollbackParatext, trainEngine, token);
             }
             finally
             {
@@ -933,7 +927,7 @@ namespace SIL.XForge.Scripture.Services
             return deletedNoteThreadDocIds;
         }
 
-        private async Task CompleteSync(bool successful, bool canRollbackParatext, CancellationToken token)
+        private async Task CompleteSync(bool successful, bool canRollbackParatext, bool trainEngine, CancellationToken token)
         {
             if (token.IsCancellationRequested)
             {
@@ -1122,6 +1116,13 @@ namespace SIL.XForge.Scripture.Services
             {
                 // Write the operations to the database
                 await _conn.CommitTransactionAsync();
+
+                // The project document and text documents must be committed before we can train the model
+                if (TranslationSuggestionsEnabled && trainEngine)
+                {
+                    // Start training Machine engine
+                    await _engineService.StartBuildByProjectIdAsync(_projectDoc.Id);
+                }
 
                 // Backup the repository
                 if (_projectDoc.Data.ParatextId.Length != SFInstallableDblResource.ResourceIdentifierLength)
