@@ -162,7 +162,7 @@ class TestEnvironment {
           shareLevel: CheckingShareLevel.Specific
         },
         sync: {
-          queuedCount: !!args.isInProgress ? 1 : 0,
+          queuedCount: args.isInProgress === true ? 1 : 0,
           percentCompleted: !!args.isInProgress ? 0.1 : undefined,
           lastSyncSuccessful: true,
           dateLastSuccessfulSync: date.toJSON()
