@@ -8,7 +8,7 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static IServiceCollection AddExceptionReporting(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddSingleton<IExceptionHandler, ExceptionHandler>();
+            services.AddScoped<IExceptionHandler, ExceptionHandler>();
             return services.AddBugsnag()
                 .Configure<Bugsnag.Configuration>(configuration.GetSection("Bugsnag"))
                 .Configure<Bugsnag.Configuration>(config =>
