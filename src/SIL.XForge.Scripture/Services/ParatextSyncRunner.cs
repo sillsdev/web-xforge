@@ -321,7 +321,7 @@ namespace SIL.XForge.Scripture.Services
                 // Check for cancellation
                 if (token.IsCancellationRequested)
                 {
-                    await CompleteSync(false, canRollbackParatext, token);
+                    await CompleteSync(false, canRollbackParatext, trainEngine, token);
                     return;
                 }
 
