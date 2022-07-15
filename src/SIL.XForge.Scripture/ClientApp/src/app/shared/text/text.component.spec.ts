@@ -180,6 +180,8 @@ describe('TextComponent', () => {
 
     const verseSegments: string[] = env.component.getVerseSegments(VerseRef.parse('LUK 1:1'));
     expect(verseSegments).toEqual(['verse_1_1', 'verse_1_1/q_1', 'verse_1_1/q_2', 'verse_1_1/q_3']);
+    const segmentText = env.component.getSegmentText('verse_1_1/q_2');
+    expect(segmentText).toEqual('Poetry third line');
   }));
 
   describe('MultiCursor Presence', () => {

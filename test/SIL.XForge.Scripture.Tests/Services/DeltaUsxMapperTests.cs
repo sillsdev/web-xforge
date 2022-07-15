@@ -2507,6 +2507,7 @@ namespace SIL.XForge.Scripture.Services
                 Para("p",
                     Verse("1"),
                     "Verse text."),
+                // support this even though we do not encourage users to type text in line breaks
                 Para("b",
                     "Text in line break"),
                 Para("p",
