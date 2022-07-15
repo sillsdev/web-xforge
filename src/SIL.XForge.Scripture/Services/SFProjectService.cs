@@ -27,10 +27,10 @@ namespace SIL.XForge.Scripture.Services
     /// </summary>
     public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFProjectService
     {
+        internal static readonly string ProjectSettingValueUnset = "unset";
         private static readonly IEqualityComparer<Dictionary<string, string>> _permissionDictionaryEqualityComparer =
             new DictionaryComparer<string, string>();
         public static readonly string ErrorAlreadyConnectedKey = "error-already-connected";
-        private static readonly string ProjectSettingValueUnset = "unset";
         private readonly IEngineService _engineService;
         private readonly ISyncService _syncService;
         private readonly IParatextService _paratextService;
@@ -257,6 +257,7 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
 
+                bool hasExistingMachineProject = projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled;
                 await projectDoc.SubmitJson0OpAsync(op =>
                 {
                     UpdateSetting(op, p => p.TranslateConfig.TranslationSuggestionsEnabled,
@@ -286,8 +287,8 @@ namespace SIL.XForge.Scripture.Services
                         {
                             // translation suggestions was enabled or source project changed
 
-                            // recreate Machine project only if source project changed
-                            if (!suggestionsEnabledSet && sourceParatextIdSet)
+                            // recreate Machine project only if one existed
+                            if (hasExistingMachineProject)
                                 await _engineService.RemoveProjectAsync(projectId);
                             var machineProject = new MachineProject
                             {
@@ -298,7 +299,7 @@ namespace SIL.XForge.Scripture.Services
                             await _engineService.AddProjectAsync(machineProject);
                             trainEngine = true;
                         }
-                        else
+                        else if (hasExistingMachineProject)
                         {
                             // translation suggestions was disabled or source project set to null
                             await _engineService.RemoveProjectAsync(projectId);
