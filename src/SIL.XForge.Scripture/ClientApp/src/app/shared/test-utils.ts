@@ -64,14 +64,14 @@ export function getPoetryVerseTextDoc(id: TextDocId): TextData {
   delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
   delta.insert({ blank: true }, { segment: 'q_1' });
   delta.insert({ verse: { number: '1', style: 'v' } });
-  delta.insert('Poetry first line', { segment: `verse_${id.chapterNum}_1/q_1` });
+  delta.insert('Poetry first line', { segment: `verse_${id.chapterNum}_1` });
   delta.insert('\n', { para: { style: 'q' } });
-  delta.insert('Poetry second line', { segment: `verse_${id.chapterNum}_1/q_2` });
+  delta.insert('Poetry second line', { segment: `verse_${id.chapterNum}_1/q_1` });
   delta.insert('\n', { para: { style: 'q' } });
   delta.insert('\n', { para: { style: 'b' } });
-  delta.insert('Poetry third line', { segment: `verse_${id.chapterNum}_1/q_3` });
+  delta.insert('Poetry third line', { segment: `verse_${id.chapterNum}_1/q_2` });
   delta.insert('\n', { para: { style: 'q' } });
-  delta.insert('Poetry fourth line.', { segment: `verse_${id.chapterNum}_1/q_4` });
+  delta.insert('Poetry fourth line.', { segment: `verse_${id.chapterNum}_1/q_3` });
   delta.insert('\n', { para: { style: 'q' } });
   return delta;
 }
