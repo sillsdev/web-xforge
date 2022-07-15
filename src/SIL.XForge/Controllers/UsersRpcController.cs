@@ -20,7 +20,7 @@ namespace SIL.XForge.Controllers
         private readonly IUserService _userService;
 
         public UsersRpcController(IUserAccessor userAccessor, IUserService userService, IAuthService authService,
-            IWebHostEnvironment hostingEnv) : base(userAccessor)
+            IWebHostEnvironment hostingEnv, Bugsnag.IClient client) : base(userAccessor, client)
         {
             _userService = userService;
             _authService = authService;
