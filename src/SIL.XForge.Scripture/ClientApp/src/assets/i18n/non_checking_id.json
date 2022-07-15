@@ -45,14 +45,13 @@
     "share_with_others": "Bagikan dengan orang lain"
   },
   "connect_project": {
-    "additional_settings": "Pengaturan Tambahan",
     "already_connected": "(Sudah terhubung)",
-    "based_on": "Berdasarkan pada",
-    "community_checking": "Pemeriksaan Komunitas",
     "connect_network_to_connect_project": "Please connect to the internet to enable connecting to a project",
     "connect_paratext_project": "Hubungkan Proyek Paratext",
     "connect": "Menghubungkan",
     "connecting_to_project": "Menghubungkan ke {{ projectName }}...",
+    "enable_community_checking": "Enable Community Checking",
+    "enable_translation_suggestions": "Enable translation suggestions",
     "engage_the_wider_community_to_check_scripture": "Libatkan komunitas yang lebih luas untuk memastikan bahwa terjemahannya jelas, akurat, dan alami. Pilih ayat, ajukan pertanyaan yang ditargetkan, izinkan diskusi jawaban.",
     "error_fetching_resources": "There was an error fetching the Digital Bible Library resources. You will only be able to select projects.",
     "log_in_with_paratext": "Masuk dengan Paratext",
@@ -62,6 +61,10 @@
     "paratext_project": "Proyek Paratext",
     "problem_already_connected": "The project is already connected. Maybe another project administrator connected the project at the same time. Please try again. If it continues to be a problem, please report the issue so we can get it fixed.",
     "proceed": "Proceed",
+    "project_settings": "Project Settings",
+    "select_project_or_resource": "Select the Paratext project or Digital Bible Library resource that your project is based on. If your project is based on a Paratext project, it's best to set it up as a daughter project in Paratext.",
+    "source_text_placeholder": "Source text (optional)",
+    "translation_suggestions_require_source_text": "Note: Translation suggestions are only available if you select a source text.",
     "you_can_change_later": "Anda dapat mengubahnya nanti.",
     "you_must_be_logged_in_to_paratext": "Anda harus masuk dengan akun Paratext Anda untuk menghubungkan ke proyek."
   },

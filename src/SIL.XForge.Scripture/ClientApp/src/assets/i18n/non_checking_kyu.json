@@ -45,14 +45,13 @@
     "share_with_others": "ꤘꤛꤢꤩ ꤕꤢꤩ ꤢꤨ꤭ꤚꤟꤌꤣ꤬"
   },
   "connect_project": {
-    "additional_settings": "ꤙꤢꤩ꤬ꤔꤟꤌꤣ꤭ꤜꤣ ꤕꤟꤥ Setting ꤒꤢ꤬ꤟꤢꤩ꤬",
     "already_connected": "(ꤘꤢꤪꤗꤟꤢ꤭ ꤔꤟꤤ ꤓꤌꤣ꤭ꤟꤢꤪ)",
-    "based_on": "ꤢ꤬ꤋꤢ꤭ꤏꤛꤢꤩꤋꤢ꤭ꤚꤟꤛꤢ꤬",
-    "community_checking": "ꤊꤢ꤬ꤛꤢ꤭ꤢꤧꤕꤚꤟꤢꤧ꤬ ꤒꤟꤢꤧ꤬ꤓꤢꤦꤡꤢꤩ꤭",
     "connect_network_to_connect_project": "Please connect to the internet to enable connecting to a project",
     "connect_paratext_project": "ꤘꤢꤪꤗꤟꤢ꤭ ꤔꤢ paratext Project",
     "connect": "ꤘꤢꤪꤗꤟꤢ꤭",
     "connecting_to_project": "ꤘꤢꤪꤗꤟꤢ꤭ ꤔꤢ ",
+    "enable_community_checking": "Enable Community Checking",
+    "enable_translation_suggestions": "Enable translation suggestions",
     "engage_the_wider_community_to_check_scripture": "ꤞꤛꤢꤖꤢꤨ ꤒꤟꤢꤧ꤬ꤚꤢ꤭ꤕꤟꤥ꤬ꤓꤢꤩ꤬ ꤛꤢꤩ꤭ ꤢ꤬ꤊꤟꤢꤦ ꤕꤜꤥ꤭ꤚꤛꤢ, ꤒꤟꤢ꤭ꤒꤟꤢꤩ꤬ꤚꤛꤢ, ꤜꤟꤢꤩꤊꤜꤥ꤭ꤚꤛꤢ ꤘꤣ ꤢꤨ꤭ ꤜꤟꤢꤩꤟꤣ ꤢ꤬ꤑꤢꤩ꤭, ꤕꤜꤥ꤭ꤓꤢꤦ꤭ ꤔꤢ ꤊꤢ꤬ꤛꤢ꤭ꤕꤜꤢꤪꤗꤟꤢꤨ꤬ ꤢꤧꤕꤚꤟꤢꤧ꤬꤯ ꤗꤟꤢꤩ꤬ꤗꤢ ꤜꤤ꤬ꤡꤢ꤭ꤏꤢꤧ꤭ꤗꤟꤢ꤭, ꤏꤢꤨ꤬ꤘꤛꤢ꤭ ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭ ꤘꤣ ꤞꤢꤧꤐꤟꤢꤦꤞꤢꤧꤑꤢꤩ꤭ ꤒꤟꤢ꤭ꤒꤟꤢꤩ꤬ ꤔꤌꤣ꤬, ꤘꤛꤢꤩꤟꤢꤩꤙꤢꤧ꤬ꤊꤟꤢ꤬ꤋꤛꤢꤩ꤭ꤟꤛꤢ꤭ꤑꤢꤩ꤭ꤏꤢꤦ꤬ ꤢꤨ꤭꤯ ",
     "error_fetching_resources": "There was an error fetching the Digital Bible Library resources. You will only be able to select projects.",
     "log_in_with_paratext": "ꤔꤟꤌꤣ꤭ ꤔꤢ Paratext",
@@ -62,6 +61,10 @@
     "paratext_project": "Paratext Project",
     "problem_already_connected": "The project is already connected. Maybe another project administrator connected the project at the same time. Please try again. If it continues to be a problem, please report the issue so we can get it fixed.",
     "proceed": "Proceed",
+    "project_settings": "Project Settings",
+    "select_project_or_resource": "Select the Paratext project or Digital Bible Library resource that your project is based on. If your project is based on a Paratext project, it's best to set it up as a daughter project in Paratext.",
+    "source_text_placeholder": "Source text (optional)",
+    "translation_suggestions_require_source_text": "Note: Translation suggestions are only available if you select a source text.",
     "you_can_change_later": "ꤔꤟꤢꤧ꤬ ꤗꤟꤢꤩ꤬ꤒꤢ꤬ꤕꤜꤢꤩ꤬ꤋꤛꤢꤩ꤭ ꤛꤢꤩ꤭ ꤏꤛꤢꤩꤢ꤬ꤔꤥ꤬ ꤗꤢ꤬ ꤢ꤬ꤔꤟꤤ ꤕꤚꤢꤧ꤯",
     "you_must_be_logged_in_to_paratext": "ꤔꤟꤢꤧ꤬ ꤜꤟꤢꤩꤔꤟꤌꤣ꤭ ꤘꤣ project ꤛꤢꤩ꤭ꤒꤣ꤬ꤊꤟꤌꤣ꤬ꤢ꤬ꤊꤢꤨ꤭ ꤢ꤬ꤑꤢꤩ꤭ꤔꤌꤣ꤬, ꤔꤟꤢꤧ꤬ ꤙꤢꤧ꤬ ꤔꤟꤌꤣ꤭ꤚꤟꤢꤩ ꤔꤢ ꤔꤟꤢꤧ꤬ Paratext account. "
   },
