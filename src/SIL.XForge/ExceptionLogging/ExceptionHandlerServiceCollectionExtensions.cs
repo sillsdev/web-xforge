@@ -11,7 +11,7 @@ namespace Microsoft.Extensions.DependencyInjection
             IConfiguration configuration
         )
         {
-            services.AddSingleton<IExceptionHandler, ExceptionHandler>();
+            services.AddScoped<IExceptionHandler, ExceptionHandler>();
             return services
                 .AddBugsnag()
                 .Configure<Bugsnag.Configuration>(configuration.GetSection("Bugsnag"))
