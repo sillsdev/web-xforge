@@ -163,7 +163,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task SyncAsync_DoesntEnqueueSourceIfTranslationSuggestionsDisabled()
+        public async Task SyncAsync_EnqueueSourceIfTranslationSuggestionsDisabled()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -175,13 +175,13 @@ namespace SIL.XForge.Scripture.Services
             await env.Service.SyncAsync("userid", Project03, false);
 
             // Verify that the jobs were queued correctly
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.QueuedCount, Is.EqualTo(1));
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.QueuedCount, Is.EqualTo(1));
-            Assert.That(env.ProjectSecrets.Get(Project01).JobIds.Count, Is.EqualTo(0));
+            Assert.That(env.ProjectSecrets.Get(Project01).JobIds.Count, Is.EqualTo(1));
             Assert.That(env.ProjectSecrets.Get(Project02).JobIds.Count, Is.EqualTo(0));
             Assert.That(env.ProjectSecrets.Get(Project03).JobIds.Count, Is.EqualTo(1));
-            Assert.That(env.ProjectSecrets.Get(Project01).JobIds, Is.Empty);
+            Assert.That(env.ProjectSecrets.Get(Project01).JobIds, Contains.Item("jobid"));
             Assert.That(env.ProjectSecrets.Get(Project02).JobIds, Is.Empty);
             Assert.That(env.ProjectSecrets.Get(Project03).JobIds, Contains.Item("jobid"));
         }

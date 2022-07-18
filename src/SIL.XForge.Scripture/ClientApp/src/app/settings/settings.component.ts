@@ -249,7 +249,9 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     if (sourceProjectChanged) {
       const settings: SFProjectSettings = {
         sourceParatextId:
-          newValue.sourceParatextId != null ? newValue.sourceParatextId : SettingsComponent.projectSettingValueUnset
+          newValue.sourceParatextId != null ? newValue.sourceParatextId : SettingsComponent.projectSettingValueUnset,
+        // Keep this value consistent with the value of the form
+        translationSuggestionsEnabled: this.previousFormValues.translationSuggestionsEnabled
       };
       if (newValue.sourceParatextId == null) {
         settings.translationSuggestionsEnabled = false;

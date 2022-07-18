@@ -1389,7 +1389,8 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Service.UpdateSettingsAsync(User01, Project01, new SFProjectSettings
             {
-                SourceParatextId = "changedId"
+                SourceParatextId = "changedId",
+                TranslationSuggestionsEnabled = true
             });
 
             SFProject project = env.GetProject("project01");
@@ -1402,23 +1403,58 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task UpdateSettingsAsync_EnableTranslate_CreateMachineProjectAndSync()
+        public async Task UpdateSettingsAsync_SelectSourceProject_NoMachineProjectAndSync()
         {
             var env = new TestEnvironment();
-
-            await env.Service.UpdateSettingsAsync(User01, Project01, new SFProjectSettings
+            await env.Service.UpdateSettingsAsync(User02, Project02, new SFProjectSettings
             {
-                TranslationSuggestionsEnabled = true,
                 SourceParatextId = "changedId"
             });
 
-            SFProject project = env.GetProject(Project01);
-            Assert.That(project.TranslateConfig.TranslationSuggestionsEnabled, Is.True);
+            SFProject project = env.GetProject("project02");
+            Assert.That(project.TranslateConfig.TranslationSuggestionsEnabled, Is.False);
             Assert.That(project.TranslateConfig.Source.ParatextId, Is.EqualTo("changedId"));
             Assert.That(project.TranslateConfig.Source.Name, Is.EqualTo("NewSource"));
 
             await env.EngineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>());
+            await env.EngineService.DidNotReceive().AddProjectAsync(Arg.Any<MachineProject>());
+            await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+        }
+
+        [Test]
+        public async Task UpdateSettingsAsync_EnableTranslate_CreateMachineProjectAndSync()
+        {
+            var env = new TestEnvironment();
+            await env.Service.UpdateSettingsAsync(User01, Project03, new SFProjectSettings
+            {
+                TranslationSuggestionsEnabled = true
+            });
+
+            SFProject project = env.GetProject(Project03);
+            Assert.That(project.TranslateConfig.TranslationSuggestionsEnabled, Is.True);
+            Assert.That(project.TranslateConfig.Source.Name, Is.EqualTo("Suggestions Disabled Resource"));
+
+            await env.EngineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>());
             await env.EngineService.Received().AddProjectAsync(Arg.Any<Machine.WebApi.Models.Project>());
+            await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+        }
+
+        [Test]
+        public async Task UpdateSettingsAsync_UnsetSourceProject_RemoveMachineProjectAndSync()
+        {
+            var env = new TestEnvironment();
+            await env.Service.UpdateSettingsAsync(User01, Project01, new SFProjectSettings
+            {
+                SourceParatextId = SFProjectService.ProjectSettingValueUnset,
+                TranslationSuggestionsEnabled = false
+            });
+
+            SFProject project = env.GetProject(Project01);
+            Assert.That(project.TranslateConfig.TranslationSuggestionsEnabled, Is.False);
+            Assert.That(project.TranslateConfig.Source, Is.Null);
+
+            await env.EngineService.Received().RemoveProjectAsync(Arg.Any<string>());
+            await env.EngineService.DidNotReceive().AddProjectAsync(Arg.Any<MachineProject>());
             await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
         }
 
@@ -1938,7 +1974,8 @@ namespace SIL.XForge.Scripture.Services
                                 Source = new TranslateSource
                                 {
                                     ProjectRef = DisabledSource,
-                                    ParatextId = "pt_dis"
+                                    ParatextId = "pt_dis",
+                                    Name = "Suggestions Disabled Resource"
                                 }
                             },
                             UserRoles =
