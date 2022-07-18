@@ -118,66 +118,66 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AboutCheckingTool" xml:space="preserve">
-    <value>Our Community Checking tool facilitates modular Scripture checking campaigns, to deliver broader feedback to the translation committee, faster.</value>
+    <value>أداة التدقيق المجتمعي لدينا تسهِّل حملات الرجوع النمطي إلى نصوص الكتاب المُقدَّس، لتقديم تعليقات أوسع للجنة الترجمة بصورة أسرع.</value>
   </data>
   <data name="AboutEngaging" xml:space="preserve">
-    <value>Scripture projects engage increasingly geographically diverse groups of heart language speakers.</value>
+    <value>تنخرط في مشاريع الكتاب المُقدَّس مجموعات تتوزع جغرافياً وذات لغاتٍ أصلية مختلفة.</value>
   </data>
   <data name="AboutFlexible" xml:space="preserve">
-    <value>Flexible</value>
+    <value>مرن</value>
   </data>
   <data name="AboutFlexibleDescription" xml:space="preserve">
-    <value>2 Compile {0}unique questions{1} that fit your specific context.</value>
+    <value>جمع {0} أسئلة فريدية {1} تناسب سياقك الخاصّ.</value>
   </data>
   <data name="AboutHeader" xml:space="preserve">
-    <value>About Scripture Forge</value>
+    <value>عن "سكريبتشر فورج"</value>
   </data>
   <data name="AboutParatext" xml:space="preserve">
-    <value>Works with Paratext</value>
+    <value>يعمل مع برنامج Paratext</value>
   </data>
   <data name="AboutParatextDescription" xml:space="preserve">
-    <value>1 {2}Paratext integration{3} and {0}ongoing synchronization{1} keeps your project up-to-date and allows user feedback via {4}Paratext Notes{3}.</value>
+    <value>{2}دمج Paratext {3}و{0}التزامن المستمر {1} يُبقي مشروعك حديثاً ويسمح بتعليقات من المستخدم من خلال{4} Paratext Notes {3}.</value>
   </data>
   <data name="AboutTitle" xml:space="preserve">
-    <value>Extend Your Reach with Scripture Checking</value>
+    <value>وسِّع نطاق وصولك بفحص النصوص الكتابية</value>
   </data>
   <data name="AboutUserEngagement" xml:space="preserve">
-    <value>User Engagement</value>
+    <value>مشاركة المُستخدِم</value>
   </data>
   <data name="AboutUserEngagementDescription" xml:space="preserve">
-    <value>3 {0}Invited users{1} can answer questions, leave comments on existing answers and like responses.</value>
+    <value>3 {0}يستطيع المُستخدمون المدعوون {1} الإجابة عن الأسئلة، وترك التعليقات على الإجابات الموجودة وتسجيل الإعجاب بالإجابات.</value>
   </data>
   <data name="Description" xml:space="preserve">
-    <value>A free set of tools to do more with your Paratext project, wherever you are. </value>
+    <value>مجموعة مجانية من الأدوات لعمل المزيد في مشروع Paratext أينما كنت. </value>
   </data>
   <data name="EngageChecking" xml:space="preserve">
-    <value>Engage in community checking</value>
+    <value>المشاركة في التحقق من المجتمع</value>
   </data>
   <data name="EngageCollaborate" xml:space="preserve">
-    <value>Collaborate on Scripture</value>
+    <value>التعاون في الكتاب المُقدَّس</value>
   </data>
   <data name="EngageSuggestions" xml:space="preserve">
-    <value>Get suggestions as you type</value>
+    <value>احصل على اقتراحات أثناء الطباعة</value>
   </data>
   <data name="EngageTitle" xml:space="preserve">
-    <value>Engage with the language community. Collaborate with your peers.</value>
+    <value>شارك مجتمع اللغة وتعاون مع الآخرين.</value>
   </data>
   <data name="QuoteQuotation1" xml:space="preserve">
-    <value>It was so easy! ...all I had to do to get started was log in using my Paratext registration and boom! It was all there.</value>
+    <value>كان الأمر سهلاً جداً! ...كل ما اضطررت لفعله للبدء هو تسجيل الدخول باستخدام تسجيلي في  Paratext. كان الأمر ميسوراً.</value>
   </data>
   <data name="QuoteQuotation2" xml:space="preserve">
-    <value>Right away I chose a verse and wrote a checking question for it. Then I also recorded myself asking that checking question.</value>
+    <value>على الفور اخترت عدداً من الكتاب المُقدَّس وكتبت سؤالا عنه. ثم سجلت نفسي وأنا أسأل السؤال.</value>
   </data>
   <data name="QuoteQuotation3" xml:space="preserve">
-    <value>It’s so great that feedback can be gathered either way. All the features are wonderful for remote contributors, including the option to answer the questions with an audio recording.</value>
+    <value>من الرائع أنه يمكن جمع ردود الفعل في كلا الاتجاهين. جميع الميزات رائعة للمساهمين عن بعد، بما في ذلك خيار الإجابة عن الأسئلة بتسجيل صوتي.</value>
   </data>
   <data name="QuoteQuoterName" xml:space="preserve">
-    <value>Trevor Deck</value>
+    <value>تريفور ديك</value>
   </data>
   <data name="QuoteQuoterRole" xml:space="preserve">
-    <value>SIL Global Diaspora Specialist</value>
+    <value>اختصاصي الشتات العالمي لدى SIL</value>
   </data>
   <data name="Statement" xml:space="preserve">
-    <value>Where translation and the community meet.</value>
+    <value>حيث تلتقي الترجمة والمجتمع.</value>
   </data>
 </root>
