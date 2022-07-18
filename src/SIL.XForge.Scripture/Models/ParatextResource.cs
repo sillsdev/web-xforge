@@ -1,3 +1,5 @@
+using System;
+using System.Globalization;
 using System.Text;
 using SIL.XForge.Scripture.Services;
 
@@ -50,13 +52,48 @@ namespace SIL.XForge.Scripture.Models
         /// </remarks>
         internal SFInstallableDblResource InstallableResource { get; set; }
 
+        /// <summary>
+        /// Gets or sets the created timestamp.
+        /// </summary>
+        /// <value>
+        /// The created timestamp.
+        /// </value>
+        /// <remarks>
+        /// This is used to see if this is newer, if the manifest checksum is different.
+        /// </remarks>
+        public DateTime CreatedTimestamp { get; set; }
+
+        /// <summary>
+        /// Gets or sets the manifest checksum.
+        /// </summary>
+        /// <value>
+        /// The manifest checksum.
+        /// </value>
+        /// <remarks>
+        /// This is used to see if the manifest has changed.
+        /// </remarks>
+        public string ManifestChecksum { get; set; }
+
+        /// <summary>
+        /// Gets or sets the permissions checksum.
+        /// </summary>
+        /// <value>
+        /// The permissions checksum.
+        /// </value>
+        /// <remarks>
+        /// This is used to see if the permissions have changed.
+        /// </remarks>
+        public string PermissionsChecksum { get; set; }
+
         /// <inheritdoc/>
         public override string ToString()
         {
             StringBuilder message = new StringBuilder();
             foreach (string item in new string[] { ParatextId, Name, ShortName, LanguageTag, ProjectId,
                 IsConnectable.ToString(), IsConnected.ToString(), IsInstalled.ToString(),
-                AvailableRevision.ToString(), InstalledRevision.ToString() })
+                AvailableRevision.ToString(), InstalledRevision.ToString(),
+                CreatedTimestamp.ToString(CultureInfo.CurrentCulture), ManifestChecksum, PermissionsChecksum
+            })
             {
                 message.Append(item);
                 message.Append(',');

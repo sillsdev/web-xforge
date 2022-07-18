@@ -167,7 +167,8 @@ namespace SIL.XForge.Scripture.Services
         /// project referred to by paratextId. Or if paratextId refers to a DBL Resource, update the local copy of the
         /// resource if needed.
         /// </summary>
-        public async Task SendReceiveAsync(UserSecret userSecret, string paratextId,
+        /// <returns>The project that was synced. This is returned so we can use it for other Paratext logic.</returns>
+        public async Task<ParatextProject> SendReceiveAsync(UserSecret userSecret, string paratextId,
             IProgress<ProgressState> progress = null, CancellationToken token = default)
         {
             if (userSecret == null || paratextId == null) { throw new ArgumentNullException(); }
@@ -245,6 +246,8 @@ namespace SIL.XForge.Scripture.Services
                         $"Failed: Errors occurred while performing the sync with the Paratext Server. More information: noErrors: {noErrors}. success: {success}. null results: {results == null}. results: {resultsInfo}");
                 }
             }
+
+            return ptProject;
         }
 
         /// <returns>
@@ -319,6 +322,50 @@ namespace SIL.XForge.Scripture.Services
         public bool IsResource(string paratextId)
         {
             return paratextId?.Length == SFInstallableDblResource.ResourceIdentifierLength;
+        }
+
+        /// <summary>
+        /// Determines whether the <see cref="TextData"/> for a resource project requires updating.
+        /// </summary>
+        /// <param name="project">The Scripture Forge project.</param>
+        /// <param name="resource">The Paratext resource.</param>
+        /// <returns>
+        /// <c>true</c> if the project's documents require updating; otherwise, <c>false</c>.
+        /// </returns>
+        /// <remarks>
+        /// This method is an implementation of <see cref="Paratext.Data.Archiving.InstallableResource.IsNewerThanCurrentlyInstalled" />
+        /// specifically for comparing downloaded resources with the resource data in the Mongo database.
+        /// If a non-resource project is specified, <c>true</c> is always returned.
+        /// </remarks>
+        public bool ResourceDocsNeedUpdating(SFProject project, ParatextResource resource)
+        {
+            // Ensure that we are checking a resource. We will default to true if it is not a resource.
+            if (!IsResource(project.ParatextId))
+            {
+                return true;
+            }
+
+            // If we do not have a ResourceConfig, return true, as we have not synced this data into the database
+            if (project.ResourceConfig == null)
+            {
+                _logger.LogInformation($"No resource configuration for '{project.ParatextId}' could be found.");
+                return true;
+            }
+
+            // We use the latest revision, as all this data is from the Paratext feed
+            if (resource.AvailableRevision > project.ResourceConfig.Revision)
+            {
+                return true;
+            }
+
+            if (resource.PermissionsChecksum != project.ResourceConfig.PermissionsChecksum)
+            {
+                return true;
+            }
+
+            // If the manifest is different, use the creation timestamp to ensure it is newer
+            return resource.ManifestChecksum != project.ResourceConfig.ManifestChecksum
+                   && resource.CreatedTimestamp > project.ResourceConfig.CreatedTimestamp;
         }
 
         /// <summary>
@@ -1088,7 +1135,7 @@ namespace SIL.XForge.Scripture.Services
         public bool BackupExists(UserSecret userSecret, string paratextId)
         {
             // We do not back up resources
-            if (paratextId == null || paratextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+            if (paratextId == null || IsResource(paratextId))
             {
                 return false;
             }
@@ -1109,7 +1156,7 @@ namespace SIL.XForge.Scripture.Services
         public bool BackupRepository(UserSecret userSecret, string paratextId)
         {
             // We do not back up resources
-            if (paratextId == null || paratextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+            if (paratextId == null || IsResource(paratextId))
             {
                 if (paratextId == null)
                 {
@@ -1161,13 +1208,13 @@ namespace SIL.XForge.Scripture.Services
         public bool RestoreRepository(UserSecret userSecret, string paratextId)
         {
             // We do not back up resources
-            if (paratextId == null || paratextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+            if (paratextId == null || IsResource(paratextId))
             {
                 if (paratextId == null)
                 {
                     _logger.LogInformation("Not restoring local PT repo for null paratextId.");
                 }
-                else if (paratextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+                else if (IsResource(paratextId))
                 {
                     _logger.LogInformation("Not restoring a DBL resource.");
                 }
@@ -1650,6 +1697,7 @@ namespace SIL.XForge.Scripture.Services
             return resources.OrderBy(r => r.FullName).Select(r => new ParatextResource
             {
                 AvailableRevision = r.DBLRevision,
+                CreatedTimestamp = r.CreatedTimestamp,
                 InstallableResource = includeInstallableResource ? r : null,
                 InstalledRevision = resourceRevisions
                     .ContainsKey(r.DBLEntryUid.Id) ? resourceRevisions[r.DBLEntryUid.Id] : 0,
@@ -1657,8 +1705,10 @@ namespace SIL.XForge.Scripture.Services
                 IsConnected = false,
                 IsInstalled = resourceRevisions.ContainsKey(r.DBLEntryUid.Id),
                 LanguageTag = r.LanguageID.Code,
+                ManifestChecksum = r.ManifestChecksum,
                 Name = r.FullName,
                 ParatextId = r.DBLEntryUid.Id,
+                PermissionsChecksum = r.PermissionsChecksum,
                 ProjectId = null,
                 ShortName = r.Name,
             }).ToArray();

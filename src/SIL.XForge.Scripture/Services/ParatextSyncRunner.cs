@@ -8,7 +8,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
-using MongoDB.Bson;
 using SIL.Machine.WebApi.Services;
 using SIL.ObjectModel;
 using SIL.Scripture;
@@ -167,7 +166,7 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 ParatextSettings settings =
-                    _paratextService.GetParatextSettings(_userSecret, _projectDoc.Data.ParatextId);
+                    _paratextService.GetParatextSettings(_userSecret, targetParatextId);
                 // update target Paratext books and notes
                 foreach (TextInfo text in _projectDoc.Data.Texts)
                 {
@@ -179,12 +178,12 @@ namespace SIL.XForge.Scripture.Services
                     }
                     SortedList<int, IDocument<TextData>> targetTextDocs = await FetchTextDocsAsync(text);
                     targetTextDocsByBook[text.BookNum] = targetTextDocs;
-                    if (isDataInSync && settings.Editable)
+                    if (isDataInSync && settings.Editable && !_paratextService.IsResource(targetParatextId))
                         await UpdateParatextBook(text, targetParatextId, targetTextDocs);
 
                     IReadOnlyList<IDocument<Question>> questionDocs = await FetchQuestionDocsAsync(text);
                     questionDocsByBook[text.BookNum] = questionDocs;
-                    if (isDataInSync)
+                    if (isDataInSync && !_paratextService.IsResource(targetParatextId))
                     {
                         await UpdateParatextNotesAsync(text, questionDocs);
                         // TODO: Sync Note changes back to Paratext
@@ -204,6 +203,7 @@ namespace SIL.XForge.Scripture.Services
 
                 // Use the new progress bar
                 var progress = new SyncProgress();
+                ParatextProject paratextProject;
                 try
                 {
                     // Create the handler
@@ -211,7 +211,7 @@ namespace SIL.XForge.Scripture.Services
 
                     Log($"RunAsync: Going to do ParatextData SendReceive.");
                     // perform Paratext send/receive
-                    await _paratextService.SendReceiveAsync(_userSecret, targetParatextId, progress, token);
+                    paratextProject = await _paratextService.SendReceiveAsync(_userSecret, targetParatextId, progress, token);
                     Log($"RunAsync: ParatextData SendReceive finished without throwing.");
                 }
                 finally
@@ -309,8 +309,29 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
 
-                await UpdateDocsAsync(targetParatextId, targetTextDocsByBook, questionDocsByBook, targetBooks,
-                    sourceBooks, token);
+                bool resourceNeedsUpdating = paratextProject is ParatextResource paratextResource &&
+                    _paratextService.ResourceDocsNeedUpdating(_projectDoc.Data, paratextResource);
+
+                if (!_paratextService.IsResource(targetParatextId) || resourceNeedsUpdating)
+                {
+                    await UpdateDocsAsync(targetParatextId, targetTextDocsByBook, questionDocsByBook, targetBooks,
+                        sourceBooks, token);
+                }
+
+                // Check for cancellation
+                if (token.IsCancellationRequested)
+                {
+                    await CompleteSync(false, canRollbackParatext, trainEngine, token);
+                    return;
+                }
+
+                // Update the resource configuration
+                if (resourceNeedsUpdating)
+                {
+                    await UpdateResourceConfig(paratextProject);
+                }
+
+                // We will always update permissions, even if this is a resource project
                 await _projectService.UpdatePermissionsAsync(userId, _projectDoc, token);
 
                 // Check for cancellation
@@ -339,6 +360,45 @@ namespace SIL.XForge.Scripture.Services
             finally
             {
                 CloseConnection();
+            }
+        }
+
+        /// <summary>
+        /// Updates the resource configuration
+        /// </summary>
+        /// <param name="project">The SF project.</param>
+        /// <param name="paratextProject">The Paratext project. This should be a resource.</param>
+        /// <returns>The asynchronous task.</returns>
+        /// <remarks>Only call this if the config requires an update.</remarks>
+        private async Task UpdateResourceConfig(ParatextProject paratextProject)
+        {
+            // Update the resource configuration
+            if (paratextProject is ParatextResource paratextResource)
+            {
+                if (_projectDoc.Data.ResourceConfig == null)
+                {
+                    // Create the resource config
+                    await _projectDoc.SubmitJson0OpAsync(
+                        op => op.Set(pd => pd.ResourceConfig,
+                            new ResourceConfig
+                            {
+                                CreatedTimestamp = paratextResource.CreatedTimestamp,
+                                ManifestChecksum = paratextResource.ManifestChecksum,
+                                PermissionsChecksum = paratextResource.PermissionsChecksum,
+                                Revision = paratextResource.AvailableRevision,
+                            }));
+                }
+                else
+                {
+                    // Update the resource config
+                    await _projectDoc.SubmitJson0OpAsync(op =>
+                    {
+                        op.Set(pd => pd.ResourceConfig.CreatedTimestamp, paratextResource.CreatedTimestamp);
+                        op.Set(pd => pd.ResourceConfig.ManifestChecksum, paratextResource.ManifestChecksum);
+                        op.Set(pd => pd.ResourceConfig.PermissionsChecksum, paratextResource.PermissionsChecksum);
+                        op.Set(pd => pd.ResourceConfig.Revision, paratextResource.AvailableRevision);
+                    });
+                }
             }
         }
 
@@ -1125,7 +1185,7 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 // Backup the repository
-                if (_projectDoc.Data.ParatextId.Length != SFInstallableDblResource.ResourceIdentifierLength)
+                if (!_paratextService.IsResource(_projectDoc.Data.ParatextId))
                 {
                     bool backupOutcome = _paratextService.BackupRepository(_userSecret, _projectDoc.Data.ParatextId);
                     if (!backupOutcome)

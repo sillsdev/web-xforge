@@ -29,6 +29,7 @@ namespace SIL.XForge.Scripture.Services
         Task<Dictionary<string, string>> GetPermissionsAsync(UserSecret userSecret, SFProject project,
             IReadOnlyDictionary<string, string> ptUsernameMapping, int book = 0, int chapter = 0,
             CancellationToken token = default);
+        bool ResourceDocsNeedUpdating(SFProject project, ParatextResource resource);
 
         IReadOnlyList<int> GetBookList(UserSecret userSecret, string paratextId);
         string GetBookText(UserSecret userSecret, string paratextId, int bookNum);
@@ -46,7 +47,7 @@ namespace SIL.XForge.Scripture.Services
         bool BackupRepository(UserSecret userSecret, string paratextId);
         bool RestoreRepository(UserSecret userSecret, string paratextId);
 
-        Task SendReceiveAsync(UserSecret userSecret, string paratextId, IProgress<ProgressState> progress = null,
+        Task<ParatextProject> SendReceiveAsync(UserSecret userSecret, string paratextId, IProgress<ProgressState> progress = null,
             CancellationToken token = default);
     }
 }
