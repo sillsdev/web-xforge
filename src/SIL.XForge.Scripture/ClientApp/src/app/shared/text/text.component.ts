@@ -10,10 +10,10 @@ import {
   ViewChild
 } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
-import { clone, cloneDeep } from 'lodash-es';
+import { clone } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import merge from 'lodash-es/merge';
-import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources } from 'quill';
+import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
 import QuillCursors from 'quill-cursors';
 import { AuthType, getAuthType } from 'realtime-server/lib/esm/common/models/user';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
@@ -597,9 +597,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   /** Respond to text changes in the quill editor. */
   onContentChanged(delta: DeltaStatic, source: string): void {
-    if ((source as Sources) === 'user') {
-      this.deleteDuplicateNoteIcons(delta);
-    }
     this.viewModel.update(delta, source as Sources);
     this.updatePlaceholderText();
     // skip updating when only formatting changes occurred
@@ -1065,80 +1062,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private getEmbedCountInRange(editorStartPos: number, length: number): number {
     const embedPositions: number[] = Array.from(this.embeddedElements.values());
     return embedPositions.filter((pos: number) => pos >= editorStartPos && pos < editorStartPos + length).length;
-  }
-
-  /**
-   * Notes that get inserted by the delta are removed from the editor to clean up duplicates.
-   * i.e. The user triggers an undo after deleting a note.
-   */
-  private deleteDuplicateNoteIcons(delta: DeltaStatic): void {
-    if (this.editor == null || delta.ops == null) {
-      return;
-    }
-    // Delta for the removal of notes that were re-created
-    let notesDeletionDelta: DeltaStatic | undefined;
-    const productiveOps = this.trimUnproductiveOps(delta);
-    if (productiveOps.ops == null) {
-      return;
-    }
-    for (const op of productiveOps.ops) {
-      if (op.insert != null && op.insert['note-thread-embed'] != null) {
-        const embedId: string = op.insert['note-thread-embed']['threadid'];
-        const deletePosition = this.embeddedElements.get(embedId);
-        if (deletePosition != null) {
-          const noteDeleteOps: DeltaOperation[] = [{ retain: deletePosition }, { delete: 1 }];
-          const noteDeleteOpDelta = new Delta(noteDeleteOps);
-          notesDeletionDelta =
-            notesDeletionDelta == null ? noteDeleteOpDelta : noteDeleteOpDelta.compose(notesDeletionDelta);
-        }
-      }
-    }
-
-    if (notesDeletionDelta != null) {
-      notesDeletionDelta.chop();
-      // Defer the update so that the current delta can be processed
-      Promise.resolve(notesDeletionDelta).then(deleteDelta => {
-        this.editor?.updateContents(deleteDelta, 'api');
-      });
-    }
-  }
-
-  /**
-   * Trims out the unproductive ops from a delta emitted by Quill's onContentChanged event.
-   * This is used to determine which ops accurately represents the change applied to the editor,
-   * more specifically, trim out object inserts like note thread embeds that did not truly get inserted.
-   */
-  private trimUnproductiveOps(delta: DeltaStatic): DeltaStatic {
-    // The quill way of determining changes applied to its content doesn't work perfectly on non-text objects
-    // and the result in the delta is a series of object inserts followed by a delete op that removes
-    // the original object inserts. This trims out those ops from this delta so the delta is a true representation
-    // of the changes applied to the text.
-    // For example, a delta may contain [ retain: 10, insert: blank, insert: verse, insert: note, delete: 2 ]
-    // where the delete: 2 op deletes the original verse and note inserts that get replaced in this delta
-    const productiveOps: DeltaStatic = cloneDeep(delta);
-    if (productiveOps.ops == null || productiveOps.ops.length < 2) {
-      return delta;
-    }
-    const opCount: number = productiveOps.ops.length;
-    // find the trailing delete op
-    const lastDeleteOp: number | undefined = productiveOps.ops[opCount - 1].delete;
-    let deleteCount: number = lastDeleteOp ?? 0;
-    if (deleteCount === 0) {
-      return delta;
-    }
-
-    for (let i = 0; i < deleteCount; i++) {
-      const curIndex: number = opCount - i - 2;
-      const insertObj = productiveOps.ops[curIndex].insert;
-      if (insertObj != null && typeof insertObj !== 'string') {
-        // the object insert may be a false op
-        continue;
-      }
-      // the op is productive, so keep the entire delta
-      return delta;
-    }
-    productiveOps.ops.splice(opCount - 1 - deleteCount);
-    return productiveOps;
   }
 
   private setHighlightMarkerPosition(): void {
