@@ -5,6 +5,11 @@ services:
     command: mongod
     volumes:
       - /data/db
+    networks:
+      webnet:
+        aliases:
+          - localhost
+
   scriptureforge:
     depends_on:
       - 'mongodb'
@@ -14,8 +19,12 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
     volumes:
       - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets
-    links:
-      - mongodb
     ports:
       - "5000:5000"
       - "5003:5003"
+    networks:
+      - webnet
+networks:
+  webnet:
+    # stdin_open: true # docker run -i
+    # tty: true        # docker run -t

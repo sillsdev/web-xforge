@@ -9,7 +9,7 @@ RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-p
   && apt-get update \
   && apt-get upgrade -y \
   && apt-get install -y --no-install-recommends \
-  dotnet-sdk-3.1 \
+  dotnet-sdk-6.0 \
   mercurial \
   && rm -rf /var/lib/apt/lists/*
 
@@ -26,19 +26,14 @@ COPY SIL.XForge ./SIL.XForge
 COPY SIL.XForge.Scripture ./SIL.XForge.Scripture
 COPY RealtimeServer ./RealtimeServer
 
-# WORKDIR /usr/src/app/RealtimeServer
-# RUN npm ci
-# WORKDIR /usr/src/app/SIL.XForge.Scripture/ClientApp
-# RUN npm ci
-# RUN npm run build
+WORKDIR /usr/src/app/RealtimeServer
+RUN npm ci
+WORKDIR /usr/src/app/SIL.XForge.Scripture/ClientApp
+RUN npm ci
+RUN npm run build
 
-# Mark the project as ready for .NET 6
 WORKDIR /usr/src/app/SIL.XForge.Scripture
-# RUN sed -i -e 's/<TargetFramework>netcoreapp3.1<\/TargetFramework>/<TargetFramework>net6.0<\/TargetFramework>/g' SIL.XForge.Scripture.csproj
 RUN dotnet build
-# RUN dotnet publish SIL.XForge.Scripture.csproj -c Release \
-#   -r linux-x64 /p:Version=9.9.9 /p:AngularConfig=production
-
 
 RUN mkdir -p /var/lib/scriptureforge/audio/
 
