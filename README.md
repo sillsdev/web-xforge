@@ -39,7 +39,6 @@ The rest of this document discusses the development of the underlying software.
   - [.NET Unit Testing](#net-unit-testing)
   - [Node Unit Testing](#node-unit-testing)
     - [Debugging Unit Tests](#debugging-unit-tests)
-  - [Angular Linting and Prettiering](#angular-linting-and-prettiering)
   - [Angular Unit Testing](#angular-unit-testing)
     - [Debugging Unit Tests](#debugging-unit-tests-1)
     - [Filtering Unit Tests](#filtering-unit-tests)
@@ -48,6 +47,7 @@ The rest of this document discusses the development of the underlying software.
 - [Backend Development](#backend-development)
   - [Model Changes](#model-changes)
 - [Debugging](#debugging)
+  - [Angular Linting and Prettiering](#angular-linting-and-prettiering)
 - [Database](#database)
 - [USX Validation](#usx-validation)
 - [Architecture and design](#architecture-and-design)
@@ -310,18 +310,6 @@ npm test
 
 Unit tests can be debugged easily in VS Code using the [Jest extension](https://github.com/jest-community/vscode-jest). After installing the exension, start the Jest test runner by executing the `Jest: Start Runner` command in the VS Code command palette. The runner will automatically run all of the Node unit tests and display a green or red circle next to each unit test indicating whether the unit test passed. If the unit test failed, a `Debug` code lens command will appear above the test. Set a breakpoint and click on the command.
 
-### Angular Linting and Prettiering
-
-To check TypeScript for readability, maintainability, and functionality errors, and to check a few other files for proper formatting. From the repo root
-
-```bash
-cd src/SIL.XForge.Scripture/ClientApp/
-npm run prettier
-ng lint
-```
-
-Or just use VS Code with this project's recommended extensions.
-
 ### Angular Unit Testing
 
 Tests are run by Karma in a browser. Help Karma find Chromium by setting CHROME_BIN. Set it persistently with
@@ -533,6 +521,18 @@ To debug backend tests, open a C# Tests file. In the code above the test, click 
 click **Debug All Tests**.
 
 Other debugging targets are available as well, such as targets that start running the frontend and/or backend.
+
+### Angular Linting and Prettiering
+
+To check TypeScript for readability, maintainability, and functionality errors, and to check a few other files for proper formatting. From the repo root
+
+```bash
+cd src/SIL.XForge.Scripture/ClientApp/
+npm run prettier
+ng lint
+```
+
+Or just use VS Code with this project's recommended extensions.
 
 ## Database
 
