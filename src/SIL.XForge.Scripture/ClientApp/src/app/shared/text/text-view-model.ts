@@ -165,12 +165,20 @@ export class TextViewModel {
     return this._segments.entries();
   }
 
+  get segmentsSnapshot(): IterableIterator<[string, RangeStatic]> {
+    return cloneDeep(this._segments).entries();
+  }
+
   get embeddedElements(): Map<string, number> {
     const embeddedElements: Map<string, number> = new Map<string, number>();
     for (const [embedId, embedPosition] of this._embeddedElements.entries()) {
       embeddedElements.set(embedId, embedPosition.position);
     }
     return embeddedElements;
+  }
+
+  get embeddedElementsSnapshot(): Map<string, number> {
+    return cloneDeep(this.embeddedElements);
   }
 
   get isLoaded(): boolean {

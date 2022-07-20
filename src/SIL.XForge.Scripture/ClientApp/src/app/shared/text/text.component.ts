@@ -10,7 +10,6 @@ import {
   ViewChild
 } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
-import { clone } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import merge from 'lodash-es/merge';
 import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
@@ -64,7 +63,7 @@ export interface TextUpdatedEvent {
   delta?: DeltaStatic;
   prevSegment?: Segment;
   segment?: Segment;
-  oldVerseEmbeds?: Map<string, number>;
+  affectedEmbeds?: EmbedsByVerse[];
   isLocalUpdate?: boolean;
 }
 
@@ -79,6 +78,12 @@ export interface FeaturedVerseRefInfo {
   icon: NoteThreadIcon;
   preview?: string;
   highlight?: boolean;
+}
+
+/** A verse's range and the embeds located within the range. */
+export interface EmbedsByVerse {
+  verseRange: RangeStatic;
+  embeds: Map<string, number>;
 }
 
 /** View of an editable text document. Used for displaying Scripture. */
@@ -601,12 +606,14 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   /** Respond to text changes in the quill editor. */
   onContentChanged(delta: DeltaStatic, source: string): void {
+    const segmentsBeforeDelta: IterableIterator<[string, RangeStatic]> = this.viewModel.segmentsSnapshot;
+    const embedsBeforeDelta: Readonly<Map<string, number>> = this.viewModel.embeddedElementsSnapshot;
     this.viewModel.update(delta, source as Sources);
     this.updatePlaceholderText();
     // skip updating when only formatting changes occurred
     if (delta.ops != null && delta.ops.some(op => op.insert != null || op.delete != null)) {
       const isUserEdit: boolean = source === 'user';
-      this.update(delta, isUserEdit);
+      this.update(delta, segmentsBeforeDelta, embedsBeforeDelta, isUserEdit);
     }
   }
 
@@ -851,7 +858,12 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
   }
 
-  private update(delta?: DeltaStatic, isUserEdit?: boolean): void {
+  private update(
+    delta?: DeltaStatic,
+    segmentsBeforeDelta?: IterableIterator<[string, RangeStatic]>,
+    embedsBeforeDelta?: Readonly<Map<string, number>>,
+    isUserEdit?: boolean
+  ): void {
     let segmentRef: string | undefined;
     let checksum: number | undefined;
     let focus: boolean | undefined;
@@ -894,14 +906,11 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     const prevSegment = this._segment;
-    let oldVerseEmbedsToUpdate: Map<string, number> | undefined;
     if (segmentRef != null) {
       // update/switch current segment
       if (!this.tryChangeSegment(segmentRef, checksum, focus) && this._segment != null) {
         // the selection has not changed to a different segment, so update existing segment
-        const oldVerseEmbeds: Map<string, number> = clone(this._segment.embeddedElements);
         this.updateSegment();
-        oldVerseEmbedsToUpdate = oldVerseEmbeds;
         if (this._highlightSegment) {
           // ensure that the currently selected segment is highlighted
           this.highlight();
@@ -911,11 +920,13 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     Promise.resolve().then(() => this.adjustSelection());
+    const affectedEmbeds: EmbedsByVerse[] =
+      isUserEdit === true ? this.getEmbedsAffectedByDelta(delta, segmentsBeforeDelta, embedsBeforeDelta) : [];
     this.updated.emit({
       delta,
       prevSegment,
       segment: this._segment,
-      oldVerseEmbeds: oldVerseEmbedsToUpdate,
+      affectedEmbeds,
       isLocalUpdate: isUserEdit
     });
   }
@@ -1004,6 +1015,88 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       }
     }
     this._segment.update(text, segmentRange, verseEmbeddedElements);
+  }
+
+  /** Gets the embeds affected */
+  private getEmbedsAffectedByDelta(
+    delta?: DeltaStatic,
+    segmentsBeforeDelta?: IterableIterator<[string, RangeStatic]>,
+    embedsBeforeDelta?: Readonly<Map<string, number>>
+  ): EmbedsByVerse[] {
+    if (delta?.ops == null || segmentsBeforeDelta == null || embedsBeforeDelta == null) {
+      return [];
+    }
+    let verseIsEdited = false;
+    let currentVerse: string = '';
+    let currentVerseRange: RangeStatic = { index: 0, length: 0 };
+    let embedsByVerse = new Map<string, number>();
+    const editPositions: number[] = this.getEditPositionInDelta(delta);
+    const embedsByEditedVerse: EmbedsByVerse[] = [];
+    for (const [segment, range] of segmentsBeforeDelta) {
+      const baseVerse: string = this.getBaseVerse(segment);
+      if (currentVerse === '') {
+        // set the current verse and range on the first pass
+        currentVerse = baseVerse;
+        currentVerseRange = range;
+      }
+      if (currentVerse !== baseVerse) {
+        // this segment belongs to a new verse, add the embeds if the  previous verse has been edited
+        if (verseIsEdited) {
+          embedsByEditedVerse.push({ embeds: embedsByVerse, verseRange: currentVerseRange });
+        }
+        embedsByVerse = new Map<string, number>();
+        currentVerse = baseVerse;
+        currentVerseRange = range;
+        verseIsEdited = false;
+      } else {
+        currentVerseRange.length += range.length;
+      }
+
+      const editedPositionsWithinRange: number[] = editPositions.filter(
+        pos => pos >= range.index && pos <= range.index + range.length
+      );
+      if (editedPositionsWithinRange.length > 0) {
+        verseIsEdited = true;
+      }
+
+      for (const [embedId, embedPosition] of embedsBeforeDelta.entries()) {
+        if (embedPosition >= range.index && embedPosition < range.index + range.length) {
+          embedsByVerse.set(embedId, embedPosition);
+        }
+      }
+    }
+
+    // set the embeds for the final verse
+    if (verseIsEdited) {
+      embedsByEditedVerse.push({ embeds: embedsByVerse, verseRange: currentVerseRange });
+    }
+    return embedsByEditedVerse;
+  }
+
+  private getEditPositionInDelta(delta: DeltaStatic): number[] {
+    let curIndex = 0;
+    const editPositions: number[] = [];
+    if (delta.ops == null) {
+      return editPositions;
+    }
+
+    for (const op of delta.ops) {
+      if (op.insert != null) {
+        editPositions.push(curIndex);
+      } else if (op.delete != null) {
+        editPositions.push(curIndex);
+        curIndex += op.delete;
+      } else {
+        // increase the current index by the value in the retain
+        curIndex += op.retain == null ? 0 : op.retain;
+      }
+    }
+    return editPositions;
+  }
+
+  private getBaseVerse(segmentRef: string): string {
+    const matchArray: RegExpExecArray | null = VERSE_REGEX.exec(segmentRef);
+    return matchArray == null ? segmentRef : matchArray[0];
   }
 
   private getVerseEndIndex(baseRef: string): number | undefined {
