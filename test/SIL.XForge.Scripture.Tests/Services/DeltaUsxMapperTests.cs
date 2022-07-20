@@ -2489,7 +2489,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertBlank("verse_1_2")
                 .InsertPara("p")
                 .InsertPara("b")
-                .InsertBlank("p_2")
+                .InsertBlank("verse_1_2/p_1")
                 .InsertVerse("3")
                 .InsertBlank("verse_1_3")
                 .InsertPara("p");
@@ -2497,6 +2497,38 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
             Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
             Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void ToDelta_BlankLineContainsText()
+        {
+            XDocument usxDoc = Usx("PHM",
+                Chapter("1"),
+                Para("p",
+                    Verse("1"),
+                    "Verse text."),
+                // support this even though we do not encourage users to type text in line breaks
+                Para("b",
+                    "Text in line break"),
+                Para("p",
+                    "second segment in verse."));
+
+            var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
+            List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
+
+            var expected = new Delta()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertText("Verse text.", "verse_1_1")
+                .InsertPara("p")
+                .InsertText("Text in line break")
+                .InsertPara("b")
+                .InsertText("second segment in verse.", "verse_1_1/p_1")
+                .InsertPara("p");
+
+            Assert.That(chapterDeltas.Count(), Is.EqualTo(1));
+            Assert.That(chapterDeltas[0].Delta.DeepEquals(expected));
         }
 
         [Test]
@@ -2691,6 +2723,40 @@ namespace SIL.XForge.Scripture.Services
 
             Assert.That(chapterDeltas.Count, Is.EqualTo(1));
             Assert.That(chapterDeltas[0].IsValid, Is.False);
+            Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
+        }
+
+        public void ToDelta_LineBreakWithinVerse()
+        {
+            XDocument usxDoc = Usx("PHM",
+                Chapter("1"),
+                Para("q",
+                    Verse("1"),
+                    "Poetry first line"),
+                Para("q", "Poetry second line"),
+                Para("b"),
+                Para("q", "Poetry third line"),
+                Para("q", "Poetry fourth line.")
+            );
+
+            var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
+            List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
+
+            var expected = new Delta()
+                .InsertChapter("1")
+                .InsertBlank("q_1")
+                .InsertVerse("1")
+                .InsertText("Poetry first line", "verse_1_1")
+                .InsertPara("q")
+                .InsertText("Poetry second line", "verse_1_1/q_1")
+                .InsertPara("q")
+                .InsertPara("b")
+                .InsertText("Poetry third line", "verse_1_1/q_2")
+                .InsertPara("q")
+                .InsertText("Poetry fourth line.", "verse_1_1/q_3")
+                .InsertPara("q");
+
+            Assert.That(chapterDeltas.Count, Is.EqualTo(1));
             Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
         }
 
