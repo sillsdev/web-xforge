@@ -34,8 +34,7 @@ namespace SIL.XForge.Scripture.Services
             // a worker just before processing a job. During the state election phase we can
             // change the target state to another one, causing a worker not to process the
             // backgorund job.
-            if (context.CandidateState.Name != ProcessingState.StateName ||
-                context.BackgroundJob.Job == null)
+            if (context.CandidateState.Name != ProcessingState.StateName || context.BackgroundJob.Job == null)
             {
                 return;
             }
@@ -45,7 +44,9 @@ namespace SIL.XForge.Scripture.Services
             var storageConnection = context.Connection as JobStorageConnection;
             if (storageConnection == null)
             {
-                throw new NotSupportedException("This version of storage doesn't support extended methods. Please try to update to the latest version.");
+                throw new NotSupportedException(
+                    "This version of storage doesn't support extended methods. Please try to update to the latest version."
+                );
             }
 
             string blockedBy;
@@ -62,10 +63,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     // Resource set contains a background job id that acquired a mutex for the resource.
                     // We are getting only one element to see what background job blocked the invocation.
-                    var range = storageConnection.GetRangeFromSet(
-                        GetResourceKey(context.BackgroundJob.Job.Args),
-                        0,
-                        0);
+                    var range = storageConnection.GetRangeFromSet(GetResourceKey(context.BackgroundJob.Job.Args), 0, 0);
 
                     blockedBy = range.Count > 0 ? range[0] : null;
 
@@ -83,7 +81,10 @@ namespace SIL.XForge.Scripture.Services
                         // that resource is owned by the current background job. Identifier will be
                         // removed only on failed state, or in one of final states (succeeded or
                         // deleted).
-                        localTransaction.AddToSet(GetResourceKey(context.BackgroundJob.Job.Args), context.BackgroundJob.Id);
+                        localTransaction.AddToSet(
+                            GetResourceKey(context.BackgroundJob.Job.Args),
+                            context.BackgroundJob.Id
+                        );
                         localTransaction.Commit();
 
                         // Invocation is permitted, and we did all the required things.
@@ -110,30 +111,33 @@ namespace SIL.XForge.Scripture.Services
             var currentAttempt = context.GetJobParameter<int>("MutexAttempt") + 1;
             context.SetJobParameter("MutexAttempt", currentAttempt);
 
-            context.CandidateState = MaxAttempts == 0 || currentAttempt <= MaxAttempts
-                ? CreateScheduledState(blockedBy, currentAttempt)
-                : CreateDeletedState(blockedBy);
+            context.CandidateState =
+                MaxAttempts == 0 || currentAttempt <= MaxAttempts
+                    ? CreateScheduledState(blockedBy, currentAttempt)
+                    : CreateDeletedState(blockedBy);
         }
 
         public void OnStateApplied(ApplyStateContext context, IWriteOnlyTransaction transaction)
         {
-            if (context.BackgroundJob.Job == null) return;
+            if (context.BackgroundJob.Job == null)
+                return;
 
             if (context.OldStateName == ProcessingState.StateName)
             {
                 using (AcquireDistributedSetLock(context.Connection, context.BackgroundJob.Job.Args))
                 {
                     var localTransaction = context.Connection.CreateWriteTransaction();
-                    localTransaction.RemoveFromSet(GetResourceKey(context.BackgroundJob.Job.Args), context.BackgroundJob.Id);
+                    localTransaction.RemoveFromSet(
+                        GetResourceKey(context.BackgroundJob.Job.Args),
+                        context.BackgroundJob.Id
+                    );
 
                     localTransaction.Commit();
                 }
             }
         }
 
-        public void OnStateUnapplied(ApplyStateContext context, IWriteOnlyTransaction transaction)
-        {
-        }
+        public void OnStateUnapplied(ApplyStateContext context, IWriteOnlyTransaction transaction) { }
 
         private static DeletedState CreateDeletedState(string blockedBy)
         {
@@ -152,10 +156,7 @@ namespace SIL.XForge.Scripture.Services
                 reason += $"/{MaxAttempts}";
             }
 
-            return new ScheduledState(TimeSpan.FromSeconds(RetryInSeconds))
-            {
-                Reason = reason
-            };
+            return new ScheduledState(TimeSpan.FromSeconds(RetryInSeconds)) { Reason = reason };
         }
 
         private IDisposable AcquireDistributedSetLock(IStorageConnection connection, IEnumerable<object> args)

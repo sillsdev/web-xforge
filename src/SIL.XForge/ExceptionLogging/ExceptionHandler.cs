@@ -14,15 +14,23 @@ namespace SIL.XForge
 
         public async static Task<string> CreateHttpRequestErrorMessage(HttpResponseMessage response)
         {
-            string responseContent = string.Join("\n", (await response.Content.ReadAsStringAsync()).Split('\n').Take(10));
-            return string.Join("\n", new string[] {
-                    "HTTP Request error:",
-                    $"{response.RequestMessage.Method} {response.RequestMessage.RequestUri}",
-                    "Response:",
-                    response.ToString(),
-                    "Response content begins with:",
-                    responseContent
-                }).Replace("\n", "\n    ");
+            string responseContent = string.Join(
+                "\n",
+                (await response.Content.ReadAsStringAsync()).Split('\n').Take(10)
+            );
+            return string.Join(
+                    "\n",
+                    new string[]
+                    {
+                        "HTTP Request error:",
+                        $"{response.RequestMessage.Method} {response.RequestMessage.RequestUri}",
+                        "Response:",
+                        response.ToString(),
+                        "Response content begins with:",
+                        responseContent
+                    }
+                )
+                .Replace("\n", "\n    ");
         }
 
         public ExceptionHandler(Bugsnag.IClient client)
@@ -39,7 +47,9 @@ namespace SIL.XForge
         {
             if (!response.IsSuccessStatusCode)
             {
-                var exception = new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
+                var exception = new HttpRequestException(
+                    await ExceptionHandler.CreateHttpRequestErrorMessage(response)
+                );
                 ReportException(exception);
                 throw exception;
             }

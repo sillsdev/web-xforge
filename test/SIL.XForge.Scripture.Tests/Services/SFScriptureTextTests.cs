@@ -16,42 +16,43 @@ namespace SIL.XForge.Scripture.Services
             // from SF DB - xforge - texts.
             var doc = new BsonDocument
             {
-                {"_id", "abc123:MAT:1:target"},
-                {"ops", new BsonArray
+                { "_id", "abc123:MAT:1:target" },
+                {
+                    "ops",
+                    new BsonArray
                     {
                         new BsonDocument
                         {
-                            {"insert", new BsonDocument
+                            {
+                                "insert",
+                                new BsonDocument
                                 {
-                                    {"chapter", new BsonDocument
-                                        {
-                                            {"number","1"},
-                                            {"style","c"}
-                                        }
+                                    {
+                                        "chapter",
+                                        new BsonDocument { { "number", "1" }, { "style", "c" } }
                                     }
                                 }
                             }
                         },
                         new BsonDocument
                         {
-                            {"insert", new BsonDocument
+                            {
+                                "insert",
+                                new BsonDocument
                                 {
-                                    {"verse", new BsonDocument
-                                        {
-                                            {"number","1"},
-                                            {"style","v"}
-                                        }
+                                    {
+                                        "verse",
+                                        new BsonDocument { { "number", "1" }, { "style", "v" } }
                                     }
                                 }
                             }
                         },
                         new BsonDocument
                         {
-                            {"insert", "First verse text here"},
-                            {"attributes", new BsonDocument
-                                {
-                                    {"segment", "verse_1_1"}
-                                }
+                            { "insert", "First verse text here" },
+                            {
+                                "attributes",
+                                new BsonDocument { { "segment", "verse_1_1" } }
                             }
                         }
                     }
@@ -77,31 +78,33 @@ namespace SIL.XForge.Scripture.Services
         {
             var doc = new BsonDocument
             {
-                {"_id", "abc123:MAT:1:target"},
-                {"ops", new BsonArray
+                { "_id", "abc123:MAT:1:target" },
+                {
+                    "ops",
+                    new BsonArray
                     {
                         new BsonDocument
                         {
-                            {"insert", new BsonDocument
+                            {
+                                "insert",
+                                new BsonDocument
                                 {
-                                    {"chapter", new BsonDocument
-                                        {
-                                            {"number","1"},
-                                            {"style","c"}
-                                        }
+                                    {
+                                        "chapter",
+                                        new BsonDocument { { "number", "1" }, { "style", "c" } }
                                     }
                                 }
                             }
                         },
                         new BsonDocument
                         {
-                            {"insert", new BsonDocument
+                            {
+                                "insert",
+                                new BsonDocument
                                 {
-                                    {"verse", new BsonDocument
-                                        {
-                                            {"number","1"},
-                                            {"style","v"}
-                                        }
+                                    {
+                                        "verse",
+                                        new BsonDocument { { "number", "1" }, { "style", "v" } }
                                     }
                                 }
                             }
@@ -130,8 +133,10 @@ namespace SIL.XForge.Scripture.Services
         {
             var doc = new BsonDocument
             {
-                {"_id", "abc123:MAT:1:target"},
-                {"ops", new BsonArray
+                { "_id", "abc123:MAT:1:target" },
+                {
+                    "ops",
+                    new BsonArray
                     {
                         // Empty ops array
                     }
@@ -162,7 +167,9 @@ namespace SIL.XForge.Scripture.Services
             var tokenizer = new LatinWordTokenizer();
 
             // SUT
-            Assert.Throws<ArgumentNullException>(() => new SFScriptureText(tokenizer, projectId, bookNumber, chapterNumber, doc));
+            Assert.Throws<ArgumentNullException>(
+                () => new SFScriptureText(tokenizer, projectId, bookNumber, chapterNumber, doc)
+            );
         }
 
         [Test]
@@ -170,7 +177,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var doc = new BsonDocument
             {
-                {"_id", "abc123:MAT:1:target"},
+                { "_id", "abc123:MAT:1:target" },
                 // Missing ops
             };
             var bookNumber = 40;
@@ -180,7 +187,9 @@ namespace SIL.XForge.Scripture.Services
             var tokenizer = new LatinWordTokenizer();
 
             // SUT
-            Assert.Throws<ArgumentException>(() => new SFScriptureText(tokenizer, projectId, bookNumber, chapterNumber, doc));
+            Assert.Throws<ArgumentException>(
+                () => new SFScriptureText(tokenizer, projectId, bookNumber, chapterNumber, doc)
+            );
         }
     }
 }

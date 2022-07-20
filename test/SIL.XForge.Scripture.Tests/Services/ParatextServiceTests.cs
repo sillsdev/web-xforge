@@ -77,8 +77,10 @@ namespace SIL.XForge.Scripture.Services
             // TODO Make PT repos in data that should not be returned.
             foreach (string projectName in new string[] { env.Project01, env.Project03, env.Project02 })
             {
-                Assert.That(repos.Single(project => project.ParatextId == env.PTProjectIds[projectName].Id),
-                    Is.Not.Null);
+                Assert.That(
+                    repos.Single(project => project.ParatextId == env.PTProjectIds[projectName].Id),
+                    Is.Not.Null
+                );
             }
 
             // Properties of one of the returned repos have the correct values.
@@ -94,8 +96,10 @@ namespace SIL.XForge.Scripture.Services
                 // Is connected since is in SF database and user is on project
                 IsConnected = true
             };
-            Assert.That(repos.Single(project => project.ParatextId == env.PTProjectIds[env.Project01].Id).ToString(),
-                Is.EqualTo(expectedProject01.ToString()));
+            Assert.That(
+                repos.Single(project => project.ParatextId == env.PTProjectIds[env.Project01].Id).ToString(),
+                Is.EqualTo(expectedProject01.ToString())
+            );
 
             // Repos are returned in alphabetical order by paratext project name.
             List<string> repoList = repos.Select(repo => repo.Name).ToList();
@@ -121,8 +125,10 @@ namespace SIL.XForge.Scripture.Services
             // Repos returned are the ones we expect.
             foreach (string projectName in new string[] { env.Project01, env.Project02, env.Project03, env.Project04 })
             {
-                Assert.That(repos.Single(project => project.ParatextId == env.PTProjectIds[projectName].Id),
-                    Is.Not.Null);
+                Assert.That(
+                    repos.Single(project => project.ParatextId == env.PTProjectIds[projectName].Id),
+                    Is.Not.Null
+                );
             }
         }
 
@@ -174,11 +180,9 @@ namespace SIL.XForge.Scripture.Services
                     sfUserId = env.User03,
                     ptUsername = "User 01",
                     userSecret = user03Secret,
-
                     sfProjectExists = true,
                     sfUserIsOnSfProject = false,
                     ptUserIsAdminOnPtProject = false,
-
                     isConnected = false,
                     reason1 = "sf project exists and but sf user is not member of the sf project",
                     isConnectable = true,
@@ -190,11 +194,9 @@ namespace SIL.XForge.Scripture.Services
                     sfUserId = env.User01,
                     ptUsername = "User 01",
                     userSecret = user01Secret,
-
                     sfProjectExists = false,
                     sfUserIsOnSfProject = false,
                     ptUserIsAdminOnPtProject = true,
-
                     isConnected = false,
                     reason1 = "sf project does not exist",
                     isConnectable = true,
@@ -206,11 +208,9 @@ namespace SIL.XForge.Scripture.Services
                     sfUserId = env.User03,
                     ptUsername = "User 03",
                     userSecret = user03Secret,
-
                     sfProjectExists = false,
                     sfUserIsOnSfProject = false,
                     ptUserIsAdminOnPtProject = false,
-
                     isConnected = false,
                     reason1 = "sf project does not exist",
                     isConnectable = false,
@@ -221,31 +221,47 @@ namespace SIL.XForge.Scripture.Services
             foreach (var testCase in testCases)
             {
                 // Check that assumptions are true.
-                Assert.That((await env.RealtimeService.GetRepository<SFProject>().GetAllAsync())
-                    .Any(sfProject => sfProject.ParatextId == testCase.paratextProjectId),
-                    Is.EqualTo(testCase.sfProjectExists), "not set up - whether sf project exists or not");
+                Assert.That(
+                    (await env.RealtimeService.GetRepository<SFProject>().GetAllAsync()).Any(
+                        sfProject => sfProject.ParatextId == testCase.paratextProjectId
+                    ),
+                    Is.EqualTo(testCase.sfProjectExists),
+                    "not set up - whether sf project exists or not"
+                );
                 if (testCase.sfProjectExists)
                 {
-                    Assert.That((await env.RealtimeService.GetRepository<SFProject>().GetAllAsync())
-                        .Single(sfProject => sfProject.ParatextId == testCase.paratextProjectId).UserRoles
-                        .ContainsKey(testCase.sfUserId), Is.EqualTo(testCase.sfUserIsOnSfProject),
-                        "not set up - whether user is on existing sf project or not");
+                    Assert.That(
+                        (await env.RealtimeService.GetRepository<SFProject>().GetAllAsync())
+                            .Single(sfProject => sfProject.ParatextId == testCase.paratextProjectId)
+                            .UserRoles.ContainsKey(testCase.sfUserId),
+                        Is.EqualTo(testCase.sfUserIsOnSfProject),
+                        "not set up - whether user is on existing sf project or not"
+                    );
                 }
-                Assert.That(env.MockInternetSharedRepositorySourceProvider.GetSource(testCase.userSecret,
-                    string.Empty, string.Empty).GetRepositories()
-                    .FirstOrDefault(sharedRepository => sharedRepository.SendReceiveId.Id == testCase.paratextProjectId)
-                    .SourceUsers.GetRole(testCase.ptUsername) == UserRoles.Administrator,
+                Assert.That(
+                    env.MockInternetSharedRepositorySourceProvider
+                        .GetSource(testCase.userSecret, string.Empty, string.Empty)
+                        .GetRepositories()
+                        .FirstOrDefault(
+                            sharedRepository => sharedRepository.SendReceiveId.Id == testCase.paratextProjectId
+                        )
+                        .SourceUsers.GetRole(testCase.ptUsername) == UserRoles.Administrator,
                     Is.EqualTo(testCase.ptUserIsAdminOnPtProject),
-                    "not set up - whether pt user is an admin on pt project");
+                    "not set up - whether pt user is an admin on pt project"
+                );
 
                 // SUT
-                ParatextProject resultingProjectToExamine = (await env.Service.GetProjectsAsync(testCase.userSecret))
-                    .Single(project => project.ParatextId == testCase.paratextProjectId);
+                ParatextProject resultingProjectToExamine = (
+                    await env.Service.GetProjectsAsync(testCase.userSecret)
+                ).Single(project => project.ParatextId == testCase.paratextProjectId);
 
                 // Assert expectations.
                 Assert.That(resultingProjectToExamine.IsConnected, Is.EqualTo(testCase.isConnected), testCase.reason1);
-                Assert.That(resultingProjectToExamine.IsConnectable,
-                    Is.EqualTo(testCase.isConnectable), testCase.reason2);
+                Assert.That(
+                    resultingProjectToExamine.IsConnectable,
+                    Is.EqualTo(testCase.isConnectable),
+                    testCase.reason2
+                );
             }
         }
 
@@ -282,8 +298,13 @@ namespace SIL.XForge.Scripture.Services
             Assert.DoesNotThrowAsync(async () => resources = await env.Service.GetResourcesAsync(env.User02));
             // "Don't crash when permission problem");
             Assert.AreEqual(0, resources.Count(), "An empty set of resources should have been returned");
-            env.MockExceptionHandler.Received().ReportException(Arg.Is<Exception>((Exception e) =>
-                e.Message.Contains("inquire about resources and is ignoring error")));
+            env.MockExceptionHandler
+                .Received()
+                .ReportException(
+                    Arg.Is<Exception>(
+                        (Exception e) => e.Message.Contains("inquire about resources and is ignoring error")
+                    )
+                );
         }
 
         [Test]
@@ -340,10 +361,10 @@ namespace SIL.XForge.Scripture.Services
             var project = projects.First();
             project.ParatextId = env.Resource2Id;
             var ptUsernameMapping = new Dictionary<string, string>()
-                {
-                    { env.User01, env.Username01 },
-                    { env.User02, env.Username02 },
-                };
+            {
+                { env.User01, env.Username01 },
+                { env.User02, env.Username02 },
+            };
 
             var permissions = await env.Service.GetPermissionsAsync(user01Secret, project, ptUsernameMapping);
             Assert.That(permissions.Count(), Is.EqualTo(2));
@@ -362,8 +383,11 @@ namespace SIL.XForge.Scripture.Services
             ISFRestClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
 
             var paratextId = "resid_is_16_char";
-            var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01,
-                CancellationToken.None);
+            var permission = await env.Service.GetResourcePermissionAsync(
+                paratextId,
+                env.User01,
+                CancellationToken.None
+            );
             Assert.That(permission, Is.EqualTo(TextInfoPermission.None));
         }
 
@@ -375,8 +399,11 @@ namespace SIL.XForge.Scripture.Services
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             env.SetRestClientFactory(user01Secret);
             var paratextId = env.Resource2Id;
-            var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01,
-                CancellationToken.None);
+            var permission = await env.Service.GetResourcePermissionAsync(
+                paratextId,
+                env.User01,
+                CancellationToken.None
+            );
             Assert.That(permission, Is.EqualTo(TextInfoPermission.Read));
         }
 
@@ -399,9 +426,10 @@ namespace SIL.XForge.Scripture.Services
         [Test]
         public void GetBookText_Works()
         {
-            string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere" +
-                "</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />" +
-                "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
+            string ruthBookUsx =
+                "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere"
+                + "</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />"
+                + "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
 
             var env = new TestEnvironment();
             var associatedPtUser = new SFParatextUser(env.Username01);
@@ -419,8 +447,10 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             string ptProjectId = env.PTProjectIds[env.Project01].Id;
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-            IInternetSharedRepositorySource mockSource =
-                env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+            IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(
+                user01Secret,
+                UserRoles.Administrator
+            );
             env.MockScrTextCollection.FindById(env.Username01, ptProjectId).Returns(i => null);
 
             // SUT
@@ -438,27 +468,32 @@ namespace SIL.XForge.Scripture.Services
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
             int ruthBookNum = 8;
-            string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere" +
-                "</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />" +
-                "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
+            string ruthBookUsx =
+                "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere"
+                + "</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />"
+                + "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
 
             JToken token1 = JToken.Parse("{\"insert\": { \"chapter\": { \"number\": \"1\", \"style\": \"c\" } } }");
             JToken token2 = JToken.Parse("{\"insert\": { \"verse\": { \"number\": \"1\", \"style\": \"v\" } } }");
-            JToken token3 =
-                JToken.Parse("{\"insert\": \"Verse 1 here. \", \"attributes\": { \"segment\": \"verse_1_1\" } }");
+            JToken token3 = JToken.Parse(
+                "{\"insert\": \"Verse 1 here. \", \"attributes\": { \"segment\": \"verse_1_1\" } }"
+            );
             JToken token4 = JToken.Parse("{\"insert\": { \"verse\": { \"number\": \"2\", \"style\": \"v\" } } }");
-            JToken token5 =
-                JToken.Parse("{\"insert\": \"Verse 2 here. THIS PART IS EDITED!\"," +
-                "\"attributes\": { \"segment\": \"verse_1_2\" } }");
+            JToken token5 = JToken.Parse(
+                "{\"insert\": \"Verse 2 here. THIS PART IS EDITED!\","
+                    + "\"attributes\": { \"segment\": \"verse_1_2\" } }"
+            );
 
             TextData data = new TextData(new Delta(new[] { token1, token2, token3, token4, token5 }));
             XDocument oldDocUsx = XDocument.Parse(ruthBookUsx);
-            DeltaUsxMapper mapper = new DeltaUsxMapper(new TestGuidService(), Substitute.For<ILogger<DeltaUsxMapper>>(),
-                Substitute.For<IExceptionHandler>());
+            DeltaUsxMapper mapper = new DeltaUsxMapper(
+                new TestGuidService(),
+                Substitute.For<ILogger<DeltaUsxMapper>>(),
+                Substitute.For<IExceptionHandler>()
+            );
             var newDocUsx = mapper.ToUsx(oldDocUsx, new List<ChapterDelta> { new ChapterDelta(1, 2, true, data) });
             await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, newDocUsx.Root.ToString());
-            env.ProjectFileManager.Received(1)
-                .WriteFileCreatingBackup(Arg.Any<string>(), Arg.Any<Action<string>>());
+            env.ProjectFileManager.Received(1).WriteFileCreatingBackup(Arg.Any<string>(), Arg.Any<Action<string>>());
 
             // PT username is not written to server logs
             env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.Message.Contains(env.Username01));
@@ -474,9 +509,10 @@ namespace SIL.XForge.Scripture.Services
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
             int ruthBookNum = 8;
-            string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere" +
-                "</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />" +
-                "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
+            string ruthBookUsx =
+                "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere"
+                + "</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />"
+                + "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
 
             // SUT
             await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, ruthBookUsx);
@@ -485,8 +521,12 @@ namespace SIL.XForge.Scripture.Services
             env.MockScrTextCollection.Received(1).FindById(env.Username01, ptProjectId);
 
             // See if there is a message for the user updating the book
-            string logMessage = string.Format("{0} updated {1} in {2}.", env.User01,
-                    Canon.BookNumberToEnglishName(ruthBookNum), env.ProjectScrText.Name);
+            string logMessage = string.Format(
+                "{0} updated {1} in {2}.",
+                env.User01,
+                Canon.BookNumberToEnglishName(ruthBookNum),
+                env.ProjectScrText.Name
+            );
             env.MockLogger.AssertHasEvent((LogEvent logEvent) => logEvent.Message == logMessage);
         }
 
@@ -500,14 +540,11 @@ namespace SIL.XForge.Scripture.Services
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
             int ruthBookNum = 8;
-            string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere" +
-                "</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />" +
-                "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
-            var chapterAuthors = new Dictionary<int, string>
-            {
-                { 1, env.User01 },
-                { 2, env.User01 },
-            };
+            string ruthBookUsx =
+                "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere"
+                + "</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />"
+                + "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
+            var chapterAuthors = new Dictionary<int, string> { { 1, env.User01 }, { 2, env.User01 }, };
 
             // SUT
             await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, ruthBookUsx, chapterAuthors);
@@ -516,8 +553,12 @@ namespace SIL.XForge.Scripture.Services
             env.MockScrTextCollection.Received(1).FindById(env.Username01, ptProjectId);
 
             // See if there is a message for the user updating the book
-            string logMessage = string.Format("{0} updated {1} in {2}.", env.User01,
-                    Canon.BookNumberToEnglishName(ruthBookNum), env.ProjectScrText.Name);
+            string logMessage = string.Format(
+                "{0} updated {1} in {2}.",
+                env.User01,
+                Canon.BookNumberToEnglishName(ruthBookNum),
+                env.ProjectScrText.Name
+            );
             env.MockLogger.AssertHasEvent((LogEvent logEvent) => logEvent.Message == logMessage);
         }
 
@@ -532,14 +573,11 @@ namespace SIL.XForge.Scripture.Services
             env.MakeUserSecret(env.User02, env.Username02, env.ParatextUserId02);
 
             int ruthBookNum = 8;
-            string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere" +
-                "</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />" +
-                "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
-            var chapterAuthors = new Dictionary<int, string>
-            {
-                { 1, env.User01 },
-                { 2, env.User02 },
-            };
+            string ruthBookUsx =
+                "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere"
+                + "</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />"
+                + "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
+            var chapterAuthors = new Dictionary<int, string> { { 1, env.User01 }, { 2, env.User02 }, };
 
             // SUT
             await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, ruthBookUsx, chapterAuthors);
@@ -549,8 +587,13 @@ namespace SIL.XForge.Scripture.Services
             env.MockScrTextCollection.Received(1).FindById(env.Username02, ptProjectId);
 
             // See if there is a message for the user updating the chapter
-            string logMessage = string.Format("{0} updated chapter {1} of {2} in {3}.", env.User01, 1,
-                    Canon.BookNumberToEnglishName(ruthBookNum), env.ProjectScrText.Name);
+            string logMessage = string.Format(
+                "{0} updated chapter {1} of {2} in {3}.",
+                env.User01,
+                1,
+                Canon.BookNumberToEnglishName(ruthBookNum),
+                env.ProjectScrText.Name
+            );
             env.MockLogger.AssertHasEvent((LogEvent logEvent) => logEvent.Message == logMessage);
         }
 
@@ -567,7 +610,8 @@ namespace SIL.XForge.Scripture.Services
                 {
                     Thread = "Answer_dataId0123",
                     VerseRefStr = "RUT 1:1"
-                });
+                }
+            );
             string notes = env.Service.GetNotes(userSecret, ptProjectId, ruthBookNum);
             string expected = $"<notes version=\"1.1\">{Environment.NewLine}  <thread id=\"Answer_dataId0123\">";
             Assert.True(notes.StartsWith(expected));
@@ -626,32 +670,64 @@ namespace SIL.XForge.Scripture.Services
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             env.AddTextDocs(40, 1, 6, "Context before ", "Text selected");
 
-            env.AddNoteThreadData(new[]
-            {
-                new ThreadComponents { threadNum = 1, noteCount = 1 }
-            });
-            env.AddParatextComments(new[]
-            {
-                new ThreadComponents { threadNum = 1, noteCount = 1, username = env.Username01 },
-                new ThreadComponents { threadNum = 2, noteCount = 1, username = env.Username01, appliesToVerse = true}
-            });
+            env.AddNoteThreadData(
+                new[]
+                {
+                    new ThreadComponents { threadNum = 1, noteCount = 1 }
+                }
+            );
+            env.AddParatextComments(
+                new[]
+                {
+                    new ThreadComponents
+                    {
+                        threadNum = 1,
+                        noteCount = 1,
+                        username = env.Username01
+                    },
+                    new ThreadComponents
+                    {
+                        threadNum = 2,
+                        noteCount = 1,
+                        username = env.Username01,
+                        appliesToVerse = true
+                    }
+                }
+            );
 
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
-                IEnumerable<IDocument<NoteThread>> noteThreadDocs =
-                    await env.GetNoteThreadDocsAsync(conn, new[] { "thread1" });
+                IEnumerable<IDocument<NoteThread>> noteThreadDocs = await env.GetNoteThreadDocsAsync(
+                    conn,
+                    new[] { "thread1" }
+                );
                 Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>
                 {
-                    { env.Username01, new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }}
+                    {
+                        env.Username01,
+                        new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+                    }
                 };
 
                 string contextBefore = "Context before changed ";
                 string selectionText = "Text selected changed";
-                Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(env.Project01, 40, 1,
-                    contextBefore, selectionText, false);
+                Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
+                    env.Project01,
+                    40,
+                    1,
+                    contextBefore,
+                    selectionText,
+                    false
+                );
 
-                IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret,
-                    ptProjectId, 40, noteThreadDocs, chapterDeltas, ptProjectUsers);
+                IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
+                    userSecret,
+                    ptProjectId,
+                    40,
+                    noteThreadDocs,
+                    chapterDeltas,
+                    ptProjectUsers
+                );
                 Assert.That(changes.Count, Is.EqualTo(2));
 
                 // Context, including the selected text have changed
@@ -676,28 +752,54 @@ namespace SIL.XForge.Scripture.Services
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             env.AddTextDocs(40, 1, 6, "Context before ", "Text selection", false);
 
-            env.AddNoteThreadData(new[]
-            {
-                new ThreadComponents { threadNum = 1, noteCount = 1 }
-            });
-            env.AddParatextComments(new[]
-            {
-                new ThreadComponents { threadNum = 1, noteCount = 1, username = env.Username01 }
-            });
+            env.AddNoteThreadData(
+                new[]
+                {
+                    new ThreadComponents { threadNum = 1, noteCount = 1 }
+                }
+            );
+            env.AddParatextComments(
+                new[]
+                {
+                    new ThreadComponents
+                    {
+                        threadNum = 1,
+                        noteCount = 1,
+                        username = env.Username01
+                    }
+                }
+            );
 
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
-                IEnumerable<IDocument<NoteThread>> noteThreadDocs =
-                    await env.GetNoteThreadDocsAsync(conn, new[] { "thread1" });
+                IEnumerable<IDocument<NoteThread>> noteThreadDocs = await env.GetNoteThreadDocsAsync(
+                    conn,
+                    new[] { "thread1" }
+                );
                 Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>
                 {
-                    { env.Username01, new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }}
+                    {
+                        env.Username01,
+                        new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+                    }
                 };
-                Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(env.Project01, 40, 1,
-                    "Unrecognizable context ", "unrecognizable selection", false);
+                Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
+                    env.Project01,
+                    40,
+                    1,
+                    "Unrecognizable context ",
+                    "unrecognizable selection",
+                    false
+                );
 
-                IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret,
-                    ptProjectId, 40, noteThreadDocs, chapterDeltas, ptProjectUsers);
+                IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
+                    userSecret,
+                    ptProjectId,
+                    40,
+                    noteThreadDocs,
+                    chapterDeltas,
+                    ptProjectUsers
+                );
                 Assert.That(changes.Count, Is.EqualTo(1));
 
                 // Vigorous text changes, the note defaults to the start
@@ -716,86 +818,157 @@ namespace SIL.XForge.Scripture.Services
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             env.AddTextDocs(40, 1, 10, "Context before ", "Text selected");
 
-            env.AddNoteThreadData(new[]
-            {
-                new ThreadComponents { threadNum = 1, noteCount = 1 },
-                new ThreadComponents { threadNum = 2, noteCount = 1 },
-                new ThreadComponents { threadNum = 4, noteCount = 2 },
-                new ThreadComponents { threadNum = 5, noteCount = 1 },
-                new ThreadComponents { threadNum = 7, noteCount = 1 },
-                new ThreadComponents { threadNum = 8, noteCount = 1 },
-                new ThreadComponents { threadNum = 9, noteCount = 3 }
-            });
-            env.AddParatextComments(new[]
-            {
-                new ThreadComponents { threadNum = 1, noteCount = 1, username = env.Username01, isEdited = true },
-                new ThreadComponents { threadNum = 2, noteCount = 1, username = env.Username01, isDeleted = true },
-                new ThreadComponents { threadNum = 3, noteCount = 1, username = env.Username02 },
-                new ThreadComponents { threadNum = 4, noteCount = 1, username = env.Username01 },
-                new ThreadComponents { threadNum = 6, noteCount = 1, isConflict = true },
-                new ThreadComponents { threadNum = 7, noteCount = 2, username = env.Username01 },
-                new ThreadComponents { threadNum = 8, noteCount = 1, username = env.Username01 },
-                new ThreadComponents { threadNum = 9, noteCount = 3, username = env.Username01 }
-            });
+            env.AddNoteThreadData(
+                new[]
+                {
+                    new ThreadComponents { threadNum = 1, noteCount = 1 },
+                    new ThreadComponents { threadNum = 2, noteCount = 1 },
+                    new ThreadComponents { threadNum = 4, noteCount = 2 },
+                    new ThreadComponents { threadNum = 5, noteCount = 1 },
+                    new ThreadComponents { threadNum = 7, noteCount = 1 },
+                    new ThreadComponents { threadNum = 8, noteCount = 1 },
+                    new ThreadComponents { threadNum = 9, noteCount = 3 }
+                }
+            );
+            env.AddParatextComments(
+                new[]
+                {
+                    new ThreadComponents
+                    {
+                        threadNum = 1,
+                        noteCount = 1,
+                        username = env.Username01,
+                        isEdited = true
+                    },
+                    new ThreadComponents
+                    {
+                        threadNum = 2,
+                        noteCount = 1,
+                        username = env.Username01,
+                        isDeleted = true
+                    },
+                    new ThreadComponents
+                    {
+                        threadNum = 3,
+                        noteCount = 1,
+                        username = env.Username02
+                    },
+                    new ThreadComponents
+                    {
+                        threadNum = 4,
+                        noteCount = 1,
+                        username = env.Username01
+                    },
+                    new ThreadComponents
+                    {
+                        threadNum = 6,
+                        noteCount = 1,
+                        isConflict = true
+                    },
+                    new ThreadComponents
+                    {
+                        threadNum = 7,
+                        noteCount = 2,
+                        username = env.Username01
+                    },
+                    new ThreadComponents
+                    {
+                        threadNum = 8,
+                        noteCount = 1,
+                        username = env.Username01
+                    },
+                    new ThreadComponents
+                    {
+                        threadNum = 9,
+                        noteCount = 3,
+                        username = env.Username01
+                    }
+                }
+            );
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
-
-                IEnumerable<IDocument<NoteThread>> noteThreadDocs =
-                    await env.GetNoteThreadDocsAsync(conn,
-                        new[] { "thread1", "thread2", "thread4", "thread5", "thread7", "thread8", "thread9" }
+                IEnumerable<IDocument<NoteThread>> noteThreadDocs = await env.GetNoteThreadDocsAsync(
+                    conn,
+                    new[] { "thread1", "thread2", "thread4", "thread5", "thread7", "thread8", "thread9" }
                 );
                 Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
-                    { new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 } }
-                    .ToDictionary(u => u.Username);
-                Dictionary<int, ChapterDelta> chapterDeltas =
-                    env.GetChapterDeltasByBook(env.Project01, 40, 1, "Context before ", "Text selected");
+                {
+                    new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+                }.ToDictionary(u => u.Username);
+                Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
+                    env.Project01,
+                    40,
+                    1,
+                    "Context before ",
+                    "Text selected"
+                );
 
                 // SUT
                 IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
-                    userSecret, ptProjectId, 40, noteThreadDocs, chapterDeltas, ptProjectUsers);
+                    userSecret,
+                    ptProjectId,
+                    40,
+                    noteThreadDocs,
+                    chapterDeltas,
+                    ptProjectUsers
+                );
                 Assert.That(changes.Count, Is.EqualTo(8));
                 Assert.That(changes.FirstOrDefault(c => c.ThreadId == "thread8"), Is.Null);
 
                 // Edited comment
                 NoteThreadChange change01 = changes.Where(c => c.ThreadId == "thread1").Single();
-                Assert.That(change01.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread1 context after.-MAT 1:1-icon1"));
+                Assert.That(
+                    change01.ThreadChangeToString(),
+                    Is.EqualTo("Context before Text selected thread1 context after.-MAT 1:1-icon1")
+                );
                 Assert.That(change01.NotesUpdated.Count, Is.EqualTo(1));
                 string expected1 = "thread1-syncuser01-user02-<p>thread1 note 1: EDITED.</p>-icon1";
                 Assert.That(change01.NotesUpdated[0].NoteToString(), Is.EqualTo(expected1));
 
                 // Deleted comment
                 NoteThreadChange change02 = changes.Where(c => c.ThreadId == "thread2").Single();
-                Assert.That(change02.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread2 context after.-MAT 1:2-icon1"));
+                Assert.That(
+                    change02.ThreadChangeToString(),
+                    Is.EqualTo("Context before Text selected thread2 context after.-MAT 1:2-icon1")
+                );
                 Assert.That(change02.NotesDeleted.Count, Is.EqualTo(1));
                 string expected2 = "thread2-syncuser01-user02-<p>thread2 note 1.</p>-deleted-icon1";
                 Assert.That(change02.NotesDeleted[0].NoteToString(), Is.EqualTo(expected2));
 
                 // Added comment on new thread and User 02 added as new pt user
                 NoteThreadChange change03 = changes.Where(c => c.ThreadId == "thread3").Single();
-                Assert.That(change03.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread3 context after.-Start:15-Length:21-MAT 1:3-icon1"));
+                Assert.That(
+                    change03.ThreadChangeToString(),
+                    Is.EqualTo("Context before Text selected thread3 context after.-Start:15-Length:21-MAT 1:3-icon1")
+                );
                 Assert.That(change03.NotesAdded.Count, Is.EqualTo(1));
                 string expected3 = "thread3-syncuser04-user02-<p>thread3 note 1.</p>-icon1";
                 Assert.That(change03.NotesAdded[0].NoteToString(), Is.EqualTo(expected3));
 
                 // Permanently removed comment
                 NoteThreadChange change04 = changes.Where(c => c.ThreadId == "thread4").Single();
-                Assert.That(change04.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread4 context after.-MAT 1:4-icon1"));
+                Assert.That(
+                    change04.ThreadChangeToString(),
+                    Is.EqualTo("Context before Text selected thread4 context after.-MAT 1:4-icon1")
+                );
                 Assert.That(change04.NoteIdsRemoved, Is.EquivalentTo(new[] { "n2onthread4" }));
 
                 // Permanently removed thread
                 NoteThreadChange change05 = changes.Where(c => c.ThreadId == "thread5").Single();
-                Assert.That(change05.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread5 context after.-MAT 1:5-icon1"));
+                Assert.That(
+                    change05.ThreadChangeToString(),
+                    Is.EqualTo("Context before Text selected thread5 context after.-MAT 1:5-icon1")
+                );
                 Assert.That(change05.ThreadRemoved, Is.True);
 
                 // Added conflict comment
                 NoteThreadChange change06 = changes.Where(c => c.ThreadId == "thread6").Single();
-                Assert.That(change06.ThreadChangeToString(),
-                    Is.EqualTo("Context before Text selected thread6 context after.-Start:15-Length:21-MAT 1:6-conflict1"));
+                Assert.That(
+                    change06.ThreadChangeToString(),
+                    Is.EqualTo(
+                        "Context before Text selected thread6 context after.-Start:15-Length:21-MAT 1:6-conflict1"
+                    )
+                );
                 string expected6 = "thread6---<p>thread6 note 1.</p>-conflict1";
                 Assert.That(change06.NotesAdded[0].NoteToString(), Is.EqualTo(expected6));
 
@@ -854,19 +1027,33 @@ namespace SIL.XForge.Scripture.Services
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 // But we have no SF notes.
-                IEnumerable<IDocument<NoteThread>> noteThreadDocs =
-                    await env.GetNoteThreadDocsAsync(conn,
-                        new string[] { /* empty */ }
+                IEnumerable<IDocument<NoteThread>> noteThreadDocs = await env.GetNoteThreadDocsAsync(
+                    conn,
+                    new string[]
+                    { /* empty */
+                    }
                 );
                 Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
-                    { new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 } }
-                    .ToDictionary(u => u.Username);
-                Dictionary<int, ChapterDelta> chapterDeltas =
-                    env.GetChapterDeltasByBook(env.Project01, 40, 1, "Context before ", "Text selected");
+                {
+                    new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+                }.ToDictionary(u => u.Username);
+                Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
+                    env.Project01,
+                    40,
+                    1,
+                    "Context before ",
+                    "Text selected"
+                );
 
                 // SUT
                 IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
-                    userSecret, ptProjectId, 40, noteThreadDocs, chapterDeltas, ptProjectUsers);
+                    userSecret,
+                    ptProjectId,
+                    40,
+                    noteThreadDocs,
+                    chapterDeltas,
+                    ptProjectUsers
+                );
                 // We fetched a single change, of one new note to create.
 
                 Assert.That(changes.Count, Is.EqualTo(1));
@@ -885,11 +1072,11 @@ namespace SIL.XForge.Scripture.Services
         public async Task GetNoteThreadChanges_NoChangeTriggersNoUpdate()
         {
             var env = new TestEnvironment();
-            IEnumerable<NoteThreadChange> changes =
-                await env.PrepareChangeOnSingleCommentAsync((Paratext.Data.ProjectComments.Comment comment) =>
-                {
+            IEnumerable<NoteThreadChange> changes = await env.PrepareChangeOnSingleCommentAsync(
+                (Paratext.Data.ProjectComments.Comment comment) => {
                     // Not modifying comment.
-                });
+                }
+            );
             // There is one PT Comment and one SF Note. No changes were made. So no changes should be reported.
             Assert.That(changes.Count, Is.Zero);
         }
@@ -898,23 +1085,25 @@ namespace SIL.XForge.Scripture.Services
         public async Task GetNoteThreadChanges_UpdateTriggeredFromTypeChange()
         {
             var env = new TestEnvironment();
-            IEnumerable<NoteThreadChange> changes =
-                await env.PrepareChangeOnSingleCommentAsync((Paratext.Data.ProjectComments.Comment comment) =>
-            {
-                // The incoming PT Comment Type is updated.
-                Assert.That(comment.Type, Is.Not.EqualTo(NoteType.Conflict), "setup");
-                comment.Type = NoteType.Conflict;
-            }, (NoteThread noteThread) =>
-            {
-                // Setting a comment type to conflict also changes the tag icon (such as from "icon1" to "conflict1").
-                // That would make the test pass, because the SF note would have a TagIcon change. But the test would
-                // not be passing for the desired reason here, which is noticing a change specifically to the type. So
-                // set the thread and note icons ahead of time, on the SF Note in the SF DB, to "conflict1" so there is
-                // no change triggered on a change to their icon. The trigger for change should  be from the update to
-                // the PT Comment Type.
-                noteThread.TagIcon = "conflict1";
-                noteThread.Notes[0].TagIcon = "conflict1";
-            });
+            IEnumerable<NoteThreadChange> changes = await env.PrepareChangeOnSingleCommentAsync(
+                (Paratext.Data.ProjectComments.Comment comment) =>
+                {
+                    // The incoming PT Comment Type is updated.
+                    Assert.That(comment.Type, Is.Not.EqualTo(NoteType.Conflict), "setup");
+                    comment.Type = NoteType.Conflict;
+                },
+                (NoteThread noteThread) =>
+                {
+                    // Setting a comment type to conflict also changes the tag icon (such as from "icon1" to "conflict1").
+                    // That would make the test pass, because the SF note would have a TagIcon change. But the test would
+                    // not be passing for the desired reason here, which is noticing a change specifically to the type. So
+                    // set the thread and note icons ahead of time, on the SF Note in the SF DB, to "conflict1" so there is
+                    // no change triggered on a change to their icon. The trigger for change should  be from the update to
+                    // the PT Comment Type.
+                    noteThread.TagIcon = "conflict1";
+                    noteThread.Notes[0].TagIcon = "conflict1";
+                }
+            );
 
             Assert.That(changes.Count, Is.EqualTo(1));
 
@@ -947,60 +1136,88 @@ namespace SIL.XForge.Scripture.Services
                     duplicate = true
                 }
             };
-            env.AddNoteThreadData(new[]
-            {
-                new ThreadComponents { threadNum = 1, noteCount = 1, notes = noteComponents }
-            });
+            env.AddNoteThreadData(
+                new[]
+                {
+                    new ThreadComponents
+                    {
+                        threadNum = 1,
+                        noteCount = 1,
+                        notes = noteComponents
+                    }
+                }
+            );
 
-            env.AddParatextComments(new[]
-            {
-                new ThreadComponents { threadNum = 1, noteCount = 1, notes = noteComponents, username = env.Username01 }
-            });
+            env.AddParatextComments(
+                new[]
+                {
+                    new ThreadComponents
+                    {
+                        threadNum = 1,
+                        noteCount = 1,
+                        notes = noteComponents,
+                        username = env.Username01
+                    }
+                }
+            );
 
             var commentThread = env.ProjectCommentManager.FindThread("thread1");
             string commentId = commentThread.Comments[0].Id;
             Assert.That(commentThread.Comments.Where(c => c.Id == commentId).Count, Is.EqualTo(2));
 
-
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
-                IEnumerable<IDocument<NoteThread>> noteThreadDocs =
-                    await env.GetNoteThreadDocsAsync(conn, new[] { "thread1" });
-                Dictionary<int, ChapterDelta> chapterDeltas =
-                env.GetChapterDeltasByBook(projectId, 40, 1, env.ContextBefore, "Text selected");
+                IEnumerable<IDocument<NoteThread>> noteThreadDocs = await env.GetNoteThreadDocsAsync(
+                    conn,
+                    new[] { "thread1" }
+                );
+                Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
+                    projectId,
+                    40,
+                    1,
+                    env.ContextBefore,
+                    "Text selected"
+                );
                 Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
-                    { new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 } }
-                    .ToDictionary(u => u.Username);
-                IEnumerable<NoteThreadChange> changes =
-                    env.Service.GetNoteThreadChanges(userSecret, projectId, 40, noteThreadDocs, chapterDeltas, ptProjectUsers);
+                {
+                    new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+                }.ToDictionary(u => u.Username);
+                IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
+                    userSecret,
+                    projectId,
+                    40,
+                    noteThreadDocs,
+                    chapterDeltas,
+                    ptProjectUsers
+                );
 
                 Assert.That(changes.Count(), Is.Zero);
             }
-
         }
-
 
         [Test]
         public async Task GetNoteThreadChanges_UpdateTriggeredFromConflictTypeChange()
         {
             var env = new TestEnvironment();
-            IEnumerable<NoteThreadChange> changes =
-                await env.PrepareChangeOnSingleCommentAsync((Paratext.Data.ProjectComments.Comment comment) =>
-            {
-                // Already, the PT Comment and SF Note (below) will have Type 'Conflict'.
-                comment.Type = NoteType.Conflict;
-                // But the incoming PT Comment ConflictType is updated.
-                comment.ConflictType = NoteConflictType.VerseTextConflict;
-            }, (NoteThread noteThread) =>
-            {
-                noteThread.Notes[0].Type = NoteType.Conflict.InternalValue;
-                // (And set icon to match the note being a conflict note.)
-                noteThread.TagIcon = "conflict1";
-                noteThread.Notes[0].TagIcon = "conflict1";
-                // SF Note ConflictType is something other than what the PT Comment ConflictType is. This is what gets
-                // changed from.
-                noteThread.Notes[0].ConflictType = NoteConflictType.VerseBridgeDifferences.InternalValue;
-            });
+            IEnumerable<NoteThreadChange> changes = await env.PrepareChangeOnSingleCommentAsync(
+                (Paratext.Data.ProjectComments.Comment comment) =>
+                {
+                    // Already, the PT Comment and SF Note (below) will have Type 'Conflict'.
+                    comment.Type = NoteType.Conflict;
+                    // But the incoming PT Comment ConflictType is updated.
+                    comment.ConflictType = NoteConflictType.VerseTextConflict;
+                },
+                (NoteThread noteThread) =>
+                {
+                    noteThread.Notes[0].Type = NoteType.Conflict.InternalValue;
+                    // (And set icon to match the note being a conflict note.)
+                    noteThread.TagIcon = "conflict1";
+                    noteThread.Notes[0].TagIcon = "conflict1";
+                    // SF Note ConflictType is something other than what the PT Comment ConflictType is. This is what gets
+                    // changed from.
+                    noteThread.Notes[0].ConflictType = NoteConflictType.VerseBridgeDifferences.InternalValue;
+                }
+            );
 
             Assert.That(changes.Count, Is.EqualTo(1));
 
@@ -1018,25 +1235,27 @@ namespace SIL.XForge.Scripture.Services
         public async Task GetNoteThreadChanges_UpdateTriggeredFromAcceptedChangeXmlChange()
         {
             var env = new TestEnvironment();
-            IEnumerable<NoteThreadChange> changes =
-                await env.PrepareChangeOnSingleCommentAsync((Paratext.Data.ProjectComments.Comment comment) =>
-            {
-                // Already, the PT Comment and SF Note (below) will have Type 'Conflict' and
-                // ConflictType 'VerseTextConflict'.
-                comment.Type = NoteType.Conflict;
-                comment.ConflictType = NoteConflictType.VerseTextConflict;
-                // But the incoming PT Comment AcceptedChangeXmlStr is updated.
-                comment.AcceptedChangeXmlStr = "new data";
-            }, (NoteThread noteThread) =>
-            {
-                noteThread.Notes[0].Type = NoteType.Conflict.InternalValue;
-                // (And set icon to match the note being a conflict note.)
-                noteThread.TagIcon = "conflict1";
-                noteThread.Notes[0].TagIcon = "conflict1";
-                noteThread.Notes[0].ConflictType = NoteConflictType.VerseTextConflict.InternalValue;
-                // The SF Note AcceptedChangeXml is different. This is what gets changed from.
-                noteThread.Notes[0].AcceptedChangeXml = "old data";
-            });
+            IEnumerable<NoteThreadChange> changes = await env.PrepareChangeOnSingleCommentAsync(
+                (Paratext.Data.ProjectComments.Comment comment) =>
+                {
+                    // Already, the PT Comment and SF Note (below) will have Type 'Conflict' and
+                    // ConflictType 'VerseTextConflict'.
+                    comment.Type = NoteType.Conflict;
+                    comment.ConflictType = NoteConflictType.VerseTextConflict;
+                    // But the incoming PT Comment AcceptedChangeXmlStr is updated.
+                    comment.AcceptedChangeXmlStr = "new data";
+                },
+                (NoteThread noteThread) =>
+                {
+                    noteThread.Notes[0].Type = NoteType.Conflict.InternalValue;
+                    // (And set icon to match the note being a conflict note.)
+                    noteThread.TagIcon = "conflict1";
+                    noteThread.Notes[0].TagIcon = "conflict1";
+                    noteThread.Notes[0].ConflictType = NoteConflictType.VerseTextConflict.InternalValue;
+                    // The SF Note AcceptedChangeXml is different. This is what gets changed from.
+                    noteThread.Notes[0].AcceptedChangeXml = "old data";
+                }
+            );
 
             Assert.That(changes.Count, Is.EqualTo(1));
 
@@ -1059,42 +1278,65 @@ namespace SIL.XForge.Scripture.Services
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             env.AddTextDocs(40, 1, 10, "Context before ", "Text selected");
 
-            env.AddNoteThreadData(new[]
+            env.AddNoteThreadData(
+                new[]
+                {
+                    new ThreadComponents { threadNum = 1, noteCount = 9 },
+                }
+            );
+            ThreadNoteComponents[] threadNotes = new[]
             {
-                new ThreadComponents { threadNum = 1, noteCount = 9 },
-            });
-            ThreadNoteComponents[] threadNotes = new[] {
-                new ThreadNoteComponents { status = NoteStatus.Todo, tagsAdded = new [] { "2" } },
+                new ThreadNoteComponents { status = NoteStatus.Todo, tagsAdded = new[] { "2" } },
                 new ThreadNoteComponents { status = NoteStatus.Unspecified },
                 new ThreadNoteComponents { status = NoteStatus.Unspecified },
                 new ThreadNoteComponents { status = NoteStatus.Resolved },
-                new ThreadNoteComponents { status = NoteStatus.Todo, tagsAdded = new [] { "3" } },
+                new ThreadNoteComponents { status = NoteStatus.Todo, tagsAdded = new[] { "3" } },
                 new ThreadNoteComponents { status = NoteStatus.Unspecified },
                 new ThreadNoteComponents { status = NoteStatus.Done },
                 new ThreadNoteComponents { status = NoteStatus.Todo },
-                new ThreadNoteComponents { status = NoteStatus.Todo, tagsAdded = new [] { "4" } }
+                new ThreadNoteComponents { status = NoteStatus.Todo, tagsAdded = new[] { "4" } }
             };
-            env.AddParatextComments(new[]
-            {
-                new ThreadComponents { threadNum = 1, noteCount = threadNotes.Count(), notes = threadNotes, username = env.Username01 },
-            });
+            env.AddParatextComments(
+                new[]
+                {
+                    new ThreadComponents
+                    {
+                        threadNum = 1,
+                        noteCount = threadNotes.Count(),
+                        notes = threadNotes,
+                        username = env.Username01
+                    },
+                }
+            );
 
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
-
-                IEnumerable<IDocument<NoteThread>> noteThreadDocs =
-                    await env.GetNoteThreadDocsAsync(conn,
-                        new[] { "thread1" }
+                IEnumerable<IDocument<NoteThread>> noteThreadDocs = await env.GetNoteThreadDocsAsync(
+                    conn,
+                    new[] { "thread1" }
                 );
                 Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
-                    { new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 } }
-                    .ToDictionary(u => u.Username);
-                Dictionary<int, ChapterDelta> chapterDeltas =
-                    env.GetChapterDeltasByBook(env.Project01, 40, 1, "Context before ", "Text selected");
+                {
+                    new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+                }.ToDictionary(u => u.Username);
+                Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
+                    env.Project01,
+                    40,
+                    1,
+                    "Context before ",
+                    "Text selected"
+                );
                 IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
-                    userSecret, ptProjectId, 40, noteThreadDocs, chapterDeltas, ptProjectUsers);
+                    userSecret,
+                    ptProjectId,
+                    40,
+                    noteThreadDocs,
+                    chapterDeltas,
+                    ptProjectUsers
+                );
 
-                List<string> expectedIcons = new List<string>() {
+                List<string> expectedIcons = new List<string>()
+                {
                     "icon2",
                     null,
                     null,
@@ -1126,10 +1368,17 @@ namespace SIL.XForge.Scripture.Services
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>
             {
-                { env.Username01, new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }}
+                {
+                    env.Username01,
+                    new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+                }
             };
 
-            ThreadNoteComponents[] getThreadNoteComponents(int noteCount, string[] assignedUsers, bool iconChange = false)
+            ThreadNoteComponents[] getThreadNoteComponents(
+                int noteCount,
+                string[] assignedUsers,
+                bool iconChange = false
+            )
             {
                 var components = new List<ThreadNoteComponents>();
                 string[] commentTagsAdded = new[] { Paratext.Data.ProjectComments.CommentTag.toDoTagId.ToString() };
@@ -1156,16 +1405,28 @@ namespace SIL.XForge.Scripture.Services
             }
             ThreadNoteComponents[] threadDocNotes7 = getThreadNoteComponents(1, new[] { env.Username02 });
             ThreadNoteComponents[] threadDocNotes8 = getThreadNoteComponents(1, new[] { env.Username02 });
-            env.AddNoteThreadData(new[]
-            {
-                new ThreadComponents { threadNum = 1, noteCount = 1 },
-                new ThreadComponents { threadNum = 3, noteCount = 1 },
-                new ThreadComponents { threadNum = 4, noteCount = 1 },
-                new ThreadComponents { threadNum = 5, noteCount = 1 },
-                new ThreadComponents { threadNum = 6, noteCount = 1 },
-                new ThreadComponents { threadNum = 7, noteCount = 1, notes = threadDocNotes7 },
-                new ThreadComponents { threadNum = 8, noteCount = 1, notes = threadDocNotes8 }
-            });
+            env.AddNoteThreadData(
+                new[]
+                {
+                    new ThreadComponents { threadNum = 1, noteCount = 1 },
+                    new ThreadComponents { threadNum = 3, noteCount = 1 },
+                    new ThreadComponents { threadNum = 4, noteCount = 1 },
+                    new ThreadComponents { threadNum = 5, noteCount = 1 },
+                    new ThreadComponents { threadNum = 6, noteCount = 1 },
+                    new ThreadComponents
+                    {
+                        threadNum = 7,
+                        noteCount = 1,
+                        notes = threadDocNotes7
+                    },
+                    new ThreadComponents
+                    {
+                        threadNum = 8,
+                        noteCount = 1,
+                        notes = threadDocNotes8
+                    }
+                }
+            );
 
             string unassignedUserString = Paratext.Data.ProjectComments.CommentThread.unassignedUser;
             string teamUserString = Paratext.Data.ProjectComments.CommentThread.teamUser;
@@ -1175,28 +1436,83 @@ namespace SIL.XForge.Scripture.Services
             ThreadNoteComponents[] threadNotes4 = getThreadNoteComponents(1, new[] { teamUserString });
             ThreadNoteComponents[] threadNotes5 = getThreadNoteComponents(1, new[] { unassignedUserString }, true);
             ThreadNoteComponents[] threadNotes7 = getThreadNoteComponents(1, null);
-            env.AddParatextComments(new[]
-            {
-                new ThreadComponents { threadNum = 1, noteCount = 2, username = env.Username01, notes = threadNotes1 },
-                new ThreadComponents { threadNum = 2, noteCount = 1, username = env.Username01, notes = threadNotes2 },
-                new ThreadComponents { threadNum = 3, noteCount = 1, username = env.Username01, notes = threadNotes3 },
-                new ThreadComponents { threadNum = 4, noteCount = 1, username = env.Username01, notes = threadNotes4 },
-                new ThreadComponents { threadNum = 5, noteCount = 1, username = env.Username01, notes = threadNotes5 },
-                new ThreadComponents { threadNum = 6, noteCount = 1, username = env.Username01 },
-                new ThreadComponents { threadNum = 7, noteCount = 1, username = env.Username01, notes = threadNotes7 },
-                new ThreadComponents { threadNum = 8, noteCount = 1, username = env.Username01 },
-                new ThreadComponents { threadNum = 9, noteCount = 1 }
-            });
+            env.AddParatextComments(
+                new[]
+                {
+                    new ThreadComponents
+                    {
+                        threadNum = 1,
+                        noteCount = 2,
+                        username = env.Username01,
+                        notes = threadNotes1
+                    },
+                    new ThreadComponents
+                    {
+                        threadNum = 2,
+                        noteCount = 1,
+                        username = env.Username01,
+                        notes = threadNotes2
+                    },
+                    new ThreadComponents
+                    {
+                        threadNum = 3,
+                        noteCount = 1,
+                        username = env.Username01,
+                        notes = threadNotes3
+                    },
+                    new ThreadComponents
+                    {
+                        threadNum = 4,
+                        noteCount = 1,
+                        username = env.Username01,
+                        notes = threadNotes4
+                    },
+                    new ThreadComponents
+                    {
+                        threadNum = 5,
+                        noteCount = 1,
+                        username = env.Username01,
+                        notes = threadNotes5
+                    },
+                    new ThreadComponents
+                    {
+                        threadNum = 6,
+                        noteCount = 1,
+                        username = env.Username01
+                    },
+                    new ThreadComponents
+                    {
+                        threadNum = 7,
+                        noteCount = 1,
+                        username = env.Username01,
+                        notes = threadNotes7
+                    },
+                    new ThreadComponents
+                    {
+                        threadNum = 8,
+                        noteCount = 1,
+                        username = env.Username01
+                    },
+                    new ThreadComponents { threadNum = 9, noteCount = 1 }
+                }
+            );
 
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 // SUT
-                IEnumerable<IDocument<NoteThread>> noteThreadDocs =
-                    await env.GetNoteThreadDocsAsync(conn,
-                        new[] { "thread1", "thread3", "thread4", "thread5", "thread6", "thread7", "thread8" });
+                IEnumerable<IDocument<NoteThread>> noteThreadDocs = await env.GetNoteThreadDocsAsync(
+                    conn,
+                    new[] { "thread1", "thread3", "thread4", "thread5", "thread6", "thread7", "thread8" }
+                );
                 var deltas = env.GetChapterDeltasByBook(env.Project01, 40, 1, "Context before ", "Text selected", true);
-                IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret, ptProjectId, 40,
-                    noteThreadDocs, deltas, ptProjectUsers);
+                IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
+                    userSecret,
+                    ptProjectId,
+                    40,
+                    noteThreadDocs,
+                    deltas,
+                    ptProjectUsers
+                );
 
                 Assert.That(changes.Count, Is.EqualTo(8));
                 Assert.That(changes.Any(c => c.ThreadId == "thread6"), Is.False);
@@ -1220,11 +1536,12 @@ namespace SIL.XForge.Scripture.Services
 
                 // Note updated with team assigned
                 NoteThreadChange change4 = changes.Single(c => c.ThreadId == "thread4");
-                Assert.That(change4.Assignment,
-                    Is.EqualTo(Paratext.Data.ProjectComments.CommentThread.teamUser));
+                Assert.That(change4.Assignment, Is.EqualTo(Paratext.Data.ProjectComments.CommentThread.teamUser));
                 Assert.That(change4.NotesUpdated.Count, Is.EqualTo(1));
-                Assert.That(change4.NotesUpdated[0].Assignment,
-                    Is.EqualTo(Paratext.Data.ProjectComments.CommentThread.teamUser));
+                Assert.That(
+                    change4.NotesUpdated[0].Assignment,
+                    Is.EqualTo(Paratext.Data.ProjectComments.CommentThread.teamUser)
+                );
 
                 // Note tagsAdded updated but assigned user unchanged
                 NoteThreadChange change5 = changes.Single(c => c.ThreadId == "thread5");
@@ -1266,24 +1583,66 @@ namespace SIL.XForge.Scripture.Services
             string ptProjectId = env.SetupProject(env.Project01, associatedPTUser);
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
-            env.AddParatextComments(new[]
-            {
-                new ThreadComponents { threadNum = 1, noteCount = 1, username = env.Username01, alternateText = SelectionType.RelatedVerse },
-                new ThreadComponents { threadNum = 8, noteCount = 1, username = env.Username01, alternateText = SelectionType.Section },
-                new ThreadComponents { threadNum = 9, noteCount = 1, username = env.Username01, alternateText = SelectionType.SectionEnd },
-                new ThreadComponents { threadNum = 10, noteCount = 1, username = env.Username01, alternateText = SelectionType.RelatedVerse }
-            });
+            env.AddParatextComments(
+                new[]
+                {
+                    new ThreadComponents
+                    {
+                        threadNum = 1,
+                        noteCount = 1,
+                        username = env.Username01,
+                        alternateText = SelectionType.RelatedVerse
+                    },
+                    new ThreadComponents
+                    {
+                        threadNum = 8,
+                        noteCount = 1,
+                        username = env.Username01,
+                        alternateText = SelectionType.Section
+                    },
+                    new ThreadComponents
+                    {
+                        threadNum = 9,
+                        noteCount = 1,
+                        username = env.Username01,
+                        alternateText = SelectionType.SectionEnd
+                    },
+                    new ThreadComponents
+                    {
+                        threadNum = 10,
+                        noteCount = 1,
+                        username = env.Username01,
+                        alternateText = SelectionType.RelatedVerse
+                    }
+                }
+            );
 
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
-                var deltas = env.GetChapterDeltasByBook(env.Project01, 40, 1, "Context before ", "Text selected",
-                    true, true);
+                var deltas = env.GetChapterDeltasByBook(
+                    env.Project01,
+                    40,
+                    1,
+                    "Context before ",
+                    "Text selected",
+                    true,
+                    true
+                );
                 Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>
                 {
-                    { env.Username01,  new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 } }
+                    {
+                        env.Username01,
+                        new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+                    }
                 };
-                IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret, ptProjectId, 40,
-                    new IDocument<NoteThread>[0], deltas, ptProjectUsers);
+                IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
+                    userSecret,
+                    ptProjectId,
+                    40,
+                    new IDocument<NoteThread>[0],
+                    deltas,
+                    ptProjectUsers
+                );
 
                 Assert.That(changes.Count, Is.EqualTo(4));
                 NoteThreadChange thread1Change = changes.Single(c => c.ThreadId == "thread1");
@@ -1310,7 +1669,11 @@ namespace SIL.XForge.Scripture.Services
                 NoteThreadChange thread10Change = changes.Single(c => c.ThreadId == "thread10");
                 string textBefore10 = "Context before Text selected thread10 context after.\n*";
                 int thread10AnchoringLength = "other text in verse".Length;
-                TextAnchor expected10 = new TextAnchor { Start = textBefore10.Length, Length = thread10AnchoringLength };
+                TextAnchor expected10 = new TextAnchor
+                {
+                    Start = textBefore10.Length,
+                    Length = thread10AnchoringLength
+                };
                 // This test also verifies that fetching verse text for verse 10 will fetch text from both segments
                 // "verse_1_10" and "verse_1_10/p_1".
                 Assert.That(thread10Change.Position, Is.EqualTo(expected10));
@@ -1329,34 +1692,93 @@ namespace SIL.XForge.Scripture.Services
             string verseStr = "MAT 1:7";
             ReattachedThreadInfo rti = env.GetReattachedThreadInfo(verseStr);
 
-            env.AddNoteThreadData(new[]
-            {
-                new ThreadComponents { threadNum = 1, noteCount = 1 },
-                new ThreadComponents { threadNum = 3, noteCount = 1, reattachedVerseStr = verseStr },
-                new ThreadComponents { threadNum = 4, noteCount = 1 },
-                new ThreadComponents { threadNum = 5, noteCount = 1, reattachedVerseStr = verseStr }
-            });
-            env.AddParatextComments(new[]
-            {
-                new ThreadComponents { threadNum = 1, noteCount = 1, username = env.Username01, reattachedVerseStr = verseStr },
-                new ThreadComponents { threadNum = 2, noteCount = 1, username = env.Username01, reattachedVerseStr = verseStr },
-                new ThreadComponents { threadNum = 3, noteCount = 1, username = env.Username01, reattachedVerseStr = verseStr },
-                new ThreadComponents { threadNum = 4, noteCount = 2, username = env.Username01, reattachedVerseStr = verseStr },
-                new ThreadComponents { threadNum = 5, noteCount = 1, username = env.Username01 }
-            });
+            env.AddNoteThreadData(
+                new[]
+                {
+                    new ThreadComponents { threadNum = 1, noteCount = 1 },
+                    new ThreadComponents
+                    {
+                        threadNum = 3,
+                        noteCount = 1,
+                        reattachedVerseStr = verseStr
+                    },
+                    new ThreadComponents { threadNum = 4, noteCount = 1 },
+                    new ThreadComponents
+                    {
+                        threadNum = 5,
+                        noteCount = 1,
+                        reattachedVerseStr = verseStr
+                    }
+                }
+            );
+            env.AddParatextComments(
+                new[]
+                {
+                    new ThreadComponents
+                    {
+                        threadNum = 1,
+                        noteCount = 1,
+                        username = env.Username01,
+                        reattachedVerseStr = verseStr
+                    },
+                    new ThreadComponents
+                    {
+                        threadNum = 2,
+                        noteCount = 1,
+                        username = env.Username01,
+                        reattachedVerseStr = verseStr
+                    },
+                    new ThreadComponents
+                    {
+                        threadNum = 3,
+                        noteCount = 1,
+                        username = env.Username01,
+                        reattachedVerseStr = verseStr
+                    },
+                    new ThreadComponents
+                    {
+                        threadNum = 4,
+                        noteCount = 2,
+                        username = env.Username01,
+                        reattachedVerseStr = verseStr
+                    },
+                    new ThreadComponents
+                    {
+                        threadNum = 5,
+                        noteCount = 1,
+                        username = env.Username01
+                    }
+                }
+            );
 
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
-                IEnumerable<IDocument<NoteThread>> noteThreadDocs =
-                    await env.GetNoteThreadDocsAsync(conn, new[] { "thread1", "thread3", "thread4", "thread5" });
-                Dictionary<int, ChapterDelta> chapterDeltas =
-                    env.GetChapterDeltasByBook(env.Project01, 40, 1, env.ContextBefore, "Text selected");
+                IEnumerable<IDocument<NoteThread>> noteThreadDocs = await env.GetNoteThreadDocsAsync(
+                    conn,
+                    new[] { "thread1", "thread3", "thread4", "thread5" }
+                );
+                Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
+                    env.Project01,
+                    40,
+                    1,
+                    env.ContextBefore,
+                    "Text selected"
+                );
                 Dictionary<string, ParatextUserProfile> syncUsers = new Dictionary<string, ParatextUserProfile>
                 {
-                    { env.Username01, new ParatextUserProfile{ OpaqueUserId = "syncuser01", Username = env.Username01 } }
+                    {
+                        env.Username01,
+                        new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+                    }
                 };
-                IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret, ptProjectId, 40,
-                    noteThreadDocs, chapterDeltas, syncUsers);
+                IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
+                    userSecret,
+                    ptProjectId,
+                    40,
+                    noteThreadDocs,
+                    chapterDeltas,
+                    syncUsers
+                );
                 Assert.That(changes.Count, Is.EqualTo(4));
 
                 // The reattach note in thread3 is existing and is not changed
@@ -1409,21 +1831,40 @@ namespace SIL.XForge.Scripture.Services
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
             string threadId = "thread1";
-            env.AddNoteThreadData(new[]
-                { new ThreadComponents { threadNum = 1, noteCount = 1, isNew = true } });
+            env.AddNoteThreadData(
+                new[]
+                {
+                    new ThreadComponents
+                    {
+                        threadNum = 1,
+                        noteCount = 1,
+                        isNew = true
+                    }
+                }
+            );
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
                 Assert.That(thread, Is.Null);
                 IDocument<NoteThread> noteThreadDoc = await env.GetNoteThreadDocAsync(conn, threadId);
                 Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>();
-                await env.Service.UpdateParatextCommentsAsync(userSecret, ptProjectId, 40, new[] { noteThreadDoc },
-                    ptProjectUsers);
+                await env.Service.UpdateParatextCommentsAsync(
+                    userSecret,
+                    ptProjectId,
+                    40,
+                    new[] { noteThreadDoc },
+                    ptProjectUsers
+                );
                 thread = env.ProjectCommentManager.FindThread(threadId);
                 Assert.That(thread.Comments.Count, Is.EqualTo(1));
                 var comment = thread.Comments.First();
-                string expected = "thread1/User 02/2019-01-01T08:00:00.0000000+00:00-" + "MAT 1:1-" +
-                    "<p>thread1 note 1.</p>-" + "Start:0-" + "user02-" + "Tag:1";
+                string expected =
+                    "thread1/User 02/2019-01-01T08:00:00.0000000+00:00-"
+                    + "MAT 1:1-"
+                    + "<p>thread1 note 1.</p>-"
+                    + "Start:0-"
+                    + "user02-"
+                    + "Tag:1";
                 Assert.That(comment.CommentToString(), Is.EqualTo(expected));
                 Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { env.Username02 }));
                 Assert.That(noteThreadDoc.Data.Notes[0].SyncUserRef, Is.EqualTo("syncuser02"));
@@ -1442,10 +1883,29 @@ namespace SIL.XForge.Scripture.Services
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
             string threadId = "thread1";
-            env.AddNoteThreadData(new[]
-                { new ThreadComponents { threadNum = 1, noteCount = 1, username = env.Username01, isEdited = true } });
-            env.AddParatextComments(new[]
-                { new ThreadComponents { threadNum = 1, noteCount = 1, username = env.Username01 } });
+            env.AddNoteThreadData(
+                new[]
+                {
+                    new ThreadComponents
+                    {
+                        threadNum = 1,
+                        noteCount = 1,
+                        username = env.Username01,
+                        isEdited = true
+                    }
+                }
+            );
+            env.AddParatextComments(
+                new[]
+                {
+                    new ThreadComponents
+                    {
+                        threadNum = 1,
+                        noteCount = 1,
+                        username = env.Username01
+                    }
+                }
+            );
 
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
@@ -1455,14 +1915,24 @@ namespace SIL.XForge.Scripture.Services
                 {
                     new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
                 }.ToDictionary(u => u.Username);
-                await env.Service.UpdateParatextCommentsAsync(userSecret, ptProjectId, 40, new[] { noteThreadDoc },
-                    ptProjectUsers);
+                await env.Service.UpdateParatextCommentsAsync(
+                    userSecret,
+                    ptProjectId,
+                    40,
+                    new[] { noteThreadDoc },
+                    ptProjectUsers
+                );
 
                 CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
                 Assert.That(thread.Comments.Count, Is.EqualTo(1));
                 var comment = thread.Comments.First();
-                string expected = "thread1/User 01/2019-01-01T08:00:00.0000000+00:00-" + "MAT 1:1-" +
-                    "<p>thread1 note 1: EDITED.</p>-" + "Start:15-" + "user02-" + "Tag:1";
+                string expected =
+                    "thread1/User 01/2019-01-01T08:00:00.0000000+00:00-"
+                    + "MAT 1:1-"
+                    + "<p>thread1 note 1: EDITED.</p>-"
+                    + "Start:15-"
+                    + "user02-"
+                    + "Tag:1";
                 Assert.That(comment.CommentToString(), Is.EqualTo(expected));
                 Assert.That(ptProjectUsers.Count(), Is.EqualTo(1));
 
@@ -1480,10 +1950,29 @@ namespace SIL.XForge.Scripture.Services
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
             string threadId = "thread1";
-            env.AddNoteThreadData(new[]
-                { new ThreadComponents { threadNum = 1, noteCount = 1, username = env.Username01, isDeleted = true } });
-            env.AddParatextComments(new[]
-                { new ThreadComponents { threadNum = 1, noteCount = 1, username = env.Username01 } });
+            env.AddNoteThreadData(
+                new[]
+                {
+                    new ThreadComponents
+                    {
+                        threadNum = 1,
+                        noteCount = 1,
+                        username = env.Username01,
+                        isDeleted = true
+                    }
+                }
+            );
+            env.AddParatextComments(
+                new[]
+                {
+                    new ThreadComponents
+                    {
+                        threadNum = 1,
+                        noteCount = 1,
+                        username = env.Username01
+                    }
+                }
+            );
 
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
@@ -1494,14 +1983,25 @@ namespace SIL.XForge.Scripture.Services
                 {
                     new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
                 }.ToDictionary(u => u.Username);
-                await env.Service.UpdateParatextCommentsAsync(userSecret, ptProjectId, 40, new[] { noteThreadDoc },
-                    ptProjectUsers);
+                await env.Service.UpdateParatextCommentsAsync(
+                    userSecret,
+                    ptProjectId,
+                    40,
+                    new[] { noteThreadDoc },
+                    ptProjectUsers
+                );
 
                 CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
                 Assert.That(thread.Comments.Count, Is.EqualTo(1));
                 var comment = thread.Comments.First();
-                string expected = "thread1/User 01/2019-01-01T08:00:00.0000000+00:00-" + "MAT 1:1-" +
-                    "<p>thread1 note 1.</p>-" + "Start:15-" + "user02-" + "deleted-" + "Tag:1";
+                string expected =
+                    "thread1/User 01/2019-01-01T08:00:00.0000000+00:00-"
+                    + "MAT 1:1-"
+                    + "<p>thread1 note 1.</p>-"
+                    + "Start:15-"
+                    + "user02-"
+                    + "deleted-"
+                    + "Tag:1";
                 Assert.That(comment.CommentToString(), Is.EqualTo(expected));
 
                 // PT username is not written to server logs
@@ -1515,8 +2015,9 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.SendReceiveAsync(null, null, null));
-            Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.SendReceiveAsync(null,
-                env.PTProjectIds[env.Project01].Id, null));
+            Assert.ThrowsAsync<ArgumentNullException>(
+                () => env.Service.SendReceiveAsync(null, env.PTProjectIds[env.Project01].Id, null)
+            );
             Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.SendReceiveAsync(user01Secret, null, null));
         }
 
@@ -1528,21 +2029,31 @@ namespace SIL.XForge.Scripture.Services
             string projectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
-            IInternetSharedRepositorySource mockSource =
-                env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+            IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(
+                user01Secret,
+                UserRoles.Administrator
+            );
             env.SetupSuccessfulSendReceive();
             // Setup share changes to be unsuccessful
-            env.MockSharingLogicWrapper.ShareChanges(Arg.Any<List<SharedProject>>(), Arg.Any<SharedRepositorySource>(),
-                out Arg.Any<List<SendReceiveResult>>(), Arg.Any<List<SharedProject>>()).Returns(false);
+            env.MockSharingLogicWrapper
+                .ShareChanges(
+                    Arg.Any<List<SharedProject>>(),
+                    Arg.Any<SharedRepositorySource>(),
+                    out Arg.Any<List<SendReceiveResult>>(),
+                    Arg.Any<List<SharedProject>>()
+                )
+                .Returns(false);
 
-            InvalidOperationException ex = Assert.ThrowsAsync<InvalidOperationException>(() =>
-                env.Service.SendReceiveAsync(user01Secret, projectId, null));
+            InvalidOperationException ex = Assert.ThrowsAsync<InvalidOperationException>(
+                () => env.Service.SendReceiveAsync(user01Secret, projectId, null)
+            );
             Assert.That(ex.Message, Does.Contain("Failed: Errors occurred"));
 
             // Check exception is thrown if errors occurred, even if share changes succeeded
             env.MockSharingLogicWrapper.HandleErrors(Arg.Any<Action>()).Returns(false);
-            ex = Assert.ThrowsAsync<InvalidOperationException>(() =>
-                env.Service.SendReceiveAsync(user01Secret, projectId, null));
+            ex = Assert.ThrowsAsync<InvalidOperationException>(
+                () => env.Service.SendReceiveAsync(user01Secret, projectId, null)
+            );
             Assert.That(ex.Message, Does.Contain("Failed: Errors occurred"));
         }
 
@@ -1554,11 +2065,14 @@ namespace SIL.XForge.Scripture.Services
             string projectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
-            IInternetSharedRepositorySource mockSource =
-                env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+            IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(
+                user01Secret,
+                UserRoles.Administrator
+            );
 
-            ArgumentException ex = Assert.ThrowsAsync<ArgumentException>(() =>
-                env.Service.SendReceiveAsync(user01Secret, "badProjectId", null));
+            ArgumentException ex = Assert.ThrowsAsync<ArgumentException>(
+                () => env.Service.SendReceiveAsync(user01Secret, "badProjectId", null)
+            );
             Assert.That(ex.Message, Does.Contain("PT projects with the following PT ids were requested"));
         }
 
@@ -1570,32 +2084,39 @@ namespace SIL.XForge.Scripture.Services
             string projectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
-            IInternetSharedRepositorySource mockSource =
-                env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+            IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(
+                user01Secret,
+                UserRoles.Administrator
+            );
             env.SetupSuccessfulSendReceive();
             // Setup share changes to be unsuccessful, but return true
             // This scenario occurs if a project is locked on the PT server
-            env.MockSharingLogicWrapper.ShareChanges(Arg.Any<List<SharedProject>>(), Arg.Any<SharedRepositorySource>(),
-                out Arg.Any<List<SendReceiveResult>>(), Arg.Any<List<SharedProject>>()).Returns(x =>
+            env.MockSharingLogicWrapper
+                .ShareChanges(
+                    Arg.Any<List<SharedProject>>(),
+                    Arg.Any<SharedRepositorySource>(),
+                    out Arg.Any<List<SendReceiveResult>>(),
+                    Arg.Any<List<SharedProject>>()
+                )
+                .Returns(x =>
                 {
                     x[2] = new List<SendReceiveResult>
                     {
-                        new SendReceiveResult(new SharedProject())
-                        {
-                            Result = SendReceiveResultEnum.Failed,
-                        },
+                        new SendReceiveResult(new SharedProject()) { Result = SendReceiveResultEnum.Failed, },
                     };
                     return true;
                 });
 
-            InvalidOperationException ex = Assert.ThrowsAsync<InvalidOperationException>(() =>
-                env.Service.SendReceiveAsync(user01Secret, projectId, null));
+            InvalidOperationException ex = Assert.ThrowsAsync<InvalidOperationException>(
+                () => env.Service.SendReceiveAsync(user01Secret, projectId, null)
+            );
             Assert.That(ex.Message, Does.Contain("Failed: Errors occurred"));
 
             // Check exception is thrown if errors occurred, even if share changes succeeded
             env.MockSharingLogicWrapper.HandleErrors(Arg.Any<Action>()).Returns(false);
-            ex = Assert.ThrowsAsync<InvalidOperationException>(() =>
-                env.Service.SendReceiveAsync(user01Secret, projectId, null));
+            ex = Assert.ThrowsAsync<InvalidOperationException>(
+                () => env.Service.SendReceiveAsync(user01Secret, projectId, null)
+            );
             Assert.That(ex.Message, Does.Contain("Failed: Errors occurred"));
         }
 
@@ -1606,26 +2127,39 @@ namespace SIL.XForge.Scripture.Services
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-            IInternetSharedRepositorySource mockSource =
-                env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+            IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(
+                user01Secret,
+                UserRoles.Administrator
+            );
             env.SetupSuccessfulSendReceive();
 
             // SUT 1
             await env.Service.SendReceiveAsync(user01Secret, ptProjectId, null);
-            env.MockSharingLogicWrapper.Received(1).ShareChanges(Arg.Is<List<SharedProject>>(list =>
-                list.Count == 1 && list[0].SendReceiveId.Id == ptProjectId), Arg.Any<SharedRepositorySource>(),
-                out Arg.Any<List<SendReceiveResult>>(),
-                Arg.Is<List<SharedProject>>(list => list.Count == 1 && list[0].SendReceiveId.Id == ptProjectId));
+            env.MockSharingLogicWrapper
+                .Received(1)
+                .ShareChanges(
+                    Arg.Is<List<SharedProject>>(list => list.Count == 1 && list[0].SendReceiveId.Id == ptProjectId),
+                    Arg.Any<SharedRepositorySource>(),
+                    out Arg.Any<List<SendReceiveResult>>(),
+                    Arg.Is<List<SharedProject>>(list => list.Count == 1 && list[0].SendReceiveId.Id == ptProjectId)
+                );
             mockSource.DidNotReceive().Pull(Arg.Any<string>(), Arg.Any<SharedRepository>());
             env.MockSharingLogicWrapper.ClearReceivedCalls();
 
             // Passing a PT project Id for a project the user does not have access to fails early without doing S/R
             // SUT 2
-            ArgumentException resultingException = Assert.ThrowsAsync<ArgumentException>(() =>
-                env.Service.SendReceiveAsync(user01Secret, "unknownPtProjectId8"));
+            ArgumentException resultingException = Assert.ThrowsAsync<ArgumentException>(
+                () => env.Service.SendReceiveAsync(user01Secret, "unknownPtProjectId8")
+            );
             Assert.That(resultingException.Message, Does.Contain("unknownPtProjectId8"));
-            env.MockSharingLogicWrapper.DidNotReceive().ShareChanges(default, Arg.Any<SharedRepositorySource>(),
-                out Arg.Any<List<SendReceiveResult>>(), default);
+            env.MockSharingLogicWrapper
+                .DidNotReceive()
+                .ShareChanges(
+                    default,
+                    Arg.Any<SharedRepositorySource>(),
+                    out Arg.Any<List<SendReceiveResult>>(),
+                    default
+                );
         }
 
         [Test]
@@ -1634,8 +2168,10 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             string ptProjectId = env.PTProjectIds[env.Project02].Id;
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-            IInternetSharedRepositorySource mockSource =
-                env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+            IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(
+                user01Secret,
+                UserRoles.Administrator
+            );
             env.SetupSuccessfulSendReceive();
             var associatedPtUser = new SFParatextUser(env.Username01);
             // FindById fails the first time, and then succeeds the second time after the pt project repo is cloned.
@@ -1661,19 +2197,20 @@ namespace SIL.XForge.Scripture.Services
             string targetProjectId = env.SetupProject(env.Project01, associatedPtUser);
             string sourceProjectId = env.PTProjectIds[env.Project02].Id;
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-            IInternetSharedRepositorySource mockSource =
-                env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+            IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(
+                user01Secret,
+                UserRoles.Administrator
+            );
             env.SetupSuccessfulSendReceive();
 
             ScrText sourceScrText = env.GetScrText(associatedPtUser, sourceProjectId);
-            env.MockScrTextCollection.FindById(env.Username01, sourceProjectId)
-                .Returns(sourceScrText);
+            env.MockScrTextCollection.FindById(env.Username01, sourceProjectId).Returns(sourceScrText);
 
             // Get the permissions, as the ScrText will be disposed in ShareChanges()
-            ComparableProjectPermissionManager sourceScrTextPermissions
-                = (ComparableProjectPermissionManager)sourceScrText.Permissions;
-            ComparableProjectPermissionManager targetScrTextPermissions
-                = (ComparableProjectPermissionManager)env.ProjectScrText.Permissions;
+            ComparableProjectPermissionManager sourceScrTextPermissions = (ComparableProjectPermissionManager)
+                sourceScrText.Permissions;
+            ComparableProjectPermissionManager targetScrTextPermissions = (ComparableProjectPermissionManager)
+                env.ProjectScrText.Permissions;
 
             ParatextProject targetProject = await env.Service.SendReceiveAsync(user01Secret, targetProjectId);
             Assert.IsNotNull(targetProject);
@@ -1684,15 +2221,27 @@ namespace SIL.XForge.Scripture.Services
             // Better may be to assert that each SharedProject.Permissions.GetUser()
             // returns a desired PT username, if the test environment wasn't
             // mired in mock.
-            env.MockSharingLogicWrapper.Received(2).ShareChanges(
-                Arg.Is<List<SharedProject>>(
-                    list =>
-                    list.Count().Equals(1) &&
-                        (list[0].SendReceiveId.Id == targetProjectId || list[0].SendReceiveId.Id == sourceProjectId) &&
-                        (sourceScrTextPermissions.Equals((ComparableProjectPermissionManager)list[0].Permissions)
-                        || targetScrTextPermissions.Equals((ComparableProjectPermissionManager)list[0].Permissions))),
-                    Arg.Any<SharedRepositorySource>(), out Arg.Any<List<SendReceiveResult>>(),
-                    Arg.Any<List<SharedProject>>());
+            env.MockSharingLogicWrapper
+                .Received(2)
+                .ShareChanges(
+                    Arg.Is<List<SharedProject>>(
+                        list =>
+                            list.Count().Equals(1)
+                            && (
+                                list[0].SendReceiveId.Id == targetProjectId
+                                || list[0].SendReceiveId.Id == sourceProjectId
+                            )
+                            && (
+                                sourceScrTextPermissions.Equals((ComparableProjectPermissionManager)list[0].Permissions)
+                                || targetScrTextPermissions.Equals(
+                                    (ComparableProjectPermissionManager)list[0].Permissions
+                                )
+                            )
+                    ),
+                    Arg.Any<SharedRepositorySource>(),
+                    out Arg.Any<List<SendReceiveResult>>(),
+                    Arg.Any<List<SharedProject>>()
+                );
             env.MockFileSystemService.DidNotReceive().DeleteDirectory(Arg.Any<string>());
 
             // Replaces obsolete source project if the source project has been changed
@@ -1700,12 +2249,13 @@ namespace SIL.XForge.Scripture.Services
             string sourcePath = Path.Combine(env.SyncDir, newSourceProjectId, "target");
 
             // Only set the the new source ScrText when it is "cloned" to the filesystem
-            env.MockFileSystemService.When(fs => fs.CreateDirectory(sourcePath)).Do(_ =>
-            {
-                ScrText newSourceScrText = env.GetScrText(associatedPtUser, newSourceProjectId);
-                env.MockScrTextCollection.FindById(env.Username01, newSourceProjectId)
-                    .Returns(newSourceScrText);
-            });
+            env.MockFileSystemService
+                .When(fs => fs.CreateDirectory(sourcePath))
+                .Do(_ =>
+                {
+                    ScrText newSourceScrText = env.GetScrText(associatedPtUser, newSourceProjectId);
+                    env.MockScrTextCollection.FindById(env.Username01, newSourceProjectId).Returns(newSourceScrText);
+                });
 
             targetProject = await env.Service.SendReceiveAsync(user01Secret, targetProjectId);
             Assert.IsNotNull(targetProject);
@@ -1713,8 +2263,9 @@ namespace SIL.XForge.Scripture.Services
             Assert.IsNotNull(sourceProject);
             env.MockFileSystemService.DidNotReceive().DeleteDirectory(Arg.Any<string>());
             env.MockFileSystemService.Received(1).CreateDirectory(sourcePath);
-            mockSource.Received(1).Pull(sourcePath, Arg.Is<SharedRepository>(repo =>
-                repo.SendReceiveId.Id == newSourceProjectId));
+            mockSource
+                .Received(1)
+                .Pull(sourcePath, Arg.Is<SharedRepository>(repo => repo.SendReceiveId.Id == newSourceProjectId));
             env.MockHgWrapper.Received(1).Update(sourcePath);
         }
 
@@ -1725,8 +2276,10 @@ namespace SIL.XForge.Scripture.Services
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-            IInternetSharedRepositorySource mockSource =
-                env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+            IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(
+                user01Secret,
+                UserRoles.Administrator
+            );
             env.SetupSuccessfulSendReceive();
             env.SetRestClientFactory(user01Secret);
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
@@ -1742,8 +2295,10 @@ namespace SIL.XForge.Scripture.Services
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-            IInternetSharedRepositorySource mockSource =
-                env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+            IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(
+                user01Secret,
+                UserRoles.Administrator
+            );
             env.SetupSuccessfulSendReceive();
             env.SetRestClientFactory(user01Secret);
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
@@ -1778,8 +2333,11 @@ namespace SIL.XForge.Scripture.Services
             env.SetSharedRepositorySource(userSecret, UserRoles.Administrator);
             var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
             var project = projects.First();
-            var attempt =
-                await env.Service.TryGetProjectRoleAsync(userSecret, project.ParatextId, CancellationToken.None);
+            var attempt = await env.Service.TryGetProjectRoleAsync(
+                userSecret,
+                project.ParatextId,
+                CancellationToken.None
+            );
             Assert.That(attempt.Success, Is.True);
             Assert.That(attempt.Result, Is.EqualTo(SFProjectRole.Administrator));
         }
@@ -1793,8 +2351,11 @@ namespace SIL.XForge.Scripture.Services
             // Notice that SetSharedRepositorySource is not called here
             var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
             var project = projects.First();
-            var attempt =
-                await env.Service.TryGetProjectRoleAsync(userSecret, project.ParatextId, CancellationToken.None);
+            var attempt = await env.Service.TryGetProjectRoleAsync(
+                userSecret,
+                project.ParatextId,
+                CancellationToken.None
+            );
             Assert.That(attempt.Success, Is.False);
             Assert.That(attempt.Result, Is.Empty);
         }
@@ -1828,19 +2389,26 @@ namespace SIL.XForge.Scripture.Services
             var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
             SFProject project = projects.First();
 
-            source.GetRepositories().Returns(x =>
-            {
-                throw Paratext.Data.HttpException.Create(new WebException("401: Unauthorized"), (HttpWebRequest)null);
-            });
+            source
+                .GetRepositories()
+                .Returns(x =>
+                {
+                    throw Paratext.Data.HttpException.Create(
+                        new WebException("401: Unauthorized"),
+                        (HttpWebRequest)null
+                    );
+                });
 
             // SUT
-            Paratext.Data.HttpException thrown = Assert.ThrowsAsync<Paratext.Data.HttpException>(() =>
-                env.Service.GetProjectRolesAsync(userSecret, project, CancellationToken.None));
+            Paratext.Data.HttpException thrown = Assert.ThrowsAsync<Paratext.Data.HttpException>(
+                () => env.Service.GetProjectRolesAsync(userSecret, project, CancellationToken.None)
+            );
 
             // Various pieces of significant data are reported when a 401 Unauthorized goes thru.
             string[] notes = { "unregistered", project.ParatextId, project.Id, userSecret.Id, "role" };
-            env.MockLogger.AssertHasEvent((LogEvent logEvent) =>
-                notes.All((string note) => logEvent.Message.Contains(note)));
+            env.MockLogger.AssertHasEvent(
+                (LogEvent logEvent) => notes.All((string note) => logEvent.Message.Contains(note))
+            );
         }
 
         [Test]
@@ -1853,7 +2421,11 @@ namespace SIL.XForge.Scripture.Services
             env.SetSharedRepositorySource(userSecret, UserRoles.Administrator);
             var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
             var project = projects.First();
-            var mapping = await env.Service.GetParatextUsernameMappingAsync(userSecret, project, CancellationToken.None);
+            var mapping = await env.Service.GetParatextUsernameMappingAsync(
+                userSecret,
+                project,
+                CancellationToken.None
+            );
             Assert.That(mapping.Count, Is.EqualTo(2));
             Assert.That(mapping.First(), Is.EqualTo(new KeyValuePair<string, string>(env.User01, env.Username01)));
             Assert.That(mapping.Last(), Is.EqualTo(new KeyValuePair<string, string>(env.User02, env.Username02)));
@@ -1866,8 +2438,11 @@ namespace SIL.XForge.Scripture.Services
             const string resourceId = "1234567890abcdef";
             Assert.That(resourceId.Length, Is.EqualTo(SFInstallableDblResource.ResourceIdentifierLength));
             var userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-            var mapping = await env.Service.GetParatextUsernameMappingAsync(userSecret,
-                new SFProject { ParatextId = resourceId }, CancellationToken.None);
+            var mapping = await env.Service.GetParatextUsernameMappingAsync(
+                userSecret,
+                new SFProject { ParatextId = resourceId },
+                CancellationToken.None
+            );
             Assert.That(mapping.Count, Is.EqualTo(0));
         }
 
@@ -1879,18 +2454,25 @@ namespace SIL.XForge.Scripture.Services
             // Note that the following user secret has same PT username and id as the other user. This presumably
             // represents a bad DB state.
             var dos = env.MakeUserSecret(env.User02, env.Username01, env.ParatextUserId01);
-            env.MockJwtTokenHelper.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == env.User02)).Returns(env.Username01);
+            env.MockJwtTokenHelper
+                .GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == env.User02))
+                .Returns(env.Username01);
 
             env.AddProjectRepository();
             env.SetSharedRepositorySource(userSecret, UserRoles.Administrator);
             var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
             var project = projects.First();
             // SUT
-            var mapping = await env.Service.GetParatextUsernameMappingAsync(userSecret, project, CancellationToken.None);
+            var mapping = await env.Service.GetParatextUsernameMappingAsync(
+                userSecret,
+                project,
+                CancellationToken.None
+            );
             string[] requiredLogWords = { "unregistered", env.Username01, "duplicate" };
             // Warn about the situation.
-            env.MockLogger.AssertHasEvent((LogEvent ev) =>
-                requiredLogWords.All((string requiredWord) => ev.Message.Contains(requiredWord)));
+            env.MockLogger.AssertHasEvent(
+                (LogEvent ev) => requiredLogWords.All((string requiredWord) => ev.Message.Contains(requiredWord))
+            );
             // And still return the data.
             Assert.That(mapping.Count, Is.EqualTo(2));
         }
@@ -1945,8 +2527,7 @@ namespace SIL.XForge.Scripture.Services
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             ScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
             string lastPublicRevision = "abc123";
-            env.MockHgWrapper.GetLastPublicRevision(scrText.Directory)
-                .Returns(lastPublicRevision);
+            env.MockHgWrapper.GetLastPublicRevision(scrText.Directory).Returns(lastPublicRevision);
 
             // SUT
             string latestSharedVersion = env.Service.GetLatestSharedVersion(user01Secret, ptProjectId);
@@ -1961,14 +2542,20 @@ namespace SIL.XForge.Scripture.Services
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
             string resourcePTId = "1234567890123456";
-            Assert.That(resourcePTId, Has.Length.EqualTo(SFInstallableDblResource.ResourceIdentifierLength),
-                "setup. Should be using a project ID that is a resource ID");
+            Assert.That(
+                resourcePTId,
+                Has.Length.EqualTo(SFInstallableDblResource.ResourceIdentifierLength),
+                "setup. Should be using a project ID that is a resource ID"
+            );
 
             // SUT
             string latestSharedVersion = env.Service.GetLatestSharedVersion(user01Secret, resourcePTId);
 
-            Assert.That(latestSharedVersion, Is.Null,
-                "DBL resources do not have hg repositories to have a last pushed or pulled hg commit id.");
+            Assert.That(
+                latestSharedVersion,
+                Is.Null,
+                "DBL resources do not have hg repositories to have a last pushed or pulled hg commit id."
+            );
             // Wouldn't have ended up trying to find a ScrText or querying hg.
             env.MockScrTextCollection.DidNotReceiveWithAnyArgs().FindById(default, default);
             env.MockHgWrapper.DidNotReceiveWithAnyArgs().GetLastPublicRevision(default);
@@ -2130,7 +2717,8 @@ namespace SIL.XForge.Scripture.Services
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             env.MockFileSystemService.FileExists(Arg.Any<string>()).Returns(true);
-            env.MockFileSystemService.DirectoryExists(Arg.Any<string>())
+            env.MockFileSystemService
+                .DirectoryExists(Arg.Any<string>())
                 .Returns(x => ((string)x[0]).Contains(ptProjectId));
 
             // SUT
@@ -2249,10 +2837,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // Setup test environment
             var env = new TestEnvironment();
-            var project = new SFProject
-            {
-                ParatextId = env.PTProjectIds[env.Project01].Id,
-            };
+            var project = new SFProject { ParatextId = env.PTProjectIds[env.Project01].Id, };
             var resource = new ParatextResource();
 
             // SUT
@@ -2266,10 +2851,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // Setup test environment
             var env = new TestEnvironment();
-            var project = new SFProject
-            {
-                ParatextId = env.Resource1Id,
-            };
+            var project = new SFProject { ParatextId = env.Resource1Id, };
             var resource = new ParatextResource();
 
             // SUT
@@ -2491,14 +3073,13 @@ namespace SIL.XForge.Scripture.Services
             public readonly string ReattachedSelectedText = "reattached text";
             public Dictionary<string, string> usernamesToIds = new Dictionary<string, string>
             {
-                { "User 01", "user01" }, { "User 02", "user02" }, { "User 03", "user03" }
+                { "User 01", "user01" },
+                { "User 02", "user02" },
+                { "User 03", "user03" }
             };
 
-            private string ruthBookUsfm = "\\id RUT - ProjectNameHere\n" +
-                "\\c 1\n" +
-                "\\v 1 Verse 1 here.\n" +
-                "\\v 2 Verse 2 here.";
-
+            private string ruthBookUsfm =
+                "\\id RUT - ProjectNameHere\n" + "\\c 1\n" + "\\v 1 Verse 1 here.\n" + "\\v 2 Verse 2 here.";
 
             public IWebHostEnvironment MockWebHostEnvironment;
             public IOptions<ParatextOptions> MockParatextOptions;
@@ -2536,29 +3117,53 @@ namespace SIL.XForge.Scripture.Services
                 MockGuidService = Substitute.For<IGuidService>();
 
                 DateTime aSecondAgo = DateTime.Now - TimeSpan.FromSeconds(1);
-                string accessToken1 =
-                    TokenHelper.CreateAccessToken(aSecondAgo - TimeSpan.FromMinutes(20), aSecondAgo, ParatextUserId01);
-                string accessToken2 =
-                    TokenHelper.CreateAccessToken(aSecondAgo - TimeSpan.FromMinutes(20), aSecondAgo, ParatextUserId02);
-                string accessToken3 =
-                    TokenHelper.CreateAccessToken(aSecondAgo - TimeSpan.FromMinutes(20), aSecondAgo, ParatextUserId03);
-                MockRepository = new MemoryRepository<UserSecret>(new[] {
-                    new UserSecret
+                string accessToken1 = TokenHelper.CreateAccessToken(
+                    aSecondAgo - TimeSpan.FromMinutes(20),
+                    aSecondAgo,
+                    ParatextUserId01
+                );
+                string accessToken2 = TokenHelper.CreateAccessToken(
+                    aSecondAgo - TimeSpan.FromMinutes(20),
+                    aSecondAgo,
+                    ParatextUserId02
+                );
+                string accessToken3 = TokenHelper.CreateAccessToken(
+                    aSecondAgo - TimeSpan.FromMinutes(20),
+                    aSecondAgo,
+                    ParatextUserId03
+                );
+                MockRepository = new MemoryRepository<UserSecret>(
+                    new[]
                     {
-                        Id = User01,
-                        ParatextTokens = new Tokens { AccessToken = accessToken1, RefreshToken = "refresh_token_1234" },
-                    },
-                    new UserSecret
-                    {
-                        Id = User02,
-                        ParatextTokens = new Tokens { AccessToken = accessToken2, RefreshToken = "refresh_token_1234" },
-                    },
-                    new UserSecret
-                    {
-                        Id = User03,
-                        ParatextTokens = new Tokens { AccessToken = accessToken3, RefreshToken = "refresh_token_1234" },
-                    },
-                });
+                        new UserSecret
+                        {
+                            Id = User01,
+                            ParatextTokens = new Tokens
+                            {
+                                AccessToken = accessToken1,
+                                RefreshToken = "refresh_token_1234"
+                            },
+                        },
+                        new UserSecret
+                        {
+                            Id = User02,
+                            ParatextTokens = new Tokens
+                            {
+                                AccessToken = accessToken2,
+                                RefreshToken = "refresh_token_1234"
+                            },
+                        },
+                        new UserSecret
+                        {
+                            Id = User03,
+                            ParatextTokens = new Tokens
+                            {
+                                AccessToken = accessToken3,
+                                RefreshToken = "refresh_token_1234"
+                            },
+                        },
+                    }
+                );
 
                 RealtimeService = new SFMemoryRealtimeService();
 
@@ -2568,10 +3173,22 @@ namespace SIL.XForge.Scripture.Services
                 int guidServiceObjectId = 2;
                 MockGuidService.NewObjectId().Returns(_ => guidServiceGuidPrefix + guidServiceObjectId++);
 
-                Service = new ParatextService(MockWebHostEnvironment, MockParatextOptions, MockRepository,
-                    RealtimeService, MockExceptionHandler, MockSiteOptions, MockFileSystemService,
-                    MockLogger, MockJwtTokenHelper, MockParatextDataHelper, MockInternetSharedRepositorySourceProvider,
-                    MockGuidService, MockRestClientFactory, MockHgWrapper);
+                Service = new ParatextService(
+                    MockWebHostEnvironment,
+                    MockParatextOptions,
+                    MockRepository,
+                    RealtimeService,
+                    MockExceptionHandler,
+                    MockSiteOptions,
+                    MockFileSystemService,
+                    MockLogger,
+                    MockJwtTokenHelper,
+                    MockParatextDataHelper,
+                    MockInternetSharedRepositorySourceProvider,
+                    MockGuidService,
+                    MockRestClientFactory,
+                    MockHgWrapper
+                );
                 Service.ScrTextCollection = MockScrTextCollection;
                 Service.SharingLogicWrapper = MockSharingLogicWrapper;
                 Service.SyncDir = SyncDir;
@@ -2585,13 +3202,16 @@ namespace SIL.XForge.Scripture.Services
                 MockJwtTokenHelper.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == User02)).Returns(Username02);
                 MockJwtTokenHelper.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == User03)).Returns(Username03);
                 MockJwtTokenHelper.GetJwtTokenFromUserSecret(Arg.Any<UserSecret>()).Returns(accessToken1);
-                MockJwtTokenHelper.RefreshAccessTokenAsync(Arg.Any<ParatextOptions>(), Arg.Any<Tokens>(),
-                    Arg.Any<HttpClient>(), Arg.Any<CancellationToken>())
-                    .Returns(Task.FromResult(new Tokens
-                    {
-                        AccessToken = accessToken1,
-                        RefreshToken = "refresh_token_1234"
-                    }));
+                MockJwtTokenHelper
+                    .RefreshAccessTokenAsync(
+                        Arg.Any<ParatextOptions>(),
+                        Arg.Any<Tokens>(),
+                        Arg.Any<HttpClient>(),
+                        Arg.Any<CancellationToken>()
+                    )
+                    .Returns(
+                        Task.FromResult(new Tokens { AccessToken = accessToken1, RefreshToken = "refresh_token_1234" })
+                    );
                 MockFileSystemService.DirectoryExists(SyncDir).Returns(true);
                 RegistryU.Implementation = new DotNetCoreRegistry();
                 ScrTextCollection.Implementation = new SFScrTextCollection();
@@ -2605,8 +3225,11 @@ namespace SIL.XForge.Scripture.Services
             public UserSecret MakeUserSecret(string userSecretId, string username, string paratextUserId)
             {
                 DateTime aSecondAgo = DateTime.Now - TimeSpan.FromSeconds(1);
-                string accessToken =
-                    TokenHelper.CreateAccessToken(aSecondAgo - TimeSpan.FromMinutes(20), aSecondAgo, paratextUserId);
+                string accessToken = TokenHelper.CreateAccessToken(
+                    aSecondAgo - TimeSpan.FromMinutes(20),
+                    aSecondAgo,
+                    paratextUserId
+                );
                 UserSecret userSecret = new UserSecret
                 {
                     Id = userSecretId,
@@ -2618,7 +3241,8 @@ namespace SIL.XForge.Scripture.Services
             public ISFRestClientFactory SetRestClientFactory(UserSecret userSecret)
             {
                 ISFRestClient mockClient = Substitute.For<ISFRestClient>();
-                string json = @"{
+                string json =
+                    @"{
     ""resources"": [
         {
             ""languageCode"": ""urw"",
@@ -2629,7 +3253,9 @@ namespace SIL.XForge.Scripture.Services
             ""fullname"": ""Sob Jonah and Luke"",
             ""name"": ""SobP15"",
             ""permissions-checksum"": ""1ab119321b305f99"",
-            ""id"": """ + this.Resource1Id + @""",
+            ""id"": """
+                    + this.Resource1Id
+                    + @""",
             ""relevance"": {
                 ""basic_permissions"": [
                     ""allow_any_user""
@@ -2647,7 +3273,9 @@ namespace SIL.XForge.Scripture.Services
             ""fullname"": ""Aruamu New Testament [msy] Papua New Guinea 2004 DBL"",
             ""name"": ""AruNT04"",
             ""permissions-checksum"": ""1ab119321b305f99"",
-            ""id"": """ + this.Resource2Id + @""",
+            ""id"": """
+                    + this.Resource2Id
+                    + @""",
             ""relevance"": {
                 ""basic_permissions"": [
                     ""allow_any_user""
@@ -2665,7 +3293,9 @@ namespace SIL.XForge.Scripture.Services
             ""fullname"": ""Revised Version with Apocrypha 1885, 1895"",
             ""name"": ""RV1895"",
             ""permissions-checksum"": ""1ab119321b305f99"",
-            ""id"": """ + this.Resource3Id + @""",
+            ""id"": """
+                    + this.Resource3Id
+                    + @""",
             ""relevance"": {
                 ""basic_permissions"": [
                     ""allow_any_user""
@@ -2676,12 +3306,8 @@ namespace SIL.XForge.Scripture.Services
         }
     ]
 }";
-                mockClient
-                    .Get(Arg.Any<string>())
-                    .Returns(json);
-                mockClient
-                    .GetFile(Arg.Any<string>(), Arg.Any<string>())
-                    .Returns(true);
+                mockClient.Get(Arg.Any<string>()).Returns(json);
+                mockClient.GetFile(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
                 MockRestClientFactory
                     .Create(Arg.Any<string>(), Arg.Is<UserSecret>(s => s.Id == userSecret.Id))
                     .Returns(mockClient);
@@ -2692,26 +3318,30 @@ namespace SIL.XForge.Scripture.Services
             /// If extraSharedRepository, a SharedRepository will be made that does not have corresponding
             /// ProjectMetadata.
             /// </summary>
-            public IInternetSharedRepositorySource SetSharedRepositorySource(UserSecret userSecret,
-                UserRoles userRoleOnAllThePtProjects, bool extraSharedRepository = false)
+            public IInternetSharedRepositorySource SetSharedRepositorySource(
+                UserSecret userSecret,
+                UserRoles userRoleOnAllThePtProjects,
+                bool extraSharedRepository = false
+            )
             {
                 // Set up the XML for the user roles - we could use an XML Document, but this is simpler
                 // The schema is from ParatextData.InternalProjectUserAccessData
                 // As the logic in PermissionManager is self-contained, this is better than a substitute
-                string xml = "<ProjectUserAccess PeerSharing=\"true\">" +
-                    $"<User UserName=\"{Username01}\" FirstUser=\"true\" UnregisteredUser=\"false\">" +
-                        $"<Role>{userRoleOnAllThePtProjects}</Role><AllBooks>true</AllBooks>" +
-                        "<Books /><Permissions /><AutomaticBooks /><AutomaticPermissions />" +
-                    "</User>" +
-                    $"<User UserName=\"{Username02}\" FirstUser=\"false\" UnregisteredUser=\"false\">" +
-                        $"<Role>{userRoleOnAllThePtProjects}</Role><AllBooks>true</AllBooks>" +
-                        "<Books /><Permissions /><AutomaticBooks /><AutomaticPermissions />" +
-                    "</User>" +
-                    $"<User UserName=\"{Username03}\" FirstUser=\"false\" UnregisteredUser=\"false\">" +
-                        $"<Role>{userRoleOnAllThePtProjects}</Role><AllBooks>true</AllBooks>" +
-                        "<Books /><Permissions /><AutomaticBooks /><AutomaticPermissions />" +
-                    "</User>" +
-                    "</ProjectUserAccess>";
+                string xml =
+                    "<ProjectUserAccess PeerSharing=\"true\">"
+                    + $"<User UserName=\"{Username01}\" FirstUser=\"true\" UnregisteredUser=\"false\">"
+                    + $"<Role>{userRoleOnAllThePtProjects}</Role><AllBooks>true</AllBooks>"
+                    + "<Books /><Permissions /><AutomaticBooks /><AutomaticPermissions />"
+                    + "</User>"
+                    + $"<User UserName=\"{Username02}\" FirstUser=\"false\" UnregisteredUser=\"false\">"
+                    + $"<Role>{userRoleOnAllThePtProjects}</Role><AllBooks>true</AllBooks>"
+                    + "<Books /><Permissions /><AutomaticBooks /><AutomaticPermissions />"
+                    + "</User>"
+                    + $"<User UserName=\"{Username03}\" FirstUser=\"false\" UnregisteredUser=\"false\">"
+                    + $"<Role>{userRoleOnAllThePtProjects}</Role><AllBooks>true</AllBooks>"
+                    + "<Books /><Permissions /><AutomaticBooks /><AutomaticPermissions />"
+                    + "</User>"
+                    + "</ProjectUserAccess>";
                 PermissionManager sourceUsers = new PermissionManager(xml);
                 IInternetSharedRepositorySource mockSource = Substitute.For<IInternetSharedRepositorySource>();
                 SharedRepository repo1 = new SharedRepository
@@ -2752,83 +3382,115 @@ namespace SIL.XForge.Scripture.Services
                 mockSource.GetProjectsMetaData().Returns(new[] { projMeta1, projMeta2, projMeta3 });
 
                 // An HttpException means that the repo is already unlocked, so any code should be OK with this
-                mockSource.When(s => s.UnlockRemoteRepository(Arg.Any<SharedRepository>()))
-                    .Do(x => throw Paratext.Data.HttpException.Create(new WebException(),
-                        GenericRequest.Create(new Uri("http://localhost/"))));
-                MockInternetSharedRepositorySourceProvider.GetSource(Arg.Is<UserSecret>(s => s.Id == userSecret.Id),
-                        Arg.Any<string>(), Arg.Any<string>()).Returns(mockSource);
+                mockSource
+                    .When(s => s.UnlockRemoteRepository(Arg.Any<SharedRepository>()))
+                    .Do(
+                        x =>
+                            throw Paratext.Data.HttpException.Create(
+                                new WebException(),
+                                GenericRequest.Create(new Uri("http://localhost/"))
+                            )
+                    );
+                MockInternetSharedRepositorySourceProvider
+                    .GetSource(Arg.Is<UserSecret>(s => s.Id == userSecret.Id), Arg.Any<string>(), Arg.Any<string>())
+                    .Returns(mockSource);
                 return mockSource;
             }
 
             public void AddProjectRepository()
             {
-                RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(
-                    new[]
-                    {
-                        new SFProject
+                RealtimeService.AddRepository(
+                    "sf_projects",
+                    OTType.Json0,
+                    new MemoryRepository<SFProject>(
+                        new[]
                         {
-                            Id = "sf_id_" + Project01,
-                            ParatextId = PTProjectIds[Project01].Id,
-                            Name = "Full Name " + Project01,
-                            ShortName = "P01",
-                            WritingSystem = new WritingSystem
+                            new SFProject
                             {
-                                Tag = "writingsystem_tag"
-                            },
-                            TranslateConfig = new TranslateConfig
-                            {
-                                TranslationSuggestionsEnabled = true,
-                                Source = new TranslateSource
+                                Id = "sf_id_" + Project01,
+                                ParatextId = PTProjectIds[Project01].Id,
+                                Name = "Full Name " + Project01,
+                                ShortName = "P01",
+                                WritingSystem = new WritingSystem { Tag = "writingsystem_tag" },
+                                TranslateConfig = new TranslateConfig
                                 {
-                                    ParatextId = "paratextId",
-                                    Name = "Source",
-                                    ShortName = "SRC",
-                                    WritingSystem = new WritingSystem
+                                    TranslationSuggestionsEnabled = true,
+                                    Source = new TranslateSource
                                     {
-                                        Tag = "qaa"
-                                    }
-                                }
-                            },
-                            CheckingConfig = new CheckingConfig
-                            {
-                                ShareEnabled = false
-                            },
-                            UserRoles = new Dictionary<string, string>
-                            {
-                                { User01, SFProjectRole.Administrator },
-                                { User02, SFProjectRole.CommunityChecker }
-                            },
-                            Texts =
-                            {
-                                new TextInfo
-                                {
-                                    BookNum = 40,
-                                    Chapters =
-                                    {
-                                        new Chapter { Number = 1, LastVerse = 6, IsValid = true, Permissions = { } }
+                                        ParatextId = "paratextId",
+                                        Name = "Source",
+                                        ShortName = "SRC",
+                                        WritingSystem = new WritingSystem { Tag = "qaa" }
                                     }
                                 },
-                                new TextInfo
+                                CheckingConfig = new CheckingConfig { ShareEnabled = false },
+                                UserRoles = new Dictionary<string, string>
                                 {
-                                    BookNum = 41,
-                                    Chapters =
+                                    { User01, SFProjectRole.Administrator },
+                                    { User02, SFProjectRole.CommunityChecker }
+                                },
+                                Texts =
+                                {
+                                    new TextInfo
                                     {
-                                        new Chapter { Number = 1, LastVerse = 3, IsValid = true, Permissions = { } },
-                                        new Chapter { Number = 2, LastVerse = 3, IsValid = true, Permissions = { } }
+                                        BookNum = 40,
+                                        Chapters =
+                                        {
+                                            new Chapter
+                                            {
+                                                Number = 1,
+                                                LastVerse = 6,
+                                                IsValid = true,
+                                                Permissions = { }
+                                            }
+                                        }
+                                    },
+                                    new TextInfo
+                                    {
+                                        BookNum = 41,
+                                        Chapters =
+                                        {
+                                            new Chapter
+                                            {
+                                                Number = 1,
+                                                LastVerse = 3,
+                                                IsValid = true,
+                                                Permissions = { }
+                                            },
+                                            new Chapter
+                                            {
+                                                Number = 2,
+                                                LastVerse = 3,
+                                                IsValid = true,
+                                                Permissions = { }
+                                            }
+                                        }
                                     }
                                 }
-                            }
-                        },
-                    }));
+                            },
+                        }
+                    )
+                );
             }
 
-
-            public void AddTextDocs(int bookNum, int chapterNum, int verses, string contextBefore, string selectedText,
-                bool useThreadSuffix = true)
+            public void AddTextDocs(
+                int bookNum,
+                int chapterNum,
+                int verses,
+                string contextBefore,
+                string selectedText,
+                bool useThreadSuffix = true
+            )
             {
                 TextData[] texts = new TextData[1];
-                Delta chapterDelta =
-                    GetChapterDelta(chapterNum, verses, contextBefore, selectedText, useThreadSuffix, false);
+                Delta chapterDelta = GetChapterDelta(
+                    chapterNum,
+                    verses,
+                    contextBefore,
+                    selectedText,
+                    useThreadSuffix,
+                    false
+                );
                 texts[0] = new TextData(chapterDelta) { Id = TextData.GetTextDocId(Project01, bookNum, chapterNum) };
                 RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>(texts));
             }
@@ -2849,9 +3511,8 @@ namespace SIL.XForge.Scripture.Services
                     string threadId = "thread" + comp.threadNum;
                     string text = "Text selected " + threadId;
                     string selectedText = comp.appliesToVerse ? ContextBefore + text + ContextAfter : text;
-                    string threadIcon = comp.notes == null
-                        ? "icon1"
-                        : $"icon{comp.notes[comp.notes.Length - 1].tagsAdded[0]}";
+                    string threadIcon =
+                        comp.notes == null ? "icon1" : $"icon{comp.notes[comp.notes.Length - 1].tagsAdded[0]}";
                     var noteThread = new NoteThread
                     {
                         Id = "project01:" + threadId,
@@ -2867,9 +3528,10 @@ namespace SIL.XForge.Scripture.Services
                         OriginalContextAfter = comp.appliesToVerse ? "" : ContextAfter,
                         Status = NoteStatus.Todo.InternalValue,
                         TagIcon = threadIcon,
-                        Assignment = comp.notes == null
-                            ? Paratext.Data.ProjectComments.CommentThread.unassignedUser
-                            : comp.notes[comp.notes.Count() - 1].assignedPTUser
+                        Assignment =
+                            comp.notes == null
+                                ? Paratext.Data.ProjectComments.CommentThread.unassignedUser
+                                : comp.notes[comp.notes.Count() - 1].assignedPTUser
                     };
                     List<Note> notes = new List<Note>();
                     for (int i = 1; i <= comp.noteCount; i++)
@@ -2890,7 +3552,9 @@ namespace SIL.XForge.Scripture.Services
                             ConflictType = Note.NoConflictType,
                             OwnerRef = "user02",
                             ExtUserId = "user02",
-                            Content = comp.isEdited ? $"<p>{threadId} note {i}: EDITED.</p>" : $"<p>{threadId} note {i}.</p>",
+                            Content = comp.isEdited
+                                ? $"<p>{threadId} note {i}: EDITED.</p>"
+                                : $"<p>{threadId} note {i}.</p>",
                             SyncUserRef = comp.isNew ? null : "syncuser01",
                             DateCreated = new DateTime(2019, 1, i, 8, 0, 0, DateTimeKind.Utc),
                             TagIcon = $"icon{noteComponent.tagsAdded[0]}",
@@ -2905,19 +3569,21 @@ namespace SIL.XForge.Scripture.Services
                     if (comp.reattachedVerseStr != null)
                     {
                         ReattachedThreadInfo rti = GetReattachedThreadInfo(comp.reattachedVerseStr);
-                        notes.Add(new Note
-                        {
-                            DataId = $"reattached{threadId}",
-                            ThreadId = threadId,
-                            Type = NoteType.Normal.InternalValue,
-                            ConflictType = Note.NoConflictType,
-                            OwnerRef = "user02",
-                            ExtUserId = "user02",
-                            SyncUserRef = "syncuser01",
-                            DateCreated = new DateTime(2019, 1, 20, 8, 0, 0, DateTimeKind.Utc),
-                            Status = NoteStatus.Unspecified.InternalValue,
-                            Reattached = ReattachedThreadInfoStr(rti)
-                        });
+                        notes.Add(
+                            new Note
+                            {
+                                DataId = $"reattached{threadId}",
+                                ThreadId = threadId,
+                                Type = NoteType.Normal.InternalValue,
+                                ConflictType = Note.NoConflictType,
+                                OwnerRef = "user02",
+                                ExtUserId = "user02",
+                                SyncUserRef = "syncuser01",
+                                DateCreated = new DateTime(2019, 1, 20, 8, 0, 0, DateTimeKind.Utc),
+                                Status = NoteStatus.Unspecified.InternalValue,
+                                Reattached = ReattachedThreadInfoStr(rti)
+                            }
+                        );
                         noteThread.Position = new TextAnchor
                         {
                             Start = rti.contextBefore.Length,
@@ -2928,43 +3594,63 @@ namespace SIL.XForge.Scripture.Services
                     if (notes.Count > 0)
                         threads = threads.Append(noteThread);
                 }
-                RealtimeService.AddRepository("note_threads", OTType.Json0,
-                    new MemoryRepository<NoteThread>(threads));
+                RealtimeService.AddRepository("note_threads", OTType.Json0, new MemoryRepository<NoteThread>(threads));
             }
 
             public void AddThread(NoteThread thread)
             {
                 var threads = new NoteThread[1];
                 threads[0] = thread;
-                RealtimeService.AddRepository("note_threads", OTType.Json0,
-                   new MemoryRepository<NoteThread>(threads));
+                RealtimeService.AddRepository("note_threads", OTType.Json0, new MemoryRepository<NoteThread>(threads));
             }
 
-            public Dictionary<int, ChapterDelta> GetChapterDeltasByBook(string projectId, int bookNum,
-                int chapters, string contextBefore, string selectedText, bool useThreadSuffix = true,
-                bool includeRelatedVerse = false)
+            public Dictionary<int, ChapterDelta> GetChapterDeltasByBook(
+                string projectId,
+                int bookNum,
+                int chapters,
+                string contextBefore,
+                string selectedText,
+                bool useThreadSuffix = true,
+                bool includeRelatedVerse = false
+            )
             {
                 Dictionary<int, ChapterDelta> chapterDeltas = new Dictionary<int, ChapterDelta>();
                 int numVersesInChapter = 10;
                 for (int i = 1; i <= chapters; i++)
                 {
-                    Delta delta = GetChapterDelta(i, numVersesInChapter, contextBefore, selectedText, useThreadSuffix,
-                        includeRelatedVerse);
+                    Delta delta = GetChapterDelta(
+                        i,
+                        numVersesInChapter,
+                        contextBefore,
+                        selectedText,
+                        useThreadSuffix,
+                        includeRelatedVerse
+                    );
                     chapterDeltas.Add(i, new ChapterDelta(i, numVersesInChapter, true, delta));
                 }
                 return chapterDeltas;
             }
 
-            public string GetUpdateNotesString(string threadId, string user, DateTime date, string content,
-                string verseRef = "MAT 1:1", bool delete = false)
+            public string GetUpdateNotesString(
+                string threadId,
+                string user,
+                DateTime date,
+                string content,
+                string verseRef = "MAT 1:1",
+                bool delete = false
+            )
             {
                 XElement notesElem = new XElement("notes", new XAttribute("version", "1.1"));
-                XElement threadElem = new XElement("thread", new XAttribute("id", threadId),
-                    new XElement("selection",
+                XElement threadElem = new XElement(
+                    "thread",
+                    new XAttribute("id", threadId),
+                    new XElement(
+                        "selection",
                         new XAttribute("verseRef", verseRef),
                         new XAttribute("startPos", 0),
                         new XAttribute("selectedText", "")
-                    ));
+                    )
+                );
                 XElement commentElem = new XElement("comment", new XAttribute("user", user));
                 commentElem.Add(new XAttribute("date", date.ToString("o")));
                 XElement contentElem = new XElement("content");
@@ -2980,8 +3666,10 @@ namespace SIL.XForge.Scripture.Services
                 return notesElem.ToString();
             }
 
-            public async Task<IEnumerable<IDocument<NoteThread>>> GetNoteThreadDocsAsync(IConnection connection,
-                string[] threadIds)
+            public async Task<IEnumerable<IDocument<NoteThread>>> GetNoteThreadDocsAsync(
+                IConnection connection,
+                string[] threadIds
+            )
             {
                 List<IDocument<NoteThread>> noteThreadDocs = new List<IDocument<NoteThread>>();
                 foreach (string threadId in threadIds)
@@ -2989,8 +3677,7 @@ namespace SIL.XForge.Scripture.Services
                 return noteThreadDocs;
             }
 
-            public async Task<IDocument<NoteThread>> GetNoteThreadDocAsync(IConnection connection,
-                string threadId)
+            public async Task<IDocument<NoteThread>> GetNoteThreadDocAsync(IConnection connection, string threadId)
             {
                 return await connection.FetchAsync<NoteThread>("project01:" + threadId);
             }
@@ -3006,8 +3693,7 @@ namespace SIL.XForge.Scripture.Services
                 ProjectFileManager.IsWritable.Returns(true);
                 ProjectScrText.SetFileManager(ProjectFileManager);
                 ProjectCommentManager = CommentManager.Get(ProjectScrText);
-                MockScrTextCollection.FindById(Arg.Any<string>(), ptProjectId)
-                    .Returns(ProjectScrText);
+                MockScrTextCollection.FindById(Arg.Any<string>(), ptProjectId).Returns(ProjectScrText);
                 SetupCommentTags(ProjectScrText);
                 return ptProjectId;
             }
@@ -3044,7 +3730,6 @@ namespace SIL.XForge.Scripture.Services
                             after = " \\p";
                             selectedText = "";
                             break;
-
                     }
 
                     Paratext.Data.ProjectComments.Comment getThreadComment()
@@ -3064,7 +3749,9 @@ namespace SIL.XForge.Scripture.Services
                     {
                         string date = $"2019-01-0{i}T08:00:00.0000000+00:00";
                         XmlElement content = doc.CreateElement("Contents");
-                        content.InnerXml = comp.isEdited ? $"<p>{threadId} note {i}: EDITED.</p>" : $"<p>{threadId} note {i}.</p>";
+                        content.InnerXml = comp.isEdited
+                            ? $"<p>{threadId} note {i}: EDITED.</p>"
+                            : $"<p>{threadId} note {i}.</p>";
                         Paratext.Data.ProjectComments.Comment comment = getThreadComment();
 
                         ThreadNoteComponents note = new ThreadNoteComponents
@@ -3081,7 +3768,11 @@ namespace SIL.XForge.Scripture.Services
                         comment.Deleted = comp.isDeleted;
                         comment.Status = note.status;
                         comment.ExternalUser = comp.isConflict ? "" : "user02";
-                        comment.TagsAdded = comp.isConflict ? null : note.tagsAdded == null ? null : note.tagsAdded;
+                        comment.TagsAdded = comp.isConflict
+                            ? null
+                            : note.tagsAdded == null
+                                ? null
+                                : note.tagsAdded;
                         comment.Type = comp.isConflict ? NoteType.Conflict : NoteType.Normal;
                         comment.ConflictType = NoteConflictType.None;
                         comment.AssignedUser = note.assignedPTUser;
@@ -3105,11 +3796,13 @@ namespace SIL.XForge.Scripture.Services
             public void AddParatextComment(Paratext.Data.ProjectComments.Comment comment)
             {
                 ProjectCommentManager.AddComment(comment);
-
             }
 
-            public MockScrText GetScrText(ParatextUser associatedPtUser, string projectId,
-                bool hasEditPermission = true)
+            public MockScrText GetScrText(
+                ParatextUser associatedPtUser,
+                string projectId,
+                bool hasEditPermission = true
+            )
             {
                 string scrtextDir = Path.Combine(SyncDir, projectId, "target");
                 ProjectName projectName = new ProjectName() { ProjectPath = scrtextDir, ShortName = "Proj" };
@@ -3137,15 +3830,23 @@ namespace SIL.XForge.Scripture.Services
 
             public void SetupSuccessfulSendReceive()
             {
-                MockSharingLogicWrapper.ShareChanges(Arg.Any<List<SharedProject>>(), Arg.Any<SharedRepositorySource>(),
-                    out Arg.Any<List<SendReceiveResult>>(), Arg.Any<List<SharedProject>>()).Returns(true);
+                MockSharingLogicWrapper
+                    .ShareChanges(
+                        Arg.Any<List<SharedProject>>(),
+                        Arg.Any<SharedRepositorySource>(),
+                        out Arg.Any<List<SendReceiveResult>>(),
+                        Arg.Any<List<SharedProject>>()
+                    )
+                    .Returns(true);
                 // Have the HandleErrors method run its first argument, which would be the ShareChanges() call.
                 // This helps check that the implementation code is calling ShareChanges().
-                MockSharingLogicWrapper.HandleErrors(Arg.Any<Action>()).Returns(callInfo =>
-                {
-                    callInfo.Arg<Action>()();
-                    return true;
-                });
+                MockSharingLogicWrapper
+                    .HandleErrors(Arg.Any<Action>())
+                    .Returns(callInfo =>
+                    {
+                        callInfo.Arg<Action>()();
+                        return true;
+                    });
             }
 
             public ReattachedThreadInfo GetReattachedThreadInfo(string verseStr)
@@ -3163,8 +3864,14 @@ namespace SIL.XForge.Scripture.Services
 
             public string ReattachedThreadInfoStr(ReattachedThreadInfo rnt)
             {
-                string[] reattachParts = new[] {
-                    rnt.verseStr, rnt.selectedText, rnt.startPos, rnt.contextBefore, rnt.contextAfter };
+                string[] reattachParts = new[]
+                {
+                    rnt.verseStr,
+                    rnt.selectedText,
+                    rnt.startPos,
+                    rnt.contextBefore,
+                    rnt.contextAfter
+                };
                 return string.Join(StringUtils.orcCharacter, reattachParts);
             }
 
@@ -3174,7 +3881,9 @@ namespace SIL.XForge.Scripture.Services
             /// Comment and the existing SF note thread (and its notes) before they are examined for differences.
             /// </summary>
             public async Task<IEnumerable<NoteThreadChange>> PrepareChangeOnSingleCommentAsync(
-                Action<Paratext.Data.ProjectComments.Comment> modifyComment, Action<NoteThread> modifyNoteThread = null)
+                Action<Paratext.Data.ProjectComments.Comment> modifyComment,
+                Action<NoteThread> modifyNoteThread = null
+            )
             {
                 var env = this;
                 string sfProjectId = env.Project01;
@@ -3203,9 +3912,11 @@ namespace SIL.XForge.Scripture.Services
                     Status = NoteStatus.Todo.InternalValue,
                     TagIcon = "icon1",
                     Assignment = Paratext.Data.ProjectComments.CommentThread.unassignedUser,
-                    Notes = {
-                    new Note {
-                        DataId = $"{threadId}note01",
+                    Notes =
+                    {
+                        new Note
+                        {
+                            DataId = $"{threadId}note01",
                             ThreadId = threadId,
                             Type = NoteType.Normal.InternalValue,
                             ConflictType = Note.NoConflictType,
@@ -3219,8 +3930,8 @@ namespace SIL.XForge.Scripture.Services
                             Assignment = Paratext.Data.ProjectComments.CommentThread.unassignedUser,
                             Content = $"<p>Note content.</p>",
                             AcceptedChangeXml = null,
+                        }
                     }
-                }
                 };
                 if (modifyNoteThread != null)
                 {
@@ -3256,26 +3967,44 @@ namespace SIL.XForge.Scripture.Services
 
                 using (IConnection conn = await env.RealtimeService.ConnectAsync())
                 {
-                    IEnumerable<IDocument<NoteThread>> noteThreadDocs =
-                        await env.GetNoteThreadDocsAsync(conn,
-                            new[] { "thread01" }
+                    IEnumerable<IDocument<NoteThread>> noteThreadDocs = await env.GetNoteThreadDocsAsync(
+                        conn,
+                        new[] { "thread01" }
                     );
                     Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
-                        { new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 } }
-                        .ToDictionary(u => u.Username);
-                    Dictionary<int, ChapterDelta> chapterDeltas =
-                        env.GetChapterDeltasByBook(env.Project01, 40, 1, "Context before ", "Text selected");
+                    {
+                        new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+                    }.ToDictionary(u => u.Username);
+                    Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
+                        env.Project01,
+                        40,
+                        1,
+                        "Context before ",
+                        "Text selected"
+                    );
 
                     // SUT
                     IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
-                        userSecret, ptProjectId, 40, noteThreadDocs, chapterDeltas, ptProjectUsers);
+                        userSecret,
+                        ptProjectId,
+                        40,
+                        noteThreadDocs,
+                        chapterDeltas,
+                        ptProjectUsers
+                    );
 
                     return changes;
                 }
             }
 
-            private Delta GetChapterDelta(int chapterNum, int verses, string contextBefore, string selectedText,
-                bool useThreadSuffix, bool includeExtraLastVerseSegment)
+            private Delta GetChapterDelta(
+                int chapterNum,
+                int verses,
+                string contextBefore,
+                string selectedText,
+                bool useThreadSuffix,
+                bool includeExtraLastVerseSegment
+            )
             {
                 string chapterText = "[ { \"insert\": { \"chapter\": { \"number\": \"" + chapterNum + "\" } }}";
                 for (int i = 1; i <= verses; i++)
@@ -3290,29 +4019,49 @@ namespace SIL.XForge.Scripture.Services
                         after = AlternateAfter;
                         noteSelectedText = ReattachedSelectedText;
                     }
-                    chapterText = chapterText + "," +
-                        "{ \"insert\": { \"verse\": { \"number\": \"" + i + "\" } }}, " +
-                        "{ \"insert\": \"" + before + noteSelectedText + after + "\", " +
-                        "\"attributes\": { \"segment\": \"verse_" + chapterNum + "_" + i + "\" } }";
+                    chapterText =
+                        chapterText
+                        + ","
+                        + "{ \"insert\": { \"verse\": { \"number\": \""
+                        + i
+                        + "\" } }}, "
+                        + "{ \"insert\": \""
+                        + before
+                        + noteSelectedText
+                        + after
+                        + "\", "
+                        + "\"attributes\": { \"segment\": \"verse_"
+                        + chapterNum
+                        + "_"
+                        + i
+                        + "\" } }";
                     if (i == 8 || i == 9)
                     {
                         // create a new section heading after verse 8
-                        chapterText = chapterText + " ," +
-                            "{ \"insert\": \"\n\", \"attributes\": { \"para\": { \"style\": \"p\" } }}, " +
-                            "{ \"insert\": \"Section heading text\", \"attributes\": { \"segment\": \"s_1\" } }, " +
-                            "{ \"insert\": \"\n\", \"attributes\": { \"para\": { \"style\": \"s\" } }}, " +
-                            "{ \"insert\": { \"blank\": true }, \"attributes\": { \"segment\": \"p_1\" } }";
+                        chapterText =
+                            chapterText
+                            + " ,"
+                            + "{ \"insert\": \"\n\", \"attributes\": { \"para\": { \"style\": \"p\" } }}, "
+                            + "{ \"insert\": \"Section heading text\", \"attributes\": { \"segment\": \"s_1\" } }, "
+                            + "{ \"insert\": \"\n\", \"attributes\": { \"para\": { \"style\": \"s\" } }}, "
+                            + "{ \"insert\": { \"blank\": true }, \"attributes\": { \"segment\": \"p_1\" } }";
                     }
                 }
                 if (includeExtraLastVerseSegment)
                 {
                     // Add a second segment in the last verse (Note the segment name ends with "/p_1").
                     string verseRef = $"verse_{chapterNum}_{verses}";
-                    chapterText = chapterText + ", { \"insert\": \"\n\" }," +
-                        "{ \"insert\": { \"note\": { \"caller\": \"*\" } }, " +
-                        "\"attributes\": { \"segment\": \"" + verseRef + "\" } }," +
-                        "{ \"insert\": \"other text in verse\", " +
-                        "\"attributes\": { \"segment\": \"" + verseRef + "/p_1\" } }";
+                    chapterText =
+                        chapterText
+                        + ", { \"insert\": \"\n\" },"
+                        + "{ \"insert\": { \"note\": { \"caller\": \"*\" } }, "
+                        + "\"attributes\": { \"segment\": \""
+                        + verseRef
+                        + "\" } },"
+                        + "{ \"insert\": \"other text in verse\", "
+                        + "\"attributes\": { \"segment\": \""
+                        + verseRef
+                        + "/p_1\" } }";
                 }
                 chapterText = chapterText + "]";
                 return new Delta(JToken.Parse(chapterText));
@@ -3320,11 +4069,12 @@ namespace SIL.XForge.Scripture.Services
 
             private ProjectMetadata GetMetadata(string projectId, string fullname)
             {
-                string json = "{\"identification_name\": \"" +
-                    fullname +
-                    "\", \"identification_systemId\": [{\"type\": \"paratext\", \"text\": \"" +
-                    projectId +
-                    "\"}]}";
+                string json =
+                    "{\"identification_name\": \""
+                    + fullname
+                    + "\", \"identification_systemId\": [{\"type\": \"paratext\", \"text\": \""
+                    + projectId
+                    + "\"}]}";
                 return new ProjectMetadata(JObject.Parse(json));
             }
         }

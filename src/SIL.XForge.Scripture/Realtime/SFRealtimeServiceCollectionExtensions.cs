@@ -11,27 +11,37 @@ namespace Microsoft.Extensions.DependencyInjection
     /// </summary>
     public static class SFRealtimeServiceCollectionExtensions
     {
-        public static IServiceCollection AddSFRealtimeServer(this IServiceCollection services,
-            ILoggerFactory loggerFactory, IConfiguration configuration, bool launchWithDebugging = false,
-            bool migrationsDisabled = false)
+        public static IServiceCollection AddSFRealtimeServer(
+            this IServiceCollection services,
+            ILoggerFactory loggerFactory,
+            IConfiguration configuration,
+            bool launchWithDebugging = false,
+            bool migrationsDisabled = false
+        )
         {
-            services.AddRealtimeServer(loggerFactory, configuration, o =>
+            services.AddRealtimeServer(
+                loggerFactory,
+                configuration,
+                o =>
                 {
                     o.AppModuleName = "scriptureforge";
                     o.MigrationsDisabled = migrationsDisabled;
                     o.ProjectDoc = new DocConfig("sf_projects", typeof(SFProject));
-                    o.ProjectDataDocs.AddRange(new[]
-                    {
-                        new DocConfig("sf_project_user_configs", typeof(SFProjectUserConfig)),
-                        new DocConfig("texts", typeof(TextData), OTType.RichText),
-                        new DocConfig("questions", typeof(Question)),
-                        new DocConfig("note_threads", typeof(NoteThread))
-                    });
-                    o.UserDataDocs.AddRange(new[]
-                    {
-                        new DocConfig("sf_project_user_configs", typeof(SFProjectUserConfig))
-                    });
-                }, launchWithDebugging);
+                    o.ProjectDataDocs.AddRange(
+                        new[]
+                        {
+                            new DocConfig("sf_project_user_configs", typeof(SFProjectUserConfig)),
+                            new DocConfig("texts", typeof(TextData), OTType.RichText),
+                            new DocConfig("questions", typeof(Question)),
+                            new DocConfig("note_threads", typeof(NoteThread))
+                        }
+                    );
+                    o.UserDataDocs.AddRange(
+                        new[] { new DocConfig("sf_project_user_configs", typeof(SFProjectUserConfig)) }
+                    );
+                },
+                launchWithDebugging
+            );
             return services;
         }
     }

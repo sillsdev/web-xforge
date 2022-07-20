@@ -41,13 +41,22 @@ namespace SIL.XForge.Scripture.Services
         private readonly IStringLocalizer<SharedResource> _localizer;
         private readonly ITransceleratorService _transceleratorService;
 
-        public SFProjectService(IRealtimeService realtimeService, IOptions<SiteOptions> siteOptions,
-            IAudioService audioService, IEmailService emailService, IRepository<SFProjectSecret> projectSecrets,
-            ISecurityService securityService, IFileSystemService fileSystemService, IEngineService engineService,
-            ISyncService syncService, IParatextService paratextService, IRepository<UserSecret> userSecrets,
-            IRepository<TranslateMetrics> translateMetrics, IStringLocalizer<SharedResource> localizer,
-            ITransceleratorService transceleratorService)
-            : base(realtimeService, siteOptions, audioService, projectSecrets, fileSystemService)
+        public SFProjectService(
+            IRealtimeService realtimeService,
+            IOptions<SiteOptions> siteOptions,
+            IAudioService audioService,
+            IEmailService emailService,
+            IRepository<SFProjectSecret> projectSecrets,
+            ISecurityService securityService,
+            IFileSystemService fileSystemService,
+            IEngineService engineService,
+            ISyncService syncService,
+            IParatextService paratextService,
+            IRepository<UserSecret> userSecrets,
+            IRepository<TranslateMetrics> translateMetrics,
+            IStringLocalizer<SharedResource> localizer,
+            ITransceleratorService transceleratorService
+        ) : base(realtimeService, siteOptions, audioService, projectSecrets, fileSystemService)
         {
             _engineService = engineService;
             _syncService = syncService;
@@ -87,10 +96,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     TranslationSuggestionsEnabled = settings.TranslationSuggestionsEnabled
                 },
-                CheckingConfig = new CheckingConfig
-                {
-                    CheckingEnabled = settings.CheckingEnabled
-                }
+                CheckingConfig = new CheckingConfig { CheckingEnabled = settings.CheckingEnabled }
             };
             Attempt<string> attempt = await TryGetProjectRoleAsync(project, curUserId);
             if (!attempt.TryResult(out string projectRole) || projectRole != SFProjectRole.Administrator)
@@ -99,8 +105,11 @@ namespace SIL.XForge.Scripture.Services
             string projectId = ObjectId.GenerateNewId().ToString();
             using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
-                if (this.RealtimeService.QuerySnapshots<SFProject>().Any(
-                    (SFProject sfProject) => sfProject.ParatextId == project.ParatextId))
+                if (
+                    this.RealtimeService
+                        .QuerySnapshots<SFProject>()
+                        .Any((SFProject sfProject) => sfProject.ParatextId == project.ParatextId)
+                )
                 {
                     throw new InvalidOperationException(ErrorAlreadyConnectedKey);
                 }
@@ -115,7 +124,11 @@ namespace SIL.XForge.Scripture.Services
                 if (settings.SourceParatextId != null && settings.SourceParatextId != settings.ParatextId)
                 {
                     TranslateSource source = await this.GetTranslateSourceAsync(
-                        curUserId, userSecret, settings.SourceParatextId, ptProjects);
+                        curUserId,
+                        userSecret,
+                        settings.SourceParatextId,
+                        ptProjects
+                    );
 
                     await projectDoc.SubmitJson0OpAsync(op =>
                     {
@@ -248,8 +261,13 @@ namespace SIL.XForge.Scripture.Services
                         throw new DataNotFoundException("The user does not exist.");
 
                     IReadOnlyList<ParatextProject> ptProjects = await _paratextService.GetProjectsAsync(userSecret);
-                    source = await GetTranslateSourceAsync(curUserId, userSecret, settings.SourceParatextId,
-                        ptProjects, projectDoc.Data.UserRoles);
+                    source = await GetTranslateSourceAsync(
+                        curUserId,
+                        userSecret,
+                        settings.SourceParatextId,
+                        ptProjects,
+                        projectDoc.Data.UserRoles
+                    );
                     if (source.ProjectRef == projectId)
                     {
                         // A project cannot reference itself
@@ -260,15 +278,21 @@ namespace SIL.XForge.Scripture.Services
                 bool hasExistingMachineProject = projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled;
                 await projectDoc.SubmitJson0OpAsync(op =>
                 {
-                    UpdateSetting(op, p => p.TranslateConfig.TranslationSuggestionsEnabled,
-                        settings.TranslationSuggestionsEnabled);
+                    UpdateSetting(
+                        op,
+                        p => p.TranslateConfig.TranslationSuggestionsEnabled,
+                        settings.TranslationSuggestionsEnabled
+                    );
                     UpdateSetting(op, p => p.TranslateConfig.Source, source, unsetSourceProject);
                     UpdateSetting(op, p => p.TranslateConfig.ShareEnabled, settings.TranslateShareEnabled);
                     UpdateSetting(op, p => p.TranslateConfig.ShareLevel, settings.TranslateShareLevel);
 
                     UpdateSetting(op, p => p.CheckingConfig.CheckingEnabled, settings.CheckingEnabled);
-                    UpdateSetting(op, p => p.CheckingConfig.UsersSeeEachOthersResponses,
-                        settings.UsersSeeEachOthersResponses);
+                    UpdateSetting(
+                        op,
+                        p => p.CheckingConfig.UsersSeeEachOthersResponses,
+                        settings.UsersSeeEachOthersResponses
+                    );
                     UpdateSetting(op, p => p.CheckingConfig.ShareEnabled, settings.CheckingShareEnabled);
                     UpdateSetting(op, p => p.CheckingConfig.ShareLevel, settings.CheckingShareLevel);
                 });
@@ -282,8 +306,10 @@ namespace SIL.XForge.Scripture.Services
                     bool trainEngine = false;
                     if (suggestionsEnabledSet || sourceParatextIdSet)
                     {
-                        if (projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled
-                            && projectDoc.Data.TranslateConfig.Source != null)
+                        if (
+                            projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled
+                            && projectDoc.Data.TranslateConfig.Source != null
+                        )
                         {
                             // translation suggestions was enabled or source project changed
 
@@ -347,23 +373,35 @@ namespace SIL.XForge.Scripture.Services
             await _syncService.CancelSyncAsync(curUserId, projectId);
         }
 
-        public async Task<bool> InviteAsync(string curUserId, string projectId, string email, string locale,
-            string role)
+        public async Task<bool> InviteAsync(
+            string curUserId,
+            string projectId,
+            string email,
+            string locale,
+            string role
+        )
         {
             SFProject project = await GetProjectAsync(projectId);
             if (!IsOnProject(project, curUserId))
                 throw new ForbiddenException();
 
-            if (await RealtimeService.QuerySnapshots<User>()
-                .AnyAsync(u => project.UserRoles.Keys.Contains(u.Id) && u.Email == email))
+            if (
+                await RealtimeService
+                    .QuerySnapshots<User>()
+                    .AnyAsync(u => project.UserRoles.Keys.Contains(u.Id) && u.Email == email)
+            )
             {
                 return false;
             }
             SiteOptions siteOptions = SiteOptions.Value;
 
             bool isAdmin = IsProjectAdmin(project, curUserId);
-            string[] availableRoles = new Dictionary<string, bool> {
-                { SFProjectRole.CommunityChecker, project.CheckingConfig.CheckingEnabled && (isAdmin || project.CheckingConfig.ShareEnabled) },
+            string[] availableRoles = new Dictionary<string, bool>
+            {
+                {
+                    SFProjectRole.CommunityChecker,
+                    project.CheckingConfig.CheckingEnabled && (isAdmin || project.CheckingConfig.ShareEnabled)
+                },
                 { SFProjectRole.SFObserver, project.TranslateConfig.ShareEnabled || isAdmin }
             }
                 .Where(entry => entry.Value)
@@ -377,23 +415,25 @@ namespace SIL.XForge.Scripture.Services
             // Remove the user sharekey if expired
             await ProjectSecrets.UpdateAsync(
                 p => p.Id == projectId,
-                update => update.RemoveAll(p => p.ShareKeys,
-                    sk => sk.Email == email && sk.ExpirationTime < DateTime.UtcNow)
+                update =>
+                    update.RemoveAll(p => p.ShareKeys, sk => sk.Email == email && sk.ExpirationTime < DateTime.UtcNow)
             );
             DateTime expTime = DateTime.UtcNow.AddDays(14);
 
             // Invite a specific person. Reuse prior code, if any.
             SFProjectSecret projectSecret = await ProjectSecrets.UpdateAsync(
                 p => p.Id == projectId && !p.ShareKeys.Any(sk => sk.Email == email),
-                update => update.Add(p => p.ShareKeys,
-                    new ShareKey
-                    {
-                        Email = email,
-                        Key = _securityService.GenerateKey(),
-                        ExpirationTime = expTime,
-                        ProjectRole = role
-                    }
-                )
+                update =>
+                    update.Add(
+                        p => p.ShareKeys,
+                        new ShareKey
+                        {
+                            Email = email,
+                            Key = _securityService.GenerateKey(),
+                            ExpirationTime = expTime,
+                            ProjectRole = role
+                        }
+                    )
             );
             if (projectSecret == null)
             {
@@ -403,8 +443,10 @@ namespace SIL.XForge.Scripture.Services
                 // Renew the expiration time of the valid key
                 await ProjectSecrets.UpdateAsync(
                     p => p.Id == projectId && p.ShareKeys.Any(sk => sk.Email == email),
-                    update => update.Set(p => p.ShareKeys[index].ExpirationTime, expTime)
-                                    .Set(p => p.ShareKeys[index].ProjectRole, role)
+                    update =>
+                        update
+                            .Set(p => p.ShareKeys[index].ExpirationTime, expTime)
+                            .Set(p => p.ShareKeys[index].ProjectRole, role)
                 );
             }
             string key = projectSecret.ShareKeys.Single(sk => sk.Email == email).Key;
@@ -413,12 +455,17 @@ namespace SIL.XForge.Scripture.Services
 
             User inviter = await RealtimeService.GetSnapshotAsync<User>(curUserId);
             string subject = _localizer[SharedResource.Keys.InviteSubject, project.Name, siteOptions.Name];
-            var greeting = $"<p>{_localizer[SharedResource.Keys.InviteGreeting, "<p>", inviter.Name, project.Name, siteOptions.Name, $"<a href=\"{url}\">{url}</a><p>"]}";
-            var instructions = $"<p>{_localizer[SharedResource.Keys.InviteInstructions, siteOptions.Name, "<b>", "</b>"]}";
+            var greeting =
+                $"<p>{_localizer[SharedResource.Keys.InviteGreeting, "<p>", inviter.Name, project.Name, siteOptions.Name, $"<a href=\"{url}\">{url}</a><p>"]}";
+            var instructions =
+                $"<p>{_localizer[SharedResource.Keys.InviteInstructions, siteOptions.Name, "<b>", "</b>"]}";
             var pt = $"<ul><li>{_localizer[SharedResource.Keys.InvitePTOption, "<b>", "</b>", siteOptions.Name]}</li>";
-            var google = $"<li>{_localizer[SharedResource.Keys.InviteGoogleOption, "<b>", "</b>", siteOptions.Name]}</li>";
-            var facebook = $"<li>{_localizer[SharedResource.Keys.InviteFacebookOption, "<b>", "</b>", siteOptions.Name]}</li>";
-            var withemail = $"<li>{_localizer[SharedResource.Keys.InviteEmailOption, siteOptions.Name]}</li></ul></p><p></p>";
+            var google =
+                $"<li>{_localizer[SharedResource.Keys.InviteGoogleOption, "<b>", "</b>", siteOptions.Name]}</li>";
+            var facebook =
+                $"<li>{_localizer[SharedResource.Keys.InviteFacebookOption, "<b>", "</b>", siteOptions.Name]}</li>";
+            var withemail =
+                $"<li>{_localizer[SharedResource.Keys.InviteEmailOption, siteOptions.Name]}</li></ul></p><p></p>";
             var signoff = $"<p>{_localizer[SharedResource.Keys.InviteSignature, "<p>", siteOptions.Name]}</p>";
             var emailBody = $"{greeting}{linkExpires}{instructions}{pt}{google}{facebook}{withemail}{signoff}";
             await _emailService.SendEmailAsync(email, subject, emailBody);
@@ -432,9 +479,19 @@ namespace SIL.XForge.Scripture.Services
             if (!IsOnProject(project, curUserId))
                 throw new ForbiddenException();
 
-            string[] availableRoles = new Dictionary<string, bool> {
-                { SFProjectRole.CommunityChecker, project.CheckingConfig.CheckingEnabled && project.CheckingConfig.ShareEnabled && project.CheckingConfig.ShareLevel == CheckingShareLevel.Anyone },
-                { SFProjectRole.SFObserver, project.TranslateConfig.ShareEnabled && project.TranslateConfig.ShareLevel == TranslateShareLevel.Anyone }
+            string[] availableRoles = new Dictionary<string, bool>
+            {
+                {
+                    SFProjectRole.CommunityChecker,
+                    project.CheckingConfig.CheckingEnabled
+                        && project.CheckingConfig.ShareEnabled
+                        && project.CheckingConfig.ShareLevel == CheckingShareLevel.Anyone
+                },
+                {
+                    SFProjectRole.SFObserver,
+                    project.TranslateConfig.ShareEnabled
+                        && project.TranslateConfig.ShareLevel == TranslateShareLevel.Anyone
+                }
             }
                 .Where(entry => entry.Value)
                 .Select(entry => entry.Key)
@@ -445,22 +502,25 @@ namespace SIL.XForge.Scripture.Services
 
             SFProjectSecret projectSecret = await ProjectSecrets.GetAsync(projectId);
             // Link sharing keys have Email set to null and ExpirationTime set to null.
-            string key = projectSecret.ShareKeys.SingleOrDefault(
-                sk => sk.Email == null && sk.ProjectRole == role)?.Key;
+            string key = projectSecret.ShareKeys.SingleOrDefault(sk => sk.Email == null && sk.ProjectRole == role)?.Key;
             if (!string.IsNullOrEmpty(key))
                 return key;
 
             // Generate a new link sharing key for the given role
             key = _securityService.GenerateKey();
-            await ProjectSecrets.UpdateAsync(p => p.Id == projectId,
-                update => update.Add(p => p.ShareKeys,
-                new ShareKey
-                {
-                    Key = key,
-                    ProjectRole = role,
-                    ExpirationTime = null
-                }
-            ));
+            await ProjectSecrets.UpdateAsync(
+                p => p.Id == projectId,
+                update =>
+                    update.Add(
+                        p => p.ShareKeys,
+                        new ShareKey
+                        {
+                            Key = key,
+                            ProjectRole = role,
+                            ExpirationTime = null
+                        }
+                    )
+            );
             return key;
         }
 
@@ -477,24 +537,29 @@ namespace SIL.XForge.Scripture.Services
                 return;
             }
 
-            await ProjectSecrets.UpdateAsync(projectId, u =>
-            {
-                u.RemoveAll(secretSet => secretSet.ShareKeys, shareKey => shareKey.Email == (emailToUninvite));
-            });
+            await ProjectSecrets.UpdateAsync(
+                projectId,
+                u =>
+                {
+                    u.RemoveAll(secretSet => secretSet.ShareKeys, shareKey => shareKey.Email == (emailToUninvite));
+                }
+            );
         }
 
         /// <summary>Is there already a pending invitation to the project for the specified email address?</summary>
         public async Task<bool> IsAlreadyInvitedAsync(string curUserId, string projectId, string email)
         {
             SFProject project = await GetProjectAsync(projectId);
-            bool sharingEnabled = project.TranslateConfig.ShareEnabled ||
-                (project.CheckingConfig.CheckingEnabled && project.CheckingConfig.ShareEnabled);
+            bool sharingEnabled =
+                project.TranslateConfig.ShareEnabled
+                || (project.CheckingConfig.CheckingEnabled && project.CheckingConfig.ShareEnabled);
             if (!IsProjectAdmin(project, curUserId) && !(IsOnProject(project, curUserId) && sharingEnabled))
                 throw new ForbiddenException();
 
             if (email == null)
                 return false;
-            return await ProjectSecrets.Query()
+            return await ProjectSecrets
+                .Query()
                 .AnyAsync(p => p.Id == projectId && p.ShareKeys.Any(sk => sk.Email == email));
         }
 
@@ -509,8 +574,18 @@ namespace SIL.XForge.Scripture.Services
             SFProjectSecret projectSecret = await ProjectSecrets.GetAsync(projectId);
 
             DateTime now = DateTime.UtcNow;
-            return projectSecret.ShareKeys.Where(s => s.Email != null).Select(sk =>
-                new InviteeStatus { Email = sk.Email, Role = sk.ProjectRole, Expired = sk.ExpirationTime < now }).ToArray();
+            return projectSecret.ShareKeys
+                .Where(s => s.Email != null)
+                .Select(
+                    sk =>
+                        new InviteeStatus
+                        {
+                            Email = sk.Email,
+                            Role = sk.ProjectRole,
+                            Expired = sk.ExpirationTime < now
+                        }
+                )
+                .ToArray();
         }
 
         /// <summary> Check that a share link is valid for a project and add the user to the project. </summary>
@@ -538,9 +613,19 @@ namespace SIL.XForge.Scripture.Services
                 if (projectRole == null)
                     throw new ForbiddenException();
 
-                string[] availableRoles = new Dictionary<string, bool> {
-                    { SFProjectRole.CommunityChecker, project.CheckingConfig.CheckingEnabled && project.CheckingConfig.ShareEnabled && project.CheckingConfig.ShareLevel == CheckingShareLevel.Anyone },
-                    { SFProjectRole.SFObserver, project.TranslateConfig.ShareEnabled && project.TranslateConfig.ShareLevel == TranslateShareLevel.Anyone }
+                string[] availableRoles = new Dictionary<string, bool>
+                {
+                    {
+                        SFProjectRole.CommunityChecker,
+                        project.CheckingConfig.CheckingEnabled
+                            && project.CheckingConfig.ShareEnabled
+                            && project.CheckingConfig.ShareLevel == CheckingShareLevel.Anyone
+                    },
+                    {
+                        SFProjectRole.SFObserver,
+                        project.TranslateConfig.ShareEnabled
+                            && project.TranslateConfig.ShareLevel == TranslateShareLevel.Anyone
+                    }
                 }
                     .Where(entry => entry.Value)
                     .Select(entry => entry.Key)
@@ -555,8 +640,11 @@ namespace SIL.XForge.Scripture.Services
                 }
                 // Look for a valid specific user share key.
                 SFProjectSecret projectSecret = await ProjectSecrets.UpdateAsync(
-                    p => p.Id == projectId && p.ShareKeys.Any(
-                        sk => sk.Email != null && sk.Key == shareKey && sk.ExpirationTime > DateTime.UtcNow),
+                    p =>
+                        p.Id == projectId
+                        && p.ShareKeys.Any(
+                            sk => sk.Email != null && sk.Key == shareKey && sk.ExpirationTime > DateTime.UtcNow
+                        ),
                     update => update.RemoveAll(p => p.ShareKeys, sk => sk.Key == shareKey)
                 );
                 if (projectSecret != null)
@@ -572,14 +660,18 @@ namespace SIL.XForge.Scripture.Services
         public bool IsSourceProject(string projectId)
         {
             IQueryable<SFProject> projectQuery = RealtimeService.QuerySnapshots<SFProject>();
-            return projectQuery.Any(p =>
-                p.TranslateConfig.Source != null &&
-                p.TranslateConfig.Source.ProjectRef == projectId &&
-                p.TranslateConfig.TranslationSuggestionsEnabled
+            return projectQuery.Any(
+                p =>
+                    p.TranslateConfig.Source != null
+                    && p.TranslateConfig.Source.ProjectRef == projectId
+                    && p.TranslateConfig.TranslationSuggestionsEnabled
             );
         }
 
-        public async Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestions(string curUserId, string projectId)
+        public async Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestions(
+            string curUserId,
+            string projectId
+        )
         {
             using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
@@ -588,17 +680,27 @@ namespace SIL.XForge.Scripture.Services
                     throw new DataNotFoundException("The project does not exist.");
                 // TODO Checking whether the permissions contains a particular string is not a very robust way to check
                 // permissions. A rights service needs to be created in C# land.
-                if (!IsProjectAdmin(projectDoc.Data, curUserId) && !projectDoc.Data.UserPermissions[curUserId].Contains("questions.create"))
+                if (
+                    !IsProjectAdmin(projectDoc.Data, curUserId)
+                    && !projectDoc.Data.UserPermissions[curUserId].Contains("questions.create")
+                )
                     throw new ForbiddenException();
                 return _transceleratorService.Questions(projectDoc.Data.ParatextId);
             }
         }
 
-        protected override async Task AddUserToProjectAsync(IConnection conn, IDocument<SFProject> projectDoc,
-            IDocument<User> userDoc, string projectRole, bool removeShareKeys = true)
+        protected override async Task AddUserToProjectAsync(
+            IConnection conn,
+            IDocument<SFProject> projectDoc,
+            IDocument<User> userDoc,
+            string projectRole,
+            bool removeShareKeys = true
+        )
         {
-            await conn.CreateAsync<SFProjectUserConfig>(SFProjectUserConfig.GetDocId(projectDoc.Id, userDoc.Id),
-                new SFProjectUserConfig { ProjectRef = projectDoc.Id, OwnerRef = userDoc.Id });
+            await conn.CreateAsync<SFProjectUserConfig>(
+                SFProjectUserConfig.GetDocId(projectDoc.Id, userDoc.Id),
+                new SFProjectUserConfig { ProjectRef = projectDoc.Id, OwnerRef = userDoc.Id }
+            );
             // Listeners can now assume the ProjectUserConfig is ready when the user is added.
             await base.AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, removeShareKeys);
 
@@ -614,9 +716,11 @@ namespace SIL.XForge.Scripture.Services
             bool translationSuggestionsEnabled = projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled;
             string sourceProjectId = projectDoc.Data.TranslateConfig.Source?.ProjectRef;
             string sourceParatextId = projectDoc.Data.TranslateConfig.Source?.ParatextId;
-            if (translationSuggestionsEnabled
+            if (
+                translationSuggestionsEnabled
                 && !string.IsNullOrWhiteSpace(sourceProjectId)
-                && !string.IsNullOrWhiteSpace(sourceParatextId))
+                && !string.IsNullOrWhiteSpace(sourceParatextId)
+            )
             {
                 // Load the source project role from MongoDB
                 IDocument<SFProject> sourceProjectDoc = await TryGetProjectDocAsync(sourceProjectId, conn);
@@ -629,8 +733,13 @@ namespace SIL.XForge.Scripture.Services
                     if (attempt.TryResult(out string sourceProjectRole))
                     {
                         // If they are in Paratext, add the user to the source project
-                        await this.AddUserToProjectAsync(conn, sourceProjectDoc, userDoc, sourceProjectRole,
-                            removeShareKeys);
+                        await this.AddUserToProjectAsync(
+                            conn,
+                            sourceProjectDoc,
+                            userDoc,
+                            sourceProjectRole,
+                            removeShareKeys
+                        );
                     }
                 }
             }
@@ -644,7 +753,11 @@ namespace SIL.XForge.Scripture.Services
         /// Note that this method is not necessarily applying permissions for user `curUserId`, but rather using that
         /// user to perform PT queries and set values in the SF DB.
         /// </summary>
-        public async Task UpdatePermissionsAsync(string curUserId, IDocument<SFProject> projectDoc, CancellationToken token)
+        public async Task UpdatePermissionsAsync(
+            string curUserId,
+            IDocument<SFProject> projectDoc,
+            CancellationToken token
+        )
         {
             Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
             if (!userSecretAttempt.TryResult(out UserSecret userSecret))
@@ -668,8 +781,14 @@ namespace SIL.XForge.Scripture.Services
             {
                 // Note that DBL specifies permission for a resource with granularity of the whole resource. We will
                 // write in the SF DB that whole-resource permission but on each book and chapter.
-                resourcePermissions =
-                    await _paratextService.GetPermissionsAsync(userSecret, projectDoc.Data, ptUsernameMapping, 0, 0, token);
+                resourcePermissions = await _paratextService.GetPermissionsAsync(
+                    userSecret,
+                    projectDoc.Data,
+                    ptUsernameMapping,
+                    0,
+                    0,
+                    token
+                );
             }
 
             foreach (int bookNum in booksInProject)
@@ -685,30 +804,48 @@ namespace SIL.XForge.Scripture.Services
                 Models.TextInfo text = projectDoc.Data.Texts[textIndex];
                 List<Chapter> chapters = text.Chapters;
                 Dictionary<string, string> bookPermissions = null;
-                IEnumerable<(int bookIndex, int chapterIndex, Dictionary<string, string> chapterPermissions)>
-                    chapterPermissionsInBook = null;
+                IEnumerable<(int bookIndex, int chapterIndex, Dictionary<
+                        string,
+                        string
+                    > chapterPermissions)> chapterPermissionsInBook = null;
 
                 if (isResource)
                 {
                     bookPermissions = resourcePermissions;
                     // Prepare to write the same resource permission for each chapter in the book/text.
                     chapterPermissionsInBook = chapters.Select(
-                        (Chapter chapter, int chapterIndex) => (textIndex, chapterIndex, bookPermissions));
+                        (Chapter chapter, int chapterIndex) => (textIndex, chapterIndex, bookPermissions)
+                    );
                 }
                 else
                 {
-                    bookPermissions = await _paratextService.GetPermissionsAsync(userSecret, projectDoc.Data,
-                        ptUsernameMapping, bookNum, 0, token);
+                    bookPermissions = await _paratextService.GetPermissionsAsync(
+                        userSecret,
+                        projectDoc.Data,
+                        ptUsernameMapping,
+                        bookNum,
+                        0,
+                        token
+                    );
 
                     // Get the project permissions for the chapters
-                    chapterPermissionsInBook = await Task.WhenAll(chapters.Select(
-                        async (Chapter chapter, int chapterIndex) =>
-                        {
-                            Dictionary<string, string> chapterPermissions = await _paratextService.GetPermissionsAsync(
-                                userSecret, projectDoc.Data, ptUsernameMapping, bookNum, chapter.Number, token);
-                            return (textIndex, chapterIndex, chapterPermissions);
-                        }
-                    ));
+                    chapterPermissionsInBook = await Task.WhenAll(
+                        chapters.Select(
+                            async (Chapter chapter, int chapterIndex) =>
+                            {
+                                Dictionary<string, string> chapterPermissions =
+                                    await _paratextService.GetPermissionsAsync(
+                                        userSecret,
+                                        projectDoc.Data,
+                                        ptUsernameMapping,
+                                        bookNum,
+                                        chapter.Number,
+                                        token
+                                    );
+                                return (textIndex, chapterIndex, chapterPermissions);
+                            }
+                        )
+                    );
                 }
                 projectChapterPermissions.AddRange(chapterPermissionsInBook);
                 projectBookPermissions.Add((textIndex, bookPermissions));
@@ -719,24 +856,39 @@ namespace SIL.XForge.Scripture.Services
             {
                 foreach ((int bookIndex, Dictionary<string, string> bookPermissions) in projectBookPermissions)
                 {
-                    op.Set(pd => pd.Texts[bookIndex].Permissions, bookPermissions,
-                        _permissionDictionaryEqualityComparer);
+                    op.Set(
+                        pd => pd.Texts[bookIndex].Permissions,
+                        bookPermissions,
+                        _permissionDictionaryEqualityComparer
+                    );
                 }
-                foreach ((int bookIndex, int chapterIndex, Dictionary<string, string> chapterPermissions)
-                    in projectChapterPermissions)
+                foreach (
+                    (
+                        int bookIndex,
+                        int chapterIndex,
+                        Dictionary<string, string> chapterPermissions
+                    ) in projectChapterPermissions
+                )
                 {
-                    op.Set(pd => pd.Texts[bookIndex].Chapters[chapterIndex].Permissions, chapterPermissions,
-                        _permissionDictionaryEqualityComparer);
+                    op.Set(
+                        pd => pd.Texts[bookIndex].Chapters[chapterIndex].Permissions,
+                        chapterPermissions,
+                        _permissionDictionaryEqualityComparer
+                    );
                 }
             });
         }
 
-        protected override async Task RemoveUserFromProjectAsync(IConnection conn, IDocument<SFProject> projectDoc,
-            IDocument<User> userDoc)
+        protected override async Task RemoveUserFromProjectAsync(
+            IConnection conn,
+            IDocument<SFProject> projectDoc,
+            IDocument<User> userDoc
+        )
         {
             await base.RemoveUserFromProjectAsync(conn, projectDoc, userDoc);
             IDocument<SFProjectUserConfig> projectUserConfigDoc = await conn.FetchAsync<SFProjectUserConfig>(
-                SFProjectUserConfig.GetDocId(projectDoc.Id, userDoc.Id));
+                SFProjectUserConfig.GetDocId(projectDoc.Id, userDoc.Id)
+            );
             await projectUserConfigDoc.DeleteAsync();
         }
 
@@ -753,20 +905,29 @@ namespace SIL.XForge.Scripture.Services
                 if (_paratextService.IsResource(project.ParatextId))
                 {
                     // If the project is a resource, get the permission from the DBL
-                    string permission = await _paratextService.GetResourcePermissionAsync(project.ParatextId, userId,
-                        CancellationToken.None);
+                    string permission = await _paratextService.GetResourcePermissionAsync(
+                        project.ParatextId,
+                        userId,
+                        CancellationToken.None
+                    );
                     return permission switch
                     {
                         TextInfoPermission.None => Attempt.Failure(ProjectRole.None),
                         TextInfoPermission.Read => Attempt.Success(SFProjectRole.PTObserver),
-                        _ => throw new ArgumentException($"Unknown resource permission: '{permission}'",
-                            nameof(permission)),
+                        _
+                            => throw new ArgumentException(
+                                $"Unknown resource permission: '{permission}'",
+                                nameof(permission)
+                            ),
                     };
                 }
                 else
                 {
-                    Attempt<string> roleAttempt = await _paratextService.TryGetProjectRoleAsync(userSecret,
-                        project.ParatextId, CancellationToken.None);
+                    Attempt<string> roleAttempt = await _paratextService.TryGetProjectRoleAsync(
+                        userSecret,
+                        project.ParatextId,
+                        CancellationToken.None
+                    );
                     if (roleAttempt.TryResult(out string role))
                     {
                         return Attempt.Success(role);
@@ -806,8 +967,12 @@ namespace SIL.XForge.Scripture.Services
             return project.UserRoles.TryGetValue(userId, out string role) && role == SFProjectRole.Translator;
         }
 
-        private static void UpdateSetting<T>(Json0OpBuilder<SFProject> builder, Expression<Func<SFProject, T>> field,
-            T setting, bool forceUpdate = false)
+        private static void UpdateSetting<T>(
+            Json0OpBuilder<SFProject> builder,
+            Expression<Func<SFProject, T>> field,
+            T setting,
+            bool forceUpdate = false
+        )
         {
             if (setting != null || forceUpdate)
                 builder.Set(field, setting);
@@ -831,23 +996,19 @@ namespace SIL.XForge.Scripture.Services
                 Name = ptProject.Name,
                 ShortName = ptProject.ShortName,
                 WritingSystem = new WritingSystem { Tag = ptProject.LanguageTag },
-                TranslateConfig = new TranslateConfig
-                {
-                    TranslationSuggestionsEnabled = false,
-                    Source = null
-                },
-                CheckingConfig = new CheckingConfig
-                {
-                    CheckingEnabled = false
-                }
+                TranslateConfig = new TranslateConfig { TranslationSuggestionsEnabled = false, Source = null },
+                CheckingConfig = new CheckingConfig { CheckingEnabled = false }
             };
 
             // Create the new project using the realtime service
             string projectId = ObjectId.GenerateNewId().ToString();
             using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
-                if (this.RealtimeService.QuerySnapshots<SFProject>().Any(
-                    (SFProject sfProject) => sfProject.ParatextId == project.ParatextId))
+                if (
+                    this.RealtimeService
+                        .QuerySnapshots<SFProject>()
+                        .Any((SFProject sfProject) => sfProject.ParatextId == project.ParatextId)
+                )
                 {
                     throw new InvalidOperationException(ErrorAlreadyConnectedKey);
                 }
@@ -870,9 +1031,13 @@ namespace SIL.XForge.Scripture.Services
         /// <param name="userIds">The ids and roles of the users who will need to access the source.</param>
         /// <returns>The <see cref="TranslateSource"/> object for the specified resource.</returns>
         /// <exception cref="DataNotFoundException">The source paratext project does not exist.</exception>
-        private async Task<TranslateSource> GetTranslateSourceAsync(string curUserId, UserSecret userSecret,
-            string paratextId, IReadOnlyList<ParatextProject> ptProjects,
-            IReadOnlyDictionary<string, string> userRoles = null)
+        private async Task<TranslateSource> GetTranslateSourceAsync(
+            string curUserId,
+            UserSecret userSecret,
+            string paratextId,
+            IReadOnlyList<ParatextProject> ptProjects,
+            IReadOnlyDictionary<string, string> userRoles = null
+        )
         {
             ParatextProject sourcePTProject = ptProjects.SingleOrDefault(p => p.ParatextId == paratextId);
             string sourceProjectRef = null;
@@ -891,8 +1056,9 @@ namespace SIL.XForge.Scripture.Services
             IEnumerable<string> userIds = userRoles != null ? userRoles.Keys : new string[] { curUserId };
 
             // Get the project reference
-            SFProject sourceProject = RealtimeService.QuerySnapshots<SFProject>()
-               .FirstOrDefault(p => p.ParatextId == paratextId);
+            SFProject sourceProject = RealtimeService
+                .QuerySnapshots<SFProject>()
+                .FirstOrDefault(p => p.ParatextId == paratextId);
             if (sourceProject != null)
             {
                 sourceProjectRef = sourceProject.Id;

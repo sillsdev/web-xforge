@@ -45,21 +45,20 @@ namespace PTDDCloneAll
             services.AddSFRealtimeServer(LoggerFactory, Configuration, IsDevelopment);
             services.AddSFServices();
             services.AddSFDataAccess(Configuration);
-            services.Configure<RequestLocalizationOptions>(
-                opts =>
+            services.Configure<RequestLocalizationOptions>(opts =>
+            {
+                var supportedCultures = new List<CultureInfo>();
+                foreach (var culture in SharedResource.Cultures)
                 {
-                    var supportedCultures = new List<CultureInfo>();
-                    foreach (var culture in SharedResource.Cultures)
-                    {
-                        supportedCultures.Add(new CultureInfo(culture.Key));
-                    }
+                    supportedCultures.Add(new CultureInfo(culture.Key));
+                }
 
-                    opts.DefaultRequestCulture = new RequestCulture("en");
-                    // Formatting numbers, dates, etc.
-                    opts.SupportedCultures = supportedCultures;
-                    // UI strings that we localized.
-                    opts.SupportedUICultures = supportedCultures;
-                });
+                opts.DefaultRequestCulture = new RequestCulture("en");
+                // Formatting numbers, dates, etc.
+                opts.SupportedCultures = supportedCultures;
+                // UI strings that we localized.
+                opts.SupportedUICultures = supportedCultures;
+            });
             services.AddLocalization(options => options.ResourcesPath = "Resources");
             services.AddSFMachine(Configuration);
             services.AddTransient<IPTDDSyncRunner, PTDDSyncRunner>();
@@ -70,8 +69,11 @@ namespace PTDDCloneAll
             return new AutofacServiceProvider(ApplicationContainer);
         }
 
-        public void Configure(IApplicationBuilder app, IHostApplicationLifetime appLifetime,
-            IExceptionHandler exceptionHandler)
+        public void Configure(
+            IApplicationBuilder app,
+            IHostApplicationLifetime appLifetime,
+            IExceptionHandler exceptionHandler
+        )
         {
             Console.WriteLine("Configuring app");
             // Set a custom realtime port using the Realtime__Port environment variable

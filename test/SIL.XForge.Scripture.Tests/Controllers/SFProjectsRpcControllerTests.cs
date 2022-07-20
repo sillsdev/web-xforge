@@ -14,7 +14,9 @@ namespace SIL.XForge.Scripture.Controllers
         public async Task InvitedUsers_Available()
         {
             var env = new TestEnvironment();
-            var output = ((await env.Controller.InvitedUsers("some-project-id")) as RpcMethodSuccessResult).ReturnObject;
+            var output = (
+                (await env.Controller.InvitedUsers("some-project-id")) as RpcMethodSuccessResult
+            ).ReturnObject;
             Assert.That(output, Is.Not.Null);
         }
 

@@ -11,9 +11,13 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class RealtimeServiceCollectionExtensions
     {
-        public static IServiceCollection AddRealtimeServer(this IServiceCollection services,
-            ILoggerFactory loggerFactory, IConfiguration configuration, Action<RealtimeOptions> configureOptions,
-            bool launchWithDebugging = false)
+        public static IServiceCollection AddRealtimeServer(
+            this IServiceCollection services,
+            ILoggerFactory loggerFactory,
+            IConfiguration configuration,
+            Action<RealtimeOptions> configureOptions,
+            bool launchWithDebugging = false
+        )
         {
             services.AddNodeJS();
             services.Configure<NodeJSProcessOptions>(options =>

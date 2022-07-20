@@ -75,8 +75,10 @@ namespace SIL.XForge.DataAccess
             return this;
         }
 
-        public IUpdateBuilder<T> RemoveAll<TItem>(Expression<Func<T, IEnumerable<TItem>>> field,
-            Expression<Func<TItem, bool>> predicate)
+        public IUpdateBuilder<T> RemoveAll<TItem>(
+            Expression<Func<T, IEnumerable<TItem>>> field,
+            Expression<Func<TItem, bool>> predicate
+        )
         {
             Func<T, IEnumerable<TItem>> getCollection = field.Compile();
             IEnumerable<TItem> collection = getCollection(_entity);
@@ -112,12 +114,16 @@ namespace SIL.XForge.DataAccess
 
         private static MethodInfo GetFirstOrDefaultMethod(Type type)
         {
-            return typeof(Enumerable).GetMethods().Where(m => m.Name == "FirstOrDefault")
-                .Single(m => m.GetParameters().Length == 2).MakeGenericMethod(type);
+            return typeof(Enumerable)
+                .GetMethods()
+                .Where(m => m.Name == "FirstOrDefault")
+                .Single(m => m.GetParameters().Length == 2)
+                .MakeGenericMethod(type);
         }
 
         private (IEnumerable<object> Owners, PropertyInfo Property, object Index) GetFieldOwners<TField>(
-            Expression<Func<T, TField>> field)
+            Expression<Func<T, TField>> field
+        )
         {
             List<object> owners = null;
             MemberInfo member = null;
@@ -141,14 +147,18 @@ namespace SIL.XForge.DataAccess
                                 switch (index)
                                 {
                                     case ArrayPosition.FirstMatching:
-                                        if (_filter.Body is MethodCallExpression callExpr
-                                            && IsAnyMethod(callExpr.Method))
+                                        if (
+                                            _filter.Body is MethodCallExpression callExpr
+                                            && IsAnyMethod(callExpr.Method)
+                                        )
                                         {
                                             var predicate = (LambdaExpression)callExpr.Arguments[1];
                                             Type itemType = predicate.Parameters[0].Type;
                                             MethodInfo firstOrDefault = GetFirstOrDefaultMethod(itemType);
-                                            newOwner = firstOrDefault.Invoke(null,
-                                                new object[] { owner, predicate.Compile() });
+                                            newOwner = firstOrDefault.Invoke(
+                                                null,
+                                                new object[] { owner, predicate.Compile() }
+                                            );
                                             if (newOwner != null)
                                                 newOwners.Add(newOwner);
                                         }

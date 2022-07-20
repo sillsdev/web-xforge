@@ -18,8 +18,6 @@ using SIL.XForge.Scripture.Realtime;
 
 namespace SIL.XForge.Scripture.Services
 {
-
-
     [TestFixture]
     public class ParatextNotesMapperTests
     {
@@ -33,7 +31,8 @@ namespace SIL.XForge.Scripture.Services
 
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
-                const string oldNotesText = @"
+                const string oldNotesText =
+                    @"
                     <notes version=""1.1"">
                         <thread id=""ANSWER_answer03"">
                             <selection verseRef=""MAT 1:2"" startPos=""0"" selectedText="""" />
@@ -45,11 +44,17 @@ namespace SIL.XForge.Scripture.Services
                             </comment>
                         </thread>
                     </notes>";
-                Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(u => u.Username);
-                XElement notesElem = await env.Mapper.GetNotesChangelistAsync(XElement.Parse(oldNotesText),
-                    await env.GetQuestionDocsAsync(conn), ptProjectUsers);
+                Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(
+                    u => u.Username
+                );
+                XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
+                    XElement.Parse(oldNotesText),
+                    await env.GetQuestionDocsAsync(conn),
+                    ptProjectUsers
+                );
 
-                const string expectedNotesText = @"
+                const string expectedNotesText =
+                    @"
                     <notes version=""1.1"">
                         <thread id=""ANSWER_answer01"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
@@ -102,7 +107,8 @@ namespace SIL.XForge.Scripture.Services
 
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
-                const string oldNotesText = @"
+                const string oldNotesText =
+                    @"
                     <notes version=""1.1"">
                         <thread id=""ANSWER_answer03"">
                             <selection verseRef=""MAT 1:2"" startPos=""0"" selectedText="""" />
@@ -114,11 +120,17 @@ namespace SIL.XForge.Scripture.Services
                             </comment>
                         </thread>
                     </notes>";
-                Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(u => u.Username);
-                XElement notesElem = await env.Mapper.GetNotesChangelistAsync(XElement.Parse(oldNotesText),
-                    await env.GetQuestionDocsAsync(conn), ptProjectUsers);
+                Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(
+                    u => u.Username
+                );
+                XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
+                    XElement.Parse(oldNotesText),
+                    await env.GetQuestionDocsAsync(conn),
+                    ptProjectUsers
+                );
 
-                const string expectedNotesText = @"
+                const string expectedNotesText =
+                    @"
                     <notes version=""1.1"">
                         <thread id=""ANSWER_answer01"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
@@ -171,7 +183,8 @@ namespace SIL.XForge.Scripture.Services
 
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
-                const string oldNotesText = @"
+                const string oldNotesText =
+                    @"
                     <notes version=""1.1"">
                         <thread id=""ANSWER_answer03"">
                             <selection verseRef=""MAT 1:2"" startPos=""0"" selectedText="""" />
@@ -183,16 +196,22 @@ namespace SIL.XForge.Scripture.Services
                             </comment>
                         </thread>
                     </notes>";
-                Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(u => u.Username);
-                XElement notesElem = await env.Mapper.GetNotesChangelistAsync(XElement.Parse(oldNotesText),
-                    await env.GetQuestionDocsAsync(conn), ptProjectUsers);
+                Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(
+                    u => u.Username
+                );
+                XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
+                    XElement.Parse(oldNotesText),
+                    await env.GetQuestionDocsAsync(conn),
+                    ptProjectUsers
+                );
 
                 // User 3 is a PT user but does not have a role on this particular PT project, according to the PT
                 // Registry. So we will attribute their comment to user 1, who does have a role on this project
                 // according to the PT registry. Otherwise we would get errors when uploading a note attributed to user
                 // 3's PT username since they do not have appropriate access to write a note. Also, NewSyncUsers will
                 // not contain user 3.
-                const string expectedNotesText = @"
+                const string expectedNotesText =
+                    @"
                     <notes version=""1.1"">
                         <thread id=""ANSWER_answer01"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
@@ -245,7 +264,8 @@ namespace SIL.XForge.Scripture.Services
 
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
-                const string oldNotesText = @"
+                const string oldNotesText =
+                    @"
                     <notes version=""1.1"">
                         <thread id=""ANSWER_answer01"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
@@ -270,11 +290,17 @@ namespace SIL.XForge.Scripture.Services
                             </comment>
                         </thread>
                     </notes>";
-                Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(u => u.Username);
-                XElement notesElem = await env.Mapper.GetNotesChangelistAsync(XElement.Parse(oldNotesText),
-                    await env.GetQuestionDocsAsync(conn), ptProjectUsers);
+                Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(
+                    u => u.Username
+                );
+                XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
+                    XElement.Parse(oldNotesText),
+                    await env.GetQuestionDocsAsync(conn),
+                    ptProjectUsers
+                );
 
-                const string expectedNotesText = @"
+                const string expectedNotesText =
+                    @"
                     <notes version=""1.1"">
                         <thread id=""ANSWER_answer01"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
@@ -309,7 +335,8 @@ namespace SIL.XForge.Scripture.Services
 
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
-                const string oldNotesText = @"
+                const string oldNotesText =
+                    @"
                     <notes version=""1.1"">
                         <thread id=""ANSWER_answer01"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
@@ -349,11 +376,17 @@ namespace SIL.XForge.Scripture.Services
                             </comment>
                         </thread>
                     </notes>";
-                Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(u => u.Username);
-                XElement notesElem = await env.Mapper.GetNotesChangelistAsync(XElement.Parse(oldNotesText),
-                    await env.GetQuestionDocsAsync(conn), ptProjectUsers);
+                Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(
+                    u => u.Username
+                );
+                XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
+                    XElement.Parse(oldNotesText),
+                    await env.GetQuestionDocsAsync(conn),
+                    ptProjectUsers
+                );
 
-                const string expectedNotesText = @"
+                const string expectedNotesText =
+                    @"
                     <notes version=""1.1"">
                         <thread id=""ANSWER_answer01"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
@@ -385,29 +418,33 @@ namespace SIL.XForge.Scripture.Services
         {
             public TestEnvironment()
             {
-                UserSecrets = new MemoryRepository<UserSecret>(new[]
-                {
-                    new UserSecret { Id = "user01" },
-                    new UserSecret { Id = "user03" }
-                });
+                UserSecrets = new MemoryRepository<UserSecret>(
+                    new[]
+                    {
+                        new UserSecret { Id = "user01" },
+                        new UserSecret { Id = "user03" }
+                    }
+                );
 
                 RealtimeService = new SFMemoryRealtimeService();
 
                 ParatextService = Substitute.For<IParatextService>();
                 ParatextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user01")).Returns("PT User 1");
                 ParatextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user03")).Returns("PT User 3");
-                var options = Microsoft.Extensions.Options.Options.Create(new LocalizationOptions
-                {
-                    ResourcesPath = "Resources"
-                });
+                var options = Microsoft.Extensions.Options.Options.Create(
+                    new LocalizationOptions { ResourcesPath = "Resources" }
+                );
                 var factory = new ResourceManagerStringLocalizerFactory(options, NullLoggerFactory.Instance);
                 Localizer = new StringLocalizer<SharedResource>(factory);
                 var siteOptions = Substitute.For<IOptions<SiteOptions>>();
-                siteOptions.Value.Returns(new SiteOptions
-                {
-                    Name = "xForge",
-                });
-                Mapper = new ParatextNotesMapper(UserSecrets, ParatextService, Localizer, siteOptions, new TestGuidService());
+                siteOptions.Value.Returns(new SiteOptions { Name = "xForge", });
+                Mapper = new ParatextNotesMapper(
+                    UserSecrets,
+                    ParatextService,
+                    Localizer,
+                    siteOptions,
+                    new TestGuidService()
+                );
             }
 
             public ParatextNotesMapper Mapper { get; }
@@ -421,66 +458,82 @@ namespace SIL.XForge.Scripture.Services
             {
                 SFProject project = Project(includeSyncUsers);
                 PtProjectUsers = project.ParatextUsers;
-                await Mapper.InitAsync(UserSecrets.Get("user01"), ProjectSecret(),
-                    ParatextUsersOnProject(twoPtUsersOnProject), project, CancellationToken.None);
+                await Mapper.InitAsync(
+                    UserSecrets.Get("user01"),
+                    ProjectSecret(),
+                    ParatextUsersOnProject(twoPtUsersOnProject),
+                    project,
+                    CancellationToken.None
+                );
             }
 
-            public void AddData(string answerSyncUserId1, string answerSyncUserId2, string commentSyncUserId1,
-                string commentSyncUserId2, bool useAudioResponses = false)
+            public void AddData(
+                string answerSyncUserId1,
+                string answerSyncUserId2,
+                string commentSyncUserId1,
+                string commentSyncUserId2,
+                bool useAudioResponses = false
+            )
             {
-                RealtimeService.AddRepository("questions", OTType.Json0, new MemoryRepository<Question>(new[]
-                {
-                    new Question
-                    {
-                        Id = "project01:question01",
-                        DataId = "question01",
-                        VerseRef = new VerseRefData(40, 1, 1),
-                        Text = useAudioResponses ? "" : "Test question?",
-                        Answers =
+                RealtimeService.AddRepository(
+                    "questions",
+                    OTType.Json0,
+                    new MemoryRepository<Question>(
+                        new[]
                         {
-                            new Answer
+                            new Question
                             {
-                                DataId = "answer01",
-                                OwnerRef = "user02",
-                                SyncUserRef = answerSyncUserId1,
-                                DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc),
-                                Text = useAudioResponses ? "" : "Test answer 1.",
-                                Comments =
+                                Id = "project01:question01",
+                                DataId = "question01",
+                                VerseRef = new VerseRefData(40, 1, 1),
+                                Text = useAudioResponses ? "" : "Test question?",
+                                Answers =
                                 {
-                                    new Comment
+                                    new Answer
                                     {
-                                        DataId = "comment01",
-                                        OwnerRef = "user03",
-                                        SyncUserRef = commentSyncUserId1,
-                                        DateCreated = new DateTime(2019, 1, 1, 9, 0, 0, DateTimeKind.Utc),
-                                        Text = "Test comment 1."
-                                    }
-                                }
-                            },
-                            new Answer
-                            {
-                                DataId = "answer02",
-                                OwnerRef = "user04",
-                                SyncUserRef = answerSyncUserId2,
-                                DateCreated = new DateTime(2019, 1, 2, 8, 0, 0, DateTimeKind.Utc),
-                                Text = "Test answer 2.",
-                                VerseRef = new VerseRefData(40, 1, "2-3"),
-                                ScriptureText = "This is some scripture.",
-                                Comments =
-                                {
-                                    new Comment
-                                    {
-                                        DataId = "comment02",
+                                        DataId = "answer01",
                                         OwnerRef = "user02",
-                                        SyncUserRef = commentSyncUserId2,
-                                        DateCreated = new DateTime(2019, 1, 2, 9, 0, 0, DateTimeKind.Utc),
-                                        Text = "Test comment 2."
+                                        SyncUserRef = answerSyncUserId1,
+                                        DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc),
+                                        Text = useAudioResponses ? "" : "Test answer 1.",
+                                        Comments =
+                                        {
+                                            new Comment
+                                            {
+                                                DataId = "comment01",
+                                                OwnerRef = "user03",
+                                                SyncUserRef = commentSyncUserId1,
+                                                DateCreated = new DateTime(2019, 1, 1, 9, 0, 0, DateTimeKind.Utc),
+                                                Text = "Test comment 1."
+                                            }
+                                        }
+                                    },
+                                    new Answer
+                                    {
+                                        DataId = "answer02",
+                                        OwnerRef = "user04",
+                                        SyncUserRef = answerSyncUserId2,
+                                        DateCreated = new DateTime(2019, 1, 2, 8, 0, 0, DateTimeKind.Utc),
+                                        Text = "Test answer 2.",
+                                        VerseRef = new VerseRefData(40, 1, "2-3"),
+                                        ScriptureText = "This is some scripture.",
+                                        Comments =
+                                        {
+                                            new Comment
+                                            {
+                                                DataId = "comment02",
+                                                OwnerRef = "user02",
+                                                SyncUserRef = commentSyncUserId2,
+                                                DateCreated = new DateTime(2019, 1, 2, 9, 0, 0, DateTimeKind.Utc),
+                                                Text = "Test comment 2."
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                }));
+                    )
+                );
             }
 
             public async Task<IEnumerable<IDocument<Question>>> GetQuestionDocsAsync(IConnection conn)
@@ -489,8 +542,10 @@ namespace SIL.XForge.Scripture.Services
                 return new[] { questionDoc };
             }
 
-            public async Task<IEnumerable<IDocument<NoteThread>>> GetNoteThreadDocsAsync(IConnection conn,
-                string[] threadIds)
+            public async Task<IEnumerable<IDocument<NoteThread>>> GetNoteThreadDocsAsync(
+                IConnection conn,
+                string[] threadIds
+            )
             {
                 IDocument<NoteThread>[] noteThreadDocs = new IDocument<NoteThread>[threadIds.Length];
                 var tasks = new List<Task>();
@@ -512,8 +567,9 @@ namespace SIL.XForge.Scripture.Services
                 ptUserRoles["ptuser01"] = SFProjectRole.Administrator;
                 if (twoPtUserOnProject)
                     ptUserRoles["ptuser03"] = SFProjectRole.Translator;
-                ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
-                    Arg.Any<CancellationToken>()).Returns(ptUserRoles);
+                ParatextService
+                    .GetProjectRolesAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), Arg.Any<CancellationToken>())
+                    .Returns(ptUserRoles);
             }
 
             private static SFProject Project(bool includeSyncUsers = true)
@@ -534,10 +590,7 @@ namespace SIL.XForge.Scripture.Services
 
             private static SFProjectSecret ProjectSecret()
             {
-                return new SFProjectSecret
-                {
-                    Id = "project01",
-                };
+                return new SFProjectSecret { Id = "project01", };
             }
 
             private static List<User> ParatextUsersOnProject(bool twoPtUsersOnProject)

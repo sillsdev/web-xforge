@@ -26,5 +26,4 @@ namespace SIL.XForge.Configuration
         /// </summary>
         public List<DocConfig> UserDataDocs { get; set; } = new List<DocConfig>();
     }
-
 }

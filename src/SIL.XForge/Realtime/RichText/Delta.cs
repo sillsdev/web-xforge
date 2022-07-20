@@ -131,8 +131,11 @@ namespace SIL.XForge.Realtime.RichText
                         else
                             newOp[InsertType] = thisOp[InsertType];
 
-                        JToken attributes = ComposeAttributes(thisOp[Attributes], otherOp[Attributes],
-                            thisOp.OpType() == RetainType);
+                        JToken attributes = ComposeAttributes(
+                            thisOp[Attributes],
+                            otherOp[Attributes],
+                            thisOp.OpType() == RetainType
+                        );
                         if (attributes != null)
                             newOp[Attributes] = attributes;
                         delta.Add(newOp);
@@ -173,9 +176,8 @@ namespace SIL.XForge.Realtime.RichText
             foreach (Diff component in diffResult)
             {
                 int length = component.text.Length;
-                DeltaOpsAttributeHelper deltaOpsHelper = component.operation == Operation.EQUAL
-                    ? new DeltaOpsAttributeHelper(retainCharIds)
-                    : null;
+                DeltaOpsAttributeHelper deltaOpsHelper =
+                    component.operation == Operation.EQUAL ? new DeltaOpsAttributeHelper(retainCharIds) : null;
                 while (length > 0)
                 {
                     int opLength = 0;
@@ -249,10 +251,12 @@ namespace SIL.XForge.Realtime.RichText
                 {
                     if (((JObject)op[InsertType]).Property("verse")?.Value.Type == JTokenType.Object)
                     {
-                        JProperty numberToken =
-                            ((JObject)((JObject)op[InsertType]).Property("verse").Value).Property("number");
+                        JProperty numberToken = ((JObject)((JObject)op[InsertType]).Property("verse").Value).Property(
+                            "number"
+                        );
                         // update target verse so we know what verse we are in
-                        isTargetVerse = numberToken.Value.Type == JTokenType.String && (string)numberToken.Value == verseRef;
+                        isTargetVerse =
+                            numberToken.Value.Type == JTokenType.String && (string)numberToken.Value == verseRef;
                         continue;
                     }
                     else if (((JObject)op[InsertType]).Property("chapter")?.Value.Type == JTokenType.Object)
@@ -384,14 +388,19 @@ namespace SIL.XForge.Realtime.RichText
                 StripCharId(bClone);
             }
             // Make a list of all attributes and their values in b, that are changed, new, or removed in b.
-            JObject attributes = aClone.Properties().Select(p => p.Name)
+            JObject attributes = aClone
+                .Properties()
+                .Select(p => p.Name)
                 .Concat(bClone.Properties().Select(p => p.Name))
-                .Aggregate(new JObject(), (attrs, key) =>
-                {
-                    if (!JToken.DeepEquals(aClone[key], bClone[key]))
-                        attrs[key] = bObj[key] == null ? JValue.CreateNull() : bObj[key];
-                    return attrs;
-                });
+                .Aggregate(
+                    new JObject(),
+                    (attrs, key) =>
+                    {
+                        if (!JToken.DeepEquals(aClone[key], bClone[key]))
+                            attrs[key] = bObj[key] == null ? JValue.CreateNull() : bObj[key];
+                        return attrs;
+                    }
+                );
             return attributes.HasValues ? attributes : null;
         }
 
@@ -412,7 +421,6 @@ namespace SIL.XForge.Realtime.RichText
                         break;
                     default:
                         break;
-
                 }
             }
             IEnumerable<string> properties = obj.Properties().Select(p => p.Name);
@@ -547,8 +555,10 @@ namespace SIL.XForge.Realtime.RichText
                     JObject newOp = newDeltaOps[i];
                     if (JTokenDeepEqualsIgnoreCharId(originalOp[InsertType], newOp[InsertType]))
                     {
-                        delta.Retain(opLengths[i],
-                            DiffAttributes(originalOp[Attributes], newOp[Attributes], retainCharIds));
+                        delta.Retain(
+                            opLengths[i],
+                            DiffAttributes(originalOp[Attributes], newOp[Attributes], retainCharIds)
+                        );
                     }
                     else
                     {

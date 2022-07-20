@@ -17,10 +17,7 @@ namespace SIL.XForge.Utils
     {
         public static Attempt<T> Failure { get; } = new Attempt<T>();
 
-        public Attempt(T result)
-            : this(true, result)
-        {
-        }
+        public Attempt(T result) : this(true, result) { }
 
         public Attempt(bool success, T result = default(T))
         {

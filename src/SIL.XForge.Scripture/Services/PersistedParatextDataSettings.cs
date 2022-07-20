@@ -7,9 +7,6 @@ namespace SIL.XForge.Scripture
     {
         public SerializableStringDictionary LastRegistryDataCachedTimes { get; set; }
 
-        public void SafeSave()
-        {
-
-        }
+        public void SafeSave() { }
     }
 }

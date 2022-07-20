@@ -13,13 +13,16 @@ namespace SIL.XForge.Services
     {
         public static string CreateAccessToken(DateTime issuedAt, DateTime expiration, string paratextUserId)
         {
-            var token = new JwtSecurityToken("ptreg_rsa", "pt-api",
+            var token = new JwtSecurityToken(
+                "ptreg_rsa",
+                "pt-api",
                 new[]
                 {
                     new Claim(JwtClaimTypes.Subject, paratextUserId),
                     new Claim(JwtClaimTypes.IssuedAt, EpochTime.GetIntDate(issuedAt).ToString())
                 },
-                expires: expiration);
+                expires: expiration
+            );
             var handler = new JwtSecurityTokenHandler();
             return handler.WriteToken(token);
         }

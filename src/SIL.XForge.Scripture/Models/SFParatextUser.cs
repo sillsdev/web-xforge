@@ -7,7 +7,6 @@ namespace SIL.XForge.Scripture.Models
     /// </summary>
     public class SFParatextUser : ParatextUser
     {
-        public SFParatextUser(string ptUsername) : base(ptUsername, true)
-        { }
+        public SFParatextUser(string ptUsername) : base(ptUsername, true) { }
     }
 }

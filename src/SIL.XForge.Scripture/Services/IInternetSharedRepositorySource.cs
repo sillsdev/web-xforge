@@ -12,6 +12,7 @@ namespace SIL.XForge.Scripture.Services
         void RefreshToken(string jwtToken);
         void UnlockRemoteRepository(SharedRepository sharedRepo);
         bool CanUserAuthenticateToPTArchives();
+
         /// <summary> Access as a particular class. </summary>
         InternetSharedRepositorySource AsInternetSharedRepositorySource();
     }

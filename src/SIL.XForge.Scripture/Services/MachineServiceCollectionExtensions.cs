@@ -14,7 +14,8 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             var siteOptions = configuration.GetOptions<SiteOptions>();
             var dataAccessOptions = configuration.GetOptions<DataAccessOptions>();
-            services.AddMachine(config =>
+            services
+                .AddMachine(config =>
                 {
                     config.AuthenticationSchemes = new[] { JwtBearerDefaults.AuthenticationScheme };
                 })

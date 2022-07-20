@@ -38,8 +38,11 @@ namespace SIL.XForge.Services
             {
                 using (var client = new SmtpClient())
                 {
-                    await client.ConnectAsync(siteOptions.SmtpServer, Convert.ToInt32(siteOptions.PortNumber),
-                        SecureSocketOptions.None);
+                    await client.ConnectAsync(
+                        siteOptions.SmtpServer,
+                        Convert.ToInt32(siteOptions.PortNumber),
+                        SecureSocketOptions.None
+                    );
                     await client.SendAsync(mimeMessage);
                     await client.DisconnectAsync(true);
                 }

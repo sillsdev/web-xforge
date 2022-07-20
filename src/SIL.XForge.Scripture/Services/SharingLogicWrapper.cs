@@ -11,8 +11,12 @@ namespace SIL.XForge.Scripture.Services
     /// </summary>
     public class SharingLogicWrapper : ISharingLogicWrapper
     {
-        public bool ShareChanges(List<SharedProject> sharedProjects, SharedRepositorySource source,
-            out List<SendReceiveResult> results, IList<SharedProject> reviewProjects)
+        public bool ShareChanges(
+            List<SharedProject> sharedProjects,
+            SharedRepositorySource source,
+            out List<SendReceiveResult> results,
+            IList<SharedProject> reviewProjects
+        )
         {
             return SharingLogic.ShareChanges(sharedProjects, source, out results, reviewProjects);
         }

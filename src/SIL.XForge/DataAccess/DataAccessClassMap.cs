@@ -10,8 +10,11 @@ namespace SIL.XForge.DataAccess
         {
             var conventionPack = new ConventionPack();
             conventionPack.AddRange(conventions);
-            ConventionRegistry.Register(nspace, conventionPack,
-                t => t.Namespace != null && t.Namespace.StartsWith(nspace));
+            ConventionRegistry.Register(
+                nspace,
+                conventionPack,
+                t => t.Namespace != null && t.Namespace.StartsWith(nspace)
+            );
         }
 
         public static void RegisterClass<T>(Action<BsonClassMap<T>> mapSetup)

@@ -87,8 +87,10 @@ namespace SourceTargetSplitting
             }
             catch (HttpRequestException)
             {
-                Log("There was an error starting the program before getting to the migration"
-                    + " part. Maybe the SF server is running and needs shut down? Rethrowing.");
+                Log(
+                    "There was an error starting the program before getting to the migration"
+                        + " part. Maybe the SF server is running and needs shut down? Rethrowing."
+                );
                 throw;
             }
 
@@ -135,27 +137,29 @@ namespace SourceTargetSplitting
                 .Build();
 
             return builder
-                .ConfigureAppConfiguration((context, config) =>
-                {
-                    IWebHostEnvironment env = context.HostingEnvironment;
-                    if (env.IsDevelopment() || env.IsEnvironment("Testing"))
+                .ConfigureAppConfiguration(
+                    (context, config) =>
                     {
-                        config.AddJsonFile("appsettings.user.json", true);
-                    }
-                    else
-                    {
-                        config.AddJsonFile("secrets.json", true, true);
-                    }
+                        IWebHostEnvironment env = context.HostingEnvironment;
+                        if (env.IsDevelopment() || env.IsEnvironment("Testing"))
+                        {
+                            config.AddJsonFile("appsettings.user.json", true);
+                        }
+                        else
+                        {
+                            config.AddJsonFile("secrets.json", true, true);
+                        }
 
-                    if (env.IsEnvironment("Testing"))
-                    {
-                        var appAssembly = Assembly.Load(new AssemblyName(env.ApplicationName));
-                        if (appAssembly != null)
-                            config.AddUserSecrets(appAssembly, true);
-                    }
+                        if (env.IsEnvironment("Testing"))
+                        {
+                            var appAssembly = Assembly.Load(new AssemblyName(env.ApplicationName));
+                            if (appAssembly != null)
+                                config.AddUserSecrets(appAssembly, true);
+                        }
 
-                    config.AddEnvironmentVariables();
-                })
+                        config.AddEnvironmentVariables();
+                    }
+                )
                 .UseConfiguration(configuration)
                 .UseStartup<Startup>();
         }

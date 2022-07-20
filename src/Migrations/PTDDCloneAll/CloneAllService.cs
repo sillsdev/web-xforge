@@ -25,8 +25,10 @@ namespace PTDDCloneAll
         public const string CLONE = "clone";
         public const string CLONE_AND_MOVE_OLD = "cloneandmoveold";
         public const string CLONE_SILENT = "clonesilent";
+
         // Discard un-synchronize SF data. S/R the project directory with PT servers. Import project directory data into SF.
         public const string SYNCHRONIZE_SF = "synchronizesf";
+
         // Write SF data to project directory. S/R the project directory with PT servers. Import project directory data into SF.
         public const string SYNCHRONIZE_PT_SF = "synchronizeptsf";
         public const string INSPECT = "inspect";
@@ -45,9 +47,14 @@ namespace PTDDCloneAll
             return cloneProject || synchronizeProject ? mode : INSPECT;
         }
 
-        public CloneAllService(Func<IPTDDSyncRunner> syncRunnerFactory, IRealtimeService realtimeService,
-            IOptions<SiteOptions> siteOptions, IParatextService paratextService, IRepository<UserSecret> userSecretRepo,
-            IFileSystemService fileSystemService)
+        public CloneAllService(
+            Func<IPTDDSyncRunner> syncRunnerFactory,
+            IRealtimeService realtimeService,
+            IOptions<SiteOptions> siteOptions,
+            IParatextService paratextService,
+            IRepository<UserSecret> userSecretRepo,
+            IFileSystemService fileSystemService
+        )
         {
             _syncRunnerFactory = syncRunnerFactory;
             _realtimeService = realtimeService;
@@ -84,7 +91,9 @@ namespace PTDDCloneAll
                     if (proj.UserRoles.TryGetValue(userId, out string role) && role == SFProjectRole.Administrator)
                     {
                         foundAdmin = true;
-                        UserSecret userSecret = _userSecretRepo.Query().FirstOrDefault((UserSecret us) => us.Id == userId);
+                        UserSecret userSecret = _userSecretRepo
+                            .Query()
+                            .FirstOrDefault((UserSecret us) => us.Id == userId);
                         string ptUsername = _paratextService.GetParatextUsername(userSecret);
                         Log($"Project administrator identified on {proj.Name}: {ptUsername} ({userId})");
                         if (mode == INSPECT)
@@ -110,8 +119,10 @@ namespace PTDDCloneAll
                         }
                         catch (Exception e)
                         {
-                            Log($"Unable to clone {proj.Name} ({proj.Id}) as user: {userId}{Environment.NewLine}" +
-                                $"Error was: {e}");
+                            Log(
+                                $"Unable to clone {proj.Name} ({proj.Id}) as user: {userId}{Environment.NewLine}"
+                                    + $"Error was: {e}"
+                            );
                         }
                     }
                 }

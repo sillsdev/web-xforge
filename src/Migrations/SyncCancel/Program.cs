@@ -42,8 +42,10 @@ namespace SyncCancel
             }
             catch (HttpRequestException)
             {
-                Logger.Log("There was an error starting the program before getting to the inspection or migration. "
-                    + "Maybe the SF server is running on this machine and needs shut down? Rethrowing.");
+                Logger.Log(
+                    "There was an error starting the program before getting to the inspection or migration. "
+                        + "Maybe the SF server is running on this machine and needs shut down? Rethrowing."
+                );
                 throw;
             }
             ISyncCancelService tool = webHost.Services.GetService<ISyncCancelService>();
@@ -70,7 +72,8 @@ namespace SyncCancel
                 .Build();
 
             return builder
-                .ConfigureAppConfiguration((context, config) =>
+                .ConfigureAppConfiguration(
+                    (context, config) =>
                     {
                         IWebHostEnvironment env = context.HostingEnvironment;
                         if (env.IsDevelopment() || env.IsEnvironment("Testing"))
@@ -84,7 +87,8 @@ namespace SyncCancel
                                 config.AddUserSecrets(appAssembly, true);
                         }
                         config.AddEnvironmentVariables();
-                    })
+                    }
+                )
                 .UseConfiguration(configuration)
                 .UseStartup<Startup>();
         }

@@ -8,7 +8,6 @@ using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services
 {
-
     /// <summary>
     /// A class that can be used to get a ScrText without using a cache. This class is not
     /// related by inheritance or type to ScrTextCollection.
@@ -63,11 +62,10 @@ namespace SIL.XForge.Scripture.Services
             string name = GetNameFromSettings(settingsFile);
             if (name != null)
             {
-                ScrText scrText = CreateScrText(ptUsername, new ProjectName()
-                {
-                    ProjectPath = fullProjectPath,
-                    ShortName = name
-                });
+                ScrText scrText = CreateScrText(
+                    ptUsername,
+                    new ProjectName() { ProjectPath = fullProjectPath, ShortName = name }
+                );
 
                 // return the object
                 return scrText;

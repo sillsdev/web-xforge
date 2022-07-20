@@ -13,7 +13,6 @@ namespace SIL.XForge.Scripture.Services
         private LazyScrTextCollection _lazyScrTextCollection;
         private IFileSystemService _fileSystemService;
 
-
         [SetUp]
         public void BeforeEachTest()
         {

@@ -30,12 +30,17 @@ namespace PtdaSyncAll
             await env.Service.SynchronizeAllProjectsAsync(false);
 
             await env.ParatextService.Received().GetProjectsAsync(Arg.Any<UserSecret>());
-            await env.ParatextSyncRunner.DidNotReceive().RunAsync(Arg.Any<string>(), Arg.Any<string>(),
-                Arg.Any<bool>());
-            env.ProgramLogger.DidNotReceive().Log(Arg.Is<string>((string message) =>
-                message.Contains("Starting an asynchronous synchronization")));
-            env.ProgramLogger.DidNotReceive().Log(Arg.Is<string>((string message) =>
-                message.Contains("Waiting for synchronization tasks to finish")));
+            await env.ParatextSyncRunner
+                .DidNotReceive()
+                .RunAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+            env.ProgramLogger
+                .DidNotReceive()
+                .Log(Arg.Is<string>((string message) => message.Contains("Starting an asynchronous synchronization")));
+            env.ProgramLogger
+                .DidNotReceive()
+                .Log(
+                    Arg.Is<string>((string message) => message.Contains("Waiting for synchronization tasks to finish"))
+                );
         }
 
         [Test]
@@ -43,14 +48,18 @@ namespace PtdaSyncAll
         {
             var env = new TestEnvironment();
             Task syncTask = null;
-            env.ParatextSyncRunner.RunAsync("project01", "user01", Arg.Any<bool>()).Returns((callInfo) =>
-            {
-                syncTask = Task.Run(() =>
-                {
-                    Task.Delay(10000).Wait();
-                });
-                return syncTask;
-            });
+            env.ParatextSyncRunner
+                .RunAsync("project01", "user01", Arg.Any<bool>())
+                .Returns(
+                    (callInfo) =>
+                    {
+                        syncTask = Task.Run(() =>
+                        {
+                            Task.Delay(10000).Wait();
+                        });
+                        return syncTask;
+                    }
+                );
             Assert.That(syncTask?.Status, Is.Not.EqualTo(TaskStatus.RanToCompletion));
 
             await env.Service.SynchronizeAllProjectsAsync(true);
@@ -60,10 +69,24 @@ namespace PtdaSyncAll
             await env.ParatextService.Received().GetProjectsAsync(Arg.Any<UserSecret>());
             await env.ParatextSyncRunner.Received().RunAsync("project01", "user01", Arg.Any<bool>());
 
-            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
-                message.Contains("All sync tasks finished with a claimed Task status of Completed Successfully")));
-            env.ProgramLogger.DidNotReceive().Log(Arg.Is<string>((string message) =>
-                message.Contains("There was a problem with one or more synchronization tasks")));
+            env.ProgramLogger
+                .Received()
+                .Log(
+                    Arg.Is<string>(
+                        (string message) =>
+                            message.Contains(
+                                "All sync tasks finished with a claimed Task status of Completed Successfully"
+                            )
+                    )
+                );
+            env.ProgramLogger
+                .DidNotReceive()
+                .Log(
+                    Arg.Is<string>(
+                        (string message) =>
+                            message.Contains("There was a problem with one or more synchronization tasks")
+                    )
+                );
         }
 
         [Test]
@@ -84,18 +107,31 @@ namespace PtdaSyncAll
             await env.ParatextSyncRunner.Received().RunAsync("project01", "user01", Arg.Any<bool>());
             await env.ParatextSyncRunner.Received().RunAsync("project02", "user01", Arg.Any<bool>());
 
-            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
-                message.Contains("All sync tasks finished with a claimed Task status of Completed Successfully")));
-            env.ProgramLogger.DidNotReceive().Log(Arg.Is<string>((string message) =>
-                message.Contains("There was a problem with one or more synchronization tasks")));
+            env.ProgramLogger
+                .Received()
+                .Log(
+                    Arg.Is<string>(
+                        (string message) =>
+                            message.Contains(
+                                "All sync tasks finished with a claimed Task status of Completed Successfully"
+                            )
+                    )
+                );
+            env.ProgramLogger
+                .DidNotReceive()
+                .Log(
+                    Arg.Is<string>(
+                        (string message) =>
+                            message.Contains("There was a problem with one or more synchronization tasks")
+                    )
+                );
 
-            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
-                message.Contains("> PT project P01")));
-            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
-                message.Contains("> PT project P02")));
+            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) => message.Contains("> PT project P01")));
+            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) => message.Contains("> PT project P02")));
 
-            env.ProgramLogger.DidNotReceive().Log(Arg.Is<string>((string message) =>
-                message.Contains("subset of projects")));
+            env.ProgramLogger
+                .DidNotReceive()
+                .Log(Arg.Is<string>((string message) => message.Contains("subset of projects")));
         }
 
         [Test]
@@ -119,18 +155,31 @@ namespace PtdaSyncAll
             await env.ParatextSyncRunner.Received().RunAsync("project01", "user01", Arg.Any<bool>());
             await env.ParatextSyncRunner.Received().RunAsync("project02", "user01", Arg.Any<bool>());
 
-            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
-                message.Contains("All sync tasks finished with a claimed Task status of Completed Successfully")));
-            env.ProgramLogger.DidNotReceive().Log(Arg.Is<string>((string message) =>
-                message.Contains("There was a problem with one or more synchronization tasks")));
+            env.ProgramLogger
+                .Received()
+                .Log(
+                    Arg.Is<string>(
+                        (string message) =>
+                            message.Contains(
+                                "All sync tasks finished with a claimed Task status of Completed Successfully"
+                            )
+                    )
+                );
+            env.ProgramLogger
+                .DidNotReceive()
+                .Log(
+                    Arg.Is<string>(
+                        (string message) =>
+                            message.Contains("There was a problem with one or more synchronization tasks")
+                    )
+                );
 
-            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
-                message.Contains("> PT project P01")));
-            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
-                message.Contains("> PT project P02")));
+            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) => message.Contains("> PT project P01")));
+            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) => message.Contains("> PT project P02")));
 
-            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
-                message.Contains("subset of projects")));
+            env.ProgramLogger
+                .Received()
+                .Log(Arg.Is<string>((string message) => message.Contains("subset of projects")));
         }
 
         [Test]
@@ -153,18 +202,33 @@ namespace PtdaSyncAll
             await env.ParatextSyncRunner.Received().RunAsync("project01", "user01", Arg.Any<bool>());
             await env.ParatextSyncRunner.DidNotReceive().RunAsync("project02", "user01", Arg.Any<bool>());
 
-            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
-                message.Contains("All sync tasks finished with a claimed Task status of Completed Successfully")));
-            env.ProgramLogger.DidNotReceive().Log(Arg.Is<string>((string message) =>
-                message.Contains("There was a problem with one or more synchronization tasks")));
+            env.ProgramLogger
+                .Received()
+                .Log(
+                    Arg.Is<string>(
+                        (string message) =>
+                            message.Contains(
+                                "All sync tasks finished with a claimed Task status of Completed Successfully"
+                            )
+                    )
+                );
+            env.ProgramLogger
+                .DidNotReceive()
+                .Log(
+                    Arg.Is<string>(
+                        (string message) =>
+                            message.Contains("There was a problem with one or more synchronization tasks")
+                    )
+                );
 
-            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
-                message.Contains("> PT project P01")));
-            env.ProgramLogger.DidNotReceive().Log(Arg.Is<string>((string message) =>
-                message.Contains("> PT project P02")));
+            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) => message.Contains("> PT project P01")));
+            env.ProgramLogger
+                .DidNotReceive()
+                .Log(Arg.Is<string>((string message) => message.Contains("> PT project P02")));
 
-            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
-                message.Contains("subset of projects")));
+            env.ProgramLogger
+                .Received()
+                .Log(Arg.Is<string>((string message) => message.Contains("subset of projects")));
         }
 
         [Test]
@@ -172,25 +236,40 @@ namespace PtdaSyncAll
         {
             var env = new TestEnvironment();
             Task syncTask = null;
-            env.ParatextSyncRunner.RunAsync("project01", "user01", Arg.Any<bool>()).Returns((callInfo) =>
-            {
-                syncTask = Task.Run(() =>
-                {
-                    Task.Delay(10000).Wait();
-                    throw new Exception("Everything broke.");
-                });
-                return syncTask;
-            });
+            env.ParatextSyncRunner
+                .RunAsync("project01", "user01", Arg.Any<bool>())
+                .Returns(
+                    (callInfo) =>
+                    {
+                        syncTask = Task.Run(() =>
+                        {
+                            Task.Delay(10000).Wait();
+                            throw new Exception("Everything broke.");
+                        });
+                        return syncTask;
+                    }
+                );
             Assert.That(syncTask?.Status, Is.Not.EqualTo(TaskStatus.RanToCompletion));
 
             await env.Service.SynchronizeAllProjectsAsync(true);
 
             // Exceptions thrown from the synchronization are reported.
             Assert.That(syncTask?.Status, Is.EqualTo(TaskStatus.Faulted));
-            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
-                message.Contains("There was a problem with one or more synchronization tasks")));
-            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
-                message.Contains("One or more sync tasks did not complete successfully")));
+            env.ProgramLogger
+                .Received()
+                .Log(
+                    Arg.Is<string>(
+                        (string message) =>
+                            message.Contains("There was a problem with one or more synchronization tasks")
+                    )
+                );
+            env.ProgramLogger
+                .Received()
+                .Log(
+                    Arg.Is<string>(
+                        (string message) => message.Contains("One or more sync tasks did not complete successfully")
+                    )
+                );
         }
 
         [Test]
@@ -215,22 +294,60 @@ namespace PtdaSyncAll
             // intentionally use the admin user that was requested to be used for project01.
             await env.ParatextSyncRunner.Received().RunAsync("project02", "user01", Arg.Any<bool>());
 
-            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
-                message.Contains("For SF Project project01, we were asked to use SF user user03, not user01")));
-            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
-                message.Contains("For SF Project project01, we were asked to use this SF user user03 to sync")));
-            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
-                message.Contains(
-                    "Starting an asynchronous synchronization for SF project project01 as SF user user03")));
-            env.ProgramLogger.DidNotReceive().Log(Arg.Is<string>((string message) =>
-                message.Contains(
-                    "Starting an asynchronous synchronization for SF project project01 as SF user user01")));
+            env.ProgramLogger
+                .Received()
+                .Log(
+                    Arg.Is<string>(
+                        (string message) =>
+                            message.Contains(
+                                "For SF Project project01, we were asked to use SF user user03, not user01"
+                            )
+                    )
+                );
+            env.ProgramLogger
+                .Received()
+                .Log(
+                    Arg.Is<string>(
+                        (string message) =>
+                            message.Contains(
+                                "For SF Project project01, we were asked to use this SF user user03 to sync"
+                            )
+                    )
+                );
+            env.ProgramLogger
+                .Received()
+                .Log(
+                    Arg.Is<string>(
+                        (string message) =>
+                            message.Contains(
+                                "Starting an asynchronous synchronization for SF project project01 as SF user user03"
+                            )
+                    )
+                );
+            env.ProgramLogger
+                .DidNotReceive()
+                .Log(
+                    Arg.Is<string>(
+                        (string message) =>
+                            message.Contains(
+                                "Starting an asynchronous synchronization for SF project project01 as SF user user01"
+                            )
+                    )
+                );
 
-            env.ProgramLogger.DidNotReceive().Log(Arg.Is<string>((string message) =>
-                message.Contains("For SF Project project02")));
-            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
-                message.Contains(
-                    "Starting an asynchronous synchronization for SF project project02 as SF user user01")));
+            env.ProgramLogger
+                .DidNotReceive()
+                .Log(Arg.Is<string>((string message) => message.Contains("For SF Project project02")));
+            env.ProgramLogger
+                .Received()
+                .Log(
+                    Arg.Is<string>(
+                        (string message) =>
+                            message.Contains(
+                                "Starting an asynchronous synchronization for SF project project02 as SF user user01"
+                            )
+                    )
+                );
 
             Task syncTaskProject01 = synchronizationTasks.GetValueOrDefault("project01");
             Task syncTaskProject02 = synchronizationTasks.GetValueOrDefault("project02");
@@ -240,25 +357,34 @@ namespace PtdaSyncAll
 
         private class TestEnvironment
         {
-
             public TestEnvironment()
             {
                 IServiceProvider serviceProvider = Substitute.For<IServiceProvider>();
                 RealtimeService = new SFMemoryRealtimeService();
                 ParatextService = Substitute.For<IParatextService>();
-                var userSecrets = new MemoryRepository<UserSecret>(new[]
-                {
-                    new UserSecret { Id = "user01" , ParatextTokens = new Tokens
+                var userSecrets = new MemoryRepository<UserSecret>(
+                    new[]
+                    {
+                        new UserSecret
                         {
-                            AccessToken = CreateAccessToken(DateTime.Now),
-                            RefreshToken = "test_refresh_token1"
-                        }},
-                        new UserSecret { Id = "user03" , ParatextTokens = new Tokens
+                            Id = "user01",
+                            ParatextTokens = new Tokens
+                            {
+                                AccessToken = CreateAccessToken(DateTime.Now),
+                                RefreshToken = "test_refresh_token1"
+                            }
+                        },
+                        new UserSecret
                         {
-                            AccessToken = CreateAccessToken(DateTime.Now),
-                            RefreshToken = "test_refresh_token2"
-                        }}
-                });
+                            Id = "user03",
+                            ParatextTokens = new Tokens
+                            {
+                                AccessToken = CreateAccessToken(DateTime.Now),
+                                RefreshToken = "test_refresh_token2"
+                            }
+                        }
+                    }
+                );
 
                 SetupSFData(true, true);
 
@@ -266,8 +392,13 @@ namespace PtdaSyncAll
                 Func<IParatextSyncRunner> syncRunnerFactory = () => ParatextSyncRunner;
 
                 ProgramLogger = Substitute.For<IProgramLogger>();
-                Service = new SyncAllService(syncRunnerFactory, RealtimeService, ParatextService, userSecrets,
-                    ProgramLogger);
+                Service = new SyncAllService(
+                    syncRunnerFactory,
+                    RealtimeService,
+                    ParatextService,
+                    userSecrets,
+                    ProgramLogger
+                );
             }
 
             public SyncAllService Service { get; }
@@ -279,123 +410,111 @@ namespace PtdaSyncAll
             public Dictionary<string, Task> SetupSynchronizationTasks()
             {
                 var synchronizationTasks = new Dictionary<string, Task>();
-                ParatextSyncRunner.RunAsync("project01", Arg.Any<string>(), Arg.Any<bool>()).Returns((callInfo) =>
-                {
-                    Task project01task = Task.Run(() =>
-                    {
-                        Task.Delay(10000).Wait();
-                    });
-                    synchronizationTasks.Add("project01", project01task);
-                    return project01task;
-                });
-                ParatextSyncRunner.RunAsync("project02", Arg.Any<string>(), Arg.Any<bool>()).Returns((callInfo) =>
-                {
-                    Task project02task = Task.Run(() =>
-                    {
-                        Task.Delay(15000).Wait();
-                    });
-                    synchronizationTasks.Add("project02", project02task);
-                    return project02task;
-                });
+                ParatextSyncRunner
+                    .RunAsync("project01", Arg.Any<string>(), Arg.Any<bool>())
+                    .Returns(
+                        (callInfo) =>
+                        {
+                            Task project01task = Task.Run(() =>
+                            {
+                                Task.Delay(10000).Wait();
+                            });
+                            synchronizationTasks.Add("project01", project01task);
+                            return project01task;
+                        }
+                    );
+                ParatextSyncRunner
+                    .RunAsync("project02", Arg.Any<string>(), Arg.Any<bool>())
+                    .Returns(
+                        (callInfo) =>
+                        {
+                            Task project02task = Task.Run(() =>
+                            {
+                                Task.Delay(15000).Wait();
+                            });
+                            synchronizationTasks.Add("project02", project02task);
+                            return project02task;
+                        }
+                    );
                 return synchronizationTasks;
             }
 
             // The SetupSFData method was copied from ParatextSyncRunnerTests.cs, trimmed, and modified.
             public void SetupSFData(bool translationSuggestionsEnabled, bool checkingEnabled)
             {
-                RealtimeService.AddRepository("users", OTType.Json0, new MemoryRepository<User>(new[]
-                {
-                    new User
-                    {
-                        Id = "user01",
-                        ParatextId = "pt01"
-                    },
-                    new User
-                    {
-                        Id = "user02",
-                        ParatextId = "pt02"
-                    },
-                    new User
-                    {
-                        Id = "user03",
-                        ParatextId = "pt03"
-                    }
-                }));
-                RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(
-                    new[]
-                    {
-                        new SFProject
+                RealtimeService.AddRepository(
+                    "users",
+                    OTType.Json0,
+                    new MemoryRepository<User>(
+                        new[]
                         {
-                            Id = "project01",
-                            Name = "project01",
-                            ShortName = "P01",
-                            UserRoles = new Dictionary<string, string>
-                            {
-                                { "user01", SFProjectRole.Administrator },
-                                { "user02", SFProjectRole.Translator },
-                                { "user03", SFProjectRole.Administrator }
-
-                            },
-                            ParatextId = "target",
-                            TranslateConfig = new TranslateConfig
-                            {
-                                TranslationSuggestionsEnabled = translationSuggestionsEnabled,
-                                Source = new TranslateSource
-                                {
-                                    ParatextId = "source",
-                                    Name = "Source",
-                                    ShortName = "SRC",
-                                    WritingSystem = new WritingSystem
-                                    {
-                                        Tag = "en"
-                                    }
-                                }
-                            },
-                            CheckingConfig = new CheckingConfig
-                            {
-                                CheckingEnabled = checkingEnabled
-                            },
-                            Sync = new Sync
-                            {
-                                QueuedCount = 1
-                            }
-                        },
-                        new SFProject
+                            new User { Id = "user01", ParatextId = "pt01" },
+                            new User { Id = "user02", ParatextId = "pt02" },
+                            new User { Id = "user03", ParatextId = "pt03" }
+                        }
+                    )
+                );
+                RealtimeService.AddRepository(
+                    "sf_projects",
+                    OTType.Json0,
+                    new MemoryRepository<SFProject>(
+                        new[]
                         {
-                            Id = "project02",
-                            Name = "project02",
-                            ShortName = "P02",
-                            UserRoles = new Dictionary<string, string>
+                            new SFProject
                             {
-                                { "user01", SFProjectRole.Administrator },
-                                { "user02", SFProjectRole.Translator },
-                                { "user03", SFProjectRole.Administrator }
-                            },
-                            ParatextId = "target",
-                            TranslateConfig = new TranslateConfig
-                            {
-                                TranslationSuggestionsEnabled = translationSuggestionsEnabled,
-                                Source = new TranslateSource
+                                Id = "project01",
+                                Name = "project01",
+                                ShortName = "P01",
+                                UserRoles = new Dictionary<string, string>
                                 {
-                                    ParatextId = "source",
-                                    Name = "Source",
-                                    ShortName = "SR2",
-                                    WritingSystem = new WritingSystem
+                                    { "user01", SFProjectRole.Administrator },
+                                    { "user02", SFProjectRole.Translator },
+                                    { "user03", SFProjectRole.Administrator }
+                                },
+                                ParatextId = "target",
+                                TranslateConfig = new TranslateConfig
+                                {
+                                    TranslationSuggestionsEnabled = translationSuggestionsEnabled,
+                                    Source = new TranslateSource
                                     {
-                                        Tag = "en"
+                                        ParatextId = "source",
+                                        Name = "Source",
+                                        ShortName = "SRC",
+                                        WritingSystem = new WritingSystem { Tag = "en" }
                                     }
-                                }
+                                },
+                                CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
+                                Sync = new Sync { QueuedCount = 1 }
                             },
-                            CheckingConfig = new CheckingConfig
+                            new SFProject
                             {
-                                CheckingEnabled = checkingEnabled
-                            },
-                            Sync = new Sync
-                            {
-                                QueuedCount = 1
+                                Id = "project02",
+                                Name = "project02",
+                                ShortName = "P02",
+                                UserRoles = new Dictionary<string, string>
+                                {
+                                    { "user01", SFProjectRole.Administrator },
+                                    { "user02", SFProjectRole.Translator },
+                                    { "user03", SFProjectRole.Administrator }
+                                },
+                                ParatextId = "target",
+                                TranslateConfig = new TranslateConfig
+                                {
+                                    TranslationSuggestionsEnabled = translationSuggestionsEnabled,
+                                    Source = new TranslateSource
+                                    {
+                                        ParatextId = "source",
+                                        Name = "Source",
+                                        ShortName = "SR2",
+                                        WritingSystem = new WritingSystem { Tag = "en" }
+                                    }
+                                },
+                                CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
+                                Sync = new Sync { QueuedCount = 1 }
                             }
                         }
-                    }));
+                    )
+                );
 
                 RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>());
                 RealtimeService.AddRepository("questions", OTType.Json0, new MemoryRepository<Question>());
@@ -404,13 +523,16 @@ namespace PtdaSyncAll
             // The CreateAccessToken method was copied verbatim from UserServiceTests.cs.
             private string CreateAccessToken(DateTime issuedAt)
             {
-                var token = new JwtSecurityToken("ptreg_rsa", "pt-api",
+                var token = new JwtSecurityToken(
+                    "ptreg_rsa",
+                    "pt-api",
                     new[]
                     {
                         new Claim(JwtClaimTypes.Subject, "paratext01"),
                         new Claim(JwtClaimTypes.IssuedAt, EpochTime.GetIntDate(issuedAt).ToString())
                     },
-                    expires: issuedAt + TimeSpan.FromMinutes(5));
+                    expires: issuedAt + TimeSpan.FromMinutes(5)
+                );
                 var handler = new JwtSecurityTokenHandler();
                 return handler.WriteToken(token);
             }

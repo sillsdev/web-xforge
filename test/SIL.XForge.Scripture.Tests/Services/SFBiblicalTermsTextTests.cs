@@ -22,9 +22,13 @@ namespace SIL.XForge.Scripture.Services
         public void Segments_EmptyRenderings()
         {
             var tokenizer = new LatinWordTokenizer();
-            var doc = new XDocument(new XElement("TermRenderingsList",
-                TermRendering("term1", guess: false),
-                TermRendering("term2", guess: false)));
+            var doc = new XDocument(
+                new XElement(
+                    "TermRenderingsList",
+                    TermRendering("term1", guess: false),
+                    TermRendering("term2", guess: false)
+                )
+            );
             var text = new SFBiblicalTermsText(tokenizer, "project01", doc);
             Assert.That(text.GetSegments(), Is.Empty);
         }
@@ -33,9 +37,13 @@ namespace SIL.XForge.Scripture.Services
         public void Segments_Guess()
         {
             var tokenizer = new LatinWordTokenizer();
-            var doc = new XDocument(new XElement("TermRenderingsList",
-                TermRendering("term1", guess: true, "Term1"),
-                TermRendering("term2", guess: true, "Term2")));
+            var doc = new XDocument(
+                new XElement(
+                    "TermRenderingsList",
+                    TermRendering("term1", guess: true, "Term1"),
+                    TermRendering("term2", guess: true, "Term2")
+                )
+            );
             var text = new SFBiblicalTermsText(tokenizer, "project01", doc);
             Assert.That(text.GetSegments(), Is.Empty);
         }
@@ -44,9 +52,13 @@ namespace SIL.XForge.Scripture.Services
         public void Segments_Renderings()
         {
             var tokenizer = new LatinWordTokenizer();
-            var doc = new XDocument(new XElement("TermRenderingsList",
-                TermRendering("term2", guess: false, "Term2"),
-                TermRendering("term1", guess: false, "Term1")));
+            var doc = new XDocument(
+                new XElement(
+                    "TermRenderingsList",
+                    TermRendering("term2", guess: false, "Term2"),
+                    TermRendering("term1", guess: false, "Term1")
+                )
+            );
             var text = new SFBiblicalTermsText(tokenizer, "project01", doc);
             TextSegment[] segments = text.GetSegments().ToArray();
             Assert.That(segments.Length, Is.EqualTo(2));
@@ -59,9 +71,13 @@ namespace SIL.XForge.Scripture.Services
         public void Segments_MultipleRenderings()
         {
             var tokenizer = new LatinWordTokenizer();
-            var doc = new XDocument(new XElement("TermRenderingsList",
-                TermRendering("term2", guess: false, "Term2-1", "Term2-2"),
-                TermRendering("term1", guess: false, "Term1")));
+            var doc = new XDocument(
+                new XElement(
+                    "TermRenderingsList",
+                    TermRendering("term2", guess: false, "Term2-1", "Term2-2"),
+                    TermRendering("term1", guess: false, "Term1")
+                )
+            );
             var text = new SFBiblicalTermsText(tokenizer, "project01", doc);
             TextSegment[] segments = text.GetSegments().ToArray();
             Assert.That(segments.Length, Is.EqualTo(3));
@@ -72,17 +88,21 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(string.Join(" ", segments[2].Segment), Is.EqualTo("Term2-2"));
         }
 
-
         private static XElement TermRendering(string id, bool guess, params string[] renderings)
         {
-            return new XElement("TermRendering",
+            return new XElement(
+                "TermRendering",
                 new XAttribute("Id", id),
                 new XAttribute("Guess", guess),
-                new XElement("Renderings", string.Join("||", renderings),
-                new XElement("Glossary"),
-                new XElement("Changes"),
-                new XElement("Notes"),
-                new XElement("Denials")));
+                new XElement(
+                    "Renderings",
+                    string.Join("||", renderings),
+                    new XElement("Glossary"),
+                    new XElement("Changes"),
+                    new XElement("Notes"),
+                    new XElement("Denials")
+                )
+            );
         }
     }
 }

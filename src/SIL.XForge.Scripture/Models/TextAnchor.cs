@@ -10,7 +10,7 @@ namespace SIL.XForge.Scripture.Models
     ///     \q2 laud him, all you peoples.
     ///     \q
     /// (1) "Praise" has Start 0 and Length 6.
-    /// (2) "all you peoples" has Start 43 and Length 15. (43 == "Praise the ".Length + "Lord".Length + ", 
+    /// (2) "all you peoples" has Start 43 and Length 15. (43 == "Praise the ".Length + "Lord".Length + ",
     ///     all you nations:".Length + "laud him, ".Length)
     /// </summary>
     public class TextAnchor
