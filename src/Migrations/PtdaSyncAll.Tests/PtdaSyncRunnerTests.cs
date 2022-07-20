@@ -202,15 +202,19 @@ namespace PtdaSyncAll
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MAT",
-                Arg.Any<string>(), Arg.Any<string>());
-            await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MRK",
-                Arg.Any<string>(), Arg.Any<string>());
+            await env.ParatextService
+                .DidNotReceive()
+                .UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MAT", Arg.Any<string>(), Arg.Any<string>());
+            await env.ParatextService
+                .DidNotReceive()
+                .UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MRK", Arg.Any<string>(), Arg.Any<string>());
 
-            await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MAT",
-                Arg.Any<string>(), Arg.Any<string>());
-            await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MRK",
-                Arg.Any<string>(), Arg.Any<string>());
+            await env.ParatextService
+                .DidNotReceive()
+                .UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MAT", Arg.Any<string>(), Arg.Any<string>());
+            await env.ParatextService
+                .DidNotReceive()
+                .UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MRK", Arg.Any<string>(), Arg.Any<string>());
 
             var delta = Delta.New().InsertText("text");
             Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(delta), Is.True);
@@ -223,8 +227,9 @@ namespace PtdaSyncAll
             Assert.That(env.GetText("MRK", 1, TextType.Source).DeepEquals(delta), Is.True);
             Assert.That(env.GetText("MRK", 2, TextType.Source).DeepEquals(delta), Is.True);
 
-            await env.ParatextService.DidNotReceive().UpdateNotesAsync(Arg.Any<UserSecret>(), "target",
-                Arg.Any<string>());
+            await env.ParatextService
+                .DidNotReceive()
+                .UpdateNotesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
 
             SFProjectSecret projectSecret = env.GetProjectSecret();
             Assert.That(projectSecret.SyncUsers.Count, Is.EqualTo(0));
@@ -246,15 +251,19 @@ namespace PtdaSyncAll
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            await env.ParatextService.Received().UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MAT",
-                Arg.Any<string>(), Arg.Any<string>());
-            await env.ParatextService.Received().UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MRK",
-                Arg.Any<string>(), Arg.Any<string>());
+            await env.ParatextService
+                .Received()
+                .UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MAT", Arg.Any<string>(), Arg.Any<string>());
+            await env.ParatextService
+                .Received()
+                .UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MRK", Arg.Any<string>(), Arg.Any<string>());
 
-            await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MAT",
-                Arg.Any<string>(), Arg.Any<string>());
-            await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MRK",
-                Arg.Any<string>(), Arg.Any<string>());
+            await env.ParatextService
+                .DidNotReceive()
+                .UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MAT", Arg.Any<string>(), Arg.Any<string>());
+            await env.ParatextService
+                .DidNotReceive()
+                .UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MRK", Arg.Any<string>(), Arg.Any<string>());
 
             var delta = Delta.New().InsertText("text");
             Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(delta), Is.True);
@@ -287,18 +296,23 @@ namespace PtdaSyncAll
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            await env.ParatextService.Received().UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MAT",
-                Arg.Any<string>(), Arg.Any<string>());
-            await env.ParatextService.Received().UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MRK",
-                Arg.Any<string>(), Arg.Any<string>());
+            await env.ParatextService
+                .Received()
+                .UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MAT", Arg.Any<string>(), Arg.Any<string>());
+            await env.ParatextService
+                .Received()
+                .UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MRK", Arg.Any<string>(), Arg.Any<string>());
 
-            await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MAT",
-                Arg.Any<string>(), Arg.Any<string>());
-            await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MRK",
-                Arg.Any<string>(), Arg.Any<string>());
+            await env.ParatextService
+                .DidNotReceive()
+                .UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MAT", Arg.Any<string>(), Arg.Any<string>());
+            await env.ParatextService
+                .DidNotReceive()
+                .UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MRK", Arg.Any<string>(), Arg.Any<string>());
 
-            await env.ParatextService.DidNotReceive().UpdateNotesAsync(Arg.Any<UserSecret>(), "target",
-                Arg.Any<string>());
+            await env.ParatextService
+                .DidNotReceive()
+                .UpdateNotesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
 
             var delta = Delta.New().InsertText("text");
             Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(delta), Is.True);
@@ -397,7 +411,8 @@ namespace PtdaSyncAll
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
             env.SetupSFData(false, true, true, books);
             env.FileSystemService.FileExists(TestEnvironment.GetUsxFileName(TextType.Target, "MAT")).Returns(false);
-            env.FileSystemService.EnumerateFiles(TestEnvironment.GetProjectPath(TextType.Target))
+            env.FileSystemService
+                .EnumerateFiles(TestEnvironment.GetProjectPath(TextType.Target))
                 .Returns(new[] { "MRK.xml" });
             env.SetupPTData(books);
 
@@ -419,11 +434,9 @@ namespace PtdaSyncAll
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
             env.SetupSFData(true, true, false, books);
             env.SetupPTData(books);
-            var ptUserRoles = new Dictionary<string, string>
-            {
-                { "pt01", SFProjectRole.Translator }
-            };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
+            var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Translator } };
+            env.ParatextService
+                .GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
 
             await env.Runner.RunAsync("project01", "user01", false);
@@ -442,11 +455,9 @@ namespace PtdaSyncAll
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
             env.SetupSFData(true, true, false, books);
             env.SetupPTData(books);
-            var ptUserRoles = new Dictionary<string, string>
-            {
-                { "pt01", SFProjectRole.Administrator }
-            };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
+            var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Administrator } };
+            env.ParatextService
+                .GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
 
             await env.SetUserRole("user02", SFProjectRole.CommunityChecker);
@@ -465,11 +476,14 @@ namespace PtdaSyncAll
         {
             var env = new TestEnvironment();
             env.SetupSFData(false, false, false, new Book("MAT", 2), new Book("MRK", 2));
-            env.RealtimeService.GetRepository<TextData>()
-                .Add(new TextData(Delta.New().InsertText("old text"))
-                {
-                    Id = TextData.GetTextDocId("project01", 42, 1, TextType.Target)
-                });
+            env.RealtimeService
+                .GetRepository<TextData>()
+                .Add(
+                    new TextData(Delta.New().InsertText("old text"))
+                    {
+                        Id = TextData.GetTextDocId("project01", 42, 1, TextType.Target)
+                    }
+                );
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2), new Book("LUK", 2));
 
             await env.Runner.RunAsync("project01", "user01", false);
@@ -512,7 +526,6 @@ namespace PtdaSyncAll
             Assert.That(env.GetText("MAT", 2, TextType.Source).DeepEquals(chapterContent), Is.True);
         }
 
-
         [Test]
         public async Task SyncBookUSxAsync_InvalidBookStateAndNoTextData_SkipSync()
         {
@@ -539,11 +552,19 @@ namespace PtdaSyncAll
             Assert.That(matBookTextInfo.Chapters.Count, Is.EqualTo(0), "setup");
             string matFilename = TestEnvironment.GetUsxFileName(TextType.Target, "MAT");
             // SUT
-            Assert.That(await env.Runner.SyncBookUsxAsync(matBookTextInfo, TextType.Target, "project01",
-                matFilename, false, chaptersToInclude), Is.Null);
+            Assert.That(
+                await env.Runner.SyncBookUsxAsync(
+                    matBookTextInfo,
+                    TextType.Target,
+                    "project01",
+                    matFilename,
+                    false,
+                    chaptersToInclude
+                ),
+                Is.Null
+            );
             // Did not throw. Returned a null list of Chapter objects.
         }
-
 
         [Test]
         public async Task SyncBookUsxAsync_InvalidBookStateAndHasTextData_Crash()
@@ -565,9 +586,19 @@ namespace PtdaSyncAll
             Assert.That(matBookTextInfo.Chapters.Count, Is.EqualTo(0), "setup");
             string matFilename = TestEnvironment.GetUsxFileName(TextType.Target, "MAT");
             // SUT
-            string exceptionMessage = Assert.ThrowsAsync<Exception>(() =>
-                env.Runner.SyncBookUsxAsync(matBookTextInfo, TextType.Target, "project01", matFilename, false,
-                    chaptersToInclude)).Message;
+            string exceptionMessage = Assert
+                .ThrowsAsync<Exception>(
+                    () =>
+                        env.Runner.SyncBookUsxAsync(
+                            matBookTextInfo,
+                            TextType.Target,
+                            "project01",
+                            matFilename,
+                            false,
+                            chaptersToInclude
+                        )
+                )
+                .Message;
             Assert.That(exceptionMessage, Does.Contain("invalid"));
         }
 
@@ -668,10 +699,14 @@ namespace PtdaSyncAll
             await env.Runner.InitAsync("project01", "user01");
 
             // SUT
-            SortedList<int, IDocument<TextData>> targetFetch =
-                await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book), TextType.Target);
-            SortedList<int, IDocument<TextData>> sourceFetch =
-                await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book), TextType.Source);
+            SortedList<int, IDocument<TextData>> targetFetch = await env.Runner.FetchTextDocsAsync(
+                env.TextInfoFromBook(book),
+                TextType.Target
+            );
+            SortedList<int, IDocument<TextData>> sourceFetch = await env.Runner.FetchTextDocsAsync(
+                env.TextInfoFromBook(book),
+                TextType.Source
+            );
             env.Runner.CloseConnection();
 
             // Fetched numberChapters chapters, none of which are missing their chapter content.
@@ -698,10 +733,12 @@ namespace PtdaSyncAll
             var missingSourceChapters = new HashSet<int>() { 2, 3, 10, 12 };
             var existingTargetChapters = Enumerable.Range(1, highestChapter);
             var existingSourceChapters = Enumerable.Range(1, highestChapter).Except(missingSourceChapters);
-            Assert.That(existingSourceChapters.Count(),
-                Is.EqualTo(highestChapter - missingSourceChapters.Count()), "setup");
-            Assert.That(existingTargetChapters.Count(),
-                Is.GreaterThan(existingSourceChapters.Count()), "setup");
+            Assert.That(
+                existingSourceChapters.Count(),
+                Is.EqualTo(highestChapter - missingSourceChapters.Count()),
+                "setup"
+            );
+            Assert.That(existingTargetChapters.Count(), Is.GreaterThan(existingSourceChapters.Count()), "setup");
             var book = new Book("MAT", highestChapter, true) { MissingSourceChapters = missingSourceChapters };
             env.SetupSFData(true, true, false, book);
             await env.Runner.InitAsync("project01", "user01");
@@ -750,13 +787,11 @@ namespace PtdaSyncAll
 
             // Paratext has chapters 1, 4 and 6, with text.
             var chapterDeltas = new int[] { 1, 4, 6 }
-                .Select(c => new ChapterDelta(c, 10, false,
-                Delta.New().InsertText("pt")))
+                .Select(c => new ChapterDelta(c, 10, false, Delta.New().InsertText("pt")))
                 .ToDictionary(cd => cd.Number);
 
             // SUT
-            await env.Runner.ChangeDbToNewSnapshotAsync(textInfo,
-                TextType.Target, null, targetTextDocs, chapterDeltas);
+            await env.Runner.ChangeDbToNewSnapshotAsync(textInfo, TextType.Target, null, targetTextDocs, chapterDeltas);
 
             env.Runner.CloseConnection();
 
@@ -777,9 +812,7 @@ namespace PtdaSyncAll
         private class Book
         {
             public Book(string bookId, int highestChapter, bool hasSource = true)
-                : this(bookId, highestChapter, hasSource ? highestChapter : 0)
-            {
-            }
+                : this(bookId, highestChapter, hasSource ? highestChapter : 0) { }
 
             public Book(string bookId, int highestTargetChapter, int highestSourceChapter)
             {
@@ -795,7 +828,6 @@ namespace PtdaSyncAll
             public HashSet<int> InvalidChapters { get; } = new HashSet<int>();
             public HashSet<int> MissingTargetChapters { get; set; } = new HashSet<int>();
             public HashSet<int> MissingSourceChapters { get; set; } = new HashSet<int>();
-
         }
 
         private class TestEnvironment
@@ -806,18 +838,12 @@ namespace PtdaSyncAll
             public TestEnvironment()
             {
                 IOptions<SiteOptions> siteOptions = Microsoft.Extensions.Options.Options.Create(
-                    new SiteOptions()
-                    {
-                        SiteDir = "scriptureforge"
-                    });
-                var userSecrets = new MemoryRepository<UserSecret>(new[]
-                {
-                    new UserSecret { Id = "user01" }
-                });
-                _projectSecrets = new MemoryRepository<SFProjectSecret>(new[]
-                {
-                    new SFProjectSecret { Id = "project01" }
-                });
+                    new SiteOptions() { SiteDir = "scriptureforge" }
+                );
+                var userSecrets = new MemoryRepository<UserSecret>(new[] { new UserSecret { Id = "user01" } });
+                _projectSecrets = new MemoryRepository<SFProjectSecret>(
+                    new[] { new SFProjectSecret { Id = "project01" } }
+                );
                 SFProjectService = Substitute.For<ISFProjectService>();
                 EngineService = Substitute.For<IEngineService>();
                 ParatextService = Substitute.For<IParatextService>();
@@ -827,7 +853,8 @@ namespace PtdaSyncAll
                     { "pt01", SFProjectRole.Administrator },
                     { "pt02", SFProjectRole.Translator }
                 };
-                ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
+                ParatextService
+                    .GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
                     .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
                 RealtimeService = new SFMemoryRealtimeService();
                 FileSystemService = Substitute.For<IFileSystemService>();
@@ -835,9 +862,19 @@ namespace PtdaSyncAll
                 _notesMapper = Substitute.For<IParatextNotesMapper>();
                 Logger = Substitute.For<ILogger<PtdaSyncRunner>>();
 
-                Runner = new PtdaSyncRunner(siteOptions, userSecrets, _projectSecrets, SFProjectService,
-                    EngineService, ParatextService, RealtimeService, FileSystemService, DeltaUsxMapper, _notesMapper,
-                    Logger);
+                Runner = new PtdaSyncRunner(
+                    siteOptions,
+                    userSecrets,
+                    _projectSecrets,
+                    SFProjectService,
+                    EngineService,
+                    ParatextService,
+                    RealtimeService,
+                    FileSystemService,
+                    DeltaUsxMapper,
+                    _notesMapper,
+                    Logger
+                );
             }
 
             public PtdaSyncRunner Runner { get; }
@@ -861,13 +898,15 @@ namespace PtdaSyncAll
 
             public bool ContainsText(string bookId, int chapter, TextType textType)
             {
-                return RealtimeService.GetRepository<TextData>()
+                return RealtimeService
+                    .GetRepository<TextData>()
                     .Contains(TextData.GetTextDocId("project01", Canon.BookIdToNumber(bookId), chapter, textType));
             }
 
             public TextData GetText(string bookId, int chapter, TextType textType)
             {
-                return RealtimeService.GetRepository<TextData>()
+                return RealtimeService
+                    .GetRepository<TextData>()
                     .Get(TextData.GetTextDocId("project01", Canon.BookIdToNumber(bookId), chapter, textType));
             }
 
@@ -881,61 +920,59 @@ namespace PtdaSyncAll
                 return RealtimeService.GetRepository<Question>().Get($"project01:question{bookId}{chapter}");
             }
 
-            public void SetupSFData(bool translationSuggestionsEnabled, bool checkingEnabled, bool changed,
-                params Book[] books)
+            public void SetupSFData(
+                bool translationSuggestionsEnabled,
+                bool checkingEnabled,
+                bool changed,
+                params Book[] books
+            )
             {
-                RealtimeService.AddRepository("users", OTType.Json0, new MemoryRepository<User>(new[]
-                {
-                    new User
-                    {
-                        Id = "user01",
-                        ParatextId = "pt01"
-                    },
-                    new User
-                    {
-                        Id = "user02",
-                        ParatextId = "pt02"
-                    }
-                }));
-                RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(
-                    new[]
-                    {
-                        new SFProject
+                RealtimeService.AddRepository(
+                    "users",
+                    OTType.Json0,
+                    new MemoryRepository<User>(
+                        new[]
                         {
-                            Id = "project01",
-                            Name = "project01",
-                            ShortName = "P01",
-                            UserRoles = new Dictionary<string, string>
+                            new User { Id = "user01", ParatextId = "pt01" },
+                            new User { Id = "user02", ParatextId = "pt02" }
+                        }
+                    )
+                );
+                RealtimeService.AddRepository(
+                    "sf_projects",
+                    OTType.Json0,
+                    new MemoryRepository<SFProject>(
+                        new[]
+                        {
+                            new SFProject
                             {
-                                { "user01", SFProjectRole.Administrator },
-                                { "user02", SFProjectRole.Translator }
-                            },
-                            ParatextId = "target",
-                            TranslateConfig = new TranslateConfig
-                            {
-                                TranslationSuggestionsEnabled = translationSuggestionsEnabled,
-                                Source = new TranslateSource
+                                Id = "project01",
+                                Name = "project01",
+                                ShortName = "P01",
+                                UserRoles = new Dictionary<string, string>
                                 {
-                                    ParatextId = "source",
-                                    Name = "Source",
-                                    ShortName = "SRC",
-                                    WritingSystem = new WritingSystem
+                                    { "user01", SFProjectRole.Administrator },
+                                    { "user02", SFProjectRole.Translator }
+                                },
+                                ParatextId = "target",
+                                TranslateConfig = new TranslateConfig
+                                {
+                                    TranslationSuggestionsEnabled = translationSuggestionsEnabled,
+                                    Source = new TranslateSource
                                     {
-                                        Tag = "en"
+                                        ParatextId = "source",
+                                        Name = "Source",
+                                        ShortName = "SRC",
+                                        WritingSystem = new WritingSystem { Tag = "en" }
                                     }
-                                }
-                            },
-                            CheckingConfig = new CheckingConfig
-                            {
-                                CheckingEnabled = checkingEnabled
-                            },
-                            Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
-                            Sync = new Sync
-                            {
-                                QueuedCount = 1
+                                },
+                                CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
+                                Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
+                                Sync = new Sync { QueuedCount = 1 }
                             }
                         }
-                    }));
+                    )
+                );
 
                 if (books.Length > 0)
                 {
@@ -944,7 +981,8 @@ namespace PtdaSyncAll
                     FileSystemService.EnumerateFiles(targetPath).Returns(books.Select(b => $"{b.Id}.xml"));
                     string sourcePath = GetProjectPath(TextType.Source);
                     FileSystemService.DirectoryExists(sourcePath).Returns(true);
-                    FileSystemService.EnumerateFiles(sourcePath)
+                    FileSystemService
+                        .EnumerateFiles(sourcePath)
                         .Returns(books.Where(b => b.HighestSourceChapter > 0).Select(b => $"{b.Id}.xml"));
                 }
 
@@ -954,7 +992,13 @@ namespace PtdaSyncAll
                 {
                     AddSFBook(book.Id, book.HighestTargetChapter, TextType.Target, changed, book.MissingTargetChapters);
                     if (book.HighestSourceChapter > 0)
-                        AddSFBook(book.Id, book.HighestSourceChapter, TextType.Source, changed, book.MissingSourceChapters);
+                        AddSFBook(
+                            book.Id,
+                            book.HighestSourceChapter,
+                            TextType.Source,
+                            changed,
+                            book.MissingSourceChapters
+                        );
                 }
 
                 var notesElem = new XElement("notes");
@@ -965,8 +1009,9 @@ namespace PtdaSyncAll
                     newSyncUsers.Add(new SyncUser { Id = "syncuser01", ParatextUsername = "User 1" });
                 }
 
-                _notesMapper.GetNotesChangelistAsync(Arg.Any<XElement>(),
-                    Arg.Any<IEnumerable<IDocument<Question>>>()).Returns(Task.FromResult(notesElem));
+                _notesMapper
+                    .GetNotesChangelistAsync(Arg.Any<XElement>(), Arg.Any<IEnumerable<IDocument<Question>>>())
+                    .Returns(Task.FromResult(notesElem));
                 _notesMapper.NewSyncUsers.Returns(newSyncUsers);
             }
 
@@ -975,31 +1020,47 @@ namespace PtdaSyncAll
                 return new TextInfo
                 {
                     BookNum = Canon.BookIdToNumber(book.Id),
-                    Chapters = Enumerable.Range(1, book.HighestTargetChapter)
-                        .Select(c => new Chapter
-                        {
-                            Number = c,
-                            LastVerse = 10,
-                            IsValid = !book.InvalidChapters.Contains(c)
-                        }).ToList(),
+                    Chapters = Enumerable
+                        .Range(1, book.HighestTargetChapter)
+                        .Select(
+                            c =>
+                                new Chapter
+                                {
+                                    Number = c,
+                                    LastVerse = 10,
+                                    IsValid = !book.InvalidChapters.Contains(c)
+                                }
+                        )
+                        .ToList(),
                     HasSource = book.HighestSourceChapter > 0
                 };
             }
 
-
             public void SetupPTData(params Book[] books)
             {
-                ParatextService.GetBooksAsync(Arg.Any<UserSecret>(), "target")
+                ParatextService
+                    .GetBooksAsync(Arg.Any<UserSecret>(), "target")
                     .Returns(books.Select(b => b.Id).ToArray());
                 // Include book with Source even if there are no chapters, if there are also no chapters in Target. PT
                 // can actually have or not have books which do or do not have chapters more flexibly than this. But in
                 // this way, allow tests to request a Source book exist even with zero chapters.
-                ParatextService.GetBooksAsync(Arg.Any<UserSecret>(), "source")
-                    .Returns(books.Where(b => b.HighestSourceChapter > 0 || b.HighestSourceChapter == b.HighestTargetChapter)
-                    .Select(b => b.Id).ToArray());
+                ParatextService
+                    .GetBooksAsync(Arg.Any<UserSecret>(), "source")
+                    .Returns(
+                        books
+                            .Where(b => b.HighestSourceChapter > 0 || b.HighestSourceChapter == b.HighestTargetChapter)
+                            .Select(b => b.Id)
+                            .ToArray()
+                    );
                 foreach (Book book in books)
                 {
-                    AddPTBook(book.Id, book.HighestTargetChapter, TextType.Target, book.MissingTargetChapters, book.InvalidChapters);
+                    AddPTBook(
+                        book.Id,
+                        book.HighestTargetChapter,
+                        TextType.Target,
+                        book.MissingTargetChapters,
+                        book.InvalidChapters
+                    );
                     if (book.HighestSourceChapter > 0 || book.HighestSourceChapter == book.HighestTargetChapter)
                         AddPTBook(book.Id, book.HighestSourceChapter, TextType.Source, book.MissingSourceChapters);
                 }
@@ -1017,27 +1078,50 @@ namespace PtdaSyncAll
 
             public Task SetUserRole(string userId, string role)
             {
-                return RealtimeService.GetRepository<SFProject>().UpdateAsync(p => p.Id == "project01", u =>
-                    u.Set(pr => pr.UserRoles[userId], role));
+                return RealtimeService
+                    .GetRepository<SFProject>()
+                    .UpdateAsync(p => p.Id == "project01", u => u.Set(pr => pr.UserRoles[userId], role));
             }
 
-            private void AddPTBook(string bookId, int highestChapter, TextType textType, HashSet<int> missingChapters,
-                HashSet<int> invalidChapters = null)
+            private void AddPTBook(
+                string bookId,
+                int highestChapter,
+                TextType textType,
+                HashSet<int> missingChapters,
+                HashSet<int> invalidChapters = null
+            )
             {
                 string paratextProject = GetParatextProject(textType);
 
                 string bookText = GetBookText(textType, bookId, 3);
-                ParatextService.GetBookTextAsync(Arg.Any<UserSecret>(), paratextProject, bookId)
+                ParatextService
+                    .GetBookTextAsync(Arg.Any<UserSecret>(), paratextProject, bookId)
                     .Returns(Task.FromResult(bookText));
-                ParatextService.UpdateBookTextAsync(Arg.Any<UserSecret>(), paratextProject, bookId,
-                    Arg.Any<string>(), Arg.Any<string>()).Returns(Task.FromResult(bookText));
+                ParatextService
+                    .UpdateBookTextAsync(
+                        Arg.Any<UserSecret>(),
+                        paratextProject,
+                        bookId,
+                        Arg.Any<string>(),
+                        Arg.Any<string>()
+                    )
+                    .Returns(Task.FromResult(bookText));
                 FileSystemService.CreateFile(GetUsxFileName(textType, bookId)).Returns(new MemoryStream());
-                Func<XDocument, bool> predicate = d => (string)d?.Root?.Element("book")?.Attribute("code") == bookId
-                        && (string)d?.Root?.Element("book") == paratextProject;
-                var chapterDeltas = Enumerable.Range(1, highestChapter)
+                Func<XDocument, bool> predicate = d =>
+                    (string)d?.Root?.Element("book")?.Attribute("code") == bookId
+                    && (string)d?.Root?.Element("book") == paratextProject;
+                var chapterDeltas = Enumerable
+                    .Range(1, highestChapter)
                     .Where(chapterNumber => !(missingChapters?.Contains(chapterNumber) ?? false))
-                    .Select(c => new ChapterDelta(c, 10, !(invalidChapters?.Contains(c) ?? false),
-                        Delta.New().InsertText("text")));
+                    .Select(
+                        c =>
+                            new ChapterDelta(
+                                c,
+                                10,
+                                !(invalidChapters?.Contains(c) ?? false),
+                                Delta.New().InsertText("text")
+                            )
+                    );
                 if (chapterDeltas.Count() == 0)
                 {
                     // Add implicit ChapterDelta, mimicing DeltaUsxMapper.ToChapterDeltas().
@@ -1046,25 +1130,41 @@ namespace PtdaSyncAll
                 DeltaUsxMapper.ToChapterDeltas(Arg.Is<XDocument>(d => predicate(d))).Returns(chapterDeltas);
             }
 
-            private void AddSFBook(string bookId, int highestChapter, TextType textType, bool changed, HashSet<int> missingChapters = null)
+            private void AddSFBook(
+                string bookId,
+                int highestChapter,
+                TextType textType,
+                bool changed,
+                HashSet<int> missingChapters = null
+            )
             {
                 int bookNum = Canon.BookIdToNumber(bookId);
                 string oldBookText = GetBookText(textType, bookId, 1);
                 string filename = GetUsxFileName(textType, bookId);
-                FileSystemService.OpenFile(filename, FileMode.Open)
+                FileSystemService
+                    .OpenFile(filename, FileMode.Open)
                     .Returns(new MemoryStream(Encoding.UTF8.GetBytes(oldBookText)));
                 FileSystemService.FileExists(filename).Returns(true);
                 string newBookText = GetBookText(textType, bookId, changed ? 2 : 1);
-                DeltaUsxMapper.ToUsx(
-                    Arg.Is<XDocument>(d => (string)d.Root.Element("book").Attribute("code") == bookId
-                        && (string)d.Root.Element("book") == GetParatextProject(textType)),
-                    Arg.Is<IEnumerable<ChapterDelta>>(
-                        (IEnumerable<ChapterDelta> chapterDeltas) => chapterDeltas.Count() > 0))
+                DeltaUsxMapper
+                    .ToUsx(
+                        Arg.Is<XDocument>(
+                            d =>
+                                (string)d.Root.Element("book").Attribute("code") == bookId
+                                && (string)d.Root.Element("book") == GetParatextProject(textType)
+                        ),
+                        Arg.Is<IEnumerable<ChapterDelta>>(
+                            (IEnumerable<ChapterDelta> chapterDeltas) => chapterDeltas.Count() > 0
+                        )
+                    )
                     .Returns(new XDocument(XElement.Parse(newBookText).Element("usx")));
-                DeltaUsxMapper.ToUsx(
-                    Arg.Any<XDocument>(),
-                    Arg.Is<IEnumerable<ChapterDelta>>(
-                        (IEnumerable<ChapterDelta> chapterDeltas) => chapterDeltas.Count() == 0))
+                DeltaUsxMapper
+                    .ToUsx(
+                        Arg.Any<XDocument>(),
+                        Arg.Is<IEnumerable<ChapterDelta>>(
+                            (IEnumerable<ChapterDelta> chapterDeltas) => chapterDeltas.Count() == 0
+                        )
+                    )
                     .Throws<Exception>();
 
                 for (int c = 1; c <= highestChapter; c++)
@@ -1072,19 +1172,24 @@ namespace PtdaSyncAll
                     string id = TextData.GetTextDocId("project01", bookNum, c, textType);
                     if (!(missingChapters?.Contains(c) ?? false))
                     {
-                        RealtimeService.GetRepository<TextData>()
+                        RealtimeService
+                            .GetRepository<TextData>()
                             .Add(new TextData(Delta.New().InsertText(changed ? "changed" : "text")) { Id = id });
                     }
-                    RealtimeService.GetRepository<Question>().Add(new[]
-                    {
-                        new Question
-                        {
-                            Id = $"project01:question{bookId}{c}",
-                            DataId = $"question{bookId}{c}",
-                            ProjectRef = "project01",
-                            VerseRef = new VerseRefData(bookNum, c, 1)
-                        }
-                    });
+                    RealtimeService
+                        .GetRepository<Question>()
+                        .Add(
+                            new[]
+                            {
+                                new Question
+                                {
+                                    Id = $"project01:question{bookId}{c}",
+                                    DataId = $"question{bookId}{c}",
+                                    ProjectRef = "project01",
+                                    VerseRef = new VerseRefData(bookNum, c, 1)
+                                }
+                            }
+                        );
                 }
             }
 

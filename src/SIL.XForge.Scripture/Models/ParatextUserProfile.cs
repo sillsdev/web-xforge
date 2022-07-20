@@ -7,6 +7,7 @@ namespace SIL.XForge.Scripture.Models
     {
         /// <summary> The user's Paratext username </summary>
         public string Username { get; set; }
+
         /// <summary>
         /// A unique id that can be used to associate a project component (e.g. a note) to this paratext user
         /// </summary>

@@ -10,7 +10,11 @@ namespace SIL.XForge.Scripture.Services
     {
         string GetParatextUsername(UserSecret userSecret);
         string GetJwtTokenFromUserSecret(UserSecret userSecret);
-        Task<Tokens> RefreshAccessTokenAsync(ParatextOptions options, Tokens paratextTokens, HttpClient client,
-            CancellationToken token);
+        Task<Tokens> RefreshAccessTokenAsync(
+            ParatextOptions options,
+            Tokens paratextTokens,
+            HttpClient client,
+            CancellationToken token
+        );
     }
 }

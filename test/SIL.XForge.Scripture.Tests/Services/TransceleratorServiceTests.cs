@@ -17,9 +17,9 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             env.FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(true);
-            env.FileSystemService.EnumerateFiles(Arg.Any<string>()).Returns(
-                new string[] { "Translated Checking Questions for GEN.xml" }
-            );
+            env.FileSystemService
+                .EnumerateFiles(Arg.Any<string>())
+                .Returns(new string[] { "Translated Checking Questions for GEN.xml" });
             env.FileSystemService.FileReadText(Arg.Any<string>()).Returns(env.XmlFileText("1.1"));
 
             var questions = env.Service.Questions(Project01).ToArray();
@@ -38,9 +38,9 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             env.FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(true);
-            env.FileSystemService.EnumerateFiles(Arg.Any<string>()).Returns(
-                new string[] { "Translated Checking Questions for GEN.xml" }
-            );
+            env.FileSystemService
+                .EnumerateFiles(Arg.Any<string>())
+                .Returns(new string[] { "Translated Checking Questions for GEN.xml" });
             env.FileSystemService.FileReadText(Arg.Any<string>()).Returns(env.XmlFileText("1.0"));
             Assert.Throws<DataNotFoundException>(() => env.Service.Questions(Project01));
             env.FileSystemService.FileReadText(Arg.Any<string>()).Returns(env.XmlFileText("1.1.0"));
@@ -57,12 +57,16 @@ namespace SIL.XForge.Scripture.Services
                 );
                 Service = new TransceleratorService(FileSystemService, siteOptions);
             }
+
             public TransceleratorService Service { get; }
             public IFileSystemService FileSystemService { get; }
+
             public string XmlFileText(string version)
             {
                 return @"<?xml version=""1.0"" encoding=""utf-8""?>
-<ComprehensionCheckingQuestionsForBook xml:lang=""en"" version=""" + version + @""" book=""GEN"">
+<ComprehensionCheckingQuestionsForBook xml:lang=""en"" version="""
+                    + version
+                    + @""" book=""GEN"">
 	<Question id=""Tell [me] the main events recorded in this passage."" overview=""true"" startChapter=""1"" endChapter=""2"" startVerse=""1"" endVerse=""3"">
 		<Q>
 			<StringAlt xml:lang=""en"">What are the main events recorded in this passage?</StringAlt>

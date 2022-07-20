@@ -19,21 +19,35 @@ namespace SIL.XForge.Scripture.Services
             return delta.InsertPara(obj, attrs);
         }
 
-        public static Delta InsertNote(this Delta delta, Delta contents, string style, string caller, string segRef,
-            bool invalid = false)
+        public static Delta InsertNote(
+            this Delta delta,
+            Delta contents,
+            string style,
+            string caller,
+            string segRef,
+            bool invalid = false
+        )
         {
             var obj = new JObject(
                 new JProperty("style", style),
                 new JProperty("caller", caller),
-                new JProperty("contents", SerializeDelta(contents)));
+                new JProperty("contents", SerializeDelta(contents))
+            );
             JObject attrs = null;
             if (invalid)
                 attrs = new JObject(new JProperty("invalid-inline", true));
             return delta.InsertEmbed("note", obj, segRef, attrs);
         }
 
-        public static Delta InsertFigure(this Delta delta, string file, string size, string reference, string text,
-            string segRef, bool invalid = false)
+        public static Delta InsertFigure(
+            this Delta delta,
+            string file,
+            string size,
+            string reference,
+            string text,
+            string segRef,
+            bool invalid = false
+        )
         {
             var obj = new JObject(new JProperty("style", "fig"));
             if (file != null)
@@ -50,44 +64,75 @@ namespace SIL.XForge.Scripture.Services
             return delta.InsertEmbed("figure", obj, segRef, attrs);
         }
 
-        public static Delta InsertChar(this Delta delta, string text, string style, string cid, string segRef = null,
-            bool invalid = false)
+        public static Delta InsertChar(
+            this Delta delta,
+            string text,
+            string style,
+            string cid,
+            string segRef = null,
+            bool invalid = false
+        )
         {
-            var attributes = new JObject(new JProperty("char",
-                new JObject(new JProperty("style", style), new JProperty("cid", cid))));
+            var attributes = new JObject(
+                new JProperty("char", new JObject(new JProperty("style", style), new JProperty("cid", cid)))
+            );
             if (invalid)
                 attributes.Add(new JProperty("invalid-inline", true));
             return delta.InsertText(text, segRef, attributes);
         }
 
-        public static Delta InsertChar(this Delta delta, string text, IEnumerable<CharAttr> charAttrs,
-            string segRef = null, bool invalid = false)
+        public static Delta InsertChar(
+            this Delta delta,
+            string text,
+            IEnumerable<CharAttr> charAttrs,
+            string segRef = null,
+            bool invalid = false
+        )
         {
-            var attributes = new JObject(new JProperty("char", charAttrs.Select(charAttr => new JObject(
-                new JProperty("style", charAttr.Style),
-                new JProperty("cid", charAttr.CharID)))));
+            var attributes = new JObject(
+                new JProperty(
+                    "char",
+                    charAttrs.Select(
+                        charAttr =>
+                            new JObject(new JProperty("style", charAttr.Style), new JProperty("cid", charAttr.CharID))
+                    )
+                )
+            );
             if (invalid)
                 attributes.Add(new JProperty("invalid-inline", true));
             return delta.InsertText(text, segRef, attributes);
         }
 
-        public static Delta InsertEmptyChar(this Delta delta, string style, string cid, string segRef = null,
-            bool invalid = false)
+        public static Delta InsertEmptyChar(
+            this Delta delta,
+            string style,
+            string cid,
+            string segRef = null,
+            bool invalid = false
+        )
         {
-            var attributes = new JObject(new JProperty("char", new JObject(
-                new JProperty("style", style),
-                new JProperty("cid", cid))));
+            var attributes = new JObject(
+                new JProperty("char", new JObject(new JProperty("style", style), new JProperty("cid", cid)))
+            );
             if (invalid)
                 attributes.Add(new JProperty("invalid-inline", true));
             return delta.InsertEmpty(segRef, attributes);
         }
 
-        public static Delta InsertCharRef(this Delta delta, string text, string style, string reference, string cid,
-            string segRef = null, bool invalid = false)
+        public static Delta InsertCharRef(
+            this Delta delta,
+            string text,
+            string style,
+            string reference,
+            string cid,
+            string segRef = null,
+            bool invalid = false
+        )
         {
             var attributes = new JObject(
                 new JProperty("char", new JObject(new JProperty("style", style), new JProperty("cid", cid))),
-                new JProperty("ref", new JObject(new JProperty("loc", reference))));
+                new JProperty("ref", new JObject(new JProperty("loc", reference)))
+            );
             if (invalid)
                 attributes.Add(new JProperty("invalid-inline", true));
             return delta.InsertText(text, segRef, attributes);
@@ -95,9 +140,7 @@ namespace SIL.XForge.Scripture.Services
 
         public static Delta InsertChapter(this Delta delta, string number, string style = "c", bool invalid = false)
         {
-            var obj = new JObject(
-                new JProperty("number", number),
-                new JProperty("style", style));
+            var obj = new JObject(new JProperty("number", number), new JProperty("style", style));
             JObject attrs = null;
             if (invalid)
                 attrs = new JObject(new JProperty("invalid-block", true));
@@ -106,9 +149,7 @@ namespace SIL.XForge.Scripture.Services
 
         public static Delta InsertVerse(this Delta delta, string number, string style = "v", bool invalid = false)
         {
-            var obj = new JObject(
-                new JProperty("number", number),
-                new JProperty("style", style));
+            var obj = new JObject(new JProperty("number", number), new JProperty("style", style));
             JObject attrs = null;
             if (invalid)
                 attrs = new JObject(new JProperty("invalid-inline", true));
@@ -129,15 +170,20 @@ namespace SIL.XForge.Scripture.Services
             return delta.InsertEmbed("ms", obj, segRef, attrs);
         }
 
-        public static Delta InsertCell(this Delta delta, int table, int row, string style, string align,
-            bool invalid = false)
+        public static Delta InsertCell(
+            this Delta delta,
+            int table,
+            int row,
+            string style,
+            string align,
+            bool invalid = false
+        )
         {
             var attrs = new JObject(
                 new JProperty("table", new JObject(new JProperty("id", $"table_{table}"))),
                 new JProperty("row", new JObject(new JProperty("id", $"row_{table}_{row}"))),
-                new JProperty("cell", new JObject(
-                    new JProperty("style", style),
-                    new JProperty("align", align))));
+                new JProperty("cell", new JObject(new JProperty("style", style), new JProperty("align", align)))
+            );
             if (invalid)
                 attrs.Add(new JProperty("invalid-block", true));
             return delta.Insert("\n", attrs);

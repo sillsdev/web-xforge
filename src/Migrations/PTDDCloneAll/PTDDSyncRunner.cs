@@ -67,10 +67,17 @@ namespace PTDDCloneAll
         private IDocument<SFProject> _projectDoc;
         private SFProjectSecret _projectSecret;
 
-        public PTDDSyncRunner(IRepository<UserSecret> userSecrets, IRepository<SFProjectSecret> projectSecrets,
-            ISFProjectService projectService, IEngineService engineService, IParatextService paratextService,
-            IRealtimeService realtimeService, IDeltaUsxMapper deltaUsxMapper, IParatextNotesMapper notesMapper,
-            ILogger<PTDDSyncRunner> logger)
+        public PTDDSyncRunner(
+            IRepository<UserSecret> userSecrets,
+            IRepository<SFProjectSecret> projectSecrets,
+            ISFProjectService projectService,
+            IEngineService engineService,
+            IParatextService paratextService,
+            IRealtimeService realtimeService,
+            IDeltaUsxMapper deltaUsxMapper,
+            IParatextNotesMapper notesMapper,
+            ILogger<PTDDSyncRunner> logger
+        )
         {
             _userSecrets = userSecrets;
             _projectSecrets = projectSecrets;
@@ -133,8 +140,7 @@ namespace PTDDCloneAll
                 }
 
                 // perform Paratext send/receive
-                await _paratextService.SendReceiveAsync(_userSecret, targetParatextId,
-                    UseNewProgress());
+                await _paratextService.SendReceiveAsync(_userSecret, targetParatextId, UseNewProgress());
 
                 // This is a clone without persisting the changes to the SF DB
                 if (silent)
@@ -149,13 +155,16 @@ namespace PTDDCloneAll
                 }
 
                 var targetBooks = new HashSet<int>(_paratextService.GetBookList(_userSecret, targetParatextId));
-                var sourceBooks = new HashSet<int>(TranslationSuggestionsEnabled
-                    ? _paratextService.GetBookList(_userSecret, sourceParatextId)
-                    : Enumerable.Empty<int>());
+                var sourceBooks = new HashSet<int>(
+                    TranslationSuggestionsEnabled
+                        ? _paratextService.GetBookList(_userSecret, sourceParatextId)
+                        : Enumerable.Empty<int>()
+                );
                 sourceBooks.IntersectWith(targetBooks);
 
-                var targetBooksToDelete = new HashSet<int>(_projectDoc.Data.Texts.Select(t => t.BookNum)
-                    .Except(targetBooks));
+                var targetBooksToDelete = new HashSet<int>(
+                    _projectDoc.Data.Texts.Select(t => t.BookNum).Except(targetBooks)
+                );
 
                 // delete all data for removed books
                 if (targetBooksToDelete.Count > 0)
@@ -174,18 +183,21 @@ namespace PTDDCloneAll
 
                 // Update user resource access, if this project has a source resource
                 // The updating of a source project's permissions is done when that project is synced.
-                if (TranslationSuggestionsEnabled
+                if (
+                    TranslationSuggestionsEnabled
                     && !string.IsNullOrWhiteSpace(sourceParatextId)
                     && !string.IsNullOrWhiteSpace(sourceProjectRef)
-                    && sourceParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
+                    && sourceParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength
+                )
                 {
                     // Get the resource project
                     IDocument<SFProject> sourceProject = await _conn.FetchAsync<SFProject>(sourceProjectRef);
                     if (sourceProject.IsLoaded)
                     {
                         // Add new users who are in the target project, but not the source project
-                        List<string> usersToAdd =
-                            _projectDoc.Data.UserRoles.Keys.Except(sourceProject.Data.UserRoles.Keys).ToList();
+                        List<string> usersToAdd = _projectDoc.Data.UserRoles.Keys
+                            .Except(sourceProject.Data.UserRoles.Keys)
+                            .ToList();
                         foreach (string uid in usersToAdd)
                         {
                             // As resource projects do not have administrators, we connect as the user we are to add
@@ -203,8 +215,10 @@ namespace PTDDCloneAll
                         List<string> usersToCheck = _projectDoc.Data.UserRoles.Keys.Except(usersToAdd).ToList();
                         foreach (string uid in usersToCheck)
                         {
-                            string permission =
-                                await _paratextService.GetResourcePermissionAsync(sourceParatextId, uid);
+                            string permission = await _paratextService.GetResourcePermissionAsync(
+                                sourceParatextId,
+                                uid
+                            );
                             if (permission == TextInfoPermission.None)
                             {
                                 // As resource projects don't have administrators, connect as the user we are to remove
@@ -223,8 +237,11 @@ namespace PTDDCloneAll
                 Dictionary<string, string> permissions;
                 if (targetParatextId.Length == SFInstallableDblResource.ResourceIdentifierLength)
                 {
-                    permissions = await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data,
-                        ptUsernameMapping);
+                    permissions = await _paratextService.GetPermissionsAsync(
+                        _userSecret,
+                        _projectDoc.Data,
+                        ptUsernameMapping
+                    );
                 }
                 else
                 {
@@ -243,8 +260,12 @@ namespace PTDDCloneAll
                         text = _projectDoc.Data.Texts[textIndex];
 
                     // update target text docs
-                    if (!targetTextDocsByBook.TryGetValue(text.BookNum,
-                        out SortedList<int, IDocument<TextData>> targetTextDocs))
+                    if (
+                        !targetTextDocsByBook.TryGetValue(
+                            text.BookNum,
+                            out SortedList<int, IDocument<TextData>> targetTextDocs
+                        )
+                    )
                     {
                         targetTextDocs = new SortedList<int, IDocument<TextData>>();
                     }
@@ -263,20 +284,33 @@ namespace PTDDCloneAll
                     else
                     {
                         // Get the project permissions for the book
-                        permissions = await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data,
-                            ptUsernameMapping, bookNum);
+                        permissions = await _paratextService.GetPermissionsAsync(
+                            _userSecret,
+                            _projectDoc.Data,
+                            ptUsernameMapping,
+                            bookNum
+                        );
                         foreach (Chapter chapter in newChapters)
                         {
                             // Get and set the project permissions for the chapter
                             Dictionary<string, string> chapterPermissions = await _paratextService.GetPermissionsAsync(
-                                _userSecret, _projectDoc.Data, ptUsernameMapping, bookNum, chapter.Number);
+                                _userSecret,
+                                _projectDoc.Data,
+                                ptUsernameMapping,
+                                bookNum,
+                                chapter.Number
+                            );
                             chapter.Permissions = chapterPermissions;
                         }
                     }
 
                     // update question docs
-                    if (questionDocsByBook.TryGetValue(text.BookNum,
-                        out IReadOnlyList<IDocument<Question>> questionDocs))
+                    if (
+                        questionDocsByBook.TryGetValue(
+                            text.BookNum,
+                            out IReadOnlyList<IDocument<Question>> questionDocs
+                        )
+                    )
                     {
                         await UpdateQuestionDocsAsync(questionDocs, newChapters);
                     }
@@ -293,13 +327,22 @@ namespace PTDDCloneAll
                     else
                     {
                         // Get the project permissions for the book
-                        permissions = await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data,
-                            ptUsernameMapping, bookNum);
+                        permissions = await _paratextService.GetPermissionsAsync(
+                            _userSecret,
+                            _projectDoc.Data,
+                            ptUsernameMapping,
+                            bookNum
+                        );
                         foreach (Chapter chapter in newChapters)
                         {
                             // Get and set the project permissions for the chapter
                             Dictionary<string, string> chapterPermissions = await _paratextService.GetPermissionsAsync(
-                                _userSecret, _projectDoc.Data, ptUsernameMapping, bookNum, chapter.Number);
+                                _userSecret,
+                                _projectDoc.Data,
+                                ptUsernameMapping,
+                                bookNum,
+                                chapter.Number
+                            );
                             chapter.Permissions = chapterPermissions;
                         }
                     }
@@ -319,8 +362,11 @@ namespace PTDDCloneAll
                             // update text info
                             op.Set(pd => pd.Texts[textIndex].Chapters, newChapters, ChapterListEqualityComparer);
                             op.Set(pd => pd.Texts[textIndex].HasSource, hasSource);
-                            op.Set(pd => pd.Texts[textIndex].Permissions, permissions,
-                                PermissionDictionaryEqualityComparer);
+                            op.Set(
+                                pd => pd.Texts[textIndex].Permissions,
+                                permissions,
+                                PermissionDictionaryEqualityComparer
+                            );
                         }
                     });
                 }
@@ -344,7 +390,6 @@ namespace PTDDCloneAll
                         op.Inc(pd => pd.Sync.QueuedCount, -1);
                         op.Unset(pd => pd.Sync.PercentCompleted);
                     });
-
                 }
                 else
                 {
@@ -368,7 +413,8 @@ namespace PTDDCloneAll
             if (!(await _userSecrets.TryGetAsync(userId)).TryResult(out _userSecret))
                 return false;
 
-            List<User> paratextUsers = await _realtimeService.QuerySnapshots<User>()
+            List<User> paratextUsers = await _realtimeService
+                .QuerySnapshots<User>()
                 .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
                 .ToListAsync();
             await _notesMapper.InitAsync(_userSecret, _projectSecret, paratextUsers, _projectDoc.Data.ParatextId);
@@ -386,8 +432,12 @@ namespace PTDDCloneAll
         {
             string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
             var oldUsxDoc = XDocument.Parse(bookText);
-            XDocument newUsxDoc = _deltaUsxMapper.ToUsx(oldUsxDoc, text.Chapters.OrderBy(c => c.Number)
-                .Select(c => new ChapterDelta(c.Number, c.LastVerse, c.IsValid, textDocs[c.Number].Data)));
+            XDocument newUsxDoc = _deltaUsxMapper.ToUsx(
+                oldUsxDoc,
+                text.Chapters
+                    .OrderBy(c => c.Number)
+                    .Select(c => new ChapterDelta(c.Number, c.LastVerse, c.IsValid, textDocs[c.Number].Data))
+            );
 
             if (!XNode.DeepEquals(oldUsxDoc, newUsxDoc))
                 _paratextService.PutBookText(_userSecret, paratextId, text.BookNum, newUsxDoc.Root.ToString());
@@ -412,13 +462,18 @@ namespace PTDDCloneAll
                 _paratextService.PutNotes(_userSecret, _projectDoc.Data.ParatextId, notesElem.ToString());
         }
 
-        private async Task<List<Chapter>> UpdateTextDocsAsync(TextInfo text, string paratextId,
-            SortedList<int, IDocument<TextData>> textDocs, ISet<int> chaptersToInclude = null)
+        private async Task<List<Chapter>> UpdateTextDocsAsync(
+            TextInfo text,
+            string paratextId,
+            SortedList<int, IDocument<TextData>> textDocs,
+            ISet<int> chaptersToInclude = null
+        )
         {
             string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
             var usxDoc = XDocument.Parse(bookText);
             var tasks = new List<Task>();
-            Dictionary<int, ChapterDelta> deltas = _deltaUsxMapper.ToChapterDeltas(usxDoc)
+            Dictionary<int, ChapterDelta> deltas = _deltaUsxMapper
+                .ToChapterDeltas(usxDoc)
                 .ToDictionary(cd => cd.Number);
             var chapters = new List<Chapter>();
             List<int> chaptersToRemove = textDocs.Keys.Where(c => !deltas.ContainsKey(c)).ToList();
@@ -464,20 +519,24 @@ namespace PTDDCloneAll
                 }
                 if (addChapter)
                 {
-                    chapters.Add(new Chapter
-                    {
-                        Number = kvp.Key,
-                        LastVerse = kvp.Value.LastVerse,
-                        IsValid = kvp.Value.IsValid,
-                        Permissions = { }
-                    });
+                    chapters.Add(
+                        new Chapter
+                        {
+                            Number = kvp.Key,
+                            LastVerse = kvp.Value.LastVerse,
+                            IsValid = kvp.Value.IsValid,
+                            Permissions = { }
+                        }
+                    );
                 }
             }
             foreach (KeyValuePair<int, IDocument<TextData>> kvp in textDocs)
             {
-                if (chaptersToInclude == null
+                if (
+                    chaptersToInclude == null
                     || chaptersToInclude.Contains(kvp.Key)
-                    || chaptersToRemove.Contains(kvp.Key))
+                    || chaptersToRemove.Contains(kvp.Key)
+                )
                 {
                     tasks.Add(kvp.Value.DeleteAsync());
                 }
@@ -486,8 +545,10 @@ namespace PTDDCloneAll
             return chapters;
         }
 
-        private async Task UpdateQuestionDocsAsync(IReadOnlyList<IDocument<Question>> questionDocs,
-            List<Chapter> newChapters)
+        private async Task UpdateQuestionDocsAsync(
+            IReadOnlyList<IDocument<Question>> questionDocs,
+            List<Chapter> newChapters
+        )
         {
             // handle deletion of chapters
             var chapterNums = new HashSet<int>(newChapters.Select(c => c.Number));
@@ -539,7 +600,8 @@ namespace PTDDCloneAll
 
         private async Task<IReadOnlyList<IDocument<Question>>> FetchQuestionDocsAsync(TextInfo text)
         {
-            List<string> questionDocIds = await _realtimeService.QuerySnapshots<Question>()
+            List<string> questionDocIds = await _realtimeService
+                .QuerySnapshots<Question>()
                 .Where(q => q.ProjectRef == _projectDoc.Id && q.VerseRef.BookNum == text.BookNum)
                 .Select(q => q.Id)
                 .ToListAsync();
@@ -572,7 +634,8 @@ namespace PTDDCloneAll
         /// </summary>
         private async Task DeleteAllQuestionsDocsForBookAsync(TextInfo text)
         {
-            List<string> questionDocIds = await _realtimeService.QuerySnapshots<Question>()
+            List<string> questionDocIds = await _realtimeService
+                .QuerySnapshots<Question>()
                 .Where(q => q.ProjectRef == _projectDoc.Id && q.VerseRef.BookNum == text.BookNum)
                 .Select(q => q.Id)
                 .ToListAsync();
@@ -608,8 +671,7 @@ namespace PTDDCloneAll
             {
                 try
                 {
-                    ptUserRoles = await _paratextService.GetProjectRolesAsync(_userSecret,
-                        _projectDoc.Data.ParatextId);
+                    ptUserRoles = await _paratextService.GetProjectRolesAsync(_userSecret, _projectDoc.Data.ParatextId);
                 }
                 catch (HttpRequestException)
                 {
@@ -620,10 +682,11 @@ namespace PTDDCloneAll
             }
 
             var userIdsToRemove = new List<string>();
-            var projectUsers = await _realtimeService.QuerySnapshots<User>()
-                    .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
-                    .Select(u => new { UserId = u.Id, ParatextId = u.ParatextId })
-                    .ToListAsync();
+            var projectUsers = await _realtimeService
+                .QuerySnapshots<User>()
+                .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
+                .Select(u => new { UserId = u.Id, ParatextId = u.ParatextId })
+                .ToListAsync();
 
             await _projectDoc.SubmitJson0OpAsync(op =>
             {
@@ -648,13 +711,14 @@ namespace PTDDCloneAll
                             userIdsToRemove.Add(projectUser.UserId);
                     }
                 }
-                bool isRtl = _paratextService
-                    .IsProjectLanguageRightToLeft(_userSecret, _projectDoc.Data.ParatextId);
+                bool isRtl = _paratextService.IsProjectLanguageRightToLeft(_userSecret, _projectDoc.Data.ParatextId);
                 op.Set(pd => pd.IsRightToLeft, isRtl);
                 if (TranslationSuggestionsEnabled)
                 {
-                    bool sourceIsRtl = _paratextService
-                        .IsProjectLanguageRightToLeft(_userSecret, _projectDoc.Data.TranslateConfig.Source.ParatextId);
+                    bool sourceIsRtl = _paratextService.IsProjectLanguageRightToLeft(
+                        _userSecret,
+                        _projectDoc.Data.TranslateConfig.Source.ParatextId
+                    );
                     op.Set(pd => pd.TranslateConfig.Source.IsRightToLeft, sourceIsRtl);
                 }
             });
@@ -662,11 +726,14 @@ namespace PTDDCloneAll
                 await _projectService.RemoveUserAsync(_userSecret.Id, _projectDoc.Id, userId);
             if (_notesMapper.NewSyncUsers.Count > 0)
             {
-                await _projectSecrets.UpdateAsync(_projectSecret.Id, u =>
-                {
-                    foreach (SyncUser syncUser in _notesMapper.NewSyncUsers)
-                        u.Add(p => p.SyncUsers, syncUser);
-                });
+                await _projectSecrets.UpdateAsync(
+                    _projectSecret.Id,
+                    u =>
+                    {
+                        foreach (SyncUser syncUser in _notesMapper.NewSyncUsers)
+                            u.Add(p => p.SyncUsers, syncUser);
+                    }
+                );
             }
         }
 
@@ -719,7 +786,8 @@ namespace PTDDCloneAll
         {
             public bool Equals(Dictionary<TKey, TValue> x, Dictionary<TKey, TValue> y)
             {
-                return (x ?? new Dictionary<TKey, TValue>()).OrderBy(p => p.Key)
+                return (x ?? new Dictionary<TKey, TValue>())
+                    .OrderBy(p => p.Key)
                     .SequenceEqual((y ?? new Dictionary<TKey, TValue>()).OrderBy(p => p.Key));
             }
 

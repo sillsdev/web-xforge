@@ -15,6 +15,7 @@ namespace SIL.XForge.Scripture.Models
         public ResourceConfig ResourceConfig { get; set; }
         public List<TextInfo> Texts { get; set; } = new List<TextInfo>();
         public Sync Sync { get; set; } = new Sync();
+
         /// <summary>
         /// Paratext users on this SF project that are associated with a project component (e.g. a note)
         /// </summary>

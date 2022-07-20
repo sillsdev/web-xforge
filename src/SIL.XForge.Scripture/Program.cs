@@ -26,7 +26,8 @@ namespace SIL.XForge.Scripture
                 .Build();
 
             return builder
-                .ConfigureAppConfiguration((context, config) =>
+                .ConfigureAppConfiguration(
+                    (context, config) =>
                     {
                         IWebHostEnvironment env = context.HostingEnvironment;
                         if (env.IsDevelopment() || env.IsEnvironment("Testing"))
@@ -40,7 +41,8 @@ namespace SIL.XForge.Scripture
                             if (appAssembly != null)
                                 config.AddUserSecrets(appAssembly, true);
                         }
-                    })
+                    }
+                )
                 .UseConfiguration(configuration)
                 .UseStartup<Startup>();
         }

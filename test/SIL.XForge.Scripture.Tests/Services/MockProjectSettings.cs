@@ -5,11 +5,7 @@ namespace Paratext.Data.ProjectSettingsAccess
     {
         private bool _editable = true;
 
-
-        public MockProjectSettings(ScrText scrText) : base(scrText)
-        {
-
-        }
+        public MockProjectSettings(ScrText scrText) : base(scrText) { }
 
         public override bool Editable
         {

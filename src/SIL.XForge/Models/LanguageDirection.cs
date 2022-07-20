@@ -5,6 +5,7 @@ namespace SIL.XForge.Models
     {
         /// <summary>Left-to-right</summary>
         public const string LTR = "ltr";
+
         /// <summary>Right-to-left</summary>
         public const string RTL = "rtl";
     }

@@ -29,9 +29,13 @@ namespace PtdaSyncAll
 
         private readonly IProgramLogger _logger;
 
-        public SyncAllService(Func<IParatextSyncRunner> syncRunnerFactory, IRealtimeService realtimeService,
-             IParatextService paratextService,
-             IRepository<UserSecret> userSecretRepo, IProgramLogger logger)
+        public SyncAllService(
+            Func<IParatextSyncRunner> syncRunnerFactory,
+            IRealtimeService realtimeService,
+            IParatextService paratextService,
+            IRepository<UserSecret> userSecretRepo,
+            IProgramLogger logger
+        )
         {
             _syncRunnerFactory = syncRunnerFactory;
             _realtimeService = realtimeService;
@@ -49,8 +53,11 @@ namespace PtdaSyncAll
         /// If `doSynchronizations` is false, only do the above reporting. If true, also synchronize the SF DB with the
         /// Paratext Data Access server.
         /// </summary>
-        public async Task SynchronizeAllProjectsAsync(bool doSynchronizations,
-            ISet<string> sfProjectIdsToSynchronize = null, IDictionary<string, string> sfAdminsToUse = null)
+        public async Task SynchronizeAllProjectsAsync(
+            bool doSynchronizations,
+            ISet<string> sfProjectIdsToSynchronize = null,
+            IDictionary<string, string> sfAdminsToUse = null
+        )
         {
             List<SFProject> allSfProjects = _realtimeService.QuerySnapshots<SFProject>().ToList<SFProject>();
             if (sfProjectIdsToSynchronize != null)
@@ -66,10 +73,14 @@ namespace PtdaSyncAll
             // Report on all SF projects.
             foreach (SFProject sfProject in allSfProjects)
             {
-                _logger.Log($"{Program.Bullet1} PT project {sfProject.ShortName}, "
-                    + $"PT project id {sfProject.ParatextId}, SF project id {sfProject.Id}.");
+                _logger.Log(
+                    $"{Program.Bullet1} PT project {sfProject.ShortName}, "
+                        + $"PT project id {sfProject.ParatextId}, SF project id {sfProject.Id}."
+                );
                 List<string> projectSfAdminUserIds = sfProject.UserRoles
-                    .Where(ur => ur.Value == SFProjectRole.Administrator).Select(ur => ur.Key).ToList<string>();
+                    .Where(ur => ur.Value == SFProjectRole.Administrator)
+                    .Select(ur => ur.Key)
+                    .ToList<string>();
                 if (projectSfAdminUserIds.Count() < 1)
                 {
                     List<string> projectSfUserIds = sfProject.UserRoles.Select(ur => ur.Key).ToList<string>();
@@ -84,7 +95,8 @@ namespace PtdaSyncAll
                 // Report on all admins in a project
                 foreach (string sfUserId in projectSfAdminUserIds)
                 {
-                    UserSecret userSecret = _userSecretRepo.Query()
+                    UserSecret userSecret = _userSecretRepo
+                        .Query()
                         .FirstOrDefault((UserSecret us) => us.Id == sfUserId);
                     string ptUsername = null;
                     string ptUserId = null;
@@ -95,19 +107,25 @@ namespace PtdaSyncAll
                     }
                     catch (Exception e)
                     {
-                        _logger.Log($"  {Program.Bullet2} Failure getting SF user's PT username or PT user id. " +
-                            $"Skipping. SF user id was {sfUserId}. If known, PT username was {ptUsername}. " +
-                            $"Error with stack was {e}");
+                        _logger.Log(
+                            $"  {Program.Bullet2} Failure getting SF user's PT username or PT user id. "
+                                + $"Skipping. SF user id was {sfUserId}. If known, PT username was {ptUsername}. "
+                                + $"Error with stack was {e}"
+                        );
                         continue;
                     }
-                    _logger.Log($"  {Program.Bullet2} PT user '{ptUsername}', "
-                        + $"id {ptUserId}, using SF admin user id {sfUserId} on SF project.");
+                    _logger.Log(
+                        $"  {Program.Bullet2} PT user '{ptUsername}', "
+                            + $"id {ptUserId}, using SF admin user id {sfUserId} on SF project."
+                    );
 
                     string rt = $"{userSecret.ParatextTokens.RefreshToken.Substring(0, 5)}..";
                     string at = $"{userSecret.ParatextTokens.AccessToken.Substring(0, 5)}..";
                     bool atv = userSecret.ParatextTokens.ValidateLifetime();
-                    _logger.Log($"    {Program.Bullet3} Paratext RefreshToken: {rt}, "
-                        + $"AccessToken: {at}, AccessToken initially valid: {atv}.");
+                    _logger.Log(
+                        $"    {Program.Bullet3} Paratext RefreshToken: {rt}, "
+                            + $"AccessToken: {at}, AccessToken initially valid: {atv}."
+                    );
 
                     // Demonstrate access to PT Registry, and report Registry's statement of role.
                     _logger.Log($"    {Program.Bullet3} PT Registry report on role on PT project: ", false);
@@ -118,8 +136,9 @@ namespace PtdaSyncAll
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine($"      Failure fetching user's PT project roles. Skipping. " +
-                            $"Error was {e.Message}");
+                        Console.WriteLine(
+                            $"      Failure fetching user's PT project roles. Skipping. " + $"Error was {e.Message}"
+                        );
                         continue;
                     }
                     if (ptProjectRoles.TryGetValue(ptUserId, out string ptRole))
@@ -138,21 +157,28 @@ namespace PtdaSyncAll
                     }
                     catch (Exception e)
                     {
-                        _logger.Log($"    {Program.Bullet3} Failure fetching user's PT projects. Skipping. "
-                            + $"Error was {e.Message}");
+                        _logger.Log(
+                            $"    {Program.Bullet3} Failure fetching user's PT projects. Skipping. "
+                                + $"Error was {e.Message}"
+                        );
                         continue;
                     }
 
-                    _logger.Log($"    {Program.Bullet3} PT Data Access and PT Registry "
-                        + "based report on projects the user can access, narrowed to this project: ", false);
+                    _logger.Log(
+                        $"    {Program.Bullet3} PT Data Access and PT Registry "
+                            + "based report on projects the user can access, narrowed to this project: ",
+                        false
+                    );
                     List<string> ptProjectNamesList = userPtProjects
                         .Where(ptProject => ptProject.ParatextId == sfProject.ParatextId)
-                        .Select(ptProject => ptProject.ShortName).ToList();
+                        .Select(ptProject => ptProject.ShortName)
+                        .ToList();
                     string ptProjectNames = string.Join(',', ptProjectNamesList);
                     if (ptProjectNamesList.Count() < 1)
                     {
-                        ptProjectNames = $"User is not on this project. " +
-                            $"PT reports they are on this many PT projects: {userPtProjects.Count()}";
+                        ptProjectNames =
+                            $"User is not on this project. "
+                            + $"PT reports they are on this many PT projects: {userPtProjects.Count()}";
                     }
                     Console.WriteLine(ptProjectNames);
 
@@ -164,36 +190,46 @@ namespace PtdaSyncAll
                             bool isUserAtHand = sfUserId == sfAdminIdToUse;
                             if (isUserAtHand)
                             {
-                                _logger.Log($"  {Program.Bullet2} For SF Project {sfProject.Id}, we were asked to use "
-                                    + $"this SF user {sfUserId} to sync.");
+                                _logger.Log(
+                                    $"  {Program.Bullet2} For SF Project {sfProject.Id}, we were asked to use "
+                                        + $"this SF user {sfUserId} to sync."
+                                );
                             }
                             else
                             {
-                                _logger.Log($"  {Program.Bullet2} For SF Project {sfProject.Id}, we were asked to use "
-                                    + $"SF user {sfAdminIdToUse}, not {sfUserId}, to sync. So skipping this user.");
+                                _logger.Log(
+                                    $"  {Program.Bullet2} For SF Project {sfProject.Id}, we were asked to use "
+                                        + $"SF user {sfAdminIdToUse}, not {sfUserId}, to sync. So skipping this user."
+                                );
                                 continue;
                             }
                         }
 
                         try
                         {
-                            _logger.Log($"  {Program.Bullet2} Starting an asynchronous synchronization for "
-                                + $"SF project {sfProject.Id} as SF user {sfUserId}.");
+                            _logger.Log(
+                                $"  {Program.Bullet2} Starting an asynchronous synchronization for "
+                                    + $"SF project {sfProject.Id} as SF user {sfUserId}."
+                            );
                             Task syncTask = SynchronizeProject(sfUserId, sfProject.Id);
                             var projectDoc = await _realtimeServiceConnection.FetchAsync<SFProject>(sfProject.Id);
                             // Increment the queued count (such as done in SyncService), since it gets decremented
                             // later by ParatextSyncRunner.
                             await projectDoc.SubmitJson0OpAsync(op => op.Inc(pd => pd.Sync.QueuedCount));
-                            _logger.Log($"    {Program.Bullet3} Synchronization task for SF project {sfProject.Id} as "
-                                + $"SF user {sfUserId} has Sync Task Id {syncTask.Id}.");
+                            _logger.Log(
+                                $"    {Program.Bullet3} Synchronization task for SF project {sfProject.Id} as "
+                                    + $"SF user {sfUserId} has Sync Task Id {syncTask.Id}."
+                            );
                             syncTasks.Add(syncTask);
                             break;
                         }
                         catch (Exception e)
                         {
                             // We probably won't get here. But just in case.
-                            _logger.Log($"    {Program.Bullet3} There was a problem with synchronizing. It might be "
-                                + $"tried next with another admin user. Exception is:{Environment.NewLine}{e}");
+                            _logger.Log(
+                                $"    {Program.Bullet3} There was a problem with synchronizing. It might be "
+                                    + $"tried next with another admin user. Exception is:{Environment.NewLine}{e}"
+                            );
                             continue;
                         }
                     }
@@ -202,8 +238,10 @@ namespace PtdaSyncAll
 
             if (doSynchronizations)
             {
-                _logger.Log("Waiting for synchronization tasks to finish (if any). "
-                    + $"There are this many tasks: {syncTasks.Count}");
+                _logger.Log(
+                    "Waiting for synchronization tasks to finish (if any). "
+                        + $"There are this many tasks: {syncTasks.Count}"
+                );
                 try
                 {
                     Task allTasks = Task.WhenAll(syncTasks);
@@ -223,8 +261,10 @@ namespace PtdaSyncAll
                 }
                 catch (AggregateException e)
                 {
-                    _logger.Log("There was a problem with one or more synchronization tasks. "
-                        + $"Exception is:{Environment.NewLine}{e}");
+                    _logger.Log(
+                        "There was a problem with one or more synchronization tasks. "
+                            + $"Exception is:{Environment.NewLine}{e}"
+                    );
                 }
 
                 if (syncTasks.Any(task => !task.IsCompletedSuccessfully))
@@ -247,8 +287,10 @@ namespace PtdaSyncAll
                     _logger.Log($"  {Program.Bullet2} Sync task Id {task.Id} has status {task.Status} {exceptionInfo}");
                     if (task.Exception?.InnerExceptions?.Count > 1)
                     {
-                        _logger.Log($"    {Program.Bullet3} Sync task Id {task.Id} has more than one inner exception. "
-                            + "Sorry if this is redundant, but they are:");
+                        _logger.Log(
+                            $"    {Program.Bullet3} Sync task Id {task.Id} has more than one inner exception. "
+                                + "Sorry if this is redundant, but they are:"
+                        );
                         foreach (var e in task.Exception.InnerExceptions)
                         {
                             _logger.Log($"    {Program.Bullet3} Inner exception: {e}");
@@ -278,18 +320,25 @@ namespace PtdaSyncAll
         {
             _logger.Log($"{Program.Bullet1} SF projects have the following last sync dates and results.");
             bool anyFailures = sfProjects.Any((SFProject sfProject) => sfProject.Sync.LastSyncSuccessful != true);
-            _logger.Log($"  {Program.Bullet2} One or more SF projects are noted as having failed the last sync "
-                + $"(this would be bad): {anyFailures}");
+            _logger.Log(
+                $"  {Program.Bullet2} One or more SF projects are noted as having failed the last sync "
+                    + $"(this would be bad): {anyFailures}"
+            );
             DateTime yesterday = DateTime.Now.ToUniversalTime().AddDays(-1);
-            bool anyDidNotSyncToday = sfProjects
-                .Any((SFProject sfProject) => sfProject.Sync.DateLastSuccessfulSync < yesterday);
-            _logger.Log($"  {Program.Bullet2} One or more SF projects have not successfully synchronized in "
-                + $"the last day (this would be bad): {anyDidNotSyncToday}");
+            bool anyDidNotSyncToday = sfProjects.Any(
+                (SFProject sfProject) => sfProject.Sync.DateLastSuccessfulSync < yesterday
+            );
+            _logger.Log(
+                $"  {Program.Bullet2} One or more SF projects have not successfully synchronized in "
+                    + $"the last day (this would be bad): {anyDidNotSyncToday}"
+            );
             foreach (SFProject sfProject in sfProjects)
             {
-                _logger.Log($"  {Program.Bullet2} SF Project id {sfProject.Id}: "
-                    + $"DateLastSuccessfulSync: {sfProject.Sync.DateLastSuccessfulSync?.ToString("o")}. "
-                    + $"LastSyncSuccessful: {sfProject.Sync.LastSyncSuccessful}.");
+                _logger.Log(
+                    $"  {Program.Bullet2} SF Project id {sfProject.Id}: "
+                        + $"DateLastSuccessfulSync: {sfProject.Sync.DateLastSuccessfulSync?.ToString("o")}. "
+                        + $"LastSyncSuccessful: {sfProject.Sync.LastSyncSuccessful}."
+                );
             }
         }
 

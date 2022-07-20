@@ -23,10 +23,7 @@ namespace SIL.XForge.DataAccess
         private readonly Func<T, object>[] _uniqueKeySelectors;
         private readonly HashSet<object>[] _uniqueKeys;
 
-        public MemoryRepository(IEnumerable<T> entities)
-            : this(null, entities)
-        {
-        }
+        public MemoryRepository(IEnumerable<T> entities) : this(null, entities) { }
 
         public MemoryRepository(IEnumerable<Func<T, object>> uniqueKeySelectors = null, IEnumerable<T> entities = null)
         {
@@ -120,21 +117,26 @@ namespace SIL.XForge.DataAccess
             return Task.FromResult(false);
         }
 
-        public Task<T> UpdateAsync(Expression<Func<T, bool>> filter, Action<IUpdateBuilder<T>> update,
-            bool upsert = false)
+        public Task<T> UpdateAsync(
+            Expression<Func<T, bool>> filter,
+            Action<IUpdateBuilder<T>> update,
+            bool upsert = false
+        )
         {
             Func<T, bool> filterFunc = filter.Compile();
-            T entity = Query().AsEnumerable().FirstOrDefault(e =>
-            {
-                try
+            T entity = Query()
+                .AsEnumerable()
+                .FirstOrDefault(e =>
                 {
-                    return filterFunc(e);
-                }
-                catch (Exception)
-                {
-                    return false;
-                }
-            });
+                    try
+                    {
+                        return filterFunc(e);
+                    }
+                    catch (Exception)
+                    {
+                        return false;
+                    }
+                });
             if (entity != null || upsert)
             {
                 T original = default(T);

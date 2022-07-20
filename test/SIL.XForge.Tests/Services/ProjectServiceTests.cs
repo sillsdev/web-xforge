@@ -33,8 +33,10 @@ namespace SIL.XForge.Services
 
             var stream = new MemoryStream();
             Uri uri = await env.Service.SaveAudioAsync(User01, Project01, dataId, ".wav", stream);
-            Assert.That(uri.ToString().StartsWith($"http://localhost/assets/audio/project01/user01_{dataId}.mp3?t="),
-                Is.True);
+            Assert.That(
+                uri.ToString().StartsWith($"http://localhost/assets/audio/project01/user01_{dataId}.mp3?t="),
+                Is.True
+            );
             await env.AudioService.Received().ConvertToMp3Async(Arg.Any<string>(), filePath);
         }
 
@@ -49,8 +51,10 @@ namespace SIL.XForge.Services
 
             var stream = new MemoryStream();
             Uri uri = await env.Service.SaveAudioAsync(User01, Project01, dataId, ".mp3", stream);
-            Assert.That(uri.ToString().StartsWith($"http://localhost/assets/audio/project01/user01_{dataId}.mp3?t="),
-                Is.True);
+            Assert.That(
+                uri.ToString().StartsWith($"http://localhost/assets/audio/project01/user01_{dataId}.mp3?t="),
+                Is.True
+            );
             env.FileSystemService.Received().OpenFile(filePath, FileMode.Create);
             await env.AudioService.DidNotReceive().ConvertToMp3Async(Arg.Any<string>(), filePath);
         }
@@ -61,8 +65,9 @@ namespace SIL.XForge.Services
             var env = new TestEnvironment();
 
             var stream = new MemoryStream();
-            Assert.ThrowsAsync<FormatException>(() => env.Service.SaveAudioAsync(User01, Project01, "/../test/abc.txt",
-                ".wav", stream));
+            Assert.ThrowsAsync<FormatException>(
+                () => env.Service.SaveAudioAsync(User01, Project01, "/../test/abc.txt", ".wav", stream)
+            );
         }
 
         [Test]
@@ -71,8 +76,9 @@ namespace SIL.XForge.Services
             var env = new TestEnvironment();
 
             var stream = new MemoryStream();
-            Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.SaveAudioAsync(User01, "/../abc.txt",
-                "507f1f77bcf86cd799439011", ".wav", stream));
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.SaveAudioAsync(User01, "/../abc.txt", "507f1f77bcf86cd799439011", ".wav", stream)
+            );
         }
 
         [Test]
@@ -107,8 +113,9 @@ namespace SIL.XForge.Services
             string filePath = Path.Combine("site", "audio", Project01, $"{User01}_{dataId}.mp3");
             env.FileSystemService.FileExists(filePath).Returns(true);
 
-            Assert.ThrowsAsync<ForbiddenException>(() =>
-                env.Service.DeleteAudioAsync(User02, Project01, User01, dataId));
+            Assert.ThrowsAsync<ForbiddenException>(
+                () => env.Service.DeleteAudioAsync(User02, Project01, User01, dataId)
+            );
         }
 
         [Test]
@@ -116,8 +123,9 @@ namespace SIL.XForge.Services
         {
             var env = new TestEnvironment();
 
-            Assert.ThrowsAsync<FormatException>(() =>
-                env.Service.DeleteAudioAsync(User02, Project01, User01, "/../test/abc.txt"));
+            Assert.ThrowsAsync<FormatException>(
+                () => env.Service.DeleteAudioAsync(User02, Project01, User01, "/../test/abc.txt")
+            );
         }
 
         [Test]
@@ -125,8 +133,9 @@ namespace SIL.XForge.Services
         {
             var env = new TestEnvironment();
 
-            Assert.ThrowsAsync<DataNotFoundException>(() =>
-                env.Service.DeleteAudioAsync(User02, "/../test/abc.txt", User01, "507f1f77bcf86cd799439011"));
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.DeleteAudioAsync(User02, "/../test/abc.txt", User01, "507f1f77bcf86cd799439011")
+            );
         }
 
         [Test]
@@ -152,8 +161,9 @@ namespace SIL.XForge.Services
         {
             var env = new TestEnvironment();
 
-            Assert.ThrowsAsync<ForbiddenException>(() =>
-                env.Service.UpdateRoleAsync(User02, SystemRole.User, Project01, TestProjectRole.Administrator));
+            Assert.ThrowsAsync<ForbiddenException>(
+                () => env.Service.UpdateRoleAsync(User02, SystemRole.User, Project01, TestProjectRole.Administrator)
+            );
         }
 
         [Test]
@@ -161,14 +171,17 @@ namespace SIL.XForge.Services
         {
             var env = new TestEnvironment();
             // SUT 1
-            Assert.ThrowsAsync<ForbiddenException>(async () =>
-                await env.Service.SetSyncDisabledAsync(User03, SystemRole.User, Project01, false));
+            Assert.ThrowsAsync<ForbiddenException>(
+                async () => await env.Service.SetSyncDisabledAsync(User03, SystemRole.User, Project01, false)
+            );
             // SUT 2
-            Assert.ThrowsAsync<ForbiddenException>(async () =>
-                await env.Service.SetSyncDisabledAsync(User03, SystemRole.None, Project01, false));
+            Assert.ThrowsAsync<ForbiddenException>(
+                async () => await env.Service.SetSyncDisabledAsync(User03, SystemRole.None, Project01, false)
+            );
             // SUT 3
-            Assert.DoesNotThrowAsync(async () =>
-                await env.Service.SetSyncDisabledAsync(User03, SystemRole.SystemAdmin, Project01, false));
+            Assert.DoesNotThrowAsync(
+                async () => await env.Service.SetSyncDisabledAsync(User03, SystemRole.SystemAdmin, Project01, false)
+            );
         }
 
         [Test]
@@ -194,24 +207,30 @@ namespace SIL.XForge.Services
             IConnection connection = Substitute.For<IConnection>();
             IDocument<TestProject> projectDoc = Substitute.For<IDocument<TestProject>>();
             IDocument<User> userDoc = Substitute.For<IDocument<User>>();
-            Assert.ThrowsAsync<ArgumentNullException>(() =>
-                env.Service.RemoveUserFromProjectAsync(null, projectDoc, userDoc));
-            Assert.ThrowsAsync<ArgumentNullException>(() =>
-                env.Service.RemoveUserFromProjectAsync(connection, null, userDoc));
-            Assert.ThrowsAsync<ArgumentNullException>(() =>
-                env.Service.RemoveUserFromProjectAsync(connection, projectDoc, null));
+            Assert.ThrowsAsync<ArgumentNullException>(
+                () => env.Service.RemoveUserFromProjectAsync(null, projectDoc, userDoc)
+            );
+            Assert.ThrowsAsync<ArgumentNullException>(
+                () => env.Service.RemoveUserFromProjectAsync(connection, null, userDoc)
+            );
+            Assert.ThrowsAsync<ArgumentNullException>(
+                () => env.Service.RemoveUserFromProjectAsync(connection, projectDoc, null)
+            );
         }
 
         [Test]
         public void RemoveUserAsync_BadArguments()
         {
             var env = new TestEnvironment();
-            Assert.ThrowsAsync<ArgumentNullException>(() =>
-                env.Service.RemoveUserAsync(null, "projectId", "projectUserId"));
-            Assert.ThrowsAsync<ArgumentNullException>(() =>
-                env.Service.RemoveUserAsync("curUserId", null, "projectUserId"));
-            Assert.ThrowsAsync<ArgumentNullException>(() =>
-                env.Service.RemoveUserAsync("curUserId", "projectId", null));
+            Assert.ThrowsAsync<ArgumentNullException>(
+                () => env.Service.RemoveUserAsync(null, "projectId", "projectUserId")
+            );
+            Assert.ThrowsAsync<ArgumentNullException>(
+                () => env.Service.RemoveUserAsync("curUserId", null, "projectUserId")
+            );
+            Assert.ThrowsAsync<ArgumentNullException>(
+                () => env.Service.RemoveUserAsync("curUserId", "projectId", null)
+            );
         }
 
         [Test]
@@ -237,10 +256,12 @@ namespace SIL.XForge.Services
         public void RemoveUserFromAllProjectsAsync_BadArguments()
         {
             var env = new TestEnvironment();
-            Assert.ThrowsAsync<ArgumentNullException>(() =>
-                env.Service.RemoveUserFromAllProjectsAsync(null, "projectUserId"));
-            Assert.ThrowsAsync<ArgumentNullException>(() =>
-                env.Service.RemoveUserFromAllProjectsAsync("curUserId", null));
+            Assert.ThrowsAsync<ArgumentNullException>(
+                () => env.Service.RemoveUserFromAllProjectsAsync(null, "projectUserId")
+            );
+            Assert.ThrowsAsync<ArgumentNullException>(
+                () => env.Service.RemoveUserFromAllProjectsAsync("curUserId", null)
+            );
         }
 
         [Test]
@@ -250,12 +271,16 @@ namespace SIL.XForge.Services
             string requestingUser = User02;
             string userToDisassociate = User01;
 
-            Assert.That(env.GetProject(Project01).UserRoles[requestingUser] != TestProjectRole.Administrator,
-                "setup: user requesting deletion should not be a project administrator to demonstrate the " +
-                    "functionality");
-            Assert.That(env.GetProject(Project02).UserRoles[requestingUser] != TestProjectRole.Administrator,
-                "setup: user requesting deletion should not be a project administrator to demonstrate the " +
-                    "functionality");
+            Assert.That(
+                env.GetProject(Project01).UserRoles[requestingUser] != TestProjectRole.Administrator,
+                "setup: user requesting deletion should not be a project administrator to demonstrate the "
+                    + "functionality"
+            );
+            Assert.That(
+                env.GetProject(Project02).UserRoles[requestingUser] != TestProjectRole.Administrator,
+                "setup: user requesting deletion should not be a project administrator to demonstrate the "
+                    + "functionality"
+            );
             Assert.That(requestingUser, Is.Not.EqualTo(userToDisassociate), "setup: not demonstrating functionality");
 
             Assert.That(env.GetProject(Project01).UserRoles, Does.ContainKey(userToDisassociate), "setup");
@@ -316,95 +341,107 @@ namespace SIL.XForge.Services
             public TestEnvironment(bool isResetLinkExpired = false)
             {
                 RealtimeService = new MemoryRealtimeService();
-                RealtimeService.AddRepository("users", OTType.Json0,
-                    new MemoryRepository<User>(new[]
-                    {
-                        new User
+                RealtimeService.AddRepository(
+                    "users",
+                    OTType.Json0,
+                    new MemoryRepository<User>(
+                        new[]
                         {
-                            Id = User01,
-                            Email = "user01@example.com",
-                            Sites = new Dictionary<string, Site>
+                            new User
                             {
-                                { SiteId, new Site()
+                                Id = User01,
+                                Email = "user01@example.com",
+                                Sites = new Dictionary<string, Site>
+                                {
                                     {
-                                        Projects = new List<String>()
+                                        SiteId,
+                                        new Site()
                                         {
-                                            Project01,
-                                            Project02
+                                            Projects = new List<String>() { Project01, Project02 }
                                         }
                                     }
                                 }
-                            }
-                        },
-                        new User
-                        {
-                            Id = User02,
-                            Email = "user02@example.com",
-                            Sites = new Dictionary<string, Site>
-                            {
-                                { SiteId, new Site()
-                                    {
-                                        Projects = new List<String>()
-                                        {
-                                            Project01,
-                                            Project02
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        new User
-                        {
-                            Id = User03,
-                            Email = "user03@example.com",
-                            Sites = new Dictionary<string, Site> { { SiteId, new Site() } }
-                        }
-                    }));
-                RealtimeService.AddRepository("projects", OTType.Json0,
-                    new MemoryRepository<TestProject>(new[]
-                    {
-                        new TestProject
-                        {
-                            Id = Project01,
-                            Name = "Project 1",
-                            UserRoles =
-                            {
-                                { User01, TestProjectRole.Administrator },
-                                { User02, TestProjectRole.Reviewer }
-                            }
-                        },
-                        new TestProject
-                        {
-                            Id = Project02,
-                            Name = "Project 2",
-                            UserRoles =
-                            {
-                                { User01, TestProjectRole.Administrator },
-                                { User02, TestProjectRole.Reviewer }
                             },
-                            SyncDisabled = true
-                        },
-                    }));
+                            new User
+                            {
+                                Id = User02,
+                                Email = "user02@example.com",
+                                Sites = new Dictionary<string, Site>
+                                {
+                                    {
+                                        SiteId,
+                                        new Site()
+                                        {
+                                            Projects = new List<String>() { Project01, Project02 }
+                                        }
+                                    }
+                                }
+                            },
+                            new User
+                            {
+                                Id = User03,
+                                Email = "user03@example.com",
+                                Sites = new Dictionary<string, Site> { { SiteId, new Site() } }
+                            }
+                        }
+                    )
+                );
+                RealtimeService.AddRepository(
+                    "projects",
+                    OTType.Json0,
+                    new MemoryRepository<TestProject>(
+                        new[]
+                        {
+                            new TestProject
+                            {
+                                Id = Project01,
+                                Name = "Project 1",
+                                UserRoles =
+                                {
+                                    { User01, TestProjectRole.Administrator },
+                                    { User02, TestProjectRole.Reviewer }
+                                }
+                            },
+                            new TestProject
+                            {
+                                Id = Project02,
+                                Name = "Project 2",
+                                UserRoles =
+                                {
+                                    { User01, TestProjectRole.Administrator },
+                                    { User02, TestProjectRole.Reviewer }
+                                },
+                                SyncDisabled = true
+                            },
+                        }
+                    )
+                );
 
                 var siteOptions = Substitute.For<IOptions<SiteOptions>>();
-                siteOptions.Value.Returns(new SiteOptions
-                {
-                    Id = SiteId,
-                    Name = "xForge",
-                    Origin = new Uri("http://localhost"),
-                    SiteDir = "site"
-                });
+                siteOptions.Value.Returns(
+                    new SiteOptions
+                    {
+                        Id = SiteId,
+                        Name = "xForge",
+                        Origin = new Uri("http://localhost"),
+                        SiteDir = "site"
+                    }
+                );
                 AudioService = Substitute.For<IAudioService>();
 
-                ProjectSecrets = new MemoryRepository<TestProjectSecret>(new[]
-                {
-                    new TestProjectSecret { Id = Project01 }
-                });
+                ProjectSecrets = new MemoryRepository<TestProjectSecret>(
+                    new[] { new TestProjectSecret { Id = Project01 } }
+                );
 
                 FileSystemService = Substitute.For<IFileSystemService>();
 
-                Service = new TestProjectService(RealtimeService, siteOptions, AudioService, ProjectSecrets,
-                    FileSystemService);
+                Service = new TestProjectService(
+                    RealtimeService,
+                    siteOptions,
+                    AudioService,
+                    ProjectSecrets,
+                    FileSystemService
+                );
             }
 
             public TestProjectService Service { get; }

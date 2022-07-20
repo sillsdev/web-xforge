@@ -362,7 +362,11 @@ namespace SIL.XForge.Scripture.Controllers
             }
         }
 
-        public async Task<IRpcMethodResult> SetUserProjectPermissions(string projectId, string userId, string[] permissions)
+        public async Task<IRpcMethodResult> SetUserProjectPermissions(
+            string projectId,
+            string userId,
+            string[] permissions
+        )
         {
             try
             {

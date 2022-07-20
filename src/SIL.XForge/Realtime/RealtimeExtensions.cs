@@ -24,8 +24,7 @@ namespace SIL.XForge.Realtime
             return default(T);
         }
 
-        public static async Task<IDocument<T>> FetchAsync<T>(this IConnection conn, string id)
-            where T : IIdentifiable
+        public static async Task<IDocument<T>> FetchAsync<T>(this IConnection conn, string id) where T : IIdentifiable
         {
             IDocument<T> doc = conn.Get<T>(id);
             await doc.FetchAsync();
@@ -40,8 +39,11 @@ namespace SIL.XForge.Realtime
             return doc;
         }
 
-        public static async Task<IDocument<T>> FetchOrCreateAsync<T>(this IConnection conn, string id,
-            Func<T> createData) where T : IIdentifiable
+        public static async Task<IDocument<T>> FetchOrCreateAsync<T>(
+            this IConnection conn,
+            string id,
+            Func<T> createData
+        ) where T : IIdentifiable
         {
             IDocument<T> doc = conn.Get<T>(id);
             await doc.FetchOrCreateAsync(createData);

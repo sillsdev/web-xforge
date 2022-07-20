@@ -27,15 +27,23 @@ namespace SIL.XForge.Scripture.Controllers
 
         [HttpPost("audio")]
         [RequestSizeLimit(100_000_000)]
-        public async Task<IActionResult> UploadAudioAsync([FromForm] string projectId, [FromForm] string dataId,
-            [FromForm] IFormFile file)
+        public async Task<IActionResult> UploadAudioAsync(
+            [FromForm] string projectId,
+            [FromForm] string dataId,
+            [FromForm] IFormFile file
+        )
         {
             try
             {
                 using (Stream stream = file.OpenReadStream())
                 {
-                    Uri uri = await _projectService.SaveAudioAsync(_userAccessor.UserId, projectId, dataId,
-                        Path.GetExtension(file.FileName), stream);
+                    Uri uri = await _projectService.SaveAudioAsync(
+                        _userAccessor.UserId,
+                        projectId,
+                        dataId,
+                        Path.GetExtension(file.FileName),
+                        stream
+                    );
                     return Created(uri.PathAndQuery, Path.GetFileName(uri.AbsolutePath));
                 }
             }

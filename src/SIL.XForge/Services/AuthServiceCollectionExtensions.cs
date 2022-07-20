@@ -14,11 +14,14 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class AuthServiceCollectionExtensions
     {
-        public static IServiceCollection AddXFAuthentication(this IServiceCollection services,
-            IConfiguration configuration)
+        public static IServiceCollection AddXFAuthentication(
+            this IServiceCollection services,
+            IConfiguration configuration
+        )
         {
             var authOptions = configuration.GetOptions<AuthOptions>();
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            services
+                .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
                     options.Authority = $"https://{authOptions.Domain}/";
@@ -46,14 +49,23 @@ namespace Microsoft.Extensions.DependencyInjection
                             {
                                 Claim[] claims = new[]
                                 {
-                                    new Claim(ClaimTypes.NameIdentifier, context.Username, ClaimValueTypes.String,
-                                        context.Options.ClaimsIssuer),
-                                    new Claim(ClaimTypes.Name, context.Username, ClaimValueTypes.String,
-                                        context.Options.ClaimsIssuer)
+                                    new Claim(
+                                        ClaimTypes.NameIdentifier,
+                                        context.Username,
+                                        ClaimValueTypes.String,
+                                        context.Options.ClaimsIssuer
+                                    ),
+                                    new Claim(
+                                        ClaimTypes.Name,
+                                        context.Username,
+                                        ClaimValueTypes.String,
+                                        context.Options.ClaimsIssuer
+                                    )
                                 };
 
-                                context.Principal = new ClaimsPrincipal(new ClaimsIdentity(claims,
-                                    context.Scheme.Name));
+                                context.Principal = new ClaimsPrincipal(
+                                    new ClaimsIdentity(claims, context.Scheme.Name)
+                                );
                                 context.Success();
                             }
                             return Task.CompletedTask;

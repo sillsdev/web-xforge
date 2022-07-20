@@ -22,8 +22,11 @@ namespace SIL.XForge.Scripture.Controllers
         private readonly IParatextService _paratextService;
         private readonly IUserAccessor _userAccessor;
 
-        public ParatextController(IRepository<UserSecret> userSecrets, IParatextService paratextService,
-            IUserAccessor userAccessor)
+        public ParatextController(
+            IRepository<UserSecret> userSecrets,
+            IParatextService paratextService,
+            IUserAccessor userAccessor
+        )
         {
             _userSecrets = userSecrets;
             _paratextService = paratextService;

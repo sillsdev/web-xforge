@@ -26,9 +26,15 @@ namespace SIL.XForge.Realtime
         private readonly Dictionary<Type, DocConfig> _docConfigs;
         private readonly IConfiguration _configuration;
 
-        public RealtimeService(IRealtimeServer server, IOptions<SiteOptions> siteOptions,
-            IOptions<DataAccessOptions> dataAccessOptions, IOptions<RealtimeOptions> realtimeOptions,
-            IOptions<AuthOptions> authOptions, IMongoClient mongoClient, IConfiguration configuration)
+        public RealtimeService(
+            IRealtimeServer server,
+            IOptions<SiteOptions> siteOptions,
+            IOptions<DataAccessOptions> dataAccessOptions,
+            IOptions<RealtimeOptions> realtimeOptions,
+            IOptions<AuthOptions> authOptions,
+            IMongoClient mongoClient,
+            IConfiguration configuration
+        )
         {
             Server = server;
             _siteOptions = siteOptions;
@@ -103,12 +109,14 @@ namespace SIL.XForge.Realtime
             await Task.WhenAll(tasks);
 
             IMongoCollection<BsonDocument> snapshotCollection = _database.GetCollection<BsonDocument>(
-                options.ProjectDoc.CollectionName);
+                options.ProjectDoc.CollectionName
+            );
             FilterDefinition<BsonDocument> idFilter = Builders<BsonDocument>.Filter.Eq("_id", projectId);
             await snapshotCollection.DeleteManyAsync(idFilter);
 
             IMongoCollection<BsonDocument> opsCollection = _database.GetCollection<BsonDocument>(
-                $"o_{options.ProjectDoc.CollectionName}");
+                $"o_{options.ProjectDoc.CollectionName}"
+            );
             FilterDefinition<BsonDocument> dFilter = Builders<BsonDocument>.Filter.Eq("d", projectId);
             await opsCollection.DeleteManyAsync(dFilter);
         }
@@ -130,11 +138,13 @@ namespace SIL.XForge.Realtime
             foreach (var collection in collectionsToProcess)
             {
                 IMongoCollection<BsonDocument> snapshotCollection = _database.GetCollection<BsonDocument>(
-                    collection.CollectionName);
+                    collection.CollectionName
+                );
                 await snapshotCollection.DeleteManyAsync(idFilter);
 
                 IMongoCollection<BsonDocument> opsCollection = _database.GetCollection<BsonDocument>(
-                $"o_{collection.CollectionName}");
+                    $"o_{collection.CollectionName}"
+                );
                 await opsCollection.DeleteManyAsync(dFilter);
             }
         }
@@ -172,21 +182,21 @@ namespace SIL.XForge.Realtime
             SortDefinition<BsonDocument> sort = Builders<BsonDocument>.Sort.Descending(field);
 
             // Use FindAsync(), as opposed to Find(), so that we can mock it
-            using IAsyncCursor<BsonDocument> cursor = await opsCollection.FindAsync(filter,
-                new FindOptions<BsonDocument, BsonDocument>()
-                {
-                    Limit = 1,
-                    Sort = sort,
-                });
+            using IAsyncCursor<BsonDocument> cursor = await opsCollection.FindAsync(
+                filter,
+                new FindOptions<BsonDocument, BsonDocument>() { Limit = 1, Sort = sort, }
+            );
             BsonDocument doc = await cursor.FirstOrDefaultAsync();
 
             // Retrieve uId from the metadata, if present
             // uId is set by sharedb-access, and will be missing if this op was created by a sync
-            if (doc != null
+            if (
+                doc != null
                 && doc.TryGetValue("m", out BsonValue mValue)
                 && mValue is BsonDocument mDoc
                 && mDoc.TryGetValue("uId", out BsonValue uidValue)
-                && uidValue is BsonString uidString)
+                && uidValue is BsonString uidString
+            )
             {
                 return uidString.Value;
             }
@@ -237,8 +247,9 @@ namespace SIL.XForge.Realtime
                 ReleaseStage = this._configuration.GetValue<string>("Bugsnag:ReleaseStage"),
                 MigrationsDisabled = this._realtimeOptions.Value.MigrationsDisabled,
                 SiteId = this._siteOptions.Value.Id,
-                Version = System.Diagnostics.FileVersionInfo.GetVersionInfo(
-                    @System.Reflection.Assembly.GetEntryAssembly().Location).ProductVersion
+                Version = System.Diagnostics.FileVersionInfo
+                    .GetVersionInfo(@System.Reflection.Assembly.GetEntryAssembly().Location)
+                    .ProductVersion
             };
         }
     }

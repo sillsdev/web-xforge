@@ -41,14 +41,18 @@ namespace SyncUserToPTUser
             }
             catch (HttpRequestException)
             {
-                Logger.Log("There was an error starting the program before getting to the inspection or migration. "
-                    + "Maybe the SF server is running on this machine and needs shut down? Rethrowing.");
+                Logger.Log(
+                    "There was an error starting the program before getting to the inspection or migration. "
+                        + "Maybe the SF server is running on this machine and needs shut down? Rethrowing."
+                );
                 throw;
             }
             ISyncUserToPTUserService tool = webHost.Services.GetService<ISyncUserToPTUserService>();
             string projectIds = Environment.GetEnvironmentVariable("SYNC_USER_PROJECT_IDS");
             bool runMode = Environment.GetEnvironmentVariable("SYNC_USER_MODE_RUN") == "true";
-            var syncUserProjectIds = string.IsNullOrEmpty(projectIds) ? null : new HashSet<string>(projectIds.Split(' '));
+            var syncUserProjectIds = string.IsNullOrEmpty(projectIds)
+                ? null
+                : new HashSet<string>(projectIds.Split(' '));
             await tool.MoveSyncUsersToProject(!runMode, syncUserProjectIds);
             await webHost.StopAsync();
             Logger.Log("Done.");
@@ -70,7 +74,8 @@ namespace SyncUserToPTUser
                 .Build();
 
             return builder
-                .ConfigureAppConfiguration((context, config) =>
+                .ConfigureAppConfiguration(
+                    (context, config) =>
                     {
                         IWebHostEnvironment env = context.HostingEnvironment;
                         if (env.IsDevelopment() || env.IsEnvironment("Testing"))
@@ -84,7 +89,8 @@ namespace SyncUserToPTUser
                                 config.AddUserSecrets(appAssembly, true);
                         }
                         config.AddEnvironmentVariables();
-                    })
+                    }
+                )
                 .UseConfiguration(configuration)
                 .UseStartup<Startup>();
         }

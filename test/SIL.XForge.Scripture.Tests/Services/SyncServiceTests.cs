@@ -168,8 +168,12 @@ namespace SIL.XForge.Scripture.Services
             // Set up test environment
             var env = new TestEnvironment();
             env.BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns("jobid");
-            await env.RealtimeService.GetRepository<SFProject>().UpdateAsync(p => p.Id == "project03", u =>
-                    u.Set(pr => pr.TranslateConfig.TranslationSuggestionsEnabled, false));
+            await env.RealtimeService
+                .GetRepository<SFProject>()
+                .UpdateAsync(
+                    p => p.Id == "project03",
+                    u => u.Set(pr => pr.TranslateConfig.TranslationSuggestionsEnabled, false)
+                );
 
             // Run sync
             await env.Service.SyncAsync("userid", Project03, false);
@@ -222,20 +226,28 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
 
             env.Service.WarnIfAnomalousQueuedCount(0, "");
-            env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.Message.Contains("QueuedCount"),
-                "No warning should have been logged for reasonable queued count 0.");
+            env.MockLogger.AssertNoEvent(
+                (LogEvent logEvent) => logEvent.Message.Contains("QueuedCount"),
+                "No warning should have been logged for reasonable queued count 0."
+            );
 
             env.Service.WarnIfAnomalousQueuedCount(1, "");
-            env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.Message.Contains("QueuedCount"),
-                "No warning should have been logged for reasonable queued count 1.");
+            env.MockLogger.AssertNoEvent(
+                (LogEvent logEvent) => logEvent.Message.Contains("QueuedCount"),
+                "No warning should have been logged for reasonable queued count 1."
+            );
 
             env.Service.WarnIfAnomalousQueuedCount(-1, "");
-            env.MockLogger.AssertHasEvent((LogEvent logEvent) => logEvent.Message.Contains("QueuedCount"),
-                "Warn for unexpected queued count -1.");
+            env.MockLogger.AssertHasEvent(
+                (LogEvent logEvent) => logEvent.Message.Contains("QueuedCount"),
+                "Warn for unexpected queued count -1."
+            );
 
             env.Service.WarnIfAnomalousQueuedCount(2, "");
-            env.MockLogger.AssertHasEvent((LogEvent logEvent) => logEvent.Message.Contains("QueuedCount"),
-                "Warn for less expected queued count 2.");
+            env.MockLogger.AssertHasEvent(
+                (LogEvent logEvent) => logEvent.Message.Contains("QueuedCount"),
+                "Warn for less expected queued count 2."
+            );
         }
 
         private class TestEnvironment
@@ -245,66 +257,55 @@ namespace SIL.XForge.Scripture.Services
             public TestEnvironment()
             {
                 BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
-                ProjectSecrets = new MemoryRepository<SFProjectSecret>(new[]
-                {
-                    new SFProjectSecret { Id = "project01" },
-                    new SFProjectSecret { Id = "project02" },
-                    new SFProjectSecret { Id = "project03" },
-                });
-                RealtimeService = new SFMemoryRealtimeService();
-
-                RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(
+                ProjectSecrets = new MemoryRepository<SFProjectSecret>(
                     new[]
                     {
-                        new SFProject
+                        new SFProjectSecret { Id = "project01" },
+                        new SFProjectSecret { Id = "project02" },
+                        new SFProjectSecret { Id = "project03" },
+                    }
+                );
+                RealtimeService = new SFMemoryRealtimeService();
+
+                RealtimeService.AddRepository(
+                    "sf_projects",
+                    OTType.Json0,
+                    new MemoryRepository<SFProject>(
+                        new[]
                         {
-                            Id = Project01,
-                            Name = "project01",
-                            ShortName = "P01",
-                            CheckingConfig = new CheckingConfig
+                            new SFProject
                             {
-                                ShareEnabled = false
+                                Id = Project01,
+                                Name = "project01",
+                                ShortName = "P01",
+                                CheckingConfig = new CheckingConfig { ShareEnabled = false },
+                                UserRoles = new Dictionary<string, string> { },
                             },
-                            UserRoles = new Dictionary<string, string>
+                            new SFProject
                             {
+                                Id = Project02,
+                                Name = "project02",
+                                ShortName = "P02",
+                                CheckingConfig = new CheckingConfig { ShareEnabled = false },
+                                UserRoles = new Dictionary<string, string> { },
+                                SyncDisabled = true
                             },
-                        },
-                        new SFProject
-                        {
-                            Id = Project02,
-                            Name = "project02",
-                            ShortName = "P02",
-                            CheckingConfig = new CheckingConfig
+                            new SFProject
                             {
-                                ShareEnabled = false
-                            },
-                            UserRoles = new Dictionary<string, string>
-                            {
-                            },
-                            SyncDisabled = true
-                        },
-                        new SFProject
-                        {
-                            Id = Project03,
-                            Name = "project03",
-                            ShortName = "P03",
-                            CheckingConfig = new CheckingConfig
-                            {
-                                ShareEnabled = false
-                            },
-                            UserRoles = new Dictionary<string, string>
-                            {
-                            },
-                            TranslateConfig = new TranslateConfig
-                            {
-                                TranslationSuggestionsEnabled = true,
-                                Source = new TranslateSource
+                                Id = Project03,
+                                Name = "project03",
+                                ShortName = "P03",
+                                CheckingConfig = new CheckingConfig { ShareEnabled = false },
+                                UserRoles = new Dictionary<string, string> { },
+                                TranslateConfig = new TranslateConfig
                                 {
-                                    ProjectRef = Project01
+                                    TranslationSuggestionsEnabled = true,
+                                    Source = new TranslateSource { ProjectRef = Project01 }
                                 }
                             }
                         }
-                }));
+                    )
+                );
 
                 MockLogger = new MockLogger<SyncService>();
 

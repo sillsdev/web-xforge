@@ -26,12 +26,14 @@ namespace SIL.XForge.Scripture.Models
         public string TagIcon { get; set; }
         public string Status { get; set; }
         public string Assignment { get; set; }
+
         /// <summary> True if the thread has been permanently removed. </summary>
         public bool ThreadRemoved { get; set; }
         public bool ThreadUpdated { get; set; }
         public List<Note> NotesAdded { get; set; } = new List<Note>();
         public List<Note> NotesUpdated { get; set; } = new List<Note>();
         public List<Note> NotesDeleted { get; set; } = new List<Note>();
+
         /// <summary> IDs for notes that have been permanently removed. </summary>
         public List<string> NoteIdsRemoved { get; set; } = new List<string>();
 
@@ -39,13 +41,25 @@ namespace SIL.XForge.Scripture.Models
         {
             get
             {
-                return NotesAdded.Count > 0 || NotesUpdated.Count > 0 || NotesDeleted.Count > 0 ||
-                    NoteIdsRemoved.Count > 0 || ThreadRemoved || ThreadUpdated || Position != null;
+                return NotesAdded.Count > 0
+                    || NotesUpdated.Count > 0
+                    || NotesDeleted.Count > 0
+                    || NoteIdsRemoved.Count > 0
+                    || ThreadRemoved
+                    || ThreadUpdated
+                    || Position != null;
             }
         }
 
-        public NoteThreadChange(string threadId, string verseRef, string selectedText, string contextBefore,
-            string contextAfter, string status, string tagIcon = null)
+        public NoteThreadChange(
+            string threadId,
+            string verseRef,
+            string selectedText,
+            string contextBefore,
+            string contextAfter,
+            string status,
+            string tagIcon = null
+        )
         {
             ThreadId = threadId;
             VerseRefStr = verseRef;

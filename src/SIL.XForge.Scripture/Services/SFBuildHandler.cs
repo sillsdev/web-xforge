@@ -41,7 +41,8 @@ namespace SIL.XForge.Scripture.Services
         private async Task ClearSelectedSegmentChecksum(IConnection conn, string projectId, string userId)
         {
             IDocument<SFProjectUserConfig> config = await conn.FetchAsync<SFProjectUserConfig>(
-                SFProjectUserConfig.GetDocId(projectId, userId));
+                SFProjectUserConfig.GetDocId(projectId, userId)
+            );
             await config.SubmitJson0OpAsync(op => op.Unset(puc => puc.SelectedSegmentChecksum));
         }
     }

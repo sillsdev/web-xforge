@@ -10,12 +10,13 @@ namespace SIL.XForge.Services
 {
     public class TestProjectService : ProjectService<TestProject, TestProjectSecret>
     {
-        public TestProjectService(IRealtimeService realtimeService, IOptions<SiteOptions> siteOptions,
-            IAudioService audioService, IRepository<TestProjectSecret> projectSecrets,
-            IFileSystemService fileSystemService)
-            : base(realtimeService, siteOptions, audioService, projectSecrets, fileSystemService)
-        {
-        }
+        public TestProjectService(
+            IRealtimeService realtimeService,
+            IOptions<SiteOptions> siteOptions,
+            IAudioService audioService,
+            IRepository<TestProjectSecret> projectSecrets,
+            IFileSystemService fileSystemService
+        ) : base(realtimeService, siteOptions, audioService, projectSecrets, fileSystemService) { }
 
         protected override string ProjectAdminRole => TestProjectRole.Administrator;
 

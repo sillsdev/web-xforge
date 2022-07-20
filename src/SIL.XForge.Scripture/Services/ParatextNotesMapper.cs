@@ -37,8 +37,13 @@ namespace SIL.XForge.Scripture.Services
         private IGuidService _guidService;
         private HashSet<string> _ptProjectUsersWhoCanWriteNotes;
 
-        public ParatextNotesMapper(IRepository<UserSecret> userSecrets, IParatextService paratextService,
-            IStringLocalizer<SharedResource> localizer, IOptions<SiteOptions> siteOptions, IGuidService guidService)
+        public ParatextNotesMapper(
+            IRepository<UserSecret> userSecrets,
+            IParatextService paratextService,
+            IStringLocalizer<SharedResource> localizer,
+            IOptions<SiteOptions> siteOptions,
+            IGuidService guidService
+        )
         {
             _userSecrets = userSecrets;
             _paratextService = paratextService;
@@ -47,17 +52,30 @@ namespace SIL.XForge.Scripture.Services
             _guidService = guidService;
         }
 
-        public async Task InitAsync(UserSecret currentUserSecret, SFProjectSecret projectSecret, List<User> ptUsers,
-            SFProject project, CancellationToken token)
+        public async Task InitAsync(
+            UserSecret currentUserSecret,
+            SFProjectSecret projectSecret,
+            List<User> ptUsers,
+            SFProject project,
+            CancellationToken token
+        )
         {
             _currentUserSecret = currentUserSecret;
             _currentParatextUsername = _paratextService.GetParatextUsername(currentUserSecret);
             _projectSecret = projectSecret;
             _ptProjectUsersWhoCanWriteNotes = new HashSet<string>();
-            IReadOnlyDictionary<string, string> roles = await _paratextService.GetProjectRolesAsync(currentUserSecret,
-                project, token);
-            var ptRolesCanWriteNote = new HashSet<string> { SFProjectRole.Administrator, SFProjectRole.Translator,
-                SFProjectRole.Consultant, SFProjectRole.WriteNote };
+            IReadOnlyDictionary<string, string> roles = await _paratextService.GetProjectRolesAsync(
+                currentUserSecret,
+                project,
+                token
+            );
+            var ptRolesCanWriteNote = new HashSet<string>
+            {
+                SFProjectRole.Administrator,
+                SFProjectRole.Translator,
+                SFProjectRole.Consultant,
+                SFProjectRole.WriteNote
+            };
             foreach (User user in ptUsers)
             {
                 // Populate the list with all Paratext users belonging to the project and who can write notes
@@ -66,8 +84,11 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        public async Task<XElement> GetNotesChangelistAsync(XElement oldNotesElem,
-            IEnumerable<IDocument<Question>> questionsDocs, Dictionary<string, ParatextUserProfile> ptProjectUsers)
+        public async Task<XElement> GetNotesChangelistAsync(
+            XElement oldNotesElem,
+            IEnumerable<IDocument<Question>> questionsDocs,
+            Dictionary<string, ParatextUserProfile> ptProjectUsers
+        )
         {
             var version = (string)oldNotesElem.Attribute("version");
             Dictionary<string, XElement> oldCommentElems = GetOldCommentElements(oldNotesElem, ptProjectUsers);
@@ -82,33 +103,49 @@ namespace SIL.XForge.Scripture.Services
                 {
                     Answer answer = question.Answers[j];
                     string threadId = $"ANSWER_{answer.DataId}";
-                    var threadElem = new XElement("thread", new XAttribute("id", threadId),
-                        new XElement("selection",
+                    var threadElem = new XElement(
+                        "thread",
+                        new XAttribute("id", threadId),
+                        new XElement(
+                            "selection",
                             new XAttribute("verseRef", question.VerseRef.ToString()),
                             new XAttribute("startPos", 0),
-                            new XAttribute("selectedText", "")));
+                            new XAttribute("selectedText", "")
+                        )
+                    );
                     var answerPrefixContents = new List<object>();
                     // Questions that have empty texts will show in Paratext notes that it is audio-only
                     string qText = string.IsNullOrEmpty(question.Text)
-                        ? _localizer[SharedResource.Keys.AudioOnlyQuestion, _siteOptions.Value.Name] : question.Text;
+                        ? _localizer[SharedResource.Keys.AudioOnlyQuestion, _siteOptions.Value.Name]
+                        : question.Text;
                     answerPrefixContents.Add(new XElement("span", new XAttribute("style", "bold"), qText));
                     if (!string.IsNullOrEmpty(answer.ScriptureText))
                     {
                         string scriptureRef = answer.VerseRef.ToString();
                         string scriptureText = $"{answer.ScriptureText.Trim()} ({scriptureRef})";
-                        answerPrefixContents.Add(new XElement("span", new XAttribute("style", "italic"),
-                            scriptureText));
+                        answerPrefixContents.Add(
+                            new XElement("span", new XAttribute("style", "italic"), scriptureText)
+                        );
                     }
-                    string answerSyncUserId = await AddCommentIfChangedAsync(oldCommentElems, threadElem,
-                        answer, ptProjectUsers, answerPrefixContents);
+                    string answerSyncUserId = await AddCommentIfChangedAsync(
+                        oldCommentElems,
+                        threadElem,
+                        answer,
+                        ptProjectUsers,
+                        answerPrefixContents
+                    );
                     if (answer.SyncUserRef == null)
                         answerSyncUserIds.Add((j, answerSyncUserId));
 
                     for (int k = 0; k < answer.Comments.Count; k++)
                     {
                         Comment comment = answer.Comments[k];
-                        string commentSyncUserId = await AddCommentIfChangedAsync(oldCommentElems, threadElem,
-                            comment, ptProjectUsers);
+                        string commentSyncUserId = await AddCommentIfChangedAsync(
+                            oldCommentElems,
+                            threadElem,
+                            comment,
+                            ptProjectUsers
+                        );
                         if (comment.SyncUserRef == null)
                             commentSyncUserIds.Add((j, k, commentSyncUserId));
                     }
@@ -133,8 +170,10 @@ namespace SIL.XForge.Scripture.Services
         /// <summar>
         /// Get the Paratext Comment elements from a project that are associated with Community Checking answers.
         /// </summary>
-        private Dictionary<string, XElement> GetOldCommentElements(XElement ptNotesElement,
-            Dictionary<string, ParatextUserProfile> ptProjectUsers)
+        private Dictionary<string, XElement> GetOldCommentElements(
+            XElement ptNotesElement,
+            Dictionary<string, ParatextUserProfile> ptProjectUsers
+        )
         {
             var oldCommentElems = new Dictionary<string, XElement>();
             // collect already pushed Paratext notes
@@ -157,12 +196,19 @@ namespace SIL.XForge.Scripture.Services
             return oldCommentElems;
         }
 
-        private async Task<string> AddCommentIfChangedAsync(Dictionary<string, XElement> oldCommentElems,
-            XElement threadElem, Comment comment, Dictionary<string, ParatextUserProfile> ptProjectUsers,
-            IReadOnlyList<object> prefixContent = null)
+        private async Task<string> AddCommentIfChangedAsync(
+            Dictionary<string, XElement> oldCommentElems,
+            XElement threadElem,
+            Comment comment,
+            Dictionary<string, ParatextUserProfile> ptProjectUsers,
+            IReadOnlyList<object> prefixContent = null
+        )
         {
-            (string syncUserId, string user, bool canWritePTNoteOnProject) = await GetSyncUserAsync(comment.SyncUserRef,
-                comment.OwnerRef, ptProjectUsers);
+            (string syncUserId, string user, bool canWritePTNoteOnProject) = await GetSyncUserAsync(
+                comment.SyncUserRef,
+                comment.OwnerRef,
+                ptProjectUsers
+            );
 
             var commentElem = new XElement("comment");
             commentElem.Add(new XAttribute("user", user));
@@ -173,7 +219,8 @@ namespace SIL.XForge.Scripture.Services
             var contentElem = new XElement("content");
             // Responses that have empty texts will show in Paratext notes that it is audio-only
             string responseText = string.IsNullOrEmpty(comment.Text)
-                ? _localizer[SharedResource.Keys.AudioOnlyResponse, _siteOptions.Value.Name] : comment.Text;
+                ? _localizer[SharedResource.Keys.AudioOnlyResponse, _siteOptions.Value.Name]
+                : comment.Text;
             if (prefixContent == null || prefixContent.Count == 0)
             {
                 contentElem.Add(responseText);
@@ -200,7 +247,8 @@ namespace SIL.XForge.Scripture.Services
             {
                 XElement oldThreadElem = oldCommentElem.Parent;
                 var threadId = (string)oldThreadElem.Attribute("id");
-                XElement threadElem = notesElem.Elements("thread")
+                XElement threadElem = notesElem
+                    .Elements("thread")
                     .FirstOrDefault(e => (string)e.Attribute("id") == threadId);
                 if (threadElem == null)
                 {
@@ -219,7 +267,10 @@ namespace SIL.XForge.Scripture.Services
         /// Gets the Paratext user for a comment from the specified sync user id and owner id.
         /// </summary>
         private async Task<(string SyncUserId, string ParatextUsername, bool CanWritePTNoteOnProject)> GetSyncUserAsync(
-            string syncUserRef, string ownerRef, Dictionary<string, ParatextUserProfile> ptProjectUsers)
+            string syncUserRef,
+            string ownerRef,
+            Dictionary<string, ParatextUserProfile> ptProjectUsers
+        )
         {
             // if the owner is a PT user who can write notes, then get the PT username
             string paratextUsername = null;
@@ -232,9 +283,8 @@ namespace SIL.XForge.Scripture.Services
 
             bool canWritePTNoteOnProject = paratextUsername != null;
 
-            ParatextUserProfile ptProjectUser = syncUserRef == null
-                ? null
-                : ptProjectUsers.Values.SingleOrDefault(s => s.OpaqueUserId == syncUserRef);
+            ParatextUserProfile ptProjectUser =
+                syncUserRef == null ? null : ptProjectUsers.Values.SingleOrDefault(s => s.OpaqueUserId == syncUserRef);
             // check if comment has already been synced before
             if (ptProjectUser == null)
             {
@@ -247,15 +297,20 @@ namespace SIL.XForge.Scripture.Services
             return (ptProjectUser.OpaqueUserId, ptProjectUser.Username, canWritePTNoteOnProject);
         }
 
-        private bool IsCommentNewOrChanged(Dictionary<string, XElement> oldCommentElems, string key,
-            XElement commentElem)
+        private bool IsCommentNewOrChanged(
+            Dictionary<string, XElement> oldCommentElems,
+            string key,
+            XElement commentElem
+        )
         {
             return !oldCommentElems.TryGetValue(key, out XElement oldCommentElem)
                 || !XNode.DeepEquals(oldCommentElem.Element("content"), commentElem.Element("content"));
         }
 
-        private ParatextUserProfile FindOrCreateParatextUser(string paratextUsername,
-            Dictionary<string, ParatextUserProfile> ptProjectUsers)
+        private ParatextUserProfile FindOrCreateParatextUser(
+            string paratextUsername,
+            Dictionary<string, ParatextUserProfile> ptProjectUsers
+        )
         {
             if (!ptProjectUsers.TryGetValue(paratextUsername, out ParatextUserProfile ptProjectUser))
             {
@@ -273,8 +328,11 @@ namespace SIL.XForge.Scripture.Services
             return ptProjectUser;
         }
 
-        private string GetCommentKey(string threadId, XElement commentElem,
-            Dictionary<string, ParatextUserProfile> ptProjectUsers)
+        private string GetCommentKey(
+            string threadId,
+            XElement commentElem,
+            Dictionary<string, ParatextUserProfile> ptProjectUsers
+        )
         {
             var user = (string)commentElem.Attribute("user");
             ParatextUserProfile ptProjectUser = FindOrCreateParatextUser(user, ptProjectUsers);

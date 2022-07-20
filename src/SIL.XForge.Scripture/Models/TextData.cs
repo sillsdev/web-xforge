@@ -13,14 +13,9 @@ namespace SIL.XForge.Scripture.Models
             return $"{projectId}:{Canon.BookNumberToId(book)}:{chapter}:target";
         }
 
-        public TextData()
-        {
-        }
+        public TextData() { }
 
-        public TextData(Delta delta)
-            : base(delta)
-        {
-        }
+        public TextData(Delta delta) : base(delta) { }
 
         [JsonIgnore]
         public string Id { get; set; }
