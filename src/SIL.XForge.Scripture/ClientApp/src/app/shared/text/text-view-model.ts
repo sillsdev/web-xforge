@@ -155,8 +155,16 @@ export class TextViewModel {
     return this._segments.entries();
   }
 
+  get segmentsSnapshot(): IterableIterator<[string, RangeStatic]> {
+    return cloneDeep(this._segments).entries();
+  }
+
   get embeddedElements(): Map<string, number> {
     return this._embeddedElements;
+  }
+
+  get embeddedElementsSnapshot(): Map<string, number> {
+    return cloneDeep(this.embeddedElements);
   }
 
   get isLoaded(): boolean {
