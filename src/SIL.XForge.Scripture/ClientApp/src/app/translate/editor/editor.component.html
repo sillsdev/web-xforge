@@ -4,7 +4,7 @@
       <div fxFlex fxLayout="row wrap">
         <app-chapter-nav [bookNum]="bookNum" [(chapter)]="chapter" [chapters]="chapters"></app-chapter-nav>
         <ng-container *ngIf="showSource">
-          <div class="toolbar-separator">&nbsp;</div>
+          <div class="toolbar-separator" [fxHide.xs]="!translationSuggestionsProjectEnabled">&nbsp;</div>
           <button
             mdc-icon-button
             appBlurOnClick
@@ -15,6 +15,7 @@
             fxHide.xs
           ></button>
           <button
+            *ngIf="translationSuggestionsProjectEnabled"
             mdc-icon-button
             appBlurOnClick
             icon="settings"

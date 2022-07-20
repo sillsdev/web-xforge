@@ -2351,7 +2351,6 @@ describe('EditorComponent', () => {
       const selection = env.targetEditor.getSelection();
       expect(selection).toBeNull();
       expect(env.component.canEdit).toBe(false);
-      expect(env.isSourceAreaHidden).toBe(true);
       expect(env.invalidWarning).not.toBeNull();
       env.dispose();
     }));
@@ -2365,6 +2364,32 @@ describe('EditorComponent', () => {
       expect(env.component.hasEditRight).toBe(true);
       expect(env.component.canEdit).toBe(false);
       expect(env.corruptedWarning).not.toBeNull();
+      env.dispose();
+    }));
+
+    it('shows translation suggestions settings when suggestions are enabled for the project', fakeAsync(() => {
+      const projectConfig = { translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: true } };
+      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
+
+      const env = new TestEnvironment();
+      env.setupProject(projectConfig);
+      env.setProjectUserConfig();
+      env.updateParams(navigationParams);
+      env.wait();
+      expect(env.suggestionsSettingsButton).toBeTruthy();
+      env.dispose();
+    }));
+
+    it('hides translation suggestions settings when suggestions are disabled for the project', fakeAsync(() => {
+      const projectConfig = { translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false } };
+      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
+
+      const env = new TestEnvironment();
+      env.setupProject(projectConfig);
+      env.setProjectUserConfig();
+      env.updateParams(navigationParams);
+      env.wait();
+      expect(env.suggestionsSettingsButton).toBeFalsy();
       env.dispose();
     }));
   });
@@ -2612,6 +2637,10 @@ class TestEnvironment {
     return Canon.bookNumberToEnglishName(this.component.bookNum!);
   }
 
+  get suggestionsSettingsButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('button[icon="settings"]'));
+  }
+
   get sharingButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('app-share'));
   }
@@ -2758,9 +2787,6 @@ class TestEnvironment {
     if (data.translateConfig?.translationSuggestionsEnabled != null) {
       projectProfileData.translateConfig.translationSuggestionsEnabled =
         data.translateConfig.translationSuggestionsEnabled;
-      if (!data.translateConfig.translationSuggestionsEnabled) {
-        projectProfileData.texts.forEach(t => (t.hasSource = false));
-      }
     }
     if (data.translateConfig?.source !== undefined) {
       projectProfileData.translateConfig.source = data.translateConfig?.source;
