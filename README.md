@@ -47,7 +47,7 @@ The rest of this document discusses the development of the underlying software.
 - [Backend Development](#backend-development)
   - [Model Changes](#model-changes)
 - [Debugging](#debugging)
-  - [Angular Linting and Prettiering](#angular-linting-and-prettiering)
+  - [Linting and Formatting](#linting-and-formatting)
 - [Database](#database)
 - [USX Validation](#usx-validation)
 - [Architecture and design](#architecture-and-design)
@@ -522,9 +522,10 @@ click **Debug All Tests**.
 
 Other debugging targets are available as well, such as targets that start running the frontend and/or backend.
 
-### Angular Linting and Prettiering
+### Linting and Formatting
 
-To check TypeScript for readability, maintainability, and functionality errors, and to check a few other files for proper formatting. From the repo root
+To check TypeScript for readability, maintainability, and functionality errors, and to check a few other files for
+proper formatting, run the following from the repo root, or just use VS Code with this project's recommended extensions.
 
 ```bash
 cd src/SIL.XForge.Scripture/ClientApp/
@@ -532,7 +533,13 @@ npm run prettier
 ng lint
 ```
 
-Or just use VS Code with this project's recommended extensions.
+C# can be formatted from the repo root by running
+
+```bash
+dotnet tool install csharpier
+dotnet csharpier .
+```
+
 
 ## Database
 
