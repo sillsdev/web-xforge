@@ -118,11 +118,6 @@
     "typescript": "~4.3.5",
     "webpack-bundle-analyzer": "^4.5.0"
   },
-  "lint-staged": {
-    "*.{ts,js,json,css,scss,less,html,md,yml}": [
-      "prettier --write"
-    ]
-  },
   "browser": {
     "moment": false
   }
