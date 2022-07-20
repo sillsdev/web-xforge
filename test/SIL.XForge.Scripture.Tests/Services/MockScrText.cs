@@ -78,9 +78,7 @@ namespace SIL.XForge.Scripture.Services
     /// </summary>
     class MockScrLanguage : ScrLanguage
     {
-        internal MockScrLanguage(ScrText scrText) : base(null, ProjectNormalization.Undefined, scrText)
-        {
-        }
+        internal MockScrLanguage(ScrText scrText) : base(null, ProjectNormalization.Undefined, scrText) { }
 
         protected override WritingSystemDefinition LoadWsDef(ScrText scrText)
         {

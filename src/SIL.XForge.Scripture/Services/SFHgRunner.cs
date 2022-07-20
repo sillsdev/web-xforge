@@ -6,10 +6,8 @@ namespace SIL.XForge.Scripture.Services
     /// <summary> An implementation of <see cref="HgExeRunner"/> that allows intercepting Mercurial commands. </summary>
     public class SFHgRunner : HgExeRunner
     {
-        public SFHgRunner(string installPath, string repository, string mergePath) : base(installPath, repository, mergePath)
-        {
-
-        }
+        public SFHgRunner(string installPath, string repository, string mergePath)
+            : base(installPath, repository, mergePath) { }
 
         public override void RunHg(string args)
         {

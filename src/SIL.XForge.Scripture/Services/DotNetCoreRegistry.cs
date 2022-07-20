@@ -21,7 +21,12 @@ namespace SIL.XForge.Scripture.Services
             return false;
         }
 
-        protected override bool RegEntryExistsInternal(RegistryKey key, string subKey, string regEntry, out object value)
+        protected override bool RegEntryExistsInternal(
+            RegistryKey key,
+            string subKey,
+            string regEntry,
+            out object value
+        )
         {
             value = null;
             return false;
@@ -52,21 +57,13 @@ namespace SIL.XForge.Scripture.Services
             return null;
         }
 
-        protected override void DelKeyInternal(string baseKey, string subKey)
-        {
-        }
+        protected override void DelKeyInternal(string baseKey, string subKey) { }
 
-        protected override void DelKeyInternal(string registryPath)
-        {
-        }
+        protected override void DelKeyInternal(string registryPath) { }
 
-        protected override void SetValInternal(string baseKey, string subKey, string key, object theValue)
-        {
-        }
+        protected override void SetValInternal(string baseKey, string subKey, string key, object theValue) { }
 
-        protected override void SetValInternal(string registryPath, object theValue)
-        {
-        }
+        protected override void SetValInternal(string registryPath, object theValue) { }
 
         protected override bool HasWritePermissionInternal(string registryPath)
         {

@@ -20,8 +20,13 @@ namespace SIL.XForge.Scripture.Services
         /// { "insert": "In the beginning ...",
         ///   "attributes": { "segment": "verse_1_1" } }
         /// </remarks>
-        public SFScriptureText(ITokenizer<string, int, string> wordTokenizer, string projectId, int book, int chapter,
-            BsonDocument doc)
+        public SFScriptureText(
+            ITokenizer<string, int, string> wordTokenizer,
+            string projectId,
+            int book,
+            int chapter,
+            BsonDocument doc
+        )
         {
             if (doc == null)
                 throw new ArgumentNullException(nameof(doc));
@@ -35,7 +40,6 @@ namespace SIL.XForge.Scripture.Services
 
         public string Id { get; }
 
-
         public string SortKey => Id;
 
         public IEnumerable<TextSegment> GetSegments(bool includeText = true, IText basedOn = null)
@@ -43,8 +47,7 @@ namespace SIL.XForge.Scripture.Services
             return _segments;
         }
 
-        private IEnumerable<TextSegment> GetSegments(ITokenizer<string, int, string> wordTokenizer,
-            BsonDocument doc)
+        private IEnumerable<TextSegment> GetSegments(ITokenizer<string, int, string> wordTokenizer, BsonDocument doc)
         {
             string prevRef = null;
             bool isSentenceStart = true;
@@ -71,8 +74,14 @@ namespace SIL.XForge.Scripture.Services
                     bool inRange = curRef.IndexOf("/") != -1;
                     isRangeStart = curRef.StartsWith(prevRef) && inRange;
                     isInRange = isRangeStart || inRange;
-                    yield return CreateSegment(wordTokenizer, prevRef, sb.ToString(), isSentenceStart, isInRange,
-                        isRangeStart);
+                    yield return CreateSegment(
+                        wordTokenizer,
+                        prevRef,
+                        sb.ToString(),
+                        isSentenceStart,
+                        isInRange,
+                        isRangeStart
+                    );
                     isSentenceStart = sb.ToString().HasSentenceEnding();
                     sb.Clear();
                 }
@@ -88,8 +97,14 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        private TextSegment CreateSegment(ITokenizer<string, int, string> wordTokenizer, string segRef,
-            string segmentStr, bool isSentenceStart, bool isInRange, bool isRangeStart)
+        private TextSegment CreateSegment(
+            ITokenizer<string, int, string> wordTokenizer,
+            string segRef,
+            string segmentStr,
+            bool isSentenceStart,
+            bool isInRange,
+            bool isRangeStart
+        )
         {
             var keys = new List<string>();
             foreach (string refPart in segRef.Split('/'))
@@ -102,8 +117,15 @@ namespace SIL.XForge.Scripture.Services
                     keys.AddRange(partKeys);
             }
             string[] segment = wordTokenizer.Tokenize(segmentStr).ToArray();
-            return new TextSegment(Id, new TextSegmentRef(keys), segment, isSentenceStart, isInRange, isRangeStart,
-                segment.Count() == 0);
+            return new TextSegment(
+                Id,
+                new TextSegmentRef(keys),
+                segment,
+                isSentenceStart,
+                isInRange,
+                isRangeStart,
+                segment.Count() == 0
+            );
         }
     }
 }

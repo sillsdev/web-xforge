@@ -92,10 +92,12 @@ namespace Migrations
             //     ...
             // New files are all on one line with no spaces or control characters between elements
             List<string> usxFiles = Directory.EnumerateFiles(path, "*.xml", SearchOption.TopDirectoryOnly).ToList();
-            List<string> oldFiles = (from file in usxFiles
-                                     let line3 = File.ReadLines(file).ElementAtOrDefault(2) ?? ""
-                                     where line3.StartsWith(" ")
-                                     select file).ToList();
+            List<string> oldFiles = (
+                from file in usxFiles
+                let line3 = File.ReadLines(file).ElementAtOrDefault(2) ?? ""
+                where line3.StartsWith(" ")
+                select file
+            ).ToList();
             Console.WriteLine($"{oldFiles.Count}/{usxFiles.Count} old/total files found.");
 
             foreach (string filePath in oldFiles)

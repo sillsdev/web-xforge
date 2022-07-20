@@ -94,14 +94,23 @@ namespace SIL.XForge.Scripture.Services
         /// <remarks>
         /// This is a convenience constructor for unit tests.
         /// </remarks>
-        internal SFInstallableDblResource(UserSecret userSecret, ParatextOptions paratextOptions,
-            ISFRestClientFactory restClientFactory, IFileSystemService fileSystemService,
-            IJwtTokenHelper jwtTokenHelper)
-            : this(userSecret, paratextOptions, restClientFactory, fileSystemService, jwtTokenHelper,
-                  new ParatextProjectDeleter(), new ParatextMigrationOperations(),
-                  new ParatextZippedResourcePasswordProvider(paratextOptions))
-        {
-        }
+        internal SFInstallableDblResource(
+            UserSecret userSecret,
+            ParatextOptions paratextOptions,
+            ISFRestClientFactory restClientFactory,
+            IFileSystemService fileSystemService,
+            IJwtTokenHelper jwtTokenHelper
+        )
+            : this(
+                userSecret,
+                paratextOptions,
+                restClientFactory,
+                fileSystemService,
+                jwtTokenHelper,
+                new ParatextProjectDeleter(),
+                new ParatextMigrationOperations(),
+                new ParatextZippedResourcePasswordProvider(paratextOptions)
+            ) { }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SFInstallableDblResource" /> class.
@@ -115,11 +124,16 @@ namespace SIL.XForge.Scripture.Services
         /// <param name="migrationOperations">The migration operations.</param>
         /// <param name="passwordProvider">The password provider.</param>
         /// <exception cref="ArgumentNullException">restClientFactory</exception>
-        private SFInstallableDblResource(UserSecret userSecret, ParatextOptions paratextOptions,
-            ISFRestClientFactory restClientFactory, IFileSystemService fileSystemService,
-            IJwtTokenHelper jwtTokenHelper, IProjectDeleter projectDeleter,
-            IMigrationOperations migrationOperations, IZippedResourcePasswordProvider passwordProvider)
-            : base(projectDeleter, migrationOperations, passwordProvider)
+        private SFInstallableDblResource(
+            UserSecret userSecret,
+            ParatextOptions paratextOptions,
+            ISFRestClientFactory restClientFactory,
+            IFileSystemService fileSystemService,
+            IJwtTokenHelper jwtTokenHelper,
+            IProjectDeleter projectDeleter,
+            IMigrationOperations migrationOperations,
+            IZippedResourcePasswordProvider passwordProvider
+        ) : base(projectDeleter, migrationOperations, passwordProvider)
         {
             this._userSecret = userSecret;
             this._paratextOptions = paratextOptions;
@@ -204,10 +218,16 @@ namespace SIL.XForge.Scripture.Services
         /// userSecret
         /// or
         /// restClientFactory</exception>
-        public static bool CheckResourcePermission(string id, UserSecret userSecret,
-            ParatextOptions paratextOptions, ISFRestClientFactory restClientFactory,
-            IFileSystemService fileSystemService, IJwtTokenHelper jwtTokenHelper,
-            IExceptionHandler exceptionHandler, string baseUrl = null)
+        public static bool CheckResourcePermission(
+            string id,
+            UserSecret userSecret,
+            ParatextOptions paratextOptions,
+            ISFRestClientFactory restClientFactory,
+            IFileSystemService fileSystemService,
+            IJwtTokenHelper jwtTokenHelper,
+            IExceptionHandler exceptionHandler,
+            string baseUrl = null
+        )
         {
             // Parameter check
             if (string.IsNullOrWhiteSpace(id))
@@ -234,7 +254,8 @@ namespace SIL.XForge.Scripture.Services
                     jwtTokenHelper,
                     exceptionHandler,
                     baseUrl,
-                    id);
+                    id
+                );
                 return resources.Any(r => r.DBLEntryUid.Id == id);
             }
             catch (Exception ex)
@@ -293,10 +314,16 @@ namespace SIL.XForge.Scripture.Services
         /// or
         /// userSecret</exception>
         /// <remarks>Tests on this method can be found in ParatextServiceTests.cs calling GetResources().</remarks>
-        public static IEnumerable<SFInstallableDblResource> GetInstallableDblResources(UserSecret userSecret,
-            ParatextOptions paratextOptions, ISFRestClientFactory restClientFactory,
-            IFileSystemService fileSystemService, IJwtTokenHelper jwtTokenHelper, IExceptionHandler exceptionHandler,
-            string baseUrl = null, string id = null)
+        public static IEnumerable<SFInstallableDblResource> GetInstallableDblResources(
+            UserSecret userSecret,
+            ParatextOptions paratextOptions,
+            ISFRestClientFactory restClientFactory,
+            IFileSystemService fileSystemService,
+            IJwtTokenHelper jwtTokenHelper,
+            IExceptionHandler exceptionHandler,
+            string baseUrl = null,
+            string id = null
+        )
         {
             // Parameter check (just like the constructor)
             if (restClientFactory == null)
@@ -308,8 +335,7 @@ namespace SIL.XForge.Scripture.Services
                 throw new ArgumentNullException(nameof(userSecret));
             }
 
-            ISFRestClient client =
-                restClientFactory.Create(string.Empty, userSecret);
+            ISFRestClient client = restClientFactory.Create(string.Empty, userSecret);
             baseUrl = string.IsNullOrWhiteSpace(baseUrl) ? InternetAccess.ParatextDBLServer : baseUrl;
             string response = null;
             try
@@ -319,17 +345,27 @@ namespace SIL.XForge.Scripture.Services
             catch (WebException e)
             {
                 // If we get a temporary 401 Unauthorized response, return an empty list.
-                string errorExplanation = "GetInstallableDblResources failed when attempting to inquire about"
+                string errorExplanation =
+                    "GetInstallableDblResources failed when attempting to inquire about"
                     + $" resources and is ignoring error {e}";
                 var report = new Exception(errorExplanation);
                 // Report to bugsnag, but don't throw.
                 exceptionHandler.ReportException(report);
                 return Enumerable.Empty<SFInstallableDblResource>();
             }
-            IEnumerable<SFInstallableDblResource> resources = ConvertJsonResponseToInstallableDblResources(baseUrl,
-                response, restClientFactory, fileSystemService, jwtTokenHelper, DateTime.Now, userSecret,
-                paratextOptions, new ParatextProjectDeleter(), new ParatextMigrationOperations(),
-                new ParatextZippedResourcePasswordProvider(paratextOptions));
+            IEnumerable<SFInstallableDblResource> resources = ConvertJsonResponseToInstallableDblResources(
+                baseUrl,
+                response,
+                restClientFactory,
+                fileSystemService,
+                jwtTokenHelper,
+                DateTime.Now,
+                userSecret,
+                paratextOptions,
+                new ParatextProjectDeleter(),
+                new ParatextMigrationOperations(),
+                new ParatextZippedResourcePasswordProvider(paratextOptions)
+            );
             return resources;
         }
 
@@ -363,8 +399,12 @@ namespace SIL.XForge.Scripture.Services
                 throw new ArgumentNullException(nameof(this.Name));
             }
 
-            string resourceFile = ScrTextCollection.GetResourcePath(this.ExistingScrText, this.Name, this.DBLEntryUid,
-                ProjectFileManager.resourceFileExtension);
+            string resourceFile = ScrTextCollection.GetResourcePath(
+                this.ExistingScrText,
+                this.Name,
+                this.DBLEntryUid,
+                ProjectFileManager.resourceFileExtension
+            );
             if (RobustFile.Exists(resourceFile))
             {
                 using var zipFile = ZipFile.Read(resourceFile);
@@ -463,8 +503,12 @@ namespace SIL.XForge.Scripture.Services
 
             if (!string.IsNullOrWhiteSpace(resourcesDirectory) && Directory.Exists(resourcesDirectory))
             {
-                foreach (string resourceFile in Directory.EnumerateFiles(ScrTextCollection.ResourcesDirectory,
-                    "*" + ProjectFileManager.resourceFileExtension))
+                foreach (
+                    string resourceFile in Directory.EnumerateFiles(
+                        ScrTextCollection.ResourcesDirectory,
+                        "*" + ProjectFileManager.resourceFileExtension
+                    )
+                )
                 {
                     // See if this a zip file, and if it contains the correct ID
                     try
@@ -480,17 +524,23 @@ namespace SIL.XForge.Scripture.Services
                         int revision = 0;
                         foreach (ZipEntry entry in zipFile)
                         {
-                            if (string.IsNullOrWhiteSpace(fileId)
+                            if (
+                                string.IsNullOrWhiteSpace(fileId)
                                 && !entry.IsDirectory
-                                && entry.FileName.StartsWith(idSearchPath, StringComparison.OrdinalIgnoreCase))
+                                && entry.FileName.StartsWith(idSearchPath, StringComparison.OrdinalIgnoreCase)
+                            )
                             {
                                 fileId = entry.FileName.Split('/', StringSplitOptions.RemoveEmptyEntries).Last();
                             }
-                            else if (revision == 0 && !entry.IsDirectory
-                                && entry.FileName.StartsWith(revisionSearchPath, StringComparison.OrdinalIgnoreCase))
+                            else if (
+                                revision == 0
+                                && !entry.IsDirectory
+                                && entry.FileName.StartsWith(revisionSearchPath, StringComparison.OrdinalIgnoreCase)
+                            )
                             {
-                                string revisionFilename =
-                                    entry.FileName.Split('/', StringSplitOptions.RemoveEmptyEntries).Last();
+                                string revisionFilename = entry.FileName
+                                    .Split('/', StringSplitOptions.RemoveEmptyEntries)
+                                    .Last();
                                 if (!int.TryParse(revisionFilename, out revision))
                                 {
                                     // An error occurred reading the revision
@@ -598,10 +648,18 @@ namespace SIL.XForge.Scripture.Services
         /// The Installable Resources.
         /// </returns>
         private static IEnumerable<SFInstallableDblResource> ConvertJsonResponseToInstallableDblResources(
-            string baseUri, string response, ISFRestClientFactory restClientFactory,
-            IFileSystemService fileSystemService, IJwtTokenHelper jwtTokenHelper, DateTime createdTimestamp,
-            UserSecret userSecret, ParatextOptions paratextOptions, IProjectDeleter projectDeleter,
-            IMigrationOperations migrationOperations, IZippedResourcePasswordProvider passwordProvider)
+            string baseUri,
+            string response,
+            ISFRestClientFactory restClientFactory,
+            IFileSystemService fileSystemService,
+            IJwtTokenHelper jwtTokenHelper,
+            DateTime createdTimestamp,
+            UserSecret userSecret,
+            ParatextOptions paratextOptions,
+            IProjectDeleter projectDeleter,
+            IMigrationOperations migrationOperations,
+            IZippedResourcePasswordProvider passwordProvider
+        )
         {
             if (!string.IsNullOrWhiteSpace(response))
             {
@@ -633,8 +691,10 @@ namespace SIL.XForge.Scripture.Services
                     var manifestChecksum = (string)jsonResource["p8z-manifest-checksum"];
                     var languageIdLdml = (string)jsonResource["languageLDMLId"];
                     var languageIdCode = (string)jsonResource["languageCode"];
-                    LanguageId languageId =
-                        migrationOperations.DetermineBestLangIdToUseForResource(languageIdLdml, languageIdCode);
+                    LanguageId languageId = migrationOperations.DetermineBestLangIdToUseForResource(
+                        languageIdLdml,
+                        languageIdCode
+                    );
                     if (string.IsNullOrEmpty(languageId.Id))
                     {
                         languageId = LanguageIdHelper.FromCommonLanguageName(languageName);
@@ -645,8 +705,16 @@ namespace SIL.XForge.Scripture.Services
                     }
 
                     string url = BuildDblResourceEntryUrl(baseUri, id);
-                    var resource = new SFInstallableDblResource(userSecret, paratextOptions, restClientFactory,
-                        fileSystemService, jwtTokenHelper, projectDeleter, migrationOperations, passwordProvider)
+                    var resource = new SFInstallableDblResource(
+                        userSecret,
+                        paratextOptions,
+                        restClientFactory,
+                        fileSystemService,
+                        jwtTokenHelper,
+                        projectDeleter,
+                        migrationOperations,
+                        passwordProvider
+                    )
                     {
                         DisplayName = name,
                         Name = name,
@@ -697,8 +765,7 @@ namespace SIL.XForge.Scripture.Services
         /// </returns>
         private bool GetFile(string filePath)
         {
-            ISFRestClient client =
-                this._restClientFactory.Create(string.Empty, this._userSecret);
+            ISFRestClient client = this._restClientFactory.Create(string.Empty, this._userSecret);
             string dblUrlToResource = CreateDblUrlWithUsernameQuery(this);
             return client.GetFile(dblUrlToResource, filePath);
         }
@@ -761,7 +828,6 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-
         /// <summary>
         /// An implementation of the Paratext zipped resource password provider.
         /// </summary>
@@ -791,9 +857,11 @@ namespace SIL.XForge.Scripture.Services
             public string GetPassword()
             {
                 // We can handle zip files with no password (for testing)
-                if (this._paratextOptions == null
+                if (
+                    this._paratextOptions == null
                     || string.IsNullOrWhiteSpace(this._paratextOptions.ResourcePasswordBase64)
-                    || string.IsNullOrWhiteSpace(this._paratextOptions.ResourcePasswordHash))
+                    || string.IsNullOrWhiteSpace(this._paratextOptions.ResourcePasswordHash)
+                )
                 {
                     return string.Empty;
                 }
@@ -802,7 +870,8 @@ namespace SIL.XForge.Scripture.Services
                 {
                     cachedValue = StringUtils.DecryptStringFromBase64(
                         this._paratextOptions.ResourcePasswordBase64,
-                        this._paratextOptions.ResourcePasswordHash);
+                        this._paratextOptions.ResourcePasswordHash
+                    );
                 }
 
                 return cachedValue;

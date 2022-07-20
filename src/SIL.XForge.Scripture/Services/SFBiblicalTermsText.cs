@@ -10,8 +10,12 @@ namespace SIL.XForge.Scripture.Services
     public class SFBiblicalTermsText : IText
     {
         private IEnumerable<TextSegment> _segments;
-        public SFBiblicalTermsText(ITokenizer<string, int, string> wordTokenizer, string projectId,
-            XDocument termRenderingsDoc)
+
+        public SFBiblicalTermsText(
+            ITokenizer<string, int, string> wordTokenizer,
+            string projectId,
+            XDocument termRenderingsDoc
+        )
         {
             Id = $"{projectId}_biblical_terms";
 
@@ -27,11 +31,16 @@ namespace SIL.XForge.Scripture.Services
             return _segments;
         }
 
-        private IEnumerable<TextSegment> GetSegments(ITokenizer<string, int, string> wordTokenizer,
-            XDocument termRenderingsDoc)
+        private IEnumerable<TextSegment> GetSegments(
+            ITokenizer<string, int, string> wordTokenizer,
+            XDocument termRenderingsDoc
+        )
         {
-            foreach (XElement termRenderingElem in termRenderingsDoc.Root.Elements("TermRendering")
-                .Where(tre => !(bool)tre.Attribute("Guess")))
+            foreach (
+                XElement termRenderingElem in termRenderingsDoc.Root
+                    .Elements("TermRendering")
+                    .Where(tre => !(bool)tre.Attribute("Guess"))
+            )
             {
                 var id = (string)termRenderingElem.Attribute("Id");
                 var renderingsStr = (string)termRenderingElem.Element("Renderings");
@@ -41,8 +50,15 @@ namespace SIL.XForge.Scripture.Services
                 {
                     string[] segment = wordTokenizer.Tokenize(rendering.Trim()).ToArray();
                     // Sentence placement is not essential for biblical terms. Set all to false
-                    yield return new TextSegment(Id, new TextSegmentRef(id), segment, false, false, false,
-                        segment.Count() == 0);
+                    yield return new TextSegment(
+                        Id,
+                        new TextSegmentRef(id),
+                        segment,
+                        false,
+                        false,
+                        false,
+                        segment.Count() == 0
+                    );
                 }
             }
         }

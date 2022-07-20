@@ -25,9 +25,9 @@ namespace SIL.XForge.Scripture.Services
         /// <summary> Get the Paratext username from the access token stored in the UserSecret. </summary>
         public string GetParatextUsername(UserSecret userSecret)
         {
-            if (userSecret == null
-                || userSecret.ParatextTokens == null
-                || userSecret.ParatextTokens.AccessToken == null)
+            if (
+                userSecret == null || userSecret.ParatextTokens == null || userSecret.ParatextTokens.AccessToken == null
+            )
             {
                 return null;
             }
@@ -46,8 +46,12 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary> Refresh the Paratext access token if expired with the given HttpClient. </summary>
-        public async Task<Tokens> RefreshAccessTokenAsync(ParatextOptions options, Tokens paratextTokens,
-            HttpClient client, CancellationToken token)
+        public async Task<Tokens> RefreshAccessTokenAsync(
+            ParatextOptions options,
+            Tokens paratextTokens,
+            HttpClient client,
+            CancellationToken token
+        )
         {
             bool expired = !paratextTokens.ValidateLifetime();
             if (!expired)
@@ -58,7 +62,8 @@ namespace SIL.XForge.Scripture.Services
                     new JProperty("grant_type", "refresh_token"),
                     new JProperty("client_id", options.ClientId),
                     new JProperty("client_secret", options.ClientSecret),
-                    new JProperty("refresh_token", paratextTokens.RefreshToken));
+                    new JProperty("refresh_token", paratextTokens.RefreshToken)
+                );
                 request.Content = new StringContent(requestObj.ToString(), Encoding.Default, "application/json");
                 HttpResponseMessage response = await client.SendAsync(request, token);
                 await _exceptionHandler.EnsureSuccessStatusCode(response);

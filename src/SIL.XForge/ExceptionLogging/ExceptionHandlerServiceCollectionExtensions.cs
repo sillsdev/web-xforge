@@ -6,10 +6,14 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class ExceptionHandlerServiceCollectionExtensions
     {
-        public static IServiceCollection AddExceptionReporting(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddExceptionReporting(
+            this IServiceCollection services,
+            IConfiguration configuration
+        )
         {
             services.AddSingleton<IExceptionHandler, ExceptionHandler>();
-            return services.AddBugsnag()
+            return services
+                .AddBugsnag()
                 .Configure<Bugsnag.Configuration>(configuration.GetSection("Bugsnag"))
                 .Configure<Bugsnag.Configuration>(config =>
                 {

@@ -7,9 +7,7 @@ namespace SIL.XForge.Scripture.Models
         private static void ParseVerseNumber(string vNum, out int number, out string segment)
         {
             int j;
-            for (j = 0; j < vNum.Length && char.IsDigit(vNum[j]); ++j)
-            {
-            }
+            for (j = 0; j < vNum.Length && char.IsDigit(vNum[j]); ++j) { }
 
             number = 0;
             if (j > 0)
@@ -21,9 +19,7 @@ namespace SIL.XForge.Scripture.Models
             segment = vNum.Substring(j);
         }
 
-        public VerseRefData()
-        {
-        }
+        public VerseRefData() { }
 
         public VerseRefData(int bookNum, int chapterNum, int verseNum)
         {

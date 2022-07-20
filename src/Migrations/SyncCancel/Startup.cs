@@ -57,38 +57,42 @@ namespace SyncCancel
             services.AddSFMachine(Configuration);
 
             services.AddTransient<IParatextSyncRunner, ParatextSyncRunner>();
-            services.AddSingleton<IProgramLogger>((IServiceProvider serviceProvider) =>
-            {
-                using (Process thisProcess = Process.GetCurrentProcess())
+            services.AddSingleton<IProgramLogger>(
+                (IServiceProvider serviceProvider) =>
                 {
-                    return new ProgramLogger(thisProcess.Id);
+                    using (Process thisProcess = Process.GetCurrentProcess())
+                    {
+                        return new ProgramLogger(thisProcess.Id);
+                    }
                 }
-            });
+            );
             services.AddSingleton<ISyncCancelService, SyncCancelService>();
 
-            services.Configure<RequestLocalizationOptions>(
-                opts =>
+            services.Configure<RequestLocalizationOptions>(opts =>
+            {
+                var supportedCultures = new List<CultureInfo>();
+                foreach (var culture in SharedResource.Cultures)
                 {
-                    var supportedCultures = new List<CultureInfo>();
-                    foreach (var culture in SharedResource.Cultures)
-                    {
-                        supportedCultures.Add(new CultureInfo(culture.Key));
-                    }
+                    supportedCultures.Add(new CultureInfo(culture.Key));
+                }
 
-                    opts.DefaultRequestCulture = new RequestCulture("en");
-                    // Formatting numbers, dates, etc.
-                    opts.SupportedCultures = supportedCultures;
-                    // UI strings that we have localized.
-                    opts.SupportedUICultures = supportedCultures;
-                });
+                opts.DefaultRequestCulture = new RequestCulture("en");
+                // Formatting numbers, dates, etc.
+                opts.SupportedCultures = supportedCultures;
+                // UI strings that we have localized.
+                opts.SupportedUICultures = supportedCultures;
+            });
 
             containerBuilder.Populate(services);
             ApplicationContainer = containerBuilder.Build();
             return new AutofacServiceProvider(ApplicationContainer);
         }
 
-        public void Configure(IApplicationBuilder app, IHostApplicationLifetime appLifetime,
-            IExceptionHandler exceptionHandler)
+        public void Configure(
+            IApplicationBuilder app,
+            IHostApplicationLifetime appLifetime,
+            IExceptionHandler exceptionHandler
+        )
         {
             // Set a custom realtime port using the Realtime__Port environment variable
             string realtimePort = Configuration["Realtime:Port"];

@@ -42,8 +42,10 @@ namespace SIL.XForge.DataAccess
             return this;
         }
 
-        public IUpdateBuilder<T> RemoveAll<TItem>(Expression<Func<T, IEnumerable<TItem>>> field,
-            Expression<Func<TItem, bool>> predicate)
+        public IUpdateBuilder<T> RemoveAll<TItem>(
+            Expression<Func<T, IEnumerable<TItem>>> field,
+            Expression<Func<TItem, bool>> predicate
+        )
         {
             _defs.Add(_builder.PullFilter(ToFieldDefinition(field), Builders<TItem>.Filter.Where(predicate)));
             return this;

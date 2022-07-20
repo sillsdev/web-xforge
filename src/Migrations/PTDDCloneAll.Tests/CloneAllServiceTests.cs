@@ -28,8 +28,9 @@ namespace PTDDCloneAll
             IEnumerable<SFProject> projectsToClone = await env.GetSFProjects(projectIds);
             await env.Service.CloneSFProjects(CloneAllService.CLONE, projectsToClone);
             await env.PTDDSyncRunner.Received(1).RunAsync("project01", "user01", Arg.Any<bool>(), Arg.Any<bool>());
-            await env.PTDDSyncRunner.DidNotReceive().RunAsync("project02", Arg.Any<string>(), Arg.Any<bool>(),
-                Arg.Any<bool>());
+            await env.PTDDSyncRunner
+                .DidNotReceive()
+                .RunAsync("project02", Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<bool>());
         }
 
         [Test]
@@ -40,8 +41,9 @@ namespace PTDDCloneAll
             IEnumerable<SFProject> projectsToClone = await env.GetSFProjects(projectIds);
             await env.Service.CloneSFProjects(CloneAllService.CLONE, projectsToClone);
             await env.PTDDSyncRunner.Received(1).RunAsync("project01", "user01", Arg.Any<bool>(), Arg.Any<bool>());
-            await env.PTDDSyncRunner.Received(1).RunAsync("project02", Arg.Any<string>(), Arg.Any<bool>(),
-                Arg.Any<bool>());
+            await env.PTDDSyncRunner
+                .Received(1)
+                .RunAsync("project02", Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<bool>());
         }
 
         [Test]
@@ -54,10 +56,12 @@ namespace PTDDCloneAll
             env.FileSystemService.DirectoryExists(project01Path).Returns(true);
             await env.Service.CloneSFProjects(CloneAllService.CLONE, projectsToClone);
             env.FileSystemService.Received(2).DirectoryExists(Arg.Any<string>());
-            await env.PTDDSyncRunner.DidNotReceive().RunAsync("project01", Arg.Any<string>(), Arg.Any<bool>(),
-                Arg.Any<bool>());
-            await env.PTDDSyncRunner.Received(1).RunAsync("project02", Arg.Any<string>(), Arg.Any<bool>(),
-                Arg.Any<bool>());
+            await env.PTDDSyncRunner
+                .DidNotReceive()
+                .RunAsync("project01", Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<bool>());
+            await env.PTDDSyncRunner
+                .Received(1)
+                .RunAsync("project02", Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<bool>());
         }
     }
 
@@ -69,31 +73,44 @@ namespace PTDDCloneAll
             ParatextService = Substitute.For<IParatextService>();
             PTDDSyncRunner = Substitute.For<IPTDDSyncRunner>();
             SiteOptions = Substitute.For<IOptions<SiteOptions>>();
-            SiteOptions.Value.Returns(new SiteOptions
-            {
-                SiteDir = "scriptureforge"
-            });
+            SiteOptions.Value.Returns(new SiteOptions { SiteDir = "scriptureforge" });
             FileSystemService = Substitute.For<IFileSystemService>();
             Func<IPTDDSyncRunner> syncRunnerFactory = () => PTDDSyncRunner;
 
-            var userSecrets = new MemoryRepository<UserSecret>(new[]
+            var userSecrets = new MemoryRepository<UserSecret>(
+                new[]
                 {
-                    new UserSecret { Id = "user01" , ParatextTokens = new Tokens
+                    new UserSecret
+                    {
+                        Id = "user01",
+                        ParatextTokens = new Tokens
                         {
                             AccessToken = "test_access_token1",
                             RefreshToken = "test_refresh_token1"
-                        }},
-                        new UserSecret { Id = "user03" , ParatextTokens = new Tokens
+                        }
+                    },
+                    new UserSecret
+                    {
+                        Id = "user03",
+                        ParatextTokens = new Tokens
                         {
                             AccessToken = "test_access_token2",
                             RefreshToken = "test_refresh_token2"
-                        }}
-                });
+                        }
+                    }
+                }
+            );
 
             SetupSFData(true, true);
 
-            Service = new CloneAllService(syncRunnerFactory, RealtimeService, SiteOptions, ParatextService, userSecrets,
-                FileSystemService);
+            Service = new CloneAllService(
+                syncRunnerFactory,
+                RealtimeService,
+                SiteOptions,
+                ParatextService,
+                userSecrets,
+                FileSystemService
+            );
         }
 
         public CloneAllService Service { get; }
@@ -106,27 +123,24 @@ namespace PTDDCloneAll
         // The SetupSFData method was copied from ParatextSyncRunnerTests.cs, trimmed, and modified.
         public void SetupSFData(bool translationSuggestionsEnabled, bool checkingEnabled)
         {
-            RealtimeService.AddRepository("users", OTType.Json0, new MemoryRepository<User>(new[]
-            {
-                    new User
+            RealtimeService.AddRepository(
+                "users",
+                OTType.Json0,
+                new MemoryRepository<User>(
+                    new[]
                     {
-                        Id = "user01",
-                        ParatextId = "pt01"
-                    },
-                    new User
-                    {
-                        Id = "user02",
-                        ParatextId = "pt02"
-                    },
-                    new User
-                    {
-                        Id = "user03",
-                        ParatextId = "pt03"
+                        new User { Id = "user01", ParatextId = "pt01" },
+                        new User { Id = "user02", ParatextId = "pt02" },
+                        new User { Id = "user03", ParatextId = "pt03" }
                     }
-                }));
-            RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(
-                new[]
-                {
+                )
+            );
+            RealtimeService.AddRepository(
+                "sf_projects",
+                OTType.Json0,
+                new MemoryRepository<SFProject>(
+                    new[]
+                    {
                         new SFProject
                         {
                             Id = "project01",
@@ -137,7 +151,6 @@ namespace PTDDCloneAll
                                 { "user01", SFProjectRole.Administrator },
                                 { "user02", SFProjectRole.Translator },
                                 { "user03", SFProjectRole.Administrator }
-
                             },
                             ParatextId = "target01",
                             TranslateConfig = new TranslateConfig
@@ -148,20 +161,11 @@ namespace PTDDCloneAll
                                     ParatextId = "source01",
                                     Name = "Source",
                                     ShortName = "SRC",
-                                    WritingSystem = new WritingSystem
-                                    {
-                                        Tag = "en"
-                                    }
+                                    WritingSystem = new WritingSystem { Tag = "en" }
                                 }
                             },
-                            CheckingConfig = new CheckingConfig
-                            {
-                                CheckingEnabled = checkingEnabled
-                            },
-                            Sync = new Sync
-                            {
-                                QueuedCount = 1
-                            }
+                            CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
+                            Sync = new Sync { QueuedCount = 1 }
                         },
                         new SFProject
                         {
@@ -183,22 +187,15 @@ namespace PTDDCloneAll
                                     ParatextId = "source02",
                                     Name = "Source",
                                     ShortName = "SR2",
-                                    WritingSystem = new WritingSystem
-                                    {
-                                        Tag = "en"
-                                    }
+                                    WritingSystem = new WritingSystem { Tag = "en" }
                                 }
                             },
-                            CheckingConfig = new CheckingConfig
-                            {
-                                CheckingEnabled = checkingEnabled
-                            },
-                            Sync = new Sync
-                            {
-                                QueuedCount = 1
-                            }
+                            CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
+                            Sync = new Sync { QueuedCount = 1 }
                         }
-                }));
+                    }
+                )
+            );
 
             RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>());
             RealtimeService.AddRepository("questions", OTType.Json0, new MemoryRepository<Question>());

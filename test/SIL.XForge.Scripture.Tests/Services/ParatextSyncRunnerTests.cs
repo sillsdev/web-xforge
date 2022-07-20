@@ -187,18 +187,25 @@ namespace SIL.XForge.Scripture.Services
             // SUT
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
-            env.MockLogger.AssertEventCount((LogEvent logEvent) => logEvent.LogLevel == LogLevel.Information &&
-                Regex.IsMatch(logEvent.Message, "Starting"), 1);
+            env.MockLogger.AssertEventCount(
+                (LogEvent logEvent) =>
+                    logEvent.LogLevel == LogLevel.Information && Regex.IsMatch(logEvent.Message, "Starting"),
+                1
+            );
 
-            await env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "target", 40,
-                Arg.Any<string>());
-            await env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "target", 41,
-                Arg.Any<string>());
+            await env.ParatextService
+                .DidNotReceive()
+                .PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>());
+            await env.ParatextService
+                .DidNotReceive()
+                .PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<string>());
 
-            await env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "source", 40,
-                Arg.Any<string>());
-            await env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "source", 41,
-                Arg.Any<string>());
+            await env.ParatextService
+                .DidNotReceive()
+                .PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<string>());
+            await env.ParatextService
+                .DidNotReceive()
+                .PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<string>());
 
             var delta = Delta.New().InsertText("text");
             Assert.That(env.GetText("project01", "MAT", 1).DeepEquals(delta), Is.True);
@@ -230,19 +237,43 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
-            await env.ParatextService.Received()
-                .PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>(),
-                    Arg.Any<Dictionary<int, string>>());
-            await env.ParatextService.Received()
-                .PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<string>(),
-                    Arg.Any<Dictionary<int, string>>());
+            await env.ParatextService
+                .Received()
+                .PutBookText(
+                    Arg.Any<UserSecret>(),
+                    "target",
+                    40,
+                    Arg.Any<string>(),
+                    Arg.Any<Dictionary<int, string>>()
+                );
+            await env.ParatextService
+                .Received()
+                .PutBookText(
+                    Arg.Any<UserSecret>(),
+                    "target",
+                    41,
+                    Arg.Any<string>(),
+                    Arg.Any<Dictionary<int, string>>()
+                );
 
-            await env.ParatextService.Received()
-                .PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<string>(),
-                    Arg.Any<Dictionary<int, string>>());
-            await env.ParatextService.Received()
-                .PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<string>(),
-                    Arg.Any<Dictionary<int, string>>());
+            await env.ParatextService
+                .Received()
+                .PutBookText(
+                    Arg.Any<UserSecret>(),
+                    "source",
+                    40,
+                    Arg.Any<string>(),
+                    Arg.Any<Dictionary<int, string>>()
+                );
+            await env.ParatextService
+                .Received()
+                .PutBookText(
+                    Arg.Any<UserSecret>(),
+                    "source",
+                    41,
+                    Arg.Any<string>(),
+                    Arg.Any<Dictionary<int, string>>()
+                );
 
             var delta = Delta.New().InsertText("text");
             Assert.That(env.GetText("project01", "MAT", 1).DeepEquals(delta), Is.True);
@@ -273,19 +304,43 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
-            await env.ParatextService.Received()
-                .PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>(),
-                    Arg.Any<Dictionary<int, string>>());
-            await env.ParatextService.Received()
-                .PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<string>(),
-                    Arg.Any<Dictionary<int, string>>());
+            await env.ParatextService
+                .Received()
+                .PutBookText(
+                    Arg.Any<UserSecret>(),
+                    "target",
+                    40,
+                    Arg.Any<string>(),
+                    Arg.Any<Dictionary<int, string>>()
+                );
+            await env.ParatextService
+                .Received()
+                .PutBookText(
+                    Arg.Any<UserSecret>(),
+                    "target",
+                    41,
+                    Arg.Any<string>(),
+                    Arg.Any<Dictionary<int, string>>()
+                );
 
-            await env.ParatextService.Received()
-                .PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<string>(),
-                    Arg.Any<Dictionary<int, string>>());
-            await env.ParatextService.Received()
-                .PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<string>(),
-                    Arg.Any<Dictionary<int, string>>());
+            await env.ParatextService
+                .Received()
+                .PutBookText(
+                    Arg.Any<UserSecret>(),
+                    "source",
+                    40,
+                    Arg.Any<string>(),
+                    Arg.Any<Dictionary<int, string>>()
+                );
+            await env.ParatextService
+                .Received()
+                .PutBookText(
+                    Arg.Any<UserSecret>(),
+                    "source",
+                    41,
+                    Arg.Any<string>(),
+                    Arg.Any<Dictionary<int, string>>()
+                );
 
             env.ParatextService.DidNotReceive().PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
 
@@ -316,9 +371,18 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
-            env.ParatextService.Received().GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 41,
-                Arg.Is<IEnumerable<IDocument<NoteThread>>>(threads => threads.Any(t => t.Id == "project01:thread02")),
-                Arg.Any<Dictionary<int, ChapterDelta>>(), Arg.Any<Dictionary<string, ParatextUserProfile>>());
+            env.ParatextService
+                .Received()
+                .GetNoteThreadChanges(
+                    Arg.Any<UserSecret>(),
+                    "target",
+                    41,
+                    Arg.Is<IEnumerable<IDocument<NoteThread>>>(
+                        threads => threads.Any(t => t.Id == "project01:thread02")
+                    ),
+                    Arg.Any<Dictionary<int, ChapterDelta>>(),
+                    Arg.Any<Dictionary<string, ParatextUserProfile>>()
+                );
 
             Assert.That(env.ContainsText("project01", "MAT", 3), Is.True);
             Assert.That(env.ContainsText("project01", "MRK", 2), Is.False);
@@ -336,8 +400,14 @@ namespace SIL.XForge.Scripture.Services
         public async Task SyncAsync_ChapterValidityChanged()
         {
             var env = new TestEnvironment();
-            env.SetupSFData(true, true, false, false, new Book("MAT", 2),
-                new Book("MRK", 2) { InvalidChapters = { 1 } });
+            env.SetupSFData(
+                true,
+                true,
+                false,
+                false,
+                new Book("MAT", 2),
+                new Book("MRK", 2) { InvalidChapters = { 1 } }
+            );
             env.SetupPTData(new Book("MAT", 2) { InvalidChapters = { 2 } }, new Book("MRK", 2));
 
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
@@ -407,19 +477,21 @@ namespace SIL.XForge.Scripture.Services
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
             env.SetupSFData(true, true, false, false, books);
             env.SetupPTData(books);
-            var ptUserRoles = new Dictionary<string, string>
-            {
-                { "pt01", SFProjectRole.Translator }
-            };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(),
-                Arg.Is((SFProject project) => project.ParatextId == "target"), Arg.Any<CancellationToken>())
+            var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Translator } };
+            env.ParatextService
+                .GetProjectRolesAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is((SFProject project) => project.ParatextId == "target"),
+                    Arg.Any<CancellationToken>()
+                )
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
 
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             SFProject project = env.VerifyProjectSync(true);
             Assert.That(project.UserRoles["user01"], Is.EqualTo(SFProjectRole.Translator));
-            await env.SFProjectService.Received()
+            await env.SFProjectService
+                .Received()
                 .RemoveUserWithoutPermissionsCheckAsync("user01", "project01", "user02");
         }
 
@@ -430,21 +502,28 @@ namespace SIL.XForge.Scripture.Services
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
             env.SetupSFData(true, true, false, false, books);
             env.SetupPTData(books);
-            var ptUserRoles = new Dictionary<string, string>
-            {
-                { "pt01", SFProjectRole.Translator }
-            };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(),
-                Arg.Is((SFProject project) => project.ParatextId == "target"), Arg.Any<CancellationToken>())
+            var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Translator } };
+            env.ParatextService
+                .GetProjectRolesAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is((SFProject project) => project.ParatextId == "target"),
+                    Arg.Any<CancellationToken>()
+                )
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
 
             // SUT
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
-            await env.SFProjectService.Received().UpdatePermissionsAsync("user01",
-                Arg.Is<IDocument<SFProject>>((IDocument<SFProject> sfProjDoc) =>
-                    sfProjDoc.Data.Id == "project01" && sfProjDoc.Data.ParatextId == "target"),
-                Arg.Any<CancellationToken>());
+            await env.SFProjectService
+                .Received()
+                .UpdatePermissionsAsync(
+                    "user01",
+                    Arg.Is<IDocument<SFProject>>(
+                        (IDocument<SFProject> sfProjDoc) =>
+                            sfProjDoc.Data.Id == "project01" && sfProjDoc.Data.ParatextId == "target"
+                    ),
+                    Arg.Any<CancellationToken>()
+                );
         }
 
         [Test]
@@ -456,20 +535,23 @@ namespace SIL.XForge.Scripture.Services
             env.SetupPTData(books);
             SFProject project = env.GetProject("project01");
             Assert.That(project.Editable, Is.True, "setup");
-            var ptUserRoles = new Dictionary<string, string>
-            {
-                { "pt01", SFProjectRole.Administrator }
-            };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(),
-                Arg.Is((SFProject project) => project.ParatextId == "target"), Arg.Any<CancellationToken>())
+            var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Administrator } };
+            env.ParatextService
+                .GetProjectRolesAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is((SFProject project) => project.ParatextId == "target"),
+                    Arg.Any<CancellationToken>()
+                )
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
 
-            env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
+            env.ParatextService
+                .GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
                 .Returns(new ParatextSettings { Editable = false });
 
             // SUT
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
-            await env.ParatextService.DidNotReceiveWithAnyArgs()
+            await env.ParatextService
+                .DidNotReceiveWithAnyArgs()
                 .PutBookText(default, default, default, default, default);
             project = env.VerifyProjectSync(true);
             Assert.That(project.Editable, Is.False);
@@ -483,12 +565,13 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, true, false, books);
             env.SetupPTData(books);
 
-            var ptUserRoles = new Dictionary<string, string>
-            {
-                { "pt01", SFProjectRole.Administrator }
-            };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>(project => project.ParatextId == "target"), Arg.Any<CancellationToken>())
+            var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Administrator } };
+            env.ParatextService
+                .GetProjectRolesAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>(project => project.ParatextId == "target"),
+                    Arg.Any<CancellationToken>()
+                )
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
             int fontSize = 10;
             string font = ProjectSettings.defaultFontName;
@@ -497,12 +580,9 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.DefaultFont, Is.EqualTo(font));
             int newFontSize = 16;
             string newFont = "Doulos SIL";
-            env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), "target")
-                .Returns(new ParatextSettings
-                {
-                    DefaultFontSize = newFontSize,
-                    DefaultFont = newFont
-                });
+            env.ParatextService
+                .GetParatextSettings(Arg.Any<UserSecret>(), "target")
+                .Returns(new ParatextSettings { DefaultFontSize = newFontSize, DefaultFont = newFont });
 
             // SUT
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
@@ -519,18 +599,20 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, true, false, books);
             env.SetupPTData(books);
 
-            var ptUserRoles = new Dictionary<string, string>
-            {
-                { "pt01", SFProjectRole.Administrator }
-            };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(),
-                Arg.Is((SFProject project) => project.ParatextId == "target"), Arg.Any<CancellationToken>())
+            var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Administrator } };
+            env.ParatextService
+                .GetProjectRolesAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is((SFProject project) => project.ParatextId == "target"),
+                    Arg.Any<CancellationToken>()
+                )
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
             env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(x => null);
 
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
             env.VerifyProjectSync(false);
-            await env.ParatextService.DidNotReceiveWithAnyArgs()
+            await env.ParatextService
+                .DidNotReceiveWithAnyArgs()
                 .PutBookText(default, default, default, default, default);
         }
 
@@ -541,12 +623,13 @@ namespace SIL.XForge.Scripture.Services
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
             env.SetupSFData(true, true, false, false, books);
             env.SetupPTData(books);
-            var ptUserRoles = new Dictionary<string, string>
-            {
-                { "pt01", SFProjectRole.Administrator }
-            };
-            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(),
-                Arg.Is((SFProject project) => project.ParatextId == "target"), Arg.Any<CancellationToken>())
+            var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Administrator } };
+            env.ParatextService
+                .GetProjectRolesAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is((SFProject project) => project.ParatextId == "target"),
+                    Arg.Any<CancellationToken>()
+                )
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
 
             await env.SetUserRole("user02", SFProjectRole.CommunityChecker);
@@ -566,7 +649,8 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, false, false, false, books);
             env.SetupPTData(books);
 
-            env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), "target")
+            env.ParatextService
+                .GetParatextSettings(Arg.Any<UserSecret>(), "target")
                 .Returns(new ParatextSettings { IsRightToLeft = true });
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
@@ -585,8 +669,7 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, false, false, false, books);
             env.SetupPTData(books);
 
-            env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), "target")
-                .Returns(new ParatextSettings());
+            env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), "target").Returns(new ParatextSettings());
 
             // SUT
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
@@ -605,7 +688,8 @@ namespace SIL.XForge.Scripture.Services
             env.SetupPTData(books);
 
             string newFullName = "New Full Name";
-            env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), "target")
+            env.ParatextService
+                .GetParatextSettings(Arg.Any<UserSecret>(), "target")
                 .Returns(new ParatextSettings { FullName = newFullName });
 
             // SUT
@@ -621,11 +705,11 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             env.SetupSFData(false, false, false, false, new Book("MAT", 2), new Book("MRK", 2));
-            env.RealtimeService.GetRepository<TextData>()
-                .Add(new TextData(Delta.New().InsertText("old text"))
-                {
-                    Id = TextData.GetTextDocId("project01", 42, 1)
-                });
+            env.RealtimeService
+                .GetRepository<TextData>()
+                .Add(
+                    new TextData(Delta.New().InsertText("old text")) { Id = TextData.GetTextDocId("project01", 42, 1) }
+                );
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2), new Book("LUK", 2));
 
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
@@ -658,7 +742,8 @@ namespace SIL.XForge.Scripture.Services
 
             // No errors or exceptions were logged
             env.MockLogger.AssertNoEvent(
-                (LogEvent logEvent) => logEvent.LogLevel == LogLevel.Error || logEvent.Exception != null);
+                (LogEvent logEvent) => logEvent.LogLevel == LogLevel.Error || logEvent.Exception != null
+            );
 
             var chapterContent = Delta.New().InsertText("text");
             // DB should contain Source chapter 2 now from Paratext.
@@ -693,7 +778,8 @@ namespace SIL.XForge.Scripture.Services
 
             // No errors or exceptions were logged
             env.MockLogger.AssertNoEvent(
-                (LogEvent logEvent) => logEvent.LogLevel == LogLevel.Error || logEvent.Exception != null);
+                (LogEvent logEvent) => logEvent.LogLevel == LogLevel.Error || logEvent.Exception != null
+            );
 
             // DB should now be missing chapter 2, but retain chapters 1 and 3.
             Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
@@ -721,7 +807,8 @@ namespace SIL.XForge.Scripture.Services
 
             // No errors or exceptions were logged
             env.MockLogger.AssertNoEvent(
-                (LogEvent logEvent) => logEvent.LogLevel == LogLevel.Error || logEvent.Exception != null);
+                (LogEvent logEvent) => logEvent.LogLevel == LogLevel.Error || logEvent.Exception != null
+            );
 
             // DB should still be missing Source chapter 2.
             Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
@@ -752,7 +839,8 @@ namespace SIL.XForge.Scripture.Services
 
             // No errors or exceptions were logged
             env.MockLogger.AssertNoEvent(
-                (LogEvent logEvent) => logEvent.LogLevel == LogLevel.Error || logEvent.Exception != null);
+                (LogEvent logEvent) => logEvent.LogLevel == LogLevel.Error || logEvent.Exception != null
+            );
 
             // DB should now be missing all chapters except for the first, implicit chapter.
             Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
@@ -777,17 +865,29 @@ namespace SIL.XForge.Scripture.Services
                 bool checkingEnabled = true;
                 bool changed = isChanged;
                 bool hasNoteThreads = false;
-                env.SetupSFData(projectSFId, "project04", translationSuggestionsEnabled, checkingEnabled, changed,
-                    hasNoteThreads, books);
+                env.SetupSFData(
+                    projectSFId,
+                    "project04",
+                    translationSuggestionsEnabled,
+                    checkingEnabled,
+                    changed,
+                    hasNoteThreads,
+                    books
+                );
                 SFProject project = env.GetProject(projectSFId);
                 string projectPTId = project.ParatextId;
                 env.SetupPTDataForProjectIds(projectPTId, env.GetProject("project04").ParatextId, books);
-                Assert.That(project.Sync.SyncedToRepositoryVersion, Is.Null,
-                    "setup. Should be testing what happens when this is not set.");
-                Assert.That(project.Sync.DataInSync, Is.Null,
-                    "setup. Should be testing what happens when this is not set.");
-                env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), projectPTId)
-                    .Returns("1", "2");
+                Assert.That(
+                    project.Sync.SyncedToRepositoryVersion,
+                    Is.Null,
+                    "setup. Should be testing what happens when this is not set."
+                );
+                Assert.That(
+                    project.Sync.DataInSync,
+                    Is.Null,
+                    "setup. Should be testing what happens when this is not set."
+                );
+                env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), projectPTId).Returns("1", "2");
 
                 // SUT
                 await env.Runner.RunAsync(projectSFId, userId, false, CancellationToken.None);
@@ -798,11 +898,17 @@ namespace SIL.XForge.Scripture.Services
                 env.DeltaUsxMapper.Received().ToUsx(Arg.Any<XDocument>(), Arg.Any<IEnumerable<ChapterDelta>>());
                 // We should get into UpdateParatextNotesAsync() and fetch and perhaps put notes.
                 env.ParatextService.Received().GetNotes(Arg.Any<UserSecret>(), projectPTId, Arg.Any<int>());
-                await env.NotesMapper.Received().GetNotesChangelistAsync(Arg.Any<XElement>(),
-                    Arg.Any<IEnumerable<IDocument<Question>>>(), Arg.Any<Dictionary<string, ParatextUserProfile>>());
+                await env.NotesMapper
+                    .Received()
+                    .GetNotesChangelistAsync(
+                        Arg.Any<XElement>(),
+                        Arg.Any<IEnumerable<IDocument<Question>>>(),
+                        Arg.Any<Dictionary<string, ParatextUserProfile>>()
+                    );
                 // We should have then called SR
-                await env.ParatextService.Received(1).SendReceiveAsync(Arg.Any<UserSecret>(), projectPTId,
-                    Arg.Any<IProgress<ProgressState>>());
+                await env.ParatextService
+                    .Received(1)
+                    .SendReceiveAsync(Arg.Any<UserSecret>(), projectPTId, Arg.Any<IProgress<ProgressState>>());
 
                 // The expected repository version can still be past the original project version, even if there were
                 // no local changes, since there may be incoming changes.
@@ -825,17 +931,25 @@ namespace SIL.XForge.Scripture.Services
                 bool checkingEnabled = true;
                 bool changed = isChanged;
                 bool hasNoteThreads = false;
-                env.SetupSFData(projectSFId, "project04", translationSuggestionsEnabled, checkingEnabled, changed,
-                    hasNoteThreads, books);
+                env.SetupSFData(
+                    projectSFId,
+                    "project04",
+                    translationSuggestionsEnabled,
+                    checkingEnabled,
+                    changed,
+                    hasNoteThreads,
+                    books
+                );
                 SFProject project = env.GetProject(projectSFId);
                 string projectPTId = project.ParatextId;
                 // env.SetupPTData(projectPTId, env.GetProject("project04").ParatextId, books);
-                Assert.That(project.Sync.SyncedToRepositoryVersion, Is.Null,
-                    "setup. Should be testing what happens when this is not set.");
-                Assert.That(project.Sync.DataInSync, Is.False,
-                    "setup. Should be testing what happens for this.");
-                env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), projectPTId)
-                    .Returns("1", "2");
+                Assert.That(
+                    project.Sync.SyncedToRepositoryVersion,
+                    Is.Null,
+                    "setup. Should be testing what happens when this is not set."
+                );
+                Assert.That(project.Sync.DataInSync, Is.False, "setup. Should be testing what happens for this.");
+                env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), projectPTId).Returns("1", "2");
 
                 // SUT
                 await env.Runner.RunAsync(projectSFId, userId, false, CancellationToken.None);
@@ -844,14 +958,21 @@ namespace SIL.XForge.Scripture.Services
                 // We are in an out-of-sync situation and so should not be writing to PT.
 
                 env.ParatextService.DidNotReceiveWithAnyArgs().GetBookText(default, default, default);
-                env.DeltaUsxMapper.DidNotReceiveWithAnyArgs().ToUsx(Arg.Any<XDocument>(),
-                    Arg.Any<IEnumerable<ChapterDelta>>());
+                env.DeltaUsxMapper
+                    .DidNotReceiveWithAnyArgs()
+                    .ToUsx(Arg.Any<XDocument>(), Arg.Any<IEnumerable<ChapterDelta>>());
                 env.ParatextService.DidNotReceiveWithAnyArgs().GetNotes(default, default, default);
-                await env.NotesMapper.DidNotReceiveWithAnyArgs().GetNotesChangelistAsync(Arg.Any<XElement>(),
-                    Arg.Any<IEnumerable<IDocument<Question>>>(), Arg.Any<Dictionary<string, ParatextUserProfile>>());
+                await env.NotesMapper
+                    .DidNotReceiveWithAnyArgs()
+                    .GetNotesChangelistAsync(
+                        Arg.Any<XElement>(),
+                        Arg.Any<IEnumerable<IDocument<Question>>>(),
+                        Arg.Any<Dictionary<string, ParatextUserProfile>>()
+                    );
                 // We should have then called SR
-                await env.ParatextService.Received(1).SendReceiveAsync(Arg.Any<UserSecret>(), projectPTId,
-                    Arg.Any<IProgress<ProgressState>>());
+                await env.ParatextService
+                    .Received(1)
+                    .SendReceiveAsync(Arg.Any<UserSecret>(), projectPTId, Arg.Any<IProgress<ProgressState>>());
 
                 string expectedRepositoryVersion = "2";
                 env.VerifyProjectSync(true, expectedRepositoryVersion, projectSFId);
@@ -868,8 +989,17 @@ namespace SIL.XForge.Scripture.Services
             var cancellationTokenSource = new CancellationTokenSource();
 
             // Setup a trap to crash the task
-            env.NotesMapper.When(x => x.InitAsync(Arg.Any<UserSecret>(), Arg.Any<SFProjectSecret>(),
-                Arg.Any<List<User>>(), Arg.Any<SFProject>(), Arg.Any<CancellationToken>()))
+            env.NotesMapper
+                .When(
+                    x =>
+                        x.InitAsync(
+                            Arg.Any<UserSecret>(),
+                            Arg.Any<SFProjectSecret>(),
+                            Arg.Any<List<User>>(),
+                            Arg.Any<SFProject>(),
+                            Arg.Any<CancellationToken>()
+                        )
+                )
                 .Do(_ => throw new ArgumentException());
 
             // Run the task
@@ -880,7 +1010,7 @@ namespace SIL.XForge.Scripture.Services
 
             // Check that the task cancelled correctly
             SFProject project = env.VerifyProjectSync(false);
-            Assert.That(project.Sync.DataInSync, Is.True);  // Nothing was synced as this was cancelled OnInit()
+            Assert.That(project.Sync.DataInSync, Is.True); // Nothing was synced as this was cancelled OnInit()
         }
 
         [Test]
@@ -893,15 +1023,23 @@ namespace SIL.XForge.Scripture.Services
             // Setup to simulate that a backup was restored at a revision not matching the recorded
             // version in the project doc
             env.ParatextService.BackupExists(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(true);
-            env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target")
+            env.ParatextService
+                .GetLatestSharedVersion(Arg.Any<UserSecret>(), "target")
                 .Returns("revNotMatchingVersion");
 
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             // Check that text edits were pushed even if the current hg repo was not at the version recorded in
             // the project docs.
-            await env.ParatextService.Received(2).PutBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<int>(),
-                Arg.Any<string>(), Arg.Any<Dictionary<int, string>>());
+            await env.ParatextService
+                .Received(2)
+                .PutBookText(
+                    Arg.Any<UserSecret>(),
+                    Arg.Any<string>(),
+                    Arg.Any<int>(),
+                    Arg.Any<string>(),
+                    Arg.Any<Dictionary<int, string>>()
+                );
             SFProject project = env.VerifyProjectSync(true);
             Assert.That(project.Sync.DataInSync, Is.True);
         }
@@ -916,12 +1054,18 @@ namespace SIL.XForge.Scripture.Services
             // after a failed send/receive
             env.ParatextService.BackupExists(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(true);
             env.ParatextService.RestoreRepository(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(true);
-            env.ParatextService.When(p => p.GetBookText(Arg.Any<UserSecret>(), "target", Arg.Any<int>()))
+            env.ParatextService
+                .When(p => p.GetBookText(Arg.Any<UserSecret>(), "target", Arg.Any<int>()))
                 .Do(_ => throw new ArgumentException());
 
-            env.ParatextService.When(p => p.RestoreRepository(Arg.Any<UserSecret>(), "target"))
-                .Do(_ => env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target")
-                    .Returns("revNotMatchingVersion"));
+            env.ParatextService
+                .When(p => p.RestoreRepository(Arg.Any<UserSecret>(), "target"))
+                .Do(
+                    _ =>
+                        env.ParatextService
+                            .GetLatestSharedVersion(Arg.Any<UserSecret>(), "target")
+                            .Returns("revNotMatchingVersion")
+                );
 
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
@@ -940,22 +1084,33 @@ namespace SIL.XForge.Scripture.Services
             var cancellationTokenSource = new CancellationTokenSource();
 
             // Setup a trap to cancel the task
-            env.NotesMapper.When(x => x.InitAsync(Arg.Any<UserSecret>(), Arg.Any<SFProjectSecret>(),
-                Arg.Any<List<User>>(), Arg.Any<SFProject>(), Arg.Any<CancellationToken>()))
+            env.NotesMapper
+                .When(
+                    x =>
+                        x.InitAsync(
+                            Arg.Any<UserSecret>(),
+                            Arg.Any<SFProjectSecret>(),
+                            Arg.Any<List<User>>(),
+                            Arg.Any<SFProject>(),
+                            Arg.Any<CancellationToken>()
+                        )
+                )
                 .Do(_ => throw new TaskCanceledException());
 
             // Run the task
             await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
 
             // The TaskCancelledException was not logged
-            Assert.That(env.MockLogger.LogEvents.Count(
-                (LogEvent logEvent) => logEvent.LogLevel == LogLevel.Error || logEvent.Exception != null),
-                Is.EqualTo(0));
-
+            Assert.That(
+                env.MockLogger.LogEvents.Count(
+                    (LogEvent logEvent) => logEvent.LogLevel == LogLevel.Error || logEvent.Exception != null
+                ),
+                Is.EqualTo(0)
+            );
 
             // Check that the task cancelled correctly
             SFProject project = env.VerifyProjectSync(false);
-            Assert.That(project.Sync.DataInSync, Is.True);  // Nothing was synced as this was cancelled OnInit()
+            Assert.That(project.Sync.DataInSync, Is.True); // Nothing was synced as this was cancelled OnInit()
         }
 
         [Test]
@@ -968,8 +1123,16 @@ namespace SIL.XForge.Scripture.Services
             var cancellationTokenSource = new CancellationTokenSource();
 
             // Setup a trap to cancel the task
-            env.ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
-                Arg.Any<IProgress<ProgressState>>(), Arg.Any<CancellationToken>()))
+            env.ParatextService
+                .When(
+                    x =>
+                        x.SendReceiveAsync(
+                            Arg.Any<UserSecret>(),
+                            Arg.Any<string>(),
+                            Arg.Any<IProgress<ProgressState>>(),
+                            Arg.Any<CancellationToken>()
+                        )
+                )
                 .Do(_ => cancellationTokenSource.Cancel());
 
             // Run the task
@@ -990,8 +1153,16 @@ namespace SIL.XForge.Scripture.Services
             env.ParatextService.BackupExists(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(true);
             env.ParatextService.RestoreRepository(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(false);
 
-            env.ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
-                Arg.Any<IProgress<ProgressState>>(), Arg.Any<CancellationToken>()))
+            env.ParatextService
+                .When(
+                    x =>
+                        x.SendReceiveAsync(
+                            Arg.Any<UserSecret>(),
+                            Arg.Any<string>(),
+                            Arg.Any<IProgress<ProgressState>>(),
+                            Arg.Any<CancellationToken>()
+                        )
+                )
                 .Do(_ => cancellationTokenSource.Cancel());
             await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
             env.ParatextService.Received(1).RestoreRepository(Arg.Any<UserSecret>(), Arg.Any<string>());
@@ -1030,7 +1201,8 @@ namespace SIL.XForge.Scripture.Services
             var cancellationTokenSource = new CancellationTokenSource();
 
             // Throw an TaskCanceledException in InitAsync after the exclusions have been called
-            env.Connection.FetchAsync<SFProject>("project01")
+            env.Connection
+                .FetchAsync<SFProject>("project01")
                 .Returns(Task.FromException<IDocument<SFProject>>(new TaskCanceledException()));
 
             // Run the task
@@ -1038,12 +1210,27 @@ namespace SIL.XForge.Scripture.Services
 
             // Only check for ExcludePropertyFromTransaction being executed,
             // as the substitute RealtimeService will not update documents.
-            env.Connection.Received(1).ExcludePropertyFromTransaction(Arg.Is<Expression<Func<SFProject, object>>>(
-                ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.PercentCompleted"));
-            env.Connection.Received(1).ExcludePropertyFromTransaction(Arg.Is<Expression<Func<SFProject, object>>>(
-                ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.QueuedCount"));
-            env.Connection.Received(1).ExcludePropertyFromTransaction(Arg.Is<Expression<Func<SFProject, object>>>(
-                ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.DataInSync"));
+            env.Connection
+                .Received(1)
+                .ExcludePropertyFromTransaction(
+                    Arg.Is<Expression<Func<SFProject, object>>>(
+                        ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.PercentCompleted"
+                    )
+                );
+            env.Connection
+                .Received(1)
+                .ExcludePropertyFromTransaction(
+                    Arg.Is<Expression<Func<SFProject, object>>>(
+                        ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.QueuedCount"
+                    )
+                );
+            env.Connection
+                .Received(1)
+                .ExcludePropertyFromTransaction(
+                    Arg.Is<Expression<Func<SFProject, object>>>(
+                        ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.DataInSync"
+                    )
+                );
             env.Connection.Received(3).ExcludePropertyFromTransaction(Arg.Any<Expression<Func<SFProject, object>>>());
         }
 
@@ -1077,11 +1264,13 @@ namespace SIL.XForge.Scripture.Services
 
             // SUT
             await env.Runner.InitAsync("project01", "user01", CancellationToken.None);
-            SortedList<int, IDocument<TextData>> targetFetch =
-                await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
+            SortedList<int, IDocument<TextData>> targetFetch = await env.Runner.FetchTextDocsAsync(
+                env.TextInfoFromBook(book)
+            );
             await env.Runner.InitAsync("project02", "user01", CancellationToken.None);
-            SortedList<int, IDocument<TextData>> sourceFetch =
-                await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
+            SortedList<int, IDocument<TextData>> sourceFetch = await env.Runner.FetchTextDocsAsync(
+                env.TextInfoFromBook(book)
+            );
             env.Runner.CloseConnection();
 
             // Fetched numberChapters chapters, none of which are missing their chapter content.
@@ -1108,10 +1297,12 @@ namespace SIL.XForge.Scripture.Services
             var missingSourceChapters = new HashSet<int>() { 2, 3, 10, 12 };
             var existingTargetChapters = Enumerable.Range(1, highestChapter);
             var existingSourceChapters = Enumerable.Range(1, highestChapter).Except(missingSourceChapters);
-            Assert.That(existingSourceChapters.Count(),
-                Is.EqualTo(highestChapter - missingSourceChapters.Count()), "setup");
-            Assert.That(existingTargetChapters.Count(),
-                Is.GreaterThan(existingSourceChapters.Count()), "setup");
+            Assert.That(
+                existingSourceChapters.Count(),
+                Is.EqualTo(highestChapter - missingSourceChapters.Count()),
+                "setup"
+            );
+            Assert.That(existingTargetChapters.Count(), Is.GreaterThan(existingSourceChapters.Count()), "setup");
             var book = new Book("MAT", highestChapter, true) { MissingSourceChapters = missingSourceChapters };
             env.SetupSFData(true, true, false, false, book);
 
@@ -1252,19 +1443,29 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, false, false, true, book);
             env.SetupPTData(book);
             env.SetupNoteChanges("thread01", "MAT 1:1", false);
-            await env.ParatextService.UpdateParatextCommentsAsync(Arg.Any<UserSecret>(), default, default,
-                Arg.Any<IEnumerable<IDocument<NoteThread>>>(), Arg.Any<Dictionary<string, ParatextUserProfile>>());
-
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
-            await env.ParatextService.Received(1).UpdateParatextCommentsAsync(Arg.Any<UserSecret>(), "target", 40,
-                Arg.Is<IEnumerable<IDocument<NoteThread>>>(t =>
-                    t.Count() == 1 && t.First().Id == "project01:thread01"),
+            await env.ParatextService.UpdateParatextCommentsAsync(
+                Arg.Any<UserSecret>(),
+                default,
+                default,
+                Arg.Any<IEnumerable<IDocument<NoteThread>>>(),
                 Arg.Any<Dictionary<string, ParatextUserProfile>>()
             );
 
+            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.ParatextService
+                .Received(1)
+                .UpdateParatextCommentsAsync(
+                    Arg.Any<UserSecret>(),
+                    "target",
+                    40,
+                    Arg.Is<IEnumerable<IDocument<NoteThread>>>(
+                        t => t.Count() == 1 && t.First().Id == "project01:thread01"
+                    ),
+                    Arg.Any<Dictionary<string, ParatextUserProfile>>()
+                );
+
             SFProject project = env.GetProject();
-            Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(
-                new[] { "User 1", "User 2" }));
+            Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(new[] { "User 1", "User 2" }));
         }
 
         [Test]
@@ -1306,8 +1507,10 @@ namespace SIL.XForge.Scripture.Services
 
             SFProject project = env.GetProject();
             // User 3 was added as a sync user
-            Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(
-                new[] { "User 1", "User 2", "User 3" }));
+            Assert.That(
+                project.ParatextUsers.Select(u => u.Username),
+                Is.EquivalentTo(new[] { "User 1", "User 2", "User 3" })
+            );
             Assert.That(project.ParatextUsers.Single(u => u.Username == "User 1").SFUserId, Is.EqualTo("user01"));
             Assert.That(project.ParatextUsers.Single(u => u.Username == "User 2").SFUserId, Is.EqualTo("user02"));
             Assert.That(project.ParatextUsers.Single(u => u.Username == "User 3").SFUserId, Is.EqualTo("user03"));
@@ -1329,11 +1532,17 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             NoteThread thread01 = env.GetNoteThread("project01", "thread01");
-            string[] reattachedParts = new[] {
-                "MAT 1:5" , "reattach selected text", "16", "Reattach before ", " reattach after." };
+            string[] reattachedParts = new[]
+            {
+                "MAT 1:5",
+                "reattach selected text",
+                "16",
+                "Reattach before ",
+                " reattach after."
+            };
             string reattached = string.Join(PtxUtils.StringUtils.orcCharacter, reattachedParts);
-            string expected = "Context before Scripture text in project context after-" +
-                $"Start:16-Length:22-MAT 1:1-icon1";
+            string expected =
+                "Context before Scripture text in project context after-" + $"Start:16-Length:22-MAT 1:1-icon1";
             Assert.That(thread01.NoteThreadToString(), Is.EqualTo(expected));
             Assert.That(thread01.Notes.Single(n => n.Reattached != null).Reattached, Is.EqualTo(reattached));
         }
@@ -1350,8 +1559,8 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
             NoteThread thread02 = env.GetNoteThread("project01", "thread02");
-            string expected = "Context before Scripture text in project context after-" +
-                "Start:0-Length:0-MAT 1:1-icon1";
+            string expected =
+                "Context before Scripture text in project context after-" + "Start:0-Length:0-MAT 1:1-icon1";
             Assert.That(thread02.NoteThreadToString(), Is.EqualTo(expected));
             Assert.That(thread02.Notes.Count, Is.EqualTo(1));
             Assert.That(thread02.Notes[0].Content, Is.EqualTo("New thread02 added."));
@@ -1395,8 +1604,11 @@ namespace SIL.XForge.Scripture.Services
             env.SetupPTData(book);
             env.SetupNoteRemovedChange(threadId, "n02");
             NoteThread thread01 = env.GetNoteThread(sfProjectId, threadId);
-            Assert.That(thread01.Notes.Select(n => n.DataId), Is.EquivalentTo(new[] { "n01", "n02", "n03" }),
-                "setup: expecting several notes in doc");
+            Assert.That(
+                thread01.Notes.Select(n => n.DataId),
+                Is.EquivalentTo(new[] { "n01", "n02", "n03" }),
+                "setup: expecting several notes in doc"
+            );
 
             // SUT 1
             await env.Runner.RunAsync(sfProjectId, "user01", false, CancellationToken.None);
@@ -1485,21 +1697,28 @@ namespace SIL.XForge.Scripture.Services
             // the changes will need to be both detected, as well as saved.
             // A PT Comment Content property was updated, which is detected and saved to SF DB.
             await env.SimpleNoteChangeAppliedCheckerAsync<string>(
-                (Note note) => note.Content, (Note note, string newValue) => note.Content = newValue,
-                "new contents");
+                (Note note) => note.Content,
+                (Note note, string newValue) => note.Content = newValue,
+                "new contents"
+            );
             // A PT Comment Type property was updated, which is detected and saved to SF DB.
             await env.SimpleNoteChangeAppliedCheckerAsync<string>(
-                (Note note) => note.Type, (Note note, string newValue) => note.Type = newValue,
-                NoteType.Conflict.InternalValue);
+                (Note note) => note.Type,
+                (Note note, string newValue) => note.Type = newValue,
+                NoteType.Conflict.InternalValue
+            );
             // ConflictType property
             await env.SimpleNoteChangeAppliedCheckerAsync<string>(
-                (Note note) => note.ConflictType, (Note note, string newValue) => note.ConflictType = newValue,
-                NoteConflictType.VerseTextConflict.InternalValue);
+                (Note note) => note.ConflictType,
+                (Note note, string newValue) => note.ConflictType = newValue,
+                NoteConflictType.VerseTextConflict.InternalValue
+            );
             // AcceptedChangeXml property
             await env.SimpleNoteChangeAppliedCheckerAsync<string>(
                 (Note note) => note.AcceptedChangeXml,
                 (Note note, string newValue) => note.AcceptedChangeXml = newValue,
-                "some xml");
+                "some xml"
+            );
         }
 
         [Test]
@@ -1507,29 +1726,34 @@ namespace SIL.XForge.Scripture.Services
         {
             // Setup the environment so there will be Paratext changes
             var env = new TestEnvironment();
-            env.SetupSFData(true, true, false, false,
-                new Book("MAT", 2), new Book("MRK", 2));
+            env.SetupSFData(true, true, false, false, new Book("MAT", 2), new Book("MRK", 2));
             env.SetupPTData(new Book("MAT", 3), new Book("MRK", 1));
 
             // Setup the environment so the Paratext service will return that the resource has changed
             env.ParatextService.IsResource(Arg.Any<string>()).Returns(true);
-            env.ParatextService.ResourceDocsNeedUpdating(Arg.Any<SFProject>(), Arg.Any<ParatextResource>())
+            env.ParatextService
+                .ResourceDocsNeedUpdating(Arg.Any<SFProject>(), Arg.Any<ParatextResource>())
                 .Returns(true);
-            env.ParatextService.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
-                    Arg.Any<IProgress<ProgressState>>(), Arg.Any<CancellationToken>())
+            env.ParatextService
+                .SendReceiveAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Any<string>(),
+                    Arg.Any<IProgress<ProgressState>>(),
+                    Arg.Any<CancellationToken>()
+                )
                 .Returns(new ParatextResource());
 
             // SUT
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
-            env.MockLogger.AssertEventCount((LogEvent logEvent) => logEvent.LogLevel == LogLevel.Information &&
-                                                                   Regex.IsMatch(logEvent.Message, "Starting"), 1);
+            env.MockLogger.AssertEventCount(
+                (LogEvent logEvent) =>
+                    logEvent.LogLevel == LogLevel.Information && Regex.IsMatch(logEvent.Message, "Starting"),
+                1
+            );
 
             // The book text is retrieved from Paratext as the resource has changed
-            env.ParatextService.Received().GetBookText(
-                Arg.Any<UserSecret>(),
-                Arg.Any<string>(),
-                Arg.Any<int>());
+            env.ParatextService.Received().GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<int>());
 
             Assert.IsNotNull(env.GetProject().ResourceConfig);
             Assert.That(env.ContainsText("project01", "MAT", 3), Is.True);
@@ -1541,29 +1765,34 @@ namespace SIL.XForge.Scripture.Services
         {
             // Setup the environment so there will be no Paratext changes
             var env = new TestEnvironment();
-            env.SetupSFData(true, true, false, false,
-                new Book("MAT", 2), new Book("MRK", 2));
+            env.SetupSFData(true, true, false, false, new Book("MAT", 2), new Book("MRK", 2));
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
 
             // Setup the environment so the Paratext service will return that the resource has not changed
             env.ParatextService.IsResource(Arg.Any<string>()).Returns(true);
-            env.ParatextService.ResourceDocsNeedUpdating(Arg.Any<SFProject>(), Arg.Any<ParatextResource>())
+            env.ParatextService
+                .ResourceDocsNeedUpdating(Arg.Any<SFProject>(), Arg.Any<ParatextResource>())
                 .Returns(false);
-            env.ParatextService.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
-                    Arg.Any<IProgress<ProgressState>>(), Arg.Any<CancellationToken>())
+            env.ParatextService
+                .SendReceiveAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Any<string>(),
+                    Arg.Any<IProgress<ProgressState>>(),
+                    Arg.Any<CancellationToken>()
+                )
                 .Returns(new ParatextResource());
 
             // SUT
             await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
 
-            env.MockLogger.AssertEventCount((LogEvent logEvent) => logEvent.LogLevel == LogLevel.Information &&
-                Regex.IsMatch(logEvent.Message, "Starting"), 1);
+            env.MockLogger.AssertEventCount(
+                (LogEvent logEvent) =>
+                    logEvent.LogLevel == LogLevel.Information && Regex.IsMatch(logEvent.Message, "Starting"),
+                1
+            );
 
             // The book text is not retrieved from Paratext as the resource did not change
-            env.ParatextService.DidNotReceive().GetBookText(
-                Arg.Any<UserSecret>(),
-                Arg.Any<string>(),
-                Arg.Any<int>());
+            env.ParatextService.DidNotReceive().GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<int>());
 
             Assert.IsNull(env.GetProject().ResourceConfig);
             Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
@@ -1573,9 +1802,7 @@ namespace SIL.XForge.Scripture.Services
         private class Book
         {
             public Book(string bookId, int highestChapter, bool hasSource = true)
-                : this(bookId, highestChapter, hasSource ? highestChapter : 0)
-            {
-            }
+                : this(bookId, highestChapter, hasSource ? highestChapter : 0) { }
 
             public Book(string bookId, int highestTargetChapter, int highestSourceChapter)
             {
@@ -1591,7 +1818,6 @@ namespace SIL.XForge.Scripture.Services
             public HashSet<int> InvalidChapters { get; } = new HashSet<int>();
             public HashSet<int> MissingTargetChapters { get; set; } = new HashSet<int>();
             public HashSet<int> MissingSourceChapters { get; set; } = new HashSet<int>();
-
         }
 
         private class TestEnvironment
@@ -1606,23 +1832,27 @@ namespace SIL.XForge.Scripture.Services
             /// than the <see cref="SFMemoryRealtimeService" />.</param>
             public TestEnvironment(bool substituteRealtimeService = false)
             {
-                var userSecrets = new MemoryRepository<UserSecret>(new[]
-                {
-                    new UserSecret { Id = "user01" },
-                    new UserSecret { Id = "user02" },
-                });
-                _projectSecrets = new MemoryRepository<SFProjectSecret>(new[]
-                {
-                    new SFProjectSecret
+                var userSecrets = new MemoryRepository<UserSecret>(
+                    new[]
                     {
-                        Id = "project01",
-                        JobIds = new List<string>{ "test_jobid" },
-                    },
-                    new SFProjectSecret { Id = "project02" },
-                    new SFProjectSecret { Id = "project03" },
-                    new SFProjectSecret { Id = "project04" },
-                    new SFProjectSecret { Id = "project05" },
-                });
+                        new UserSecret { Id = "user01" },
+                        new UserSecret { Id = "user02" },
+                    }
+                );
+                _projectSecrets = new MemoryRepository<SFProjectSecret>(
+                    new[]
+                    {
+                        new SFProjectSecret
+                        {
+                            Id = "project01",
+                            JobIds = new List<string> { "test_jobid" },
+                        },
+                        new SFProjectSecret { Id = "project02" },
+                        new SFProjectSecret { Id = "project03" },
+                        new SFProjectSecret { Id = "project04" },
+                        new SFProjectSecret { Id = "project05" },
+                    }
+                );
                 SFProjectService = Substitute.For<ISFProjectService>();
                 EngineService = Substitute.For<IEngineService>();
                 ParatextService = Substitute.For<IParatextService>();
@@ -1632,33 +1862,46 @@ namespace SIL.XForge.Scripture.Services
                     { "pt01", SFProjectRole.Administrator },
                     { "pt02", SFProjectRole.Translator }
                 };
-                ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(),
-                    Arg.Is((SFProject project) => project.ParatextId == "target"), Arg.Any<CancellationToken>())
+                ParatextService
+                    .GetProjectRolesAsync(
+                        Arg.Any<UserSecret>(),
+                        Arg.Is((SFProject project) => project.ParatextId == "target"),
+                        Arg.Any<CancellationToken>()
+                    )
                     .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
-                ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), "target",
-                    Arg.Any<IProgress<ProgressState>>(), Arg.Any<CancellationToken>()))
+                ParatextService
+                    .When(
+                        x =>
+                            x.SendReceiveAsync(
+                                Arg.Any<UserSecret>(),
+                                "target",
+                                Arg.Any<IProgress<ProgressState>>(),
+                                Arg.Any<CancellationToken>()
+                            )
+                    )
                     .Do(x =>
-                        {
-                            _sendReceivedCalled = true;
-                            ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), Arg.Any<string>())
-                                .Returns("afterSR");
-                        }
-                    );
+                    {
+                        _sendReceivedCalled = true;
+                        ParatextService
+                            .GetLatestSharedVersion(Arg.Any<UserSecret>(), Arg.Any<string>())
+                            .Returns("afterSR");
+                    });
 
                 ParatextService.GetNotes(Arg.Any<UserSecret>(), "target", Arg.Any<int>()).Returns("<notes/>");
                 ParatextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user01")).Returns("User 1");
-                ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
-                    .Returns(x => new ParatextSettings
-                    {
-                        FullName = (string)x[1],
-                        IsRightToLeft = false,
-                        Editable = true
-                    }
+                ParatextService
+                    .GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
+                    .Returns(
+                        x =>
+                            new ParatextSettings
+                            {
+                                FullName = (string)x[1],
+                                IsRightToLeft = false,
+                                Editable = true
+                            }
                     );
-                ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target")
-                    .Returns("beforeSR");
-                ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "source")
-                    .Returns("beforeSR", "afterSR");
+                ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target").Returns("beforeSR");
+                ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "source").Returns("beforeSR", "afterSR");
                 RealtimeService = new SFMemoryRealtimeService();
                 Connection = Substitute.For<IConnection>();
                 SubstituteRealtimeService = Substitute.For<IRealtimeService>();
@@ -1667,9 +1910,17 @@ namespace SIL.XForge.Scripture.Services
                 NotesMapper = Substitute.For<IParatextNotesMapper>();
                 MockLogger = new MockLogger<ParatextSyncRunner>();
 
-                Runner = new ParatextSyncRunner(userSecrets, _projectSecrets, SFProjectService, EngineService,
-                    ParatextService, substituteRealtimeService ? SubstituteRealtimeService : RealtimeService,
-                    DeltaUsxMapper, NotesMapper, MockLogger);
+                Runner = new ParatextSyncRunner(
+                    userSecrets,
+                    _projectSecrets,
+                    SFProjectService,
+                    EngineService,
+                    ParatextService,
+                    substituteRealtimeService ? SubstituteRealtimeService : RealtimeService,
+                    DeltaUsxMapper,
+                    NotesMapper,
+                    MockLogger
+                );
             }
 
             public ParatextSyncRunner Runner { get; }
@@ -1699,19 +1950,22 @@ namespace SIL.XForge.Scripture.Services
 
             public SFProjectUserConfig GetProjectUserConfig(string projectId, string userId)
             {
-                return RealtimeService.GetRepository<SFProjectUserConfig>()
+                return RealtimeService
+                    .GetRepository<SFProjectUserConfig>()
                     .Get(SFProjectUserConfig.GetDocId(projectId, userId));
             }
 
             public bool ContainsText(string projectId, string bookId, int chapter)
             {
-                return RealtimeService.GetRepository<TextData>()
+                return RealtimeService
+                    .GetRepository<TextData>()
                     .Contains(TextData.GetTextDocId(projectId, Canon.BookIdToNumber(bookId), chapter));
             }
 
             public TextData GetText(string projectId, string bookId, int chapter)
             {
-                return RealtimeService.GetRepository<TextData>()
+                return RealtimeService
+                    .GetRepository<TextData>()
                     .Get(TextData.GetTextDocId(projectId, Canon.BookIdToNumber(bookId), chapter));
             }
 
@@ -1740,8 +1994,11 @@ namespace SIL.XForge.Scripture.Services
                 return RealtimeService.GetRepository<NoteThread>().Get($"{projectId}:{threadId}");
             }
 
-            public SFProject VerifyProjectSync(bool successful, string expectedRepoVersion = null,
-                string projectSFId = "project01")
+            public SFProject VerifyProjectSync(
+                bool successful,
+                string expectedRepoVersion = null,
+                string projectSFId = "project01"
+            )
             {
                 SFProjectSecret projectSecret = GetProjectSecret(projectSFId);
                 Assert.That(projectSecret.JobIds.Count, Is.EqualTo(0));
@@ -1770,278 +2027,250 @@ namespace SIL.XForge.Scripture.Services
                     BookNum = bookNum,
                     Chapters = new List<Chapter>
                     {
-                        new Chapter
-                        {
-                            Number = chapterNum,
-                            Permissions = chapterPermissions,
-                        },
+                        new Chapter { Number = chapterNum, Permissions = chapterPermissions, },
                     },
                 };
-                RealtimeService.AddRepository("users", OTType.Json0, new MemoryRepository<User>(new[]
-                {
-                    new User
-                    {
-                        Id = "user01"
-                    },
-                }));
-                RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>(new[]
-                {
-                    new TextData(Delta.New()) { Id = id },
-                }));
-                RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(new[]
-                {
-                    new SFProject
-                    {
-                        Id = projectId,
-                        UserRoles = new Dictionary<string, string>
+                RealtimeService.AddRepository(
+                    "users",
+                    OTType.Json0,
+                    new MemoryRepository<User>(new[] { new User { Id = "user01" }, })
+                );
+                RealtimeService.AddRepository(
+                    "texts",
+                    OTType.RichText,
+                    new MemoryRepository<TextData>(new[] { new TextData(Delta.New()) { Id = id }, })
+                );
+                RealtimeService.AddRepository(
+                    "sf_projects",
+                    OTType.Json0,
+                    new MemoryRepository<SFProject>(
+                        new[]
                         {
-                            { "user03", SFProjectRole.Administrator },
-                            { "user04", SFProjectRole.Translator },
-                        },
-                    },
-                }));
+                            new SFProject
+                            {
+                                Id = projectId,
+                                UserRoles = new Dictionary<string, string>
+                                {
+                                    { "user03", SFProjectRole.Administrator },
+                                    { "user04", SFProjectRole.Translator },
+                                },
+                            },
+                        }
+                    )
+                );
                 return textInfo;
             }
 
-            public void SetupSFData(bool translationSuggestionsEnabled, bool checkingEnabled, bool changed,
-                bool noteOnFirstBook, params Book[] books)
+            public void SetupSFData(
+                bool translationSuggestionsEnabled,
+                bool checkingEnabled,
+                bool changed,
+                bool noteOnFirstBook,
+                params Book[] books
+            )
             {
-                SetupSFData("project01", "project02", translationSuggestionsEnabled, checkingEnabled, changed,
-                    noteOnFirstBook, books);
+                SetupSFData(
+                    "project01",
+                    "project02",
+                    translationSuggestionsEnabled,
+                    checkingEnabled,
+                    changed,
+                    noteOnFirstBook,
+                    books
+                );
             }
 
-            public void SetupSFData(string targetProjectSFId, string sourceProjectSFId,
-                bool translationSuggestionsEnabled, bool checkingEnabled, bool changed, bool noteOnFirstBook,
-                params Book[] books)
+            public void SetupSFData(
+                string targetProjectSFId,
+                string sourceProjectSFId,
+                bool translationSuggestionsEnabled,
+                bool checkingEnabled,
+                bool changed,
+                bool noteOnFirstBook,
+                params Book[] books
+            )
             {
-                RealtimeService.AddRepository("users", OTType.Json0, new MemoryRepository<User>(new[]
-                {
-                    new User
-                    {
-                        Id = "user01",
-                        ParatextId = "pt01"
-                    },
-                    new User
-                    {
-                        Id = "user02",
-                        ParatextId = "pt02"
-                    }
-                }));
-                // It is expected that if a user is on a project, there is a corresponding project-user-config doc.
-                RealtimeService.AddRepository("sf_project_user_configs", OTType.Json0,
-                    new MemoryRepository<SFProjectUserConfig>(
-                    new[]
-                    {
-                        new SFProjectUserConfig
+                RealtimeService.AddRepository(
+                    "users",
+                    OTType.Json0,
+                    new MemoryRepository<User>(
+                        new[]
                         {
-                            Id = SFProjectUserConfig.GetDocId("project01", "user01"),
-                        },
-                        new SFProjectUserConfig
-                        {
-                            Id = SFProjectUserConfig.GetDocId("project01", "user02"),
+                            new User { Id = "user01", ParatextId = "pt01" },
+                            new User { Id = "user02", ParatextId = "pt02" }
                         }
-                    }));
-                RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(
-                    new[]
-                    {
-                        new SFProject
+                    )
+                );
+                // It is expected that if a user is on a project, there is a corresponding project-user-config doc.
+                RealtimeService.AddRepository(
+                    "sf_project_user_configs",
+                    OTType.Json0,
+                    new MemoryRepository<SFProjectUserConfig>(
+                        new[]
                         {
-                            Id = "project01",
-                            Name = "project01",
-                            ShortName = "P01",
-                            UserRoles = new Dictionary<string, string>
+                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId("project01", "user01"), },
+                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId("project01", "user02"), }
+                        }
+                    )
+                );
+                RealtimeService.AddRepository(
+                    "sf_projects",
+                    OTType.Json0,
+                    new MemoryRepository<SFProject>(
+                        new[]
+                        {
+                            new SFProject
                             {
-                                { "user01", SFProjectRole.Administrator },
-                                { "user02", SFProjectRole.Translator }
-                            },
-                            ParatextId = "target",
-                            IsRightToLeft = false,
-                            DefaultFontSize = 10,
-                            DefaultFont = ProjectSettings.defaultFontName,
-                            TranslateConfig = new TranslateConfig
-                            {
-                                TranslationSuggestionsEnabled = translationSuggestionsEnabled,
-                                Source = new TranslateSource
+                                Id = "project01",
+                                Name = "project01",
+                                ShortName = "P01",
+                                UserRoles = new Dictionary<string, string>
                                 {
-                                    ParatextId = "source",
-                                    ProjectRef = "project02",
-                                    Name = "Source",
-                                    ShortName = "SRC",
-                                    WritingSystem = new WritingSystem
-                                    {
-                                        Tag = "en"
-                                    },
-                                    IsRightToLeft = false
-                                }
-                            },
-                            CheckingConfig = new CheckingConfig
-                            {
-                                CheckingEnabled = checkingEnabled
-                            },
-                            Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
-                            Sync = new Sync
-                            {
-                                // QueuedCount is incremented before RunAsync() by SyncService.SyncAsync(). So set
-                                // it to 1 to simulate it being incremented.
-                                QueuedCount = 1,
-                                SyncedToRepositoryVersion = "beforeSR",
-                                DataInSync = true
-                            },
-                            ParatextUsers = new List<ParatextUserProfile>
-                            {
-                                new ParatextUserProfile
-                                {
-                                    OpaqueUserId = "syncuser01",
-                                    Username = "User 1"
+                                    { "user01", SFProjectRole.Administrator },
+                                    { "user02", SFProjectRole.Translator }
                                 },
-                                new ParatextUserProfile
+                                ParatextId = "target",
+                                IsRightToLeft = false,
+                                DefaultFontSize = 10,
+                                DefaultFont = ProjectSettings.defaultFontName,
+                                TranslateConfig = new TranslateConfig
                                 {
-                                    OpaqueUserId = "syncuser02",
-                                    Username = "User 2"
-                                }
-                            }
-                        },
-                        new SFProject
-                        {
-                            Id = "project02",
-                            Name = "Source",
-                            ShortName = "SRC",
-                            UserRoles = new Dictionary<string, string>(),
-                            ParatextId = "source",
-                            IsRightToLeft = false,
-                            TranslateConfig = new TranslateConfig
-                            {
-                                TranslationSuggestionsEnabled = false
-                            },
-                            CheckingConfig = new CheckingConfig
-                            {
-                                CheckingEnabled = checkingEnabled
-                            },
-                            WritingSystem = new WritingSystem
-                            {
-                                Tag = "en"
-                            },
-                            Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
-                            Sync = new Sync
-                            {
-                                QueuedCount = 0,
-                                SyncedToRepositoryVersion = "beforeSR"
-                            }
-                        },
-                        new SFProject
-                        {
-                            // This project was not sync'd since we started tracking SyncedToRepositoryVersion when
-                            // a 2021-05-14 commit reached sf-live.
-                            Id = "project03",
-                            Name = "project03withNoSyncedToRepositoryVersion",
-                            ShortName = "P03",
-                            UserRoles = new Dictionary<string, string>
-                            {
-                                { "user01", SFProjectRole.Administrator },
-                                { "user02", SFProjectRole.Translator }
-                            },
-                            ParatextId = "paratext-project03",
-                            IsRightToLeft = false,
-                            TranslateConfig = new TranslateConfig
-                            {
-                                TranslationSuggestionsEnabled = translationSuggestionsEnabled,
-                                Source = new TranslateSource
-                                {
-                                    ParatextId = "paratext-project04",
-                                    ProjectRef = "project04",
-                                    Name = "project04",
-                                    ShortName = "P04",
-                                    WritingSystem = new WritingSystem
+                                    TranslationSuggestionsEnabled = translationSuggestionsEnabled,
+                                    Source = new TranslateSource
                                     {
-                                        Tag = "en"
-                                    },
-                                    IsRightToLeft = false
-                                }
-                            },
-                            CheckingConfig = new CheckingConfig
-                            {
-                                CheckingEnabled = checkingEnabled
-                            },
-                            Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
-                            Sync = new Sync
-                            {
-                                QueuedCount = 1,
-                                // No SyncedToRepositoryVersion
-                                // No DataInSync
-                            },
-                        },
-                        new SFProject
-                        {
-                            Id = "project04",
-                            Name = "project04",
-                            ShortName = "P04",
-                            UserRoles = new Dictionary<string, string>(),
-                            ParatextId = "paratext-project04",
-                            IsRightToLeft = false,
-                            TranslateConfig = new TranslateConfig
-                            {
-                                TranslationSuggestionsEnabled = false
-                            },
-                            CheckingConfig = new CheckingConfig
-                            {
-                                CheckingEnabled = checkingEnabled
-                            },
-                            WritingSystem = new WritingSystem
-                            {
-                                Tag = "en"
-                            },
-                            Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
-                            Sync = new Sync
-                            {
-                                QueuedCount = 0,
-                                // No SyncedToRepositoryVersion
-                                // No DataInSync
-                            }
-                        },
-                        new SFProject
-                        {
-                            // This project was sync'd after we started tracking SyncedToRepositoryVersion, but the
-                            // only sync attempt triggered a failure, and so only DataInSync was written to,
-                            // not SyncedToRepositoryVersion.
-                            Id = "project05",
-                            Name = "project05",
-                            ShortName = "P05",
-                            UserRoles = new Dictionary<string, string>
-                            {
-                                { "user01", SFProjectRole.Administrator },
-                                { "user02", SFProjectRole.Translator }
-                            },
-                            ParatextId = "paratext-project05",
-                            IsRightToLeft = false,
-                            TranslateConfig = new TranslateConfig
-                            {
-                                TranslationSuggestionsEnabled = translationSuggestionsEnabled,
-                                Source = new TranslateSource
+                                        ParatextId = "source",
+                                        ProjectRef = "project02",
+                                        Name = "Source",
+                                        ShortName = "SRC",
+                                        WritingSystem = new WritingSystem { Tag = "en" },
+                                        IsRightToLeft = false
+                                    }
+                                },
+                                CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
+                                Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
+                                Sync = new Sync
                                 {
-                                    ParatextId = "paratext-project04",
-                                    ProjectRef = "project04",
-                                    Name = "project04",
-                                    ShortName = "P04",
-                                    WritingSystem = new WritingSystem
-                                    {
-                                        Tag = "en"
-                                    },
-                                    IsRightToLeft = false
+                                    // QueuedCount is incremented before RunAsync() by SyncService.SyncAsync(). So set
+                                    // it to 1 to simulate it being incremented.
+                                    QueuedCount = 1,
+                                    SyncedToRepositoryVersion = "beforeSR",
+                                    DataInSync = true
+                                },
+                                ParatextUsers = new List<ParatextUserProfile>
+                                {
+                                    new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = "User 1" },
+                                    new ParatextUserProfile { OpaqueUserId = "syncuser02", Username = "User 2" }
                                 }
                             },
-                            CheckingConfig = new CheckingConfig
+                            new SFProject
                             {
-                                CheckingEnabled = checkingEnabled
+                                Id = "project02",
+                                Name = "Source",
+                                ShortName = "SRC",
+                                UserRoles = new Dictionary<string, string>(),
+                                ParatextId = "source",
+                                IsRightToLeft = false,
+                                TranslateConfig = new TranslateConfig { TranslationSuggestionsEnabled = false },
+                                CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
+                                WritingSystem = new WritingSystem { Tag = "en" },
+                                Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
+                                Sync = new Sync { QueuedCount = 0, SyncedToRepositoryVersion = "beforeSR" }
                             },
-                            Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
-                            Sync = new Sync
+                            new SFProject
                             {
-                                QueuedCount = 1,
-                                DataInSync = false
-                                // No SyncedToRepositoryVersion
+                                // This project was not sync'd since we started tracking SyncedToRepositoryVersion when
+                                // a 2021-05-14 commit reached sf-live.
+                                Id = "project03",
+                                Name = "project03withNoSyncedToRepositoryVersion",
+                                ShortName = "P03",
+                                UserRoles = new Dictionary<string, string>
+                                {
+                                    { "user01", SFProjectRole.Administrator },
+                                    { "user02", SFProjectRole.Translator }
+                                },
+                                ParatextId = "paratext-project03",
+                                IsRightToLeft = false,
+                                TranslateConfig = new TranslateConfig
+                                {
+                                    TranslationSuggestionsEnabled = translationSuggestionsEnabled,
+                                    Source = new TranslateSource
+                                    {
+                                        ParatextId = "paratext-project04",
+                                        ProjectRef = "project04",
+                                        Name = "project04",
+                                        ShortName = "P04",
+                                        WritingSystem = new WritingSystem { Tag = "en" },
+                                        IsRightToLeft = false
+                                    }
+                                },
+                                CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
+                                Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
+                                Sync = new Sync
+                                {
+                                    QueuedCount = 1,
+                                    // No SyncedToRepositoryVersion
+                                    // No DataInSync
+                                },
                             },
-                        },
-                    }));
+                            new SFProject
+                            {
+                                Id = "project04",
+                                Name = "project04",
+                                ShortName = "P04",
+                                UserRoles = new Dictionary<string, string>(),
+                                ParatextId = "paratext-project04",
+                                IsRightToLeft = false,
+                                TranslateConfig = new TranslateConfig { TranslationSuggestionsEnabled = false },
+                                CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
+                                WritingSystem = new WritingSystem { Tag = "en" },
+                                Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
+                                Sync = new Sync
+                                {
+                                    QueuedCount = 0,
+                                    // No SyncedToRepositoryVersion
+                                    // No DataInSync
+                                }
+                            },
+                            new SFProject
+                            {
+                                // This project was sync'd after we started tracking SyncedToRepositoryVersion, but the
+                                // only sync attempt triggered a failure, and so only DataInSync was written to,
+                                // not SyncedToRepositoryVersion.
+                                Id = "project05",
+                                Name = "project05",
+                                ShortName = "P05",
+                                UserRoles = new Dictionary<string, string>
+                                {
+                                    { "user01", SFProjectRole.Administrator },
+                                    { "user02", SFProjectRole.Translator }
+                                },
+                                ParatextId = "paratext-project05",
+                                IsRightToLeft = false,
+                                TranslateConfig = new TranslateConfig
+                                {
+                                    TranslationSuggestionsEnabled = translationSuggestionsEnabled,
+                                    Source = new TranslateSource
+                                    {
+                                        ParatextId = "paratext-project04",
+                                        ProjectRef = "project04",
+                                        Name = "project04",
+                                        ShortName = "P04",
+                                        WritingSystem = new WritingSystem { Tag = "en" },
+                                        IsRightToLeft = false
+                                    }
+                                },
+                                CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
+                                Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
+                                Sync = new Sync
+                                {
+                                    QueuedCount = 1,
+                                    DataInSync = false
+                                    // No SyncedToRepositoryVersion
+                                },
+                            },
+                        }
+                    )
+                );
 
                 RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>());
                 RealtimeService.AddRepository("questions", OTType.Json0, new MemoryRepository<Question>());
@@ -2051,12 +2280,24 @@ namespace SIL.XForge.Scripture.Services
                     SetupEmptyNoteThreads();
                 foreach (Book book in books)
                 {
-                    AddSFBook(targetProjectSFId, GetProject(targetProjectSFId).ParatextId, book.Id,
-                        book.HighestTargetChapter, changed, book.MissingTargetChapters);
+                    AddSFBook(
+                        targetProjectSFId,
+                        GetProject(targetProjectSFId).ParatextId,
+                        book.Id,
+                        book.HighestTargetChapter,
+                        changed,
+                        book.MissingTargetChapters
+                    );
                     if (book.HighestSourceChapter > 0)
                     {
-                        AddSFBook(sourceProjectSFId, GetProject(sourceProjectSFId).ParatextId, book.Id,
-                            book.HighestSourceChapter, changed, book.MissingSourceChapters);
+                        AddSFBook(
+                            sourceProjectSFId,
+                            GetProject(sourceProjectSFId).ParatextId,
+                            book.Id,
+                            book.HighestSourceChapter,
+                            changed,
+                            book.MissingSourceChapters
+                        );
                     }
                 }
 
@@ -2066,8 +2307,12 @@ namespace SIL.XForge.Scripture.Services
                     notesElem.Add(new XElement("thread"));
                 }
 
-                NotesMapper.GetNotesChangelistAsync(Arg.Any<XElement>(),
-                    Arg.Any<IEnumerable<IDocument<Question>>>(), Arg.Any<Dictionary<string, ParatextUserProfile>>())
+                NotesMapper
+                    .GetNotesChangelistAsync(
+                        Arg.Any<XElement>(),
+                        Arg.Any<IEnumerable<IDocument<Question>>>(),
+                        Arg.Any<Dictionary<string, ParatextUserProfile>>()
+                    )
                     .Returns(Task.FromResult(notesElem));
             }
 
@@ -2076,14 +2321,19 @@ namespace SIL.XForge.Scripture.Services
                 return new TextInfo
                 {
                     BookNum = Canon.BookIdToNumber(book.Id),
-                    Chapters = Enumerable.Range(1, book.HighestTargetChapter)
-                        .Select(c => new Chapter
-                        {
-                            Number = c,
-                            LastVerse = 10,
-                            IsValid = !book.InvalidChapters.Contains(c),
-                            Permissions = { }
-                        }).ToList(),
+                    Chapters = Enumerable
+                        .Range(1, book.HighestTargetChapter)
+                        .Select(
+                            c =>
+                                new Chapter
+                                {
+                                    Number = c,
+                                    LastVerse = 10,
+                                    IsValid = !book.InvalidChapters.Contains(c),
+                                    Permissions = { }
+                                }
+                        )
+                        .ToList(),
                     HasSource = book.HighestSourceChapter > 0
                 };
             }
@@ -2098,22 +2348,35 @@ namespace SIL.XForge.Scripture.Services
                 SetupPTDataForProjectIds(targetProjectPTId, "sourceProjectPTId", books);
             }
 
-            public void SetupPTDataForProjectIds(string targetProjectPTId, string sourceProjectPTId,
-                params Book[] books)
+            public void SetupPTDataForProjectIds(
+                string targetProjectPTId,
+                string sourceProjectPTId,
+                params Book[] books
+            )
             {
-                ParatextService.GetBookList(Arg.Any<UserSecret>(), targetProjectPTId)
+                ParatextService
+                    .GetBookList(Arg.Any<UserSecret>(), targetProjectPTId)
                     .Returns(books.Select(b => Canon.BookIdToNumber(b.Id)).ToArray());
                 // Include book with Source even if there are no chapters, if there are also no chapters in Target. PT
                 // can actually have or not have books which do or do not have chapters more flexibly than this. But in
                 // this way, allow tests to request a Source book exist even with zero chapters.
-                ParatextService.GetBookList(Arg.Any<UserSecret>(), sourceProjectPTId)
-                    .Returns(books
-                        .Where(b => b.HighestSourceChapter > 0 || b.HighestSourceChapter == b.HighestTargetChapter)
-                        .Select(b => Canon.BookIdToNumber(b.Id)).ToArray());
+                ParatextService
+                    .GetBookList(Arg.Any<UserSecret>(), sourceProjectPTId)
+                    .Returns(
+                        books
+                            .Where(b => b.HighestSourceChapter > 0 || b.HighestSourceChapter == b.HighestTargetChapter)
+                            .Select(b => Canon.BookIdToNumber(b.Id))
+                            .ToArray()
+                    );
                 foreach (Book book in books)
                 {
-                    AddPTBook(targetProjectPTId, book.Id, book.HighestTargetChapter, book.MissingTargetChapters,
-                        book.InvalidChapters);
+                    AddPTBook(
+                        targetProjectPTId,
+                        book.Id,
+                        book.HighestTargetChapter,
+                        book.MissingTargetChapters,
+                        book.InvalidChapters
+                    );
                     if (book.HighestSourceChapter > 0 || book.HighestSourceChapter == book.HighestTargetChapter)
                         AddPTBook(sourceProjectPTId, book.Id, book.HighestSourceChapter, book.MissingSourceChapters);
                 }
@@ -2121,44 +2384,70 @@ namespace SIL.XForge.Scripture.Services
 
             public Task SetUserRole(string userId, string role)
             {
-                return RealtimeService.GetRepository<SFProject>().UpdateAsync(p => p.Id == "project01", u =>
-                    u.Set(pr => pr.UserRoles[userId], role));
+                return RealtimeService
+                    .GetRepository<SFProject>()
+                    .UpdateAsync(p => p.Id == "project01", u => u.Set(pr => pr.UserRoles[userId], role));
             }
 
             public void SetupNoteChanges(string threadId, string verseRef = "MAT 1:1", bool fromParatext = true)
             {
                 if (fromParatext)
                 {
-                    var noteThreadChange = new NoteThreadChange(threadId, verseRef, $"Scripture text in project",
-                        "Context before ", " context after", NoteStatus.Todo.InternalValue, "tag02");
+                    var noteThreadChange = new NoteThreadChange(
+                        threadId,
+                        verseRef,
+                        $"Scripture text in project",
+                        "Context before ",
+                        " context after",
+                        NoteStatus.Todo.InternalValue,
+                        "tag02"
+                    );
                     noteThreadChange.ThreadUpdated = true;
                     noteThreadChange.Position = new TextAnchor { Start = 0, Length = 0 };
                     noteThreadChange.Assignment = CommentThread.teamUser;
                     noteThreadChange.AddChange(
                         CreateNote(threadId, "n01", "syncuser01", $"{threadId} updated.", ChangeType.Updated),
-                            ChangeType.Updated);
+                        ChangeType.Updated
+                    );
                     noteThreadChange.AddChange(
                         CreateNote(threadId, "n02", "syncuser02", $"{threadId} deleted.", ChangeType.Deleted),
-                            ChangeType.Deleted);
+                        ChangeType.Deleted
+                    );
                     noteThreadChange.AddChange(
                         CreateNote(threadId, "n03", "syncuser03", $"{threadId} added.", ChangeType.Added, "tag03"),
-                            ChangeType.Added);
+                        ChangeType.Added
+                    );
 
-                    ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
-                        Arg.Any<IEnumerable<IDocument<NoteThread>>>(), Arg.Any<Dictionary<int, ChapterDelta>>(),
-                        Arg.Any<Dictionary<string, ParatextUserProfile>>())
+                    ParatextService
+                        .GetNoteThreadChanges(
+                            Arg.Any<UserSecret>(),
+                            "target",
+                            40,
+                            Arg.Any<IEnumerable<IDocument<NoteThread>>>(),
+                            Arg.Any<Dictionary<int, ChapterDelta>>(),
+                            Arg.Any<Dictionary<string, ParatextUserProfile>>()
+                        )
                         .Returns(x =>
                         {
-                            ((Dictionary<string, ParatextUserProfile>)x[5]).Add("User 3", new ParatextUserProfile
-                            { OpaqueUserId = "syncuser03", Username = "User 3" });
+                            ((Dictionary<string, ParatextUserProfile>)x[5]).Add(
+                                "User 3",
+                                new ParatextUserProfile { OpaqueUserId = "syncuser03", Username = "User 3" }
+                            );
                             return new[] { noteThreadChange };
                         });
                     Dictionary<string, string> userIdsToUsernames = new Dictionary<string, string>
                     {
-                        { "user01", "User 1" }, { "user02", "User 2" }, { "user03", "User 3" }
+                        { "user01", "User 1" },
+                        { "user02", "User 2" },
+                        { "user03", "User 3" }
                     };
-                    ParatextService.GetParatextUsernameMappingAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(),
-                        CancellationToken.None).Returns(userIdsToUsernames);
+                    ParatextService
+                        .GetParatextUsernameMappingAsync(
+                            Arg.Any<UserSecret>(),
+                            Arg.Any<SFProject>(),
+                            CancellationToken.None
+                        )
+                        .Returns(userIdsToUsernames);
                 }
                 else
                 {
@@ -2173,28 +2462,50 @@ namespace SIL.XForge.Scripture.Services
 
             public void SetupNoteStatusChange(string threadId, string status, string verseRef = "MAT 1:1")
             {
-                var noteThreadChange = new NoteThreadChange(threadId, verseRef, $"{threadId} selected text.",
-                    "Context before ", " context after", status, "icon1");
+                var noteThreadChange = new NoteThreadChange(
+                    threadId,
+                    verseRef,
+                    $"{threadId} selected text.",
+                    "Context before ",
+                    " context after",
+                    status,
+                    "icon1"
+                );
                 noteThreadChange.ThreadUpdated = true;
                 SetupNoteThreadChanges(new[] { noteThreadChange }, "target", 40);
             }
 
             public void SetupNewNoteThreadChange(string threadId, string syncUserId, string verseRef = "MAT 1:1")
             {
-                var noteThreadChange = new NoteThreadChange(threadId, verseRef, $"Scripture text in project",
-                    "Context before ", " context after", NoteStatus.Todo.InternalValue, "icon1");
+                var noteThreadChange = new NoteThreadChange(
+                    threadId,
+                    verseRef,
+                    $"Scripture text in project",
+                    "Context before ",
+                    " context after",
+                    NoteStatus.Todo.InternalValue,
+                    "icon1"
+                );
                 noteThreadChange.Position = new TextAnchor { Start = 0, Length = 0 };
                 noteThreadChange.Assignment = CommentThread.teamUser;
                 noteThreadChange.AddChange(
                     CreateNote(threadId, "n01", syncUserId, $"New {threadId} added.", ChangeType.Added),
-                        ChangeType.Added);
+                    ChangeType.Added
+                );
                 SetupNoteThreadChanges(new[] { noteThreadChange }, "target", 40);
             }
 
             public void SetupNewConflictNoteThreadChange(string threadId, string verseRef = "MAT 1:1")
             {
-                var noteThreadChange = new NoteThreadChange(threadId, verseRef, null, null, null,
-                    NoteStatus.Todo.InternalValue, "conflict1");
+                var noteThreadChange = new NoteThreadChange(
+                    threadId,
+                    verseRef,
+                    null,
+                    null,
+                    null,
+                    NoteStatus.Todo.InternalValue,
+                    "conflict1"
+                );
                 noteThreadChange.Position = new TextAnchor { Start = 0, Length = 0 };
                 noteThreadChange.AddChange(
                     CreateNote(threadId, "conflict1", "", "Conflict on note.", ChangeType.Added, "conflict1"),
@@ -2205,8 +2516,15 @@ namespace SIL.XForge.Scripture.Services
 
             public void SetupNoteRemovedChange(string threadId, string noteId, string verseRef = "MAT 1:1")
             {
-                var noteThreadChange = new NoteThreadChange(threadId, verseRef, $"{threadId} selected text.",
-                    "Context before ", " context after", NoteStatus.Resolved.InternalValue, "icon1");
+                var noteThreadChange = new NoteThreadChange(
+                    threadId,
+                    verseRef,
+                    $"{threadId} selected text.",
+                    "Context before ",
+                    " context after",
+                    NoteStatus.Resolved.InternalValue,
+                    "icon1"
+                );
                 if (noteId == null)
                     noteThreadChange.ThreadRemoved = true;
                 else
@@ -2216,34 +2534,54 @@ namespace SIL.XForge.Scripture.Services
 
             public void SetupNoteReattachedChange(string threadId, string verseRef)
             {
-                var noteThreadChange = new NoteThreadChange(threadId, verseRef, $"{threadId} selected text.",
-                    "Context before ", " context after", null);
+                var noteThreadChange = new NoteThreadChange(
+                    threadId,
+                    verseRef,
+                    $"{threadId} selected text.",
+                    "Context before ",
+                    " context after",
+                    null
+                );
                 string before = "Reattach before ";
                 string reattachSelectedText = "reattach selected text";
                 int start = before.Length;
                 int length = reattachSelectedText.Length;
                 noteThreadChange.Position = new TextAnchor { Start = start, Length = length };
-                string[] reattachParts = {
-                    verseRef, reattachSelectedText, start.ToString(), before, " reattach after." };
+                string[] reattachParts =
+                {
+                    verseRef,
+                    reattachSelectedText,
+                    start.ToString(),
+                    before,
+                    " reattach after."
+                };
                 string reattached = string.Join(PtxUtils.StringUtils.orcCharacter, reattachParts);
                 Note reattachedNote = CreateNote(threadId, "reattached01", "syncuser01", null, ChangeType.Added);
                 reattachedNote.Reattached = reattached;
                 noteThreadChange.AddChange(reattachedNote, ChangeType.Added);
-                ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), "target", 40,
-                    Arg.Any<IEnumerable<IDocument<NoteThread>>>(), Arg.Any<Dictionary<int, ChapterDelta>>(),
-                    Arg.Any<Dictionary<string, ParatextUserProfile>>())
+                ParatextService
+                    .GetNoteThreadChanges(
+                        Arg.Any<UserSecret>(),
+                        "target",
+                        40,
+                        Arg.Any<IEnumerable<IDocument<NoteThread>>>(),
+                        Arg.Any<Dictionary<int, ChapterDelta>>(),
+                        Arg.Any<Dictionary<string, ParatextUserProfile>>()
+                    )
                     .Returns(new[] { noteThreadChange });
             }
 
             /// <summary>Prepare a change report to be provided when thread changes are asked for.</summary>
-            public void SetupThreadAndNoteChange(string threadId, Action<NoteThreadChange> modifyNoteThreadChange,
-                Action<Note> modifyNoteChange)
+            public void SetupThreadAndNoteChange(
+                string threadId,
+                Action<NoteThreadChange> modifyNoteThreadChange,
+                Action<Note> modifyNoteChange
+            )
             {
                 string status = NoteStatus.Todo.InternalValue;
                 string verseRef = "MAT 1:1";
                 // Create a NoteThreadChange, and allow client to adjust it.
-                var noteThreadChange = new NoteThreadChange(threadId, verseRef, null,
-                    null, null, status, "icon1");
+                var noteThreadChange = new NoteThreadChange(threadId, verseRef, null, null, null, status, "icon1");
                 if (modifyNoteThreadChange != null)
                 {
                     modifyNoteThreadChange(noteThreadChange);
@@ -2264,8 +2602,11 @@ namespace SIL.XForge.Scripture.Services
             /// Helper method to test the simple case of a note property change being received from PT, and getting
             /// applied to the SF DB.
             /// </summary>>
-            public async Task SimpleNoteChangeAppliedCheckerAsync<T>(Func<Note, T> datumGetter,
-                Action<Note, T> datumSetter, T newData)
+            public async Task SimpleNoteChangeAppliedCheckerAsync<T>(
+                Func<Note, T> datumGetter,
+                Action<Note, T> datumSetter,
+                T newData
+            )
             {
                 // Set up some PT and SF project data, including a note.
                 string projectId = "project01";
@@ -2279,10 +2620,14 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(datumGetter(note), Is.Not.EqualTo(newData), "setup");
 
                 // Let the client code define the incoming note change from PT.
-                SetupThreadAndNoteChange(threadId, null, (Note note) =>
-                {
-                    datumSetter(note, newData);
-                });
+                SetupThreadAndNoteChange(
+                    threadId,
+                    null,
+                    (Note note) =>
+                    {
+                        datumSetter(note, newData);
+                    }
+                );
 
                 // SUT
                 await Runner.RunAsync(projectId, "user01", false, CancellationToken.None);
@@ -2297,51 +2642,59 @@ namespace SIL.XForge.Scripture.Services
             {
                 int chapter = book.HighestTargetChapter;
                 string threadId = $"thread0{chapter}";
-                RealtimeService.AddRepository("note_threads", OTType.Json0,
-                    new MemoryRepository<NoteThread>(new[]
-                    {
-                        new NoteThread
+                RealtimeService.AddRepository(
+                    "note_threads",
+                    OTType.Json0,
+                    new MemoryRepository<NoteThread>(
+                        new[]
                         {
-                            Id = $"project01:{threadId}",
-                            DataId = threadId,
-                            ProjectRef = "project01",
-                            OwnerRef = "user01",
-                            VerseRef = new VerseRefData(Canon.BookIdToNumber(book.Id), chapter, 1),
-                            OriginalContextBefore = "Context before ",
-                            OriginalContextAfter = " context after",
-                            OriginalSelectedText = "Scripture text in project",
-                            TagIcon = "icon1",
-                            Notes = new List<Note>()
+                            new NoteThread
                             {
-                                new Note
+                                Id = $"project01:{threadId}",
+                                DataId = threadId,
+                                ProjectRef = "project01",
+                                OwnerRef = "user01",
+                                VerseRef = new VerseRefData(Canon.BookIdToNumber(book.Id), chapter, 1),
+                                OriginalContextBefore = "Context before ",
+                                OriginalContextAfter = " context after",
+                                OriginalSelectedText = "Scripture text in project",
+                                TagIcon = "icon1",
+                                Notes = new List<Note>()
                                 {
-                                    DataId = "n01",
-                                    ThreadId = threadId,
-                                    SyncUserRef = "syncuser01",
-                                    ExtUserId = "user02",
-                                    Content = "Paratext note 1.",
-                                    DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc)
-                                },
-                                new Note
-                                {
-                                    DataId = "n02",
-                                    ThreadId = threadId,
-                                    SyncUserRef = "syncuser02",
-                                    ExtUserId = "user03",
-                                    Content = "Paratext note 2.",
-                                    DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc)
-                                },
+                                    new Note
+                                    {
+                                        DataId = "n01",
+                                        ThreadId = threadId,
+                                        SyncUserRef = "syncuser01",
+                                        ExtUserId = "user02",
+                                        Content = "Paratext note 1.",
+                                        DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc)
+                                    },
+                                    new Note
+                                    {
+                                        DataId = "n02",
+                                        ThreadId = threadId,
+                                        SyncUserRef = "syncuser02",
+                                        ExtUserId = "user03",
+                                        Content = "Paratext note 2.",
+                                        DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc)
+                                    },
+                                }
                             }
                         }
-                    })
+                    )
                 );
             }
 
             public async Task SetThreadNotesAsync(string sfProjectId, string threadId, List<Note> notes)
             {
                 string threadDocId = NoteThread.GetDocId(sfProjectId, threadId);
-                await RealtimeService.GetRepository<NoteThread>().UpdateAsync(thread => thread.Id == threadDocId,
-                    update => update.Set(thread => thread.Notes, notes));
+                await RealtimeService
+                    .GetRepository<NoteThread>()
+                    .UpdateAsync(
+                        thread => thread.Id == threadDocId,
+                        update => update.Set(thread => thread.Notes, notes)
+                    );
             }
 
             public void SetupEmptyNoteThreads()
@@ -2349,16 +2702,30 @@ namespace SIL.XForge.Scripture.Services
                 RealtimeService.AddRepository("note_threads", OTType.Json0, new MemoryRepository<NoteThread>());
             }
 
-            private void AddPTBook(string paratextId, string bookId, int highestChapter, HashSet<int> missingChapters,
-                HashSet<int> invalidChapters = null)
+            private void AddPTBook(
+                string paratextId,
+                string bookId,
+                int highestChapter,
+                HashSet<int> missingChapters,
+                HashSet<int> invalidChapters = null
+            )
             {
                 MockGetBookText(paratextId, bookId);
-                Func<XDocument, bool> predicate = d => (string)d?.Root?.Element("book")?.Attribute("code") == bookId
-                        && (string)d?.Root?.Element("book") == paratextId;
-                var chapterDeltas = Enumerable.Range(1, highestChapter)
+                Func<XDocument, bool> predicate = d =>
+                    (string)d?.Root?.Element("book")?.Attribute("code") == bookId
+                    && (string)d?.Root?.Element("book") == paratextId;
+                var chapterDeltas = Enumerable
+                    .Range(1, highestChapter)
                     .Where(chapterNumber => !(missingChapters?.Contains(chapterNumber) ?? false))
-                    .Select(c => new ChapterDelta(c, 10, !(invalidChapters?.Contains(c) ?? false),
-                        Delta.New().InsertText("text")));
+                    .Select(
+                        c =>
+                            new ChapterDelta(
+                                c,
+                                10,
+                                !(invalidChapters?.Contains(c) ?? false),
+                                Delta.New().InsertText("text")
+                            )
+                    );
                 if (chapterDeltas.Count() == 0)
                 {
                     // Add implicit ChapterDelta, mimicing DeltaUsxMapper.ToChapterDeltas().
@@ -2367,15 +2734,23 @@ namespace SIL.XForge.Scripture.Services
                 DeltaUsxMapper.ToChapterDeltas(Arg.Is<XDocument>(d => predicate(d))).Returns(chapterDeltas);
             }
 
-            private void AddSFBook(string projectId, string paratextId, string bookId, int highestChapter, bool changed,
-                HashSet<int> missingChapters = null)
+            private void AddSFBook(
+                string projectId,
+                string paratextId,
+                string bookId,
+                int highestChapter,
+                bool changed,
+                HashSet<int> missingChapters = null
+            )
             {
                 MockGetBookText(paratextId, bookId);
                 int bookNum = Canon.BookIdToNumber(bookId);
                 string newBookText = GetBookText(paratextId, bookId, changed ? 2 : 1);
-                Func<XDocument, bool> predicate = d => (string)d?.Root?.Element("book")?.Attribute("code") == bookId
+                Func<XDocument, bool> predicate = d =>
+                    (string)d?.Root?.Element("book")?.Attribute("code") == bookId
                     && (string)d?.Root?.Element("book") == paratextId;
-                DeltaUsxMapper.ToUsx(Arg.Is<XDocument>(d => predicate(d)), Arg.Any<IEnumerable<ChapterDelta>>())
+                DeltaUsxMapper
+                    .ToUsx(Arg.Is<XDocument>(d => predicate(d)), Arg.Any<IEnumerable<ChapterDelta>>())
                     .Returns(XDocument.Parse(newBookText));
 
                 for (int c = 1; c <= highestChapter; c++)
@@ -2383,19 +2758,24 @@ namespace SIL.XForge.Scripture.Services
                     string id = TextData.GetTextDocId(projectId, bookNum, c);
                     if (!(missingChapters?.Contains(c) ?? false))
                     {
-                        RealtimeService.GetRepository<TextData>()
+                        RealtimeService
+                            .GetRepository<TextData>()
                             .Add(new TextData(Delta.New().InsertText(changed ? "changed" : "text")) { Id = id });
                     }
-                    RealtimeService.GetRepository<Question>().Add(new[]
-                    {
-                        new Question
-                        {
-                            Id = $"{projectId}:question{bookId}{c}",
-                            DataId = $"question{bookId}{c}",
-                            ProjectRef = projectId,
-                            VerseRef = new VerseRefData(bookNum, c, 1)
-                        }
-                    });
+                    RealtimeService
+                        .GetRepository<Question>()
+                        .Add(
+                            new[]
+                            {
+                                new Question
+                                {
+                                    Id = $"{projectId}:question{bookId}{c}",
+                                    DataId = $"question{bookId}{c}",
+                                    ProjectRef = projectId,
+                                    VerseRef = new VerseRefData(bookNum, c, 1)
+                                }
+                            }
+                        );
                 }
             }
 
@@ -2403,27 +2783,38 @@ namespace SIL.XForge.Scripture.Services
             {
                 string oldBookText = GetBookText(paratextId, bookId, 1);
                 string remoteBookText = GetBookText(paratextId, bookId, 3);
-                ParatextService.GetBookText(Arg.Any<UserSecret>(), paratextId, Canon.BookIdToNumber(bookId))
+                ParatextService
+                    .GetBookText(Arg.Any<UserSecret>(), paratextId, Canon.BookIdToNumber(bookId))
                     .Returns(x => _sendReceivedCalled ? remoteBookText : oldBookText);
             }
 
             private static string GetBookText(string paratextId, string bookId, int version)
             {
-                return
-                    $"<usx version=\"2.5\"><book code=\"{bookId}\" style=\"id\">{paratextId}</book><content version=\"{version}\"/></usx>";
+                return $"<usx version=\"2.5\"><book code=\"{bookId}\" style=\"id\">{paratextId}</book><content version=\"{version}\"/></usx>";
             }
 
             private void SetupNoteThreadChanges(NoteThreadChange[] noteThreadChanges, string projectId, int bookNum)
             {
-                ParatextService.GetNoteThreadChanges(Arg.Any<UserSecret>(), projectId, bookNum,
-                    Arg.Any<IEnumerable<IDocument<NoteThread>>>(), Arg.Any<Dictionary<int, ChapterDelta>>(),
-                    Arg.Any<Dictionary<string, ParatextUserProfile>>())
+                ParatextService
+                    .GetNoteThreadChanges(
+                        Arg.Any<UserSecret>(),
+                        projectId,
+                        bookNum,
+                        Arg.Any<IEnumerable<IDocument<NoteThread>>>(),
+                        Arg.Any<Dictionary<int, ChapterDelta>>(),
+                        Arg.Any<Dictionary<string, ParatextUserProfile>>()
+                    )
                     .Returns(noteThreadChanges);
             }
 
-
-            private Note CreateNote(string threadId, string noteId, string user, string content, ChangeType type,
-                string tagIcon = null)
+            private Note CreateNote(
+                string threadId,
+                string noteId,
+                string user,
+                string content,
+                ChangeType type,
+                string tagIcon = null
+            )
             {
                 return new Note
                 {

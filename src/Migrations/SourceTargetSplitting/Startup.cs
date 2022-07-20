@@ -88,21 +88,20 @@ namespace SourceTargetSplitting
             services.AddSFRealtimeServer(LoggerFactory, Configuration, IsDevelopment, Program.MigrationsDisabled);
             services.AddSFServices();
             services.AddSFDataAccess(Configuration);
-            services.Configure<RequestLocalizationOptions>(
-                opts =>
+            services.Configure<RequestLocalizationOptions>(opts =>
+            {
+                var supportedCultures = new List<CultureInfo>();
+                foreach (var culture in SharedResource.Cultures)
                 {
-                    var supportedCultures = new List<CultureInfo>();
-                    foreach (var culture in SharedResource.Cultures)
-                    {
-                        supportedCultures.Add(new CultureInfo(culture.Key));
-                    }
+                    supportedCultures.Add(new CultureInfo(culture.Key));
+                }
 
-                    opts.DefaultRequestCulture = new RequestCulture("en");
-                    // Formatting numbers, dates, etc.
-                    opts.SupportedCultures = supportedCultures;
-                    // UI strings that we localized.
-                    opts.SupportedUICultures = supportedCultures;
-                });
+                opts.DefaultRequestCulture = new RequestCulture("en");
+                // Formatting numbers, dates, etc.
+                opts.SupportedCultures = supportedCultures;
+                // UI strings that we localized.
+                opts.SupportedUICultures = supportedCultures;
+            });
             services.AddLocalization(options => options.ResourcesPath = "Resources");
             services.AddSFMachine(Configuration);
 

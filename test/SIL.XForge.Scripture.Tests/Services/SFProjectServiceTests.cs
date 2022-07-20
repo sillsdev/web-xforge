@@ -52,10 +52,17 @@ namespace SIL.XForge.Scripture.Services
             const string role = SFProjectRole.CommunityChecker;
 
             await env.Service.InviteAsync(User01, Project01, email, "en", role);
-            await env.EmailService.Received(1).SendEmailAsync(email, Arg.Any<string>(),
-                Arg.Is<string>(body =>
-                    body.Contains($"http://localhost/projects/{Project01}?sharing=true&shareKey=1234abc")
-                    && body.Contains("The project invitation link expires in 14 days")));
+            await env.EmailService
+                .Received(1)
+                .SendEmailAsync(
+                    email,
+                    Arg.Any<string>(),
+                    Arg.Is<string>(
+                        body =>
+                            body.Contains($"http://localhost/projects/{Project01}?sharing=true&shareKey=1234abc")
+                            && body.Contains("The project invitation link expires in 14 days")
+                    )
+                );
             SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project01);
             Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).ProjectRole, Is.EqualTo(role));
         }
@@ -68,10 +75,17 @@ namespace SIL.XForge.Scripture.Services
             const string role = SFProjectRole.CommunityChecker;
 
             await env.Service.InviteAsync(User01, Project03, email, "en", role);
-            await env.EmailService.Received(1).SendEmailAsync(email, Arg.Any<string>(),
-                Arg.Is<string>(body =>
-                    body.Contains($"http://localhost/projects/{Project03}?sharing=true&shareKey=1234abc")
-                    && body.Contains("The project invitation link expires in 14 days")));
+            await env.EmailService
+                .Received(1)
+                .SendEmailAsync(
+                    email,
+                    Arg.Any<string>(),
+                    Arg.Is<string>(
+                        body =>
+                            body.Contains($"http://localhost/projects/{Project03}?sharing=true&shareKey=1234abc")
+                            && body.Contains("The project invitation link expires in 14 days")
+                    )
+                );
 
             // Code was recorded in database and email address was encoded in ShareKeys
             SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
@@ -88,29 +102,52 @@ namespace SIL.XForge.Scripture.Services
             const string endingRole = SFProjectRole.SFObserver;
 
             SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
-            Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).ExpirationTime,
-                Is.LessThan(DateTime.UtcNow.AddDays(2)), "setup");
+            Assert.That(
+                projectSecret.ShareKeys.Single(sk => sk.Email == email).ExpirationTime,
+                Is.LessThan(DateTime.UtcNow.AddDays(2)),
+                "setup"
+            );
             var invitees = await env.Service.InvitedUsersAsync(User01, Project03);
-            Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(
-                new[] { "bob@example.com", "expired@example.com", "user03@example.com", "bill@example.com" }), "setup");
+            Assert.That(
+                invitees.Select(i => i.Email),
+                Is.EquivalentTo(
+                    new[] { "bob@example.com", "expired@example.com", "user03@example.com", "bill@example.com" }
+                ),
+                "setup"
+            );
             Assert.That(invitees[0].Role == initialRole);
 
             await env.Service.InviteAsync(User01, Project03, email, "en", endingRole);
             // Invitation email was resent but with original code and updated time
-            await env.EmailService.Received(1).SendEmailAsync(Arg.Is(email), Arg.Any<string>(),
-                Arg.Is<string>(body =>
-                    body.Contains($"http://localhost/projects/{Project03}?sharing=true&shareKey=key1111")));
+            await env.EmailService
+                .Received(1)
+                .SendEmailAsync(
+                    Arg.Is(email),
+                    Arg.Any<string>(),
+                    Arg.Is<string>(
+                        body => body.Contains($"http://localhost/projects/{Project03}?sharing=true&shareKey=key1111")
+                    )
+                );
 
             projectSecret = env.ProjectSecrets.Get(Project03);
-            Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).Key, Is.EqualTo("key1111"),
-                "Code should not have been changed");
-            Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).ExpirationTime,
-                Is.GreaterThan(DateTime.UtcNow.AddDays(13)));
+            Assert.That(
+                projectSecret.ShareKeys.Single(sk => sk.Email == email).Key,
+                Is.EqualTo("key1111"),
+                "Code should not have been changed"
+            );
+            Assert.That(
+                projectSecret.ShareKeys.Single(sk => sk.Email == email).ExpirationTime,
+                Is.GreaterThan(DateTime.UtcNow.AddDays(13))
+            );
             Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).ProjectRole, Is.EqualTo(endingRole));
 
             invitees = await env.Service.InvitedUsersAsync(User01, Project03);
-            Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(
-                new[] { "bob@example.com", "expired@example.com", "user03@example.com", "bill@example.com" }));
+            Assert.That(
+                invitees.Select(i => i.Email),
+                Is.EquivalentTo(
+                    new[] { "bob@example.com", "expired@example.com", "user03@example.com", "bill@example.com" }
+                )
+            );
         }
 
         [Test]
@@ -121,19 +158,31 @@ namespace SIL.XForge.Scripture.Services
             const string role = SFProjectRole.CommunityChecker;
 
             SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
-            Assert.That(projectSecret.ShareKeys.Any(
-                sk => sk.Email == email && sk.ExpirationTime < DateTime.UtcNow), Is.True, "setup");
+            Assert.That(
+                projectSecret.ShareKeys.Any(sk => sk.Email == email && sk.ExpirationTime < DateTime.UtcNow),
+                Is.True,
+                "setup"
+            );
 
             env.SecurityService.GenerateKey().Returns("newkey");
             await env.Service.InviteAsync(User01, Project03, email, "en", role);
             // Invitation email was sent with a new code
-            await env.EmailService.Received(1).SendEmailAsync(Arg.Is(email), Arg.Any<string>(),
-                Arg.Is<string>(body =>
-                    body.Contains($"http://localhost/projects/{Project03}?sharing=true&shareKey=newkey")));
+            await env.EmailService
+                .Received(1)
+                .SendEmailAsync(
+                    Arg.Is(email),
+                    Arg.Any<string>(),
+                    Arg.Is<string>(
+                        body => body.Contains($"http://localhost/projects/{Project03}?sharing=true&shareKey=newkey")
+                    )
+                );
 
             projectSecret = env.ProjectSecrets.Get(Project03);
-            Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).Key, Is.EqualTo("newkey"),
-                "Code should not have been changed");
+            Assert.That(
+                projectSecret.ShareKeys.Single(sk => sk.Email == email).Key,
+                Is.EqualTo("newkey"),
+                "Code should not have been changed"
+            );
             Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).ProjectRole, Is.EqualTo(role));
         }
 
@@ -143,16 +192,24 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             SFProject project = env.GetProject(Project02);
             Assert.That(project.CheckingConfig.ShareEnabled, Is.True, "setup");
-            Assert.That(project.CheckingConfig.ShareLevel,
-                Is.EqualTo(CheckingShareLevel.Anyone), "setup: link sharing should be enabled");
+            Assert.That(
+                project.CheckingConfig.ShareLevel,
+                Is.EqualTo(CheckingShareLevel.Anyone),
+                "setup: link sharing should be enabled"
+            );
             const string email = "newuser@example.com";
             const string role = SFProjectRole.CommunityChecker;
             // SUT
             await env.Service.InviteAsync(User02, Project02, email, "en", role);
-            await env.EmailService.Received(1).SendEmailAsync(email, Arg.Any<string>(),
-                Arg.Is<string>(
-                    body => body.Contains($"http://localhost/projects/{Project02}?sharing=true&shareKey=1234abc"))
-            );
+            await env.EmailService
+                .Received(1)
+                .SendEmailAsync(
+                    email,
+                    Arg.Any<string>(),
+                    Arg.Is<string>(
+                        body => body.Contains($"http://localhost/projects/{Project02}?sharing=true&shareKey=1234abc")
+                    )
+                );
             SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project02);
             Assert.That(projectSecret.ShareKeys.Single(sk => sk.Key == "1234abc").ProjectRole, Is.EqualTo(role));
         }
@@ -161,8 +218,16 @@ namespace SIL.XForge.Scripture.Services
         public async Task InviteAsync_SharingDisabled_ForbiddenError()
         {
             var env = new TestEnvironment();
-            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.InviteAsync(User02, Project01,
-                "newuser@example.com", "en", SFProjectRole.CommunityChecker));
+            Assert.ThrowsAsync<ForbiddenException>(
+                () =>
+                    env.Service.InviteAsync(
+                        User02,
+                        Project01,
+                        "newuser@example.com",
+                        "en",
+                        SFProjectRole.CommunityChecker
+                    )
+            );
             await env.EmailService.DidNotReceiveWithAnyArgs().SendEmailAsync(default, default, default);
         }
 
@@ -181,8 +246,11 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.UserRoles.ContainsKey(User02), Is.True, "user should still be a project user");
 
             SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
-            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == email), Is.False,
-                "no sharekey should have been added");
+            Assert.That(
+                projectSecret.ShareKeys.Any(sk => sk.Email == email),
+                Is.False,
+                "no sharekey should have been added"
+            );
 
             // Email should not have been sent
             await env.EmailService.DidNotReceiveWithAnyArgs().SendEmailAsync(null, default, default);
@@ -202,17 +270,26 @@ namespace SIL.XForge.Scripture.Services
         public async Task GetLinkSharingKeyAsync_LinkDoesNotExist_NewShareKeyCreated()
         {
             var env = new TestEnvironment();
-            await env.Service.UpdateSettingsAsync(User01, Project03,
-                new SFProjectSettings { CheckingShareLevel = CheckingShareLevel.Anyone });
+            await env.Service.UpdateSettingsAsync(
+                User01,
+                Project03,
+                new SFProjectSettings { CheckingShareLevel = CheckingShareLevel.Anyone }
+            );
             SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
             Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == null), Is.False);
             env.SecurityService.GenerateKey().Returns("newkey");
 
-            string shareLink = await env.Service.GetLinkSharingKeyAsync(User02, Project03, SFProjectRole.CommunityChecker);
+            string shareLink = await env.Service.GetLinkSharingKeyAsync(
+                User02,
+                Project03,
+                SFProjectRole.CommunityChecker
+            );
             Assert.That(shareLink, Is.EqualTo("newkey"));
             projectSecret = env.ProjectSecrets.Get(Project03);
-            Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == null && sk.ExpirationTime == null).Key,
-                Is.EqualTo("newkey"));
+            Assert.That(
+                projectSecret.ShareKeys.Single(sk => sk.Email == null && sk.ExpirationTime == null).Key,
+                Is.EqualTo("newkey")
+            );
         }
 
         [Test]
@@ -222,8 +299,11 @@ namespace SIL.XForge.Scripture.Services
             const string role = SFProjectRole.CommunityChecker;
             SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project02);
 
-            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == null && sk.ProjectRole == role), Is.True,
-                "setup - a link sharing key should exist");
+            Assert.That(
+                projectSecret.ShareKeys.Any(sk => sk.Email == null && sk.ProjectRole == role),
+                Is.True,
+                "setup - a link sharing key should exist"
+            );
             string shareLink = await env.Service.GetLinkSharingKeyAsync(User02, Project02, role);
             Assert.That(shareLink, Is.EqualTo("linksharing02"));
         }
@@ -255,9 +335,14 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             SFProject project = env.GetProject(Project02);
             Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
-            await env.Service.UpdateSettingsAsync(User02, Project02, new SFProjectSettings { CheckingShareEnabled = false });
+            await env.Service.UpdateSettingsAsync(
+                User02,
+                Project02,
+                new SFProjectSettings { CheckingShareEnabled = false }
+            );
             Assert.ThrowsAsync<ForbiddenException>(
-                () => env.Service.CheckLinkSharingAsync(User03, Project02, "linksharing02"));
+                () => env.Service.CheckLinkSharingAsync(User03, Project02, "linksharing02")
+            );
         }
 
         [Test]
@@ -289,8 +374,11 @@ namespace SIL.XForge.Scripture.Services
             project = env.GetProject(Project02);
             projectSecret = env.ProjectSecrets.Get(Project02);
             Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
-            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "existingkeyuser03"), Is.False,
-                "Key should have been removed from project");
+            Assert.That(
+                projectSecret.ShareKeys.Any(sk => sk.Key == "existingkeyuser03"),
+                Is.False,
+                "Key should have been removed from project"
+            );
         }
 
         [Test]
@@ -302,20 +390,30 @@ namespace SIL.XForge.Scripture.Services
 
             Assert.That(project.UserRoles.ContainsKey(User04), Is.False, "setup");
             var invitees = await env.Service.InvitedUsersAsync(User01, Project03);
-            Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(
-                new[] { "bob@example.com", "expired@example.com", "user03@example.com", "bill@example.com" }), "setup");
+            Assert.That(
+                invitees.Select(i => i.Email),
+                Is.EquivalentTo(
+                    new[] { "bob@example.com", "expired@example.com", "user03@example.com", "bill@example.com" }
+                ),
+                "setup"
+            );
 
             // Use the sharekey linked to user03
             await env.Service.CheckLinkSharingAsync(User04, Project03, "key1234");
             project = env.GetProject(Project03);
             projectSecret = env.ProjectSecrets.Get(Project03);
             Assert.That(project.UserRoles.ContainsKey(User04), Is.True, "User should have been added to project");
-            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.False,
-                "Key should have been removed from project");
+            Assert.That(
+                projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"),
+                Is.False,
+                "Key should have been removed from project"
+            );
 
             invitees = await env.Service.InvitedUsersAsync(User01, Project03);
-            Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(
-                new[] { "bob@example.com", "expired@example.com", "bill@example.com" }));
+            Assert.That(
+                invitees.Select(i => i.Email),
+                Is.EquivalentTo(new[] { "bob@example.com", "expired@example.com", "bill@example.com" })
+            );
         }
 
         [Test]
@@ -328,14 +426,18 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.UserRoles.ContainsKey(LinkExpiredUser), Is.False, "setup");
             Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == "expired@example.com"), Is.True, "setup");
 
-            Assert.ThrowsAsync<ForbiddenException>(() =>
-                env.Service.CheckLinkSharingAsync(LinkExpiredUser, Project03, "keyexp"),
+            Assert.ThrowsAsync<ForbiddenException>(
+                () => env.Service.CheckLinkSharingAsync(LinkExpiredUser, Project03, "keyexp"),
                 "The user should be forbidden to join the project: Email was in ShareKeys, but code was expired."
             );
 
             var invitees = await env.Service.InvitedUsersAsync(User01, Project03);
-            Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(new[] {
-                "bob@example.com", "expired@example.com", "user03@example.com", "bill@example.com" }));
+            Assert.That(
+                invitees.Select(i => i.Email),
+                Is.EquivalentTo(
+                    new[] { "bob@example.com", "expired@example.com", "user03@example.com", "bill@example.com" }
+                )
+            );
         }
 
         [Test]
@@ -348,8 +450,10 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
             Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == "user03@example.com"), Is.True, "setup");
 
-            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CheckLinkSharingAsync(User03, Project03, "badcode"),
-                "The user should be forbidden to join the project: Email address was in ShareKeys list, but wrong code was given.");
+            Assert.ThrowsAsync<ForbiddenException>(
+                () => env.Service.CheckLinkSharingAsync(User03, Project03, "badcode"),
+                "The user should be forbidden to join the project: Email address was in ShareKeys list, but wrong code was given."
+            );
         }
 
         [Test]
@@ -368,8 +472,11 @@ namespace SIL.XForge.Scripture.Services
             project = env.GetProject(Project03);
             projectSecret = env.ProjectSecrets.Get(Project03);
             Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
-            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.False,
-                "Key should have been removed from project");
+            Assert.That(
+                projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"),
+                Is.False,
+                "Key should have been removed from project"
+            );
         }
 
         [Test]
@@ -383,7 +490,11 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.True, "setup");
             Assert.That(projectSecret.ShareKeys.Count, Is.EqualTo(4), "setup");
 
-            await env.Service.UpdateSettingsAsync(User01, Project03, new SFProjectSettings { CheckingShareEnabled = false });
+            await env.Service.UpdateSettingsAsync(
+                User01,
+                Project03,
+                new SFProjectSettings { CheckingShareEnabled = false }
+            );
             project = env.GetProject(Project03);
             Assert.That(project.CheckingConfig.ShareEnabled, Is.False, "setup");
             await env.Service.CheckLinkSharingAsync(User03, Project03, "key1234");
@@ -391,8 +502,11 @@ namespace SIL.XForge.Scripture.Services
             project = env.GetProject(Project03);
             projectSecret = env.ProjectSecrets.Get(Project03);
             Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
-            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.False,
-                "Key should have been removed from project");
+            Assert.That(
+                projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"),
+                Is.False,
+                "Key should have been removed from project"
+            );
         }
 
         [Test]
@@ -411,18 +525,26 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(user.ParatextId, Is.Not.Null, "setup. PT user should have a PT User ID.");
 
             string userRoleOnPTProject = SFProjectRole.Translator;
-            Assert.That(userRoleOnPTProject, Is.Not.EqualTo(SFProjectRole.CommunityChecker),
-                "setup. role should be different than community checker for purposes of part of what this test is testing.");
+            Assert.That(
+                userRoleOnPTProject,
+                Is.Not.EqualTo(SFProjectRole.CommunityChecker),
+                "setup. role should be different than community checker for purposes of part of what this test is testing."
+            );
             string shareKeyCode = "key12345";
-            ShareKey shareKeyForUserInvitation = env.ProjectSecrets.Get(project.Id).ShareKeys.First(
-                (ShareKey shareKey) => shareKey.Key == shareKeyCode);
-            Assert.That(shareKeyForUserInvitation.ProjectRole, Is.EqualTo(SFProjectRole.CommunityChecker),
-                "setup. the user should be being invited as a community checker.");
+            ShareKey shareKeyForUserInvitation = env.ProjectSecrets
+                .Get(project.Id)
+                .ShareKeys.First((ShareKey shareKey) => shareKey.Key == shareKeyCode);
+            Assert.That(
+                shareKeyForUserInvitation.ProjectRole,
+                Is.EqualTo(SFProjectRole.CommunityChecker),
+                "setup. the user should be being invited as a community checker."
+            );
             env.ParatextService
                 .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(Attempt.Success(userRoleOnPTProject)));
             string userDBLPermissionForResource = TextInfoPermission.Read;
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
+            env.ParatextService
+                .GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
                 .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
             Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
@@ -453,27 +575,43 @@ namespace SIL.XForge.Scripture.Services
             };
             const int bookValueToIndicateWholeResource = 0;
             const int chapterValueToIndicateWholeBook = 0;
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
+            env.ParatextService
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    Arg.Any<int>(),
+                    chapterValueToIndicateWholeBook
+                )
                 .Returns(Task.FromResult(ptBookPermissions));
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
+            env.ParatextService
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    Arg.Any<int>(),
+                    Arg.Is<int>((int arg) => arg > 0)
+                )
                 .Returns(Task.FromResult(ptChapterPermissions));
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                bookValueToIndicateWholeResource,
-                chapterValueToIndicateWholeBook)
+            env.ParatextService
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    bookValueToIndicateWholeResource,
+                    chapterValueToIndicateWholeBook
+                )
                 .Returns(Task.FromResult(ptSourcePermissions));
 
             // SUT
             await env.Service.CheckLinkSharingAsync(User03, Project05, shareKeyCode);
 
             project = env.GetProject(Project05);
-            Assert.That(project.UserRoles.TryGetValue(User03, out string userRole), Is.True,
-            "user should be added to project");
+            Assert.That(
+                project.UserRoles.TryGetValue(User03, out string userRole),
+                Is.True,
+                "user should be added to project"
+            );
             // This user was invited as a community checker (according to the share key). But their project role and
             // permissions will reflect what is set on the PT project. The user will have a translator role rather than
             // a community checker role.
@@ -482,17 +620,28 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(user.Sites[SiteId].Projects, Contains.Item(Project05));
 
             Assert.That(project.Texts.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Read));
-            Assert.That(project.Texts.First().Chapters.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Write));
+            Assert.That(
+                project.Texts.First().Chapters.First().Permissions[User03],
+                Is.EqualTo(TextInfoPermission.Write)
+            );
 
             resource = env.GetProject(Resource01);
-            Assert.That(resource.UserRoles.TryGetValue(User03, out string resourceUserRole), Is.True,
-                "user should have been added to resource");
-            Assert.That(resourceUserRole, Is.EqualTo(SFProjectRole.PTObserver),
-                "user role not set correctly on resource");
+            Assert.That(
+                resource.UserRoles.TryGetValue(User03, out string resourceUserRole),
+                Is.True,
+                "user should have been added to resource"
+            );
+            Assert.That(
+                resourceUserRole,
+                Is.EqualTo(SFProjectRole.PTObserver),
+                "user role not set correctly on resource"
+            );
             Assert.That(user.Sites[SiteId].Projects, Contains.Item(Resource01), "user not added to resource correctly");
             Assert.That(resource.Texts.First().Permissions[User03], Is.EqualTo(userDBLPermissionForResource));
-            Assert.That(resource.Texts.First().Chapters.First().Permissions[User03],
-                Is.EqualTo(userDBLPermissionForResource));
+            Assert.That(
+                resource.Texts.First().Chapters.First().Permissions[User03],
+                Is.EqualTo(userDBLPermissionForResource)
+            );
         }
 
         [Test]
@@ -501,8 +650,11 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             SFProject project = env.GetProject(Project05);
 
-            Assert.That(env.UserSecrets.Contains(User04), Is.False,
-                "setup. Non-PT user is not expected to have user secrets.");
+            Assert.That(
+                env.UserSecrets.Contains(User04),
+                Is.False,
+                "setup. Non-PT user is not expected to have user secrets."
+            );
             User user = env.GetUser(User04);
             Assert.That(user.ParatextId, Is.Null, "setup. Non-PT user should not have a PT User ID.");
 
@@ -514,28 +666,39 @@ namespace SIL.XForge.Scripture.Services
             await env.Service.CheckLinkSharingAsync(User04, Project05, "key12345");
 
             project = env.GetProject(Project05);
-            Assert.That(project.UserRoles.TryGetValue(User04, out string userRole), Is.True,
-                "user was added to project");
+            Assert.That(
+                project.UserRoles.TryGetValue(User04, out string userRole),
+                Is.True,
+                "user was added to project"
+            );
             Assert.That(userRole, Is.EqualTo(SFProjectRole.CommunityChecker));
             user = env.GetUser(User04);
             Assert.That(user.Sites[SiteId].Projects, Contains.Item(Project05));
 
-            Assert.That(project.Texts.First().Permissions.ContainsKey(User04), Is.False,
-                "no permissions should have been specified for user");
-            Assert.That(project.Texts.First().Chapters.First().Permissions.ContainsKey(User04), Is.False,
-                "no permissions should have been specified for user");
+            Assert.That(
+                project.Texts.First().Permissions.ContainsKey(User04),
+                Is.False,
+                "no permissions should have been specified for user"
+            );
+            Assert.That(
+                project.Texts.First().Chapters.First().Permissions.ContainsKey(User04),
+                Is.False,
+                "no permissions should have been specified for user"
+            );
 
             // The get permission methods shouldn't have even been called.
-            await env.ParatextService.DidNotReceiveWithAnyArgs().GetPermissionsAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Any<SFProject>(),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                Arg.Any<int>(),
-                Arg.Any<int>());
-            await env.ParatextService.DidNotReceiveWithAnyArgs().GetResourcePermissionAsync(
-                Arg.Any<string>(),
-                Arg.Any<string>(),
-                Arg.Any<CancellationToken>());
+            await env.ParatextService
+                .DidNotReceiveWithAnyArgs()
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Any<SFProject>(),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    Arg.Any<int>(),
+                    Arg.Any<int>()
+                );
+            await env.ParatextService
+                .DidNotReceiveWithAnyArgs()
+                .GetResourcePermissionAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
         }
 
         [Test]
@@ -549,20 +712,35 @@ namespace SIL.XForge.Scripture.Services
             SFProject project = env.GetProject(Project05);
             SFProject resource = env.GetProject(Resource01);
 
-            Assert.That(env.UserSecrets.Contains(User03), Is.True,
-                "setup. This is a PT user and is expected to have user secrets.");
+            Assert.That(
+                env.UserSecrets.Contains(User03),
+                Is.True,
+                "setup. This is a PT user and is expected to have user secrets."
+            );
             User user = env.GetUser(User03);
             Assert.That(user.ParatextId, Is.Not.Null, "setup. PT user should have a PT User ID.");
 
-            Assert.That(project.UserRoles.ContainsKey(User03), Is.False,
-                "setup. User should not already be on the project.");
-            Assert.That(project.Texts.First().Permissions.ContainsKey(User03), Is.False,
-                "setup. User should not already have permissions on the project.");
+            Assert.That(
+                project.UserRoles.ContainsKey(User03),
+                Is.False,
+                "setup. User should not already be on the project."
+            );
+            Assert.That(
+                project.Texts.First().Permissions.ContainsKey(User03),
+                Is.False,
+                "setup. User should not already have permissions on the project."
+            );
             Assert.That(project.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
-            Assert.That(resource.UserRoles.ContainsKey(User03), Is.False,
-                "setup. User should not already be on the project.");
-            Assert.That(resource.Texts.First().Permissions.ContainsKey(User03), Is.False,
-                "setup. User should not have permissions.");
+            Assert.That(
+                resource.UserRoles.ContainsKey(User03),
+                Is.False,
+                "setup. User should not already be on the project."
+            );
+            Assert.That(
+                resource.Texts.First().Permissions.ContainsKey(User03),
+                Is.False,
+                "setup. User should not have permissions."
+            );
             Assert.That(resource.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
 
             // If the user is not a member of the paratext project, then
@@ -570,21 +748,27 @@ namespace SIL.XForge.Scripture.Services
             // and in ParatextService.CallApiAsync() there originates a System.Net.Http.HttpRequestException or perhaps
             // EdjCase.JsonRpc.Common.RpcException. Our test should not end up doing down a path that causes this
             // exception.
-            env.ParatextService.GetParatextUsernameMappingAsync(
-                Arg.Is<UserSecret>((UserSecret userSecret) => userSecret.Id == User03),
-                Arg.Is((SFProject project) => project.ParatextId == project05PTId),
-                Arg.Any<CancellationToken>())
-                .Returns(Task.FromException<IReadOnlyDictionary<string, string>>(new System.Net.Http.HttpRequestException()));
+            env.ParatextService
+                .GetParatextUsernameMappingAsync(
+                    Arg.Is<UserSecret>((UserSecret userSecret) => userSecret.Id == User03),
+                    Arg.Is((SFProject project) => project.ParatextId == project05PTId),
+                    Arg.Any<CancellationToken>()
+                )
+                .Returns(
+                    Task.FromException<IReadOnlyDictionary<string, string>>(new System.Net.Http.HttpRequestException())
+                );
 
             string userRoleOnPTProject = (string)null;
             env.ParatextService
                 .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(Attempt.Failure(userRoleOnPTProject)));
             string userDBLPermissionForResource = TextInfoPermission.None;
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
+            env.ParatextService
+                .GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
                 .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
-            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>())
+            env.ParatextService
+                .GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>())
                 .Returns(x => throw new Exception("Probably can not do this."));
 
             // PT could answer with these permissions.
@@ -605,46 +789,80 @@ namespace SIL.XForge.Scripture.Services
             };
             const int bookValueToIndicateWholeResource = 0;
             const int chapterValueToIndicateWholeBook = 0;
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
+            env.ParatextService
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    Arg.Any<int>(),
+                    chapterValueToIndicateWholeBook
+                )
                 .Returns(Task.FromResult(ptBookPermissions));
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
+            env.ParatextService
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    Arg.Any<int>(),
+                    Arg.Is<int>((int arg) => arg > 0)
+                )
                 .Returns(Task.FromResult(ptChapterPermissions));
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                bookValueToIndicateWholeResource,
-                chapterValueToIndicateWholeBook)
+            env.ParatextService
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    bookValueToIndicateWholeResource,
+                    chapterValueToIndicateWholeBook
+                )
                 .Returns(Task.FromResult(ptSourcePermissions));
 
             // SUT
             await env.Service.CheckLinkSharingAsync(User03, Project05, "key12345");
 
             project = env.GetProject(Project05);
-            Assert.That(project.UserRoles.TryGetValue(User03, out string userRole), Is.True,
-                "user should have been added to project");
+            Assert.That(
+                project.UserRoles.TryGetValue(User03, out string userRole),
+                Is.True,
+                "user should have been added to project"
+            );
             Assert.That(userRole, Is.EqualTo(SFProjectRole.CommunityChecker));
             user = env.GetUser(User03);
-            Assert.That(user.Sites[SiteId].Projects, Contains.Item(Project05),
-                "user not added to project correctly");
+            Assert.That(user.Sites[SiteId].Projects, Contains.Item(Project05), "user not added to project correctly");
 
-            Assert.That(project.Texts.First().Permissions.ContainsKey(User03), Is.False,
-                "no project permissions should have been specified for user");
-            Assert.That(project.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False,
-                "no project permissions should have been specified for user");
+            Assert.That(
+                project.Texts.First().Permissions.ContainsKey(User03),
+                Is.False,
+                "no project permissions should have been specified for user"
+            );
+            Assert.That(
+                project.Texts.First().Chapters.First().Permissions.ContainsKey(User03),
+                Is.False,
+                "no project permissions should have been specified for user"
+            );
 
             // User03 is not added to the target or source, nor do they have any permissions listed in the source.
             resource = env.GetProject(Resource01);
-            Assert.That(resource.UserRoles.ContainsKey(User03), Is.False,
-                "user should not have been added to resource project");
-            Assert.That(resource.Texts.First().Permissions.ContainsKey(User03), Is.False,
-                "user should not have permissions to resource");
-            Assert.That(resource.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False,
-                "user should not have permissions to resource");
-            Assert.That(user.Sites[SiteId].Projects, Does.Not.Contain(Resource01), "user should not have been added to");
+            Assert.That(
+                resource.UserRoles.ContainsKey(User03),
+                Is.False,
+                "user should not have been added to resource project"
+            );
+            Assert.That(
+                resource.Texts.First().Permissions.ContainsKey(User03),
+                Is.False,
+                "user should not have permissions to resource"
+            );
+            Assert.That(
+                resource.Texts.First().Chapters.First().Permissions.ContainsKey(User03),
+                Is.False,
+                "user should not have permissions to resource"
+            );
+            Assert.That(
+                user.Sites[SiteId].Projects,
+                Does.Not.Contain(Resource01),
+                "user should not have been added to"
+            );
 
             // With the current implementation, both ParatextService.GetPermissionsAsync(for the source resource) and
             // ParatextService.GetPermissionsAsync(for the target project) should be called never. In a future change to
@@ -652,12 +870,24 @@ namespace SIL.XForge.Scripture.Services
             // getting called is a helpful indication of expected operation.
             // The mocks above regarding env.ParatextService.GetPermissionsAsync(for the target project) are left in
             // place in case they begin to be used.
-            await env.ParatextService.DidNotReceive().GetPermissionsAsync(
-                Arg.Any<UserSecret>(), Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Project05),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>());
-            await env.ParatextService.DidNotReceive().GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Resource01),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>());
+            await env.ParatextService
+                .DidNotReceive()
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Project05),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    Arg.Any<int>(),
+                    Arg.Any<int>()
+                );
+            await env.ParatextService
+                .DidNotReceive()
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Resource01),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    Arg.Any<int>(),
+                    Arg.Any<int>()
+                );
 
             // We may not be able to query a book list for the target project without the user having a PT project role,
             // or of the DBL resource, without the user having read permission.
@@ -676,35 +906,54 @@ namespace SIL.XForge.Scripture.Services
             SFProject project = env.GetProject(Project05);
             SFProject resource = env.GetProject(Resource01);
 
-            Assert.That(env.UserSecrets.Contains(User03), Is.True,
-                "setup. This is a PT user and is expected to have user secrets.");
+            Assert.That(
+                env.UserSecrets.Contains(User03),
+                Is.True,
+                "setup. This is a PT user and is expected to have user secrets."
+            );
             User user = env.GetUser(User03);
-            Assert.That(user.ParatextId, Is.Not.Null,
-                "setup. PT user should have a PT User ID.");
+            Assert.That(user.ParatextId, Is.Not.Null, "setup. PT user should have a PT User ID.");
 
-            Assert.That(project.UserRoles.ContainsKey(User03), Is.False,
-                "setup. User should not already be on the project.");
-            Assert.That(project.Texts.First().Permissions.ContainsKey(User03), Is.False,
-                "setup. User should not already have permissions on the project.");
+            Assert.That(
+                project.UserRoles.ContainsKey(User03),
+                Is.False,
+                "setup. User should not already be on the project."
+            );
+            Assert.That(
+                project.Texts.First().Permissions.ContainsKey(User03),
+                Is.False,
+                "setup. User should not already have permissions on the project."
+            );
             Assert.That(project.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
-            Assert.That(resource.UserRoles.ContainsKey(User03), Is.False,
-                "setup. User should not already be on the project, for purposes of testing that they are later.");
-            Assert.That(resource.Texts.First().Permissions.ContainsKey(User03), Is.False,
-                "setup. User should not already have permissions.");
+            Assert.That(
+                resource.UserRoles.ContainsKey(User03),
+                Is.False,
+                "setup. User should not already be on the project, for purposes of testing that they are later."
+            );
+            Assert.That(
+                resource.Texts.First().Permissions.ContainsKey(User03),
+                Is.False,
+                "setup. User should not already have permissions."
+            );
             Assert.That(resource.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
 
-            env.ParatextService.GetParatextUsernameMappingAsync(
-                Arg.Is<UserSecret>((UserSecret userSecret) => userSecret.Id == User03),
-                Arg.Is((SFProject project) => project.ParatextId == project05PTId),
-                Arg.Any<CancellationToken>())
-                .Returns(Task.FromException<IReadOnlyDictionary<string, string>>(new System.Net.Http.HttpRequestException()));
+            env.ParatextService
+                .GetParatextUsernameMappingAsync(
+                    Arg.Is<UserSecret>((UserSecret userSecret) => userSecret.Id == User03),
+                    Arg.Is((SFProject project) => project.ParatextId == project05PTId),
+                    Arg.Any<CancellationToken>()
+                )
+                .Returns(
+                    Task.FromException<IReadOnlyDictionary<string, string>>(new System.Net.Http.HttpRequestException())
+                );
 
             string userRoleOnPTProject = (string)null;
             env.ParatextService
                 .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(Attempt.Failure(userRoleOnPTProject)));
             string userDBLPermissionForResource = TextInfoPermission.Read;
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
+            env.ParatextService
+                .GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
                 .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
             var bookList = new List<int>() { 40, 41 };
@@ -729,52 +978,85 @@ namespace SIL.XForge.Scripture.Services
             };
             const int bookValueToIndicateWholeResource = 0;
             const int chapterValueToIndicateWholeBook = 0;
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
+            env.ParatextService
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    Arg.Any<int>(),
+                    chapterValueToIndicateWholeBook
+                )
                 .Returns(Task.FromResult(ptBookPermissions));
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
+            env.ParatextService
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    Arg.Any<int>(),
+                    Arg.Is<int>((int arg) => arg > 0)
+                )
                 .Returns(Task.FromResult(ptChapterPermissions));
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                bookValueToIndicateWholeResource,
-                chapterValueToIndicateWholeBook)
+            env.ParatextService
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    bookValueToIndicateWholeResource,
+                    chapterValueToIndicateWholeBook
+                )
                 .Returns(Task.FromResult(ptSourcePermissions));
 
             // SUT
             await env.Service.CheckLinkSharingAsync(User03, Project05, "key12345");
 
             project = env.GetProject(Project05);
-            Assert.That(project.UserRoles.TryGetValue(User03, out string userRole), Is.True,
-                "user should have been added to project");
+            Assert.That(
+                project.UserRoles.TryGetValue(User03, out string userRole),
+                Is.True,
+                "user should have been added to project"
+            );
             Assert.That(userRole, Is.EqualTo(SFProjectRole.CommunityChecker));
             user = env.GetUser(User03);
             Assert.That(user.Sites[SiteId].Projects, Contains.Item(Project05), "user not added to project correctly");
 
-            Assert.That(project.Texts.First().Permissions.ContainsKey(User03), Is.False,
-                "no project permissions should have been specified for user");
-            Assert.That(project.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False,
-                "no project permissions should have been specified for user");
+            Assert.That(
+                project.Texts.First().Permissions.ContainsKey(User03),
+                Is.False,
+                "no project permissions should have been specified for user"
+            );
+            Assert.That(
+                project.Texts.First().Chapters.First().Permissions.ContainsKey(User03),
+                Is.False,
+                "no project permissions should have been specified for user"
+            );
 
             // User03 is not on project project05PTId, but they have access to the source resource. So
             // UpdatePermissionsAsync() should be inquiring about this and setting permissions as appropriate.
-            await env.ParatextService.Received()
+            await env.ParatextService
+                .Received()
                 .GetResourcePermissionAsync(Resource01PTId, User03, Arg.Any<CancellationToken>());
             resource = env.GetProject(Resource01);
-            Assert.That(resource.Texts.First().Permissions[User03], Is.EqualTo(userDBLPermissionForResource),
-                "resource permissions should have been set for joining project user");
-            Assert.That(resource.Texts.First().Chapters.First().Permissions[User03],
+            Assert.That(
+                resource.Texts.First().Permissions[User03],
                 Is.EqualTo(userDBLPermissionForResource),
-                "resource permissions should have been set for joining project user");
-            Assert.That(resource.UserRoles.TryGetValue(User03, out string resourceUserRole), Is.True,
-                "user should have been added to resource");
-            Assert.That(resourceUserRole, Is.EqualTo(SFProjectRole.PTObserver),
-                "user role not set correctly on resource");
-            Assert.That(user.Sites[SiteId].Projects, Contains.Item(Resource01),
-                "user not added to resource correctly");
+                "resource permissions should have been set for joining project user"
+            );
+            Assert.That(
+                resource.Texts.First().Chapters.First().Permissions[User03],
+                Is.EqualTo(userDBLPermissionForResource),
+                "resource permissions should have been set for joining project user"
+            );
+            Assert.That(
+                resource.UserRoles.TryGetValue(User03, out string resourceUserRole),
+                Is.True,
+                "user should have been added to resource"
+            );
+            Assert.That(
+                resourceUserRole,
+                Is.EqualTo(SFProjectRole.PTObserver),
+                "user role not set correctly on resource"
+            );
+            Assert.That(user.Sites[SiteId].Projects, Contains.Item(Resource01), "user not added to resource correctly");
 
             // With the current implementation, ParatextService.GetPermissionsAsync(for the source resource) should be
             // called once, but ParatextService.GetPermissionsAsync(for the target project) should be called never. In
@@ -782,12 +1064,24 @@ namespace SIL.XForge.Scripture.Services
             // don't get applied. But for now, not getting called is a helpful indication of expected operation.
             // The mocks above regarding env.ParatextService.GetPermissionsAsync(for the target project) are left in
             // place in case they begin to be used.
-            await env.ParatextService.DidNotReceive().GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Project05),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>());
-            await env.ParatextService.Received(1).GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Resource01),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Any<int>());
+            await env.ParatextService
+                .DidNotReceive()
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Project05),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    Arg.Any<int>(),
+                    Arg.Any<int>()
+                );
+            await env.ParatextService
+                .Received(1)
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Resource01),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    Arg.Any<int>(),
+                    Arg.Any<int>()
+                );
 
             // We may not be able to query a book list for the target project without the user having a PT project role.
             env.ParatextService.DidNotReceive().GetBookList(Arg.Any<UserSecret>(), project05PTId);
@@ -832,9 +1126,15 @@ namespace SIL.XForge.Scripture.Services
         public async Task IsAlreadyInvitedAsync_NotInvitedButOnProject_False()
         {
             var env = new TestEnvironment();
-            Assert.That(env.GetProject(Project03).UserRoles.GetValueOrDefault(User01, null), Is.EqualTo(SFProjectRole.Administrator));
+            Assert.That(
+                env.GetProject(Project03).UserRoles.GetValueOrDefault(User01, null),
+                Is.EqualTo(SFProjectRole.Administrator)
+            );
             Assert.That(await env.Service.IsAlreadyInvitedAsync(User01, Project03, "user01@example.com"), Is.False);
-            Assert.That(env.GetProject(Project02).UserRoles.GetValueOrDefault(User04, null), Is.EqualTo(SFProjectRole.CommunityChecker));
+            Assert.That(
+                env.GetProject(Project02).UserRoles.GetValueOrDefault(User04, null),
+                Is.EqualTo(SFProjectRole.CommunityChecker)
+            );
             Assert.That(await env.Service.IsAlreadyInvitedAsync(User04, Project02, "user01@example.com"), Is.False);
         }
 
@@ -853,9 +1153,14 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             Assert.That(env.GetProject(Project06).CheckingConfig.CheckingEnabled, Is.False);
             Assert.That(env.GetProject(Project06).CheckingConfig.ShareEnabled, Is.True);
-            Assert.That(env.GetProject(Project06).UserRoles.GetValueOrDefault(User01, null), Is.EqualTo(SFProjectRole.CommunityChecker));
+            Assert.That(
+                env.GetProject(Project06).UserRoles.GetValueOrDefault(User01, null),
+                Is.EqualTo(SFProjectRole.CommunityChecker)
+            );
 
-            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.IsAlreadyInvitedAsync(User01, Project06, "user@example.com"));
+            Assert.ThrowsAsync<ForbiddenException>(
+                () => env.Service.IsAlreadyInvitedAsync(User01, Project06, "user@example.com")
+            );
         }
 
         [Test]
@@ -875,7 +1180,9 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.GetProject(Project02).CheckingConfig.ShareEnabled, Is.True);
             Assert.That(env.GetProject(Project02).UserRoles.GetValueOrDefault(User01, null), Is.Null);
 
-            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.IsAlreadyInvitedAsync(User01, Project02, "user@example.com"));
+            Assert.ThrowsAsync<ForbiddenException>(
+                () => env.Service.IsAlreadyInvitedAsync(User01, Project02, "user@example.com")
+            );
         }
 
         [Test]
@@ -894,7 +1201,12 @@ namespace SIL.XForge.Scripture.Services
             invitees = await env.Service.InvitedUsersAsync(User01, Project03);
             Assert.That(invitees.Count, Is.EqualTo(4));
             string[] expectedEmailList =
-                { "bob@example.com", "expired@example.com", "user03@example.com", "bill@example.com" };
+            {
+                "bob@example.com",
+                "expired@example.com",
+                "user03@example.com",
+                "bill@example.com"
+            };
             Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(expectedEmailList));
         }
 
@@ -907,8 +1219,10 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.GetProject(Project03).UserRoles.ContainsKey(User04), Is.False, "test setup");
             Assert.That(env.GetUser(User04).Role, Is.EqualTo(SystemRole.SystemAdmin), "test setup");
 
-            Assert.ThrowsAsync<ForbiddenException>(() => (env.Service.InvitedUsersAsync(User04, Project03)),
-                "should have been forbidden");
+            Assert.ThrowsAsync<ForbiddenException>(
+                () => (env.Service.InvitedUsersAsync(User04, Project03)),
+                "should have been forbidden"
+            );
         }
 
         [Test]
@@ -916,11 +1230,16 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             // User02 is not an admin on Project01
-            Assert.That(env.GetProject(Project01).UserRoles[User02],
-                Is.Not.EqualTo(SFProjectRole.Administrator), "test setup");
+            Assert.That(
+                env.GetProject(Project01).UserRoles[User02],
+                Is.Not.EqualTo(SFProjectRole.Administrator),
+                "test setup"
+            );
             Assert.That(env.GetUser(User02).Role, Is.Not.EqualTo(SystemRole.SystemAdmin), "test setup");
-            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.InvitedUsersAsync(User02, Project01),
-                "should have been forbidden");
+            Assert.ThrowsAsync<ForbiddenException>(
+                () => env.Service.InvitedUsersAsync(User02, Project01),
+                "should have been forbidden"
+            );
         }
 
         [Test]
@@ -939,13 +1258,13 @@ namespace SIL.XForge.Scripture.Services
             Assert.ThrowsAsync<ForbiddenException>(() => env.Service.InvitedUsersAsync("bad-user-id", Project01));
         }
 
-
         [Test]
         public void UninviteUser_BadProject_Error()
         {
             var env = new TestEnvironment();
-            Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.UninviteUserAsync(User02, "nonexistent-project",
-                "some@email.com"));
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.UninviteUserAsync(User02, "nonexistent-project", "some@email.com")
+            );
         }
 
         [Test]
@@ -953,10 +1272,15 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             // User02 is not an admin on Project01
-            Assert.That(env.GetProject(Project01).UserRoles[User02], Is.Not.EqualTo(SFProjectRole.Administrator),
-                "test setup");
-            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.UninviteUserAsync(User02, Project01,
-                "some@email.com"), "should have been forbidden");
+            Assert.That(
+                env.GetProject(Project01).UserRoles[User02],
+                Is.Not.EqualTo(SFProjectRole.Administrator),
+                "test setup"
+            );
+            Assert.ThrowsAsync<ForbiddenException>(
+                () => env.Service.UninviteUserAsync(User02, Project01, "some@email.com"),
+                "should have been forbidden"
+            );
         }
 
         [Test]
@@ -964,12 +1288,18 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             var initialInvitationCount = 4;
-            Assert.That((await env.ProjectSecrets.GetAsync(Project03)).ShareKeys.Count,
-                Is.EqualTo(initialInvitationCount), "test setup");
+            Assert.That(
+                (await env.ProjectSecrets.GetAsync(Project03)).ShareKeys.Count,
+                Is.EqualTo(initialInvitationCount),
+                "test setup"
+            );
 
             await env.Service.UninviteUserAsync(User01, Project03, "unknown@email.com");
-            Assert.That((await env.ProjectSecrets.GetAsync(Project03)).ShareKeys.Count,
-                Is.EqualTo(initialInvitationCount), "should not have changed");
+            Assert.That(
+                (await env.ProjectSecrets.GetAsync(Project03)).ShareKeys.Count,
+                Is.EqualTo(initialInvitationCount),
+                "should not have changed"
+            );
         }
 
         [Test]
@@ -977,18 +1307,33 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             var initialInvitationCount = 4;
-            Assert.That((await env.ProjectSecrets.GetAsync(Project03)).ShareKeys.Count,
-                Is.EqualTo(initialInvitationCount), "test setup");
-            Assert.That((await env.ProjectSecrets.GetAsync(Project03)).ShareKeys
-                .Any(sk => sk.Email == "bob@example.com"), Is.True, "test setup");
-            Assert.That((await env.ProjectSecrets.GetAsync(Project03)).ShareKeys.Count,
-                Is.EqualTo(initialInvitationCount), "test setup");
+            Assert.That(
+                (await env.ProjectSecrets.GetAsync(Project03)).ShareKeys.Count,
+                Is.EqualTo(initialInvitationCount),
+                "test setup"
+            );
+            Assert.That(
+                (await env.ProjectSecrets.GetAsync(Project03)).ShareKeys.Any(sk => sk.Email == "bob@example.com"),
+                Is.True,
+                "test setup"
+            );
+            Assert.That(
+                (await env.ProjectSecrets.GetAsync(Project03)).ShareKeys.Count,
+                Is.EqualTo(initialInvitationCount),
+                "test setup"
+            );
 
             await env.Service.UninviteUserAsync(User01, Project03, "bob@example.com");
-            Assert.That((await env.ProjectSecrets.GetAsync(Project03)).ShareKeys.Count,
-                Is.EqualTo(initialInvitationCount - 1), "unexpected number of outstanding invitations");
-            Assert.That((await env.ProjectSecrets.GetAsync(Project03)).ShareKeys
-                .Any(sk => sk.Email == "bob@example.com"), Is.False, "should not still have uninvited email address");
+            Assert.That(
+                (await env.ProjectSecrets.GetAsync(Project03)).ShareKeys.Count,
+                Is.EqualTo(initialInvitationCount - 1),
+                "unexpected number of outstanding invitations"
+            );
+            Assert.That(
+                (await env.ProjectSecrets.GetAsync(Project03)).ShareKeys.Any(sk => sk.Email == "bob@example.com"),
+                Is.False,
+                "should not still have uninvited email address"
+            );
         }
 
         [Test]
@@ -999,8 +1344,10 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.GetProject(Project03).UserRoles.ContainsKey(User04), Is.False, "test setup");
             Assert.That(env.GetUser(User04).Role, Is.EqualTo(SystemRole.SystemAdmin), "test setup");
 
-            Assert.ThrowsAsync<ForbiddenException>(() =>
-                env.Service.UninviteUserAsync(User04, Project03, "bob@example.com"), "should have been forbidden");
+            Assert.ThrowsAsync<ForbiddenException>(
+                () => env.Service.UninviteUserAsync(User04, Project03, "bob@example.com"),
+                "should have been forbidden"
+            );
         }
 
         [Test]
@@ -1012,16 +1359,19 @@ namespace SIL.XForge.Scripture.Services
 
             Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
             Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.True, "setup");
-            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
-                Arg.Any<CancellationToken>())
+            env.ParatextService
+                .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Translator)));
 
             await env.Service.AddUserAsync(User03, Project03, null);
             project = env.GetProject(Project03);
             projectSecret = env.ProjectSecrets.Get(Project03);
             Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
-            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.False,
-                "Key should have been removed from project");
+            Assert.That(
+                projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"),
+                Is.False,
+                "Key should have been removed from project"
+            );
         }
 
         [Test]
@@ -1048,15 +1398,27 @@ namespace SIL.XForge.Scripture.Services
             User user = env.GetUser(User03);
             Assert.That(user.ParatextId, Is.Not.Null, "setup. PT user should have a PT User ID.");
 
-            Assert.That(project.UserRoles.ContainsKey(User03), Is.False,
-                "setup. User should not already be on the project.");
-            Assert.That(project.Texts.First().Permissions.ContainsKey(User03), Is.False,
-                "setup. User should not already have permissions on the project.");
+            Assert.That(
+                project.UserRoles.ContainsKey(User03),
+                Is.False,
+                "setup. User should not already be on the project."
+            );
+            Assert.That(
+                project.Texts.First().Permissions.ContainsKey(User03),
+                Is.False,
+                "setup. User should not already have permissions on the project."
+            );
             Assert.That(project.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
-            Assert.That(resource.UserRoles.ContainsKey(User03), Is.False,
-                "setup. User should not already be on the project, for purposes of testing that they are later.");
-            Assert.That(resource.Texts.First().Permissions.ContainsKey(User03), Is.False,
-                "setup. User should not already have permissions.");
+            Assert.That(
+                resource.UserRoles.ContainsKey(User03),
+                Is.False,
+                "setup. User should not already be on the project, for purposes of testing that they are later."
+            );
+            Assert.That(
+                resource.Texts.First().Permissions.ContainsKey(User03),
+                Is.False,
+                "setup. User should not already have permissions."
+            );
             Assert.That(resource.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
 
             string userRoleOnPTProject = SFProjectRole.Translator;
@@ -1064,7 +1426,8 @@ namespace SIL.XForge.Scripture.Services
                 .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(Attempt.Success(userRoleOnPTProject)));
             string userDBLPermissionForResource = TextInfoPermission.Read;
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
+            env.ParatextService
+                .GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
                 .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
             var bookList = new List<int>() { 40, 41 };
@@ -1088,19 +1451,32 @@ namespace SIL.XForge.Scripture.Services
             };
             const int bookValueToIndicateWholeResource = 0;
             const int chapterValueToIndicateWholeBook = 0;
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
+            env.ParatextService
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    Arg.Any<int>(),
+                    chapterValueToIndicateWholeBook
+                )
                 .Returns(Task.FromResult(ptBookPermissions));
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
+            env.ParatextService
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    Arg.Any<int>(),
+                    Arg.Is<int>((int arg) => arg > 0)
+                )
                 .Returns(Task.FromResult(ptChapterPermissions));
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                bookValueToIndicateWholeResource,
-                chapterValueToIndicateWholeBook)
+            env.ParatextService
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    bookValueToIndicateWholeResource,
+                    chapterValueToIndicateWholeBook
+                )
                 .Returns(Task.FromResult(ptSourcePermissions));
 
             string projectRoleSpecifiedFromConnectProjectPage = null;
@@ -1109,19 +1485,37 @@ namespace SIL.XForge.Scripture.Services
             await env.Service.AddUserAsync(User03, Project05, projectRoleSpecifiedFromConnectProjectPage);
 
             project = env.GetProject(Project05);
-            Assert.That(project.UserRoles.TryGetValue(User03, out string userRole), Is.True, "user should be added to project");
+            Assert.That(
+                project.UserRoles.TryGetValue(User03, out string userRole),
+                Is.True,
+                "user should be added to project"
+            );
             Assert.That(userRole, Is.EqualTo(userRoleOnPTProject));
             user = env.GetUser(User03);
             Assert.That(user.Sites[SiteId].Projects, Contains.Item(Project05));
 
             Assert.That(project.Texts.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Read));
-            Assert.That(project.Texts.First().Chapters.First().Permissions[User03], Is.EqualTo(TextInfoPermission.Write));
+            Assert.That(
+                project.Texts.First().Chapters.First().Permissions[User03],
+                Is.EqualTo(TextInfoPermission.Write)
+            );
 
             resource = env.GetProject(Resource01);
             Assert.That(resource.Texts.First().Permissions[User03], Is.EqualTo(userDBLPermissionForResource));
-            Assert.That(resource.Texts.First().Chapters.First().Permissions[User03], Is.EqualTo(userDBLPermissionForResource));
-            Assert.That(resource.UserRoles.TryGetValue(User03, out string resourceUserRole), Is.True, "user should have been added to resource");
-            Assert.That(resourceUserRole, Is.EqualTo(SFProjectRole.PTObserver), "user role not set correctly on resource");
+            Assert.That(
+                resource.Texts.First().Chapters.First().Permissions[User03],
+                Is.EqualTo(userDBLPermissionForResource)
+            );
+            Assert.That(
+                resource.UserRoles.TryGetValue(User03, out string resourceUserRole),
+                Is.True,
+                "user should have been added to resource"
+            );
+            Assert.That(
+                resourceUserRole,
+                Is.EqualTo(SFProjectRole.PTObserver),
+                "user role not set correctly on resource"
+            );
             Assert.That(user.Sites[SiteId].Projects, Contains.Item(Resource01), "user not added to resource correctly");
         }
 
@@ -1148,7 +1542,9 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(sfProject.Texts.Count, Is.LessThan(3), "setup");
 
             // But PT reports that there are 3 books.
-            env.ParatextService.GetBookList(Arg.Any<UserSecret>(), project01PTId).Returns(new List<int>() { 40, 41, 42 });
+            env.ParatextService
+                .GetBookList(Arg.Any<UserSecret>(), project01PTId)
+                .Returns(new List<int>() { 40, 41, 42 });
 
             var ptBookPermissions = new Dictionary<string, string>()
             {
@@ -1161,13 +1557,23 @@ namespace SIL.XForge.Scripture.Services
                 { User02, TextInfoPermission.Read },
             };
             const int chapterValueToIndicateWholeBook = 0;
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
+            env.ParatextService
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    Arg.Any<int>(),
+                    chapterValueToIndicateWholeBook
+                )
                 .Returns(Task.FromResult(ptBookPermissions));
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
+            env.ParatextService
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    Arg.Any<int>(),
+                    Arg.Is<int>((int arg) => arg > 0)
+                )
                 .Returns(Task.FromResult(ptChapterPermissions));
 
             sfProject = env.GetProject(Project01);
@@ -1184,8 +1590,14 @@ namespace SIL.XForge.Scripture.Services
             sfProject = env.GetProject(Project01);
             Assert.That(sfProject.Texts.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Read));
             Assert.That(sfProject.Texts.First().Permissions[User02], Is.EqualTo(TextInfoPermission.Write));
-            Assert.That(sfProject.Texts.First().Chapters.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Write));
-            Assert.That(sfProject.Texts.First().Chapters.First().Permissions[User02], Is.EqualTo(TextInfoPermission.Read));
+            Assert.That(
+                sfProject.Texts.First().Chapters.First().Permissions[User01],
+                Is.EqualTo(TextInfoPermission.Write)
+            );
+            Assert.That(
+                sfProject.Texts.First().Chapters.First().Permissions[User02],
+                Is.EqualTo(TextInfoPermission.Read)
+            );
 
             // SF should still only have the 2 books.
             Assert.That(sfProject.Texts.Count, Is.LessThan(3), "surprise");
@@ -1204,7 +1616,9 @@ namespace SIL.XForge.Scripture.Services
             IDocument<SFProject> project01Doc = await conn.FetchAsync<SFProject>(Project01);
 
             // SUT
-            Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.UpdatePermissionsAsync(User04, project01Doc, CancellationToken.None));
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.UpdatePermissionsAsync(User04, project01Doc, CancellationToken.None)
+            );
         }
 
         [Test]
@@ -1228,13 +1642,23 @@ namespace SIL.XForge.Scripture.Services
                 { User02, TextInfoPermission.Read },
             };
             const int chapterValueToIndicateWholeBook = 0;
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
+            env.ParatextService
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    Arg.Any<int>(),
+                    chapterValueToIndicateWholeBook
+                )
                 .Returns(Task.FromResult(ptBookPermissions));
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
+            env.ParatextService
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    Arg.Any<int>(),
+                    Arg.Is<int>((int arg) => arg > 0)
+                )
                 .Returns(Task.FromResult(ptChapterPermissions));
 
             sfProject = env.GetProject(Project01);
@@ -1250,10 +1674,15 @@ namespace SIL.XForge.Scripture.Services
             sfProject = env.GetProject(Project01);
             Assert.That(sfProject.Texts.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Read));
             Assert.That(sfProject.Texts.First().Permissions[User02], Is.EqualTo(TextInfoPermission.Write));
-            Assert.That(sfProject.Texts.First().Chapters.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Write));
-            Assert.That(sfProject.Texts.First().Chapters.First().Permissions[User02], Is.EqualTo(TextInfoPermission.Read));
+            Assert.That(
+                sfProject.Texts.First().Chapters.First().Permissions[User01],
+                Is.EqualTo(TextInfoPermission.Write)
+            );
+            Assert.That(
+                sfProject.Texts.First().Chapters.First().Permissions[User02],
+                Is.EqualTo(TextInfoPermission.Read)
+            );
         }
-
 
         [Test]
         public async Task UpdatePermissionsAsync_UserHasNoChapterPermission()
@@ -1276,13 +1705,23 @@ namespace SIL.XForge.Scripture.Services
                 { User02, TextInfoPermission.None },
             };
             const int chapterValueToIndicateWholeBook = 0;
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
+            env.ParatextService
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    Arg.Any<int>(),
+                    chapterValueToIndicateWholeBook
+                )
                 .Returns(Task.FromResult(ptBookPermissions));
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
+            env.ParatextService
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    Arg.Any<int>(),
+                    Arg.Is<int>((int arg) => arg > 0)
+                )
                 .Returns(Task.FromResult(ptChapterPermissions));
 
             sfProject = env.GetProject(Project01);
@@ -1298,8 +1737,14 @@ namespace SIL.XForge.Scripture.Services
             sfProject = env.GetProject(Project01);
             Assert.That(sfProject.Texts.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Read));
             Assert.That(sfProject.Texts.First().Permissions[User02], Is.EqualTo(TextInfoPermission.None));
-            Assert.That(sfProject.Texts.First().Chapters.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Read));
-            Assert.That(sfProject.Texts.First().Chapters.First().Permissions[User02], Is.EqualTo(TextInfoPermission.None));
+            Assert.That(
+                sfProject.Texts.First().Chapters.First().Permissions[User01],
+                Is.EqualTo(TextInfoPermission.Read)
+            );
+            Assert.That(
+                sfProject.Texts.First().Chapters.First().Permissions[User02],
+                Is.EqualTo(TextInfoPermission.None)
+            );
         }
 
         [Test]
@@ -1330,17 +1775,32 @@ namespace SIL.XForge.Scripture.Services
             };
             const int bookValueToIndicateWholeResource = 0;
             const int chapterValueToIndicateWholeBook = 0;
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
+            env.ParatextService
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    Arg.Any<int>(),
+                    chapterValueToIndicateWholeBook
+                )
                 .Returns(Task.FromResult(ptBookPermissions));
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
+            env.ParatextService
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    Arg.Any<int>(),
+                    Arg.Is<int>((int arg) => arg > 0)
+                )
                 .Returns(Task.FromResult(ptChapterPermissions));
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), bookValueToIndicateWholeResource, chapterValueToIndicateWholeBook)
+            env.ParatextService
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    bookValueToIndicateWholeResource,
+                    chapterValueToIndicateWholeBook
+                )
                 .Returns(Task.FromResult(ptSourcePermissions));
 
             sfProject = env.GetProject(Project01);
@@ -1364,12 +1824,24 @@ namespace SIL.XForge.Scripture.Services
             resource = env.GetProject(Resource01);
             Assert.That(sfProject.Texts.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Write));
             Assert.That(sfProject.Texts.First().Permissions[User02], Is.EqualTo(TextInfoPermission.Write));
-            Assert.That(sfProject.Texts.First().Chapters.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Write));
-            Assert.That(sfProject.Texts.First().Chapters.First().Permissions[User02], Is.EqualTo(TextInfoPermission.Write));
+            Assert.That(
+                sfProject.Texts.First().Chapters.First().Permissions[User01],
+                Is.EqualTo(TextInfoPermission.Write)
+            );
+            Assert.That(
+                sfProject.Texts.First().Chapters.First().Permissions[User02],
+                Is.EqualTo(TextInfoPermission.Write)
+            );
             Assert.That(resource.Texts.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Read));
             Assert.That(resource.Texts.First().Permissions[User02], Is.EqualTo(TextInfoPermission.None));
-            Assert.That(resource.Texts.First().Chapters.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Read));
-            Assert.That(resource.Texts.First().Chapters.First().Permissions[User02], Is.EqualTo(TextInfoPermission.None));
+            Assert.That(
+                resource.Texts.First().Chapters.First().Permissions[User01],
+                Is.EqualTo(TextInfoPermission.Read)
+            );
+            Assert.That(
+                resource.Texts.First().Chapters.First().Permissions[User02],
+                Is.EqualTo(TextInfoPermission.None)
+            );
         }
 
         [Test]
@@ -1387,11 +1859,11 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
 
-            await env.Service.UpdateSettingsAsync(User01, Project01, new SFProjectSettings
-            {
-                SourceParatextId = "changedId",
-                TranslationSuggestionsEnabled = true
-            });
+            await env.Service.UpdateSettingsAsync(
+                User01,
+                Project01,
+                new SFProjectSettings { SourceParatextId = "changedId", TranslationSuggestionsEnabled = true }
+            );
 
             SFProject project = env.GetProject("project01");
             Assert.That(project.TranslateConfig.Source.ParatextId, Is.EqualTo("changedId"));
@@ -1406,10 +1878,11 @@ namespace SIL.XForge.Scripture.Services
         public async Task UpdateSettingsAsync_SelectSourceProject_NoMachineProjectAndSync()
         {
             var env = new TestEnvironment();
-            await env.Service.UpdateSettingsAsync(User02, Project02, new SFProjectSettings
-            {
-                SourceParatextId = "changedId"
-            });
+            await env.Service.UpdateSettingsAsync(
+                User02,
+                Project02,
+                new SFProjectSettings { SourceParatextId = "changedId" }
+            );
 
             SFProject project = env.GetProject("project02");
             Assert.That(project.TranslateConfig.TranslationSuggestionsEnabled, Is.False);
@@ -1425,10 +1898,11 @@ namespace SIL.XForge.Scripture.Services
         public async Task UpdateSettingsAsync_EnableTranslate_CreateMachineProjectAndSync()
         {
             var env = new TestEnvironment();
-            await env.Service.UpdateSettingsAsync(User01, Project03, new SFProjectSettings
-            {
-                TranslationSuggestionsEnabled = true
-            });
+            await env.Service.UpdateSettingsAsync(
+                User01,
+                Project03,
+                new SFProjectSettings { TranslationSuggestionsEnabled = true }
+            );
 
             SFProject project = env.GetProject(Project03);
             Assert.That(project.TranslateConfig.TranslationSuggestionsEnabled, Is.True);
@@ -1443,11 +1917,15 @@ namespace SIL.XForge.Scripture.Services
         public async Task UpdateSettingsAsync_UnsetSourceProject_RemoveMachineProjectAndSync()
         {
             var env = new TestEnvironment();
-            await env.Service.UpdateSettingsAsync(User01, Project01, new SFProjectSettings
-            {
-                SourceParatextId = SFProjectService.ProjectSettingValueUnset,
-                TranslationSuggestionsEnabled = false
-            });
+            await env.Service.UpdateSettingsAsync(
+                User01,
+                Project01,
+                new SFProjectSettings
+                {
+                    SourceParatextId = SFProjectService.ProjectSettingValueUnset,
+                    TranslationSuggestionsEnabled = false
+                }
+            );
 
             SFProject project = env.GetProject(Project01);
             Assert.That(project.TranslateConfig.TranslationSuggestionsEnabled, Is.False);
@@ -1478,7 +1956,11 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
 
-            await env.Service.UpdateSettingsAsync(User01, Project01, new SFProjectSettings { CheckingShareEnabled = true });
+            await env.Service.UpdateSettingsAsync(
+                User01,
+                Project01,
+                new SFProjectSettings { CheckingShareEnabled = true }
+            );
 
             SFProject project = env.GetProject(Project01);
             Assert.That(project.CheckingConfig.ShareEnabled, Is.True);
@@ -1523,17 +2005,20 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
-            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
-                Arg.Any<CancellationToken>())
-               .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
+            env.ParatextService
+                .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
             // SUT
-            string sfProjectId = await env.Service.CreateProjectAsync(User01, new SFProjectCreateSettings()
-            {
-                ParatextId = "ptProject123"
-            });
+            string sfProjectId = await env.Service.CreateProjectAsync(
+                User01,
+                new SFProjectCreateSettings() { ParatextId = "ptProject123" }
+            );
             Assert.That(env.ContainsProject(sfProjectId), Is.True);
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Query().Count(),
-                Is.EqualTo(projectCount + 1), "should have increased");
+            Assert.That(
+                env.RealtimeService.GetRepository<SFProject>().Query().Count(),
+                Is.EqualTo(projectCount + 1),
+                "should have increased"
+            );
             SFProject newProject = env.RealtimeService.GetRepository<SFProject>().Get(sfProjectId);
             Assert.That(newProject.CheckingConfig.ShareEnabled, Is.False, "Should default to not shared (SF-1142)");
         }
@@ -1543,24 +2028,33 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
-            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
-                Arg.Any<CancellationToken>())
-               .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User01, Arg.Any<CancellationToken>())
+            env.ParatextService
+                .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
+            env.ParatextService
+                .GetResourcePermissionAsync(Arg.Any<string>(), User01, Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(TextInfoPermission.Read));
             // SUT
-            string sfProjectId = await env.Service.CreateProjectAsync(User01, new SFProjectCreateSettings()
-            {
-                ParatextId = "ptProject123",
-                SourceParatextId = "resource_project",
-                TranslationSuggestionsEnabled = true,
-            });
+            string sfProjectId = await env.Service.CreateProjectAsync(
+                User01,
+                new SFProjectCreateSettings()
+                {
+                    ParatextId = "ptProject123",
+                    SourceParatextId = "resource_project",
+                    TranslationSuggestionsEnabled = true,
+                }
+            );
             Assert.That(env.ContainsProject(sfProjectId), Is.True);
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Query().Count(),
-                Is.EqualTo(projectCount + 2), "should have increased");
+            Assert.That(
+                env.RealtimeService.GetRepository<SFProject>().Query().Count(),
+                Is.EqualTo(projectCount + 2),
+                "should have increased"
+            );
 
             // The source should have a later ID than the target in the project repository
-            var projects = env.RealtimeService.GetRepository<SFProject>().Query()
+            var projects = env.RealtimeService
+                .GetRepository<SFProject>()
+                .Query()
                 .Where(p => p.ParatextId == "ptProject123" || p.ParatextId == "resource_project")
                 .OrderBy(p => p.Id);
             Assert.That(projects.First().ParatextId, Is.EqualTo("ptProject123"), "target has the first id");
@@ -1568,8 +2062,11 @@ namespace SIL.XForge.Scripture.Services
 
             // The source should appear after the target in the user's project array
             User user = env.GetUser(User01);
-            Assert.That(user.Sites[SiteId].Projects.Skip(3).First(), Is.EqualTo(
-                projects.First().Id), "target is first");
+            Assert.That(
+                user.Sites[SiteId].Projects.Skip(3).First(),
+                Is.EqualTo(projects.First().Id),
+                "target is first"
+            );
             Assert.That(user.Sites[SiteId].Projects.Last(), Is.EqualTo(projects.Last().Id), "source is last");
         }
 
@@ -1578,19 +2075,24 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
-            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(),
-                Arg.Any<CancellationToken>())
-               .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
+            env.ParatextService
+                .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
             SFProject existingSfProject = env.GetProject(Project01);
             // SUT
             InvalidOperationException thrown = Assert.ThrowsAsync<InvalidOperationException>(
-                () => env.Service.CreateProjectAsync(User01, new SFProjectCreateSettings()
-                {
-                    ParatextId = existingSfProject.ParatextId
-                }));
+                () =>
+                    env.Service.CreateProjectAsync(
+                        User01,
+                        new SFProjectCreateSettings() { ParatextId = existingSfProject.ParatextId }
+                    )
+            );
             Assert.That(thrown.Message, Does.Contain(SFProjectService.ErrorAlreadyConnectedKey));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Query().Count(),
-                Is.EqualTo(projectCount), "should not have changed");
+            Assert.That(
+                env.RealtimeService.GetRepository<SFProject>().Query().Count(),
+                Is.EqualTo(projectCount),
+                "should not have changed"
+            );
         }
 
         [Test]
@@ -1609,8 +2111,11 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(user.ParatextId, Is.Not.Null, "setup. PT user should have a PT User ID.");
             Assert.That(env.ContainsProject(targetProjectPTId), Is.False, "setup. No such SF should exist yet.");
 
-            Assert.That(resource.UserRoles.ContainsKey(User03), Is.False,
-                "setup. User should not already be on the project, for purposes of testing that they are later.");
+            Assert.That(
+                resource.UserRoles.ContainsKey(User03),
+                Is.False,
+                "setup. User should not already be on the project, for purposes of testing that they are later."
+            );
             Assert.That(resource.Texts.First().Permissions.ContainsKey(User03), Is.False, "setup");
             Assert.That(resource.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
 
@@ -1619,7 +2124,8 @@ namespace SIL.XForge.Scripture.Services
                 .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(Attempt.Success(userRoleOnPTProject)));
             string userDBLPermissionForResource = TextInfoPermission.Read;
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
+            env.ParatextService
+                .GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
                 .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
             var bookList = new List<int>() { 40, 41 };
@@ -1646,35 +2152,59 @@ namespace SIL.XForge.Scripture.Services
             };
             const int bookValueToIndicateWholeResource = 0;
             const int chapterValueToIndicateWholeBook = 0;
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == targetProjectPTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), chapterValueToIndicateWholeBook)
+            env.ParatextService
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject project) => project.ParatextId == targetProjectPTId),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    Arg.Any<int>(),
+                    chapterValueToIndicateWholeBook
+                )
                 .Returns(Task.FromResult(ptBookPermissions));
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == targetProjectPTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), Arg.Any<int>(), Arg.Is<int>((int arg) => arg > 0))
+            env.ParatextService
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject project) => project.ParatextId == targetProjectPTId),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    Arg.Any<int>(),
+                    Arg.Is<int>((int arg) => arg > 0)
+                )
                 .Returns(Task.FromResult(ptChapterPermissions));
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == sourceProjectPTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(), bookValueToIndicateWholeResource, chapterValueToIndicateWholeBook)
+            env.ParatextService
+                .GetPermissionsAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Is<SFProject>((SFProject project) => project.ParatextId == sourceProjectPTId),
+                    Arg.Any<IReadOnlyDictionary<string, string>>(),
+                    bookValueToIndicateWholeResource,
+                    chapterValueToIndicateWholeBook
+                )
                 .Returns(Task.FromResult(ptSourcePermissions));
 
             resource = env.GetProject(Resource01);
-            Assert.That(resource.Texts.First().Permissions.Count, Is.EqualTo(0),
-                "setup. User should not have permissions on resource yet.");
+            Assert.That(
+                resource.Texts.First().Permissions.Count,
+                Is.EqualTo(0),
+                "setup. User should not have permissions on resource yet."
+            );
             Assert.That(resource.Texts.First().Chapters.First().Permissions.Count, Is.EqualTo(0), "setup");
 
             // SUT
-            string sfProjectId = await env.Service.CreateProjectAsync(User03, new SFProjectCreateSettings()
-            {
-                ParatextId = targetProjectPTId,
-                SourceParatextId = sourceProjectPTId,
-                TranslationSuggestionsEnabled = true,
-            });
+            string sfProjectId = await env.Service.CreateProjectAsync(
+                User03,
+                new SFProjectCreateSettings()
+                {
+                    ParatextId = targetProjectPTId,
+                    SourceParatextId = sourceProjectPTId,
+                    TranslationSuggestionsEnabled = true,
+                }
+            );
 
             SFProject project = env.GetProject(sfProjectId);
-            Assert.That(project.UserRoles.TryGetValue(User03, out string userRole), Is.True,
-                "user should be added to project");
+            Assert.That(
+                project.UserRoles.TryGetValue(User03, out string userRole),
+                Is.True,
+                "user should be added to project"
+            );
             Assert.That(userRole, Is.EqualTo(userRoleOnPTProject));
             user = env.GetUser(User03);
             Assert.That(user.Sites[SiteId].Projects, Contains.Item(sfProjectId), "user not added to project correctly");
@@ -1688,12 +2218,20 @@ namespace SIL.XForge.Scripture.Services
 
             resource = env.GetProject(Resource01);
             Assert.That(resource.Texts.First().Permissions[User03], Is.EqualTo(userDBLPermissionForResource));
-            Assert.That(resource.Texts.First().Chapters.First().Permissions[User03],
-                Is.EqualTo(userDBLPermissionForResource));
-            Assert.That(resource.UserRoles.TryGetValue(User03, out string resourceUserRole), Is.True,
-                "user should have been added to resource");
-            Assert.That(resourceUserRole, Is.EqualTo(SFProjectRole.PTObserver),
-                "user role not set correctly on resource");
+            Assert.That(
+                resource.Texts.First().Chapters.First().Permissions[User03],
+                Is.EqualTo(userDBLPermissionForResource)
+            );
+            Assert.That(
+                resource.UserRoles.TryGetValue(User03, out string resourceUserRole),
+                Is.True,
+                "user should have been added to resource"
+            );
+            Assert.That(
+                resourceUserRole,
+                Is.EqualTo(SFProjectRole.PTObserver),
+                "user role not set correctly on resource"
+            );
             Assert.That(user.Sites[SiteId].Projects, Contains.Item(Resource01), "user not added to resource correctly");
         }
 
@@ -1705,8 +2243,11 @@ namespace SIL.XForge.Scripture.Services
             // SUT
             string sfProjectId = await env.Service.CreateResourceProjectAsync(User01, "resource_project");
             Assert.That(env.ContainsProject(sfProjectId), Is.True);
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Query().Count(),
-                Is.EqualTo(projectCount + 1), "should have increased");
+            Assert.That(
+                env.RealtimeService.GetRepository<SFProject>().Query().Count(),
+                Is.EqualTo(projectCount + 1),
+                "should have increased"
+            );
         }
 
         [Test]
@@ -1717,17 +2258,22 @@ namespace SIL.XForge.Scripture.Services
             SFProject existingSfProject = env.GetProject(Resource01);
             // SUT
             InvalidOperationException thrown = Assert.ThrowsAsync<InvalidOperationException>(
-                () => env.Service.CreateResourceProjectAsync(User01, existingSfProject.ParatextId));
+                () => env.Service.CreateResourceProjectAsync(User01, existingSfProject.ParatextId)
+            );
             Assert.That(thrown.Message, Does.Contain(SFProjectService.ErrorAlreadyConnectedKey));
-            Assert.That(env.RealtimeService.GetRepository<SFProject>().Query().Count(),
-                Is.EqualTo(projectCount), "should not have changed");
+            Assert.That(
+                env.RealtimeService.GetRepository<SFProject>().Query().Count(),
+                Is.EqualTo(projectCount),
+                "should not have changed"
+            );
         }
 
         [Test]
         public async Task AddUserToResourceProjectAsync_UserResourcePermission()
         {
             var env = new TestEnvironment();
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User01, Arg.Any<CancellationToken>())
+            env.ParatextService
+                .GetResourcePermissionAsync(Arg.Any<string>(), User01, Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(TextInfoPermission.Read));
 
             User user = env.GetUser(User01);
@@ -1743,7 +2289,8 @@ namespace SIL.XForge.Scripture.Services
         public void AddUserToResourceProjectAsync_UserResourceNoPermission()
         {
             var env = new TestEnvironment();
-            env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User01, Arg.Any<CancellationToken>())
+            env.ParatextService
+                .GetResourcePermissionAsync(Arg.Any<string>(), User01, Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(TextInfoPermission.None));
 
             User user = env.GetUser(User01);
@@ -1830,416 +2377,481 @@ namespace SIL.XForge.Scripture.Services
             public TestEnvironment()
             {
                 RealtimeService = new SFMemoryRealtimeService();
-                RealtimeService.AddRepository("users", OTType.Json0, new MemoryRepository<User>(new[]
-                {
-                    new User
-                    {
-                        Id = User01,
-                        Email = "user01@example.com",
-                        ParatextId="pt-user01",
-                        Sites = new Dictionary<string, Site>
+                RealtimeService.AddRepository(
+                    "users",
+                    OTType.Json0,
+                    new MemoryRepository<User>(
+                        new[]
                         {
-                            { SiteId, new Site { Projects = { Project01, Project03, DisabledSource } } }
-                        }
-                    },
-                    new User
-                    {
-                        Id = User02,
-                        Email = "user02@example.com",
-                        ParatextId="pt-user02",
-                        Sites = new Dictionary<string, Site>
-                        {
-                            { SiteId, new Site { Projects = { Project01, Project02, Project03 } } }
-                        }
-                    },
-                    new User
-                    {
-                        Id = User03,
-                        Email = "user03@example.com",
-                        ParatextId="pt-user03",
-                        Sites = new Dictionary<string, Site> { { SiteId, new Site() } }
-                    },
-                    new User
-                    {
-                        Id = User04,
-                        Email = "user04@example.com",
-                        Sites = new Dictionary<string,Site> { { SiteId, new Site() } },
-                        Role = SystemRole.SystemAdmin
-                    },
-                    new User
-                    {
-                        Id = LinkExpiredUser,
-                        Email = "expired@example.com",
-                        Sites = new Dictionary<string, Site> { { SiteId, new Site() }}
-                    },
-                    new User
-                    {
-                        Id = User05,
-                        Email = "user05@example.com",
-                        ParatextId = "pt-user05",
-                        Sites = new Dictionary<string, Site>
-                        {
-                            { SiteId, new Site { Projects = { Project01 } } }
-                        }
-                    },
-                }));
-                RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(
-                    new[]
-                    {
-                        new SFProject
-                        {
-                            Id = Project01,
-                            ParatextId = "paratext_" + Project01,
-                            Name = "project01",
-                            ShortName = "P01",
-                            TranslateConfig = new TranslateConfig
+                            new User
                             {
-                                TranslationSuggestionsEnabled = true,
-                                Source = new TranslateSource
+                                Id = User01,
+                                Email = "user01@example.com",
+                                ParatextId = "pt-user01",
+                                Sites = new Dictionary<string, Site>
                                 {
-                                    ProjectRef = Resource01,
-                                    ParatextId = Resource01PTId,
-                                    Name = "resource project",
-                                    ShortName = "RES",
-                                    WritingSystem = new WritingSystem
                                     {
-                                        Tag = "qaa"
+                                        SiteId,
+                                        new Site { Projects = { Project01, Project03, DisabledSource } }
                                     }
                                 }
                             },
-                            CheckingConfig = new CheckingConfig
+                            new User
                             {
-                                CheckingEnabled = true,
-                                ShareEnabled = false
-                            },
-                            UserRoles = new Dictionary<string, string>
-                            {
-                                { User01, SFProjectRole.Administrator },
-                                { User02, SFProjectRole.CommunityChecker },
-                                { User05, SFProjectRole.Translator },
-                            },
-                            Texts =
-                            {
-                                new TextInfo
+                                Id = User02,
+                                Email = "user02@example.com",
+                                ParatextId = "pt-user02",
+                                Sites = new Dictionary<string, Site>
                                 {
-                                    BookNum = 40,
-                                    Chapters =
                                     {
-                                        new Chapter { Number = 1, LastVerse = 3, IsValid = true, Permissions = { } }
+                                        SiteId,
+                                        new Site { Projects = { Project01, Project02, Project03 } }
+                                    }
+                                }
+                            },
+                            new User
+                            {
+                                Id = User03,
+                                Email = "user03@example.com",
+                                ParatextId = "pt-user03",
+                                Sites = new Dictionary<string, Site> { { SiteId, new Site() } }
+                            },
+                            new User
+                            {
+                                Id = User04,
+                                Email = "user04@example.com",
+                                Sites = new Dictionary<string, Site> { { SiteId, new Site() } },
+                                Role = SystemRole.SystemAdmin
+                            },
+                            new User
+                            {
+                                Id = LinkExpiredUser,
+                                Email = "expired@example.com",
+                                Sites = new Dictionary<string, Site> { { SiteId, new Site() } }
+                            },
+                            new User
+                            {
+                                Id = User05,
+                                Email = "user05@example.com",
+                                ParatextId = "pt-user05",
+                                Sites = new Dictionary<string, Site>
+                                {
+                                    {
+                                        SiteId,
+                                        new Site { Projects = { Project01 } }
+                                    }
+                                }
+                            },
+                        }
+                    )
+                );
+                RealtimeService.AddRepository(
+                    "sf_projects",
+                    OTType.Json0,
+                    new MemoryRepository<SFProject>(
+                        new[]
+                        {
+                            new SFProject
+                            {
+                                Id = Project01,
+                                ParatextId = "paratext_" + Project01,
+                                Name = "project01",
+                                ShortName = "P01",
+                                TranslateConfig = new TranslateConfig
+                                {
+                                    TranslationSuggestionsEnabled = true,
+                                    Source = new TranslateSource
+                                    {
+                                        ProjectRef = Resource01,
+                                        ParatextId = Resource01PTId,
+                                        Name = "resource project",
+                                        ShortName = "RES",
+                                        WritingSystem = new WritingSystem { Tag = "qaa" }
                                     }
                                 },
-                                new TextInfo
+                                CheckingConfig = new CheckingConfig { CheckingEnabled = true, ShareEnabled = false },
+                                UserRoles = new Dictionary<string, string>
                                 {
-                                    BookNum = 41,
-                                    Chapters =
-                                    {
-                                        new Chapter { Number = 1, LastVerse = 3, IsValid = true, Permissions = { } },
-                                        new Chapter { Number = 2, LastVerse = 3, IsValid = true, Permissions = { } }
-                                    }
-                                }
-                            }
-                        },
-                        new SFProject
-                        {
-                            Id = Project02,
-                            Name = "project02",
-                            ShortName = "P02",
-                            ParatextId = "paratext_" + Project02,
-                            CheckingConfig = new CheckingConfig
-                            {
-                                CheckingEnabled = true,
-                                ShareEnabled = true,
-                                ShareLevel = CheckingShareLevel.Anyone
-                            },
-                            UserRoles =
-                            {
-                                { User02, SFProjectRole.Administrator },
-                                { User04, SFProjectRole.CommunityChecker }
-                            },
-                        },
-                        new SFProject
-                        {
-                            Id = Project03,
-                            Name = "project03",
-                            ShortName = "P03",
-                            ParatextId = "paratext_" + Project03,
-                            CheckingConfig = new CheckingConfig
-                            {
-                                CheckingEnabled = true,
-                                ShareEnabled = true,
-                                ShareLevel = CheckingShareLevel.Specific
-                            },
-                            TranslateConfig = {
-                                TranslationSuggestionsEnabled = false,
-                                Source = new TranslateSource
-                                {
-                                    ProjectRef = DisabledSource,
-                                    ParatextId = "pt_dis",
-                                    Name = "Suggestions Disabled Resource"
-                                }
-                            },
-                            UserRoles =
-                            {
-                                { User01, SFProjectRole.Administrator },
-                                { User02, SFProjectRole.CommunityChecker }
-                            }
-                        },
-                        new SFProject
-                        {
-                            Id = Project04,
-                            Name = "project04",
-                            ParatextId = "paratext_" + Project04,
-                            TranslateConfig = new TranslateConfig
-                            {
-                                TranslationSuggestionsEnabled = true,
-                                Source = new TranslateSource
-                                {
-                                    ProjectRef = "Invalid_Source",
-                                    ParatextId = "P04"
+                                    { User01, SFProjectRole.Administrator },
+                                    { User02, SFProjectRole.CommunityChecker },
+                                    { User05, SFProjectRole.Translator },
                                 },
-                                ShareEnabled = true,
-                                ShareLevel = TranslateShareLevel.Anyone
-                            },
-                            UserRoles =
-                            {
-                                { User01, SFProjectRole.CommunityChecker }
-                            }
-                        },
-                        new SFProject
-                        {
-                            Id = Project05,
-                            ParatextId = "paratext_" + Project05,
-                            Name = "Project05",
-                            ShortName = "P05",
-                            TranslateConfig = new TranslateConfig
-                            {
-                                TranslationSuggestionsEnabled = true,
-                                Source = new TranslateSource
+                                Texts =
                                 {
-                                    ProjectRef = Resource01,
-                                    ParatextId = Resource01PTId,
-                                    Name = "resource project",
-                                    ShortName = "RES",
-                                    WritingSystem = new WritingSystem
+                                    new TextInfo
                                     {
-                                        Tag = "qaa"
+                                        BookNum = 40,
+                                        Chapters =
+                                        {
+                                            new Chapter
+                                            {
+                                                Number = 1,
+                                                LastVerse = 3,
+                                                IsValid = true,
+                                                Permissions = { }
+                                            }
+                                        }
+                                    },
+                                    new TextInfo
+                                    {
+                                        BookNum = 41,
+                                        Chapters =
+                                        {
+                                            new Chapter
+                                            {
+                                                Number = 1,
+                                                LastVerse = 3,
+                                                IsValid = true,
+                                                Permissions = { }
+                                            },
+                                            new Chapter
+                                            {
+                                                Number = 2,
+                                                LastVerse = 3,
+                                                IsValid = true,
+                                                Permissions = { }
+                                            }
+                                        }
                                     }
                                 }
                             },
-                            CheckingConfig = new CheckingConfig
+                            new SFProject
                             {
-                                CheckingEnabled = true,
-                                ShareEnabled = false
-                            },
-                            UserRoles = new Dictionary<string, string>
-                            {
-                                { User01, SFProjectRole.Administrator },
-                                { User02, SFProjectRole.CommunityChecker }
-                            },
-                            Texts =
-                            {
-                                new TextInfo
+                                Id = Project02,
+                                Name = "project02",
+                                ShortName = "P02",
+                                ParatextId = "paratext_" + Project02,
+                                CheckingConfig = new CheckingConfig
                                 {
-                                    BookNum = 40,
-                                    Chapters =
+                                    CheckingEnabled = true,
+                                    ShareEnabled = true,
+                                    ShareLevel = CheckingShareLevel.Anyone
+                                },
+                                UserRoles =
+                                {
+                                    { User02, SFProjectRole.Administrator },
+                                    { User04, SFProjectRole.CommunityChecker }
+                                },
+                            },
+                            new SFProject
+                            {
+                                Id = Project03,
+                                Name = "project03",
+                                ShortName = "P03",
+                                ParatextId = "paratext_" + Project03,
+                                CheckingConfig = new CheckingConfig
+                                {
+                                    CheckingEnabled = true,
+                                    ShareEnabled = true,
+                                    ShareLevel = CheckingShareLevel.Specific
+                                },
+                                TranslateConfig =
+                                {
+                                    TranslationSuggestionsEnabled = false,
+                                    Source = new TranslateSource
                                     {
-                                        new Chapter { Number = 1, LastVerse = 3, IsValid = true, Permissions = { } }
+                                        ProjectRef = DisabledSource,
+                                        ParatextId = "pt_dis",
+                                        Name = "Suggestions Disabled Resource"
                                     }
                                 },
-                                new TextInfo
+                                UserRoles =
                                 {
-                                    BookNum = 41,
-                                    Chapters =
-                                    {
-                                        new Chapter { Number = 1, LastVerse = 3, IsValid = true, Permissions = { } },
-                                        new Chapter { Number = 2, LastVerse = 3, IsValid = true, Permissions = { } }
-                                    }
+                                    { User01, SFProjectRole.Administrator },
+                                    { User02, SFProjectRole.CommunityChecker }
                                 }
-                            }
-                        },
-                        new SFProject
-                        {
-                            Id = Project06,
-                            Name = "project06",
-                            ParatextId = "paratext_" + Project06,
-                            CheckingConfig = new CheckingConfig
-                            {
-                                CheckingEnabled = false,
-                                ShareEnabled = true,
-                                ShareLevel = TranslateShareLevel.Anyone
                             },
-                            UserRoles =
+                            new SFProject
                             {
-                                { User01, SFProjectRole.CommunityChecker }
-                            }
-                        },
-                        new SFProject
-                        {
-                            Id = Resource01,
-                            ParatextId = Resource01PTId,
-                            Name = "resource project",
-                            ShortName = "RES",
-                            Texts =
-                            {
-                                new TextInfo
+                                Id = Project04,
+                                Name = "project04",
+                                ParatextId = "paratext_" + Project04,
+                                TranslateConfig = new TranslateConfig
                                 {
-                                    BookNum = 40,
-                                    Chapters =
+                                    TranslationSuggestionsEnabled = true,
+                                    Source = new TranslateSource { ProjectRef = "Invalid_Source", ParatextId = "P04" },
+                                    ShareEnabled = true,
+                                    ShareLevel = TranslateShareLevel.Anyone
+                                },
+                                UserRoles = { { User01, SFProjectRole.CommunityChecker } }
+                            },
+                            new SFProject
+                            {
+                                Id = Project05,
+                                ParatextId = "paratext_" + Project05,
+                                Name = "Project05",
+                                ShortName = "P05",
+                                TranslateConfig = new TranslateConfig
+                                {
+                                    TranslationSuggestionsEnabled = true,
+                                    Source = new TranslateSource
                                     {
-                                        new Chapter { Number = 1, LastVerse = 3, IsValid = true, Permissions = { } }
+                                        ProjectRef = Resource01,
+                                        ParatextId = Resource01PTId,
+                                        Name = "resource project",
+                                        ShortName = "RES",
+                                        WritingSystem = new WritingSystem { Tag = "qaa" }
                                     }
                                 },
-                                new TextInfo
+                                CheckingConfig = new CheckingConfig { CheckingEnabled = true, ShareEnabled = false },
+                                UserRoles = new Dictionary<string, string>
                                 {
-                                    BookNum = 41,
-                                    Chapters =
+                                    { User01, SFProjectRole.Administrator },
+                                    { User02, SFProjectRole.CommunityChecker }
+                                },
+                                Texts =
+                                {
+                                    new TextInfo
                                     {
-                                        new Chapter { Number = 1, LastVerse = 3, IsValid = true, Permissions = { } },
-                                        new Chapter { Number = 2, LastVerse = 3, IsValid = true, Permissions = { } }
+                                        BookNum = 40,
+                                        Chapters =
+                                        {
+                                            new Chapter
+                                            {
+                                                Number = 1,
+                                                LastVerse = 3,
+                                                IsValid = true,
+                                                Permissions = { }
+                                            }
+                                        }
+                                    },
+                                    new TextInfo
+                                    {
+                                        BookNum = 41,
+                                        Chapters =
+                                        {
+                                            new Chapter
+                                            {
+                                                Number = 1,
+                                                LastVerse = 3,
+                                                IsValid = true,
+                                                Permissions = { }
+                                            },
+                                            new Chapter
+                                            {
+                                                Number = 2,
+                                                LastVerse = 3,
+                                                IsValid = true,
+                                                Permissions = { }
+                                            }
+                                        }
                                     }
                                 }
+                            },
+                            new SFProject
+                            {
+                                Id = Project06,
+                                Name = "project06",
+                                ParatextId = "paratext_" + Project06,
+                                CheckingConfig = new CheckingConfig
+                                {
+                                    CheckingEnabled = false,
+                                    ShareEnabled = true,
+                                    ShareLevel = TranslateShareLevel.Anyone
+                                },
+                                UserRoles = { { User01, SFProjectRole.CommunityChecker } }
+                            },
+                            new SFProject
+                            {
+                                Id = Resource01,
+                                ParatextId = Resource01PTId,
+                                Name = "resource project",
+                                ShortName = "RES",
+                                Texts =
+                                {
+                                    new TextInfo
+                                    {
+                                        BookNum = 40,
+                                        Chapters =
+                                        {
+                                            new Chapter
+                                            {
+                                                Number = 1,
+                                                LastVerse = 3,
+                                                IsValid = true,
+                                                Permissions = { }
+                                            }
+                                        }
+                                    },
+                                    new TextInfo
+                                    {
+                                        BookNum = 41,
+                                        Chapters =
+                                        {
+                                            new Chapter
+                                            {
+                                                Number = 1,
+                                                LastVerse = 3,
+                                                IsValid = true,
+                                                Permissions = { }
+                                            },
+                                            new Chapter
+                                            {
+                                                Number = 2,
+                                                LastVerse = 3,
+                                                IsValid = true,
+                                                Permissions = { }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            new SFProject
+                            {
+                                Id = DisabledSource,
+                                ParatextId = "pt_dis",
+                                Name = "Disabled Source Project",
+                                ShortName = "DSP",
+                                UserRoles = { { User01, SFProjectRole.Administrator } }
                             }
-                        },
-                        new SFProject
-                        {
-                            Id = DisabledSource,
-                            ParatextId = "pt_dis",
-                            Name = "Disabled Source Project",
-                            ShortName = "DSP",
-                            UserRoles = { { User01, SFProjectRole.Administrator } }
                         }
-                    }));
-                RealtimeService.AddRepository("sf_project_user_configs", OTType.Json0,
-                    new MemoryRepository<SFProjectUserConfig>(new[]
-                    {
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User01) },
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User02) },
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User05) },
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project02, User02) },
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project03, User01) },
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project03, User02) },
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(DisabledSource, User01) }
-                    }));
+                    )
+                );
+                RealtimeService.AddRepository(
+                    "sf_project_user_configs",
+                    OTType.Json0,
+                    new MemoryRepository<SFProjectUserConfig>(
+                        new[]
+                        {
+                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User01) },
+                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User02) },
+                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User05) },
+                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project02, User02) },
+                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project03, User01) },
+                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project03, User02) },
+                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(DisabledSource, User01) }
+                        }
+                    )
+                );
 
-                RealtimeService.AddRepository("paratext_note_threads", OTType.Json0,
-                    new MemoryRepository<NoteThread>(new[]
-                    {
-                        new NoteThread { Id = "project01:thread01", DataId = "thread01",
-                            Notes = new List<Note>()
+                RealtimeService.AddRepository(
+                    "paratext_note_threads",
+                    OTType.Json0,
+                    new MemoryRepository<NoteThread>(
+                        new[]
+                        {
+                            new NoteThread
                             {
-                                new Note { DataId = "thread01:PT01", SyncUserRef = "PT01" },
-                                new Note { DataId = "thread01:PT01", SyncUserRef = "PT02" }
-                            }
-                        },
-                        new NoteThread { Id = "project01:thread02", DataId = "thread02",
-                            Notes = new List<Note>()
+                                Id = "project01:thread01",
+                                DataId = "thread01",
+                                Notes = new List<Note>()
+                                {
+                                    new Note { DataId = "thread01:PT01", SyncUserRef = "PT01" },
+                                    new Note { DataId = "thread01:PT01", SyncUserRef = "PT02" }
+                                }
+                            },
+                            new NoteThread
                             {
-                                new Note { DataId = "thread02:PT01", SyncUserRef = "PT01" },
-                                new Note { DataId = "thread02:PT02", SyncUserRef = "PT02" }
-                            }
-                        },
-                    }));
+                                Id = "project01:thread02",
+                                DataId = "thread02",
+                                Notes = new List<Note>()
+                                {
+                                    new Note { DataId = "thread02:PT01", SyncUserRef = "PT01" },
+                                    new Note { DataId = "thread02:PT02", SyncUserRef = "PT02" }
+                                }
+                            },
+                        }
+                    )
+                );
                 var siteOptions = Substitute.For<IOptions<SiteOptions>>();
-                siteOptions.Value.Returns(new SiteOptions
-                {
-                    Id = SiteId,
-                    Name = "xForge",
-                    Origin = new Uri("http://localhost"),
-                    SiteDir = "xforge"
-                });
+                siteOptions.Value.Returns(
+                    new SiteOptions
+                    {
+                        Id = SiteId,
+                        Name = "xForge",
+                        Origin = new Uri("http://localhost"),
+                        SiteDir = "xforge"
+                    }
+                );
                 var audioService = Substitute.For<IAudioService>();
                 EmailService = Substitute.For<IEmailService>();
                 var currentTime = DateTime.Now;
-                ProjectSecrets = new MemoryRepository<SFProjectSecret>(new[]
-                {
-                    new SFProjectSecret {
-                        Id = Project01,
-                        ShareKeys = new List<ShareKey>
-                        {
-                        }
-                    },
-                    new SFProjectSecret
+                ProjectSecrets = new MemoryRepository<SFProjectSecret>(
+                    new[]
                     {
-                        Id = Project02,
-                        ShareKeys = new List<ShareKey>
+                        new SFProjectSecret
                         {
-                            new ShareKey
+                            Id = Project01,
+                            ShareKeys = new List<ShareKey> { }
+                        },
+                        new SFProjectSecret
+                        {
+                            Id = Project02,
+                            ShareKeys = new List<ShareKey>
                             {
-                                Key = "linksharing02",
-                                ProjectRole = SFProjectRole.CommunityChecker
-                            },
-                            new ShareKey
-                            {
-                                Email = "user03@example.com",
-                                Key = "existingkeyuser03",
-                                ExpirationTime = currentTime.AddDays(1),
-                                ProjectRole = SFProjectRole.CommunityChecker
+                                new ShareKey { Key = "linksharing02", ProjectRole = SFProjectRole.CommunityChecker },
+                                new ShareKey
+                                {
+                                    Email = "user03@example.com",
+                                    Key = "existingkeyuser03",
+                                    ExpirationTime = currentTime.AddDays(1),
+                                    ProjectRole = SFProjectRole.CommunityChecker
+                                }
                             }
-                        }
-                    },
-                    new SFProjectSecret
-                    {
-                        Id = Project03,
-                        ShareKeys = new List<ShareKey>
+                        },
+                        new SFProjectSecret
                         {
-                            new ShareKey
+                            Id = Project03,
+                            ShareKeys = new List<ShareKey>
                             {
-                                Email = "bob@example.com",
-                                Key = "key1111",
-                                ExpirationTime = currentTime.AddDays(1),
-                                ProjectRole = SFProjectRole.CommunityChecker
-                            },
-                            new ShareKey
-                            {
-                                Email = "expired@example.com",
-                                Key = "keyexp",
-                                ExpirationTime = currentTime.AddDays(-1),
-                                ProjectRole = SFProjectRole.CommunityChecker,
-                            },
-                            new ShareKey
-                            {
-                                Email = "user03@example.com",
-                                Key = "key1234",
-                                ExpirationTime = currentTime.AddDays(1),
-                                ProjectRole = SFProjectRole.CommunityChecker
-                            },
-                            new ShareKey
-                            {
-                                Email = "bill@example.com",
-                                Key = "key2222",
-                                ExpirationTime = currentTime.AddDays(1),
-                                ProjectRole = SFProjectRole.CommunityChecker
+                                new ShareKey
+                                {
+                                    Email = "bob@example.com",
+                                    Key = "key1111",
+                                    ExpirationTime = currentTime.AddDays(1),
+                                    ProjectRole = SFProjectRole.CommunityChecker
+                                },
+                                new ShareKey
+                                {
+                                    Email = "expired@example.com",
+                                    Key = "keyexp",
+                                    ExpirationTime = currentTime.AddDays(-1),
+                                    ProjectRole = SFProjectRole.CommunityChecker,
+                                },
+                                new ShareKey
+                                {
+                                    Email = "user03@example.com",
+                                    Key = "key1234",
+                                    ExpirationTime = currentTime.AddDays(1),
+                                    ProjectRole = SFProjectRole.CommunityChecker
+                                },
+                                new ShareKey
+                                {
+                                    Email = "bill@example.com",
+                                    Key = "key2222",
+                                    ExpirationTime = currentTime.AddDays(1),
+                                    ProjectRole = SFProjectRole.CommunityChecker
+                                }
                             }
-                        }
-                    },
-                    new SFProjectSecret
-                    {
-                        Id = Project04,
-                        ShareKeys = new List<ShareKey>
+                        },
+                        new SFProjectSecret
                         {
-                            new ShareKey {
-                                Key = "linksharing04",
-                                ProjectRole = SFProjectRole.SFObserver
-                            },
-                        }
-                    },
-                    new SFProjectSecret {
-                        Id = Project05,
-                        ShareKeys = new List<ShareKey>
-                        {
-                            new ShareKey
+                            Id = Project04,
+                            ShareKeys = new List<ShareKey>
                             {
-                                Email = "user03@example.com",
-                                Key = "key12345",
-                                ExpirationTime = currentTime.AddDays(1),
-                                ProjectRole = SFProjectRole.CommunityChecker
+                                new ShareKey { Key = "linksharing04", ProjectRole = SFProjectRole.SFObserver },
                             }
-                        }
-                    },
-                });
+                        },
+                        new SFProjectSecret
+                        {
+                            Id = Project05,
+                            ShareKeys = new List<ShareKey>
+                            {
+                                new ShareKey
+                                {
+                                    Email = "user03@example.com",
+                                    Key = "key12345",
+                                    ExpirationTime = currentTime.AddDays(1),
+                                    ProjectRole = SFProjectRole.CommunityChecker
+                                }
+                            }
+                        },
+                    }
+                );
                 EngineService = Substitute.For<IEngineService>();
                 SyncService = Substitute.For<ISyncService>();
-                SyncService.SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
+                SyncService
+                    .SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
                     .Returns(Task.CompletedTask);
                 ParatextService = Substitute.For<IParatextService>();
                 IReadOnlyList<ParatextProject> ptProjects = new[]
@@ -2250,18 +2862,9 @@ namespace SIL.XForge.Scripture.Services
                         Name = "NewSource",
                         LanguageTag = "qaa"
                     },
-                    new ParatextProject
-                    {
-                        ParatextId = GetProject(Project01).ParatextId
-                    },
-                    new ParatextProject
-                    {
-                        ParatextId = PTProjectIdNotYetInSF
-                    },
-                    new ParatextProject
-                    {
-                        ParatextId = "ptProject123"
-                    }
+                    new ParatextProject { ParatextId = GetProject(Project01).ParatextId },
+                    new ParatextProject { ParatextId = PTProjectIdNotYetInSF },
+                    new ParatextProject { ParatextId = "ptProject123" }
                 };
                 ParatextService.GetProjectsAsync(Arg.Any<UserSecret>()).Returns(Task.FromResult(ptProjects));
                 IReadOnlyList<ParatextResource> ptResources = new[]
@@ -2272,18 +2875,17 @@ namespace SIL.XForge.Scripture.Services
                         Name = "ResourceProject",
                         LanguageTag = "qaa"
                     },
-                    new ParatextResource
-                    {
-                        ParatextId = GetProject(Resource01).ParatextId
-                    }
+                    new ParatextResource { ParatextId = GetProject(Resource01).ParatextId }
                 };
                 ParatextService.GetResourcesAsync(Arg.Any<string>()).Returns(ptResources);
-                UserSecrets = new MemoryRepository<UserSecret>(new[]
-                {
-                    new UserSecret { Id = User01 },
-                    new UserSecret { Id = User02 },
-                    new UserSecret { Id = User03 }
-                });
+                UserSecrets = new MemoryRepository<UserSecret>(
+                    new[]
+                    {
+                        new UserSecret { Id = User01 },
+                        new UserSecret { Id = User02 },
+                        new UserSecret { Id = User03 }
+                    }
+                );
                 var translateMetrics = new MemoryRepository<TranslateMetrics>();
                 FileSystemService = Substitute.For<IFileSystemService>();
                 var options = Options.Create(new LocalizationOptions { ResourcesPath = "Resources" });
@@ -2293,13 +2895,29 @@ namespace SIL.XForge.Scripture.Services
                 SecurityService.GenerateKey().Returns("1234abc");
                 var transceleratorService = Substitute.For<ITransceleratorService>();
 
-                ParatextService.IsResource(Arg.Any<string>()).Returns(callInfo =>
-                    callInfo.ArgAt<string>(0).Length == SFInstallableDblResource.ResourceIdentifierLength
-                );
+                ParatextService
+                    .IsResource(Arg.Any<string>())
+                    .Returns(
+                        callInfo =>
+                            callInfo.ArgAt<string>(0).Length == SFInstallableDblResource.ResourceIdentifierLength
+                    );
 
-                Service = new SFProjectService(RealtimeService, siteOptions, audioService, EmailService, ProjectSecrets,
-                    SecurityService, FileSystemService, EngineService, SyncService, ParatextService, UserSecrets,
-                    translateMetrics, Localizer, transceleratorService);
+                Service = new SFProjectService(
+                    RealtimeService,
+                    siteOptions,
+                    audioService,
+                    EmailService,
+                    ProjectSecrets,
+                    SecurityService,
+                    FileSystemService,
+                    EngineService,
+                    SyncService,
+                    ParatextService,
+                    UserSecrets,
+                    translateMetrics,
+                    Localizer,
+                    transceleratorService
+                );
             }
 
             public SFProjectService Service { get; }

@@ -8,7 +8,8 @@ namespace SIL.XForge.Scripture.Services
     {
         public bool Equals(Dictionary<TKey, TValue> x, Dictionary<TKey, TValue> y)
         {
-            return (x ?? new Dictionary<TKey, TValue>()).OrderBy(p => p.Key)
+            return (x ?? new Dictionary<TKey, TValue>())
+                .OrderBy(p => p.Key)
                 .SequenceEqual((y ?? new Dictionary<TKey, TValue>()).OrderBy(p => p.Key));
         }
 

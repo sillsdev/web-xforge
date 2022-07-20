@@ -33,12 +33,17 @@ namespace SIL.XForge.Scripture.I18N
                 var keyValue = (string)propInfo.GetValue(null);
                 var englishStringFromResource = localizer.GetString(keyValue);
                 // verify that each key is found
-                Assert.IsFalse(englishStringFromResource.ResourceNotFound,
-                    "Missing english string from .resx for " + propInfo.Name);
+                Assert.IsFalse(
+                    englishStringFromResource.ResourceNotFound,
+                    "Missing english string from .resx for " + propInfo.Name
+                );
             }
 
-            Assert.AreEqual(publicProps.Length, localizer.GetAllStrings().Count(),
-                "There are extra strings in the SharedResources.en.resx which are not in the SharedResource.Keys class");
+            Assert.AreEqual(
+                publicProps.Length,
+                localizer.GetAllStrings().Count(),
+                "There are extra strings in the SharedResources.en.resx which are not in the SharedResource.Keys class"
+            );
         }
     }
 }

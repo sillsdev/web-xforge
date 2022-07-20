@@ -39,8 +39,10 @@ namespace SIL.XForge.Scripture.Services
                 if (attempt.TryResult(out SFProject project))
                 {
                     string userId = context.User.FindFirst(XFClaimTypes.UserId)?.Value;
-                    if (project.UserRoles.TryGetValue(userId, out string role)
-                        && (role == SFProjectRole.Administrator || role == SFProjectRole.Translator))
+                    if (
+                        project.UserRoles.TryGetValue(userId, out string role)
+                        && (role == SFProjectRole.Administrator || role == SFProjectRole.Translator)
+                    )
                     {
                         List<IAuthorizationRequirement> pendingRequirements = context.PendingRequirements.ToList();
                         foreach (IAuthorizationRequirement requirement in pendingRequirements)

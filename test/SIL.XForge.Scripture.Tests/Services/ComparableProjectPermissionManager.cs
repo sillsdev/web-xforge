@@ -11,12 +11,10 @@ namespace SIL.XForge.Scripture.Services
     /// <seealso cref="ProjectPermissionManager" />
     /// <seealso cref="IEquatable{ComparableProjectPermissionManager}" />
     public class ComparableProjectPermissionManager
-        : ProjectPermissionManager, IEquatable<ComparableProjectPermissionManager>
+        : ProjectPermissionManager,
+            IEquatable<ComparableProjectPermissionManager>
     {
-        public ComparableProjectPermissionManager(ScrText scrText)
-            : base(scrText)
-        {
-        }
+        public ComparableProjectPermissionManager(ScrText scrText) : base(scrText) { }
 
         /// <summary>
         /// Gets the XML data.
@@ -26,7 +24,6 @@ namespace SIL.XForge.Scripture.Services
         /// </remarks>
         private string XmlData => Memento.ToXmlString(Data, false, true);
 
-        public bool Equals(ComparableProjectPermissionManager other)
-            => this.XmlData == other?.XmlData;
+        public bool Equals(ComparableProjectPermissionManager other) => this.XmlData == other?.XmlData;
     }
 }

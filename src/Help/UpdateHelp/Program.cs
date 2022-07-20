@@ -174,8 +174,11 @@ namespace UpdateHelp
         /// <summary>
         /// Add menu translations from menu_[target].json file.
         /// </summary>
-        static void AddMenuTranslations(Dictionary<string, string> translations, string sourceMenuPath,
-            string targetMenuPath)
+        static void AddMenuTranslations(
+            Dictionary<string, string> translations,
+            string sourceMenuPath,
+            string targetMenuPath
+        )
         {
             string sourceMenuJson = File.ReadAllText(sourceMenuPath);
             string targetMenuJson = File.ReadAllText(targetMenuPath);
@@ -214,8 +217,8 @@ namespace UpdateHelp
             string result = "";
             var doc = new HtmlDocument();
             doc.Load(file);
-            HtmlNode heading = doc.DocumentNode.SelectSingleNode("//body/h1") ??
-                doc.DocumentNode.SelectSingleNode("//body/h2");
+            HtmlNode heading =
+                doc.DocumentNode.SelectSingleNode("//body/h1") ?? doc.DocumentNode.SelectSingleNode("//body/h2");
 
             if (heading != null)
             {
@@ -253,8 +256,12 @@ namespace UpdateHelp
         /// Find all idata???.js files, extract the containing XML, and parse and extract the topics.
         /// Replace translated topic names in all idata???.js and idata???.new.js files.
         /// </summary>
-        static void UpdateIdataFiles(string sourcePath, string targetPath, Dictionary<string, string> translations,
-            bool doWrite)
+        static void UpdateIdataFiles(
+            string sourcePath,
+            string targetPath,
+            Dictionary<string, string> translations,
+            bool doWrite
+        )
         {
             try
             {
@@ -271,10 +278,16 @@ namespace UpdateHelp
                     {
                         string idataFilePath = Path.Combine(targetPath, Path.GetFileName(file));
                         ReplaceTranslationsInFile(idataFilePath, topicTextInIdata, topicUrlsByName.Keys, translations);
-                        string idataNewFilePath = Path.Combine(targetPath,
-                            Path.GetFileNameWithoutExtension(file) + ".new" + Path.GetExtension(file));
-                        ReplaceTranslationsInFile(idataNewFilePath, topicTextInIdataNew, topicUrlsByName.Keys,
-                            translations);
+                        string idataNewFilePath = Path.Combine(
+                            targetPath,
+                            Path.GetFileNameWithoutExtension(file) + ".new" + Path.GetExtension(file)
+                        );
+                        ReplaceTranslationsInFile(
+                            idataNewFilePath,
+                            topicTextInIdataNew,
+                            topicUrlsByName.Keys,
+                            translations
+                        );
                     }
                 }
             }
@@ -288,21 +301,25 @@ namespace UpdateHelp
         /// Find all toc???.js files, extract the containing XML, and parse and extract the books.
         /// Replace translated book names in all toc???.js and toc???.new.js files.
         /// </summary>
-        static void UpdateTocFiles(string sourcePath, string targetPath, Dictionary<string, string> translations,
-            bool doWrite)
+        static void UpdateTocFiles(
+            string sourcePath,
+            string targetPath,
+            Dictionary<string, string> translations,
+            bool doWrite
+        )
         {
             try
             {
                 string[] files = Directory.GetFiles(sourcePath, "toc???.js");
                 Console.WriteLine($"There are {files.Length} toc source files.");
-                Func<string, string> bookTextInToc =
-                    bookName => $"<book name=\\\"{SecurityElement.Escape(bookName)}\\\"";
-                Func<string, string> bookTextInTocNew =
-                    bookName => $"\"name\":\"{HttpUtility.JavaScriptStringEncode(bookName)}\",\"type\":\"book\"";
-                Func<string, string> itemTextInToc =
-                    itemName => $"<item name=\\\"{SecurityElement.Escape(itemName)}\\\"";
-                Func<string, string> itemTextInTocNew =
-                    itemName => $"\"name\":\"{HttpUtility.JavaScriptStringEncode(itemName)}\",\"type\":\"item\"";
+                Func<string, string> bookTextInToc = bookName =>
+                    $"<book name=\\\"{SecurityElement.Escape(bookName)}\\\"";
+                Func<string, string> bookTextInTocNew = bookName =>
+                    $"\"name\":\"{HttpUtility.JavaScriptStringEncode(bookName)}\",\"type\":\"book\"";
+                Func<string, string> itemTextInToc = itemName =>
+                    $"<item name=\\\"{SecurityElement.Escape(itemName)}\\\"";
+                Func<string, string> itemTextInTocNew = itemName =>
+                    $"\"name\":\"{HttpUtility.JavaScriptStringEncode(itemName)}\",\"type\":\"item\"";
                 var bookSrcsByName = new Dictionary<string, string>();
                 var itemUrlsByName = new Dictionary<string, string>();
                 foreach (string file in files)
@@ -315,8 +332,10 @@ namespace UpdateHelp
                         string tocFilePath = Path.Combine(targetPath, Path.GetFileName(file));
                         ReplaceTranslationsInFile(tocFilePath, bookTextInToc, bookSrcsByName.Keys, translations);
                         ReplaceTranslationsInFile(tocFilePath, itemTextInToc, itemUrlsByName.Keys, translations);
-                        string tocNewFilePath = Path.Combine(targetPath,
-                            Path.GetFileNameWithoutExtension(file) + ".new" + Path.GetExtension(file));
+                        string tocNewFilePath = Path.Combine(
+                            targetPath,
+                            Path.GetFileNameWithoutExtension(file) + ".new" + Path.GetExtension(file)
+                        );
                         ReplaceTranslationsInFile(tocNewFilePath, bookTextInTocNew, bookSrcsByName.Keys, translations);
                         ReplaceTranslationsInFile(tocNewFilePath, itemTextInTocNew, itemUrlsByName.Keys, translations);
                     }
@@ -341,14 +360,16 @@ namespace UpdateHelp
             HtmlNode searchInputDiv = doc.DocumentNode.SelectSingleNode("//div[@class='search-input']");
             HtmlNode searchResultsDiv = doc.DocumentNode.SelectSingleNode("//div[@class='searchresults left-pane']");
 
-            HtmlNode node = HtmlNode.CreateNode("<style>body.media-desktop div.searchresults.search-sidebar " +
-                "a.gs-title { color: #1155CC; }</style>");
+            HtmlNode node = HtmlNode.CreateNode(
+                "<style>body.media-desktop div.searchresults.search-sidebar " + "a.gs-title { color: #1155CC; }</style>"
+            );
             if (head.FirstChild.Name == "style")
                 head.FirstChild.Remove();
             head.PrependChild(node);
 
             node = HtmlNode.CreateNode(
-                $"<script async src=\"https://cse.google.com/cse.js?cx={searchEngineID}\"></script>");
+                $"<script async src=\"https://cse.google.com/cse.js?cx={searchEngineID}\"></script>"
+            );
             if (searchBarDiv.FirstChild.Name == "script")
                 searchBarDiv.FirstChild.Remove();
             searchBarDiv.PrependChild(node);
@@ -376,8 +397,7 @@ namespace UpdateHelp
             HtmlNode gloButton = doc.DocumentNode.SelectSingleNode("//a[@class='glo']");
             HtmlNode filterButton = doc.DocumentNode.SelectSingleNode("//a[@class='filter']");
             HtmlNode searchButton = doc.DocumentNode.SelectSingleNode("//a[@class='fts']");
-            HtmlNode searchbarExtraInput =
-                doc.DocumentNode.SelectSingleNode("//div[@class='searchbar-extra']");
+            HtmlNode searchbarExtraInput = doc.DocumentNode.SelectSingleNode("//div[@class='searchbar-extra']");
             if (idxButton != null)
                 idxButton.Remove();
             if (gloButton != null)
@@ -425,8 +445,13 @@ namespace UpdateHelp
         /// <summary>
         /// Extract 2 specified attributes on a particular element from XML.
         /// </summary>
-        static void ExtractXmlElementAttributes(XDocument doc, string elementName, string attr1Name, string att2Name,
-            Dictionary<string, string> attr2ByAttr1)
+        static void ExtractXmlElementAttributes(
+            XDocument doc,
+            string elementName,
+            string attr1Name,
+            string att2Name,
+            Dictionary<string, string> attr2ByAttr1
+        )
         {
             IEnumerable<XElement> elementList = doc.XPathSelectElements($"//{elementName}");
             foreach (XElement element in elementList)
@@ -437,8 +462,10 @@ namespace UpdateHelp
                 {
                     if (savedAttr2 == attr2)
                         return;
-                    throw new Exception($"Same {elementName} '{attr1Name}' ({attr1}) but different '{att2Name}' " +
-                        $"({savedAttr2} {attr2})");
+                    throw new Exception(
+                        $"Same {elementName} '{attr1Name}' ({attr1}) but different '{att2Name}' "
+                            + $"({savedAttr2} {attr2})"
+                    );
                 }
                 attr2ByAttr1.Add(attr1, attr2);
             }
@@ -447,8 +474,12 @@ namespace UpdateHelp
         /// <summary>
         /// Replace translatable text in the specified file using the expression function.
         /// </summary>
-        static void ReplaceTranslationsInFile(string filePath, Func<string, string> textExpression,
-            Dictionary<string, string>.KeyCollection sources, Dictionary<string, string> translations)
+        static void ReplaceTranslationsInFile(
+            string filePath,
+            Func<string, string> textExpression,
+            Dictionary<string, string>.KeyCollection sources,
+            Dictionary<string, string> translations
+        )
         {
             string text = File.ReadAllText(filePath);
             foreach (string source in sources)

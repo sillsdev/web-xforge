@@ -57,13 +57,9 @@ namespace SIL.XForge.Realtime
         /// </summary>
         internal int CallCountDeleteUserAsync { get; set; } = 0;
 
-        public void StartServer()
-        {
-        }
+        public void StartServer() { }
 
-        public void StopServer()
-        {
-        }
+        public void StopServer() { }
 
         public Task<IConnection> ConnectAsync(string userId = null)
         {

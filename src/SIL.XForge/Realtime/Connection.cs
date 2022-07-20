@@ -122,16 +122,28 @@ namespace SIL.XForge.Realtime
                     switch (queuedOperation.Action)
                     {
                         case QueuedAction.Create:
-                            await _realtimeServer.CreateDocAsync(queuedOperation.Handle, queuedOperation.Collection,
-                                queuedOperation.Id, queuedOperation.Data, queuedOperation.OtTypeName);
+                            await _realtimeServer.CreateDocAsync(
+                                queuedOperation.Handle,
+                                queuedOperation.Collection,
+                                queuedOperation.Id,
+                                queuedOperation.Data,
+                                queuedOperation.OtTypeName
+                            );
                             break;
                         case QueuedAction.Delete:
-                            await _realtimeServer.DeleteDocAsync(queuedOperation.Handle, queuedOperation.Collection,
-                                queuedOperation.Id);
+                            await _realtimeServer.DeleteDocAsync(
+                                queuedOperation.Handle,
+                                queuedOperation.Collection,
+                                queuedOperation.Id
+                            );
                             break;
                         case QueuedAction.Submit:
-                            await _realtimeServer.SubmitOpAsync<object>(queuedOperation.Handle,
-                                queuedOperation.Collection, queuedOperation.Id, queuedOperation.Op);
+                            await _realtimeServer.SubmitOpAsync<object>(
+                                queuedOperation.Handle,
+                                queuedOperation.Collection,
+                                queuedOperation.Id,
+                                queuedOperation.Op
+                            );
                             break;
                     }
                 }
@@ -163,22 +175,20 @@ namespace SIL.XForge.Realtime
             if (_isTransaction)
             {
                 // Queue this operation
-                _queuedOperations.Enqueue(new QueuedOperation
-                {
-                    Action = QueuedAction.Create,
-                    Collection = collection,
-                    Data = data,
-                    Handle = _handle,
-                    Id = id,
-                    OtTypeName = otTypeName,
-                });
+                _queuedOperations.Enqueue(
+                    new QueuedOperation
+                    {
+                        Action = QueuedAction.Create,
+                        Collection = collection,
+                        Data = data,
+                        Handle = _handle,
+                        Id = id,
+                        OtTypeName = otTypeName,
+                    }
+                );
 
                 // Return a snapshot
-                return new Snapshot<T>
-                {
-                    Data = data,
-                    Version = 1,
-                };
+                return new Snapshot<T> { Data = data, Version = 1, };
             }
             else
             {
@@ -197,13 +207,15 @@ namespace SIL.XForge.Realtime
             if (_isTransaction)
             {
                 // Queue this operation
-                _queuedOperations.Enqueue(new QueuedOperation
-                {
-                    Action = QueuedAction.Delete,
-                    Collection = collection,
-                    Handle = _handle,
-                    Id = id,
-                });
+                _queuedOperations.Enqueue(
+                    new QueuedOperation
+                    {
+                        Action = QueuedAction.Delete,
+                        Collection = collection,
+                        Handle = _handle,
+                        Id = id,
+                    }
+                );
             }
             else
             {
@@ -229,8 +241,9 @@ namespace SIL.XForge.Realtime
             if (_isTransaction)
             {
                 // Exclude the property, if we are in a transaction state
-                string excluded =
-                    (typeof(T).Name + "." + string.Join('.', new ObjectPath(field).Items)).ToLowerInvariant();
+                string excluded = (
+                    typeof(T).Name + "." + string.Join('.', new ObjectPath(field).Items)
+                ).ToLowerInvariant();
                 _excludedProperties.Add(excluded);
             }
             else
@@ -265,11 +278,14 @@ namespace SIL.XForge.Realtime
         public IDocument<T> Get<T>(string id) where T : IIdentifiable
         {
             DocConfig docConfig = _realtimeService.GetDocConfig<T>();
-            object doc = _documents.GetOrAdd((docConfig.CollectionName, id), key =>
-            {
-                string otTypeName = docConfig.OTTypeName;
-                return new Document<T>(this, otTypeName, docConfig.CollectionName, id);
-            });
+            object doc = _documents.GetOrAdd(
+                (docConfig.CollectionName, id),
+                key =>
+                {
+                    string otTypeName = docConfig.OTTypeName;
+                    return new Document<T>(this, otTypeName, docConfig.CollectionName, id);
+                }
+            );
             return (Document<T>)doc;
         }
 
@@ -307,8 +323,13 @@ namespace SIL.XForge.Realtime
         /// <returns>
         /// A snapshot of the document with the submitted operation from the realtime server.
         /// </returns>
-        public async Task<Snapshot<T>> SubmitOpAsync<T>(string collection, string id, object op, T currentDoc,
-            int currentVersion)
+        public async Task<Snapshot<T>> SubmitOpAsync<T>(
+            string collection,
+            string id,
+            object op,
+            T currentDoc,
+            int currentVersion
+        )
         {
             if (_isTransaction)
             {
@@ -326,14 +347,16 @@ namespace SIL.XForge.Realtime
                 }
 
                 // Queue this operation
-                _queuedOperations.Enqueue(new QueuedOperation
-                {
-                    Action = QueuedAction.Submit,
-                    Collection = collection,
-                    Handle = _handle,
-                    Id = id,
-                    Op = op,
-                });
+                _queuedOperations.Enqueue(
+                    new QueuedOperation
+                    {
+                        Action = QueuedAction.Submit,
+                        Collection = collection,
+                        Handle = _handle,
+                        Id = id,
+                        Op = op,
+                    }
+                );
 
                 // Return the operation applied to the object
                 string otTypeName = op is IEnumerable<Json0Op> || op is Json0Op ? OTType.Json0 : OTType.RichText;

@@ -7,9 +7,7 @@ namespace SIL.XForge.Scripture.Services
 {
     public class MockCommentTags : CommentTags
     {
-        public MockCommentTags(ScrText scrText) : base(scrText)
-        {
-        }
+        public MockCommentTags(ScrText scrText) : base(scrText) { }
 
         public CommentTags.CommentTagList TagsList
         {

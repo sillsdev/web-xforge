@@ -58,8 +58,9 @@ namespace PtdaSyncAll
             }
             catch
             {
-                Logger.Log($"There was a problem parsing the SYNC_SET SF project ids "
-                    + $"environment variable. Rethrowing.");
+                Logger.Log(
+                    $"There was a problem parsing the SYNC_SET SF project ids " + $"environment variable. Rethrowing."
+                );
                 throw;
             }
 
@@ -88,8 +89,10 @@ namespace PtdaSyncAll
             }
             catch (HttpRequestException)
             {
-                Logger.Log("There was an error starting the program before getting to the inspection or migration. "
-                    + "Maybe the SF server is running on this machine and needs shut down? Rethrowing.");
+                Logger.Log(
+                    "There was an error starting the program before getting to the inspection or migration. "
+                        + "Maybe the SF server is running on this machine and needs shut down? Rethrowing."
+                );
                 throw;
             }
             ISyncAllService tool = webHost.Services.GetService<ISyncAllService>();
@@ -114,7 +117,8 @@ namespace PtdaSyncAll
                 .Build();
 
             return builder
-                .ConfigureAppConfiguration((context, config) =>
+                .ConfigureAppConfiguration(
+                    (context, config) =>
                     {
                         IWebHostEnvironment env = context.HostingEnvironment;
                         if (env.IsDevelopment() || env.IsEnvironment("Testing"))
@@ -128,7 +132,8 @@ namespace PtdaSyncAll
                                 config.AddUserSecrets(appAssembly, true);
                         }
                         config.AddEnvironmentVariables();
-                    })
+                    }
+                )
                 .UseConfiguration(configuration)
                 .UseStartup<Startup>();
         }

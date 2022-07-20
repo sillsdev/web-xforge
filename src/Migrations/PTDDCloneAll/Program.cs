@@ -25,7 +25,6 @@ using SIL.XForge.Scripture;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
 
-
 namespace PTDDCloneAll
 {
     public class Program
@@ -45,8 +44,10 @@ namespace PTDDCloneAll
             }
             catch (HttpRequestException)
             {
-                Log("There was an error starting the program before getting to the migration"
-                    + " part. Maybe the SF server is running and needs shut down? Rethrowing.");
+                Log(
+                    "There was an error starting the program before getting to the migration"
+                        + " part. Maybe the SF server is running and needs shut down? Rethrowing."
+                );
                 throw;
             }
             await SelectProjectsAndClone(webHost, mode);
@@ -68,8 +69,9 @@ namespace PTDDCloneAll
             }
             catch
             {
-                Log($"There was a problem parsing the CLONE_SET SF project ids "
-                    + $"environment variable. Rethrowing.");
+                Log(
+                    $"There was a problem parsing the CLONE_SET SF project ids " + $"environment variable. Rethrowing."
+                );
                 throw;
             }
             IRealtimeService realtimeService = webHost.Services.GetService<IRealtimeService>();
@@ -105,7 +107,8 @@ namespace PTDDCloneAll
                 .Build();
 
             return builder
-                .ConfigureAppConfiguration((context, config) =>
+                .ConfigureAppConfiguration(
+                    (context, config) =>
                     {
                         IWebHostEnvironment env = context.HostingEnvironment;
                         if (env.IsDevelopment() || env.IsEnvironment("Testing"))
@@ -119,7 +122,8 @@ namespace PTDDCloneAll
                                 config.AddUserSecrets(appAssembly, true);
                         }
                         config.AddEnvironmentVariables();
-                    })
+                    }
+                )
                 .UseConfiguration(configuration)
                 .UseStartup<Startup>();
         }

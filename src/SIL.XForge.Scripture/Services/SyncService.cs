@@ -27,7 +27,8 @@ namespace SIL.XForge.Scripture.Services
             IBackgroundJobClient backgroundJobClient,
             IRepository<SFProjectSecret> projectSecrets,
             IRealtimeService realtimeService,
-            ILogger<SyncService> logger)
+            ILogger<SyncService> logger
+        )
         {
             _backgroundJobClient = backgroundJobClient;
             _projectSecrets = projectSecrets;
@@ -64,8 +65,11 @@ namespace SIL.XForge.Scripture.Services
                     else
                     {
                         // Load the source project secrets, so we can store the job id
-                        if (!(await _projectSecrets.TryGetAsync(sourceProjectId))
-                            .TryResult(out SFProjectSecret sourceProjectSecret))
+                        if (
+                            !(await _projectSecrets.TryGetAsync(sourceProjectId)).TryResult(
+                                out SFProjectSecret sourceProjectSecret
+                            )
+                        )
                         {
                             throw new ArgumentException("The source project secret cannot be found.");
                         }
@@ -77,36 +81,50 @@ namespace SIL.XForge.Scripture.Services
                         // We need to sync the source first so that we can link the source texts and train the engine.
                         string sourceJobId = _backgroundJobClient.Schedule<ParatextSyncRunner>(
                             r => r.RunAsync(sourceProjectId, curUserId, false, CancellationToken.None),
-                            TimeSpan.FromMinutes(5));
-                        string targetJobId = _backgroundJobClient.ContinueJobWith<ParatextSyncRunner>(sourceJobId,
-                            r => r.RunAsync(projectId, curUserId, trainEngine, CancellationToken.None), null,
-                            JobContinuationOptions.OnAnyFinishedState);
+                            TimeSpan.FromMinutes(5)
+                        );
+                        string targetJobId = _backgroundJobClient.ContinueJobWith<ParatextSyncRunner>(
+                            sourceJobId,
+                            r => r.RunAsync(projectId, curUserId, trainEngine, CancellationToken.None),
+                            null,
+                            JobContinuationOptions.OnAnyFinishedState
+                        );
                         try
                         {
                             await sourceProjectDoc.SubmitJson0OpAsync(op =>
                             {
                                 op.Inc(pd => pd.Sync.QueuedCount);
                             });
-                            WarnIfAnomalousQueuedCount(sourceProjectDoc.Data.Sync.QueuedCount,
-                                $"For parent SF project id {sourceProjectDoc.Id} after inc.");
+                            WarnIfAnomalousQueuedCount(
+                                sourceProjectDoc.Data.Sync.QueuedCount,
+                                $"For parent SF project id {sourceProjectDoc.Id} after inc."
+                            );
                             await projectDoc.SubmitJson0OpAsync(op =>
                             {
                                 op.Inc(pd => pd.Sync.QueuedCount);
                             });
-                            WarnIfAnomalousQueuedCount(projectDoc.Data.Sync.QueuedCount,
-                                $"For daughter SF project id {projectDoc.Id} after inc.");
+                            WarnIfAnomalousQueuedCount(
+                                projectDoc.Data.Sync.QueuedCount,
+                                $"For daughter SF project id {projectDoc.Id} after inc."
+                            );
 
                             // Store the source job id so we can cancel the job later if needed
-                            await _projectSecrets.UpdateAsync(sourceProjectSecret.Id, u =>
-                            {
-                                u.Add(p => p.JobIds, sourceJobId);
-                            });
+                            await _projectSecrets.UpdateAsync(
+                                sourceProjectSecret.Id,
+                                u =>
+                                {
+                                    u.Add(p => p.JobIds, sourceJobId);
+                                }
+                            );
 
                             // Store the target job id so we can cancel the job later if needed
-                            await _projectSecrets.UpdateAsync(projectSecret.Id, u =>
-                            {
-                                u.Add(p => p.JobIds, targetJobId);
-                            });
+                            await _projectSecrets.UpdateAsync(
+                                projectSecret.Id,
+                                u =>
+                                {
+                                    u.Add(p => p.JobIds, targetJobId);
+                                }
+                            );
 
                             _backgroundJobClient.ChangeState(sourceJobId, new EnqueuedState());
                         }
@@ -127,21 +145,27 @@ namespace SIL.XForge.Scripture.Services
                 // See the comments in the block above regarding scheduling for rationale on the process
                 string jobId = _backgroundJobClient.Schedule<ParatextSyncRunner>(
                     r => r.RunAsync(projectId, curUserId, trainEngine, CancellationToken.None),
-                    TimeSpan.FromMinutes(5));
+                    TimeSpan.FromMinutes(5)
+                );
                 try
                 {
                     await projectDoc.SubmitJson0OpAsync(op =>
                     {
                         op.Inc(pd => pd.Sync.QueuedCount);
                     });
-                    WarnIfAnomalousQueuedCount(projectDoc.Data.Sync.QueuedCount,
-                        $"For SF project id {projectDoc.Id} after inc.");
+                    WarnIfAnomalousQueuedCount(
+                        projectDoc.Data.Sync.QueuedCount,
+                        $"For SF project id {projectDoc.Id} after inc."
+                    );
 
                     // Store the job id so we can cancel the job later if needed
-                    await _projectSecrets.UpdateAsync(projectSecret.Id, u =>
-                    {
-                        u.Add(p => p.JobIds, jobId);
-                    });
+                    await _projectSecrets.UpdateAsync(
+                        projectSecret.Id,
+                        u =>
+                        {
+                            u.Add(p => p.JobIds, jobId);
+                        }
+                    );
 
                     _backgroundJobClient.ChangeState(jobId, new EnqueuedState());
                 }
@@ -209,13 +233,18 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 // Remove all job ids from the project secrets
-                await _projectSecrets.UpdateAsync(projectSecret.Id, u =>
-                {
-                    u.Set(p => p.JobIds, new List<string>());
-                });
+                await _projectSecrets.UpdateAsync(
+                    projectSecret.Id,
+                    u =>
+                    {
+                        u.Set(p => p.JobIds, new List<string>());
+                    }
+                );
 
-                WarnIfAnomalousQueuedCount(projectDoc.Data.Sync.QueuedCount,
-                    $"For SF project id {projectDoc.Id} before setting QueuedCount to 0 as part of cancelling.");
+                WarnIfAnomalousQueuedCount(
+                    projectDoc.Data.Sync.QueuedCount,
+                    $"For SF project id {projectDoc.Id} before setting QueuedCount to 0 as part of cancelling."
+                );
                 // Mark sync as cancelled
                 await projectDoc.SubmitJson0OpAsync(op =>
                 {

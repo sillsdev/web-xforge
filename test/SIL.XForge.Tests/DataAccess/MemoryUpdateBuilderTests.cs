@@ -130,23 +130,20 @@ namespace SIL.XForge.DataAccess
                 TestEntity = new TestEntity
                 {
                     Id = "test_id_1",
-                    TestChildCollection = new List<TestEntity>
-                    {
-                        new TestEntity { Id = "test_id_2" },
-                    },
+                    TestChildCollection = new List<TestEntity> { new TestEntity { Id = "test_id_2" }, },
                     TestNumber = 1,
-                    TestStringCollection = new List<string>
-                    {
-                        "test_value_1",
-                        "test_value_2",
-                    },
+                    TestStringCollection = new List<string> { "test_value_1", "test_value_2", },
                     TestStringField = "test_value",
                 };
 
                 // Set up the memory update builder for the test entity
-                MemoryUpdateBuilder =
-                    new MemoryUpdateBuilder<TestEntity>(e => e.Id == TestEntity.Id, TestEntity, setOnInsert);
+                MemoryUpdateBuilder = new MemoryUpdateBuilder<TestEntity>(
+                    e => e.Id == TestEntity.Id,
+                    TestEntity,
+                    setOnInsert
+                );
             }
+
             public MemoryUpdateBuilder<TestEntity> MemoryUpdateBuilder { get; }
             public TestEntity TestEntity { get; }
         }

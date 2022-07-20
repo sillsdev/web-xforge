@@ -15,19 +15,28 @@ namespace SIL.XForge.Scripture.Services
         private readonly IOptions<SiteOptions> _siteOptions;
         private readonly IHgWrapper _hgWrapper;
 
-        public InternetSharedRepositorySourceProvider(IJwtTokenHelper jwtTokenHelper, IOptions<SiteOptions> siteOptions,
-            IHgWrapper hgWrapper)
+        public InternetSharedRepositorySourceProvider(
+            IJwtTokenHelper jwtTokenHelper,
+            IOptions<SiteOptions> siteOptions,
+            IHgWrapper hgWrapper
+        )
         {
             _jwtTokenHelper = jwtTokenHelper;
             _siteOptions = siteOptions;
             _hgWrapper = hgWrapper;
         }
 
-        public IInternetSharedRepositorySource GetSource(UserSecret userSecret, string sendReceiveServerUri,
-            string registryServerUri)
+        public IInternetSharedRepositorySource GetSource(
+            UserSecret userSecret,
+            string sendReceiveServerUri,
+            string registryServerUri
+        )
         {
-            if (userSecret == null || string.IsNullOrEmpty(sendReceiveServerUri)
-                || string.IsNullOrEmpty(registryServerUri))
+            if (
+                userSecret == null
+                || string.IsNullOrEmpty(sendReceiveServerUri)
+                || string.IsNullOrEmpty(registryServerUri)
+            )
             {
                 throw new ArgumentException();
             }
@@ -39,9 +48,13 @@ namespace SIL.XForge.Scripture.Services
             }
             var ptUser = new SFParatextUser(ptUsername);
             JwtRestClient jwtClient = GenerateParatextRegistryJwtClient(userSecret, registryServerUri);
-            IInternetSharedRepositorySource source =
-                new JwtInternetSharedRepositorySource(userSecret.ParatextTokens.AccessToken,
-                    jwtClient, _hgWrapper, ptUser, sendReceiveServerUri);
+            IInternetSharedRepositorySource source = new JwtInternetSharedRepositorySource(
+                userSecret.ParatextTokens.AccessToken,
+                jwtClient,
+                _hgWrapper,
+                ptUser,
+                sendReceiveServerUri
+            );
             source.RefreshToken(userSecret.ParatextTokens.AccessToken);
             return source;
         }

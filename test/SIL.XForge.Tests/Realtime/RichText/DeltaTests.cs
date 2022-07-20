@@ -32,32 +32,36 @@ namespace SIL.XForge.Realtime.RichText
         [Test]
         public void Insert_ConsecutiveTextsMatchingAttrs_MergeOps()
         {
-            var delta = Delta.New()
-                .Insert("a", new { bold = true })
-                .Insert("b", new { bold = true });
+            var delta = Delta.New().Insert("a", new { bold = true }).Insert("b", new { bold = true });
             Assert.That(delta.Ops, Is.EqualTo(Objs(new { insert = "ab", attributes = new { bold = true } })));
         }
 
         [Test]
         public void Insert_ConsecutiveTextsDifferentAttrs_TwoOps()
         {
-            var delta = Delta.New()
-                .Insert("a", new { bold = true })
-                .Insert("b");
-            Assert.That(delta.Ops, Is.EqualTo(Objs(
-                new { insert = "a", attributes = new { bold = true } },
-                new { insert = "b" })));
+            var delta = Delta.New().Insert("a", new { bold = true }).Insert("b");
+            Assert.That(
+                delta.Ops,
+                Is.EqualTo(Objs(new { insert = "a", attributes = new { bold = true } }, new { insert = "b" }))
+            );
         }
 
         [Test]
         public void Insert_ConsecutiveEmbedsMatchingAttrs_TwoOps()
         {
-            var delta = Delta.New()
+            var delta = Delta
+                .New()
                 .Insert(1, new { alt = "Description" })
                 .Insert(new { url = "http://quilljs.com" }, new { alt = "Description" });
-            Assert.That(delta.Ops, Is.EqualTo(Objs(
-                new { insert = 1, attributes = new { alt = "Description" } },
-                new { insert = new { url = "http://quilljs.com" }, attributes = new { alt = "Description" } })));
+            Assert.That(
+                delta.Ops,
+                Is.EqualTo(
+                    Objs(
+                        new { insert = 1, attributes = new { alt = "Description" } },
+                        new { insert = new { url = "http://quilljs.com" }, attributes = new { alt = "Description" } }
+                    )
+                )
+            );
         }
 
         [Test]
@@ -149,21 +153,18 @@ namespace SIL.XForge.Realtime.RichText
         [Test]
         public void Retain_ConsecutiveRetainsMatchingAttrs_MergeOps()
         {
-            var delta = Delta.New()
-                .Retain(1, new { bold = true })
-                .Retain(3, new { bold = true });
+            var delta = Delta.New().Retain(1, new { bold = true }).Retain(3, new { bold = true });
             Assert.That(delta.Ops, Is.EqualTo(Objs(new { retain = 4, attributes = new { bold = true } })));
         }
 
         [Test]
         public void Retain_ConsecutiveRetainsDifferentAttrs_TwoOps()
         {
-            var delta = Delta.New()
-                .Retain(1, new { bold = true })
-                .Retain(3);
-            Assert.That(delta.Ops, Is.EqualTo(Objs(
-                new { retain = 1, attributes = new { bold = true } },
-                new { retain = 3 })));
+            var delta = Delta.New().Retain(1, new { bold = true }).Retain(3);
+            Assert.That(
+                delta.Ops,
+                Is.EqualTo(Objs(new { retain = 1, attributes = new { bold = true } }, new { retain = 3 }))
+            );
         }
 
         [Test]
@@ -499,7 +500,8 @@ namespace SIL.XForge.Realtime.RichText
         {
             var a = Delta.New().Insert("12", new { bold = true }).Insert("34", new { italic = true });
             var b = Delta.New().Insert("123", new { color = "red" });
-            var expected = Delta.New()
+            var expected = Delta
+                .New()
                 .Retain(2, new { bold = (bool?)null, color = "red" })
                 .Retain(1, new { italic = (bool?)null, color = "red" })
                 .Delete(1);
@@ -511,7 +513,8 @@ namespace SIL.XForge.Realtime.RichText
         {
             var a = Delta.New().Insert("Bad", new { color = "red" }).Insert("cat", new { color = "blue" });
             var b = Delta.New().Insert("Good", new { bold = true }).Insert("dog", new { italic = true });
-            var expected = Delta.New()
+            var expected = Delta
+                .New()
                 .Insert("Good", new { bold = true })
                 .Delete(2)
                 .Retain(1, new { italic = true, color = (string)null })
@@ -558,10 +561,12 @@ namespace SIL.XForge.Realtime.RichText
         [Test]
         public void Diff_CharAttributeObjectChanged()
         {
-            JObject charObjA = new JObject(new JProperty("char",
-                new JObject(new JProperty("style", "it"), new JProperty("cid", "123"))));
-            JObject charObjB = new JObject(new JProperty("char",
-                new JObject(new JProperty("style", "fr"), new JProperty("cid", "456"))));
+            JObject charObjA = new JObject(
+                new JProperty("char", new JObject(new JProperty("style", "it"), new JProperty("cid", "123")))
+            );
+            JObject charObjB = new JObject(
+                new JProperty("char", new JObject(new JProperty("style", "fr"), new JProperty("cid", "456")))
+            );
             var a = Delta.New().Insert("A", charObjA);
             var b = Delta.New().Insert("A", charObjB);
             var expected = Delta.New().Retain(1, charObjB);
@@ -572,14 +577,32 @@ namespace SIL.XForge.Realtime.RichText
         public void Diff_ArrayOfCharAttributeObjects()
         {
             // The path to the cid can look like insert.note.contents.ops[i].attributes.char.cid
-            JObject a1 = new JObject(new JProperty("insert", "text1"), new JProperty("attributes",
-                new JObject(new JProperty("char", new JObject(new JProperty("cid", "123"))))));
-            JObject b1 = new JObject(new JProperty("attributes",
-                new JObject(new JProperty("char", new JObject(new JProperty("cid", "456"))))));
-            JObject a2 = new JObject(new JProperty("insert", "text1"), new JProperty("attributes",
-                new JObject(new JProperty("char", new JObject(new JProperty("cid", "234"))))));
-            JObject b2 = new JObject(new JProperty("attributes",
-                new JObject(new JProperty("char", new JObject(new JProperty("cid", "567"))))));
+            JObject a1 = new JObject(
+                new JProperty("insert", "text1"),
+                new JProperty(
+                    "attributes",
+                    new JObject(new JProperty("char", new JObject(new JProperty("cid", "123"))))
+                )
+            );
+            JObject b1 = new JObject(
+                new JProperty(
+                    "attributes",
+                    new JObject(new JProperty("char", new JObject(new JProperty("cid", "456"))))
+                )
+            );
+            JObject a2 = new JObject(
+                new JProperty("insert", "text1"),
+                new JProperty(
+                    "attributes",
+                    new JObject(new JProperty("char", new JObject(new JProperty("cid", "234"))))
+                )
+            );
+            JObject b2 = new JObject(
+                new JProperty(
+                    "attributes",
+                    new JObject(new JProperty("char", new JObject(new JProperty("cid", "567"))))
+                )
+            );
 
             JObject obj1 = new JObject(new JProperty("ops", new JArray(a1, b1)));
             JObject obj2 = new JObject(new JProperty("ops", new JArray(a2, b2)));
@@ -593,21 +616,44 @@ namespace SIL.XForge.Realtime.RichText
         public void Diff_ArrayOfCharAttributeObjectsChanged()
         {
             // The path to the cid can look like insert.note.contents.ops[i].attributes.char.cid
-            JObject a1 = new JObject(new JProperty("insert", "text1"), new JProperty("attributes",
-                new JObject(new JProperty("char", new JObject(new JProperty("cid", "123"))))));
-            JObject b1 = new JObject(new JProperty("attributes",
-                new JObject(new JProperty("char", new JObject(new JProperty("cid", "456"))))));
-            JObject a2 = new JObject(new JProperty("insert", "text2"), new JProperty("attributes",
-                new JObject(new JProperty("char", new JObject(new JProperty("cid", "234"))))));
-            JObject b2 = new JObject(new JProperty("attributes",
-                new JObject(new JProperty("char", new JObject(new JProperty("cid", "567"))))));
+            JObject a1 = new JObject(
+                new JProperty("insert", "text1"),
+                new JProperty(
+                    "attributes",
+                    new JObject(new JProperty("char", new JObject(new JProperty("cid", "123"))))
+                )
+            );
+            JObject b1 = new JObject(
+                new JProperty(
+                    "attributes",
+                    new JObject(new JProperty("char", new JObject(new JProperty("cid", "456"))))
+                )
+            );
+            JObject a2 = new JObject(
+                new JProperty("insert", "text2"),
+                new JProperty(
+                    "attributes",
+                    new JObject(new JProperty("char", new JObject(new JProperty("cid", "234"))))
+                )
+            );
+            JObject b2 = new JObject(
+                new JProperty(
+                    "attributes",
+                    new JObject(new JProperty("char", new JObject(new JProperty("cid", "567"))))
+                )
+            );
 
             JObject obj1 = new JObject(new JProperty("ops", new JArray(a1, b1)));
             JObject obj2 = new JObject(new JProperty("ops", new JArray(a2, b2)));
             var del1 = Delta.New().Insert(obj1);
             var del2 = Delta.New().Insert(obj2);
-            JObject expectedObj = new JObject(new JProperty("insert", "text2"), new JProperty("attributes",
-                new JObject(new JProperty("char", new JObject(new JProperty("cid", "234"))))));
+            JObject expectedObj = new JObject(
+                new JProperty("insert", "text2"),
+                new JProperty(
+                    "attributes",
+                    new JObject(new JProperty("char", new JObject(new JProperty("cid", "234"))))
+                )
+            );
             Delta result = del1.Diff(del2);
             JToken resultToken = ((JObject)result.Ops.First(o => o.Type == JTokenType.Object))["insert"]["ops"];
             Assert.That(JToken.DeepEquals(resultToken[0], expectedObj));
@@ -625,12 +671,27 @@ namespace SIL.XForge.Realtime.RichText
 
             var length1 = "text".Length;
             var length3 = "1".Length;
-            JObject expectedObj1 = new JObject(new JProperty("retain", length1), new JProperty("attributes",
-                new JObject(new JProperty("char", new JObject(new JProperty("cid", "456"))))));
-            JObject expectedObj2 = new JObject(new JProperty("insert", " with edits "), new JProperty("attributes",
-                new JObject(new JProperty("char", new JObject(new JProperty("cid", "456"))))));
-            JObject expectedObj3 = new JObject(new JProperty("retain", length3), new JProperty("attributes",
-                new JObject(new JProperty("char", new JObject(new JProperty("cid", "456"))))));
+            JObject expectedObj1 = new JObject(
+                new JProperty("retain", length1),
+                new JProperty(
+                    "attributes",
+                    new JObject(new JProperty("char", new JObject(new JProperty("cid", "456"))))
+                )
+            );
+            JObject expectedObj2 = new JObject(
+                new JProperty("insert", " with edits "),
+                new JProperty(
+                    "attributes",
+                    new JObject(new JProperty("char", new JObject(new JProperty("cid", "456"))))
+                )
+            );
+            JObject expectedObj3 = new JObject(
+                new JProperty("retain", length3),
+                new JProperty(
+                    "attributes",
+                    new JObject(new JProperty("char", new JObject(new JProperty("cid", "456"))))
+                )
+            );
 
             Delta result = oldDel.Diff(newDel);
             Assert.That(result.Ops.Count, Is.EqualTo(3));
@@ -643,14 +704,21 @@ namespace SIL.XForge.Realtime.RichText
         public void Diff_CharIdUpdatedForTextFormattingDiffDelta()
         {
             // The path to the cid can look like attributes.char[0].cid for usfm text formatting
-            JObject obj1Attr = new JObject(new JProperty("char",
-                new JObject(new JProperty("cid", "123"), new JProperty("style", "wj"))));
-            JObject obj2Attr1 = new JObject(new JProperty("char",
-                new JObject(new JProperty("cid", "456"), new JProperty("style", "wj"))));
-            JObject obj2Attr2 = new JObject(new JProperty("char", new JArray(
-                new JObject(new JProperty("cid", "456"), new JProperty("style", "wj")),
-                new JObject(new JProperty("cid", "789"), new JProperty("style", "w"))
-            )));
+            JObject obj1Attr = new JObject(
+                new JProperty("char", new JObject(new JProperty("cid", "123"), new JProperty("style", "wj")))
+            );
+            JObject obj2Attr1 = new JObject(
+                new JProperty("char", new JObject(new JProperty("cid", "456"), new JProperty("style", "wj")))
+            );
+            JObject obj2Attr2 = new JObject(
+                new JProperty(
+                    "char",
+                    new JArray(
+                        new JObject(new JProperty("cid", "456"), new JProperty("style", "wj")),
+                        new JObject(new JProperty("cid", "789"), new JProperty("style", "w"))
+                    )
+                )
+            );
 
             var oldDel = Delta.New().Insert("Words of Jesus.", obj1Attr);
             var newDel = Delta.New().Insert("Words of ", obj2Attr1).Insert("Jesus", obj2Attr2).Insert(".", obj2Attr1);
@@ -658,20 +726,39 @@ namespace SIL.XForge.Realtime.RichText
             var length1 = "Words of ".Length;
             var length2 = "Jesus".Length;
             var length3 = ".".Length;
-            JObject expectedObj1 = new JObject(new JProperty("retain", length1), new JProperty("attributes",
-                new JObject(new JProperty("char",
-                    new JObject(new JProperty("cid", "456"), new JProperty("style", "wj"))))
-            ));
-            JObject expectedObj2 = new JObject(new JProperty("retain", length2), new JProperty("attributes",
-                new JObject(new JProperty("char", new JArray(
-                    new JObject(new JProperty("cid", "456"), new JProperty("style", "wj")),
-                    new JObject(new JProperty("cid", "789"), new JProperty("style", "w"))))
+            JObject expectedObj1 = new JObject(
+                new JProperty("retain", length1),
+                new JProperty(
+                    "attributes",
+                    new JObject(
+                        new JProperty("char", new JObject(new JProperty("cid", "456"), new JProperty("style", "wj")))
+                    )
                 )
-            ));
-            JObject expectedObj3 = new JObject(new JProperty("retain", length3), new JProperty("attributes",
-                new JObject(new JProperty("char",
-                    new JObject(new JProperty("cid", "456"), new JProperty("style", "wj"))))
-            ));
+            );
+            JObject expectedObj2 = new JObject(
+                new JProperty("retain", length2),
+                new JProperty(
+                    "attributes",
+                    new JObject(
+                        new JProperty(
+                            "char",
+                            new JArray(
+                                new JObject(new JProperty("cid", "456"), new JProperty("style", "wj")),
+                                new JObject(new JProperty("cid", "789"), new JProperty("style", "w"))
+                            )
+                        )
+                    )
+                )
+            );
+            JObject expectedObj3 = new JObject(
+                new JProperty("retain", length3),
+                new JProperty(
+                    "attributes",
+                    new JObject(
+                        new JProperty("char", new JObject(new JProperty("cid", "456"), new JProperty("style", "wj")))
+                    )
+                )
+            );
 
             Delta result = oldDel.Diff(newDel);
             Assert.That(result.Ops.Count, Is.EqualTo(3));

@@ -89,11 +89,24 @@ namespace SIL.XForge.Scripture.Models
         public override string ToString()
         {
             StringBuilder message = new StringBuilder();
-            foreach (string item in new string[] { ParatextId, Name, ShortName, LanguageTag, ProjectId,
-                IsConnectable.ToString(), IsConnected.ToString(), IsInstalled.ToString(),
-                AvailableRevision.ToString(), InstalledRevision.ToString(),
-                CreatedTimestamp.ToString(CultureInfo.CurrentCulture), ManifestChecksum, PermissionsChecksum
-            })
+            foreach (
+                string item in new string[]
+                {
+                    ParatextId,
+                    Name,
+                    ShortName,
+                    LanguageTag,
+                    ProjectId,
+                    IsConnectable.ToString(),
+                    IsConnected.ToString(),
+                    IsInstalled.ToString(),
+                    AvailableRevision.ToString(),
+                    InstalledRevision.ToString(),
+                    CreatedTimestamp.ToString(CultureInfo.CurrentCulture),
+                    ManifestChecksum,
+                    PermissionsChecksum
+                }
+            )
             {
                 message.Append(item);
                 message.Append(',');

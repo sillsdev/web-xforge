@@ -65,10 +65,17 @@ namespace SIL.XForge.Scripture.Services
         private SFProjectSecret _projectSecret;
         private Dictionary<string, ParatextUserProfile> _currentPtSyncUsers;
 
-        public ParatextSyncRunner(IRepository<UserSecret> userSecrets, IRepository<SFProjectSecret> projectSecrets,
-            ISFProjectService projectService, IEngineService engineService, IParatextService paratextService,
-            IRealtimeService realtimeService, IDeltaUsxMapper deltaUsxMapper, IParatextNotesMapper notesMapper,
-            ILogger<ParatextSyncRunner> logger)
+        public ParatextSyncRunner(
+            IRepository<UserSecret> userSecrets,
+            IRepository<SFProjectSecret> projectSecrets,
+            ISFProjectService projectService,
+            IEngineService engineService,
+            IParatextService paratextService,
+            IRealtimeService realtimeService,
+            IDeltaUsxMapper deltaUsxMapper,
+            IParatextNotesMapper notesMapper,
+            ILogger<ParatextSyncRunner> logger
+        )
         {
             _userSecrets = userSecrets;
             _projectSecrets = projectSecrets;
@@ -122,7 +129,9 @@ namespace SIL.XForge.Scripture.Services
                     }
                     else
                     {
-                        Log($"RunAsync: There wasn't already a local PT repo backup, so we tried to make one but failed.");
+                        Log(
+                            $"RunAsync: There wasn't already a local PT repo backup, so we tried to make one but failed."
+                        );
                     }
                 }
 
@@ -143,7 +152,9 @@ namespace SIL.XForge.Scripture.Services
                     // The recent hg repository pushed or pulled commit id matches what we recorded as being the last
                     // place where SF and PT last synced.
                     isDataInSync = true;
-                    Log($"RunAsync: The local PT repo last shared rev matches the SF DB SyncedToRepositoryVersion of '{lastSharedVersion}'. Is in sync.");
+                    Log(
+                        $"RunAsync: The local PT repo last shared rev matches the SF DB SyncedToRepositoryVersion of '{lastSharedVersion}'. Is in sync."
+                    );
                 }
                 if (_projectDoc.Data.Sync.SyncedToRepositoryVersion == null && _projectDoc.Data.Sync.DataInSync == null)
                 {
@@ -158,15 +169,18 @@ namespace SIL.XForge.Scripture.Services
                     // There is also a special case where SyncedToRepositoryVersion may be absent, but DataInSync may
                     // be present (and true), which may indicate that the initial Connect project failed to hg clone.
                     isDataInSync = true;
-                    Log($"RunAsync: The SF DB project has no settings for Sync.SyncedToRepositoryVersion or Sync.DataInSync. Considering that data is in sync.");
+                    Log(
+                        $"RunAsync: The SF DB project has no settings for Sync.SyncedToRepositoryVersion or Sync.DataInSync. Considering that data is in sync."
+                    );
                 }
                 if (!isDataInSync)
                 {
-                    Log($"RunAsync: Considering that data is not in sync. The local PT repo last shared revision is '{lastSharedVersion}'. The SF DB project Sync.SyncedToRepositoryVersion is '{_projectDoc.Data.Sync.SyncedToRepositoryVersion}'. canRollbackParatext is '{canRollbackParatext}'.");
+                    Log(
+                        $"RunAsync: Considering that data is not in sync. The local PT repo last shared revision is '{lastSharedVersion}'. The SF DB project Sync.SyncedToRepositoryVersion is '{_projectDoc.Data.Sync.SyncedToRepositoryVersion}'. canRollbackParatext is '{canRollbackParatext}'."
+                    );
                 }
 
-                ParatextSettings settings =
-                    _paratextService.GetParatextSettings(_userSecret, targetParatextId);
+                ParatextSettings settings = _paratextService.GetParatextSettings(_userSecret, targetParatextId);
                 // update target Paratext books and notes
                 foreach (TextInfo text in _projectDoc.Data.Texts)
                 {
@@ -211,7 +225,12 @@ namespace SIL.XForge.Scripture.Services
 
                     Log($"RunAsync: Going to do ParatextData SendReceive.");
                     // perform Paratext send/receive
-                    paratextProject = await _paratextService.SendReceiveAsync(_userSecret, targetParatextId, progress, token);
+                    paratextProject = await _paratextService.SendReceiveAsync(
+                        _userSecret,
+                        targetParatextId,
+                        progress,
+                        token
+                    );
                     Log($"RunAsync: ParatextData SendReceive finished without throwing.");
                 }
                 finally
@@ -231,8 +250,9 @@ namespace SIL.XForge.Scripture.Services
                 var sourceBooks = new HashSet<int>(_paratextService.GetBookList(_userSecret, sourceParatextId));
                 sourceBooks.IntersectWith(targetBooks);
 
-                var targetBooksToDelete = new HashSet<int>(_projectDoc.Data.Texts.Select(t => t.BookNum)
-                    .Except(targetBooks));
+                var targetBooksToDelete = new HashSet<int>(
+                    _projectDoc.Data.Texts.Select(t => t.BookNum).Except(targetBooks)
+                );
 
                 // Check for cancellation
                 if (token.IsCancellationRequested)
@@ -244,7 +264,9 @@ namespace SIL.XForge.Scripture.Services
                 // delete all data for removed books
                 if (targetBooksToDelete.Count > 0)
                 {
-                    Log($"RunAsync: Going to delete texts and questions,comments,answers for {targetBooksToDelete.Count} books.");
+                    Log(
+                        $"RunAsync: Going to delete texts and questions,comments,answers for {targetBooksToDelete.Count} books."
+                    );
                     // delete target books
                     foreach (int bookNum in targetBooksToDelete)
                     {
@@ -267,10 +289,12 @@ namespace SIL.XForge.Scripture.Services
 
                 // Update user resource access, if this project has a source resource
                 // The updating of a source project's permissions is done when that project is synced.
-                if (TranslationSuggestionsEnabled
+                if (
+                    TranslationSuggestionsEnabled
                     && !string.IsNullOrWhiteSpace(sourceParatextId)
                     && !string.IsNullOrWhiteSpace(sourceProjectRef)
-                    && _paratextService.IsResource(sourceParatextId))
+                    && _paratextService.IsResource(sourceParatextId)
+                )
                 {
                     // Get the resource project
                     IDocument<SFProject> sourceProject = await _conn.FetchAsync<SFProject>(sourceProjectRef);
@@ -279,8 +303,9 @@ namespace SIL.XForge.Scripture.Services
                         // NOTE: The following additions/removals not included in the transaction
 
                         // Add new users who are in the target project, but not the source project
-                        List<string> usersToAdd =
-                            _projectDoc.Data.UserRoles.Keys.Except(sourceProject.Data.UserRoles.Keys).ToList();
+                        List<string> usersToAdd = _projectDoc.Data.UserRoles.Keys
+                            .Except(sourceProject.Data.UserRoles.Keys)
+                            .ToList();
                         foreach (string uid in usersToAdd)
                         {
                             // As resource projects do not have administrators, we connect as the user we are to add
@@ -299,23 +324,37 @@ namespace SIL.XForge.Scripture.Services
                         List<string> usersToCheck = _projectDoc.Data.UserRoles.Keys.Except(usersToAdd).ToList();
                         foreach (string uid in usersToCheck)
                         {
-                            string permission =
-                                await _paratextService.GetResourcePermissionAsync(sourceParatextId, uid, token);
+                            string permission = await _paratextService.GetResourcePermissionAsync(
+                                sourceParatextId,
+                                uid,
+                                token
+                            );
                             if (permission == TextInfoPermission.None)
                             {
-                                await _projectService.RemoveUserWithoutPermissionsCheckAsync(uid, sourceProjectRef, uid);
+                                await _projectService.RemoveUserWithoutPermissionsCheckAsync(
+                                    uid,
+                                    sourceProjectRef,
+                                    uid
+                                );
                             }
                         }
                     }
                 }
 
-                bool resourceNeedsUpdating = paratextProject is ParatextResource paratextResource &&
-                    _paratextService.ResourceDocsNeedUpdating(_projectDoc.Data, paratextResource);
+                bool resourceNeedsUpdating =
+                    paratextProject is ParatextResource paratextResource
+                    && _paratextService.ResourceDocsNeedUpdating(_projectDoc.Data, paratextResource);
 
                 if (!_paratextService.IsResource(targetParatextId) || resourceNeedsUpdating)
                 {
-                    await UpdateDocsAsync(targetParatextId, targetTextDocsByBook, questionDocsByBook, targetBooks,
-                        sourceBooks, token);
+                    await UpdateDocsAsync(
+                        targetParatextId,
+                        targetTextDocsByBook,
+                        questionDocsByBook,
+                        targetBooks,
+                        sourceBooks,
+                        token
+                    );
                 }
 
                 // Check for cancellation
@@ -352,7 +391,10 @@ namespace SIL.XForge.Scripture.Services
                     {
                         additionalInformation.AppendLine($"{key}: {e.Data[key]}");
                     }
-                    _logger.LogError(e, $"Error occurred while executing Paratext sync for project with SF id '{projectSFId}'. {(additionalInformation.Length == 0 ? string.Empty : ($"Additional information: {additionalInformation.ToString()}"))}");
+                    _logger.LogError(
+                        e,
+                        $"Error occurred while executing Paratext sync for project with SF id '{projectSFId}'. {(additionalInformation.Length == 0 ? string.Empty : ($"Additional information: {additionalInformation.ToString()}"))}"
+                    );
                 }
 
                 await CompleteSync(false, canRollbackParatext, trainEngine, token);
@@ -379,14 +421,18 @@ namespace SIL.XForge.Scripture.Services
                 {
                     // Create the resource config
                     await _projectDoc.SubmitJson0OpAsync(
-                        op => op.Set(pd => pd.ResourceConfig,
-                            new ResourceConfig
-                            {
-                                CreatedTimestamp = paratextResource.CreatedTimestamp,
-                                ManifestChecksum = paratextResource.ManifestChecksum,
-                                PermissionsChecksum = paratextResource.PermissionsChecksum,
-                                Revision = paratextResource.AvailableRevision,
-                            }));
+                        op =>
+                            op.Set(
+                                pd => pd.ResourceConfig,
+                                new ResourceConfig
+                                {
+                                    CreatedTimestamp = paratextResource.CreatedTimestamp,
+                                    ManifestChecksum = paratextResource.ManifestChecksum,
+                                    PermissionsChecksum = paratextResource.PermissionsChecksum,
+                                    Revision = paratextResource.AvailableRevision,
+                                }
+                            )
+                    );
                 }
                 else
                 {
@@ -409,10 +455,14 @@ namespace SIL.XForge.Scripture.Services
             Log($"User can authenticate to PT Registry: {canAuthToRegistry}, to PT Archives: {canAuthToArchives}.");
         }
 
-        private async Task UpdateDocsAsync(string targetParatextId,
+        private async Task UpdateDocsAsync(
+            string targetParatextId,
             Dictionary<int, SortedList<int, IDocument<TextData>>> targetTextDocsByBook,
-            Dictionary<int, IReadOnlyList<IDocument<Question>>> questionDocsByBook, HashSet<int> targetBooks,
-            HashSet<int> sourceBooks, CancellationToken token)
+            Dictionary<int, IReadOnlyList<IDocument<Question>>> questionDocsByBook,
+            HashSet<int> targetBooks,
+            HashSet<int> sourceBooks,
+            CancellationToken token
+        )
         {
             Dictionary<string, string> ptUsernamesToSFUserIds = await GetPTUsernameToSFUserIdsAsync(token);
             // update source and target real-time docs
@@ -427,8 +477,12 @@ namespace SIL.XForge.Scripture.Services
                     text = _projectDoc.Data.Texts[textIndex];
 
                 // update target text docs
-                if (!targetTextDocsByBook.TryGetValue(text.BookNum,
-                    out SortedList<int, IDocument<TextData>> targetTextDocs))
+                if (
+                    !targetTextDocsByBook.TryGetValue(
+                        text.BookNum,
+                        out SortedList<int, IDocument<TextData>> targetTextDocs
+                    )
+                )
                 {
                     targetTextDocs = new SortedList<int, IDocument<TextData>>();
                 }
@@ -436,15 +490,13 @@ namespace SIL.XForge.Scripture.Services
                 List<Chapter> newSetOfChapters = await UpdateTextDocsAsync(text, targetParatextId, targetTextDocs);
 
                 // update question docs
-                if (questionDocsByBook.TryGetValue(text.BookNum,
-                    out IReadOnlyList<IDocument<Question>> questionDocs))
+                if (questionDocsByBook.TryGetValue(text.BookNum, out IReadOnlyList<IDocument<Question>> questionDocs))
                 {
                     await UpdateQuestionDocsAsync(questionDocs, newSetOfChapters);
                 }
 
                 // update note thread docs
-                Dictionary<string, IDocument<NoteThread>> noteThreadDocs =
-                    await FetchNoteThreadDocsAsync(text.BookNum);
+                Dictionary<string, IDocument<NoteThread>> noteThreadDocs = await FetchNoteThreadDocsAsync(text.BookNum);
                 Dictionary<int, ChapterDelta> chapterDeltas = GetDeltasByChapter(text, targetParatextId);
 
                 await UpdateNoteThreadDocsAsync(text, noteThreadDocs, token, chapterDeltas, ptUsernamesToSFUserIds);
@@ -495,7 +547,8 @@ namespace SIL.XForge.Scripture.Services
                 return false;
             }
 
-            List<User> paratextUsers = await _realtimeService.QuerySnapshots<User>()
+            List<User> paratextUsers = await _realtimeService
+                .QuerySnapshots<User>()
                 .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
                 .ToListAsync();
 
@@ -513,12 +566,20 @@ namespace SIL.XForge.Scripture.Services
             _conn?.Dispose();
         }
 
-        private async Task UpdateParatextBook(TextInfo text, string paratextId, SortedList<int, IDocument<TextData>> textDocs)
+        private async Task UpdateParatextBook(
+            TextInfo text,
+            string paratextId,
+            SortedList<int, IDocument<TextData>> textDocs
+        )
         {
             string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
             var oldUsxDoc = XDocument.Parse(bookText);
-            XDocument newUsxDoc = _deltaUsxMapper.ToUsx(oldUsxDoc, text.Chapters.OrderBy(c => c.Number)
-                .Select(c => new ChapterDelta(c.Number, c.LastVerse, c.IsValid, textDocs[c.Number].Data)));
+            XDocument newUsxDoc = _deltaUsxMapper.ToUsx(
+                oldUsxDoc,
+                text.Chapters
+                    .OrderBy(c => c.Number)
+                    .Select(c => new ChapterDelta(c.Number, c.LastVerse, c.IsValid, textDocs[c.Number].Data))
+            );
 
             if (!XNode.DeepEquals(oldUsxDoc, newUsxDoc))
             {
@@ -539,8 +600,10 @@ namespace SIL.XForge.Scripture.Services
         /// <remarks>
         /// This is internal so it can be unit tested.
         /// </remarks>
-        internal async Task<Dictionary<int, string>> GetChapterAuthorsAsync(TextInfo text,
-            SortedList<int, IDocument<TextData>> textDocs)
+        internal async Task<Dictionary<int, string>> GetChapterAuthorsAsync(
+            TextInfo text,
+            SortedList<int, IDocument<TextData>> textDocs
+        )
         {
             // Get all of the last editors for the chapters.
             var chapterAuthors = new Dictionary<int, string>();
@@ -559,9 +622,11 @@ namespace SIL.XForge.Scripture.Services
                     userSFId = await _realtimeService.GetLastModifiedUserIdAsync<TextData>(textId, version);
 
                     // Check that this user still has write permissions
-                    if (string.IsNullOrEmpty(userSFId)
+                    if (
+                        string.IsNullOrEmpty(userSFId)
                         || !chapter.Permissions.TryGetValue(userSFId, out string permission)
-                        || permission != TextInfoPermission.Write)
+                        || permission != TextInfoPermission.Write
+                    )
                     {
                         // They no longer have write access, so reset the user id, and find it below
                         userSFId = null;
@@ -572,8 +637,10 @@ namespace SIL.XForge.Scripture.Services
                 if (string.IsNullOrEmpty(userSFId))
                 {
                     // See if the current user has permissions
-                    if (chapter.Permissions.TryGetValue(_userSecret.Id, out string permission)
-                        && permission == TextInfoPermission.Write)
+                    if (
+                        chapter.Permissions.TryGetValue(_userSecret.Id, out string permission)
+                        && permission == TextInfoPermission.Write
+                    )
                     {
                         userSFId = _userSecret.Id;
                     }
@@ -587,7 +654,8 @@ namespace SIL.XForge.Scripture.Services
                         if (string.IsNullOrEmpty(userSFId))
                         {
                             userSFId = _projectDoc.Data.UserRoles
-                                .FirstOrDefault(p => p.Value == SFProjectRole.Administrator).Key;
+                                .FirstOrDefault(p => p.Value == SFProjectRole.Administrator)
+                                .Key;
                         }
                     }
                 }
@@ -615,19 +683,27 @@ namespace SIL.XForge.Scripture.Services
             else
                 oldNotesElem = new XElement("notes", new XAttribute("version", "1.1"));
 
-            XElement notesElem = await _notesMapper.GetNotesChangelistAsync(oldNotesElem, questionDocs, _currentPtSyncUsers);
+            XElement notesElem = await _notesMapper.GetNotesChangelistAsync(
+                oldNotesElem,
+                questionDocs,
+                _currentPtSyncUsers
+            );
             if (notesElem.Elements("thread").Any())
                 _paratextService.PutNotes(_userSecret, _projectDoc.Data.ParatextId, notesElem.ToString());
-
         }
 
-        private async Task<List<Chapter>> UpdateTextDocsAsync(TextInfo text, string paratextId,
-            SortedList<int, IDocument<TextData>> textDocs, ISet<int> chaptersToInclude = null)
+        private async Task<List<Chapter>> UpdateTextDocsAsync(
+            TextInfo text,
+            string paratextId,
+            SortedList<int, IDocument<TextData>> textDocs,
+            ISet<int> chaptersToInclude = null
+        )
         {
             string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
             var usxDoc = XDocument.Parse(bookText);
             var tasks = new List<Task>();
-            Dictionary<int, ChapterDelta> deltas = _deltaUsxMapper.ToChapterDeltas(usxDoc)
+            Dictionary<int, ChapterDelta> deltas = _deltaUsxMapper
+                .ToChapterDeltas(usxDoc)
                 .ToDictionary(cd => cd.Number);
             var chapters = new List<Chapter>();
             List<int> chaptersToRemove = textDocs.Keys.Where(c => !deltas.ContainsKey(c)).ToList();
@@ -673,20 +749,24 @@ namespace SIL.XForge.Scripture.Services
                 }
                 if (addChapter)
                 {
-                    chapters.Add(new Chapter
-                    {
-                        Number = kvp.Key,
-                        LastVerse = kvp.Value.LastVerse,
-                        IsValid = kvp.Value.IsValid,
-                        Permissions = { }
-                    });
+                    chapters.Add(
+                        new Chapter
+                        {
+                            Number = kvp.Key,
+                            LastVerse = kvp.Value.LastVerse,
+                            IsValid = kvp.Value.IsValid,
+                            Permissions = { }
+                        }
+                    );
                 }
             }
             foreach (KeyValuePair<int, IDocument<TextData>> kvp in textDocs)
             {
-                if (chaptersToInclude == null
+                if (
+                    chaptersToInclude == null
                     || chaptersToInclude.Contains(kvp.Key)
-                    || chaptersToRemove.Contains(kvp.Key))
+                    || chaptersToRemove.Contains(kvp.Key)
+                )
                 {
                     tasks.Add(kvp.Value.DeleteAsync());
                 }
@@ -696,8 +776,10 @@ namespace SIL.XForge.Scripture.Services
             return chapters;
         }
 
-        private async Task UpdateQuestionDocsAsync(IReadOnlyList<IDocument<Question>> questionDocs,
-            List<Chapter> newChapters)
+        private async Task UpdateQuestionDocsAsync(
+            IReadOnlyList<IDocument<Question>> questionDocs,
+            List<Chapter> newChapters
+        )
         {
             // handle deletion of chapters
             var chapterNums = new HashSet<int>(newChapters.Select(c => c.Number));
@@ -713,12 +795,22 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>
         /// Updates ParatextNoteThread docs for a book
         /// </summary>
-        private async Task UpdateNoteThreadDocsAsync(TextInfo text,
-            Dictionary<string, IDocument<NoteThread>> noteThreadDocs, CancellationToken token,
-            Dictionary<int, ChapterDelta> chapterDeltas, Dictionary<string, string> usernamesToUserIds)
+        private async Task UpdateNoteThreadDocsAsync(
+            TextInfo text,
+            Dictionary<string, IDocument<NoteThread>> noteThreadDocs,
+            CancellationToken token,
+            Dictionary<int, ChapterDelta> chapterDeltas,
+            Dictionary<string, string> usernamesToUserIds
+        )
         {
-            IEnumerable<NoteThreadChange> noteThreadChanges = _paratextService.GetNoteThreadChanges(_userSecret,
-                 _projectDoc.Data.ParatextId, text.BookNum, noteThreadDocs.Values, chapterDeltas, _currentPtSyncUsers);
+            IEnumerable<NoteThreadChange> noteThreadChanges = _paratextService.GetNoteThreadChanges(
+                _userSecret,
+                _projectDoc.Data.ParatextId,
+                text.BookNum,
+                noteThreadDocs.Values,
+                chapterDeltas,
+                _currentPtSyncUsers
+            );
             var tasks = new List<Task>();
 
             foreach (NoteThreadChange change in noteThreadChanges)
@@ -734,19 +826,21 @@ namespace SIL.XForge.Scripture.Services
                         VerseRef verseRef = new VerseRef();
                         verseRef.Parse(change.VerseRefStr);
                         VerseRefData vrd = new VerseRefData(verseRef.BookNum, verseRef.ChapterNum, verseRef.Verse);
-                        await doc.CreateAsync(new NoteThread()
-                        {
-                            DataId = change.ThreadId,
-                            ProjectRef = _projectDoc.Id,
-                            VerseRef = vrd,
-                            OriginalSelectedText = change.SelectedText,
-                            OriginalContextBefore = change.ContextBefore,
-                            OriginalContextAfter = change.ContextAfter,
-                            TagIcon = change.TagIcon,
-                            Position = change.Position,
-                            Status = change.Status,
-                            Assignment = change.Assignment
-                        });
+                        await doc.CreateAsync(
+                            new NoteThread()
+                            {
+                                DataId = change.ThreadId,
+                                ProjectRef = _projectDoc.Id,
+                                VerseRef = vrd,
+                                OriginalSelectedText = change.SelectedText,
+                                OriginalContextBefore = change.ContextBefore,
+                                OriginalContextAfter = change.ContextAfter,
+                                TagIcon = change.TagIcon,
+                                Position = change.Position,
+                                Status = change.Status,
+                                Assignment = change.Assignment
+                            }
+                        );
                         await SubmitChangesOnNoteThreadDocAsync(doc, change, usernamesToUserIds);
                     }
                     tasks.Add(createThreadDoc(change.ThreadId, _projectDoc.Id, change));
@@ -796,7 +890,8 @@ namespace SIL.XForge.Scripture.Services
 
         private async Task<IReadOnlyList<IDocument<Question>>> FetchQuestionDocsAsync(TextInfo text)
         {
-            List<string> questionDocIds = await _realtimeService.QuerySnapshots<Question>()
+            List<string> questionDocIds = await _realtimeService
+                .QuerySnapshots<Question>()
                 .Where(q => q.ProjectRef == _projectDoc.Id && q.VerseRef.BookNum == text.BookNum)
                 .Select(q => q.Id)
                 .ToListAsync();
@@ -819,7 +914,8 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         private async Task<Dictionary<string, IDocument<NoteThread>>> FetchNoteThreadDocsAsync(int bookNum)
         {
-            List<string> noteThreadDocIds = await _realtimeService.QuerySnapshots<NoteThread>()
+            List<string> noteThreadDocIds = await _realtimeService
+                .QuerySnapshots<NoteThread>()
                 .Where(pnt => pnt.ProjectRef == _projectDoc.Id && pnt.VerseRef.BookNum == bookNum)
                 .Select(pnt => pnt.Id)
                 .ToListAsync();
@@ -841,8 +937,11 @@ namespace SIL.XForge.Scripture.Services
         /// Apply the changes to a ParatextNoteThread doc.
         /// TODO: Handle if verseRef changes
         /// </summary>
-        private async Task SubmitChangesOnNoteThreadDocAsync(IDocument<NoteThread> threadDoc,
-            NoteThreadChange change, IReadOnlyDictionary<string, string> usernamesToUserIds)
+        private async Task SubmitChangesOnNoteThreadDocAsync(
+            IDocument<NoteThread> threadDoc,
+            NoteThreadChange change,
+            IReadOnlyDictionary<string, string> usernamesToUserIds
+        )
         {
             if (change.ThreadRemoved)
             {
@@ -942,7 +1041,8 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         private async Task DeleteAllQuestionsDocsForBookAsync(TextInfo text)
         {
-            List<string> questionDocIds = await _realtimeService.QuerySnapshots<Question>()
+            List<string> questionDocIds = await _realtimeService
+                .QuerySnapshots<Question>()
                 .Where(q => q.ProjectRef == _projectDoc.Id && q.VerseRef.BookNum == text.BookNum)
                 .Select(q => q.Id)
                 .ToListAsync();
@@ -963,10 +1063,12 @@ namespace SIL.XForge.Scripture.Services
         private async Task<List<string>> DeleteNoteThreadDocsInChapters(int bookNum, IEnumerable<Chapter> chapters)
         {
             IEnumerable<int> chaptersToDelete = chapters.Select(c => c.Number);
-            IEnumerable<NoteThread> threadDocs = _realtimeService.QuerySnapshots<NoteThread>()
+            IEnumerable<NoteThread> threadDocs = _realtimeService
+                .QuerySnapshots<NoteThread>()
                 .Where(n => n.ProjectRef == _projectDoc.Id && n.VerseRef.BookNum == bookNum);
-            IEnumerable<string> noteThreadDocIds =
-                threadDocs.Where(nt => chaptersToDelete.Contains(nt.VerseRef.ChapterNum)).Select(n => n.Id);
+            IEnumerable<string> noteThreadDocIds = threadDocs
+                .Where(nt => chaptersToDelete.Contains(nt.VerseRef.ChapterNum))
+                .Select(n => n.Id);
             // Make a record of the note thread doc ids to return since they are removed
             // from noteThreadDocIds after the docs are deleted.
             List<string> deletedNoteThreadDocIds = new List<string>(noteThreadDocIds);
@@ -987,7 +1089,12 @@ namespace SIL.XForge.Scripture.Services
             return deletedNoteThreadDocIds;
         }
 
-        private async Task CompleteSync(bool successful, bool canRollbackParatext, bool trainEngine, CancellationToken token)
+        private async Task CompleteSync(
+            bool successful,
+            bool canRollbackParatext,
+            bool trainEngine,
+            CancellationToken token
+        )
         {
             if (token.IsCancellationRequested)
             {
@@ -1013,14 +1120,15 @@ namespace SIL.XForge.Scripture.Services
             {
                 try
                 {
-                    ptUserRoles = await _paratextService.GetProjectRolesAsync(_userSecret,
-                        _projectDoc.Data, token);
+                    ptUserRoles = await _paratextService.GetProjectRolesAsync(_userSecret, _projectDoc.Data, token);
                 }
                 catch (Exception ex)
                 {
                     if (ex is HttpRequestException || ex is OperationCanceledException)
                     {
-                        Log($"CompleteSync: Problem fetching project roles. Maybe the user does not have access to the project or cancelled the sync. ({ex})");
+                        Log(
+                            $"CompleteSync: Problem fetching project roles. Maybe the user does not have access to the project or cancelled the sync. ({ex})"
+                        );
                         // This throws a 404 if the user does not have access to the project
                         // A task cancelled exception will be thrown if the user cancels the task
                         // Note: OperationCanceledException includes TaskCanceledException
@@ -1036,10 +1144,11 @@ namespace SIL.XForge.Scripture.Services
             }
 
             var userIdsToRemove = new List<string>();
-            var projectUsers = await _realtimeService.QuerySnapshots<User>()
-                    .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
-                    .Select(u => new { UserId = u.Id, ParatextId = u.ParatextId })
-                    .ToListAsync();
+            var projectUsers = await _realtimeService
+                .QuerySnapshots<User>()
+                .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
+                .Select(u => new { UserId = u.Id, ParatextId = u.ParatextId })
+                .ToListAsync();
 
             bool dataInSync = true;
             if (!successful)
@@ -1052,11 +1161,15 @@ namespace SIL.XForge.Scripture.Services
                     // the restored repo can be assumed to be at the revision recorded in the project doc.
                     restoreSucceeded = _paratextService.RestoreRepository(_userSecret, _projectDoc.Data.ParatextId);
                 }
-                Log($"CompleteSync: Sync was not successful. {(restoreSucceeded ? "Rolled back" : "Failed to roll back")} local PT repo.");
+                Log(
+                    $"CompleteSync: Sync was not successful. {(restoreSucceeded ? "Rolled back" : "Failed to roll back")} local PT repo."
+                );
                 if (!restoreSucceeded)
                 {
-                    string repoVersion =
-                        _paratextService.GetLatestSharedVersion(_userSecret, _projectDoc.Data.ParatextId);
+                    string repoVersion = _paratextService.GetLatestSharedVersion(
+                        _userSecret,
+                        _projectDoc.Data.ParatextId
+                    );
                     dataInSync = repoVersion == _projectDoc.Data.Sync.SyncedToRepositoryVersion;
                 }
             }
@@ -1081,7 +1194,9 @@ namespace SIL.XForge.Scripture.Services
                 }
                 else
                 {
-                    Log($"CompleteSync: Failed to synchronize. PT repo latest shared version is '{repoVersion}'. SF DB project SyncedToRepositoryVersion is '{_projectDoc.Data.Sync.SyncedToRepositoryVersion}'.");
+                    Log(
+                        $"CompleteSync: Failed to synchronize. PT repo latest shared version is '{repoVersion}'. SF DB project SyncedToRepositoryVersion is '{_projectDoc.Data.Sync.SyncedToRepositoryVersion}'."
+                    );
                     op.Set(pd => pd.Sync.DataInSync, dataInSync);
                 }
                 // the frontend checks the queued count to determine if the sync is complete. The ShareDB client emits
@@ -1094,7 +1209,9 @@ namespace SIL.XForge.Scripture.Services
                 }
                 else
                 {
-                    Log($"CompleteSync: Warning: SF project id {_projectDoc.Id} QueuedCount is unexpectedly {_projectDoc.Data.Sync.QueuedCount}. Setting to 0 instead of decrementing.");
+                    Log(
+                        $"CompleteSync: Warning: SF project id {_projectDoc.Id} QueuedCount is unexpectedly {_projectDoc.Data.Sync.QueuedCount}. Setting to 0 instead of decrementing."
+                    );
                     op.Set(pd => pd.Sync.QueuedCount, 0);
                 }
 
@@ -1110,8 +1227,10 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
 
-                ParatextSettings settings =
-                    _paratextService.GetParatextSettings(_userSecret, _projectDoc.Data.ParatextId);
+                ParatextSettings settings = _paratextService.GetParatextSettings(
+                    _userSecret,
+                    _projectDoc.Data.ParatextId
+                );
                 if (settings != null)
                 {
                     // See if the full name of the project needs updating
@@ -1127,11 +1246,12 @@ namespace SIL.XForge.Scripture.Services
                     op.Set(pd => pd.DefaultFontSize, settings.DefaultFontSize);
                 }
                 // The source can be null if there was an error getting a resource from the DBL
-                if (TranslationSuggestionsEnabled
-                    && _projectDoc.Data.TranslateConfig.Source != null)
+                if (TranslationSuggestionsEnabled && _projectDoc.Data.TranslateConfig.Source != null)
                 {
-                    ParatextSettings sourceSettings = _paratextService.GetParatextSettings(_userSecret,
-                        _projectDoc.Data.TranslateConfig.Source.ParatextId);
+                    ParatextSettings sourceSettings = _paratextService.GetParatextSettings(
+                        _userSecret,
+                        _projectDoc.Data.TranslateConfig.Source.ParatextId
+                    );
                     if (sourceSettings != null)
                         op.Set(pd => pd.TranslateConfig.Source.IsRightToLeft, sourceSettings.IsRightToLeft);
                 }
@@ -1145,18 +1265,23 @@ namespace SIL.XForge.Scripture.Services
             {
                 foreach (ParatextUserProfile activePtSyncUser in _currentPtSyncUsers.Values)
                 {
-                    ParatextUserProfile existingUser =
-                        _projectDoc.Data.ParatextUsers.SingleOrDefault(u => u.Username == activePtSyncUser.Username);
+                    ParatextUserProfile existingUser = _projectDoc.Data.ParatextUsers.SingleOrDefault(
+                        u => u.Username == activePtSyncUser.Username
+                    );
                     if (existingUser == null)
                     {
                         if (ptUsernamesToSFUserIds.TryGetValue(activePtSyncUser.Username, out string userId))
                             activePtSyncUser.SFUserId = userId;
                         op.Add(pd => pd.ParatextUsers, activePtSyncUser);
                     }
-                    else if (existingUser.SFUserId == null &&
-                        ptUsernamesToSFUserIds.TryGetValue(existingUser.Username, out string userId))
+                    else if (
+                        existingUser.SFUserId == null
+                        && ptUsernamesToSFUserIds.TryGetValue(existingUser.Username, out string userId)
+                    )
                     {
-                        int index = _projectDoc.Data.ParatextUsers.FindIndex(u => u.Username == activePtSyncUser.Username);
+                        int index = _projectDoc.Data.ParatextUsers.FindIndex(
+                            u => u.Username == activePtSyncUser.Username
+                        );
                         op.Set(pd => pd.ParatextUsers[index].SFUserId, userId);
                     }
                 }
@@ -1165,10 +1290,13 @@ namespace SIL.XForge.Scripture.Services
             // If we have an id in the job ids collection, remove the first one
             if (_projectSecret.JobIds.Any())
             {
-                await _projectSecrets.UpdateAsync(_projectSecret.Id, u =>
-                {
-                    u.Remove(p => p.JobIds, _projectSecret.JobIds.First());
-                });
+                await _projectSecrets.UpdateAsync(
+                    _projectSecret.Id,
+                    u =>
+                    {
+                        u.Remove(p => p.JobIds, _projectSecret.JobIds.First());
+                    }
+                );
             }
 
             // Commit or rollback the transaction, depending on success
@@ -1204,8 +1332,11 @@ namespace SIL.XForge.Scripture.Services
 
         private async Task<Dictionary<string, string>> GetPTUsernameToSFUserIdsAsync(CancellationToken token)
         {
-            IReadOnlyDictionary<string, string> idsToUsernames =
-                await _paratextService.GetParatextUsernameMappingAsync(_userSecret, _projectDoc.Data, token);
+            IReadOnlyDictionary<string, string> idsToUsernames = await _paratextService.GetParatextUsernameMappingAsync(
+                _userSecret,
+                _projectDoc.Data,
+                token
+            );
             Dictionary<string, string> usernamesToUserIds = new Dictionary<string, string>();
             // Swap the keys and values
             foreach (KeyValuePair<string, string> kvp in idsToUsernames)
@@ -1235,8 +1366,9 @@ namespace SIL.XForge.Scripture.Services
         {
             string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
             XDocument usxDoc = XDocument.Parse(bookText);
-            Dictionary<int, ChapterDelta> chapterDeltas =
-                _deltaUsxMapper.ToChapterDeltas(usxDoc).ToDictionary(cd => cd.Number);
+            Dictionary<int, ChapterDelta> chapterDeltas = _deltaUsxMapper
+                .ToChapterDeltas(usxDoc)
+                .ToDictionary(cd => cd.Number);
             return chapterDeltas;
         }
 
@@ -1251,7 +1383,9 @@ namespace SIL.XForge.Scripture.Services
                 double percentCompleted = progress.ProgressValue;
                 if (percentCompleted >= 0)
                 {
-                    await _projectDoc.SubmitJson0OpAsync(op => op.Set(pd => pd.Sync.PercentCompleted, percentCompleted));
+                    await _projectDoc.SubmitJson0OpAsync(
+                        op => op.Set(pd => pd.Sync.PercentCompleted, percentCompleted)
+                    );
                 }
             }
         }

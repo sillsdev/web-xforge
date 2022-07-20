@@ -26,8 +26,13 @@ namespace SIL.XForge.Services
         private readonly IAuthService _authService;
         private readonly IProjectService _projectService;
 
-        public UserService(IRealtimeService realtimeService, IOptions<SiteOptions> siteOptions,
-            IRepository<UserSecret> userSecrets, IAuthService authService, IProjectService projectService)
+        public UserService(
+            IRealtimeService realtimeService,
+            IOptions<SiteOptions> siteOptions,
+            IRepository<UserSecret> userSecrets,
+            IAuthService authService,
+            IProjectService projectService
+        )
         {
             _realtimeService = realtimeService;
             _siteOptions = siteOptions;
@@ -40,37 +45,46 @@ namespace SIL.XForge.Services
         {
             var userProfile = JObject.Parse(userProfileJson);
             var identities = (JArray)userProfile["identities"];
-            JObject ptIdentity = identities.OfType<JObject>()
+            JObject ptIdentity = identities
+                .OfType<JObject>()
                 .FirstOrDefault(i => (string)i["connection"] == "paratext");
             Regex emailRegex = new Regex(EMAIL_PATTERN);
             using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
             {
                 string name = (string)userProfile["name"];
-                IDocument<User> userDoc = await conn.FetchOrCreateAsync<User>(curUserId, () => new User
-                {
-                    AuthId = (string)userProfile["user_id"],
-                    DisplayName = string.IsNullOrWhiteSpace(name) || emailRegex.IsMatch(name) ?
-                        (string)userProfile["nickname"] : name
-                });
-                await userDoc.SubmitJson0OpAsync(op =>
-                    {
-                        op.Set(u => u.Name, name);
-                        op.Set(u => u.Email, (string)userProfile["email"]);
-                        op.Set(u => u.AvatarUrl, (string)userProfile["picture"]);
-                        op.Set(u => u.Role, (string)userProfile["app_metadata"]["xf_role"]);
-                        if (ptIdentity != null)
+                IDocument<User> userDoc = await conn.FetchOrCreateAsync<User>(
+                    curUserId,
+                    () =>
+                        new User
                         {
-                            var ptId = (string)ptIdentity["user_id"];
-                            op.Set(u => u.ParatextId, GetIdpIdFromAuthId(ptId));
+                            AuthId = (string)userProfile["user_id"],
+                            DisplayName =
+                                string.IsNullOrWhiteSpace(name) || emailRegex.IsMatch(name)
+                                    ? (string)userProfile["nickname"]
+                                    : name
                         }
-                        string language = userProfile["user_metadata"] == null ? null :
-                            (string)userProfile["user_metadata"]["interface_language"];
-                        string interfaceLanguage = string.IsNullOrWhiteSpace(language) ? "en" : language;
-                        op.Set(u => u.InterfaceLanguage, interfaceLanguage);
-                        string key = _siteOptions.Value.Id;
-                        if (!userDoc.Data.Sites.ContainsKey(key))
-                            op.Set(u => u.Sites[key], new Site());
-                    });
+                );
+                await userDoc.SubmitJson0OpAsync(op =>
+                {
+                    op.Set(u => u.Name, name);
+                    op.Set(u => u.Email, (string)userProfile["email"]);
+                    op.Set(u => u.AvatarUrl, (string)userProfile["picture"]);
+                    op.Set(u => u.Role, (string)userProfile["app_metadata"]["xf_role"]);
+                    if (ptIdentity != null)
+                    {
+                        var ptId = (string)ptIdentity["user_id"];
+                        op.Set(u => u.ParatextId, GetIdpIdFromAuthId(ptId));
+                    }
+                    string language =
+                        userProfile["user_metadata"] == null
+                            ? null
+                            : (string)userProfile["user_metadata"]["interface_language"];
+                    string interfaceLanguage = string.IsNullOrWhiteSpace(language) ? "en" : language;
+                    op.Set(u => u.InterfaceLanguage, interfaceLanguage);
+                    string key = _siteOptions.Value.Id;
+                    if (!userDoc.Data.Sites.ContainsKey(key))
+                        op.Set(u => u.Sites[key], new Site());
+                });
             }
 
             if (ptIdentity != null)
@@ -80,14 +94,19 @@ namespace SIL.XForge.Services
                     AccessToken = (string)ptIdentity["access_token"],
                     RefreshToken = (string)ptIdentity["refresh_token"]
                 };
-                UserSecret userSecret = await _userSecrets.UpdateAsync(curUserId, update => update
-                    .SetOnInsert(put => put.ParatextTokens, newPTTokens), true);
+                UserSecret userSecret = await _userSecrets.UpdateAsync(
+                    curUserId,
+                    update => update.SetOnInsert(put => put.ParatextTokens, newPTTokens),
+                    true
+                );
 
                 // Only update the PT tokens if they are newer
                 if (newPTTokens.IssuedAt > userSecret.ParatextTokens.IssuedAt)
                 {
-                    await _userSecrets.UpdateAsync(curUserId,
-                        update => update.Set(put => put.ParatextTokens, newPTTokens));
+                    await _userSecrets.UpdateAsync(
+                        curUserId,
+                        update => update.Set(put => put.ParatextTokens, newPTTokens)
+                    );
                 }
             }
         }
@@ -106,15 +125,18 @@ namespace SIL.XForge.Services
             JObject userProfile = JObject.Parse(await _authService.GetUserAsync(primaryAuthId));
             var primaryUserId = (string)userProfile["app_metadata"]["xf_user_id"];
             var identities = (JArray)userProfile["identities"];
-            JObject ptIdentity = identities.OfType<JObject>()
-                .First(i => (string)i["connection"] == "paratext");
+            JObject ptIdentity = identities.OfType<JObject>().First(i => (string)i["connection"] == "paratext");
             var ptId = (string)ptIdentity["user_id"];
             var ptTokens = new Tokens
             {
                 AccessToken = (string)ptIdentity["access_token"],
                 RefreshToken = (string)ptIdentity["refresh_token"]
             };
-            await _userSecrets.UpdateAsync(primaryUserId, update => update.Set(us => us.ParatextTokens, ptTokens), true);
+            await _userSecrets.UpdateAsync(
+                primaryUserId,
+                update => update.Set(us => us.ParatextTokens, ptTokens),
+                true
+            );
 
             using (IConnection conn = await _realtimeService.ConnectAsync(primaryUserId))
             {

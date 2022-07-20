@@ -77,12 +77,13 @@ namespace SourceTargetSplitting
         /// <param name="userSecrets">The user secrets repository.</param>
         public ObjectMigrator(
             IOptions<DataAccessOptions> dataAccessOptions,
-             IDeltaUsxMapper deltaUsxMapper,
+            IDeltaUsxMapper deltaUsxMapper,
             IMongoClient mongoClient,
             IParatextService paratextService,
             ISFProjectService projectService,
             IRealtimeService realtimeService,
-            IRepository<UserSecret> userSecrets)
+            IRepository<UserSecret> userSecrets
+        )
         {
             this._database = mongoClient.GetDatabase(dataAccessOptions.Value.MongoDatabaseName);
             this._deltaUsxMapper = deltaUsxMapper;
@@ -123,8 +124,9 @@ namespace SourceTargetSplitting
         public async Task CreateProjectFromSourceAsync(string sourceId, string targetId)
         {
             // Get the administrator for the specified project
-            var targetProject =
-                this._realtimeService.QuerySnapshots<SFProject>().FirstOrDefault(p => p.ParatextId == targetId);
+            var targetProject = this._realtimeService
+                .QuerySnapshots<SFProject>()
+                .FirstOrDefault(p => p.ParatextId == targetId);
             if (targetProject == null)
             {
                 throw new DataNotFoundException("The target project does not exist");
@@ -145,8 +147,7 @@ namespace SourceTargetSplitting
                 try
                 {
                     // Use the project service to create the resource project
-                    sourceProjectRef =
-                        await this._projectService.CreateResourceProjectAsync(userId, sourceId);
+                    sourceProjectRef = await this._projectService.CreateResourceProjectAsync(userId, sourceId);
 
                     // Add each user in the target project to the source project so they can access it
                     foreach (string uid in userIds)
@@ -192,8 +193,7 @@ namespace SourceTargetSplitting
                 using IConnection connection = await this._realtimeService.ConnectAsync();
 
                 // Get the project
-                IDocument<SFProject>? projectDoc =
-                    await connection.FetchAsync<SFProject>(sourceProjectRef);
+                IDocument<SFProject>? projectDoc = await connection.FetchAsync<SFProject>(sourceProjectRef);
                 if (!projectDoc.IsLoaded)
                     return;
 
@@ -205,7 +205,11 @@ namespace SourceTargetSplitting
                 foreach (int bookNum in this._paratextService.GetBookList(userSecret, sourceId))
                 {
                     Dictionary<string, string>? permissions = await this._paratextService.GetPermissionsAsync(
-                        userSecret, projectDoc.Data, ptUsernameMapping, bookNum);
+                        userSecret,
+                        projectDoc.Data,
+                        ptUsernameMapping,
+                        bookNum
+                    );
 
                     TextInfo text = new TextInfo
                     {
@@ -214,8 +218,13 @@ namespace SourceTargetSplitting
                         Permissions = permissions,
                     };
 
-                    List<Chapter> newChapters =
-                        await this.UpdateTextDocsAsync(userSecret, text, sourceProjectRef, sourceId, connection);
+                    List<Chapter> newChapters = await this.UpdateTextDocsAsync(
+                        userSecret,
+                        text,
+                        sourceProjectRef,
+                        sourceId,
+                        connection
+                    );
 
                     // Update project with new TextInfo
                     await projectDoc.SubmitJson0OpAsync(op =>
@@ -280,7 +289,9 @@ namespace SourceTargetSplitting
                     }
                     else
                     {
-                        Program.Log($"Error Migrating {project.Id} - Source {sourceParatextId} is missing from MongoDB!");
+                        Program.Log(
+                            $"Error Migrating {project.Id} - Source {sourceParatextId} is missing from MongoDB!"
+                        );
                     }
                 }
             }
@@ -402,7 +413,8 @@ namespace SourceTargetSplitting
             }
 
             // Get every user id and username from the user secrets
-            Dictionary<string, string> userMapping = await this._userSecrets.Query()
+            Dictionary<string, string> userMapping = await this._userSecrets
+                .Query()
                 .ToDictionaryAsync(u => u.Id, u => this._paratextService.GetParatextUsername(u));
 
             // Iterate over every project
@@ -413,8 +425,9 @@ namespace SourceTargetSplitting
                 if (!doWrite && this._testProjectCollection.Contains(project))
                 {
                     // If we are in testing, find the original target project to get the source ScrText object
-                    SFProject? targetProject = existingProjects
-                        .FirstOrDefault(p => p.TranslateConfig.Source?.ParatextId == project.ParatextId);
+                    SFProject? targetProject = existingProjects.FirstOrDefault(
+                        p => p.TranslateConfig.Source?.ParatextId == project.ParatextId
+                    );
                     if (targetProject != null)
                     {
                         scrText = this.SourceScrTextCollection.FindById("admin", targetProject.ParatextId);
@@ -438,8 +451,7 @@ namespace SourceTargetSplitting
                     using IConnection connection = await this._realtimeService.ConnectAsync();
 
                     // Get the project
-                    IDocument<SFProject>? projectDoc =
-                        await connection.FetchAsync<SFProject>(project.Id);
+                    IDocument<SFProject>? projectDoc = await connection.FetchAsync<SFProject>(project.Id);
                     if (!projectDoc.IsLoaded)
                         return;
 
@@ -458,9 +470,11 @@ namespace SourceTargetSplitting
                         foreach (string uid in project.UserRoles.Keys)
                         {
                             // See if the user is in the project members list
-                            if (!userMapping.TryGetValue(uid, out string? userName)
+                            if (
+                                !userMapping.TryGetValue(uid, out string? userName)
                                 || string.IsNullOrWhiteSpace(userName)
-                                || scrText.Permissions.GetRole(userName) == Paratext.Data.Users.UserRoles.None)
+                                || scrText.Permissions.GetRole(userName) == Paratext.Data.Users.UserRoles.None
+                            )
                             {
                                 bookPermissions.Add(uid, TextInfoPermission.None);
                             }
@@ -468,7 +482,9 @@ namespace SourceTargetSplitting
                             {
                                 string textInfoPermission = TextInfoPermission.Read;
                                 IEnumerable<int> editable = scrText.Permissions.GetEditableBooks(
-                                        Paratext.Data.Users.PermissionSet.Merged, userName);
+                                    Paratext.Data.Users.PermissionSet.Merged,
+                                    userName
+                                );
                                 if (editable == null || !editable.Any())
                                 {
                                     // If there are no editable book permissions, check if they can edit all books
@@ -499,9 +515,11 @@ namespace SourceTargetSplitting
                             foreach (string uid in project.UserRoles.Keys)
                             {
                                 // See if the user is in the project members list
-                                if (!userMapping.TryGetValue(uid, out string? userName)
+                                if (
+                                    !userMapping.TryGetValue(uid, out string? userName)
                                     || string.IsNullOrWhiteSpace(userName)
-                                    || scrText.Permissions.GetRole(userName) == Paratext.Data.Users.UserRoles.None)
+                                    || scrText.Permissions.GetRole(userName) == Paratext.Data.Users.UserRoles.None
+                                )
                                 {
                                     chapterPermissions.Add(uid, TextInfoPermission.None);
                                 }
@@ -509,8 +527,11 @@ namespace SourceTargetSplitting
                                 {
                                     string textInfoPermission = TextInfoPermission.Read;
                                     IEnumerable<int>? editable = scrText.Permissions.GetEditableChapters(
-                                        project.Texts[i].BookNum, scrText.Settings.Versification, userName,
-                                        Paratext.Data.Users.PermissionSet.Merged);
+                                        project.Texts[i].BookNum,
+                                        scrText.Settings.Versification,
+                                        userName,
+                                        Paratext.Data.Users.PermissionSet.Merged
+                                    );
                                     if (editable?.Contains(project.Texts[i].Chapters[j].Number) ?? false)
                                     {
                                         textInfoPermission = TextInfoPermission.Write;
@@ -535,8 +556,13 @@ namespace SourceTargetSplitting
                                 op.Set(pd => pd.Texts[i].Permissions, bookPermissions);
                             }
 
-                            foreach ((int i, int j, Dictionary<string, string> chapterPermissions) in
-                                chapterPermissionOperations)
+                            foreach (
+                                (
+                                    int i,
+                                    int j,
+                                    Dictionary<string, string> chapterPermissions
+                                ) in chapterPermissionOperations
+                            )
                             {
                                 op.Set(pd => pd.Texts[i].Chapters[j].Permissions, chapterPermissions);
                             }
@@ -566,16 +592,18 @@ namespace SourceTargetSplitting
         public async Task MigrateTargetPermissionsAsync(string sourceId, string targetId)
         {
             // Get the target project
-            var targetProject =
-                this._realtimeService.QuerySnapshots<SFProject>().FirstOrDefault(p => p.ParatextId == targetId);
+            var targetProject = this._realtimeService
+                .QuerySnapshots<SFProject>()
+                .FirstOrDefault(p => p.ParatextId == targetId);
             if (targetProject == null)
             {
                 throw new DataNotFoundException("The target project does not exist");
             }
 
             // Get the source project
-            var sourceProject =
-                this._realtimeService.QuerySnapshots<SFProject>().FirstOrDefault(p => p.ParatextId == sourceId);
+            var sourceProject = this._realtimeService
+                .QuerySnapshots<SFProject>()
+                .FirstOrDefault(p => p.ParatextId == sourceId);
             if (sourceProject == null)
             {
                 throw new DataNotFoundException("The source project does not exist");
@@ -639,8 +667,9 @@ namespace SourceTargetSplitting
                         string usfm = scrText.GetText(bookNum);
                         string bookText = UsfmToUsx.ConvertToXmlString(scrText, bookNum, usfm, false);
                         var usxDoc = XDocument.Parse(bookText);
-                        Dictionary<int, ChapterDelta> deltas =
-                            this._deltaUsxMapper.ToChapterDeltas(usxDoc).ToDictionary(cd => cd.Number);
+                        Dictionary<int, ChapterDelta> deltas = this._deltaUsxMapper
+                            .ToChapterDeltas(usxDoc)
+                            .ToDictionary(cd => cd.Number);
                         var chapters = new List<Chapter>();
                         foreach (KeyValuePair<int, ChapterDelta> kvp in deltas)
                         {
@@ -654,8 +683,9 @@ namespace SourceTargetSplitting
                 }
 
                 // See that at least one user in the target project has permission to create the source project
-                var targetProject =
-                    this._realtimeService.QuerySnapshots<SFProject>().FirstOrDefault(p => p.ParatextId == targetId);
+                var targetProject = this._realtimeService
+                    .QuerySnapshots<SFProject>()
+                    .FirstOrDefault(p => p.ParatextId == targetId);
                 if (targetProject == null)
                 {
                     throw new DataNotFoundException("The target project does not exist");
@@ -700,13 +730,15 @@ namespace SourceTargetSplitting
         /// <param name="id">The identifier.</param>
         private async Task DeleteDocsAsync(string collectionName, string id)
         {
-            IMongoCollection<BsonDocument> snapshotCollection =
-                this._database.GetCollection<BsonDocument>(collectionName);
+            IMongoCollection<BsonDocument> snapshotCollection = this._database.GetCollection<BsonDocument>(
+                collectionName
+            );
             FilterDefinition<BsonDocument> idFilter = Builders<BsonDocument>.Filter.Regex("_id", $"^{id}");
             await snapshotCollection.DeleteManyAsync(idFilter);
 
-            IMongoCollection<BsonDocument> opsCollection =
-                this._database.GetCollection<BsonDocument>($"o_{collectionName}");
+            IMongoCollection<BsonDocument> opsCollection = this._database.GetCollection<BsonDocument>(
+                $"o_{collectionName}"
+            );
             FilterDefinition<BsonDocument> dFilter = Builders<BsonDocument>.Filter.Regex("d", $"^{id}");
             await opsCollection.DeleteManyAsync(dFilter);
         }
@@ -731,13 +763,15 @@ namespace SourceTargetSplitting
             TextInfo text,
             string projectId,
             string paratextId,
-            IConnection connection)
+            IConnection connection
+        )
         {
             string bookText = this._paratextService.GetBookText(userSecret, paratextId, text.BookNum);
             var usxDoc = XDocument.Parse(bookText);
             var tasks = new List<Task>();
-            Dictionary<int, ChapterDelta> deltas =
-                this._deltaUsxMapper.ToChapterDeltas(usxDoc).ToDictionary(cd => cd.Number);
+            Dictionary<int, ChapterDelta> deltas = this._deltaUsxMapper
+                .ToChapterDeltas(usxDoc)
+                .ToDictionary(cd => cd.Number);
             var chapters = new List<Chapter>();
             foreach (KeyValuePair<int, ChapterDelta> kvp in deltas)
             {
@@ -754,12 +788,14 @@ namespace SourceTargetSplitting
                 }
 
                 tasks.Add(createText(kvp.Key, kvp.Value.Delta));
-                chapters.Add(new Chapter
-                {
-                    Number = kvp.Key,
-                    LastVerse = kvp.Value.LastVerse,
-                    IsValid = kvp.Value.IsValid
-                });
+                chapters.Add(
+                    new Chapter
+                    {
+                        Number = kvp.Key,
+                        LastVerse = kvp.Value.LastVerse,
+                        IsValid = kvp.Value.IsValid
+                    }
+                );
             }
 
             await Task.WhenAll(tasks);
