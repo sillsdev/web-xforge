@@ -1120,10 +1120,9 @@ namespace SIL.XForge.Scripture.Services
                     noteThreadDocs, chapterDeltas, ptProjectUsers);
                 Assert.That(changes.Count, Is.EqualTo(1));
                 NoteThreadChange change = changes.First();
+                // include the newline length of the q paragraph break, but not the b
                 int startPos = text1.Length + "\n".Length + text2.Length;
                 TextAnchor expected = new TextAnchor { Start = startPos, Length = selected.Length };
-                Console.WriteLine($"Expected: start: {expected.Start}, length: {expected.Length}");
-                Console.WriteLine($"Actual: start: {change.Position.Start}, length: {change.Position.Length}");
                 Assert.That(change.Position, Is.EqualTo(expected));
             }
         }
