@@ -3,7 +3,7 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { TranslocoService } from '@ngneat/transloco';
-import Quill, { RangeStatic } from 'quill';
+import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import QuillCursors from 'quill-cursors';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
@@ -182,6 +182,39 @@ describe('TextComponent', () => {
     expect(verseSegments).toEqual(['verse_1_1', 'verse_1_1/q_1', 'verse_1_1/q_2', 'verse_1_1/q_3']);
     const segmentText = env.component.getSegmentText('verse_1_1/q_2');
     expect(segmentText).toEqual('Poetry third line');
+  }));
+
+  it('pastes text with proper attributes', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.fixture.detectChanges();
+    env.id = new TextDocId('project01', 40, 1);
+    tick();
+    env.fixture.detectChanges();
+    env.embedNoteAtVerse(1);
+    tick();
+    env.fixture.detectChanges();
+
+    const range: RangeStatic = env.component.getSegmentRange('verse_1_1')!;
+    env.component.editor!.setSelection(range.index, 0, 'user');
+    tick();
+    env.fixture.detectChanges();
+    let segmentElement: HTMLElement = env.getSegment('verse_1_1')!;
+    expect(segmentElement.classList).toContain('note-thread-segment');
+    const pasteText = 'paste text';
+    let contents: DeltaStatic = env.component.getSegmentContents('verse_1_1')!;
+    expect(contents.ops![0].insert).toEqual('target: ');
+    const dataTransfer = new DataTransfer();
+    dataTransfer.setData('text/plain', pasteText);
+    const pasteEvent = new ClipboardEvent('paste', { clipboardData: dataTransfer });
+    env.component.editor!.root.dispatchEvent(pasteEvent);
+    tick(10);
+    env.fixture.detectChanges();
+
+    expect(env.quillEditor.querySelectorAll('usx-segment[data-segment="verse_1_1"]').length).toEqual(1);
+    segmentElement = env.getSegment('verse_1_1')!;
+    expect(segmentElement.classList).toContain('note-thread-segment');
+    contents = env.component.getSegmentContents('verse_1_1')!;
+    expect(contents.ops![0].insert).toEqual(pasteText + 'target: ');
   }));
 
   describe('MultiCursor Presence', () => {
@@ -2876,6 +2909,10 @@ class TestEnvironment {
 
   get remotePresences(): Record<string, PresenceData> {
     return (this.viewModel as any).presence.remotePresences;
+  }
+
+  getSegment(segmentRef: string): HTMLElement | null {
+    return this.quillEditor.querySelector(`usx-segment[data-segment="${segmentRef}"]`);
   }
 
   isSegmentHighlighted(chapter: number, verse: number | string): boolean {
