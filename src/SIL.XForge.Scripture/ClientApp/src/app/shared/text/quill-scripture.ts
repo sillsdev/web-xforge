@@ -740,7 +740,9 @@ export function registerScripture(): string[] {
         }
         if (typeof modelOp.insert === 'object') {
           // clear the formatting attributes on embeds to prevent dom elements from being corrupted
-          modelOp.attributes = undefined;
+          if (modelOp.insert.blank == null) {
+            modelOp.attributes = undefined;
+          }
         }
         (updatedDelta as any).push(modelOp);
       }
