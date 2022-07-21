@@ -28,7 +28,13 @@ import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../shared.module';
-import { getCombinedVerseTextDoc, getPoetryVerseTextDoc, getSFProject, getTextDoc } from '../test-utils';
+import {
+  getCombinedVerseTextDoc,
+  getEmptyChapterDoc,
+  getPoetryVerseTextDoc,
+  getSFProject,
+  getTextDoc
+} from '../test-utils';
 import { DragAndDrop } from './drag-and-drop';
 import { TextComponent } from './text.component';
 import { PresenceData, RemotePresences, TextViewModel } from './text-view-model';
@@ -182,6 +188,25 @@ describe('TextComponent', () => {
     expect(verseSegments).toEqual(['verse_1_1', 'verse_1_1/q_1', 'verse_1_1/q_2', 'verse_1_1/q_3']);
     const segmentText = env.component.getSegmentText('verse_1_1/q_2');
     expect(segmentText).toEqual('Poetry third line');
+  }));
+
+  it('can undo when segment is blank', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.fixture.detectChanges();
+    env.id = new TextDocId('project01', 43, 1);
+    tick();
+    env.fixture.detectChanges();
+
+    const range: RangeStatic = env.component.getSegmentRange('s_3')!;
+    env.component.editor!.setSelection(range.index + 1, 'user');
+    tick();
+    env.fixture.detectChanges();
+    env.insertText(range.index + 1, 'text');
+
+    // SUT
+    env.triggerUndo();
+    const rangePostUndo: RangeStatic | undefined = env.component.getSegmentRange('s_3');
+    expect(rangePostUndo).toBeTruthy();
   }));
 
   describe('MultiCursor Presence', () => {
@@ -2802,6 +2827,7 @@ class TestEnvironment {
     const matTextDocId = new TextDocId('project01', 40, 1);
     const mrkTextDocId = new TextDocId('project01', 41, 1);
     const lukTextDocId = new TextDocId('project01', 42, 1);
+    const jhnTextDocId = new TextDocId('project01', 43, 1);
     this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
       id: 'project01',
       data: getSFProject('project01')
@@ -2821,7 +2847,8 @@ class TestEnvironment {
         id: lukTextDocId.toString(),
         data: getPoetryVerseTextDoc(lukTextDocId),
         type: RichText.type.name
-      }
+      },
+      { id: jhnTextDocId.toString(), data: getEmptyChapterDoc(jhnTextDocId), type: RichText.type.name }
     ]);
 
     when(mockedProjectService.getText(anything())).thenCall(id =>
@@ -2881,6 +2908,12 @@ class TestEnvironment {
   isSegmentHighlighted(chapter: number, verse: number | string): boolean {
     const segment = this.quillEditor.querySelector(`usx-segment[data-segment="verse_${chapter}_${verse}"]`)!;
     return segment != null && segment.classList.contains('highlight-segment');
+  }
+
+  insertText(index: number, text: string): void {
+    this.component.editor!.insertText(index, text, 'user');
+    tick();
+    this.fixture.detectChanges();
   }
 
   embedNoteAtVerse(verse: number): void {
@@ -3026,6 +3059,12 @@ class TestEnvironment {
       .withContext('setup: should be grabbing a single, specific binding in quill with the desired handler')
       .toEqual(1);
     return matchingBindings[0].handler(range);
+  }
+
+  triggerUndo(): void {
+    this.component.editor!.history.undo();
+    tick();
+    this.fixture.detectChanges();
   }
 
   /** Assert that in `parentNode`, there are only immediate children with name and order specified in
