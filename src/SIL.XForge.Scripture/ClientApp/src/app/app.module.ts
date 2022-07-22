@@ -29,6 +29,7 @@ import { SyncProgressComponent } from './sync/sync-progress/sync-progress.compon
 import { SyncComponent } from './sync/sync.component';
 import { TranslateModule } from './translate/translate.module';
 import { UsersModule } from './users/users.module';
+import { TextNoteDialogComponent } from './shared/text/text-note-dialog/text-note-dialog.component';
 
 @NgModule({
   declarations: [
@@ -45,7 +46,8 @@ import { UsersModule } from './users/users.module';
     ErrorComponent,
     EditNameDialogComponent,
     ProjectSelectComponent,
-    SyncProgressComponent
+    SyncProgressComponent,
+    TextNoteDialogComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
