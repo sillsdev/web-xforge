@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -73,6 +74,19 @@ namespace SIL.XForge.Scripture.Controllers
             catch (FormatException)
             {
                 return BadRequest();
+            }
+            catch (Exception)
+            {
+                // Send additional to bugsnag, then rethrow the error
+                _bugsnag.BeforeNotify(report =>
+                {
+                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string> {
+                        { "method", "UploadAudioAsync"},
+                        { "projectId", projectId },
+                        { "dataId", dataId },
+                    });
+                });
+                throw;
             }
         }
     }
