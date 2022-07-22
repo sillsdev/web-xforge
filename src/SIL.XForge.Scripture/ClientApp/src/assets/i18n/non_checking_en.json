@@ -142,14 +142,14 @@
     "other_viewers": "{{ count }} other viewers"
   },
   "note_dialog": {
-    "declare_conflict": "There is a conflict. Colors correspond to older (red) and newer (green) text.",
     "acceptance_change_heading": "Changes Paratext Accepted (current text):",
-    "rejection_change_heading": "Changes Paratext Rejected:",
     "close": "Close",
+    "declare_conflict": "There is a conflict. Colors correspond to older (red) and newer (green) text.",
     "hide_changes": "Hide changes",
     "note_reattached": "Note reattached",
     "paratext_user": "Assigned to a Paratext user",
     "reattached": "(Re-attached)",
+    "rejection_change_heading": "Changes Paratext Rejected:",
     "show_changes": "Show changes",
     "status_resolved": "Resolved",
     "status_to_do": "To do",
@@ -261,6 +261,11 @@
     "book_is_empty": "This book is empty. Add chapters in Paratext.",
     "loading": "Loading...",
     "not_available_offline": "This text is not available offline. Connect to the Internet to see the text."
+  },
+  "text_note_dialog": {
+    "cross_reference": "Cross-reference",
+    "end_note": "End note",
+    "footnote": "Footnote"
   },
   "translate_overview": {
     "cannot_train_suggestion_engine": "Translation suggestions are unavailable. Please select a source project that shares books in common with this project to get translation suggestions.",

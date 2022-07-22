@@ -389,6 +389,24 @@ usx-note {
     > span::before {
       counter-increment: note;
       content: counter(note, lower-alpha);
+      background: #000;
+      color: white;
+      border-radius: 50%;
+      width: 1.25em;
+      height: 1.25em;
+      display: inline-block;
+      line-height: 1.25em;
+      text-align: center;
+      cursor: pointer;
+    }
+    &[data-style='f'] > span::before {
+      background: $blueMedium;
+    }
+    &[data-style='fe'] > span::before {
+      background: $purpleLight;
+    }
+    &[data-style='x'] > span::before {
+      background: $greenLight;
     }
   }
 }

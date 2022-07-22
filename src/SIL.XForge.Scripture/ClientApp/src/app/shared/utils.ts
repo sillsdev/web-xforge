@@ -61,13 +61,16 @@ export function threadIdFromMouseEvent(event: MouseEvent): string | undefined {
   return attributeFromMouseEvent(event, 'DISPLAY-NOTE', 'data-thread-id');
 }
 
-function attributeFromMouseEvent(event: MouseEvent, nodeName: string, attribute: string): string | undefined {
+export function attributeFromMouseEvent(event: MouseEvent, nodeName: string, attribute: string): string | undefined {
   let target = event.target;
   if (target == null) {
     return;
   }
   if (target['offsetParent']['nodeName'] === nodeName) {
     target = target['offsetParent'] as EventTarget;
+  }
+  if (target['parentNode']['nodeName'] === nodeName) {
+    target = target['parentNode'] as EventTarget;
   }
   if (target['nodeName'] === nodeName) {
     return target['attributes'][attribute].value;

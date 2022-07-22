@@ -23,6 +23,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { MockConsole } from 'xforge-common/mock-console';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
+import { MatDialog } from '@angular/material/dialog';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
@@ -38,6 +39,7 @@ import {
 import { DragAndDrop } from './drag-and-drop';
 import { TextComponent } from './text.component';
 import { PresenceData, RemotePresences, TextViewModel } from './text-view-model';
+import { TextNoteDialogComponent } from './text-note-dialog/text-note-dialog.component';
 
 const mockedBugsnagService = mock(BugsnagService);
 const mockedPwaService = mock(PwaService);
@@ -45,6 +47,7 @@ const mockedProjectService = mock(SFProjectService);
 const mockedTranslocoService = mock(TranslocoService);
 const mockedUserService = mock(UserService);
 const mockedConsole: MockConsole = MockConsole.install();
+const mockedMatDialog = mock(MatDialog);
 
 describe('TextComponent', () => {
   configureTestingModule(() => ({
@@ -62,7 +65,8 @@ describe('TextComponent', () => {
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: PwaService, useMock: mockedPwaService },
       { provide: TranslocoService, useMock: mockedTranslocoService },
-      { provide: UserService, useMock: mockedUserService }
+      { provide: UserService, useMock: mockedUserService },
+      { provide: MatDialog, useMock: mockedMatDialog }
     ]
   }));
   beforeEach(() => {
@@ -2739,6 +2743,147 @@ describe('TextComponent', () => {
 
     expect(cancelled).withContext('event should have been cancelled when invalid selection').toBeTrue();
     expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
+  }));
+
+  it('can display footnote dialog', fakeAsync(() => {
+    const chapterNum = 2;
+    const segmentRef: string = `verse_${chapterNum}_1`;
+    const textDocOps: RichText.DeltaOperation[] = [
+      { insert: { chapter: { number: chapterNum.toString(), style: 'c' } } },
+      { insert: { verse: { number: '1', style: 'v' } } },
+      {
+        insert: `quick brown`,
+        attributes: {
+          segment: segmentRef
+        }
+      },
+      {
+        insert: {
+          note: {
+            caller: '+',
+            style: 'f',
+            contents: {
+              ops: [
+                {
+                  insert: `${chapterNum}.1 `,
+                  attributes: {
+                    char: {
+                      style: 'fe',
+                      closed: 'false',
+                      cid: '65efb8c9-ebf1-4ac8-abd2-20b5e067996d'
+                    }
+                  }
+                },
+                {
+                  insert: 'footnote text',
+                  attributes: {
+                    char: {
+                      style: 'ft',
+                      closed: 'false',
+                      cid: '6746d56a-77eb-4b72-8d38-4b87f3af32e2'
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        attributes: {
+          segment: segmentRef
+        }
+      },
+      {
+        insert: {
+          note: {
+            caller: '+',
+            style: 'fe',
+            contents: {
+              ops: [
+                {
+                  insert: `${chapterNum}.1 `,
+                  attributes: {
+                    char: {
+                      style: 'fe',
+                      closed: 'false',
+                      cid: '65efb8c9-ebf1-4ac8-abd2-20b5e067996d'
+                    }
+                  }
+                },
+                {
+                  insert: 'end note text',
+                  attributes: {
+                    char: {
+                      style: 'ft',
+                      closed: 'false',
+                      cid: '6746d56a-77eb-4b72-8d38-4b87f3af32e2'
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        attributes: {
+          segment: segmentRef
+        }
+      },
+      {
+        insert: {
+          note: {
+            caller: '+',
+            style: 'x',
+            contents: {
+              ops: [
+                {
+                  insert: `${chapterNum}.1 `,
+                  attributes: {
+                    char: {
+                      style: 'fe',
+                      closed: 'false',
+                      cid: '65efb8c9-ebf1-4ac8-abd2-20b5e067996d'
+                    }
+                  }
+                },
+                {
+                  insert: 'cross-reference text',
+                  attributes: {
+                    char: {
+                      style: 'ft',
+                      closed: 'false',
+                      cid: '6746d56a-77eb-4b72-8d38-4b87f3af32e2'
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        attributes: {
+          segment: segmentRef
+        }
+      },
+      {
+        insert: ` fox`,
+        attributes: {
+          segment: segmentRef
+        }
+      }
+    ];
+    const env = new TestEnvironment({ chapterNum, textDoc: textDocOps });
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+
+    const footNote = 'f';
+    const endNote = 'fe';
+    const crossReferenceNote = 'fe';
+    [footNote, endNote, crossReferenceNote].forEach(noteStyle => {
+      const note = env.quillEditor.querySelector('usx-note[data-style="' + noteStyle + '"]') as HTMLElement;
+      expect(note).withContext(noteStyle).not.toBeNull();
+      note!.click();
+    });
+    // env.fixture.detectChanges();
+    verify(mockedMatDialog.open(TextNoteDialogComponent, anything())).thrice();
   }));
 });
 
