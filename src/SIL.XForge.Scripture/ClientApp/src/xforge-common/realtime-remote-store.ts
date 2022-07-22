@@ -12,6 +12,7 @@ export abstract class RealtimeRemoteStore {
   abstract init(getAccessToken: () => Promise<string | undefined>): Promise<void>;
   abstract createDocAdapter(collection: string, id: string): RealtimeDocAdapter;
   abstract createQueryAdapter(collection: string, parameters: QueryParameters): RealtimeQueryAdapter;
+  abstract subscribeToBeforeSendOp(listener: (collection: string, docId: string) => Promise<void>): void;
 }
 
 /**

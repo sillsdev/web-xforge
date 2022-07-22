@@ -75,7 +75,7 @@ export abstract class ProjectDataDoc<T extends ProjectData = ProjectData> extend
     return undefined;
   }
 
-  protected async updateOfflineData(force: boolean = false): Promise<void> {
+  async updateOfflineData(force: boolean = false): Promise<void> {
     await super.updateOfflineData(force);
     await this.updateFileCache();
   }

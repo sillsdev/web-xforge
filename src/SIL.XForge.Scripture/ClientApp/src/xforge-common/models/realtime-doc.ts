@@ -197,7 +197,7 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
    *
    * @param {boolean} [force=false] Indicates whether force the update to occur even if not subscribed.
    */
-  protected async updateOfflineData(force: boolean = false): Promise<void> {
+  async updateOfflineData(force: boolean = false): Promise<void> {
     if (this.adapter.type == null) {
       return;
     }
@@ -213,7 +213,12 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
 
     const pendingOps = this.adapter.pendingOps
       .filter(opInfo => opInfo.op != null)
-      .map(opInfo => this.prepareDataForStore(opInfo.op));
+      .map(opInfo => {
+        const data = { op: this.prepareDataForStore(opInfo.op) };
+        if (opInfo.hasOwnProperty('src')) data['src'] = opInfo.src;
+        if (opInfo.hasOwnProperty('seq')) data['seq'] = opInfo.seq;
+        return data;
+      });
 
     this.offlineSnapshotVersion = this.adapter.version;
     const offlineData: RealtimeOfflineData = {

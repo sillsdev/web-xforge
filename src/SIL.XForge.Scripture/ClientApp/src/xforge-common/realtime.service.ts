@@ -35,6 +35,10 @@ export class RealtimeService {
     if (this.fileService != null) {
       this.fileService.init(this);
     }
+    this.remoteStore.subscribeToBeforeSendOp(async (collection: string, docId: string) => {
+      const doc = this.docs.get(getDocKey(collection, docId));
+      await doc?.updateOfflineData();
+    });
   }
 
   get<T extends RealtimeDoc>(collection: string, id: string): T {

@@ -40,6 +40,7 @@ declare module 'sharedb/lib/client' {
   export type Callback = (err: Error) => void;
 
   export interface Connection {
+    id: string | null;
     get(collection: string, id: string): Doc;
     createFetchQuery(
       collection: string,

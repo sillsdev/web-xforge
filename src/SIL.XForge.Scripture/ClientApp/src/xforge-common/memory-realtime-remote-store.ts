@@ -55,6 +55,8 @@ export class MemoryRealtimeRemoteStore extends RealtimeRemoteStore {
   createQueryAdapter(collection: string, parameters: QueryParameters): RealtimeQueryAdapter {
     return new MemoryRealtimeQueryAdapter(this, collection, parameters);
   }
+
+  subscribeToBeforeSendOp(_listener: (collection: string, docId: string) => Promise<void>): void {}
 }
 
 /**

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import cloneDeep from 'lodash-es/cloneDeep';
-import ReconnectingWebSocket from 'reconnecting-websocket';
+import ReconnectingWebSocket, { Message } from 'reconnecting-websocket';
+import Events from 'reconnecting-websocket/dist/events';
 import * as RichText from 'rich-text';
 import { fromEvent, Observable, Subject } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
@@ -15,6 +16,75 @@ import { RealtimeDocAdapter, RealtimeQueryAdapter, RealtimeRemoteStore } from '.
 
 types.register(RichText.type);
 
+function isMessageSendingOp(data: string) {
+  try {
+    const obj = JSON.parse(data);
+    return obj['a'] === 'op';
+  } catch {
+    return false;
+  }
+}
+
+class ShareDBWebsocketAdapter {
+  constructor(readonly socket: ReconnectingWebSocket, readonly remoteStore: SharedbRealtimeRemoteStore) {}
+
+  close(): void {
+    this.socket.close();
+  }
+
+  get readyState(): number {
+    return this.socket.readyState;
+  }
+
+  get onmessage() {
+    return this.socket.onmessage;
+  }
+
+  set onmessage(handler: ((event: MessageEvent) => void) | null) {
+    this.socket.onmessage = (event: MessageEvent) => {
+      if (handler == null || (isMessageSendingOp(event.data) && window['PREVENT_OP_ACKNOWLEDGEMENT'])) {
+        return;
+      }
+      handler(event);
+    };
+  }
+
+  get onerror() {
+    return this.socket.onerror;
+  }
+
+  set onerror(handler: ((event: Events.ErrorEvent) => void) | null) {
+    this.socket.onerror = handler;
+  }
+
+  get onopen() {
+    return this.socket.onopen;
+  }
+
+  set onopen(handler: ((event: Events.Event) => void) | null) {
+    this.socket.onopen = handler;
+  }
+
+  get onclose() {
+    return this.socket.onclose;
+  }
+
+  set onclose(handler: ((event: Events.CloseEvent) => void) | null) {
+    this.socket.onclose = handler;
+  }
+
+  async send(data: Message): Promise<void> {
+    if (typeof data === 'string' && isMessageSendingOp(data) && window['PREVENT_OP_SUBMISSION']) {
+      return;
+    }
+    if (typeof data === 'string' && isMessageSendingOp(data)) {
+      const message = JSON.parse(data);
+      await this.remoteStore.beforeSendOp(message['c'], message['d']);
+    }
+    this.socket.send(data);
+  }
+}
+
 /**
  * This is the ShareDB-based implementation of the real-time remote store.
  */
@@ -22,9 +92,12 @@ types.register(RichText.type);
   providedIn: 'root'
 })
 export class SharedbRealtimeRemoteStore extends RealtimeRemoteStore {
+  beforeSendOpListeners: ((collection: string, docId: string) => Promise<void>)[] = [];
+
   private ws?: ReconnectingWebSocket;
   private connection?: Connection;
   private getAccessToken?: () => Promise<string | undefined>;
+  private shareDBWebsocketAdapter?: ShareDBWebsocketAdapter;
 
   constructor(private readonly locationService: LocationService, private readonly pwaService: PwaService) {
     super();
@@ -49,7 +122,8 @@ export class SharedbRealtimeRemoteStore extends RealtimeRemoteStore {
         resolve();
       });
     });
-    this.connection = new Connection(this.ws);
+    this.shareDBWebsocketAdapter = new ShareDBWebsocketAdapter(this.ws!, this);
+    this.connection = new Connection(this.shareDBWebsocketAdapter);
   }
 
   createDocAdapter(collection: string, id: string): RealtimeDocAdapter {
@@ -81,6 +155,16 @@ export class SharedbRealtimeRemoteStore extends RealtimeRemoteStore {
       }
     }
     return url;
+  }
+
+  subscribeToBeforeSendOp(listener: (collection: string, docId: string) => Promise<void>): void {
+    this.beforeSendOpListeners.push(listener);
+  }
+
+  async beforeSendOp(collection: string, docId: string): Promise<void> {
+    for (const listener of this.beforeSendOpListeners) {
+      await listener(collection, docId);
+    }
   }
 }
 
@@ -143,7 +227,8 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
       pendingOps = this.doc.pendingOps.slice();
 
       if (this.doc.inflightOp != null && this.doc.inflightOp.op != null) {
-        pendingOps.unshift(this.doc.inflightOp);
+        // set the src if it doesn't exist on the op already
+        pendingOps.unshift({ src: this.doc.connection.id, ...this.doc.inflightOp });
       }
     }
     return pendingOps;
@@ -243,7 +328,14 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
   }
 
   updatePendingOps(ops: any[]): void {
-    this.doc.pendingOps.push(...ops.map(component => ({ op: component, type: this.doc.type, callbacks: [] })));
+    this.doc.pendingOps.push(
+      ...ops.map(component => {
+        const data = { op: component.op, type: this.doc.type, callbacks: [] };
+        if (component.hasOwnProperty('src')) data['src'] = component.src;
+        if (component.hasOwnProperty('seq')) data['seq'] = component.seq;
+        return data;
+      })
+    );
     this.doc.flush();
   }
 
