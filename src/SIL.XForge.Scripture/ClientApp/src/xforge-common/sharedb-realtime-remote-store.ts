@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import cloneDeep from 'lodash-es/cloneDeep';
-import ReconnectingWebSocket from 'reconnecting-websocket';
+import ReconnectingWebSocket, { Message } from 'reconnecting-websocket';
+import Events from 'reconnecting-websocket/dist/events';
 import * as RichText from 'rich-text';
 import { fromEvent, Observable, Subject } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
@@ -8,12 +9,134 @@ import { Connection, Doc, OTType, Query, Snapshot, types } from 'sharedb/lib/cli
 import { Presence } from 'sharedb/lib/sharedb';
 import { PwaService } from 'xforge-common/pwa.service';
 import { Snapshot as DataSnapshot } from 'xforge-common/models/snapshot';
+import { hasPropWithValue, hasStringProp } from 'src/type-utils';
 import { environment } from '../environments/environment';
 import { LocationService } from './location.service';
 import { QueryParameters } from './query-parameters';
 import { RealtimeDocAdapter, RealtimeQueryAdapter, RealtimeRemoteStore } from './realtime-remote-store';
+import { FeatureFlagService } from './feature-flags/feature-flag.service';
+import { tryParseJSON } from './utils';
 
 types.register(RichText.type);
+
+/** Checks whether the given string is a message sending an op to the server */
+function isMessageSendingOp(data: unknown): boolean {
+  return hasPropWithValue(data, 'a', 'op');
+}
+
+/**
+ * This class was created to work around a problem with ShareDB and offline support. ShareDB is designed to work with a
+ * network that drops and then reconnects, but is not designed to persist data anywhere other than in memory.
+ *
+ * In order to make submitting an op idempotent, two properties are set on the op:
+ * - `src` is set to the value of the `id` property of the connection. (In practice this is usually omitted because it
+ * would be the same as the connection id; see below)
+ * - `seq` is set to a monotonically increasing number that is unique to the connection.
+ * If an op has been submitted but not acknowledged, then the op is submitted again, and the server will ignore the op
+ * if it already applied it.
+ *
+ * If the user closes the browser when an op has been sent and not acknowledged, the op needs to be stored in IndexedDB
+ * with the same `src` and `seq` properties so that when the user opens the browser again, the op can be submitted again
+ * idempotently. The problem is that ShareDB sets the `seq` property immediately before sending the op, so it is not
+ * possible to fully store the op in IndexedDB before the `seq` property is set. There is no event that can be
+ * subscribed to that will be triggered after the `seq` property is set and before the op is sent, and we cannot set the
+ * `seq` property ourselves when submitting the op to ShareDB (or at least no way was found when this route was
+ * investigated).
+ *
+ * ShareDB is even more lackadaisical about setting the `src` property on the op. When the op is first submitted, the
+ * `src` value would be set to the `id` property of the connection, which is known by the server, so ShareDB omits the
+ * `src` property and lets the server get the value from the connection. Immediately after submitting the op, ShareDB
+ * sets the `src` property to the value of the `id` property of the connection, so that if the op is later sent again
+ * after a new connection is established, the op can be correctly ignored.
+ *
+ * The workaround to these problems is to use a custom websocket adapter that will intercept the connection and store
+ * the op in IndexedDB before it is sent. When the op is intercepted it already has the `seq` property set, but lacks
+ * the `src` property. To work around this, the `src` property is added to a copy of the op just before it is stored in
+ * IndexedDB.
+ *
+ * - NP, 2023-03-07
+ *
+ * Notes:
+ * - This class is implementing a websocket, but only the methods that are used by ShareDB are implemented.
+ */
+class ShareDBWebsocketAdapter {
+  constructor(
+    readonly socket: ReconnectingWebSocket,
+    readonly remoteStore: SharedbRealtimeRemoteStore,
+    readonly featureFlags: FeatureFlagService
+  ) {}
+
+  close(): void {
+    this.socket.close();
+  }
+
+  get readyState(): number {
+    return this.socket.readyState;
+  }
+
+  get onmessage(): ((event: MessageEvent<any>) => void) | null {
+    return this.socket.onmessage;
+  }
+
+  /**
+   * Handles messages from the server and passes them on to ShareDB on the client. If the message is an op, and the
+   * feature flag to disable op acknowledgement is turned on, the message is ignored (not passed on to ShareDB).
+   * (Actually all ops are blocked, not just acknowledgements. We might want to consider changing that).
+   */
+  set onmessage(handler: ((event: MessageEvent) => void) | null) {
+    this.socket.onmessage = (event: MessageEvent) => {
+      const sendingOp = isMessageSendingOp(tryParseJSON(event.data));
+      if (handler == null || (sendingOp && this.featureFlags.preventOpAcknowledgement.enabled)) {
+        return;
+      }
+      handler(event);
+    };
+  }
+
+  get onerror(): ((event: Events.ErrorEvent) => void) | null {
+    return this.socket.onerror;
+  }
+
+  set onerror(handler: ((event: Events.ErrorEvent) => void) | null) {
+    this.socket.onerror = handler;
+  }
+
+  get onopen(): ((event: Events.Event) => void) | null {
+    return this.socket.onopen;
+  }
+
+  set onopen(handler: ((event: Events.Event) => void) | null) {
+    this.socket.onopen = handler;
+  }
+
+  get onclose(): ((event: Events.CloseEvent) => void) | null {
+    return this.socket.onclose;
+  }
+
+  set onclose(handler: ((event: Events.CloseEvent) => void) | null) {
+    this.socket.onclose = handler;
+  }
+
+  /**
+   * Sends messages on through from the ShareDB client to the websocket, but ignores them if the message is an op and
+   * the feature flag to disable sending ops is turned on.
+   *
+   * If the message is an op and sending ops is not disabled, then the remote store is notified that an op is about to
+   * be sent, along with the collection and document id of the op, so that it can be stored in IndexedDB before being
+   * sent.
+   */
+  async send(data: Message): Promise<void> {
+    const message = tryParseJSON(data);
+    const sendingOp = isMessageSendingOp(message);
+    if (sendingOp && this.featureFlags.preventOpSubmission.enabled) {
+      return;
+    }
+    if (sendingOp && hasStringProp(message, 'c') && hasStringProp(message, 'd')) {
+      await this.remoteStore.beforeSendOp(message['c'], message['d']);
+    }
+    this.socket.send(data);
+  }
+}
 
 /**
  * This is the ShareDB-based implementation of the real-time remote store.
@@ -22,11 +145,18 @@ types.register(RichText.type);
   providedIn: 'root'
 })
 export class SharedbRealtimeRemoteStore extends RealtimeRemoteStore {
+  beforeSendOpListeners: ((collection: string, docId: string) => Promise<void>)[] = [];
+
   private ws?: ReconnectingWebSocket;
   private connection?: Connection;
   private getAccessToken?: () => Promise<string | undefined>;
+  private shareDBWebsocketAdapter?: ShareDBWebsocketAdapter;
 
-  constructor(private readonly locationService: LocationService, private readonly pwaService: PwaService) {
+  constructor(
+    private readonly locationService: LocationService,
+    private readonly pwaService: PwaService,
+    private readonly featureFlags: FeatureFlagService
+  ) {
     super();
   }
 
@@ -49,7 +179,8 @@ export class SharedbRealtimeRemoteStore extends RealtimeRemoteStore {
         resolve();
       });
     });
-    this.connection = new Connection(this.ws);
+    this.shareDBWebsocketAdapter = new ShareDBWebsocketAdapter(this.ws!, this, this.featureFlags);
+    this.connection = new Connection(this.shareDBWebsocketAdapter);
   }
 
   createDocAdapter(collection: string, id: string): RealtimeDocAdapter {
@@ -81,6 +212,21 @@ export class SharedbRealtimeRemoteStore extends RealtimeRemoteStore {
       }
     }
     return url;
+  }
+
+  /**
+   * Adds a listener that will be called before an op is sent to the server. This allows the op to be stored in
+   * IndexedDB before being sent.
+   */
+  subscribeToBeforeSendOp(listener: (collection: string, docId: string) => Promise<void>): void {
+    this.beforeSendOpListeners.push(listener);
+  }
+
+  /** Calls all listeners that have been added to be notified before an op is sent to the server. */
+  async beforeSendOp(collection: string, docId: string): Promise<void> {
+    for (const listener of this.beforeSendOpListeners) {
+      await listener(collection, docId);
+    }
   }
 }
 
@@ -137,13 +283,21 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
     return this.doc.connection.getDocPresence(this.collection, this.id);
   }
 
+  /**
+   * Returns the pending ops for the document. This includes the inflight op if it exists. This is used to save the
+   * pending ops to IndexedDB so they can be sent to the server when the connection is restored.
+   */
   get pendingOps(): any[] {
     let pendingOps = [];
     if (this.doc.hasWritePending()) {
       pendingOps = this.doc.pendingOps.slice();
 
       if (this.doc.inflightOp != null && this.doc.inflightOp.op != null) {
-        pendingOps.unshift(this.doc.inflightOp);
+        // If the inflight op does not already have the src set, provide the connection id as the src.
+        // This doesn't modify ShareDB's copy of the op, but it ensures that when the pending ops are saved to IndexedDB
+        // the src is set, even though ShareDB hasn't set it yet at this point. See documentation for
+        // ShareDBWebsocketAdapter for more details.
+        pendingOps.unshift({ src: this.doc.connection.id, ...this.doc.inflightOp });
       }
     }
     return pendingOps;
@@ -243,7 +397,14 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
   }
 
   updatePendingOps(ops: any[]): void {
-    this.doc.pendingOps.push(...ops.map(component => ({ op: component, type: this.doc.type, callbacks: [] })));
+    this.doc.pendingOps.push(
+      ...ops.map(component => {
+        const data = { op: component.op, type: this.doc.type, callbacks: [] };
+        if (component.hasOwnProperty('src')) data['src'] = component.src;
+        if (component.hasOwnProperty('seq')) data['seq'] = component.seq;
+        return data;
+      })
+    );
     this.doc.flush();
   }
 

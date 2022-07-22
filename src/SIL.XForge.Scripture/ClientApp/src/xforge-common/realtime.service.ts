@@ -35,6 +35,13 @@ export class RealtimeService {
     if (this.fileService != null) {
       this.fileService.init(this);
     }
+
+    // Subscribe to before-send-op events so the pending ops can be updated in IndexedDB with the src and seq on the
+    // inflight op, before it is sent to the server.
+    this.remoteStore.subscribeToBeforeSendOp(async (collection: string, docId: string) => {
+      const doc = this.docs.get(getDocKey(collection, docId));
+      await doc?.updateOfflineData();
+    });
   }
 
   get<T extends RealtimeDoc>(collection: string, id: string): T {
