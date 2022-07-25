@@ -91,6 +91,14 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     );
   }
 
+  get cannotTrainSuggestionsEngine(): boolean {
+    return (
+      this.projectDoc?.data != null &&
+      this.projectDoc.data.translateConfig.translationSuggestionsEnabled &&
+      this.projectDoc.data.texts.filter(t => t.hasSource).length < 1
+    );
+  }
+
   ngOnInit(): void {
     this.subscribe(this.activatedRoute.params.pipe(map(params => params['projectId'])), async projectId => {
       this.loadingStarted();
@@ -183,7 +191,10 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
       this.trainingSub = undefined;
     }
     this.translationEngine = undefined;
-    if (this.projectDoc == null || !this.translationSuggestionsEnabled || !this.canEditTexts) {
+    if (this.projectDoc?.data == null) {
+      return;
+    }
+    if (!this.translationSuggestionsEnabled || !this.canEditTexts || this.cannotTrainSuggestionsEngine) {
       return;
     }
 

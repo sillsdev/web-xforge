@@ -177,6 +177,25 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task SyncAsync_NewProjectOnlyNoMatchingSourceText_TranslationSuggestionEnabled()
+        {
+            var env = new TestEnvironment();
+            env.SetupSFData(true, false, false, false);
+            env.SetupPTData(new Book("MAT", 2, false));
+
+            await env.Runner.RunAsync("project02", "user01", true, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", true, CancellationToken.None);
+
+            Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
+            Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
+            Assert.That(env.ContainsText("project02", "MAT", 1), Is.False);
+            Assert.That(env.ContainsText("project02", "MAT", 2), Is.False);
+
+            await env.EngineService.DidNotReceive().StartBuildByProjectIdAsync("project01");
+            env.VerifyProjectSync(true);
+        }
+
+        [Test]
         public async Task SyncAsync_DataNotChanged()
         {
             var env = new TestEnvironment();
