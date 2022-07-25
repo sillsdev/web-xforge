@@ -38,7 +38,7 @@ export const ROLE_SETTING = 'role';
 export const EXPIRES_AT_SETTING = 'expires_at';
 
 export interface AuthState {
-  returnUrl?: string;
+  returnUrl: string;
   linking?: boolean;
   currentSub?: string;
 }
@@ -385,8 +385,8 @@ export class AuthService {
   /**
    * Check to help avoid redirect loops where sometimes the return URL can end up as the login page or auth0 callback
    */
-  private isValidReturnUrl(returnUrl: string | undefined): boolean {
-    return !(returnUrl == null || this.isCallbackUrl(returnUrl) || returnUrl === '/login');
+  private isValidReturnUrl(returnUrl: string): boolean {
+    return !(returnUrl === '' || this.isCallbackUrl(returnUrl) || returnUrl === '/login');
   }
 
   private isCallbackUrl(callbackUrl: string | undefined = undefined): boolean {

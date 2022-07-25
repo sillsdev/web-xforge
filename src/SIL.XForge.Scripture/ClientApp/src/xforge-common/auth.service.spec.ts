@@ -426,6 +426,7 @@ describe('AuthService', () => {
       isOnline: true,
       isNewlyLoggedIn: true,
       loginState: {
+        returnUrl: '',
         linking: true,
         currentSub: 'user01'
       }
@@ -440,6 +441,7 @@ describe('AuthService', () => {
       isOnline: true,
       isNewlyLoggedIn: true,
       loginState: {
+        returnUrl: '',
         linking: true,
         currentSub: 'user01'
       },
@@ -599,7 +601,7 @@ class TestEnvironment {
     isOnline = false,
     isLoggedIn,
     isNewlyLoggedIn,
-    loginState = {},
+    loginState = { returnUrl: '' },
     accountLinkingResponse,
     callback
   }: TestEnvironmentConstructorArgs = {}) {
