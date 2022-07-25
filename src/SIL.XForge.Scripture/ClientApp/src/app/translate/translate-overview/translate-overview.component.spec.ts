@@ -163,6 +163,20 @@ describe('TranslateOverviewComponent', () => {
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress.mode).toBe('determinate');
     }));
+
+    it('should not create engine if no source text docs', fakeAsync(() => {
+      const env = new TestEnvironment(false);
+      env.simulateNoSourceTextDocs();
+
+      verify(mockedTranslationEngineService.createTranslationEngine(anything())).never();
+      expect(env.translationSuggestionsInfoMessage).toBeFalsy();
+      env.simulateTranslateSuggestionsEnabled(true);
+      verify(mockedTranslationEngineService.createTranslationEngine(anything())).never();
+      expect(env.translationSuggestionsInfoMessage).toBeTruthy();
+      env.clickRetrainButton();
+      verify(mockedTranslationEngineService.createTranslationEngine(anything())).never();
+      expect(env.translationSuggestionsInfoMessage).toBeTruthy();
+    }));
   });
 });
 
@@ -216,6 +230,10 @@ class TestEnvironment {
 
   get segmentsCount(): DebugElement {
     return this.fixture.debugElement.query(By.css('.engine-card-segments-count'));
+  }
+
+  get translationSuggestionsInfoMessage(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.translation-suggestions-info'));
   }
 
   get trainingProgress(): MatProgressBar {
@@ -370,11 +388,20 @@ class TestEnvironment {
   }
 
   simulateTranslateSuggestionsEnabled(enabled: boolean = true) {
-    const projectDoc = <SFProjectProfileDoc>this.realtimeService.get(SFProjectProfileDoc.COLLECTION, 'project01');
+    const projectDoc: SFProjectProfileDoc = this.realtimeService.get(SFProjectProfileDoc.COLLECTION, 'project01');
     projectDoc.submitJson0Op(
       op => op.set<boolean>(p => p.translateConfig.translationSuggestionsEnabled, enabled),
       false
     );
+    this.wait();
+  }
+
+  simulateNoSourceTextDocs() {
+    const projectDoc: SFProjectProfileDoc = this.realtimeService.get(SFProjectProfileDoc.COLLECTION, 'project01');
+    const textCount: number = projectDoc.data!.texts.length;
+    projectDoc.submitJson0Op(op => {
+      for (let i = 0; i < textCount; i++) op.set(p => p.texts[i].hasSource, false);
+    }, false);
     this.wait();
   }
 
