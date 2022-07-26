@@ -50,7 +50,7 @@ namespace SIL.XForge.Scripture.Services
             "lh",
             "li",
             "lf",
-            "lim",
+            "lim"
         };
 
         private IGuidService GuidService;
