@@ -166,8 +166,7 @@ describe('TranslateOverviewComponent', () => {
 
     it('should not create engine if no source text docs', fakeAsync(() => {
       const env = new TestEnvironment(false);
-      env.simulateNoSourceTextDocs();
-
+      when(mockedTranslationEngineService.checkHasSourceBooks(anything())).thenReturn(false);
       verify(mockedTranslationEngineService.createTranslationEngine(anything())).never();
       expect(env.translationSuggestionsInfoMessage).toBeFalsy();
       env.simulateTranslateSuggestionsEnabled(true);
@@ -196,6 +195,7 @@ class TestEnvironment {
     when(mockedTranslationEngineService.createTranslationEngine('project01')).thenReturn(
       instance(this.mockedRemoteTranslationEngine)
     );
+    when(mockedTranslationEngineService.checkHasSourceBooks(anything())).thenReturn(true);
     when(this.mockedRemoteTranslationEngine.getStats()).thenResolve({ confidence: 0.25, trainedSegmentCount: 100 });
     when(this.mockedRemoteTranslationEngine.listenForTrainingStatus()).thenReturn(defer(() => this.trainingProgress$));
     when(mockedSFProjectService.getText(anything())).thenCall(id =>
@@ -393,15 +393,6 @@ class TestEnvironment {
       op => op.set<boolean>(p => p.translateConfig.translationSuggestionsEnabled, enabled),
       false
     );
-    this.wait();
-  }
-
-  simulateNoSourceTextDocs() {
-    const projectDoc: SFProjectProfileDoc = this.realtimeService.get(SFProjectProfileDoc.COLLECTION, 'project01');
-    const textCount: number = projectDoc.data!.texts.length;
-    projectDoc.submitJson0Op(op => {
-      for (let i = 0; i < textCount; i++) op.set(p => p.texts[i].hasSource, false);
-    }, false);
     this.wait();
   }
 
