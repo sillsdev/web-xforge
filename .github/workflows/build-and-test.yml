@@ -9,6 +9,47 @@ on:
   workflow_dispatch:
 
 jobs:
+  test-frontend:
+    name: "Build and test frontend"
+    strategy:
+      matrix:
+        os: ["ubuntu-20.04"]
+        node_version: ["16.15.0"]
+      fail-fast: false
+    runs-on: ${{matrix.os}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: "Deps: Node"
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{matrix.node_version}}
+      - name: Pre-build report
+        run: |
+          set -xueo pipefail
+          lsb_release -a
+          which dotnet
+          dotnet --version
+          dpkg -l dotnet\*
+          dotnet --list-sdks
+          dotnet --list-runtimes
+          which node
+          node --version
+          which npm
+          npm --version
+
+      - name: "Deps: RealtimeServer npm"
+        run: cd src/RealtimeServer && npm ci
+      - name: "Deps: Frontend npm"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm ci
+
+      - name: "Build: Frontend"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run build
+
+      - name: "Test: Frontend"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run test:tc
+
   build-development:
     name: "Build and test"
     strategy:
@@ -68,8 +109,6 @@ jobs:
 
       - name: "Build: Backend, RealtimeServer"
         run: dotnet build xForge.sln
-      - name: "Build: Frontend"
-        run: cd src/SIL.XForge.Scripture/ClientApp && npm run build
 
       - name: "Test: RealtimeServer"
         run: cd src/RealtimeServer && npm run test:tc
@@ -79,8 +118,6 @@ jobs:
             -p:CollectCoverage=true \
             -p:CoverletOutputFormat=opencover \
             -p:Exclude=\"[NUnit3.TestAdapter]*,[SIL.XForge.*.Views]*,[SIL.XForge.Tests]*\"
-      - name: "Test: Frontend"
-        run: cd src/SIL.XForge.Scripture/ClientApp && npm run test:tc
 
       - name: "Coverage: Backend"
         run: |
@@ -91,8 +128,49 @@ jobs:
       - name: "Coverage: Publish to Codecov"
         uses: codecov/codecov-action@v3
 
+  test-production-frontend:
+    name: "Production build and test frontend"
+    strategy:
+      matrix:
+        os: ["ubuntu-20.04"]
+        dotnet_version: ["6.0"]
+        node_version: ["16.15.0"]
+      fail-fast: false
+    runs-on: ${{matrix.os}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: "Deps: Node"
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{matrix.node_version}}
+      - name: "Deps: System packages"
+        run: |
+          sudo apt-get install --assume-yes \
+            dotnet-sdk-${{matrix.dotnet_version}}
+      - name: Pre-build report
+        run: |
+          set -xueo pipefail
+          lsb_release -a
+          which dotnet
+          dotnet --version
+          dpkg -l dotnet\*
+          dotnet --list-sdks
+          dotnet --list-runtimes
+          which node
+          node --version
+          which npm
+          npm --version
+
+      - name: "Build: Frontend"
+        run: cd src/SIL.XForge.Scripture && dotnet build -t:PublishRunWebpack
+
+      - name: "Test: Frontend"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run test:tc
+
   build-production:
-    name: "Production build and test"
+    name: "Production build, test backend and realtimeserver"
     strategy:
       matrix:
         os: ["ubuntu-20.04"]
@@ -138,5 +216,3 @@ jobs:
             -p:Exclude=\"[NUnit3.TestAdapter]*,[SIL.XForge.*.Views]*,[SIL.XForge.Tests]*\"
       - name: "Test: RealtimeServer"
         run: cd src/RealtimeServer && npm run test:tc
-      - name: "Test: Frontend"
-        run: cd src/SIL.XForge.Scripture/ClientApp && npm run test:tc
