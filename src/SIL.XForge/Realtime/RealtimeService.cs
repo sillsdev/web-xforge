@@ -184,7 +184,7 @@ namespace SIL.XForge.Realtime
             // Use FindAsync(), as opposed to Find(), so that we can mock it
             using IAsyncCursor<BsonDocument> cursor = await opsCollection.FindAsync(
                 filter,
-                new FindOptions<BsonDocument, BsonDocument>() { Limit = 1, Sort = sort, }
+                new FindOptions<BsonDocument, BsonDocument>() { Limit = 1, Sort = sort }
             );
             BsonDocument doc = await cursor.FirstOrDefaultAsync();
 

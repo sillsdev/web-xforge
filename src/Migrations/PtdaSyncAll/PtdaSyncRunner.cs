@@ -288,7 +288,7 @@ namespace PtdaSyncAll
                     $"SyncOrCloneBookUsxAsync: Warning: When processing textinfo booknum {text.BookNum}, "
                         + $"chapters {text.Chapters.Count}, texttype {textType}, for paratext project id {paratextId}, "
                         + $"the text chapter count was 0 but there was already a file at {fileName}. Perhaps indicating "
-                        + $"a prior failed clone. Going to try cloning it again, rather than syncing."
+                        + "a prior failed clone. Going to try cloning it again, rather than syncing."
                 );
             }
 
