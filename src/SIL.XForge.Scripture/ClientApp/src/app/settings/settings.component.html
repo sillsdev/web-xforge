@@ -7,18 +7,9 @@
       <p class="mat-body">{{ t("select_additional_tools_and_features") }}</p>
       <mat-card class="card card-outline">
         <form [formGroup]="form">
-          <div class="card-content">
+          <mat-card-content>
+            <mat-card-title>{{ t("translate") }}</mat-card-title>
             <div class="tool-setting">
-              <div class="tool-setting-field checkbox-field">
-                <mat-checkbox [disabled]="true" [checked]="true" class="checkbox-placeholder">
-                  {{ t("translate") }}
-                </mat-checkbox>
-              </div>
-              <mat-hint class="helper-text checkbox-helper-text">
-                {{ t("translate_tool_is_always_available") }}
-              </mat-hint>
-            </div>
-            <div class="tool-setting indent">
               <div *ngIf="!isLoading && !isLoggedInToParatext && isAppOnline" class="paratext-login-container">
                 <button
                   class="action-button"
@@ -37,14 +28,12 @@
                 ></span>
               </div>
               <ng-container *ngIf="mainSettingsLoaded">
-                <mat-hint
-                  class="helper-text"
-                  [innerHTML]="i18n.translateAndInsertTags('settings.translation_based_on')"
-                ></mat-hint>
+                <p class="helper-text">{{ t("select_project_or_resource") }}</p>
+                <mat-hint>{{ t("translation_suggestions_require_source_text") }}</mat-hint>
                 <div class="tool-setting-field">
                   <app-project-select
                     formControlName="sourceParatextId"
-                    placeholder="{{ t('based_on') }}"
+                    [placeholder]="t('source_text_placeholder')"
                     [projects]="projects"
                     [resources]="resources"
                     [nonSelectableProjects]="nonSelectableProjects"
@@ -68,7 +57,7 @@
                 </mat-error>
               </ng-container>
             </div>
-            <div class="tool-setting indent" *ngIf="isBasedOnProjectSet">
+            <div class="tool-setting" *ngIf="isBasedOnProjectSet">
               <div class="tool-setting-field checkbox-field">
                 <mat-checkbox formControlName="translationSuggestionsEnabled" id="checkbox-translation-suggestions">
                   {{ t("translation_suggestions") }}
@@ -84,7 +73,8 @@
                 [innerHTML]="i18n.translateAndInsertTags('settings.translations_will_be_suggested')"
               ></mat-hint>
             </div>
-            <div class="tool-setting indent">
+            <h2 class="sharing-heading">{{ t("sharing") }}</h2>
+            <div class="tool-setting">
               <div class="tool-setting-field checkbox-field">
                 <mat-checkbox formControlName="translateShareEnabled" id="checkbox-translate-share">
                   {{ t("share") }}
@@ -105,14 +95,15 @@
               <mat-radio-group
                 id="translate-share-level-radio-group"
                 formControlName="translateShareLevel"
-                class="tool-setting indent"
+                class="tool-setting"
+                [fxHide]="translateShareLevel.disabled"
               >
                 <div class="tool-setting-field">
                   <mat-radio-button id="radio-translateShareLevel-anyone" [value]="TranslateShareLevel.Anyone">{{
                     t("anyone_with_a_link")
                   }}</mat-radio-button>
                   <mat-radio-button id="radio-translateShareLevel-specific" [value]="TranslateShareLevel.Specific">{{
-                    t("specific_people")
+                    t("email_invitations_only")
                   }}</mat-radio-button>
                   <app-write-status
                     [state]="getControlState('translateShareLevel')"
@@ -122,13 +113,14 @@
                 </div>
               </mat-radio-group>
             </div>
-          </div>
+          </mat-card-content>
           <mat-divider></mat-divider>
-          <div class="card-content">
+          <mat-card-content>
+            <mat-card-title>{{ t("community_checking_settings") }}</mat-card-title>
             <div class="tool-setting">
               <div class="tool-setting-field checkbox-field">
                 <mat-checkbox formControlName="checkingEnabled" id="checkbox-community-checking">
-                  {{ t("community_checking") }}
+                  {{ t("enable_community_checking") }}
                 </mat-checkbox>
                 <app-write-status
                   [state]="getControlState('checkingEnabled')"
@@ -139,7 +131,7 @@
               <mat-hint class="helper-text checkbox-helper-text">{{ t("engage_the_wider_community") }}</mat-hint>
             </div>
             <ng-container *ngIf="isCheckingEnabled">
-              <div class="tool-setting indent">
+              <div class="tool-setting">
                 <div class="tool-setting-field checkbox-field">
                   <mat-checkbox formControlName="usersSeeEachOthersResponses" id="checkbox-see-others-responses">{{
                     t("see_others_answers_and_comments")
@@ -154,7 +146,8 @@
                   {{ t("users_can_interact_with_each_other") }}
                 </mat-hint>
               </div>
-              <div class="tool-setting indent">
+              <h2 class="sharing-heading">{{ t("sharing") }}</h2>
+              <div class="tool-setting">
                 <div class="tool-setting-field checkbox-field">
                   <mat-checkbox formControlName="checkingShareEnabled" id="checkbox-checking-share">
                     {{ t("share") }}
@@ -175,14 +168,15 @@
                 <mat-radio-group
                   id="checking-share-level-radio-group"
                   formControlName="checkingShareLevel"
-                  class="tool-setting indent"
+                  class="tool-setting"
+                  [fxHide]="checkingShareLevel.disabled"
                 >
                   <div class="tool-setting-field">
                     <mat-radio-button id="radio-checkingShareLevel-anyone" [value]="CheckingShareLevel.Anyone">{{
                       t("anyone_with_a_link")
                     }}</mat-radio-button>
                     <mat-radio-button id="radio-checkingShareLevel-specific" [value]="CheckingShareLevel.Specific">{{
-                      t("specific_people")
+                      t("email_invitations_only")
                     }}</mat-radio-button>
                     <app-write-status
                       [state]="getControlState('checkingShareLevel')"
@@ -193,7 +187,7 @@
                 </mat-radio-group>
               </div>
             </ng-container>
-          </div>
+          </mat-card-content>
         </form>
       </mat-card>
     </div>
