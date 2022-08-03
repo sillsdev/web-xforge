@@ -498,7 +498,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     segment?: Segment,
     delta?: DeltaStatic,
     prevSegment?: Segment,
-    embedsBeforeDeltaInEditedVerses?: EmbedsByVerse[],
+    preDeltaAffectedEmbeds?: EmbedsByVerse[],
     isLocalUpdate?: boolean
   ): Promise<void> {
     if (this.target == null || this.target.editor == null) {
@@ -562,12 +562,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         }
         if (
           segment != null &&
-          embedsBeforeDeltaInEditedVerses != null &&
+          preDeltaAffectedEmbeds != null &&
           this.shouldNoteThreadsRespondToEdits &&
           !!isLocalUpdate
         ) {
           // only update the note anchors if the update is local, otherwise remote edits will mess up the note anchors
-          await this.updateVerseNoteThreadAnchors(embedsBeforeDeltaInEditedVerses, delta);
+          await this.updateVerseNoteThreadAnchors(preDeltaAffectedEmbeds, delta);
         }
       }
 
@@ -1189,12 +1189,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           noteThreadDoc.data.position.length
         );
         const noteAnchorEndIndex: number = notePos + noteThreadDoc.data.position.length + noteCountInTextAnchor;
-        const isUndoOperation: boolean = reinsertedNoteEmbeds.length > 0;
+        const isUndoingDeleteNoteEmbed: boolean = reinsertedNoteEmbeds.length > 0;
         // A note anchor is only affected by the undo operation if the delta includes inserting the note embed, or
         // if the edit op occurs before the note text anchor last character
         // i.e. note anchors are unaffected if the edit index comes after the note and anchor
         const noteIsAffected: boolean = noteAnchorEndIndex >= editPosition || reinsertedNoteIds.includes(threadId);
-        if (isUndoOperation && noteIsAffected && hasTextEditOp) {
+        if (isUndoingDeleteNoteEmbed && noteIsAffected && hasTextEditOp) {
           updatePromises.push(
             noteThreadDoc
               .previousSnapshot()
@@ -1305,10 +1305,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         continue;
       }
 
-      const editInVerseRange: boolean =
+      const editIsInVerseRange: boolean =
         curIndex >= verseRange.index && curIndex <= verseRange.index + verseRange.length;
       if (insertOp != null) {
-        if (!editInVerseRange) continue;
+        if (!editIsInVerseRange) continue;
         let length = 0;
         if (typeof insertOp === 'string') {
           length = insertOp.length;
@@ -1330,7 +1330,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           lengthChange += length;
         }
       } else if (deleteOp != null) {
-        if (editInVerseRange) {
+        if (editIsInVerseRange) {
           let [deleteBefore, deleteWithin] = this.calculateDeletionUpdate(
             curIndex,
             embedPosition,

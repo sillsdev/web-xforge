@@ -606,14 +606,14 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   /** Respond to text changes in the quill editor. */
   onContentChanged(delta: DeltaStatic, source: string): void {
-    const segmentsBeforeDelta: IterableIterator<[string, RangeStatic]> = this.viewModel.segmentsSnapshot;
-    const embedsBeforeDelta: Readonly<Map<string, number>> = this.viewModel.embeddedElementsSnapshot;
+    const preDeltaSegmentCache: IterableIterator<[string, RangeStatic]> = this.viewModel.segmentsSnapshot;
+    const preDeltaEmbedCache: Readonly<Map<string, number>> = this.viewModel.embeddedElementsSnapshot;
     this.viewModel.update(delta, source as Sources);
     this.updatePlaceholderText();
     // skip updating when only formatting changes occurred
     if (delta.ops != null && delta.ops.some(op => op.insert != null || op.delete != null)) {
       const isUserEdit: boolean = source === 'user';
-      this.update(delta, segmentsBeforeDelta, embedsBeforeDelta, isUserEdit);
+      this.update(delta, preDeltaSegmentCache, preDeltaEmbedCache, isUserEdit);
     }
   }
 
@@ -860,8 +860,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   private update(
     delta?: DeltaStatic,
-    segmentsBeforeDelta?: IterableIterator<[string, RangeStatic]>,
-    embedsBeforeDelta?: Readonly<Map<string, number>>,
+    preDeltaSegmentCache?: IterableIterator<[string, RangeStatic]>,
+    preDeltaEmbedCache?: Readonly<Map<string, number>>,
     isUserEdit?: boolean
   ): void {
     let segmentRef: string | undefined;
@@ -921,7 +921,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
     Promise.resolve().then(() => this.adjustSelection());
     const affectedEmbeds: EmbedsByVerse[] =
-      isUserEdit === true ? this.getEmbedsAffectedByDelta(delta, segmentsBeforeDelta, embedsBeforeDelta) : [];
+      isUserEdit === true ? this.getEmbedsAffectedByDelta(delta, preDeltaSegmentCache, preDeltaEmbedCache) : [];
     this.updated.emit({
       delta,
       prevSegment,
@@ -1020,19 +1020,20 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   /** Gets the embeds affected */
   private getEmbedsAffectedByDelta(
     delta?: DeltaStatic,
-    segmentsBeforeDelta?: IterableIterator<[string, RangeStatic]>,
-    embedsBeforeDelta?: Readonly<Map<string, number>>
+    preDeltaSegmentCache?: IterableIterator<[string, RangeStatic]>,
+    preDeltaEmbedCache?: Readonly<Map<string, number>>
   ): EmbedsByVerse[] {
-    if (delta?.ops == null || segmentsBeforeDelta == null || embedsBeforeDelta == null) {
+    if (delta?.ops == null || preDeltaSegmentCache == null || preDeltaEmbedCache == null) {
       return [];
     }
     let verseIsEdited = false;
     let currentVerse: string = '';
     let currentVerseRange: RangeStatic = { index: 0, length: 0 };
     let embedsByVerse = new Map<string, number>();
-    const editPositions: number[] = this.getEditPositionInDelta(delta);
+    const editPositions: number[] = this.getEditPositionsInDelta(delta);
     const embedsByEditedVerse: EmbedsByVerse[] = [];
-    for (const [segment, range] of segmentsBeforeDelta) {
+    for (const [segment, range] of preDeltaSegmentCache) {
+      // TODO: if a section heading, continue in previous verse
       const baseVerse: string = this.getBaseVerse(segment);
       if (currentVerse === '') {
         // set the current verse and range on the first pass
@@ -1040,7 +1041,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         currentVerseRange = range;
       }
       if (currentVerse !== baseVerse) {
-        // this segment belongs to a new verse, add the embeds if the  previous verse has been edited
+        // this segment belongs to a new verse, add the embeds if the previous verse has been edited
         if (verseIsEdited) {
           embedsByEditedVerse.push({ embeds: embedsByVerse, verseRange: currentVerseRange });
         }
@@ -1049,7 +1050,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         currentVerseRange = range;
         verseIsEdited = false;
       } else {
-        currentVerseRange.length += range.length;
+        const lengthFromVerseStart: number = range.index + range.length - currentVerseRange.index;
+        currentVerseRange.length = lengthFromVerseStart;
       }
 
       const editedPositionsWithinRange: number[] = editPositions.filter(
@@ -1059,7 +1061,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         verseIsEdited = true;
       }
 
-      for (const [embedId, embedPosition] of embedsBeforeDelta.entries()) {
+      for (const [embedId, embedPosition] of preDeltaEmbedCache.entries()) {
         if (embedPosition >= range.index && embedPosition < range.index + range.length) {
           embedsByVerse.set(embedId, embedPosition);
         }
@@ -1073,7 +1075,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return embedsByEditedVerse;
   }
 
-  private getEditPositionInDelta(delta: DeltaStatic): number[] {
+  private getEditPositionsInDelta(delta: DeltaStatic): number[] {
     let curIndex = 0;
     const editPositions: number[] = [];
     if (delta.ops == null) {

@@ -1838,7 +1838,7 @@ describe('EditorComponent', () => {
       env.targetEditor.updateContents(deleteDelta, 'user');
       tick();
       env.fixture.detectChanges();
-      const insertStart: number = notePosition + ' 1, ver'.length;
+      const insertStart: number = notePosition + 'ter 1, ver'.length;
       const insertOps: DeltaOperation[] = [{ retain: insertStart }, { insert: text }];
       const insertDelta: DeltaStatic = new Delta(insertOps);
       env.targetEditor.updateContents(insertDelta, 'user');
