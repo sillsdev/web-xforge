@@ -1856,6 +1856,31 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('updates note anchor for non-verse segments', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      const origThread06Pos: TextAnchor = { start: 38, length: 7 };
+      env.addParatextNoteThread(6, 'LUK 1:2-3', 'section', origThread06Pos, ['user01']);
+      env.wait();
+      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.wait();
+      const textBeforeNote = 'Text in ';
+      let range: RangeStatic = env.component.target!.getSegmentRange('s_2')!;
+      let notePosition: number = env.getNoteThreadEditorPosition('thread06');
+      expect(range.index + textBeforeNote.length).toEqual(notePosition);
+      const thread06Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread06');
+      let textAnchor: TextAnchor = thread06Doc.data!.position;
+      expect(textAnchor).toEqual(origThread06Pos);
+
+      const verse2_3Range: RangeStatic = env.component.target!.getSegmentRange('verse_1_2-3')!;
+      env.targetEditor.setSelection(verse2_3Range.index + verse2_3Range.length);
+      env.wait();
+      env.typeCharacters('T');
+      textAnchor = thread06Doc.data!.position;
+      expect(textAnchor).toEqual({ start: origThread06Pos.start + 1, length: origThread06Pos.length });
+      env.dispose();
+    }));
+
     it('can display note dialog', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();

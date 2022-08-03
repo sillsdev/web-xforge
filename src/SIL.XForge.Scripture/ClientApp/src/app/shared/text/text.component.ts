@@ -1032,9 +1032,11 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     let embedsByVerse = new Map<string, number>();
     const editPositions: number[] = this.getEditPositionsInDelta(delta);
     const embedsByEditedVerse: EmbedsByVerse[] = [];
+    // content before verse 1 are considered to be in verse 0
+    let baseVerse: string = '0';
     for (const [segment, range] of preDeltaSegmentCache) {
-      // TODO: if a section heading, continue in previous verse
-      const baseVerse: string = this.getBaseVerse(segment);
+      // if we cannot determine the base verse, consider it as part of the previous verse
+      baseVerse = this.getBaseVerse(segment) ?? baseVerse;
       if (currentVerse === '') {
         // set the current verse and range on the first pass
         currentVerse = baseVerse;
@@ -1096,9 +1098,13 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return editPositions;
   }
 
-  private getBaseVerse(segmentRef: string): string {
+  /**
+   * Returns the base verse of the segment ref. e.g. 'verse_1_5'
+   * @return The segment ref of the first segment in the verse, or undefined if the segment does not belong to a verse.
+   */
+  private getBaseVerse(segmentRef: string): string | undefined {
     const matchArray: RegExpExecArray | null = VERSE_REGEX.exec(segmentRef);
-    return matchArray == null ? segmentRef : matchArray[0];
+    return matchArray == null ? undefined : matchArray[0];
   }
 
   private getVerseEndIndex(baseRef: string): number | undefined {
