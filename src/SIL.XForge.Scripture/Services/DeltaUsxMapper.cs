@@ -101,6 +101,17 @@ namespace SIL.XForge.Scripture.Services
             ExceptionHandler = exceptionHandler;
         }
 
+        public static bool CanParaContainVerseText(string style)
+        {
+            // an empty style indicates an improperly formatted paragraph which could contain verse text
+            if (style == string.Empty)
+                return true;
+            if (char.IsDigit(style[style.Length - 1]))
+                style = style.Substring(0, style.Length - 1);
+            // paragraph, poetry, and list styles are the only types of valid paras that can contain verse text
+            return ParagraphPoetryListStyles.Contains(style);
+        }
+
         /// <summary>
         /// Create list of ChapterDelta objects from USX.
         ///
@@ -456,17 +467,6 @@ namespace SIL.XForge.Scripture.Services
                     newDelta.InsertBlank(segRef);
                 }
             }
-        }
-
-        private static bool CanParaContainVerseText(string style)
-        {
-            // an empty style indicates an improperly formatted paragraph which could contain verse text
-            if (style == string.Empty)
-                return true;
-            if (char.IsDigit(style[style.Length - 1]))
-                style = style.Substring(0, style.Length - 1);
-            // paragraph, poetry, and list styles are the only types of valid paras that can contain verse text
-            return ParagraphPoetryListStyles.Contains(style);
         }
 
         private static string GetParagraphRef(Dictionary<string, int> nextIds, string key, string prefix)
