@@ -255,17 +255,17 @@ describe('CheckingOverviewComponent', () => {
       env.simulateRowClick(1, id);
       // Edit a question with no answers
       env.clickElement(env.questionEditButtons[3]);
-      verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).never();
+      verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent, anything())).never();
       resetCalls(mockedMdcDialog);
       when(env.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('close'));
       // Edit a question with answers
       env.clickElement(env.questionEditButtons[0]);
-      verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).once();
+      verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent, anything())).once();
       verify(mockedMdcDialog.open(QuestionDialogComponent, anything())).never();
       resetCalls(mockedQuestionDialogService);
       when(env.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('accept'));
       env.clickElement(env.questionEditButtons[0]);
-      verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).twice();
+      verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent, anything())).twice();
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
       expect().nothing();
     }));
@@ -790,7 +790,9 @@ class TestEnvironment {
 
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(mockedQuestionDialogService.questionDialog(anything())).thenResolve();
-    when(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).thenReturn(instance(this.mockedAnsweredDialogRef));
+    when(mockedMdcDialog.open(QuestionAnsweredDialogComponent, anything())).thenReturn(
+      instance(this.mockedAnsweredDialogRef)
+    );
     when(this.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('accept'));
     when(mockedProjectService.getProfile(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
