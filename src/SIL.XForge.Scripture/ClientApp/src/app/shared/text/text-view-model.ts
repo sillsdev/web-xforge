@@ -190,7 +190,7 @@ export class TextViewModel {
   }
 
   private get embedPositions(): number[] {
-    return this.embeddedElementPositions(this._embeddedElements);
+    return this.embeddedElementPositions(Array.from(this._embeddedElements.values()));
   }
 
   /** Associate the existing editor to a (single) specific textdoc. */
@@ -687,6 +687,11 @@ export class TextViewModel {
             embedPosition = { position };
             this._embeddedElements.set(id, embedPosition);
           } else {
+            if (embedPosition.duplicatePosition != null) {
+              console.warn(
+                'Warning: text-view-model.updateSegments() did not expect to encounter an embed with >2 positions'
+              );
+            }
             embedPosition.duplicatePosition = position;
           }
           curSegment.notesCount++;
@@ -746,7 +751,7 @@ export class TextViewModel {
     return [fixDelta, fixOffset];
   }
 
-  private embeddedElementPositions(embeds: Map<string, EmbedPosition> | EmbedPosition[]): number[] {
+  private embeddedElementPositions(embeds: EmbedPosition[]): number[] {
     let result: number[] = [];
     for (const ep of embeds.values()) {
       result.push(ep.position);
@@ -873,24 +878,19 @@ export class TextViewModel {
   }
 
   /** Gets the number of embeds in a given range displayed in the quill editor. */
-  private getEmbedsInEditorRange(startIndex: number, length: number): number {
-    const embedPositions: IterableIterator<EmbedPosition> = this._embeddedElements.values();
-    const opEndIndex: number = startIndex + length;
+  private getEmbedsInEditorRange(startPos: number, length: number): number {
+    const embedPositions = this.embedPositions;
+    const opEndIndex: number = startPos + length;
     let embeddedElementsCount: number = 0;
-    for (const pos of embedPositions) {
-      if (pos.position < startIndex && (pos.duplicatePosition == null || pos.duplicatePosition < startIndex)) {
+    for (const embedPos of embedPositions) {
+      if (embedPos < startPos) {
         continue;
-      } else if (pos.position >= startIndex && pos.position < opEndIndex) {
-        embeddedElementsCount++;
-      } else if (
-        pos.duplicatePosition != null &&
-        pos.duplicatePosition >= startIndex &&
-        pos.duplicatePosition < opEndIndex
-      ) {
-        embeddedElementsCount++;
-      } else {
-        break;
       }
+      if (embedPos >= startPos && embedPos < opEndIndex) {
+        embeddedElementsCount++;
+        continue;
+      }
+      break;
     }
     return embeddedElementsCount;
   }
