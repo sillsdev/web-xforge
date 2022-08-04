@@ -493,7 +493,7 @@ namespace SIL.XForge.Scripture.Services
             if (invalidNodes.Contains(node))
             {
                 attributes = (JObject)attributes?.DeepClone() ?? new JObject();
-                attributes.Add(new JProperty("invalid-inline", true));
+                attributes["invalid-inline"] = true;
             }
             return attributes;
         }
@@ -507,7 +507,7 @@ namespace SIL.XForge.Scripture.Services
             if (invalidNodes.Contains(node))
             {
                 attributes = (JObject)attributes?.DeepClone() ?? new JObject();
-                attributes.Add(new JProperty("invalid-block", true));
+                attributes["invalid-block"] = true;
             }
             return attributes;
         }

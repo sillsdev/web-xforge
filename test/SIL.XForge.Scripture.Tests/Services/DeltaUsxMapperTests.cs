@@ -1605,6 +1605,41 @@ namespace SIL.XForge.Scripture.Services
             Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
         }
 
+
+        [Test]
+        public void ToDelta_DoublyInvalidInline()
+        {
+            // A node that is invalid for more than one reason is still just invalid, not crashing.
+
+            XDocument usxDoc = Usx("PHM",
+                Chapter("1"),
+                Para("p",
+                    Verse("1"),
+                    Char("tei",
+                        Char("ver", "blah")),
+                    Verse("2")));
+
+            var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
+            List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
+
+            var expected = Delta.New()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertChar("blah", new List<CharAttr> {
+                    new CharAttr { Style ="tei", CharID = _testGuidService.Generate() },
+                    new CharAttr { Style ="ver", CharID = _testGuidService.Generate() }
+                    }, "verse_1_1", invalid:true)
+                .InsertVerse("2")
+                .InsertBlank("verse_1_2")
+                .InsertPara("p");
+
+            Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
+            Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(2));
+            Assert.That(chapterDeltas[0].IsValid, Is.False);
+            Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
+        }
+
         [Test]
         public void ToDelta_InvalidLastVerse()
         {
