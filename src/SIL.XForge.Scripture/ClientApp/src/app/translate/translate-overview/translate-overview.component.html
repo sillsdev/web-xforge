@@ -1,8 +1,5 @@
 <ng-container *transloco="let t; read: 'translate_overview'">
   <div class="title mat-display-1">{{ t("translate_overview") }}</div>
-  <div *ngIf="showCannotTrainEngineMessage" class="translation-suggestions-info">
-    {{ t("cannot_train_suggestion_engine") }}
-  </div>
   <div class="card-wrapper">
     <mat-card class="books-card">
       <mat-card-header id="translate-overview-title" class="books-card-title">
@@ -67,6 +64,9 @@
         <div class="engine-card-segments">
           <span class="engine-card-segments-count">{{ trainedSegmentCount }}</span
           ><span>{{ t("trained_segments") }}</span>
+        </div>
+        <div *ngIf="showCannotTrainEngineMessage" class="translation-suggestions-info">
+          {{ t("cannot_train_suggestion_engine") }}
         </div>
       </mat-card-content>
       <mat-divider></mat-divider>
