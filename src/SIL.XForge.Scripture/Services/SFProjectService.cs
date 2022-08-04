@@ -661,10 +661,7 @@ namespace SIL.XForge.Scripture.Services
         {
             IQueryable<SFProject> projectQuery = RealtimeService.QuerySnapshots<SFProject>();
             return projectQuery.Any(
-                p =>
-                    p.TranslateConfig.Source != null
-                    && p.TranslateConfig.Source.ProjectRef == projectId
-                    && p.TranslateConfig.TranslationSuggestionsEnabled
+                p => p.TranslateConfig.Source != null && p.TranslateConfig.Source.ProjectRef == projectId
             );
         }
 
