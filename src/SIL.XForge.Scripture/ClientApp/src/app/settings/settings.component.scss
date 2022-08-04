@@ -7,14 +7,9 @@
   max-width: 800px;
 }
 
-.card {
-  box-shadow: initial;
-  padding: 0;
-}
-
-.card-content {
-  box-shadow: initial;
-  padding: 16px;
+.mat-card {
+  box-shadow: unset;
+  padding: 24px;
 }
 
 .tool-setting {
@@ -69,10 +64,6 @@
   }
 }
 
-#share-level-anyone-field {
-  margin-right: 20px;
-}
-
 #btn-log-in-settings {
   background-color: $pt-button-green;
   color: white;
@@ -124,11 +115,6 @@
   background-color: red;
 }
 
-#based-on-select {
-  width: 100%;
-  max-width: 200px;
-}
-
 mat-radio-group.tool-setting {
   display: initial;
   mat-radio-button {
@@ -138,4 +124,28 @@ mat-radio-group.tool-setting {
 
 app-project-select {
   margin-top: 16px;
+}
+
+.mat-card-content {
+  display: flex;
+  flex-direction: column;
+  row-gap: 16px;
+  margin: 0;
+}
+
+.mat-card-title {
+  margin: 0;
+}
+
+.mat-card-content:not(:first-child) {
+  padding-top: 16px;
+}
+
+.mat-card-content:not(:last-child) {
+  padding-bottom: 16px;
+}
+
+.sharing-heading {
+  font-weight: 500;
+  margin-bottom: 0;
 }
