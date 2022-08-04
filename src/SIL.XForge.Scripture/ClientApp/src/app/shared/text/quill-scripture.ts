@@ -714,6 +714,15 @@ export function registerScripture(): string[] {
       if (delta == null) {
         return;
       }
+      const sourceDelta: DeltaStatic = delta[source];
+      // Workaround to cancel the op if an undo gets triggered that includes inserting a chapter embed.
+      // The delta diff algorithm has a problem if an op occurs before the first text inserts in a doc. Generally,
+      // this has no effect, but when edits are made in a blank section heading after a chapter embed at
+      // index 0, duplicate chapter headings appear and the doc gets corrupted.
+      if (sourceDelta.ops != null && sourceDelta.ops.filter(o => o.insert?.chapter != null).length > 0) {
+        this.clear();
+        return;
+      }
       this.stack[dest].push(delta);
       this.lastRecorded = 0;
       this.ignoreChange = true;
