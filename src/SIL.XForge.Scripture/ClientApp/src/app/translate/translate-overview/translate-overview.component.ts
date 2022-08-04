@@ -93,7 +93,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
 
   get showCannotTrainEngineMessage(): boolean {
     if (this.projectDoc?.data == null) {
-      return true;
+      return false;
     }
     const hasSourceBooks: boolean = this.translationEngineService.checkHasSourceBooks(this.projectDoc.data);
     return this.translationSuggestionsEnabled && !hasSourceBooks;
