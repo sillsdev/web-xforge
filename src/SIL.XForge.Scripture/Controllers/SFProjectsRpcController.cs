@@ -54,7 +54,6 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (Exception)
             {
-                // Send additional to bugsnag, then rethrow the error
                 _exceptionHandler.RecordEndpointInfoForException(
                     new Dictionary<string, string>
                     {
@@ -86,7 +85,6 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (Exception)
             {
-                // Send additional to bugsnag, then rethrow the error
                 _exceptionHandler.RecordEndpointInfoForException(
                     new Dictionary<string, string> { { "method", "Delete" }, { "projectId", projectId }, }
                 );
@@ -111,7 +109,6 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (Exception)
             {
-                // Send additional to bugsnag, then rethrow the error
                 _exceptionHandler.RecordEndpointInfoForException(
                     new Dictionary<string, string>
                     {
@@ -148,7 +145,6 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (Exception)
             {
-                // Send additional to bugsnag, then rethrow the error
                 _exceptionHandler.RecordEndpointInfoForException(
                     new Dictionary<string, string>
                     {
@@ -183,7 +179,6 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (Exception)
             {
-                // Send additional to bugsnag, then rethrow the error
                 _exceptionHandler.RecordEndpointInfoForException(
                     new Dictionary<string, string>
                     {
@@ -209,7 +204,6 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (Exception)
             {
-                // Send additional to bugsnag, then rethrow the error
                 _exceptionHandler.RecordEndpointInfoForException(
                     new Dictionary<string, string> { { "method", "GetProjectRole" }, { "projectId", projectId }, }
                 );
@@ -234,7 +228,6 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (Exception)
             {
-                // Send additional to bugsnag, then rethrow the error
                 _exceptionHandler.RecordEndpointInfoForException(
                     new Dictionary<string, string>
                     {
@@ -265,7 +258,6 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (Exception)
             {
-                // Send additional to bugsnag, then rethrow the error
                 _exceptionHandler.RecordEndpointInfoForException(
                     new Dictionary<string, string>
                     {
@@ -297,7 +289,6 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (Exception)
             {
-                // Send additional to bugsnag, then rethrow the error
                 _exceptionHandler.RecordEndpointInfoForException(
                     new Dictionary<string, string> { { "method", "UninviteUser" }, { "projectId", projectId }, }
                 );
@@ -321,7 +312,6 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (Exception)
             {
-                // Send additional to bugsnag, then rethrow the error
                 _exceptionHandler.RecordEndpointInfoForException(
                     new Dictionary<string, string> { { "method", "IsAlreadyInvited" }, { "projectId", projectId }, }
                 );
@@ -345,7 +335,6 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (Exception)
             {
-                // Send additional to bugsnag, then rethrow the error
                 _exceptionHandler.RecordEndpointInfoForException(
                     new Dictionary<string, string> { { "method", "InvitedUsers" }, { "projectId", projectId }, }
                 );
@@ -370,7 +359,6 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (Exception)
             {
-                // Send additional to bugsnag, then rethrow the error
                 _exceptionHandler.RecordEndpointInfoForException(
                     new Dictionary<string, string> { { "method", "CheckLinkSharing" }, { "projectId", projectId }, }
                 );
@@ -400,7 +388,6 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (Exception)
             {
-                // Send additional to bugsnag, then rethrow the error
                 _exceptionHandler.RecordEndpointInfoForException(
                     new Dictionary<string, string>
                     {
@@ -430,7 +417,6 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (Exception)
             {
-                // Send additional to bugsnag, then rethrow the error
                 _exceptionHandler.RecordEndpointInfoForException(
                     new Dictionary<string, string>
                     {
@@ -460,7 +446,6 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (Exception)
             {
-                // Send additional to bugsnag, then rethrow the error
                 _exceptionHandler.RecordEndpointInfoForException(
                     new Dictionary<string, string> { { "method", "Sync" }, { "projectId", projectId }, }
                 );
@@ -485,7 +470,6 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (Exception)
             {
-                // Send additional to bugsnag, then rethrow the error
                 _exceptionHandler.RecordEndpointInfoForException(
                     new Dictionary<string, string> { { "method", "CancelSync" }, { "projectId", projectId }, }
                 );
@@ -514,7 +498,6 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (Exception)
             {
-                // Send additional to bugsnag, then rethrow the error
                 _exceptionHandler.RecordEndpointInfoForException(
                     new Dictionary<string, string>
                     {
@@ -545,7 +528,6 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (Exception)
             {
-                // Send additional to bugsnag, then rethrow the error
                 _exceptionHandler.RecordEndpointInfoForException(
                     new Dictionary<string, string>
                     {
@@ -574,7 +556,6 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (Exception)
             {
-                // Send additional to bugsnag, then rethrow the error
                 _exceptionHandler.RecordEndpointInfoForException(
                     new Dictionary<string, string>
                     {
@@ -607,7 +588,6 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (Exception)
             {
-                // Send additional to bugsnag, then rethrow the error
                 _exceptionHandler.RecordEndpointInfoForException(
                     new Dictionary<string, string>
                     {

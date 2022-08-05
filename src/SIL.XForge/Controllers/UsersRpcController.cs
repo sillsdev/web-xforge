@@ -47,7 +47,6 @@ namespace SIL.XForge.Controllers
             }
             catch (Exception)
             {
-                // Send additional to bugsnag, then rethrow the error
                 _exceptionHandler.RecordEndpointInfoForException(
                     new Dictionary<string, string> { { "method", "PushAuthUserProfile" }, { "userId", userId }, }
                 );
@@ -83,7 +82,6 @@ namespace SIL.XForge.Controllers
             }
             catch (Exception)
             {
-                // Send additional to bugsnag, then rethrow the error
                 _exceptionHandler.RecordEndpointInfoForException(
                     new Dictionary<string, string>
                     {
@@ -105,7 +103,6 @@ namespace SIL.XForge.Controllers
             }
             catch (Exception)
             {
-                // Send additional to bugsnag, then rethrow the error
                 _exceptionHandler.RecordEndpointInfoForException(
                     new Dictionary<string, string>
                     {
@@ -130,7 +127,6 @@ namespace SIL.XForge.Controllers
             }
             catch (Exception)
             {
-                // Send additional to bugsnag, then rethrow the error
                 _exceptionHandler.RecordEndpointInfoForException(
                     new Dictionary<string, string> { { "method", "Delete" }, { "userId", userId }, }
                 );

@@ -19,8 +19,6 @@ namespace SIL.XForge.Controllers
         {
             _userAccessor = userAccessor;
             _exceptionHandler = exceptionHandler;
-
-            // Report the user id to bugsnag for this request
             exceptionHandler.RecordUserIdForException(_userAccessor.UserId);
         }
 
