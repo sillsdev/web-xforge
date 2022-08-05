@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Linq;
@@ -12,7 +13,7 @@ namespace SIL.XForge
     {
         private readonly Bugsnag.IClient _bugsnag;
 
-        public async static Task<string> CreateHttpRequestErrorMessage(HttpResponseMessage response)
+        public static async Task<string> CreateHttpRequestErrorMessage(HttpResponseMessage response)
         {
             string responseContent = string.Join(
                 "\n",
@@ -66,6 +67,25 @@ namespace SIL.XForge
                 var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
                 ReportException(exceptionHandlerPathFeature.Error);
             });
+        }
+
+        public void RecordEndpointInfoForException(Dictionary<string, string> metadata)
+        {
+            _bugsnag.BeforeNotify(report =>
+            {
+                report.Event.Metadata.Add("endpoint", metadata);
+            });
+        }
+
+        public void RecordUserIdForException(string userId)
+        {
+            if (!string.IsNullOrWhiteSpace(userId))
+            {
+                _bugsnag.BeforeNotify(report =>
+                {
+                    report.Event.User = new Bugsnag.Payload.User { Id = userId, };
+                });
+            }
         }
     }
 }

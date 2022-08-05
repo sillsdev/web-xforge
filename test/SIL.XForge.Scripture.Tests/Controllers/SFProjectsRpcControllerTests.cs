@@ -31,13 +31,13 @@ namespace SIL.XForge.Scripture.Controllers
         {
             public TestEnvironment()
             {
-                BugsNag = Substitute.For<Bugsnag.IClient>();
+                ExceptionHandler = Substitute.For<IExceptionHandler>();
                 SFProjectService = Substitute.For<ISFProjectService>();
                 UserAccessor = Substitute.For<IUserAccessor>();
-                Controller = new SFProjectsRpcController(UserAccessor, SFProjectService, BugsNag);
+                Controller = new SFProjectsRpcController(UserAccessor, SFProjectService, ExceptionHandler);
             }
 
-            public Bugsnag.IClient BugsNag { get; }
+            public IExceptionHandler ExceptionHandler { get; }
             public SFProjectsRpcController Controller { get; }
             public ISFProjectService SFProjectService { get; }
             public IUserAccessor UserAccessor { get; }

@@ -17,28 +17,22 @@ namespace SIL.XForge.Scripture.Controllers
     [Route(UrlConstants.CommandApiNamespace + "/" + UrlConstants.Projects)]
     public class SFProjectsUploadController : ControllerBase
     {
-        private readonly Bugsnag.IClient _bugsnag;
+        private readonly IExceptionHandler _exceptionHandler;
         private readonly IUserAccessor _userAccessor;
         private readonly ISFProjectService _projectService;
 
-        public SFProjectsUploadController(IUserAccessor userAccessor, ISFProjectService projectService,
-            Bugsnag.IClient client)
+        public SFProjectsUploadController(
+            IUserAccessor userAccessor,
+            ISFProjectService projectService,
+            IExceptionHandler exceptionHandler
+        )
         {
             _userAccessor = userAccessor;
             _projectService = projectService;
-            _bugsnag = client;
+            _exceptionHandler = exceptionHandler;
 
             // Report the user id to bugsnag for this request
-            if (!string.IsNullOrWhiteSpace(_userAccessor.UserId))
-            {
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.User = new Bugsnag.Payload.User
-                    {
-                        Id = _userAccessor.UserId,
-                    };
-                });
-            }
+            _exceptionHandler.RecordUserIdForException(_userAccessor.UserId);
         }
 
         [HttpPost("audio")]
@@ -78,14 +72,14 @@ namespace SIL.XForge.Scripture.Controllers
             catch (Exception)
             {
                 // Send additional to bugsnag, then rethrow the error
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string> {
-                        { "method", "UploadAudioAsync"},
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "UploadAudioAsync" },
                         { "projectId", projectId },
                         { "dataId", dataId },
-                    });
-                });
+                    }
+                );
                 throw;
             }
         }
