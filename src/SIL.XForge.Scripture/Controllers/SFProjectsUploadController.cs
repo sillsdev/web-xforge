@@ -30,8 +30,6 @@ namespace SIL.XForge.Scripture.Controllers
             _userAccessor = userAccessor;
             _projectService = projectService;
             _exceptionHandler = exceptionHandler;
-
-            // Report the user id to bugsnag for this request
             _exceptionHandler.RecordUserIdForException(_userAccessor.UserId);
         }
 
@@ -71,7 +69,6 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (Exception)
             {
-                // Send additional to bugsnag, then rethrow the error
                 _exceptionHandler.RecordEndpointInfoForException(
                     new Dictionary<string, string>
                     {

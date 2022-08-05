@@ -34,8 +34,6 @@ namespace SIL.XForge.Scripture.Controllers
             _paratextService = paratextService;
             _userAccessor = userAccessor;
             _exceptionHandler = exceptionHandler;
-
-            // Report the user id to bugsnag for this request
             _exceptionHandler.RecordUserIdForException(_userAccessor.UserId);
         }
 
