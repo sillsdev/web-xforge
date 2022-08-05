@@ -1103,21 +1103,35 @@ namespace SIL.XForge.Scripture.Services
             {
                 IEnumerable<IDocument<NoteThread>> noteThreadDocs = new IDocument<NoteThread>[0];
                 Dictionary<int, ChapterDelta> chapterDeltas = new Dictionary<int, ChapterDelta>();
-                string chapterText = "[ { \"insert\": { \"chapter\": { \"style\": \"c\", \"number\": \"1\" } } }, " +
-                    "{ \"insert\": { \"blank\": true }, \"attributes\": { \"segment\": \"q_1\" } }," +
-                    "{ \"insert\": { \"verse\": { \"style\": \"v\", \"number\": \"1\" } } }, " +
-                    "{ \"insert\": \"" + text1 + "\", \"attributes\": { \"segment\": \"verse_1_1\" } }, " +
-                    "{ \"insert\": \"\n\", \"attributes\": { \"para\": { \"style\": \"q\" } } }, " +
-                    "{ \"insert\": \"\n\", \"attributes\": { \"para\": { \"style\": \"b\" } } }, " +
-                    "{ \"insert\": \"" + text2 + selected + text3 + "\", \"attributes\": { \"segment\": \"verse_1_1/q_1\" } } ]";
+                string chapterText =
+                    "[ { \"insert\": { \"chapter\": { \"style\": \"c\", \"number\": \"1\" } } }, "
+                    + "{ \"insert\": { \"blank\": true }, \"attributes\": { \"segment\": \"q_1\" } },"
+                    + "{ \"insert\": { \"verse\": { \"style\": \"v\", \"number\": \"1\" } } }, "
+                    + "{ \"insert\": \""
+                    + text1
+                    + "\", \"attributes\": { \"segment\": \"verse_1_1\" } }, "
+                    + "{ \"insert\": \"\n\", \"attributes\": { \"para\": { \"style\": \"q\" } } }, "
+                    + "{ \"insert\": \"\n\", \"attributes\": { \"para\": { \"style\": \"b\" } } }, "
+                    + "{ \"insert\": \""
+                    + text2
+                    + selected
+                    + text3
+                    + "\", \"attributes\": { \"segment\": \"verse_1_1/q_1\" } } ]";
                 var delta = new Delta(JToken.Parse(chapterText));
                 ChapterDelta chapterDelta = new ChapterDelta(1, 1, true, delta);
                 chapterDeltas.Add(1, chapterDelta);
                 Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
-                    { new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 } }
-                    .ToDictionary(u => u.Username);
-                IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(userSecret, ptProjectId, 40,
-                    noteThreadDocs, chapterDeltas, ptProjectUsers);
+                {
+                    new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+                }.ToDictionary(u => u.Username);
+                IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
+                    userSecret,
+                    ptProjectId,
+                    40,
+                    noteThreadDocs,
+                    chapterDeltas,
+                    ptProjectUsers
+                );
                 Assert.That(changes.Count, Is.EqualTo(1));
                 NoteThreadChange change = changes.First();
                 // include the newline length of the q paragraph break, but not the b
