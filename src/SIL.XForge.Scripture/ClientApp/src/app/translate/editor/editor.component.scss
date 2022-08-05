@@ -80,7 +80,7 @@ app-text {
   position: fixed;
   display: flex;
   flex-direction: column;
-  right: 15px;
+  inset-inline-end: 15px;
   bottom: 10px;
   border-radius: 4px;
   width: 270px;
@@ -88,7 +88,9 @@ app-text {
   overflow: hidden;
 
   > .training-title {
-    padding: 2px 2px 2px 10px;
+    padding: 2px;
+    padding-inline-start: 10px;
+
     > div {
       color: white;
     }
