@@ -20,13 +20,16 @@ namespace SIL.XForge.Scripture.Controllers
     {
         internal const string AlreadyProjectMemberResponse = "alreadyProjectMember";
 
-        private readonly Bugsnag.IClient _bugsnag;
+        private readonly IExceptionHandler _exceptionHandler;
         private readonly ISFProjectService _projectService;
 
-        public SFProjectsRpcController(IUserAccessor userAccessor, ISFProjectService projectService,
-            Bugsnag.IClient client) : base(userAccessor, client)
+        public SFProjectsRpcController(
+            IUserAccessor userAccessor,
+            ISFProjectService projectService,
+            IExceptionHandler exceptionHandler
+        ) : base(userAccessor, exceptionHandler)
         {
-            _bugsnag = client;
+            _exceptionHandler = exceptionHandler;
             _projectService = projectService;
         }
 
@@ -52,17 +55,16 @@ namespace SIL.XForge.Scripture.Controllers
             catch (Exception)
             {
                 // Send additional to bugsnag, then rethrow the error
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string>
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
                     {
-                        { "method", "Create"},
+                        { "method", "Create" },
                         { "ParatextId", settings?.ParatextId },
                         { "SourceParatextId", settings?.SourceParatextId },
                         { "CheckingEnabled", settings?.CheckingEnabled.ToString() },
                         { "TranslationSuggestionsEnabled", settings?.TranslationSuggestionsEnabled.ToString() },
-                    });
-                });
+                    }
+                );
                 throw;
             }
         }
@@ -85,13 +87,9 @@ namespace SIL.XForge.Scripture.Controllers
             catch (Exception)
             {
                 // Send additional to bugsnag, then rethrow the error
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string> {
-                        { "method", "Delete"},
-                        { "projectId", projectId },
-                    });
-                });
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string> { { "method", "Delete" }, { "projectId", projectId }, }
+                );
                 throw;
             }
         }
@@ -114,10 +112,10 @@ namespace SIL.XForge.Scripture.Controllers
             catch (Exception)
             {
                 // Send additional to bugsnag, then rethrow the error
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string> {
-                        { "method", "UpdateSettings"},
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "UpdateSettings" },
                         { "projectId", projectId },
                         { "CheckingShareLevel", settings?.CheckingShareLevel },
                         { "SourceParatextId", settings?.SourceParatextId },
@@ -127,8 +125,8 @@ namespace SIL.XForge.Scripture.Controllers
                         { "TranslateShareEnabled", settings?.TranslateShareEnabled?.ToString() },
                         { "TranslationSuggestionsEnabled", settings?.TranslationSuggestionsEnabled?.ToString() },
                         { "UsersSeeEachOthersResponses", settings?.UsersSeeEachOthersResponses?.ToString() },
-                    });
-                });
+                    }
+                );
                 throw;
             }
         }
@@ -151,14 +149,14 @@ namespace SIL.XForge.Scripture.Controllers
             catch (Exception)
             {
                 // Send additional to bugsnag, then rethrow the error
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string> {
-                        { "method", "AddUser"},
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "AddUser" },
                         { "projectId", projectId },
                         { "projectRole", projectRole },
-                    });
-                });
+                    }
+                );
                 throw;
             }
         }
@@ -186,14 +184,14 @@ namespace SIL.XForge.Scripture.Controllers
             catch (Exception)
             {
                 // Send additional to bugsnag, then rethrow the error
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string> {
-                        { "method", "RemoveUser"},
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "RemoveUser" },
                         { "projectId", projectId },
                         { "projectUserId", projectUserId },
-                    });
-                });
+                    }
+                );
                 throw;
             }
         }
@@ -212,13 +210,9 @@ namespace SIL.XForge.Scripture.Controllers
             catch (Exception)
             {
                 // Send additional to bugsnag, then rethrow the error
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string> {
-                        { "method", "GetProjectRole"},
-                        { "projectId", projectId },
-                    });
-                });
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string> { { "method", "GetProjectRole" }, { "projectId", projectId }, }
+                );
                 throw;
             }
         }
@@ -241,14 +235,14 @@ namespace SIL.XForge.Scripture.Controllers
             catch (Exception)
             {
                 // Send additional to bugsnag, then rethrow the error
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string> {
-                        { "method", "UpdateRole"},
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "UpdateRole" },
                         { "projectId", projectId },
                         { "projectRole", projectRole },
-                    });
-                });
+                    }
+                );
                 throw;
             }
         }
@@ -272,16 +266,16 @@ namespace SIL.XForge.Scripture.Controllers
             catch (Exception)
             {
                 // Send additional to bugsnag, then rethrow the error
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string> {
-                        { "method", "Invite"},
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "Invite" },
                         { "projectId", projectId },
                         // Exclude email as it is PII
                         { "locale", locale },
                         { "role", role },
-                    });
-                });
+                    }
+                );
                 throw;
             }
         }
@@ -304,13 +298,9 @@ namespace SIL.XForge.Scripture.Controllers
             catch (Exception)
             {
                 // Send additional to bugsnag, then rethrow the error
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string> {
-                        { "method", "UninviteUser"},
-                        { "projectId", projectId },
-                    });
-                });
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string> { { "method", "UninviteUser" }, { "projectId", projectId }, }
+                );
                 throw;
             }
         }
@@ -332,13 +322,9 @@ namespace SIL.XForge.Scripture.Controllers
             catch (Exception)
             {
                 // Send additional to bugsnag, then rethrow the error
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string> {
-                        { "method", "IsAlreadyInvited"},
-                        { "projectId", projectId },
-                    });
-                });
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string> { { "method", "IsAlreadyInvited" }, { "projectId", projectId }, }
+                );
                 throw;
             }
         }
@@ -360,13 +346,9 @@ namespace SIL.XForge.Scripture.Controllers
             catch (Exception)
             {
                 // Send additional to bugsnag, then rethrow the error
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string> {
-                        { "method", "InvitedUsers"},
-                        { "projectId", projectId },
-                    });
-                });
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string> { { "method", "InvitedUsers" }, { "projectId", projectId }, }
+                );
                 throw;
             }
         }
@@ -389,13 +371,9 @@ namespace SIL.XForge.Scripture.Controllers
             catch (Exception)
             {
                 // Send additional to bugsnag, then rethrow the error
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string> {
-                        { "method", "CheckLinkSharing"},
-                        { "projectId", projectId },
-                    });
-                });
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string> { { "method", "CheckLinkSharing" }, { "projectId", projectId }, }
+                );
                 throw;
             }
         }
@@ -423,14 +401,14 @@ namespace SIL.XForge.Scripture.Controllers
             catch (Exception)
             {
                 // Send additional to bugsnag, then rethrow the error
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string> {
-                        { "method", "LinkSharingKey"},
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "LinkSharingKey" },
                         { "projectId", projectId },
                         { "role", role },
-                    });
-                });
+                    }
+                );
                 throw;
             }
         }
@@ -453,14 +431,14 @@ namespace SIL.XForge.Scripture.Controllers
             catch (Exception)
             {
                 // Send additional to bugsnag, then rethrow the error
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string> {
-                        { "method", "AddTranslateMetrics"},
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "AddTranslateMetrics" },
                         { "metricsId", metrics.Id },
                         { "projectId", projectId },
-                    });
-                });
+                    }
+                );
                 throw;
             }
         }
@@ -483,13 +461,9 @@ namespace SIL.XForge.Scripture.Controllers
             catch (Exception)
             {
                 // Send additional to bugsnag, then rethrow the error
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string> {
-                        { "method", "Sync"},
-                        { "projectId", projectId },
-                    });
-                });
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string> { { "method", "Sync" }, { "projectId", projectId }, }
+                );
                 throw;
             }
         }
@@ -512,13 +486,9 @@ namespace SIL.XForge.Scripture.Controllers
             catch (Exception)
             {
                 // Send additional to bugsnag, then rethrow the error
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string> {
-                        { "method", "CancelSync"},
-                        { "projectId", projectId },
-                    });
-                });
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string> { { "method", "CancelSync" }, { "projectId", projectId }, }
+                );
                 throw;
             }
         }
@@ -545,15 +515,15 @@ namespace SIL.XForge.Scripture.Controllers
             catch (Exception)
             {
                 // Send additional to bugsnag, then rethrow the error
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string> {
-                        { "method", "DeleteAudio"},
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "DeleteAudio" },
                         { "projectId", projectId },
                         { "ownerId", ownerId },
                         { "dataId", dataId },
-                    });
-                });
+                    }
+                );
                 throw;
             }
         }
@@ -576,14 +546,14 @@ namespace SIL.XForge.Scripture.Controllers
             catch (Exception)
             {
                 // Send additional to bugsnag, then rethrow the error
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string> {
-                        { "method", "SetSyncDisabled"},
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "SetSyncDisabled" },
                         { "projectId", projectId },
                         { "isDisabled", isDisabled.ToString() },
-                    });
-                });
+                    }
+                );
                 throw;
             }
         }
@@ -605,13 +575,13 @@ namespace SIL.XForge.Scripture.Controllers
             catch (Exception)
             {
                 // Send additional to bugsnag, then rethrow the error
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string> {
-                        { "method", "TransceleratorQuestions"},
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "TransceleratorQuestions" },
                         { "projectId", projectId },
-                    });
-                });
+                    }
+                );
                 throw;
             }
         }
@@ -638,15 +608,15 @@ namespace SIL.XForge.Scripture.Controllers
             catch (Exception)
             {
                 // Send additional to bugsnag, then rethrow the error
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string> {
-                        { "method", "SetUserProjectPermissions"},
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "SetUserProjectPermissions" },
                         { "projectId", projectId },
                         { "userId", userId },
                         { "permissions", string.Join(',', permissions) },
-                    });
-                });
+                    }
+                );
                 throw;
             }
         }

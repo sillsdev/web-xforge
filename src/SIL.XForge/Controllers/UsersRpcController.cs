@@ -17,7 +17,7 @@ namespace SIL.XForge.Controllers
     public class UsersRpcController : RpcControllerBase
     {
         private readonly IAuthService _authService;
-        private readonly Bugsnag.IClient _bugsnag;
+        private readonly IExceptionHandler _exceptionHandler;
         private readonly IWebHostEnvironment _hostingEnv;
         private readonly IUserService _userService;
 
@@ -26,13 +26,13 @@ namespace SIL.XForge.Controllers
             IUserService userService,
             IAuthService authService,
             IWebHostEnvironment hostingEnv,
-            Bugsnag.IClient client
-        ) : base(userAccessor, client)
+            IExceptionHandler exceptionHandler
+        ) : base(userAccessor, exceptionHandler)
         {
             _userService = userService;
             _authService = authService;
             _hostingEnv = hostingEnv;
-            _bugsnag = client;
+            _exceptionHandler = exceptionHandler;
         }
 
         /// <summary>
@@ -48,13 +48,9 @@ namespace SIL.XForge.Controllers
             catch (Exception)
             {
                 // Send additional to bugsnag, then rethrow the error
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string> {
-                        { "method", "PushAuthUserProfile"},
-                        { "userId", userId },
-                    });
-                });
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string> { { "method", "PushAuthUserProfile" }, { "userId", userId }, }
+                );
                 throw;
             }
         }
@@ -88,14 +84,14 @@ namespace SIL.XForge.Controllers
             catch (Exception)
             {
                 // Send additional to bugsnag, then rethrow the error
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string> {
-                        { "method", "LinkParatextAccount"},
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "LinkParatextAccount" },
                         { "primaryId", primaryId },
                         { "secondaryId", secondaryId },
-                    });
-                });
+                    }
+                );
                 throw;
             }
         }
@@ -110,13 +106,13 @@ namespace SIL.XForge.Controllers
             catch (Exception)
             {
                 // Send additional to bugsnag, then rethrow the error
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string> {
-                        { "method", "UpdateInterfaceLanguage"},
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "UpdateInterfaceLanguage" },
                         { "language", language },
-                    });
-                });
+                    }
+                );
                 throw;
             }
         }
@@ -135,13 +131,10 @@ namespace SIL.XForge.Controllers
             catch (Exception)
             {
                 // Send additional to bugsnag, then rethrow the error
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.Metadata.Add("endpoint", new Dictionary<string, string> {
-                        { "method", "Delete"},
-                        { "userId", userId },
-                    });
-                });
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string> { { "method", "Delete" }, { "userId", userId }, }
+                );
+
                 throw;
             }
         }

@@ -12,25 +12,16 @@ namespace SIL.XForge.Controllers
     [Authorize]
     public abstract class RpcControllerBase : RpcController
     {
-        private readonly Bugsnag.IClient _bugsnag;
+        private readonly IExceptionHandler _exceptionHandler;
         private readonly IUserAccessor _userAccessor;
 
-        protected RpcControllerBase(IUserAccessor userAccessor, Bugsnag.IClient client)
+        protected RpcControllerBase(IUserAccessor userAccessor, IExceptionHandler exceptionHandler)
         {
             _userAccessor = userAccessor;
-            _bugsnag = client;
+            _exceptionHandler = exceptionHandler;
 
             // Report the user id to bugsnag for this request
-            if (!string.IsNullOrWhiteSpace(_userAccessor.UserId))
-            {
-                _bugsnag.BeforeNotify(report =>
-                {
-                    report.Event.User = new Bugsnag.Payload.User
-                    {
-                        Id = _userAccessor.UserId,
-                    };
-                });
-            }
+            exceptionHandler.RecordUserIdForException(_userAccessor.UserId);
         }
 
         protected string UserId => _userAccessor.UserId;
