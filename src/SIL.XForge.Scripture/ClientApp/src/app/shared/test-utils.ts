@@ -76,6 +76,28 @@ export function getPoetryVerseTextDoc(id: TextDocId): TextData {
   return delta;
 }
 
+export function getEmptyChapterDoc(id: TextDocId): TextData {
+  const delta = new Delta();
+  delta.insert({ blank: true }, { segment: 's_1' });
+  delta.insert('\n', { para: { style: 's' } });
+  delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
+  delta.insert({ blank: true }, { segment: 's_2' });
+  delta.insert('\n', { para: { style: 's' } });
+  delta.insert({ blank: true }, { segment: 'p_1' });
+  delta.insert({ verse: { number: '1', style: 'v' } });
+  delta.insert({ blank: true }, { segment: 'verse_1_1' });
+  delta.insert({ verse: { number: '2', style: 'v' } });
+  delta.insert({ blank: true }, { segment: 'verse_1_2' });
+  delta.insert('\n', { para: { style: 'p' } });
+  delta.insert({ blank: true }, { segment: 's_3' });
+  delta.insert('\n', { para: { style: 's' } });
+  delta.insert({ blank: true }, { segment: 'p_2' });
+  delta.insert({ verse: { number: '3', style: 'v' } });
+  delta.insert({ blank: true }, { segment: 'verse_1_3' });
+  delta.insert('\n', { para: { style: 'p' } });
+  return delta;
+}
+
 export function getSFProject(id: string): SFProjectProfile {
   return {
     name: `${id} name`,

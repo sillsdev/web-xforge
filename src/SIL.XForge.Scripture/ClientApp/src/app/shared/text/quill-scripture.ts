@@ -727,7 +727,7 @@ export function registerScripture(): string[] {
 
   /**
    * Updates delta to remove segment highlights from segments that are not explicitly highlighted
-   * and strips off formatting from note thread embeds.
+   * and strips away formatting from embeds, excluding blanks.
    */
   function removeObsoleteSegmentAttrs(delta: DeltaStatic): DeltaStatic {
     const updatedDelta = new Delta();
@@ -739,8 +739,11 @@ export function registerScripture(): string[] {
           attrs['highlight-segment'] = false;
         }
         if (typeof modelOp.insert === 'object') {
-          // clear the formatting attributes on embeds to prevent dom elements from being corrupted
-          modelOp.attributes = undefined;
+          // clear the formatting attributes on embeds to prevent dom elements from being corrupted,
+          // excluding blanks, since empty segments do not have texts with formatting to reference
+          if (modelOp.insert.blank == null) {
+            modelOp.attributes = undefined;
+          }
         }
         (updatedDelta as any).push(modelOp);
       }
