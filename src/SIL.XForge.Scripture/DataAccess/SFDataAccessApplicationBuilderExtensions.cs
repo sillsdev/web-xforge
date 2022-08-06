@@ -10,6 +10,7 @@ namespace Microsoft.AspNetCore.Builder
 
             app.InitRepository<TranslateMetrics>();
             app.InitRepository<SFProjectSecret>();
+            app.InitRepository<SyncMetrics>();
         }
     }
 }

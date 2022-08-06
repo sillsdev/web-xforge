@@ -51,6 +51,7 @@ namespace SIL.XForge.Scripture.Services
 
         private readonly IRepository<UserSecret> _userSecrets;
         private readonly IRepository<SFProjectSecret> _projectSecrets;
+        private readonly IRepository<SyncMetrics> _syncMetricsRepository;
         private readonly ISFProjectService _projectService;
         private readonly IEngineService _engineService;
         private readonly IParatextService _paratextService;
@@ -63,11 +64,13 @@ namespace SIL.XForge.Scripture.Services
         private UserSecret _userSecret;
         private IDocument<SFProject> _projectDoc;
         private SFProjectSecret _projectSecret;
+        private SyncMetrics _syncMetrics;
         private Dictionary<string, ParatextUserProfile> _currentPtSyncUsers;
 
         public ParatextSyncRunner(
             IRepository<UserSecret> userSecrets,
             IRepository<SFProjectSecret> projectSecrets,
+            IRepository<SyncMetrics> syncMetricsRepository,
             ISFProjectService projectService,
             IEngineService engineService,
             IParatextService paratextService,
@@ -79,6 +82,7 @@ namespace SIL.XForge.Scripture.Services
         {
             _userSecrets = userSecrets;
             _projectSecrets = projectSecrets;
+            _syncMetricsRepository = syncMetricsRepository;
             _projectService = projectService;
             _engineService = engineService;
             _paratextService = paratextService;
@@ -100,13 +104,19 @@ namespace SIL.XForge.Scripture.Services
         /// <param name="projectSFId"/> parameter, i.e. "{0}".
         /// </remarks>
         [Mutex("{0}")]
-        public async Task RunAsync(string projectSFId, string userId, bool trainEngine, CancellationToken token)
+        public async Task RunAsync(
+            string projectSFId,
+            string userId,
+            string syncMetricsId,
+            bool trainEngine,
+            CancellationToken token
+        )
         {
             // Whether or not we can rollback Paratext
             bool canRollbackParatext = false;
             try
             {
-                if (!await InitAsync(projectSFId, userId, token))
+                if (!await InitAsync(projectSFId, userId, syncMetricsId, token))
                 {
                     await CompleteSync(false, canRollbackParatext, trainEngine, token);
                     return;
@@ -538,8 +548,21 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        internal async Task<bool> InitAsync(string projectSFId, string userId, CancellationToken token)
+        internal async Task<bool> InitAsync(
+            string projectSFId,
+            string userId,
+            string syncMetricsId,
+            CancellationToken token
+        )
         {
+            if (!(await _syncMetricsRepository.TryGetAsync(syncMetricsId)).TryResult(out _syncMetrics))
+            {
+                Log($"Could not find sync metrics.", syncMetricsId, userId);
+                return false;
+            }
+
+            _syncMetrics.DateStarted = DateTime.UtcNow;
+
             _conn = await _realtimeService.ConnectAsync();
             _conn.BeginTransaction();
             _conn.ExcludePropertyFromTransaction<SFProject>(op => op.Sync.PercentCompleted);
@@ -1346,6 +1369,15 @@ namespace SIL.XForge.Scripture.Services
                 // Rollback the operations (the repository was restored above)
                 _conn.RollbackTransaction();
             }
+
+            if (_syncMetrics != null)
+            {
+                // _syncMetrics will be null if InitAsync() fails
+                _syncMetrics.Successful = successful;
+                _syncMetrics.DateFinished = DateTime.UtcNow;
+                await _syncMetricsRepository.ReplaceAsync(_syncMetrics, true);
+            }
+
             Log($"CompleteSync: Finished. Sync was {(successful ? "successful" : "unsuccessful")}.");
         }
 
