@@ -16,6 +16,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
             services.AddMongoRepository<TranslateMetrics>("translate_metrics", cm => cm.MapIdProperty(tm => tm.Id));
             services.AddMongoRepository<SFProjectSecret>("sf_project_secrets");
+            services.AddMongoRepository<SyncMetrics>("sync_metrics", cm => cm.MapIdProperty(sm => sm.Id));
 
             return services;
         }
