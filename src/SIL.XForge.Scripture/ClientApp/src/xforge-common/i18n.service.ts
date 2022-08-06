@@ -122,6 +122,10 @@ export class I18nService {
     return this.currentLocale.direction;
   }
 
+  get isRtl(): boolean {
+    return this.currentLocale.direction === 'rtl';
+  }
+
   get forwardDirectionWord(): 'right' | 'left' {
     return this.currentLocale.direction === 'ltr' ? 'right' : 'left';
   }
