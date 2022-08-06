@@ -265,6 +265,7 @@ namespace SIL.XForge.Scripture.Services
                         new SFProjectSecret { Id = "project03" },
                     }
                 );
+                var syncMetrics = new MemoryRepository<SyncMetrics>();
                 RealtimeService = new SFMemoryRealtimeService();
 
                 RealtimeService.AddRepository(
@@ -309,7 +310,13 @@ namespace SIL.XForge.Scripture.Services
 
                 MockLogger = new MockLogger<SyncService>();
 
-                Service = new SyncService(BackgroundJobClient, ProjectSecrets, RealtimeService, MockLogger);
+                Service = new SyncService(
+                    BackgroundJobClient,
+                    ProjectSecrets,
+                    syncMetrics,
+                    RealtimeService,
+                    MockLogger
+                );
             }
 
             public SyncService Service { get; }
