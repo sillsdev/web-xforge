@@ -5,7 +5,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
-import { TextNoteDialogComponent, NoteDialogData } from './text-note-dialog.component';
+import { NoteDialogData, TextNoteDialogComponent, TextNoteType } from './text-note-dialog.component';
 
 describe('TextNoteDialogComponent', () => {
   configureTestingModule(() => ({
@@ -19,21 +19,21 @@ describe('TextNoteDialogComponent', () => {
 
   it('Displays footnotes', fakeAsync(() => {
     const text = 'Footnote text';
-    env = new TestEnvironment({ type: 'f', text, isRightToLeft: false });
+    env = new TestEnvironment({ type: TextNoteType.Footnote, text, isRightToLeft: false });
     expect(env.title).toBe('text_note_dialog.footnote');
     expect(env.text).toBe(text);
   }));
 
   it('Displays cross-references', fakeAsync(() => {
     const text = 'End note text';
-    env = new TestEnvironment({ type: 'fe', text, isRightToLeft: false });
+    env = new TestEnvironment({ type: TextNoteType.EndNote, text, isRightToLeft: false });
     expect(env.title).toBe('text_note_dialog.end_note');
     expect(env.text).toBe(text);
   }));
 
   it('Displays end notes', fakeAsync(() => {
     const text = 'Cross-reference text';
-    env = new TestEnvironment({ type: 'x', text, isRightToLeft: false });
+    env = new TestEnvironment({ type: TextNoteType.CrossReference, text, isRightToLeft: false });
     expect(env.title).toBe('text_note_dialog.cross_reference');
     expect(env.text).toBe(text);
   }));
