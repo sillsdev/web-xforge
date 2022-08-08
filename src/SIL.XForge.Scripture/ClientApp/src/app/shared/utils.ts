@@ -62,18 +62,19 @@ export function threadIdFromMouseEvent(event: MouseEvent): string | undefined {
 }
 
 export function attributeFromMouseEvent(event: MouseEvent, nodeName: string, attribute: string): string | undefined {
-  let target = event.target;
+  // Target is actually a EventTarget but if we treat it as any then we can improve null checks
+  let target = event.target as any;
   if (target == null) {
     return;
   }
-  if (target['offsetParent']['nodeName'] === nodeName) {
-    target = target['offsetParent'] as EventTarget;
+  if (target?.offsetParent?.nodeName === nodeName) {
+    target = target.offsetParent;
   }
-  if (target['parentNode']['nodeName'] === nodeName) {
-    target = target['parentNode'] as EventTarget;
+  if (target?.parentNode?.nodeName === nodeName) {
+    target = target.parentNode;
   }
-  if (target['nodeName'] === nodeName) {
-    return target['attributes'][attribute].value;
+  if (target?.nodeName === nodeName) {
+    return target?.attributes[attribute].value;
   }
   return;
 }
