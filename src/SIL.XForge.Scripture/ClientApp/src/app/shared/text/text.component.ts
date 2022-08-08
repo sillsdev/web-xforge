@@ -997,24 +997,13 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       return;
     }
 
-    const matchArray: RegExpExecArray | null = VERSE_REGEX.exec(this._segment.ref);
-    const baseVerse = matchArray == null ? this._segment.ref : matchArray[0];
-    const startSegmentRange: RangeStatic | undefined = this.viewModel.getSegmentRange(baseVerse);
     const segmentRange: RangeStatic | undefined = this.viewModel.getSegmentRange(this._segment.ref);
     if (segmentRange == null) {
       return;
     }
 
-    const endIndex: number = this.getVerseEndIndex(baseVerse) ?? segmentRange.index + segmentRange.length;
-    const startIndex: number = startSegmentRange?.index ?? segmentRange.index;
     const text = this.viewModel.getSegmentText(this._segment.ref);
-    const verseEmbeddedElements: Map<string, number> = new Map<string, number>();
-    for (const [threadId, index] of this.embeddedElements.entries()) {
-      if (index >= startIndex && index < endIndex) {
-        verseEmbeddedElements.set(threadId, index);
-      }
-    }
-    this._segment.update(text, segmentRange, verseEmbeddedElements);
+    this._segment.update(text, segmentRange);
   }
 
   /** Gets the embeds affected */
@@ -1154,11 +1143,11 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       }
       const newEnd: number = Math.min(oldEnd, segEnd);
 
-      const embedIndices: number[] = Array.from(this._segment.embeddedElements.values()).sort();
-      if (newStart === this._segment.range.index || embedIndices.includes(newStart - 1)) {
+      const embedPositions: number[] = Array.from(this.embeddedElements.values()).sort();
+      if (newStart === this._segment.range.index || embedPositions.includes(newStart - 1)) {
         // if the selection is before an embed at the start of the segment or
         // the selection is between embeds, move the selection behind it
-        while (embedIndices.includes(newStart)) {
+        while (embedPositions.includes(newStart)) {
           newStart++;
         }
       }
