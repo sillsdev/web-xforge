@@ -361,6 +361,24 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task CheckLinkSharingAsync_LinkSharingEnabledAndUserHasPTRole_UserJoined()
+        {
+            var env = new TestEnvironment();
+            SFProject project = env.GetProject(Project04);
+            Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
+            env.ParatextService
+                .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
+                .Returns(Task.FromResult(new Attempt<string>(SFProjectRole.Translator)));
+
+            await env.Service.CheckLinkSharingAsync(User03, Project04, "linksharing04");
+            project = env.GetProject(Project04);
+            Assert.That(project.UserRoles.TryGetValue(User03, out string userRole), Is.True);
+            Assert.That(userRole, Is.EqualTo(SFProjectRole.Translator));
+            User user = env.GetUser(User03);
+            Assert.That(user.Sites[SiteId].Projects, Contains.Item(Project04));
+        }
+
+        [Test]
         public async Task CheckLinkSharingAsync_LinkSharingEnabledAndShareKeyExists_UserJoinedAndKeyRemoved()
         {
             var env = new TestEnvironment();
