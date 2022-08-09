@@ -1520,6 +1520,29 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task AddUserAsync_HasSourceProjectRole_AddedToSourceProject()
+        {
+            var env = new TestEnvironment();
+            SFProject project03 = env.GetProject(Project03);
+            SFProject source = env.GetProject(SourceOnly);
+            Assert.That(project03.UserRoles.ContainsKey(User03), Is.False, "setup");
+            Assert.That(source.UserRoles.ContainsKey(User03), Is.False, "setup");
+            User user = env.GetUser(User03);
+            Assert.That(user.Sites[SiteId].Projects, Is.Empty);
+            env.ParatextService
+                .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), "pt_source_no_suggestions", CancellationToken.None)
+                .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Translator)));
+
+            await env.Service.AddUserAsync(User03, Project03, SFProjectRole.Translator);
+            project03 = env.GetProject(Project03);
+            source = env.GetProject(SourceOnly);
+            Assert.That(project03.UserRoles.ContainsKey(User03));
+            Assert.That(source.UserRoles.ContainsKey(User03));
+            user = env.GetUser(User03);
+            Assert.That(user.Sites[SiteId].Projects, Is.EquivalentTo(new[] { Project03, SourceOnly }));
+        }
+
+        [Test]
         public async Task UpdatePermissionsAsync_SkipsBookNotInDB()
         {
             // If a user connects a new project, and we seek to set permissions for the user before actually
