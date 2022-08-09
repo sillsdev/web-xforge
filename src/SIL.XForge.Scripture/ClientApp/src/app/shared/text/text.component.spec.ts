@@ -209,6 +209,28 @@ describe('TextComponent', () => {
     expect(rangePostUndo).toBeTruthy();
   }));
 
+  it('drops history when edit includes chapter embed', fakeAsync(() => {
+    const env = new TestEnvironment({ includeHeading: false });
+    env.fixture.detectChanges();
+    env.id = new TextDocId('project01', 43, 1);
+    tick();
+    env.fixture.detectChanges();
+    const updateContentsSpy: jasmine.Spy<any> = spyOn<any>(env.component.editor!, 'updateContents').and.callThrough();
+
+    const range: RangeStatic = env.component.getSegmentRange('s_1')!;
+    env.component.editor!.setSelection(range.index + 1, 'user');
+    tick();
+    env.fixture.detectChanges();
+    env.insertText(range.index + 1, 'text');
+    expect(env.component.getSegmentText('s_1')).toEqual('text');
+    expect(updateContentsSpy.calls.count()).toEqual(2);
+
+    // SUT
+    env.triggerUndo();
+    expect(env.component.getSegmentText('s_1')).toEqual('text');
+    expect(updateContentsSpy.calls.count()).toEqual(2);
+  }));
+
   describe('MultiCursor Presence', () => {
     it('should not update presence if something other than the user moves the cursor', fakeAsync(() => {
       const env: TestEnvironment = new TestEnvironment();
@@ -2747,6 +2769,7 @@ interface PerformDropTestArgs {
 interface TestEnvCtorArgs {
   chapterNum?: number;
   textDoc?: RichText.DeltaOperation[];
+  includeHeading?: boolean;
 }
 
 class MockDragEvent extends DragEvent {
@@ -2817,7 +2840,7 @@ class TestEnvironment {
   private _onlineStatus = new BehaviorSubject<boolean>(true);
   private isOnline: boolean = true;
 
-  constructor({ textDoc, chapterNum }: TestEnvCtorArgs = {}) {
+  constructor({ textDoc, chapterNum, includeHeading }: TestEnvCtorArgs = {}) {
     when(mockedPwaService.onlineStatus).thenReturn(this._onlineStatus.asObservable());
     when(mockedPwaService.isOnline).thenCall(() => this.isOnline);
     when(mockedTranslocoService.translate<string>(anything())).thenCall(
@@ -2848,7 +2871,7 @@ class TestEnvironment {
         data: getPoetryVerseTextDoc(lukTextDocId),
         type: RichText.type.name
       },
-      { id: jhnTextDocId.toString(), data: getEmptyChapterDoc(jhnTextDocId), type: RichText.type.name }
+      { id: jhnTextDocId.toString(), data: getEmptyChapterDoc(jhnTextDocId, includeHeading), type: RichText.type.name }
     ]);
 
     when(mockedProjectService.getText(anything())).thenCall(id =>

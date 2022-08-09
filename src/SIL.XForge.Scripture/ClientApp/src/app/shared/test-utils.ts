@@ -76,10 +76,12 @@ export function getPoetryVerseTextDoc(id: TextDocId): TextData {
   return delta;
 }
 
-export function getEmptyChapterDoc(id: TextDocId): TextData {
+export function getEmptyChapterDoc(id: TextDocId, includeHeading: boolean = true): TextData {
   const delta = new Delta();
-  delta.insert({ blank: true }, { segment: 's_1' });
-  delta.insert('\n', { para: { style: 's' } });
+  if (includeHeading) {
+    delta.insert({ blank: true }, { segment: 's_1' });
+    delta.insert('\n', { para: { style: 's' } });
+  }
   delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
   delta.insert({ blank: true }, { segment: 's_2' });
   delta.insert('\n', { para: { style: 's' } });
