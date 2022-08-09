@@ -39,7 +39,7 @@ import {
 import { DragAndDrop } from './drag-and-drop';
 import { TextComponent } from './text.component';
 import { PresenceData, RemotePresences, TextViewModel } from './text-view-model';
-import { TextNoteDialogComponent } from './text-note-dialog/text-note-dialog.component';
+import { TextNoteDialogComponent, TextNoteType } from './text-note-dialog/text-note-dialog.component';
 
 const mockedBugsnagService = mock(BugsnagService);
 const mockedPwaService = mock(PwaService);
@@ -2874,15 +2874,11 @@ describe('TextComponent', () => {
     tick();
     env.fixture.detectChanges();
 
-    const footNote = 'f';
-    const endNote = 'fe';
-    const crossReferenceNote = 'fe';
-    [footNote, endNote, crossReferenceNote].forEach(noteStyle => {
+    [TextNoteType.Footnote, TextNoteType.EndNote, TextNoteType.CrossReference].forEach(noteStyle => {
       const note = env.quillEditor.querySelector('usx-note[data-style="' + noteStyle + '"]') as HTMLElement;
       expect(note).withContext(noteStyle).not.toBeNull();
       note!.click();
     });
-    // env.fixture.detectChanges();
     verify(mockedMatDialog.open(TextNoteDialogComponent, anything())).thrice();
   }));
 });

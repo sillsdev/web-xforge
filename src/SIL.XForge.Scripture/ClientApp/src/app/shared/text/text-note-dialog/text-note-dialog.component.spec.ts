@@ -85,11 +85,11 @@ class TestEnvironment {
   }
 
   get title(): string {
-    return this.overlayContainerElement.query(By.css('h1 span'))!.nativeElement.innerHTML.trim();
+    return this.overlayContainerElement.query(By.css('h1 span'))!.nativeElement.textContent.trim();
   }
 
   get text(): string {
-    return this.overlayContainerElement.query(By.css('mat-dialog-content'))!.nativeElement.innerHTML.trim();
+    return this.overlayContainerElement.query(By.css('mat-dialog-content'))!.nativeElement.textContent.trim();
   }
 
   closeDialog(): void {
