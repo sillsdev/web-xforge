@@ -691,7 +691,14 @@ export function registerScripture(): string[] {
       text = text.replace(/(?:\r?\n)+/, ' ');
       setTimeout(() => {
         this.container.innerHTML = text;
-        delta = delta.concat(this.convert()).delete(range.length);
+        const pasteDelta: DeltaStatic = this.convert();
+        if (pasteDelta.ops != null) {
+          for (const op of pasteDelta.ops) {
+            // add the attributes to the paste delta which should just be 1 insert op
+            op.attributes = getAttributesAtPosition(this.quill, range.index);
+          }
+        }
+        delta = delta.concat(pasteDelta).delete(range.length);
         this.quill.updateContents(delta, 'user');
         // range.length contributes to delta.length()
         this.quill.setSelection(delta.length() - range.length, 'silent');
