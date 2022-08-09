@@ -173,8 +173,8 @@ sudo mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
 sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list'
 tryharderto sudo apt-get update
 tryharderto sudo apt-get install code
-# Let VS Code watch lots of files.
-sudo tee -a /etc/sysctl.conf >/dev/null <<< 'fs.inotify.max_user_watches=524288'
+# Let VS Code and npm test watch lots of files. Whether from bug or need, 500000 is not enough.
+sudo tee -a /etc/sysctl.conf >/dev/null <<< 'fs.inotify.max_user_watches=10000000'
 sudo sysctl -p
 # mono-devel for OmniSharp
 tryharderto sudo apt-get install -y mono-devel
