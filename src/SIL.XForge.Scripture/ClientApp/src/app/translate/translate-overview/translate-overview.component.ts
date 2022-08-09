@@ -66,7 +66,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     private readonly projectService: SFProjectService,
     private readonly translationEngineService: TranslationEngineService,
     private readonly userService: UserService,
-    private readonly i18n: I18nService
+    readonly i18n: I18nService
   ) {
     super(noticeService);
     this.engineQualityStars = [];
