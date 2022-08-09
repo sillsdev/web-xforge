@@ -140,7 +140,7 @@
       notify: restart network
       tags: ["network"]
 
-    - name: Enable convenient access to ng + npm from commandline | bin dir
+    - name: Enable convenient access to ng from commandline | bin dir
       become: no
       file:
         path: "{{lookup('env','HOME')}}/bin"
@@ -151,15 +151,6 @@
       file:
         src: "{{repo_path}}/src/SIL.XForge.Scripture/ClientApp/node_modules/.bin/ng"
         path: "{{lookup('env','HOME')}}/bin/ng"
-        state: link
-        force: yes
-        follow: no
-      when: inventory_hostname == "localhost"
-    - name: Enable convenient access to npm from commandline | symlink
-      become: no
-      file:
-        src: "{{repo_path}}/src/SIL.XForge.Scripture/ClientApp/node_modules/.bin/npm"
-        path: "{{lookup('env','HOME')}}/bin/npm"
         state: link
         force: yes
         follow: no
@@ -175,6 +166,10 @@
     - name: Install/update reportgenerator
       become: no
       shell: dotnet tool install -g dotnet-reportgenerator-globaltool || dotnet tool update -g dotnet-reportgenerator-globaltool
+
+    - name: Install csharpier
+      become: no
+      shell: dotnet tool install csharpier
 
     - name: Set initial PT connection settings
       become: no
