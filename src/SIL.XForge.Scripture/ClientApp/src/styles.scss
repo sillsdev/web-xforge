@@ -165,3 +165,7 @@ app-root {
     }
   }
 }
+
+[class*='mdc-']:not(.mdc-top-app-bar-adjust):not(.mdc-typography) {
+  background-color: rgb(128 0 0 / 50%) !important;
+}
