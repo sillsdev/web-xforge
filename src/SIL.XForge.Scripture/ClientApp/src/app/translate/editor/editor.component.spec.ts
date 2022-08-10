@@ -643,6 +643,19 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('does not build machine project if no source books exists', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      when(mockedTranslationEngineService.checkHasSourceBooks(anything())).thenReturn(false);
+      env.wait();
+      verify(mockedTranslationEngineService.createTranslationEngine(anything())).never();
+      env.updateParams({ projectId: 'project02', bookId: 'MAT' });
+      env.wait();
+      verify(mockedTranslationEngineService.createTranslationEngine(anything())).never();
+      expect().nothing();
+      env.dispose();
+    }));
+
     it('change texts', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
@@ -2573,6 +2586,7 @@ class TestEnvironment {
     this.addParatextNoteThread(4, 'MAT 1:3', 'verse', { start: 20, length: 5 }, ['user01']);
     this.addParatextNoteThread(5, 'MAT 1:4', 'Paragraph', { start: 28, length: 9 }, ['user01']);
     this.addParatextNoteThread(6, 'MAT 1:5', 'resolved note', { start: 0, length: 0 }, ['user01'], NoteStatus.Resolved);
+    when(mockedTranslationEngineService.checkHasSourceBooks(anything())).thenReturn(true);
     when(this.mockedRemoteTranslationEngine.getWordGraph(anything())).thenCall(segment =>
       Promise.resolve(this.createWordGraph(segment))
     );

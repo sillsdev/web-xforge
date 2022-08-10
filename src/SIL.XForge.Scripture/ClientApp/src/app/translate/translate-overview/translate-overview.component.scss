@@ -21,6 +21,11 @@ mat-card {
   gap: 20px 40px;
 }
 
+.translation-suggestions-info {
+  color: $lighterTextColor;
+  padding: 16px;
+}
+
 .books-card {
   width: 18rem;
 
@@ -101,5 +106,10 @@ mat-card {
         margin-right: 8px;
       }
     }
+  }
+
+  .mat-card-actions {
+    margin: 0;
+    padding: 8px;
   }
 }

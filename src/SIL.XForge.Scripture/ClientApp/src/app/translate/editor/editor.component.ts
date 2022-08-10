@@ -782,7 +782,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
     this.translator = undefined;
     this.translationEngine = undefined;
-    if (this.projectDoc == null || !this.translationSuggestionsProjectEnabled || !this.hasEditRight) {
+    if (this.projectDoc?.data == null) {
+      return;
+    }
+    const hasSourceBooks: boolean = this.translationEngineService.checkHasSourceBooks(this.projectDoc.data);
+    if (!this.translationSuggestionsProjectEnabled || !this.hasEditRight || !hasSourceBooks) {
       return;
     }
 

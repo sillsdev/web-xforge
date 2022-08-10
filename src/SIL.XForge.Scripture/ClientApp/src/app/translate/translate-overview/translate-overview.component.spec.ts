@@ -163,6 +163,19 @@ describe('TranslateOverviewComponent', () => {
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress.mode).toBe('determinate');
     }));
+
+    it('should not create engine if no source text docs', fakeAsync(() => {
+      const env = new TestEnvironment(false);
+      when(mockedTranslationEngineService.checkHasSourceBooks(anything())).thenReturn(false);
+      verify(mockedTranslationEngineService.createTranslationEngine(anything())).never();
+      expect(env.translationSuggestionsInfoMessage).toBeFalsy();
+      env.simulateTranslateSuggestionsEnabled(true);
+      verify(mockedTranslationEngineService.createTranslationEngine(anything())).never();
+      expect(env.translationSuggestionsInfoMessage).toBeTruthy();
+      env.clickRetrainButton();
+      verify(mockedTranslationEngineService.createTranslationEngine(anything())).never();
+      expect(env.translationSuggestionsInfoMessage).toBeTruthy();
+    }));
   });
 });
 
@@ -182,6 +195,7 @@ class TestEnvironment {
     when(mockedTranslationEngineService.createTranslationEngine('project01')).thenReturn(
       instance(this.mockedRemoteTranslationEngine)
     );
+    when(mockedTranslationEngineService.checkHasSourceBooks(anything())).thenReturn(true);
     when(this.mockedRemoteTranslationEngine.getStats()).thenResolve({ confidence: 0.25, trainedSegmentCount: 100 });
     when(this.mockedRemoteTranslationEngine.listenForTrainingStatus()).thenReturn(defer(() => this.trainingProgress$));
     when(mockedSFProjectService.getText(anything())).thenCall(id =>
@@ -216,6 +230,10 @@ class TestEnvironment {
 
   get segmentsCount(): DebugElement {
     return this.fixture.debugElement.query(By.css('.engine-card-segments-count'));
+  }
+
+  get translationSuggestionsInfoMessage(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.translation-suggestions-info'));
   }
 
   get trainingProgress(): MatProgressBar {
@@ -370,7 +388,7 @@ class TestEnvironment {
   }
 
   simulateTranslateSuggestionsEnabled(enabled: boolean = true) {
-    const projectDoc = <SFProjectProfileDoc>this.realtimeService.get(SFProjectProfileDoc.COLLECTION, 'project01');
+    const projectDoc: SFProjectProfileDoc = this.realtimeService.get(SFProjectProfileDoc.COLLECTION, 'project01');
     projectDoc.submitJson0Op(
       op => op.set<boolean>(p => p.translateConfig.translationSuggestionsEnabled, enabled),
       false

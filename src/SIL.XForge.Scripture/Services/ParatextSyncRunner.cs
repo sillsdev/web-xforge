@@ -1306,7 +1306,8 @@ namespace SIL.XForge.Scripture.Services
                 await _conn.CommitTransactionAsync();
 
                 // The project document and text documents must be committed before we can train the model
-                if (TranslationSuggestionsEnabled && trainEngine)
+                bool hasSourceTextDocs = _projectDoc.Data.Texts.Any(t => t.HasSource);
+                if (TranslationSuggestionsEnabled && trainEngine && hasSourceTextDocs)
                 {
                     // Start training Machine engine
                     await _engineService.StartBuildByProjectIdAsync(_projectDoc.Id);

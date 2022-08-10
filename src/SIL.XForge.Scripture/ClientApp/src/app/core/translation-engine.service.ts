@@ -7,6 +7,7 @@ import {
   RemoteTranslationEngine
 } from '@sillsdev/machine';
 import * as crc from 'crc-32';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
@@ -50,6 +51,10 @@ export class TranslationEngineService extends SubscriptionDisposable {
 
   createTranslationEngine(projectId: string): RemoteTranslationEngine {
     return new RemoteTranslationEngine(projectId, this.machineHttp);
+  }
+
+  checkHasSourceBooks(project: SFProjectProfile): boolean {
+    return project.texts.filter(t => t.hasSource).length > 0;
   }
 
   /**
