@@ -927,8 +927,8 @@ describe('EditorComponent', () => {
 
       const userId: string = 'user01';
       const projectId: string = 'project01';
-      let userDoc = env.getUserDoc(userId);
-      expect(userDoc.data?.role).toBe(SystemRole.User);
+      let projectDoc = env.getProjectDoc(projectId);
+      expect(projectDoc.data?.userRoles[userId]).toBe(SFProjectRole.ParatextTranslator);
       expect(env.bookName).toEqual('Matthew');
       expect(env.component.canEdit).toBe(true);
 
@@ -938,15 +938,15 @@ describe('EditorComponent', () => {
       expect(env.component.target!.segmentRef).toBe('verse_1_2');
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
 
-      // Change user role and run a sync to force remote updates on the project
+      // Change user role on the project and run a sync to force remote updates
       env.changeUserRole(projectId, userId, SFProjectRole.Observer);
       env.setDataInSync(projectId, true, false);
       env.setDataInSync(projectId, false, false);
       env.wait();
       resetCalls(env.mockedRemoteTranslationEngine);
 
-      userDoc = env.getUserDoc(userId);
-      expect(userDoc.data?.role).toBe(SFProjectRole.Observer);
+      projectDoc = env.getProjectDoc(projectId);
+      expect(projectDoc.data?.userRoles[userId]).toBe(SFProjectRole.Observer);
       expect(env.bookName).toEqual('Matthew');
       expect(env.component.canEdit).toBe(false);
 
@@ -2996,12 +2996,9 @@ class TestEnvironment {
   }
 
   changeUserRole(projectId: string, userId: string, role: SFProjectRole): void {
-    const userDoc: UserDoc = this.getUserDoc(userId);
-    userDoc.submitJson0Op(op => op.set(u => u.role, role.toString()), false);
-
     const projectDoc: SFProjectProfileDoc = this.getProjectDoc(projectId);
     const userRoles = cloneDeep(this.userRolesOnProject);
-    userRoles.user01 = role;
+    userRoles[userId] = role;
     projectDoc.submitJson0Op(op => op.set(p => p.userRoles, userRoles), false);
 
     this.wait();
