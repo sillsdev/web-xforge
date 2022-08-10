@@ -116,7 +116,8 @@ app-text {
 .formatting-invalid-warning,
 .out-of-sync-warning,
 .doc-corrupted-warning,
-.project-text-not-editable {
+.project-text-not-editable,
+.no-edit-permission-message {
   color: #ff4118;
   border: 1px solid $border-color;
   padding: 5px 10px;
@@ -127,9 +128,14 @@ app-text {
     margin-right: 10px;
   }
 
-  mdc-icon {
+  mat-icon {
     vertical-align: bottom;
   }
+}
+
+.no-edit-permission-message,
+.project-text-not-editable {
+  color: $lighterTextColor;
 }
 
 #training-progress-spinner {

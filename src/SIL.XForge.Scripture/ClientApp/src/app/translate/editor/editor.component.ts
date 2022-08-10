@@ -39,6 +39,7 @@ import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
 import { getLinkHTML, issuesEmailTemplate } from 'xforge-common/utils';
 import { DialogService } from 'xforge-common/dialog.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { environment } from '../../../environments/environment';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
@@ -141,6 +142,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly mediaObserver: MediaObserver,
     private readonly pwaService: PwaService,
     private readonly translationEngineService: TranslationEngineService,
+    private readonly i18n: I18nService,
     @Inject(CONSOLE) private readonly console: ConsoleInterface
   ) {
     super(noticeService);
@@ -246,22 +248,32 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get hasEditRight(): boolean {
+    return this.userHasGeneralEditRight && this.hasChapterEditPermission;
+  }
+
+  /**
+   * Determines whether the user has the right to edit texts generally, without considering permissions on this chapter.
+   */
+  get userHasGeneralEditRight(): boolean {
     const project = this.projectDoc?.data;
     if (project == null) {
       return false;
     }
+    return SF_PROJECT_RIGHTS.hasRight(project, this.userService.currentUserId, SFProjectDomain.Texts, Operation.Edit);
+  }
 
-    if (SF_PROJECT_RIGHTS.hasRight(project, this.userService.currentUserId, SFProjectDomain.Texts, Operation.Edit)) {
-      // Check for chapter rights
-      const chapter = this.text?.chapters.find(c => c.number === this._chapter);
-      // Even though permissions is guaranteed to be there in the model, its not in IndexedDB the first time the project
-      // is accessed after migration
-      if (chapter != null && chapter.permissions != null) {
-        return chapter.permissions[this.userService.currentUserId] === TextInfoPermission.Write;
-      }
-    }
+  /**
+   * Determines whether the user has permission to edit the currently active chapter.
+   */
+  get hasChapterEditPermission(): boolean {
+    const chapter = this.text?.chapters.find(c => c.number === this._chapter);
+    // Even though permissions is guaranteed to be there in the model, its not in IndexedDB the first time the project
+    // is accessed after migration
+    return chapter?.permissions?.[this.userService.currentUserId] === TextInfoPermission.Write;
+  }
 
-    return false;
+  get userRole(): string {
+    return this.i18n.localizeRole(this.projectDoc?.data?.userRoles[this.userService.currentUserId] || '');
   }
 
   get hasSourceViewRight(): boolean {
