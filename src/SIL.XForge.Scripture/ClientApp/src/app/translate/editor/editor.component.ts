@@ -435,7 +435,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
               }
             }
             this.source!.id = sourceId;
-            if (this.translationEngine == null || !this.translationSuggestionsProjectEnabled) {
+            if (this.translationEngine == null || !this.translationSuggestionsProjectEnabled || !this.hasEditRight) {
               this.setupTranslationEngine();
             }
             setTimeout(() => this.setTextHeight());
