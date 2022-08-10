@@ -140,7 +140,7 @@
       notify: restart network
       tags: ["network"]
 
-    - name: Enable convenient access to ng + npm from commandline | bin dir
+    - name: Enable convenient access to ng from commandline | bin dir
       become: no
       file:
         path: "{{lookup('env','HOME')}}/bin"
@@ -155,15 +155,6 @@
         force: yes
         follow: no
       when: inventory_hostname == "localhost"
-    - name: Enable convenient access to npm from commandline | symlink
-      become: no
-      file:
-        src: "{{repo_path}}/src/SIL.XForge.Scripture/ClientApp/node_modules/.bin/npm"
-        path: "{{lookup('env','HOME')}}/bin/npm"
-        state: link
-        force: yes
-        follow: no
-      when: inventory_hostname == "localhost"
 
     - name: Use chromium for unit tests
       become: no
@@ -172,9 +163,13 @@
         line: "CHROME_BIN=chromium-browser"
         create: yes
 
-    - name: Install/update reportgenerator
+    - name: Install reportgenerator
       become: no
-      shell: dotnet tool install -g dotnet-reportgenerator-globaltool || dotnet tool update -g dotnet-reportgenerator-globaltool
+      shell: dotnet tool update --global dotnet-reportgenerator-globaltool
+
+    - name: Install csharpier
+      become: no
+      shell: dotnet tool update csharpier
 
     - name: Set initial PT connection settings
       become: no
