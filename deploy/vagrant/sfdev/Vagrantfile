@@ -52,6 +52,10 @@ Vagrant.configure("2") do |config|
     # Clean up from dotnet 3.1, built in the basebox, so dotnet 6.0 can build.
     cd ~/src/web-xforge
     find test src -name obj -print0 | xargs -0 xargs rm -vrf
+
+    # Remove local npm
+    rm -vf ~/bin/npm
+
     cd ~/src/web-xforge/deploy
     tryharderto ansible-playbook playbook_focal.yml --limit localhost
 
@@ -73,7 +77,7 @@ Vagrant.configure("2") do |config|
     dotnet build
 
     # Let vscode, dotnet, and npm test monitor lots of files.
-    sudo tee --amend /etc/sysctl.conf <<END
+    sudo tee --append /etc/sysctl.conf <<END
     fs.inotify.max_user_watches=10000000
     fs.inotify.max_user_instances=10000000
     END
