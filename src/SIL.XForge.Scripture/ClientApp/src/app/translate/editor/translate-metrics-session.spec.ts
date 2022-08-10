@@ -1,4 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { MatDialog } from '@angular/material/dialog';
 import { LatinWordTokenizer } from '@sillsdev/machine';
 import { QuillModule } from 'ngx-quill';
 import * as RichText from 'rich-text';
@@ -28,6 +29,7 @@ import {
 const mockedPwaService = mock(PwaService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
+const mockedMatDialog = mock(MatDialog);
 
 describe('TranslateMetricsSession', () => {
   configureTestingModule(() => ({
@@ -36,7 +38,8 @@ describe('TranslateMetricsSession', () => {
     providers: [
       { provide: PwaService, useMock: mockedPwaService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
-      { provide: UserService, useMock: mockedUserService }
+      { provide: UserService, useMock: mockedUserService },
+      { provide: MatDialog, useMock: mockedMatDialog }
     ]
   }));
 

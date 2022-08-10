@@ -18,20 +18,22 @@ import QuillCursors from 'quill-cursors';
 import { AuthType, getAuthType } from 'realtime-server/lib/esm/common/models/user';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
-import { fromEvent } from 'rxjs';
+import { fromEvent, Subscription } from 'rxjs';
 import { LocalPresence } from 'sharedb/lib/sharedb';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
 import { getBrowserEngine } from 'xforge-common/utils';
+import { MatDialog } from '@angular/material/dialog';
 import { Delta, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { NoteThreadIcon } from '../../core/models/note-thread-doc';
-import { VERSE_REGEX } from '../utils';
+import { attributeFromMouseEvent, VERSE_REGEX } from '../utils';
 import { registerScripture } from './quill-scripture';
 import { Segment } from './segment';
 import { EditorRange, PresenceData, RemotePresences, TextViewModel } from './text-view-model';
+import { TextNoteDialogComponent, NoteDialogData } from './text-note-dialog/text-note-dialog.component';
 
 const EDITORS = new Set<Quill>();
 
@@ -100,6 +102,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   // allow for different CSS based on the browser engine
   readonly browserEngine: string = getBrowserEngine();
 
+  private clickSubs: Map<string, Subscription[]> = new Map<string, Subscription[]>();
   private _isReadOnly: boolean = true;
   private _editorStyles: any = { fontSize: '1rem' };
   private readonly DEFAULT_MODULES: any = {
@@ -210,6 +213,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   constructor(
     private readonly changeDetector: ChangeDetectorRef,
+    private readonly dialog: MatDialog,
     private readonly projectService: SFProjectService,
     private readonly pwaService: PwaService,
     private readonly transloco: TranslocoService,
@@ -746,6 +750,29 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
     this.loaded.emit();
     this.applyEditorStyles();
+    // These refer to footnotes, cross-references, and end notes and not actual notes
+    const elements = this.editor?.container.querySelectorAll('usx-note[data-caller="+"]');
+    if (elements != null) {
+      this.clickSubs.get('notes')?.forEach(s => s.unsubscribe());
+      this.clickSubs.set(
+        'notes',
+        Array.from(elements).map((element: Element) =>
+          this.subscribe(fromEvent<MouseEvent>(element, 'click'), event => {
+            const noteText = attributeFromMouseEvent(event, 'USX-NOTE', 'title');
+            const noteType = attributeFromMouseEvent(event, 'USX-NOTE', 'data-style');
+            this.dialog.open(TextNoteDialogComponent, {
+              autoFocus: false,
+              width: '600px',
+              data: {
+                type: noteType,
+                text: noteText,
+                isRightToLeft: this.isRtl
+              } as NoteDialogData
+            });
+          })
+        )
+      );
+    }
   }
 
   private isSelectionAtSegmentPosition(end: boolean): boolean {
