@@ -222,6 +222,7 @@
     "share": "Allow users to invite others to the project",
     "sharing": "Sharing",
     "source_projects_cannot_be_deleted": "Another project is based on this project and so it cannot be deleted.",
+    "source_text_change_needs_synchronization": "Changing the source text will start a Synchronization, which must complete before the source text is available.",
     "source_text_placeholder": "Source text (optional)",
     "tools": "Tools",
     "translate": "Translation Settings",

@@ -29,6 +29,7 @@
               </div>
               <ng-container *ngIf="mainSettingsLoaded">
                 <p class="helper-text">{{ t("select_project_or_resource") }}</p>
+                <p class="helper-text">{{ t("source_text_change_needs_synchronization") }}</p>
                 <mat-hint>{{ t("translation_suggestions_require_source_text") }}</mat-hint>
                 <div class="tool-setting-field">
                   <app-project-select
