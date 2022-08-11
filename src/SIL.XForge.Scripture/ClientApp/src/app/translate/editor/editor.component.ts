@@ -1,6 +1,5 @@
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, ViewChild } from '@angular/core';
 import { MediaObserver } from '@angular/flex-layout';
-import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import {
@@ -39,6 +38,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
 import { getLinkHTML, issuesEmailTemplate } from 'xforge-common/utils';
+import { DialogService } from 'xforge-common/dialog.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { environment } from '../../../environments/environment';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
@@ -137,7 +137,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
     noticeService: NoticeService,
-    private readonly dialog: MatDialog,
+    private readonly dialogService: DialogService,
     private readonly mediaObserver: MediaObserver,
     private readonly pwaService: PwaService,
     private readonly translationEngineService: TranslationEngineService,
@@ -167,7 +167,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   set targetFocused(focused: boolean) {
-    focused = this.dialog.openDialogs.length > 0 ? true : focused;
+    focused = this.dialogService.openDialogCount > 0 ? true : focused;
     this._targetFocused = focused;
   }
 
@@ -685,13 +685,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
 
-    const dialogRef = this.dialog.open<SuggestionsSettingsDialogComponent, SuggestionsSettingsDialogData>(
+    const dialogRef = this.dialogService.openMatDialog<
       SuggestionsSettingsDialogComponent,
-      {
-        autoFocus: false,
-        data: { projectUserConfigDoc: this.projectUserConfigDoc }
-      }
-    );
+      SuggestionsSettingsDialogData
+    >(SuggestionsSettingsDialogComponent, {
+      autoFocus: false,
+      data: { projectUserConfigDoc: this.projectUserConfigDoc }
+    });
     dialogRef.afterClosed().subscribe(() => {
       if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
         const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
@@ -739,7 +739,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private showNoteThread(threadId: string): void {
-    const dialogRef = this.dialog.open(NoteDialogComponent, {
+    const dialogRef = this.dialogService.openMatDialog(NoteDialogComponent, {
       autoFocus: false,
       width: '600px',
       data: {
