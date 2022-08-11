@@ -919,6 +919,46 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('user cannot edit a text if their permissions change', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject();
+      env.setProjectUserConfig();
+      env.wait();
+
+      const userId: string = 'user01';
+      const projectId: string = 'project01';
+      let projectDoc = env.getProjectDoc(projectId);
+      expect(projectDoc.data?.userRoles[userId]).toBe(SFProjectRole.ParatextTranslator);
+      expect(env.bookName).toEqual('Matthew');
+      expect(env.component.canEdit).toBe(true);
+
+      let range = env.component.target!.getSegmentRange('verse_1_2');
+      env.targetEditor.setSelection(range!.index + 1, 0, 'user');
+      env.wait();
+      expect(env.component.target!.segmentRef).toBe('verse_1_2');
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
+
+      // Change user role on the project and run a sync to force remote updates
+      env.changeUserRole(projectId, userId, SFProjectRole.Observer);
+      env.setDataInSync(projectId, true, false);
+      env.setDataInSync(projectId, false, false);
+      env.wait();
+      resetCalls(env.mockedRemoteTranslationEngine);
+
+      projectDoc = env.getProjectDoc(projectId);
+      expect(projectDoc.data?.userRoles[userId]).toBe(SFProjectRole.Observer);
+      expect(env.bookName).toEqual('Matthew');
+      expect(env.component.canEdit).toBe(false);
+
+      range = env.component.target!.getSegmentRange('verse_1_3');
+      env.targetEditor.setSelection(range!.index + 1, 0, 'user');
+      env.wait();
+      expect(env.component.target!.segmentRef).toBe('verse_1_3');
+      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
+
+      env.dispose();
+    }));
+
     it('uses default font size', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setupProject({ defaultFontSize: 18 });
@@ -2867,12 +2907,20 @@ class TestEnvironment {
     return null;
   }
 
+  getProjectDoc(projectId: string): SFProjectProfileDoc {
+    return this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
+  }
+
   getSegmentElement(segmentRef: string): HTMLElement | null {
     return this.targetEditor.container.querySelector('usx-segment[data-segment="' + segmentRef + '"]');
   }
 
   getTextDoc(textId: TextDocId): TextDoc {
     return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, textId.toString());
+  }
+
+  getUserDoc(userId: string): UserDoc {
+    return this.realtimeService.get<UserDoc>(UserDoc.COLLECTION, userId);
   }
 
   getNoteThreadDoc(projectId: string, threadId: string): NoteThreadDoc {
@@ -2902,21 +2950,15 @@ class TestEnvironment {
     return thread != null;
   }
 
-  setDataInSync(projectId: string, isInSync: boolean): void {
-    const projectDoc: SFProjectProfileDoc = this.realtimeService.get<SFProjectProfileDoc>(
-      SFProjectProfileDoc.COLLECTION,
-      projectId
-    );
-    projectDoc.submitJson0Op(op => op.set(p => p.sync.dataInSync!, isInSync));
+  setDataInSync(projectId: string, isInSync: boolean, source?: any): void {
+    const projectDoc: SFProjectProfileDoc = this.getProjectDoc(projectId);
+    projectDoc.submitJson0Op(op => op.set(p => p.sync.dataInSync!, isInSync), source);
     tick();
     this.fixture.detectChanges();
   }
 
   updateFontSize(projectId: string, size: number): void {
-    const projectDoc: SFProjectProfileDoc = this.realtimeService.get<SFProjectProfileDoc>(
-      SFProjectProfileDoc.COLLECTION,
-      projectId
-    );
+    const projectDoc: SFProjectProfileDoc = this.getProjectDoc(projectId);
     projectDoc.submitJson0Op(op => op.set(p => p.defaultFontSize, size), false);
     tick();
     this.fixture.detectChanges();
@@ -2950,6 +2992,15 @@ class TestEnvironment {
     keydownEvent.key = 'ArrowDown';
     keydownEvent.initEvent('keydown', true, true);
     this.component.target!.editor!.root.dispatchEvent(keydownEvent);
+    this.wait();
+  }
+
+  changeUserRole(projectId: string, userId: string, role: SFProjectRole): void {
+    const projectDoc: SFProjectProfileDoc = this.getProjectDoc(projectId);
+    const userRoles = cloneDeep(this.userRolesOnProject);
+    userRoles[userId] = role;
+    projectDoc.submitJson0Op(op => op.set(p => p.userRoles, userRoles), false);
+
     this.wait();
   }
 
