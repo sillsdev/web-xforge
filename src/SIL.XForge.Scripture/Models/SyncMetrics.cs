@@ -12,8 +12,10 @@ namespace SIL.XForge.Scripture.Models
         public DateTime DateQueued { get; set; }
         public DateTime? DateStarted { get; set; }
         public string Id { get; set; }
+        public string ErrorDetails { get; set; }
+        public string RequiresId { get; set; }
         public string ProjectRef { get; set; }
-        public bool Successful { get; set; }
+        public SyncStatus Status { get; set; }
         public string UserRef { get; set; }
     }
 }
