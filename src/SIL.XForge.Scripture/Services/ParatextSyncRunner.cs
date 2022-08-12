@@ -412,17 +412,18 @@ namespace SIL.XForge.Scripture.Services
             }
             catch (Exception e)
             {
-                if (!(e is TaskCanceledException))
+                if (e is not TaskCanceledException)
                 {
                     StringBuilder additionalInformation = new StringBuilder();
                     foreach (var key in e.Data.Keys)
                     {
                         additionalInformation.AppendLine($"{key}: {e.Data[key]}");
                     }
-                    _logger.LogError(
-                        e,
-                        $"Error occurred while executing Paratext sync for project with SF id '{projectSFId}'. {(additionalInformation.Length == 0 ? string.Empty : ($"Additional information: {additionalInformation.ToString()}"))}"
-                    );
+
+                    string message =
+                        $"Error occurred while executing Paratext sync for project with SF id '{projectSFId}'. {(additionalInformation.Length == 0 ? string.Empty : $"Additional information: {additionalInformation}")}";
+                    _syncMetrics.ErrorDetails = $"{e} {message}";
+                    _logger.LogError(e, message);
                 }
 
                 await CompleteSync(false, canRollbackParatext, trainEngine, token);
@@ -562,6 +563,11 @@ namespace SIL.XForge.Scripture.Services
             }
 
             _syncMetrics.DateStarted = DateTime.UtcNow;
+            _syncMetrics.Status = SyncStatus.Running;
+            if (!await _syncMetricsRepository.ReplaceAsync(_syncMetrics, true))
+            {
+                Log("The sync metrics could not be updated in MongoDB");
+            }
 
             _conn = await _realtimeService.ConnectAsync();
             _conn.BeginTransaction();
@@ -1329,13 +1335,21 @@ namespace SIL.XForge.Scripture.Services
             });
 
             // If we have an id in the job ids collection, remove the first one
-            if (_projectSecret.JobIds.Any())
+            if (_projectSecret.JobIds.Any() || _projectSecret.SyncMetricsIds.Contains(_syncMetrics.Id))
             {
                 await _projectSecrets.UpdateAsync(
                     _projectSecret.Id,
                     u =>
                     {
-                        u.Remove(p => p.JobIds, _projectSecret.JobIds.First());
+                        if (_projectSecret.JobIds.Any())
+                        {
+                            u.Remove(p => p.JobIds, _projectSecret.JobIds.First());
+                        }
+
+                        if (_projectSecret.SyncMetricsIds.Contains(_syncMetrics.Id))
+                        {
+                            u.Remove(p => p.SyncMetricsIds, _syncMetrics.Id);
+                        }
                     }
                 );
             }
@@ -1370,12 +1384,31 @@ namespace SIL.XForge.Scripture.Services
                 _conn.RollbackTransaction();
             }
 
-            if (_syncMetrics != null)
+            if (_syncMetrics == null)
+            {
+                Log("The sync metrics were missing, and cannot be updated");
+            }
+            else
             {
                 // _syncMetrics will be null if InitAsync() fails
-                _syncMetrics.Successful = successful;
+                if (token.IsCancellationRequested)
+                {
+                    _syncMetrics.Status = SyncStatus.Cancelled;
+                }
+                else if (successful)
+                {
+                    _syncMetrics.Status = SyncStatus.Successful;
+                }
+                else
+                {
+                    _syncMetrics.Status = SyncStatus.Failed;
+                }
+
                 _syncMetrics.DateFinished = DateTime.UtcNow;
-                await _syncMetricsRepository.ReplaceAsync(_syncMetrics, true);
+                if (!await _syncMetricsRepository.ReplaceAsync(_syncMetrics, true))
+                {
+                    Log("The sync metrics could not be updated in MongoDB");
+                }
             }
 
             Log($"CompleteSync: Finished. Sync was {(successful ? "successful" : "unsuccessful")}.");

@@ -79,19 +79,22 @@ namespace SIL.XForge.Scripture.Services
                         }
 
                         // Create the sync metrics for the source and target projects
-                        SyncMetrics sourceSyncMetrics = new SyncMetrics
+                        var sourceSyncMetrics = new SyncMetrics
                         {
                             DateQueued = DateTime.UtcNow,
                             Id = ObjectId.GenerateNewId().ToString(),
                             ProjectRef = sourceProjectId,
+                            Status = SyncStatus.Queued,
                             UserRef = curUserId,
                         };
                         await _syncMetrics.InsertAsync(sourceSyncMetrics);
-                        SyncMetrics targetSyncMetrics = new SyncMetrics
+                        var targetSyncMetrics = new SyncMetrics
                         {
                             DateQueued = DateTime.UtcNow,
                             Id = ObjectId.GenerateNewId().ToString(),
                             ProjectRef = projectId,
+                            RequiresId = sourceSyncMetrics.Id,
+                            Status = SyncStatus.Queued,
                             UserRef = curUserId,
                         };
                         await _syncMetrics.InsertAsync(targetSyncMetrics);
@@ -150,6 +153,7 @@ namespace SIL.XForge.Scripture.Services
                                 u =>
                                 {
                                     u.Add(p => p.JobIds, sourceJobId);
+                                    u.Add(p => p.SyncMetricsIds, sourceSyncMetrics.Id);
                                 }
                             );
 
@@ -159,6 +163,7 @@ namespace SIL.XForge.Scripture.Services
                                 u =>
                                 {
                                     u.Add(p => p.JobIds, targetJobId);
+                                    u.Add(p => p.SyncMetricsIds, targetSyncMetrics.Id);
                                 }
                             );
 
@@ -178,11 +183,12 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 // Create the sync metrics for this project
-                SyncMetrics syncMetrics = new SyncMetrics
+                var syncMetrics = new SyncMetrics
                 {
                     DateQueued = DateTime.UtcNow,
                     Id = ObjectId.GenerateNewId().ToString(),
                     ProjectRef = projectId,
+                    Status = SyncStatus.Queued,
                     UserRef = curUserId,
                 };
                 await _syncMetrics.InsertAsync(syncMetrics);
@@ -210,6 +216,7 @@ namespace SIL.XForge.Scripture.Services
                         u =>
                         {
                             u.Add(p => p.JobIds, jobId);
+                            u.Add(p => p.SyncMetricsIds, syncMetrics.Id);
                         }
                     );
 
@@ -278,12 +285,25 @@ namespace SIL.XForge.Scripture.Services
                     _backgroundJobClient.Delete(jobId);
                 }
 
-                // Remove all job ids from the project secrets
+                // Mark all sync metrics as cancelled
+                foreach (string syncMetricsId in projectSecret.SyncMetricsIds)
+                {
+                    await _syncMetrics.UpdateAsync(
+                        syncMetricsId,
+                        u =>
+                        {
+                            u.Set(s => s.Status, SyncStatus.Cancelled);
+                        }
+                    );
+                }
+
+                // Remove all job ids and sync metrics ids from the project secrets
                 await _projectSecrets.UpdateAsync(
                     projectSecret.Id,
                     u =>
                     {
                         u.Set(p => p.JobIds, new List<string>());
+                        u.Set(p => p.SyncMetricsIds, new List<string>());
                     }
                 );
 
