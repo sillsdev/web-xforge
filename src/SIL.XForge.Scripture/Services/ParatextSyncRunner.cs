@@ -133,6 +133,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     // Attempt to create a backup if we cannot rollback
                     canRollbackParatext = _paratextService.BackupRepository(_userSecret, targetParatextId);
+                    _syncMetrics.RepositoryBackupCreated = canRollbackParatext;
                     if (canRollbackParatext)
                     {
                         Log($"RunAsync: There wasn't already a local PT repo backup, so we made one.");
@@ -422,7 +423,7 @@ namespace SIL.XForge.Scripture.Services
 
                     string message =
                         $"Error occurred while executing Paratext sync for project with SF id '{projectSFId}'. {(additionalInformation.Length == 0 ? string.Empty : $"Additional information: {additionalInformation}")}";
-                    _syncMetrics.ErrorDetails = $"{e} {message}";
+                    _syncMetrics.ErrorDetails = $"{e}{Environment.NewLine}{message}";
                     _logger.LogError(e, message);
                 }
 
@@ -1213,6 +1214,7 @@ namespace SIL.XForge.Scripture.Services
                     // If the restore is successful, then dataInSync will always be set to true because
                     // the restored repo can be assumed to be at the revision recorded in the project doc.
                     restoreSucceeded = _paratextService.RestoreRepository(_userSecret, _projectDoc.Data.ParatextId);
+                    _syncMetrics.RepositoryRestoredFromBackup = restoreSucceeded;
                 }
                 Log(
                     $"CompleteSync: Sync was not successful. {(restoreSucceeded ? "Rolled back" : "Failed to roll back")} local PT repo."
@@ -1310,6 +1312,7 @@ namespace SIL.XForge.Scripture.Services
                 }
             });
 
+            _syncMetrics.UsersRemoved = userIdsToRemove.Count;
             foreach (var userId in userIdsToRemove)
                 await _projectService.RemoveUserWithoutPermissionsCheckAsync(_userSecret.Id, _projectDoc.Id, userId);
 
@@ -1382,6 +1385,7 @@ namespace SIL.XForge.Scripture.Services
                 if (!_paratextService.IsResource(_projectDoc.Data.ParatextId))
                 {
                     bool backupOutcome = _paratextService.BackupRepository(_userSecret, _projectDoc.Data.ParatextId);
+                    _syncMetrics.RepositoryBackupCreated = backupOutcome;
                     if (!backupOutcome)
                     {
                         Log($"CompleteSync: Failure backing up local PT repo.");
