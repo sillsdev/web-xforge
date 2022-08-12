@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using Paratext.Data.ProjectComments;
 using Paratext.Data.ProjectSettingsAccess;
@@ -183,8 +184,8 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, false, false, false);
             env.SetupPTData(new Book("MAT", 2, false));
 
-            await env.Runner.RunAsync("project02", "user01", true, CancellationToken.None);
-            await env.Runner.RunAsync("project01", "user01", true, CancellationToken.None);
+            await env.Runner.RunAsync("project02", "user01", "project02", true, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", true, CancellationToken.None);
 
             Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
             Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
@@ -1181,6 +1182,51 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task SyncAsync_TaskCancelledExecutesRollback()
+        {
+            // Set up the environment
+            var env = new TestEnvironment(substituteRealtimeService: true);
+            env.SetupSFData(true, true, false, false);
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+            var cancellationTokenSource = new CancellationTokenSource();
+
+            // Return the project so InitAsync will execute successfully
+            var project = Substitute.For<IDocument<SFProject>>();
+            project.IsLoaded.Returns(true);
+            project.Data.Returns(env.GetProject());
+            env.Connection.Get<SFProject>("project01").Returns(project);
+
+            // The HTTP call throws this when a cancelled token is passed
+            env.ParatextService
+                .GetParatextUsernameMappingAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Any<SFProject>(),
+                    Arg.Any<CancellationToken>()
+                )
+                .ThrowsForAnyArgs(new OperationCanceledException());
+
+            // Setup a trap to cancel the task
+            env.ParatextService
+                .When(
+                    x =>
+                        x.SendReceiveAsync(
+                            Arg.Any<UserSecret>(),
+                            Arg.Any<string>(),
+                            Arg.Any<IProgress<ProgressState>>(),
+                            Arg.Any<CancellationToken>()
+                        )
+                )
+                .Do(_ => cancellationTokenSource.Cancel());
+
+            // Run the task
+            await env.Runner.RunAsync("project01", "user01", "project01", false, cancellationTokenSource.Token);
+
+            // Check for RollbackTransaction being executed, to ensure
+            // that CompleteAsync executes to the end without exception
+            env.Connection.Received(1).RollbackTransaction();
+        }
+
+        [Test]
         public async Task SyncAsync_ExcludesPropertiesFromTransactions()
         {
             // Set up the environment
@@ -1190,9 +1236,8 @@ namespace SIL.XForge.Scripture.Services
             var cancellationTokenSource = new CancellationTokenSource();
 
             // Throw an TaskCanceledException in InitAsync after the exclusions have been called
-            env.Connection
-                .FetchAsync<SFProject>("project01")
-                .Returns(Task.FromException<IDocument<SFProject>>(new TaskCanceledException()));
+            // InitAsync calls the IConnection.FetchAsync() extension, which calls IConnection.Get()
+            env.Connection.Get<SFProject>("project01").Throws(new TaskCanceledException());
 
             // Run the task
             await env.Runner.RunAsync("project01", "user01", "project01", false, cancellationTokenSource.Token);

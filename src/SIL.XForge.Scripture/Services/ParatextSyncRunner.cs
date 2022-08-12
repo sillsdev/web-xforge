@@ -1163,6 +1163,12 @@ namespace SIL.XForge.Scripture.Services
                 ptUserRoles = new Dictionary<string, string>();
                 updateRoles = false;
             }
+            else if (token.IsCancellationRequested)
+            {
+                // If the token is cancelled, GetProjectRolesAsync will fail
+                ptUserRoles = new Dictionary<string, string>();
+                updateRoles = false;
+            }
             else
             {
                 try
@@ -1307,32 +1313,36 @@ namespace SIL.XForge.Scripture.Services
             foreach (var userId in userIdsToRemove)
                 await _projectService.RemoveUserWithoutPermissionsCheckAsync(_userSecret.Id, _projectDoc.Id, userId);
 
-            Dictionary<string, string> ptUsernamesToSFUserIds = await GetPTUsernameToSFUserIdsAsync(token);
-            await _projectDoc.SubmitJson0OpAsync(op =>
+            // GetPTUsernameToSFUserIdsAsync will fail if the token is cancelled
+            if (!token.IsCancellationRequested)
             {
-                foreach (ParatextUserProfile activePtSyncUser in _currentPtSyncUsers.Values)
+                Dictionary<string, string> ptUsernamesToSFUserIds = await GetPTUsernameToSFUserIdsAsync(token);
+                await _projectDoc.SubmitJson0OpAsync(op =>
                 {
-                    ParatextUserProfile existingUser = _projectDoc.Data.ParatextUsers.SingleOrDefault(
-                        u => u.Username == activePtSyncUser.Username
-                    );
-                    if (existingUser == null)
+                    foreach (ParatextUserProfile activePtSyncUser in _currentPtSyncUsers.Values)
                     {
-                        if (ptUsernamesToSFUserIds.TryGetValue(activePtSyncUser.Username, out string userId))
-                            activePtSyncUser.SFUserId = userId;
-                        op.Add(pd => pd.ParatextUsers, activePtSyncUser);
-                    }
-                    else if (
-                        existingUser.SFUserId == null
-                        && ptUsernamesToSFUserIds.TryGetValue(existingUser.Username, out string userId)
-                    )
-                    {
-                        int index = _projectDoc.Data.ParatextUsers.FindIndex(
+                        ParatextUserProfile existingUser = _projectDoc.Data.ParatextUsers.SingleOrDefault(
                             u => u.Username == activePtSyncUser.Username
                         );
-                        op.Set(pd => pd.ParatextUsers[index].SFUserId, userId);
+                        if (existingUser == null)
+                        {
+                            if (ptUsernamesToSFUserIds.TryGetValue(activePtSyncUser.Username, out string userId))
+                                activePtSyncUser.SFUserId = userId;
+                            op.Add(pd => pd.ParatextUsers, activePtSyncUser);
+                        }
+                        else if (
+                            existingUser.SFUserId == null
+                            && ptUsernamesToSFUserIds.TryGetValue(existingUser.Username, out string userId)
+                        )
+                        {
+                            int index = _projectDoc.Data.ParatextUsers.FindIndex(
+                                u => u.Username == activePtSyncUser.Username
+                            );
+                            op.Set(pd => pd.ParatextUsers[index].SFUserId, userId);
+                        }
                     }
-                }
-            });
+                });
+            }
 
             // If we have an id in the job ids collection, remove the first one
             if (_projectSecret.JobIds.Any() || _projectSecret.SyncMetricsIds.Contains(_syncMetrics.Id))
