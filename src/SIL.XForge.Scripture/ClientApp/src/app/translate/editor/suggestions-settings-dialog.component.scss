@@ -2,8 +2,8 @@
   margin-top: 15px;
 }
 
-.switch-label {
-  margin-left: 12px;
+.suggestions-switch {
+  column-gap: 12px;
 }
 
 mat-dialog-content.content-padding {
@@ -15,11 +15,13 @@ mat-dialog-content.content-padding {
   width: 100%;
 }
 
-mat-slider.mat-slider-horizontal ::ng-deep {
-  width: 100%;
-  > .mat-slider-wrapper {
-    left: 0;
-    right: 0;
+.suggestions-confidence-field {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; // prevent slider from causing scrollbar when rtl
+
+  .mat-slider {
+    margin: 0 2px; // prevent slider thumb from being clipped by hiding of overflow
   }
 }
 
