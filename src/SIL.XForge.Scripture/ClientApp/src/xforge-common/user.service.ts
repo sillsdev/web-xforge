@@ -6,6 +6,7 @@ import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { combineLatest, from, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { environment } from '../environments/environment';
 import { AuthService } from './auth.service';
 import { CommandService } from './command.service';
 import { EditNameDialogComponent, EditNameDialogResult } from './edit-name-dialog/edit-name-dialog.component';
@@ -17,7 +18,7 @@ import { Filters, QueryParameters } from './query-parameters';
 import { RealtimeService } from './realtime.service';
 import { USERS_URL } from './url-constants';
 
-const CURRENT_PROJECT_ID_SETTING = 'current_project_id';
+export const CURRENT_PROJECT_ID_SETTING = 'current_project_id';
 
 /**
  * Provides operations on user objects.
@@ -26,6 +27,9 @@ const CURRENT_PROJECT_ID_SETTING = 'current_project_id';
   providedIn: 'root'
 })
 export class UserService {
+  // TODO: if/when we enable another xForge site, remove this and get the component to provide the site info
+  private siteId: string = environment.siteId;
+
   constructor(
     private readonly realtimeService: RealtimeService,
     private readonly authService: AuthService,
@@ -38,12 +42,19 @@ export class UserService {
     return this.authService.currentUserId == null ? '' : this.authService.currentUserId;
   }
 
-  get currentProjectId(): string | undefined {
-    return this.localSettings.get(CURRENT_PROJECT_ID_SETTING);
+  currentProjectId(user: UserDoc): string | undefined {
+    return this.localSettings.get(CURRENT_PROJECT_ID_SETTING) ?? user.data?.sites?.[this.siteId].currentProjectId;
   }
 
-  setCurrentProjectId(value?: string): void {
+  async setCurrentProjectId(user?: UserDoc, value?: string): Promise<void> {
     this.localSettings.set(CURRENT_PROJECT_ID_SETTING, value);
+    await user?.submitJson0Op(update => {
+      if (value != null) {
+        update.set(u => u.sites[this.siteId].currentProjectId, value);
+      } else {
+        update.unset(u => u.sites[this.siteId].currentProjectId);
+      }
+    });
   }
 
   /** Get currently-logged in user. */

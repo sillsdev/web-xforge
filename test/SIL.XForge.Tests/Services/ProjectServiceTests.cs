@@ -244,12 +244,16 @@ namespace SIL.XForge.Services
             Assert.AreEqual(1, env.GetProject(project).UserPermissions.Count);
             Assert.That(env.GetProject(project).UserRoles, Does.ContainKey(userToDisassociate), "setup");
             Assert.That(env.GetProject(project).UserPermissions, Does.ContainKey(userToDisassociate), "setup");
-            Assert.That(env.GetUser(userToDisassociate).Sites[SiteId].Projects, Does.Contain(project), "setup");
+            Site userSite = env.GetUser(userToDisassociate).Sites[SiteId];
+            Assert.That(userSite.Projects, Does.Contain(project), "setup");
+            Assert.That(userSite.CurrentProjectId, Is.EqualTo(Project01));
             // SUT
             await env.Service.RemoveUserAsync(requestingUser, project, userToDisassociate);
             Assert.That(env.GetProject(project).UserRoles, Does.Not.ContainKey(userToDisassociate));
             Assert.That(env.GetProject(project).UserPermissions, Does.Not.ContainKey(userToDisassociate));
-            Assert.That(env.GetUser(userToDisassociate).Sites[SiteId].Projects, Does.Not.Contain(project));
+            userSite = env.GetUser(userToDisassociate).Sites[SiteId];
+            Assert.That(userSite.Projects, Does.Not.Contain(project));
+            Assert.That(userSite.CurrentProjectId, Is.Null);
         }
 
         [Test]
@@ -357,6 +361,7 @@ namespace SIL.XForge.Services
                                         SiteId,
                                         new Site()
                                         {
+                                            CurrentProjectId = Project01,
                                             Projects = new List<String>() { Project01, Project02 }
                                         }
                                     }
@@ -372,6 +377,7 @@ namespace SIL.XForge.Services
                                         SiteId,
                                         new Site()
                                         {
+                                            CurrentProjectId = Project01,
                                             Projects = new List<String>() { Project01, Project02 }
                                         }
                                     }
