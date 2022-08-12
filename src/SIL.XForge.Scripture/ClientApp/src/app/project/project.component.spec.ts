@@ -262,7 +262,7 @@ class TestEnvironment {
     snapshot.queryParams = { sharing: 'true' };
     when(mockedActivatedRoute.snapshot).thenReturn(snapshot);
     when(mockedUserService.currentUserId).thenReturn('user01');
-    when(mockedUserService.currentProjectId).thenReturn('project01');
+    when(mockedUserService.currentProjectId(anything())).thenReturn('project01');
     when(mockedUserService.getCurrentUser()).thenCall(() =>
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );

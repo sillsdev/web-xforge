@@ -102,7 +102,7 @@ class TestEnvironment {
   }
 
   setCurrentUserProjectData(projectId?: string, projects: string[] = ['project01', 'project02']): void {
-    when(mockedUserService.currentProjectId).thenReturn(projectId);
+    when(mockedUserService.currentProjectId(anything())).thenReturn(projectId);
 
     this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
       id: 'user01',
