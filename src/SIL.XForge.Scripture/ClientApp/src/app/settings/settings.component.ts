@@ -201,7 +201,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     const dialogRef = this.dialog.open(DeleteProjectDialogComponent, config);
     dialogRef.afterClosed().subscribe(async result => {
       if (result === 'accept') {
-        this.userService.setCurrentProjectId();
+        await this.userService.setCurrentProjectId();
         if (this.projectDoc != null) {
           await this.projectService.onlineDelete(this.projectDoc.id);
           this.router.navigateByUrl('/projects', { replaceUrl: true });

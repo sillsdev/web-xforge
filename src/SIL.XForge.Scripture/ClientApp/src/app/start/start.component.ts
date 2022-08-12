@@ -47,7 +47,8 @@ export class StartComponent extends SubscriptionDisposable implements OnInit {
   }
 
   private navigateToProject(userDoc: UserDoc): void {
-    const projectId = selectValidProject(userDoc, this.userService.currentProjectId);
+    const currentProjectId: string | undefined = this.userService.currentProjectId(userDoc);
+    const projectId = selectValidProject(userDoc, currentProjectId);
     if (projectId != null) {
       this.router.navigate(['./', projectId], { relativeTo: this.route, replaceUrl: true });
     }

@@ -133,7 +133,8 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
   private async showOfflineMessage(): Promise<void> {
     await this.noticeService.showMessageDialog(() => this.transloco.translate('project.please_connect_to_use_link'));
     const userDoc: UserDoc = await this.userService.getCurrentUser();
-    const projectId: string | undefined = selectValidProject(userDoc, this.userService.currentProjectId);
+    const currentProjectId: string | undefined = this.userService.currentProjectId(userDoc);
+    const projectId: string | undefined = selectValidProject(userDoc, currentProjectId);
     if (projectId == null) {
       this.router.navigateByUrl('/projects', { replaceUrl: true });
     } else {
