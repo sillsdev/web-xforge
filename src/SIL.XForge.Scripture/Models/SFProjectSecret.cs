@@ -15,5 +15,17 @@ namespace SIL.XForge.Scripture.Models
         /// The <see cref="List{T}.Count">Count</see> should correspond to <see cref="QueuedCount" />.
         /// </remarks>
         public List<string> JobIds { get; set; } = new List<string>();
+
+        /// <summary>
+        /// The queued or active SyncMetrics Ids for the project.
+        /// </summary>
+        /// <value>
+        /// The SyncMetrics Ids.
+        /// </value>
+        /// <remarks>
+        /// This functions in a similar way to <see cref="JobIds"/>,
+        /// so that we can mark the <see cref="SyncMetrics"/> as cancelled.
+        /// </remarks>
+        public List<string> SyncMetricsIds { get; set; } = new List<string>();
     }
 }
