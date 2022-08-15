@@ -36,8 +36,8 @@
           <mat-form-field id="invitation-role">
             <mat-label>{{ t("invitation_role") }}</mat-label>
             <mat-select formControlName="role">
-              <mat-option *ngFor="let role of availableRolesInfo" [value]="role.role">{{
-                role.displayName
+              <mat-option *ngFor="let roleInfo of availableRolesInfo" [value]="roleInfo.role">{{
+                i18n.localizeRole(roleInfo.role)
               }}</mat-option>
             </mat-select>
             <mat-error *ngIf="roleControl.hasError('required')">{{ t("select_invitation_role") }}</mat-error>
