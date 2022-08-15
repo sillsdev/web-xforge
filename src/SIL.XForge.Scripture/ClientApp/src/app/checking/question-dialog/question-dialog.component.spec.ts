@@ -1,4 +1,4 @@
-import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
+import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
@@ -23,6 +23,8 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { DialogService } from 'xforge-common/dialog.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -61,7 +63,12 @@ describe('QuestionDialogComponent', () => {
   }));
 
   let env: TestEnvironment;
-  afterEach(() => env.dialogRef.close());
+  afterEach(fakeAsync(() => {
+    if (env.cancelButton != null) {
+      env.clickElement(env.cancelButton);
+    }
+    flush();
+  }));
 
   it('should allow user to cancel', fakeAsync(() => {
     env = new TestEnvironment();
@@ -225,7 +232,9 @@ describe('QuestionDialogComponent', () => {
 
     env.clickElement(env.scriptureStartInputIcon);
     flush();
-    verify(env.dialogSpy.open(anything(), objectContaining({ data: { input: VerseRef.parse('MAT 3:4') } }))).once();
+    verify(
+      env.dialogServiceSpy.openMatDialog(anything(), objectContaining({ data: { input: VerseRef.parse('MAT 3:4') } }))
+    ).once();
     flush();
     expect(env.component.scriptureStart.value).toEqual('LUK 1:2');
   }));
@@ -266,7 +275,7 @@ describe('QuestionDialogComponent', () => {
     // Dialog receives unhelpful input value that can be ignored.
     // rangeStart should have been passed in, and from scriptureStart value.
     verify(
-      env.dialogSpy.open(
+      env.dialogServiceSpy.openMatDialog(
         anything(),
         objectContaining({ data: { input: VerseRef.parse('GEN 5:6'), rangeStart: VerseRef.parse('LUK 1:1') } })
       )
@@ -284,7 +293,7 @@ describe('QuestionDialogComponent', () => {
     flush();
     // rangeStart should not have been passed in.
     verify(
-      env.dialogSpy.open(
+      env.dialogServiceSpy.openMatDialog(
         anything(),
         objectContaining({ data: { input: VerseRef.parse('LUK 1:1'), rangeStart: undefined } })
       )
@@ -396,7 +405,7 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.scriptureEnd.valid).toBe(true);
     expect(env.component.questionForm.errors!.verseDifferentBookOrChapter).toBe(true);
     env.clickElement(env.saveButton);
-    expect(env.scriptureEndInput.classList).toContain('mdc-text-field--invalid');
+    expect(env.scriptureEndInput.classList).toContain('mat-form-field-invalid');
     expect(env.scriptureEndValidationMsg.textContent).toContain('Must be the same book and chapter');
   }));
 
@@ -416,7 +425,7 @@ describe('QuestionDialogComponent', () => {
     env.component.scriptureStart.markAsTouched();
     expect(env.component.questionForm.errors!.verseDifferentBookOrChapter).toBe(true);
     env.clickElement(env.saveButton);
-    expect(env.scriptureEndInput.classList).toContain('mdc-text-field--invalid');
+    expect(env.scriptureEndInput.classList).toContain('mat-form-field-invalid');
     expect(env.scriptureEndValidationMsg.textContent).toContain('Must be the same book and chapter');
   }));
 
@@ -531,7 +540,7 @@ class ChildViewContainerComponent {
 }
 
 @NgModule({
-  imports: [CommonModule, UICommonModule, CheckingModule, TestTranslocoModule],
+  imports: [CommonModule, UICommonModule, CheckingModule, TestTranslocoModule, NoopAnimationsModule],
   declarations: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent],
   exports: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent]
 })
@@ -540,11 +549,11 @@ class DialogTestModule {}
 class TestEnvironment {
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
   readonly component: QuestionDialogComponent;
-  readonly dialogRef: MdcDialogRef<QuestionDialogComponent>;
+  readonly dialogRef: MatDialogRef<QuestionDialogComponent>;
   readonly afterCloseCallback: jasmine.Spy;
-  readonly dialogSpy: MdcDialog;
+  readonly dialogServiceSpy: DialogService;
 
-  readonly mockedScriptureChooserMdcDialogRef = mock(MdcDialogRef);
+  readonly mockedScriptureChooserMdcDialogRef = mock(MatDialogRef);
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
@@ -561,7 +570,7 @@ class TestEnvironment {
       questionDoc = this.realtimeService.get<QuestionDoc>(QuestionDoc.COLLECTION, questionId);
       questionDoc.onlineFetch();
     }
-    const config: MdcDialogConfig<QuestionDialogData> = {
+    const config: MatDialogConfig<QuestionDialogData> = {
       data: {
         questionDoc,
         textsByBookId: {
@@ -594,14 +603,16 @@ class TestEnvironment {
       viewContainerRef
     };
 
-    this.dialogRef = TestBed.inject(MdcDialog).open(QuestionDialogComponent, config);
+    this.dialogRef = TestBed.inject(MatDialog).open(QuestionDialogComponent, config);
     this.afterCloseCallback = jasmine.createSpy('afterClose callback');
     this.dialogRef.afterClosed().subscribe(this.afterCloseCallback);
     this.component = this.dialogRef.componentInstance;
 
     // Set up MdcDialog mocking after it's already used above in creating the component.
-    this.dialogSpy = spy(this.component.dialog);
-    when(this.dialogSpy.open(anything(), anything())).thenReturn(instance(this.mockedScriptureChooserMdcDialogRef));
+    this.dialogServiceSpy = spy(this.component.dialogService);
+    when(this.dialogServiceSpy.openMatDialog(anything(), anything())).thenReturn(
+      instance(this.mockedScriptureChooserMdcDialogRef)
+    );
     const chooserDialogResult = new VerseRef('LUK', '1', '2');
     when(this.mockedScriptureChooserMdcDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
     this.addTextDoc(new TextDocId('project01', 40, 1));
@@ -643,7 +654,7 @@ class TestEnvironment {
   }
 
   get scriptureEndInputIcon(): HTMLInputElement {
-    return this.scriptureEndInput.querySelector('mdc-icon') as HTMLInputElement;
+    return this.scriptureEndInput.querySelector('mat-icon') as HTMLInputElement;
   }
 
   get scriptureStartInput(): HTMLInputElement {
@@ -651,15 +662,15 @@ class TestEnvironment {
   }
 
   get scriptureStartInputIcon(): HTMLInputElement {
-    return this.scriptureStartInput.querySelector('mdc-icon') as HTMLInputElement;
+    return this.scriptureStartInput.querySelector('mat-icon') as HTMLInputElement;
   }
 
   get scriptureStartValidationMsg(): HTMLElement {
-    return this.overlayContainerElement.querySelector('#question-scripture-start-helper-text > div') as HTMLElement;
+    return this.overlayContainerElement.querySelector('#question-scripture-start-helper-text') as HTMLElement;
   }
 
   get scriptureEndValidationMsg(): HTMLElement {
-    return this.overlayContainerElement.querySelector('#question-scripture-end-helper-text > div') as HTMLElement;
+    return this.overlayContainerElement.querySelector('#question-scripture-end-helper-text') as HTMLElement;
   }
 
   inputValue(element: HTMLElement, value: string) {

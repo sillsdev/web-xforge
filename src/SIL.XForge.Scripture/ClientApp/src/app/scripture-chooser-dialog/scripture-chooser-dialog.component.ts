@@ -1,5 +1,5 @@
-import { MdcDialogRef, MDC_DIALOG_DATA } from '@angular-mdc/web/dialog';
 import { Component, Inject, OnInit } from '@angular/core';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -43,9 +43,9 @@ export class ScriptureChooserDialogComponent implements OnInit {
   selection: { book?: string; chapter?: string; verse?: string } = {};
 
   constructor(
-    public dialogRef: MdcDialogRef<ScriptureChooserDialogComponent>,
+    public dialogRef: MatDialogRef<ScriptureChooserDialogComponent>,
     readonly i18n: I18nService,
-    @Inject(MDC_DIALOG_DATA) public data: ScriptureChooserDialogData
+    @Inject(MAT_DIALOG_DATA) public data: ScriptureChooserDialogData
   ) {}
 
   get hasOTBooks() {
