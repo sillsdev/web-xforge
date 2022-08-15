@@ -82,3 +82,8 @@ $material-app-theme: mat.define-light-theme(
   @include mat.elevation(0);
   border: 1px solid #e0e0e0;
 }
+
+.mat-flat-button {
+  color: #fff;
+  background-color: #343a31;
+}

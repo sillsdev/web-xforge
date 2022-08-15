@@ -1,10 +1,11 @@
-import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Injectable } from '@angular/core';
+import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { TranslocoService } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { DialogService } from 'xforge-common/dialog.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
@@ -18,7 +19,7 @@ import { QuestionDialogComponent, QuestionDialogData, QuestionDialogResult } fro
 })
 export class QuestionDialogService {
   constructor(
-    private readonly dialog: MdcDialog,
+    private readonly dialogService: DialogService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
     private readonly noticeService: NoticeService,
@@ -29,8 +30,8 @@ export class QuestionDialogService {
   async questionDialog(config: QuestionDialogData): Promise<QuestionDoc | undefined> {
     const questionDoc = config.questionDoc;
     // handling auto focus is left for the template because MdcDialog would focus the wrong element
-    const dialogConfig: MdcDialogConfig = { data: config, clickOutsideToClose: false, autoFocus: false };
-    const dialogRef = this.dialog.open(QuestionDialogComponent, dialogConfig) as MdcDialogRef<
+    const dialogConfig: MatDialogConfig = { data: config, autoFocus: false, disableClose: true };
+    const dialogRef = this.dialogService.openMatDialog(QuestionDialogComponent, dialogConfig) as MatDialogRef<
       QuestionDialogComponent,
       QuestionDialogResult | 'close'
     >;

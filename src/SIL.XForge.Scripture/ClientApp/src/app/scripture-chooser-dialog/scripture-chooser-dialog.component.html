@@ -1,102 +1,101 @@
 <ng-container *transloco="let t; read: 'scripture_chooser_dialog'">
-  <mdc-dialog>
-    <mdc-dialog-container class="dialogContainer" [dir]="i18n.direction">
-      <mdc-dialog-surface id="bookPane" *ngIf="showing === 'books'">
-        <mdc-dialog-title>
-          <button mdcIconButton class="backout-button" (click)="onClickBackoutButton()" (focus)="onCloseFocus($event)">
-            <mdc-icon>close</mdc-icon>
-          </button>
-          <span>{{ t("choose_book") }}</span>
-        </mdc-dialog-title>
-        <mdc-dialog-content>
-          <div class="upperBookSet">
-            <button
-              *ngFor="let book of otBooks"
-              mdc-button
-              [unelevated]="data.input?.book === book"
-              (click)="onClickBook(book)"
-            >
-              {{ i18n.localizeBook(book) }}
-            </button>
-          </div>
+  <div class="dialogContainer">
+    <div id="bookPane" *ngIf="showing === 'books'">
+      <h1 mat-dialog-title>
+        <button mat-icon-button class="backout-button" (click)="onClickBackoutButton()" (focus)="onCloseFocus($event)">
+          <mat-icon>close</mat-icon>
+        </button>
+        <span>{{ t("choose_book") }}</span>
+      </h1>
+      <div mat-dialog-content>
+        <div class="upperBookSet">
           <button
-            *ngFor="let book of ntBooks"
-            mdc-button
-            [unelevated]="data.input?.book === book"
+            *ngFor="let book of otBooks"
+            mat-button
+            [ngClass]="{ 'mat-flat-button': data.input?.book === book }"
             (click)="onClickBook(book)"
           >
             {{ i18n.localizeBook(book) }}
           </button>
-        </mdc-dialog-content>
-      </mdc-dialog-surface>
-
-      <mdc-dialog-surface id="chapterPane" *ngIf="showing === 'chapters'">
-        <mdc-dialog-title>
-          <button mdcIconButton class="backout-button" (click)="onClickBackoutButton()">
-            <mdc-icon>navigate_before</mdc-icon>
-          </button>
-          <span>{{ t("choose_chapter") }}</span>
-        </mdc-dialog-title>
-        <mdc-dialog-content>
-          <div class="reference">{{ getBookName(selection?.book) }}</div>
-          <button
-            *ngFor="let chapter of chaptersOf(selection?.book)"
-            mdc-button
-            [unelevated]="data.input?.book === selection?.book && getNumOrNaN(data.input?.chapterNum) === +chapter"
-            (click)="onClickChapter(chapter)"
-          >
-            {{ chapter }}
-          </button>
-        </mdc-dialog-content>
-      </mdc-dialog-surface>
-
-      <mdc-dialog-surface id="versePane" *ngIf="showing === 'verses'">
-        <mdc-dialog-title>
-          <button mdcIconButton class="backout-button" (click)="onClickBackoutButton()">
-            <mdc-icon>navigate_before</mdc-icon>
-          </button>
-          <span>{{ t("choose_verse") }}</span>
-        </mdc-dialog-title>
-        <mdc-dialog-content>
-          <div class="reference">{{ getBookName(selection?.book) }} {{ selection.chapter }}</div>
-          <button
-            *ngFor="let verse of versesOf(selection?.book, selection?.chapter)"
-            mdc-button
-            [unelevated]="
+        </div>
+        <button
+          *ngFor="let book of ntBooks"
+          mat-button
+          [ngClass]="{ 'mat-flat-button': data.input?.book === book }"
+          (click)="onClickBook(book)"
+        >
+          {{ i18n.localizeBook(book) }}
+        </button>
+      </div>
+    </div>
+    <div id="chapterPane" *ngIf="showing === 'chapters'">
+      <h1 mat-dialog-title>
+        <button mat-icon-button class="backout-button" (click)="onClickBackoutButton()">
+          <mat-icon>navigate_before</mat-icon>
+        </button>
+        <span>{{ t("choose_chapter") }}</span>
+      </h1>
+      <div mat-dialog-content>
+        <div class="reference">{{ getBookName(selection?.book) }}</div>
+        <button
+          *ngFor="let chapter of chaptersOf(selection?.book)"
+          mat-button
+          [ngClass]="{
+            'mat-flat-button': data.input?.book === selection?.book && getNumOrNaN(data.input?.chapterNum) === +chapter
+          }"
+          (click)="onClickChapter(chapter)"
+        >
+          {{ chapter }}
+        </button>
+      </div>
+    </div>
+    <div id="versePane" *ngIf="showing === 'verses'">
+      <h1 mat-dialog-title>
+        <button mat-icon-button class="backout-button" (click)="onClickBackoutButton()">
+          <mat-icon>navigate_before</mat-icon>
+        </button>
+        <span>{{ t("choose_verse") }}</span>
+      </h1>
+      <div mat-dialog-content>
+        <div class="reference">{{ getBookName(selection?.book) }} {{ selection.chapter }}</div>
+        <button
+          *ngFor="let verse of versesOf(selection?.book, selection?.chapter)"
+          mat-button
+          [ngClass]="{
+            'mat-flat-button':
               data.input?.book === selection?.book &&
               data.input?.chapter === selection?.chapter &&
               getNumOrNaN(data.input?.verseNum) === +verse
-            "
-            (click)="onClickVerse(verse)"
-          >
-            {{ verse }}
-          </button>
-        </mdc-dialog-content>
-      </mdc-dialog-surface>
-
-      <mdc-dialog-surface id="rangeEndPane" *ngIf="showing === 'rangeEnd'">
-        <mdc-dialog-title>
-          <button mdcIconButton class="backout-button" (click)="onClickBackoutButton()" (focus)="onCloseFocus($event)">
-            <mdc-icon>close</mdc-icon>
-          </button>
-          <span>{{ t("choose_end_verse") }}</span>
-        </mdc-dialog-title>
-        <mdc-dialog-content>
-          <div class="reference">{{ getBookName(data.rangeStart?.book) }} {{ data.rangeStart?.chapter }}</div>
-          <button
-            *ngFor="let verse of versesOf(data.rangeStart?.book, data.rangeStart?.chapter, data.rangeStart?.verseNum)"
-            mdc-button
-            [unelevated]="
+          }"
+          (click)="onClickVerse(verse)"
+        >
+          {{ verse }}
+        </button>
+      </div>
+    </div>
+    <div id="rangeEndPane" *ngIf="showing === 'rangeEnd'">
+      <div mat-dialog-title>
+        <button mat-icon-button class="backout-button" (click)="onClickBackoutButton()" (focus)="onCloseFocus($event)">
+          <mat-icon>close</mat-icon>
+        </button>
+        <span>{{ t("choose_end_verse") }}</span>
+      </div>
+      <div mat-dialog-content>
+        <div class="reference">{{ getBookName(data.rangeStart?.book) }} {{ data.rangeStart?.chapter }}</div>
+        <button
+          *ngFor="let verse of versesOf(data.rangeStart?.book, data.rangeStart?.chapter, data.rangeStart?.verseNum)"
+          mat-button
+          [ngClass]="{
+            'mat-flat-button':
               data.input?.book === data.rangeStart?.book &&
               data.input?.chapter === data.rangeStart?.chapter &&
               getNumOrNaN(data.input?.verseNum) === +verse
-            "
-            (click)="onClickVerse(verse)"
-          >
-            {{ verse }}
-          </button>
-        </mdc-dialog-content>
-      </mdc-dialog-surface>
-    </mdc-dialog-container>
-  </mdc-dialog>
+          }"
+          (click)="onClickVerse(verse)"
+        >
+          {{ verse }}
+        </button>
+      </div>
+    </div>
+  </div>
 </ng-container>

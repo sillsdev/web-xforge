@@ -1,4 +1,4 @@
-import { MdcDialog, MdcDialogConfig, MdcDialogModule, MdcDialogRef } from '@angular-mdc/web/dialog';
+import { MatDialog, MatDialogConfig, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -14,6 +14,7 @@ import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
 import { ScriptureChooserDialogComponent, ScriptureChooserDialogData } from './scripture-chooser-dialog.component';
 
@@ -30,7 +31,11 @@ describe('ScriptureChooserDialog', () => {
   }));
 
   let env: TestEnvironment;
-  afterEach(() => env.dialogRef.close());
+  afterEach(fakeAsync(() => {
+    while (env.backoutButton != null) {
+      env.click(env.backoutButton);
+    }
+  }));
 
   it('initially shows book chooser, close button', () => {
     env = new TestEnvironment();
@@ -431,8 +436,9 @@ describe('ScriptureChooserDialog', () => {
       HttpClientTestingModule,
       RouterTestingModule,
       UICommonModule,
-      MdcDialogModule,
-      TestTranslocoModule
+      MatDialogModule,
+      TestTranslocoModule,
+      NoopAnimationsModule
     ],
     declarations: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent],
     exports: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent]
@@ -442,7 +448,7 @@ describe('ScriptureChooserDialog', () => {
   class TestEnvironment {
     fixture: ComponentFixture<ChildViewContainerComponent>;
     component: ScriptureChooserDialogComponent;
-    dialogRef: MdcDialogRef<ScriptureChooserDialogComponent>;
+    dialogRef: MatDialogRef<ScriptureChooserDialogComponent>;
     dialogResult?: 'close' | VerseRef;
     closeIconName = 'close';
     backIconName = 'navigate_before';
@@ -501,12 +507,11 @@ describe('ScriptureChooserDialog', () => {
       const booksAndChaptersToShow: TextsByBookId = {};
       textsInProject.forEach(text => (booksAndChaptersToShow[Canon.bookNumberToId(text.bookNum)] = text));
 
-      const config: MdcDialogConfig<ScriptureChooserDialogData> = {
-        scrollable: true,
+      const config: MatDialogConfig<ScriptureChooserDialogData> = {
         viewContainerRef: viewContainerRef,
         data: { input: inputScriptureReference, booksAndChaptersToShow: booksAndChaptersToShow, rangeStart: rangeStart }
       };
-      this.dialogRef = TestBed.inject(MdcDialog).open(ScriptureChooserDialogComponent, config);
+      this.dialogRef = TestBed.inject(MatDialog).open(ScriptureChooserDialogComponent, config);
       this.dialogRef.afterClosed().subscribe(result => (this.dialogResult = result));
       this.component = this.dialogRef.componentInstance;
 
@@ -554,7 +559,7 @@ describe('ScriptureChooserDialog', () => {
     }
 
     get highlightedButton(): DebugElement {
-      return this.fixture.debugElement.query(By.css('.mdc-button--unelevated'));
+      return this.fixture.debugElement.query(By.css('.mat-flat-button'));
     }
 
     click(element: DebugElement): void {
