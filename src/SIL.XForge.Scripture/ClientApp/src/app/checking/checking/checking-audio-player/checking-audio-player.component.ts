@@ -1,6 +1,7 @@
 import { Component, Input, OnDestroy, Pipe, PipeTransform, ViewChild } from '@angular/core';
 import { MatSlider, MatSliderChange } from '@angular/material/slider';
 import { formatFileSource, isLocalBlobUrl } from 'xforge-common/file.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -36,7 +37,7 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
   private audio: HTMLAudioElement = new Audio();
   private audioDataLoaded = false;
 
-  constructor(private readonly pwaService: PwaService) {
+  constructor(private readonly pwaService: PwaService, readonly i18n: I18nService) {
     super();
     this.audio.addEventListener('loadedmetadata', () => {
       this.updateDuration();

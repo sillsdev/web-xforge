@@ -16,6 +16,7 @@
     .slider {
       flex: 1;
       width: 100%;
+      overflow: hidden; // prevent overflow when UI is RTL
     }
   }
 
@@ -38,4 +39,8 @@
       }
     }
   }
+}
+
+.invert-direction {
+  transform: rotateY(180deg);
 }
