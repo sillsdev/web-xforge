@@ -2,7 +2,7 @@
   <div class="audio-area">
     <div *ngIf="hasSource && isAudioAvailable" class="player">
       <button *ngIf="!isPlaying" mat-icon-button type="button" (click)="play()" class="play">
-        <mat-icon>play_arrow</mat-icon>
+        <mat-icon [class.invert-direction]="i18n.isRtl">play_arrow</mat-icon>
       </button>
       <button *ngIf="isPlaying" mat-icon-button type="button" (click)="pause()" class="pause">
         <mat-icon>pause</mat-icon>

@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
+import { I18nService } from 'xforge-common/i18n.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -132,6 +133,7 @@ class HostComponent {
 
 class TestEnvironment {
   readonly mockedPwaService = mock(PwaService);
+  readonly mockedI18nService = mock(I18nService);
   readonly ngZone: NgZone;
 
   fixture: ComponentFixture<HostComponent>;
@@ -140,7 +142,10 @@ class TestEnvironment {
   constructor(template: string, isOnline = true) {
     TestBed.configureTestingModule({
       declarations: [HostComponent, CheckingAudioPlayerComponent, AudioTimePipe],
-      providers: [{ provide: PwaService, useFactory: () => instance(this.mockedPwaService) }],
+      providers: [
+        { provide: PwaService, useFactory: () => instance(this.mockedPwaService) },
+        { provide: I18nService, useFactory: () => instance(this.mockedI18nService) }
+      ],
       imports: [UICommonModule, TestTranslocoModule]
     });
     when(this.mockedPwaService.isOnline).thenCall(() => isOnline);

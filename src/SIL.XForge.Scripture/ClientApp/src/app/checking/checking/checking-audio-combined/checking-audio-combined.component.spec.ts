@@ -4,6 +4,7 @@ import { By } from '@angular/platform-browser';
 import { ngfModule } from 'angular-file';
 import { of } from 'rxjs';
 import { mock, when } from 'ts-mockito';
+import { I18nService } from 'xforge-common/i18n.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -20,6 +21,7 @@ import { CheckingAudioCombinedComponent } from './checking-audio-combined.compon
 const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
 const mockedPwaService = mock(PwaService);
+const mockedI18nService = mock(I18nService);
 
 describe('CheckingAudioCombinedComponent', () => {
   configureTestingModule(() => ({
@@ -33,7 +35,8 @@ describe('CheckingAudioCombinedComponent', () => {
     providers: [
       { provide: UserService, useMock: mockedUserService },
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: PwaService, useMock: mockedPwaService }
+      { provide: PwaService, useMock: mockedPwaService },
+      { provide: I18nService, useMock: mockedI18nService }
     ]
   }));
 

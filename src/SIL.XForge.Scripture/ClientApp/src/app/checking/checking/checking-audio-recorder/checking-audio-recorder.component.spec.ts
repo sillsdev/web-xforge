@@ -5,6 +5,7 @@ import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
+import { I18nService } from 'xforge-common/i18n.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -23,6 +24,7 @@ const mockedNoticeService = mock(NoticeService);
 const mockedNavigator = mock(Navigator);
 const mockedPwaService = mock(PwaService);
 const mockedDialog = mock(MdcDialog);
+const mockedI18nService = mock(I18nService);
 
 describe('CheckingAudioRecorderComponent', () => {
   configureTestingModule(() => ({
@@ -33,7 +35,8 @@ describe('CheckingAudioRecorderComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: NAVIGATOR, useMock: mockedNavigator },
       { provide: PwaService, useMock: mockedPwaService },
-      { provide: MdcDialog, useMock: mockedDialog }
+      { provide: MdcDialog, useMock: mockedDialog },
+      { provide: I18nService, useMock: mockedI18nService }
     ]
   }));
 
