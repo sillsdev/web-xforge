@@ -91,7 +91,7 @@ export interface EditorRange {
 
 export interface PresenceData {
   viewer: MultiCursorViewer;
-  range: RangeStatic;
+  range: RangeStatic | null;
 }
 
 export interface RemotePresences {
@@ -235,7 +235,7 @@ export class TextViewModel {
 
     const cursors: QuillCursors = editor.getModule('cursors');
     this.onPresenceReceive = (presenceId: string, presenceData: PresenceData | null) => {
-      if (presenceData == null) {
+      if (presenceData == null || presenceData.range == null) {
         cursors.removeCursor(presenceId);
         this.presenceChange?.emit(this.presence?.remotePresences);
         return;

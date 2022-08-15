@@ -263,6 +263,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         this.bindQuill();
       }
       this.setLangFromText();
+      this.submitLocalPresence(null);
     }
   }
 
@@ -623,31 +624,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     // We only need to send presence updates if the user moves the cursor themselves. Cursor updates as a result of text
     // changes will automatically be handled by the remote client.
     if ((source as Sources) !== 'user') return;
-    // Clear the cursor on blurring.
-    if (range == null) {
-      this.viewModel.localPresence?.submit(null as unknown as PresenceData);
-      return;
-    }
-    if (!this.isPresenceEnabled) return;
-
-    // In this particular instance, we can send extra information on the presence object. This ability will vary
-    // depending on type.
-    const currentUserDoc: UserDoc = await this.userService.getCurrentUser();
-    // If the avatar src is empty ('') then it generates one with the same background and cursor color
-    // Do this for email/password accounts
-    const authType: AuthType = getAuthType(currentUserDoc.data?.authId ?? '');
-    const avatarUrl: string = authType === AuthType.Account ? '' : currentUserDoc.data?.avatarUrl ?? '';
-    const presenceData: PresenceData = {
-      viewer: {
-        displayName: currentUserDoc.data?.displayName || this.transloco.translate('editor.anonymous'),
-        avatarUrl,
-        cursorColor: this.viewModel.cursorColor
-      },
-      range
-    };
-    this.viewModel.localPresence?.submit(presenceData, error => {
-      if (error) throw error;
-    });
+    this.submitLocalPresence(range);
   }
 
   clearHighlight(): void {
@@ -856,6 +833,29 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (prevRef != null) {
       this.setSegment(prevRef, undefined, true, end);
     }
+  }
+
+  private async submitLocalPresence(range: RangeStatic | null): Promise<void> {
+    if (!this.isPresenceEnabled) return;
+
+    // In this particular instance, we can send extra information on the presence object. This ability will vary
+    // depending on type.
+    const currentUserDoc: UserDoc = await this.userService.getCurrentUser();
+    // If the avatar src is empty ('') then it generates one with the same background and cursor color
+    // Do this for email/password accounts
+    const authType: AuthType = getAuthType(currentUserDoc.data?.authId ?? '');
+    const avatarUrl: string = authType === AuthType.Account ? '' : currentUserDoc.data?.avatarUrl ?? '';
+    const presenceData: PresenceData = {
+      viewer: {
+        displayName: currentUserDoc.data?.displayName || this.transloco.translate('editor.anonymous'),
+        avatarUrl,
+        cursorColor: this.viewModel.cursorColor
+      },
+      range
+    };
+    this.viewModel.localPresence?.submit(presenceData, error => {
+      if (error) throw error;
+    });
   }
 
   private update(
