@@ -1,108 +1,71 @@
 <ng-container *transloco="let t; read: 'question_dialog'">
-  <mdc-dialog>
-    <mdc-dialog-container [dir]="i18n.direction">
-      <mdc-dialog-surface class="dialog-size">
-        <mdc-dialog-title fxLayoutAlign="start center">
-          <i class="material-icons">live_help</i> {{ modeLabel }}
-        </mdc-dialog-title>
-        <mdc-dialog-content class="content-padding">
-          <form [formGroup]="questionForm" autocomplete="off" id="question-form">
-            <div fxLayout="row wrap" fxLayoutAlign="space-around start" fxLayoutGap.gt-xs="1em">
-              <mdc-form-field>
-                <!-- appAutofocus is needed because MdcDialog would focus the mdc-icon, since it is first in the dom -->
-                <mdc-text-field
-                  appAutofocus
-                  label="{{ t('scripture_reference') }}"
-                  type="text"
-                  formControlName="scriptureStart"
-                  [outlined]="true"
-                  id="scripture-start"
-                  (input)="updateScriptureEndEnabled()"
-                >
-                  <mdc-icon
-                    mdcTextFieldIcon
-                    [trailing]="true"
-                    [clickable]="true"
-                    (click)="openScriptureChooser(scriptureStart)"
-                    >expand_more</mdc-icon
-                  >
-                </mdc-text-field>
-                <mdc-helper-text
-                  [validation]="true"
-                  id="question-scripture-start-helper-text"
-                  class="scripture-helper-text"
-                >
-                  {{ scriptureInputErrorMessages.startError }}
-                </mdc-helper-text>
-              </mdc-form-field>
-              <mdc-form-field>
-                <mdc-text-field
-                  label="{{ t('end_reference') }}"
-                  type="text"
-                  formControlName="scriptureEnd"
-                  [outlined]="true"
-                  [errorStateMatcher]="parentAndStartMatcher"
-                  id="scripture-end"
-                >
-                  <mdc-icon
-                    mdcTextFieldIcon
-                    [trailing]="true"
-                    [clickable]="true"
-                    (click)="openScriptureChooser(scriptureEnd)"
-                    >expand_more</mdc-icon
-                  >
-                </mdc-text-field>
-                <mdc-helper-text id="question-scripture-end-helper-text" [validation]="true">
-                  {{ scriptureInputErrorMessages.endError }}
-                  <span
-                    *ngIf="questionForm.hasError('verseBeforeStart')"
-                    [innerHTML]="i18n.translateAndInsertTags('question_dialog.must_be_after_scripture_reference')"
-                  ></span>
-                </mdc-helper-text>
-              </mdc-form-field>
-            </div>
-            <div class="text-container">
-              <app-checking-text
-                [id]="textDocId"
-                placeholder="{{ t('enter_a_reference_to_load_text') }}"
-                [activeVerse]="selection"
-                [isRightToLeft]="isTextRightToLeft"
-              ></app-checking-text>
-            </div>
-            <mdc-form-field>
-              <mdc-textarea
-                label="{{ t('question') }}"
-                type="text"
-                formControlName="questionText"
-                [rows]="2"
-                [fullwidth]="true"
-                [helperText]="questionHelper"
-                id="question-text"
-              ></mdc-textarea>
-              <mdc-helper-text #questionHelper [validation]="true">{{ t("required_with_asterisk") }}</mdc-helper-text>
-            </mdc-form-field>
-            <app-checking-audio-combined
-              [source]="audioSource"
-              (update)="processAudio($event)"
-            ></app-checking-audio-combined>
-          </form>
-        </mdc-dialog-content>
-        <mdc-dialog-actions>
-          <button mdcDialogButton mdcDialogAction="close" type="button" id="question-cancel-btn">
-            {{ t("cancel") }}
-          </button>
-          <button
-            mdcDialogButton
-            [unelevated]="true"
-            form="question-form"
-            type="submit"
-            id="question-save-btn"
-            (click)="submit()"
-          >
-            {{ t("save") }}
-          </button>
-        </mdc-dialog-actions>
-      </mdc-dialog-surface>
-    </mdc-dialog-container>
-  </mdc-dialog>
+  <div>
+    <h1 mat-dialog-title fxLayoutAlign="start center"><i class="material-icons">live_help</i> {{ modeLabel }}</h1>
+    <mat-dialog-content class="content-padding">
+      <form [formGroup]="questionForm" autocomplete="off" id="question-form">
+        <div fxLayout="row wrap" fxLayoutAlign="space-around start" fxLayoutGap.gt-xs="1em">
+          <mat-form-field class="scripture-reference" id="scripture-start" appearance="outline">
+            <!-- cdkFocusInitial is needed because MatDialog would focus the icon, since it is first in the dom -->
+            <mat-label>{{ t("scripture_reference") }}</mat-label>
+            <input
+              matInput
+              cdkFocusInitial
+              type="text"
+              formControlName="scriptureStart"
+              (input)="updateScriptureEndEnabled()"
+            />
+            <button mat-icon-button matSuffix (click)="openScriptureChooser(scriptureStart)">
+              <mat-icon>expand_more</mat-icon>
+            </button>
+            <mat-error
+              *ngIf="scriptureInputErrorMessages.startError != null"
+              id="question-scripture-start-helper-text"
+              class="scripture-helper-text"
+            >
+              {{ scriptureInputErrorMessages.startError }}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field class="scripture-reference" id="scripture-end" appearance="outline">
+            <mat-label>{{ t("end_reference") }}</mat-label>
+            <input matInput type="text" formControlName="scriptureEnd" [errorStateMatcher]="parentAndStartMatcher" />
+            <button mat-icon-button matSuffix (click)="openScriptureChooser(scriptureEnd)">
+              <mat-icon>expand_more</mat-icon>
+            </button>
+            <mat-error id="question-scripture-end-helper-text" *ngIf="scriptureInputErrorMessages.endError != null">
+              {{ scriptureInputErrorMessages.endError }}
+              <span
+                *ngIf="questionForm.hasError('verseBeforeStart')"
+                [innerHTML]="i18n.translateAndInsertTags('question_dialog.must_be_after_scripture_reference')"
+              ></span>
+            </mat-error>
+          </mat-form-field>
+        </div>
+        <div class="text-container">
+          <app-checking-text
+            [id]="textDocId"
+            placeholder="{{ t('enter_a_reference_to_load_text') }}"
+            [activeVerse]="selection"
+            [isRightToLeft]="isTextRightToLeft"
+          ></app-checking-text>
+        </div>
+        <mat-form-field class="question-container" id="question-text" appearance="outline">
+          <mat-label>{{ t("question") }}</mat-label>
+          <textarea matInput type="text" formControlName="questionText" [rows]="2"></textarea>
+          <mat-hint #questionHelper>{{ t("required_with_asterisk") }}</mat-hint>
+        </mat-form-field>
+        <app-checking-audio-combined
+          [source]="audioSource"
+          (update)="processAudio($event)"
+        ></app-checking-audio-combined>
+      </form>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button (click)="cancelDialog()" type="button" id="question-cancel-btn">
+        {{ t("cancel") }}
+      </button>
+      <button mat-flat-button form="question-form" type="submit" id="question-save-btn" (click)="submit()">
+        {{ t("save") }}
+      </button>
+    </mat-dialog-actions>
+  </div>
 </ng-container>

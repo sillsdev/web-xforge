@@ -1,20 +1,19 @@
-mdc-dialog-content.content-padding {
+.mat-dialog-content.content-padding {
   padding-top: 0.5em;
+  max-width: 560px;
 }
 
-mdc-form-field {
+mat-form-field {
   margin-bottom: 1em;
-  .scripture-helper-text {
+  .scripture-helper-text .scripture-reference {
     max-width: 248px;
+    .mat-form-field-suffix {
+      top: 0.5em;
+    }
   }
-}
-
-mdc-text-field {
-  max-width: 248px;
-}
-
-mdc-dialog-actions {
-  text-align: end;
+  &.question-container {
+    width: 100%;
+  }
 }
 
 .text-container {
