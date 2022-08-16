@@ -303,15 +303,6 @@ class TestEnvironment {
         userPermissions: {},
         texts: [
           {
-            bookNum: 40,
-            chapters: [
-              { number: 1, lastVerse: 3, isValid: true, permissions: {} },
-              { number: 2, lastVerse: 3, isValid: true, permissions: {} }
-            ],
-            hasSource: true,
-            permissions: {}
-          },
-          {
             bookNum: 41,
             chapters: [
               { number: 1, lastVerse: 3, isValid: true, permissions: {} },
@@ -336,6 +327,15 @@ class TestEnvironment {
               { number: 2, lastVerse: 3, isValid: true, permissions: {} }
             ],
             hasSource: false,
+            permissions: {}
+          },
+          {
+            bookNum: 40,
+            chapters: [
+              { number: 1, lastVerse: 3, isValid: true, permissions: {} },
+              { number: 2, lastVerse: 3, isValid: true, permissions: {} }
+            ],
+            hasSource: true,
             permissions: {}
           }
         ]

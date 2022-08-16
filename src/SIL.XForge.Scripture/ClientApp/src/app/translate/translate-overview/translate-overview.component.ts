@@ -164,7 +164,9 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     if (this.projectDoc == null || this.projectDoc.data == null) {
       return;
     }
-    this.texts = this.projectDoc.data.texts.map(t => new TextProgress(t));
+    this.texts = this.projectDoc.data.texts
+      .map(t => new TextProgress(t))
+      .sort((a, b) => a.text.bookNum - b.text.bookNum);
     this.overallProgress = new Progress();
     const updateTextProgressPromises: Promise<void>[] = [];
     for (const textProgress of this.texts) {
