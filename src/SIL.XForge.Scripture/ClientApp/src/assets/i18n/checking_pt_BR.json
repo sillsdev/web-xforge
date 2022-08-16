@@ -2,11 +2,11 @@
   "app": {
     "action_not_available_offline": "Esta ação não está disponível enquanto você estiver offline.",
     "all_questions": "Todas as Perguntas",
-    "announcements": "Announcements",
+    "announcements": "Anúncios",
     "cannot_change_password": "Não é possível alterar a senha neste momento. Tente novamente mais tarde ou relate um problema no menu de Ajuda.",
     "change_password": "Alterar senha",
     "community_checking": "Verificação da Comunidade",
-    "community_support": "Community Support",
+    "community_support": "Apoio da Comunidade",
     "connect_project": "Conectar projeto",
     "help": "Ajuda",
     "language": "Idioma",
@@ -216,7 +216,7 @@
     "answers": "Respostas",
     "comments": "Comentários",
     "likes": "Curtidas",
-    "loading_questions": "Loading questions...",
+    "loading_questions": "Carregando perguntas...",
     "questions": "Perguntas",
     "texts_with_questions": "Textos com Perguntas"
   },
@@ -267,7 +267,7 @@
     "dismiss": "Ignorar"
   },
   "project": {
-    "please_connect_to_use_link": "Please connect to the internet to join a project using a link.",
+    "please_connect_to_use_link": "Conecte-se à Internet para participar de um projeto através de um link.",
     "project_link_is_invalid": "O link do projeto é inválido.",
     "problem_finding_project": "Ocorreu um problema ao localizar um projeto ({{ projectID }}) ou informações específicas do usuário do projeto. Pode haver um erro de digitação no URL que você indicou. Você pode ter tentado acessar um projeto que não está mais disponível."
   },
@@ -289,16 +289,16 @@
     "email_invalid": "O endereço de e-mail é inválido",
     "email": "E-mail",
     "invitation_language": "Idioma do convite",
-    "invitation_role": "Role",
+    "invitation_role": "Função",
     "invitation_sent": "Um e-mail de convite foi enviado para {{ email }}",
     "invite_people": "Convidar pessoas",
     "link_copied": "Link copiado para a área de transferência",
-    "link_sharing_not_available_offline": "Inviting users by link sharing is unavailable while offline.",
+    "link_sharing_not_available_offline": "Convidar usuários através de links compartilhados não está disponível enquanto estiver offline.",
     "link_sharing": "Compartilhamento de link",
     "not_inviting_already_member": "Não convidar: Usuário já é membro deste projeto",
     "resend": "Reenviar",
     "select_invitation_language": "Selecione um idioma para o e-mail do convite",
-    "select_invitation_role": "Select a role for the invited user",
+    "select_invitation_role": "Selecione uma função para o usuário convidado",
     "send": "Enviar",
     "share_by_email_not_available_offline": "Convidar usuários por e-mail não está disponível enquanto estiver offline."
   },
