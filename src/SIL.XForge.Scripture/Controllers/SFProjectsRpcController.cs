@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using EdjCase.JsonRpc.Router.Abstractions;
 using SIL.XForge.Controllers;
@@ -19,11 +20,16 @@ namespace SIL.XForge.Scripture.Controllers
     {
         internal const string AlreadyProjectMemberResponse = "alreadyProjectMember";
 
+        private readonly IExceptionHandler _exceptionHandler;
         private readonly ISFProjectService _projectService;
 
-        public SFProjectsRpcController(IUserAccessor userAccessor, ISFProjectService projectService)
-            : base(userAccessor)
+        public SFProjectsRpcController(
+            IUserAccessor userAccessor,
+            ISFProjectService projectService,
+            IExceptionHandler exceptionHandler
+        ) : base(userAccessor, exceptionHandler)
         {
+            _exceptionHandler = exceptionHandler;
             _projectService = projectService;
         }
 
@@ -46,6 +52,20 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return InvalidParamsError(e.Message);
             }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "Create" },
+                        { "ParatextId", settings?.ParatextId },
+                        { "SourceParatextId", settings?.SourceParatextId },
+                        { "CheckingEnabled", settings?.CheckingEnabled.ToString() },
+                        { "TranslationSuggestionsEnabled", settings?.TranslationSuggestionsEnabled.ToString() },
+                    }
+                );
+                throw;
+            }
         }
 
         public async Task<IRpcMethodResult> Delete(string projectId)
@@ -62,6 +82,13 @@ namespace SIL.XForge.Scripture.Controllers
             catch (DataNotFoundException dnfe)
             {
                 return NotFoundError(dnfe.Message);
+            }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string> { { "method", "Delete" }, { "projectId", projectId }, }
+                );
+                throw;
             }
         }
 
@@ -80,6 +107,25 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return NotFoundError(dnfe.Message);
             }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "UpdateSettings" },
+                        { "projectId", projectId },
+                        { "CheckingShareLevel", settings?.CheckingShareLevel },
+                        { "SourceParatextId", settings?.SourceParatextId },
+                        { "TranslateShareLevel", settings?.TranslateShareLevel },
+                        { "CheckingEnabled", settings?.CheckingEnabled?.ToString() },
+                        { "CheckingShareEnabled", settings?.CheckingShareEnabled?.ToString() },
+                        { "TranslateShareEnabled", settings?.TranslateShareEnabled?.ToString() },
+                        { "TranslationSuggestionsEnabled", settings?.TranslationSuggestionsEnabled?.ToString() },
+                        { "UsersSeeEachOthersResponses", settings?.UsersSeeEachOthersResponses?.ToString() },
+                    }
+                );
+                throw;
+            }
         }
 
         public async Task<IRpcMethodResult> AddUser(string projectId, string projectRole)
@@ -96,6 +142,18 @@ namespace SIL.XForge.Scripture.Controllers
             catch (DataNotFoundException dnfe)
             {
                 return NotFoundError(dnfe.Message);
+            }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "AddUser" },
+                        { "projectId", projectId },
+                        { "projectRole", projectRole },
+                    }
+                );
+                throw;
             }
         }
 
@@ -119,6 +177,18 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return NotFoundError(dnfe.Message);
             }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "RemoveUser" },
+                        { "projectId", projectId },
+                        { "projectUserId", projectUserId },
+                    }
+                );
+                throw;
+            }
         }
 
         public async Task<IRpcMethodResult> GetProjectRole(string projectId)
@@ -131,6 +201,13 @@ namespace SIL.XForge.Scripture.Controllers
             catch (DataNotFoundException dnfe)
             {
                 return NotFoundError(dnfe.Message);
+            }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string> { { "method", "GetProjectRole" }, { "projectId", projectId }, }
+                );
+                throw;
             }
         }
 
@@ -148,6 +225,18 @@ namespace SIL.XForge.Scripture.Controllers
             catch (DataNotFoundException dnfe)
             {
                 return NotFoundError(dnfe.Message);
+            }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "UpdateRole" },
+                        { "projectId", projectId },
+                        { "projectRole", projectRole },
+                    }
+                );
+                throw;
             }
         }
 
@@ -167,6 +256,20 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return NotFoundError(dnfe.Message);
             }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "Invite" },
+                        { "projectId", projectId },
+                        // Exclude email as it is PII
+                        { "locale", locale },
+                        { "role", role },
+                    }
+                );
+                throw;
+            }
         }
 
         public async Task<IRpcMethodResult> UninviteUser(string projectId, string emailToUninvite)
@@ -184,6 +287,13 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return NotFoundError(dnfe.Message);
             }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string> { { "method", "UninviteUser" }, { "projectId", projectId }, }
+                );
+                throw;
+            }
         }
 
         public async Task<IRpcMethodResult> IsAlreadyInvited(string projectId, string email)
@@ -199,6 +309,13 @@ namespace SIL.XForge.Scripture.Controllers
             catch (DataNotFoundException dnfe)
             {
                 return NotFoundError(dnfe.Message);
+            }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string> { { "method", "IsAlreadyInvited" }, { "projectId", projectId }, }
+                );
+                throw;
             }
         }
 
@@ -216,6 +333,13 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return NotFoundError(dnfe.Message);
             }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string> { { "method", "InvitedUsers" }, { "projectId", projectId }, }
+                );
+                throw;
+            }
         }
 
         public async Task<IRpcMethodResult> CheckLinkSharing(string projectId, string shareKey)
@@ -232,6 +356,13 @@ namespace SIL.XForge.Scripture.Controllers
             catch (DataNotFoundException dnfe)
             {
                 return NotFoundError(dnfe.Message);
+            }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string> { { "method", "CheckLinkSharing" }, { "projectId", projectId }, }
+                );
+                throw;
             }
         }
 
@@ -255,6 +386,18 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return NotFoundError(dnfe.Message);
             }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "LinkSharingKey" },
+                        { "projectId", projectId },
+                        { "role", role },
+                    }
+                );
+                throw;
+            }
         }
 
         public async Task<IRpcMethodResult> AddTranslateMetrics(string projectId, TranslateMetrics metrics)
@@ -271,6 +414,18 @@ namespace SIL.XForge.Scripture.Controllers
             catch (DataNotFoundException dnfe)
             {
                 return NotFoundError(dnfe.Message);
+            }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "AddTranslateMetrics" },
+                        { "metricsId", metrics.Id },
+                        { "projectId", projectId },
+                    }
+                );
+                throw;
             }
         }
 
@@ -289,6 +444,13 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return NotFoundError(dnfe.Message);
             }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string> { { "method", "Sync" }, { "projectId", projectId }, }
+                );
+                throw;
+            }
         }
 
         public async Task<IRpcMethodResult> CancelSync(string projectId)
@@ -305,6 +467,13 @@ namespace SIL.XForge.Scripture.Controllers
             catch (DataNotFoundException dnfe)
             {
                 return NotFoundError(dnfe.Message);
+            }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string> { { "method", "CancelSync" }, { "projectId", projectId }, }
+                );
+                throw;
             }
         }
 
@@ -327,6 +496,19 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return InvalidParamsError(fe.Message);
             }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "DeleteAudio" },
+                        { "projectId", projectId },
+                        { "ownerId", ownerId },
+                        { "dataId", dataId },
+                    }
+                );
+                throw;
+            }
         }
 
         public async Task<IRpcMethodResult> SetSyncDisabled(string projectId, bool isDisabled)
@@ -344,6 +526,18 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return NotFoundError(dnfe.Message);
             }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "SetSyncDisabled" },
+                        { "projectId", projectId },
+                        { "isDisabled", isDisabled.ToString() },
+                    }
+                );
+                throw;
+            }
         }
 
         public async Task<IRpcMethodResult> TransceleratorQuestions(string projectId)
@@ -359,6 +553,17 @@ namespace SIL.XForge.Scripture.Controllers
             catch (DataNotFoundException dnfe)
             {
                 return NotFoundError(dnfe.Message);
+            }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "TransceleratorQuestions" },
+                        { "projectId", projectId },
+                    }
+                );
+                throw;
             }
         }
 
@@ -380,6 +585,19 @@ namespace SIL.XForge.Scripture.Controllers
             catch (DataNotFoundException dnfe)
             {
                 return NotFoundError(dnfe.Message);
+            }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "SetUserProjectPermissions" },
+                        { "projectId", projectId },
+                        { "userId", userId },
+                        { "permissions", string.Join(',', permissions) },
+                    }
+                );
+                throw;
             }
         }
     }

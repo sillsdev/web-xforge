@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -16,13 +17,20 @@ namespace SIL.XForge.Scripture.Controllers
     [Route(UrlConstants.CommandApiNamespace + "/" + UrlConstants.Projects)]
     public class SFProjectsUploadController : ControllerBase
     {
+        private readonly IExceptionHandler _exceptionHandler;
         private readonly IUserAccessor _userAccessor;
         private readonly ISFProjectService _projectService;
 
-        public SFProjectsUploadController(IUserAccessor userAccessor, ISFProjectService projectService)
+        public SFProjectsUploadController(
+            IUserAccessor userAccessor,
+            ISFProjectService projectService,
+            IExceptionHandler exceptionHandler
+        )
         {
             _userAccessor = userAccessor;
             _projectService = projectService;
+            _exceptionHandler = exceptionHandler;
+            _exceptionHandler.RecordUserIdForException(_userAccessor.UserId);
         }
 
         [HttpPost("audio")]
@@ -58,6 +66,18 @@ namespace SIL.XForge.Scripture.Controllers
             catch (FormatException)
             {
                 return BadRequest();
+            }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "UploadAudioAsync" },
+                        { "projectId", projectId },
+                        { "dataId", dataId },
+                    }
+                );
+                throw;
             }
         }
     }

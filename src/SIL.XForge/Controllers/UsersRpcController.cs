@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
 using EdjCase.JsonRpc.Router.Abstractions;
@@ -16,6 +17,7 @@ namespace SIL.XForge.Controllers
     public class UsersRpcController : RpcControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly IExceptionHandler _exceptionHandler;
         private readonly IWebHostEnvironment _hostingEnv;
         private readonly IUserService _userService;
 
@@ -23,12 +25,14 @@ namespace SIL.XForge.Controllers
             IUserAccessor userAccessor,
             IUserService userService,
             IAuthService authService,
-            IWebHostEnvironment hostingEnv
-        ) : base(userAccessor)
+            IWebHostEnvironment hostingEnv,
+            IExceptionHandler exceptionHandler
+        ) : base(userAccessor, exceptionHandler)
         {
             _userService = userService;
             _authService = authService;
             _hostingEnv = hostingEnv;
+            _exceptionHandler = exceptionHandler;
         }
 
         /// <summary>
@@ -37,7 +41,17 @@ namespace SIL.XForge.Controllers
         [Authorize(AuthenticationSchemes = BasicAuthenticationDefaults.AuthenticationScheme)]
         public Task PushAuthUserProfile(string userId, JsonElement userProfile)
         {
-            return _userService.UpdateUserFromProfileAsync(userId, userProfile.ToString());
+            try
+            {
+                return _userService.UpdateUserFromProfileAsync(userId, userProfile.ToString());
+            }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string> { { "method", "PushAuthUserProfile" }, { "userId", userId }, }
+                );
+                throw;
+            }
         }
 
         /// <summary>
@@ -66,12 +80,38 @@ namespace SIL.XForge.Controllers
             {
                 return InvalidParamsError(e.Message);
             }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "LinkParatextAccount" },
+                        { "primaryId", primaryId },
+                        { "secondaryId", secondaryId },
+                    }
+                );
+                throw;
+            }
         }
 
         public async Task<IRpcMethodResult> UpdateInterfaceLanguage(string language)
         {
-            await _userService.UpdateInterfaceLanguageAsync(UserId, AuthId, language);
-            return Ok();
+            try
+            {
+                await _userService.UpdateInterfaceLanguageAsync(UserId, AuthId, language);
+                return Ok();
+            }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "UpdateInterfaceLanguage" },
+                        { "language", language },
+                    }
+                );
+                throw;
+            }
         }
 
         public async Task<IRpcMethodResult> Delete(string userId)
@@ -84,6 +124,14 @@ namespace SIL.XForge.Controllers
             catch (ForbiddenException)
             {
                 return ForbiddenError();
+            }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string> { { "method", "Delete" }, { "userId", userId }, }
+                );
+
+                throw;
             }
         }
 

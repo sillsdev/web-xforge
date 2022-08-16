@@ -18,6 +18,7 @@ namespace SIL.XForge.Scripture.Controllers
     [Authorize]
     public class ParatextController : ControllerBase
     {
+        private readonly IExceptionHandler _exceptionHandler;
         private readonly IRepository<UserSecret> _userSecrets;
         private readonly IParatextService _paratextService;
         private readonly IUserAccessor _userAccessor;
@@ -25,12 +26,15 @@ namespace SIL.XForge.Scripture.Controllers
         public ParatextController(
             IRepository<UserSecret> userSecrets,
             IParatextService paratextService,
-            IUserAccessor userAccessor
+            IUserAccessor userAccessor,
+            IExceptionHandler exceptionHandler
         )
         {
             _userSecrets = userSecrets;
             _paratextService = paratextService;
             _userAccessor = userAccessor;
+            _exceptionHandler = exceptionHandler;
+            _exceptionHandler.RecordUserIdForException(_userAccessor.UserId);
         }
 
         [HttpGet("projects")]

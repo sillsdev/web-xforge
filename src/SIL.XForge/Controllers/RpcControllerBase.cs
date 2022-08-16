@@ -12,11 +12,14 @@ namespace SIL.XForge.Controllers
     [Authorize]
     public abstract class RpcControllerBase : RpcController
     {
+        private readonly IExceptionHandler _exceptionHandler;
         private readonly IUserAccessor _userAccessor;
 
-        protected RpcControllerBase(IUserAccessor userAccessor)
+        protected RpcControllerBase(IUserAccessor userAccessor, IExceptionHandler exceptionHandler)
         {
             _userAccessor = userAccessor;
+            _exceptionHandler = exceptionHandler;
+            exceptionHandler.RecordUserIdForException(_userAccessor.UserId);
         }
 
         protected string UserId => _userAccessor.UserId;
