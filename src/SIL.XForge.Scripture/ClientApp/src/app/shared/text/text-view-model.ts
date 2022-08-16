@@ -105,7 +105,7 @@ interface EmbedPosition {
    * The editor position of an embed with the same embed id as the one located at position.
    * When this is set it is necessary to clean up duplicate embeds as early as possible.
    */
-  duplicatePosition?: number;
+  // duplicatePosition?: number;
 }
 
 class SegmentInfo {
@@ -300,16 +300,14 @@ export class TextViewModel {
 
     // Defer the update, since it might cause the segment ranges to be out-of-sync with the view model
     Promise.resolve().then(() => {
-      const updateDelta = this.updateSegments(editor);
-      if (updateDelta.ops != null && updateDelta.ops.length > 0) {
-        // Clean up blanks in quill editor. This may result in re-entering the update() method.
-        editor.updateContents(updateDelta, source);
-      }
-
-      const removeDuplicateDelta: DeltaStatic = this.fixDeltaForDuplicateEmbeds();
-      if (removeDuplicateDelta.ops && removeDuplicateDelta.ops.length > 0) {
-        editor.updateContents(removeDuplicateDelta, 'api');
-      }
+      const updateDeltas: { delta: DeltaStatic; source?: Sources }[] = this.updateSegments(editor);
+      // Apply adjustments, such as cleaning up blanks in the quill editor. This may result in
+      // re-entering the update() method.
+      updateDeltas.forEach((updateDelta: { delta: DeltaStatic; source?: Sources }) => {
+        if (updateDelta.delta.ops != null && updateDelta.delta.ops.length > 0) {
+          editor.updateContents(updateDelta.delta, updateDelta.source ?? source);
+        }
+      });
     });
   }
 
@@ -566,15 +564,16 @@ export class TextViewModel {
    * Re-generate segment boundaries from quill editor ops. Return ops to clean up where and whether blanks are
    * represented.
    */
-  private updateSegments(editor: Quill): DeltaStatic {
+  private updateSegments(editor: Quill): { delta: DeltaStatic; source?: Sources }[] {
     const convertDelta = new Delta();
     let fixDelta = new Delta();
+    let dedupEmbedsDelta = new Delta();
     let fixOffset = 0;
     const delta = editor.getContents();
     this._segments.clear();
     this._embeddedElements.clear();
     if (delta.ops == null) {
-      return convertDelta;
+      return [{ delta: convertDelta }, { delta: dedupEmbedsDelta, source: 'api' }];
     }
     const nextIds = new Map<string, number>();
     let paraSegments: SegmentInfo[] = [];
@@ -687,12 +686,12 @@ export class TextViewModel {
             embedPosition = { position };
             this._embeddedElements.set(id, embedPosition);
           } else {
-            if (embedPosition.duplicatePosition != null) {
-              console.warn(
-                'Warning: text-view-model.updateSegments() did not expect to encounter an embed with >2 positions'
-              );
-            }
-            embedPosition.duplicatePosition = position;
+            // There was already an embed with this id. Remove both from the editor so they will
+            // be re-generated in the right place.
+            const deleteDeltaPos1 = new Delta().retain(embedPosition.position).delete(1);
+            const deleteDeltaPos2 = new Delta().retain(position - 1).delete(1);
+            dedupEmbedsDelta = dedupEmbedsDelta.compose(deleteDeltaPos1);
+            dedupEmbedsDelta = dedupEmbedsDelta.compose(deleteDeltaPos2);
           }
           curSegment.notesCount++;
         }
@@ -700,7 +699,11 @@ export class TextViewModel {
       convertDelta.retain(len, attrs);
     }
 
-    return convertDelta.compose(fixDelta).chop();
+    let D = new Delta();
+    if (dedupEmbedsDelta.ops != null && dedupEmbedsDelta.ops.length > 0) {
+      D = convertDelta.compose(dedupEmbedsDelta);
+    }
+    return [{ delta: convertDelta.compose(fixDelta).chop() }, { delta: D.chop(), source: 'api' }];
   }
 
   /** Computes and adds to `fixDelta` a change to add or remove a blank indication as needed on `segment`, and other
@@ -755,26 +758,23 @@ export class TextViewModel {
     let result: number[] = [];
     for (const ep of embeds.values()) {
       result.push(ep.position);
-      if (ep.duplicatePosition != null) {
-        result.push(ep.duplicatePosition);
-      }
     }
     return result;
   }
 
-  private fixDeltaForDuplicateEmbeds(): DeltaStatic {
-    let delta = new Delta();
-    const duplicatePositions: EmbedPosition[] = Array.from(this._embeddedElements.values()).filter(
-      ep => ep.duplicatePosition != null
-    );
+  // private fixDeltaForDuplicateEmbeds(): DeltaStatic {
+  //   let delta = new Delta();
+  //   const duplicatePositions: EmbedPosition[] = Array.from(this._embeddedElements.values()).filter(
+  //     ep => ep.duplicatePosition != null
+  //   );
 
-    const deletePositions: number[] = this.embeddedElementPositions(duplicatePositions).sort((a, b) => a - b);
-    for (const pos of deletePositions) {
-      const deleteDelta = new Delta().retain(pos).delete(1);
-      delta = deleteDelta.compose(delta);
-    }
-    return delta.chop();
-  }
+  //   const deletePositions: number[] = this.embeddedElementPositions(duplicatePositions).sort((a, b) => a - b);
+  //   for (const pos of deletePositions) {
+  //     const deleteDelta = new Delta().retain(pos).delete(1);
+  //     delta = deleteDelta.compose(delta);
+  //   }
+  //   return delta.chop();
+  // }
 
   private checkEditor(): Quill {
     if (this.editor == null) {
