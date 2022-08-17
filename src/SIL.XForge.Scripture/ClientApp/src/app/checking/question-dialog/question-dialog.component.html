@@ -60,7 +60,7 @@
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button (click)="cancelDialog()" type="button" id="question-cancel-btn">
+      <button mat-button [mat-dialog-close]="'close'" type="button" id="question-cancel-btn">
         {{ t("cancel") }}
       </button>
       <button mat-flat-button form="question-form" type="submit" id="question-save-btn" (click)="submit()">

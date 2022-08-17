@@ -1,10 +1,11 @@
-import { MdcDialog, MdcDialogConfig, MdcDialogRef, MDC_DIALOG_DATA } from '@angular-mdc/web';
 import { Component, ElementRef, Inject, Optional, ViewChild } from '@angular/core';
+import { MatDialogConfig, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { fromEvent } from 'rxjs';
 import { auditTime } from 'rxjs/operators';
 import { DOCUMENT } from 'xforge-common/browser-globals';
+import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { TextDocId } from '../core/models/text-doc';
@@ -53,11 +54,11 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
   private readonly verseSegmentSelector = 'usx-segment[data-segment^=verse_]';
 
   constructor(
-    private readonly dialogRef: MdcDialogRef<TextChooserDialogComponent>,
-    readonly dialog: MdcDialog,
+    private readonly dialogRef: MatDialogRef<TextChooserDialogComponent>,
+    readonly dialogService: DialogService,
     private readonly i18n: I18nService,
     @Inject(DOCUMENT) private readonly document: Document,
-    @Optional() @Inject(MDC_DIALOG_DATA) private readonly data: TextChooserDialogData
+    @Optional() @Inject(MAT_DIALOG_DATA) private readonly data: TextChooserDialogData
   ) {
     super();
     // caniuse doesn't have complete data for the selection events api, but testing on BrowserStack shows the event is
@@ -116,11 +117,11 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
   }
 
   openScriptureChooser() {
-    const dialogConfig: MdcDialogConfig<ScriptureChooserDialogData> = {
+    const dialogConfig: MatDialogConfig<ScriptureChooserDialogData> = {
       data: { booksAndChaptersToShow: this.data.textsByBookId, includeVerseSelection: false }
     };
 
-    const dialogRef = this.dialog.open(ScriptureChooserDialogComponent, dialogConfig) as MdcDialogRef<
+    const dialogRef = this.dialogService.openMatDialog(ScriptureChooserDialogComponent, dialogConfig) as MatDialogRef<
       ScriptureChooserDialogComponent,
       VerseRef | 'close'
     >;

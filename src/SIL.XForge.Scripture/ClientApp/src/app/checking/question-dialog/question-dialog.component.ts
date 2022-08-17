@@ -186,10 +186,6 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     });
   }
 
-  cancelDialog(): void {
-    return this.dialogRef.close('close');
-  }
-
   /** Edit text of control using Scripture chooser dialog. */
   openScriptureChooser(control: AbstractControl) {
     if (this.scriptureStart.value === '') {
