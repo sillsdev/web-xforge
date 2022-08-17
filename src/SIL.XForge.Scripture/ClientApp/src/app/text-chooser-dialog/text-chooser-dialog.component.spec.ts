@@ -1,7 +1,8 @@
-import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { CookieService } from 'ngx-cookie-service';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -37,7 +38,7 @@ const mockedUserService = mock(UserService);
 
 describe('TextChooserDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [DialogTestModule, NoopAnimationsModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: AuthService, useMock: mock(AuthService) },
       { provide: BugsnagService, useMock: mockedBugsnagService },
@@ -93,6 +94,7 @@ describe('TextChooserDialogComponent', () => {
     expect(env.selectedText).toEqual('previously selected text (John 1:2-3)');
     env.click(env.saveButton);
     expect(await env.resultPromise).toEqual('close');
+    flush();
   }));
 
   it('is cancelable', fakeAsync(async () => {
@@ -161,6 +163,7 @@ describe('TextChooserDialogComponent', () => {
       startClipped: false,
       endClipped: true
     });
+    flush();
   }));
 
   it('indicates when not all segments of the start verse were selected', fakeAsync(async () => {
@@ -174,6 +177,7 @@ describe('TextChooserDialogComponent', () => {
       startClipped: true,
       endClipped: false
     });
+    flush();
   }));
 
   it(
@@ -190,6 +194,7 @@ describe('TextChooserDialogComponent', () => {
         startClipped: true,
         endClipped: false
       });
+      flush();
     })
   );
 
@@ -207,6 +212,7 @@ describe('TextChooserDialogComponent', () => {
         startClipped: false,
         endClipped: true
       });
+      flush();
     })
   );
 
@@ -221,6 +227,7 @@ describe('TextChooserDialogComponent', () => {
       startClipped: true,
       endClipped: true
     });
+    flush();
   }));
 
   it("doesn't show ending ellipsis when entire verse is selected", fakeAsync(async () => {
@@ -234,6 +241,7 @@ describe('TextChooserDialogComponent', () => {
       startClipped: false,
       endClipped: false
     });
+    flush();
   }));
 
   it('shows the correct verse range when first or last segment has only white space selected', fakeAsync(async () => {
@@ -417,7 +425,7 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-  readonly mockedScriptureChooserMdcDialogRef = mock(MdcDialogRef);
+  readonly mockedScriptureChooserMdcDialogRef = mock(MatDialogRef);
 
   readonly resultPromise: Promise<TextSelection | 'close'>;
   selectionChangeHandler!: () => any;
@@ -487,13 +495,13 @@ class TestEnvironment {
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
 
-    const dialogRef = TestBed.inject(MdcDialog).open(TextChooserDialogComponent, { data: config });
+    const dialogRef = TestBed.inject(MatDialog).open(TextChooserDialogComponent, { data: config });
     this.component = dialogRef.componentInstance;
     this.resultPromise = dialogRef.afterClosed().toPromise();
 
-    // Set up MdcDialog mocking after it's already used above in creating the component.
-    const dialogSpy = spy(this.component.dialog);
-    when(dialogSpy.open(anything(), anything())).thenReturn(instance(this.mockedScriptureChooserMdcDialogRef));
+    // Set up DialogService mocking after it's already used above in creating the component.
+    const dialogSpy = spy(this.component.dialogService);
+    when(dialogSpy.openMatDialog(anything(), anything())).thenReturn(instance(this.mockedScriptureChooserMdcDialogRef));
     const chooserDialogResult = new VerseRef('LUK', '1', '2');
     when(this.mockedScriptureChooserMdcDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
     when(mockedPwaService.isOnline).thenReturn(true);
@@ -512,7 +520,7 @@ class TestEnvironment {
   }
 
   get cancelButton(): HTMLButtonElement {
-    return this.select('button[data-mdc-dialog-action="close"]') as HTMLButtonElement;
+    return this.select('#cancel-button') as HTMLButtonElement;
   }
 
   get headingText() {

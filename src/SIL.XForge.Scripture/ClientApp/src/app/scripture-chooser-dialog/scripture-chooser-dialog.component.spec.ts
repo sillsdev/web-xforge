@@ -104,16 +104,19 @@ describe('ScriptureChooserDialog', () => {
 
   it('book not highlighted, if no (undefined) incoming reference', fakeAsync(() => {
     env = new TestEnvironment({ inputScriptureReference: undefined });
+    flush();
     expect(env.highlightedButton).toBeNull();
   }));
 
   it('book not highlighted, if no (omitted) incoming reference', fakeAsync(() => {
     env = new TestEnvironment();
+    flush();
     expect(env.highlightedButton).toBeNull();
   }));
 
   it('book highlighted', fakeAsync(() => {
     env = new TestEnvironment({ inputScriptureReference: new VerseRef('ROM', '11', '33') });
+    flush();
     env.fixture.detectChanges();
     expect(env.highlightedButton).not.toBeNull();
   }));
@@ -166,6 +169,7 @@ describe('ScriptureChooserDialog', () => {
 
   it('input is received', fakeAsync(() => {
     env = new TestEnvironment({ inputScriptureReference: new VerseRef('EPH', '3', '21') });
+    flush();
     expect(env.component.data.input!.book).toEqual('EPH');
     expect(env.component.data.input!.chapter).toEqual('3');
     expect(env.component.data.input!.verse).toEqual('21');
@@ -173,6 +177,7 @@ describe('ScriptureChooserDialog', () => {
 
   it('only shows books that we seed (from project)', fakeAsync(() => {
     env = new TestEnvironment();
+    flush();
     expect(env.dialogText).toContain('Exodus');
     expect(env.dialogText).toContain('Matthew');
     expect(env.dialogText).not.toContain('Genesis');
@@ -303,6 +308,7 @@ describe('ScriptureChooserDialog', () => {
       // rangeStart is for book that is not in texts
       rangeStart: new VerseRef('RUT', '3', '15')
     });
+    flush();
 
     // Is not 'rangeEnd'
     expect(env.component.showing).toEqual('books');
@@ -347,6 +353,7 @@ describe('ScriptureChooserDialog', () => {
       // rangeStart is for chapter that is not in texts
       rangeStart: new VerseRef('ROM', '4', '15')
     });
+    flush();
 
     // Is not 'rangeEnd'
     expect(env.component.showing).toEqual('books');
@@ -391,6 +398,7 @@ describe('ScriptureChooserDialog', () => {
       // rangeStart is for invalid verse
       rangeStart: new VerseRef('ROM', '3', '99')
     });
+    flush();
 
     // Is not 'rangeEnd'
     expect(env.component.showing).toEqual('books');
@@ -564,6 +572,8 @@ describe('ScriptureChooserDialog', () => {
 
     click(element: DebugElement): void {
       element!.nativeElement.click();
+      this.fixture.detectChanges();
+      flush();
       this.fixture.detectChanges();
       flush();
     }
