@@ -1,5 +1,5 @@
 <ng-container *transloco="let t; read: 'scripture_chooser_dialog'">
-  <div>
+  <div class="dialog-container">
     <div id="bookPane" *ngIf="showing === 'books'">
       <h1 mat-dialog-title>
         <button mat-icon-button class="backout-button" (click)="onClickBackoutButton()" (focus)="onCloseFocus($event)">
