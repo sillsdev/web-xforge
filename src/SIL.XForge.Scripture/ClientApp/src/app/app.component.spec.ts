@@ -393,11 +393,13 @@ describe('AppComponent', () => {
     env.navigate(['/projects', 'project01']);
     env.init();
 
-    expect(env.lastSyncFailedBadge).toBeNull();
+    env.setLastSyncSuccessful('project01', true);
+    // SUT 1
+    expect(env.lastSyncFailedBadgeIsPresent).toBeFalse();
 
-    env.setLastSyncSuccessful('project02', false);
-    env.selectProject('project02');
-    expect(env.lastSyncFailedBadge).toBeTruthy();
+    env.setLastSyncSuccessful('project01', false);
+    // SUT 2
+    expect(env.lastSyncFailedBadgeIsPresent).toBeTrue();
   }));
 
   describe('Community Checking', () => {
@@ -683,6 +685,13 @@ class TestEnvironment {
 
   get lastSyncFailedBadge(): DebugElement {
     return this.menuDrawer.query(By.css('#sync-icon .mat-badge-active'));
+  }
+  get lastSyncFailedBadgeIsPresent(): boolean {
+    const iconIfBadgeHidden = this.menuDrawer.query(By.css('#sync-icon.mat-badge-hidden'));
+    if (iconIfBadgeHidden != null) {
+      return false;
+    }
+    return true;
   }
 
   getMenuItemText(index: number): string {
