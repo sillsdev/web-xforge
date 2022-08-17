@@ -3,6 +3,10 @@
   flex-direction: column;
 }
 
+.dialog-container {
+  max-width: 560px;
+}
+
 .select-chapter {
   cursor: pointer;
   display: inline-flex;
