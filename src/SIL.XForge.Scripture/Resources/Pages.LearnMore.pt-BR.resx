@@ -127,22 +127,22 @@
     <value>Saiba mais sobre o Scripture Forge</value>
   </data>
   <data name="LearnSliderCheckingOfflineAnwering" xml:space="preserve">
-    <value>{0}Answering questions{1}, including recording an audio answer, offline.</value>
+    <value>{0}Responder às perguntas{1}, incluindo a gravação de uma resposta em áudio, offline.</value>
   </data>
   <data name="LearnSliderCheckingOfflineDescription" xml:space="preserve">
-    <value>{0}Community Checkers{1} and {0}Administrators{1} should {2}watch this video{3} to see how users can keep working, even when offline. It covers:</value>
+    <value>{0}Verificadores da Comunidade{1} e {0}Administradores{1} devem {2}assistir a este vídeo{3} para ver como os usuários podem continuar trabalhando, mesmo quando estão offline. O vídeo abrange:</value>
   </data>
   <data name="LearnSliderCheckingOfflineHeader" xml:space="preserve">
-    <value>Working Offline</value>
+    <value>Trabalhar Offline</value>
   </data>
   <data name="LearnSliderCheckingOfflineInstalling" xml:space="preserve">
-    <value>{0}Installing the app{1} on your device by using {2}Add to Home screen{3}.</value>
+    <value>{0}Instalar o aplicativo{1} no seu dispositivo utilizando {2}Adicionar à Tela inicial{3}.</value>
   </data>
   <data name="LearnSliderCheckingOfflineLoading" xml:space="preserve">
-    <value>{0}Loading questions{1} automatically before going offline.</value>
+    <value>{0}Carregar perguntas{1} automaticamente antes de ficar offline.</value>
   </data>
   <data name="LearnSliderCheckingOfflineSaving" xml:space="preserve">
-    <value>{0}Automatically saving{1} updated answers once you're back online.</value>
+    <value>{0}Salvar automaticamente{1} as respostas atualizadas quando estiver de volta online.</value>
   </data>
   <data name="LearnSliderCheckingSeeAnswer" xml:space="preserve">
     <value>{0}Responder às perguntas{1} em forma de texto e áudio.</value>
@@ -169,10 +169,10 @@
     <value>{0}Conectar-se a um projeto do Paratext{1} no Scripture Forge.</value>
   </data>
   <data name="LearnSliderCheckingSetupDescription" xml:space="preserve">
-    <value>{4}Paratext{5} project {0}Administrators{1} can {2}watch this video{3} to learn about setting up {0}Community Checking{1}. It covers:</value>
+    <value>{0}Os administradores{1} de projetos do {4}Paratext{5} podem {2}assistir a este vídeo{3} para aprender como configurar a {0}Verificação da Comunidade {1}. O vídeo cobre:</value>
   </data>
   <data name="LearnSliderCheckingSetupHeader" xml:space="preserve">
-    <value>Configurando a Verificação da Comunidade</value>
+    <value>Configurar a Verificação da Comunidade</value>
   </data>
   <data name="LearnSliderCheckingSetupShare" xml:space="preserve">
     <value>{0}Compartilhar o projeto{1} convidando {2}Verificadores da Comunidade{3} para responder a perguntas.</value>
