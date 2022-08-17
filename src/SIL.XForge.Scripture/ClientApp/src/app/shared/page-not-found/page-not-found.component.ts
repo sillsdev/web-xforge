@@ -11,7 +11,10 @@ import { takeWhile } from 'rxjs/operators';
 export class PageNotFoundComponent {
   // Timer fires every 100ms until 100 instances have occurred (10s)
   progress = timer(0, 100).pipe(
-    takeWhile(val => (val <= 100 ? true : this.router.navigateByUrl('/projects') && false))
+    takeWhile(val => {
+      if (val > 100) this.router.navigateByUrl('/projects');
+      return val <= 100;
+    })
   );
 
   constructor(readonly router: Router) {}
