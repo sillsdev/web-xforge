@@ -11,6 +11,7 @@ import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scri
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { Subscription } from 'rxjs';
+import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
@@ -103,6 +104,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   constructor(
     private readonly userService: UserService,
     private readonly dialog: MdcDialog,
+    private readonly dialogService: DialogService,
     private readonly noticeService: NoticeService,
     private readonly questionDialogService: QuestionDialogService,
     private readonly i18n: I18nService,
@@ -340,7 +342,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       selectedText: this.selectedText || '',
       selectedVerses: this.verseRef
     };
-    const dialogRef = this.dialog.open(TextChooserDialogComponent, { data: dialogData });
+    const dialogRef = this.dialogService.openMatDialog(TextChooserDialogComponent, { data: dialogData });
     dialogRef.afterClosed().subscribe(result => {
       if (result != null && result !== 'close') {
         const selection = result as TextSelection;
