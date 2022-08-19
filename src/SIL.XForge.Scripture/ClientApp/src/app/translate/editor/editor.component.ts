@@ -142,7 +142,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly mediaObserver: MediaObserver,
     private readonly pwaService: PwaService,
     private readonly translationEngineService: TranslationEngineService,
-    private readonly i18n: I18nService,
+    readonly i18n: I18nService,
     @Inject(CONSOLE) private readonly console: ConsoleInterface
   ) {
     super(noticeService);
@@ -273,7 +273,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get userRole(): string {
-    return this.i18n.localizeRole(this.projectDoc?.data?.userRoles[this.userService.currentUserId] || '');
+    const role = this.projectDoc?.data?.userRoles[this.userService.currentUserId];
+    return role == null ? '' : this.i18n.localizeRole(role);
   }
 
   get hasSourceViewRight(): boolean {

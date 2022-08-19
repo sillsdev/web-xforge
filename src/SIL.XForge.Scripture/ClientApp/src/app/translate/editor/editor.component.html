@@ -70,8 +70,11 @@
         <div *ngIf="projectTextNotEditable && hasEditRight" class="project-text-not-editable">
           <mat-icon>info</mat-icon> {{ t("project_text_not_editable") }}
         </div>
-        <div *ngIf="userHasGeneralEditRight && !hasChapterEditPermission" class="no-edit-permission-message">
-          <mat-icon>info</mat-icon> {{ t("no_permission_edit_chapter", { userRole: userRole }) }}
+        <div *ngIf="(userHasGeneralEditRight && !hasChapterEditPermission) || true" class="no-edit-permission-message">
+          <mat-icon>info</mat-icon>
+          <span
+            [innerHtml]="i18n.translateAndInsertTags('editor.no_permission_edit_chapter', { userRole: userRole })"
+          ></span>
         </div>
         <div #targetContainer class="text-container" [style.height]="textHeight">
           <app-text

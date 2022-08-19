@@ -83,7 +83,7 @@
     "completed_successfully": "Completed successfully",
     "configure_translation_suggestions": "Configure translation suggestions",
     "more_notes": "--- {{ count }} more note(s) ---",
-    "no_permission_edit_chapter": "You don't have permission to edit this chapter, even though you have the {{ userRole }} role. Permissions can only be changed in Paratext.",
+    "no_permission_edit_chapter": "You don't have permission to edit this chapter, even though you have the {{boldStart}}{{ userRole }}{{boldEnd}} role. Permissions can only be changed in Paratext.",
     "project_data_out_of_sync": "Your project data is out of sync. Please synchronize your project to edit this text.",
     "project_text_not_editable": "Text in this project is not editable. This setting can be changed in Paratext.",
     "swap_source_and_target": "Swap source and target",
