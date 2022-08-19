@@ -54,6 +54,9 @@ export class CheckingTextComponent extends SubscriptionDisposable {
       if (this.isEditorLoaded && !isEqual(this._id, textDocId)) {
         this._editorLoaded = false;
       }
+      if (this._activeVerse != null && this._id != null && this._id !== textDocId) {
+        this.activeVerse = undefined;
+      }
       this._id = textDocId;
     }
   }
@@ -64,9 +67,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
 
   @Input() set questionVerses(verseRefs: VerseRef[] | undefined) {
     this.toggleQuestionVerses(false);
-    this._questionVerses = clone(
-      verseRefs?.filter(v => v.bookNum === this.id?.bookNum && v.chapterNum === this.id?.chapterNum)
-    );
+    this._questionVerses = clone(verseRefs);
     this.toggleQuestionVerses(true);
   }
 
@@ -81,11 +82,18 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     this.scrollToActiveVerse();
   }
 
+  private get questionVersesInCurrentText(): VerseRef[] {
+    if (this.questionVerses == null) {
+      return [];
+    }
+    return this.questionVerses.filter(v => v.bookNum === this.id?.bookNum && v.chapterNum === this.id?.chapterNum);
+  }
+
   private toggleQuestionVerses(value: boolean): void {
     if (!this.isEditorLoaded || this.questionVerses == null) {
       return;
     }
-    const segments = this.textComponent.toggleFeaturedVerseRefs(value, this.questionVerses, 'question');
+    const segments = this.textComponent.toggleFeaturedVerseRefs(value, this.questionVersesInCurrentText, 'question');
     if (value) {
       this.subscribeClickEvents(segments);
     } else {
