@@ -25,7 +25,7 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
 import { getBrowserEngine } from 'xforge-common/utils';
-import { MatDialog } from '@angular/material/dialog';
+import { DialogService } from 'xforge-common/dialog.service';
 import { Delta, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { NoteThreadIcon } from '../../core/models/note-thread-doc';
@@ -213,7 +213,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   constructor(
     private readonly changeDetector: ChangeDetectorRef,
-    private readonly dialog: MatDialog,
+    private readonly dialogService: DialogService,
     private readonly projectService: SFProjectService,
     private readonly pwaService: PwaService,
     private readonly transloco: TranslocoService,
@@ -760,7 +760,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
           this.subscribe(fromEvent<MouseEvent>(element, 'click'), event => {
             const noteText = attributeFromMouseEvent(event, 'USX-NOTE', 'title');
             const noteType = attributeFromMouseEvent(event, 'USX-NOTE', 'data-style');
-            this.dialog.open(TextNoteDialogComponent, {
+            this.dialogService.openMatDialog(TextNoteDialogComponent, {
               autoFocus: false,
               width: '600px',
               data: {

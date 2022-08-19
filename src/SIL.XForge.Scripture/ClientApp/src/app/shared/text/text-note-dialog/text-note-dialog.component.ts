@@ -24,8 +24,8 @@ export class TextNoteDialogComponent {
     private readonly translocoService: TranslocoService
   ) {}
 
-  get isRtl(): boolean {
-    return this.data.isRightToLeft;
+  get direction(): 'ltr' | 'rtl' {
+    return this.data.isRightToLeft ? 'rtl' : 'ltr';
   }
 
   get text(): string {
