@@ -30,7 +30,8 @@
     "localName": "العربية",
     "englishName": "Arabic",
     "tags": ["ar", "ar-SA"],
-    "direction": "rtl"
+    "direction": "rtl",
+    "production": true
   },
   {
     "localName": "Русский",
