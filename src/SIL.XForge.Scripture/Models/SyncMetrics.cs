@@ -20,8 +20,15 @@ namespace SIL.XForge.Scripture.Models
         public string UserRef { get; set; }
 
         // Sync Statistics
+        public SyncMetricInfo Books { get; set; } = new SyncMetricInfo();
+        public SyncMetricInfo NoteThreads { get; set; } = new SyncMetricInfo();
+        public SyncMetricInfo ParatextBooks { get; set; } = new SyncMetricInfo();
+        public SyncMetricInfo ParatextNotes { get; set; } = new SyncMetricInfo();
+        public int QuestionsDeleted { get; set; }
         public bool RepositoryBackupCreated { get; set; }
         public bool RepositoryRestoredFromBackup { get; set; }
-        public int UsersRemoved { get; set; }
+        public SyncMetricInfo ResourceUsers { get; set; } = new SyncMetricInfo();
+        public SyncMetricInfo TextDocs { get; set; } = new SyncMetricInfo();
+        public SyncMetricInfo Users { get; set; } = new SyncMetricInfo();
     }
 }

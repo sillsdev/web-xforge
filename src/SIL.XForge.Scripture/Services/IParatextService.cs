@@ -44,7 +44,7 @@ namespace SIL.XForge.Scripture.Services
 
         IReadOnlyList<int> GetBookList(UserSecret userSecret, string paratextId);
         string GetBookText(UserSecret userSecret, string paratextId, int bookNum);
-        Task PutBookText(
+        Task<int> PutBookText(
             UserSecret userSecret,
             string paratextId,
             int bookNum,
@@ -52,8 +52,8 @@ namespace SIL.XForge.Scripture.Services
             Dictionary<int, string> chapterAuthors = null
         );
         string GetNotes(UserSecret userSecret, string ptProjectId, int bookNum);
-        void PutNotes(UserSecret userSecret, string ptProjectId, string notesText);
-        Task UpdateParatextCommentsAsync(
+        SyncMetricInfo PutNotes(UserSecret userSecret, string ptProjectId, string notesText);
+        Task<SyncMetricInfo> UpdateParatextCommentsAsync(
             UserSecret userSecret,
             string projectId,
             int bookNum,

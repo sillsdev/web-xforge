@@ -211,7 +211,7 @@ namespace SIL.XForge.Scripture.Services
                     if (isDataInSync && !_paratextService.IsResource(targetParatextId))
                     {
                         await UpdateParatextNotesAsync(text, questionDocs);
-                        // TODO: Sync Note changes back to Paratext
+                        // TODO: Sync Note changes back to Paratext, and record sync metric info
                         // IEnumerable<IDocument<NoteThread>> noteThreadDocs =
                         //     (await FetchNoteThreadDocsAsync(text.BookNum)).Values;
                         // await _paratextService.UpdateParatextCommentsAsync(_userSecret, targetParatextId, text.BookNum,
@@ -289,6 +289,8 @@ namespace SIL.XForge.Scripture.Services
                         await DeleteAllQuestionsDocsForBookAsync(text);
                         await DeleteNoteThreadDocsInChapters(text.BookNum, text.Chapters);
                     }
+
+                    _syncMetrics.Books.Deleted = targetBooksToDelete.Count;
                 }
 
                 // Check for cancellation
@@ -323,6 +325,7 @@ namespace SIL.XForge.Scripture.Services
                             try
                             {
                                 await _projectService.AddUserAsync(uid, sourceProjectRef);
+                                _syncMetrics.ResourceUsers.Added++;
                             }
                             catch (ForbiddenException e)
                             {
@@ -347,6 +350,7 @@ namespace SIL.XForge.Scripture.Services
                                     sourceProjectRef,
                                     uid
                                 );
+                                _syncMetrics.ResourceUsers.Deleted++;
                             }
                         }
                     }
@@ -484,9 +488,15 @@ namespace SIL.XForge.Scripture.Services
                 int textIndex = _projectDoc.Data.Texts.FindIndex(t => t.BookNum == bookNum);
                 TextInfo text;
                 if (textIndex == -1)
+                {
                     text = new TextInfo { BookNum = bookNum, HasSource = hasSource };
+                    _syncMetrics.Books.Added++;
+                }
                 else
+                {
                     text = _projectDoc.Data.Texts[textIndex];
+                    _syncMetrics.Books.Updated++;
+                }
 
                 // update target text docs
                 if (
@@ -615,7 +625,13 @@ namespace SIL.XForge.Scripture.Services
             {
                 string usx = newUsxDoc.Root.ToString();
                 var chapterAuthors = await GetChapterAuthorsAsync(text, textDocs);
-                await _paratextService.PutBookText(_userSecret, paratextId, text.BookNum, usx, chapterAuthors);
+                _syncMetrics.ParatextBooks.Updated += await _paratextService.PutBookText(
+                    _userSecret,
+                    paratextId,
+                    text.BookNum,
+                    usx,
+                    chapterAuthors
+                );
             }
         }
 
@@ -719,7 +735,13 @@ namespace SIL.XForge.Scripture.Services
                 _currentPtSyncUsers
             );
             if (notesElem.Elements("thread").Any())
-                _paratextService.PutNotes(_userSecret, _projectDoc.Data.ParatextId, notesElem.ToString());
+            {
+                _syncMetrics.ParatextNotes += _paratextService.PutNotes(
+                    _userSecret,
+                    _projectDoc.Data.ParatextId,
+                    notesElem.ToString()
+                );
+            }
         }
 
         private async Task<List<Chapter>> UpdateTextDocsAsync(
@@ -746,7 +768,11 @@ namespace SIL.XForge.Scripture.Services
                     {
                         Delta diffDelta = textDataDoc.Data.Diff(kvp.Value.Delta);
                         if (diffDelta.Ops.Count > 0)
+                        {
                             tasks.Add(textDataDoc.SubmitOpAsync(diffDelta));
+                            _syncMetrics.TextDocs.Updated++;
+                        }
+
                         textDocs.Remove(kvp.Key);
                     }
                     else
@@ -772,6 +798,7 @@ namespace SIL.XForge.Scripture.Services
                         await textDataDoc.CreateAsync(new TextData(delta));
                     }
                     tasks.Add(createText(kvp.Key, kvp.Value.Delta));
+                    _syncMetrics.TextDocs.Added++;
                 }
                 else
                 {
@@ -799,6 +826,7 @@ namespace SIL.XForge.Scripture.Services
                 )
                 {
                     tasks.Add(kvp.Value.DeleteAsync());
+                    _syncMetrics.TextDocs.Deleted++;
                 }
             }
 
@@ -817,7 +845,10 @@ namespace SIL.XForge.Scripture.Services
             foreach (IDocument<Question> questionDoc in questionDocs)
             {
                 if (!chapterNums.Contains(questionDoc.Data.VerseRef.ChapterNum))
+                {
                     tasks.Add(questionDoc.DeleteAsync());
+                    _syncMetrics.QuestionsDeleted++;
+                }
             }
             await Task.WhenAll(tasks);
         }
@@ -874,9 +905,13 @@ namespace SIL.XForge.Scripture.Services
                         await SubmitChangesOnNoteThreadDocAsync(doc, change, usernamesToUserIds);
                     }
                     tasks.Add(createThreadDoc(change.ThreadId, _projectDoc.Id, change));
+                    _syncMetrics.NoteThreads.Added++;
                 }
                 else
+                {
                     tasks.Add(SubmitChangesOnNoteThreadDocAsync(threadDoc, change, usernamesToUserIds));
+                    _syncMetrics.NoteThreads.Updated++;
+                }
             }
             await Task.WhenAll(tasks);
         }
@@ -916,6 +951,7 @@ namespace SIL.XForge.Scripture.Services
             foreach (Chapter chapter in text.Chapters)
                 tasks.Add(DeleteTextDocAsync(text, chapter.Number));
             await Task.WhenAll(tasks);
+            _syncMetrics.TextDocs.Deleted += text.Chapters.Count;
         }
 
         private async Task<IReadOnlyList<IDocument<Question>>> FetchQuestionDocsAsync(TextInfo text)
@@ -1088,6 +1124,7 @@ namespace SIL.XForge.Scripture.Services
                 tasks.Add(deleteQuestion());
             }
             await Task.WhenAll(tasks);
+            _syncMetrics.QuestionsDeleted += questionDocIds.Count;
         }
 
         private async Task<List<string>> DeleteNoteThreadDocsInChapters(int bookNum, IEnumerable<Chapter> chapters)
@@ -1112,10 +1149,11 @@ namespace SIL.XForge.Scripture.Services
                     if (noteThreadDoc.IsLoaded)
                         await noteThreadDoc.DeleteAsync();
                 }
-                tasks.Add((deleteNoteThread()));
+                tasks.Add(deleteNoteThread());
             }
 
             await Task.WhenAll(tasks);
+            _syncMetrics.NoteThreads.Deleted += deletedNoteThreadDocIds.Count;
             return deletedNoteThreadDocIds;
         }
 
@@ -1294,7 +1332,7 @@ namespace SIL.XForge.Scripture.Services
                 }
             });
 
-            _syncMetrics.UsersRemoved = userIdsToRemove.Count;
+            _syncMetrics.Users.Deleted = userIdsToRemove.Count;
             foreach (var userId in userIdsToRemove)
                 await _projectService.RemoveUserWithoutPermissionsCheckAsync(_userSecret.Id, _projectDoc.Id, userId);
 
