@@ -936,7 +936,7 @@ namespace SIL.XForge.Scripture.Services
 
         /// <summary> Write up-to-date book text from mongo database to Paratext project folder. </summary>
         /// <remarks> It is up to the caller to determine whether the project text is editable. </remarks>
-        public async Task PutBookText(
+        public async Task<int> PutBookText(
             UserSecret userSecret,
             string projectPTId,
             int bookNum,
@@ -953,6 +953,7 @@ namespace SIL.XForge.Scripture.Services
                 throw new ArgumentException(nameof(projectPTId));
             }
 
+            int booksUpdated = 0;
             StringBuilder log = new StringBuilder(
                 $"ParatextService.PutBookText(userSecret, projectPTId {projectPTId}, bookNum {bookNum}, usx {usx}, chapterAuthors: {(chapNumToAuthorUserSFIdMap == null ? "null" : ($"count {chapNumToAuthorUserSFIdMap.Count}"))})"
             );
@@ -994,6 +995,7 @@ namespace SIL.XForge.Scripture.Services
                     log.AppendLine($"Using current user ({userSecret.Id}) to write book {bookNum} to {scrText.Name}.");
                     // If we don't have chapter authors, update book as current user
                     WriteChapterToScrText(scrText, userSecret.Id, bookNum, 0, usfm);
+                    booksUpdated++;
                 }
                 else
                 {
@@ -1042,6 +1044,8 @@ namespace SIL.XForge.Scripture.Services
                             // If the author does not have permission, attempt to run as the current user
                             WriteChapterToScrText(scrText, userSecret.Id, bookNum, 0, usfm);
                         }
+
+                        booksUpdated++;
                     }
                     else
                     {
@@ -1081,6 +1085,8 @@ namespace SIL.XForge.Scripture.Services
                                 log.AppendLine($"Not processing erroneous chapter number '{chapterNum}'");
                             }
                         }
+
+                        booksUpdated++;
                     }
                 }
             }
@@ -1103,6 +1109,8 @@ namespace SIL.XForge.Scripture.Services
                 // Clear the collection to release the references to the ScrTexts for GC
                 scrTexts.Clear();
             }
+
+            return booksUpdated;
         }
 
         /// <summary> Get notes from the Paratext project folder. </summary>
@@ -1125,11 +1133,11 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary> Write up-to-date notes from the mongo database to the Paratext project folder </summary>
-        public void PutNotes(UserSecret userSecret, string projectId, string notesText)
+        public SyncMetricInfo PutNotes(UserSecret userSecret, string projectId, string notesText)
         {
             // TODO: should accept some data structure instead of XML
             var changeList = NotesFormatter.ParseNotes(notesText, new SFParatextUser(GetParatextUsername(userSecret)));
-            PutCommentThreads(userSecret, projectId, changeList);
+            return PutCommentThreads(userSecret, projectId, changeList);
         }
 
         /// <summary>
@@ -1273,7 +1281,7 @@ namespace SIL.XForge.Scripture.Services
             return changes;
         }
 
-        public async Task UpdateParatextCommentsAsync(
+        public async Task<SyncMetricInfo> UpdateParatextCommentsAsync(
             UserSecret userSecret,
             string projectId,
             int bookNum,
@@ -1293,7 +1301,7 @@ namespace SIL.XForge.Scripture.Services
                     ptProjectUsers
                 );
 
-            PutCommentThreads(userSecret, projectId, noteThreadChangeList);
+            return PutCommentThreads(userSecret, projectId, noteThreadChangeList);
         }
 
         /// <summary>
@@ -1808,7 +1816,7 @@ namespace SIL.XForge.Scripture.Services
             return threads.Where(t => !t.Id.StartsWith("ANSWER_"));
         }
 
-        private void PutCommentThreads(
+        private SyncMetricInfo PutCommentThreads(
             UserSecret userSecret,
             string projectId,
             List<List<Paratext.Data.ProjectComments.Comment>> changeList
@@ -1816,9 +1824,7 @@ namespace SIL.XForge.Scripture.Services
         {
             string username = GetParatextUsername(userSecret);
             List<string> users = new List<string>();
-            int nbrAddedComments = 0,
-                nbrDeletedComments = 0,
-                nbrUpdatedComments = 0;
+            SyncMetricInfo syncMetricInfo = new SyncMetricInfo();
             ScrText scrText = ScrTextCollection.FindById(username, projectId);
             if (scrText == null)
                 throw new DataNotFoundException("Can't get access to cloned project.");
@@ -1836,19 +1842,19 @@ namespace SIL.XForge.Scripture.Services
                     if (existingComment == null)
                     {
                         manager.AddComment(comment);
-                        nbrAddedComments++;
+                        syncMetricInfo.Added++;
                     }
                     else if (comment.Deleted)
                     {
                         existingComment.Deleted = true;
-                        nbrDeletedComments++;
+                        syncMetricInfo.Deleted++;
                     }
                     else
                     {
                         existingComment.ExternalUser = comment.ExternalUser;
                         existingComment.Contents = comment.Contents;
                         existingComment.VersionNumber += 1;
-                        nbrUpdatedComments++;
+                        syncMetricInfo.Updated++;
                     }
 
                     if (!users.Contains(comment.User))
@@ -1862,21 +1868,23 @@ namespace SIL.XForge.Scripture.Services
                     manager.SaveUser(user, false);
                 _paratextDataHelper.CommitVersionedText(
                     scrText,
-                    $"{nbrAddedComments} notes added and "
-                        + $"{nbrDeletedComments + nbrUpdatedComments} notes updated or deleted in synchronize"
+                    $"{syncMetricInfo.Added} notes added and "
+                        + $"{syncMetricInfo.Deleted + syncMetricInfo.Updated} notes updated or deleted in synchronize"
                 );
                 _logger.LogInformation(
                     "{0} added {1} notes, updated {2} notes and deleted {3} notes",
                     userSecret.Id,
-                    nbrAddedComments,
-                    nbrUpdatedComments,
-                    nbrDeletedComments
+                    syncMetricInfo.Added,
+                    syncMetricInfo.Updated,
+                    syncMetricInfo.Deleted
                 );
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "Exception while updating notes: {0}", e.Message);
             }
+
+            return syncMetricInfo;
         }
 
         private CommentTags GetCommentTags(UserSecret userSecret, string projectId)
