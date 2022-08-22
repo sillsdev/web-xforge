@@ -12,6 +12,7 @@ export function fetchSnapshotByVersion(
   version: number
 ): Promise<Snapshot>;
 export function fetchDoc(doc: Doc): Promise<void>;
+export function deleteDoc(doc: Doc): Promise<void>;
 export function submitDocOp(doc: Doc, op: any): Promise<void>;
 export function colored(colorCode: number, textToColor: string): string;
 export type ConnectionSettings = { dbLocation: string; wsConnectionString: string; origin: string };
