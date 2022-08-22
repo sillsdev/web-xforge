@@ -98,6 +98,16 @@ export interface RemotePresences {
   [id: string]: PresenceData;
 }
 
+/** Represents the position of an embed. */
+interface EmbedPosition {
+  position: number;
+  /**
+   * The editor position of an embed with the same embed id as the one located at position.
+   * When this is set it is necessary to clean up duplicate embeds as early as possible.
+   */
+  duplicatePosition?: number;
+}
+
 class SegmentInfo {
   length: number = 0;
   origRef?: string;
@@ -137,7 +147,7 @@ export class TextViewModel {
    * A mapping of IDs of elements embedded into the quill editor to their positions.
    * These elements are in addition to the text data i.e. Note threads
    */
-  private _embeddedElements: Map<string, number> = new Map<string, number>();
+  private _embeddedElements: Map<string, EmbedPosition> = new Map<string, EmbedPosition>();
 
   private onPresenceReceive = (_presenceId: string, _presenceData: PresenceData | null) => {};
 
@@ -156,7 +166,11 @@ export class TextViewModel {
   }
 
   get embeddedElements(): Map<string, number> {
-    return this._embeddedElements;
+    const embeddedElements: Map<string, number> = new Map<string, number>();
+    for (const [embedId, embedPosition] of this._embeddedElements.entries()) {
+      embeddedElements.set(embedId, embedPosition.position);
+    }
+    return embeddedElements;
   }
 
   get isLoaded(): boolean {
@@ -173,6 +187,10 @@ export class TextViewModel {
 
   get areOpsCorrupted(): boolean {
     return this.textDoc?.isLoaded === true && this.textDoc.data?.ops != null && isBadDelta(this.textDoc.data.ops);
+  }
+
+  private get embedPositions(): number[] {
+    return this.embeddedElementPositions(Array.from(this._embeddedElements.values()));
   }
 
   /** Associate the existing editor to a (single) specific textdoc. */
@@ -286,6 +304,11 @@ export class TextViewModel {
       if (updateDelta.ops != null && updateDelta.ops.length > 0) {
         // Clean up blanks in quill editor. This may result in re-entering the update() method.
         editor.updateContents(updateDelta, source);
+      }
+
+      const removeDuplicateDelta: DeltaStatic = this.fixDeltaForDuplicateEmbeds();
+      if (removeDuplicateDelta.ops && removeDuplicateDelta.ops.length > 0) {
+        editor.updateContents(removeDuplicateDelta, 'api');
       }
     });
   }
@@ -476,8 +499,8 @@ export class TextViewModel {
 
   /** Returns editor range information that corresponds to a text position past an editor position. */
   getEditorContentRange(startEditorPosition: number, textPosPast: number): EditorRange {
-    const embedEditorPositions = Array.from(this.embeddedElements.values());
-    const leadingEmbedCount = this.countSequentialEmbedsStartingAt(startEditorPosition);
+    const embedEditorPositions: number[] = this.embedPositions;
+    const leadingEmbedCount: number = this.countSequentialEmbedsStartingAt(startEditorPosition);
     let resultingEditorPos = startEditorPosition + leadingEmbedCount;
     let textCharactersFound = 0;
     let embedsWithinRange = leadingEmbedCount;
@@ -501,7 +524,7 @@ export class TextViewModel {
   }
 
   private countSequentialEmbedsStartingAt(startEditorPosition: number): number {
-    const embedEditorPositions = Array.from(this.embeddedElements.values());
+    const embedEditorPositions = this.embedPositions;
     // add up the leading embeds
     let leadingEmbedCount = 0;
     while (embedEditorPositions.includes(startEditorPosition + leadingEmbedCount)) {
@@ -658,7 +681,19 @@ export class TextViewModel {
         } else if (op.insert['note-thread-embed'] != null) {
           // record the presence of an embedded note in the segment
           const id = op.attributes != null && op.attributes['threadid'];
-          this._embeddedElements.set(id, curIndex + curSegment.length - 1);
+          let embedPosition: EmbedPosition | undefined = this._embeddedElements.get(id);
+          const position: number = curIndex + curSegment.length - 1;
+          if (embedPosition == null) {
+            embedPosition = { position };
+            this._embeddedElements.set(id, embedPosition);
+          } else {
+            if (embedPosition.duplicatePosition != null) {
+              console.warn(
+                'Warning: text-view-model.updateSegments() did not expect to encounter an embed with >2 positions'
+              );
+            }
+            embedPosition.duplicatePosition = position;
+          }
           curSegment.notesCount++;
         }
       }
@@ -714,6 +749,31 @@ export class TextViewModel {
       fixDelta = fixDelta.compose(delta);
     }
     return [fixDelta, fixOffset];
+  }
+
+  private embeddedElementPositions(embeds: EmbedPosition[]): number[] {
+    let result: number[] = [];
+    for (const ep of embeds.values()) {
+      result.push(ep.position);
+      if (ep.duplicatePosition != null) {
+        result.push(ep.duplicatePosition);
+      }
+    }
+    return result;
+  }
+
+  private fixDeltaForDuplicateEmbeds(): DeltaStatic {
+    let delta = new Delta();
+    const duplicatePositions: EmbedPosition[] = Array.from(this._embeddedElements.values()).filter(
+      ep => ep.duplicatePosition != null
+    );
+
+    const deletePositions: number[] = this.embeddedElementPositions(duplicatePositions).sort((a, b) => a - b);
+    for (const pos of deletePositions) {
+      const deleteDelta = new Delta().retain(pos).delete(1);
+      delta = deleteDelta.compose(delta);
+    }
+    return delta.chop();
   }
 
   private checkEditor(): Quill {
@@ -818,18 +878,19 @@ export class TextViewModel {
   }
 
   /** Gets the number of embeds in a given range displayed in the quill editor. */
-  private getEmbedsInEditorRange(startIndex: number, length: number): number {
-    const indices: IterableIterator<number> = this._embeddedElements.values();
-    const opEndIndex: number = startIndex + length;
+  private getEmbedsInEditorRange(startPos: number, length: number): number {
+    const embedPositions = this.embedPositions;
+    const opEndIndex: number = startPos + length;
     let embeddedElementsCount: number = 0;
-    for (const embedIndex of indices) {
-      if (embedIndex < startIndex) {
+    for (const embedPos of embedPositions) {
+      if (embedPos < startPos) {
         continue;
-      } else if (embedIndex >= startIndex && embedIndex < opEndIndex) {
-        embeddedElementsCount++;
-      } else {
-        break;
       }
+      if (embedPos >= startPos && embedPos < opEndIndex) {
+        embeddedElementsCount++;
+        continue;
+      }
+      break;
     }
     return embeddedElementsCount;
   }
