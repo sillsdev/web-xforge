@@ -5,6 +5,7 @@ import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils
 import * as RichText from 'rich-text';
 import { BehaviorSubject } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
+import { DialogService } from 'xforge-common/dialog.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -22,6 +23,7 @@ import { CheckingTextComponent } from './checking-text.component';
 const mockedPwaService = mock(PwaService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
+const mockedDialogService = mock(DialogService);
 
 describe('CheckingTextComponent', () => {
   configureTestingModule(() => ({
@@ -36,7 +38,8 @@ describe('CheckingTextComponent', () => {
     providers: [
       { provide: PwaService, useMock: mockedPwaService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
-      { provide: UserService, useMock: mockedUserService }
+      { provide: UserService, useMock: mockedUserService },
+      { provide: DialogService, useMock: mockedDialogService }
     ]
   }));
 

@@ -2,6 +2,6 @@
   <span>{{ type }}</span>
   <button mat-icon-button mat-dialog-close><mat-icon>close</mat-icon></button>
 </h1>
-<mat-dialog-content class="content-padding" [ngClass]="{ rtl: isRtl, ltr: !isRtl }">
+<mat-dialog-content class="content-padding" [dir]="direction">
   {{ text }}
 </mat-dialog-content>

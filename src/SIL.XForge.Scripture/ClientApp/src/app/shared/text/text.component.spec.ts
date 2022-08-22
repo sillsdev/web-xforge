@@ -23,7 +23,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { MockConsole } from 'xforge-common/mock-console';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
-import { MatDialog } from '@angular/material/dialog';
+import { DialogService } from 'xforge-common/dialog.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
@@ -47,7 +47,7 @@ const mockedProjectService = mock(SFProjectService);
 const mockedTranslocoService = mock(TranslocoService);
 const mockedUserService = mock(UserService);
 const mockedConsole: MockConsole = MockConsole.install();
-const mockedMatDialog = mock(MatDialog);
+const mockedDialogService = mock(DialogService);
 
 describe('TextComponent', () => {
   configureTestingModule(() => ({
@@ -66,7 +66,7 @@ describe('TextComponent', () => {
       { provide: PwaService, useMock: mockedPwaService },
       { provide: TranslocoService, useMock: mockedTranslocoService },
       { provide: UserService, useMock: mockedUserService },
-      { provide: MatDialog, useMock: mockedMatDialog }
+      { provide: DialogService, useMock: mockedDialogService }
     ]
   }));
   beforeEach(() => {
@@ -2879,7 +2879,7 @@ describe('TextComponent', () => {
       expect(note).withContext(noteStyle).not.toBeNull();
       note!.click();
     });
-    verify(mockedMatDialog.open(TextNoteDialogComponent, anything())).thrice();
+    verify(mockedDialogService.openMatDialog(TextNoteDialogComponent, anything())).thrice();
   }));
 });
 
