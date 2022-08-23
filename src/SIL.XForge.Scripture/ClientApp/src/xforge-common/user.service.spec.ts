@@ -50,7 +50,7 @@ describe('UserService', () => {
     expect(user.data!.sites['sf'].currentProjectId).toEqual('project02');
 
     // remove current project id
-    env.service.setCurrentProjectId(user);
+    env.service.setCurrentProjectId(user, undefined);
     expect(user.data!.sites['sf'].currentProjectId).toBeUndefined();
   });
 });
