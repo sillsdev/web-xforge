@@ -504,7 +504,7 @@ describe('SettingsComponent', () => {
       env.setDialogResponse(true);
       env.wait();
       env.clickElement(env.deleteProjectButton);
-      verify(mockedUserService.setCurrentProjectId()).once();
+      verify(mockedUserService.setCurrentProjectId(anything(), undefined)).once();
       verify(mockedSFProjectService.onlineDelete(anything())).once();
       expect(env.location.path()).toEqual('/projects');
     }));
@@ -515,7 +515,7 @@ describe('SettingsComponent', () => {
       env.setDialogResponse(false);
       env.wait();
       env.clickElement(env.deleteProjectButton);
-      verify(mockedUserService.setCurrentProjectId()).never();
+      verify(mockedUserService.setCurrentProjectId(anything(), undefined)).never();
       verify(mockedSFProjectService.onlineDelete(anything())).never();
       expect().nothing();
     }));

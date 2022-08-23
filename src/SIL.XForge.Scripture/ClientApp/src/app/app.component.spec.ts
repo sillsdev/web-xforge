@@ -224,7 +224,7 @@ describe('AppComponent', () => {
     // SUT
     env.deleteProject('project01', false);
     verify(mockedMdcDialog.open(ProjectDeletedDialogComponent)).once();
-    verify(mockedUserService.setCurrentProjectId(anything())).once();
+    verify(mockedUserService.setCurrentProjectId(anything(), undefined)).once();
     env.confirmProjectDeletedDialog();
     // Get past setTimeout to navigation
     tick();
@@ -241,7 +241,7 @@ describe('AppComponent', () => {
     env.init();
 
     expect(env.isDrawerVisible).toEqual(false);
-    verify(mockedUserService.setCurrentProjectId(anything())).once();
+    verify(mockedUserService.setCurrentProjectId(anything(), undefined)).once();
     expect(env.location.path()).toEqual('/projects');
   }));
 
