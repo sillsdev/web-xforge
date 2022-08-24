@@ -2336,7 +2336,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('user cannot edit a chapter with permission', fakeAsync(() => {
+    it('translator cannot edit a chapter without edit permission on chapter', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setupProject({ translateConfig: defaultTranslateConfig });
       env.setCurrentUser('user03');
@@ -2350,8 +2350,11 @@ describe('EditorComponent', () => {
       expect(env.component.target!.segmentRef).toEqual('');
       const selection = env.targetEditor.getSelection();
       expect(selection).toBeNull();
+      expect(env.component.userHasGeneralEditRight).toBe(true);
+      expect(env.component.hasChapterEditPermission).toBe(false);
       expect(env.component.canEdit).toBe(false);
       expect(env.isSourceAreaHidden).toBe(true);
+      expect(env.noChapterEditPermissionMessage).toBeTruthy();
       env.dispose();
     }));
 
@@ -2741,6 +2744,10 @@ class TestEnvironment {
 
   get outOfSyncWarning(): DebugElement {
     return this.fixture.debugElement.query(By.css('.out-of-sync-warning'));
+  }
+
+  get noChapterEditPermissionMessage(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.no-edit-permission-message'));
   }
 
   get isSourceAreaHidden(): boolean {
