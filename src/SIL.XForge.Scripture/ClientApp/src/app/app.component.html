@@ -236,7 +236,7 @@
             [class.list-item-disabled]="!isAppOnline"
             (click)="itemSelected()"
           >
-            <mat-icon mat-list-icon>sync</mat-icon>
+            <mat-icon mat-list-icon matBadge="error" [matBadgeHidden]="!lastSyncFailed" id="sync-icon">sync</mat-icon>
             {{ t("synchronize") }}
           </a>
         </div>
