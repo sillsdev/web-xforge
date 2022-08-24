@@ -10,7 +10,6 @@ import {
   ViewChild
 } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
-import { clone } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import merge from 'lodash-es/merge';
 import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
@@ -64,7 +63,7 @@ export interface TextUpdatedEvent {
   delta?: DeltaStatic;
   prevSegment?: Segment;
   segment?: Segment;
-  oldVerseEmbeds?: Map<string, number>;
+  affectedEmbeds?: EmbedsByVerse[];
   isLocalUpdate?: boolean;
 }
 
@@ -79,6 +78,12 @@ export interface FeaturedVerseRefInfo {
   icon: NoteThreadIcon;
   preview?: string;
   highlight?: boolean;
+}
+
+/** A verse's range and the embeds located within the range. */
+export interface EmbedsByVerse {
+  verseRange: RangeStatic;
+  embeds: Map<string, number>;
 }
 
 /** View of an editable text document. Used for displaying Scripture. */
@@ -601,12 +606,14 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   /** Respond to text changes in the quill editor. */
   onContentChanged(delta: DeltaStatic, source: string): void {
+    const preDeltaSegmentCache: IterableIterator<[string, RangeStatic]> = this.viewModel.segmentsSnapshot;
+    const preDeltaEmbedCache: Readonly<Map<string, number>> = this.viewModel.embeddedElementsSnapshot;
     this.viewModel.update(delta, source as Sources);
     this.updatePlaceholderText();
     // skip updating when only formatting changes occurred
     if (delta.ops != null && delta.ops.some(op => op.insert != null || op.delete != null)) {
       const isUserEdit: boolean = source === 'user';
-      this.update(delta, isUserEdit);
+      this.update(delta, preDeltaSegmentCache, preDeltaEmbedCache, isUserEdit);
     }
   }
 
@@ -851,7 +858,12 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
   }
 
-  private update(delta?: DeltaStatic, isUserEdit?: boolean): void {
+  private update(
+    delta?: DeltaStatic,
+    preDeltaSegmentCache?: IterableIterator<[string, RangeStatic]>,
+    preDeltaEmbedCache?: Readonly<Map<string, number>>,
+    isUserEdit?: boolean
+  ): void {
     let segmentRef: string | undefined;
     let checksum: number | undefined;
     let focus: boolean | undefined;
@@ -894,14 +906,11 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     const prevSegment = this._segment;
-    let oldVerseEmbedsToUpdate: Map<string, number> | undefined;
     if (segmentRef != null) {
       // update/switch current segment
       if (!this.tryChangeSegment(segmentRef, checksum, focus) && this._segment != null) {
         // the selection has not changed to a different segment, so update existing segment
-        const oldVerseEmbeds: Map<string, number> = clone(this._segment.embeddedElements);
         this.updateSegment();
-        oldVerseEmbedsToUpdate = oldVerseEmbeds;
         if (this._highlightSegment) {
           // ensure that the currently selected segment is highlighted
           this.highlight();
@@ -911,11 +920,13 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     Promise.resolve().then(() => this.adjustSelection());
+    const affectedEmbeds: EmbedsByVerse[] =
+      isUserEdit === true ? this.getEmbedsAffectedByDelta(delta, preDeltaSegmentCache, preDeltaEmbedCache) : [];
     this.updated.emit({
       delta,
       prevSegment,
       segment: this._segment,
-      oldVerseEmbeds: oldVerseEmbedsToUpdate,
+      affectedEmbeds,
       isLocalUpdate: isUserEdit
     });
   }
@@ -986,24 +997,103 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       return;
     }
 
-    const matchArray: RegExpExecArray | null = VERSE_REGEX.exec(this._segment.ref);
-    const baseVerse = matchArray == null ? this._segment.ref : matchArray[0];
-    const startSegmentRange: RangeStatic | undefined = this.viewModel.getSegmentRange(baseVerse);
     const segmentRange: RangeStatic | undefined = this.viewModel.getSegmentRange(this._segment.ref);
     if (segmentRange == null) {
       return;
     }
 
-    const endIndex: number = this.getVerseEndIndex(baseVerse) ?? segmentRange.index + segmentRange.length;
-    const startIndex: number = startSegmentRange?.index ?? segmentRange.index;
     const text = this.viewModel.getSegmentText(this._segment.ref);
-    const verseEmbeddedElements: Map<string, number> = new Map<string, number>();
-    for (const [threadId, index] of this.embeddedElements.entries()) {
-      if (index >= startIndex && index < endIndex) {
-        verseEmbeddedElements.set(threadId, index);
+    this._segment.update(text, segmentRange);
+  }
+
+  /** Gets the embeds affected */
+  private getEmbedsAffectedByDelta(
+    delta?: DeltaStatic,
+    preDeltaSegmentCache?: IterableIterator<[string, RangeStatic]>,
+    preDeltaEmbedCache?: Readonly<Map<string, number>>
+  ): EmbedsByVerse[] {
+    if (delta?.ops == null || preDeltaSegmentCache == null || preDeltaEmbedCache == null) {
+      return [];
+    }
+    let verseIsEdited = false;
+    let currentVerse: string = '';
+    let currentVerseRange: RangeStatic = { index: 0, length: 0 };
+    let embedsByVerse = new Map<string, number>();
+    const editPositions: number[] = this.getEditPositionsInDelta(delta);
+    const embedsByEditedVerse: EmbedsByVerse[] = [];
+    // content before verse 1 are considered to be in verse 0
+    let baseVerse: string = '0';
+    for (const [segment, range] of preDeltaSegmentCache) {
+      // if we cannot determine the base verse, consider it as part of the previous verse
+      baseVerse = this.getBaseVerse(segment) ?? baseVerse;
+      if (currentVerse === '') {
+        // set the current verse and range on the first pass
+        currentVerse = baseVerse;
+        currentVerseRange = range;
+      }
+      if (currentVerse !== baseVerse) {
+        // this segment belongs to a new verse, add the embeds if the previous verse has been edited
+        if (verseIsEdited) {
+          embedsByEditedVerse.push({ embeds: embedsByVerse, verseRange: currentVerseRange });
+        }
+        embedsByVerse = new Map<string, number>();
+        currentVerse = baseVerse;
+        currentVerseRange = range;
+        verseIsEdited = false;
+      } else {
+        const lengthFromVerseStart: number = range.index + range.length - currentVerseRange.index;
+        currentVerseRange.length = lengthFromVerseStart;
+      }
+
+      const editedPositionsWithinRange: number[] = editPositions.filter(
+        pos => pos >= range.index && pos <= range.index + range.length
+      );
+      if (editedPositionsWithinRange.length > 0) {
+        verseIsEdited = true;
+      }
+
+      for (const [embedId, embedPosition] of preDeltaEmbedCache.entries()) {
+        if (embedPosition >= range.index && embedPosition < range.index + range.length) {
+          embedsByVerse.set(embedId, embedPosition);
+        }
       }
     }
-    this._segment.update(text, segmentRange, verseEmbeddedElements);
+
+    // set the embeds for the final verse
+    if (verseIsEdited) {
+      embedsByEditedVerse.push({ embeds: embedsByVerse, verseRange: currentVerseRange });
+    }
+    return embedsByEditedVerse;
+  }
+
+  private getEditPositionsInDelta(delta: DeltaStatic): number[] {
+    let curIndex = 0;
+    const editPositions: number[] = [];
+    if (delta.ops == null) {
+      return editPositions;
+    }
+
+    for (const op of delta.ops) {
+      if (op.insert != null) {
+        editPositions.push(curIndex);
+      } else if (op.delete != null) {
+        editPositions.push(curIndex);
+        curIndex += op.delete;
+      } else {
+        // increase the current index by the value in the retain
+        curIndex += op.retain == null ? 0 : op.retain;
+      }
+    }
+    return editPositions;
+  }
+
+  /**
+   * Returns the base verse of the segment ref. e.g. 'verse_1_5'
+   * @return The segment ref of the first segment in the verse, or undefined if the segment does not belong to a verse.
+   */
+  private getBaseVerse(segmentRef: string): string | undefined {
+    const matchArray: RegExpExecArray | null = VERSE_REGEX.exec(segmentRef);
+    return matchArray == null ? undefined : matchArray[0];
   }
 
   private getVerseEndIndex(baseRef: string): number | undefined {
@@ -1053,11 +1143,11 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       }
       const newEnd: number = Math.min(oldEnd, segEnd);
 
-      const embedIndices: number[] = Array.from(this._segment.embeddedElements.values()).sort();
-      if (newStart === this._segment.range.index || embedIndices.includes(newStart - 1)) {
+      const embedPositions: number[] = Array.from(this.embeddedElements.values()).sort();
+      if (newStart === this._segment.range.index || embedPositions.includes(newStart - 1)) {
         // if the selection is before an embed at the start of the segment or
         // the selection is between embeds, move the selection behind it
-        while (embedIndices.includes(newStart)) {
+        while (embedPositions.includes(newStart)) {
           newStart++;
         }
       }

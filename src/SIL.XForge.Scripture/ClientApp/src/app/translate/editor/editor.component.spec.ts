@@ -1816,6 +1816,71 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('update note thread anchors when multiple edits within a verse', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      const origNoteAnchor: TextAnchor = { start: 8, length: 9 };
+      expect(noteThreadDoc.data!.position).toEqual(origNoteAnchor);
+
+      const notePosition: number = env.getNoteThreadEditorPosition('thread01');
+      const deleteStart: number = notePosition + 1;
+      const text = 'chap';
+
+      //  target: $chapter 1, verse 1.
+      // move this ----    here ^
+      const deleteOps: DeltaOperation[] = [{ retain: deleteStart }, { delete: text.length }];
+      const deleteDelta: DeltaStatic = new Delta(deleteOps);
+      env.targetEditor.setSelection(deleteStart, text.length);
+      // simulate a drag and drop operation, which include a delete and an insert operation
+      env.targetEditor.updateContents(deleteDelta, 'user');
+      tick();
+      env.fixture.detectChanges();
+      const insertStart: number = notePosition + 'ter 1, ver'.length;
+      const insertOps: DeltaOperation[] = [{ retain: insertStart }, { insert: text }];
+      const insertDelta: DeltaStatic = new Delta(insertOps);
+      env.targetEditor.updateContents(insertDelta, 'user');
+
+      env.wait();
+      const expectedNoteAnchor: TextAnchor = {
+        start: origNoteAnchor.start,
+        length: origNoteAnchor.length - text.length
+      };
+      expect(noteThreadDoc.data!.position).toEqual(expectedNoteAnchor);
+      // SUT
+      env.triggerUndo();
+      // this triggers undoing the drag and drop in one delta
+      expect(noteThreadDoc.data!.position).toEqual(origNoteAnchor);
+      env.dispose();
+    }));
+
+    it('updates note anchor for non-verse segments', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      const origThread06Pos: TextAnchor = { start: 38, length: 7 };
+      env.addParatextNoteThread(6, 'LUK 1:2-3', 'section', origThread06Pos, ['user01']);
+      env.wait();
+      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.wait();
+      const textBeforeNote = 'Text in ';
+      let range: RangeStatic = env.component.target!.getSegmentRange('s_2')!;
+      let notePosition: number = env.getNoteThreadEditorPosition('thread06');
+      expect(range.index + textBeforeNote.length).toEqual(notePosition);
+      const thread06Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread06');
+      let textAnchor: TextAnchor = thread06Doc.data!.position;
+      expect(textAnchor).toEqual(origThread06Pos);
+
+      const verse2_3Range: RangeStatic = env.component.target!.getSegmentRange('verse_1_2-3')!;
+      env.targetEditor.setSelection(verse2_3Range.index + verse2_3Range.length);
+      env.wait();
+      env.typeCharacters('T');
+      textAnchor = thread06Doc.data!.position;
+      expect(textAnchor).toEqual({ start: origThread06Pos.start + 1, length: origThread06Pos.length });
+      env.dispose();
+    }));
+
     it('can display note dialog', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
