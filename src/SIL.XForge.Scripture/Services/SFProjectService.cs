@@ -602,13 +602,17 @@ namespace SIL.XForge.Scripture.Services
                 string projectRole;
                 // Attempt to get the role for the user from the Paratext registry
                 Attempt<string> attempt = await TryGetProjectRoleAsync(project, curUserId);
-                if (!attempt.TryResult(out projectRole))
+                if (attempt.TryResult(out projectRole))
                 {
-                    // Get the project role that is specified in the sharekey
-                    Attempt<SFProjectSecret> psAttempt = await ProjectSecrets.TryGetAsync(projectId);
-                    if (psAttempt.TryResult(out SFProjectSecret ps))
-                        projectRole = ps.ShareKeys.SingleOrDefault(sk => sk.Key == shareKey)?.ProjectRole;
+                    // Add the user and remove the specific user share key if it exists.
+                    await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, true);
+                    return;
                 }
+
+                // Get the project role that is specified in the sharekey
+                Attempt<SFProjectSecret> psAttempt = await ProjectSecrets.TryGetAsync(projectId);
+                if (psAttempt.TryResult(out SFProjectSecret ps))
+                    projectRole = ps.ShareKeys.SingleOrDefault(sk => sk.Key == shareKey)?.ProjectRole;
                 // The share key was invalid
                 if (projectRole == null)
                     throw new ForbiddenException();
