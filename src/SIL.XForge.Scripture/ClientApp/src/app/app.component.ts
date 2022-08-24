@@ -414,9 +414,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         if (this._projectSelect != null) {
           this._projectSelect.value = this.selectedProjectDoc.id;
         }
-        if (this.currentUserDoc != null) {
-          await this.userService.setCurrentProjectId(this.currentUserDoc, this.selectedProjectDoc.id);
-        }
+        await this.userService.setCurrentProjectId(this.currentUserDoc!, this.selectedProjectDoc.id);
 
         this.checkCheckingBookQuestions();
         this.checkDeviceStorage();
@@ -591,9 +589,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   private async showProjectDeletedDialog(): Promise<void> {
-    if (this.currentUserDoc != null) {
-      await this.userService.setCurrentProjectId(this.currentUserDoc, undefined);
-    }
+    await this.userService.setCurrentProjectId(this.currentUserDoc!, undefined);
     this.projectDeletedDialogRef = this.dialog.open(ProjectDeletedDialogComponent);
     this.projectDeletedDialogRef.afterClosed().subscribe(() => this.navigateToStart());
   }

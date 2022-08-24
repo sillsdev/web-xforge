@@ -3,6 +3,7 @@ import { MdcDialog } from '@angular-mdc/web';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { TestBed } from '@angular/core/testing';
 import { User } from 'realtime-server/lib/esm/common/models/user';
+import { verify } from 'ts-mockito';
 import { CURRENT_PROJECT_ID_SETTING, UserService } from './user.service';
 import { AuthService } from './auth.service';
 import { CommandService } from './command.service';
@@ -48,10 +49,12 @@ describe('UserService', () => {
     expect(user.data!.sites['sf'].currentProjectId).toEqual('project01');
     env.service.setCurrentProjectId(user, 'project02');
     expect(user.data!.sites['sf'].currentProjectId).toEqual('project02');
+    verify(mockedLocalSettingsService.set(CURRENT_PROJECT_ID_SETTING, 'project02')).once();
 
     // remove current project id
     env.service.setCurrentProjectId(user, undefined);
     expect(user.data!.sites['sf'].currentProjectId).toBeUndefined();
+    verify(mockedLocalSettingsService.set(CURRENT_PROJECT_ID_SETTING, undefined)).once();
   });
 });
 
