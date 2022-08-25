@@ -586,10 +586,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.syncScroll();
     }
 
-    if (delta != null) {
+    if (delta != null && this.shouldNoteThreadsRespondToEdits) {
       // wait 20 ms so that note thread docs have time to receive the updated note positions
       setTimeout(() => {
-        this.recreateDeletedNoteThreadEmbeds();
+        this.toggleNoteThreadVerses(true);
         if (segment != null) {
           this.subscribeClickEvents([segment.ref]);
         }
@@ -734,6 +734,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
+  /** Insert or remove note thread embeds into the quill editor. */
   private toggleNoteThreadVerses(value: boolean): void {
     if (this.target?.editor == null || this.noteThreadQuery == null || this.bookNum == null || this._chapter == null) {
       return;
@@ -746,14 +747,21 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         featureVerseRefInfo.push(featured);
       }
     }
-    const noteThreadVerseRefs: VerseRef[] = featureVerseRefInfo.map(f => f.verseRef);
 
+    const noteThreadVerseRefs: Set<VerseRef> = new Set<VerseRef>();
     if (value) {
       for (const featured of featureVerseRefInfo) {
-        this.embedNoteThread(featured);
+        if (!this.target.embeddedElements.has(featured.id)) {
+          this.embedNoteThread(featured);
+          noteThreadVerseRefs.add(featured.verseRef);
+        }
       }
       // add the formatting to mark featured verses after notes are embedded
-      const segments: string[] = this.target.toggleFeaturedVerseRefs(value, noteThreadVerseRefs, 'note-thread');
+      const segments: string[] = this.target.toggleFeaturedVerseRefs(
+        value,
+        Array.from(noteThreadVerseRefs.values()),
+        'note-thread'
+      );
       this.subscribeClickEvents(segments);
     } else {
       this.removeEmbeddedElements();
@@ -1420,31 +1428,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         nt.data.verseRef.chapterNum === this.chapter &&
         nt.data.notes.length > 0
     );
-  }
-
-  /** Re-create any note embeds that have been deleted by the user. */
-  private recreateDeletedNoteThreadEmbeds(): void {
-    if (this.target == null || !this.shouldNoteThreadsRespondToEdits) {
-      return;
-    }
-    const currentNotes: Readonly<Map<string, number>> = this.target.embeddedElements;
-    const segmentsToSubscribe: Set<string> = new Set<string>();
-    const noteThreadDocs: NoteThreadDoc[] = this.currentChapterNoteThreadDocs();
-    for (const noteThreadDoc of noteThreadDocs) {
-      if (noteThreadDoc?.data?.dataId == null || currentNotes.has(noteThreadDoc.data.dataId)) {
-        continue;
-      }
-
-      const featured: FeaturedVerseRefInfo | undefined = this.getFeaturedVerseRefInfo(noteThreadDoc);
-      if (featured == null) {
-        continue;
-      }
-      const segment: string | undefined = this.embedNoteThread(featured);
-      if (segment != null && !segmentsToSubscribe.has(segment)) {
-        segmentsToSubscribe.add(segment);
-      }
-    }
-    this.subscribeClickEvents(Array.from(segmentsToSubscribe.values()));
   }
 
   private embedNoteThread(featured: FeaturedVerseRefInfo): string | undefined {

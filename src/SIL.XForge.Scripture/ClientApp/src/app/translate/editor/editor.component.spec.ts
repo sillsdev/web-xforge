@@ -1618,6 +1618,31 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('should re-embed deleted note and allow user to open note dialog', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      const position: number = env.getNoteThreadEditorPosition('thread03');
+      const length = 9;
+      // $target: chapter 1, |->$$verse 3<-|.
+      env.targetEditor.setSelection(position, length, 'api');
+      env.deleteCharacters();
+      const range: RangeStatic = env.component.target!.getSegmentRange('verse_1_3')!;
+      expect(env.getNoteThreadEditorPosition('thread02')).toEqual(range.index);
+      expect(env.getNoteThreadEditorPosition('thread03')).toEqual(range.index + 1);
+      expect(env.getNoteThreadEditorPosition('thread04')).toEqual(range.index + 2);
+
+      for (let i = 0; i <= 2; i++) {
+        const noteThreadId: number = i + 2;
+        const note: HTMLElement = env.getNoteThreadIconElement('verse_1_3', `thread0${noteThreadId}`)!;
+        note.click();
+        env.wait();
+        verify(mockedMatDialog.open(NoteDialogComponent, anything())).times(i + 1);
+      }
+      env.dispose();
+    }));
+
     it('handles deleting parts of two notes text anchors', fakeAsync(() => {
       const env = new TestEnvironment();
       env.addParatextNoteThread(6, 'MAT 1:1', 'verse', { start: 19, length: 5 }, ['user01']);
