@@ -504,7 +504,7 @@ describe('SettingsComponent', () => {
       env.setDialogResponse(true);
       env.wait();
       env.clickElement(env.deleteProjectButton);
-      verify(mockedUserService.setCurrentProjectId()).once();
+      verify(mockedUserService.setCurrentProjectId(anything(), undefined)).once();
       verify(mockedSFProjectService.onlineDelete(anything())).once();
       expect(env.location.path()).toEqual('/projects');
     }));
@@ -515,7 +515,7 @@ describe('SettingsComponent', () => {
       env.setDialogResponse(false);
       env.wait();
       env.clickElement(env.deleteProjectButton);
-      verify(mockedUserService.setCurrentProjectId()).never();
+      verify(mockedUserService.setCurrentProjectId(anything(), undefined)).never();
       verify(mockedSFProjectService.onlineDelete(anything())).never();
       expect().nothing();
     }));
@@ -536,7 +536,6 @@ class TestEnvironment {
     when(mockedSFProjectService.onlineIsSourceProject('project01')).thenResolve(isSource);
     when(mockedSFProjectService.onlineDelete(anything())).thenResolve();
     when(mockedSFProjectService.onlineUpdateSettings('project01', anything())).thenResolve();
-    when(mockedUserService.currentProjectId).thenReturn('project01');
     when(mockedSFProjectService.get('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );

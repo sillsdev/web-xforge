@@ -9,6 +9,7 @@ import { map, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
@@ -201,7 +202,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     const dialogRef = this.dialog.open(DeleteProjectDialogComponent, config);
     dialogRef.afterClosed().subscribe(async result => {
       if (result === 'accept') {
-        this.userService.setCurrentProjectId();
+        const user: UserDoc = await this.userService.getCurrentUser();
+        await this.userService.setCurrentProjectId(user, undefined);
         if (this.projectDoc != null) {
           await this.projectService.onlineDelete(this.projectDoc.id);
           this.router.navigateByUrl('/projects', { replaceUrl: true });
