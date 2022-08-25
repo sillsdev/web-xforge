@@ -139,7 +139,7 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
       pendingOps = this.doc.pendingOps.slice();
 
       if (this.doc.inflightOp != null && this.doc.inflightOp.op != null) {
-        pendingOps.push(this.doc.inflightOp);
+        pendingOps.unshift(this.doc.inflightOp);
       }
     }
     return pendingOps;
