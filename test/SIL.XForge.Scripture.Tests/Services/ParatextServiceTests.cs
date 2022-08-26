@@ -492,8 +492,14 @@ namespace SIL.XForge.Scripture.Services
                 Substitute.For<IExceptionHandler>()
             );
             var newDocUsx = mapper.ToUsx(oldDocUsx, new List<ChapterDelta> { new ChapterDelta(1, 2, true, data) });
-            await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, newDocUsx.Root.ToString());
+            int booksUpdated = await env.Service.PutBookText(
+                userSecret,
+                ptProjectId,
+                ruthBookNum,
+                newDocUsx.Root.ToString()
+            );
             env.ProjectFileManager.Received(1).WriteFileCreatingBackup(Arg.Any<string>(), Arg.Any<Action<string>>());
+            Assert.That(booksUpdated, Is.EqualTo(1));
 
             // PT username is not written to server logs
             env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.Message.Contains(env.Username01));
@@ -515,10 +521,11 @@ namespace SIL.XForge.Scripture.Services
                 + "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
 
             // SUT
-            await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, ruthBookUsx);
+            int booksUpdated = await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, ruthBookUsx);
 
             // Make sure only one ScrText was loaded
             env.MockScrTextCollection.Received(1).FindById(env.Username01, ptProjectId);
+            Assert.That(booksUpdated, Is.EqualTo(1));
 
             // See if there is a message for the user updating the book
             string logMessage = string.Format(
@@ -547,10 +554,17 @@ namespace SIL.XForge.Scripture.Services
             var chapterAuthors = new Dictionary<int, string> { { 1, env.User01 }, { 2, env.User01 }, };
 
             // SUT
-            await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, ruthBookUsx, chapterAuthors);
+            int booksUpdated = await env.Service.PutBookText(
+                userSecret,
+                ptProjectId,
+                ruthBookNum,
+                ruthBookUsx,
+                chapterAuthors
+            );
 
             // Make sure only one ScrText was loaded
             env.MockScrTextCollection.Received(1).FindById(env.Username01, ptProjectId);
+            Assert.That(booksUpdated, Is.EqualTo(1));
 
             // See if there is a message for the user updating the book
             string logMessage = string.Format(
@@ -580,11 +594,18 @@ namespace SIL.XForge.Scripture.Services
             var chapterAuthors = new Dictionary<int, string> { { 1, env.User01 }, { 2, env.User02 }, };
 
             // SUT
-            await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, ruthBookUsx, chapterAuthors);
+            int booksUpdated = await env.Service.PutBookText(
+                userSecret,
+                ptProjectId,
+                ruthBookNum,
+                ruthBookUsx,
+                chapterAuthors
+            );
 
             // Make sure two ScrTexts were loaded
             env.MockScrTextCollection.Received(1).FindById(env.Username01, ptProjectId);
             env.MockScrTextCollection.Received(1).FindById(env.Username02, ptProjectId);
+            Assert.That(booksUpdated, Is.EqualTo(1));
 
             // See if there is a message for the user updating the chapter
             string logMessage = string.Format(
@@ -631,7 +652,7 @@ namespace SIL.XForge.Scripture.Services
             string content = "Content for comment to update.";
             string verseRef = "RUT 1:1";
             string updateNotesString = env.GetUpdateNotesString(threadId, env.User01, date, content, verseRef);
-            env.Service.PutNotes(userSecret, ptProjectId, updateNotesString);
+            var syncMetricInfo = env.Service.PutNotes(userSecret, ptProjectId, updateNotesString);
 
             CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
             Assert.That(thread.Comments.Count, Is.EqualTo(1));
@@ -639,23 +660,26 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(comment.VerseRefStr, Is.EqualTo(verseRef));
             Assert.That(comment.User, Is.EqualTo(env.User01));
             Assert.That(comment.Contents.InnerText, Is.EqualTo(content));
+            Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 0, updated: 0)));
 
             // Edit a comment
             content = "Edited: Content for comment to update.";
             updateNotesString = env.GetUpdateNotesString(threadId, env.User01, date, content, verseRef);
-            env.Service.PutNotes(userSecret, ptProjectId, updateNotesString);
+            syncMetricInfo = env.Service.PutNotes(userSecret, ptProjectId, updateNotesString);
 
             Assert.That(thread.Comments.Count, Is.EqualTo(1));
             comment = thread.Comments.First();
             Assert.That(comment.Contents.InnerText, Is.EqualTo(content));
+            Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 1)));
 
             // Delete a comment
             updateNotesString = env.GetUpdateNotesString(threadId, env.User01, date, content, verseRef, true);
-            env.Service.PutNotes(userSecret, ptProjectId, updateNotesString);
+            syncMetricInfo = env.Service.PutNotes(userSecret, ptProjectId, updateNotesString);
 
             Assert.That(thread.Comments.Count, Is.EqualTo(1));
             comment = thread.Comments.First();
             Assert.That(comment.Deleted, Is.True, "Comment should be marked deleted");
+            Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 1, updated: 0)));
 
             // PT username is not written to server logs
             env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.Message.Contains(env.Username01));
@@ -1921,7 +1945,7 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(thread, Is.Null);
                 IDocument<NoteThread> noteThreadDoc = await env.GetNoteThreadDocAsync(conn, threadId);
                 Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>();
-                await env.Service.UpdateParatextCommentsAsync(
+                var syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
                     userSecret,
                     ptProjectId,
                     40,
@@ -1941,6 +1965,7 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(comment.CommentToString(), Is.EqualTo(expected));
                 Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { env.Username02 }));
                 Assert.That(noteThreadDoc.Data.Notes[0].SyncUserRef, Is.EqualTo("syncuser02"));
+                Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 0, updated: 0)));
 
                 // PT username is not written to server logs
                 env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.Message.Contains(env.Username02));
@@ -1988,7 +2013,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
                 }.ToDictionary(u => u.Username);
-                await env.Service.UpdateParatextCommentsAsync(
+                var syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
                     userSecret,
                     ptProjectId,
                     40,
@@ -2008,6 +2033,7 @@ namespace SIL.XForge.Scripture.Services
                     + "Tag:1";
                 Assert.That(comment.CommentToString(), Is.EqualTo(expected));
                 Assert.That(ptProjectUsers.Count(), Is.EqualTo(1));
+                Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 1)));
 
                 // PT username is not written to server logs
                 env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.Message.Contains(env.Username01));
@@ -2056,7 +2082,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
                 }.ToDictionary(u => u.Username);
-                await env.Service.UpdateParatextCommentsAsync(
+                var syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
                     userSecret,
                     ptProjectId,
                     40,
@@ -2076,6 +2102,7 @@ namespace SIL.XForge.Scripture.Services
                     + "deleted-"
                     + "Tag:1";
                 Assert.That(comment.CommentToString(), Is.EqualTo(expected));
+                Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 1, updated: 0)));
 
                 // PT username is not written to server logs
                 env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.Message.Contains(env.Username01));
@@ -3271,9 +3298,15 @@ namespace SIL.XForge.Scripture.Services
                 PTProjectIds.Add(Project03, HexId.CreateNew());
                 PTProjectIds.Add(Project04, HexId.CreateNew());
 
-                MockJwtTokenHelper.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == User01)).Returns(Username01);
-                MockJwtTokenHelper.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == User02)).Returns(Username02);
-                MockJwtTokenHelper.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == User03)).Returns(Username03);
+                MockJwtTokenHelper
+                    .GetParatextUsername(Arg.Is<UserSecret>(u => u != null && u.Id == User01))
+                    .Returns(Username01);
+                MockJwtTokenHelper
+                    .GetParatextUsername(Arg.Is<UserSecret>(u => u != null && u.Id == User02))
+                    .Returns(Username02);
+                MockJwtTokenHelper
+                    .GetParatextUsername(Arg.Is<UserSecret>(u => u != null && u.Id == User03))
+                    .Returns(Username03);
                 MockJwtTokenHelper.GetJwtTokenFromUserSecret(Arg.Any<UserSecret>()).Returns(accessToken1);
                 MockJwtTokenHelper
                     .RefreshAccessTokenAsync(

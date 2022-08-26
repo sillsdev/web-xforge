@@ -24,7 +24,7 @@ namespace SIL.XForge.Scripture.Models
         public SyncMetricInfo NoteThreads { get; set; } = new SyncMetricInfo();
         public SyncMetricInfo ParatextBooks { get; set; } = new SyncMetricInfo();
         public SyncMetricInfo ParatextNotes { get; set; } = new SyncMetricInfo();
-        public int QuestionsDeleted { get; set; }
+        public SyncMetricInfo Questions { get; set; } = new SyncMetricInfo();
         public bool RepositoryBackupCreated { get; set; }
         public bool RepositoryRestoredFromBackup { get; set; }
         public SyncMetricInfo ResourceUsers { get; set; } = new SyncMetricInfo();
