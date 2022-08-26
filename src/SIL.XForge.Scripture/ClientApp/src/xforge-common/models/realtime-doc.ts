@@ -2,6 +2,7 @@ import { merge, Observable, Subject, Subscription } from 'rxjs';
 import { Presence } from 'sharedb/lib/sharedb';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { RealtimeDocAdapter } from '../realtime-remote-store';
+import { PresenceData } from '../../app/shared/text/text.component';
 import { Snapshot } from './snapshot';
 import { RealtimeOfflineData } from './realtime-offline-data';
 
@@ -62,6 +63,10 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
 
   get collection(): string {
     return this.adapter.collection;
+  }
+
+  get channelPresence(): Presence<PresenceData> {
+    return this.adapter.channelPresence;
   }
 
   get docPresence(): Presence<P> {

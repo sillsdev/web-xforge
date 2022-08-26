@@ -51,8 +51,7 @@ import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { Segment } from '../../shared/text/segment';
-import { PresenceData, RemotePresences } from '../../shared/text/text-view-model';
-import { EmbedsByVerse, FeaturedVerseRefInfo, TextComponent } from '../../shared/text/text.component';
+import { EmbedsByVerse, FeaturedVerseRefInfo, TextComponent, PresenceData, RemotePresences } from '../../shared/text/text.component';
 import { formatFontSizeToRems, threadIdFromMouseEvent } from '../../shared/utils';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData } from './note-dialog/note-dialog.component';
@@ -630,6 +629,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   onPresenceChange(remotePresences?: RemotePresences): void {
     if (remotePresences != null) {
+      console.log('before unique', remotePresences);
+      // Both source and target docs can emit a presence so only include one unique user
       const uniquePresences: PresenceData[] = Object.values(remotePresences).filter(
         (a, index, self) =>
           index ===
@@ -637,6 +638,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             b => b.viewer.displayName === a.viewer.displayName && b.viewer.avatarUrl === a.viewer.avatarUrl
           )
       );
+      // this.multiCursorViewers = this.multiCursorViewers
+      //   .filter(v => uniquePresences.some(p => p.viewer.viewerId === v.viewerId))
+      //   .concat(
+      //     uniquePresences
+      //       .filter(p => !this.multiCursorViewers.some(v => v.viewerId === p.viewer.viewerId))
+      //       .map(p => p.viewer)
+      //   );
+      console.log(uniquePresences, this.multiCursorViewers);
       const multiCursorViewers: MultiCursorViewer[] = [];
       const currentUser: User | undefined = this.currentUserDoc?.data;
       for (const presence of uniquePresences) {

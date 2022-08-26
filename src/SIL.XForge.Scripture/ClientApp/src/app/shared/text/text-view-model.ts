@@ -1,14 +1,9 @@
-import { EventEmitter } from '@angular/core';
 import cloneDeep from 'lodash-es/cloneDeep';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
-import QuillCursors from 'quill-cursors';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { Subscription } from 'rxjs';
-import { LocalPresence, Presence } from 'sharedb/lib/sharedb';
-import tinyColor from 'tinycolor2';
-import { objectId } from 'xforge-common/utils';
+
 import { Delta, TextDoc } from '../../core/models/text-doc';
-import { MultiCursorViewer } from '../../translate/editor/multi-viewer/multi-viewer.component';
 import { isBadDelta, VERSE_FROM_SEGMENT_REF_REGEX } from '../utils';
 import { getAttributesAtPosition } from './quill-scripture';
 import { USFM_STYLE_DESCRIPTIONS } from './usfm-style-descriptions';
@@ -89,15 +84,6 @@ export interface EditorRange {
   trailingEmbedCount: number;
 }
 
-export interface PresenceData {
-  viewer: MultiCursorViewer;
-  range: RangeStatic | null;
-}
-
-export interface RemotePresences {
-  [id: string]: PresenceData;
-}
-
 /** Represents the position of an embed. */
 interface EmbedPosition {
   position: number;
@@ -130,16 +116,9 @@ class SegmentInfo {
  * See text.component.spec.ts for some unit tests.
  */
 export class TextViewModel {
-  readonly cursorColor: string;
-  enablePresenceReceive: boolean = false;
   editor?: Quill;
-  localPresence?: LocalPresence<PresenceData>;
 
   private readonly _segments: Map<string, RangeStatic> = new Map<string, RangeStatic>();
-  private readonly presenceId: string = objectId();
-  private readonly cursorColorStorageKey = 'cursor_color';
-  /** The sharedb presence information for the textdoc that the quill is bound to. */
-  private presence?: Presence<PresenceData>;
   private remoteChangesSub?: Subscription;
   private onCreateSub?: Subscription;
   private textDoc?: TextDoc;
@@ -148,18 +127,6 @@ export class TextViewModel {
    * These elements are in addition to the text data i.e. Note threads
    */
   private _embeddedElements: Map<string, EmbedPosition> = new Map<string, EmbedPosition>();
-
-  private onPresenceReceive = (_presenceId: string, _presenceData: PresenceData | null) => {};
-
-  constructor(private presenceChange?: EventEmitter<RemotePresences | undefined>) {
-    let localCursorColor = localStorage.getItem(this.cursorColorStorageKey);
-    if (localCursorColor == null) {
-      // keep the cursor color from getting too close to white since the text is white
-      localCursorColor = tinyColor({ s: 0.7, l: 0.5, h: Math.random() * 360 }).toHexString();
-      localStorage.setItem(this.cursorColorStorageKey, localCursorColor);
-    }
-    this.cursorColor = localCursorColor;
-  }
 
   get segments(): IterableIterator<[string, RangeStatic]> {
     return this._segments.entries();
@@ -207,6 +174,7 @@ export class TextViewModel {
     if (this.textDoc != null) {
       this.unbind();
     }
+    console.log('bind text-view-model', textDoc.id);
 
     this.textDoc = textDoc;
     editor.setContents(this.textDoc.data as DeltaStatic);
@@ -223,34 +191,11 @@ export class TextViewModel {
       }
       editor.history.clear();
     });
-    this.attachPresences(textDoc, editor);
-  }
-
-  attachPresences(textDoc: TextDoc, editor: Quill): void {
-    this.presence = textDoc.docPresence;
-    this.presence.subscribe(error => {
-      if (error) throw error;
-    });
-    this.localPresence = this.presence.create(this.presenceId);
-
-    const cursors: QuillCursors = editor.getModule('cursors');
-    this.onPresenceReceive = (presenceId: string, presenceData: PresenceData | null) => {
-      if (presenceData == null || presenceData.range == null) {
-        cursors.removeCursor(presenceId);
-        this.presenceChange?.emit(this.presence?.remotePresences);
-        return;
-      }
-      if (!this.enablePresenceReceive) return;
-
-      cursors.createCursor(presenceId, presenceData.viewer.displayName, presenceData.viewer.cursorColor);
-      cursors.moveCursor(presenceId, presenceData.range);
-      this.presenceChange?.emit(this.presence?.remotePresences);
-    };
-    this.presence.on('receive', this.onPresenceReceive);
   }
 
   /** Break the association of the editor with the currently associated textdoc. */
   unbind(): void {
+    console.log('UNBIND text-view-model', this.textDoc?.id);
     if (this.remoteChangesSub != null) {
       this.remoteChangesSub.unsubscribe();
     }
@@ -262,24 +207,8 @@ export class TextViewModel {
     if (this.editor != null) {
       this.editor.setText('', 'silent');
     }
-    this.dismissPresences();
     this._segments.clear();
     this._embeddedElements.clear();
-  }
-
-  dismissPresences(): void {
-    this.localPresence?.submit(null as unknown as PresenceData);
-    if (this.editor != null) {
-      const cursors: QuillCursors = this.editor.getModule('cursors');
-      cursors.clearCursors();
-    }
-    this.presence?.unsubscribe(error => {
-      if (error) throw error;
-    });
-    this.presence?.off('receive', this.onPresenceReceive);
-    this.presence = undefined;
-    const noRemotePresences: RemotePresences = {};
-    this.presenceChange?.emit(noRemotePresences);
   }
 
   /**
