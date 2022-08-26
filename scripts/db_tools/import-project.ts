@@ -123,6 +123,8 @@ class Program {
     try {
       const originDB: Db = originClient.db();
       const destinationDB: Db = destinationClient.db();
+      console.log(`Origin realtime server connection: ${originConn.state}`);
+      console.log(`Destination realtime server connection: ${destinationConn.state}`);
       await activity(originConn, originDB, destinationConn, destinationDB);
     } finally {
       await originClient.close();
