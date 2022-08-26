@@ -8,6 +8,7 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 
 export interface MultiCursorViewer extends UserProfile {
   cursorColor: string;
+  activeInEditor: boolean;
 }
 
 @Component({

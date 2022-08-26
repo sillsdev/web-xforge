@@ -27,6 +27,7 @@ export interface RealtimeDocAdapter {
   readonly pendingOps: any[];
   readonly subscribed: boolean;
   readonly collection: string;
+  readonly channelPresence: Presence;
   readonly docPresence: Presence;
 
   readonly idle$: Observable<void>;

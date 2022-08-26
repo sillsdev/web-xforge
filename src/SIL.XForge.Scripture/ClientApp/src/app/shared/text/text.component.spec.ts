@@ -254,7 +254,7 @@ describe('TextComponent', () => {
       tick();
       env.fixture.detectChanges();
       const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
-      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresence, 'submit').and.callThrough();
+      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresenceChannel, 'submit').and.callThrough();
 
       env.component.editor?.setSelection(1, 1, 'api');
 
@@ -271,7 +271,7 @@ describe('TextComponent', () => {
       tick();
       env.fixture.detectChanges();
       const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
-      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresence, 'submit').and.callThrough();
+      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresenceChannel, 'submit').and.callThrough();
 
       env.component.editor?.setSelection(1, 1, 'user');
 
@@ -289,7 +289,7 @@ describe('TextComponent', () => {
       tick();
       env.fixture.detectChanges();
       const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
-      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresence, 'submit').and.callThrough();
+      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresenceChannel, 'submit').and.callThrough();
 
       env.component.editor?.setSelection(1, 1, 'user');
 
@@ -307,7 +307,7 @@ describe('TextComponent', () => {
       tick();
       env.fixture.detectChanges();
       const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
-      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresence, 'submit').and.callThrough();
+      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresenceChannel, 'submit').and.callThrough();
 
       env.component.editor?.setSelection(1, 1, 'user');
 
@@ -324,7 +324,7 @@ describe('TextComponent', () => {
       tick();
       env.fixture.detectChanges();
       const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
-      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresence, 'submit').and.callThrough();
+      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresenceChannel, 'submit').and.callThrough();
 
       env.component.onSelectionChanged({ index: 0, length: 0 }, 'user');
 
@@ -364,7 +364,7 @@ describe('TextComponent', () => {
       tick();
       env.fixture.detectChanges();
       const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
-      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresence, 'submit');
+      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresenceChannel, 'submit');
 
       // SUT
       env.component.onSelectionChanged(null as unknown as RangeStatic, 'user');
@@ -382,7 +382,7 @@ describe('TextComponent', () => {
       tick();
       env.fixture.detectChanges();
       const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
-      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresence, 'submit');
+      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresenceChannel, 'submit');
 
       // SUT
       env.component.onSelectionChanged({ index: 0, length: 0 }, 'user');
