@@ -4,18 +4,34 @@ namespace SIL.XForge.Scripture.Models
     /// Information on the operations performed when syncing a subsystem.
     /// </summary>
     /// <remarks>This is to be used with <see cref="SyncMetrics"/>.</remarks>
-    public class SyncMetricInfo
+    public record SyncMetricInfo
     {
+        public SyncMetricInfo() { }
+
+        public SyncMetricInfo(int added, int deleted, int updated)
+        {
+            Added = added;
+            Deleted = deleted;
+            Updated = updated;
+        }
+
         public int Added { get; set; }
         public int Deleted { get; set; }
         public int Updated { get; set; }
 
-        public static SyncMetricInfo operator +(SyncMetricInfo a, SyncMetricInfo b) =>
-            new SyncMetricInfo
+        public static SyncMetricInfo operator +(SyncMetricInfo a, SyncMetricInfo b)
+        {
+            if (a is not null && b is not null)
             {
-                Added = a.Added + b.Added,
-                Deleted = a.Deleted + b.Deleted,
-                Updated = a.Updated + b.Updated,
-            };
+                return new SyncMetricInfo
+                {
+                    Added = a.Added + b.Added,
+                    Deleted = a.Deleted + b.Deleted,
+                    Updated = a.Updated + b.Updated,
+                };
+            }
+
+            return a ?? b;
+        }
     }
 }

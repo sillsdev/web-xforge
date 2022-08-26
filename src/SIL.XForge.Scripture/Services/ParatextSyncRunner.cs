@@ -865,7 +865,7 @@ namespace SIL.XForge.Scripture.Services
                 if (!chapterNums.Contains(questionDoc.Data.VerseRef.ChapterNum))
                 {
                     tasks.Add(questionDoc.DeleteAsync());
-                    _syncMetrics.QuestionsDeleted++;
+                    _syncMetrics.Questions.Deleted++;
                 }
             }
             await Task.WhenAll(tasks);
@@ -1142,7 +1142,7 @@ namespace SIL.XForge.Scripture.Services
                 tasks.Add(deleteQuestion());
             }
             await Task.WhenAll(tasks);
-            _syncMetrics.QuestionsDeleted += questionDocIds.Count;
+            _syncMetrics.Questions.Deleted += questionDocIds.Count;
         }
 
         private async Task<List<string>> DeleteNoteThreadDocsInChapters(int bookNum, IEnumerable<Chapter> chapters)
