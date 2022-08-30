@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
-import { NoteThread, NoteStatus } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
+import { NoteThread, NoteStatus, getNoteThreadDocId } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProject, SF_PROJECTS_COLLECTION } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
@@ -143,6 +143,11 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
       question.audioUrl = audioUrl;
     }
     return this.realtimeService.create<QuestionDoc>(QuestionDoc.COLLECTION, docId, question);
+  }
+
+  async createNoteThread(projectId: string, noteThread: NoteThread): Promise<void> {
+    const docId: string = getNoteThreadDocId(projectId, noteThread.dataId);
+    await this.realtimeService.create<NoteThreadDoc>(NoteThreadDoc.COLLECTION, docId, noteThread);
   }
 
   queryNoteThreads(id: string): Promise<RealtimeQuery<NoteThreadDoc>> {

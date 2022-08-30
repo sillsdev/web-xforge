@@ -37,9 +37,10 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
-import { getLinkHTML, issuesEmailTemplate } from 'xforge-common/utils';
+import { getLinkHTML, issuesEmailTemplate, objectId } from 'xforge-common/utils';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { environment } from '../../../environments/environment';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
@@ -54,13 +55,13 @@ import { Segment } from '../../shared/text/segment';
 import {
   EmbedsByVerse,
   FeaturedVerseRefInfo,
-  TextComponent,
   PresenceData,
-  RemotePresences
+  RemotePresences,
+  TextComponent
 } from '../../shared/text/text.component';
-import { formatFontSizeToRems, threadIdFromMouseEvent } from '../../shared/utils';
+import { formatFontSizeToRems, getVerseRefFromSegmentRef, threadIdFromMouseEvent } from '../../shared/utils';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
-import { NoteDialogComponent, NoteDialogData } from './note-dialog/note-dialog.component';
+import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
 import {
   SuggestionsSettingsDialogComponent,
   SuggestionsSettingsDialogData
@@ -69,6 +70,7 @@ import { Suggestion } from './suggestions.component';
 import { TranslateMetricsSession } from './translate-metrics-session';
 
 export const UPDATE_SUGGESTIONS_TIMEOUT = 100;
+export const SF_NOTE_THREAD_PREFIX = 'SFNOTETHREAD_';
 
 const PUNCT_SPACE_REGEX = /^(?:\p{P}|\p{S}|\p{Cc}|\p{Z})+$/u;
 
@@ -723,6 +725,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     });
   }
 
+  insertNote(): void {
+    if (this.target == null) {
+      return;
+    }
+    const segmentRef: string | undefined = this.target.currentSegmentOrDefault;
+    if (segmentRef != null && this.bookNum != null) {
+      const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(this.bookNum, segmentRef);
+      this.showNoteThread(undefined, verseRef);
+    }
+  }
+
   removeEmbeddedElements(): void {
     this.shouldNoteThreadsRespondToEdits = false;
     this.target?.removeEmbeddedElements();
@@ -763,20 +776,40 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.subscribeClickEvents(segments);
   }
 
-  private showNoteThread(threadId: string): void {
-    const dialogRef = this.dialogService.openMatDialog(NoteDialogComponent, {
-      autoFocus: false,
-      width: '600px',
-      data: {
-        projectId: this.projectDoc!.id,
-        threadId: threadId
-      } as NoteDialogData
-    });
-    dialogRef.afterClosed().subscribe(() => {
-      // Ensure cursor selection remains at the position of the note in case the focus was lost when the dialog was open
-      const selectIndex = this.target!.segment!.range.index;
+  private async showNoteThread(threadId?: string, verseRef?: VerseRef): Promise<void> {
+    if (this.bookNum == null || this.chapter == null) {
+      return;
+    }
+    if (threadId == null && verseRef == null) {
+      // at least one must be defined
+      return;
+    }
+    const noteDialogData: NoteDialogData = {
+      projectId: this.projectDoc!.id,
+      threadId,
+      textDocId: new TextDocId(this.projectDoc!.id, this.bookNum, this.chapter),
+      verseRef
+    };
+    const dialogRef = this.dialogService.openMatDialog<NoteDialogComponent, NoteDialogData, NoteDialogResult>(
+      NoteDialogComponent,
+      {
+        autoFocus: false,
+        width: '600px',
+        disableClose: true,
+        data: noteDialogData
+      }
+    );
+    const result: NoteDialogResult | undefined = await dialogRef.afterClosed().toPromise();
+    if (result != null) {
+      await this.handleNoteDialogResult(result);
+      this.toggleNoteThreadVerses(true);
+    }
+    // Ensure cursor selection remains at the position of the note in case the focus was lost when the dialog was open
+    const currentSegment: string | undefined = this.target!.currentSegmentOrDefault;
+    if (currentSegment != null) {
+      const selectIndex = this.target!.getSegmentRange(currentSegment)!.index;
       this.target!.editor!.setSelection(selectIndex, 0, 'silent');
-    });
+    }
   }
 
   private updateReadNotes(threadId: string) {
@@ -798,6 +831,26 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         }
       });
     }
+  }
+
+  private async handleNoteDialogResult(result: NoteDialogResult): Promise<void> {
+    const projectId: string = this.projectDoc!.id;
+    const threadId: string = SF_NOTE_THREAD_PREFIX + objectId();
+    result.note.threadId = threadId;
+    const noteThread: NoteThread = {
+      dataId: threadId,
+      verseRef: result.verseRef,
+      projectRef: projectId,
+      ownerRef: this.userService.currentUserId,
+      notes: [result.note],
+      position: result.position,
+      originalContextBefore: '',
+      originalSelectedText: result.selectedText,
+      originalContextAfter: '',
+      tagIcon: '01flag1',
+      status: NoteStatus.Todo
+    };
+    await this.projectService.createNoteThread(projectId, noteThread);
   }
 
   private setupTranslationEngine(): void {

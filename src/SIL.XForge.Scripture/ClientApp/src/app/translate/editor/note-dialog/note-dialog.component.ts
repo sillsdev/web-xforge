@@ -1,7 +1,7 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { sortBy } from 'lodash-es';
-import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { I18nService } from 'xforge-common/i18n.service';
 import {
@@ -14,15 +14,26 @@ import { translate } from '@ngneat/transloco';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { UserService } from 'xforge-common/user.service';
+import { objectId } from 'xforge-common/utils';
+import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
-import { NoteThreadDoc } from '../../../core/models/note-thread-doc';
+import { NoteThreadDoc, defaultNoteThreadIcon } from '../../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 
 export interface NoteDialogData {
-  threadId: string;
+  threadId?: string;
+  textDocId: TextDocId;
   projectId: string;
+  verseRef?: VerseRef;
+}
+
+export interface NoteDialogResult {
+  verseRef: VerseRefData;
+  note: Note;
+  selectedText: string;
+  position: TextAnchor;
 }
 
 // TODO: Implement a diff - there is an accepted solution here that might be a good starting point:
@@ -34,6 +45,7 @@ export interface NoteDialogData {
 })
 export class NoteDialogComponent implements OnInit {
   showSegmentText: boolean = false;
+  currentNote: string = '';
   private isAssignedToOtherUser: boolean = false;
   private threadDoc?: NoteThreadDoc;
   private projectProfileDoc?: SFProjectProfileDoc;
@@ -41,6 +53,7 @@ export class NoteDialogComponent implements OnInit {
   private paratextProjectUsers?: ParatextUserProfile[];
 
   constructor(
+    private readonly dialogRef: MatDialogRef<NoteDialogComponent, NoteDialogResult>,
     @Inject(MAT_DIALOG_DATA) private readonly data: NoteDialogData,
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
@@ -48,13 +61,19 @@ export class NoteDialogComponent implements OnInit {
   ) {}
 
   async ngOnInit(): Promise<void> {
-    this.threadDoc = await this.projectService.getNoteThread(this.projectId + ':' + this.threadId);
-    this.textDoc = await this.projectService.getText(this.textDocId);
+    // This can be refactored so the asynchronous calls are done in parallel
+    if (this.threadId == null) {
+      this.textDoc = await this.projectService.getText(this.textDocId);
+    } else {
+      this.threadDoc = await this.projectService.getNoteThread(this.projectId + ':' + this.threadId);
+      this.textDoc = await this.projectService.getText(this.textDocId);
+    }
+
     this.projectProfileDoc = await this.projectService.getProfile(this.projectId);
     const userRole = this.projectProfileDoc?.data?.userRoles[this.userService.currentUserId];
     if (userRole != null) {
       const projectDoc: SFProjectDoc | undefined = await this.projectService.tryGetForRole(this.projectId, userRole);
-      if (projectDoc != null && projectDoc.data?.paratextUsers != null) {
+      if (this.threadDoc != null && projectDoc != null && projectDoc.data?.paratextUsers != null) {
         this.paratextProjectUsers = projectDoc.data.paratextUsers;
         this.isAssignedToOtherUser = this.threadDoc.isAssignedToOtherUser(
           this.userService.currentUserId,
@@ -70,9 +89,13 @@ export class NoteDialogComponent implements OnInit {
 
   get flagIcon(): string {
     if (this.threadDoc?.data == null) {
-      return '';
+      return defaultNoteThreadIcon().url;
     }
     return this.isAssignedToOtherUser ? this.threadDoc.iconGrayed.url : this.threadDoc.icon.url;
+  }
+
+  get isNewNote(): boolean {
+    return this.data.threadId == null;
   }
 
   get isRtl(): boolean {
@@ -92,12 +115,9 @@ export class NoteDialogComponent implements OnInit {
     );
   }
 
-  get verseRef(): string {
-    if (this.threadDoc?.data == null) {
-      return '';
-    }
-    const verseRef = toVerseRef(this.threadDoc.data.verseRef);
-    return this.i18n.localizeReference(verseRef);
+  get verseRefDisplay(): string {
+    const verseRef: VerseRef | undefined = this.verseRef;
+    return verseRef == null ? '' : this.i18n.localizeReference(verseRef);
   }
 
   get noteContextText(): string {
@@ -114,10 +134,14 @@ export class NoteDialogComponent implements OnInit {
   }
 
   get segmentText(): string {
-    if (this.textDoc?.data == null || this.threadDoc?.data == null) {
+    if (this.textDoc?.data == null) {
       return '';
     }
-    const verseRef = toVerseRef(this.threadDoc.data.verseRef);
+    const verseRef: VerseRef | undefined =
+      this.threadDoc?.data == null ? this.data.verseRef : toVerseRef(this.threadDoc.data.verseRef);
+    if (verseRef == null) {
+      return '';
+    }
     return this.textDoc.getSegmentTextIncludingRelated(`verse_${verseRef.chapter}_${verseRef.verse}`);
   }
 
@@ -154,16 +178,18 @@ export class NoteDialogComponent implements OnInit {
   }
 
   private get textDocId(): string {
-    if (this.threadDoc?.data == null) {
-      return '';
-    }
-    const verseRef = toVerseRef(this.threadDoc.data.verseRef);
-    const textDocId = new TextDocId(this.projectId, verseRef.bookNum, verseRef.chapterNum);
-    return textDocId.toString();
+    return this.data.textDocId.toString();
   }
 
-  private get threadId(): string {
+  private get threadId(): string | undefined {
     return this.data.threadId;
+  }
+
+  private get verseRef(): VerseRef | undefined {
+    if (this.threadDoc?.data == null) {
+      return this.data.verseRef == null ? undefined : this.data.verseRef;
+    }
+    return toVerseRef(this.threadDoc.data.verseRef);
   }
 
   parseNote(content: string | undefined): string {
@@ -250,5 +276,38 @@ export class NoteDialogComponent implements OnInit {
       u => u.opaqueUserId === assignedNoteUserRef
     );
     return paratextUser?.username ?? translate('note_dialog.paratext_user');
+  }
+
+  submit(): void {
+    if (this.currentNote == null || this.currentNote.trim().length === 0) {
+      this.dialogRef.close();
+      return;
+    }
+    const verseRef: VerseRef | undefined = this.verseRef;
+    if (verseRef == null) return;
+
+    const currentDate = new Date().toJSON();
+    const note: Note = {
+      dataId: objectId(),
+      // empty so that the editor component knows this is a new note
+      threadId: '',
+      ownerRef: this.userService.currentUserId,
+      content: this.currentNote,
+      dateCreated: currentDate,
+      dateModified: currentDate,
+      conflictType: NoteConflictType.DefaultValue,
+      extUserId: this.userService.currentUserId,
+      type: NoteType.Normal,
+      status: NoteStatus.Todo,
+      deleted: false
+    };
+
+    const result: NoteDialogResult = {
+      verseRef: fromVerseRef(verseRef),
+      note,
+      position: { start: 0, length: 0 },
+      selectedText: this.segmentText
+    };
+    this.dialogRef.close(result);
   }
 }
