@@ -6,23 +6,35 @@
         <ng-container *ngIf="showSource">
           <div class="toolbar-separator" [fxHide.xs]="!translationSuggestionsProjectEnabled">&nbsp;</div>
           <button
-            mdc-icon-button
+            mat-icon-button
             appBlurOnClick
-            icon="swap_horiz"
             type="button"
             (click)="isTargetTextRight = !isTargetTextRight"
             title="{{ t('swap_source_and_target') }}"
             fxHide.xs
-          ></button>
+          >
+            <mat-icon>swap_horiz</mat-icon>
+          </button>
           <button
             *ngIf="translationSuggestionsProjectEnabled"
-            mdc-icon-button
+            mat-icon-button
             appBlurOnClick
-            icon="settings"
             type="button"
+            id="settings-btn"
             (click)="openSuggestionsSettings()"
             title="{{ t('configure_translation_suggestions') }}"
-          ></button>
+          >
+            <mat-icon>settings</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            type="button"
+            id="create-note-btn"
+            (click)="insertNote()"
+            title="{{ t('insert_note') }}"
+          >
+            <mat-icon>add_comment</mat-icon>
+          </button>
         </ng-container>
         <ng-container *ngIf="canShare">
           <div class="toolbar-separator">&nbsp;</div>

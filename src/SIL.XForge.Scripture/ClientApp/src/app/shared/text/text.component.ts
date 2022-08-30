@@ -28,7 +28,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { Delta, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { NoteThreadIcon } from '../../core/models/note-thread-doc';
-import { attributeFromMouseEvent, VERSE_REGEX } from '../utils';
+import { attributeFromMouseEvent, getBaseVerse } from '../utils';
 import { registerScripture } from './quill-scripture';
 import { Segment } from './segment';
 import { EditorRange, PresenceData, RemotePresences, TextViewModel } from './text-view-model';
@@ -370,6 +370,18 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   get localPresence(): LocalPresence<PresenceData> | undefined {
     return this.viewModel.localPresence;
+  }
+
+  get currentSegmentOrDefault(): string | undefined {
+    if (this._segment != null) {
+      return this._segment.ref;
+    }
+    for (const [segmentRef] of this.viewModel.segments) {
+      if (getBaseVerse(segmentRef) != null) {
+        return segmentRef;
+      }
+    }
+    return undefined;
   }
 
   private get isPresenceEnabled(): boolean {
@@ -1025,7 +1037,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     let baseVerse: string = '0';
     for (const [segment, range] of preDeltaSegmentCache) {
       // if we cannot determine the base verse, consider it as part of the previous verse
-      baseVerse = this.getBaseVerse(segment) ?? baseVerse;
+      baseVerse = getBaseVerse(segment) ?? baseVerse;
       if (currentVerse === '') {
         // set the current verse and range on the first pass
         currentVerse = baseVerse;
@@ -1085,15 +1097,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       }
     }
     return editPositions;
-  }
-
-  /**
-   * Returns the base verse of the segment ref. e.g. 'verse_1_5'
-   * @return The segment ref of the first segment in the verse, or undefined if the segment does not belong to a verse.
-   */
-  private getBaseVerse(segmentRef: string): string | undefined {
-    const matchArray: RegExpExecArray | null = VERSE_REGEX.exec(segmentRef);
-    return matchArray == null ? undefined : matchArray[0];
   }
 
   private getVerseEndIndex(baseRef: string): number | undefined {

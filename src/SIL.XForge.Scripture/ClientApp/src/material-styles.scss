@@ -1,4 +1,5 @@
 @use '~@angular/material' as mat;
+@use 'variables';
 @import 'variables';
 
 @include mat.core();
@@ -78,4 +79,16 @@ $material-app-theme: mat.define-light-theme(
 .card-outline {
   @include mat.elevation(0);
   border: 1px solid #e0e0e0;
+}
+
+button.mat-icon-button {
+  transition: color 0.15s;
+  &:hover {
+    color: variables.$greenLight !important;
+  }
+}
+
+.mat-flat-button {
+  color: #fff;
+  background-color: variables.$greyDark;
 }
