@@ -38,7 +38,7 @@ export const ROLE_SETTING = 'role';
 export const EXPIRES_AT_SETTING = 'expires_at';
 
 export interface AuthState {
-  returnUrl?: string;
+  returnUrl: string;
   linking?: boolean;
   currentSub?: string;
 }
@@ -52,6 +52,13 @@ export interface AuthDetails {
 interface LoginResult {
   loggedIn: boolean;
   newlyLoggedIn: boolean;
+}
+
+interface LoginParams {
+  locale?: string;
+  promptPasswordlessLogin?: boolean;
+  returnUrl: string;
+  signUp?: boolean;
 }
 
 @Injectable({
@@ -179,14 +186,16 @@ export class AuthService {
     return true;
   }
 
-  async logIn(returnUrl: string, signUp?: boolean, locale?: string): Promise<void> {
+  async logIn({ returnUrl, signUp, locale, promptPasswordlessLogin }: LoginParams = { returnUrl: '' }): Promise<void> {
     const state: AuthState = { returnUrl };
     const language: string = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME));
     const ui_locales: string = language;
     const authOptions: RedirectLoginOptions = {
       appState: JSON.stringify(state),
       language,
-      login_hint: ui_locales
+      login_hint: ui_locales,
+      enablePasswordless: true,
+      promptPasswordlessLogin: promptPasswordlessLogin === true
     };
     if (signUp) {
       authOptions.mode = 'signUp';
@@ -376,8 +385,8 @@ export class AuthService {
   /**
    * Check to help avoid redirect loops where sometimes the return URL can end up as the login page or auth0 callback
    */
-  private isValidReturnUrl(returnUrl: string | undefined): boolean {
-    return !(returnUrl == null || this.isCallbackUrl(returnUrl) || returnUrl === '/login');
+  private isValidReturnUrl(returnUrl: string): boolean {
+    return !(returnUrl === '' || this.isCallbackUrl(returnUrl) || returnUrl === '/login');
   }
 
   private isCallbackUrl(callbackUrl: string | undefined = undefined): boolean {
@@ -449,7 +458,7 @@ export class AuthService {
         }
       })
         .catch(() => {
-          this.logIn(this.locationService.pathname + this.locationService.search);
+          this.logIn({ returnUrl: this.locationService.pathname + this.locationService.search });
         })
         .then(() => {
           this.renewTokenPromise = undefined;
