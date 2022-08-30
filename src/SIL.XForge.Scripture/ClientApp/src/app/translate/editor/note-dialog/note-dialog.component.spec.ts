@@ -30,6 +30,8 @@ import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/mode
 import { REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { UserService } from 'xforge-common/user.service';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { fromVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
@@ -37,7 +39,7 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { getTextDoc, paratextUsersFromRoles } from '../../../shared/test-utils';
 import { NoteThreadDoc } from '../../../core/models/note-thread-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
-import { NoteDialogComponent, NoteDialogData } from './note-dialog.component';
+import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog.component';
 
 const mockedAuthService = mock(AuthService);
 const mockedCookieService = mock(CookieService);
@@ -65,7 +67,7 @@ describe('NoteDialogComponent', () => {
   }));
 
   it('show selected text and toggle visibility of related segment', fakeAsync(() => {
-    env = new TestEnvironment();
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
 
     expect(env.noteText.nativeElement.textContent).toEqual('before selection selected text after selection');
     expect(env.segmentText).toBeNull();
@@ -76,12 +78,12 @@ describe('NoteDialogComponent', () => {
   }));
 
   it('should not show deleted notes', fakeAsync(() => {
-    env = new TestEnvironment();
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
     expect(env.notes.length).toBe(4);
   }));
 
   it('should style notes', fakeAsync(() => {
-    env = new TestEnvironment();
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
     const tests: { text: string | undefined; expected: string }[] = [
       {
         text: 'turn <bold>text bold</bold>',
@@ -138,7 +140,7 @@ describe('NoteDialogComponent', () => {
   }));
 
   it('conflict preamble is transformed', fakeAsync(() => {
-    env = new TestEnvironment();
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
     const conflictNote = env.component.notes[0];
     conflictNote.type = NoteType.Conflict;
     conflictNote.conflictType = NoteConflictType.VerseTextConflict;
@@ -184,7 +186,7 @@ describe('NoteDialogComponent', () => {
   }));
 
   it('isConflictNote detects', fakeAsync(() => {
-    env = new TestEnvironment();
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
     // A non-conflict note is detected.
     env.component.notes[0].type = NoteType.Normal;
     env.component.notes[0].conflictType = NoteConflictType.DefaultValue;
@@ -201,7 +203,7 @@ describe('NoteDialogComponent', () => {
   }));
 
   it('non-conflict notes in a thread with one conflict, are not displayed as conflict notes', fakeAsync(() => {
-    env = new TestEnvironment();
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
     // In this note thread, the first note is a conflict note, and the second note is a human-written note.
     // The conflict note should display conflict information, but the following note should not.
     env.component.notes[0].type = NoteType.Conflict;
@@ -222,12 +224,12 @@ describe('NoteDialogComponent', () => {
   }));
 
   it('produce correct default note icon', fakeAsync(() => {
-    env = new TestEnvironment();
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
     expect(env.component.flagIcon).toEqual('/assets/icons/TagIcons/flag02.png');
   }));
 
   it('should show correct icon', fakeAsync(() => {
-    env = new TestEnvironment();
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
 
     // To do
     expect(env.notes[0].nativeElement.querySelector('img').getAttribute('src'))
@@ -261,7 +263,8 @@ describe('NoteDialogComponent', () => {
   }));
 
   it('should show notes for reattachment', fakeAsync(() => {
-    env = new TestEnvironment({ reattachedContent: '' });
+    const reattachedContent = '';
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread(reattachedContent) });
     const verseText = 'before selection reattached text after selection';
     const expectedSrc = '/assets/icons/TagIcons/ReattachNote.png';
     const reattachNote = env.notes[4].nativeElement as HTMLElement;
@@ -272,8 +275,8 @@ describe('NoteDialogComponent', () => {
   }));
 
   it('reattached note with content', fakeAsync(() => {
-    let content: string = 'Reattached content text.';
-    env = new TestEnvironment({ reattachedContent: content });
+    let reattachedContent: string = 'Reattached content text.';
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread(reattachedContent) });
 
     // Check note with status set
     const verseText = 'before selection reattached text after selection';
@@ -281,16 +284,16 @@ describe('NoteDialogComponent', () => {
     let reattachNote = env.notes[4].nativeElement as HTMLElement;
     expect(reattachNote.querySelector('.content .text')!.textContent).toContain(verseText);
     expect(reattachNote.querySelector('.content .verse-reattached')!.textContent).toContain('Matthew 1:4');
-    expect(reattachNote.querySelector('.content .note-content')!.textContent).toContain(content);
+    expect(reattachNote.querySelector('.content .note-content')!.textContent).toContain(reattachedContent);
     expect(reattachNote.querySelector('img')?.getAttribute('src')).toEqual(expectedSrc);
     expect(reattachNote.querySelector('img')?.getAttribute('title')).toEqual('To do');
 
     // Check note with no status set
-    content = 'reattached02';
+    reattachedContent = 'reattached02';
     expectedSrc = '/assets/icons/TagIcons/flag03.png';
     reattachNote = env.notes[5].nativeElement as HTMLElement;
     expect(reattachNote.querySelector('.content .verse-reattached')!.textContent).toContain('Matthew 1:4');
-    expect(reattachNote.querySelector('.content .note-content')!.textContent).toContain(content);
+    expect(reattachNote.querySelector('.content .note-content')!.textContent).toContain(reattachedContent);
     expect(reattachNote.querySelector('img')?.getAttribute('src')).toEqual(expectedSrc);
     expect(reattachNote.querySelector('img')?.getAttribute('title')).toEqual('Note reattached');
   }));
@@ -354,7 +357,7 @@ describe('NoteDialogComponent', () => {
   }));
 
   it('shows assigned user', fakeAsync(() => {
-    env = new TestEnvironment();
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
     expect(env.threadAssignedUser.nativeElement.textContent).toContain('Team');
     expect(env.notes[0].nativeElement.querySelector('.assigned-user').textContent).toContain(
       TestEnvironment.paratextUsers.find(u => u.sfUserId === 'user01')!.username
@@ -427,21 +430,21 @@ describe('NoteDialogComponent', () => {
   }));
 
   it('hides assigned user for non-paratext users', fakeAsync(() => {
-    env = new TestEnvironment({ currentUserId: 'user02' });
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread(), currentUserId: 'user02' });
     expect(env.threadAssignedUser.nativeElement.textContent).toContain('Team');
     expect(env.notes[0].nativeElement.querySelector('.assigned-user').textContent).toContain('Paratext user');
     expect(env.notes[1].nativeElement.querySelector('.assigned-user').textContent).toContain('Team');
   }));
 
   it('should gracefully return when data not ready', fakeAsync(() => {
-    env = new TestEnvironment({ includeSnapshots: false });
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread(), includeSnapshots: false });
     expect(env.component.segmentText).toEqual('');
     const noteThread: NoteThread = TestEnvironment.getNoteThread();
     expect(env.component.noteIcon(noteThread[0])).toEqual('');
   }));
 
   it('uses rtl direction with rtl project', fakeAsync(() => {
-    env = new TestEnvironment({ isRightToLeftProject: true });
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread(), isRightToLeftProject: true });
     expect(env.component.isRtl).withContext('setup').toBeTrue();
     // RTL is detected and applied.
     expect(env.dialogContentArea.classes.rtl).toBeTrue();
@@ -449,10 +452,44 @@ describe('NoteDialogComponent', () => {
   }));
 
   it('uses ltr direction with ltr project', fakeAsync(() => {
-    env = new TestEnvironment();
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
     expect(env.component.isRtl).withContext('setup').toBeFalse();
     expect(env.dialogContentArea.classes.rtl).toBeUndefined();
     expect(env.dialogContentArea.classes.ltr).toBeTrue();
+  }));
+
+  it('show insert note dialog content', fakeAsync(() => {
+    env = new TestEnvironment({ verseRef: VerseRef.parse('MAT 1:1') });
+    expect(env.noteInputElement).toBeTruthy();
+    expect(env.flagIcon).toEqual('/assets/icons/TagIcons/01flag1.png');
+    expect(env.verseRef).toEqual('Matthew 1:1');
+    expect(env.noteText.nativeElement.innerText).toEqual('target: chapter 1, verse 1.');
+    expect(env.threadAssignedUser).toBeNull();
+  }));
+
+  it('can insert a note', fakeAsync(() => {
+    const verseRef = VerseRef.parse('MAT 1:3');
+    env = new TestEnvironment({ verseRef });
+    expect(env.noteInputElement).toBeTruthy();
+    expect(env.verseRef).toEqual('Matthew 1:3');
+    env.enterNoteContent('Enter note content');
+    expect(env.component.currentNote).toEqual('Enter note content');
+    expect(env.component.segmentText).toEqual('target: chapter 1, verse 3.');
+    env.submit();
+
+    const verseData: VerseRefData = fromVerseRef(verseRef);
+    const result = env.dialogResult as NoteDialogResult;
+    expect(result.verseRef).toEqual(verseData);
+    expect(result.selectedText).toEqual('target: chapter 1, verse 3.');
+    expect(result.note.ownerRef).toEqual('user01');
+    expect(result.note.content).toEqual('Enter note content');
+  }));
+
+  it('does not save note if textarea is empty', fakeAsync(() => {
+    env = new TestEnvironment({ verseRef: VerseRef.parse('MAT 1:1') });
+    expect(env.noteInputElement).toBeTruthy();
+    env.submit();
+    expect(env.dialogResult).toBeUndefined();
   }));
 });
 
@@ -483,9 +520,9 @@ class DialogTestModule {}
 interface TestEnvironmentConstructorArgs {
   includeSnapshots?: boolean;
   isRightToLeftProject?: boolean;
-  reattachedContent?: string;
   currentUserId?: string;
   noteThread?: NoteThread;
+  verseRef?: VerseRef;
 }
 
 class TestEnvironment {
@@ -662,21 +699,22 @@ class TestEnvironment {
   readonly component: NoteDialogComponent;
   readonly dialogRef: MatDialogRef<NoteDialogComponent>;
   readonly mockedNoteMdcDialogRef = mock(MatDialogRef);
+  dialogResult?: NoteDialogResult;
 
   constructor({
     includeSnapshots = true,
     isRightToLeftProject,
-    reattachedContent,
     currentUserId = 'user01',
-    noteThread
+    noteThread,
+    verseRef
   }: TestEnvironmentConstructorArgs = {}) {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
-    if (noteThread == null) {
-      noteThread = TestEnvironment.getNoteThread(reattachedContent);
-    }
+    const textDocId = new TextDocId(TestEnvironment.PROJECT01, 40, 1);
     const configData: NoteDialogData = {
       projectId: TestEnvironment.PROJECT01,
-      threadId: noteThread.dataId
+      textDocId,
+      threadId: noteThread?.dataId,
+      verseRef
     };
     TestEnvironment.testProjectProfile.isRightToLeft = isRightToLeftProject;
     TestEnvironment.testProject.isRightToLeft = isRightToLeftProject;
@@ -693,16 +731,18 @@ class TestEnvironment {
         id: configData.projectId,
         data: TestEnvironment.testProjectProfile
       });
-      const textDocId = new TextDocId(TestEnvironment.PROJECT01, 40, 1);
+      const textData = getTextDoc(textDocId);
       this.realtimeService.addSnapshot<TextData>(TextDoc.COLLECTION, {
         id: textDocId.toString(),
-        data: getTextDoc(textDocId),
+        data: textData,
         type: RichText.type.name
       });
-      this.realtimeService.addSnapshot<NoteThread>(NoteThreadDoc.COLLECTION, {
-        id: [TestEnvironment.PROJECT01, noteThread.dataId].join(':'),
-        data: noteThread
-      });
+      if (noteThread != null) {
+        this.realtimeService.addSnapshot<NoteThread>(NoteThreadDoc.COLLECTION, {
+          id: [TestEnvironment.PROJECT01, noteThread.dataId].join(':'),
+          data: noteThread
+        });
+      }
     }
 
     when(mockedProjectService.getNoteThread(anything())).thenCall(id =>
@@ -722,6 +762,10 @@ class TestEnvironment {
     );
 
     when(mockedUserService.currentUserId).thenReturn(currentUserId);
+    this.dialogRef
+      .afterClosed()
+      .toPromise()
+      .then(result => (this.dialogResult = result));
 
     this.fixture.detectChanges();
     tick();
@@ -730,7 +774,11 @@ class TestEnvironment {
   }
 
   get flagIcon(): string {
-    return this.overlayContainerElement.query(By.css('mdc-dialog-title img')).nativeElement.getAttribute('src');
+    return this.overlayContainerElement.query(By.css('h1 img')).nativeElement.getAttribute('src');
+  }
+
+  get verseRef(): string {
+    return this.overlayContainerElement.query(By.css('h1 .verse-reference')).nativeElement.textContent;
   }
 
   get notes(): DebugElement[] {
@@ -743,6 +791,10 @@ class TestEnvironment {
 
   get segmentText(): DebugElement {
     return this.overlayContainerElement.query(By.css('.segment-text'));
+  }
+
+  get noteInputElement(): DebugElement {
+    return this.overlayContainerElement.query(By.css('mat-form-field textarea'));
   }
 
   get dialogContentArea(): DebugElement {
@@ -758,8 +810,21 @@ class TestEnvironment {
   }
 
   closeDialog(): void {
-    this.overlayContainerElement.query(By.css('button[mat-dialog-close]')).nativeElement.click();
+    this.overlayContainerElement.query(By.css('button.close-button')).nativeElement.click();
     tick(matDialogCloseDelay);
+  }
+
+  submit(): void {
+    this.overlayContainerElement.query(By.css('.save-button')).nativeElement.click();
+    tick(matDialogCloseDelay);
+  }
+
+  enterNoteContent(noteContent: string): void {
+    const textAreaInput: HTMLTextAreaElement = this.noteInputElement.nativeElement;
+    textAreaInput.value = noteContent;
+    textAreaInput.dispatchEvent(new Event('input'));
+    tick();
+    this.fixture.detectChanges();
   }
 
   toggleSegmentButton(): void {

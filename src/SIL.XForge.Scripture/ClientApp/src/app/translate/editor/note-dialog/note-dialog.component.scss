@@ -58,6 +58,13 @@ h1 {
     }
   }
 }
+.full-width {
+  width: 100%;
+  margin-top: 1em;
+  .mat-form-field-flex {
+    padding: 0 0.75em;
+  }
+}
 .assigned-user {
   opacity: 0.5;
 }
