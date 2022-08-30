@@ -44,6 +44,24 @@ export function combineVerseRefStrs(startStr?: string, endStr?: string): VerseRe
   return range.verseRef;
 }
 
+/**
+ * Returns the base verse of the segment ref. e.g. 'verse_1_5'
+ * @return The segment ref of the first segment in the verse, or undefined if the segment does not belong to a verse.
+ */
+export function getBaseVerse(segmentRef: string): string | undefined {
+  const matchArray: RegExpExecArray | null = VERSE_REGEX.exec(segmentRef);
+  return matchArray == null ? undefined : matchArray[0];
+}
+
+export function getVerseRefFromSegmentRef(bookNum: number, segmentRef: string): VerseRef | undefined {
+  const baseRef: string | undefined = getBaseVerse(segmentRef);
+  if (baseRef == null) {
+    return;
+  }
+  const parts = baseRef.split('_');
+  return new VerseRef(bookNum, parts[1], parts[2]);
+}
+
 export function verseSlug(verse: VerseRef) {
   return 'verse_' + verse.chapterNum + '_' + (verse.verse == null ? verse.verseNum : verse.verse);
 }

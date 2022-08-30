@@ -11,6 +11,12 @@ import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-
 import { AssignedUsers } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 
+export function defaultNoteThreadIcon(): NoteThreadIcon {
+  const iconTag: string = '01flag1';
+  const iconUrl = `/assets/icons/TagIcons/${iconTag}.png`;
+  return { cssVar: `--icon-file: url(${iconUrl});`, url: iconUrl };
+}
+
 export interface NoteThreadIcon {
   cssVar: string;
   url: string;
