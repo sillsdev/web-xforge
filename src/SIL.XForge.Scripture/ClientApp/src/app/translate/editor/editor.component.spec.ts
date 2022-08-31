@@ -2355,6 +2355,29 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('shows insert note button for users with permission', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+      // user02 does not have read permission on the text
+      const usersWhoCanInsertNotes = ['user01', 'user03', 'user04', 'user05'];
+      usersWhoCanInsertNotes.forEach(user => {
+        env.setCurrentUser(user);
+        tick();
+        env.fixture.detectChanges();
+        expect(env.insertNoteButton).toBeTruthy();
+      });
+
+      const usersWhoCannotInsertNotes = ['user06', 'user07'];
+      usersWhoCannotInsertNotes.forEach(user => {
+        env.setCurrentUser(user);
+        tick();
+        env.fixture.detectChanges();
+        expect(env.insertNoteButton).toBeNull();
+      });
+      env.dispose();
+    }));
+
     it('can open insert note dialog on default verse', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
@@ -2617,7 +2640,10 @@ class TestEnvironment {
     user01: SFProjectRole.ParatextTranslator,
     user02: SFProjectRole.ParatextConsultant,
     user03: SFProjectRole.ParatextTranslator,
-    user04: SFProjectRole.ParatextAdministrator
+    user04: SFProjectRole.ParatextAdministrator,
+    user05: SFProjectRole.Reviewer,
+    user06: SFProjectRole.ParatextObserver,
+    user07: SFProjectRole.Observer
   };
   private paratextUsersOnProject = paratextUsersFromRoles(this.userRolesOnProject);
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
@@ -2626,7 +2652,11 @@ class TestEnvironment {
   private textInfoPermissions = {
     user01: TextInfoPermission.Write,
     user02: TextInfoPermission.None,
-    user03: TextInfoPermission.Read
+    user03: TextInfoPermission.Read,
+    user04: TextInfoPermission.Write,
+    user05: TextInfoPermission.Read,
+    user06: TextInfoPermission.Read,
+    user07: TextInfoPermission.Read
   };
 
   private testProjectProfile: SFProjectProfile = {
@@ -2923,74 +2953,26 @@ class TestEnvironment {
   }
 
   setupUsers(): void {
-    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
-      id: 'user01',
-      data: {
-        name: 'User 01',
-        email: 'user1@example.com',
-        role: SystemRole.User,
-        isDisplayNameConfirmed: true,
-        avatarUrl: '',
-        authId: 'auth01',
-        displayName: 'User 01',
-        sites: {
-          sf: {
-            projects: ['project01', 'project02', 'project03']
+    for (const user of Object.keys(this.userRolesOnProject)) {
+      const name = 'U' + user.substring(1);
+      this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
+        id: user,
+        data: {
+          name,
+          email: user + '@example.com',
+          role: SystemRole.User,
+          isDisplayNameConfirmed: true,
+          avatarUrl: '',
+          authId: 'auth' + user,
+          displayName: name,
+          sites: {
+            sf: {
+              projects: ['project01', 'project02', 'project03']
+            }
           }
         }
-      }
-    });
-    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
-      id: 'user02',
-      data: {
-        name: 'User 02',
-        email: 'user2@example.com',
-        role: SystemRole.User,
-        isDisplayNameConfirmed: true,
-        avatarUrl: '',
-        authId: 'auth02',
-        displayName: 'User 02',
-        sites: {
-          sf: {
-            projects: ['project01', 'project02', 'project03']
-          }
-        }
-      }
-    });
-    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
-      id: 'user03',
-      data: {
-        name: 'User 03',
-        email: 'user3@example.com',
-        role: SystemRole.User,
-        isDisplayNameConfirmed: true,
-        avatarUrl: '',
-        authId: 'auth03',
-        displayName: 'User 03',
-        sites: {
-          sf: {
-            projects: ['project01', 'project02', 'project03']
-          }
-        }
-      }
-    });
-    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
-      id: 'user04',
-      data: {
-        name: 'User 04',
-        email: 'user4@example.com',
-        role: SystemRole.User,
-        isDisplayNameConfirmed: true,
-        avatarUrl: '',
-        authId: 'auth04',
-        displayName: 'User 04',
-        sites: {
-          sf: {
-            projects: ['project01', 'project02', 'project03']
-          }
-        }
-      }
-    });
+      });
+    }
   }
 
   setupProject(data: Partial<SFProject> = {}): void {

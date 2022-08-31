@@ -17,6 +17,7 @@ import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { canInsertNote } from 'src/app/shared/utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -147,8 +148,9 @@ export class NoteDialogComponent implements OnInit {
     return this.textDoc.getSegmentTextIncludingRelated(`verse_${verseRef.chapter}_${verseRef.verse}`);
   }
 
-  get canCreateNote(): boolean {
-    return this.featureFlags.allowAddingNotes.enabled;
+  get canInsertNote(): boolean {
+    if (this.projectProfileDoc?.data == null) return false;
+    return this.isAddNotesEnabled && canInsertNote(this.projectProfileDoc.data, this.userService.currentUserId);
   }
 
   /** Is a note considered to be a conflict note? */
@@ -196,6 +198,10 @@ export class NoteDialogComponent implements OnInit {
       return this.data.verseRef == null ? undefined : this.data.verseRef;
     }
     return toVerseRef(this.threadDoc.data.verseRef);
+  }
+
+  private get isAddNotesEnabled(): boolean {
+    return this.featureFlags.allowAddingNotes.enabled;
   }
 
   parseNote(content: string | undefined): string {

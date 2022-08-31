@@ -36,12 +36,14 @@
         <app-owner [ownerRef]="note.ownerRef" [dateTime]="note.dateCreated"></app-owner>
       </div>
     </div>
-    <mat-form-field class="full-width" appearance="fill" *ngIf="canCreateNote">
+    <mat-form-field *ngIf="canInsertNote" class="full-width" appearance="fill">
       <textarea matInput [(ngModel)]="currentNote"></textarea>
     </mat-form-field>
   </mat-dialog-content>
   <mat-dialog-actions fxLayoutAlign="end">
     <button mat-button class="close-button" [mat-dialog-close]="undefined">{{ t("close") }}</button>
-    <button mat-flat-button color="primary" class="save-button" (click)="submit()">{{ t("save") }}</button>
+    <button *ngIf="canInsertNote" mat-flat-button color="primary" class="save-button" (click)="submit()">
+      {{ t("save") }}
+    </button>
   </mat-dialog-actions>
 </ng-container>
