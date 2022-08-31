@@ -54,7 +54,12 @@ import { TranslationEngineService } from '../../core/translation-engine.service'
 import { Segment } from '../../shared/text/segment';
 import { PresenceData, RemotePresences } from '../../shared/text/text-view-model';
 import { EmbedsByVerse, FeaturedVerseRefInfo, TextComponent } from '../../shared/text/text.component';
-import { formatFontSizeToRems, getVerseRefFromSegmentRef, threadIdFromMouseEvent } from '../../shared/utils';
+import {
+  canInsertNote,
+  formatFontSizeToRems,
+  getVerseRefFromSegmentRef,
+  threadIdFromMouseEvent
+} from '../../shared/utils';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
 import {
@@ -308,6 +313,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       !this.target?.areOpsCorrupted &&
       !this.projectTextNotEditable
     );
+  }
+
+  get canInsertNote(): boolean {
+    if (this.projectDoc?.data == null) return false;
+    return canInsertNote(this.projectDoc.data, this.userService.currentUserId);
   }
 
   get canShare(): boolean {

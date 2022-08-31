@@ -16,6 +16,8 @@ import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/mode
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
+import { SFProjectRights, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { canInsertNote } from 'src/app/shared/utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -47,6 +49,7 @@ export class NoteDialogComponent implements OnInit {
   showSegmentText: boolean = false;
   currentNote: string = '';
   private isAssignedToOtherUser: boolean = false;
+  private readonly projectRights: SFProjectRights = SF_PROJECT_RIGHTS;
   private threadDoc?: NoteThreadDoc;
   private projectProfileDoc?: SFProjectProfileDoc;
   private textDoc?: TextDoc;
@@ -148,6 +151,11 @@ export class NoteDialogComponent implements OnInit {
       return '';
     }
     return this.textDoc.getSegmentTextIncludingRelated(`verse_${verseRef.chapter}_${verseRef.verse}`);
+  }
+
+  get canInsertNote(): boolean {
+    if (this.projectProfileDoc?.data == null) return false;
+    return canInsertNote(this.projectProfileDoc.data, this.userService.currentUserId);
   }
 
   /** Is a note considered to be a conflict note? */

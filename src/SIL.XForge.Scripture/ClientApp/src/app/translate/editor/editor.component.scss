@@ -1,5 +1,4 @@
 @use '@material/button/mixins' as button;
-@use '@material/icon-button/mixins' as icon-button;
 
 @import 'src/variables';
 @import 'bootstrap/scss/mixins/breakpoints';
@@ -13,6 +12,10 @@
   @include media-breakpoint-only(xs) {
     margin: -10px;
   }
+}
+
+.avatar-padding {
+  padding-bottom: 2px;
 }
 
 .language-label {
@@ -32,10 +35,6 @@
     margin-bottom: 0;
     border-bottom-width: 0;
   }
-
-  .mdc-icon-button {
-    @include icon-button.icon-size(24px, 24px, 8px);
-  }
 }
 
 .toolbar-separator {
@@ -43,11 +42,6 @@
   margin: 0px 4px;
   height: 36px;
   width: 0;
-}
-
-.mdc-icon-button.mdc-icon-button--activated::before {
-  transition-duration: 12ms;
-  opacity: mdc-states-opacity(black, activated);
 }
 
 .ql-suggestions {
@@ -96,9 +90,8 @@ app-text {
     }
     > button {
       @include button.ink-color(white);
-      @include icon-button.icon-size(24px, 24px, 8px);
     }
-    background-color: $mdc-theme-primary;
+    background-color: $sf_grey;
   }
 
   > .training-content {
