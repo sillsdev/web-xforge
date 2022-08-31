@@ -1,3 +1,6 @@
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { DeltaOperation } from 'rich-text';
 import { SelectableProject } from '../core/paratext.service';
@@ -142,4 +145,8 @@ export function compareProjectsForSorting(a: { shortName: string }, b: { shortNa
 export function formatFontSizeToRems(fontSize: number | undefined): string | undefined {
   // Paratext allows a font size between 8 and 32. 12pt font is equivalent to 1rem
   return fontSize == null ? undefined : `${fontSize / 12}rem`;
+}
+
+export function canInsertNote(project: SFProjectProfile, userId: string): boolean {
+  return SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.NoteThreads, Operation.Create);
 }
