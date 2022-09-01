@@ -188,11 +188,6 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
 
   /** Edit text of control using Scripture chooser dialog. */
   openScriptureChooser(control: AbstractControl) {
-    if (this.scriptureStart.value === '') {
-      // the input element is losing focus, but the input is still being interacted with, so errors shouldn't be shown
-      this.scriptureStart.markAsUntouched();
-    }
-
     let currentVerseSelection: VerseRef | undefined;
     const { verseRef } = VerseRef.tryParse(control.value);
     if (verseRef.valid) {
@@ -216,6 +211,12 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
       ScriptureChooserDialogComponent,
       VerseRef | 'close'
     >;
+    if (control.value === '') {
+      // the input element is losing focus, but the input is still being interacted with, so errors shouldn't be shown
+      dialogRef.afterOpened().subscribe(() => {
+        control.markAsUntouched();
+      });
+    }
     dialogRef.afterClosed().subscribe(result => {
       if (result != null && result !== 'close') {
         control.markAsTouched();
