@@ -263,7 +263,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   @Input() set isReadOnly(value: boolean) {
     this._isReadOnly = value;
-    this.submitLocalPresenceChannel(this._isReadOnly);
   }
 
   get areOpsCorrupted(): boolean {
