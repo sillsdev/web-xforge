@@ -649,7 +649,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
   }
 
-  async onSelectionChanged(range: RangeStatic): Promise<void> {
+  async onSelectionChanged(range: RangeStatic | null): Promise<void> {
     this.update();
 
     this.submitLocalPresenceDoc(range);
