@@ -19,9 +19,9 @@ describe('MultiViewerComponent', () => {
 
   it('should have all avatars when the menu is closed', () => {
     component.viewers = [
-      { displayName: 'v 1', avatarUrl: '', cursorColor: '' },
-      { displayName: 'v 2', avatarUrl: '', cursorColor: '' },
-      { displayName: 'v 3', avatarUrl: '', cursorColor: '' }
+      { displayName: 'v 1', avatarUrl: '', cursorColor: '', activeInEditor: false },
+      { displayName: 'v 2', avatarUrl: '', cursorColor: '', activeInEditor: false },
+      { displayName: 'v 3', avatarUrl: '', cursorColor: '', activeInEditor: false }
     ];
     expect(component.maxAvatars).withContext('setup').toEqual(3);
 
@@ -30,9 +30,9 @@ describe('MultiViewerComponent', () => {
 
   it('should not have avatars when the menu is open', () => {
     component.viewers = [
-      { displayName: 'v 1', avatarUrl: '', cursorColor: '' },
-      { displayName: 'v 2', avatarUrl: '', cursorColor: '' },
-      { displayName: 'v 3', avatarUrl: '', cursorColor: '' }
+      { displayName: 'v 1', avatarUrl: '', cursorColor: '', activeInEditor: false },
+      { displayName: 'v 2', avatarUrl: '', cursorColor: '', activeInEditor: false },
+      { displayName: 'v 3', avatarUrl: '', cursorColor: '', activeInEditor: false }
     ];
 
     component.isMenuOpen = true;
@@ -42,10 +42,10 @@ describe('MultiViewerComponent', () => {
 
   it('should limit the avatars when there are many', () => {
     component.viewers = [
-      { displayName: 'v 1', avatarUrl: '', cursorColor: '' },
-      { displayName: 'v 2', avatarUrl: '', cursorColor: '' },
-      { displayName: 'v 3', avatarUrl: '', cursorColor: '' },
-      { displayName: 'v 4', avatarUrl: '', cursorColor: '' }
+      { displayName: 'v 1', avatarUrl: '', cursorColor: '', activeInEditor: false },
+      { displayName: 'v 2', avatarUrl: '', cursorColor: '', activeInEditor: false },
+      { displayName: 'v 3', avatarUrl: '', cursorColor: '', activeInEditor: false },
+      { displayName: 'v 4', avatarUrl: '', cursorColor: '', activeInEditor: false }
     ];
     expect(component.maxAvatars).withContext('setup').toEqual(3);
 

@@ -67,6 +67,18 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
   readonly create$ = new Subject<void>();
   readonly delete$ = new Subject<void>();
   readonly idle$ = EMPTY;
+  readonly channelPresence: Presence = {
+    remotePresences: {},
+    subscribe: (_callback?: Callback) => {},
+    unsubscribe: (_callback?: Callback) => {},
+    create: (_id?: string) =>
+      ({
+        submit: (_value: any, _callback?: Callback) => {}
+      } as LocalPresence),
+    destroy: (_callback?: Callback) => {},
+    on: (_event: string, _handler: Function) => {},
+    off: (_event: string, _handler: Function) => {}
+  } as Presence;
   readonly docPresence: Presence = {
     remotePresences: {},
     subscribe: (_callback?: Callback) => {},

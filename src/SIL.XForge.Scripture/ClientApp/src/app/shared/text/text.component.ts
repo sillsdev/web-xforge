@@ -39,6 +39,8 @@ import { EditorRange, TextViewModel } from './text-view-model';
 import { TextNoteDialogComponent, NoteDialogData } from './text-note-dialog/text-note-dialog.component';
 
 const EDITORS = new Set<Quill>();
+// When a user is active in the editor a timer starts to mark them as inactive for remote presences
+export const PRESENCE_EDITOR_ACTIVE_TIMEOUT = 3500;
 
 function onNativeSelectionChanged(): void {
   // workaround for bug where Quill allows a selection inside of an embed
@@ -105,6 +107,7 @@ export interface EmbedsByVerse {
 })
 export class TextComponent extends SubscriptionDisposable implements AfterViewInit, OnDestroy {
   @ViewChild('quillEditor', { static: true, read: ElementRef }) quill!: ElementRef;
+  @Input() enablePresence: boolean = false;
   @Input() markInvalid: boolean = false;
   @Input() multiSegmentSelection = false;
   @Input() subscribeToUpdates = true;
@@ -114,8 +117,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   @Output() focused = new EventEmitter<boolean>(true);
   @Output() presenceChange = new EventEmitter<RemotePresences | undefined>(true);
   lang: string = '';
-  localPresenceChannel?: LocalPresence<PresenceData>;
-  localPresenceDoc?: LocalPresence<RangeStatic | null>;
   // only use USX formats and not default Quill formats
   readonly allowedFormats: string[] = USX_FORMATS;
   // allow for different CSS based on the browser engine
@@ -125,6 +126,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private clickSubs: Map<string, Subscription[]> = new Map<string, Subscription[]>();
   private _isReadOnly: boolean = true;
   private _editorStyles: any = { fontSize: '1rem' };
+  private activePresenceSubscription?: Subscription;
   private readonly DEFAULT_MODULES: any = {
     toolbar: false,
     keyboard: {
@@ -231,6 +233,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private _placeholder?: string;
   private readonly cursorColorStorageKey = 'cursor_color';
   private displayMessage: string = '';
+  private localPresenceChannel?: LocalPresence<PresenceData>;
+  private localPresenceDoc?: LocalPresence<RangeStatic | null>;
   private readonly presenceId: string = objectId();
   /** The ShareDB presence information for the TextDoc that the quill is bound to. */
   private presenceDoc?: Presence<RangeStatic>;
@@ -399,7 +403,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   private get isPresenceEnabled(): boolean {
-    return !this._isReadOnly && this.pwaService.isOnline;
+    return this.enablePresence;
   }
 
   private get contentShowing(): boolean {
@@ -426,6 +430,9 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       EDITORS.delete(this._editor);
     }
     this.dismissPresences();
+    if (this.activePresenceSubscription != null) {
+      this.activePresenceSubscription.unsubscribe();
+    }
   }
 
   onEditorCreated(editor: Quill): void {
@@ -499,59 +506,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   getSegmentElement(segment: string): Element | null {
     return this.editor == null ? null : this.editor.container.querySelector(`usx-segment[data-segment="${segment}"]`);
-  }
-
-  attachPresences(textDoc: TextDoc): void {
-    if (this.editor == null) {
-      console.log('could not attach yet - no editor');
-      return;
-    }
-    const cursors: QuillCursors = this.editor.getModule('cursors');
-
-    // Subscribe to TextDoc specific presence changes - these only include RangeStatic updates from ShareDB
-    this.presenceDoc = textDoc.docPresence;
-    this.presenceDoc.subscribe(error => {
-      if (error) throw error;
-    });
-    this.localPresenceDoc = this.presenceDoc.create(this.presenceId);
-
-    this.onPresenceDocReceive = (presenceId: string, range: RangeStatic | null) => {
-      console.log('onPresenceDocReceive', presenceId, range);
-      if (range == null) {
-        cursors.removeCursor(presenceId);
-        console.log('removeCursor', presenceId);
-        return;
-      }
-      console.log(this.presenceChannel?.remotePresences);
-      const viewer: MultiCursorViewer | undefined = this.getPresenceViewer(presenceId);
-      if (viewer == null) {
-        return;
-      }
-      cursors.createCursor(presenceId, viewer.displayName, viewer.cursorColor);
-      cursors.moveCursor(presenceId, range);
-      console.log('moved cursor', viewer.activeInEditor);
-    };
-    this.presenceDoc.on('receive', this.onPresenceDocReceive);
-    console.info('presenceDoc setup');
-
-    // Subscribe to a generic channel for the TextDoc to keep track of who is viewing the document
-    // This includes those who may not have focus on the Quill editor
-    this.presenceChannel = textDoc.channelPresence;
-    this.presenceChannel.subscribe(error => {
-      if (error) throw error;
-    });
-    this.localPresenceChannel = this.presenceChannel.create(this.presenceId);
-
-    this.onPresenceChannelReceive = (presenceId: string, presenceData: PresenceData | null) => {
-      console.log('onPresenceChannelReceive', presenceId, presenceData);
-      if (presenceData != null) {
-        cursors.toggleFlag(presenceId, presenceData.viewer.activeInEditor);
-      }
-      this.presenceChange?.emit(this.presenceChannel?.remotePresences);
-    };
-    this.presenceChannel.on('receive', this.onPresenceChannelReceive);
-    this.submitLocalPresenceChannel(false);
-    console.info('presenceChannel setup');
   }
 
   toggleFeaturedVerseRefs(
@@ -696,41 +650,14 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
   }
 
-  async onSelectionChanged(range: RangeStatic | null, source: string): Promise<void> {
+  async onSelectionChanged(range: RangeStatic): Promise<void> {
     this.update();
 
-    // We only need to send presence updates if the user moves the cursor themselves. Cursor updates as a result of text
-    // changes will automatically be handled by the remote client.
-    // if ((source as Sources) !== 'user') return;
-    console.log('onSelectionChanged', range, source);
     this.submitLocalPresenceDoc(range);
   }
 
   clearHighlight(): void {
     this.highlight([]);
-  }
-
-  async dismissPresences(): Promise<void> {
-    await this.submitLocalPresenceChannel(null);
-    await this.submitLocalPresenceDoc(null);
-    if (this.editor != null) {
-      const cursors: QuillCursors = this.editor.getModule('cursors');
-      cursors.clearCursors();
-    }
-    this.presenceChannel?.unsubscribe(error => {
-      if (error) throw error;
-    });
-    this.presenceChannel?.off('receive', this.onPresenceChannelReceive);
-    this.presenceChannel = undefined;
-
-    this.presenceDoc?.unsubscribe(error => {
-      if (error) throw error;
-    });
-    this.presenceDoc?.off('receive', this.onPresenceDocReceive);
-    this.presenceDoc = undefined;
-    const noRemotePresences: RemotePresences = {};
-    console.log('noRemotePresences');
-    this.presenceChange?.emit(noRemotePresences);
   }
 
   highlight(segmentRefs?: string[]): void {
@@ -817,6 +744,51 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
   }
 
+  private attachPresences(textDoc: TextDoc): void {
+    if (!this.isPresenceEnabled || this.editor == null) {
+      return;
+    }
+    const cursors: QuillCursors = this.editor.getModule('cursors');
+
+    // Subscribe to TextDoc specific presence changes - these only include RangeStatic updates from ShareDB
+    this.presenceDoc = textDoc.docPresence;
+    this.presenceDoc.subscribe(error => {
+      if (error) throw error;
+    });
+    this.localPresenceDoc = this.presenceDoc.create(this.presenceId);
+
+    this.onPresenceDocReceive = (presenceId: string, range: RangeStatic | null) => {
+      if (range == null) {
+        cursors.removeCursor(presenceId);
+        return;
+      }
+      const viewer: MultiCursorViewer | undefined = this.getPresenceViewer(presenceId);
+      if (viewer == null) {
+        return;
+      }
+      cursors.createCursor(presenceId, viewer.displayName, viewer.cursorColor);
+      cursors.moveCursor(presenceId, range);
+    };
+    this.presenceDoc.on('receive', this.onPresenceDocReceive);
+
+    // Subscribe to a generic channel for the TextDoc to keep track of who is viewing the document
+    // This includes those who may not have focus on the Quill editor
+    this.presenceChannel = textDoc.channelPresence;
+    this.presenceChannel.subscribe(error => {
+      if (error) throw error;
+    });
+    this.localPresenceChannel = this.presenceChannel.create(this.presenceId);
+
+    this.onPresenceChannelReceive = (presenceId: string, presenceData: PresenceData | null) => {
+      if (presenceData != null) {
+        cursors.toggleFlag(presenceId, presenceData.viewer.activeInEditor);
+      }
+      this.presenceChange?.emit(this.presenceChannel?.remotePresences);
+    };
+    this.presenceChannel.on('receive', this.onPresenceChannelReceive);
+    this.submitLocalPresenceChannel(false);
+  }
+
   private async bindQuill(): Promise<void> {
     this.viewModel.unbind();
     await this.dismissPresences();
@@ -858,6 +830,31 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         )
       );
     }
+  }
+
+  private async dismissPresences(): Promise<void> {
+    if (!this.isPresenceEnabled) {
+      return;
+    }
+    await this.submitLocalPresenceChannel(null);
+    await this.submitLocalPresenceDoc(null);
+    if (this.editor != null) {
+      const cursors: QuillCursors = this.editor.getModule('cursors');
+      cursors.clearCursors();
+    }
+    this.presenceChannel?.unsubscribe(error => {
+      if (error) throw error;
+    });
+    this.presenceChannel?.off('receive', this.onPresenceChannelReceive);
+    this.presenceChannel = undefined;
+
+    this.presenceDoc?.unsubscribe(error => {
+      if (error) throw error;
+    });
+    this.presenceDoc?.off('receive', this.onPresenceDocReceive);
+    this.presenceDoc = undefined;
+    const noRemotePresences: RemotePresences = {};
+    this.presenceChange?.emit(noRemotePresences);
   }
 
   private getPresenceViewer(presenceId: string): MultiCursorViewer | undefined {
@@ -952,8 +949,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   private async submitLocalPresenceChannel(active: boolean | null): Promise<void> {
-    if (!this.isPresenceEnabled || this.localPresenceChannel == null) {
-      console.warn('submitLocalPresenceChannel not ready', this.isPresenceEnabled, this.localPresenceChannel);
+    if (!this.isPresenceEnabled || this.localPresenceChannel == null || !this.pwaService.isOnline) {
       return;
     }
 
@@ -976,24 +972,25 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       };
       this.presenceActiveEditor$.next(active);
       if (active) {
-        timer(3500)
+        if (this.activePresenceSubscription != null) {
+          this.activePresenceSubscription.unsubscribe();
+        }
+        this.activePresenceSubscription = timer(PRESENCE_EDITOR_ACTIVE_TIMEOUT)
           .pipe(takeUntil(this.presenceActiveEditor$))
           .subscribe(() => {
-            console.log('not active any more');
             this.submitLocalPresenceChannel(false);
           });
       }
     }
-    console.log('submitLocalPresenceChannel', presenceData);
     this.localPresenceChannel.submit(presenceData, error => {
       if (error) throw error;
     });
   }
 
   private async submitLocalPresenceDoc(range: RangeStatic | null): Promise<void> {
-    if (!this.isPresenceEnabled || this.localPresenceDoc == null) return;
+    if (!this.isPresenceEnabled || this.localPresenceDoc == null || this._isReadOnly || !this.pwaService.isOnline)
+      return;
 
-    console.log('submitLocalPresenceDoc', range);
     this.localPresenceDoc.submit(range, error => {
       if (error) throw error;
     });

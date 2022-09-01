@@ -68,6 +68,7 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { SharedModule } from '../../shared/shared.module';
 import { getCombinedVerseTextDoc, paratextUsersFromRoles } from '../../shared/test-utils';
+import { PRESENCE_EDITOR_ACTIVE_TIMEOUT } from '../../shared/text/text.component';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
 import { NoteDialogComponent } from './note-dialog/note-dialog.component';
 import { SuggestionsComponent } from './suggestions.component';
@@ -3046,6 +3047,10 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
+  waitForPresenceTimer(): void {
+    tick(PRESENCE_EDITOR_ACTIVE_TIMEOUT);
+  }
+
   insertSuggestion(i: number = 0): void {
     const keydownEvent: any = document.createEvent('CustomEvent');
     if (i === 0) {
@@ -3160,6 +3165,7 @@ class TestEnvironment {
   dispose(): void {
     this.wait();
     this.component.metricsSession!.dispose();
+    this.waitForPresenceTimer();
   }
 
   addTextDoc(id: TextDocId, textType: TextType = 'target', corrupt = false): void {

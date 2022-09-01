@@ -174,7 +174,6 @@ export class TextViewModel {
     if (this.textDoc != null) {
       this.unbind();
     }
-    console.log('bind text-view-model', textDoc.id);
 
     this.textDoc = textDoc;
     editor.setContents(this.textDoc.data as DeltaStatic);
@@ -195,7 +194,6 @@ export class TextViewModel {
 
   /** Break the association of the editor with the currently associated textdoc. */
   unbind(): void {
-    console.log('UNBIND text-view-model', this.textDoc?.id);
     if (this.remoteChangesSub != null) {
       this.remoteChangesSub.unsubscribe();
     }

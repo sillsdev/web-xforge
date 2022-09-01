@@ -105,10 +105,17 @@ describe('CheckingTextComponent', () => {
   it('can set text direction explicitly', fakeAsync(() => {
     const env = new TestEnvironment();
     env.wait();
-    expect(env.fixture.nativeElement.querySelector('quill-editor[class="read-only-editor ltr"')).not.toBeNull();
+    expect(env.fixture.nativeElement.querySelector('quill-editor[class="read-only-editor ltr"]')).not.toBeNull();
     env.component.isRightToLeft = true;
     env.wait();
-    expect(env.fixture.nativeElement.querySelector('quill-editor[class="read-only-editor rtl"')).not.toBeNull();
+    expect(env.fixture.nativeElement.querySelector('quill-editor[class="read-only-editor rtl"]')).not.toBeNull();
+  }));
+
+  it('should have local presence disabled', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.wait();
+
+    expect(env.component.textComponent.enablePresence).toBe(false);
   }));
 });
 
