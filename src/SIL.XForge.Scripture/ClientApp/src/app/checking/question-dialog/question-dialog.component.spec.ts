@@ -267,11 +267,16 @@ describe('QuestionDialogComponent', () => {
   it('passes start reference to end-reference chooser', fakeAsync(() => {
     env = new TestEnvironment();
     flush();
+    expect(env.scriptureEndInputIcon.classList).toContain('mat-button-disabled');
     env.component.scriptureStart.setValue('LUK 1:1');
     env.component.scriptureEnd.setValue('GEN 5:6');
+    tick();
+    env.fixture.detectChanges();
+    expect(env.component.scriptureEnd.enabled).toBe(true);
+    expect(env.scriptureEndInputIcon.classList).not.toContain('mat-button-disabled');
+    console.log(env.scriptureEndInputIcon);
 
     env.clickElement(env.scriptureEndInputIcon);
-    flush();
     // Dialog receives unhelpful input value that can be ignored.
     // rangeStart should have been passed in, and from scriptureStart value.
     verify(
@@ -653,16 +658,16 @@ class TestEnvironment {
     return this.overlayContainerElement.querySelector('#scripture-end') as HTMLInputElement;
   }
 
-  get scriptureEndInputIcon(): HTMLInputElement {
-    return this.scriptureEndInput.querySelector('mat-icon') as HTMLInputElement;
+  get scriptureEndInputIcon(): HTMLElement {
+    return this.scriptureEndInput.querySelector('button') as HTMLElement;
   }
 
   get scriptureStartInput(): HTMLInputElement {
     return this.overlayContainerElement.querySelector('#scripture-start') as HTMLInputElement;
   }
 
-  get scriptureStartInputIcon(): HTMLInputElement {
-    return this.scriptureStartInput.querySelector('mat-icon') as HTMLInputElement;
+  get scriptureStartInputIcon(): HTMLElement {
+    return this.scriptureStartInput.querySelector('button') as HTMLElement;
   }
 
   get scriptureStartValidationMsg(): HTMLElement {
