@@ -126,6 +126,13 @@ describe('CheckingTextComponent', () => {
     env.wait();
     expect(env.fixture.nativeElement.querySelector('quill-editor[class="read-only-editor rtl"]')).not.toBeNull();
   }));
+
+  it('should have local presence disabled', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.wait();
+
+    expect(env.component.textComponent.enablePresence).toBe(false);
+  }));
 });
 
 class TestEnvironment {

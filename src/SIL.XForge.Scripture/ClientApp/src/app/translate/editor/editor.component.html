@@ -90,6 +90,7 @@
             (focused)="targetFocused = $event"
             (presenceChange)="onPresenceChange($event)"
             [highlightSegment]="targetFocused && canEdit"
+            [enablePresence]="true"
             [markInvalid]="true"
             [isRightToLeft]="isTargetRightToLeft"
             [fontSize]="fontSize"

@@ -24,6 +24,7 @@ import { MockConsole } from 'xforge-common/mock-console';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { LocalPresence } from 'sharedb/lib/sharedb';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
@@ -37,8 +38,8 @@ import {
   getTextDoc
 } from '../test-utils';
 import { DragAndDrop } from './drag-and-drop';
-import { TextComponent } from './text.component';
-import { PresenceData, RemotePresences, TextViewModel } from './text-view-model';
+import { PresenceData, PRESENCE_EDITOR_ACTIVE_TIMEOUT, RemotePresences, TextComponent } from './text.component';
+import { TextViewModel } from './text-view-model';
 import { TextNoteDialogComponent, TextNoteType } from './text-note-dialog/text-note-dialog.component';
 
 const mockedBugsnagService = mock(BugsnagService);
@@ -80,6 +81,7 @@ describe('TextComponent', () => {
     env.component.onEditorCreated(mockedQuill);
     expect(env.component.placeholder).toEqual('initial placeholder text');
     env.id = new TextDocId('project01', 40, 1);
+    tick();
     expect(env.component.placeholder).toEqual('text.loading');
     env.onlineStatus = false;
     env.fixture.detectChanges();
@@ -148,6 +150,8 @@ describe('TextComponent', () => {
     tick();
     env.fixture.detectChanges();
     expect(env.isSegmentHighlighted(1, '2-3')).toBe(true);
+
+    TestEnvironment.waitForPresenceTimer();
   }));
 
   it('adds data attributes for usfm labels', fakeAsync(() => {
@@ -211,6 +215,8 @@ describe('TextComponent', () => {
     env.triggerUndo();
     const rangePostUndo: RangeStatic | undefined = env.component.getSegmentRange('s_3');
     expect(rangePostUndo).toBeTruthy();
+
+    TestEnvironment.waitForPresenceTimer();
   }));
 
   it('pastes text with proper attributes', fakeAsync(() => {
@@ -244,26 +250,11 @@ describe('TextComponent', () => {
     expect(segmentElement.classList).toContain('note-thread-segment');
     contents = env.component.getSegmentContents('verse_1_1')!;
     expect(contents.ops![0].insert).toEqual(pasteText + 'target: ');
+
+    TestEnvironment.waitForPresenceTimer();
   }));
 
   describe('MultiCursor Presence', () => {
-    it('should not update presence if something other than the user moves the cursor', fakeAsync(() => {
-      const env: TestEnvironment = new TestEnvironment();
-      env.fixture.detectChanges();
-      env.id = new TextDocId('project01', 40, 1);
-      tick();
-      env.fixture.detectChanges();
-      const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
-      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresenceChannel, 'submit').and.callThrough();
-
-      env.component.editor?.setSelection(1, 1, 'api');
-
-      tick();
-      expect(onSelectionChangedSpy).toHaveBeenCalledTimes(1);
-      expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(0);
-      verify(mockedUserService.getCurrentUser()).never();
-    }));
-
     it('should update presence if the user moves the cursor', fakeAsync(() => {
       const env: TestEnvironment = new TestEnvironment();
       env.fixture.detectChanges();
@@ -271,7 +262,7 @@ describe('TextComponent', () => {
       tick();
       env.fixture.detectChanges();
       const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
-      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresenceChannel, 'submit').and.callThrough();
+      const localPresenceSubmitSpy = spyOn<any>(env.localPresenceDoc, 'submit').and.callThrough();
 
       env.component.editor?.setSelection(1, 1, 'user');
 
@@ -279,24 +270,6 @@ describe('TextComponent', () => {
       expect(onSelectionChangedSpy).toHaveBeenCalledTimes(1);
       expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(1);
       verify(mockedUserService.getCurrentUser()).once();
-    }));
-
-    it('should not update presence if readonly', fakeAsync(() => {
-      const env: TestEnvironment = new TestEnvironment();
-      env.hostComponent.isReadOnly = true;
-      env.fixture.detectChanges();
-      env.id = new TextDocId('project01', 40, 1);
-      tick();
-      env.fixture.detectChanges();
-      const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
-      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresenceChannel, 'submit').and.callThrough();
-
-      env.component.editor?.setSelection(1, 1, 'user');
-
-      tick();
-      expect(onSelectionChangedSpy).toHaveBeenCalledTimes(1);
-      expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(0);
-      verify(mockedUserService.getCurrentUser()).never();
     }));
 
     it('should not update presence if offline', fakeAsync(() => {
@@ -307,7 +280,7 @@ describe('TextComponent', () => {
       tick();
       env.fixture.detectChanges();
       const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
-      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresenceChannel, 'submit').and.callThrough();
+      const localPresenceSubmitSpy = spyOn<any>(env.localPresenceDoc, 'submit').and.callThrough();
 
       env.component.editor?.setSelection(1, 1, 'user');
 
@@ -317,23 +290,23 @@ describe('TextComponent', () => {
       verify(mockedUserService.getCurrentUser()).never();
     }));
 
-    it('should clear presence on blur', fakeAsync(() => {
+    it('should clear doc presence on blur', fakeAsync(() => {
       const env: TestEnvironment = new TestEnvironment();
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
       tick();
       env.fixture.detectChanges();
       const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
-      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresenceChannel, 'submit').and.callThrough();
+      const localPresenceSubmitSpy = spyOn<any>(env.localPresenceDoc, 'submit').and.callThrough();
 
-      env.component.onSelectionChanged({ index: 0, length: 0 }, 'user');
+      env.component.onSelectionChanged({ index: 0, length: 0 });
 
       tick();
       expect(onSelectionChangedSpy).toHaveBeenCalledTimes(1);
       expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(1);
       verify(mockedUserService.getCurrentUser()).once();
 
-      env.component.onSelectionChanged(null as unknown as RangeStatic, 'user');
+      env.component.onSelectionChanged(null as unknown as RangeStatic);
 
       tick();
       expect(onSelectionChangedSpy).toHaveBeenCalledTimes(2);
@@ -345,102 +318,16 @@ describe('TextComponent', () => {
       const env: TestEnvironment = new TestEnvironment();
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
+      when(mockedUserService.getCurrentUser()).thenResolve({ data: undefined } as UserDoc);
       tick();
       env.fixture.detectChanges();
-      when(mockedUserService.getCurrentUser()).thenResolve({ data: undefined } as UserDoc);
 
-      env.component.onSelectionChanged({ index: 0, length: 0 }, 'user');
+      env.component.onSelectionChanged({ index: 0, length: 0 });
 
       tick();
       verify(mockedUserService.getCurrentUser()).once();
       verify(mockedTranslocoService.translate('editor.anonymous')).once();
       expect().nothing();
-    }));
-
-    it('should emit on blur', fakeAsync(() => {
-      const env: TestEnvironment = new TestEnvironment();
-      env.fixture.detectChanges();
-      env.id = new TextDocId('project01', 40, 1);
-      tick();
-      env.fixture.detectChanges();
-      const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
-      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresenceChannel, 'submit');
-
-      // SUT
-      env.component.onSelectionChanged(null as unknown as RangeStatic, 'user');
-
-      tick();
-      expect(onSelectionChangedSpy).toHaveBeenCalledTimes(1);
-      expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(1);
-      verify(mockedUserService.getCurrentUser()).never();
-    }));
-
-    it('should emit on cursor move', fakeAsync(() => {
-      const env: TestEnvironment = new TestEnvironment();
-      env.fixture.detectChanges();
-      env.id = new TextDocId('project01', 40, 1);
-      tick();
-      env.fixture.detectChanges();
-      const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
-      const localPresenceSubmitSpy = spyOn<any>(env.component.localPresenceChannel, 'submit');
-
-      // SUT
-      env.component.onSelectionChanged({ index: 0, length: 0 }, 'user');
-
-      tick();
-      expect(onSelectionChangedSpy).toHaveBeenCalledTimes(1);
-      expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(1);
-      verify(mockedUserService.getCurrentUser()).once();
-    }));
-
-    it('should not emit if readonly, when learn remote presence', fakeAsync(() => {
-      const env: TestEnvironment = new TestEnvironment();
-      env.hostComponent.isReadOnly = true;
-      env.fixture.detectChanges();
-      env.id = new TextDocId('project01', 40, 1);
-      tick();
-      env.fixture.detectChanges();
-      const presenceChangeEmitSpy: jasmine.Spy<any> = spyOn<any>((env.viewModel as any).presenceChange, 'emit');
-
-      expect(Object.keys(env.remotePresences).length)
-        .withContext('setup: sharedb presence info should start off empty')
-        .toEqual(0);
-
-      // SUT
-      env.addRemotePresence('remote-person-1');
-
-      expect(Object.keys(env.remotePresences).length)
-        .withContext('setup: sharedb presence info should contain remote person(s)')
-        .toEqual(1);
-
-      tick();
-      expect(presenceChangeEmitSpy).withContext('should not have announced any persons').toHaveBeenCalledTimes(0);
-      verify(mockedUserService.getCurrentUser()).never();
-    }));
-
-    it('should not emit if offline, when learn remote presence', fakeAsync(() => {
-      const env: TestEnvironment = new TestEnvironment();
-      env.onlineStatus = false;
-      env.fixture.detectChanges();
-      env.id = new TextDocId('project01', 40, 1);
-      tick();
-      env.fixture.detectChanges();
-      const presenceChangeEmitSpy: jasmine.Spy<any> = spyOn<any>((env.viewModel as any).presenceChange, 'emit');
-
-      expect(Object.keys(env.remotePresences).length)
-        .withContext('setup: sharedb presence info should start off empty')
-        .toEqual(0);
-
-      // SUT
-      env.addRemotePresence('remote-person-1');
-
-      expect(Object.keys(env.remotePresences).length)
-        .withContext('setup: sharedb presence info should contain remote person(s)')
-        .toEqual(1);
-
-      tick();
-      expect(presenceChangeEmitSpy).withContext('should not have announced any persons').toHaveBeenCalledTimes(0);
-      verify(mockedUserService.getCurrentUser()).never();
     }));
 
     it('should learn and announce about new remote presences', fakeAsync(() => {
@@ -449,9 +336,9 @@ describe('TextComponent', () => {
       env.id = new TextDocId('project01', 40, 1);
       tick();
       env.fixture.detectChanges();
-      const presenceChangeEmitSpy: jasmine.Spy<any> = spyOn<any>((env.viewModel as any).presenceChange, 'emit');
+      const presenceChangeEmitSpy: jasmine.Spy<any> = spyOn<any>((env.component as any).presenceChange, 'emit');
 
-      expect(Object.keys(env.remotePresences).length)
+      expect(Object.keys(env.remoteDocPresences).length)
         .withContext('setup: sharedb presence info should start off empty')
         .toEqual(0);
 
@@ -460,7 +347,7 @@ describe('TextComponent', () => {
       env.addRemotePresence('remote-person-2');
       const numberRemotePersons: number = 2;
 
-      expect(Object.keys(env.remotePresences).length)
+      expect(Object.keys(env.remoteDocPresences).length)
         .withContext('setup: sharedb presence info should contain remote person(s)')
         .toEqual(numberRemotePersons);
 
@@ -483,8 +370,8 @@ describe('TextComponent', () => {
         .withContext('some remote person(s) should have been reported')
         .toEqual(2);
 
-      // Disassociate the quill editor from its current textdoc.
-      env.viewModel.unbind();
+      // Leaving the text doc should dismiss their presence to other users
+      env.component.ngOnDestroy();
       tick();
 
       expect(Object.keys(env.hostComponent.remotePresences!).length)
@@ -493,6 +380,66 @@ describe('TextComponent', () => {
       expect((env.component as any).presence)
         .withContext('presence info should be absent')
         .toBeUndefined();
+    }));
+
+    it('should emit user active when editing', fakeAsync(() => {
+      const env: TestEnvironment = new TestEnvironment();
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+      env.fixture.detectChanges();
+      const presenceChannelSubmit = spyOn<any>(env.localPresenceChannel, 'submit');
+
+      const range: RangeStatic = env.component.getSegmentRange('verse_1_1')!;
+      env.component.editor!.setSelection(range.index + 1, 'user');
+      tick();
+      env.fixture.detectChanges();
+      env.insertText(range.index + 1, 'text');
+
+      // After a text update the channel will emit that the user is active
+      let presenceData: PresenceData = presenceChannelSubmit.calls.mostRecent().args[0] as PresenceData;
+      expect(presenceData).toBeDefined();
+      if (presenceData != null) {
+        expect(presenceData.viewer.activeInEditor).toBe(true);
+      }
+
+      // After a set period of time the channel will emit that the user is no longer active
+      TestEnvironment.waitForPresenceTimer();
+      presenceData = presenceChannelSubmit.calls.mostRecent().args[0] as PresenceData;
+      expect(presenceData).toBeDefined();
+      if (presenceData != null) {
+        expect(presenceData.viewer.activeInEditor).toBe(false);
+      }
+    }));
+
+    it('should not emit doc presence when in read only mode', fakeAsync(() => {
+      const env: TestEnvironment = new TestEnvironment();
+      env.hostComponent.isReadOnly = true;
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+      env.fixture.detectChanges();
+
+      const presenceDocSubmit = spyOn<any>(env.localPresenceDoc, 'submit');
+      const range: RangeStatic = env.component.getSegmentRange('verse_1_1')!;
+      env.component.editor!.setSelection(range.index + 1, 'user');
+      tick();
+      env.fixture.detectChanges();
+
+      expect(presenceDocSubmit).withContext('presenceChanelDoc').toHaveBeenCalledTimes(0);
+    }));
+
+    it('should not register to local presence when presence is disabled', fakeAsync(() => {
+      const env: TestEnvironment = new TestEnvironment({ presenceEnabled: false });
+      const presenceChangeEmitSpy: jasmine.Spy<any> = spyOn<any>((env.component as any).presenceChange, 'emit');
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+      env.fixture.detectChanges();
+
+      expect(env.localPresenceDoc).toBeUndefined();
+      expect(env.localPresenceChannel).toBeUndefined();
+      expect(presenceChangeEmitSpy).toHaveBeenCalledTimes(0);
     }));
   });
 
@@ -559,6 +506,8 @@ describe('TextComponent', () => {
       // After text is dragged into the document, set the selection to the inserted text.
       expect(resultingSelection.index).toEqual(desiredSelectionStart);
       expect(resultingSelection.length).toEqual(desiredSelectionLength);
+
+      TestEnvironment.waitForPresenceTimer();
     }));
 
     it('inserts externally introduced data in the right place, accounting for embeds', fakeAsync(() => {
@@ -619,6 +568,8 @@ describe('TextComponent', () => {
       // After text is dragged into the document, set the selection to the inserted text.
       expect(resultingSelection.index).toEqual(desiredSelectionStart);
       expect(resultingSelection.length).toEqual(desiredSelectionLength);
+
+      TestEnvironment.waitForPresenceTimer();
     }));
 
     it('also works in Firefox: inserts externally introduced data in the right place, without formatting or line breaks', fakeAsync(() => {
@@ -674,6 +625,8 @@ describe('TextComponent', () => {
       }
       expect(resultingSelection.index).toEqual(desiredSelectionStart);
       expect(resultingSelection.length).toEqual(desiredSelectionLength);
+
+      TestEnvironment.waitForPresenceTimer();
     }));
 
     it('also works for Firefox: inserts externally introduced data in the right place, accounting for embeds', fakeAsync(() => {
@@ -735,6 +688,8 @@ describe('TextComponent', () => {
       }
       expect(resultingSelection.index).toEqual(desiredSelectionStart);
       expect(resultingSelection.length).toEqual(desiredSelectionLength);
+
+      TestEnvironment.waitForPresenceTimer();
     }));
 
     it('moves drag-and-drop selection in doc', fakeAsync(() => {
@@ -820,6 +775,8 @@ describe('TextComponent', () => {
       // text.
       expect(resultingSelection.index).toEqual(desiredSelectionStart);
       expect(resultingSelection.length).toEqual(desiredSelectionLength);
+
+      TestEnvironment.waitForPresenceTimer();
     }));
 
     it('moves drag-and-drop selection in doc when dragged to earlier in segment', fakeAsync(() => {
@@ -893,6 +850,8 @@ describe('TextComponent', () => {
       // text.
       expect(resultingSelection.index).toEqual(desiredSelectionStart);
       expect(resultingSelection.length).toEqual(desiredSelectionLength);
+
+      TestEnvironment.waitForPresenceTimer();
     }));
 
     it('copies drag-and-drop if user holds ctrl key', fakeAsync(() => {
@@ -981,6 +940,8 @@ describe('TextComponent', () => {
       // copied text.
       expect(resultingSelection.index).toEqual(desiredSelectionStart);
       expect(resultingSelection.length).toEqual(desiredSelectionLength);
+
+      TestEnvironment.waitForPresenceTimer();
     }));
 
     it('does not remove selected text if it is not the text being dragged', fakeAsync(() => {
@@ -1050,6 +1011,8 @@ describe('TextComponent', () => {
       // not necessarily be the text that was previously selected.
       expect(resultingSelection.index).toEqual(desiredSelectionStart);
       expect(resultingSelection.length).toEqual(desiredSelectionLength);
+
+      TestEnvironment.waitForPresenceTimer();
     }));
 
     it('dont drag-and-drop to an invalid target element', fakeAsync(() => {
@@ -1330,6 +1293,8 @@ describe('TextComponent', () => {
       // After text is dragged, the new selection should be the inserted text.
       expect(resultingSelection.index).toEqual(desiredSelectionStart);
       expect(resultingSelection.length).toEqual(desiredSelectionLength);
+
+      TestEnvironment.waitForPresenceTimer();
     }));
 
     it('can drag-and-drop into note thread anchoring area', fakeAsync(() => {
@@ -1458,6 +1423,8 @@ describe('TextComponent', () => {
       // After text is dragged, the new selection should be the inserted text.
       expect(resultingSelection.index).toEqual(desiredSelectionStart);
       expect(resultingSelection.length).toEqual(desiredSelectionLength);
+
+      TestEnvironment.waitForPresenceTimer();
     }));
 
     it('can drag-and-drop correctly into overlapping note thread anchoring area', fakeAsync(() => {
@@ -1613,6 +1580,8 @@ describe('TextComponent', () => {
       // After text is dragged, the new selection should be the inserted text.
       expect(resultingSelection.index).toEqual(desiredSelectionStart);
       expect(resultingSelection.length).toEqual(desiredSelectionLength);
+
+      TestEnvironment.waitForPresenceTimer();
     }));
 
     it('dropped text does not acquire underline formatting from a following anchor', fakeAsync(() => {
@@ -1652,6 +1621,8 @@ describe('TextComponent', () => {
       verse1Segment = env.component.editor!.container.querySelector('usx-segment[data-segment="verse_1_1"]')!;
       textAnchorContent = verse1Segment.querySelector('display-text-anchor')!.textContent!;
       expect(textAnchorContent.trim()).toEqual(expected);
+
+      TestEnvironment.waitForPresenceTimer();
     }));
 
     it('can drag-and-drop correctly near figure', fakeAsync(() => {
@@ -1689,6 +1660,8 @@ describe('TextComponent', () => {
       // length 1, while inserted text of 'hello' would be length 'hello'.length.
       const nuggetEditorLength = 1;
       testNugget({ nuggetElementName, chapterNum, nuggetTextDocSnippet, nuggetEditorLength });
+
+      TestEnvironment.waitForPresenceTimer();
     }));
 
     it('can drag-and-drop correctly near endnote', fakeAsync(() => {
@@ -1729,6 +1702,8 @@ describe('TextComponent', () => {
       };
       const nuggetEditorLength = 1;
       testNugget({ nuggetElementName, chapterNum, nuggetTextDocSnippet, nuggetEditorLength });
+
+      TestEnvironment.waitForPresenceTimer();
     }));
 
     it('can drag-and-drop correctly near foot note', fakeAsync(() => {
@@ -1769,6 +1744,8 @@ describe('TextComponent', () => {
       };
       const nuggetEditorLength = 1;
       testNugget({ nuggetElementName, chapterNum, nuggetTextDocSnippet, nuggetEditorLength });
+
+      TestEnvironment.waitForPresenceTimer();
     }));
 
     it('can drag-and-drop correctly near cross reference', fakeAsync(() => {
@@ -1810,6 +1787,8 @@ describe('TextComponent', () => {
       };
       const nuggetEditorLength = 1;
       testNugget({ nuggetElementName, chapterNum, nuggetTextDocSnippet, nuggetEditorLength });
+
+      TestEnvironment.waitForPresenceTimer();
     }));
 
     it('can drag-and-drop correctly around usx-char elements', fakeAsync(() => {
@@ -1838,6 +1817,8 @@ describe('TextComponent', () => {
         nuggetTextDocAttributes,
         nuggetTextDocText
       });
+
+      TestEnvironment.waitForPresenceTimer();
     }));
 
     it('can drag-and-drop correctly around usx-char elements with child elements', fakeAsync(() => {
@@ -1902,6 +1883,8 @@ describe('TextComponent', () => {
         nuggetTextDocAttributes,
         nuggetTextDocText
       });
+
+      TestEnvironment.waitForPresenceTimer();
     }));
 
     interface testNuggetArgs {
@@ -2223,6 +2206,8 @@ describe('TextComponent', () => {
         expectedTopLevelNodeSeriesAfterEvent
       };
       env.performDropTest(args);
+
+      TestEnvironment.waitForPresenceTimer();
     }));
 
     function skipProblemTest(extraSteps: (env: TestEnvironment, dropEvent: MockDragEvent) => void) {
@@ -2668,6 +2653,8 @@ describe('TextComponent', () => {
 
     expect(quillUpdateContentsSpy).withContext('quill is edited').toHaveBeenCalled();
     expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
+
+    TestEnvironment.waitForPresenceTimer();
   }));
 
   it('cancels paste when invalid selection', fakeAsync(() => {
@@ -2921,6 +2908,7 @@ interface PerformDropTestArgs {
 interface TestEnvCtorArgs {
   chapterNum?: number;
   textDoc?: RichText.DeltaOperation[];
+  presenceEnabled?: boolean;
 }
 
 class MockDragEvent extends DragEvent {
@@ -2966,12 +2954,14 @@ class MockQuill extends Quill {
     [id]="id"
     [isRightToLeft]="isTextRightToLeft"
     [isReadOnly]="isReadOnly"
+    [enablePresence]="enablePresence"
     (presenceChange)="onPresenceChange($event)"
   ></app-text>`
 })
 class HostComponent {
   @ViewChild(TextComponent) textComponent!: TextComponent;
 
+  enablePresence: boolean = true;
   initialPlaceHolder = 'initial placeholder text';
   isTextRightToLeft: boolean = false;
   isReadOnly: boolean = false;
@@ -2991,7 +2981,7 @@ class TestEnvironment {
   private _onlineStatus = new BehaviorSubject<boolean>(true);
   private isOnline: boolean = true;
 
-  constructor({ textDoc, chapterNum }: TestEnvCtorArgs = {}) {
+  constructor({ textDoc, chapterNum, presenceEnabled = true }: TestEnvCtorArgs = {}) {
     when(mockedPwaService.onlineStatus).thenReturn(this._onlineStatus.asObservable());
     when(mockedPwaService.isOnline).thenCall(() => this.isOnline);
     when(mockedTranslocoService.translate<string>(anything())).thenCall(
@@ -3038,6 +3028,8 @@ class TestEnvironment {
     this.component = this.fixture.componentInstance.textComponent;
     this.hostComponent = this.fixture.componentInstance;
 
+    this.hostComponent.enablePresence = presenceEnabled;
+
     if (textDoc != null && chapterNum != null) {
       const textDocId: TextDocId = new TextDocId('project01', 40, chapterNum);
       const delta = new Delta(textDoc);
@@ -3051,6 +3043,10 @@ class TestEnvironment {
 
     tick();
     this.fixture.detectChanges();
+  }
+
+  static waitForPresenceTimer(): void {
+    tick(PRESENCE_EDITOR_ACTIVE_TIMEOUT);
   }
 
   set id(value: TextDocId) {
@@ -3075,8 +3071,20 @@ class TestEnvironment {
     return (this.component as any).viewModel;
   }
 
-  get remotePresences(): Record<string, PresenceData> {
-    return (this.viewModel as any).presence.remotePresences;
+  get remoteChannelPresences(): Record<string, PresenceData> {
+    return (this.component as any).presenceChannel.remotePresences;
+  }
+
+  get remoteDocPresences(): Record<string, PresenceData> {
+    return (this.component as any).presenceDoc.remotePresences;
+  }
+
+  get localPresenceChannel(): LocalPresence<PresenceData> {
+    return (this.component as any).localPresenceChannel;
+  }
+
+  get localPresenceDoc(): LocalPresence<RangeStatic | null> {
+    return (this.component as any).localPresenceDoc;
   }
 
   getSegment(segmentRef: string): HTMLElement | null {
@@ -3199,14 +3207,17 @@ class TestEnvironment {
     this.assertNodeOrder(segmentElementDropTarget, expectedTopLevelNodeSeriesAfterEvent);
   }
 
-  /** Write a presence into the sharedb remote presence list, and notify TextViewModel that a new remote presence has
+  /** Write a presence into the sharedb remote presence list, and notify that a new remote presence has
    * appeared on the textdoc. */
   addRemotePresence(remotePresenceId: string) {
     const presenceData: PresenceData = mock<PresenceData>();
+    const range: RangeStatic = mock<RangeStatic>();
     // Write the presence right into the area that would be being provided by the sharedb.
-    this.remotePresences[remotePresenceId] = presenceData;
+    this.remoteChannelPresences[remotePresenceId] = presenceData;
+    this.remoteDocPresences[remotePresenceId] = presenceData;
     // A remote presence is learned about.
-    (this.viewModel as any).onPresenceReceive(remotePresenceId, presenceData);
+    (this.component as any).onPresenceDocReceive(remotePresenceId, range);
+    (this.component as any).onPresenceChannelReceive(remotePresenceId, presenceData);
     tick();
   }
 
