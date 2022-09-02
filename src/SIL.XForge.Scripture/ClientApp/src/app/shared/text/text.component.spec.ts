@@ -398,18 +398,12 @@ describe('TextComponent', () => {
 
       // After a text update the channel will emit that the user is active
       let presenceData: PresenceData = presenceChannelSubmit.calls.mostRecent().args[0] as PresenceData;
-      expect(presenceData).toBeDefined();
-      if (presenceData != null) {
-        expect(presenceData.viewer.activeInEditor).toBe(true);
-      }
+      expect(presenceData.viewer.activeInEditor).toBe(true);
 
       // After a set period of time the channel will emit that the user is no longer active
       TestEnvironment.waitForPresenceTimer();
       presenceData = presenceChannelSubmit.calls.mostRecent().args[0] as PresenceData;
-      expect(presenceData).toBeDefined();
-      if (presenceData != null) {
-        expect(presenceData.viewer.activeInEditor).toBe(false);
-      }
+      expect(presenceData.viewer.activeInEditor).toBe(false);
     }));
 
     it('should not emit doc presence when in read only mode', fakeAsync(() => {
