@@ -1278,7 +1278,10 @@ namespace SIL.XForge.Scripture.Services
                     // If the restore is successful, then dataInSync will always be set to true because
                     // the restored repo can be assumed to be at the revision recorded in the project doc.
                     restoreSucceeded = _paratextService.RestoreRepository(_userSecret, _projectDoc.Data.ParatextId);
-                    _syncMetrics.RepositoryRestoredFromBackup = restoreSucceeded;
+                    if (_syncMetrics != null)
+                    {
+                        _syncMetrics.RepositoryRestoredFromBackup = restoreSucceeded;
+                    }
                 }
                 Log(
                     $"CompleteSync: Sync was not successful. {(restoreSucceeded ? "Rolled back" : "Failed to roll back")} local PT repo."
@@ -1376,7 +1379,11 @@ namespace SIL.XForge.Scripture.Services
                 }
             });
 
-            _syncMetrics.Users.Deleted = userIdsToRemove.Count;
+            if (_syncMetrics != null)
+            {
+                _syncMetrics.Users.Deleted = userIdsToRemove.Count;
+            }
+
             foreach (var userId in userIdsToRemove)
                 await _projectService.RemoveUserWithoutPermissionsCheckAsync(_userSecret.Id, _projectDoc.Id, userId);
 
@@ -1412,7 +1419,7 @@ namespace SIL.XForge.Scripture.Services
             }
 
             // If we have an id in the job ids collection, remove the first one
-            if (_projectSecret.JobIds.Any() || _projectSecret.SyncMetricsIds.Contains(_syncMetrics.Id))
+            if (_projectSecret.JobIds.Any() || _projectSecret.SyncMetricsIds.Contains(_syncMetrics?.Id))
             {
                 await _projectSecrets.UpdateAsync(
                     _projectSecret.Id,
@@ -1423,9 +1430,9 @@ namespace SIL.XForge.Scripture.Services
                             u.Remove(p => p.JobIds, _projectSecret.JobIds.First());
                         }
 
-                        if (_projectSecret.SyncMetricsIds.Contains(_syncMetrics.Id))
+                        if (_projectSecret.SyncMetricsIds.Contains(_syncMetrics?.Id))
                         {
-                            u.Remove(p => p.SyncMetricsIds, _syncMetrics.Id);
+                            u.Remove(p => p.SyncMetricsIds, _syncMetrics?.Id);
                         }
                     }
                 );
@@ -1449,7 +1456,11 @@ namespace SIL.XForge.Scripture.Services
                 if (!_paratextService.IsResource(_projectDoc.Data.ParatextId))
                 {
                     bool backupOutcome = _paratextService.BackupRepository(_userSecret, _projectDoc.Data.ParatextId);
-                    _syncMetrics.RepositoryBackupCreated = backupOutcome;
+                    if (_syncMetrics != null)
+                    {
+                        _syncMetrics.RepositoryBackupCreated = backupOutcome;
+                    }
+
                     if (!backupOutcome)
                     {
                         Log($"CompleteSync: Failure backing up local PT repo.");
