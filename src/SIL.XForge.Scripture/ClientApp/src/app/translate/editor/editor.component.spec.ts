@@ -45,7 +45,7 @@ import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/ca
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, Observable, of, Subject } from 'rxjs';
-import { anything, capture, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
+import { anything, capture, deepEqual, instance, mock, objectContaining, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { CONSOLE } from 'xforge-common/browser-globals';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
@@ -74,6 +74,7 @@ import { EditorComponent, SF_NOTE_THREAD_PREFIX, UPDATE_SUGGESTIONS_TIMEOUT } fr
 import { NoteDialogComponent, NoteDialogResult } from './note-dialog/note-dialog.component';
 import { SuggestionsComponent } from './suggestions.component';
 import { ACTIVE_EDIT_TIMEOUT } from './translate-metrics-session';
+import { NoteDialogData } from './note-dialog/note-dialog.component';
 
 const mockedAuthService = mock(AuthService);
 const mockedSFProjectService = mock(SFProjectService);
@@ -2399,28 +2400,16 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
-      const date: string = '2022-08-01T01:00:000Z';
-      const note: Note = {
-        dataId: 'notenew01',
-        threadId: '',
-        extUserId: 'user01',
-        ownerRef: 'user01',
-        status: NoteStatus.Todo,
-        content: 'New note thread',
-        conflictType: NoteConflictType.DefaultValue,
-        dateCreated: date,
-        dateModified: date,
-        deleted: false,
-        type: NoteType.Normal
-      };
+
       const position: TextAnchor = { start: 0, length: 0 };
       const selectedText = 'target: chapter 1, verse 4.';
       const verseRef: VerseRefData = fromVerseRef(VerseRef.parse('Mat 1:4'));
       env.setSelectionAndInsertNote('verse_1_4');
 
+      const emptyThreadId = '';
+      const note: Note = env.getNoteTemplate(emptyThreadId);
       env.mockNoteDialogRef.close({ verseRef, note, position, selectedText });
-      tick();
-      env.fixture.detectChanges();
+      env.wait();
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
       const [, config] = capture(mockedMatDialog.open).last();
       const noteVerseRef: VerseRef = (config as MatDialogConfig).data!.verseRef;
@@ -2430,6 +2419,40 @@ describe('EditorComponent', () => {
       const noteInserted = noteThread.notes[0];
       expect(noteThread.dataId).toEqual(noteInserted.threadId);
       expect(noteThread.dataId.startsWith(SF_NOTE_THREAD_PREFIX)).toBe(true);
+      env.dispose();
+    }));
+
+    it('can add a note to an existing thread', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      const threadId = 'thread01';
+      const existingThread: NoteThreadDoc = env.getNoteThreadDoc('project01', threadId)!;
+      expect(existingThread.data!.notes.length).toEqual(3);
+
+      const note: Note = env.getNoteTemplate(threadId);
+      const content = 'new note on thread';
+      env.openNoteDialogAndEdit('verse_1_1', existingThread.data!, note, content);
+      expect(existingThread!.data!.notes.length).toEqual(4);
+      env.dispose();
+    }));
+
+    it('can edit an existing note', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      const threadId = 'thread01';
+      const existingThread: NoteThreadDoc = env.getNoteThreadDoc('project01', threadId)!;
+      expect(existingThread.data!.notes.length).toEqual(3);
+
+      const lastNote: Note = cloneDeep(existingThread.data!.notes[2]);
+      const lastNoteId: string = lastNote.dataId;
+      const content = 'edit content';
+      env.openNoteDialogAndEdit('verse_1_1', existingThread.data!, lastNote, content);
+      expect(existingThread.data!.notes.length).toEqual(3);
+      expect(existingThread.data!.notes.find(n => n.dataId === lastNoteId)!.content).toEqual(content);
       env.dispose();
     }));
   });
@@ -3093,6 +3116,28 @@ class TestEnvironment {
     return thread != null;
   }
 
+  openNoteDialogAndEdit(segmentRef: string, thread: NoteThread, note: Note, content: string): void {
+    const iconElement: HTMLElement = this.getNoteThreadIconElement(segmentRef, thread.dataId)!;
+    iconElement.click();
+    this.wait();
+
+    note.content = content;
+    this.mockNoteDialogRef.close({
+      verseRef: thread.verseRef,
+      note,
+      position: thread.position,
+      selectedText: thread.originalSelectedText
+    });
+    this.wait();
+    const noteDialogData: NoteDialogData = {
+      verseRef: undefined,
+      threadId: thread.dataId,
+      projectId: 'project01',
+      textDocId: new TextDocId('project01', 40, 1)
+    };
+    verify(mockedMatDialog.open(NoteDialogComponent, objectContaining({ data: noteDialogData }))).once();
+  }
+
   setDataInSync(projectId: string, isInSync: boolean, source?: any): void {
     const projectDoc: SFProjectProfileDoc = this.getProjectDoc(projectId);
     projectDoc.submitJson0Op(op => op.set(p => p.sync.dataInSync!, isInSync), source);
@@ -3390,6 +3435,23 @@ class TestEnvironment {
       }
     }
     return noteEmbedCount;
+  }
+
+  getNoteTemplate(threadId: string): Note {
+    const date: string = '2022-08-01T01:00:000Z';
+    return {
+      dataId: 'notenew01',
+      threadId,
+      extUserId: 'user01',
+      ownerRef: 'user01',
+      status: NoteStatus.Todo,
+      content: 'New note thread',
+      conflictType: NoteConflictType.DefaultValue,
+      dateCreated: date,
+      dateModified: date,
+      deleted: false,
+      type: NoteType.Normal
+    };
   }
 
   private addCombinedVerseTextDoc(id: TextDocId): void {

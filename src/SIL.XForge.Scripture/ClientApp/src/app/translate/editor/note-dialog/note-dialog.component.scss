@@ -16,6 +16,9 @@ h1 {
     margin-right: -15px;
   }
 }
+.mat-dialog-content {
+  min-height: 300px;
+}
 .text-row {
   display: flex;
   min-height: 30px;
@@ -42,6 +45,15 @@ h1 {
     .content {
       color: #000;
       flex: 1 1 100%;
+      .row-layout {
+        display: flex;
+        .note-content {
+          flex-grow: 1;
+        }
+        .edit-actions {
+          flex: 0;
+        }
+      }
     }
     &:first-child {
       padding-top: 10px;
@@ -52,6 +64,12 @@ h1 {
     app-owner {
       display: block;
       margin: 5px;
+    }
+    .edit-actions {
+      display: flex;
+      align-items: end;
+      justify-content: end;
+      flex: 1 1 100%;
     }
     img {
       align-self: center;

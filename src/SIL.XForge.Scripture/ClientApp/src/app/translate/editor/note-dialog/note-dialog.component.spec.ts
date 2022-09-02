@@ -144,10 +144,10 @@ describe('NoteDialogComponent', () => {
 
   it('conflict preamble is transformed', fakeAsync(() => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
-    const conflictNote = env.component.notes[0];
+    const conflictNote = env.component.notesToDisplay[0];
     conflictNote.type = NoteType.Conflict;
     conflictNote.conflictType = NoteConflictType.VerseTextConflict;
-    const normalNote = env.component.notes[1];
+    const normalNote = env.component.notesToDisplay[1];
     normalNote.type = NoteType.Normal;
     normalNote.conflictType = NoteConflictType.DefaultValue;
 
@@ -191,29 +191,29 @@ describe('NoteDialogComponent', () => {
   it('isConflictNote detects', fakeAsync(() => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
     // A non-conflict note is detected.
-    env.component.notes[0].type = NoteType.Normal;
-    env.component.notes[0].conflictType = NoteConflictType.DefaultValue;
-    expect(env.component.isConflictNote(env.component.notes[0])).toBeFalse();
+    env.component.notesToDisplay[0].type = NoteType.Normal;
+    env.component.notesToDisplay[0].conflictType = NoteConflictType.DefaultValue;
+    expect(env.component.isConflictNote(env.component.notesToDisplay[0])).toBeFalse();
     // A conflict note is detected.
-    env.component.notes[0].type = NoteType.Conflict;
-    env.component.notes[0].conflictType = NoteConflictType.VerseTextConflict;
-    expect(env.component.isConflictNote(env.component.notes[0])).toBeTrue();
+    env.component.notesToDisplay[0].type = NoteType.Conflict;
+    env.component.notesToDisplay[0].conflictType = NoteConflictType.VerseTextConflict;
+    expect(env.component.isConflictNote(env.component.notesToDisplay[0])).toBeTrue();
     // If a thread starts with a conflict note, human-written followup notes are also set with type
     // 'conflict'. But detect that they aren't actually conflict notes.
-    env.component.notes[1].type = NoteType.Conflict;
-    env.component.notes[1].conflictType = NoteConflictType.DefaultValue;
-    expect(env.component.isConflictNote(env.component.notes[1])).toBeFalse();
+    env.component.notesToDisplay[1].type = NoteType.Conflict;
+    env.component.notesToDisplay[1].conflictType = NoteConflictType.DefaultValue;
+    expect(env.component.isConflictNote(env.component.notesToDisplay[1])).toBeFalse();
   }));
 
   it('non-conflict notes in a thread with one conflict, are not displayed as conflict notes', fakeAsync(() => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
     // In this note thread, the first note is a conflict note, and the second note is a human-written note.
     // The conflict note should display conflict information, but the following note should not.
-    env.component.notes[0].type = NoteType.Conflict;
-    env.component.notes[0].conflictType = NoteConflictType.VerseTextConflict;
+    env.component.notesToDisplay[0].type = NoteType.Conflict;
+    env.component.notesToDisplay[0].conflictType = NoteConflictType.VerseTextConflict;
     // (And the human-written followup note also has type 'conflict' in this situation.)
-    env.component.notes[1].type = NoteType.Conflict;
-    env.component.notes[1].conflictType = NoteConflictType.DefaultValue;
+    env.component.notesToDisplay[1].type = NoteType.Conflict;
+    env.component.notesToDisplay[1].conflictType = NoteConflictType.DefaultValue;
     env.fixture.detectChanges();
 
     const conflictNoteDialogContentDivs = env.notes[0].children[0].children;
@@ -476,7 +476,7 @@ describe('NoteDialogComponent', () => {
     expect(env.noteInputElement).toBeTruthy();
     expect(env.verseRef).toEqual('Matthew 1:3');
     env.enterNoteContent('Enter note content');
-    expect(env.component.currentNote).toEqual('Enter note content');
+    expect(env.component.currentNoteContent).toEqual('Enter note content');
     expect(env.component.segmentText).toEqual('target: chapter 1, verse 3.');
     env.submit();
 
@@ -486,6 +486,7 @@ describe('NoteDialogComponent', () => {
     expect(result.selectedText).toEqual('target: chapter 1, verse 3.');
     expect(result.note.ownerRef).toEqual('user01');
     expect(result.note.content).toEqual('Enter note content');
+    expect(result.note.threadId).toEqual('');
   }));
 
   it('does not save note if textarea is empty', fakeAsync(() => {
@@ -500,6 +501,43 @@ describe('NoteDialogComponent', () => {
     env = new TestEnvironment({ currentUserId: 'user02', verseRef });
     expect(env.noteInputElement).toBeNull();
     expect(env.saveButton).toBeNull();
+  }));
+
+  it('does not save if empty note added to an existing thread', fakeAsync(() => {
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
+    expect(env.noteInputElement).toBeTruthy();
+    env.submit();
+    expect(env.dialogResult).toBeUndefined();
+  }));
+
+  it('allows adding a note to an existing thread', fakeAsync(() => {
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
+    expect(env.noteInputElement).toBeTruthy();
+    expect(env.component.notesToDisplay.length).toEqual(4);
+    const content = 'content in the thread';
+    env.enterNoteContent('content in the thread');
+    env.submit();
+    const result: NoteDialogResult = env.dialogResult as NoteDialogResult;
+    expect(result.note.dataId).not.toContain('note0');
+    expect(result.note.threadId).toEqual('thread01');
+    expect(result.note.content).toEqual(content);
+  }));
+
+  it('allows user to edit the last note in the thread', fakeAsync(() => {
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
+    expect(env.notes.length).toEqual(4);
+    const noteNumbers = [1, 2, 3];
+    noteNumbers.forEach(n => expect(env.hasEditActions(n)).toBe(false));
+    expect(env.hasEditActions(4)).toBe(true);
+    env.clickEditNote();
+    expect(env.noteInputElement).toBeTruthy();
+    expect(env.notes.length).toEqual(3);
+    noteNumbers.forEach(n => expect(env.hasEditActions(n)).toBe(false));
+    expect(env.component.currentNoteContent).toEqual('note05');
+    const content = 'note 05 edited content';
+    env.enterNoteContent(content);
+    env.submit();
+    expect((env.dialogResult as NoteDialogResult).note.content).toEqual(content);
   }));
 });
 
@@ -817,6 +855,10 @@ class TestEnvironment {
     return this.overlayContainerElement.query(By.css('#assignedUser'));
   }
 
+  get editButton(): DebugElement {
+    return this.overlayContainerElement.query(By.css('.edit-actions .edit-button'));
+  }
+
   get saveButton(): DebugElement {
     return this.overlayContainerElement.query(By.css('button.save-button'));
   }
@@ -830,9 +872,16 @@ class TestEnvironment {
     tick(matDialogCloseDelay);
   }
 
-  submit(): void {
-    this.saveButton.nativeElement.click();
-    tick(matDialogCloseDelay);
+  clickEditNote(): void {
+    this.editButton.nativeElement.click();
+    tick();
+    this.fixture.detectChanges();
+  }
+
+  hasEditActions(noteNumber: number): boolean {
+    return (
+      this.overlayContainerElement.query(By.css('.notes .note:nth-child(' + noteNumber + ') .edit-actions')) != null
+    );
   }
 
   enterNoteContent(noteContent: string): void {
@@ -841,6 +890,11 @@ class TestEnvironment {
     textAreaInput.dispatchEvent(new Event('input'));
     tick();
     this.fixture.detectChanges();
+  }
+
+  submit(): void {
+    this.saveButton.nativeElement.click();
+    tick(matDialogCloseDelay);
   }
 
   toggleSegmentButton(): void {
