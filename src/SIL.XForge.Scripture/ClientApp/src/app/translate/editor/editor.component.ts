@@ -855,22 +855,41 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   private async handleNoteDialogResult(result: NoteDialogResult): Promise<void> {
     const projectId: string = this.projectDoc!.id;
-    const threadId: string = SF_NOTE_THREAD_PREFIX + objectId();
-    result.note.threadId = threadId;
-    const noteThread: NoteThread = {
-      dataId: threadId,
-      verseRef: result.verseRef,
-      projectRef: projectId,
-      ownerRef: this.userService.currentUserId,
-      notes: [result.note],
-      position: result.position,
-      originalContextBefore: '',
-      originalSelectedText: result.selectedText,
-      originalContextAfter: '',
-      tagIcon: '01flag1',
-      status: NoteStatus.Todo
-    };
-    await this.projectService.createNoteThread(projectId, noteThread);
+    if (result.note.threadId === '') {
+      // create a new thread
+      const threadId: string = SF_NOTE_THREAD_PREFIX + objectId();
+      result.note.threadId = threadId;
+      const noteThread: NoteThread = {
+        dataId: threadId,
+        verseRef: result.verseRef,
+        projectRef: projectId,
+        ownerRef: this.userService.currentUserId,
+        notes: [result.note],
+        position: result.position,
+        originalContextBefore: '',
+        originalSelectedText: result.selectedText,
+        originalContextAfter: '',
+        tagIcon: '01flag1',
+        status: NoteStatus.Todo
+      };
+      await this.projectService.createNoteThread(projectId, noteThread);
+      return;
+    }
+
+    const noteThreadDoc: NoteThreadDoc | undefined = this.noteThreadQuery?.docs.find(
+      nt => nt.data?.dataId === result.note.threadId
+    );
+    if (noteThreadDoc?.data != null) {
+      const noteIndex: number = noteThreadDoc.data.notes.findIndex(n => n.dataId === result.note.dataId);
+      if (noteIndex >= 0) {
+        noteThreadDoc.submitJson0Op(op => {
+          op.set(t => t.notes[noteIndex].content, result.note.content);
+          op.set(t => t.notes[noteIndex].dateModified, result.note.dateModified);
+        });
+      } else {
+        noteThreadDoc.submitJson0Op(op => op.add(t => t.notes, result.note));
+      }
+    }
   }
 
   private setupTranslationEngine(): void {
