@@ -242,6 +242,75 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task SyncAsync_SourceProjectSecretsRecordsSyncMetricsId()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+
+            // Run sync
+            await env.Service.SyncAsync("userid", Project01, false);
+
+            // Verify that the sync metrics ids are recorded in the project secrets
+            Assert.That(env.SyncMetrics.Get(env.ProjectSecrets.Get(Project01).SyncMetricsIds.First()), Is.Not.Null);
+            Assert.That(env.ProjectSecrets.Get(Project02).SyncMetricsIds, Is.Empty);
+            Assert.That(env.ProjectSecrets.Get(Project03).SyncMetricsIds, Is.Empty);
+
+            // Cancel sync
+            await env.Service.CancelSyncAsync("userid", Project01);
+
+            // Verify that the sync metrics are cleared from the project secrets
+            Assert.That(env.ProjectSecrets.Get(Project01).SyncMetricsIds, Is.Empty);
+            Assert.That(env.ProjectSecrets.Get(Project02).SyncMetricsIds, Is.Empty);
+            Assert.That(env.ProjectSecrets.Get(Project03).SyncMetricsIds, Is.Empty);
+        }
+
+        [Test]
+        public async Task SyncAsync_SourceAndTargetProjectSecretsRecordsSyncMetricsId()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+
+            // Run sync
+            await env.Service.SyncAsync("userid", Project03, false);
+
+            // Verify that the sync metrics ids are recorded in the project secrets
+            Assert.That(env.SyncMetrics.Get(env.ProjectSecrets.Get(Project01).SyncMetricsIds.First()), Is.Not.Null);
+            Assert.That(env.ProjectSecrets.Get(Project02).SyncMetricsIds, Is.Empty);
+            Assert.That(env.SyncMetrics.Get(env.ProjectSecrets.Get(Project03).SyncMetricsIds.First()), Is.Not.Null);
+
+            // Cancel sync
+            await env.Service.CancelSyncAsync("userid", Project03);
+
+            // Verify that the sync metrics are cleared from the project secrets
+            Assert.That(env.ProjectSecrets.Get(Project01).SyncMetricsIds, Is.Empty);
+            Assert.That(env.ProjectSecrets.Get(Project02).SyncMetricsIds, Is.Empty);
+            Assert.That(env.ProjectSecrets.Get(Project03).SyncMetricsIds, Is.Empty);
+        }
+
+        [Test]
+        public async Task SyncAsync_SourceWithCancelledTargetProjectSecretsRecordsSyncMetricsId()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+
+            // Run sync
+            await env.Service.SyncAsync("userid", Project03, false);
+
+            // Verify that the sync metrics ids are recorded in the project secrets
+            Assert.That(env.SyncMetrics.Get(env.ProjectSecrets.Get(Project01).SyncMetricsIds.First()), Is.Not.Null);
+            Assert.That(env.ProjectSecrets.Get(Project02).SyncMetricsIds, Is.Empty);
+            Assert.That(env.SyncMetrics.Get(env.ProjectSecrets.Get(Project03).SyncMetricsIds.First()), Is.Not.Null);
+
+            // Cancel sync
+            await env.Service.CancelSyncAsync("userid", Project01);
+
+            // Verify that the sync metrics are cleared from the project secrets
+            Assert.That(env.ProjectSecrets.Get(Project01).SyncMetricsIds, Is.Empty);
+            Assert.That(env.ProjectSecrets.Get(Project02).SyncMetricsIds, Is.Empty);
+            Assert.That(env.SyncMetrics.Get(env.ProjectSecrets.Get(Project03).SyncMetricsIds.First()), Is.Not.Null);
+        }
+
+        [Test]
         public async Task SyncAsync_SyncMetricsSourceAndTargetCancelled()
         {
             var env = new TestEnvironment();
