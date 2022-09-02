@@ -1,6 +1,6 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { sortBy } from 'lodash-es';
+import { cloneDeep, sortBy } from 'lodash-es';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -46,12 +46,14 @@ export interface NoteDialogResult {
 })
 export class NoteDialogComponent implements OnInit {
   showSegmentText: boolean = false;
-  currentNote: string = '';
+  currentNoteContent: string = '';
   private isAssignedToOtherUser: boolean = false;
   private threadDoc?: NoteThreadDoc;
   private projectProfileDoc?: SFProjectProfileDoc;
   private textDoc?: TextDoc;
   private paratextProjectUsers?: ParatextUserProfile[];
+  private noteBeingEdited?: Note;
+  private lastNoteId?: string;
 
   constructor(
     private readonly dialogRef: MatDialogRef<NoteDialogComponent, NoteDialogResult>,
@@ -83,6 +85,11 @@ export class NoteDialogComponent implements OnInit {
         );
       }
     }
+
+    this.noteBeingEdited = this.getNoteTemplate(this.threadId);
+    const notesCount: number = this.notesToDisplay.length;
+    const lastNoteId: string | undefined = notesCount > 0 ? this.notesToDisplay[notesCount - 1].dataId : undefined;
+    this.lastNoteId = lastNoteId;
   }
 
   get noteThreadAssignedUserRef(): string | undefined {
@@ -107,12 +114,12 @@ export class NoteDialogComponent implements OnInit {
     return this.projectProfileDoc.data.isRightToLeft ?? false;
   }
 
-  get notes(): Note[] {
+  get notesToDisplay(): Note[] {
     if (this.threadDoc?.data == null) {
       return [];
     }
     return sortBy(
-      this.threadDoc.data.notes.filter(n => !n.deleted),
+      this.threadDoc.data.notes.filter(n => !n.deleted && n.dataId !== this.noteBeingEdited?.dataId),
       n => n.dateCreated
     );
   }
@@ -198,6 +205,15 @@ export class NoteDialogComponent implements OnInit {
     return toVerseRef(this.threadDoc.data.verseRef);
   }
 
+  editNote(note: Note): void {
+    this.noteBeingEdited = cloneDeep(note);
+    this.currentNoteContent = note.content ?? '';
+  }
+
+  deleteNote(note: Note): void {
+    console.log('TODO: delete note: ' + note.dataId);
+  }
+
   parseNote(content: string | undefined): string {
     // See also PT CommentEditHelper.cs and CommentEditHelperTests.cs for info and examples on how conflict
     // information is interpreted.
@@ -247,6 +263,10 @@ export class NoteDialogComponent implements OnInit {
     return note.reattached != null ? translate('note_dialog.note_reattached') : '';
   }
 
+  isNoteEditable(note: Note): boolean {
+    return note.dataId === this.lastNoteId && note.ownerRef === this.userService.currentUserId;
+  }
+
   reattachedText(note: Note): string {
     if (note.reattached == null) {
       return '';
@@ -285,7 +305,11 @@ export class NoteDialogComponent implements OnInit {
   }
 
   submit(): void {
-    if (this.currentNote == null || this.currentNote.trim().length === 0) {
+    if (
+      this.noteBeingEdited == null ||
+      this.currentNoteContent == null ||
+      this.currentNoteContent.trim().length === 0
+    ) {
       this.dialogRef.close();
       return;
     }
@@ -293,27 +317,36 @@ export class NoteDialogComponent implements OnInit {
     if (verseRef == null) return;
 
     const currentDate = new Date().toJSON();
-    const note: Note = {
-      dataId: objectId(),
-      // empty so that the editor component knows this is a new note
-      threadId: '',
+    if (this.noteBeingEdited.dataId === '') {
+      this.noteBeingEdited.dataId = objectId();
+      this.noteBeingEdited.dateCreated = currentDate;
+    }
+    this.noteBeingEdited.dateModified = currentDate;
+    this.noteBeingEdited.content = this.currentNoteContent;
+
+    const result: NoteDialogResult = {
+      verseRef: verseRef,
+      note: this.noteBeingEdited,
+      position: { start: 0, length: 0 },
+      selectedText: this.segmentText
+    };
+    this.dialogRef.close(result);
+  }
+
+  private getNoteTemplate(threadId: string | undefined): Note {
+    return {
+      dataId: '',
+      // thread id is the empty string when the note belongs to a new thread
+      threadId: threadId ?? '',
       ownerRef: this.userService.currentUserId,
-      content: this.currentNote,
-      dateCreated: currentDate,
-      dateModified: currentDate,
+      content: '',
+      dateCreated: '',
+      dateModified: '',
       conflictType: NoteConflictType.DefaultValue,
       extUserId: this.userService.currentUserId,
       type: NoteType.Normal,
       status: NoteStatus.Todo,
       deleted: false
     };
-
-    const result: NoteDialogResult = {
-      verseRef: fromVerseRef(verseRef),
-      note,
-      position: { start: 0, length: 0 },
-      selectedText: this.segmentText
-    };
-    this.dialogRef.close(result);
   }
 }

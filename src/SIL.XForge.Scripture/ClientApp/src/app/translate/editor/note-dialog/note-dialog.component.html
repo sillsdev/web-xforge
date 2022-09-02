@@ -21,7 +21,7 @@
       </mat-menu>
     </div>
     <div class="notes">
-      <div *ngFor="let note of notes" class="note">
+      <div *ngFor="let note of notesToDisplay" class="note">
         <div class="content">
           <div *ngIf="note.assignment != null" class="assigned-user">>{{ getAssignedUserString(note.assignment) }}</div>
           <div *ngIf="note.reattached" class="verse-reattached">{{ reattachedVerse(note) }}</div>
@@ -30,14 +30,26 @@
           <div class="note-conflict-explanation" *ngIf="isConflictNote(note)">{{ t("acceptance_change_heading") }}</div>
           <div class="note-content" [innerHTML]="parseNote(note.acceptedChangeXml)" *ngIf="isConflictNote(note)"></div>
           <div class="note-conflict-explanation" *ngIf="isConflictNote(note)">{{ t("rejection_change_heading") }}</div>
-          <div class="note-content" [innerHTML]="contentForDisplay(note)"></div>
+          <div class="row-layout">
+            <div class="note-content" [innerHTML]="contentForDisplay(note)"></div>
+            <div fxHide.xs *ngIf="isNoteEditable(note)" class="edit-actions">
+              <button mat-icon-button class="edit-button" (click)="editNote(note)"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button class="delete-button" (click)="deleteNote(note)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div fxShow.xs fxHide.gt-xs *ngIf="isNoteEditable(note)" class="edit-actions">
+          <button mat-icon-button class="edit-button" (click)="editNote(note)"><mat-icon>edit</mat-icon></button>
+          <button mat-icon-button class="delete-button" (click)="deleteNote(note)"><mat-icon>delete</mat-icon></button>
         </div>
         <img [src]="noteIcon(note)" alt="" [title]="noteTitle(note)" />
         <app-owner [ownerRef]="note.ownerRef" [dateTime]="note.dateCreated"></app-owner>
       </div>
     </div>
     <mat-form-field class="full-width" appearance="fill" *ngIf="canCreateNote">
-      <textarea matInput [(ngModel)]="currentNote"></textarea>
+      <textarea matInput [(ngModel)]="currentNoteContent"></textarea>
     </mat-form-field>
   </mat-dialog-content>
   <mat-dialog-actions fxLayoutAlign="end">
