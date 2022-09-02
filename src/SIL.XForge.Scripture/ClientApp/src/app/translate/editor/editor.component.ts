@@ -635,7 +635,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   onPresenceChange(remotePresences?: RemotePresences): void {
     if (remotePresences != null) {
-      // Both source and target docs can emit a presence so only include one unique user
       const uniquePresences: PresenceData[] = Object.values(remotePresences).filter(
         (a, index, self) =>
           index ===
