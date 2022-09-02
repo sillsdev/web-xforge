@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using SIL.XForge.Models;
 
 namespace SIL.XForge.Scripture.Models
@@ -30,5 +31,10 @@ namespace SIL.XForge.Scripture.Models
         public SyncMetricInfo ResourceUsers { get; set; } = new SyncMetricInfo();
         public SyncMetricInfo TextDocs { get; set; } = new SyncMetricInfo();
         public SyncMetricInfo Users { get; set; } = new SyncMetricInfo();
+
+        /// <summary>
+        /// The log messages from <see cref="Services.ParatextSyncRunner"/>.
+        /// </summary>
+        public List<string> Log { get; set; } = new List<string>();
     }
 }

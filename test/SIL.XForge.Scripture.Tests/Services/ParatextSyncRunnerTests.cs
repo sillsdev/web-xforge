@@ -1985,6 +1985,10 @@ namespace SIL.XForge.Scripture.Services
             Assert.IsNotNull(env.GetProject().ResourceConfig);
             Assert.That(env.ContainsText("project01", "MAT", 3), Is.True);
             Assert.That(env.ContainsText("project01", "MRK", 2), Is.False);
+
+            // Check that the resource users metrics have been updated
+            var syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.ResourceUsers, Is.EqualTo(new SyncMetricInfo(2, 0, 0)));
         }
 
         [Test]
@@ -2024,6 +2028,122 @@ namespace SIL.XForge.Scripture.Services
             Assert.IsNull(env.GetProject().ResourceConfig);
             Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
             Assert.That(env.ContainsText("project01", "MRK", 2), Is.True);
+        }
+
+        [Test]
+        public async Task SyncAsync_SyncMetricsSetsDateStartedAndDateFinished()
+        {
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, true, false);
+
+            await env.Runner.RunAsync("project01", "user03", "project01", false, CancellationToken.None);
+
+            SFProject project = env.VerifyProjectSync(false);
+            Assert.That(project.Sync.DataInSync, Is.True);
+
+            // Check that the date started and date finished are set
+            var syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.DateStarted, Is.Not.Null);
+            Assert.That(syncMetrics.DateFinished, Is.Not.Null);
+        }
+
+        [Test]
+        public async Task SyncAsync_SyncMetricsRecordsLogs()
+        {
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, true, false);
+
+            await env.Runner.RunAsync("project01", "user03", "project01", false, CancellationToken.None);
+
+            SFProject project = env.VerifyProjectSync(false);
+            Assert.That(project.Sync.DataInSync, Is.True);
+
+            // Check that the date started and date finished are set
+            var syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Log.Count, Is.Not.Zero);
+        }
+
+        [Test]
+        public async Task SyncAsync_SyncMetricsRecordsBackupCreated()
+        {
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, true, false, new Book("MAT", 2), new Book("MRK", 2));
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+
+            // Simulate that there is no backup, and that the backups are created successfully
+            env.ParatextService.BackupExists(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(false);
+            env.ParatextService.BackupRepository(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(true);
+
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+
+            // A backup was created before and after the sync
+            env.ParatextService.Received(2).BackupRepository(Arg.Any<UserSecret>(), Arg.Any<string>());
+            SFProject project = env.VerifyProjectSync(true);
+            Assert.That(project.Sync.DataInSync, Is.True);
+
+            // Check that the metrics were updated
+            var syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.RepositoryBackupCreated, Is.True);
+        }
+
+        [Test]
+        public async Task SyncAsync_SyncMetricsRecordsParatextNotes()
+        {
+            var env = new TestEnvironment();
+            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+            env.SetupSFData(true, true, true, false, books);
+            env.SetupPTData(books);
+            var syncMetricInfo = new SyncMetricInfo(1, 2, 3);
+            env.ParatextService.PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>()).Returns(syncMetricInfo);
+
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+
+            env.ParatextService.Received(2).PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
+
+            env.VerifyProjectSync(true);
+
+            // Check that as PutNotes was run twice, the metrics will be multiplied by two
+            var syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.ParatextNotes, Is.EqualTo(syncMetricInfo + syncMetricInfo));
+        }
+
+        [Test]
+        public async Task SyncAsync_SyncMetricsRecordsParatextBooks()
+        {
+            var env = new TestEnvironment();
+            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+            env.SetupSFData(true, true, true, false, books);
+            env.SetupPTData(books);
+            env.ParatextService
+                .PutBookText(
+                    Arg.Any<UserSecret>(),
+                    Arg.Any<string>(),
+                    Arg.Any<int>(),
+                    Arg.Any<string>(),
+                    Arg.Any<Dictionary<int, string>>()
+                )
+                .Returns(1);
+
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+
+            await env.ParatextService
+                .Received(2)
+                .PutBookText(
+                    Arg.Any<UserSecret>(),
+                    Arg.Any<string>(),
+                    Arg.Any<int>(),
+                    Arg.Any<string>(),
+                    Arg.Any<Dictionary<int, string>>()
+                );
+            ;
+
+            SFProject project = env.GetProject();
+            Assert.That(project.ParatextUsers.Count, Is.EqualTo(2));
+            env.VerifyProjectSync(true);
+
+            // Check that as PutBookText was run twice, the metrics will be that two books are added
+            var syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.ParatextBooks, Is.EqualTo(new SyncMetricInfo(0, 0, 2)));
         }
 
         private class Book

@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Hangfire;
 using Hangfire.Common;
@@ -40,6 +42,9 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ProjectSecrets.Get(Project01).JobIds, Contains.Item("jobid"));
             Assert.That(env.ProjectSecrets.Get(Project02).JobIds, Is.Empty);
             Assert.That(env.ProjectSecrets.Get(Project03).JobIds, Contains.Item("jobid"));
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project01), Is.EqualTo(1));
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project02), Is.Zero);
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project03), Is.EqualTo(1));
 
             // Cancel sync
             await env.Service.CancelSyncAsync("userid", Project03);
@@ -55,6 +60,9 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ProjectSecrets.Get(Project01).JobIds, Is.Empty);
             Assert.That(env.ProjectSecrets.Get(Project02).JobIds, Is.Empty);
             Assert.That(env.ProjectSecrets.Get(Project03).JobIds, Is.Empty);
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project01), Is.EqualTo(1));
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project02), Is.Zero);
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project03), Is.EqualTo(1));
         }
 
         [Test]
@@ -77,6 +85,9 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ProjectSecrets.Get(Project01).JobIds, Contains.Item("jobid"));
             Assert.That(env.ProjectSecrets.Get(Project02).JobIds, Is.Empty);
             Assert.That(env.ProjectSecrets.Get(Project03).JobIds, Contains.Item("jobid"));
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project01), Is.EqualTo(1));
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project02), Is.Zero);
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project03), Is.EqualTo(1));
 
             // Cancel sync
             await env.Service.CancelSyncAsync("userid", Project01);
@@ -92,6 +103,9 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ProjectSecrets.Get(Project01).JobIds, Is.Empty);
             Assert.That(env.ProjectSecrets.Get(Project02).JobIds, Is.Empty);
             Assert.That(env.ProjectSecrets.Get(Project03).JobIds, Contains.Item("jobid"));
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project01), Is.EqualTo(1));
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project02), Is.Zero);
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project03), Is.EqualTo(1));
         }
 
         [Test]
@@ -114,6 +128,9 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ProjectSecrets.Get(Project01).JobIds, Contains.Item("jobid"));
             Assert.That(env.ProjectSecrets.Get(Project02).JobIds, Is.Empty);
             Assert.That(env.ProjectSecrets.Get(Project03).JobIds, Is.Empty);
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project01), Is.EqualTo(1));
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project02), Is.Zero);
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project03), Is.Zero);
 
             // Cancel sync
             await env.Service.CancelSyncAsync("userid", Project01);
@@ -129,6 +146,9 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ProjectSecrets.Get(Project01).JobIds, Is.Empty);
             Assert.That(env.ProjectSecrets.Get(Project02).JobIds, Is.Empty);
             Assert.That(env.ProjectSecrets.Get(Project03).JobIds, Is.Empty);
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project01), Is.EqualTo(1));
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project02), Is.Zero);
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project03), Is.Zero);
         }
 
         [Test]
@@ -160,6 +180,9 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ProjectSecrets.Get(Project01).JobIds, Contains.Item("jobid"));
             Assert.That(env.ProjectSecrets.Get(Project02).JobIds, Is.Empty);
             Assert.That(env.ProjectSecrets.Get(Project03).JobIds, Contains.Item("jobid"));
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project01), Is.EqualTo(1));
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project02), Is.Zero);
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project03), Is.EqualTo(1));
         }
 
         [Test]
@@ -188,6 +211,9 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ProjectSecrets.Get(Project01).JobIds, Contains.Item("jobid"));
             Assert.That(env.ProjectSecrets.Get(Project02).JobIds, Is.Empty);
             Assert.That(env.ProjectSecrets.Get(Project03).JobIds, Contains.Item("jobid"));
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project01), Is.EqualTo(1));
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project02), Is.Zero);
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project03), Is.EqualTo(1));
         }
 
         [Test]
@@ -210,6 +236,187 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ProjectSecrets.Get(Project01).JobIds, Contains.Item("jobid"));
             Assert.That(env.ProjectSecrets.Get(Project02).JobIds, Is.Empty);
             Assert.That(env.ProjectSecrets.Get(Project03).JobIds, Is.Empty);
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project01), Is.EqualTo(1));
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project02), Is.Zero);
+            Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project03), Is.Zero);
+        }
+
+        [Test]
+        public async Task SyncAsync_SyncMetricsSourceAndTargetCancelled()
+        {
+            var env = new TestEnvironment();
+            Assert.That(env.SyncMetrics.Query().Any(), Is.False);
+
+            // Run sync
+            await env.Service.SyncAsync("userid", Project03, false);
+
+            // Verify the sync metrics as queued
+            Assert.That(
+                env.SyncMetrics.Query().Single(s => s.ProjectRef == Project01).Status,
+                Is.EqualTo(SyncStatus.Queued)
+            );
+            Assert.That(
+                env.SyncMetrics.Query().Single(s => s.ProjectRef == Project03).Status,
+                Is.EqualTo(SyncStatus.Queued)
+            );
+
+            // Cancel sync
+            await env.Service.CancelSyncAsync("userid", Project03);
+
+            // Verify the sync metrics as cancelled
+            Assert.That(
+                env.SyncMetrics.Query().Single(s => s.ProjectRef == Project01).Status,
+                Is.EqualTo(SyncStatus.Cancelled)
+            );
+            Assert.That(
+                env.SyncMetrics.Query().Single(s => s.ProjectRef == Project03).Status,
+                Is.EqualTo(SyncStatus.Cancelled)
+            );
+        }
+
+        [Test]
+        public async Task SyncAsync_SyncMetricsSourceAndTargetQueued()
+        {
+            var env = new TestEnvironment();
+            Assert.That(env.SyncMetrics.Query().Any(), Is.False);
+
+            // Run sync
+            await env.Service.SyncAsync("userid", Project03, false);
+
+            // Verify the sync metrics
+            Assert.That(
+                env.SyncMetrics.Query().Single(s => s.ProjectRef == Project01).Status,
+                Is.EqualTo(SyncStatus.Queued)
+            );
+            Assert.That(
+                env.SyncMetrics.Query().Single(s => s.ProjectRef == Project03).Status,
+                Is.EqualTo(SyncStatus.Queued)
+            );
+        }
+
+        [Test]
+        public async Task SyncAsync_SyncMetricsSourceNotTargetCancelled()
+        {
+            var env = new TestEnvironment();
+            Assert.That(env.SyncMetrics.Query().Any(), Is.False);
+
+            // Run sync
+            await env.Service.SyncAsync("userid", Project03, false);
+
+            // Verify the sync metrics as queued
+            Assert.That(
+                env.SyncMetrics.Query().Single(s => s.ProjectRef == Project01).Status,
+                Is.EqualTo(SyncStatus.Queued)
+            );
+            Assert.That(
+                env.SyncMetrics.Query().Single(s => s.ProjectRef == Project03).Status,
+                Is.EqualTo(SyncStatus.Queued)
+            );
+
+            // Cancel sync
+            await env.Service.CancelSyncAsync("userid", Project01);
+
+            // Verify the sync metrics as cancelled
+            Assert.That(
+                env.SyncMetrics.Query().Single(s => s.ProjectRef == Project01).Status,
+                Is.EqualTo(SyncStatus.Cancelled)
+            );
+            Assert.That(
+                env.SyncMetrics.Query().Single(s => s.ProjectRef == Project03).Status,
+                Is.EqualTo(SyncStatus.Queued)
+            );
+        }
+
+        [Test]
+        public async Task SyncAsync_SyncMetricsSourceRequiresTarget()
+        {
+            var env = new TestEnvironment();
+            Assert.That(env.SyncMetrics.Query().Any(), Is.False);
+
+            // Run sync
+            await env.Service.SyncAsync("userid", Project03, false);
+
+            // Verify the sync metrics
+            string sourceId = env.SyncMetrics.Query().Single(s => s.ProjectRef == Project01).Id;
+            string requiresId = env.SyncMetrics.Query().Single(s => s.ProjectRef == Project03).RequiresId;
+            Assert.That(string.IsNullOrWhiteSpace(requiresId), Is.False);
+            Assert.That(requiresId, Is.EqualTo(sourceId));
+        }
+
+        [Test]
+        public async Task SyncAsync_SyncMetricsSpecifiesDateQueued()
+        {
+            var env = new TestEnvironment();
+            DateTime beforeSync = DateTime.UtcNow;
+            Assert.That(env.SyncMetrics.Query().Any(), Is.False);
+
+            // Run sync
+            await env.Service.SyncAsync("userid", Project01, false);
+            DateTime afterSync = DateTime.UtcNow;
+
+            // Verify the sync metrics
+            var syncMetrics = env.SyncMetrics.Query().Single(s => s.ProjectRef == Project01);
+            Assert.That(syncMetrics.DateQueued, Is.Not.EqualTo(DateTime.MinValue));
+            Assert.That(syncMetrics.DateQueued, Is.Not.EqualTo(DateTime.MaxValue));
+            Assert.That(syncMetrics.DateQueued, Is.GreaterThanOrEqualTo(beforeSync));
+            Assert.That(syncMetrics.DateQueued, Is.LessThanOrEqualTo(afterSync));
+            Assert.That(syncMetrics.DateStarted, Is.Null);
+            Assert.That(syncMetrics.DateFinished, Is.Null);
+        }
+
+        [Test]
+        public async Task SyncAsync_SyncMetricsSpecifiesUser()
+        {
+            var env = new TestEnvironment();
+            Assert.That(env.SyncMetrics.Query().Any(), Is.False);
+            string curUserId = "userid";
+
+            // Run sync
+            await env.Service.SyncAsync(curUserId, Project01, false);
+
+            // Verify the sync metrics
+            Assert.That(env.SyncMetrics.Query().Single(s => s.ProjectRef == Project01).UserRef, Is.EqualTo(curUserId));
+        }
+
+        [Test]
+        public async Task SyncAsync_SyncMetricsTargetOnlyCancelled()
+        {
+            var env = new TestEnvironment();
+            Assert.That(env.SyncMetrics.Query().Any(), Is.False);
+
+            // Run sync
+            await env.Service.SyncAsync("userid", Project01, false);
+
+            // Verify the sync metrics as queued
+            Assert.That(
+                env.SyncMetrics.Query().Single(s => s.ProjectRef == Project01).Status,
+                Is.EqualTo(SyncStatus.Queued)
+            );
+
+            // Cancel sync
+            await env.Service.CancelSyncAsync("userid", Project01);
+
+            // Verify the sync metrics as cancelled
+            Assert.That(
+                env.SyncMetrics.Query().Single(s => s.ProjectRef == Project01).Status,
+                Is.EqualTo(SyncStatus.Cancelled)
+            );
+        }
+
+        [Test]
+        public async Task SyncAsync_SyncMetricsTargetOnlyQueued()
+        {
+            var env = new TestEnvironment();
+            Assert.That(env.SyncMetrics.Query().Any(), Is.False);
+
+            // Run sync
+            await env.Service.SyncAsync("userid", Project01, false);
+
+            // Verify the sync metrics
+            Assert.That(
+                env.SyncMetrics.Query().Single(s => s.ProjectRef == Project01).Status,
+                Is.EqualTo(SyncStatus.Queued)
+            );
         }
 
         [Test]
@@ -265,7 +472,7 @@ namespace SIL.XForge.Scripture.Services
                         new SFProjectSecret { Id = "project03" },
                     }
                 );
-                var syncMetrics = new MemoryRepository<SyncMetrics>();
+                SyncMetrics = new MemoryRepository<SyncMetrics>();
                 RealtimeService = new SFMemoryRealtimeService();
 
                 RealtimeService.AddRepository(
@@ -313,7 +520,7 @@ namespace SIL.XForge.Scripture.Services
                 Service = new SyncService(
                     BackgroundJobClient,
                     ProjectSecrets,
-                    syncMetrics,
+                    SyncMetrics,
                     RealtimeService,
                     MockLogger
                 );
@@ -323,6 +530,7 @@ namespace SIL.XForge.Scripture.Services
             public IBackgroundJobClient BackgroundJobClient { get; }
             public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
             public SFMemoryRealtimeService RealtimeService { get; }
+            public MemoryRepository<SyncMetrics> SyncMetrics { get; }
         }
     }
 }

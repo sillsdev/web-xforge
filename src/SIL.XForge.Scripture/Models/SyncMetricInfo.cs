@@ -21,17 +21,17 @@ namespace SIL.XForge.Scripture.Models
 
         public static SyncMetricInfo operator +(SyncMetricInfo a, SyncMetricInfo b)
         {
-            if (a is not null && b is not null)
+            if (a is null || b is null)
             {
-                return new SyncMetricInfo
-                {
-                    Added = a.Added + b.Added,
-                    Deleted = a.Deleted + b.Deleted,
-                    Updated = a.Updated + b.Updated,
-                };
+                return a ?? b;
             }
 
-            return a ?? b;
+            return new SyncMetricInfo
+            {
+                Added = a.Added + b.Added,
+                Deleted = a.Deleted + b.Deleted,
+                Updated = a.Updated + b.Updated,
+            };
         }
     }
 }

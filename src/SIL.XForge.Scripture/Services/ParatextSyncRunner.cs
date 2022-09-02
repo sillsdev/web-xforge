@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
+using System.ServiceModel.Channels;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -213,6 +215,7 @@ namespace SIL.XForge.Scripture.Services
                 // update target Paratext books and notes
                 foreach (TextInfo text in _projectDoc.Data.Texts)
                 {
+                    LogMetric($"Updating Paratext book {text.BookNum}");
                     if (settings == null)
                     {
                         Log($"FAILED: Attempting to write to a project repository that does not exist.");
@@ -222,12 +225,16 @@ namespace SIL.XForge.Scripture.Services
                     SortedList<int, IDocument<TextData>> targetTextDocs = await FetchTextDocsAsync(text);
                     targetTextDocsByBook[text.BookNum] = targetTextDocs;
                     if (isDataInSync && settings.Editable && !_paratextService.IsResource(targetParatextId))
+                    {
+                        LogMetric("Updating Paratext book");
                         await UpdateParatextBook(text, targetParatextId, targetTextDocs);
+                    }
 
                     IReadOnlyList<IDocument<Question>> questionDocs = await FetchQuestionDocsAsync(text);
                     questionDocsByBook[text.BookNum] = questionDocs;
                     if (isDataInSync && !_paratextService.IsResource(targetParatextId))
                     {
+                        LogMetric("Updating paratext book");
                         await UpdateParatextNotesAsync(text, questionDocs);
                         // TODO: Sync Note changes back to Paratext, and record sync metric info
                         // IEnumerable<IDocument<NoteThread>> noteThreadDocs =
@@ -299,6 +306,7 @@ namespace SIL.XForge.Scripture.Services
                     // delete target books
                     foreach (int bookNum in targetBooksToDelete)
                     {
+                        LogMetric($"Deleting book {bookNum}");
                         int textIndex = _projectDoc.Data.Texts.FindIndex(t => t.BookNum == bookNum);
                         TextInfo text = _projectDoc.Data.Texts[textIndex];
                         await _projectDoc.SubmitJson0OpAsync(op => op.Remove(pd => pd.Texts, textIndex));
@@ -327,6 +335,8 @@ namespace SIL.XForge.Scripture.Services
                     && _paratextService.IsResource(sourceParatextId)
                 )
                 {
+                    LogMetric("Updating user resource access");
+
                     // Get the resource project
                     IDocument<SFProject> sourceProject = await _conn.FetchAsync<SFProject>(sourceProjectRef);
                     if (sourceProject.IsLoaded)
@@ -400,10 +410,12 @@ namespace SIL.XForge.Scripture.Services
                 // Update the resource configuration
                 if (resourceNeedsUpdating)
                 {
+                    LogMetric("Updating resource config");
                     await UpdateResourceConfig(paratextProject);
                 }
 
                 // We will always update permissions, even if this is a resource project
+                LogMetric("Updating permissions");
                 await _projectService.UpdatePermissionsAsync(userId, _projectDoc, token);
 
                 // Check for cancellation
@@ -429,6 +441,7 @@ namespace SIL.XForge.Scripture.Services
                         $"Error occurred while executing Paratext sync for project with SF id '{projectSFId}'. {(additionalInformation.Length == 0 ? string.Empty : $"Additional information: {additionalInformation}")}";
                     _syncMetrics.ErrorDetails = $"{e}{Environment.NewLine}{message}";
                     _logger.LogError(e, message);
+                    LogMetric(message);
                 }
 
                 await CompleteSync(false, canRollbackParatext, trainEngine, token);
@@ -499,9 +512,11 @@ namespace SIL.XForge.Scripture.Services
         )
         {
             Dictionary<string, string> ptUsernamesToSFUserIds = await GetPTUsernameToSFUserIdsAsync(token);
+
             // update source and target real-time docs
             foreach (int bookNum in targetBooks)
             {
+                LogMetric($"Updating book {bookNum}");
                 bool hasSource = sourceBooks.Contains(bookNum);
                 int textIndex = _projectDoc.Data.Texts.FindIndex(t => t.BookNum == bookNum);
                 TextInfo text;
@@ -527,15 +542,18 @@ namespace SIL.XForge.Scripture.Services
                     targetTextDocs = new SortedList<int, IDocument<TextData>>();
                 }
 
+                LogMetric("Updating text docs");
                 List<Chapter> newSetOfChapters = await UpdateTextDocsAsync(text, targetParatextId, targetTextDocs);
 
                 // update question docs
                 if (questionDocsByBook.TryGetValue(text.BookNum, out IReadOnlyList<IDocument<Question>> questionDocs))
                 {
+                    LogMetric("Updating question docs");
                     await UpdateQuestionDocsAsync(questionDocs, newSetOfChapters);
                 }
 
                 // update note thread docs
+                LogMetric("Updating thread docs");
                 Dictionary<string, IDocument<NoteThread>> noteThreadDocs = await FetchNoteThreadDocsAsync(text.BookNum);
                 Dictionary<int, ChapterDelta> chapterDeltas = GetDeltasByChapter(text, targetParatextId);
 
@@ -1068,7 +1086,9 @@ namespace SIL.XForge.Scripture.Services
                     }
                     else
                     {
-                        _logger.LogWarning("Unable to update note in database with id: " + updated.DataId);
+                        string message = "Unable to update note in database with id: " + updated.DataId;
+                        _logger.LogWarning(message);
+                        LogMetric(message);
                     }
                 }
                 // Delete notes
@@ -1081,7 +1101,11 @@ namespace SIL.XForge.Scripture.Services
                         op.Set(td => td.Notes[index].Deleted, true);
                     }
                     else
-                        _logger.LogWarning("Unable to delete note in database with id: " + deleted.DataId);
+                    {
+                        string message = "Unable to delete note in database with id: " + deleted.DataId;
+                        _logger.LogWarning(message);
+                        LogMetric(message);
+                    }
                 }
 
                 // Add new notes, giving each note an associated SF userId if the user is also a Paratext user.
@@ -1193,6 +1217,7 @@ namespace SIL.XForge.Scripture.Services
                 return;
             }
 
+            LogMetric("Completing sync");
             bool updateRoles = true;
             IReadOnlyDictionary<string, string> ptUserRoles;
             if (_paratextService.IsResource(_projectDoc.Data.ParatextId))
@@ -1245,6 +1270,7 @@ namespace SIL.XForge.Scripture.Services
             bool dataInSync = true;
             if (!successful)
             {
+                LogMetric("Restoring from backup");
                 bool restoreSucceeded = false;
                 // If we have failed, restore the repository, if we can
                 if (canRollbackParatext)
@@ -1546,9 +1572,12 @@ namespace SIL.XForge.Scripture.Services
 
         private void Log(string message, string projectSFId = null, string userId = null)
         {
-            projectSFId = projectSFId ?? _projectDoc?.Id ?? "unknown";
-            userId = userId ?? _userSecret?.Id ?? "unknown";
+            projectSFId ??= _projectDoc?.Id ?? "unknown";
+            userId ??= _userSecret?.Id ?? "unknown";
             _logger.LogInformation($"SyncLog ({projectSFId},{userId}): {message}");
+            LogMetric(message);
         }
+
+        private void LogMetric(string message) => _syncMetrics.Log.Add($"{DateTime.UtcNow} {message}");
     }
 }
