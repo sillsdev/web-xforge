@@ -492,14 +492,18 @@ namespace SIL.XForge.Scripture.Services
         /// Gets the permission a user has to access a resource, according to a DBL server.
         /// </summary>
         /// <param name="paratextId">The paratext resource identifier.</param>
-        /// <param name="userId">The user identifier.</param>
+        /// <param name="userSFId">The user SF identifier.</param>
         /// <returns>
         /// Read or None.
         /// </returns>
         /// <remarks>
         /// See <see cref="TextInfoPermission" /> for permission values.
         /// </remarks>
-        public async Task<string> GetResourcePermissionAsync(string paratextId, string userId, CancellationToken token)
+        public async Task<string> GetResourcePermissionAsync(
+            string paratextId,
+            string userSFId,
+            CancellationToken token
+        )
         {
             // See if the source is even a resource
             if (!IsResource(paratextId))
@@ -507,7 +511,7 @@ namespace SIL.XForge.Scripture.Services
                 // Default to no permissions for projects used as sources
                 return TextInfoPermission.None;
             }
-            using (ParatextAccessLock accessLock = await GetParatextAccessLock(userId, token))
+            using (ParatextAccessLock accessLock = await GetParatextAccessLock(userSFId, token))
             {
                 bool canRead = SFInstallableDblResource.CheckResourcePermission(
                     paratextId,
@@ -670,7 +674,7 @@ namespace SIL.XForge.Scripture.Services
         /// Gets the permissions for a project or resource.
         /// </summary>
         /// <param name="userSecret">The user secret.</param>
-        /// <param name="project">The project - the UserRoles and ParatextId are used.</param>
+        /// <param name="sfProject">The project - the UserRoles and ParatextId are used.</param>
         /// <param name="ptUsernameMapping">A mapping of user ID to Paratext username.</param>
         /// <param name="book">The book number. Set to zero to check for all books.</param>
         /// <param name="chapter">The chapter number. Set to zero to check for all books.</param>
@@ -683,7 +687,7 @@ namespace SIL.XForge.Scripture.Services
         /// </remarks>
         public async Task<Dictionary<string, string>> GetPermissionsAsync(
             UserSecret userSecret,
-            SFProject project,
+            SFProject sfProject,
             IReadOnlyDictionary<string, string> ptUsernameMapping,
             int book = 0,
             int chapter = 0,
@@ -692,20 +696,26 @@ namespace SIL.XForge.Scripture.Services
         {
             var permissions = new Dictionary<string, string>();
 
-            if (IsResource(project.ParatextId))
+            if (IsResource(sfProject.ParatextId))
             {
-                foreach (string uid in project.UserRoles.Keys)
+                foreach (string userSFId in sfProject.UserRoles.Keys)
                 {
-                    permissions.Add(uid, await this.GetResourcePermissionAsync(project.ParatextId, uid, token));
+                    permissions.Add(
+                        userSFId,
+                        await this.GetResourcePermissionAsync(sfProject.ParatextId, userSFId, token)
+                    );
                 }
             }
             else
             {
                 // Get the scripture text so we can retrieve the permissions from the XML
-                using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), project.ParatextId);
+                using ScrText scrText = ScrTextCollection.FindById(
+                    GetParatextUsername(userSecret),
+                    sfProject.ParatextId
+                );
 
                 // Calculate the project and resource permissions
-                foreach (string uid in project.UserRoles.Keys)
+                foreach (string uid in sfProject.UserRoles.Keys)
                 {
                     // See if the user is in the project members list
                     if (
@@ -2032,11 +2042,11 @@ namespace SIL.XForge.Scripture.Services
         /// Get access to a source for PT project repositories, based on user secret.
         /// </summary>
         private async Task<IInternetSharedRepositorySource> GetInternetSharedRepositorySource(
-            string userId,
+            string userSFId,
             CancellationToken token
         )
         {
-            using (ParatextAccessLock accessLock = await GetParatextAccessLock(userId, token))
+            using (ParatextAccessLock accessLock = await GetParatextAccessLock(userSFId, token))
             {
                 return _internetSharedRepositorySourceProvider.GetSource(
                     accessLock.UserSecret,
@@ -2055,13 +2065,13 @@ namespace SIL.XForge.Scripture.Services
         /// The available resources.
         /// </returns>
         private async Task<IReadOnlyList<ParatextResource>> GetResourcesInternalAsync(
-            string userId,
+            string userSFId,
             bool includeInstallableResource,
             CancellationToken token
         )
         {
             IEnumerable<SFInstallableDblResource> resources;
-            using (ParatextAccessLock accessLock = await GetParatextAccessLock(userId, token))
+            using (ParatextAccessLock accessLock = await GetParatextAccessLock(userSFId, token))
             {
                 resources = SFInstallableDblResource.GetInstallableDblResources(
                     accessLock.UserSecret,
@@ -2449,17 +2459,20 @@ namespace SIL.XForge.Scripture.Services
             PtxUtils.Progress.Progress.Mgr.SetDisplay(progressDisplay);
         }
 
-        private async Task<ParatextAccessLock> GetParatextAccessLock(string userId, CancellationToken token)
+        private async Task<ParatextAccessLock> GetParatextAccessLock(string userSFId, CancellationToken token)
         {
-            SemaphoreSlim semaphore = _tokenRefreshSemaphores.GetOrAdd(userId, (string key) => new SemaphoreSlim(1, 1));
+            SemaphoreSlim semaphore = _tokenRefreshSemaphores.GetOrAdd(
+                userSFId,
+                (string key) => new SemaphoreSlim(1, 1)
+            );
             await semaphore.WaitAsync();
 
             try
             {
-                Attempt<UserSecret> attempt = await _userSecretRepository.TryGetAsync(userId);
+                Attempt<UserSecret> attempt = await _userSecretRepository.TryGetAsync(userSFId);
                 if (!attempt.TryResult(out UserSecret userSecret))
                 {
-                    throw new DataNotFoundException("Could not find user secrets for " + userId);
+                    throw new DataNotFoundException("Could not find user secrets for " + userSFId);
                 }
 
                 if (!userSecret.ParatextTokens.ValidateLifetime())
@@ -2471,7 +2484,7 @@ namespace SIL.XForge.Scripture.Services
                         token
                     );
                     userSecret = await _userSecretRepository.UpdateAsync(
-                        userId,
+                        userSFId,
                         b => b.Set(u => u.ParatextTokens, refreshedUserTokens)
                     );
                 }
