@@ -1,5 +1,5 @@
 import Quill, { DeltaOperation, RangeStatic, StringMap } from 'quill';
-import { hasFunctionProp } from 'utils';
+import { CaretPosition, hasFunctionProp } from '../../../utils';
 import { Delta } from '../../core/models/text-doc';
 import { getAttributesAtPosition } from './quill-scripture';
 import { TextComponent } from './text.component';
@@ -197,12 +197,6 @@ export class DragAndDrop {
       nodeDroppedInto = range.startContainer;
     } else if (hasFunctionProp(document, 'caretPositionFromPoint') && document.caretPositionFromPoint !== undefined) {
       // Firefox browser
-      // The CaretPosition type is no longer in the TypeScript DOM API type definitions, though it is still in Firefox,
-      // as of Firefox 104.0, on 2022-09-06
-      interface CaretPosition {
-        readonly offset: number;
-        readonly offsetNode: Node;
-      }
       const range: CaretPosition | null = document.caretPositionFromPoint(targetX, targetY);
       if (range == null) {
         console.warn('Warning: drag-and-drop inferred a null caret position for insertion');

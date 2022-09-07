@@ -168,15 +168,16 @@ describe('CommandService', () => {
         expect(errorInfo).toBeInstanceOf(CommandError);
         const commandError: CommandError = errorInfo;
 
-        expect(commandError.message).toMatch(/Network problem/);
-        expect(commandError.message).toMatch(/error message here/);
+        expect(commandError.message).toMatch(
+          /Error invoking someMethod: Http failure response for command-api\/place1/
+        );
         expect(commandError.code).toEqual(CommandErrorCode.Other);
         expect(commandError.data).toBeUndefined();
       });
     tick();
 
     const request = env.httpMock.expectOne({ url: 'command-api/place1', method: 'POST' });
-    const errorResponse: ErrorEvent = new ErrorEvent('Network problem', { message: 'error message here' });
+    const errorResponse = new ProgressEvent('Network problem');
     request.error(errorResponse);
     tick();
     env.httpMock.verify();
