@@ -91,6 +91,22 @@ describe('CheckingTextComponent', () => {
     expect(env.isSegmentHighlighted(1, 4)).toBe(true);
   }));
 
+  it('should show related questions when the text changes ', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.wait();
+
+    expect(env.segmentHasQuestion(1, 1)).toBe(true);
+    expect(env.segmentHasQuestion(1, 3)).toBe(true);
+    expect(env.segmentHasQuestion(2, 1)).toBe(false);
+
+    env.component.id = new TextDocId('project01', 40, 2);
+    env.wait();
+
+    expect(env.segmentHasQuestion(1, 1)).toBe(false);
+    expect(env.segmentHasQuestion(1, 3)).toBe(false);
+    expect(env.segmentHasQuestion(2, 1)).toBe(true);
+  }));
+
   it('highlights combined verse', fakeAsync(() => {
     const env = new TestEnvironment();
     env.component.id = new TextDocId('project01', 41, 1);
@@ -105,10 +121,10 @@ describe('CheckingTextComponent', () => {
   it('can set text direction explicitly', fakeAsync(() => {
     const env = new TestEnvironment();
     env.wait();
-    expect(env.fixture.nativeElement.querySelector('quill-editor[class="read-only-editor ltr"')).not.toBeNull();
+    expect(env.fixture.nativeElement.querySelector('quill-editor[class="read-only-editor ltr"]')).not.toBeNull();
     env.component.isRightToLeft = true;
     env.wait();
-    expect(env.fixture.nativeElement.querySelector('quill-editor[class="read-only-editor rtl"')).not.toBeNull();
+    expect(env.fixture.nativeElement.querySelector('quill-editor[class="read-only-editor rtl"]')).not.toBeNull();
   }));
 });
 
@@ -121,6 +137,7 @@ class TestEnvironment {
 
   constructor() {
     this.addTextDoc(new TextDocId('project01', 40, 1, 'target'));
+    this.addTextDoc(new TextDocId('project01', 40, 2, 'target'));
     this.addCombinedVerseTextDoc(new TextDocId('project01', 41, 1, 'target'));
     this.setupProject('project01');
     when(mockedSFProjectService.getProfile('project01')).thenCall(() =>
@@ -136,7 +153,7 @@ class TestEnvironment {
     this.component.id = new TextDocId('project01', 40, 1, 'target');
     const activeVerse = new VerseRef(40, 1, 1);
     this.component.activeVerse = activeVerse;
-    this.component.questionVerses = [activeVerse, new VerseRef(40, 1, 3)];
+    this.component.questionVerses = [activeVerse, new VerseRef(40, 1, 3), new VerseRef(40, 2, 1)];
   }
 
   get quillEditor(): HTMLElement {
