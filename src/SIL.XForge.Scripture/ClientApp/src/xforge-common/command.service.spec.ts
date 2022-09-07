@@ -168,8 +168,10 @@ describe('CommandService', () => {
         expect(errorInfo).toBeInstanceOf(CommandError);
         const commandError: CommandError = errorInfo;
 
-        expect(commandError.message).toMatch(/Network problem/);
-        expect(commandError.message).toMatch(/error message here/);
+        // "Network problem" before Chromium 105, "Error invoking someMethod" works for Chromium 105
+        expect(commandError.message).toMatch(
+          /(?:Network problem|Error invoking someMethod: Http failure response for command-api\/place1)/
+        );
         expect(commandError.code).toEqual(CommandErrorCode.Other);
         expect(commandError.data).toBeUndefined();
       });
