@@ -148,10 +148,12 @@
   "note_dialog": {
     "acceptance_change_heading": "Changes Paratext Accepted (current text):",
     "close": "Close",
+    "confirm": "Confirm",
     "declare_conflict": "There is a conflict. Colors correspond to older (red) and newer (green) text.",
     "hide_changes": "Hide changes",
     "note_reattached": "Note reattached",
     "paratext_user": "Assigned to a Paratext user",
+    "permanently_delete_note": "Permanently delete this comment?",
     "reattached": "(Re-attached)",
     "rejection_change_heading": "Changes Paratext Rejected:",
     "save": "Save",
