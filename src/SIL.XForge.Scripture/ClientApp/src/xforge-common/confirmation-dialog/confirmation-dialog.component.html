@@ -1,0 +1,7 @@
+<ng-container *transloco="let t; read: 'confirmation_dialog'">
+  <h1 mat-dialog-title>{{ message }}</h1>
+  <mat-dialog-actions fxLayoutAlign="end">
+    <button mat-button [mat-dialog-close]="undefined">{{ t("cancel") }}</button>
+    <button mat-button [mat-dialog-close]="'confirm'">{{ t("confirm") }}</button>
+  </mat-dialog-actions>
+</ng-container>

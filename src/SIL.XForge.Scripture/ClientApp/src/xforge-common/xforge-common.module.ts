@@ -12,6 +12,7 @@ import { AvatarComponent } from './avatar/avatar.component';
 import { I18nService, TranslationLoader } from './i18n.service';
 import { IndexeddbOfflineStore } from './indexeddb-offline-store';
 import { MessageDialogComponent } from './message-dialog/message-dialog.component';
+import { ConfirmationDialogComponent } from './confirmation-dialog/confirmation-dialog.component';
 import { OfflineStore } from './offline-store';
 import { RealtimeRemoteStore } from './realtime-remote-store';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
@@ -31,7 +32,8 @@ const componentExports = [
   SystemAdministrationComponent,
   PageNotFoundComponent,
   WriteStatusComponent,
-  OwnerComponent
+  OwnerComponent,
+  ConfirmationDialogComponent
 ];
 
 @NgModule({

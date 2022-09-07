@@ -3,7 +3,6 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { cloneDeep, sortBy } from 'lodash-es';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
-import { I18nService } from 'xforge-common/i18n.service';
 import {
   AssignedUsers,
   NoteConflictType,
@@ -13,9 +12,14 @@ import {
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
+import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { ConfirmationDialogComponent } from 'xforge-common/confirmation-dialog/confirmation-dialog.component';
+import { DialogService } from 'xforge-common/dialog.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
-import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -30,10 +34,11 @@ export interface NoteDialogData {
 }
 
 export interface NoteDialogResult {
-  verseRef: VerseRefData;
+  verseRef?: VerseRefData;
   note: Note;
   selectedText: string;
   position: TextAnchor;
+  deleted?: boolean;
 }
 
 // TODO: Implement a diff - there is an accepted solution here that might be a good starting point:
@@ -59,7 +64,8 @@ export class NoteDialogComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) private readonly data: NoteDialogData,
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private readonly dialogService: DialogService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -202,8 +208,23 @@ export class NoteDialogComponent implements OnInit {
     this.currentNoteContent = note.content ?? '';
   }
 
-  deleteNote(note: Note): void {
-    console.log('TODO: delete note: ' + note.dataId);
+  async deleteNote(note: Note): Promise<void> {
+    const message: string = translate('note_dialog.permanently_delete_note');
+    const dialogRef: MatDialogRef<ConfirmationDialogComponent, 'confirm' | undefined> =
+      this.dialogService.openMatDialog(ConfirmationDialogComponent, { data: { message } });
+
+    const result: 'confirm' | undefined = await dialogRef.afterClosed().toPromise();
+    if (result === 'confirm' && this.threadDoc?.data != null) {
+      if (this.notesToDisplay.length === 1) {
+        // This may be the last note in the thread, so the thread may need to be deleted
+        this.dialogRef.close({ note, selectedText: '', position: { start: 0, length: 0 }, deleted: true });
+        return;
+      }
+      const index: number = this.threadDoc.data.notes.findIndex(n => n.dataId === note.dataId);
+      if (index >= 0) {
+        await this.threadDoc.submitJson0Op(op => op.remove(nt => nt.notes, index));
+      }
+    }
   }
 
   parseNote(content: string | undefined): string {
@@ -256,7 +277,17 @@ export class NoteDialogComponent implements OnInit {
   }
 
   isNoteEditable(note: Note): boolean {
-    return note.dataId === this.lastNoteId && note.ownerRef === this.userService.currentUserId;
+    if (this.projectProfileDoc?.data == null) return false;
+    return (
+      note.dataId === this.lastNoteId &&
+      SF_PROJECT_RIGHTS.hasRight(
+        this.projectProfileDoc.data,
+        this.userService.currentUserId,
+        SFProjectDomain.Notes,
+        Operation.Edit,
+        note
+      )
+    );
   }
 
   reattachedText(note: Note): string {

@@ -2402,6 +2402,34 @@ describe('EditorComponent', () => {
       expect(existingThread.data!.notes.find(n => n.dataId === lastNoteId)!.content).toEqual(content);
       env.dispose();
     }));
+
+    it('allows user to delete a thread', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      const threadId = 'thread02';
+      const existingThread: NoteThreadDoc = env.getNoteThreadDoc('project01', threadId);
+      expect(existingThread.data!.notes.length).toEqual(1);
+      const note: Note = existingThread.data!.notes[0];
+      env.openNoteDialogAndEdit('verse_1_3', existingThread.data!, note, 'deleted note', true);
+      expect(existingThread.data).toBeUndefined();
+      env.dispose();
+    }));
+
+    it('deletes the note if notes still exist in the thread', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      const threadId = 'thread01';
+      const existingThread: NoteThreadDoc = env.getNoteThreadDoc('project01', threadId);
+      expect(existingThread.data!.notes.length).toEqual(3);
+      const note: Note = existingThread.data!.notes[2];
+      env.openNoteDialogAndEdit('verse_1_1', existingThread.data!, note, 'deleted note', true);
+      expect(existingThread.data!.notes.length).toEqual(2);
+      env.dispose();
+    }));
   });
 
   describe('Translation Suggestions disabled', () => {
@@ -3103,7 +3131,7 @@ class TestEnvironment {
     return thread != null;
   }
 
-  openNoteDialogAndEdit(segmentRef: string, thread: NoteThread, note: Note, content: string): void {
+  openNoteDialogAndEdit(segmentRef: string, thread: NoteThread, note: Note, content: string, deleted?: boolean): void {
     const iconElement: HTMLElement = this.getNoteThreadIconElement(segmentRef, thread.dataId)!;
     iconElement.click();
     this.wait();
@@ -3113,7 +3141,8 @@ class TestEnvironment {
       verseRef: thread.verseRef,
       note,
       position: thread.position,
-      selectedText: thread.originalSelectedText
+      selectedText: thread.originalSelectedText,
+      deleted
     });
     const noteDialogData: NoteDialogData = {
       verseRef: undefined,

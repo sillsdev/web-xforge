@@ -12,7 +12,7 @@ import { hasParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptur
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import * as RichText from 'rich-text';
-import { anything, mock, when } from 'ts-mockito';
+import { anything, instance, mock, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -33,6 +33,9 @@ import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/mode
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { first } from 'rxjs/operators';
 import { fromVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { DialogService } from 'xforge-common/dialog.service';
+import { verify } from 'ts-mockito';
+import { of } from 'rxjs';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
@@ -40,6 +43,7 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { getTextDoc, paratextUsersFromRoles } from '../../../shared/test-utils';
 import { NoteThreadDoc } from '../../../core/models/note-thread-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
+import { ConfirmationDialogComponent } from '../../../../xforge-common/confirmation-dialog/confirmation-dialog.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog.component';
 
 const mockedAuthService = mock(AuthService);
@@ -47,6 +51,7 @@ const mockedCookieService = mock(CookieService);
 const mockedHttpClient = mock(HttpClient);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
+const mockedDialogService = mock(DialogService);
 
 describe('NoteDialogComponent', () => {
   configureTestingModule(() => ({
@@ -56,7 +61,8 @@ describe('NoteDialogComponent', () => {
       { provide: CookieService, useMock: mockedCookieService },
       { provide: HttpClient, useMock: mockedHttpClient },
       { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: UserService, useMock: mockedUserService }
+      { provide: UserService, useMock: mockedUserService },
+      { provide: DialogService, useMock: mockedDialogService }
     ]
   }));
 
@@ -392,34 +398,8 @@ describe('NoteDialogComponent', () => {
         expectedIcon: grayIcon
       }
     ];
-    const noteThread: NoteThread = {
-      originalContextBefore: '',
-      originalContextAfter: '',
-      originalSelectedText: '',
-      dataId: 'thread01',
-      ownerRef: 'user01',
-      position: { start: 0, length: 0 },
-      projectRef: TestEnvironment.PROJECT01,
-      tagIcon: 'flag02',
-      verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 },
-      status: NoteStatus.Todo,
-      assignment: AssignedUsers.TeamUser,
-      notes: [
-        {
-          dataId: 'note01',
-          type: NoteType.Normal,
-          conflictType: NoteConflictType.DefaultValue,
-          threadId: 'thread01',
-          content: 'thread01',
-          extUserId: 'user01',
-          deleted: false,
-          ownerRef: 'user01',
-          status: NoteStatus.Todo,
-          dateCreated: '',
-          dateModified: ''
-        }
-      ]
-    };
+
+    const noteThread: NoteThread = TestEnvironment.defaultNoteThread;
     for (const assignment of assigned) {
       noteThread.assignment = assignment.assigned;
       env = new TestEnvironment({ noteThread, currentUserId });
@@ -518,17 +498,45 @@ describe('NoteDialogComponent', () => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
     expect(env.notes.length).toEqual(4);
     const noteNumbers = [1, 2, 3];
-    noteNumbers.forEach(n => expect(env.hasEditActions(n)).toBe(false));
-    expect(env.hasEditActions(4)).toBe(true);
+    noteNumbers.forEach(n => expect(env.noteHasEditActions(n)).toBe(false));
+    expect(env.noteHasEditActions(4)).toBe(true);
     env.clickEditNote();
     expect(env.noteInputElement).toBeTruthy();
     expect(env.notes.length).toEqual(3);
-    noteNumbers.forEach(n => expect(env.hasEditActions(n)).toBe(false));
+    noteNumbers.forEach(n => expect(env.noteHasEditActions(n)).toBe(false));
     expect(env.component.currentNoteContent).toEqual('note05');
     const content = 'note 05 edited content';
     env.enterNoteContent(content);
     env.submit();
     expect((env.dialogResult as NoteDialogResult).note.content).toEqual(content);
+  }));
+
+  it('allows user to delete the last note in the thread', fakeAsync(() => {
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
+    expect(env.notes.length).toEqual(4);
+    expect(env.noteHasEditActions(4)).toBe(true);
+    env.clickDeleteNote();
+    verify(mockedDialogService.openMatDialog(ConfirmationDialogComponent, anything())).once();
+    expect(env.notes.length).toEqual(3);
+  }));
+
+  it('does not delete the note if a user cancels', fakeAsync(() => {
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
+    expect(env.notes.length).toEqual(4);
+    when(env.deleteNoteDialogRef.afterClosed()).thenReturn(of(undefined));
+    expect(env.noteHasEditActions(4)).toBe(true);
+    env.clickDeleteNote();
+    verify(mockedDialogService.openMatDialog(ConfirmationDialogComponent, anything())).once();
+    expect(env.notes.length).toEqual(4);
+  }));
+
+  it('deletes the thread if the last note is deleted', fakeAsync(() => {
+    env = new TestEnvironment({ noteThread: TestEnvironment.defaultNoteThread });
+    expect(env.notes.length).toEqual(1);
+    expect(env.noteHasEditActions(1)).toBe(true);
+    env.clickDeleteNote();
+    verify(mockedDialogService.openMatDialog(ConfirmationDialogComponent, anything())).once();
+    expect((env.dialogResult as NoteDialogResult).deleted).toEqual(true);
   }));
 });
 
@@ -609,6 +617,34 @@ class TestEnvironment {
   static reattached: string = ['MAT 1:4', 'reattached text', '17', 'before selection ', ' after selection'].join(
     REATTACH_SEPARATOR
   );
+  static defaultNoteThread: NoteThread = {
+    originalContextBefore: '',
+    originalContextAfter: '',
+    originalSelectedText: '',
+    dataId: 'thread01',
+    ownerRef: 'user01',
+    position: { start: 0, length: 0 },
+    projectRef: TestEnvironment.PROJECT01,
+    tagIcon: 'flag02',
+    verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 },
+    status: NoteStatus.Todo,
+    assignment: AssignedUsers.TeamUser,
+    notes: [
+      {
+        dataId: 'note01',
+        type: NoteType.Normal,
+        conflictType: NoteConflictType.DefaultValue,
+        threadId: 'thread01',
+        content: 'thread01',
+        extUserId: 'user01',
+        deleted: false,
+        ownerRef: 'user01',
+        status: NoteStatus.Todo,
+        dateCreated: '',
+        dateModified: ''
+      }
+    ]
+  };
   static getNoteThread(reattachedContent?: string): NoteThread {
     const type: NoteType = NoteType.Normal;
     const conflictType: NoteConflictType = NoteConflictType.DefaultValue;
@@ -737,7 +773,9 @@ class TestEnvironment {
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   readonly component: NoteDialogComponent;
   readonly dialogRef: MatDialogRef<NoteDialogComponent>;
-  readonly mockedNoteMdcDialogRef = mock(MatDialogRef);
+  readonly deleteNoteDialogRef: MatDialogRef<ConfirmationDialogComponent, 'confirm' | undefined> = mock(
+    MatDialogRef
+  ) as MatDialogRef<ConfirmationDialogComponent, 'confirm' | undefined>;
   dialogResult: NoteDialogResult | 'close' | undefined;
 
   constructor({
@@ -806,6 +844,11 @@ class TestEnvironment {
       .pipe(first())
       .subscribe(result => (this.dialogResult = result));
 
+    when(mockedDialogService.openMatDialog(ConfirmationDialogComponent, anything())).thenReturn(
+      instance(this.deleteNoteDialogRef)
+    );
+    when(this.deleteNoteDialogRef.afterClosed()).thenReturn(of('confirm'));
+
     this.fixture.detectChanges();
     tick();
     this.fixture.detectChanges();
@@ -859,7 +902,13 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  hasEditActions(noteNumber: number): boolean {
+  clickDeleteNote(): void {
+    this.overlayContainerElement.query(By.css('.delete-button')).nativeElement.click();
+    flush();
+    this.fixture.detectChanges();
+  }
+
+  noteHasEditActions(noteNumber: number): boolean {
     const noteElement: DebugElement = this.overlayContainerElement.query(
       By.css('.notes .note:nth-child(' + noteNumber + ')')
     );
