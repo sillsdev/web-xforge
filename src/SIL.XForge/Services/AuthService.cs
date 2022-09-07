@@ -49,6 +49,12 @@ namespace SIL.XForge.Services
             return CallApiAsync(HttpMethod.Post, $"users/{primaryAuthId}/identities", content);
         }
 
+        public Task UpdateAvatar(string authId, string url)
+        {
+            var content = new JObject(new JProperty("picture", url));
+            return CallApiAsync(new HttpMethod("PATCH"), $"users/{authId}", content);
+        }
+
         public Task UpdateInterfaceLanguage(string authId, string language)
         {
             var content = new JObject(
