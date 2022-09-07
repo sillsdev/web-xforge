@@ -11,7 +11,7 @@ export function createUploadFileData(
   realtimeDocRef: string,
   blob: Blob,
   filename: string
-): FileOfflineData {
+): FileOfflineData & { blob: Blob } {
   return { dataCollection, id: dataId, projectRef, realtimeDocRef, blob, filename };
 }
 
