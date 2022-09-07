@@ -94,6 +94,22 @@ namespace SIL.XForge.Controllers
             }
         }
 
+        public async Task<IRpcMethodResult> UpdateAvatarFromDisplayName()
+        {
+            try
+            {
+                await _userService.UpdateAvatarFromDisplayNameAsync(UserId, AuthId);
+                return Ok();
+            }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string> { { "method", "UpdateAvatarFromDisplayName" }, }
+                );
+                throw;
+            }
+        }
+
         public async Task<IRpcMethodResult> UpdateInterfaceLanguage(string language)
         {
             try

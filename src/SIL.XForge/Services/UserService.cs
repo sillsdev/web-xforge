@@ -9,6 +9,7 @@ using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
+using SIL.XForge.Utils;
 
 namespace SIL.XForge.Services
 {
@@ -142,6 +143,51 @@ namespace SIL.XForge.Services
             {
                 IDocument<User> userDoc = await conn.FetchAsync<User>(primaryUserId);
                 await userDoc.SubmitJson0OpAsync(op => op.Set(u => u.ParatextId, GetIdpIdFromAuthId(ptId)));
+            }
+        }
+
+        /// <summary>
+        /// Updates the user avatar on their Auth0 account based off their display name
+        /// </summary>
+        public async Task UpdateAvatarFromDisplayNameAsync(string curUserId, string authId)
+        {
+            using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
+            {
+                IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
+                // Only overwrite the avatar for allowed domains so as not to overwrite an avatar provided by a social connection
+                string[] excludeDomains = { "cdn.auth0.com", "gravatar.com" };
+                if (!excludeDomains.Any(userDoc.Data.AvatarUrl.Contains))
+                {
+                    return;
+                }
+
+                var initials = string.Concat(
+                    userDoc.Data.DisplayName
+                        .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
+                        .Where(x => x.Length > 1 && char.IsLetter(x[0]))
+                        .Select(x => char.ToLower(x[0]))
+                );
+                if (initials.Length == 0)
+                {
+                    return;
+                }
+                else if (initials.Length > 2)
+                {
+                    // Auth0 avatar images only support 2 characters
+                    initials = $"{initials[0]}{initials[initials.Length - 1]}";
+                }
+                var avatarUrl = $"https://cdn.auth0.com/avatars/{initials}.png";
+                // If user has an email then link to Gravatar with auth0 as a fallback
+                if (userDoc.Data.Email != null && userDoc.Data.Email != "")
+                {
+                    var emailHash = StringUtils.ComputeMd5Hash(userDoc.Data.Email);
+                    var auth0Fallback = System.Web.HttpUtility.UrlEncode(avatarUrl);
+                    avatarUrl = $"https://www.gravatar.com/avatar/{emailHash}?s=480&r=pg&d={auth0Fallback}";
+                }
+                // Update Auth0 profile
+                await _authService.UpdateAvatar(authId, avatarUrl);
+                // Update user doc
+                await userDoc.SubmitJson0OpAsync(op => op.Set(u => u.AvatarUrl, avatarUrl));
             }
         }
 
