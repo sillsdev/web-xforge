@@ -1,9 +1,12 @@
-import { mock, when } from 'ts-mockito';
+import { anything, capture, instance, mock, when } from 'ts-mockito';
 import { MdcDialog } from '@angular-mdc/web';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { verify } from 'ts-mockito';
+import { MdcDialogRef } from '@angular-mdc/web/dialog';
+import { of } from 'rxjs';
+import { EditNameDialogComponent } from 'xforge-common/edit-name-dialog/edit-name-dialog.component';
 import { CURRENT_PROJECT_ID_SETTING, UserService } from './user.service';
 import { AuthService } from './auth.service';
 import { CommandService } from './command.service';
@@ -56,6 +59,14 @@ describe('UserService', () => {
     expect(user.data!.sites['sf'].currentProjectId).toBeUndefined();
     verify(mockedLocalSettingsService.set(CURRENT_PROJECT_ID_SETTING, undefined)).once();
   });
+
+  it('triggers update for avatar when display name is updated', fakeAsync(() => {
+    const env = new TestEnvironment({ storedProjectId: 'project01' });
+    env.service.editDisplayName(false);
+    tick();
+    const [, method] = capture<string, string, any>(mockedCommandService.onlineInvoke).last();
+    expect(method).toEqual('updateAvatarFromDisplayName');
+  }));
 });
 
 interface TestArgs {
@@ -66,6 +77,7 @@ interface TestArgs {
 class TestEnvironment {
   readonly service: UserService;
   readonly realtimeService: TestRealtimeService;
+  readonly mockedEditNameDialogRef = mock<MdcDialogRef<EditNameDialogComponent>>(MdcDialogRef);
 
   constructor(testArgs: TestArgs) {
     this.realtimeService = TestBed.inject(TestRealtimeService);
@@ -86,5 +98,8 @@ class TestEnvironment {
 
     when(mockedLocalSettingsService.get<string>(CURRENT_PROJECT_ID_SETTING)).thenReturn(testArgs.localProjectId);
     when(mockedAuthService.currentUserId).thenReturn('user01');
+    when(mockedAuthService.isLoggedIn).thenResolve(true);
+    when(mockedDialog.open(EditNameDialogComponent, anything())).thenReturn(instance(this.mockedEditNameDialogRef));
+    when(this.mockedEditNameDialogRef.afterClosed()).thenReturn(of({ displayName: 'User Name' }));
   }
 }
