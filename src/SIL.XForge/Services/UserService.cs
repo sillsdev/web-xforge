@@ -155,13 +155,13 @@ namespace SIL.XForge.Services
             {
                 IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
                 // Only overwrite the avatar for allowed domains so as not to overwrite an avatar provided by a social connection
-                string[] excludeDomains = { "cdn.auth0.com", "gravatar.com" };
-                if (!excludeDomains.Any(userDoc.Data.AvatarUrl.Contains))
+                string[] allowedDomains = { "cdn.auth0.com", "gravatar.com" };
+                if (!allowedDomains.Any(userDoc.Data.AvatarUrl.Contains))
                 {
                     return;
                 }
 
-                var initials = string.Concat(
+                string initials = string.Concat(
                     userDoc.Data.DisplayName
                         .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
                         .Where(x => x.Length > 1 && char.IsLetter(x[0]))
