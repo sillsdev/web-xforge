@@ -25,7 +25,7 @@ namespace SIL.XForge.Models
         }
 
         /// <summary>
-        /// Checks whether the access token is valid and not about to expire within the next minute.
+        /// Checks whether the access token is valid and not about to expire.
         /// </summary>
         public bool ValidateLifetime()
         {
