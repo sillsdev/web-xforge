@@ -2488,12 +2488,23 @@ namespace SIL.XForge.Scripture.Services
 
                 if (!userSecret.ParatextTokens.ValidateLifetime())
                 {
-                    Tokens refreshedUserTokens = await _jwtTokenHelper.RefreshAccessTokenAsync(
-                        _paratextOptions.Value,
-                        userSecret.ParatextTokens,
-                        _registryClient,
-                        token
-                    );
+                    Tokens refreshedUserTokens;
+                    try
+                    {
+                        refreshedUserTokens = await _jwtTokenHelper.RefreshAccessTokenAsync(
+                            _paratextOptions.Value,
+                            userSecret.ParatextTokens,
+                            _registryClient,
+                            token
+                        );
+                    }
+                    catch
+                    {
+                        _logger.LogWarning(
+                            $"ParatextService.GetParatextAccessLock for sfUserId {sfUserId} is throwing from call RefreshAccessTokenAsync()."
+                        );
+                        throw;
+                    }
                     userSecret = await _userSecretRepository.UpdateAsync(
                         sfUserId,
                         b => b.Set(u => u.ParatextTokens, refreshedUserTokens)
