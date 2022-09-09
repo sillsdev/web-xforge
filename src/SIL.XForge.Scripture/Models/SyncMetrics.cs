@@ -22,6 +22,7 @@ namespace SIL.XForge.Scripture.Models
 
         // Sync Statistics
         public SyncMetricInfo Books { get; set; } = new SyncMetricInfo();
+        public NoteSyncMetricInfo Notes { get; set; } = new NoteSyncMetricInfo();
         public SyncMetricInfo NoteThreads { get; set; } = new SyncMetricInfo();
         public SyncMetricInfo ParatextBooks { get; set; } = new SyncMetricInfo();
         public SyncMetricInfo ParatextNotes { get; set; } = new SyncMetricInfo();
