@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Reflection;
-using System.ServiceModel.Channels;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -234,7 +232,7 @@ namespace SIL.XForge.Scripture.Services
                     questionDocsByBook[text.BookNum] = questionDocs;
                     if (isDataInSync && !_paratextService.IsResource(targetParatextId))
                     {
-                        LogMetric("Updating paratext book");
+                        LogMetric("Updating paratext notes");
                         await UpdateParatextNotesAsync(text, questionDocs);
                         // TODO: Sync Note changes back to Paratext, and record sync metric info
                         // IEnumerable<IDocument<NoteThread>> noteThreadDocs =
@@ -516,7 +514,7 @@ namespace SIL.XForge.Scripture.Services
             // update source and target real-time docs
             foreach (int bookNum in targetBooks)
             {
-                LogMetric($"Updating book {bookNum}");
+                LogMetric($"Updating text info for book {bookNum}");
                 bool hasSource = sourceBooks.Contains(bookNum);
                 int textIndex = _projectDoc.Data.Texts.FindIndex(t => t.BookNum == bookNum);
                 TextInfo text;
@@ -946,7 +944,24 @@ namespace SIL.XForge.Scripture.Services
                 else
                 {
                     tasks.Add(SubmitChangesOnNoteThreadDocAsync(threadDoc, change, usernamesToUserIds));
-                    _syncMetrics.NoteThreads.Updated++;
+
+                    // Record thread metrics and note metrics
+                    if (change.ThreadRemoved)
+                    {
+                        _syncMetrics.NoteThreads.Deleted++;
+                    }
+
+                    if (change.ThreadUpdated)
+                    {
+                        _syncMetrics.NoteThreads.Updated++;
+                    }
+
+                    _syncMetrics.Notes += new NoteSyncMetricInfo(
+                        added: change.NotesAdded.Count,
+                        deleted: change.NotesDeleted.Count,
+                        updated: change.NotesUpdated.Count,
+                        removed: change.NoteIdsRemoved.Count
+                    );
                 }
             }
             await Task.WhenAll(tasks);
@@ -1220,16 +1235,11 @@ namespace SIL.XForge.Scripture.Services
             LogMetric("Completing sync");
             bool updateRoles = true;
             IReadOnlyDictionary<string, string> ptUserRoles;
-            if (_paratextService.IsResource(_projectDoc.Data.ParatextId))
+            if (_paratextService.IsResource(_projectDoc.Data.ParatextId) || token.IsCancellationRequested)
             {
-                // Do not update permissions on sync, if this is a resource project
-                // Permission updates will be performed when a target project is synchronized
-                ptUserRoles = new Dictionary<string, string>();
-                updateRoles = false;
-            }
-            else if (token.IsCancellationRequested)
-            {
-                // If the token is cancelled, GetProjectRolesAsync will fail
+                // Do not update permissions on sync, if this is a resource project, as then,
+                // permission updates will be performed when a target project is synchronized.
+                // If the token is cancelled, do not update permissions as GetProjectRolesAsync will fail.
                 ptUserRoles = new Dictionary<string, string>();
                 updateRoles = false;
             }
@@ -1418,7 +1428,8 @@ namespace SIL.XForge.Scripture.Services
                 });
             }
 
-            // If we have an id in the job ids collection, remove the first one
+            // If we have an id in the job ids collection, remove the first one, and/or if we have a
+            // sync metrics id, we will remove that specific id from the project secrets.
             if (_projectSecret.JobIds.Any() || _projectSecret.SyncMetricsIds.Contains(_syncMetrics?.Id))
             {
                 await _projectSecrets.UpdateAsync(

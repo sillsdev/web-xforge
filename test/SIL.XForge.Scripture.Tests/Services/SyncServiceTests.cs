@@ -244,18 +244,16 @@ namespace SIL.XForge.Scripture.Services
         [Test]
         public async Task SyncAsync_SourceProjectSecretsRecordsSyncMetricsId()
         {
-            // Set up test environment
             var env = new TestEnvironment();
 
-            // Run sync
             await env.Service.SyncAsync("userid", Project01, false);
 
             // Verify that the sync metrics ids are recorded in the project secrets
-            Assert.That(env.SyncMetrics.Get(env.ProjectSecrets.Get(Project01).SyncMetricsIds.First()), Is.Not.Null);
+            string syncMetricsId = env.ProjectSecrets.Get(Project01).SyncMetricsIds.First();
+            Assert.That(env.SyncMetrics.Get(syncMetricsId), Is.Not.Null);
             Assert.That(env.ProjectSecrets.Get(Project02).SyncMetricsIds, Is.Empty);
             Assert.That(env.ProjectSecrets.Get(Project03).SyncMetricsIds, Is.Empty);
 
-            // Cancel sync
             await env.Service.CancelSyncAsync("userid", Project01);
 
             // Verify that the sync metrics are cleared from the project secrets
@@ -267,18 +265,17 @@ namespace SIL.XForge.Scripture.Services
         [Test]
         public async Task SyncAsync_SourceAndTargetProjectSecretsRecordsSyncMetricsId()
         {
-            // Set up test environment
             var env = new TestEnvironment();
 
-            // Run sync
             await env.Service.SyncAsync("userid", Project03, false);
 
             // Verify that the sync metrics ids are recorded in the project secrets
-            Assert.That(env.SyncMetrics.Get(env.ProjectSecrets.Get(Project01).SyncMetricsIds.First()), Is.Not.Null);
+            string syncMetricsId01 = env.ProjectSecrets.Get(Project01).SyncMetricsIds.First();
+            string syncMetricsId03 = env.ProjectSecrets.Get(Project03).SyncMetricsIds.First();
+            Assert.That(env.SyncMetrics.Get(syncMetricsId01), Is.Not.Null);
             Assert.That(env.ProjectSecrets.Get(Project02).SyncMetricsIds, Is.Empty);
-            Assert.That(env.SyncMetrics.Get(env.ProjectSecrets.Get(Project03).SyncMetricsIds.First()), Is.Not.Null);
+            Assert.That(env.SyncMetrics.Get(syncMetricsId03), Is.Not.Null);
 
-            // Cancel sync
             await env.Service.CancelSyncAsync("userid", Project03);
 
             // Verify that the sync metrics are cleared from the project secrets
@@ -290,21 +287,20 @@ namespace SIL.XForge.Scripture.Services
         [Test]
         public async Task SyncAsync_SourceWithCancelledTargetProjectSecretsRecordsSyncMetricsId()
         {
-            // Set up test environment
             var env = new TestEnvironment();
 
-            // Run sync
             await env.Service.SyncAsync("userid", Project03, false);
 
             // Verify that the sync metrics ids are recorded in the project secrets
-            Assert.That(env.SyncMetrics.Get(env.ProjectSecrets.Get(Project01).SyncMetricsIds.First()), Is.Not.Null);
+            string syncMetricsId01 = env.ProjectSecrets.Get(Project01).SyncMetricsIds.First();
+            string syncMetricsId03 = env.ProjectSecrets.Get(Project03).SyncMetricsIds.First();
+            Assert.That(env.SyncMetrics.Get(syncMetricsId01), Is.Not.Null);
             Assert.That(env.ProjectSecrets.Get(Project02).SyncMetricsIds, Is.Empty);
-            Assert.That(env.SyncMetrics.Get(env.ProjectSecrets.Get(Project03).SyncMetricsIds.First()), Is.Not.Null);
+            Assert.That(env.SyncMetrics.Get(syncMetricsId03), Is.Not.Null);
 
-            // Cancel sync
             await env.Service.CancelSyncAsync("userid", Project01);
 
-            // Verify that the sync metrics are cleared from the project secrets
+            // Verify that the sync metrics are only cleared from the target project secrets
             Assert.That(env.ProjectSecrets.Get(Project01).SyncMetricsIds, Is.Empty);
             Assert.That(env.ProjectSecrets.Get(Project02).SyncMetricsIds, Is.Empty);
             Assert.That(env.SyncMetrics.Get(env.ProjectSecrets.Get(Project03).SyncMetricsIds.First()), Is.Not.Null);
@@ -316,7 +312,6 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             Assert.That(env.SyncMetrics.Query().Any(), Is.False);
 
-            // Run sync
             await env.Service.SyncAsync("userid", Project03, false);
 
             // Verify the sync metrics as queued
@@ -329,7 +324,6 @@ namespace SIL.XForge.Scripture.Services
                 Is.EqualTo(SyncStatus.Queued)
             );
 
-            // Cancel sync
             await env.Service.CancelSyncAsync("userid", Project03);
 
             // Verify the sync metrics as cancelled
@@ -349,7 +343,6 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             Assert.That(env.SyncMetrics.Query().Any(), Is.False);
 
-            // Run sync
             await env.Service.SyncAsync("userid", Project03, false);
 
             // Verify the sync metrics
@@ -369,7 +362,6 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             Assert.That(env.SyncMetrics.Query().Any(), Is.False);
 
-            // Run sync
             await env.Service.SyncAsync("userid", Project03, false);
 
             // Verify the sync metrics as queued
@@ -382,7 +374,6 @@ namespace SIL.XForge.Scripture.Services
                 Is.EqualTo(SyncStatus.Queued)
             );
 
-            // Cancel sync
             await env.Service.CancelSyncAsync("userid", Project01);
 
             // Verify the sync metrics as cancelled
@@ -402,7 +393,6 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             Assert.That(env.SyncMetrics.Query().Any(), Is.False);
 
-            // Run sync
             await env.Service.SyncAsync("userid", Project03, false);
 
             // Verify the sync metrics
@@ -419,14 +409,11 @@ namespace SIL.XForge.Scripture.Services
             DateTime beforeSync = DateTime.UtcNow;
             Assert.That(env.SyncMetrics.Query().Any(), Is.False);
 
-            // Run sync
             await env.Service.SyncAsync("userid", Project01, false);
             DateTime afterSync = DateTime.UtcNow;
 
             // Verify the sync metrics
             var syncMetrics = env.SyncMetrics.Query().Single(s => s.ProjectRef == Project01);
-            Assert.That(syncMetrics.DateQueued, Is.Not.EqualTo(DateTime.MinValue));
-            Assert.That(syncMetrics.DateQueued, Is.Not.EqualTo(DateTime.MaxValue));
             Assert.That(syncMetrics.DateQueued, Is.GreaterThanOrEqualTo(beforeSync));
             Assert.That(syncMetrics.DateQueued, Is.LessThanOrEqualTo(afterSync));
             Assert.That(syncMetrics.DateStarted, Is.Null);
@@ -440,7 +427,6 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.SyncMetrics.Query().Any(), Is.False);
             string curUserId = "userid";
 
-            // Run sync
             await env.Service.SyncAsync(curUserId, Project01, false);
 
             // Verify the sync metrics
@@ -453,7 +439,6 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             Assert.That(env.SyncMetrics.Query().Any(), Is.False);
 
-            // Run sync
             await env.Service.SyncAsync("userid", Project01, false);
 
             // Verify the sync metrics as queued
@@ -462,7 +447,6 @@ namespace SIL.XForge.Scripture.Services
                 Is.EqualTo(SyncStatus.Queued)
             );
 
-            // Cancel sync
             await env.Service.CancelSyncAsync("userid", Project01);
 
             // Verify the sync metrics as cancelled
@@ -478,7 +462,6 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             Assert.That(env.SyncMetrics.Query().Any(), Is.False);
 
-            // Run sync
             await env.Service.SyncAsync("userid", Project01, false);
 
             // Verify the sync metrics

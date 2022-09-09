@@ -49,7 +49,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.Sync.DataInSync, Is.True);
 
             // Check that the failure was logged in the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Failed));
         }
 
@@ -67,7 +67,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.Sync.DataInSync, Is.False);
 
             // Check that the failure was logged in the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Failed));
         }
 
@@ -99,7 +99,7 @@ namespace SIL.XForge.Scripture.Services
             env.VerifyProjectSync(true);
 
             // Verify the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
             Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 4, deleted: 0, updated: 0)));
             syncMetrics = env.GetSyncMetrics("project02");
@@ -136,7 +136,7 @@ namespace SIL.XForge.Scripture.Services
             env.VerifyProjectSync(true);
 
             // Verify the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
             Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 4, deleted: 0, updated: 0)));
             syncMetrics = env.GetSyncMetrics("project02");
@@ -173,7 +173,7 @@ namespace SIL.XForge.Scripture.Services
             env.VerifyProjectSync(true);
 
             // Verify the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
             Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 4, deleted: 0, updated: 0)));
             syncMetrics = env.GetSyncMetrics("project02");
@@ -209,7 +209,7 @@ namespace SIL.XForge.Scripture.Services
             env.VerifyProjectSync(true);
 
             // Verify the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
             Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 4, deleted: 0, updated: 0)));
             syncMetrics = env.GetSyncMetrics("project02");
@@ -236,7 +236,7 @@ namespace SIL.XForge.Scripture.Services
             env.VerifyProjectSync(true);
 
             // Verify the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 0, updated: 0)));
             Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
             syncMetrics = env.GetSyncMetrics("project02");
@@ -428,7 +428,7 @@ namespace SIL.XForge.Scripture.Services
             env.VerifyProjectSync(true);
 
             // Verify the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 2)));
             Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 4)));
             syncMetrics = env.GetSyncMetrics("project02");
@@ -472,7 +472,7 @@ namespace SIL.XForge.Scripture.Services
             env.VerifyProjectSync(true);
 
             // Verify the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 2)));
             Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 1, updated: 0)));
             Assert.That(syncMetrics.Questions, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 1, updated: 0)));
@@ -556,14 +556,22 @@ namespace SIL.XForge.Scripture.Services
             env.VerifyProjectSync(true);
 
             // Verify the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 1, updated: 1)));
             Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 2, updated: 0)));
+            Assert.That(
+                syncMetrics.Notes,
+                Is.EqualTo(new NoteSyncMetricInfo(added: 0, deleted: 0, updated: 0, removed: 0))
+            );
             Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 1, updated: 0)));
             Assert.That(syncMetrics.Questions, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 2, updated: 0)));
             syncMetrics = env.GetSyncMetrics("project02");
             Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 1, updated: 1)));
             Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 2, updated: 0)));
+            Assert.That(
+                syncMetrics.Notes,
+                Is.EqualTo(new NoteSyncMetricInfo(added: 0, deleted: 0, updated: 0, removed: 0))
+            );
             Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
             Assert.That(syncMetrics.Questions, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 2, updated: 0)));
         }
@@ -593,7 +601,7 @@ namespace SIL.XForge.Scripture.Services
                 .RemoveUserWithoutPermissionsCheckAsync("user01", "project01", "user02");
 
             // Verify the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Users, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 1, updated: 0)));
         }
 
@@ -718,7 +726,7 @@ namespace SIL.XForge.Scripture.Services
                 .PutBookText(default, default, default, default, default);
 
             // Check that the failure was logged in the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Failed));
         }
 
@@ -747,7 +755,7 @@ namespace SIL.XForge.Scripture.Services
             await env.SFProjectService.DidNotReceiveWithAnyArgs().RemoveUserAsync("user01", "project01", "user02");
 
             // Verify the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Users, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
         }
 
@@ -834,7 +842,7 @@ namespace SIL.XForge.Scripture.Services
             env.VerifyProjectSync(true);
 
             // Verify the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
             syncMetrics = env.GetSyncMetrics("project02");
             Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
@@ -869,7 +877,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.GetText("project02", "MAT", 2).DeepEquals(chapterContent), Is.True);
 
             // Verify the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
             syncMetrics = env.GetSyncMetrics("project02");
             Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 0, updated: 0)));
@@ -912,7 +920,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("project02", "MAT", 3), Is.True);
 
             // Verify the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 1, updated: 0)));
             syncMetrics = env.GetSyncMetrics("project02");
             Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 1, updated: 0)));
@@ -943,7 +951,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("project02", "MAT", 2), Is.False);
 
             // Verify the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
             syncMetrics = env.GetSyncMetrics("project02");
             Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
@@ -985,7 +993,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("project02", "MAT", 3), Is.False);
 
             // Verify the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 2, updated: 1)));
             syncMetrics = env.GetSyncMetrics("project02");
             Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 2, updated: 1)));
@@ -1150,7 +1158,7 @@ namespace SIL.XForge.Scripture.Services
             env.MockLogger.AssertHasEvent((LogEvent logEvent) => logEvent.Exception != null);
 
             // Check that the exception was logged in the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Failed));
             StringAssert.StartsWith("System.ArgumentException", syncMetrics.ErrorDetails);
 
@@ -1185,7 +1193,7 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             // Check that the failure was logged in the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Failed));
             Assert.That(syncMetrics.RepositoryRestoredFromBackup, Is.True);
 
@@ -1234,7 +1242,7 @@ namespace SIL.XForge.Scripture.Services
             );
 
             // Check that the cancellation was logged in the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Cancelled));
 
             // Check that the task cancelled correctly
@@ -1268,7 +1276,7 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project01", "user01", "project01", false, cancellationTokenSource.Token);
 
             // Check that the cancellation was logged in the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Cancelled));
 
             // Check that the task cancelled correctly
@@ -1302,7 +1310,7 @@ namespace SIL.XForge.Scripture.Services
             SFProject project = env.VerifyProjectSync(false);
 
             // Check that the cancellation was logged in the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Cancelled));
 
             // Data is out of sync due to the failed restore
@@ -1325,7 +1333,7 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project01", "user01", "project01", false, cancellationTokenSource.Token);
 
             // Check that the cancellation was logged in the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Cancelled));
 
             // Check that the task was cancelled after awaiting the check above
@@ -1378,7 +1386,7 @@ namespace SIL.XForge.Scripture.Services
             env.Connection.Received(1).RollbackTransaction();
 
             // Check that the cancellation was logged in the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Cancelled));
         }
 
@@ -1708,8 +1716,12 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
 
             // Verify the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
+            Assert.That(
+                syncMetrics.Notes,
+                Is.EqualTo(new NoteSyncMetricInfo(added: 1, deleted: 1, updated: 1, removed: 0))
+            );
             Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 1)));
         }
 
@@ -1742,9 +1754,13 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(thread01.Notes.Single(n => n.Reattached != null).Reattached, Is.EqualTo(reattached));
 
             // Verify the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
-            Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 1)));
+            Assert.That(
+                syncMetrics.Notes,
+                Is.EqualTo(new NoteSyncMetricInfo(added: 1, deleted: 0, updated: 0, removed: 0))
+            );
+            Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
         }
 
         [Test]
@@ -1780,8 +1796,12 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
 
             // Verify the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
+            Assert.That(
+                syncMetrics.Notes,
+                Is.EqualTo(new NoteSyncMetricInfo(added: 0, deleted: 0, updated: 0, removed: 0))
+            );
             Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
         }
 
@@ -1823,19 +1843,33 @@ namespace SIL.XForge.Scripture.Services
             SFProject project = env.GetProject();
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
 
+            // Verify the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
+            Assert.That(
+                syncMetrics.Notes,
+                Is.EqualTo(new NoteSyncMetricInfo(added: 0, deleted: 0, updated: 0, removed: 1))
+            );
+            Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
+
             // Remove the entire thread
             env.SetupNoteRemovedChange(threadId, null);
+
             // SUT 2
-            await env.Runner.RunAsync(sfProjectId, "user01", sfProjectId, false, CancellationToken.None);
+            await env.Runner.RunAsync(sfProjectId, "user01", "project01_alt", false, CancellationToken.None);
 
             Assert.That(env.ContainsNoteThread(sfProjectId, threadId), Is.False);
             project = env.GetProject();
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
 
             // Verify the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            syncMetrics = env.GetSyncMetrics("project01_alt");
             Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
-            Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 2)));
+            Assert.That(
+                syncMetrics.Notes,
+                Is.EqualTo(new NoteSyncMetricInfo(added: 0, deleted: 0, updated: 0, removed: 0))
+            );
+            Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 1, updated: 0)));
         }
 
         [Test]
@@ -1863,8 +1897,12 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(thread02.Status, Is.EqualTo(NoteStatus.Resolved.InternalValue));
 
             // Verify the sync metrics
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
+            Assert.That(
+                syncMetrics.Notes,
+                Is.EqualTo(new NoteSyncMetricInfo(added: 0, deleted: 0, updated: 0, removed: 0))
+            );
             Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 0, updated: 1)));
 
             // Change status back to false - happens if the note becomes unresolved again in Paratext
@@ -1878,6 +1916,10 @@ namespace SIL.XForge.Scripture.Services
             // Verify the sync metrics
             syncMetrics = env.GetSyncMetrics("project01_alt");
             Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
+            Assert.That(
+                syncMetrics.Notes,
+                Is.EqualTo(new NoteSyncMetricInfo(added: 0, deleted: 0, updated: 0, removed: 0))
+            );
             Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 1)));
         }
 
@@ -1909,9 +1951,13 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(note.NoteToString(), Is.EqualTo(origNoteData), "Note data should not have been changed");
 
             // Verify the sync metrics - the note data will be updated, even though it is not changed
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
-            Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 1)));
+            Assert.That(
+                syncMetrics.Notes,
+                Is.EqualTo(new NoteSyncMetricInfo(added: 0, deleted: 0, updated: 0, removed: 0))
+            );
+            Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
         }
 
         [Test]
@@ -1987,7 +2033,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("project01", "MRK", 2), Is.False);
 
             // Check that the resource users metrics have been updated
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.ResourceUsers, Is.EqualTo(new SyncMetricInfo(2, 0, 0)));
         }
 
@@ -2042,7 +2088,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.Sync.DataInSync, Is.True);
 
             // Check that the date started and date finished are set
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.DateStarted, Is.Not.Null);
             Assert.That(syncMetrics.DateFinished, Is.Not.Null);
         }
@@ -2058,8 +2104,7 @@ namespace SIL.XForge.Scripture.Services
             SFProject project = env.VerifyProjectSync(false);
             Assert.That(project.Sync.DataInSync, Is.True);
 
-            // Check that the date started and date finished are set
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.Log.Count, Is.Not.Zero);
         }
 
@@ -2082,7 +2127,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.Sync.DataInSync, Is.True);
 
             // Check that the metrics were updated
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.RepositoryBackupCreated, Is.True);
         }
 
@@ -2103,7 +2148,7 @@ namespace SIL.XForge.Scripture.Services
             env.VerifyProjectSync(true);
 
             // Check that as PutNotes was run twice, the metrics will be multiplied by two
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.ParatextNotes, Is.EqualTo(syncMetricInfo + syncMetricInfo));
         }
 
@@ -2142,7 +2187,7 @@ namespace SIL.XForge.Scripture.Services
             env.VerifyProjectSync(true);
 
             // Check that as PutBookText was run twice, the metrics will be that two books are added
-            var syncMetrics = env.GetSyncMetrics("project01");
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
             Assert.That(syncMetrics.ParatextBooks, Is.EqualTo(new SyncMetricInfo(0, 0, 2)));
         }
 
@@ -2373,7 +2418,7 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(project.Sync.SyncedToRepositoryVersion, Is.EqualTo(syncedToRepositoryVersion));
 
                 // Check for the correct system metrics status
-                var syncMetrics = GetSyncMetrics(projectSFId);
+                SyncMetrics syncMetrics = GetSyncMetrics(projectSFId);
                 if (lastSyncSuccess)
                 {
                     Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
