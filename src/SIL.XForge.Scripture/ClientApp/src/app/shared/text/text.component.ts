@@ -17,24 +17,30 @@ import QuillCursors from 'quill-cursors';
 import { AuthType, getAuthType } from 'realtime-server/lib/esm/common/models/user';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
-import { fromEvent, Subscription } from 'rxjs';
-import { LocalPresence } from 'sharedb/lib/sharedb';
+import { fromEvent, Subject, Subscription, timer } from 'rxjs';
+import { LocalPresence, Presence } from 'sharedb/lib/sharedb';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
 import { getBrowserEngine } from 'xforge-common/utils';
 import { DialogService } from 'xforge-common/dialog.service';
-import { Delta, TextDocId } from '../../core/models/text-doc';
+import { objectId } from 'xforge-common/utils';
+import tinyColor from 'tinycolor2';
+import { takeUntil } from 'rxjs/operators';
+import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { attributeFromMouseEvent, VERSE_REGEX } from '../utils';
+import { MultiCursorViewer } from '../../translate/editor/multi-viewer/multi-viewer.component';
 import { registerScripture } from './quill-scripture';
 import { Segment } from './segment';
-import { EditorRange, PresenceData, RemotePresences, TextViewModel } from './text-view-model';
+import { EditorRange, TextViewModel } from './text-view-model';
 import { TextNoteDialogComponent, NoteDialogData } from './text-note-dialog/text-note-dialog.component';
 
 const EDITORS = new Set<Quill>();
+// When a user is active in the editor a timer starts to mark them as inactive for remote presences
+export const PRESENCE_EDITOR_ACTIVE_TIMEOUT = 3500;
 
 function onNativeSelectionChanged(): void {
   // workaround for bug where Quill allows a selection inside of an embed
@@ -80,6 +86,14 @@ export interface FeaturedVerseRefInfo {
   highlight?: boolean;
 }
 
+export interface PresenceData {
+  viewer: MultiCursorViewer;
+}
+
+export interface RemotePresences {
+  [id: string]: PresenceData;
+}
+
 /** A verse's range and the embeds located within the range. */
 export interface EmbedsByVerse {
   verseRange: RangeStatic;
@@ -93,6 +107,7 @@ export interface EmbedsByVerse {
 })
 export class TextComponent extends SubscriptionDisposable implements AfterViewInit, OnDestroy {
   @ViewChild('quillEditor', { static: true, read: ElementRef }) quill!: ElementRef;
+  @Input() enablePresence: boolean = false;
   @Input() markInvalid: boolean = false;
   @Input() multiSegmentSelection = false;
   @Input() subscribeToUpdates = true;
@@ -106,10 +121,12 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   readonly allowedFormats: string[] = USX_FORMATS;
   // allow for different CSS based on the browser engine
   readonly browserEngine: string = getBrowserEngine();
+  readonly cursorColor: string;
 
   private clickSubs: Map<string, Subscription[]> = new Map<string, Subscription[]>();
   private _isReadOnly: boolean = true;
   private _editorStyles: any = { fontSize: '1rem' };
+  private activePresenceSubscription?: Subscription;
   private readonly DEFAULT_MODULES: any = {
     toolbar: false,
     keyboard: {
@@ -203,7 +220,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private _isRightToLeft: boolean = false;
   private _modules: any = this.DEFAULT_MODULES;
   private _editor?: Quill;
-  private viewModel = new TextViewModel(this.presenceChange);
+  private viewModel = new TextViewModel();
   private _segment?: Segment;
   private initialTextFetched: boolean = false;
   private initialSegmentRef?: string;
@@ -214,7 +231,17 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private highlightMarkerTop: number = 0;
   private highlightMarkerHeight: number = 0;
   private _placeholder?: string;
+  private readonly cursorColorStorageKey = 'cursor_color';
   private displayMessage: string = '';
+  private localPresenceChannel?: LocalPresence<PresenceData>;
+  private localPresenceDoc?: LocalPresence<RangeStatic | null>;
+  private readonly presenceId: string = objectId();
+  /** The ShareDB presence information for the TextDoc that the quill is bound to. */
+  private presenceDoc?: Presence<RangeStatic>;
+  private presenceChannel?: Presence<PresenceData>;
+  private presenceActiveEditor$: Subject<boolean> = new Subject<boolean>();
+  private onPresenceDocReceive = (_presenceId: string, _range: RangeStatic | null) => {};
+  private onPresenceChannelReceive = (_presenceId: string, _presenceData: PresenceData | null) => {};
 
   constructor(
     private readonly changeDetector: ChangeDetectorRef,
@@ -225,11 +252,17 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     private readonly userService: UserService
   ) {
     super();
+    let localCursorColor = localStorage.getItem(this.cursorColorStorageKey);
+    if (localCursorColor == null) {
+      // keep the cursor color from getting too close to white since the text is white
+      localCursorColor = tinyColor({ s: 0.7, l: 0.5, h: Math.random() * 360 }).toHexString();
+      localStorage.setItem(this.cursorColorStorageKey, localCursorColor);
+    }
+    this.cursorColor = localCursorColor;
   }
 
   @Input() set isReadOnly(value: boolean) {
     this._isReadOnly = value;
-    this.viewModel.enablePresenceReceive = this.isPresenceEnabled;
   }
 
   get areOpsCorrupted(): boolean {
@@ -368,12 +401,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return this.viewModel.embeddedElements;
   }
 
-  get localPresence(): LocalPresence<PresenceData> | undefined {
-    return this.viewModel.localPresence;
-  }
-
   private get isPresenceEnabled(): boolean {
-    return !this._isReadOnly && this.pwaService.isOnline;
+    return this.enablePresence;
   }
 
   private get contentShowing(): boolean {
@@ -388,7 +417,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         const cursors: QuillCursors = this._editor.getModule('cursors');
         cursors.clearCursors();
       }
-      this.viewModel.enablePresenceReceive = this.isPresenceEnabled;
     });
   }
 
@@ -399,6 +427,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
     if (this._editor != null) {
       EDITORS.delete(this._editor);
+    }
+    this.dismissPresences();
+    if (this.activePresenceSubscription != null) {
+      this.activePresenceSubscription.unsubscribe();
     }
   }
 
@@ -617,37 +649,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
   }
 
-  async onSelectionChanged(range: RangeStatic | null, source: string): Promise<void> {
+  async onSelectionChanged(range: RangeStatic | null): Promise<void> {
     this.update();
 
-    // We only need to send presence updates if the user moves the cursor themselves. Cursor updates as a result of text
-    // changes will automatically be handled by the remote client.
-    if ((source as Sources) !== 'user') return;
-    // Clear the cursor on blurring.
-    if (range == null) {
-      this.viewModel.localPresence?.submit(null as unknown as PresenceData);
-      return;
-    }
-    if (!this.isPresenceEnabled) return;
-
-    // In this particular instance, we can send extra information on the presence object. This ability will vary
-    // depending on type.
-    const currentUserDoc: UserDoc = await this.userService.getCurrentUser();
-    // If the avatar src is empty ('') then it generates one with the same background and cursor color
-    // Do this for email/password accounts
-    const authType: AuthType = getAuthType(currentUserDoc.data?.authId ?? '');
-    const avatarUrl: string = authType === AuthType.Account ? '' : currentUserDoc.data?.avatarUrl ?? '';
-    const presenceData: PresenceData = {
-      viewer: {
-        displayName: currentUserDoc.data?.displayName || this.transloco.translate('editor.anonymous'),
-        avatarUrl,
-        cursorColor: this.viewModel.cursorColor
-      },
-      range
-    };
-    this.viewModel.localPresence?.submit(presenceData, error => {
-      if (error) throw error;
-    });
+    this.submitLocalPresenceDoc(range);
   }
 
   clearHighlight(): void {
@@ -738,8 +743,54 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
   }
 
+  private attachPresences(textDoc: TextDoc): void {
+    if (!this.isPresenceEnabled || this.editor == null) {
+      return;
+    }
+    const cursors: QuillCursors = this.editor.getModule('cursors');
+
+    // Subscribe to TextDoc specific presence changes - these only include RangeStatic updates from ShareDB
+    this.presenceDoc = textDoc.docPresence;
+    this.presenceDoc.subscribe(error => {
+      if (error) throw error;
+    });
+    this.localPresenceDoc = this.presenceDoc.create(this.presenceId);
+
+    this.onPresenceDocReceive = (presenceId: string, range: RangeStatic | null) => {
+      if (range == null) {
+        cursors.removeCursor(presenceId);
+        return;
+      }
+      const viewer: MultiCursorViewer | undefined = this.getPresenceViewer(presenceId);
+      if (viewer == null) {
+        return;
+      }
+      cursors.createCursor(presenceId, viewer.displayName, viewer.cursorColor);
+      cursors.moveCursor(presenceId, range);
+    };
+    this.presenceDoc.on('receive', this.onPresenceDocReceive);
+
+    // Subscribe to a generic channel for the TextDoc to keep track of who is viewing the document
+    // This includes those who may not have focus on the Quill editor
+    this.presenceChannel = textDoc.channelPresence;
+    this.presenceChannel.subscribe(error => {
+      if (error) throw error;
+    });
+    this.localPresenceChannel = this.presenceChannel.create(this.presenceId);
+
+    this.onPresenceChannelReceive = (presenceId: string, presenceData: PresenceData | null) => {
+      if (presenceData != null) {
+        cursors.toggleFlag(presenceId, presenceData.viewer.activeInEditor);
+      }
+      this.presenceChange?.emit(this.presenceChannel?.remotePresences);
+    };
+    this.presenceChannel.on('receive', this.onPresenceChannelReceive);
+    this.submitLocalPresenceChannel(false);
+  }
+
   private async bindQuill(): Promise<void> {
     this.viewModel.unbind();
+    await this.dismissPresences();
     if (this._id == null) {
       return;
     }
@@ -751,6 +802,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     const textDoc = await this.projectService.getText(this._id);
     this.viewModel.bind(textDoc, this.subscribeToUpdates);
     this.updatePlaceholderText();
+    this.attachPresences(textDoc);
 
     this.loaded.emit();
     this.applyEditorStyles();
@@ -777,6 +829,43 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         )
       );
     }
+  }
+
+  private async dismissPresences(): Promise<void> {
+    if (!this.isPresenceEnabled) {
+      return;
+    }
+    await this.submitLocalPresenceChannel(null);
+    await this.submitLocalPresenceDoc(null);
+    if (this.editor != null) {
+      const cursors: QuillCursors = this.editor.getModule('cursors');
+      cursors.clearCursors();
+    }
+    this.presenceChannel?.unsubscribe(error => {
+      if (error) throw error;
+    });
+    this.presenceChannel?.off('receive', this.onPresenceChannelReceive);
+    this.presenceChannel = undefined;
+
+    this.presenceDoc?.unsubscribe(error => {
+      if (error) throw error;
+    });
+    this.presenceDoc?.off('receive', this.onPresenceDocReceive);
+    this.presenceDoc = undefined;
+    const noRemotePresences: RemotePresences = {};
+    this.presenceChange?.emit(noRemotePresences);
+  }
+
+  private getPresenceViewer(presenceId: string): MultiCursorViewer | undefined {
+    if (this.presenceChannel?.remotePresences != null) {
+      const viewer = Object.entries(this.presenceChannel.remotePresences)
+        .filter(remotePresence => remotePresence[0] === presenceId)
+        .map(remotePresence => remotePresence[1].viewer);
+      if (viewer.length > 0) {
+        return viewer[0];
+      }
+    }
+    return;
   }
 
   private isSelectionAtSegmentPosition(end: boolean): boolean {
@@ -858,6 +947,54 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
   }
 
+  private async submitLocalPresenceChannel(active: boolean | null): Promise<void> {
+    if (!this.isPresenceEnabled || this.localPresenceChannel == null || !this.pwaService.isOnline) {
+      return;
+    }
+
+    let presenceData: PresenceData = null as unknown as PresenceData;
+    if (active != null) {
+      // In this particular instance, we can send extra information on the presence object. This ability will vary
+      // depending on type.
+      const currentUserDoc: UserDoc = await this.userService.getCurrentUser();
+      // If the avatar src is empty ('') then it generates one with the same background and cursor color
+      // Do this for email/password accounts
+      const authType: AuthType = getAuthType(currentUserDoc.data?.authId ?? '');
+      const avatarUrl: string = authType === AuthType.Unknown ? '' : currentUserDoc.data?.avatarUrl ?? '';
+      presenceData = {
+        viewer: {
+          displayName: currentUserDoc.data?.displayName || this.transloco.translate('editor.anonymous'),
+          avatarUrl,
+          cursorColor: this.cursorColor,
+          activeInEditor: active
+        }
+      };
+      this.presenceActiveEditor$.next(active);
+      if (active) {
+        if (this.activePresenceSubscription != null) {
+          this.activePresenceSubscription.unsubscribe();
+        }
+        this.activePresenceSubscription = timer(PRESENCE_EDITOR_ACTIVE_TIMEOUT)
+          .pipe(takeUntil(this.presenceActiveEditor$))
+          .subscribe(() => {
+            this.submitLocalPresenceChannel(false);
+          });
+      }
+    }
+    this.localPresenceChannel.submit(presenceData, error => {
+      if (error) throw error;
+    });
+  }
+
+  private async submitLocalPresenceDoc(range: RangeStatic | null): Promise<void> {
+    if (!this.isPresenceEnabled || this.localPresenceDoc == null || this._isReadOnly || !this.pwaService.isOnline)
+      return;
+
+    this.localPresenceDoc.submit(range, error => {
+      if (error) throw error;
+    });
+  }
+
   private update(
     delta?: DeltaStatic,
     preDeltaSegmentCache?: IterableIterator<[string, RangeStatic]>,
@@ -929,6 +1066,9 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       affectedEmbeds,
       isLocalUpdate: isUserEdit
     });
+    if (isUserEdit) {
+      this.submitLocalPresenceChannel(true);
+    }
   }
 
   private tryChangeSegment(

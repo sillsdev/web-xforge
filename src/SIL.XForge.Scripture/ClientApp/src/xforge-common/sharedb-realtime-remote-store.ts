@@ -129,6 +129,10 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
     return this.doc.collection;
   }
 
+  get channelPresence(): Presence {
+    return this.doc.connection.getPresence(`${this.collection}:${this.id}`);
+  }
+
   get docPresence(): Presence {
     return this.doc.connection.getDocPresence(this.collection, this.id);
   }

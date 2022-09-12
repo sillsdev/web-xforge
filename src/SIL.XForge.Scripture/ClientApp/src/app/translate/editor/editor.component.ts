@@ -51,8 +51,13 @@ import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { Segment } from '../../shared/text/segment';
-import { PresenceData, RemotePresences } from '../../shared/text/text-view-model';
-import { EmbedsByVerse, FeaturedVerseRefInfo, TextComponent } from '../../shared/text/text.component';
+import {
+  EmbedsByVerse,
+  FeaturedVerseRefInfo,
+  TextComponent,
+  PresenceData,
+  RemotePresences
+} from '../../shared/text/text.component';
 import { formatFontSizeToRems, threadIdFromMouseEvent } from '../../shared/utils';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData } from './note-dialog/note-dialog.component';
