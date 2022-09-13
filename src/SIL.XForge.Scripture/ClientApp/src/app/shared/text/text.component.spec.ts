@@ -25,6 +25,7 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { LocalPresence } from 'sharedb/lib/sharedb';
+import { CaretPosition } from '../../../utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
@@ -594,7 +595,7 @@ describe('TextComponent', () => {
       // Override the Firefox point-to-index method behaviour to simulate actually pointing to a location
       // when dropping.
       const offsetNode: Node = targetElement!.childNodes[0] as Node;
-      document.caretPositionFromPoint = (_x: number, _y: number) =>
+      document['caretPositionFromPoint'] = (_x: number, _y: number) =>
         ({ offset: desiredIndexInSegment, offsetNode } as CaretPosition);
       // Remove the Chromium point-to-index method so the Firefox one will be used (in our Chromium test runner).
       (document as any).caretRangeFromPoint = undefined;
@@ -657,7 +658,7 @@ describe('TextComponent', () => {
       // Override the Firefox point-to-index method behaviour to simulate actually pointing to a location
       // when dropping.
       const offsetNode: Node = targetElement!.childNodes[2] as Node;
-      document.caretPositionFromPoint = (_x: number, _y: number) =>
+      document['caretPositionFromPoint'] = (_x: number, _y: number) =>
         ({ offset: textNodeIndex, offsetNode } as CaretPosition);
       // Remove the Chromium point-to-index method so the Firefox one will be used (in our Chromium test runner).
       (document as any).caretRangeFromPoint = undefined;
@@ -2332,7 +2333,7 @@ describe('TextComponent', () => {
     it('skips problem: Firefox unexpectedly gives a null insertion position.', fakeAsync(() => {
       mockedConsole.expectAndHideOnly(/null caret position for insertion/);
       skipProblemTest((_env: TestEnvironment, _dropEvent: MockDragEvent) => {
-        document.caretPositionFromPoint = (_x: number, _y: number) => null;
+        document['caretPositionFromPoint'] = (_x: number, _y: number) => null;
         // Remove the Chromium point-to-index method so the Firefox one will be used (in our Chromium test runner).
         (document as any).caretRangeFromPoint = undefined;
       });
