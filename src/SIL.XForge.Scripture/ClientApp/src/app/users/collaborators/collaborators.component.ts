@@ -8,6 +8,7 @@ import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scri
 import { hasParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -63,7 +64,8 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     private readonly userService: UserService,
     readonly i18n: I18nService,
     private readonly pwaService: PwaService,
-    private readonly changeDetector: ChangeDetectorRef
+    private readonly changeDetector: ChangeDetectorRef,
+    private readonly dialogService: DialogService
   ) {
     super(noticeService);
   }
@@ -191,8 +193,14 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     this.pageSize = event.pageSize;
   }
 
-  removeProjectUser(userId: string): void {
-    this.projectService.onlineRemoveUser(this.projectId, userId);
+  async removeProjectUserClicked(row: Row): Promise<void> {
+    const confirmed: boolean = await this.dialogService.confirm(
+      this.i18n.translate('collaborators.confirm_remove_user', { user: row.user.displayName }),
+      this.i18n.translate('collaborators.remove_user')
+    );
+    if (confirmed) {
+      this.projectService.onlineRemoveUser(this.projectId, row.id);
+    }
   }
 
   async uninviteProjectUser(emailToUninvite: string): Promise<void> {

@@ -10,6 +10,7 @@ import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { PageNotFoundComponent } from '../app/shared/page-not-found/page-not-found.component';
 import { AuthHttpInterceptor } from './auth-http-interceptor';
 import { AvatarComponent } from './avatar/avatar.component';
+import { GenericDialogComponent } from './generic-dialog/generic-dialog.component';
 import { I18nService, TranslationLoader } from './i18n.service';
 import { IndexeddbOfflineStore } from './indexeddb-offline-store';
 import { MessageDialogComponent } from './message-dialog/message-dialog.component';
@@ -25,6 +26,7 @@ import { WriteStatusComponent } from './write-status/write-status.component';
 
 const componentExports = [
   AvatarComponent,
+  GenericDialogComponent,
   MessageDialogComponent,
   SaProjectsComponent,
   SaDeleteDialogComponent,

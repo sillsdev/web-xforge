@@ -27,6 +27,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, emptyHammerLoader, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { paratextUsersFromRoles } from '../../shared/test-utils';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -45,6 +46,7 @@ const mockedUserService = mock(UserService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
+const mockedDialogService = mock(DialogService);
 
 describe('CollaboratorsComponent', () => {
   configureTestingModule(() => ({
@@ -66,6 +68,7 @@ describe('CollaboratorsComponent', () => {
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: PwaService, useMock: mockedPwaService },
+      { provide: DialogService, useMock: mockedDialogService },
       emptyHammerLoader
     ]
   }));
@@ -509,6 +512,7 @@ class TestEnvironment {
     this.isOnline = new BehaviorSubject<boolean>(hasConnection);
     when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
     when(mockedPwaService.isOnline).thenReturn(this.isOnline.value);
+    when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
     this.fixture = TestBed.createComponent(CollaboratorsComponent);
     this.component = this.fixture.componentInstance;
   }
