@@ -12,6 +12,7 @@ import { ExceptionHandlingService } from 'xforge-common/exception-handling-servi
 import { SupportedBrowsersDialogComponent } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
+import { FeatureFlagsDialogComponent } from 'xforge-common/feature-flags/feature-flags.component';
 import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -45,6 +46,7 @@ import { TextNoteDialogComponent } from './shared/text/text-note-dialog/text-not
     SupportedBrowsersDialogComponent,
     ErrorComponent,
     EditNameDialogComponent,
+    FeatureFlagsDialogComponent,
     ProjectSelectComponent,
     SyncProgressComponent,
     TextNoteDialogComponent

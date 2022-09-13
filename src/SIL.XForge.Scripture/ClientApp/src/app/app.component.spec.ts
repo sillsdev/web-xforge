@@ -223,7 +223,7 @@ describe('AppComponent', () => {
     expect(env.selectedProjectId).toEqual('project01');
     // SUT
     env.deleteProject('project01', false);
-    verify(mockedMdcDialog.open(ProjectDeletedDialogComponent)).once();
+    verify(mockedMdcDialog.open(ProjectDeletedDialogComponent, anything())).once();
     verify(mockedUserService.setCurrentProjectId(anything(), undefined)).once();
     env.confirmProjectDeletedDialog();
     // Get past setTimeout to navigation
@@ -252,7 +252,7 @@ describe('AppComponent', () => {
 
     expect(env.selectedProjectId).toEqual('project01');
     env.removesUserFromProject('project01');
-    verify(mockedMdcDialog.open(ProjectDeletedDialogComponent)).once();
+    verify(mockedMdcDialog.open(ProjectDeletedDialogComponent, anything())).once();
     env.confirmProjectDeletedDialog();
     // Get past setTimeout to navigation
     tick();
@@ -603,7 +603,9 @@ class TestEnvironment {
     }
     when(mockedFileService.notifyUserIfStorageQuotaBelow(anything())).thenResolve();
     when(mockedPwaService.hasUpdate).thenReturn(this.hasUpdate$);
-    when(mockedMdcDialog.open(ProjectDeletedDialogComponent)).thenReturn(instance(this.mockedProjectDeletedDialogRef));
+    when(mockedMdcDialog.open(ProjectDeletedDialogComponent, anything())).thenReturn(
+      instance(this.mockedProjectDeletedDialogRef)
+    );
     when(this.mockedProjectDeletedDialogRef.afterClosed()).thenReturn(this.projectDeletedDialogRefAfterClosed$);
 
     this.router = TestBed.inject(Router);
