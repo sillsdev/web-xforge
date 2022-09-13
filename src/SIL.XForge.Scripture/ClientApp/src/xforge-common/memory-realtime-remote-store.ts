@@ -12,10 +12,10 @@ import { RealtimeDocAdapter, RealtimeQueryAdapter, RealtimeRemoteStore } from '.
  * This is the memory-based implementation of the real-time remote store. It is useful for testing.
  */
 export class MemoryRealtimeRemoteStore extends RealtimeRemoteStore {
-  private getAccessToken?: () => string | undefined;
+  private getAccessToken?: () => Promise<string | undefined>;
   private readonly snapshots = new Map<string, Map<string, Snapshot>>();
 
-  async init(getAccessToken: () => string | undefined): Promise<void> {
+  async init(getAccessToken: () => Promise<string | undefined>): Promise<void> {
     this.getAccessToken = getAccessToken;
   }
 

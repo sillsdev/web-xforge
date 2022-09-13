@@ -24,20 +24,20 @@ types.register(RichText.type);
 export class SharedbRealtimeRemoteStore extends RealtimeRemoteStore {
   private ws?: ReconnectingWebSocket;
   private connection?: Connection;
-  private getAccessToken?: () => string | undefined;
+  private getAccessToken?: () => Promise<string | undefined>;
 
   constructor(private readonly locationService: LocationService, private readonly pwaService: PwaService) {
     super();
   }
 
-  async init(getAccessToken: () => string | undefined): Promise<void> {
+  async init(getAccessToken: () => Promise<string | undefined>): Promise<void> {
     if (this.connection != null) {
       return;
     }
     this.getAccessToken = getAccessToken;
     // Wait until we have a valid connection or error before proceeding so we know we're online/offline
     await new Promise<void>(resolve => {
-      this.ws = new ReconnectingWebSocket(() => this.getUrl(), undefined, { maxEnqueuedMessages: 0 });
+      this.ws = new ReconnectingWebSocket(async () => await this.getUrl(), undefined, { maxEnqueuedMessages: 0 });
       // When the web socket is open we have a valid connection
       this.ws.addEventListener('open', () => {
         this.pwaService.webSocketResponse = true;
@@ -67,7 +67,7 @@ export class SharedbRealtimeRemoteStore extends RealtimeRemoteStore {
     return new SharedbRealtimeQueryAdapter(this.connection, collection, parameters);
   }
 
-  private getUrl(): string {
+  private async getUrl(): Promise<string> {
     const protocol = this.locationService.protocol === 'https:' ? 'wss:' : 'ws:';
     let url = `${protocol}//${this.locationService.hostname}`;
     if (environment.realtimePort !== 0) {
@@ -75,7 +75,7 @@ export class SharedbRealtimeRemoteStore extends RealtimeRemoteStore {
     }
     url += environment.realtimeUrl;
     if (this.getAccessToken != null) {
-      const accessToken = this.getAccessToken();
+      const accessToken = await this.getAccessToken();
       if (accessToken != null) {
         url += '?access_token=' + accessToken;
       }

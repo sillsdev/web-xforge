@@ -39,11 +39,20 @@ export class PwaService extends SubscriptionDisposable {
       // we have a valid web socket connection OR
       //    the web socket hasn't yet had a chance to connect i.e. (null) when the app first loads
       this.appOnlineStatus.next(this.windowOnLineStatus.getValue() && this.webSocketStatus.getValue() !== false);
+      // this.appOnlineStatus.next(this.windowOnLineStatus.getValue());
     });
+  }
+
+  get isBrowserOnline(): boolean {
+    return this.windowOnLineStatus.getValue();
   }
 
   get isOnline(): boolean {
     return this.appOnlineStatus.getValue();
+  }
+
+  get onlineBrowserStatus(): Observable<boolean> {
+    return this.windowOnLineStatus.asObservable();
   }
 
   get onlineStatus(): Observable<boolean> {

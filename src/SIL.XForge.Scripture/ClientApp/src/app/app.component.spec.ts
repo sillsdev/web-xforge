@@ -16,7 +16,7 @@ import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-proj
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { BehaviorSubject, of, Subject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
@@ -406,6 +406,19 @@ describe('AppComponent', () => {
     expect(env.lastSyncFailedBadgeIsPresent).toBeTrue();
   }));
 
+  it('checks online auth status when browser comes online but app is not fully online', fakeAsync(() => {
+    const env = new TestEnvironment('offline');
+    env.init();
+
+    expect(env.component.isAppOnline).toBe(false);
+    verify(mockedAuthService.checkOnlineAuth()).never();
+
+    env.setBrowserOnline();
+    tick();
+    expect(env.component.isAppOnline).toBe(false);
+    verify(mockedAuthService.checkOnlineAuth()).once();
+  }));
+
   describe('Community Checking', () => {
     it('no books showing in the menu', fakeAsync(() => {
       const env = new TestEnvironment();
@@ -529,6 +542,8 @@ class TestEnvironment {
   readonly mockedProjectDeletedDialogRef = mock<MdcDialogRef<ProjectDeletedDialogComponent>>(MdcDialogRef);
   readonly projectDeletedDialogRefAfterClosed$: Subject<string> = new Subject<string>();
   readonly comesOnline$: Subject<void> = new Subject<void>();
+  private browserOnline$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
+  private webSocketOnline$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
@@ -595,15 +610,16 @@ class TestEnvironment {
       this.comesOnline$.subscribe(() => resolve());
     });
 
+    when(mockedPwaService.isOnline).thenReturn(this.browserOnline$.getValue() && this.webSocketOnline$.getValue());
+    when(mockedPwaService.isBrowserOnline).thenReturn(this.browserOnline$.getValue());
+    when(mockedPwaService.online).thenReturn(comesOnline);
+    when(mockedPwaService.onlineStatus).thenReturn(this.webSocketOnline$);
+    when(mockedPwaService.onlineBrowserStatus).thenReturn(this.browserOnline$);
     if (initialConnectionStatus === 'offline') {
-      when(mockedPwaService.isOnline).thenReturn(false);
-      when(mockedPwaService.online).thenReturn(comesOnline);
-      when(mockedPwaService.onlineStatus).thenReturn(of(false));
+      this.goFullyOffline();
     } else {
-      when(mockedPwaService.isOnline).thenReturn(true);
-      when(mockedPwaService.online).thenReturn(comesOnline);
       this.comesOnline$.next();
-      when(mockedPwaService.onlineStatus).thenReturn(of(true));
+      this.goFullyOnline();
     }
     when(mockedFileService.notifyUserIfStorageQuotaBelow(anything())).thenResolve();
     when(mockedPwaService.hasUpdate).thenReturn(this.hasUpdate$);
@@ -740,6 +756,32 @@ class TestEnvironment {
     );
     questionDoc.submitJson0Op(ops => ops.set(q => q.isArchived, isArchived));
     this.wait();
+  }
+
+  goFullyOffline() {
+    this.setBrowserOffline();
+    this.setWebSocketOffline();
+  }
+
+  goFullyOnline() {
+    this.setBrowserOnline();
+    this.setWebSocketOnline();
+  }
+
+  setBrowserOffline() {
+    this.browserOnline$.next(false);
+  }
+
+  setBrowserOnline() {
+    this.browserOnline$.next(true);
+  }
+
+  setWebSocketOffline() {
+    this.webSocketOnline$.next(false);
+  }
+
+  setWebSocketOnline() {
+    this.webSocketOnline$.next(true);
   }
 
   init(): void {

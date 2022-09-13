@@ -158,7 +158,7 @@ export class AuthService {
    * Ensure renewal timer is initiated so tokens can be refreshed when expired
    */
   async checkOnlineAuth(): Promise<void> {
-    if ((await this.isLoggedIn) && this.pwaService.isOnline) {
+    if ((await this.isLoggedIn) && this.pwaService.isBrowserOnline) {
       this.scheduleRenewal();
     }
   }
@@ -168,6 +168,9 @@ export class AuthService {
   }
 
   async getAccessToken(): Promise<string | undefined> {
+    if (!this.pwaService.isBrowserOnline) {
+      return undefined;
+    }
     try {
       return await this.auth0.getTokenSilently();
     } catch {
@@ -176,7 +179,7 @@ export class AuthService {
   }
 
   async isAuthenticated(): Promise<boolean> {
-    if ((await this.hasExpired()) && this.pwaService.isOnline) {
+    if ((await this.hasExpired()) && this.pwaService.isBrowserOnline) {
       await this.renewTokens();
       // If still expired then the user is logging in and we need to degrade nicely while that happens
       if (await this.hasExpired()) {
@@ -252,18 +255,23 @@ export class AuthService {
       if (
         this.idToken == null ||
         this.expiresAt == null ||
-        (this.pwaService.isOnline && (await this.hasExpired())) ||
+        (this.pwaService.isBrowserOnline && (await this.hasExpired())) ||
         this.isCallbackUrl()
       ) {
         return await this.tryOnlineLogIn();
       }
-      // We don't want to check for an access token unless we know it is likely to be there
-      // - When not logged in there can be a delay waiting on auth0
-      const accessToken = await this.getAccessToken();
-      if (accessToken == null) {
-        return await this.tryOnlineLogIn();
+      // When offline, avoid fetching a token from the Auth0 script as it will not return an expired access token
+      // and will instead try to fetch a new one
+      let accessToken: string | undefined;
+      if (this.pwaService.isBrowserOnline) {
+        // We don't want to check for an access token unless we know it is likely to be there
+        // - When not logged in there can be a delay waiting on auth0
+        accessToken = await this.getAccessToken();
+        if (accessToken == null) {
+          return await this.tryOnlineLogIn();
+        }
       }
-      await this.remoteStore.init(() => accessToken);
+      await this.remoteStore.init(() => this.getAccessToken());
       return { loggedIn: true, newlyLoggedIn: false };
     } catch (error) {
       await this.handleLoginError('tryLogIn', error);
@@ -283,7 +291,7 @@ export class AuthService {
             return { loggedIn: false, newlyLoggedIn: false };
           }
           await this.localLogIn(token.access_token, token.id_token, token.expires_in);
-          await this.remoteStore.init(() => token.access_token);
+          await this.remoteStore.init(() => this.getAccessToken());
           return { loggedIn: true, newlyLoggedIn: false };
         }
         // Handle the callback response from auth0
@@ -335,7 +343,7 @@ export class AuthService {
     } else {
       await this.localLogIn(authDetails.token.access_token, authDetails.token.id_token, authDetails.token.expires_in);
     }
-    await this.remoteStore.init(() => authDetails.token.access_token);
+    await this.remoteStore.init(() => this.getAccessToken());
     if (primaryId != null && secondaryId != null) {
       try {
         await this.commandService.onlineInvoke(USERS_URL, 'linkParatextAccount', { primaryId, secondaryId });
@@ -409,7 +417,7 @@ export class AuthService {
         const now = Date.now();
         return timer(Math.max(1, expAt - now));
       }),
-      filter(() => this.pwaService.isOnline)
+      filter(() => this.pwaService.isBrowserOnline)
     );
 
     this.refreshSubscription = expiresIn$.subscribe(async () => {
