@@ -758,7 +758,7 @@ class TestEnvironment {
 
   setOnline(isOnline: boolean = true): void {
     when(mockedPwaService.checkOnline()).thenResolve(isOnline);
-    when(mockedPwaService.isOnline).thenReturn(isOnline);
+    when(mockedPwaService.isBrowserOnline).thenReturn(isOnline);
   }
 
   setTimeoutResponse() {
