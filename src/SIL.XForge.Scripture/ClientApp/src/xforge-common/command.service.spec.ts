@@ -178,7 +178,7 @@ describe('CommandService', () => {
     tick();
 
     const request = env.httpMock.expectOne({ url: 'command-api/place1', method: 'POST' });
-    const errorResponse: ErrorEvent = new ErrorEvent('Network problem', { message: 'error message here' });
+    const errorResponse = new ProgressEvent('Network problem');
     request.error(errorResponse);
     tick();
     env.httpMock.verify();
