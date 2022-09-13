@@ -79,7 +79,7 @@
                 *ngIf="!userRow.inviteeStatus && !isCurrentUser(userRow)"
                 type="button"
                 [disabled]="!isAppOnline"
-                (click)="removeProjectUser(userRow.id)"
+                (click)="removeProjectUserClicked(userRow)"
                 title="{{ t('remove_from_project') }}"
               ></button>
 
