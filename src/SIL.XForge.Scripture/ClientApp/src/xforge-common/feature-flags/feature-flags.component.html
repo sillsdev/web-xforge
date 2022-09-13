@@ -1,0 +1,6 @@
+<h2 mat-dialog-title><mat-icon>science</mat-icon> Experimental feature flags</h2>
+<mat-dialog-content class="mat-typography">
+  <mat-checkbox *ngFor="let flag of featureFlags.featureFlags" [(ngModel)]="flag.enabled">
+    {{ flag.description }}
+  </mat-checkbox>
+</mat-dialog-content>

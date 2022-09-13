@@ -1,5 +1,5 @@
 import { MdcIconRegistry } from '@angular-mdc/web';
-import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
+import { MdcDialogRef } from '@angular-mdc/web/dialog';
 import { MdcSelect } from '@angular-mdc/web/select';
 import { MdcTopAppBar } from '@angular-mdc/web/top-app-bar';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
@@ -18,8 +18,11 @@ import { combineLatest, from, merge, Observable, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, switchMap, tap } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { FeatureFlagsDialogComponent } from 'xforge-common/feature-flags/feature-flags.component';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
@@ -62,6 +65,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   issueEmail: string = environment.issueEmail;
   isAppOnline: boolean = false;
   isExpanded: boolean = false;
+  versionNumberClickCount = 0;
   translateVisible: boolean = false;
   checkingVisible: boolean = false;
 
@@ -95,13 +99,14 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly settingsAuthGuard: SettingsAuthGuard,
     private readonly syncAuthGuard: SyncAuthGuard,
     private readonly usersAuthGuard: UsersAuthGuard,
-    private readonly dialog: MdcDialog,
+    private readonly dialogService: DialogService,
     private readonly fileService: FileService,
     private readonly reportingService: ErrorReportingService,
     readonly noticeService: NoticeService,
     readonly i18n: I18nService,
     readonly media: MediaObserver,
     readonly urls: ExternalUrlService,
+    readonly featureFlags: FeatureFlagService,
     private readonly pwaService: PwaService,
     iconRegistry: MdcIconRegistry,
     sanitizer: DomSanitizer
@@ -296,7 +301,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       const isBrowserSupported = supportedBrowser();
       this.reportingService.addMeta({ isBrowserSupported });
       if (isNewlyLoggedIn && !isBrowserSupported) {
-        this.dialog.open(SupportedBrowsersDialogComponent, { autoFocus: false, data: BrowserIssue.Upgrade });
+        this.dialogService.openMdcDialog(SupportedBrowsersDialogComponent, {
+          autoFocus: false,
+          data: BrowserIssue.Upgrade
+        });
       }
 
       const projectDocs$ = this.currentUserDoc.remoteChanges$.pipe(
@@ -528,6 +536,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.pwaService.activateUpdates();
   }
 
+  openFeatureFlagDialog() {
+    this.dialogService.openMatDialog(FeatureFlagsDialogComponent);
+  }
+
   get lastSyncFailed(): boolean {
     return this.selectedProjectDoc?.data?.sync.lastSyncSuccessful === false;
   }
@@ -590,7 +602,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   private async showProjectDeletedDialog(): Promise<void> {
     await this.userService.setCurrentProjectId(this.currentUserDoc!, undefined);
-    this.projectDeletedDialogRef = this.dialog.open(ProjectDeletedDialogComponent);
+    this.projectDeletedDialogRef = this.dialogService.openMdcDialog(ProjectDeletedDialogComponent);
     this.projectDeletedDialogRef.afterClosed().subscribe(() => this.navigateToStart());
   }
 

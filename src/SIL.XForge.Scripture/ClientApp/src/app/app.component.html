@@ -51,7 +51,7 @@
               id="helpMenuIcon"
               mdcTopAppBarActionItem
               title="{{ t('help') }}"
-              (click)="helpMenu.open = !helpMenu.open"
+              (click)="helpMenu.open = !helpMenu.open; versionNumberClickCount = 0"
               >help</mdc-icon
             >
             <mdc-menu #helpMenu anchorCorner="bottomStart" [anchorElement]="helpMenuAnchor">
@@ -68,8 +68,18 @@
                       </mdc-list-item-secondary>
                     </mdc-list-item-text>
                   </a>
+                  <ng-container *ngIf="versionNumberClickCount >= 10 || featureFlags.showFeatureFlags.enabled">
+                    <mdc-list-divider></mdc-list-divider>
+                    <mdc-list-item (click)="openFeatureFlagDialog()">Feature flags</mdc-list-item>
+                  </ng-container>
                   <mdc-list-divider></mdc-list-divider>
-                  <div mdcListGroupSubheader class="version">{{ t("product_version", { version: version }) }}</div>
+                  <div
+                    mdcListGroupSubheader
+                    class="version"
+                    (click)="versionNumberClickCount = versionNumberClickCount + 1"
+                  >
+                    {{ t("product_version", { version: version }) }}
+                  </div>
                 </mdc-list>
               </mdc-list-group>
             </mdc-menu>
