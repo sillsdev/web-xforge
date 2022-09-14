@@ -31,7 +31,6 @@ import { REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/model
 import { UserService } from 'xforge-common/user.service';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
-import { first } from 'rxjs/operators';
 import { fromVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
@@ -490,7 +489,7 @@ describe('NoteDialogComponent', () => {
     env = new TestEnvironment({ verseRef: VerseRef.parse('MAT 1:1') });
     expect(env.noteInputElement).toBeTruthy();
     env.submit();
-    expect(env.dialogResult).toEqual('close');
+    expect(env.dialogResult).toBeUndefined();
   }));
 });
 
@@ -700,7 +699,7 @@ class TestEnvironment {
   readonly component: NoteDialogComponent;
   readonly dialogRef: MatDialogRef<NoteDialogComponent>;
   readonly mockedNoteMdcDialogRef = mock(MatDialogRef);
-  dialogResult: NoteDialogResult | 'close' | undefined;
+  dialogResult?: NoteDialogResult;
 
   constructor({
     includeSnapshots = true,
@@ -765,8 +764,8 @@ class TestEnvironment {
     when(mockedUserService.currentUserId).thenReturn(currentUserId);
     this.dialogRef
       .afterClosed()
-      .pipe(first())
-      .subscribe(result => (this.dialogResult = result));
+      .toPromise()
+      .then(result => (this.dialogResult = result));
 
     this.fixture.detectChanges();
     tick();
