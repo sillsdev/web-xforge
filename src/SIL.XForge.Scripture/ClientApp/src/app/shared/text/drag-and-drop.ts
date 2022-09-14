@@ -184,8 +184,8 @@ export class DragAndDrop {
 
     let startPositionInTargetNode: number = 0;
     let nodeDroppedInto: Node | undefined;
-    // eslint-disable-next-line deprecation/deprecation
-    if (document.caretRangeFromPoint !== undefined) {
+    // Without as unknown, TS assumes this check cannot fail, and then in the else block gives document type never
+    if (hasFunctionProp(document as unknown, 'caretRangeFromPoint')) {
       // Chromium/Chrome, Edge, and Safari browsers
       // eslint-disable-next-line deprecation/deprecation
       const range: Range | null = document.caretRangeFromPoint(targetX, targetY);
@@ -195,7 +195,7 @@ export class DragAndDrop {
       }
       startPositionInTargetNode = range.startOffset;
       nodeDroppedInto = range.startContainer;
-    } else if (hasFunctionProp(document, 'caretPositionFromPoint') && document.caretPositionFromPoint !== undefined) {
+    } else if (hasFunctionProp(document, 'caretPositionFromPoint')) {
       // Firefox browser
       const range: CaretPosition | null = document.caretPositionFromPoint(targetX, targetY);
       if (range == null) {
