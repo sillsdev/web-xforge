@@ -145,8 +145,8 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.realtimeService.create<QuestionDoc>(QuestionDoc.COLLECTION, docId, question);
   }
 
-  async createNoteThread(id: string, noteThread: NoteThread): Promise<void> {
-    const docId: string = getNoteThreadDocId(id, noteThread.dataId);
+  async createNoteThread(projectId: string, noteThread: NoteThread): Promise<void> {
+    const docId: string = getNoteThreadDocId(projectId, noteThread.dataId);
     await this.realtimeService.create<NoteThreadDoc>(NoteThreadDoc.COLLECTION, docId, noteThread);
   }
 

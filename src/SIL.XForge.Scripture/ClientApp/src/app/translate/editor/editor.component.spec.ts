@@ -2362,7 +2362,7 @@ describe('EditorComponent', () => {
       const [, arg2] = capture(mockedMatDialog.open).last();
       const noteVerseRef: VerseRef = (arg2 as MatDialogConfig).data!.verseRef;
       expect(noteVerseRef.toString()).toEqual('MAT 1:1');
-      env.mockNoteDialogRef.close$.next('close');
+      env.mockNoteDialogRef.close();
       tick();
       env.fixture.detectChanges();
       verify(mockedSFProjectService.createNoteThread(anything(), anything())).never();
@@ -2392,7 +2392,9 @@ describe('EditorComponent', () => {
       const verseRef: VerseRefData = fromVerseRef(VerseRef.parse('Mat 1:4'));
       env.setSelectionAndInsertNote('verse_1_4');
 
-      env.mockNoteDialogRef.close$.next({ verseRef, note, position, selectedText });
+      env.mockNoteDialogRef.close({ verseRef, note, position, selectedText });
+      tick();
+      env.fixture.detectChanges();
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
       const [, config] = capture(mockedMatDialog.open).last();
       const noteVerseRef: VerseRef = (config as MatDialogConfig).data!.verseRef;
@@ -3459,19 +3461,19 @@ class TestEnvironment {
 }
 
 class MockNoteDialogRef {
-  close$ = new Subject<NoteDialogResult | 'close'>();
+  close$ = new Subject<NoteDialogResult | void>();
 
   constructor(element: Element) {
     // steal the focus to simulate a dialog stealing the focus
     element.appendChild(document.createElement('input')).focus();
   }
 
-  close() {
-    this.close$.next();
+  close(result?: NoteDialogResult) {
+    this.close$.next(result);
     this.close$.complete();
   }
 
-  afterClosed(): Observable<NoteDialogResult | 'close'> {
+  afterClosed(): Observable<NoteDialogResult | void> {
     return this.close$;
   }
 }

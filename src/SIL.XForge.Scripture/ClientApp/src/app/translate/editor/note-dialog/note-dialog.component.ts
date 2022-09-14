@@ -53,7 +53,7 @@ export class NoteDialogComponent implements OnInit {
   private paratextProjectUsers?: ParatextUserProfile[];
 
   constructor(
-    private readonly dialogRef: MatDialogRef<NoteDialogComponent, NoteDialogResult | 'close'>,
+    private readonly dialogRef: MatDialogRef<NoteDialogComponent, NoteDialogResult>,
     @Inject(MAT_DIALOG_DATA) private readonly data: NoteDialogData,
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
@@ -61,6 +61,7 @@ export class NoteDialogComponent implements OnInit {
   ) {}
 
   async ngOnInit(): Promise<void> {
+    // This can be refactored so the asynchronous calls are done in parallel
     if (this.threadId == null) {
       this.textDoc = await this.projectService.getText(this.textDocId);
     } else {
@@ -114,15 +115,9 @@ export class NoteDialogComponent implements OnInit {
     );
   }
 
-  get verseRef(): string {
-    if (this.threadDoc?.data == null) {
-      if (this.data.verseRef == null) {
-        return '';
-      }
-      return this.i18n.localizeReference(this.data.verseRef);
-    }
-    const verseRef = toVerseRef(this.threadDoc.data.verseRef);
-    return this.i18n.localizeReference(verseRef);
+  get verseRefDisplay(): string {
+    const verseRef: VerseRef | undefined = this.verseRef;
+    return verseRef == null ? '' : this.i18n.localizeReference(verseRef);
   }
 
   get noteContextText(): string {
@@ -185,18 +180,16 @@ export class NoteDialogComponent implements OnInit {
   private get textDocId(): string {
     return this.data.textDocId.toString();
   }
-  /*
-  private get textDocId(): string {
-    if (this.threadDoc?.data == null) {
-      return '';
-    }
-    const verseRef = toVerseRef(this.threadDoc.data.verseRef);
-    const textDocId = new TextDocId(this.projectId, verseRef.bookNum, verseRef.chapterNum);
-    return textDocId.toString();
-  }
-*/
+
   private get threadId(): string | undefined {
     return this.data.threadId;
+  }
+
+  private get verseRef(): VerseRef | undefined {
+    if (this.threadDoc?.data == null) {
+      return this.data.verseRef == null ? undefined : this.data.verseRef;
+    }
+    return toVerseRef(this.threadDoc.data.verseRef);
   }
 
   parseNote(content: string | undefined): string {
@@ -286,35 +279,31 @@ export class NoteDialogComponent implements OnInit {
   }
 
   submit(): void {
-    if (this.currentNote == null || this.currentNote.length === 0) {
-      this.dialogRef.close('close');
+    if (this.currentNote == null || this.currentNote.trim().length === 0) {
+      this.dialogRef.close();
       return;
     }
-    let verseRef: VerseRefData | undefined = this.threadDoc?.data?.verseRef;
-    if (verseRef == null && this.data.verseRef != null) {
-      verseRef = fromVerseRef(this.data.verseRef);
-    }
-    if (verseRef == null) {
-      return;
-    }
+    const verseRef: VerseRef | undefined = this.verseRef;
+    if (verseRef == null) return;
 
     const currentDate = new Date().toJSON();
     const note: Note = {
       dataId: objectId(),
+      // empty so that the editor component knows this is a new note
       threadId: '',
       ownerRef: this.userService.currentUserId,
       content: this.currentNote,
       dateCreated: currentDate,
       dateModified: currentDate,
       conflictType: NoteConflictType.DefaultValue,
-      extUserId: '',
+      extUserId: this.userService.currentUserId,
       type: NoteType.Normal,
       status: NoteStatus.Todo,
       deleted: false
     };
 
     const result: NoteDialogResult = {
-      verseRef: verseRef,
+      verseRef: fromVerseRef(verseRef),
       note,
       position: { start: 0, length: 0 },
       selectedText: this.segmentText

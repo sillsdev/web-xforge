@@ -776,8 +776,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.subscribeClickEvents(segments);
   }
 
-  private showNoteThread(threadId?: string, verseRef?: VerseRef): void {
+  private async showNoteThread(threadId?: string, verseRef?: VerseRef): Promise<void> {
     if (this.bookNum == null || this.chapter == null) {
+      return;
+    }
+    if (threadId == null && verseRef == null) {
+      // at least one must be defined
       return;
     }
     const noteDialogData: NoteDialogData = {
@@ -786,7 +790,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       textDocId: new TextDocId(this.projectDoc!.id, this.bookNum, this.chapter),
       verseRef
     };
-    const dialogRef = this.dialogService.openMatDialog<NoteDialogComponent, NoteDialogData, NoteDialogResult | 'close'>(
+    const dialogRef = this.dialogService.openMatDialog<NoteDialogComponent, NoteDialogData, NoteDialogResult>(
       NoteDialogComponent,
       {
         autoFocus: false,
@@ -795,18 +799,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         data: noteDialogData
       }
     );
-    dialogRef.afterClosed().subscribe(async result => {
-      if (result != null && result !== 'close') {
-        await this.handleNoteDialogResult(result);
-        this.toggleNoteThreadVerses(true);
-      }
-      // Ensure cursor selection remains at the position of the note in case the focus was lost when the dialog was open
-      const currentSegment: string | undefined = this.target!.currentSegmentOrDefault;
-      if (currentSegment != null) {
-        const selectIndex = this.target!.getSegmentRange(currentSegment)!.index;
-        this.target!.editor!.setSelection(selectIndex, 0, 'silent');
-      }
-    });
+    const result: NoteDialogResult | undefined = await dialogRef.afterClosed().toPromise();
+    if (result != null) {
+      await this.handleNoteDialogResult(result);
+      this.toggleNoteThreadVerses(true);
+    }
+    // Ensure cursor selection remains at the position of the note in case the focus was lost when the dialog was open
+    const currentSegment: string | undefined = this.target!.currentSegmentOrDefault;
+    if (currentSegment != null) {
+      const selectIndex = this.target!.getSegmentRange(currentSegment)!.index;
+      this.target!.editor!.setSelection(selectIndex, 0, 'silent');
+    }
   }
 
   private updateReadNotes(threadId: string) {
