@@ -74,9 +74,6 @@ h1 {
       align-self: center;
       opacity: 0.5;
     }
-    &:not(:last-child) > .edit-actions {
-      display: hidden;
-    }
   }
 }
 .full-width {

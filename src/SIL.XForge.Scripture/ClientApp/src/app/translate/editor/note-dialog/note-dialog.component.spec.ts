@@ -500,7 +500,7 @@ describe('NoteDialogComponent', () => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
     expect(env.noteInputElement).toBeTruthy();
     env.submit();
-    expect(env.dialogResult).toEqual('close');
+    expect(env.dialogResult).toBeUndefined();
   }));
 
   it('allows adding a note to an existing thread', fakeAsync(() => {
@@ -864,10 +864,9 @@ class TestEnvironment {
   }
 
   hasEditActions(noteNumber: number): boolean {
-    const noteElement: DebugElement = this.overlayContainerElement.query(
-      By.css('.notes .note:nth-child(' + noteNumber + ')')
+    return (
+      this.overlayContainerElement.query(By.css('.notes .note:nth-child(' + noteNumber + ') .edit-actions')) != null
     );
-    return noteElement.query(By.css('.edit-actions')) != null;
   }
 
   enterNoteContent(noteContent: string): void {

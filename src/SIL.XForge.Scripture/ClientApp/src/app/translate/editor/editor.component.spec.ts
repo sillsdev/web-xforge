@@ -2385,7 +2385,8 @@ describe('EditorComponent', () => {
 
       const emptyThreadId = '';
       const note: Note = env.getNoteTemplate(emptyThreadId);
-      env.mockNoteDialogRef.close$.next({ verseRef, note, position, selectedText });
+      env.mockNoteDialogRef.close({ verseRef, note, position, selectedText });
+      env.wait();
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
       const [, config] = capture(mockedMatDialog.open).last();
       const noteVerseRef: VerseRef = (config as MatDialogConfig).data!.verseRef;
@@ -3139,12 +3140,13 @@ class TestEnvironment {
     this.wait();
 
     note.content = content;
-    this.mockNoteDialogRef.close$.next({
+    this.mockNoteDialogRef.close({
       verseRef: thread.verseRef,
       note,
       position: thread.position,
       selectedText: thread.originalSelectedText
     });
+    this.wait();
     const noteDialogData: NoteDialogData = {
       verseRef: undefined,
       threadId: thread.dataId,

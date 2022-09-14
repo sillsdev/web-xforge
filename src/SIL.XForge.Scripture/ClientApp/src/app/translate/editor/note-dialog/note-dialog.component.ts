@@ -325,7 +325,7 @@ export class NoteDialogComponent implements OnInit {
     this.noteBeingEdited.content = this.currentNoteContent;
 
     const result: NoteDialogResult = {
-      verseRef: verseRef,
+      verseRef: fromVerseRef(verseRef),
       note: this.noteBeingEdited,
       position: { start: 0, length: 0 },
       selectedText: this.segmentText
