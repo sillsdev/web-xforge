@@ -574,8 +574,6 @@ describe('ScriptureChooserDialog', () => {
       element!.nativeElement.click();
       this.fixture.detectChanges();
       flush();
-      this.fixture.detectChanges();
-      flush();
     }
 
     buttonWithText(text: string): DebugElement {
