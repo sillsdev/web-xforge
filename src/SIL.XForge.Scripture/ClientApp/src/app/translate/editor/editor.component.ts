@@ -735,37 +735,32 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   /** Insert or remove note thread embeds into the quill editor. */
-  private toggleNoteThreadVerses(value: boolean): void {
+  private toggleNoteThreadVerses(toggleOn: boolean): void {
     if (this.target?.editor == null || this.noteThreadQuery == null || this.bookNum == null || this._chapter == null) {
       return;
     }
+    if (!toggleOn) {
+      this.removeEmbeddedElements();
+      return;
+    }
+
     const chapterNoteThreadDocs: NoteThreadDoc[] = this.currentChapterNoteThreadDocs();
-    const featureVerseRefInfo: FeaturedVerseRefInfo[] = [];
+    const noteThreadVerseRefs: Set<VerseRef> = new Set<VerseRef>();
     for (const noteThreadDoc of chapterNoteThreadDocs) {
       const featured: FeaturedVerseRefInfo | undefined = this.getFeaturedVerseRefInfo(noteThreadDoc);
-      if (featured != null) {
-        featureVerseRefInfo.push(featured);
+      if (featured != null && !this.target.embeddedElements.has(featured.id)) {
+        this.embedNoteThread(featured);
+        noteThreadVerseRefs.add(featured.verseRef);
       }
     }
 
-    const noteThreadVerseRefs: Set<VerseRef> = new Set<VerseRef>();
-    if (value) {
-      for (const featured of featureVerseRefInfo) {
-        if (!this.target.embeddedElements.has(featured.id)) {
-          this.embedNoteThread(featured);
-          noteThreadVerseRefs.add(featured.verseRef);
-        }
-      }
-      // add the formatting to mark featured verses after notes are embedded
-      const segments: string[] = this.target.toggleFeaturedVerseRefs(
-        value,
-        Array.from(noteThreadVerseRefs.values()),
-        'note-thread'
-      );
-      this.subscribeClickEvents(segments);
-    } else {
-      this.removeEmbeddedElements();
-    }
+    // add the formatting to mark featured verses after notes are embedded
+    const segments: string[] = this.target.toggleFeaturedVerseRefs(
+      toggleOn,
+      Array.from(noteThreadVerseRefs.values()),
+      'note-thread'
+    );
+    this.subscribeClickEvents(segments);
   }
 
   private showNoteThread(threadId: string): void {
