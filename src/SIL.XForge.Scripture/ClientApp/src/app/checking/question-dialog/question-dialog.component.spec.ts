@@ -274,7 +274,6 @@ describe('QuestionDialogComponent', () => {
     env.fixture.detectChanges();
     expect(env.component.scriptureEnd.enabled).toBe(true);
     expect(env.scriptureEndInputIcon.classList).not.toContain('mat-button-disabled');
-    console.log(env.scriptureEndInputIcon);
 
     env.clickElement(env.scriptureEndInputIcon);
     // Dialog receives unhelpful input value that can be ignored.
