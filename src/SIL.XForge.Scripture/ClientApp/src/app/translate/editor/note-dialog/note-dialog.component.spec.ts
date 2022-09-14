@@ -507,7 +507,7 @@ describe('NoteDialogComponent', () => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
     expect(env.noteInputElement).toBeTruthy();
     env.submit();
-    expect(env.dialogResult).toEqual('close');
+    expect(env.dialogResult).toBeUndefined();
   }));
 
   it('allows adding a note to an existing thread', fakeAsync(() => {
