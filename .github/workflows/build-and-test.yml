@@ -45,6 +45,8 @@ jobs:
           node --version
           which npm
           npm --version
+          which chromium-browser
+          chromium-browser --version
       - name: "Ensure desired tool versions"
         # The build machine may come with newer tools than we are ready for.
         run: |
@@ -54,7 +56,7 @@ jobs:
           [[ $(npm --version) == ${{matrix.npm_version}} ]]
 
       - name: "Deps: reportgenerator tool"
-        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+        run: dotnet tool install --global dotnet-reportgenerator-globaltool
       - name: "Deps: RealtimeServer npm"
         run: cd src/RealtimeServer && npm ci
       - name: "Deps: Backend nuget"
@@ -129,6 +131,8 @@ jobs:
           node --version
           which npm
           npm --version
+          which chromium-browser
+          chromium-browser --version
       - name: "Ensure desired tool versions"
         run: |
           set -xueo pipefail
