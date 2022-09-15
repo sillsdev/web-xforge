@@ -16,6 +16,7 @@ import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/mode
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -57,7 +58,8 @@ export class NoteDialogComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) private readonly data: NoteDialogData,
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private readonly featureFlags: FeatureFlagService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -143,6 +145,10 @@ export class NoteDialogComponent implements OnInit {
       return '';
     }
     return this.textDoc.getSegmentTextIncludingRelated(`verse_${verseRef.chapter}_${verseRef.verse}`);
+  }
+
+  get canCreateNote(): boolean {
+    return this.featureFlags.allowAddingNotes.enabled;
   }
 
   /** Is a note considered to be a conflict note? */

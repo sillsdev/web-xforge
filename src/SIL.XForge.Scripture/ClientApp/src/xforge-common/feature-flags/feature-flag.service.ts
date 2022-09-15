@@ -33,7 +33,7 @@ class LocalStorageFlagStore implements FeatureFlagStore {
   }
 }
 
-class FeatureFlag {
+export class FeatureFlag {
   constructor(private readonly storage: FeatureFlagStore, readonly description: string) {}
 
   get enabled(): boolean {
@@ -42,10 +42,6 @@ class FeatureFlag {
 
   set enabled(value: boolean) {
     this.storage.enabled = value;
-  }
-
-  get flagVisibleInUI(): boolean {
-    return this.description != null;
   }
 }
 

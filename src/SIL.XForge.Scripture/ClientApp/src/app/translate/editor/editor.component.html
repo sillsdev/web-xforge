@@ -27,6 +27,7 @@
             <mat-icon>settings</mat-icon>
           </button>
           <button
+            *ngIf="canInsertNote"
             mat-icon-button
             type="button"
             id="create-note-btn"
