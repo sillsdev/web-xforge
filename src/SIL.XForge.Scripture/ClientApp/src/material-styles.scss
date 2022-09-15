@@ -1,5 +1,5 @@
 @use '@angular/material' as mat;
-@use 'variables';
+@import 'variables';
 
 @include mat.core();
 
@@ -86,6 +86,6 @@ $material-app-theme: mat.define-light-theme(
 button.mat-icon-button {
   transition: color 0.15s;
   &:hover {
-    color: variables.$greenLight !important;
+    color: $greenLight !important;
   }
 }

@@ -32,6 +32,7 @@ import { UserService } from 'xforge-common/user.service';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { fromVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
@@ -46,6 +47,7 @@ const mockedCookieService = mock(CookieService);
 const mockedHttpClient = mock(HttpClient);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
+const mockedFeatureFlagService = mock(FeatureFlagService);
 
 describe('NoteDialogComponent', () => {
   configureTestingModule(() => ({
@@ -55,7 +57,8 @@ describe('NoteDialogComponent', () => {
       { provide: CookieService, useMock: mockedCookieService },
       { provide: HttpClient, useMock: mockedHttpClient },
       { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: UserService, useMock: mockedUserService }
+      { provide: UserService, useMock: mockedUserService },
+      { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
     ]
   }));
 
@@ -766,6 +769,8 @@ class TestEnvironment {
       .afterClosed()
       .toPromise()
       .then(result => (this.dialogResult = result));
+
+    when(mockedFeatureFlagService.allowAddingNotes).thenReturn({ enabled: true } as FeatureFlag);
 
     this.fixture.detectChanges();
     tick();
