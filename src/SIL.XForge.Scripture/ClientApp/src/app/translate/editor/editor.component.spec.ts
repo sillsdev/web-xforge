@@ -58,6 +58,7 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
+import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -84,6 +85,7 @@ const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
 const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedMatDialog = mock(MatDialog);
+const mockedFeatureFlagService = mock(FeatureFlagService);
 
 class MockConsole {
   log(val: any) {
@@ -119,7 +121,8 @@ describe('EditorComponent', () => {
       { provide: CookieService, useMock: mockedCookieService },
       { provide: PwaService, useMock: mockedPwaService },
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
-      { provide: MatDialog, useMock: mockedMatDialog }
+      { provide: MatDialog, useMock: mockedMatDialog },
+      { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
     ]
   }));
 
@@ -2827,6 +2830,7 @@ class TestEnvironment {
       return this.mockNoteDialogRef;
     });
     when(mockedMatDialog.closeAll()).thenCall(() => openNoteDialogs.forEach(dialog => dialog.close()));
+    when(mockedFeatureFlagService.allowAddingNotes).thenReturn({ enabled: true } as FeatureFlag);
   }
 
   get activeElementClasses(): DOMTokenList | undefined {

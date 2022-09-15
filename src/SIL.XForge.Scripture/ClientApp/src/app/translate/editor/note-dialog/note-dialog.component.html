@@ -36,7 +36,7 @@
         <app-owner [ownerRef]="note.ownerRef" [dateTime]="note.dateCreated"></app-owner>
       </div>
     </div>
-    <mat-form-field class="full-width" appearance="fill">
+    <mat-form-field class="full-width" appearance="fill" *ngIf="canCreateNote">
       <textarea matInput [(ngModel)]="currentNote"></textarea>
     </mat-form-field>
   </mat-dialog-content>
