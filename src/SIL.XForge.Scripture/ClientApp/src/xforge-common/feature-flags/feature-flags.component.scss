@@ -1,0 +1,12 @@
+.mat-dialog-title {
+  display: flex;
+  align-items: center;
+  column-gap: 0.5em;
+}
+
+.mat-dialog-content {
+  display: flex;
+  flex-direction: column;
+  row-gap: 0.5em;
+  padding-bottom: 1em;
+}

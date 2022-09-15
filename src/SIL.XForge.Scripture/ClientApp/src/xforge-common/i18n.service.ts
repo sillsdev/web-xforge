@@ -11,10 +11,10 @@ import { map } from 'rxjs/operators';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import enChecking from '../assets/i18n/checking_en.json';
 import enNonChecking from '../assets/i18n/non_checking_en.json';
-import { environment } from '../environments/environment';
 import { AuthService } from './auth.service';
 import { DOCUMENT } from './browser-globals';
 import { BugsnagService } from './bugsnag.service';
+import { FeatureFlagService } from './feature-flags/feature-flag.service';
 import { LocationService } from './location.service';
 import { Locale } from './models/i18n-locale';
 import { aspCultureCookieValue, ASP_CULTURE_COOKIE_NAME, getAspCultureCookieLanguage, getI18nLocales } from './utils';
@@ -66,10 +66,9 @@ export class I18nService {
   };
 
   static readonly defaultLocale = I18nService.getLocale('en')!;
-  static readonly availableLocales = I18nService.locales.filter(locale => locale.production || !environment.production);
 
   static readonly translocoConfig: TranslocoConfig = {
-    availableLangs: I18nService.availableLocales.map(locale => locale.canonicalTag),
+    availableLangs: I18nService.locales.map(locale => locale.canonicalTag),
     reRenderOnLangChange: true,
     fallbackLang: I18nService.defaultLocale.canonicalTag,
     defaultLang: I18nService.defaultLocale.canonicalTag,
@@ -95,6 +94,7 @@ export class I18nService {
     private readonly transloco: TranslocoService,
     private readonly cookieService: CookieService,
     private readonly reportingService: ErrorReportingService,
+    private readonly featureFlags: FeatureFlagService,
     @Inject(DOCUMENT) private readonly document: Document
   ) {
     // Note that if the user is already logged in, and the user has a different interface language specified in their
@@ -135,7 +135,9 @@ export class I18nService {
   }
 
   get locales() {
-    return I18nService.availableLocales;
+    return I18nService.locales.filter(
+      locale => locale.production || this.featureFlags.showNonPublishedLocalizations.enabled
+    );
   }
 
   setLocale(tag: string) {
