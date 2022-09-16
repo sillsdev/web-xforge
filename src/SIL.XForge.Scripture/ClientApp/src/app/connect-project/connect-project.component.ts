@@ -6,6 +6,7 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
+import { hasStringProp } from '../../type-utils';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectCreateSettings } from '../core/models/sf-project-create-settings';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
@@ -188,8 +189,8 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       let projectId: string = '';
       try {
         projectId = await this.projectService.onlineCreate(settings);
-      } catch (err) {
-        if (!err.message?.includes(ConnectProjectComponent.errorAlreadyConnectedKey)) {
+      } catch (err: unknown) {
+        if (!hasStringProp(err, 'message') || !err.message.includes(ConnectProjectComponent.errorAlreadyConnectedKey)) {
           throw err;
         }
 

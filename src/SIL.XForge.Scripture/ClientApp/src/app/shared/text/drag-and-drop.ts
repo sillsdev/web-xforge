@@ -1,5 +1,5 @@
 import Quill, { DeltaOperation, RangeStatic, StringMap } from 'quill';
-import { CaretPosition, hasFunctionProp } from '../../../utils';
+import { CaretPosition, hasFunctionProp } from '../../../type-utils';
 import { Delta } from '../../core/models/text-doc';
 import { getAttributesAtPosition } from './quill-scripture';
 import { TextComponent } from './text.component';
