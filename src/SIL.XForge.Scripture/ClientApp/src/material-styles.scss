@@ -1,4 +1,4 @@
-@use '~@angular/material' as mat;
+@use '@angular/material' as mat;
 @import 'variables';
 
 @include mat.core();
@@ -15,7 +15,9 @@ $mat-sf-purple: (
 );
 
 $mat-sf-grey: (
+  100: $greyLight,
   200: $greyLight,
+  700: $greyDark,
   800: $greyDark,
   contrast: (
     200: rgba(black, 0.87),
@@ -26,6 +28,7 @@ $mat-sf-grey: (
 $mat-sf-green: (
   200: #dcedc8,
   500: $greenLight,
+  700: $greenDark,
   800: $greenDark,
   contrast: (
     200: rgba(black, 0.87),

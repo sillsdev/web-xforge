@@ -1,7 +1,12 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { timer } from 'rxjs';
-import { takeWhile } from 'rxjs/operators';
+import { map, takeWhile } from 'rxjs/operators';
+
+// All times in milliseconds
+const redirectDelay = 10_000;
+const progressUpdateInterval = 100;
+const totalProgressUpdates = redirectDelay / progressUpdateInterval;
 
 @Component({
   selector: 'app-page-not-found',
@@ -9,10 +14,14 @@ import { takeWhile } from 'rxjs/operators';
   styleUrls: ['./page-not-found.component.scss']
 })
 export class PageNotFoundComponent {
-  // Timer fires every 100ms until 100 instances have occurred (10s)
-  progress = timer(0, 100).pipe(
-    takeWhile(val => (val <= 100 ? true : this.router.navigateByUrl('/projects') && false))
+  progress = timer(0, progressUpdateInterval).pipe(
+    takeWhile(val => val < totalProgressUpdates),
+    map(val => (val / totalProgressUpdates) * 100)
   );
 
-  constructor(readonly router: Router) {}
+  constructor(readonly router: Router) {
+    this.progress.toPromise().then(() => {
+      this.router.navigateByUrl('/projects');
+    });
+  }
 }

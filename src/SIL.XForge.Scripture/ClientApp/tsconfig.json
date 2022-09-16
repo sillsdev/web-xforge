@@ -20,6 +20,7 @@
     "esModuleInterop": true,
     "typeRoots": ["node_modules/@types"],
     "resolveJsonModule": true,
+    "useUnknownInCatchVariables": false,
     "paths": {
       "xforge-common/*": ["./src/xforge-common/*"]
     }

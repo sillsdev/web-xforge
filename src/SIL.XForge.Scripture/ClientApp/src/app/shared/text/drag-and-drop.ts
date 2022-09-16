@@ -1,4 +1,5 @@
 import Quill, { DeltaOperation, RangeStatic, StringMap } from 'quill';
+import { CaretPosition, hasFunctionProp } from '../../../utils';
 import { Delta } from '../../core/models/text-doc';
 import { getAttributesAtPosition } from './quill-scripture';
 import { TextComponent } from './text.component';
@@ -183,14 +184,18 @@ export class DragAndDrop {
 
     let startPositionInTargetNode: number = 0;
     let nodeDroppedInto: Node | undefined;
-    // eslint-disable-next-line deprecation/deprecation
-    if (document.caretRangeFromPoint !== undefined) {
+    // Without as unknown, TS assumes this check cannot fail, and then in the else block gives document type never
+    if (hasFunctionProp(document as unknown, 'caretRangeFromPoint')) {
       // Chromium/Chrome, Edge, and Safari browsers
       // eslint-disable-next-line deprecation/deprecation
-      const range: Range = document.caretRangeFromPoint(targetX, targetY);
+      const range: Range | null = document.caretRangeFromPoint(targetX, targetY);
+      if (range == null) {
+        console.warn('Warning: drag-and-drop inferred a null caret position for insertion');
+        return;
+      }
       startPositionInTargetNode = range.startOffset;
       nodeDroppedInto = range.startContainer;
-    } else if (document.caretPositionFromPoint !== undefined) {
+    } else if (hasFunctionProp(document, 'caretPositionFromPoint')) {
       // Firefox browser
       const range: CaretPosition | null = document.caretPositionFromPoint(targetX, targetY);
       if (range == null) {
