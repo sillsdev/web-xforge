@@ -385,48 +385,41 @@ usx-note {
     vertical-align: baseline;
   }
 
-  &[data-caller='+'] > span::before,
-  &[data-caller]:not([data-caller='+']):not([data-caller='-']) > span {
+  > span {
     background: #000;
     color: white;
-    border-radius: 50%;
-    width: 1.25em;
+    border-radius: 1em;
+    min-width: 1.25em;
     height: 1.25em;
     display: inline-block;
     line-height: 1.25em;
     text-align: center;
     cursor: pointer;
+    white-space: nowrap;
+    padding: 0 3px;
   }
-
-  &[data-caller='+'] {
-    &[data-style='f'] > span::before {
-      background: $blueMedium;
-      counter-increment: note;
-      content: counter(note, lower-alpha);
-    }
-    &[data-style='fe'] > span::before {
-      background: $purpleLight;
-      counter-increment: note;
-      content: counter(note, lower-alpha);
-    }
-    &[data-style='x'] > span::before {
-      background: $greenLight;
-      content: '†';
+  &[data-caller='-'][data-style] > span {
+    background: #cbcbcb;
+    &::before {
+      content: '*';
     }
   }
-
-  &[data-caller]:not([data-caller='-']):not([data-caller='+']) {
+  &[data-caller='+']:not([data-style='x']) > span::before {
+    counter-increment: note;
+    content: counter(note, lower-alpha);
+  }
+  &[data-style='f'] > span {
+    background: $blueMedium;
+  }
+  &[data-style='fe'] > span {
+    background: $purpleLight;
+  }
+  &[data-style='x'] {
     > span {
-      color: white !important;
-    }
-    &[data-style='f'] > span {
-      background: $blueMedium;
-    }
-    &[data-style='fe'] > span {
-      background: $purpleLight;
-    }
-    &[data-style='x'] > span {
       background: $greenLight;
+    }
+    &[data-caller='+'] > span::before {
+      content: '†';
     }
   }
 }
