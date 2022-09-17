@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, ViewChild } from '@angular/core';
 import { MediaObserver } from '@angular/flex-layout';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import {
   createInteractiveTranslator,
@@ -40,6 +40,7 @@ import { UserService } from 'xforge-common/user.service';
 import { getLinkHTML, issuesEmailTemplate, objectId } from 'xforge-common/utils';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { MatDialogRef } from '@angular/material/dialog';
 import { NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -74,6 +75,7 @@ import {
 } from './suggestions-settings-dialog.component';
 import { Suggestion } from './suggestions.component';
 import { TranslateMetricsSession } from './translate-metrics-session';
+import { TextDeletedDialogComponent } from './text-deleted-dialog/text-deleted-dialog.component';
 
 export const UPDATE_SUGGESTIONS_TIMEOUT = 100;
 export const SF_NOTE_THREAD_PREFIX = 'SFNOTETHREAD_';
@@ -128,6 +130,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private paratextUsers: ParatextUserProfile[] = [];
   private projectUserConfigChangesSub?: Subscription;
   private text?: TextInfo;
+  private textDeletedDialogRef: MatDialogRef<TextDeletedDialogComponent> | null = null;
   private sourceText?: TextInfo;
   private sourceProjectDoc?: SFProjectProfileDoc;
   private sourceLoaded: boolean = false;
@@ -136,6 +139,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private _chapter?: number;
   private lastShownSuggestions: Suggestion[] = [];
   private readonly segmentUpdated$: Subject<void>;
+  private onTargetDeleteSub?: Subscription;
   private trainingSub?: Subscription;
   private projectDataChangesSub?: Subscription;
   private trainingProgressClosed: boolean = false;
@@ -157,7 +161,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly translationEngineService: TranslationEngineService,
     private readonly i18n: I18nService,
     private readonly featureFlags: FeatureFlagService,
-    @Inject(CONSOLE) private readonly console: ConsoleInterface
+    @Inject(CONSOLE) private readonly console: ConsoleInterface,
+    private readonly router: Router
   ) {
     super(noticeService);
     const wordTokenizer = new LatinWordTokenizer();
@@ -513,6 +518,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
     if (this.metricsSession != null) {
       this.metricsSession.dispose();
+    }
+    if (this.onTargetDeleteSub != null) {
+      this.onTargetDeleteSub.unsubscribe();
     }
   }
 
@@ -967,7 +975,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  private changeText(): void {
+  private async changeText(): Promise<void> {
     if (this.projectDoc == null || this.text == null || this._chapter == null) {
       this.source!.id = undefined;
       this.target!.id = undefined;
@@ -1006,6 +1014,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.target.segment.acceptChanges();
       }
     }
+    const textDoc = await this.projectService.getText(targetId);
+    if (this.onTargetDeleteSub != null) {
+      this.onTargetDeleteSub.unsubscribe();
+    }
+    this.onTargetDeleteSub = textDoc.delete$.subscribe(() => {
+      this.textDeletedDialogRef = this.dialogService.openMatDialog(TextDeletedDialogComponent);
+      this.textDeletedDialogRef.afterClosed().subscribe(() => {
+        this.router.navigateByUrl('/projects/' + this.projectDoc?.id + '/translate', { replaceUrl: true });
+      });
+    });
     setTimeout(() => this.setTextHeight());
   }
 
