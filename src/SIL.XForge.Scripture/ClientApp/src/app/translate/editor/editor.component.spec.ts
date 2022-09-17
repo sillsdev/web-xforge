@@ -1,10 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { DebugElement } from '@angular/core';
+import { Location } from '@angular/common';
+import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef, MatDialogConfig } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { ActivatedRoute, Params } from '@angular/router';
+import { ActivatedRoute, Params, Route, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import {
   createRange,
@@ -75,6 +76,7 @@ import { NoteDialogComponent } from './note-dialog/note-dialog.component';
 import { SuggestionsComponent } from './suggestions.component';
 import { ACTIVE_EDIT_TIMEOUT } from './translate-metrics-session';
 import { NoteDialogData } from './note-dialog/note-dialog.component';
+import { TextDeletedDialogComponent } from './text-deleted-dialog/text-deleted-dialog.component';
 
 const mockedAuthService = mock(AuthService);
 const mockedSFProjectService = mock(SFProjectService);
@@ -87,6 +89,10 @@ const mockedPwaService = mock(PwaService);
 const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedMatDialog = mock(MatDialog);
 const mockedFeatureFlagService = mock(FeatureFlagService);
+
+class MockComponent {}
+
+const ROUTES: Route[] = [{ path: 'projects/:projectId/translate', component: MockComponent }];
 
 class MockConsole {
   log(val: any) {
@@ -105,7 +111,7 @@ describe('EditorComponent', () => {
     declarations: [EditorComponent, SuggestionsComponent],
     imports: [
       NoopAnimationsModule,
-      RouterTestingModule,
+      RouterTestingModule.withRoutes(ROUTES),
       SharedModule,
       UICommonModule,
       TestTranslocoModule,
@@ -139,6 +145,20 @@ describe('EditorComponent', () => {
     env.updateParams({ projectId: 'project01', bookId: 'MAT' });
     env.wait();
     expect(env.sharingButton).not.toBeNull();
+    env.dispose();
+  }));
+
+  it('response to remote text deletion', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.updateParams({ projectId: 'project02', bookId: 'MAT' });
+    env.wait();
+
+    const textDocId = new TextDocId('project02', 40, 1, 'target');
+    env.deleteText(textDocId.toString());
+    verify(mockedMatDialog.open(TextDeletedDialogComponent, anything())).once();
+    env.confirmTextDeletedDialog();
+    tick();
+    expect(env.location.path()).toEqual('/projects/project02/translate');
     env.dispose();
   }));
 
@@ -2622,9 +2642,13 @@ const defaultTranslateConfig = {
 class TestEnvironment {
   readonly component: EditorComponent;
   readonly fixture: ComponentFixture<EditorComponent>;
-
   readonly mockedRemoteTranslationEngine = mock(RemoteTranslationEngine);
+  readonly router: Router;
+  readonly location: Location;
   readonly mockNoteDialogRef;
+  readonly mockedTextDeletedDialogRef = mock<MatDialogRef<TextDeletedDialogComponent>>(MatDialogRef);
+  readonly ngZone: NgZone;
+  readonly textDeletedDialogRefAfterClosed$: Subject<string> = new Subject<string>();
 
   private userRolesOnProject = {
     user01: SFProjectRole.ParatextTranslator,
@@ -2851,6 +2875,17 @@ class TestEnvironment {
     });
     when(mockedMatDialog.closeAll()).thenCall(() => openNoteDialogs.forEach(dialog => dialog.close()));
     when(mockedFeatureFlagService.allowAddingNotes).thenReturn({ enabled: true } as FeatureFlag);
+    when(mockedMatDialog.open(TextDeletedDialogComponent, anything())).thenReturn(
+      instance(this.mockedTextDeletedDialogRef)
+    );
+    when(this.mockedTextDeletedDialogRef.afterClosed()).thenReturn(this.textDeletedDialogRefAfterClosed$);
+
+    this.router = TestBed.inject(Router);
+    this.location = TestBed.inject(Location);
+    this.ngZone = TestBed.inject(NgZone);
+    this.fixture = TestBed.createComponent(EditorComponent);
+    this.component = this.fixture.componentInstance;
+    this.ngZone.run(() => this.router.initialNavigation());
   }
 
   get activeElementClasses(): DOMTokenList | undefined {
@@ -2935,6 +2970,18 @@ class TestEnvironment {
   set onlineStatus(value: boolean) {
     when(mockedPwaService.isOnline).thenReturn(value);
     when(mockedPwaService.onlineStatus).thenReturn(of(value));
+  }
+
+  confirmTextDeletedDialog() {
+    this.ngZone.run(() => this.textDeletedDialogRefAfterClosed$.next('close'));
+  }
+
+  deleteText(textId: string): void {
+    this.ngZone.run(() => {
+      const textDoc = this.realtimeService.get(TextDoc.COLLECTION, textId);
+      textDoc.delete();
+    });
+    this.wait();
   }
 
   setCurrentUser(userId: string): void {

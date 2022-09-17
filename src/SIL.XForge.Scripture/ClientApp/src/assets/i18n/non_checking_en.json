@@ -267,6 +267,10 @@
     "loading": "Loading...",
     "not_available_offline": "This text is not available offline. Connect to the Internet to see the text."
   },
+  "text_deleted_dialog": {
+    "ok": "OK",
+    "text_has_been_deleted": "The book has been deleted or is no longer accessible."
+  },
   "text_note_dialog": {
     "cross_reference": "Cross-reference",
     "end_note": "End note",
