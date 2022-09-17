@@ -127,6 +127,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private _isReadOnly: boolean = true;
   private _editorStyles: any = { fontSize: '1rem' };
   private activePresenceSubscription?: Subscription;
+  private onDeleteSub?: Subscription;
   private readonly DEFAULT_MODULES: any = {
     toolbar: false,
     keyboard: {
@@ -461,8 +462,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       EDITORS.delete(this._editor);
     }
     this.dismissPresences();
-    if (this.activePresenceSubscription != null) {
-      this.activePresenceSubscription.unsubscribe();
+    if (this.onDeleteSub != null) {
+      this.onDeleteSub.unsubscribe();
     }
   }
 
@@ -872,6 +873,21 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     this.viewModel.bind(textDoc, this.subscribeToUpdates);
     this.updatePlaceholderText();
     this.attachPresences(textDoc);
+    if (this.onDeleteSub != null) {
+      this.onDeleteSub.unsubscribe();
+    }
+    this.onDeleteSub = textDoc.delete$.subscribe(async () => {
+      this.viewModel.unbind();
+      // Unset these to stop any additional events that might try to submit a presence update
+      this.localPresenceChannel = undefined;
+      this.localPresenceDoc = undefined;
+      // Remove all presence data from the interface i.e. cursors and avatars
+      await this.dismissPresences();
+      // Completely disable it to avoid any other interactions from events
+      this.enablePresence = false;
+      this._id = undefined;
+      this.updatePlaceholderText();
+    });
 
     this.loaded.emit();
     this.applyEditorStyles();
@@ -923,6 +939,9 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     this.presenceDoc = undefined;
     const noRemotePresences: RemotePresences = {};
     this.presenceChange?.emit(noRemotePresences);
+    if (this.activePresenceSubscription != null) {
+      this.activePresenceSubscription.unsubscribe();
+    }
   }
 
   private getPresenceViewer(presenceId: string): MultiCursorViewer | undefined {
