@@ -25,7 +25,7 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { LocalPresence } from 'sharedb/lib/sharedb';
-import { CaretPosition } from '../../../utils';
+import { CaretPosition } from '../../../type-utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';

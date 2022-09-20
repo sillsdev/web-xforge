@@ -6,6 +6,10 @@ export function hasProp<X, Y extends PropertyKey>(value: X, property: Y): value 
   return isObj(value) && property in value;
 }
 
+export function hasStringProp<X, Y extends PropertyKey>(value: X, property: Y): value is X & Record<Y, String> {
+  return hasProp(value, property) && typeof value[property] === 'string';
+}
+
 export function hasFunctionProp<X, Y extends PropertyKey>(value: X, property: Y): value is X & Record<Y, Function> {
   return hasProp(value, property) && typeof value[property] === 'function';
 }
