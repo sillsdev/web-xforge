@@ -13,10 +13,12 @@
         [multiSegmentSelection]="true"
         [isRightToLeft]="isTextRightToLeft"
       ></app-text>
-      <p class="selection-preview">
-        {{ (startClipped ? "…" : "") + (selectedText || "") + (endClipped ? "…" : "") }}
-        <span class="selection-reference">{{ referenceForDisplay }}</span>
-      </p>
+      <div class="selection-preview">
+        <p>
+          {{ (startClipped ? "…" : "") + (selectedText || "") + (endClipped ? "…" : "") }}
+          <span class="selection-reference">{{ referenceForDisplay }}</span>
+        </p>
+      </div>
       <span class="error-message" *ngIf="showError">{{ t("select_text_error_message") }}</span>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
