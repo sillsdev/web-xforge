@@ -28,6 +28,7 @@
           </button>
           <button
             mat-icon-button
+            *ngIf="isAddNotesEnabled"
             type="button"
             id="create-note-btn"
             (click)="insertNote()"

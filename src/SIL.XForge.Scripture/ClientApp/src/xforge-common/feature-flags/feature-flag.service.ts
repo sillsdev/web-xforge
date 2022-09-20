@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-interface FeatureFlagStore {
+export interface FeatureFlagStore {
   enabled: boolean;
 }
 
@@ -9,7 +9,7 @@ interface FeatureFlagStore {
 //   constructor(public enabled: boolean = false) {}
 // }
 
-class LocalStorageFlagStore implements FeatureFlagStore {
+export class LocalStorageFlagStore implements FeatureFlagStore {
   static readonly keyPrefix = 'SF_FEATURE_FLAG_';
 
   private readonly featureFlagKey: string;
@@ -33,7 +33,7 @@ class LocalStorageFlagStore implements FeatureFlagStore {
   }
 }
 
-class FeatureFlag {
+export class FeatureFlag {
   constructor(private readonly storage: FeatureFlagStore, readonly description: string) {}
 
   get enabled(): boolean {

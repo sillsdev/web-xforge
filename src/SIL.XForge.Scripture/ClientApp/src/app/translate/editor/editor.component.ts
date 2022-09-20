@@ -41,6 +41,7 @@ import { getLinkHTML, issuesEmailTemplate, objectId } from 'xforge-common/utils'
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { environment } from '../../../environments/environment';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
@@ -150,6 +151,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly pwaService: PwaService,
     private readonly translationEngineService: TranslationEngineService,
     private readonly i18n: I18nService,
+    private readonly featureFlags: FeatureFlagService,
     @Inject(CONSOLE) private readonly console: ConsoleInterface
   ) {
     super(noticeService);
@@ -317,6 +319,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   get canShare(): boolean {
     return this.isProjectAdmin || this.projectDoc?.data?.translateConfig.shareEnabled === true;
+  }
+
+  get isAddNotesEnabled(): boolean {
+    return this.featureFlags.allowAddingNotes.enabled;
   }
 
   get fontSize(): string | undefined {

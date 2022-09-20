@@ -49,6 +49,7 @@ import { anything, capture, deepEqual, instance, mock, resetCalls, verify, when 
 import { AuthService } from 'xforge-common/auth.service';
 import { CONSOLE } from 'xforge-common/browser-globals';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -73,6 +74,7 @@ import { EditorComponent, SF_NOTE_THREAD_PREFIX, UPDATE_SUGGESTIONS_TIMEOUT } fr
 import { NoteDialogComponent, NoteDialogResult } from './note-dialog/note-dialog.component';
 import { SuggestionsComponent } from './suggestions.component';
 import { ACTIVE_EDIT_TIMEOUT } from './translate-metrics-session';
+import { TestFeatureFlag } from 'xforge-common/feature-flags/test-feature-flag';
 
 const mockedAuthService = mock(AuthService);
 const mockedSFProjectService = mock(SFProjectService);
@@ -84,6 +86,7 @@ const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
 const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedMatDialog = mock(MatDialog);
+const mockedFeatureFlagService = mock(FeatureFlagService);
 
 class MockConsole {
   log(val: any) {
@@ -119,7 +122,8 @@ describe('EditorComponent', () => {
       { provide: CookieService, useMock: mockedCookieService },
       { provide: PwaService, useMock: mockedPwaService },
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
-      { provide: MatDialog, useMock: mockedMatDialog }
+      { provide: MatDialog, useMock: mockedMatDialog },
+      { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
     ]
   }));
 
@@ -2609,6 +2613,7 @@ class TestEnvironment {
 
   readonly mockedRemoteTranslationEngine = mock(RemoteTranslationEngine);
   readonly mockNoteDialogRef;
+  readonly mockNoteFeatureFlag = new TestFeatureFlag();
 
   private userRolesOnProject = {
     user01: SFProjectRole.ParatextTranslator,
@@ -2769,6 +2774,7 @@ class TestEnvironment {
     when(mockedTranslationEngineService.createTranslationEngine('project02')).thenReturn(
       instance(this.mockedRemoteTranslationEngine)
     );
+    when(mockedFeatureFlagService.allowAddingNotes).thenReturn(this.mockNoteFeatureFlag);
     this.setupProject();
     this.addParatextNoteThread(1, 'MAT 1:1', 'chapter 1', { start: 8, length: 9 }, ['user01', 'user02', 'user03']);
     this.addParatextNoteThread(2, 'MAT 1:3', 'target: chapter 1, verse 3.', { start: 0, length: 0 }, ['user01']);

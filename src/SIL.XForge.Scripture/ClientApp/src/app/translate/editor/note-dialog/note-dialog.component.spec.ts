@@ -32,6 +32,8 @@ import { UserService } from 'xforge-common/user.service';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { fromVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { TestFeatureFlag } from 'xforge-common/feature-flags/test-feature-flag';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
@@ -46,6 +48,7 @@ const mockedCookieService = mock(CookieService);
 const mockedHttpClient = mock(HttpClient);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
+const mockedFeatureFlagService = mock(FeatureFlagService);
 
 describe('NoteDialogComponent', () => {
   configureTestingModule(() => ({
@@ -55,7 +58,8 @@ describe('NoteDialogComponent', () => {
       { provide: CookieService, useMock: mockedCookieService },
       { provide: HttpClient, useMock: mockedHttpClient },
       { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: UserService, useMock: mockedUserService }
+      { provide: UserService, useMock: mockedUserService },
+      { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
     ]
   }));
 
@@ -699,6 +703,7 @@ class TestEnvironment {
   readonly component: NoteDialogComponent;
   readonly dialogRef: MatDialogRef<NoteDialogComponent>;
   readonly mockedNoteMdcDialogRef = mock(MatDialogRef);
+  readonly mockedNoteFeatureFlag = new TestFeatureFlag();
   dialogResult?: NoteDialogResult;
 
   constructor({
@@ -760,6 +765,8 @@ class TestEnvironment {
     when(mockedProjectService.tryGetForRole(anything(), anything())).thenCall((id, role) =>
       hasParatextRole(role) ? this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id) : undefined
     );
+
+    when(mockedFeatureFlagService.allowAddingNotes).thenReturn(this.mockedNoteFeatureFlag);
 
     when(mockedUserService.currentUserId).thenReturn(currentUserId);
     this.dialogRef
