@@ -44,15 +44,6 @@ h1 {
     .content {
       color: #000;
       flex: 1 1 100%;
-      .row-layout {
-        display: flex;
-        .note-content {
-          flex-grow: 1;
-        }
-        .edit-actions {
-          flex: 0;
-        }
-      }
     }
     &:first-child {
       padding-top: 10px;
@@ -63,12 +54,6 @@ h1 {
     app-owner {
       display: block;
       margin: 5px;
-    }
-    .edit-actions {
-      display: flex;
-      align-items: end;
-      justify-content: end;
-      flex: 1 1 100%;
     }
     img {
       align-self: center;
@@ -101,5 +86,20 @@ h1 {
 .ltr {
   .note {
     flex-direction: row-reverse;
+  }
+}
+
+.note-content-and-actions {
+  display: flex;
+  @include media-breakpoint-down(xs) {
+    flex-direction: column;
+  }
+  .note-content {
+    flex-basis: 100%;
+  }
+  .edit-actions {
+    flex-basis: 0;
+    display: flex;
+    align-self: flex-end;
   }
 }
