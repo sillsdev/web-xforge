@@ -41,7 +41,9 @@
     </mat-form-field>
   </mat-dialog-content>
   <mat-dialog-actions fxLayoutAlign="end">
-    <button mat-button class="close-button" [mat-dialog-close]="'close'">{{ t("close") }}</button>
-    <button *ngIf="canInsertNote" mat-flat-button class="save-button" (click)="submit()">{{ t("save") }}</button>
+    <button mat-button class="close-button" [mat-dialog-close]="undefined">{{ t("close") }}</button>
+    <button *ngIf="canInsertNote" mat-flat-button class="save-button" color="primary" (click)="submit()">
+      {{ t("save") }}
+    </button>
   </mat-dialog-actions>
 </ng-container>

@@ -17,12 +17,12 @@ import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { canInsertNote } from 'src/app/shared/utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { NoteThreadDoc, defaultNoteThreadIcon } from '../../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
+import { canInsertNote } from '../../../shared/utils';
 
 export interface NoteDialogData {
   threadId?: string;
