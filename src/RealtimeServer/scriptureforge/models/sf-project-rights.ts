@@ -54,6 +54,10 @@ export class SFProjectRights extends ProjectRights {
       { projectDomain: SFProjectDomain.Likes, operation: Operation.Create },
       { projectDomain: SFProjectDomain.Likes, operation: Operation.DeleteOwn },
 
+      { projectDomain: SFProjectDomain.NoteThreads, operation: Operation.Create },
+      { projectDomain: SFProjectDomain.NoteThreads, operation: Operation.Edit },
+      { projectDomain: SFProjectDomain.NoteThreads, operation: Operation.Delete },
+
       { projectDomain: SFProjectDomain.Notes, operation: Operation.Create },
       { projectDomain: SFProjectDomain.Notes, operation: Operation.EditOwn },
       { projectDomain: SFProjectDomain.Notes, operation: Operation.DeleteOwn }
@@ -67,15 +71,7 @@ export class SFProjectRights extends ProjectRights {
     this.addRights(SFProjectRole.ParatextConsultant, ptReviewerRights);
 
     const translatorRights: ProjectRight[] = ptReviewerRights.concat([
-      { projectDomain: SFProjectDomain.Texts, operation: Operation.Edit },
-
-      { projectDomain: SFProjectDomain.NoteThreads, operation: Operation.Create },
-      { projectDomain: SFProjectDomain.NoteThreads, operation: Operation.Edit },
-      { projectDomain: SFProjectDomain.NoteThreads, operation: Operation.Delete },
-
-      { projectDomain: SFProjectDomain.Notes, operation: Operation.Create },
-      { projectDomain: SFProjectDomain.Notes, operation: Operation.EditOwn },
-      { projectDomain: SFProjectDomain.Notes, operation: Operation.DeleteOwn }
+      { projectDomain: SFProjectDomain.Texts, operation: Operation.Edit }
     ]);
     this.addRights(SFProjectRole.ParatextTranslator, translatorRights);
 

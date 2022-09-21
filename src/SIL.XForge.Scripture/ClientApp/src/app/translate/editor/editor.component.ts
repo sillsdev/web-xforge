@@ -60,7 +60,12 @@ import {
   RemotePresences,
   TextComponent
 } from '../../shared/text/text.component';
-import { formatFontSizeToRems, getVerseRefFromSegmentRef, threadIdFromMouseEvent } from '../../shared/utils';
+import {
+  canInsertNote,
+  formatFontSizeToRems,
+  getVerseRefFromSegmentRef,
+  threadIdFromMouseEvent
+} from '../../shared/utils';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
 import {
@@ -317,6 +322,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     );
   }
 
+  get canInsertNote(): boolean {
+    if (this.projectDoc?.data == null) return false;
+    return this.isAddNotesEnabled && canInsertNote(this.projectDoc.data, this.userService.currentUserId);
+  }
+
   get canShare(): boolean {
     return this.isProjectAdmin || this.projectDoc?.data?.translateConfig.shareEnabled === true;
   }
@@ -368,7 +378,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.pwaService.isOnline && this.multiCursorViewers.length > 0;
   }
 
-  get canInsertNote(): boolean {
+  get isAddNoteEnabled(): boolean {
     return this.featureFlags.allowAddingNotes.enabled;
   }
 
@@ -380,6 +390,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       const projects = this.currentUser.sites[environment.siteId].projects;
       return this.text.hasSource && projects.includes(sourceId);
     }
+  }
+
+  private get isAddNotesEnabled(): boolean {
+    return this.featureFlags.allowAddingNotes.enabled;
   }
 
   ngAfterViewInit(): void {

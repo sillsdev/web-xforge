@@ -494,6 +494,13 @@ describe('NoteDialogComponent', () => {
     env.submit();
     expect(env.dialogResult).toBeUndefined();
   }));
+
+  it('does not show text area for users without write permissions', fakeAsync(() => {
+    const verseRef = VerseRef.parse('MAT 1:3');
+    env = new TestEnvironment({ currentUserId: 'user02', verseRef });
+    expect(env.noteInputElement).toBeNull();
+    expect(env.saveButton).toBeNull();
+  }));
 });
 
 @Directive({
@@ -810,6 +817,10 @@ class TestEnvironment {
     return this.overlayContainerElement.query(By.css('#assignedUser'));
   }
 
+  get saveButton(): DebugElement {
+    return this.overlayContainerElement.query(By.css('button.save-button'));
+  }
+
   private get overlayContainerElement(): DebugElement {
     return this.fixture.debugElement.parent!.query(By.css('.cdk-overlay-container'));
   }
@@ -820,7 +831,7 @@ class TestEnvironment {
   }
 
   submit(): void {
-    this.overlayContainerElement.query(By.css('.save-button')).nativeElement.click();
+    this.saveButton.nativeElement.click();
     tick(matDialogCloseDelay);
   }
 

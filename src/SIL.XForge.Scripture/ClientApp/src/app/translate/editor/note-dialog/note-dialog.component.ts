@@ -22,6 +22,7 @@ import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { NoteThreadDoc, defaultNoteThreadIcon } from '../../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
+import { canInsertNote } from '../../../shared/utils';
 
 export interface NoteDialogData {
   threadId?: string;
@@ -147,8 +148,9 @@ export class NoteDialogComponent implements OnInit {
     return this.textDoc.getSegmentTextIncludingRelated(`verse_${verseRef.chapter}_${verseRef.verse}`);
   }
 
-  get canCreateNote(): boolean {
-    return this.featureFlags.allowAddingNotes.enabled;
+  get canInsertNote(): boolean {
+    if (this.projectProfileDoc?.data == null) return false;
+    return this.isAddNotesEnabled && canInsertNote(this.projectProfileDoc.data, this.userService.currentUserId);
   }
 
   /** Is a note considered to be a conflict note? */
@@ -196,6 +198,10 @@ export class NoteDialogComponent implements OnInit {
       return this.data.verseRef == null ? undefined : this.data.verseRef;
     }
     return toVerseRef(this.threadDoc.data.verseRef);
+  }
+
+  private get isAddNotesEnabled(): boolean {
+    return this.featureFlags.allowAddingNotes.enabled;
   }
 
   parseNote(content: string | undefined): string {
