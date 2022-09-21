@@ -807,7 +807,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     this.loaded.emit();
     this.applyEditorStyles();
     // These refer to footnotes, cross-references, and end notes and not actual notes
-    const elements = this.editor?.container.querySelectorAll('usx-note[data-caller="+"]');
+    const elements = this.editor?.container.querySelectorAll('usx-note');
     if (elements != null) {
       this.clickSubs.get('notes')?.forEach(s => s.unsubscribe());
       this.clickSubs.set(

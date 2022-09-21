@@ -351,6 +351,7 @@ usx-chapter {
   font-size: 1.5em;
   margin-top: 8pt;
   margin-bottom: 4pt;
+  color: #7c7c7c;
 }
 
 usx-verse {
@@ -366,6 +367,7 @@ usx-verse {
     border-radius: 8px;
     white-space: nowrap;
     margin: 0 0.2em 0 0.3em;
+    color: #7c7c7c;
     span[data-style='va'] {
       font-size: 65%;
       color: #5faa5f;
@@ -385,28 +387,41 @@ usx-note {
     vertical-align: baseline;
   }
 
-  &[data-caller='+'] {
-    > span::before {
-      counter-increment: note;
-      content: counter(note, lower-alpha);
-      background: #000;
-      color: white;
-      border-radius: 50%;
-      width: 1.25em;
-      height: 1.25em;
-      display: inline-block;
-      line-height: 1.25em;
-      text-align: center;
-      cursor: pointer;
+  > span {
+    background: #000;
+    color: white;
+    border-radius: 1em;
+    min-width: 1.25em;
+    height: 1.25em;
+    display: inline-block;
+    line-height: 1.25em;
+    text-align: center;
+    cursor: pointer;
+    white-space: nowrap;
+    padding: 0 3px;
+  }
+  &[data-caller='-'][data-style] > span {
+    background: #cbcbcb;
+    &::before {
+      content: '*';
     }
-    &[data-style='f'] > span::before {
-      background: $blueMedium;
-    }
-    &[data-style='fe'] > span::before {
-      background: $purpleLight;
-    }
-    &[data-style='x'] > span::before {
+  }
+  &[data-caller='+']:not([data-style='x']) > span::before {
+    counter-increment: note;
+    content: counter(note, lower-alpha);
+  }
+  &[data-style='f'] > span {
+    background: $blueMedium;
+  }
+  &[data-style='fe'] > span {
+    background: $purpleLight;
+  }
+  &[data-style='x'] {
+    > span {
       background: $greenLight;
+    }
+    &[data-caller='+'] > span::before {
+      content: '†';
     }
   }
 }
