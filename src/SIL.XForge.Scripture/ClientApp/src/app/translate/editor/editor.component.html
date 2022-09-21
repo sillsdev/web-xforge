@@ -26,17 +26,17 @@
           >
             <mat-icon>settings</mat-icon>
           </button>
-          <button
-            *ngIf="canInsertNote"
-            mat-icon-button
-            type="button"
-            id="create-note-btn"
-            (click)="insertNote()"
-            title="{{ t('insert_note') }}"
-          >
-            <mat-icon>add_comment</mat-icon>
-          </button>
         </ng-container>
+        <button
+          *ngIf="canInsertNote"
+          mat-icon-button
+          type="button"
+          id="create-note-btn"
+          (click)="insertNote()"
+          title="{{ t('insert_note') }}"
+        >
+          <mat-icon>add_comment</mat-icon>
+        </button>
         <ng-container *ngIf="canShare">
           <div class="toolbar-separator">&nbsp;</div>
           <app-share [defaultRole]="defaultShareRole"></app-share>

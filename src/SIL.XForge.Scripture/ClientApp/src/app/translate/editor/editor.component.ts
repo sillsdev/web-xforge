@@ -324,7 +324,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   get canInsertNote(): boolean {
     if (this.projectDoc?.data == null) return false;
-    return canInsertNote(this.projectDoc.data, this.userService.currentUserId);
+    return this.isAddNotesEnabled && canInsertNote(this.projectDoc.data, this.userService.currentUserId);
   }
 
   get canShare(): boolean {
@@ -378,7 +378,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.pwaService.isOnline && this.multiCursorViewers.length > 0;
   }
 
-  get canInsertNote(): boolean {
+  get isAddNoteEnabled(): boolean {
     return this.featureFlags.allowAddingNotes.enabled;
   }
 
@@ -390,6 +390,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       const projects = this.currentUser.sites[environment.siteId].projects;
       return this.text.hasSource && projects.includes(sourceId);
     }
+  }
+
+  private get isAddNotesEnabled(): boolean {
+    return this.featureFlags.allowAddingNotes.enabled;
   }
 
   ngAfterViewInit(): void {

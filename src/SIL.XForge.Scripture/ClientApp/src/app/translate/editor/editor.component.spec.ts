@@ -2361,20 +2361,20 @@ describe('EditorComponent', () => {
       env.wait();
       // user02 does not have read permission on the text
       const usersWhoCanInsertNotes = ['user01', 'user03', 'user04', 'user05'];
-      usersWhoCanInsertNotes.forEach(user => {
+      for (const user of usersWhoCanInsertNotes) {
         env.setCurrentUser(user);
         tick();
         env.fixture.detectChanges();
         expect(env.insertNoteButton).toBeTruthy();
-      });
+      }
 
       const usersWhoCannotInsertNotes = ['user06', 'user07'];
-      usersWhoCannotInsertNotes.forEach(user => {
+      for (const user of usersWhoCannotInsertNotes) {
         env.setCurrentUser(user);
         tick();
         env.fixture.detectChanges();
         expect(env.insertNoteButton).toBeNull();
-      });
+      }
       env.dispose();
     }));
 
