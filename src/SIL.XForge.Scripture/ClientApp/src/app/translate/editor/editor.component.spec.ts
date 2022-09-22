@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Params } from '@angular/router';
@@ -40,12 +40,12 @@ import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-a
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { fromVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, Observable, of, Subject } from 'rxjs';
-import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
+import { anything, capture, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { CONSOLE } from 'xforge-common/browser-globals';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
@@ -58,6 +58,7 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
+import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -69,8 +70,8 @@ import { TranslationEngineService } from '../../core/translation-engine.service'
 import { SharedModule } from '../../shared/shared.module';
 import { getCombinedVerseTextDoc, paratextUsersFromRoles } from '../../shared/test-utils';
 import { PRESENCE_EDITOR_ACTIVE_TIMEOUT } from '../../shared/text/text.component';
-import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
-import { NoteDialogComponent } from './note-dialog/note-dialog.component';
+import { EditorComponent, SF_NOTE_THREAD_PREFIX, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
+import { NoteDialogComponent, NoteDialogResult } from './note-dialog/note-dialog.component';
 import { SuggestionsComponent } from './suggestions.component';
 import { ACTIVE_EDIT_TIMEOUT } from './translate-metrics-session';
 
@@ -84,6 +85,7 @@ const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
 const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedMatDialog = mock(MatDialog);
+const mockedFeatureFlagService = mock(FeatureFlagService);
 
 class MockConsole {
   log(val: any) {
@@ -119,7 +121,8 @@ describe('EditorComponent', () => {
       { provide: CookieService, useMock: mockedCookieService },
       { provide: PwaService, useMock: mockedPwaService },
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
-      { provide: MatDialog, useMock: mockedMatDialog }
+      { provide: MatDialog, useMock: mockedMatDialog },
+      { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
     ]
   }));
 
@@ -2345,10 +2348,88 @@ describe('EditorComponent', () => {
       )!;
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
       env.wait();
-      expect(env.activeElementTagName).toBe('INPUT');
+      expect(env.activeElementTagName).toBe('DIV');
       expect(element.classList).withContext('dialog opened').toContain('highlight-segment');
       mockedMatDialog.closeAll();
       expect(element.classList).withContext('dialog closed').toContain('highlight-segment');
+      env.dispose();
+    }));
+
+    it('shows insert note button for users with permission', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+      // user02 does not have read permission on the text
+      const usersWhoCanInsertNotes = ['user01', 'user03', 'user04', 'user05'];
+      for (const user of usersWhoCanInsertNotes) {
+        env.setCurrentUser(user);
+        tick();
+        env.fixture.detectChanges();
+        expect(env.insertNoteButton).toBeTruthy();
+      }
+
+      const usersWhoCannotInsertNotes = ['user06', 'user07'];
+      for (const user of usersWhoCannotInsertNotes) {
+        env.setCurrentUser(user);
+        tick();
+        env.fixture.detectChanges();
+        expect(env.insertNoteButton).toBeNull();
+      }
+      env.dispose();
+    }));
+
+    it('can open insert note dialog on default verse', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      env.setSelectionAndInsertNote(undefined);
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
+      const [, arg2] = capture(mockedMatDialog.open).last();
+      const noteVerseRef: VerseRef = (arg2 as MatDialogConfig).data!.verseRef;
+      expect(noteVerseRef.toString()).toEqual('MAT 1:1');
+      env.mockNoteDialogRef.close();
+      tick();
+      env.fixture.detectChanges();
+      verify(mockedSFProjectService.createNoteThread(anything(), anything())).never();
+      env.dispose();
+    }));
+
+    it('can insert note on verse at cursor position', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+      const date: string = '2022-08-01T01:00:000Z';
+      const note: Note = {
+        dataId: 'notenew01',
+        threadId: '',
+        extUserId: 'user01',
+        ownerRef: 'user01',
+        status: NoteStatus.Todo,
+        content: 'New note thread',
+        conflictType: NoteConflictType.DefaultValue,
+        dateCreated: date,
+        dateModified: date,
+        deleted: false,
+        type: NoteType.Normal
+      };
+      const position: TextAnchor = { start: 0, length: 0 };
+      const selectedText = 'target: chapter 1, verse 4.';
+      const verseRef: VerseRefData = fromVerseRef(VerseRef.parse('Mat 1:4'));
+      env.setSelectionAndInsertNote('verse_1_4');
+
+      env.mockNoteDialogRef.close({ verseRef, note, position, selectedText });
+      tick();
+      env.fixture.detectChanges();
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
+      const [, config] = capture(mockedMatDialog.open).last();
+      const noteVerseRef: VerseRef = (config as MatDialogConfig).data!.verseRef;
+      expect(noteVerseRef.toString()).toEqual('MAT 1:4');
+      verify(mockedSFProjectService.createNoteThread('project01', anything())).once();
+      const [, noteThread] = capture(mockedSFProjectService.createNoteThread).last();
+      const noteInserted = noteThread.notes[0];
+      expect(noteThread.dataId).toEqual(noteInserted.threadId);
+      expect(noteThread.dataId.startsWith(SF_NOTE_THREAD_PREFIX)).toBe(true);
       env.dispose();
     }));
   });
@@ -2553,12 +2634,16 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<EditorComponent>;
 
   readonly mockedRemoteTranslationEngine = mock(RemoteTranslationEngine);
+  readonly mockNoteDialogRef;
 
   private userRolesOnProject = {
     user01: SFProjectRole.ParatextTranslator,
     user02: SFProjectRole.ParatextConsultant,
     user03: SFProjectRole.ParatextTranslator,
-    user04: SFProjectRole.ParatextAdministrator
+    user04: SFProjectRole.ParatextAdministrator,
+    user05: SFProjectRole.Reviewer,
+    user06: SFProjectRole.ParatextObserver,
+    user07: SFProjectRole.Observer
   };
   private paratextUsersOnProject = paratextUsersFromRoles(this.userRolesOnProject);
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
@@ -2567,7 +2652,11 @@ class TestEnvironment {
   private textInfoPermissions = {
     user01: TextInfoPermission.Write,
     user02: TextInfoPermission.None,
-    user03: TextInfoPermission.Read
+    user03: TextInfoPermission.Read,
+    user04: TextInfoPermission.Write,
+    user05: TextInfoPermission.Read,
+    user06: TextInfoPermission.Read,
+    user07: TextInfoPermission.Read
   };
 
   private testProjectProfile: SFProjectProfile = {
@@ -2761,17 +2850,17 @@ class TestEnvironment {
     when(mockedPwaService.isOnline).thenReturn(true);
     when(mockedPwaService.onlineStatus).thenReturn(of(true));
 
-    const openNoteDialogs: MockNoteDialogRef[] = [];
-    when(mockedMatDialog.openDialogs).thenCall(() => openNoteDialogs);
-    when(mockedMatDialog.open(NoteDialogComponent, anything())).thenCall(() => {
-      const noteDialog = new MockNoteDialogRef(this.fixture.nativeElement);
-      openNoteDialogs.push(noteDialog);
-      return noteDialog;
-    });
-    when(mockedMatDialog.closeAll()).thenCall(() => openNoteDialogs.forEach(dialog => dialog.close()));
-
     this.fixture = TestBed.createComponent(EditorComponent);
     this.component = this.fixture.componentInstance;
+    const openNoteDialogs: MockNoteDialogRef[] = [];
+    when(mockedMatDialog.openDialogs).thenCall(() => openNoteDialogs);
+    this.mockNoteDialogRef = new MockNoteDialogRef(this.fixture.nativeElement);
+    when(mockedMatDialog.open(NoteDialogComponent, anything())).thenCall(() => {
+      openNoteDialogs.push(this.mockNoteDialogRef);
+      return this.mockNoteDialogRef;
+    });
+    when(mockedMatDialog.closeAll()).thenCall(() => openNoteDialogs.forEach(dialog => dialog.close()));
+    when(mockedFeatureFlagService.allowAddingNotes).thenReturn({ enabled: true } as FeatureFlag);
   }
 
   get activeElementClasses(): DOMTokenList | undefined {
@@ -2786,7 +2875,11 @@ class TestEnvironment {
   }
 
   get suggestionsSettingsButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('button[icon="settings"]'));
+    return this.fixture.debugElement.query(By.css('#settings-btn'));
+  }
+
+  get insertNoteButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#create-note-btn'));
   }
 
   get sharingButton(): DebugElement {
@@ -2860,74 +2953,26 @@ class TestEnvironment {
   }
 
   setupUsers(): void {
-    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
-      id: 'user01',
-      data: {
-        name: 'User 01',
-        email: 'user1@example.com',
-        role: SystemRole.User,
-        isDisplayNameConfirmed: true,
-        avatarUrl: '',
-        authId: 'auth01',
-        displayName: 'User 01',
-        sites: {
-          sf: {
-            projects: ['project01', 'project02', 'project03']
+    for (const user of Object.keys(this.userRolesOnProject)) {
+      const name = 'U' + user.substring(1);
+      this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
+        id: user,
+        data: {
+          name,
+          email: user + '@example.com',
+          role: SystemRole.User,
+          isDisplayNameConfirmed: true,
+          avatarUrl: '',
+          authId: 'auth' + user,
+          displayName: name,
+          sites: {
+            sf: {
+              projects: ['project01', 'project02', 'project03']
+            }
           }
         }
-      }
-    });
-    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
-      id: 'user02',
-      data: {
-        name: 'User 02',
-        email: 'user2@example.com',
-        role: SystemRole.User,
-        isDisplayNameConfirmed: true,
-        avatarUrl: '',
-        authId: 'auth02',
-        displayName: 'User 02',
-        sites: {
-          sf: {
-            projects: ['project01', 'project02', 'project03']
-          }
-        }
-      }
-    });
-    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
-      id: 'user03',
-      data: {
-        name: 'User 03',
-        email: 'user3@example.com',
-        role: SystemRole.User,
-        isDisplayNameConfirmed: true,
-        avatarUrl: '',
-        authId: 'auth03',
-        displayName: 'User 03',
-        sites: {
-          sf: {
-            projects: ['project01', 'project02', 'project03']
-          }
-        }
-      }
-    });
-    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
-      id: 'user04',
-      data: {
-        name: 'User 04',
-        email: 'user4@example.com',
-        role: SystemRole.User,
-        isDisplayNameConfirmed: true,
-        avatarUrl: '',
-        authId: 'auth04',
-        displayName: 'User 04',
-        sites: {
-          sf: {
-            projects: ['project01', 'project02', 'project03']
-          }
-        }
-      }
-    });
+      });
+    }
   }
 
   setupProject(data: Partial<SFProject> = {}): void {
@@ -3051,6 +3096,18 @@ class TestEnvironment {
   setDataInSync(projectId: string, isInSync: boolean, source?: any): void {
     const projectDoc: SFProjectProfileDoc = this.getProjectDoc(projectId);
     projectDoc.submitJson0Op(op => op.set(p => p.sync.dataInSync!, isInSync), source);
+    tick();
+    this.fixture.detectChanges();
+  }
+
+  setSelectionAndInsertNote(segmentRef: string | undefined): void {
+    if (segmentRef != null) {
+      const range: RangeStatic = this.component.target!.getSegmentRange(segmentRef)!;
+      this.targetEditor.setSelection(range.index, 'user');
+      this.wait();
+      this.fixture.detectChanges();
+    }
+    this.insertNoteButton.nativeElement.click();
     tick();
     this.fixture.detectChanges();
   }
@@ -3390,19 +3447,19 @@ class TestEnvironment {
 }
 
 class MockNoteDialogRef {
-  close$ = new Subject<void>();
+  close$ = new Subject<NoteDialogResult | void>();
 
   constructor(element: Element) {
     // steal the focus to simulate a dialog stealing the focus
     element.appendChild(document.createElement('input')).focus();
   }
 
-  close() {
-    this.close$.next();
+  close(result?: NoteDialogResult) {
+    this.close$.next(result);
     this.close$.complete();
   }
 
-  afterClosed(): Observable<void> {
+  afterClosed(): Observable<NoteDialogResult | void> {
     return this.close$;
   }
 }

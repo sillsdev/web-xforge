@@ -6,31 +6,44 @@
         <ng-container *ngIf="showSource">
           <div class="toolbar-separator" [fxHide.xs]="!translationSuggestionsProjectEnabled">&nbsp;</div>
           <button
-            mdc-icon-button
+            mat-icon-button
             appBlurOnClick
-            icon="swap_horiz"
             type="button"
             (click)="isTargetTextRight = !isTargetTextRight"
             title="{{ t('swap_source_and_target') }}"
             fxHide.xs
-          ></button>
+          >
+            <mat-icon>swap_horiz</mat-icon>
+          </button>
           <button
             *ngIf="translationSuggestionsProjectEnabled"
-            mdc-icon-button
+            mat-icon-button
             appBlurOnClick
-            icon="settings"
             type="button"
+            id="settings-btn"
             (click)="openSuggestionsSettings()"
             title="{{ t('configure_translation_suggestions') }}"
-          ></button>
+          >
+            <mat-icon>settings</mat-icon>
+          </button>
         </ng-container>
+        <button
+          *ngIf="canInsertNote"
+          mat-icon-button
+          type="button"
+          id="create-note-btn"
+          (click)="insertNote()"
+          title="{{ t('insert_note') }}"
+        >
+          <mat-icon>add_comment</mat-icon>
+        </button>
         <ng-container *ngIf="canShare">
           <div class="toolbar-separator">&nbsp;</div>
           <app-share [defaultRole]="defaultShareRole"></app-share>
         </ng-container>
       </div>
       <ng-container *ngIf="showMultiViewers">
-        <div fxFlexAlign="center">
+        <div fxFlexAlign="end" class="avatar-padding">
           <app-multi-viewer [viewers]="multiCursorViewers"></app-multi-viewer>
         </div>
       </ng-container>
@@ -106,20 +119,16 @@
         </div>
       </div>
     </div>
-    <div *ngIf="showTrainingProgress" class="training-progress" [mdcElevation]="2">
+    <div *ngIf="showTrainingProgress" class="training-progress">
       <div class="training-title" fxLayout="row" fxLayoutAlign="space-between center">
-        <div mdcSubtitle1>{{ t("training") }}</div>
-        <button
-          id="training-close-button"
-          mdc-icon-button
-          icon="close"
-          type="button"
-          (click)="closeTrainingProgress()"
-        ></button>
+        <div>{{ t("training") }}</div>
+        <button id="training-close-button" mat-icon-button type="button" (click)="closeTrainingProgress()">
+          <mat-icon>close</mat-icon>
+        </button>
       </div>
-      <mdc-list-divider></mdc-list-divider>
+      <mat-divider></mat-divider>
       <div class="training-content" fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="5px">
-        <div class="text-ellipsis" mdcBody2>{{ trainingMessage }}</div>
+        <div class="text-ellipsis">{{ trainingMessage }}</div>
         <div>
           <app-donut-chart
             id="training-progress-spinner"
@@ -130,7 +139,7 @@
             [innerThicknessDelta]="0"
             [thickness]="22"
           ></app-donut-chart>
-          <mdc-icon id="training-complete-icon" *ngIf="trainingPercentage === 100">check_circle_outline</mdc-icon>
+          <mat-icon id="training-complete-icon" *ngIf="trainingPercentage === 100">check_circle_outline</mat-icon>
         </div>
       </div>
     </div>

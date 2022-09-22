@@ -1,3 +1,6 @@
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { DeltaOperation } from 'rich-text';
 import { SelectableProject } from '../core/paratext.service';
@@ -42,6 +45,24 @@ export function combineVerseRefStrs(startStr?: string, endStr?: string): VerseRe
     return undefined;
   }
   return range.verseRef;
+}
+
+/**
+ * Returns the base verse of the segment ref. e.g. 'verse_1_5'
+ * @return The segment ref of the first segment in the verse, or undefined if the segment does not belong to a verse.
+ */
+export function getBaseVerse(segmentRef: string): string | undefined {
+  const matchArray: RegExpExecArray | null = VERSE_REGEX.exec(segmentRef);
+  return matchArray == null ? undefined : matchArray[0];
+}
+
+export function getVerseRefFromSegmentRef(bookNum: number, segmentRef: string): VerseRef | undefined {
+  const baseRef: string | undefined = getBaseVerse(segmentRef);
+  if (baseRef == null) {
+    return;
+  }
+  const parts = baseRef.split('_');
+  return new VerseRef(bookNum, parts[1], parts[2]);
 }
 
 export function verseSlug(verse: VerseRef) {
@@ -124,4 +145,8 @@ export function compareProjectsForSorting(a: { shortName: string }, b: { shortNa
 export function formatFontSizeToRems(fontSize: number | undefined): string | undefined {
   // Paratext allows a font size between 8 and 32. 12pt font is equivalent to 1rem
   return fontSize == null ? undefined : `${fontSize / 12}rem`;
+}
+
+export function canInsertNote(project: SFProjectProfile, userId: string): boolean {
+  return SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.NoteThreads, Operation.Create);
 }

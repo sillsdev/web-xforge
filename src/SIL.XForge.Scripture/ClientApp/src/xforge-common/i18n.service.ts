@@ -6,7 +6,7 @@ import merge from 'lodash-es/merge';
 import { CookieService } from 'ngx-cookie-service';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
-import { of, zip } from 'rxjs';
+import { Observable, of, zip } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import enChecking from '../assets/i18n/checking_en.json';
@@ -195,6 +195,10 @@ export class I18nService {
 
   localizeRole(role: string) {
     return this.transloco.translate(`roles.${role}`);
+  }
+
+  translate(key: string, params: object = {}): Observable<string> {
+    return this.transloco.selectTranslate<string>(key, params);
   }
 
   translateAndInsertTags(key: string, params: object = {}) {

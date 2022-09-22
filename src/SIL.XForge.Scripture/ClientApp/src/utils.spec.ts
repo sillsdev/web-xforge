@@ -1,4 +1,4 @@
-import { hasFunctionProp, hasProp, isObj } from './utils';
+import { hasFunctionProp, hasProp, hasStringProp, isObj } from './type-utils';
 
 const miscValues = [undefined, null, NaN, true, false, Infinity, -1, 0, Symbol(), '', '\0', () => {}, BigInt(3)];
 
@@ -23,6 +23,14 @@ describe('type utils', () => {
     expect(objectFromPrototype.hasOwnProperty('hello')).toBeFalse();
     expect(hasProp(prototype, 'hello')).toBeTrue();
     expect(hasProp(objectFromPrototype, 'hello')).toBeTrue();
+  });
+
+  it('checks whether a value has a string property', () => {
+    for (const value of [...miscValues, ...objValues]) expect(hasStringProp(value, 'hello')).toBeFalse();
+
+    expect(hasStringProp({}, 'hello')).toBeFalse();
+    expect(hasStringProp({ hello: () => {} }, 'hello')).toBeFalse();
+    expect(hasStringProp({ hello: 'world' }, 'hello')).toBeTrue();
   });
 
   it('checks whether a value has a function property', () => {

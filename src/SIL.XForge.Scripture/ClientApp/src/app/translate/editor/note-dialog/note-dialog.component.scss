@@ -18,6 +18,7 @@ h1 {
 }
 .text-row {
   display: flex;
+  min-height: 30px;
   .text {
     color: $greenDark;
     background: rgba(0, 0, 0, 0.05);
@@ -56,6 +57,13 @@ h1 {
       align-self: center;
       opacity: 0.5;
     }
+  }
+}
+.full-width {
+  width: 100%;
+  margin-top: 1em;
+  .mat-form-field-flex {
+    padding: 0 0.75em;
   }
 }
 .assigned-user {
