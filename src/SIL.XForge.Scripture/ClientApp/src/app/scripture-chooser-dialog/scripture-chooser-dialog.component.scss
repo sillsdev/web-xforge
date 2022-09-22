@@ -6,11 +6,11 @@
   padding-bottom: 1em;
 }
 
-.dialogContainer {
-  min-height: 400px;
+.dialog-container {
+  max-width: 560px;
 }
 
-mdc-dialog-title > button,
-mdc-dialog-title > span {
+h1 > button,
+h1 > span {
   vertical-align: middle;
 }

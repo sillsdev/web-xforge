@@ -1,33 +1,31 @@
 <ng-container *transloco="let t; read: 'text_chooser_dialog'">
-  <mdc-dialog>
-    <mdc-dialog-container>
-      <mdc-dialog-surface>
-        <mdc-dialog-title>{{ t("select_scripture") }}</mdc-dialog-title>
-        <mdc-dialog-content>
-          <div class="select-chapter" (click)="openScriptureChooser()">
-            <mdc-icon>library_books</mdc-icon>
-            <h2>{{ bookName }} {{ chapterNum }}</h2>
-            <mdc-icon>keyboard_arrow_down</mdc-icon>
-          </div>
-          <app-text
-            #scriptureText
-            [id]="textDocId"
-            [multiSegmentSelection]="true"
-            [isRightToLeft]="isTextRightToLeft"
-          ></app-text>
-          <p class="selection-preview">
-            {{ (startClipped ? "…" : "") + (selectedText || "") + (endClipped ? "…" : "") }}
-            <span class="selection-reference">{{ referenceForDisplay }}</span>
-          </p>
-          <span class="error-message" *ngIf="showError">{{ t("select_text_error_message") }}</span>
-        </mdc-dialog-content>
-        <mdc-dialog-actions>
-          <button mdcDialogButton mdcDialogAction="close" type="button">{{ t("cancel") }}</button>
-          <button mdcDialogButton type="submit" [unelevated]="true" [default]="true" (click)="submit()">
-            {{ t("save") }}
-          </button>
-        </mdc-dialog-actions>
-      </mdc-dialog-surface>
-    </mdc-dialog-container>
-  </mdc-dialog>
+  <div class="dialog-container">
+    <h1 mat-dialog-title>{{ t("select_scripture") }}</h1>
+    <mat-dialog-content>
+      <div class="select-chapter" (click)="openScriptureChooser()">
+        <mat-icon>library_books</mat-icon>
+        <h2>{{ bookName }} {{ chapterNum }}</h2>
+        <mat-icon>keyboard_arrow_down</mat-icon>
+      </div>
+      <app-text
+        #scriptureText
+        [id]="textDocId"
+        [multiSegmentSelection]="true"
+        [isRightToLeft]="isTextRightToLeft"
+      ></app-text>
+      <div class="selection-preview">
+        <p>
+          {{ (startClipped ? "…" : "") + (selectedText || "") + (endClipped ? "…" : "") }}
+          <span class="selection-reference">{{ referenceForDisplay }}</span>
+        </p>
+      </div>
+      <span class="error-message" *ngIf="showError">{{ t("select_text_error_message") }}</span>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button type="button" id="cancel-button" [mat-dialog-close]="'close'">{{ t("cancel") }}</button>
+      <button mat-flat-button color="primary" type="submit" cdkFocusInitial (click)="submit()">
+        {{ t("save") }}
+      </button>
+    </mat-dialog-actions>
+  </div>
 </ng-container>

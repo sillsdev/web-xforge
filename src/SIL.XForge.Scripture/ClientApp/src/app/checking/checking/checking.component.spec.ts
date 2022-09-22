@@ -2,6 +2,7 @@ import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Location } from '@angular/common';
 import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, ActivatedRouteSnapshot, Route } from '@angular/router';
@@ -35,6 +36,7 @@ import { anyString, anything, deepEqual, instance, mock, reset, resetCalls, spy,
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { createStorageFileData, FileOfflineData, FileType } from 'xforge-common/models/file-offline-data';
 import { Snapshot } from 'xforge-common/models/snapshot';
@@ -82,6 +84,7 @@ const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedNoticeService = mock(NoticeService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedMdcDialog = mock(MdcDialog);
+const mockedDialogService = mock(DialogService);
 const mockedTextChooserDialogComponent = mock(TextChooserDialogComponent);
 const mockedQuestionDialogService = mock(QuestionDialogService);
 const mockedBugsnagService = mock(BugsnagService);
@@ -154,6 +157,7 @@ describe('CheckingComponent', () => {
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: MdcDialog, useMock: mockedMdcDialog },
+      { provide: DialogService, useMock: mockedDialogService },
       { provide: TextChooserDialogComponent, useMock: mockedTextChooserDialogComponent },
       { provide: QuestionDialogService, useMock: mockedQuestionDialogService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
@@ -1456,7 +1460,7 @@ class TestEnvironment {
   readonly ngZone: NgZone = TestBed.inject(NgZone);
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   readonly mockedAnsweredDialogRef = mock<MdcDialogRef<QuestionAnsweredDialogComponent>>(MdcDialogRef);
-  readonly mockedTextChooserDialogComponent = mock<MdcDialogRef<TextChooserDialogComponent>>(MdcDialogRef);
+  readonly mockedTextChooserDialogComponent = mock<MatDialogRef<TextChooserDialogComponent>>(MatDialogRef);
   readonly location: Location;
 
   questionReadTimer: number = 2000;
@@ -2353,7 +2357,7 @@ class TestEnvironment {
     );
 
     when(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).thenReturn(instance(this.mockedAnsweredDialogRef));
-    when(mockedMdcDialog.open(TextChooserDialogComponent, anything())).thenReturn(
+    when(mockedDialogService.openMatDialog(TextChooserDialogComponent, anything())).thenReturn(
       instance(this.mockedTextChooserDialogComponent)
     );
   }

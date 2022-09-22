@@ -1,9 +1,10 @@
-import { MdcDialog, MdcDialogConfig, MdcDialogRef, MDC_DIALOG_DATA } from '@angular-mdc/web/dialog';
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
+import { MatDialogConfig, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
 import { toStartAndEndVerseRefs } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -59,11 +60,11 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
   audioSource?: string;
 
   constructor(
-    private readonly dialogRef: MdcDialogRef<QuestionDialogComponent, QuestionDialogResult>,
-    @Inject(MDC_DIALOG_DATA) private data: QuestionDialogData,
+    private readonly dialogRef: MatDialogRef<QuestionDialogComponent, QuestionDialogResult | 'close'>,
+    @Inject(MAT_DIALOG_DATA) private data: QuestionDialogData,
     private noticeService: NoticeService,
     readonly i18n: I18nService,
-    readonly dialog: MdcDialog
+    readonly dialogService: DialogService
   ) {
     super();
   }
@@ -187,11 +188,6 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
 
   /** Edit text of control using Scripture chooser dialog. */
   openScriptureChooser(control: AbstractControl) {
-    if (this.scriptureStart.value === '') {
-      // the input element is losing focus, but the input is still being interacted with, so errors shouldn't be shown
-      this.scriptureStart.markAsUntouched();
-    }
-
     let currentVerseSelection: VerseRef | undefined;
     const { verseRef } = VerseRef.tryParse(control.value);
     if (verseRef.valid) {
@@ -206,15 +202,21 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
       }
     }
 
-    const dialogConfig: MdcDialogConfig<ScriptureChooserDialogData> = {
+    const dialogConfig: MatDialogConfig<ScriptureChooserDialogData> = {
       data: { input: currentVerseSelection, booksAndChaptersToShow: this.data.textsByBookId, rangeStart },
       autoFocus: false
     };
 
-    const dialogRef = this.dialog.open(ScriptureChooserDialogComponent, dialogConfig) as MdcDialogRef<
+    const dialogRef = this.dialogService.openMatDialog(ScriptureChooserDialogComponent, dialogConfig) as MatDialogRef<
       ScriptureChooserDialogComponent,
       VerseRef | 'close'
     >;
+    if (control.value === '') {
+      // the input element is losing focus, but the input is still being interacted with, so errors shouldn't be shown
+      dialogRef.afterOpened().subscribe(() => {
+        control.markAsUntouched();
+      });
+    }
     dialogRef.afterClosed().subscribe(result => {
       if (result != null && result !== 'close') {
         control.markAsTouched();

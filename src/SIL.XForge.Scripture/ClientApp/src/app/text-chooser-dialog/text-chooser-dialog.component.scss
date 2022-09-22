@@ -1,3 +1,12 @@
+.mat-dialog-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog-container {
+  max-width: 560px;
+}
+
 .select-chapter {
   cursor: pointer;
   display: inline-flex;
@@ -23,8 +32,12 @@ app-text {
 }
 
 .selection-preview {
-  height: 6em;
+  height: 16em;
   overflow-y: scroll;
+  margin-top: 1em;
+  > p {
+    margin-bottom: 0;
+  }
 }
 
 .error-message {

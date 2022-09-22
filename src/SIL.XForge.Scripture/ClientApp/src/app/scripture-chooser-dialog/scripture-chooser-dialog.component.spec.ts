@@ -1,4 +1,4 @@
-import { MdcDialog, MdcDialogConfig, MdcDialogModule, MdcDialogRef } from '@angular-mdc/web/dialog';
+import { MatDialog, MatDialogConfig, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -14,6 +14,7 @@ import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
 import { ScriptureChooserDialogComponent, ScriptureChooserDialogData } from './scripture-chooser-dialog.component';
 
@@ -30,7 +31,11 @@ describe('ScriptureChooserDialog', () => {
   }));
 
   let env: TestEnvironment;
-  afterEach(() => env.dialogRef.close());
+  afterEach(fakeAsync(() => {
+    while (env.backoutButton != null) {
+      env.click(env.backoutButton);
+    }
+  }));
 
   it('initially shows book chooser, close button', () => {
     env = new TestEnvironment();
@@ -99,16 +104,19 @@ describe('ScriptureChooserDialog', () => {
 
   it('book not highlighted, if no (undefined) incoming reference', fakeAsync(() => {
     env = new TestEnvironment({ inputScriptureReference: undefined });
+    flush();
     expect(env.highlightedButton).toBeNull();
   }));
 
   it('book not highlighted, if no (omitted) incoming reference', fakeAsync(() => {
     env = new TestEnvironment();
+    flush();
     expect(env.highlightedButton).toBeNull();
   }));
 
   it('book highlighted', fakeAsync(() => {
     env = new TestEnvironment({ inputScriptureReference: new VerseRef('ROM', '11', '33') });
+    flush();
     env.fixture.detectChanges();
     expect(env.highlightedButton).not.toBeNull();
   }));
@@ -161,6 +169,7 @@ describe('ScriptureChooserDialog', () => {
 
   it('input is received', fakeAsync(() => {
     env = new TestEnvironment({ inputScriptureReference: new VerseRef('EPH', '3', '21') });
+    flush();
     expect(env.component.data.input!.book).toEqual('EPH');
     expect(env.component.data.input!.chapter).toEqual('3');
     expect(env.component.data.input!.verse).toEqual('21');
@@ -168,6 +177,7 @@ describe('ScriptureChooserDialog', () => {
 
   it('only shows books that we seed (from project)', fakeAsync(() => {
     env = new TestEnvironment();
+    flush();
     expect(env.dialogText).toContain('Exodus');
     expect(env.dialogText).toContain('Matthew');
     expect(env.dialogText).not.toContain('Genesis');
@@ -298,6 +308,7 @@ describe('ScriptureChooserDialog', () => {
       // rangeStart is for book that is not in texts
       rangeStart: new VerseRef('RUT', '3', '15')
     });
+    flush();
 
     // Is not 'rangeEnd'
     expect(env.component.showing).toEqual('books');
@@ -342,6 +353,7 @@ describe('ScriptureChooserDialog', () => {
       // rangeStart is for chapter that is not in texts
       rangeStart: new VerseRef('ROM', '4', '15')
     });
+    flush();
 
     // Is not 'rangeEnd'
     expect(env.component.showing).toEqual('books');
@@ -386,6 +398,7 @@ describe('ScriptureChooserDialog', () => {
       // rangeStart is for invalid verse
       rangeStart: new VerseRef('ROM', '3', '99')
     });
+    flush();
 
     // Is not 'rangeEnd'
     expect(env.component.showing).toEqual('books');
@@ -431,8 +444,9 @@ describe('ScriptureChooserDialog', () => {
       HttpClientTestingModule,
       RouterTestingModule,
       UICommonModule,
-      MdcDialogModule,
-      TestTranslocoModule
+      MatDialogModule,
+      TestTranslocoModule,
+      NoopAnimationsModule
     ],
     declarations: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent],
     exports: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent]
@@ -442,7 +456,7 @@ describe('ScriptureChooserDialog', () => {
   class TestEnvironment {
     fixture: ComponentFixture<ChildViewContainerComponent>;
     component: ScriptureChooserDialogComponent;
-    dialogRef: MdcDialogRef<ScriptureChooserDialogComponent>;
+    dialogRef: MatDialogRef<ScriptureChooserDialogComponent>;
     dialogResult?: 'close' | VerseRef;
     closeIconName = 'close';
     backIconName = 'navigate_before';
@@ -501,12 +515,11 @@ describe('ScriptureChooserDialog', () => {
       const booksAndChaptersToShow: TextsByBookId = {};
       textsInProject.forEach(text => (booksAndChaptersToShow[Canon.bookNumberToId(text.bookNum)] = text));
 
-      const config: MdcDialogConfig<ScriptureChooserDialogData> = {
-        scrollable: true,
+      const config: MatDialogConfig<ScriptureChooserDialogData> = {
         viewContainerRef: viewContainerRef,
         data: { input: inputScriptureReference, booksAndChaptersToShow: booksAndChaptersToShow, rangeStart: rangeStart }
       };
-      this.dialogRef = TestBed.inject(MdcDialog).open(ScriptureChooserDialogComponent, config);
+      this.dialogRef = TestBed.inject(MatDialog).open(ScriptureChooserDialogComponent, config);
       this.dialogRef.afterClosed().subscribe(result => (this.dialogResult = result));
       this.component = this.dialogRef.componentInstance;
 
@@ -554,7 +567,7 @@ describe('ScriptureChooserDialog', () => {
     }
 
     get highlightedButton(): DebugElement {
-      return this.fixture.debugElement.query(By.css('.mdc-button--unelevated'));
+      return this.fixture.debugElement.query(By.css('.mat-flat-button'));
     }
 
     click(element: DebugElement): void {

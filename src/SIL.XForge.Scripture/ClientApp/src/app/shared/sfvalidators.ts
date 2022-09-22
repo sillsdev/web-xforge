@@ -113,15 +113,12 @@ export class ParentAndStartErrorStateMatcher implements ErrorStateMatcher {
     }
 
     const invalidCtrl = control.invalid && control.parent.dirty;
-    const invalidStart =
-      !control.parent.controls['scriptureStart'].hasError('verseFormat') &&
-      !control.parent.controls['scriptureStart'].hasError('verseRange') &&
-      (control.parent.controls['scriptureStart'].invalid ||
-        control.parent.hasError('verseDifferentBookOrChapter') ||
-        control.parent.hasError('verseBeforeStart'));
+    const invalidParent =
+      control.parent.controls['scriptureStart'].valid &&
+      (control.parent.hasError('verseDifferentBookOrChapter') || control.parent.hasError('verseBeforeStart'));
     return (
       (control.touched && invalidCtrl) ||
-      ((control.touched || control.parent.controls['scriptureStart'].touched) && invalidStart)
+      ((control.touched || control.parent.controls['scriptureStart'].touched) && invalidParent)
     );
   }
 }

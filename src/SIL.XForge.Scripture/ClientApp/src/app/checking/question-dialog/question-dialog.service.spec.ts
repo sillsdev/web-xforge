@@ -1,5 +1,6 @@
-import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { TestBed } from '@angular/core/testing';
+import { MatDialogRef } from '@angular/material/dialog';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import {
   getQuestionDocId,
@@ -14,12 +15,14 @@ import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/vers
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -29,7 +32,7 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { QuestionDialogComponent, QuestionDialogData, QuestionDialogResult } from './question-dialog.component';
 import { QuestionDialogService } from './question-dialog.service';
 
-const mockedDialog = mock(MdcDialog);
+const mockedDialogService = mock(DialogService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
@@ -37,10 +40,10 @@ const mockedFileService = mock(FileService);
 
 describe('QuestionDialogService', () => {
   configureTestingModule(() => ({
-    imports: [TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [TestTranslocoModule, NoopAnimationsModule, UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       QuestionDialogService,
-      { provide: MdcDialog, useMock: mockedDialog },
+      { provide: DialogService, useMock: mockedDialogService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: NoticeService, useMock: mockedNoticeService },
@@ -160,7 +163,7 @@ interface UserInfo {
 
 class TestEnvironment {
   readonly service: QuestionDialogService;
-  readonly mockedDialogRef = mock<MdcDialogRef<QuestionDialogComponent, QuestionDialogResult | 'close'>>(MdcDialogRef);
+  readonly mockedDialogRef = mock<MatDialogRef<QuestionDialogComponent, QuestionDialogResult | 'close'>>(MatDialogRef);
   textsByBookId: TextsByBookId;
   matthewText: TextInfo = {
     bookNum: 40,
@@ -212,7 +215,7 @@ class TestEnvironment {
       data: this.testProject
     });
 
-    when(mockedDialog.open(anything(), anything())).thenReturn(instance(this.mockedDialogRef));
+    when(mockedDialogService.openMatDialog(anything(), anything())).thenReturn(instance(this.mockedDialogRef));
     when(mockedUserService.currentUserId).thenReturn(this.adminUser.id);
     when(mockedProjectService.get(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id)
