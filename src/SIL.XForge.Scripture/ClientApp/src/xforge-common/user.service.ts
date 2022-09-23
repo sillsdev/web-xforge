@@ -48,6 +48,9 @@ export class UserService {
 
   async setCurrentProjectId(user: UserDoc, value: string | undefined): Promise<void> {
     this.localSettings.set(CURRENT_PROJECT_ID_SETTING, value);
+    if (user.data?.sites[this.siteId].currentProjectId === value) {
+      return;
+    }
     await user.submitJson0Op(update => {
       if (value != null) {
         update.set(u => u.sites[this.siteId].currentProjectId, value);
