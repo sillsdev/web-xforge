@@ -28,6 +28,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddTextCorpus<SFTextCorpusFactory>();
             services.AddSingleton<IAuthorizationHandler, MachineAuthorizationHandler>();
             services.AddSingleton<IBuildHandler, SFBuildHandler>();
+            services.AddSingleton<IMachineService, MachineService>();
             return services;
         }
     }
