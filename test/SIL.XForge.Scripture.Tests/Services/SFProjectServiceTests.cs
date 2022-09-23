@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
-using SIL.Machine.WebApi.Services;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -18,7 +17,6 @@ using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
-using MachineProject = SIL.Machine.WebApi.Models.Project;
 using Options = Microsoft.Extensions.Options.Options;
 
 namespace SIL.XForge.Scripture.Services
@@ -1976,12 +1974,12 @@ namespace SIL.XForge.Scripture.Services
                 new SFProjectSettings { SourceParatextId = "changedId", TranslationSuggestionsEnabled = true }
             );
 
-            SFProject project = env.GetProject("project01");
+            SFProject project = env.GetProject(Project01);
             Assert.That(project.TranslateConfig.Source.ParatextId, Is.EqualTo("changedId"));
             Assert.That(project.TranslateConfig.Source.Name, Is.EqualTo("NewSource"));
 
-            await env.EngineService.Received().RemoveProjectAsync(Arg.Any<string>());
-            await env.EngineService.Received().AddProjectAsync(Arg.Any<MachineProject>());
+            await env.MachineService.Received().RemoveProjectAsync(User01, Project01);
+            await env.MachineService.Received().AddProjectAsync(User01, Project01);
             await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
         }
 
@@ -1995,13 +1993,13 @@ namespace SIL.XForge.Scripture.Services
                 new SFProjectSettings { SourceParatextId = "changedId" }
             );
 
-            SFProject project = env.GetProject("project02");
+            SFProject project = env.GetProject(Project02);
             Assert.That(project.TranslateConfig.TranslationSuggestionsEnabled, Is.False);
             Assert.That(project.TranslateConfig.Source.ParatextId, Is.EqualTo("changedId"));
             Assert.That(project.TranslateConfig.Source.Name, Is.EqualTo("NewSource"));
 
-            await env.EngineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>());
-            await env.EngineService.DidNotReceive().AddProjectAsync(Arg.Any<MachineProject>());
+            await env.MachineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>());
+            await env.MachineService.DidNotReceive().AddProjectAsync(Arg.Any<string>(), Arg.Any<string>());
             await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
         }
 
@@ -2019,8 +2017,8 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.TranslateConfig.TranslationSuggestionsEnabled, Is.True);
             Assert.That(project.TranslateConfig.Source.Name, Is.EqualTo("Source Only Project"));
 
-            await env.EngineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>());
-            await env.EngineService.Received().AddProjectAsync(Arg.Any<Machine.WebApi.Models.Project>());
+            await env.MachineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>());
+            await env.MachineService.Received().AddProjectAsync(User01, Project03);
             await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
         }
 
@@ -2042,8 +2040,8 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.TranslateConfig.TranslationSuggestionsEnabled, Is.False);
             Assert.That(project.TranslateConfig.Source, Is.Null);
 
-            await env.EngineService.Received().RemoveProjectAsync(Arg.Any<string>());
-            await env.EngineService.DidNotReceive().AddProjectAsync(Arg.Any<MachineProject>());
+            await env.MachineService.Received().RemoveProjectAsync(User01, Project01);
+            await env.MachineService.DidNotReceive().AddProjectAsync(Arg.Any<string>(), Arg.Any<string>());
             await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
         }
 
@@ -2057,8 +2055,8 @@ namespace SIL.XForge.Scripture.Services
             SFProject project = env.GetProject(Project01);
             Assert.That(project.CheckingConfig.CheckingEnabled, Is.True);
 
-            await env.EngineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>());
-            await env.EngineService.DidNotReceive().AddProjectAsync(Arg.Any<Machine.WebApi.Models.Project>());
+            await env.MachineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>());
+            await env.MachineService.DidNotReceive().AddProjectAsync(Arg.Any<string>(), Arg.Any<string>());
             await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
         }
 
@@ -2076,8 +2074,8 @@ namespace SIL.XForge.Scripture.Services
             SFProject project = env.GetProject(Project01);
             Assert.That(project.CheckingConfig.ShareEnabled, Is.True);
 
-            await env.EngineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>());
-            await env.EngineService.DidNotReceive().AddProjectAsync(Arg.Any<Machine.WebApi.Models.Project>());
+            await env.MachineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>());
+            await env.MachineService.DidNotReceive().AddProjectAsync(Arg.Any<string>(), Arg.Any<string>());
             await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
         }
 
@@ -2094,7 +2092,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsProject(Project01), Is.False);
             User user = env.GetUser(User01);
             Assert.That(user.Sites[SiteId].Projects, Does.Not.Contain(Project01));
-            await env.EngineService.Received().RemoveProjectAsync(Project01);
+            await env.MachineService.Received().RemoveProjectAsync(User01, Project01);
             env.FileSystemService.Received().DeleteDirectory(ptProjectDir);
             Assert.That(env.ProjectSecrets.Contains(Project01), Is.False);
 
@@ -2104,7 +2102,7 @@ namespace SIL.XForge.Scripture.Services
             await env.Service.DeleteProjectAsync(User01, SourceOnly);
 
             await env.SyncService.Received().CancelSyncAsync(User01, SourceOnly);
-            await env.EngineService.Received().RemoveProjectAsync(SourceOnly);
+            await env.MachineService.Received().RemoveProjectAsync(User01, SourceOnly);
             env.FileSystemService.Received().DeleteDirectory(ptProjectDir);
             Assert.That(env.ContainsProject(SourceOnly), Is.False);
             Assert.That(env.GetUser(User01).Sites[SiteId].Projects, Does.Not.Contain(SourceOnly));
@@ -2990,7 +2988,7 @@ namespace SIL.XForge.Scripture.Services
                         },
                     }
                 );
-                EngineService = Substitute.For<IEngineService>();
+                MachineService = Substitute.For<IMachineService>();
                 SyncService = Substitute.For<ISyncService>();
                 SyncService
                     .SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
@@ -3052,7 +3050,7 @@ namespace SIL.XForge.Scripture.Services
                     ProjectSecrets,
                     SecurityService,
                     FileSystemService,
-                    EngineService,
+                    MachineService,
                     SyncService,
                     ParatextService,
                     UserSecrets,
@@ -3063,7 +3061,7 @@ namespace SIL.XForge.Scripture.Services
             }
 
             public SFProjectService Service { get; }
-            public IEngineService EngineService { get; }
+            public IMachineService MachineService { get; }
             public ISyncService SyncService { get; }
             public SFMemoryRealtimeService RealtimeService { get; }
             public IFileSystemService FileSystemService { get; }
