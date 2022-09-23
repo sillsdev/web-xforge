@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
-using SIL.Machine.WebApi.Services;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -18,7 +17,6 @@ using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
-using MachineProject = SIL.Machine.WebApi.Models.Project;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -31,7 +29,7 @@ namespace SIL.XForge.Scripture.Services
         private static readonly IEqualityComparer<Dictionary<string, string>> _permissionDictionaryEqualityComparer =
             new DictionaryComparer<string, string>();
         public static readonly string ErrorAlreadyConnectedKey = "error-already-connected";
-        private readonly IEngineService _engineService;
+        private readonly IMachineService _machineService;
         private readonly ISyncService _syncService;
         private readonly IParatextService _paratextService;
         private readonly IRepository<UserSecret> _userSecrets;
@@ -49,7 +47,7 @@ namespace SIL.XForge.Scripture.Services
             IRepository<SFProjectSecret> projectSecrets,
             ISecurityService securityService,
             IFileSystemService fileSystemService,
-            IEngineService engineService,
+            IMachineService machineService,
             ISyncService syncService,
             IParatextService paratextService,
             IRepository<UserSecret> userSecrets,
@@ -58,7 +56,7 @@ namespace SIL.XForge.Scripture.Services
             ITransceleratorService transceleratorService
         ) : base(realtimeService, siteOptions, audioService, projectSecrets, fileSystemService)
         {
-            _engineService = engineService;
+            _machineService = machineService;
             _syncService = syncService;
             _paratextService = paratextService;
             _userSecrets = userSecrets;
@@ -138,13 +136,7 @@ namespace SIL.XForge.Scripture.Services
 
                 if (projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled)
                 {
-                    var machineProject = new MachineProject
-                    {
-                        Id = projectDoc.Id,
-                        SourceLanguageTag = projectDoc.Data.TranslateConfig.Source.WritingSystem.Tag,
-                        TargetLanguageTag = projectDoc.Data.WritingSystem.Tag
-                    };
-                    await _engineService.AddProjectAsync(machineProject);
+                    await _machineService.AddProjectAsync(curUserId, projectDoc.Id);
                 }
             }
 
@@ -232,7 +224,7 @@ namespace SIL.XForge.Scripture.Services
 
             await ProjectSecrets.DeleteAsync(projectId);
             await RealtimeService.DeleteProjectAsync(projectId);
-            await _engineService.RemoveProjectAsync(projectId);
+            await _machineService.RemoveProjectAsync(curUserId, projectId);
             string projectDir = Path.Combine(SiteOptions.Value.SiteDir, "sync", ptProjectId);
             if (FileSystemService.DirectoryExists(projectDir))
                 FileSystemService.DeleteDirectory(projectDir);
@@ -316,20 +308,17 @@ namespace SIL.XForge.Scripture.Services
 
                             // recreate Machine project only if one existed
                             if (hasExistingMachineProject)
-                                await _engineService.RemoveProjectAsync(projectId);
-                            var machineProject = new MachineProject
                             {
-                                Id = projectId,
-                                SourceLanguageTag = projectDoc.Data.TranslateConfig.Source.WritingSystem.Tag,
-                                TargetLanguageTag = projectDoc.Data.WritingSystem.Tag
-                            };
-                            await _engineService.AddProjectAsync(machineProject);
+                                await _machineService.RemoveProjectAsync(curUserId, projectId);
+                            }
+
+                            await _machineService.AddProjectAsync(curUserId, projectId);
                             trainEngine = true;
                         }
                         else if (hasExistingMachineProject)
                         {
                             // translation suggestions was disabled or source project set to null
-                            await _engineService.RemoveProjectAsync(projectId);
+                            await _machineService.RemoveProjectAsync(curUserId, projectId);
                         }
                     }
 
