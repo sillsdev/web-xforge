@@ -8,7 +8,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
-using SIL.Machine.WebApi.Services;
 using SIL.ObjectModel;
 using SIL.Scripture;
 using SIL.XForge.DataAccess;
@@ -63,7 +62,7 @@ namespace SIL.XForge.Scripture.Services
         private readonly IRepository<SFProjectSecret> _projectSecrets;
         private readonly IRepository<SyncMetrics> _syncMetricsRepository;
         private readonly ISFProjectService _projectService;
-        private readonly IEngineService _engineService;
+        private readonly IMachineService _machineService;
         private readonly IParatextService _paratextService;
         private readonly IRealtimeService _realtimeService;
         private readonly IDeltaUsxMapper _deltaUsxMapper;
@@ -82,7 +81,7 @@ namespace SIL.XForge.Scripture.Services
             IRepository<SFProjectSecret> projectSecrets,
             IRepository<SyncMetrics> syncMetricsRepository,
             ISFProjectService projectService,
-            IEngineService engineService,
+            IMachineService machineService,
             IParatextService paratextService,
             IRealtimeService realtimeService,
             IDeltaUsxMapper deltaUsxMapper,
@@ -94,7 +93,7 @@ namespace SIL.XForge.Scripture.Services
             _projectSecrets = projectSecrets;
             _syncMetricsRepository = syncMetricsRepository;
             _projectService = projectService;
-            _engineService = engineService;
+            _machineService = machineService;
             _paratextService = paratextService;
             _realtimeService = realtimeService;
             _logger = logger;
@@ -1436,7 +1435,7 @@ namespace SIL.XForge.Scripture.Services
                 if (TranslationSuggestionsEnabled && trainEngine && hasSourceTextDocs)
                 {
                     // Start training Machine engine
-                    await _engineService.StartBuildByProjectIdAsync(_projectDoc.Id);
+                    await _machineService.BuildProjectAsync(_userSecret.Id, _projectDoc.Id);
                 }
 
                 // Backup the repository
