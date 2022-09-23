@@ -1,4 +1,3 @@
-import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { MdcList } from '@angular-mdc/web/list';
 import { MdcMenuSelectedEvent } from '@angular-mdc/web/menu';
 import { Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
@@ -26,6 +25,8 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
+import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
+import { DialogService } from 'xforge-common/dialog.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SF_DEFAULT_SHARE_ROLE } from '../../core/models/sf-project-role-info';
@@ -104,7 +105,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
     private readonly media: MediaObserver,
-    private readonly dialog: MdcDialog,
+    private readonly dialogService: DialogService,
     noticeService: NoticeService,
     private readonly router: Router,
     private readonly questionDialogService: QuestionDialogService,
@@ -644,11 +645,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   openScriptureChooser() {
-    const dialogConfig: MdcDialogConfig<ScriptureChooserDialogData> = {
+    const dialogConfig: MatDialogConfig<ScriptureChooserDialogData> = {
       data: { booksAndChaptersToShow: this.textsByBookId, includeVerseSelection: false }
     };
 
-    const dialogRef = this.dialog.open(ScriptureChooserDialogComponent, dialogConfig) as MdcDialogRef<
+    const dialogRef = this.dialogService.openMatDialog(ScriptureChooserDialogComponent, dialogConfig) as MatDialogRef<
       ScriptureChooserDialogComponent,
       VerseRef | 'close'
     >;
