@@ -14,8 +14,8 @@ import { AuthType, getAuthType, User } from 'realtime-server/lib/esm/common/mode
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
-import { combineLatest, from, merge, Observable, Subscription } from 'rxjs';
-import { distinctUntilChanged, filter, map, startWith, switchMap, tap } from 'rxjs/operators';
+import { combineLatest, merge, Observable, Subscription } from 'rxjs';
+import { distinctUntilChanged, filter, map, startWith, tap } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -34,6 +34,7 @@ import {
   BrowserIssue,
   SupportedBrowsersDialogComponent
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
+import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import versionData from '../../../version.json';
@@ -44,7 +45,7 @@ import { canAccessTranslateApp } from './core/models/sf-project-role-info';
 import { SFProjectService } from './core/sf-project.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
 import { SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
-import { compareProjectsForSorting, projectLabel } from './shared/utils';
+import { projectLabel } from './shared/utils';
 
 declare function gtag(...args: any): void;
 
@@ -102,6 +103,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly dialogService: DialogService,
     private readonly fileService: FileService,
     private readonly reportingService: ErrorReportingService,
+    private readonly userProjectsService: SFUserProjectsService,
     readonly noticeService: NoticeService,
     readonly i18n: I18nService,
     readonly media: MediaObserver,
@@ -311,10 +313,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         });
       }
 
-      const projectDocs$ = this.currentUserDoc.remoteChanges$.pipe(
-        startWith(null),
-        switchMap(() => from(this.getProjectDocs()))
-      );
+      const projectDocs$ = this.userProjectsService.projectDocs$;
 
       // retrieve the projectId from the current route. Since the nav menu is outside of the router outlet, it cannot
       // use ActivatedRoute to get the params. Instead the nav menu, listens to router events and traverses the route
@@ -426,13 +425,15 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         if (this._projectSelect != null) {
           this._projectSelect.value = this.selectedProjectDoc.id;
         }
-        // TODO Re-implement. Removed to prevent bug causing recursive writing producing 10s of thousands of user ops.
-        // See SF-1750
-        // await this.userService.setCurrentProjectId(this.currentUserDoc!, this.selectedProjectDoc.id);
 
         this.checkCheckingBookQuestions();
         this.checkDeviceStorage();
       });
+
+      this.subscribe(
+        projectId$.pipe(filter(id => id != null)),
+        async projectId => await this.userService.setCurrentProjectId(this.currentUserDoc!, projectId)
+      );
     }
     this.loadingFinished();
   }
@@ -588,26 +589,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       questionQuery.dispose();
     }
     this.questionCountQueries.clear();
-  }
-
-  private async getProjectDocs(): Promise<SFProjectProfileDoc[]> {
-    if (this.currentUser == null) {
-      return [];
-    }
-
-    this.loadingStarted();
-    const projects = this.currentUser.sites[environment.siteId].projects;
-    const projectDocs: SFProjectProfileDoc[] = new Array(projects.length);
-    const promises: Promise<any>[] = [];
-    for (let i = 0; i < projects.length; i++) {
-      const index = i;
-      promises.push(this.projectService.getProfile(projects[index]).then(p => (projectDocs[index] = p)));
-    }
-    await Promise.all(promises);
-    this.loadingFinished();
-    return projectDocs.sort((a, b) =>
-      a.data == null || b.data == null ? 0 : compareProjectsForSorting(a.data, b.data)
-    );
   }
 
   private async showProjectDeletedDialog(): Promise<void> {
