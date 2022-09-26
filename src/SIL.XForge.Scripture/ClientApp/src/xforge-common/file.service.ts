@@ -1,10 +1,11 @@
 import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { TranslocoService } from '@ngneat/transloco';
 import { Observable, Subject } from 'rxjs';
 import { environment } from '../environments/environment';
 import { AuthService } from './auth.service';
 import { CommandService } from './command.service';
+import { DialogService } from './dialog.service';
+import { I18nService } from './i18n.service';
 import {
   createDeletionFileData,
   createStorageFileData,
@@ -13,7 +14,6 @@ import {
   FileType
 } from './models/file-offline-data';
 import { ProjectDataDoc } from './models/project-data-doc';
-import { NoticeService } from './notice.service';
 import { OfflineStore } from './offline-store';
 import { PwaService } from './pwa.service';
 import { RealtimeService } from './realtime.service';
@@ -56,8 +56,8 @@ export class FileService extends SubscriptionDisposable {
     private readonly http: HttpClient,
     private readonly authService: AuthService,
     private readonly commandService: CommandService,
-    private readonly transloco: TranslocoService,
-    private readonly noticeService: NoticeService
+    private readonly i18n: I18nService,
+    private readonly dialogService: DialogService
   ) {
     super();
   }
@@ -190,8 +190,8 @@ export class FileService extends SubscriptionDisposable {
         quota.usage == null || quota.quota == null ? true : quota.quota - quota.usage > megabytes * 1024 * 1024;
     }
     if (!hasAdequateSpace && this.limitedStorageDialogPromise == null) {
-      this.limitedStorageDialogPromise = this.noticeService
-        .showMessageDialog(() => this.transloco.translate('file_service.storage_space_is_limited'))
+      this.limitedStorageDialogPromise = this.dialogService
+        .message(this.i18n.translate('file_service.storage_space_is_limited'))
         .then(() => (this.limitedStorageDialogPromise = undefined));
     }
   }
@@ -278,9 +278,9 @@ export class FileService extends SubscriptionDisposable {
       return Promise.reject(error);
     }
     // Prompt the user to check storage space
-    await this.noticeService.showMessageDialog(
-      () => this.transloco.translate('file_service.failed_to_save'),
-      () => this.transloco.translate('file_service.i_understand')
+    await this.dialogService.message(
+      this.i18n.translate('file_service.failed_to_save'),
+      this.i18n.translate('file_service.i_understand')
     );
   }
 }

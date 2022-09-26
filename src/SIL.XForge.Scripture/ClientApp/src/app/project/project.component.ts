@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TranslocoService } from '@ngneat/transloco';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { combineLatest } from 'rxjs';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { DialogService } from 'xforge-common/dialog.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -27,8 +28,9 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     private readonly projectService: SFProjectService,
     private readonly router: Router,
     private readonly userService: UserService,
-    private readonly transloco: TranslocoService,
+    private readonly i18n: I18nService,
     private readonly pwaService: PwaService,
+    private readonly dialogService: DialogService,
     noticeService: NoticeService
   ) {
     super(noticeService);
@@ -73,7 +75,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
         (err.code === CommandErrorCode.Forbidden || err.code === CommandErrorCode.NotFound)
       ) {
         await this.projectService.localDelete(projectId);
-        await this.noticeService.showMessageDialog(() => this.transloco.translate('project.project_link_is_invalid'));
+        await this.dialogService.message(this.i18n.translate('project.project_link_is_invalid'));
         this.router.navigateByUrl('/projects', { replaceUrl: true });
         return;
       } else {
@@ -131,7 +133,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
   }
 
   private async showOfflineMessage(): Promise<void> {
-    await this.noticeService.showMessageDialog(() => this.transloco.translate('project.please_connect_to_use_link'));
+    await this.dialogService.message(this.i18n.translate('project.please_connect_to_use_link'));
     const userDoc: UserDoc = await this.userService.getCurrentUser();
     const currentProjectId: string | undefined = this.userService.currentProjectId(userDoc);
     const projectId: string | undefined = selectValidProject(userDoc, currentProjectId);

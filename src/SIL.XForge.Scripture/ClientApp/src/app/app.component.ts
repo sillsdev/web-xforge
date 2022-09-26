@@ -298,7 +298,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
       const languageTag = this.currentUserDoc.data!.interfaceLanguage;
       if (languageTag != null) {
-        this.i18n.trySetLocale(languageTag, false);
+        this.i18n.trySetLocale(languageTag, this.authService);
       }
 
       const isNewlyLoggedIn = await this.authService.isNewlyLoggedIn;
@@ -448,6 +448,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.disposeQuestionQueries();
   }
 
+  setLocale(locale: string) {
+    this.i18n.setLocale(locale, this.authService);
+  }
+
   changePassword(): void {
     if (this.currentUser == null) {
       return;
@@ -460,7 +464,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
           this.noticeService.show(translate('app.password_reset_email_sent'));
         })
         .catch(() => {
-          this.noticeService.showMessageDialog(() => translate('app.cannot_change_password'));
+          this.dialogService.message(this.i18n.translate('app.cannot_change_password'));
         });
     }
   }

@@ -11,6 +11,7 @@ import { BehaviorSubject, of } from 'rxjs';
 import { anyString, anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -27,6 +28,7 @@ import { SyncComponent } from './sync.component';
 const mockedAuthService = mock(AuthService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedNoticeService = mock(NoticeService);
+const mockedDialogService = mock(DialogService);
 const mockedParatextService = mock(ParatextService);
 const mockedProjectService = mock(SFProjectService);
 const mockedBugsnagService = mock(BugsnagService);
@@ -41,6 +43,7 @@ describe('SyncComponent', () => {
       { provide: AuthService, useMock: mockedAuthService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: DialogService, useMock: mockedDialogService },
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
@@ -122,7 +125,7 @@ describe('SyncComponent', () => {
     env.emitSyncComplete(false, env.projectId);
 
     expect(env.component.syncActive).toBe(false);
-    verify(mockedNoticeService.showMessageDialog(anything())).once();
+    verify(mockedDialogService.message(anything())).once();
   }));
 
   it('should show progress if in-progress when loaded', fakeAsync(() => {
@@ -192,7 +195,7 @@ describe('SyncComponent', () => {
     expect(env.component.syncActive).toBe(false);
     expect(env.component.lastSyncDate).toEqual(previousLastSyncDate);
     verify(mockedNoticeService.show(anything())).never();
-    verify(mockedNoticeService.showMessageDialog(anything())).never();
+    verify(mockedDialogService.message(anything())).never();
   }));
 
   it('should report success if sync was cancelled but had finished', fakeAsync(() => {
@@ -207,7 +210,7 @@ describe('SyncComponent', () => {
     env.emitSyncComplete(true, env.projectId);
 
     verify(mockedNoticeService.show('Successfully synchronized Sync Test Project with Paratext.')).once();
-    verify(mockedNoticeService.showMessageDialog(anything())).never();
+    verify(mockedDialogService.message(anything())).never();
   }));
 });
 
