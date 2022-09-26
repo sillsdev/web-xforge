@@ -270,7 +270,9 @@ export class NoteDialogComponent implements OnInit {
   }
 
   isNoteEditable(note: Note): boolean {
-    return note.dataId === this.lastNoteId && note.ownerRef === this.userService.currentUserId;
+    return (
+      this.isAddNotesEnabled && note.dataId === this.lastNoteId && note.ownerRef === this.userService.currentUserId
+    );
   }
 
   reattachedText(note: Note): string {
