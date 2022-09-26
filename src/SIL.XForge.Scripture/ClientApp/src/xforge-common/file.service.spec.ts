@@ -8,10 +8,10 @@ import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforg
 import { environment } from '../environments/environment';
 import { AuthService } from './auth.service';
 import { CommandService } from './command.service';
+import { DialogService } from './dialog.service';
 import { FileService, formatFileSource } from './file.service';
 import { createDeletionFileData, createStorageFileData, FileOfflineData, FileType } from './models/file-offline-data';
 import { ProjectDataDoc } from './models/project-data-doc';
-import { NoticeService } from './notice.service';
 import { PwaService } from './pwa.service';
 import { TestRealtimeModule } from './test-realtime.module';
 import { TestRealtimeService } from './test-realtime.service';
@@ -21,7 +21,7 @@ import { COMMAND_API_NAMESPACE, PROJECTS_URL } from './url-constants';
 const mockedPwaService = mock(PwaService);
 const mockedAuthService = mock(AuthService);
 const mockedCommandService = mock(CommandService);
-const mockedNoticeService = mock(NoticeService);
+const mockedDialogService = mock(DialogService);
 
 describe('FileService', () => {
   configureTestingModule(() => ({
@@ -35,7 +35,7 @@ describe('FileService', () => {
       { provide: PwaService, useMock: mockedPwaService },
       { provide: AuthService, useMock: mockedAuthService },
       { provide: CommandService, useMock: mockedCommandService },
-      { provide: NoticeService, useMock: mockedNoticeService }
+      { provide: DialogService, useMock: mockedDialogService }
     ]
   }));
 
@@ -213,10 +213,10 @@ describe('FileService', () => {
   it('should show dialog when storage quota exceeded', fakeAsync(() => {
     const env = new TestEnvironment(false);
     env.realtimeService.offlineStorageQuotaStatus = true;
-    when(mockedNoticeService.showMessageDialog(anything(), anything())).thenResolve();
+    when(mockedDialogService.message(anything(), anything())).thenResolve();
     env.simulateUploadAudio(env.doc!);
     tick();
-    verify(mockedNoticeService.showMessageDialog(anything(), anything())).once();
+    verify(mockedDialogService.message(anything(), anything())).once();
     expect(env.doc!.data!.audioUrl).toBeUndefined();
   }));
 });
