@@ -90,7 +90,6 @@ export class I18nService {
   constructor(
     locationService: LocationService,
     private readonly bugsnagService: BugsnagService,
-    private readonly authService: AuthService,
     private readonly transloco: TranslocoService,
     private readonly cookieService: CookieService,
     private readonly reportingService: ErrorReportingService,
@@ -101,11 +100,11 @@ export class I18nService {
     // Auth0 profile, then the locale from the URL will end up being overridden.
     const urlLocale = new URLSearchParams(locationService.search).get('locale');
     if (urlLocale != null) {
-      this.trySetLocale(urlLocale, false);
+      this.trySetLocale(urlLocale);
     } else {
       const cookieLocale = this.cookieService.get(ASP_CULTURE_COOKIE_NAME);
       if (cookieLocale != null) {
-        this.trySetLocale(getAspCultureCookieLanguage(cookieLocale), false);
+        this.trySetLocale(getAspCultureCookieLanguage(cookieLocale));
       }
     }
   }
@@ -140,15 +139,15 @@ export class I18nService {
     );
   }
 
-  setLocale(tag: string) {
+  setLocale(tag: string, authService: AuthService) {
     const locale = I18nService.getLocale(tag);
     if (locale == null) {
       throw new Error(`Cannot set locale to non-existent locale ${tag}`);
     }
-    this.trySetLocale(tag);
+    this.trySetLocale(tag, authService);
   }
 
-  trySetLocale(tag: string, doAuthUpdate: boolean = true) {
+  trySetLocale(tag: string, authService?: AuthService) {
     const locale = I18nService.getLocale(tag);
     if (locale == null) {
       this.reportingService.silentError(`Failed attempt to set locale to unsupported locale ${tag}`);
@@ -168,8 +167,8 @@ export class I18nService {
       true,
       'Strict'
     );
-    if (doAuthUpdate) {
-      this.authService.updateInterfaceLanguage(locale.canonicalTag);
+    if (authService != null) {
+      authService.updateInterfaceLanguage(locale.canonicalTag);
     }
     this.bugsnagService.leaveBreadcrumb(
       'Set Locale',

@@ -27,12 +27,12 @@ import { LocalSettingsService } from './local-settings.service';
 import { LocationService } from './location.service';
 import { MemoryOfflineStore } from './memory-offline-store';
 import { MemoryRealtimeRemoteStore } from './memory-realtime-remote-store';
-import { NoticeService } from './notice.service';
 import { OfflineStore } from './offline-store';
 import { PwaService } from './pwa.service';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
-import { configureTestingModule } from './test-utils';
+import { configureTestingModule, TestTranslocoModule } from './test-utils';
 import { aspCultureCookieValue } from './utils';
+import { DialogService } from './dialog.service';
 
 const mockedAuth0Service = mock(Auth0Service);
 const mockedLocationService = mock(LocationService);
@@ -42,14 +42,14 @@ const mockedCookieService = mock(CookieService);
 const mockedRouter = mock(Router);
 const mockedLocalSettingsService = mock(LocalSettingsService);
 const mockedPwaService = mock(PwaService);
-const mockedNoticeService = mock(NoticeService);
+const mockedDialogService = mock(DialogService);
 const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedWebAuth = mock(Auth0Client);
 const mockedConsole: MockConsole = MockConsole.install();
 
 describe('AuthService', () => {
   configureTestingModule(() => ({
-    imports: [RouterTestingModule],
+    imports: [RouterTestingModule, TestTranslocoModule],
     providers: [
       AuthService,
       { provide: Auth0Service, useMock: mockedAuth0Service },
@@ -62,7 +62,7 @@ describe('AuthService', () => {
       { provide: Router, useMock: mockedRouter },
       { provide: LocalSettingsService, useMock: mockedLocalSettingsService },
       { provide: PwaService, useMock: mockedPwaService },
-      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: DialogService, useMock: mockedDialogService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService }
     ]
   }));
@@ -417,7 +417,7 @@ describe('AuthService', () => {
     const env = new TestEnvironment({ isOnline: true, isNewlyLoggedIn: true, callback });
     expect(env.isLoggedIn).toBe(false);
     verify(mockedWebAuth.getTokenSilently(anything())).twice();
-    verify(mockedNoticeService.showMessageDialog(anything(), anything())).once();
+    verify(mockedDialogService.message(anything(), anything())).once();
     mockedConsole.verify();
   }));
 
@@ -449,7 +449,7 @@ describe('AuthService', () => {
     });
     expect(env.isAuthenticated).toBe(true);
     verify(mockedLocationService.reload()).once();
-    verify(mockedNoticeService.showMessageDialog(anything(), anything())).once();
+    verify(mockedDialogService.message(anything(), anything())).once();
     // handleOnlineAuth gets called a second time after the dialog is closed
     verify(mockedRouter.navigateByUrl('/projects', anything())).twice();
 
@@ -636,7 +636,7 @@ class TestEnvironment {
     } else {
       when(mockedLocationService.href).thenReturn('http://localhost:5000/projects');
     }
-    when(mockedNoticeService.showMessageDialog(anything(), anything())).thenResolve();
+    when(mockedDialogService.message(anything(), anything())).thenResolve();
     when(mockedAuth0Service.init(anything())).thenReturn(instance(mockedWebAuth));
     when(mockedAuth0Service.changePassword(anything())).thenReturn(new Promise(r => r));
     when(mockedCommandService.onlineInvoke(anything(), 'linkParatextAccount', anything())).thenCall(

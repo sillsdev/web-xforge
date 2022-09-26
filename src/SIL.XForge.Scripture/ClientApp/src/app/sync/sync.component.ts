@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { map, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -33,7 +34,8 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     private readonly paratextService: ParatextService,
     private readonly projectService: SFProjectService,
     readonly i18n: I18nService,
-    private readonly pwaService: PwaService
+    private readonly pwaService: PwaService,
+    private readonly dialogService: DialogService
   ) {
     super(noticeService);
   }
@@ -88,8 +90,8 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
           this.noticeService.show(translate('sync.successfully_synchronized_with_paratext', { projectName }));
           this.previousLastSyncDate = this.lastSyncDate;
         } else {
-          this.noticeService.showMessageDialog(() =>
-            translate('sync.something_went_wrong_synchronizing_this_project', { projectName })
+          this.dialogService.message(
+            this.i18n.translate('sync.something_went_wrong_synchronizing_this_project', { projectName })
           );
         }
       }

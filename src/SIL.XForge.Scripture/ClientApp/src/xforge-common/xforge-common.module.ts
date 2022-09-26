@@ -13,7 +13,6 @@ import { AvatarComponent } from './avatar/avatar.component';
 import { GenericDialogComponent } from './generic-dialog/generic-dialog.component';
 import { I18nService, TranslationLoader } from './i18n.service';
 import { IndexeddbOfflineStore } from './indexeddb-offline-store';
-import { MessageDialogComponent } from './message-dialog/message-dialog.component';
 import { OfflineStore } from './offline-store';
 import { RealtimeRemoteStore } from './realtime-remote-store';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
@@ -27,7 +26,6 @@ import { WriteStatusComponent } from './write-status/write-status.component';
 const componentExports = [
   AvatarComponent,
   GenericDialogComponent,
-  MessageDialogComponent,
   SaProjectsComponent,
   SaDeleteDialogComponent,
   SaUsersComponent,
