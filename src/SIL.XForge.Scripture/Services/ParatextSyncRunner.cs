@@ -138,6 +138,24 @@ namespace SIL.XForge.Scripture.Services
                 var targetTextDocsByBook = new Dictionary<int, SortedList<int, IDocument<TextData>>>();
                 var questionDocsByBook = new Dictionary<int, IReadOnlyList<IDocument<Question>>>();
                 string lastSharedVersion = _paratextService.GetLatestSharedVersion(_userSecret, targetParatextId);
+                if (lastSharedVersion != _projectDoc.Data.Sync.SyncedToRepositoryVersion)
+                {
+                    if (
+                        _projectDoc.Data.Sync.SyncedToRepositoryVersion == null
+                        && _projectDoc.Data.Sync.DataInSync == null
+                    )
+                    {
+                        // This project pre-dates when we started tracking this information, and does not yet have a record of it.
+                    }
+                    else
+                    {
+                        Log(
+                            $"RunAsync: The reported PT hg repo latest shared version '{lastSharedVersion}' does not match record of project SyncedToRepositoryVersion '{_projectDoc.Data.Sync.SyncedToRepositoryVersion}'. Refusing to continue, to protect data."
+                        );
+                        await CompleteSync(successful: false, canRollbackParatext, trainEngine, token);
+                        return;
+                    }
+                }
 
                 bool isDataInSync = _projectDoc.Data.Sync.DataInSync ?? false;
                 if (lastSharedVersion == null)

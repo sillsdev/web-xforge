@@ -879,33 +879,13 @@ namespace SIL.XForge.Scripture.Services
                 string projectSFId = "project03";
                 string userId = "user01";
 
-                Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-                bool translationSuggestionsEnabled = true;
-                bool checkingEnabled = true;
-                bool changed = isChanged;
-                bool hasNoteThreads = false;
-                env.SetupSFData(
-                    projectSFId,
-                    "project04",
-                    translationSuggestionsEnabled,
-                    checkingEnabled,
-                    changed,
-                    hasNoteThreads,
-                    books
-                );
-                SFProject project = env.GetProject(projectSFId);
-                string projectPTId = project.ParatextId;
-                env.SetupPTDataForProjectIds(projectPTId, env.GetProject("project04").ParatextId, books);
-                Assert.That(
-                    project.Sync.SyncedToRepositoryVersion,
-                    Is.Null,
-                    "setup. Should be testing what happens when this is not set."
-                );
+                SFProject project = env.SetupProjectWithExpectedImportedRev(projectSFId, null);
                 Assert.That(
                     project.Sync.DataInSync,
                     Is.Null,
                     "setup. Should be testing what happens when this is not set."
                 );
+                string projectPTId = project.ParatextId;
                 env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), projectPTId).Returns("1", "2");
 
                 // SUT
@@ -929,73 +909,94 @@ namespace SIL.XForge.Scripture.Services
                     .Received(1)
                     .SendReceiveAsync(Arg.Any<UserSecret>(), projectPTId, Arg.Any<IProgress<ProgressState>>());
 
-                // The expected repository version can still be past the original project version, even if there were
-                // no local changes, since there may be incoming changes.
+                // The expected after-sync repository version can be past the original, before-sync project version,
+                // even if there were no local changes, since there may be incoming changes from the PT Archives server.
                 string expectedRepositoryVersion = "2";
                 env.VerifyProjectSync(true, expectedRepositoryVersion, projectSFId);
             }
         }
 
         [Test]
-        public async Task RunAsync_NoRecordOfSyncedToRepositoryVersionYetOutOfSyncRecord_NotWriteToPT()
+        public async Task RunAsync_NullSyncRevRecordMatchesNullHgRev_Continue()
         {
-            foreach (bool isChanged in new bool[] { true, false })
-            {
-                var env = new TestEnvironment();
-                string projectSFId = "project05";
-                string userId = "user01";
+            // The project sync record has no recorded PT hg repo revision that it imported from.
+            // The hg repo gives no revision either. Continue with sync.
 
-                Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-                bool translationSuggestionsEnabled = false;
-                bool checkingEnabled = true;
-                bool changed = isChanged;
-                bool hasNoteThreads = false;
-                env.SetupSFData(
-                    projectSFId,
-                    "project04",
-                    translationSuggestionsEnabled,
-                    checkingEnabled,
-                    changed,
-                    hasNoteThreads,
-                    books
-                );
-                SFProject project = env.GetProject(projectSFId);
-                string projectPTId = project.ParatextId;
-                // env.SetupPTData(projectPTId, env.GetProject("project04").ParatextId, books);
-                Assert.That(
-                    project.Sync.SyncedToRepositoryVersion,
-                    Is.Null,
-                    "setup. Should be testing what happens when this is not set."
-                );
-                Assert.That(project.Sync.DataInSync, Is.False, "setup. Should be testing what happens for this.");
-                env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), projectPTId).Returns("1", "2");
+            var env = new TestEnvironment();
+            // project05 has a null DB SyncedToRepositoryVersion.
+            string projectSFId = "project05";
+            string userId = "user01";
+            SFProject project = env.SetupProjectWithExpectedImportedRev(
+                projectSFId,
+                startingDBSyncedToRepositoryVersion: null
+            );
+            env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), project.ParatextId).Returns((string)null);
+            Assert.That(
+                project.Sync.DataInSync,
+                Is.Not.Null,
+                "setup. We are not testing the special situation of DataInSync being null."
+            );
+            await env.RunAndAssertContinuesAsync(projectSFId, userId, finalDBSyncedToRepositoryVersion: null);
+        }
 
-                // SUT
-                await env.Runner.RunAsync(projectSFId, userId, false, CancellationToken.None);
+        [Test]
+        public async Task RunAsync_NullSyncRevRecordNotMatchHgRev_Abort()
+        {
+            // The project sync record has no recorded PT hg repo revision that it imported from,
+            // yet the hg repo is there and has a revision. Do not perform sync.
 
-                project = env.GetProject(projectSFId);
-                // We are in an out-of-sync situation and so should not be writing to PT.
+            var env = new TestEnvironment();
+            // project05 has a null DB SyncedToRepositoryVersion.
+            string projectSFId = "project05";
+            string userId = "user01";
+            SFProject project = env.SetupProjectWithExpectedImportedRev(
+                projectSFId,
+                startingDBSyncedToRepositoryVersion: null
+            );
+            env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), project.ParatextId).Returns("v1");
+            Assert.That(
+                project.Sync.DataInSync,
+                Is.Not.Null,
+                "setup. We are not testing the special situation of DataInSync being null."
+            );
+            await env.RunAndAssertAbortAsync(projectSFId, userId, finalDBSyncedToRepositoryVersion: null);
+        }
 
-                env.ParatextService.DidNotReceiveWithAnyArgs().GetBookText(default, default, default);
-                env.DeltaUsxMapper
-                    .DidNotReceiveWithAnyArgs()
-                    .ToUsx(Arg.Any<XDocument>(), Arg.Any<IEnumerable<ChapterDelta>>());
-                env.ParatextService.DidNotReceiveWithAnyArgs().GetNotes(default, default, default);
-                await env.NotesMapper
-                    .DidNotReceiveWithAnyArgs()
-                    .GetNotesChangelistAsync(
-                        Arg.Any<XElement>(),
-                        Arg.Any<IEnumerable<IDocument<Question>>>(),
-                        Arg.Any<Dictionary<string, ParatextUserProfile>>()
-                    );
-                // We should have then called SR
-                await env.ParatextService
-                    .Received(1)
-                    .SendReceiveAsync(Arg.Any<UserSecret>(), projectPTId, Arg.Any<IProgress<ProgressState>>());
+        [Test]
+        public async Task RunAsync_SyncRevRecordNotMatchHgRev_Abort()
+        {
+            // The project sync record of PT hg repo revision that it imported from does not match the current
+            // hg repo revision. Do not perform sync.
 
-                string expectedRepositoryVersion = "2";
-                env.VerifyProjectSync(true, expectedRepositoryVersion, projectSFId);
-            }
+            var env = new TestEnvironment();
+            // project01 has a non-null DB SyncedToRepositoryVersion.
+            string projectSFId = "project01";
+            string userId = "user01";
+            SFProject project = env.SetupProjectWithExpectedImportedRev(
+                projectSFId,
+                startingDBSyncedToRepositoryVersion: "beforeSR"
+            );
+            env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), project.ParatextId).Returns("v1");
+            await env.RunAndAssertAbortAsync(projectSFId, userId, finalDBSyncedToRepositoryVersion: "beforeSR");
+        }
+
+        [Test]
+        public async Task RunAsync_SyncRevRecordMatchesHgRev_Continue()
+        {
+            // The project sync record of PT hg repo revision that it imported from matches the current
+            // hg repo revision. Continue with sync.
+
+            var env = new TestEnvironment();
+            // project01 has a non-null DB SyncedToRepositoryVersion.
+            string projectSFId = "project01";
+            string userId = "user01";
+            SFProject project = env.SetupProjectWithExpectedImportedRev(
+                projectSFId,
+                startingDBSyncedToRepositoryVersion: "beforeSR"
+            );
+            env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), project.ParatextId).Returns(("beforeSR"));
+
+            await env.RunAndAssertContinuesAsync(projectSFId, userId, finalDBSyncedToRepositoryVersion: "afterSR");
         }
 
         [Test]
@@ -1030,37 +1031,6 @@ namespace SIL.XForge.Scripture.Services
             // Check that the task cancelled correctly
             SFProject project = env.VerifyProjectSync(false);
             Assert.That(project.Sync.DataInSync, Is.True); // Nothing was synced as this was cancelled OnInit()
-        }
-
-        [Test]
-        public async Task SyncAsync_BackupRestoredPreviouslyRevNotMatching_WritesToPT()
-        {
-            var env = new TestEnvironment();
-            env.SetupSFData(true, true, true, false, new Book("MAT", 2), new Book("MRK", 2));
-            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
-
-            // Setup to simulate that a backup was restored at a revision not matching the recorded
-            // version in the project doc
-            env.ParatextService.BackupExists(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(true);
-            env.ParatextService
-                .GetLatestSharedVersion(Arg.Any<UserSecret>(), "target")
-                .Returns("revNotMatchingVersion");
-
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
-
-            // Check that text edits were pushed even if the current hg repo was not at the version recorded in
-            // the project docs.
-            await env.ParatextService
-                .Received(2)
-                .PutBookText(
-                    Arg.Any<UserSecret>(),
-                    Arg.Any<string>(),
-                    Arg.Any<int>(),
-                    Arg.Any<string>(),
-                    Arg.Any<Dictionary<int, string>>()
-                );
-            SFProject project = env.VerifyProjectSync(true);
-            Assert.That(project.Sync.DataInSync, Is.True);
         }
 
         [Test]
@@ -1711,29 +1681,31 @@ namespace SIL.XForge.Scripture.Services
         [Test]
         public async Task SyncAsync_NoteChanges_SavedToSFDB()
         {
-            var env = new TestEnvironment();
+            // Note that there are multiple constructions of TestEnvironment, since some mocks return different
+            // values when called more than once.
+
             // Various changes to note properties, coming from PT, are recorded into the SF DB. For this to happen,
             // the changes will need to be both detected, as well as saved.
             // A PT Comment Content property was updated, which is detected and saved to SF DB.
-            await env.SimpleNoteChangeAppliedCheckerAsync<string>(
+            await (new TestEnvironment()).SimpleNoteChangeAppliedCheckerAsync<string>(
                 (Note note) => note.Content,
                 (Note note, string newValue) => note.Content = newValue,
                 "new contents"
             );
             // A PT Comment Type property was updated, which is detected and saved to SF DB.
-            await env.SimpleNoteChangeAppliedCheckerAsync<string>(
+            await (new TestEnvironment()).SimpleNoteChangeAppliedCheckerAsync<string>(
                 (Note note) => note.Type,
                 (Note note, string newValue) => note.Type = newValue,
                 NoteType.Conflict.InternalValue
             );
             // ConflictType property
-            await env.SimpleNoteChangeAppliedCheckerAsync<string>(
+            await (new TestEnvironment()).SimpleNoteChangeAppliedCheckerAsync<string>(
                 (Note note) => note.ConflictType,
                 (Note note, string newValue) => note.ConflictType = newValue,
                 NoteConflictType.VerseTextConflict.InternalValue
             );
             // AcceptedChangeXml property
-            await env.SimpleNoteChangeAppliedCheckerAsync<string>(
+            await (new TestEnvironment()).SimpleNoteChangeAppliedCheckerAsync<string>(
                 (Note note) => note.AcceptedChangeXml,
                 (Note note, string newValue) => note.AcceptedChangeXml = newValue,
                 "some xml"
@@ -2013,20 +1985,29 @@ namespace SIL.XForge.Scripture.Services
                 return RealtimeService.GetRepository<NoteThread>().Get($"{projectId}:{threadId}");
             }
 
-            public SFProject VerifyProjectSync(
-                bool successful,
-                string expectedRepoVersion = null,
-                string projectSFId = "project01"
+            public SFProject AssertDBSyncMetadata(
+                string projectSFId,
+                bool lastSyncSuccess,
+                string syncedToRepositoryVersion
             )
             {
                 SFProjectSecret projectSecret = GetProjectSecret(projectSFId);
                 Assert.That(projectSecret.JobIds.Count, Is.EqualTo(0));
                 SFProject project = GetProject(projectSFId);
                 Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
-                Assert.That(project.Sync.LastSyncSuccessful, Is.EqualTo(successful));
-                string repoVersion = expectedRepoVersion ?? (successful ? "afterSR" : "beforeSR");
-                Assert.That(project.Sync.SyncedToRepositoryVersion, Is.EqualTo(repoVersion));
+                Assert.That(project.Sync.LastSyncSuccessful, Is.EqualTo(lastSyncSuccess));
+                Assert.That(project.Sync.SyncedToRepositoryVersion, Is.EqualTo(syncedToRepositoryVersion));
                 return project;
+            }
+
+            public SFProject VerifyProjectSync(
+                bool successful,
+                string expectedRepoVersion = null,
+                string projectSFId = "project01"
+            )
+            {
+                string repoVersion = expectedRepoVersion ?? (successful ? "afterSR" : "beforeSR");
+                return AssertDBSyncMetadata(projectSFId, successful, repoVersion);
             }
 
             public TextInfo SetupChapterAuthorsAndGetTextInfo(bool setChapterPermissions)
@@ -2719,6 +2700,109 @@ namespace SIL.XForge.Scripture.Services
             public void SetupEmptyNoteThreads()
             {
                 RealtimeService.AddRepository("note_threads", OTType.Json0, new MemoryRepository<NoteThread>());
+            }
+
+            public SFProject SetupProjectWithExpectedImportedRev(
+                string projectSFId,
+                string startingDBSyncedToRepositoryVersion
+            )
+            {
+                Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+                bool translationSuggestionsEnabled = false;
+                bool checkingEnabled = true;
+                bool changed = true;
+                bool hasNoteThreads = false;
+                SetupSFData(
+                    targetProjectSFId: projectSFId,
+                    sourceProjectSFId: "project04",
+                    translationSuggestionsEnabled,
+                    checkingEnabled,
+                    changed,
+                    hasNoteThreads,
+                    books
+                );
+                SFProject project = GetProject(projectSFId);
+                SetupPTDataForProjectIds(project.ParatextId, GetProject("project04").ParatextId, books);
+                Assert.That(
+                    project.Sync.SyncedToRepositoryVersion,
+                    Is.EqualTo(startingDBSyncedToRepositoryVersion),
+                    "setup"
+                );
+                return project;
+            }
+
+            public async Task RunAndAssertAbortAsync(
+                string projectSFId,
+                string userId,
+                string finalDBSyncedToRepositoryVersion
+            )
+            {
+                // SUT
+                await Runner.RunAsync(projectSFId, userId, trainEngine: false, token: CancellationToken.None);
+
+                // We are in an out-of-sync situation and so should not be writing to PT.
+
+                // Should not be preparing to write data to the PT hg repo.
+                ParatextService.DidNotReceiveWithAnyArgs().GetBookText(default, default, default);
+                DeltaUsxMapper
+                    .DidNotReceiveWithAnyArgs()
+                    .ToUsx(Arg.Any<XDocument>(), Arg.Any<IEnumerable<ChapterDelta>>());
+                ParatextService.DidNotReceiveWithAnyArgs().GetNotes(default, default, default);
+                await NotesMapper
+                    .DidNotReceiveWithAnyArgs()
+                    .GetNotesChangelistAsync(
+                        Arg.Any<XElement>(),
+                        Arg.Any<IEnumerable<IDocument<Question>>>(),
+                        Arg.Any<Dictionary<string, ParatextUserProfile>>()
+                    );
+
+                // Should not be performing a SR.
+                await ParatextService
+                    .DidNotReceiveWithAnyArgs()
+                    .SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<IProgress<ProgressState>>());
+
+                // Record of sync is of not success.
+                AssertDBSyncMetadata(
+                    projectSFId,
+                    lastSyncSuccess: false,
+                    syncedToRepositoryVersion: finalDBSyncedToRepositoryVersion
+                );
+            }
+
+            public async Task RunAndAssertContinuesAsync(
+                string projectSFId,
+                string userId,
+                string finalDBSyncedToRepositoryVersion
+            )
+            {
+                // SUT
+                await Runner.RunAsync(projectSFId, userId, trainEngine: false, token: CancellationToken.None);
+
+                // We are not in an out-of-sync situation and should proceed with the sync.
+
+                // Should be preparing to write data to the PT hg repo.
+                ParatextService.ReceivedWithAnyArgs().GetBookText(default, default, default);
+                DeltaUsxMapper.ReceivedWithAnyArgs().ToUsx(Arg.Any<XDocument>(), Arg.Any<IEnumerable<ChapterDelta>>());
+                ParatextService.ReceivedWithAnyArgs().GetNotes(default, default, default);
+                await NotesMapper
+                    .ReceivedWithAnyArgs()
+                    .GetNotesChangelistAsync(
+                        Arg.Any<XElement>(),
+                        Arg.Any<IEnumerable<IDocument<Question>>>(),
+                        Arg.Any<Dictionary<string, ParatextUserProfile>>()
+                    );
+
+                // Should be performing a SR.
+                await ParatextService
+                    .ReceivedWithAnyArgs()
+                    .SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<IProgress<ProgressState>>());
+
+                // Record of sync is of success.
+                AssertDBSyncMetadata(
+                    projectSFId,
+                    lastSyncSuccess: true,
+                    syncedToRepositoryVersion: finalDBSyncedToRepositoryVersion
+                );
             }
 
             private void AddPTBook(
