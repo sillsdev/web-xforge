@@ -1,6 +1,6 @@
-import { MDC_DIALOG_DATA } from '@angular-mdc/web/dialog';
 import { Component, Inject } from '@angular/core';
 import { translate } from '@ngneat/transloco';
+import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 export interface MessageDialogData {
   message: () => string;
@@ -12,7 +12,7 @@ export interface MessageDialogData {
   templateUrl: './message-dialog.component.html'
 })
 export class MessageDialogComponent {
-  constructor(@Inject(MDC_DIALOG_DATA) private readonly data: MessageDialogData) {}
+  constructor(@Inject(MAT_DIALOG_DATA) private readonly data: MessageDialogData) {}
 
   get message(): string {
     return this.data.message();

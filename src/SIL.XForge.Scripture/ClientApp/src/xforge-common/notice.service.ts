@@ -1,6 +1,6 @@
-import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { MdcSnackbar, MdcSnackbarConfig } from '@angular-mdc/web/snackbar';
 import { Injectable } from '@angular/core';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MessageDialogComponent, MessageDialogData } from './message-dialog/message-dialog.component';
 
 /** Manages and provides access to notices shown to user on the web site. */
@@ -12,7 +12,7 @@ export class NoticeService {
   private loadingCount: number = 0;
   private messageOnDisplay?: string;
 
-  constructor(private readonly snackbar: MdcSnackbar, private readonly dialog: MdcDialog) {}
+  constructor(private readonly snackbar: MdcSnackbar, private readonly dialog: MatDialog) {}
 
   get isAppLoading(): boolean {
     return this._isAppLoading;
@@ -43,7 +43,7 @@ export class NoticeService {
   showMessageDialog(message: () => string, closeButtonText?: () => string): Promise<void> {
     const dialogRef = this.dialog.open<MessageDialogComponent, MessageDialogData>(MessageDialogComponent, {
       data: { message, closeButtonText }
-    }) as MdcDialogRef<MessageDialogComponent, any>;
+    }) as MatDialogRef<MessageDialogComponent, any>;
 
     return dialogRef.afterClosed().toPromise();
   }
