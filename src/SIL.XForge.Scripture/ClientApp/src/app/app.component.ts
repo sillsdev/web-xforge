@@ -414,7 +414,9 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         if (this._projectSelect != null) {
           this._projectSelect.value = this.selectedProjectDoc.id;
         }
-        await this.userService.setCurrentProjectId(this.currentUserDoc!, this.selectedProjectDoc.id);
+        // TODO Re-implement. Removed to prevent bug causing recursive writing producing 10s of thousands of user ops.
+        // See SF-1750
+        // await this.userService.setCurrentProjectId(this.currentUserDoc!, this.selectedProjectDoc.id);
 
         this.checkCheckingBookQuestions();
         this.checkDeviceStorage();
