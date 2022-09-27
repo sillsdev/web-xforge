@@ -413,7 +413,7 @@ describe('AppComponent', () => {
     expect(env.component.isAppOnline).toBe(false);
     verify(mockedAuthService.checkOnlineAuth()).never();
 
-    env.setBrowserOnline();
+    env.setBrowserOnlineStatus(true);
     tick();
     expect(env.component.isAppOnline).toBe(false);
     verify(mockedAuthService.checkOnlineAuth()).once();
@@ -759,29 +759,21 @@ class TestEnvironment {
   }
 
   goFullyOffline() {
-    this.setBrowserOffline();
-    this.setWebSocketOffline();
+    this.setBrowserOnlineStatus(false);
+    this.setWebSocketOnlineStatus(false);
   }
 
   goFullyOnline() {
-    this.setBrowserOnline();
-    this.setWebSocketOnline();
+    this.setBrowserOnlineStatus(true);
+    this.setWebSocketOnlineStatus(true);
   }
 
-  setBrowserOffline() {
-    this.browserOnline$.next(false);
+  setBrowserOnlineStatus(status: boolean) {
+    this.browserOnline$.next(status);
   }
 
-  setBrowserOnline() {
-    this.browserOnline$.next(true);
-  }
-
-  setWebSocketOffline() {
-    this.webSocketOnline$.next(false);
-  }
-
-  setWebSocketOnline() {
-    this.webSocketOnline$.next(true);
+  setWebSocketOnlineStatus(status: boolean) {
+    this.webSocketOnline$.next(status);
   }
 
   init(): void {
