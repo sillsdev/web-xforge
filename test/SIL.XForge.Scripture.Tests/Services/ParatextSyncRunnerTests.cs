@@ -883,7 +883,7 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(
                     project.Sync.DataInSync,
                     Is.Null,
-                    "setup. Should be testing what happens when this is not set."
+                    "setup. Should be testing what happens when this is null."
                 );
                 string projectPTId = project.ParatextId;
                 env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), projectPTId).Returns("1", "2");
@@ -1681,8 +1681,8 @@ namespace SIL.XForge.Scripture.Services
         [Test]
         public async Task SyncAsync_NoteChanges_SavedToSFDB()
         {
-            // Note that there are multiple constructions of TestEnvironment, since some mocks return different
-            // values when called more than once.
+            // Note that there are multiple constructions of TestEnvironment, since
+            // ParatextService.GetLastSharedRevision() returns different values before and after SendReceive.
 
             // Various changes to note properties, coming from PT, are recorded into the SF DB. For this to happen,
             // the changes will need to be both detected, as well as saved.
