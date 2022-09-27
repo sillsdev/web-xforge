@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Location } from '@angular/common';
 import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { MatDialog, MatDialogRef, MatDialogConfig } from '@angular/material/dialog';
+import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Params, Route, Router } from '@angular/router';
@@ -76,7 +76,6 @@ import { NoteDialogComponent } from './note-dialog/note-dialog.component';
 import { SuggestionsComponent } from './suggestions.component';
 import { ACTIVE_EDIT_TIMEOUT } from './translate-metrics-session';
 import { NoteDialogData } from './note-dialog/note-dialog.component';
-import { TextDeletedDialogComponent } from './text-deleted-dialog/text-deleted-dialog.component';
 
 const mockedAuthService = mock(AuthService);
 const mockedSFProjectService = mock(SFProjectService);
@@ -149,14 +148,14 @@ describe('EditorComponent', () => {
   }));
 
   it('response to remote text deletion', fakeAsync(() => {
+    when(mockedNoticeService.showMessageDialog(anything())).thenResolve();
     const env = new TestEnvironment();
     env.updateParams({ projectId: 'project02', bookId: 'MAT' });
     env.wait();
 
     const textDocId = new TextDocId('project02', 40, 1, 'target');
     env.deleteText(textDocId.toString());
-    verify(mockedMatDialog.open(TextDeletedDialogComponent, anything())).once();
-    env.confirmTextDeletedDialog();
+    verify(mockedNoticeService.showMessageDialog(anything())).once();
     tick();
     expect(env.location.path()).toEqual('/projects/project02/translate');
     env.dispose();
@@ -2646,9 +2645,7 @@ class TestEnvironment {
   readonly router: Router;
   readonly location: Location;
   readonly mockNoteDialogRef;
-  readonly mockedTextDeletedDialogRef = mock<MatDialogRef<TextDeletedDialogComponent>>(MatDialogRef);
   readonly ngZone: NgZone;
-  readonly textDeletedDialogRefAfterClosed$: Subject<string> = new Subject<string>();
 
   private userRolesOnProject = {
     user01: SFProjectRole.ParatextTranslator,
@@ -2875,10 +2872,6 @@ class TestEnvironment {
     });
     when(mockedMatDialog.closeAll()).thenCall(() => openNoteDialogs.forEach(dialog => dialog.close()));
     when(mockedFeatureFlagService.allowAddingNotes).thenReturn({ enabled: true } as FeatureFlag);
-    when(mockedMatDialog.open(TextDeletedDialogComponent, anything())).thenReturn(
-      instance(this.mockedTextDeletedDialogRef)
-    );
-    when(this.mockedTextDeletedDialogRef.afterClosed()).thenReturn(this.textDeletedDialogRefAfterClosed$);
 
     this.router = TestBed.inject(Router);
     this.location = TestBed.inject(Location);
@@ -2972,8 +2965,8 @@ class TestEnvironment {
     when(mockedPwaService.onlineStatus).thenReturn(of(value));
   }
 
-  confirmTextDeletedDialog() {
-    this.ngZone.run(() => this.textDeletedDialogRefAfterClosed$.next('close'));
+  dismissMessageDialog() {
+    // this.ngZone.run(() => this.messageDialogRefAfterClosed$.next('close'));
   }
 
   deleteText(textId: string): void {
