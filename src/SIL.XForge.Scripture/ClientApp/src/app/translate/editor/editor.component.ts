@@ -40,7 +40,6 @@ import { UserService } from 'xforge-common/user.service';
 import { getLinkHTML, issuesEmailTemplate, objectId } from 'xforge-common/utils';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { MatDialogRef } from '@angular/material/dialog';
 import { NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -75,7 +74,6 @@ import {
 } from './suggestions-settings-dialog.component';
 import { Suggestion } from './suggestions.component';
 import { TranslateMetricsSession } from './translate-metrics-session';
-import { TextDeletedDialogComponent } from './text-deleted-dialog/text-deleted-dialog.component';
 
 export const UPDATE_SUGGESTIONS_TIMEOUT = 100;
 export const SF_NOTE_THREAD_PREFIX = 'SFNOTETHREAD_';
@@ -130,7 +128,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private paratextUsers: ParatextUserProfile[] = [];
   private projectUserConfigChangesSub?: Subscription;
   private text?: TextInfo;
-  private textDeletedDialogRef: MatDialogRef<TextDeletedDialogComponent> | null = null;
   private sourceText?: TextInfo;
   private sourceProjectDoc?: SFProjectProfileDoc;
   private sourceLoaded: boolean = false;
@@ -1050,10 +1047,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.onTargetDeleteSub.unsubscribe();
     }
     this.onTargetDeleteSub = textDoc.delete$.subscribe(() => {
-      this.textDeletedDialogRef = this.dialogService.openMatDialog(TextDeletedDialogComponent);
-      this.textDeletedDialogRef.afterClosed().subscribe(() => {
-        this.router.navigateByUrl('/projects/' + this.projectDoc?.id + '/translate', { replaceUrl: true });
-      });
+      this.noticeService
+        .showMessageDialog(() => translate('editor.text_has_been_deleted'))
+        .then(() => {
+          this.router.navigateByUrl('/projects/' + this.projectDoc!.id + '/translate', { replaceUrl: true });
+        });
     });
     setTimeout(() => this.setTextHeight());
   }
