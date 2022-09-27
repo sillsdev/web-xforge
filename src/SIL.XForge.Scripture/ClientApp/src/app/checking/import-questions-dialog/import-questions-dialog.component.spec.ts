@@ -1,4 +1,4 @@
-import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
+import { MdcDialogRef } from '@angular-mdc/web';
 import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
@@ -18,6 +18,7 @@ import { BehaviorSubject, of, throwError } from 'rxjs';
 import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { CsvService } from 'xforge-common/csv-service.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { TestingRetryingRequestService } from 'xforge-common/testing-retrying-request.service';
@@ -36,7 +37,7 @@ import {
 const mockedProjectService = mock(SFProjectService);
 const mockedAuthService = mock(AuthService);
 const mockedCookieService = mock(CookieService);
-const mockedMdcDialog = mock(MdcDialog);
+const mockedDialogService = mock(DialogService);
 const mockedCsvService = mock(CsvService);
 const mockedRealtimeQuery: RealtimeQuery<QuestionDoc> = mock(RealtimeQuery);
 
@@ -47,7 +48,7 @@ describe('ImportQuestionsDialogComponent', () => {
       { provide: AuthService, useMock: mockedAuthService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: CookieService, useMock: mockedCookieService },
-      { provide: MdcDialog, useMock: mockedMdcDialog },
+      { provide: DialogService, useMock: mockedDialogService },
       { provide: CsvService, useMock: mockedCsvService }
     ]
   }));
@@ -171,9 +172,9 @@ describe('ImportQuestionsDialogComponent', () => {
   it('show scripture chooser dialog', fakeAsync(() => {
     const env = new TestEnvironment();
     env.click(env.importFromTransceleratorButton);
-    when(env.mockedScriptureChooserMdcDialogRef.afterClosed()).thenReturn(of(VerseRef.parse('MAT 1:1')));
+    when(env.mockedScriptureChooserMatDialogRef.afterClosed()).thenReturn(of(VerseRef.parse('MAT 1:1')));
     env.openFromScriptureChooser();
-    verify(mockedMdcDialog.open(anything(), anything())).once();
+    verify(mockedDialogService.openMatDialog(anything(), anything())).once();
     expect(env.component.fromControl.value).toBe('MAT 1:1');
     env.click(env.cancelButton);
   }));
@@ -189,7 +190,7 @@ describe('ImportQuestionsDialogComponent', () => {
 
     when(env.mockedImportQuestionsConfirmationMdcDialogRef.afterClosed()).thenReturn(of([false, false]));
     env.clickSelectAll();
-    verify(mockedMdcDialog.open(anything(), anything())).once();
+    verify(mockedDialogService.openMdcDialog(anything(), anything())).once();
     expect(env.tableRows.length).toBe(4);
     expect(env.component.filteredList[0].checked).toBe(false);
     expect(env.component.filteredList[1].checked).toBe(false);
@@ -204,7 +205,7 @@ describe('ImportQuestionsDialogComponent', () => {
     env.click(env.importFromTransceleratorButton);
     expect(env.tableRows.length).toBe(4);
     env.clickSelectAll();
-    verify(mockedMdcDialog.open(anything(), anything())).once();
+    verify(mockedDialogService.openMdcDialog(anything(), anything())).once();
     env.click(env.importSelectedQuestionsButton);
     expect(env.editedTransceleratorQuestionIds).toEqual(['1', '4']);
   }));
@@ -449,7 +450,7 @@ class TestEnvironment {
   fixture: ComponentFixture<ChildViewContainerComponent>;
   component: ImportQuestionsDialogComponent;
   dialogRef: MatDialogRef<ImportQuestionsDialogComponent>;
-  mockedScriptureChooserMdcDialogRef = mock<MdcDialogRef<ScriptureChooserDialogComponent>>(MdcDialogRef);
+  mockedScriptureChooserMatDialogRef = mock<MatDialogRef<ScriptureChooserDialogComponent>>(MatDialogRef);
   mockedImportQuestionsConfirmationMdcDialogRef =
     mock<MdcDialogRef<ImportQuestionsConfirmationDialogComponent>>(MdcDialogRef);
   editedTransceleratorQuestionIds: string[] = [];
@@ -543,10 +544,10 @@ class TestEnvironment {
     this.dialogRef = TestBed.inject(MatDialog).open(ImportQuestionsDialogComponent, config);
     this.component = this.dialogRef.componentInstance;
 
-    when(mockedMdcDialog.open(ScriptureChooserDialogComponent, anything())).thenReturn(
-      instance<MdcDialogRef<ScriptureChooserDialogComponent>>(this.mockedScriptureChooserMdcDialogRef)
+    when(mockedDialogService.openMatDialog(ScriptureChooserDialogComponent, anything())).thenReturn(
+      instance<MatDialogRef<ScriptureChooserDialogComponent>>(this.mockedScriptureChooserMatDialogRef)
     );
-    when(mockedMdcDialog.open(ImportQuestionsConfirmationDialogComponent, anything())).thenReturn(
+    when(mockedDialogService.openMdcDialog(ImportQuestionsConfirmationDialogComponent, anything())).thenReturn(
       instance<MdcDialogRef<ImportQuestionsConfirmationDialogComponent>>(
         this.mockedImportQuestionsConfirmationMdcDialogRef
       )

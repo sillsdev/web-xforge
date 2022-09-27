@@ -1,8 +1,8 @@
-import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
+import { MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
 import { Component, ElementRef, Inject, NgZone, OnDestroy, ViewChild } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
 import { MatCheckbox } from '@angular/material/checkbox';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialogConfig, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
@@ -14,6 +14,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { RetryingRequest } from 'xforge-common/retrying-request.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { environment } from '../../../environments/environment';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
@@ -104,7 +105,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
     private readonly projectService: SFProjectService,
     private readonly dialogRef: MatDialogRef<ImportQuestionsDialogComponent>,
     private readonly transloco: TranslocoService,
-    private readonly mdcDialog: MdcDialog,
+    private readonly dialogService: DialogService,
     private readonly zone: NgZone,
     private readonly csvService: CsvService,
     readonly i18n: I18nService,
@@ -259,12 +260,12 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
   }
 
   openScriptureChooser(control: AbstractControl) {
-    const dialogConfig: MdcDialogConfig<ScriptureChooserDialogData> = {
+    const dialogConfig: MatDialogConfig<ScriptureChooserDialogData> = {
       data: { booksAndChaptersToShow: this.data.textsByBookId },
       autoFocus: false
     };
 
-    const dialogRef = this.mdcDialog.open(ScriptureChooserDialogComponent, dialogConfig) as MdcDialogRef<
+    const dialogRef = this.dialogService.openMatDialog(ScriptureChooserDialogComponent, dialogConfig) as MatDialogRef<
       ScriptureChooserDialogComponent,
       VerseRef | 'close'
     >;
@@ -451,10 +452,10 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
       escapeToClose: false,
       clickOutsideToClose: false
     };
-    const dialogRef = this.mdcDialog.open(ImportQuestionsConfirmationDialogComponent, data) as MdcDialogRef<
+    const dialogRef = this.dialogService.openMdcDialog(
       ImportQuestionsConfirmationDialogComponent,
-      ImportQuestionsConfirmationDialogResult
-    >;
+      data
+    ) as MdcDialogRef<ImportQuestionsConfirmationDialogComponent, ImportQuestionsConfirmationDialogResult>;
     (await dialogRef.afterClosed().toPromise())!.forEach(
       (checked, index) => (changesToConfirm[index].checked = checked)
     );
