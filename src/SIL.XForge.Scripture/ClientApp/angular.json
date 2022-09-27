@@ -122,7 +122,8 @@
               "browserTarget": "SIL.XForge.Scripture:build:production"
             },
             "development": {
-              "browserTarget": "SIL.XForge.Scripture:build:development"
+              "browserTarget": "SIL.XForge.Scripture:build:development",
+              "publicHost": "localhost:4200"
             }
           },
           "defaultConfiguration": "development"
