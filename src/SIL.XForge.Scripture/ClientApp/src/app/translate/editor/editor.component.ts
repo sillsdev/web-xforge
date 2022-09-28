@@ -824,12 +824,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       await this.handleNoteDialogResult(result);
       this.toggleNoteThreadVerses(true);
     }
-    // Ensure cursor selection remains at the position of the note in case the focus was lost when the dialog was open
-    const currentSegment: string | undefined = this.target!.currentSegmentOrDefault;
-    if (currentSegment != null) {
-      const selectIndex = this.target!.getSegmentRange(currentSegment)!.index;
-      this.target!.editor!.setSelection(selectIndex, 0, 'silent');
-    }
   }
 
   private updateReadNotes(threadId: string) {
