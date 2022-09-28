@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Location } from '@angular/common';
 import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
+import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Params, Route, Router } from '@angular/router';
@@ -60,6 +60,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -148,14 +149,14 @@ describe('EditorComponent', () => {
   }));
 
   it('response to remote text deletion', fakeAsync(() => {
-    when(mockedNoticeService.showMessageDialog(anything())).thenResolve();
     const env = new TestEnvironment();
     env.updateParams({ projectId: 'project02', bookId: 'MAT' });
     env.wait();
 
+    const dialogMessage = spyOn((env.component as any).dialogService, 'message').and.callThrough();
     const textDocId = new TextDocId('project02', 40, 1, 'target');
     env.deleteText(textDocId.toString());
-    verify(mockedNoticeService.showMessageDialog(anything())).once();
+    expect(dialogMessage).toHaveBeenCalledTimes(1);
     tick();
     expect(env.location.path()).toEqual('/projects/project02/translate');
     env.dispose();
@@ -2645,6 +2646,7 @@ class TestEnvironment {
   readonly router: Router;
   readonly location: Location;
   readonly mockNoteDialogRef;
+  readonly mockedDialogRef = mock<MatDialogRef<GenericDialogComponent<any>, GenericDialogOptions<any>>>(MatDialogRef);
   readonly ngZone: NgZone;
 
   private userRolesOnProject = {
@@ -2872,6 +2874,8 @@ class TestEnvironment {
     });
     when(mockedMatDialog.closeAll()).thenCall(() => openNoteDialogs.forEach(dialog => dialog.close()));
     when(mockedFeatureFlagService.allowAddingNotes).thenReturn({ enabled: true } as FeatureFlag);
+    when(mockedMatDialog.open(GenericDialogComponent, anything())).thenReturn(instance(this.mockedDialogRef));
+    when(this.mockedDialogRef.afterClosed()).thenReturn(of());
 
     this.router = TestBed.inject(Router);
     this.location = TestBed.inject(Location);
@@ -2963,10 +2967,6 @@ class TestEnvironment {
   set onlineStatus(value: boolean) {
     when(mockedPwaService.isOnline).thenReturn(value);
     when(mockedPwaService.onlineStatus).thenReturn(of(value));
-  }
-
-  dismissMessageDialog() {
-    // this.ngZone.run(() => this.messageDialogRefAfterClosed$.next('close'));
   }
 
   deleteText(textId: string): void {
