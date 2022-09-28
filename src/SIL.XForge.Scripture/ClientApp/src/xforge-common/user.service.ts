@@ -118,11 +118,18 @@ export class UserService {
         op.set(u => u.displayName, result.displayName);
         op.set<boolean>(u => u.isDisplayNameConfirmed, true);
       });
+      await this.updateAvatarFromDisplayName();
     }
   }
 
   async userMigrationComplete(): Promise<void> {
     await this.onlineInvoke('userMigrationComplete', { userId: this.currentUserId });
+  }
+
+  private async updateAvatarFromDisplayName(): Promise<void> {
+    if (await this.authService.isLoggedIn) {
+      await this.onlineInvoke('updateAvatarFromDisplayName');
+    }
   }
 
   private onlineInvoke<T>(method: string, params?: any): Promise<T | undefined> {

@@ -8,6 +8,8 @@ using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
+using SIL.XForge.Realtime.Json0;
+using SIL.XForge.Utils;
 
 namespace SIL.XForge.Services
 {
@@ -107,6 +109,66 @@ namespace SIL.XForge.Services
             env.AuthService.GetUserAsync("notPt03").Returns(Task.FromResult(userProfile.ToString()));
 
             Assert.ThrowsAsync<ArgumentException>(() => env.Service.LinkParatextAccountAsync("auth02", "notPt03"));
+        }
+
+        [Test]
+        public async Task UpdateAvatarFromDisplayNameAsync()
+        {
+            var env = new TestEnvironment();
+            var userId = "user04";
+            var userAuth = "auth04";
+            using IConnection conn = await env.RealtimeService.ConnectAsync(userId);
+            IDocument<User> userDoc = await conn.FetchAsync<User>(userId);
+
+            string[,] expectedInitials =
+            {
+                { "User Name", "UN" },
+                { "Username", "U" },
+                { "User Middle Name", "UN" },
+                { "User M Name", "UN" },
+                { "U Name", "N" },
+                { "1 Number", "N" },
+                { "11 Number", "N" },
+                { "U", "example" } // Should not change from what is already set
+            };
+            var expectedAvatarUrl = "";
+            User user;
+
+            // Check avatar URL is updated - only happens if the existing URL is one set by Auth0
+            for (int i = 0; i < expectedInitials.GetLength(0); i++)
+            {
+                await userDoc.SubmitJson0OpAsync(op => op.Set(u => u.DisplayName, expectedInitials[i, 0]));
+                await env.Service.UpdateAvatarFromDisplayNameAsync(userId, userAuth);
+                expectedAvatarUrl = $"https://cdn.auth0.com/avatars/{expectedInitials[i, 1].ToLower()}.png";
+                user = env.GetUser(userId);
+                Assert.That(user.AvatarUrl, Is.EqualTo(expectedAvatarUrl));
+            }
+
+            // Check avatar is not updated if the existing Url is not from Auth0
+            expectedAvatarUrl = "https://cdn.google.com/avatars/example.png";
+            await userDoc.SubmitJson0OpAsync(op =>
+            {
+                op.Set(u => u.DisplayName, expectedInitials[0, 0]);
+                op.Set(u => u.AvatarUrl, expectedAvatarUrl);
+            });
+            await env.Service.UpdateAvatarFromDisplayNameAsync(userId, userAuth);
+            user = env.GetUser(userId);
+            Assert.That(user.AvatarUrl, Is.EqualTo(expectedAvatarUrl));
+
+            // Check avatar Url supports Gravatar if an email is available
+            await userDoc.SubmitJson0OpAsync(op =>
+            {
+                op.Set(u => u.DisplayName, expectedInitials[0, 0]);
+                op.Set(u => u.AvatarUrl, "https://cdn.auth0.com/avatars/example.png");
+                op.Set(u => u.Email, "example@example.com");
+            });
+            await env.Service.UpdateAvatarFromDisplayNameAsync(userId, userAuth);
+            var emailHash = StringUtils.ComputeMd5Hash(userDoc.Data.Email);
+            expectedAvatarUrl = "https://cdn.auth0.com/avatars/un.png";
+            var auth0Fallback = System.Web.HttpUtility.UrlEncode(expectedAvatarUrl);
+            expectedAvatarUrl = $"https://www.gravatar.com/avatar/{emailHash}?s=480&r=pg&d={auth0Fallback}";
+            user = env.GetUser(userId);
+            Assert.That(user.AvatarUrl, Is.EqualTo(expectedAvatarUrl));
         }
 
         [Test]
@@ -273,6 +335,12 @@ namespace SIL.XForge.Services
                                 Id = "user02",
                                 AvatarUrl = "http://example.com/avatar2.png",
                                 AuthId = "auth02"
+                            },
+                            new User
+                            {
+                                Id = "user04",
+                                AvatarUrl = "https://cdn.auth0.com/avatars/example.png",
+                                AuthId = "auth04"
                             }
                         }
                     )
