@@ -42,8 +42,16 @@ export class PwaService extends SubscriptionDisposable {
     });
   }
 
+  get isBrowserOnline(): boolean {
+    return this.windowOnLineStatus.getValue();
+  }
+
   get isOnline(): boolean {
     return this.appOnlineStatus.getValue();
+  }
+
+  get onlineBrowserStatus(): Observable<boolean> {
+    return this.windowOnLineStatus.asObservable();
   }
 
   get onlineStatus(): Observable<boolean> {

@@ -122,16 +122,20 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       }
     );
 
-    // Check online status changes
+    // Check full online status changes
     this.isAppOnline = pwaService.isOnline;
     this.subscribe(pwaService.onlineStatus, status => {
       if (status !== this.isAppOnline) {
         this.isAppOnline = status;
         this.checkDeviceStorage();
       }
+    });
+
+    // Check browser online status to allow checks with Auth0
+    this.subscribe(pwaService.onlineBrowserStatus, status => {
       // Check authentication when coming back online
       // This is also run on first load when the websocket connects for the first time
-      if (this.isAppOnline && !this.isAppLoading) {
+      if (status && !this.isAppLoading) {
         this.authService.checkOnlineAuth();
       }
     });
