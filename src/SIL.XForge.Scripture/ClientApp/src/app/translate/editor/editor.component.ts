@@ -28,7 +28,7 @@ import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/model
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { DeltaOperation } from 'rich-text';
-import { BehaviorSubject, fromEvent, merge, Observable, Subject, Subscription, timer } from 'rxjs';
+import { BehaviorSubject, fromEvent, merge, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, delayWhen, filter, repeat, retryWhen, tap } from 'rxjs/operators';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -1195,11 +1195,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.noteThreadQuery?.dispose();
     this.noteThreadQuery = await this.projectService.queryNoteThreads(projectId);
     this.toggleNoteThreadSub?.unsubscribe();
-    const toggleNoteThreadsReady$: Observable<void> = merge(
-      this.toggleNoteThreadVerseRefs$,
-      this.noteThreadQuery.ready$
+    this.toggleNoteThreadSub = this.subscribe(merge(this.toggleNoteThreadVerseRefs$, this.noteThreadQuery.ready$), () =>
+      this.toggleNoteThreadVerses(true)
     );
-    this.toggleNoteThreadSub = this.subscribe(toggleNoteThreadsReady$, () => this.toggleNoteThreadVerses(true));
   }
 
   private loadProjectUserConfig() {
