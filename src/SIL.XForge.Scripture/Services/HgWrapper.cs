@@ -1,4 +1,6 @@
+#nullable enable annotations
 using System;
+using System.IO;
 using System.Linq;
 using Paratext.Data.Repository;
 
@@ -53,6 +55,19 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>
+        /// Returns the currently checked out revision of an hg repository.
+        /// </summary>
+        public string GetRepoRevision(string repositoryPath)
+        {
+            string rev = RunCommand(repositoryPath, "log --limit 1 --rev . --template {node}");
+            if (string.IsNullOrWhiteSpace(rev))
+            {
+                throw new InvalidDataException($"Unable to determine repo revision for hg repo at {repositoryPath}");
+            }
+            return rev;
+        }
+
+        /// <summary>
         /// Restores the repository.
         /// </summary>
         /// <param name="destination">The destination to restore to.</param>
@@ -94,6 +109,16 @@ namespace SIL.XForge.Scripture.Services
         public void Update(string repository)
         {
             Hg.Default.Update(repository);
+        }
+
+        /// <summary>
+        /// Set a hg repo's files to a particular revision in history. Similar to running
+        /// `git checkout --force --detach COMMITTISH`
+        /// Changes to tracked files will be discarded. Untracked files are left in place without being cleaned up.
+        /// </summary>
+        public void Update(string repositoryPath, string rev)
+        {
+            Hg.Default.Update(repositoryPath, rev);
         }
     }
 }

@@ -1,3 +1,4 @@
+#nullable enable annotations
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -2834,6 +2835,14 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void LocalProjectDirExists_Works()
+        {
+            var env = new TestEnvironment();
+            Assert.That(env.Service.LocalProjectDirExists(env.PTProjectIds[env.Project01].Id), Is.True);
+            Assert.That(env.Service.LocalProjectDirExists("not-existing"), Is.False);
+        }
+
+        [Test]
         public async Task CanUserAuthenticateToPTRegistryAsync_Works()
         {
             var env = new TestEnvironment();
@@ -3144,6 +3153,50 @@ namespace SIL.XForge.Scripture.Services
             var result = env.Service.ResourceDocsNeedUpdating(project, resource);
             Assert.That(env.Service.IsResource(project.ParatextId), Is.True);
             Assert.That(result, Is.True);
+        }
+
+        [Test]
+        public void SetRepoToRevision_SetsAndChecks()
+        {
+            TestEnvironment env = new();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string projectPTId = env.SetupProject(env.Project01, associatedPtUser);
+            string rev = "some-desired-revision";
+            env.MockHgWrapper
+                .GetRepoRevision(
+                    Arg.Is<string>((string repoPath) => repoPath.EndsWith(Path.Combine(projectPTId, "target")))
+                )
+                .Returns(rev);
+            // SUT
+            env.Service.SetRepoToRevision(
+                env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01),
+                projectPTId,
+                rev
+            );
+            env.MockHgWrapper.Received().Update(Arg.Any<string>(), rev);
+            env.MockHgWrapper.Received().GetRepoRevision(Arg.Any<string>());
+        }
+
+        [Test]
+        public void SetRepoToRevision_DetectsProblem()
+        {
+            TestEnvironment env = new();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string projectPTId = env.SetupProject(env.Project01, associatedPtUser);
+            string rev = "some-desired-new-revision";
+            string wrongRev = "not-the-rev-we-wanted";
+            env.MockHgWrapper.GetRepoRevision(Arg.Any<string>()).Returns(wrongRev);
+            // SUT
+            Assert.Throws<Exception>(
+                () =>
+                    env.Service.SetRepoToRevision(
+                        env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01),
+                        projectPTId,
+                        rev
+                    )
+            );
+            env.MockHgWrapper.Received().Update(Arg.Any<string>(), rev);
+            env.MockHgWrapper.Received().GetRepoRevision(Arg.Any<string>());
         }
 
         private class TestEnvironment
@@ -3577,6 +3630,13 @@ namespace SIL.XForge.Scripture.Services
                         }
                     )
                 );
+                MockFileSystemService
+                    .DirectoryExists(
+                        Arg.Is<string>(
+                            (string path) => path.EndsWith(Path.Combine(PTProjectIds[Project01].Id, "target"))
+                        )
+                    )
+                    .Returns(true);
             }
 
             public void AddTextDocs(
