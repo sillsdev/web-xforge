@@ -1,3 +1,4 @@
+#nullable enable annotations
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,7 +9,7 @@ namespace SIL.XForge.Scripture.Services
 {
     public interface IJwtTokenHelper
     {
-        string GetParatextUsername(UserSecret userSecret);
+        string? GetParatextUsername(UserSecret userSecret);
         string GetJwtTokenFromUserSecret(UserSecret userSecret);
         Task<Tokens> RefreshAccessTokenAsync(
             ParatextOptions options,

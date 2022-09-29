@@ -1,3 +1,5 @@
+#nullable enable annotations
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -2407,7 +2409,7 @@ namespace SIL.XForge.Scripture.Services
             public SFProject AssertDBSyncMetadata(
                 string projectSFId,
                 bool lastSyncSuccess,
-                string syncedToRepositoryVersion
+                string? syncedToRepositoryVersion
             )
             {
                 SFProjectSecret projectSecret = GetProjectSecret(projectSFId);
@@ -2433,7 +2435,7 @@ namespace SIL.XForge.Scripture.Services
 
             public SFProject VerifyProjectSync(
                 bool successful,
-                string expectedRepoVersion = null,
+                string? expectedRepoVersion = null,
                 string projectSFId = "project01"
             )
             {
@@ -3135,7 +3137,7 @@ namespace SIL.XForge.Scripture.Services
 
             public SFProject SetupProjectWithExpectedImportedRev(
                 string projectSFId,
-                string startingDBSyncedToRepositoryVersion
+                string? startingDBSyncedToRepositoryVersion
             )
             {
                 Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
@@ -3209,7 +3211,7 @@ namespace SIL.XForge.Scripture.Services
             public async Task RunAndAssertContinuesAsync(
                 string projectSFId,
                 string userId,
-                string finalDBSyncedToRepositoryVersion
+                string? finalDBSyncedToRepositoryVersion
             )
             {
                 // SUT

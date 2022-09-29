@@ -1,3 +1,4 @@
+#nullable enable annotations
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
@@ -23,7 +24,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary> Get the Paratext username from the access token stored in the UserSecret. </summary>
-        public string GetParatextUsername(UserSecret userSecret)
+        public string? GetParatextUsername(UserSecret userSecret)
         {
             if (
                 userSecret == null || userSecret.ParatextTokens == null || userSecret.ParatextTokens.AccessToken == null

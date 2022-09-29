@@ -1,3 +1,5 @@
+#nullable enable annotations
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -123,9 +125,9 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 string targetParatextId = _projectDoc.Data.ParatextId;
-                string sourceParatextId = _projectDoc.Data.TranslateConfig.Source?.ParatextId;
-                string sourceProjectRef = _projectDoc.Data.TranslateConfig.Source?.ProjectRef;
-                Log($"RunAsync: Starting. Target PTID '{targetParatextId}', source PTID '{sourceParatextId}'.");
+                string? sourceParatextId = _projectDoc.Data.TranslateConfig.Source?.ParatextId;
+                string? sourceProjectRef = _projectDoc.Data.TranslateConfig.Source?.ProjectRef;
+                Log($"RunAsync: Starting. Target PT id '{targetParatextId}', source PT id '{sourceParatextId}'.");
 
                 // Determine if we can rollback Paratext
                 canRollbackParatext = _paratextService.BackupExists(_userSecret, targetParatextId);
@@ -783,7 +785,7 @@ namespace SIL.XForge.Scripture.Services
             TextInfo text,
             string paratextId,
             SortedList<int, IDocument<TextData>> textDocs,
-            ISet<int> chaptersToInclude = null
+            ISet<int>? chaptersToInclude = null
         )
         {
             string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
@@ -1593,7 +1595,7 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        private void Log(string message, string projectSFId = null, string userId = null)
+        private void Log(string message, string? projectSFId = null, string? userId = null)
         {
             projectSFId ??= _projectDoc?.Id ?? "unknown";
             userId ??= _userSecret?.Id ?? "unknown";
