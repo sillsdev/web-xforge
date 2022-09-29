@@ -24,9 +24,9 @@ namespace SIL.XForge.Scripture.Services
     /// <summary>
     /// This class syncs real-time text and question docs with the Paratext S/R server. This class coordinates the data
     /// flow between three sources:
-    /// 1. The real-time docs stored in Mongo.
+    /// 1. The real-time docs stored in Mongo, the SF DB.
     /// 2. The local Paratext project repo.
-    /// 3. The remote Paratext project repo.
+    /// 3. The remote Paratext project repo, aka PT Archives, aka the Send and Receive server.
     ///
     /// Algorithm:
     /// 1. The text deltas from the real-time docs are converted to USX.
@@ -43,6 +43,16 @@ namespace SIL.XForge.Scripture.Services
     ///
     /// Target and source refer to daughter and mother translation data. Not to be confused with a target or source for
     /// where data is coming from or going to when fetching or syncing.
+    /// <code>
+    /// Diagram showing a high-level look at the order of data being transmitted:
+    /// ┌─────┐  ┌─────┐  ┌───────────┐
+    /// │SF DB├─>│Local│  │PT Archives│
+    /// │     │  │PT hg├─>│           │
+    /// │     │  │repo │  │           │
+    /// │     │  │     │<─┤           │
+    /// │     │<─┤     │  │           │
+    /// └─────┘  └─────┘  └───────────┘
+    /// </code>
     /// </summary>
     public class ParatextSyncRunner : IParatextSyncRunner
     {
@@ -146,69 +156,32 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
 
+                ReportRepoRevs();
+
+                if (_paratextService.IsResource(targetParatextId))
+                {
+                    Log($"This is a resource, so not considering hg repo revisions.");
+                }
+                else if (_projectDoc.Data.Sync.SyncedToRepositoryVersion == null)
+                {
+                    Log(
+                        $"The SF DB SyncedToRepositoryVersion is null. Maybe this project is being Connected, or has not synced successfully since we started tracking this information."
+                    );
+                }
+                else
+                {
+                    Log(
+                        $"Setting hg repo to last imported hg repo rev of {_projectDoc.Data.Sync.SyncedToRepositoryVersion}."
+                    );
+                    _paratextService.SetRepoToRevision(
+                        _userSecret,
+                        targetParatextId,
+                        _projectDoc.Data.Sync.SyncedToRepositoryVersion
+                    );
+                }
+
                 var targetTextDocsByBook = new Dictionary<int, SortedList<int, IDocument<TextData>>>();
                 var questionDocsByBook = new Dictionary<int, IReadOnlyList<IDocument<Question>>>();
-                string lastSharedVersion = _paratextService.GetLatestSharedVersion(_userSecret, targetParatextId);
-                if (lastSharedVersion != _projectDoc.Data.Sync.SyncedToRepositoryVersion)
-                {
-                    if (
-                        _projectDoc.Data.Sync.SyncedToRepositoryVersion == null
-                        && _projectDoc.Data.Sync.DataInSync == null
-                    )
-                    {
-                        // This project pre-dates when we started tracking this information, and does not yet have a record of it.
-                    }
-                    else
-                    {
-                        Log(
-                            $"RunAsync: The reported PT hg repo latest shared version '{lastSharedVersion}' does not match record of project SyncedToRepositoryVersion '{_projectDoc.Data.Sync.SyncedToRepositoryVersion}'. Refusing to continue, to protect data."
-                        );
-                        await CompleteSync(successful: false, canRollbackParatext, trainEngine, token);
-                        return;
-                    }
-                }
-
-                bool isDataInSync = _projectDoc.Data.Sync.DataInSync ?? false;
-                if (lastSharedVersion == null)
-                {
-                    // The hg repository has no pushed or pulled commit. Maybe we are only just getting set up with a
-                    // project. Maybe it is a resource and not a project and has no hg repo directory.
-                    isDataInSync = true;
-                    Log($"RunAsync: The local PT repo has no last shared revision. Considering that data is in sync.");
-                }
-                if (lastSharedVersion == _projectDoc.Data.Sync.SyncedToRepositoryVersion)
-                {
-                    // The recent hg repository pushed or pulled commit id matches what we recorded as being the last
-                    // place where SF and PT last synced.
-                    isDataInSync = true;
-                    Log(
-                        $"RunAsync: The local PT repo last shared rev matches the SF DB SyncedToRepositoryVersion of '{lastSharedVersion}'. Is in sync."
-                    );
-                }
-                if (_projectDoc.Data.Sync.SyncedToRepositoryVersion == null && _projectDoc.Data.Sync.DataInSync == null)
-                {
-                    // We have no record of where SF and PT last synced. So it was probably before we started tracking
-                    // this. Or this is a resource that we won't have this information for. Assume the data is
-                    // 'in sync'.
-                    // Note that there is a special case where SyncedToRepositoryVersion may be absent, but DataInSync
-                    // may be present (and false), which may indicate a situation where a project only had unsuccessful
-                    // syncs since we started tracking SyncedToRepositoryVersion. Note that this could happen if the
-                    // _first_ sync, from Connecting, had a failure. In this case, isDataInSync should
-                    // be false.
-                    // There is also a special case where SyncedToRepositoryVersion may be absent, but DataInSync may
-                    // be present (and true), which may indicate that the initial Connect project failed to hg clone.
-                    isDataInSync = true;
-                    Log(
-                        $"RunAsync: The SF DB project has no settings for Sync.SyncedToRepositoryVersion or Sync.DataInSync. Considering that data is in sync."
-                    );
-                }
-                if (!isDataInSync)
-                {
-                    Log(
-                        $"RunAsync: Considering that data is not in sync. The local PT repo last shared revision is '{lastSharedVersion}'. The SF DB project Sync.SyncedToRepositoryVersion is '{_projectDoc.Data.Sync.SyncedToRepositoryVersion}'. canRollbackParatext is '{canRollbackParatext}'."
-                    );
-                }
-
                 ParatextSettings settings = _paratextService.GetParatextSettings(_userSecret, targetParatextId);
                 // update target Paratext books and notes
                 foreach (TextInfo text in _projectDoc.Data.Texts)
@@ -222,7 +195,7 @@ namespace SIL.XForge.Scripture.Services
                     }
                     SortedList<int, IDocument<TextData>> targetTextDocs = await FetchTextDocsAsync(text);
                     targetTextDocsByBook[text.BookNum] = targetTextDocs;
-                    if (isDataInSync && settings.Editable && !_paratextService.IsResource(targetParatextId))
+                    if (settings.Editable && !_paratextService.IsResource(targetParatextId))
                     {
                         LogMetric("Updating Paratext book");
                         await UpdateParatextBook(text, targetParatextId, targetTextDocs);
@@ -230,7 +203,7 @@ namespace SIL.XForge.Scripture.Services
 
                     IReadOnlyList<IDocument<Question>> questionDocs = await FetchQuestionDocsAsync(text);
                     questionDocsByBook[text.BookNum] = questionDocs;
-                    if (isDataInSync && !_paratextService.IsResource(targetParatextId))
+                    if (!_paratextService.IsResource(targetParatextId))
                     {
                         LogMetric("Updating paratext notes");
                         await UpdateParatextNotesAsync(text, questionDocs);
@@ -1485,6 +1458,8 @@ namespace SIL.XForge.Scripture.Services
                 _conn.RollbackTransaction();
             }
 
+            ReportRepoRevs("CompleteSync: ");
+
             if (_syncMetrics == null)
             {
                 Log("The sync metrics were missing, and cannot be updated");
@@ -1513,6 +1488,29 @@ namespace SIL.XForge.Scripture.Services
             }
 
             Log($"CompleteSync: Finished. Sync was {(successful ? "successful" : "unsuccessful")}.");
+        }
+
+        private void ReportRepoRevs(string prefix = "")
+        {
+            string projectPTId = _projectDoc.Data.ParatextId;
+            string dbInfo =
+                $"DB Sync.SyncedToRepositoryVersion: {_projectDoc.Data.Sync.SyncedToRepositoryVersion}, DB Sync.DataInSync: {_projectDoc.Data.Sync.DataInSync}.";
+            if (_paratextService.IsResource(projectPTId))
+            {
+                Log($"{prefix}In-sync info: Is resource. {dbInfo}");
+            }
+            else if (!_paratextService.LocalProjectDirExists(projectPTId))
+            {
+                Log($"{prefix}In-sync info: No local hg repo. {dbInfo}");
+            }
+            else
+            {
+                string repoRev = _paratextService.GetRepoRevision(_userSecret, projectPTId);
+                string sharedRev = _paratextService.GetLatestSharedVersion(_userSecret, projectPTId);
+                Log(
+                    $"{prefix}In-sync info: Local hg repo current rev: {repoRev}, Latest shared rev: {sharedRev}, {dbInfo}"
+                );
+            }
         }
 
         private async Task<Dictionary<string, string>> GetPTUsernameToSFUserIdsAsync(CancellationToken token)
@@ -1597,7 +1595,7 @@ namespace SIL.XForge.Scripture.Services
         {
             projectSFId ??= _projectDoc?.Id ?? "unknown";
             userId ??= _userSecret?.Id ?? "unknown";
-            _logger.LogInformation($"SyncLog ({projectSFId},{userId}): {message}");
+            _logger.LogInformation($"SyncLog ({projectSFId} {userId}): {message}");
             LogMetric(message);
         }
 

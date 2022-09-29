@@ -1016,32 +1016,15 @@ namespace SIL.XForge.Scripture.Services
                 );
                 string projectPTId = project.ParatextId;
                 env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), projectPTId).Returns("1", "2");
-
-                // SUT
-                await env.Runner.RunAsync(projectSFId, userId, projectSFId, false, CancellationToken.None);
-
-                project = env.GetProject(projectSFId);
-                // We should get into UpdateParatextBook() and fetch and perhaps put books.
-                env.ParatextService.Received().GetBookText(Arg.Any<UserSecret>(), projectPTId, Arg.Any<int>());
-                env.DeltaUsxMapper.Received().ToUsx(Arg.Any<XDocument>(), Arg.Any<IEnumerable<ChapterDelta>>());
-                // We should get into UpdateParatextNotesAsync() and fetch and perhaps put notes.
-                env.ParatextService.Received().GetNotes(Arg.Any<UserSecret>(), projectPTId, Arg.Any<int>());
-                await env.NotesMapper
-                    .Received()
-                    .GetNotesChangelistAsync(
-                        Arg.Any<XElement>(),
-                        Arg.Any<IEnumerable<IDocument<Question>>>(),
-                        Arg.Any<Dictionary<string, ParatextUserProfile>>()
-                    );
-                // We should have then called SR
-                await env.ParatextService
-                    .Received(1)
-                    .SendReceiveAsync(Arg.Any<UserSecret>(), projectPTId, Arg.Any<IProgress<ProgressState>>());
-
                 // The expected after-sync repository version can be past the original, before-sync project version,
                 // even if there were no local changes, since there may be incoming changes from the PT Archives server.
                 string expectedRepositoryVersion = "2";
-                env.VerifyProjectSync(true, expectedRepositoryVersion, projectSFId);
+                // SUT
+                await env.RunAndAssertContinuesAsync(projectSFId, userId, expectedRepositoryVersion);
+                // Shouldn't be setting repo rev.
+                env.ParatextService
+                    .DidNotReceive()
+                    .SetRepoToRevision(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<string>());
             }
         }
 
@@ -1059,20 +1042,27 @@ namespace SIL.XForge.Scripture.Services
                 projectSFId,
                 startingDBSyncedToRepositoryVersion: null
             );
-            env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), project.ParatextId).Returns((string)null);
+            env.ParatextService
+                .GetLatestSharedVersion(Arg.Any<UserSecret>(), project.ParatextId)
+                .Returns((string?)null);
             Assert.That(
                 project.Sync.DataInSync,
                 Is.Not.Null,
                 "setup. We are not testing the special situation of DataInSync being null."
             );
+            // SUT
             await env.RunAndAssertContinuesAsync(projectSFId, userId, finalDBSyncedToRepositoryVersion: null);
+            // Shouldn't be setting repo rev.
+            env.ParatextService
+                .DidNotReceive()
+                .SetRepoToRevision(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Test]
-        public async Task RunAsync_NullSyncRevRecordNotMatchHgRev_Abort()
+        public async Task RunAsync_NullSyncRevRecordNotMatchHgRev_Continue()
         {
             // The project sync record has no recorded PT hg repo revision that it imported from,
-            // yet the hg repo is there and has a revision. Do not perform sync.
+            // yet the hg repo is there and has a revision. Continue with sync.
 
             var env = new TestEnvironment();
             // project05 has a null DB SyncedToRepositoryVersion.
@@ -1088,14 +1078,19 @@ namespace SIL.XForge.Scripture.Services
                 Is.Not.Null,
                 "setup. We are not testing the special situation of DataInSync being null."
             );
-            await env.RunAndAssertAbortAsync(projectSFId, userId, finalDBSyncedToRepositoryVersion: null);
+            // SUT
+            await env.RunAndAssertContinuesAsync(projectSFId, userId, finalDBSyncedToRepositoryVersion: "v1");
+            // Shouldn't be setting repo rev.
+            env.ParatextService
+                .DidNotReceive()
+                .SetRepoToRevision(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Test]
-        public async Task RunAsync_SyncRevRecordNotMatchHgRev_Abort()
+        public async Task RunAsync_SyncRevRecordNotMatchHgRev_AdjustAndContinue()
         {
             // The project sync record of PT hg repo revision that it imported from does not match the current
-            // hg repo revision. Do not perform sync.
+            // hg repo revision. So we set the repo revision, and perform sync.
 
             var env = new TestEnvironment();
             // project01 has a non-null DB SyncedToRepositoryVersion.
@@ -1106,7 +1101,9 @@ namespace SIL.XForge.Scripture.Services
                 startingDBSyncedToRepositoryVersion: "beforeSR"
             );
             env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), project.ParatextId).Returns("v1");
-            await env.RunAndAssertAbortAsync(projectSFId, userId, finalDBSyncedToRepositoryVersion: "beforeSR");
+            // SUT
+            await env.RunAndAssertContinuesAsync(projectSFId, userId, finalDBSyncedToRepositoryVersion: "afterSR");
+            env.ParatextService.Received().SetRepoToRevision(Arg.Any<UserSecret>(), Arg.Any<string>(), "beforeSR");
         }
 
         [Test]
@@ -1124,8 +1121,9 @@ namespace SIL.XForge.Scripture.Services
                 startingDBSyncedToRepositoryVersion: "beforeSR"
             );
             env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), project.ParatextId).Returns(("beforeSR"));
-
+            // SUT
             await env.RunAndAssertContinuesAsync(projectSFId, userId, finalDBSyncedToRepositoryVersion: "afterSR");
+            // And it doesn't matter if we set the hg repo to the rev or not.
         }
 
         [Test]
@@ -2471,24 +2469,21 @@ namespace SIL.XForge.Scripture.Services
                     OTType.RichText,
                     new MemoryRepository<TextData>(new[] { new TextData(Delta.New()) { Id = id }, })
                 );
-                RealtimeService.AddRepository(
-                    "sf_projects",
-                    OTType.Json0,
-                    new MemoryRepository<SFProject>(
-                        new[]
+                SFProject[] sfProjects = new[]
+                {
+                    new SFProject
+                    {
+                        Id = projectId,
+                        UserRoles = new Dictionary<string, string>
                         {
-                            new SFProject
-                            {
-                                Id = projectId,
-                                UserRoles = new Dictionary<string, string>
-                                {
-                                    { "user03", SFProjectRole.Administrator },
-                                    { "user04", SFProjectRole.Translator },
-                                },
-                            },
-                        }
-                    )
-                );
+                            { "user03", SFProjectRole.Administrator },
+                            { "user04", SFProjectRole.Translator },
+                        },
+                    },
+                };
+                RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(sfProjects));
+                MockProjectDirsExist(sfProjects.Select((SFProject proj) => proj.ParatextId));
+
                 return textInfo;
             }
 
@@ -2544,164 +2539,160 @@ namespace SIL.XForge.Scripture.Services
                         }
                     )
                 );
-                RealtimeService.AddRepository(
-                    "sf_projects",
-                    OTType.Json0,
-                    new MemoryRepository<SFProject>(
-                        new[]
+                SFProject[] sfProjects = new[]
+                {
+                    new SFProject
+                    {
+                        Id = "project01",
+                        Name = "project01",
+                        ShortName = "P01",
+                        UserRoles = new Dictionary<string, string>
                         {
-                            new SFProject
+                            { "user01", SFProjectRole.Administrator },
+                            { "user02", SFProjectRole.Translator }
+                        },
+                        ParatextId = "target",
+                        IsRightToLeft = false,
+                        DefaultFontSize = 10,
+                        DefaultFont = ProjectSettings.defaultFontName,
+                        TranslateConfig = new TranslateConfig
+                        {
+                            TranslationSuggestionsEnabled = translationSuggestionsEnabled,
+                            Source = new TranslateSource
                             {
-                                Id = "project01",
-                                Name = "project01",
-                                ShortName = "P01",
-                                UserRoles = new Dictionary<string, string>
-                                {
-                                    { "user01", SFProjectRole.Administrator },
-                                    { "user02", SFProjectRole.Translator }
-                                },
-                                ParatextId = "target",
-                                IsRightToLeft = false,
-                                DefaultFontSize = 10,
-                                DefaultFont = ProjectSettings.defaultFontName,
-                                TranslateConfig = new TranslateConfig
-                                {
-                                    TranslationSuggestionsEnabled = translationSuggestionsEnabled,
-                                    Source = new TranslateSource
-                                    {
-                                        ParatextId = "source",
-                                        ProjectRef = "project02",
-                                        Name = "Source",
-                                        ShortName = "SRC",
-                                        WritingSystem = new WritingSystem { Tag = "en" },
-                                        IsRightToLeft = false
-                                    }
-                                },
-                                CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
-                                Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
-                                Sync = new Sync
-                                {
-                                    // QueuedCount is incremented before RunAsync() by SyncService.SyncAsync(). So set
-                                    // it to 1 to simulate it being incremented.
-                                    QueuedCount = 1,
-                                    SyncedToRepositoryVersion = "beforeSR",
-                                    DataInSync = true
-                                },
-                                ParatextUsers = new List<ParatextUserProfile>
-                                {
-                                    new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = "User 1" },
-                                    new ParatextUserProfile { OpaqueUserId = "syncuser02", Username = "User 2" }
-                                }
-                            },
-                            new SFProject
-                            {
-                                Id = "project02",
+                                ParatextId = "source",
+                                ProjectRef = "project02",
                                 Name = "Source",
                                 ShortName = "SRC",
-                                UserRoles = new Dictionary<string, string>(),
-                                ParatextId = "source",
-                                IsRightToLeft = false,
-                                TranslateConfig = new TranslateConfig { TranslationSuggestionsEnabled = false },
-                                CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
                                 WritingSystem = new WritingSystem { Tag = "en" },
-                                Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
-                                Sync = new Sync { QueuedCount = 0, SyncedToRepositoryVersion = "beforeSR" }
-                            },
-                            new SFProject
+                                IsRightToLeft = false
+                            }
+                        },
+                        CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
+                        Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
+                        Sync = new Sync
+                        {
+                            // QueuedCount is incremented before RunAsync() by SyncService.SyncAsync(). So set
+                            // it to 1 to simulate it being incremented.
+                            QueuedCount = 1,
+                            SyncedToRepositoryVersion = "beforeSR",
+                            DataInSync = true
+                        },
+                        ParatextUsers = new List<ParatextUserProfile>
+                        {
+                            new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = "User 1" },
+                            new ParatextUserProfile { OpaqueUserId = "syncuser02", Username = "User 2" }
+                        }
+                    },
+                    new SFProject
+                    {
+                        Id = "project02",
+                        Name = "Source",
+                        ShortName = "SRC",
+                        UserRoles = new Dictionary<string, string>(),
+                        ParatextId = "source",
+                        IsRightToLeft = false,
+                        TranslateConfig = new TranslateConfig { TranslationSuggestionsEnabled = false },
+                        CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
+                        WritingSystem = new WritingSystem { Tag = "en" },
+                        Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
+                        Sync = new Sync { QueuedCount = 0, SyncedToRepositoryVersion = "beforeSR" }
+                    },
+                    new SFProject
+                    {
+                        // This project was not sync'd since we started tracking SyncedToRepositoryVersion when
+                        // a 2021-05-14 commit reached sf-live.
+                        Id = "project03",
+                        Name = "project03withNoSyncedToRepositoryVersion",
+                        ShortName = "P03",
+                        UserRoles = new Dictionary<string, string>
+                        {
+                            { "user01", SFProjectRole.Administrator },
+                            { "user02", SFProjectRole.Translator }
+                        },
+                        ParatextId = "paratext-project03",
+                        IsRightToLeft = false,
+                        TranslateConfig = new TranslateConfig
+                        {
+                            TranslationSuggestionsEnabled = translationSuggestionsEnabled,
+                            Source = new TranslateSource
                             {
-                                // This project was not sync'd since we started tracking SyncedToRepositoryVersion when
-                                // a 2021-05-14 commit reached sf-live.
-                                Id = "project03",
-                                Name = "project03withNoSyncedToRepositoryVersion",
-                                ShortName = "P03",
-                                UserRoles = new Dictionary<string, string>
-                                {
-                                    { "user01", SFProjectRole.Administrator },
-                                    { "user02", SFProjectRole.Translator }
-                                },
-                                ParatextId = "paratext-project03",
-                                IsRightToLeft = false,
-                                TranslateConfig = new TranslateConfig
-                                {
-                                    TranslationSuggestionsEnabled = translationSuggestionsEnabled,
-                                    Source = new TranslateSource
-                                    {
-                                        ParatextId = "paratext-project04",
-                                        ProjectRef = "project04",
-                                        Name = "project04",
-                                        ShortName = "P04",
-                                        WritingSystem = new WritingSystem { Tag = "en" },
-                                        IsRightToLeft = false
-                                    }
-                                },
-                                CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
-                                Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
-                                Sync = new Sync
-                                {
-                                    QueuedCount = 1,
-                                    // No SyncedToRepositoryVersion
-                                    // No DataInSync
-                                },
-                            },
-                            new SFProject
-                            {
-                                Id = "project04",
+                                ParatextId = "paratext-project04",
+                                ProjectRef = "project04",
                                 Name = "project04",
                                 ShortName = "P04",
-                                UserRoles = new Dictionary<string, string>(),
-                                ParatextId = "paratext-project04",
-                                IsRightToLeft = false,
-                                TranslateConfig = new TranslateConfig { TranslationSuggestionsEnabled = false },
-                                CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
                                 WritingSystem = new WritingSystem { Tag = "en" },
-                                Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
-                                Sync = new Sync
-                                {
-                                    QueuedCount = 0,
-                                    // No SyncedToRepositoryVersion
-                                    // No DataInSync
-                                }
-                            },
-                            new SFProject
-                            {
-                                // This project was sync'd after we started tracking SyncedToRepositoryVersion, but the
-                                // only sync attempt triggered a failure, and so only DataInSync was written to,
-                                // not SyncedToRepositoryVersion.
-                                Id = "project05",
-                                Name = "project05",
-                                ShortName = "P05",
-                                UserRoles = new Dictionary<string, string>
-                                {
-                                    { "user01", SFProjectRole.Administrator },
-                                    { "user02", SFProjectRole.Translator }
-                                },
-                                ParatextId = "paratext-project05",
-                                IsRightToLeft = false,
-                                TranslateConfig = new TranslateConfig
-                                {
-                                    TranslationSuggestionsEnabled = translationSuggestionsEnabled,
-                                    Source = new TranslateSource
-                                    {
-                                        ParatextId = "paratext-project04",
-                                        ProjectRef = "project04",
-                                        Name = "project04",
-                                        ShortName = "P04",
-                                        WritingSystem = new WritingSystem { Tag = "en" },
-                                        IsRightToLeft = false
-                                    }
-                                },
-                                CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
-                                Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
-                                Sync = new Sync
-                                {
-                                    QueuedCount = 1,
-                                    DataInSync = false
-                                    // No SyncedToRepositoryVersion
-                                },
-                            },
+                                IsRightToLeft = false
+                            }
+                        },
+                        CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
+                        Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
+                        Sync = new Sync
+                        {
+                            QueuedCount = 1,
+                            // No SyncedToRepositoryVersion
+                            // No DataInSync
+                        },
+                    },
+                    new SFProject
+                    {
+                        Id = "project04",
+                        Name = "project04",
+                        ShortName = "P04",
+                        UserRoles = new Dictionary<string, string>(),
+                        ParatextId = "paratext-project04",
+                        IsRightToLeft = false,
+                        TranslateConfig = new TranslateConfig { TranslationSuggestionsEnabled = false },
+                        CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
+                        WritingSystem = new WritingSystem { Tag = "en" },
+                        Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
+                        Sync = new Sync
+                        {
+                            QueuedCount = 0,
+                            // No SyncedToRepositoryVersion
+                            // No DataInSync
                         }
-                    )
-                );
+                    },
+                    new SFProject
+                    {
+                        // This project was sync'd after we started tracking SyncedToRepositoryVersion, but the
+                        // only sync attempt triggered a failure, and so only DataInSync was written to,
+                        // not SyncedToRepositoryVersion.
+                        Id = "project05",
+                        Name = "project05",
+                        ShortName = "P05",
+                        UserRoles = new Dictionary<string, string>
+                        {
+                            { "user01", SFProjectRole.Administrator },
+                            { "user02", SFProjectRole.Translator }
+                        },
+                        ParatextId = "paratext-project05",
+                        IsRightToLeft = false,
+                        TranslateConfig = new TranslateConfig
+                        {
+                            TranslationSuggestionsEnabled = translationSuggestionsEnabled,
+                            Source = new TranslateSource
+                            {
+                                ParatextId = "paratext-project04",
+                                ProjectRef = "project04",
+                                Name = "project04",
+                                ShortName = "P04",
+                                WritingSystem = new WritingSystem { Tag = "en" },
+                                IsRightToLeft = false
+                            }
+                        },
+                        CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
+                        Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
+                        Sync = new Sync
+                        {
+                            QueuedCount = 1,
+                            DataInSync = false
+                            // No SyncedToRepositoryVersion
+                        },
+                    },
+                };
+                RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(sfProjects));
+                MockProjectDirsExist(sfProjects.Select((SFProject proj) => proj.ParatextId));
 
                 RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>());
                 RealtimeService.AddRepository("questions", OTType.Json0, new MemoryRepository<Question>());
@@ -3231,11 +3222,11 @@ namespace SIL.XForge.Scripture.Services
                 // We are not in an out-of-sync situation and should proceed with the sync.
 
                 // Should be preparing to write data to the PT hg repo.
-                ParatextService.ReceivedWithAnyArgs().GetBookText(default, default, default);
-                DeltaUsxMapper.ReceivedWithAnyArgs().ToUsx(Arg.Any<XDocument>(), Arg.Any<IEnumerable<ChapterDelta>>());
-                ParatextService.ReceivedWithAnyArgs().GetNotes(default, default, default);
+                ParatextService.Received().GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<int>());
+                DeltaUsxMapper.Received().ToUsx(Arg.Any<XDocument>(), Arg.Any<IEnumerable<ChapterDelta>>());
+                ParatextService.Received().GetNotes(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<int>());
                 await NotesMapper
-                    .ReceivedWithAnyArgs()
+                    .Received()
                     .GetNotesChangelistAsync(
                         Arg.Any<XElement>(),
                         Arg.Any<IEnumerable<IDocument<Question>>>(),
@@ -3244,7 +3235,7 @@ namespace SIL.XForge.Scripture.Services
 
                 // Should be performing a SR.
                 await ParatextService
-                    .ReceivedWithAnyArgs()
+                    .Received(1)
                     .SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<IProgress<ProgressState>>());
 
                 // Record of sync is of success.
@@ -3253,6 +3244,15 @@ namespace SIL.XForge.Scripture.Services
                     lastSyncSuccess: true,
                     syncedToRepositoryVersion: finalDBSyncedToRepositoryVersion
                 );
+            }
+
+            /// <summary>Cause mocks to report that the project dirs exist for specified project
+            /// PT ids.</summary>
+            private void MockProjectDirsExist(IEnumerable<string> projectPTIds)
+            {
+                ParatextService
+                    .LocalProjectDirExists(Arg.Is<string>((string projectPTId) => projectPTIds.Contains(projectPTId)))
+                    .Returns(true);
             }
 
             private void AddPTBook(

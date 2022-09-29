@@ -1328,6 +1328,38 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
+        /// <summary>Returns the current revision of the local hg repo for a given project PT id,
+        /// accessed using a given user.</summary>
+        public string GetRepoRevision(UserSecret userSecret, string projectPTId)
+        {
+            if (IsResource(projectPTId))
+            {
+                throw new InvalidOperationException("Cannot query a resource for an hg repo revision.");
+            }
+            using ScrText scrText = GetScrText(userSecret, projectPTId);
+            return _hgHelper.GetRepoRevision(scrText.Directory);
+        }
+
+        /// <summary>Set a project local hg repo to a given Mercurial revision. Accessed by a given user.</summary>>
+        public void SetRepoToRevision(UserSecret userSecret, string projectPTId, string desiredRevision)
+        {
+            if (IsResource(projectPTId))
+            {
+                throw new InvalidOperationException("Cannot query a resource for an hg repo revision.");
+            }
+            using ScrText scrText = GetScrText(userSecret, projectPTId);
+            // Act
+            _hgHelper.Update(scrText.Directory, desiredRevision);
+            // Verify
+            string currentRepoRev = GetRepoRevision(userSecret, projectPTId);
+            if (currentRepoRev != desiredRevision)
+            {
+                throw new Exception(
+                    $"SetRepoToRevision failed to set repo for project PT id {projectPTId} to revision {desiredRevision}, as the resulting revision is {currentRepoRev}."
+                );
+            }
+        }
+
         /// <summary>
         /// Checks whether a backup exists for the Paratext project repository.
         /// </summary>
@@ -1505,10 +1537,34 @@ namespace SIL.XForge.Scripture.Services
             return false;
         }
 
+        /// <summary>Does a local directory exist for the project? (i.e. in /var/lib/...)</summary>
+        public bool LocalProjectDirExists(string projectPTId)
+        {
+            string dir = LocalProjectDir(projectPTId);
+            return _fileSystemService.DirectoryExists(dir);
+        }
+
         protected override void DisposeManagedResources()
         {
             _registryClient.Dispose();
             _httpClientHandler.Dispose();
+        }
+
+        private ScrText GetScrText(UserSecret userSecret, string projectPTId)
+        {
+            string? ptUsername = GetParatextUsername(userSecret);
+            if (ptUsername == null)
+            {
+                throw new DataNotFoundException($"Failed to get username for UserSecret id {userSecret.Id}.");
+            }
+            ScrText? scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), projectPTId);
+            if (scrText == null)
+            {
+                throw new DataNotFoundException(
+                    $"Could not find project for UserSecret id {userSecret.Id}, project PT id {projectPTId}"
+                );
+            }
+            return scrText;
         }
 
         /// <summary>
@@ -1747,7 +1803,7 @@ namespace SIL.XForge.Scripture.Services
                 // Extract the resource to the source directory
                 if (needsToBeCloned)
                 {
-                    string path = Path.Combine(SyncDir, targetParatextId, "target");
+                    string path = LocalProjectDir(targetParatextId);
                     _fileSystemService.CreateDirectory(path);
                     resource.InstallableResource.ExtractToDirectory(path);
                 }
@@ -1788,9 +1844,19 @@ namespace SIL.XForge.Scripture.Services
             };
         }
 
-        private void CloneProjectRepo(IInternetSharedRepositorySource source, string projectId, SharedRepository repo)
+        /// <summary>Path for project directory on local filesystem. Whether or not that directory
+        /// exists. </summary>
+        private string LocalProjectDir(string projectPTId)
         {
-            string clonePath = Path.Combine(SyncDir, projectId, "target");
+            // Historically, SF used both "target" and "source" projects in adjacent directories. Then
+            // moved to just using "target".
+            string subDirForMainProject = "target";
+            return Path.Combine(SyncDir, projectPTId, subDirForMainProject);
+        }
+
+        private void CloneProjectRepo(IInternetSharedRepositorySource source, string projectPTId, SharedRepository repo)
+        {
+            string clonePath = LocalProjectDir(projectPTId);
             if (!_fileSystemService.DirectoryExists(clonePath))
             {
                 _fileSystemService.CreateDirectory(clonePath);
