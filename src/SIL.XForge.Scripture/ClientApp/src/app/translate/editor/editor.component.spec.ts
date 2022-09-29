@@ -2864,7 +2864,7 @@ class TestEnvironment {
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
     when(mockedSFProjectService.isProjectAdmin('project01', 'user04')).thenResolve(true);
-    when(mockedSFProjectService.queryNoteThreads('project01')).thenCall(id =>
+    when(mockedSFProjectService.queryNoteThreads(anything())).thenCall(id =>
       this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, {
         [obj<NoteThread>().pathStr(t => t.projectRef)]: id,
         [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo
