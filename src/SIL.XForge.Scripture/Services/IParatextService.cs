@@ -69,9 +69,12 @@ namespace SIL.XForge.Scripture.Services
             Dictionary<string, ParatextUserProfile> ptProjectUsers
         );
         string? GetLatestSharedVersion(UserSecret userSecret, string paratextId);
+        string GetRepoRevision(UserSecret userSecret, string projectPTId);
+        void SetRepoToRevision(UserSecret userSecret, string projectPTId, string desiredRevision);
         bool BackupExists(UserSecret userSecret, string paratextId);
         bool BackupRepository(UserSecret userSecret, string paratextId);
         bool RestoreRepository(UserSecret userSecret, string paratextId);
+        bool LocalProjectDirExists(string projectPTId);
 
         Task<ParatextProject> SendReceiveAsync(
             UserSecret userSecret,
