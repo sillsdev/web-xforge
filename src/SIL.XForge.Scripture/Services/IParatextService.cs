@@ -1,3 +1,4 @@
+#nullable enable annotations
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -15,7 +16,7 @@ namespace SIL.XForge.Scripture.Services
         Task<bool> CanUserAuthenticateToPTRegistryAsync(UserSecret userSecret);
         Task<bool> CanUserAuthenticateToPTArchivesAsync(string userSFId);
         Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret);
-        string GetParatextUsername(UserSecret userSecret);
+        string? GetParatextUsername(UserSecret userSecret);
         Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId, CancellationToken token);
         Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(
             UserSecret userSecret,
@@ -68,7 +69,7 @@ namespace SIL.XForge.Scripture.Services
             Dictionary<int, ChapterDelta> chapterDeltas,
             Dictionary<string, ParatextUserProfile> ptProjectUsers
         );
-        string GetLatestSharedVersion(UserSecret userSecret, string paratextId);
+        string? GetLatestSharedVersion(UserSecret userSecret, string paratextId);
         bool BackupExists(UserSecret userSecret, string paratextId);
         bool BackupRepository(UserSecret userSecret, string paratextId);
         bool RestoreRepository(UserSecret userSecret, string paratextId);

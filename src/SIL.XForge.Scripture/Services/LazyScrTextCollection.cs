@@ -1,3 +1,4 @@
+#nullable enable annotations
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
@@ -37,7 +38,7 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         /// <param name="ptUsername"> The username of the user retrieving the ScrText. </param>
         /// <param name="projectId"> The ID of the target project. </param>
-        public ScrText FindById(string ptUsername, string projectId)
+        public ScrText? FindById(string ptUsername, string projectId)
         {
             if (projectId == null)
                 return null;
