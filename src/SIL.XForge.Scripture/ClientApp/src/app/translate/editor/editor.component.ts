@@ -987,7 +987,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.onTargetDeleteSub.unsubscribe();
     }
     this.onTargetDeleteSub = textDoc.delete$.subscribe(() => {
-      this.dialogService.message(translate('editor.text_has_been_deleted')).then(() => {
+      this.dialogService.message(this.i18n.translate('editor.text_has_been_deleted')).then(() => {
         this.router.navigateByUrl('/projects/' + this.projectDoc!.id + '/translate', { replaceUrl: true });
       });
     });
