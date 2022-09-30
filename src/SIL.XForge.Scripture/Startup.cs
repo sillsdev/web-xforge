@@ -177,7 +177,7 @@ namespace SIL.XForge.Scripture
                 });
             }
 
-            services.AddSFMachine(Configuration);
+            services.AddSFMachine(Configuration, Environment);
 
             containerBuilder.Populate(services);
 
