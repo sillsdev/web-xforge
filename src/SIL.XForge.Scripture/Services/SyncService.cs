@@ -128,6 +128,12 @@ namespace SIL.XForge.Scripture.Services
                             null,
                             JobContinuationOptions.OnAnyFinishedState
                         );
+                        _logger.LogInformation(
+                            $"Queueing sync for source project {sourceProjectId} with sync metrics id {sourceSyncMetrics.Id}"
+                        );
+                        _logger.LogInformation(
+                            $"Queueing sync for target project {projectId} with sync metrics id {targetSyncMetrics.Id}"
+                        );
                         try
                         {
                             await sourceProjectDoc.SubmitJson0OpAsync(op =>
@@ -199,6 +205,7 @@ namespace SIL.XForge.Scripture.Services
                     r => r.RunAsync(projectId, curUserId, syncMetrics.Id, trainEngine, CancellationToken.None),
                     TimeSpan.FromMinutes(5)
                 );
+                _logger.LogInformation($"Queueing sync for project {projectId} with sync metrics id {syncMetrics.Id}");
                 try
                 {
                     await projectDoc.SubmitJson0OpAsync(op =>
@@ -288,6 +295,9 @@ namespace SIL.XForge.Scripture.Services
                 // Mark all sync metrics as cancelled
                 foreach (string syncMetricsId in projectSecret.SyncMetricsIds)
                 {
+                    _logger.LogInformation(
+                        $"Cancelling sync for project {projectSecret.Id} with sync metrics id {syncMetricsId}"
+                    );
                     await _syncMetrics.UpdateAsync(
                         syncMetricsId,
                         u =>

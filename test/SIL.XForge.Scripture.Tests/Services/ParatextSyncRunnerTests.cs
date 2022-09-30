@@ -3169,7 +3169,13 @@ namespace SIL.XForge.Scripture.Services
             )
             {
                 // SUT
-                await Runner.RunAsync(projectSFId, userId, trainEngine: false, token: CancellationToken.None);
+                await Runner.RunAsync(
+                    projectSFId,
+                    userId,
+                    syncMetricsId: projectSFId,
+                    trainEngine: false,
+                    token: CancellationToken.None
+                );
 
                 // We are in an out-of-sync situation and so should not be writing to PT.
 
@@ -3207,7 +3213,13 @@ namespace SIL.XForge.Scripture.Services
             )
             {
                 // SUT
-                await Runner.RunAsync(projectSFId, userId, trainEngine: false, token: CancellationToken.None);
+                await Runner.RunAsync(
+                    projectSFId,
+                    userId,
+                    syncMetricsId: projectSFId,
+                    trainEngine: false,
+                    token: CancellationToken.None
+                );
 
                 // We are not in an out-of-sync situation and should proceed with the sync.
 

@@ -583,6 +583,7 @@ namespace SIL.XForge.Scripture.Services
             CancellationToken token
         )
         {
+            _logger.LogInformation($"Initializing sync for project {projectSFId} with sync metrics id {syncMetricsId}");
             if (!(await _syncMetricsRepository.TryGetAsync(syncMetricsId)).TryResult(out _syncMetrics))
             {
                 Log($"Could not find sync metrics.", syncMetricsId, userId);
