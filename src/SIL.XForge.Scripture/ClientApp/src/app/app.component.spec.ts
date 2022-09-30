@@ -114,8 +114,7 @@ describe('AppComponent', () => {
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project01');
     expect(env.menuLength).toEqual(5);
-    // TODO re-implement test
-    // verify(mockedUserService.setCurrentProjectId(anything(), 'project01')).once();
+    verify(mockedUserService.setCurrentProjectId(anything(), 'project01')).once();
   }));
 
   it('navigate to different project', fakeAsync(() => {
@@ -129,8 +128,7 @@ describe('AppComponent', () => {
     expect(env.menuLength).toEqual(5);
     expect(env.component.isCheckingEnabled).toEqual(true);
     expect(env.component.isTranslateEnabled).toEqual(false);
-    // TODO re-implement test
-    // verify(mockedUserService.setCurrentProjectId(anything(), 'project02')).once();
+    verify(mockedUserService.setCurrentProjectId(anything(), 'project02')).once();
   }));
 
   it('hide translate tool for community checkers', fakeAsync(() => {
@@ -144,8 +142,7 @@ describe('AppComponent', () => {
     expect(env.menuLength).toEqual(5);
     expect(env.component.isCheckingEnabled).toEqual(true);
     expect(env.component.isTranslateEnabled).toEqual(false);
-    // TODO re-implement test
-    // verify(mockedUserService.setCurrentProjectId(anything(), 'project03')).once();
+    verify(mockedUserService.setCurrentProjectId(anything(), 'project03')).once();
 
     // Does not collapse Community Checking item when translate is disabled
     env.selectItem(0);
@@ -193,8 +190,7 @@ describe('AppComponent', () => {
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project02');
     expect(env.location.path()).toEqual('/projects/project02');
-    // TODO re-implement test
-    // verify(mockedUserService.setCurrentProjectId(anything(), 'project02')).once();
+    verify(mockedUserService.setCurrentProjectId(anything(), 'project02')).once();
   }));
 
   it('connect project', fakeAsync(() => {
