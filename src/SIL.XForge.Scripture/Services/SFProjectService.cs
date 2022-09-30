@@ -222,9 +222,10 @@ namespace SIL.XForge.Scripture.Services
                 await Task.WhenAll(tasks);
             }
 
+            // The machine service requires the project secrets
+            await _machineService.RemoveProjectAsync(curUserId, projectId);
             await ProjectSecrets.DeleteAsync(projectId);
             await RealtimeService.DeleteProjectAsync(projectId);
-            await _machineService.RemoveProjectAsync(curUserId, projectId);
             string projectDir = Path.Combine(SiteOptions.Value.SiteDir, "sync", ptProjectId);
             if (FileSystemService.DirectoryExists(projectDir))
                 FileSystemService.DeleteDirectory(projectDir);
