@@ -14,6 +14,7 @@ import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/mode
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -33,6 +34,7 @@ const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedRouter = mock(Router);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
+const mockedDialogService = mock(DialogService);
 const mockedTranslocoService = mock(TranslocoService);
 const mockedPwaService = mock(PwaService);
 
@@ -46,6 +48,7 @@ describe('ProjectComponent', () => {
       { provide: Router, useMock: mockedRouter },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: DialogService, useMock: mockedDialogService },
       { provide: TranslocoService, useMock: mockedTranslocoService },
       { provide: PwaService, useMock: mockedPwaService }
     ]
@@ -155,7 +158,7 @@ describe('ProjectComponent', () => {
   }));
 
   it('check sharing link skipped offline', fakeAsync(() => {
-    when(mockedNoticeService.showMessageDialog(anything())).thenResolve();
+    when(mockedDialogService.message(anything())).thenResolve();
     const env = new TestEnvironment();
     env.onlineStatus = false;
     env.setProjectData({
@@ -168,13 +171,13 @@ describe('ProjectComponent', () => {
     env.fixture.detectChanges();
     tick();
     verify(mockedSFProjectService.onlineCheckLinkSharing(anything(), anything())).never();
-    verify(mockedNoticeService.showMessageDialog(anything())).once();
+    verify(mockedDialogService.message(anything())).once();
     verify(mockedRouter.navigate(deepEqual(['projects', 'project01', 'translate', 'MAT']), anything())).once();
     expect().nothing();
   }));
 
   it('check sharing link skipped offline and redirect user if not on any projects', fakeAsync(() => {
-    when(mockedNoticeService.showMessageDialog(anything())).thenResolve();
+    when(mockedDialogService.message(anything())).thenResolve();
     const env = new TestEnvironment();
     env.onlineStatus = false;
     env.setProjectData({ selectedTask: 'translate', projectId: 'project02' });
@@ -182,7 +185,7 @@ describe('ProjectComponent', () => {
     env.fixture.detectChanges();
     tick();
     verify(mockedSFProjectService.onlineCheckLinkSharing(anything(), anything())).never();
-    verify(mockedNoticeService.showMessageDialog(anything())).once();
+    verify(mockedDialogService.message(anything())).once();
     verify(mockedRouter.navigateByUrl('/projects', anything())).once();
     expect().nothing();
   }));
@@ -199,7 +202,7 @@ describe('ProjectComponent', () => {
     env.fixture.detectChanges();
     tick();
     verify(mockedSFProjectService.onlineCheckLinkSharing(anything(), anything())).never();
-    verify(mockedNoticeService.showMessageDialog(anything())).never();
+    verify(mockedDialogService.message(anything())).never();
     verify(mockedRouter.navigate(deepEqual(['projects', 'project02', 'checking', 'ALL']), anything())).once();
     expect().nothing();
   }));
@@ -214,7 +217,7 @@ describe('ProjectComponent', () => {
     env.fixture.detectChanges();
     tick();
 
-    verify(mockedNoticeService.showMessageDialog(anything())).once();
+    verify(mockedDialogService.message(anything())).once();
     verify(mockedRouter.navigateByUrl('/projects', anything())).once();
     expect().nothing();
   }));
@@ -229,7 +232,7 @@ describe('ProjectComponent', () => {
     env.fixture.detectChanges();
     tick();
 
-    verify(mockedNoticeService.showMessageDialog(anything())).once();
+    verify(mockedDialogService.message(anything())).once();
     verify(mockedRouter.navigateByUrl('/projects', anything())).once();
     expect().nothing();
   }));
@@ -269,7 +272,7 @@ class TestEnvironment {
     when(mockedSFProjectService.onlineCheckLinkSharing('project01', anything())).thenCall(() =>
       this.setProjectData({ memberProjects: ['project01'] })
     );
-    when(mockedNoticeService.showMessageDialog(anything())).thenResolve();
+    when(mockedDialogService.message(anything())).thenResolve();
 
     when(mockedTranslocoService.translate<string>(anything())).thenReturn('The project link is invalid.');
     this.isOnline = new BehaviorSubject<boolean>(true);

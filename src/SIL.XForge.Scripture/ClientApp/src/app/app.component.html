@@ -36,7 +36,7 @@
                   <mdc-list-item
                     *ngFor="let locale of i18n.locales"
                     [class.active-locale]="locale.canonicalTag === i18n.localeCode"
-                    (click)="langMenu.open = false; i18n.setLocale(locale.canonicalTag)"
+                    (click)="langMenu.open = false; setLocale(locale.canonicalTag)"
                   >
                     <!-- `langMenu.open = false` is workaround for menu not closing when click is on a span element -->
                     <mdc-icon>check</mdc-icon>

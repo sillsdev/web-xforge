@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { translate } from '@ngneat/transloco';
 import {
   Auth0Client,
   GetTokenSilentlyVerboseResponse,
@@ -20,10 +19,11 @@ import { environment } from '../environments/environment';
 import { Auth0Service } from './auth0.service';
 import { BugsnagService } from './bugsnag.service';
 import { CommandError, CommandService } from './command.service';
+import { DialogService } from './dialog.service';
 import { ErrorReportingService } from './error-reporting.service';
+import { I18nService } from './i18n.service';
 import { LocalSettingsService } from './local-settings.service';
 import { LocationService } from './location.service';
-import { NoticeService } from './notice.service';
 import { OfflineStore } from './offline-store';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
 import { USERS_URL } from './url-constants';
@@ -91,8 +91,9 @@ export class AuthService {
     private readonly router: Router,
     private readonly localSettings: LocalSettingsService,
     private readonly pwaService: PwaService,
-    private readonly noticeService: NoticeService,
-    private readonly reportingService: ErrorReportingService
+    private readonly dialogService: DialogService,
+    private readonly reportingService: ErrorReportingService,
+    private readonly i18n: I18nService
   ) {
     // Listen for changes to the auth state. If the user logs out in another tab/window, redirect to the home page.
     // When localStorage is cleared event.key is null. The logic below may be more specific than necessary, but we can't
@@ -355,13 +356,12 @@ export class AuthService {
           console.error(err);
           return false;
         }
-        this.noticeService
-          .showMessageDialog(
-            () =>
-              translate('connect_project.paratext_account_linked_to_another_user', {
-                email: authDetails.idToken?.email
-              }),
-            () => translate('connect_project.proceed')
+        this.dialogService
+          .message(
+            this.i18n.translate('connect_project.paratext_account_linked_to_another_user', {
+              email: authDetails.idToken?.email
+            }),
+            this.i18n.translate('connect_project.proceed')
           )
           .then(async () => {
             // Strip out the linking state so that we don't process linking again
@@ -428,9 +428,9 @@ export class AuthService {
   private async handleLoginError(method: string, error: object): Promise<void> {
     console.error(error);
     this.reportingService.silentError(`Error occurred in ${method}`, error);
-    await this.noticeService.showMessageDialog(
-      () => translate('error_messages.error_occurred_login'),
-      () => translate('error_messages.try_again')
+    await this.dialogService.message(
+      this.i18n.translate('error_messages.error_occurred_login'),
+      this.i18n.translate('error_messages.try_again')
     );
   }
 
