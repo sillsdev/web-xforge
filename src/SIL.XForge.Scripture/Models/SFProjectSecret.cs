@@ -27,5 +27,15 @@ namespace SIL.XForge.Scripture.Models
         /// so that we can mark the <see cref="SyncMetrics"/> as cancelled.
         /// </remarks>
         public List<string> SyncMetricsIds { get; set; } = new List<string>();
+
+        /// The Machine API Translation Engine Id for the project.
+        /// </summary>
+        /// <value>
+        /// The Translation Engine Id.
+        /// </value>
+        /// <remarks>
+        /// The user should not interact with the translation engine directly by ID.
+        /// </remarks>
+        public string TranslationEngineId { get; set; }
     }
 }

@@ -1,4 +1,7 @@
+using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using NSubstitute;
 using NUnit.Framework;
@@ -19,15 +22,57 @@ namespace SIL.XForge.Scripture.Services
         private const string User01 = "user01";
 
         [Test]
-        public async Task AddProjectAsync_ExecutesInMemoryMachine()
+        public async Task AddProjectAsync_ExecutesInMemoryMachineAndMachineApi()
         {
+            // Set up a mock Machine API
+            string translationEngineId = "633711040935fe633f927c80";
+            var response =
+                $"{{\"id\": \"{translationEngineId}\",\"href\":\"/translation-engines/{translationEngineId}\"}}";
+            var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
+            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+
             // Set up test environment
-            var env = new TestEnvironment();
+            var env = new TestEnvironment(httpClient);
 
             // SUT
             await env.Service.AddProjectAsync(User01, Project01);
 
             await env.EngineService.Received().AddProjectAsync(Arg.Any<MachineProject>());
+            Assert.AreEqual(translationEngineId, env.ProjectSecrets.Get(Project01).TranslationEngineId);
+            Assert.AreEqual(1, handler.NumberOfCalls);
+        }
+
+        [Test]
+        public async Task BuildProjectAsync_CallsMachineApiIfTranslationEngineIdPresent()
+        {
+            // Set up a mock Machine API
+            var response = $"{{\"id\": \"633711040935fe633f927c80\",\"state\":\"pending\"}}";
+            var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
+            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+
+            // Set up test environment
+            var env = new TestEnvironment(httpClient);
+
+            // SUT
+            await env.Service.BuildProjectAsync(User01, Project02);
+
+            Assert.AreEqual(1, handler.NumberOfCalls);
+        }
+
+        [Test]
+        public async Task BuildProjectAsync_DoesNotCallMachineApiIfNoTranslationEngineId()
+        {
+            // Set up a mock Machine API
+            var handler = new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK);
+            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+
+            // Set up test environment
+            var env = new TestEnvironment(httpClient);
+
+            // SUT
+            await env.Service.BuildProjectAsync(User01, Project01);
+
+            Assert.AreEqual(0, handler.NumberOfCalls);
         }
 
         [Test]
@@ -40,6 +85,38 @@ namespace SIL.XForge.Scripture.Services
             await env.Service.BuildProjectAsync(User01, Project01);
 
             await env.EngineService.Received().StartBuildByProjectIdAsync(Project01);
+        }
+
+        [Test]
+        public async Task RemoveProjectAsync_CallsMachineApiIfTranslationEngineIdPresent()
+        {
+            // Set up a mock Machine API
+            var handler = new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK);
+            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+
+            // Set up test environment
+            var env = new TestEnvironment(httpClient);
+
+            // SUT
+            await env.Service.RemoveProjectAsync(User01, Project02);
+
+            Assert.AreEqual(1, handler.NumberOfCalls);
+        }
+
+        [Test]
+        public async Task RemoveProjectAsync_DoesNotCallMachineApiIfNoTranslationEngineId()
+        {
+            // Set up a mock Machine API
+            var handler = new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK);
+            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+
+            // Set up test environment
+            var env = new TestEnvironment(httpClient);
+
+            // SUT
+            await env.Service.RemoveProjectAsync(User01, Project01);
+
+            Assert.AreEqual(0, handler.NumberOfCalls);
         }
 
         [Test]
@@ -56,11 +133,22 @@ namespace SIL.XForge.Scripture.Services
 
         private class TestEnvironment
         {
-            public TestEnvironment()
+            public TestEnvironment(HttpClient httpClient = default)
             {
                 EngineService = Substitute.For<IEngineService>();
-                var realtimeService = new SFMemoryRealtimeService();
+                var httpClientFactory = Substitute.For<IHttpClientFactory>();
+                httpClientFactory.CreateClient(Arg.Any<string>()).Returns(httpClient);
+                var logger = new MockLogger<MachineService>();
 
+                ProjectSecrets = new MemoryRepository<SFProjectSecret>(
+                    new[]
+                    {
+                        new SFProjectSecret { Id = Project01 },
+                        new SFProjectSecret { Id = Project02, TranslationEngineId = Project02 },
+                    }
+                );
+
+                var realtimeService = new SFMemoryRealtimeService();
                 realtimeService.AddRepository(
                     "sf_projects",
                     OTType.Json0,
@@ -92,11 +180,12 @@ namespace SIL.XForge.Scripture.Services
                     )
                 );
 
-                Service = new MachineService(EngineService, realtimeService);
+                Service = new MachineService(EngineService, httpClientFactory, logger, ProjectSecrets, realtimeService);
             }
 
             public MachineService Service { get; }
             public IEngineService EngineService { get; }
+            public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
         }
     }
 }

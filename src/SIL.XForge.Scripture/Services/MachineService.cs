@@ -1,12 +1,12 @@
+using System;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using SIL.Machine.WebApi.Services;
 using SIL.ObjectModel;
-using SIL.XForge.Configuration;
+using SIL.XForge.DataAccess;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
@@ -18,43 +18,27 @@ namespace SIL.XForge.Scripture.Services
 {
     public class MachineService : DisposableBase, IMachineService
     {
+        public const string ClientName = "machine_api";
+
         private readonly IEngineService _engineService;
-        private readonly HttpClientHandler _httpClientHandler;
-        private readonly HttpClient? _machineClient;
+        private readonly ILogger<MachineService> _logger;
+        private readonly HttpClient _machineClient;
+        private readonly IRepository<SFProjectSecret> _projectSecrets;
         private readonly IRealtimeService _realtimeService;
 
         public MachineService(
             IEngineService engineService,
-            IWebHostEnvironment env,
+            IHttpClientFactory httpClientFactory,
             ILogger<MachineService> logger,
-            IOptions<MachineOptions> machineOptions,
+            IRepository<SFProjectSecret> projectSecrets,
             IRealtimeService realtimeService
         )
         {
             _engineService = engineService;
+            _logger = logger;
+            _projectSecrets = projectSecrets;
             _realtimeService = realtimeService;
-            _httpClientHandler = new HttpClientHandler();
-
-            // Verify that we have the required machine options
-            if (
-                string.IsNullOrWhiteSpace(machineOptions.Value.ApiServer)
-                || string.IsNullOrWhiteSpace(machineOptions.Value.Audience)
-                || string.IsNullOrWhiteSpace(machineOptions.Value.ClientId)
-                || string.IsNullOrWhiteSpace(machineOptions.Value.ClientSecret)
-                || string.IsNullOrWhiteSpace(machineOptions.Value.TokenUrl)
-            )
-            {
-                logger.LogWarning("Machine API not configured - using in-memory instance.");
-                return;
-            }
-
-            // Setup the HTTP Client
-            _machineClient = new HttpClient(_httpClientHandler);
-            if (env.IsDevelopment() || env.IsEnvironment("Testing"))
-            {
-                _httpClientHandler.ServerCertificateCustomValidationCallback =
-                    HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-            }
+            _machineClient = httpClientFactory.CreateClient(ClientName);
         }
 
         public async Task AddProjectAsync(string curUserId, string projectId)
@@ -75,7 +59,42 @@ namespace SIL.XForge.Scripture.Services
             };
             await _engineService.AddProjectAsync(machineProject);
 
-            // TODO: Add the project to the Machine API
+            // Add the project to the Machine API
+            const string requestUri = "translation-engines";
+            using var response = await _machineClient.PostAsJsonAsync(
+                requestUri,
+                new
+                {
+                    name = projectId,
+                    sourceLanguageTag = machineProject.SourceLanguageTag,
+                    targetLanguageTag = projectDoc.Data.WritingSystem.Tag,
+                    type = "SmtTransfer",
+                }
+            );
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
+            }
+
+            string data = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation($"Response from {requestUri}: {data}");
+
+            // Get the ID from the API response
+            dynamic? translationEngine = JsonConvert.DeserializeObject<dynamic>(data);
+            string? translationEngineId = translationEngine?.id;
+            if (string.IsNullOrWhiteSpace(translationEngineId))
+            {
+                throw new ArgumentException("Translation Engine ID from the Machine API is missing.");
+            }
+
+            // Store the Translation Engine ID
+            await _projectSecrets.UpdateAsync(
+                projectId,
+                u =>
+                {
+                    u.Set(p => p.TranslationEngineId, translationEngineId);
+                }
+            );
         }
 
         public async Task BuildProjectAsync(string curUserId, string projectId)
@@ -83,7 +102,28 @@ namespace SIL.XForge.Scripture.Services
             // Build the project with the in-memory Machine instance
             await _engineService.StartBuildByProjectIdAsync(projectId);
 
-            // TODO: Build the project with the Machine API
+            // Load the target project secrets, so we can get the translation engine ID
+            if (!(await _projectSecrets.TryGetAsync(projectId)).TryResult(out SFProjectSecret projectSecret))
+            {
+                throw new ArgumentException("The project secret cannot be found.");
+            }
+
+            // Build the project with the Machine API
+            if (!string.IsNullOrWhiteSpace(projectSecret.TranslationEngineId))
+            {
+                string requestUri = $"translation-engines/{projectSecret.TranslationEngineId}/builds";
+                using var response = await _machineClient.PostAsync(requestUri, null);
+
+                // TODO: Use the response body?
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
+                }
+            }
+            else
+            {
+                _logger.LogInformation($"No Translation Engine Id specified for project {projectId}");
+            }
         }
 
         public async Task RemoveProjectAsync(string curUserId, string projectId)
@@ -91,13 +131,35 @@ namespace SIL.XForge.Scripture.Services
             // Remove the project from the in-memory Machine instance
             await _engineService.RemoveProjectAsync(projectId);
 
-            // TODO: Remove the project from the Machine API
+            // Load the target project secrets, so we can get the translation engine ID
+            if (!(await _projectSecrets.TryGetAsync(projectId)).TryResult(out SFProjectSecret projectSecret))
+            {
+                throw new ArgumentException("The project secret cannot be found.");
+            }
+
+            // Remove the project from the Machine API
+            if (!string.IsNullOrWhiteSpace(projectSecret.TranslationEngineId))
+            {
+                string requestUri = $"translation-engines/{projectSecret.TranslationEngineId}";
+                using var response = await _machineClient.DeleteAsync(requestUri);
+
+                // There is no response body - just check the status code
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogInformation(
+                        $"Translation engine {projectSecret.TranslationEngineId} for project {projectId} could not be deleted."
+                    );
+                }
+            }
+            else
+            {
+                _logger.LogInformation($"No Translation Engine Id specified for project {projectId}");
+            }
         }
 
         protected override void DisposeManagedResources()
         {
-            _machineClient?.Dispose();
-            _httpClientHandler.Dispose();
+            _machineClient.Dispose();
         }
     }
 }
