@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Hangfire;
 using Hangfire.States;
+using MongoDB.Bson;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
@@ -20,18 +21,21 @@ namespace SIL.XForge.Scripture.Services
     {
         private readonly IBackgroundJobClient _backgroundJobClient;
         private readonly IRepository<SFProjectSecret> _projectSecrets;
+        private readonly IRepository<SyncMetrics> _syncMetrics;
         private readonly IRealtimeService _realtimeService;
         private readonly ILogger<SyncService> _logger;
 
         public SyncService(
             IBackgroundJobClient backgroundJobClient,
             IRepository<SFProjectSecret> projectSecrets,
+            IRepository<SyncMetrics> syncMetrics,
             IRealtimeService realtimeService,
             ILogger<SyncService> logger
         )
         {
             _backgroundJobClient = backgroundJobClient;
             _projectSecrets = projectSecrets;
+            _syncMetrics = syncMetrics;
             _realtimeService = realtimeService;
             _logger = logger;
         }
@@ -74,20 +78,61 @@ namespace SIL.XForge.Scripture.Services
                             throw new ArgumentException("The source project secret cannot be found.");
                         }
 
+                        // Create the sync metrics for the source and target projects
+                        var sourceSyncMetrics = new SyncMetrics
+                        {
+                            DateQueued = DateTime.UtcNow,
+                            Id = ObjectId.GenerateNewId().ToString(),
+                            ProjectRef = sourceProjectId,
+                            Status = SyncStatus.Queued,
+                            UserRef = curUserId,
+                        };
+                        await _syncMetrics.InsertAsync(sourceSyncMetrics);
+                        var targetSyncMetrics = new SyncMetrics
+                        {
+                            DateQueued = DateTime.UtcNow,
+                            Id = ObjectId.GenerateNewId().ToString(),
+                            ProjectRef = projectId,
+                            RequiresId = sourceSyncMetrics.Id,
+                            Status = SyncStatus.Queued,
+                            UserRef = curUserId,
+                        };
+                        await _syncMetrics.InsertAsync(targetSyncMetrics);
+
                         // Schedule the sync for 5 minutes to give us enough time to update the project's sync object
                         // We do this because there is no "draft" status in hangfire - this is close enough
                         // After we do that, we will enqueue the job. We do it this way because we don't want to start
                         // the job unless the queued count and job ids have been incremented appropriately.
                         // We need to sync the source first so that we can link the source texts and train the engine.
                         string sourceJobId = _backgroundJobClient.Schedule<ParatextSyncRunner>(
-                            r => r.RunAsync(sourceProjectId, curUserId, false, CancellationToken.None),
+                            r =>
+                                r.RunAsync(
+                                    sourceProjectId,
+                                    curUserId,
+                                    sourceSyncMetrics.Id,
+                                    false,
+                                    CancellationToken.None
+                                ),
                             TimeSpan.FromMinutes(5)
                         );
                         string targetJobId = _backgroundJobClient.ContinueJobWith<ParatextSyncRunner>(
                             sourceJobId,
-                            r => r.RunAsync(projectId, curUserId, trainEngine, CancellationToken.None),
+                            r =>
+                                r.RunAsync(
+                                    projectId,
+                                    curUserId,
+                                    targetSyncMetrics.Id,
+                                    trainEngine,
+                                    CancellationToken.None
+                                ),
                             null,
                             JobContinuationOptions.OnAnyFinishedState
+                        );
+                        _logger.LogInformation(
+                            $"Queueing sync for source project {sourceProjectId} with sync metrics id {sourceSyncMetrics.Id}"
+                        );
+                        _logger.LogInformation(
+                            $"Queueing sync for target project {projectId} with sync metrics id {targetSyncMetrics.Id}"
                         );
                         try
                         {
@@ -114,6 +159,7 @@ namespace SIL.XForge.Scripture.Services
                                 u =>
                                 {
                                     u.Add(p => p.JobIds, sourceJobId);
+                                    u.Add(p => p.SyncMetricsIds, sourceSyncMetrics.Id);
                                 }
                             );
 
@@ -123,6 +169,7 @@ namespace SIL.XForge.Scripture.Services
                                 u =>
                                 {
                                     u.Add(p => p.JobIds, targetJobId);
+                                    u.Add(p => p.SyncMetricsIds, targetSyncMetrics.Id);
                                 }
                             );
 
@@ -141,12 +188,24 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
 
+                // Create the sync metrics for this project
+                var syncMetrics = new SyncMetrics
+                {
+                    DateQueued = DateTime.UtcNow,
+                    Id = ObjectId.GenerateNewId().ToString(),
+                    ProjectRef = projectId,
+                    Status = SyncStatus.Queued,
+                    UserRef = curUserId,
+                };
+                await _syncMetrics.InsertAsync(syncMetrics);
+
                 // Sync the target project only, as it does not have a source, or the source cannot be synced
                 // See the comments in the block above regarding scheduling for rationale on the process
                 string jobId = _backgroundJobClient.Schedule<ParatextSyncRunner>(
-                    r => r.RunAsync(projectId, curUserId, trainEngine, CancellationToken.None),
+                    r => r.RunAsync(projectId, curUserId, syncMetrics.Id, trainEngine, CancellationToken.None),
                     TimeSpan.FromMinutes(5)
                 );
+                _logger.LogInformation($"Queueing sync for project {projectId} with sync metrics id {syncMetrics.Id}");
                 try
                 {
                     await projectDoc.SubmitJson0OpAsync(op =>
@@ -164,6 +223,7 @@ namespace SIL.XForge.Scripture.Services
                         u =>
                         {
                             u.Add(p => p.JobIds, jobId);
+                            u.Add(p => p.SyncMetricsIds, syncMetrics.Id);
                         }
                     );
 
@@ -232,12 +292,28 @@ namespace SIL.XForge.Scripture.Services
                     _backgroundJobClient.Delete(jobId);
                 }
 
-                // Remove all job ids from the project secrets
+                // Mark all sync metrics as cancelled
+                foreach (string syncMetricsId in projectSecret.SyncMetricsIds)
+                {
+                    _logger.LogInformation(
+                        $"Cancelling sync for project {projectSecret.Id} with sync metrics id {syncMetricsId}"
+                    );
+                    await _syncMetrics.UpdateAsync(
+                        syncMetricsId,
+                        u =>
+                        {
+                            u.Set(s => s.Status, SyncStatus.Cancelled);
+                        }
+                    );
+                }
+
+                // Remove all job ids and sync metrics ids from the project secrets
                 await _projectSecrets.UpdateAsync(
                     projectSecret.Id,
                     u =>
                     {
                         u.Set(p => p.JobIds, new List<string>());
+                        u.Set(p => p.SyncMetricsIds, new List<string>());
                     }
                 );
 

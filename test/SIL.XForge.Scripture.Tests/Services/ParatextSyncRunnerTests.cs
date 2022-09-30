@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using Paratext.Data.ProjectComments;
 using Paratext.Data.ProjectSettingsAccess;
@@ -32,7 +33,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
 
             // SUT
-            await env.Runner.RunAsync("project03", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project03", "user01", "project03", false, CancellationToken.None);
         }
 
         [Test]
@@ -42,10 +43,14 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, true, false);
             env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target").Returns("beforeSR");
 
-            await env.Runner.RunAsync("project01", "user03", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user03", "project01", false, CancellationToken.None);
 
             SFProject project = env.VerifyProjectSync(false);
             Assert.That(project.Sync.DataInSync, Is.True);
+
+            // Check that the failure was logged in the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Failed));
         }
 
         [Test]
@@ -56,10 +61,14 @@ namespace SIL.XForge.Scripture.Services
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
             env.DeltaUsxMapper.When(d => d.ToChapterDeltas(Arg.Any<XDocument>())).Do(x => throw new Exception());
 
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             SFProject project = env.VerifyProjectSync(false);
             Assert.That(project.Sync.DataInSync, Is.False);
+
+            // Check that the failure was logged in the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Failed));
         }
 
         [Test]
@@ -69,7 +78,7 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(false, false, false, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2, false));
 
-            await env.Runner.RunAsync("project01", "user01", true, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", true, CancellationToken.None);
 
             Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
             Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
@@ -88,6 +97,14 @@ namespace SIL.XForge.Scripture.Services
 
             await env.EngineService.DidNotReceive().StartBuildByProjectIdAsync("project01");
             env.VerifyProjectSync(true);
+
+            // Verify the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 4, deleted: 0, updated: 0)));
+            syncMetrics = env.GetSyncMetrics("project02");
+            Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
         }
 
         [Test]
@@ -97,8 +114,8 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, false, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2, false));
 
-            await env.Runner.RunAsync("project02", "user01", true, CancellationToken.None);
-            await env.Runner.RunAsync("project01", "user01", true, CancellationToken.None);
+            await env.Runner.RunAsync("project02", "user01", "project02", true, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", true, CancellationToken.None);
 
             Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
             Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
@@ -117,6 +134,14 @@ namespace SIL.XForge.Scripture.Services
 
             await env.EngineService.Received().StartBuildByProjectIdAsync("project01");
             env.VerifyProjectSync(true);
+
+            // Verify the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 4, deleted: 0, updated: 0)));
+            syncMetrics = env.GetSyncMetrics("project02");
+            Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 0, updated: 0)));
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
         }
 
         [Test]
@@ -126,8 +151,8 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, false, false, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2, false));
 
-            await env.Runner.RunAsync("project02", "user01", true, CancellationToken.None);
-            await env.Runner.RunAsync("project01", "user01", true, CancellationToken.None);
+            await env.Runner.RunAsync("project02", "user01", "project02", true, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", true, CancellationToken.None);
 
             Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
             Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
@@ -146,6 +171,14 @@ namespace SIL.XForge.Scripture.Services
 
             await env.EngineService.Received().StartBuildByProjectIdAsync("project01");
             env.VerifyProjectSync(true);
+
+            // Verify the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 4, deleted: 0, updated: 0)));
+            syncMetrics = env.GetSyncMetrics("project02");
+            Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 0, updated: 0)));
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
         }
 
         [Test]
@@ -155,7 +188,7 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(false, true, false, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2, false));
 
-            await env.Runner.RunAsync("project01", "user01", true, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", true, CancellationToken.None);
 
             Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
             Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
@@ -174,6 +207,14 @@ namespace SIL.XForge.Scripture.Services
 
             await env.EngineService.DidNotReceive().StartBuildByProjectIdAsync("project01");
             env.VerifyProjectSync(true);
+
+            // Verify the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 4, deleted: 0, updated: 0)));
+            syncMetrics = env.GetSyncMetrics("project02");
+            Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
         }
 
         [Test]
@@ -183,8 +224,8 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, false, false, false);
             env.SetupPTData(new Book("MAT", 2, false));
 
-            await env.Runner.RunAsync("project02", "user01", true, CancellationToken.None);
-            await env.Runner.RunAsync("project01", "user01", true, CancellationToken.None);
+            await env.Runner.RunAsync("project02", "user01", "project02", true, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", true, CancellationToken.None);
 
             Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
             Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
@@ -193,6 +234,14 @@ namespace SIL.XForge.Scripture.Services
 
             await env.EngineService.DidNotReceive().StartBuildByProjectIdAsync("project01");
             env.VerifyProjectSync(true);
+
+            // Verify the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 0, updated: 0)));
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
+            syncMetrics = env.GetSyncMetrics("project02");
+            Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
         }
 
         [Test]
@@ -204,7 +253,7 @@ namespace SIL.XForge.Scripture.Services
             env.SetupPTData(books);
 
             // SUT
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             env.MockLogger.AssertEventCount(
                 (LogEvent logEvent) =>
@@ -253,8 +302,8 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, true, false, books);
             env.SetupPTData(books);
 
-            await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project02", "user01", "project02", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             await env.ParatextService
                 .Received()
@@ -320,8 +369,8 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, false, true, false, books);
             env.SetupPTData(books);
 
-            await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project02", "user01", "project02", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             await env.ParatextService
                 .Received()
@@ -377,6 +426,14 @@ namespace SIL.XForge.Scripture.Services
             SFProject project = env.GetProject();
             Assert.That(project.ParatextUsers.Count, Is.EqualTo(2));
             env.VerifyProjectSync(true);
+
+            // Verify the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 2)));
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 4)));
+            syncMetrics = env.GetSyncMetrics("project02");
+            Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 2)));
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 4)));
         }
 
         [Test]
@@ -388,8 +445,8 @@ namespace SIL.XForge.Scripture.Services
             env.AddParatextNoteThreadData(new Book("MRK", 2));
             Assert.That(env.ContainsNote(2), Is.True);
 
-            await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project02", "user01", "project02", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
             env.ParatextService
                 .Received()
                 .GetNoteThreadChanges(
@@ -413,6 +470,16 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
             Assert.That(env.ContainsNote(2), Is.True);
             env.VerifyProjectSync(true);
+
+            // Verify the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 2)));
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 1, updated: 0)));
+            Assert.That(syncMetrics.Questions, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 1, updated: 0)));
+            syncMetrics = env.GetSyncMetrics("project02");
+            Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 2)));
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 1, updated: 0)));
+            Assert.That(syncMetrics.Questions, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 1, updated: 0)));
         }
 
         [Test]
@@ -429,7 +496,7 @@ namespace SIL.XForge.Scripture.Services
             );
             env.SetupPTData(new Book("MAT", 2) { InvalidChapters = { 2 } }, new Book("MRK", 2));
 
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             SFProject project = env.GetProject();
             Assert.That(project.Texts[0].Chapters[0].IsValid, Is.True);
@@ -467,8 +534,8 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsNote(2), Is.True);
 
             // SUT
-            await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project02", "user01", "project02", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             Assert.That(env.ContainsText("project01", "MRK", 1), Is.False);
             Assert.That(env.ContainsText("project01", "MRK", 2), Is.False);
@@ -487,6 +554,26 @@ namespace SIL.XForge.Scripture.Services
 
             Assert.That(env.ContainsNote(2), Is.False);
             env.VerifyProjectSync(true);
+
+            // Verify the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 1, updated: 1)));
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 2, updated: 0)));
+            Assert.That(
+                syncMetrics.Notes,
+                Is.EqualTo(new NoteSyncMetricInfo(added: 0, deleted: 0, updated: 0, removed: 0))
+            );
+            Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 1, updated: 0)));
+            Assert.That(syncMetrics.Questions, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 2, updated: 0)));
+            syncMetrics = env.GetSyncMetrics("project02");
+            Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 1, updated: 1)));
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 2, updated: 0)));
+            Assert.That(
+                syncMetrics.Notes,
+                Is.EqualTo(new NoteSyncMetricInfo(added: 0, deleted: 0, updated: 0, removed: 0))
+            );
+            Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
+            Assert.That(syncMetrics.Questions, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 2, updated: 0)));
         }
 
         [Test]
@@ -505,13 +592,17 @@ namespace SIL.XForge.Scripture.Services
                 )
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
 
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             SFProject project = env.VerifyProjectSync(true);
             Assert.That(project.UserRoles["user01"], Is.EqualTo(SFProjectRole.Translator));
             await env.SFProjectService
                 .Received()
                 .RemoveUserWithoutPermissionsCheckAsync("user01", "project01", "user02");
+
+            // Verify the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Users, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 1, updated: 0)));
         }
 
         [Test]
@@ -531,7 +622,7 @@ namespace SIL.XForge.Scripture.Services
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
 
             // SUT
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             await env.SFProjectService
                 .Received()
@@ -568,7 +659,7 @@ namespace SIL.XForge.Scripture.Services
                 .Returns(new ParatextSettings { Editable = false });
 
             // SUT
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
             await env.ParatextService
                 .DidNotReceiveWithAnyArgs()
                 .PutBookText(default, default, default, default, default);
@@ -604,7 +695,7 @@ namespace SIL.XForge.Scripture.Services
                 .Returns(new ParatextSettings { DefaultFontSize = newFontSize, DefaultFont = newFont });
 
             // SUT
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
             project = env.VerifyProjectSync(true);
             Assert.That(project.DefaultFontSize, Is.EqualTo(newFontSize));
             Assert.That(project.DefaultFont, Is.EqualTo(newFont));
@@ -628,11 +719,15 @@ namespace SIL.XForge.Scripture.Services
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
             env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(x => null);
 
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
             env.VerifyProjectSync(false);
             await env.ParatextService
                 .DidNotReceiveWithAnyArgs()
                 .PutBookText(default, default, default, default, default);
+
+            // Check that the failure was logged in the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Failed));
         }
 
         [Test]
@@ -654,10 +749,14 @@ namespace SIL.XForge.Scripture.Services
             await env.SetUserRole("user02", SFProjectRole.CommunityChecker);
             SFProject project = env.GetProject();
             Assert.That(project.UserRoles["user02"], Is.EqualTo(SFProjectRole.CommunityChecker));
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             env.VerifyProjectSync(true);
             await env.SFProjectService.DidNotReceiveWithAnyArgs().RemoveUserAsync("user01", "project01", "user02");
+
+            // Verify the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Users, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
         }
 
         [Test]
@@ -671,7 +770,7 @@ namespace SIL.XForge.Scripture.Services
             env.ParatextService
                 .GetParatextSettings(Arg.Any<UserSecret>(), "target")
                 .Returns(new ParatextSettings { IsRightToLeft = true });
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             SFProject project = env.GetProject();
             env.ParatextService.Received().GetParatextSettings(Arg.Any<UserSecret>(), "target");
@@ -691,7 +790,7 @@ namespace SIL.XForge.Scripture.Services
             env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), "target").Returns(new ParatextSettings());
 
             // SUT
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             SFProject project = env.GetProject();
             env.ParatextService.Received().GetParatextSettings(Arg.Any<UserSecret>(), "target");
@@ -712,7 +811,7 @@ namespace SIL.XForge.Scripture.Services
                 .Returns(new ParatextSettings { FullName = newFullName });
 
             // SUT
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             SFProject project = env.GetProject();
             env.ParatextService.Received().GetParatextSettings(Arg.Any<UserSecret>(), "target");
@@ -731,7 +830,7 @@ namespace SIL.XForge.Scripture.Services
                 );
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2), new Book("LUK", 2));
 
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             var delta = Delta.New().InsertText("text");
             Assert.That(env.GetText("project01", "MAT", 1).DeepEquals(delta), Is.True);
@@ -741,6 +840,12 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.GetText("project01", "LUK", 1).DeepEquals(delta), Is.True);
             Assert.That(env.GetText("project01", "LUK", 2).DeepEquals(delta), Is.True);
             env.VerifyProjectSync(true);
+
+            // Verify the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
+            syncMetrics = env.GetSyncMetrics("project02");
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
         }
 
         [Test]
@@ -756,8 +861,8 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("project02", "MAT", 2), Is.False);
 
             // SUT
-            await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project02", "user01", "project02", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             // No errors or exceptions were logged
             env.MockLogger.AssertNoEvent(
@@ -770,6 +875,12 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("project02", "MAT", 2), Is.True);
             Assert.That(env.GetText("project01", "MAT", 2).DeepEquals(chapterContent), Is.True);
             Assert.That(env.GetText("project02", "MAT", 2).DeepEquals(chapterContent), Is.True);
+
+            // Verify the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
+            syncMetrics = env.GetSyncMetrics("project02");
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 0, updated: 0)));
         }
 
         [Test]
@@ -792,8 +903,8 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("project02", "MAT", 3), Is.True);
 
             // SUT
-            await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project02", "user01", "project02", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             // No errors or exceptions were logged
             env.MockLogger.AssertNoEvent(
@@ -807,6 +918,12 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("project02", "MAT", 2), Is.False);
             Assert.That(env.ContainsText("project01", "MAT", 3), Is.True);
             Assert.That(env.ContainsText("project02", "MAT", 3), Is.True);
+
+            // Verify the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 1, updated: 0)));
+            syncMetrics = env.GetSyncMetrics("project02");
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 1, updated: 0)));
         }
 
         [Test]
@@ -822,7 +939,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("project02", "MAT", 2), Is.False);
 
             // SUT
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             // No errors or exceptions were logged
             env.MockLogger.AssertNoEvent(
@@ -832,6 +949,12 @@ namespace SIL.XForge.Scripture.Services
             // DB should still be missing Source chapter 2.
             Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
             Assert.That(env.ContainsText("project02", "MAT", 2), Is.False);
+
+            // Verify the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
+            syncMetrics = env.GetSyncMetrics("project02");
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
         }
 
         [Test]
@@ -853,8 +976,8 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("project02", "MAT", 3), Is.True);
 
             // SUT
-            await env.Runner.RunAsync("project02", "user01", false, CancellationToken.None);
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project02", "user01", "project02", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             // No errors or exceptions were logged
             env.MockLogger.AssertNoEvent(
@@ -868,6 +991,12 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("project02", "MAT", 2), Is.False);
             Assert.That(env.ContainsText("project01", "MAT", 3), Is.False);
             Assert.That(env.ContainsText("project02", "MAT", 3), Is.False);
+
+            // Verify the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 2, updated: 1)));
+            syncMetrics = env.GetSyncMetrics("project02");
+            Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 2, updated: 1)));
         }
 
         [Test]
@@ -889,7 +1018,7 @@ namespace SIL.XForge.Scripture.Services
                 env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), projectPTId).Returns("1", "2");
 
                 // SUT
-                await env.Runner.RunAsync(projectSFId, userId, false, CancellationToken.None);
+                await env.Runner.RunAsync(projectSFId, userId, projectSFId, false, CancellationToken.None);
 
                 project = env.GetProject(projectSFId);
                 // We should get into UpdateParatextBook() and fetch and perhaps put books.
@@ -1023,10 +1152,15 @@ namespace SIL.XForge.Scripture.Services
                 .Do(_ => throw new ArgumentException());
 
             // Run the task
-            await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, cancellationTokenSource.Token);
 
             // Check that the Exception was logged
             env.MockLogger.AssertHasEvent((LogEvent logEvent) => logEvent.Exception != null);
+
+            // Check that the exception was logged in the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Failed));
+            StringAssert.StartsWith("System.ArgumentException", syncMetrics.ErrorDetails);
 
             // Check that the task cancelled correctly
             SFProject project = env.VerifyProjectSync(false);
@@ -1056,8 +1190,14 @@ namespace SIL.XForge.Scripture.Services
                             .Returns("revNotMatchingVersion")
                 );
 
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
+            // Check that the failure was logged in the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Failed));
+            Assert.That(syncMetrics.RepositoryRestoredFromBackup, Is.True);
+
+            // Check that the sync restored correctly
             env.ParatextService.Received(1).RestoreRepository(Arg.Any<UserSecret>(), "target");
             SFProject project = env.VerifyProjectSync(false);
             Assert.That(project.Sync.DataInSync, Is.True);
@@ -1084,10 +1224,14 @@ namespace SIL.XForge.Scripture.Services
                             Arg.Any<CancellationToken>()
                         )
                 )
-                .Do(_ => throw new TaskCanceledException());
+                .Do(_ =>
+                {
+                    cancellationTokenSource.Cancel();
+                    throw new TaskCanceledException();
+                });
 
             // Run the task
-            await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, cancellationTokenSource.Token);
 
             // The TaskCancelledException was not logged
             Assert.That(
@@ -1096,6 +1240,10 @@ namespace SIL.XForge.Scripture.Services
                 ),
                 Is.EqualTo(0)
             );
+
+            // Check that the cancellation was logged in the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Cancelled));
 
             // Check that the task cancelled correctly
             SFProject project = env.VerifyProjectSync(false);
@@ -1125,7 +1273,11 @@ namespace SIL.XForge.Scripture.Services
                 .Do(_ => cancellationTokenSource.Cancel());
 
             // Run the task
-            await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, cancellationTokenSource.Token);
+
+            // Check that the cancellation was logged in the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Cancelled));
 
             // Check that the task cancelled correctly
             SFProject project = env.VerifyProjectSync(false);
@@ -1153,9 +1305,14 @@ namespace SIL.XForge.Scripture.Services
                         )
                 )
                 .Do(_ => cancellationTokenSource.Cancel());
-            await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, cancellationTokenSource.Token);
             env.ParatextService.Received(1).RestoreRepository(Arg.Any<UserSecret>(), Arg.Any<string>());
             SFProject project = env.VerifyProjectSync(false);
+
+            // Check that the cancellation was logged in the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Cancelled));
+
             // Data is out of sync due to the failed restore
             Assert.That(project.Sync.DataInSync, Is.False);
         }
@@ -1173,11 +1330,64 @@ namespace SIL.XForge.Scripture.Services
             cancellationTokenSource.Cancel();
 
             // Run the task
-            await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, cancellationTokenSource.Token);
+
+            // Check that the cancellation was logged in the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Cancelled));
 
             // Check that the task was cancelled after awaiting the check above
             SFProject project = env.VerifyProjectSync(false);
             Assert.That(project.Sync.DataInSync, Is.True);
+        }
+
+        [Test]
+        public async Task SyncAsync_TaskCancelledExecutesRollback()
+        {
+            // Set up the environment
+            var env = new TestEnvironment(substituteRealtimeService: true);
+            env.SetupSFData(true, true, false, false);
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+            var cancellationTokenSource = new CancellationTokenSource();
+
+            // Return the project so InitAsync will execute successfully
+            var project = Substitute.For<IDocument<SFProject>>();
+            project.IsLoaded.Returns(true);
+            project.Data.Returns(env.GetProject());
+            env.Connection.Get<SFProject>("project01").Returns(project);
+
+            // The HTTP call throws this when a cancelled token is passed
+            env.ParatextService
+                .GetParatextUsernameMappingAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Any<SFProject>(),
+                    Arg.Any<CancellationToken>()
+                )
+                .ThrowsForAnyArgs(new OperationCanceledException());
+
+            // Setup a trap to cancel the task
+            env.ParatextService
+                .When(
+                    x =>
+                        x.SendReceiveAsync(
+                            Arg.Any<UserSecret>(),
+                            Arg.Any<string>(),
+                            Arg.Any<IProgress<ProgressState>>(),
+                            Arg.Any<CancellationToken>()
+                        )
+                )
+                .Do(_ => cancellationTokenSource.Cancel());
+
+            // Run the task
+            await env.Runner.RunAsync("project01", "user01", "project01", false, cancellationTokenSource.Token);
+
+            // Check for RollbackTransaction being executed, to ensure
+            // that CompleteAsync executes to the end without exception
+            env.Connection.Received(1).RollbackTransaction();
+
+            // Check that the cancellation was logged in the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Cancelled));
         }
 
         [Test]
@@ -1190,12 +1400,11 @@ namespace SIL.XForge.Scripture.Services
             var cancellationTokenSource = new CancellationTokenSource();
 
             // Throw an TaskCanceledException in InitAsync after the exclusions have been called
-            env.Connection
-                .FetchAsync<SFProject>("project01")
-                .Returns(Task.FromException<IDocument<SFProject>>(new TaskCanceledException()));
+            // InitAsync calls the IConnection.FetchAsync() extension, which calls IConnection.Get()
+            env.Connection.Get<SFProject>("project01").Throws(new TaskCanceledException());
 
             // Run the task
-            await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, cancellationTokenSource.Token);
 
             // Only check for ExcludePropertyFromTransaction being executed,
             // as the substitute RealtimeService will not update documents.
@@ -1233,7 +1442,7 @@ namespace SIL.XForge.Scripture.Services
             var cancellationTokenSource = new CancellationTokenSource();
 
             // Run the task
-            await env.Runner.RunAsync("project01", "user01", false, cancellationTokenSource.Token);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, cancellationTokenSource.Token);
 
             // Cancel the token after awaiting the task
             cancellationTokenSource.Cancel();
@@ -1252,11 +1461,11 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, false, false, book);
 
             // SUT
-            await env.Runner.InitAsync("project01", "user01", CancellationToken.None);
+            await env.Runner.InitAsync("project01", "user01", "project01", CancellationToken.None);
             SortedList<int, IDocument<TextData>> targetFetch = await env.Runner.FetchTextDocsAsync(
                 env.TextInfoFromBook(book)
             );
-            await env.Runner.InitAsync("project02", "user01", CancellationToken.None);
+            await env.Runner.InitAsync("project02", "user01", "project02", CancellationToken.None);
             SortedList<int, IDocument<TextData>> sourceFetch = await env.Runner.FetchTextDocsAsync(
                 env.TextInfoFromBook(book)
             );
@@ -1296,10 +1505,10 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, false, false, book);
 
             // SUT
-            await env.Runner.InitAsync("project01", "user01", CancellationToken.None);
+            await env.Runner.InitAsync("project01", "user01", "project01", CancellationToken.None);
             var targetFetch = await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
 
-            await env.Runner.InitAsync("project02", "user01", CancellationToken.None);
+            await env.Runner.InitAsync("project02", "user01", "project02", CancellationToken.None);
             var sourceFetch = await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book));
 
             env.Runner.CloseConnection();
@@ -1320,7 +1529,7 @@ namespace SIL.XForge.Scripture.Services
             // But note that user05 must also be in the chapter permissions to be used
             var env = new TestEnvironment();
             TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: false);
-            await env.Runner.InitAsync("project01", "user01", CancellationToken.None);
+            await env.Runner.InitAsync("project01", "user01", "project01", CancellationToken.None);
             var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
             textInfo.Chapters.First().Permissions.Add("user05", TextInfoPermission.Write);
             env.RealtimeService.LastModifiedUserId = "user05";
@@ -1339,7 +1548,7 @@ namespace SIL.XForge.Scripture.Services
             // So the user id will be retrieved from the user secret
             var env = new TestEnvironment();
             TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: true);
-            await env.Runner.InitAsync("project01", "user01", CancellationToken.None);
+            await env.Runner.InitAsync("project01", "user01", "project01", CancellationToken.None);
             var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
 
             // SUT
@@ -1356,7 +1565,7 @@ namespace SIL.XForge.Scripture.Services
             // So the user id will be retrieved from the chapter permissions
             var env = new TestEnvironment();
             TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: true);
-            await env.Runner.InitAsync("project01", "user02", CancellationToken.None);
+            await env.Runner.InitAsync("project01", "user02", "project01", CancellationToken.None);
             var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
 
             // SUT
@@ -1373,7 +1582,7 @@ namespace SIL.XForge.Scripture.Services
             // So the user id will be retrieved from the project doc
             var env = new TestEnvironment();
             TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: false);
-            await env.Runner.InitAsync("project01", "user02", CancellationToken.None);
+            await env.Runner.InitAsync("project01", "user02", "project01", CancellationToken.None);
             var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
 
             // SUT
@@ -1391,7 +1600,7 @@ namespace SIL.XForge.Scripture.Services
             // But will not pass the chapter permissions test (only user05 has permission)
             var env = new TestEnvironment();
             TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: false);
-            await env.Runner.InitAsync("project01", "user01", CancellationToken.None);
+            await env.Runner.InitAsync("project01", "user01", "project01", CancellationToken.None);
             var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
             textInfo.Chapters.First().Permissions.Add("user05", TextInfoPermission.Write);
             env.RealtimeService.LastModifiedUserId = "user06";
@@ -1412,7 +1621,7 @@ namespace SIL.XForge.Scripture.Services
             // However, user03 will be used because they are the project administrator
             var env = new TestEnvironment();
             TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: false);
-            await env.Runner.InitAsync("project01", "user01", CancellationToken.None);
+            await env.Runner.InitAsync("project01", "user01", "project01", CancellationToken.None);
             var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
             textInfo.Chapters.First().Permissions.Add("user05", TextInfoPermission.Read);
             env.RealtimeService.LastModifiedUserId = "user05";
@@ -1440,7 +1649,7 @@ namespace SIL.XForge.Scripture.Services
                 Arg.Any<Dictionary<string, ParatextUserProfile>>()
             );
 
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
             await env.ParatextService
                 .Received(1)
                 .UpdateParatextCommentsAsync(
@@ -1472,7 +1681,7 @@ namespace SIL.XForge.Scripture.Services
             int expectedNoteCountChange = 1;
 
             // SUT
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             NoteThread thread01 = env.GetNoteThread("project01", "thread01");
             string expectedThreadTagIcon = "tag02";
@@ -1505,6 +1714,15 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.ParatextUsers.Single(u => u.Username == "User 3").SFUserId, Is.EqualTo("user03"));
             Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+
+            // Verify the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
+            Assert.That(
+                syncMetrics.Notes,
+                Is.EqualTo(new NoteSyncMetricInfo(added: 1, deleted: 1, updated: 1, removed: 0))
+            );
+            Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 1)));
         }
 
         [Test]
@@ -1518,7 +1736,7 @@ namespace SIL.XForge.Scripture.Services
             string verseStr = "MAT 1:5";
             env.SetupNoteReattachedChange(threadId, verseStr);
 
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             NoteThread thread01 = env.GetNoteThread("project01", "thread01");
             string[] reattachedParts = new[]
@@ -1534,6 +1752,15 @@ namespace SIL.XForge.Scripture.Services
                 "Context before Scripture text in project context after-" + $"Start:16-Length:22-MAT 1:1-icon1";
             Assert.That(thread01.NoteThreadToString(), Is.EqualTo(expected));
             Assert.That(thread01.Notes.Single(n => n.Reattached != null).Reattached, Is.EqualTo(reattached));
+
+            // Verify the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
+            Assert.That(
+                syncMetrics.Notes,
+                Is.EqualTo(new NoteSyncMetricInfo(added: 1, deleted: 0, updated: 0, removed: 0))
+            );
+            Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
         }
 
         [Test]
@@ -1545,7 +1772,7 @@ namespace SIL.XForge.Scripture.Services
             env.SetupPTData(book);
             env.SetupNewNoteThreadChange("thread02", "syncuser01");
 
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             NoteThread thread02 = env.GetNoteThread("project01", "thread02");
             string expected =
@@ -1562,11 +1789,20 @@ namespace SIL.XForge.Scripture.Services
 
             // Add a conflict note
             env.SetupNewConflictNoteThreadChange("conflictthread01");
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             Assert.That(env.ContainsNoteThread("project01", "conflictthread01"), Is.True);
             project = env.GetProject();
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+
+            // Verify the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
+            Assert.That(
+                syncMetrics.Notes,
+                Is.EqualTo(new NoteSyncMetricInfo(added: 0, deleted: 0, updated: 0, removed: 0))
+            );
+            Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
         }
 
         [Test]
@@ -1600,21 +1836,40 @@ namespace SIL.XForge.Scripture.Services
             );
 
             // SUT 1
-            await env.Runner.RunAsync(sfProjectId, "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync(sfProjectId, "user01", sfProjectId, false, CancellationToken.None);
 
             thread01 = env.GetNoteThread(sfProjectId, threadId);
             Assert.That(thread01.Notes.Select(n => n.DataId), Is.EquivalentTo(new[] { "n01", "n03" }));
             SFProject project = env.GetProject();
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
 
+            // Verify the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
+            Assert.That(
+                syncMetrics.Notes,
+                Is.EqualTo(new NoteSyncMetricInfo(added: 0, deleted: 0, updated: 0, removed: 1))
+            );
+            Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
+
             // Remove the entire thread
             env.SetupNoteRemovedChange(threadId, null);
+
             // SUT 2
-            await env.Runner.RunAsync(sfProjectId, "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync(sfProjectId, "user01", "project01_alt", false, CancellationToken.None);
 
             Assert.That(env.ContainsNoteThread(sfProjectId, threadId), Is.False);
             project = env.GetProject();
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+
+            // Verify the sync metrics
+            syncMetrics = env.GetSyncMetrics("project01_alt");
+            Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
+            Assert.That(
+                syncMetrics.Notes,
+                Is.EqualTo(new NoteSyncMetricInfo(added: 0, deleted: 0, updated: 0, removed: 0))
+            );
+            Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 1, updated: 0)));
         }
 
         [Test]
@@ -1626,7 +1881,7 @@ namespace SIL.XForge.Scripture.Services
             env.SetupPTData(book);
             env.SetupNewNoteThreadChange("thread02", "syncuser01");
 
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             // Default resolved status is false
             NoteThread thread02 = env.GetNoteThread("project01", "thread02");
@@ -1635,19 +1890,37 @@ namespace SIL.XForge.Scripture.Services
 
             // Change resolve status to true
             env.SetupNoteStatusChange("thread02", NoteStatus.Resolved.InternalValue);
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             thread02 = env.GetNoteThread("project01", "thread02");
             Assert.That(thread02.VerseRef.ToString(), Is.EqualTo("MAT 1:1"));
             Assert.That(thread02.Status, Is.EqualTo(NoteStatus.Resolved.InternalValue));
 
+            // Verify the sync metrics
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
+            Assert.That(
+                syncMetrics.Notes,
+                Is.EqualTo(new NoteSyncMetricInfo(added: 0, deleted: 0, updated: 0, removed: 0))
+            );
+            Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 0, updated: 1)));
+
             // Change status back to false - happens if the note becomes unresolved again in Paratext
             env.SetupNoteStatusChange("thread02", NoteStatus.Todo.InternalValue);
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01_alt", false, CancellationToken.None);
 
             thread02 = env.GetNoteThread("project01", "thread02");
             Assert.That(thread02.VerseRef.ToString(), Is.EqualTo("MAT 1:1"));
             Assert.That(thread02.Status, Is.EqualTo(NoteStatus.Todo.InternalValue));
+
+            // Verify the sync metrics
+            syncMetrics = env.GetSyncMetrics("project01_alt");
+            Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
+            Assert.That(
+                syncMetrics.Notes,
+                Is.EqualTo(new NoteSyncMetricInfo(added: 0, deleted: 0, updated: 0, removed: 0))
+            );
+            Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 1)));
         }
 
         [Test]
@@ -1669,13 +1942,22 @@ namespace SIL.XForge.Scripture.Services
             env.SetupThreadAndNoteChange(threadId, null, null);
 
             // SUT
-            await env.Runner.RunAsync(projectId, "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync(projectId, "user01", projectId, false, CancellationToken.None);
 
             thread03 = env.GetNoteThread(projectId, threadId);
             note = thread03.Notes[0];
             // No incoming note changes mean no changes to the SF DB Notes.
             // This is not a particularly thorough check, but is showing at least that a few pieces have not changed.
             Assert.That(note.NoteToString(), Is.EqualTo(origNoteData), "Note data should not have been changed");
+
+            // Verify the sync metrics - the note data will be updated, even though it is not changed
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
+            Assert.That(
+                syncMetrics.Notes,
+                Is.EqualTo(new NoteSyncMetricInfo(added: 0, deleted: 0, updated: 0, removed: 0))
+            );
+            Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
         }
 
         [Test]
@@ -1735,7 +2017,7 @@ namespace SIL.XForge.Scripture.Services
                 .Returns(new ParatextResource());
 
             // SUT
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             env.MockLogger.AssertEventCount(
                 (LogEvent logEvent) =>
@@ -1749,6 +2031,10 @@ namespace SIL.XForge.Scripture.Services
             Assert.IsNotNull(env.GetProject().ResourceConfig);
             Assert.That(env.ContainsText("project01", "MAT", 3), Is.True);
             Assert.That(env.ContainsText("project01", "MRK", 2), Is.False);
+
+            // Check that the resource users metrics have been updated
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.ResourceUsers, Is.EqualTo(new SyncMetricInfo(2, 0, 0)));
         }
 
         [Test]
@@ -1774,7 +2060,7 @@ namespace SIL.XForge.Scripture.Services
                 .Returns(new ParatextResource());
 
             // SUT
-            await env.Runner.RunAsync("project01", "user01", false, CancellationToken.None);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             env.MockLogger.AssertEventCount(
                 (LogEvent logEvent) =>
@@ -1788,6 +2074,121 @@ namespace SIL.XForge.Scripture.Services
             Assert.IsNull(env.GetProject().ResourceConfig);
             Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
             Assert.That(env.ContainsText("project01", "MRK", 2), Is.True);
+        }
+
+        [Test]
+        public async Task SyncAsync_SyncMetricsSetsDateStartedAndDateFinished()
+        {
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, true, false);
+
+            await env.Runner.RunAsync("project01", "user03", "project01", false, CancellationToken.None);
+
+            SFProject project = env.VerifyProjectSync(false);
+            Assert.That(project.Sync.DataInSync, Is.True);
+
+            // Check that the date started and date finished are set
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.DateStarted, Is.Not.Null);
+            Assert.That(syncMetrics.DateFinished, Is.Not.Null);
+        }
+
+        [Test]
+        public async Task SyncAsync_SyncMetricsRecordsLogs()
+        {
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, true, false);
+
+            await env.Runner.RunAsync("project01", "user03", "project01", false, CancellationToken.None);
+
+            SFProject project = env.VerifyProjectSync(false);
+            Assert.That(project.Sync.DataInSync, Is.True);
+
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.Log.Count, Is.Not.Zero);
+        }
+
+        [Test]
+        public async Task SyncAsync_SyncMetricsRecordsBackupCreated()
+        {
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, true, false, new Book("MAT", 2), new Book("MRK", 2));
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+
+            // Simulate that there is no backup, and that the backups are created successfully
+            env.ParatextService.BackupExists(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(false);
+            env.ParatextService.BackupRepository(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(true);
+
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+
+            // A backup was created before and after the sync
+            env.ParatextService.Received(2).BackupRepository(Arg.Any<UserSecret>(), Arg.Any<string>());
+            SFProject project = env.VerifyProjectSync(true);
+            Assert.That(project.Sync.DataInSync, Is.True);
+
+            // Check that the metrics were updated
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.RepositoryBackupCreated, Is.True);
+        }
+
+        [Test]
+        public async Task SyncAsync_SyncMetricsRecordsParatextNotes()
+        {
+            var env = new TestEnvironment();
+            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+            env.SetupSFData(true, true, true, false, books);
+            env.SetupPTData(books);
+            var syncMetricInfo = new SyncMetricInfo(1, 2, 3);
+            env.ParatextService.PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>()).Returns(syncMetricInfo);
+
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+
+            env.ParatextService.Received(2).PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
+
+            env.VerifyProjectSync(true);
+
+            // Check that as PutNotes was run twice, the metrics will be multiplied by two
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.ParatextNotes, Is.EqualTo(syncMetricInfo + syncMetricInfo));
+        }
+
+        [Test]
+        public async Task SyncAsync_SyncMetricsRecordsParatextBooks()
+        {
+            var env = new TestEnvironment();
+            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+            env.SetupSFData(true, true, true, false, books);
+            env.SetupPTData(books);
+            env.ParatextService
+                .PutBookText(
+                    Arg.Any<UserSecret>(),
+                    Arg.Any<string>(),
+                    Arg.Any<int>(),
+                    Arg.Any<string>(),
+                    Arg.Any<Dictionary<int, string>>()
+                )
+                .Returns(1);
+
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+
+            await env.ParatextService
+                .Received(2)
+                .PutBookText(
+                    Arg.Any<UserSecret>(),
+                    Arg.Any<string>(),
+                    Arg.Any<int>(),
+                    Arg.Any<string>(),
+                    Arg.Any<Dictionary<int, string>>()
+                );
+            ;
+
+            SFProject project = env.GetProject();
+            Assert.That(project.ParatextUsers.Count, Is.EqualTo(2));
+            env.VerifyProjectSync(true);
+
+            // Check that as PutBookText was run twice, the metrics will be that two books are added
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.ParatextBooks, Is.EqualTo(new SyncMetricInfo(0, 0, 2)));
         }
 
         private class Book
@@ -1814,6 +2215,7 @@ namespace SIL.XForge.Scripture.Services
         private class TestEnvironment
         {
             private readonly MemoryRepository<SFProjectSecret> _projectSecrets;
+            private readonly MemoryRepository<SyncMetrics> _syncMetrics;
             private bool _sendReceivedCalled = false;
 
             /// <summary>
@@ -1842,6 +2244,17 @@ namespace SIL.XForge.Scripture.Services
                         new SFProjectSecret { Id = "project03" },
                         new SFProjectSecret { Id = "project04" },
                         new SFProjectSecret { Id = "project05" },
+                    }
+                );
+                _syncMetrics = new MemoryRepository<SyncMetrics>(
+                    new[]
+                    {
+                        new SyncMetrics { Id = "project01" },
+                        new SyncMetrics { Id = "project01_alt" },
+                        new SyncMetrics { Id = "project02" },
+                        new SyncMetrics { Id = "project03" },
+                        new SyncMetrics { Id = "project04" },
+                        new SyncMetrics { Id = "project05" },
                     }
                 );
                 SFProjectService = Substitute.For<ISFProjectService>();
@@ -1904,6 +2317,7 @@ namespace SIL.XForge.Scripture.Services
                 Runner = new ParatextSyncRunner(
                     userSecrets,
                     _projectSecrets,
+                    _syncMetrics,
                     SFProjectService,
                     EngineService,
                     ParatextService,
@@ -1985,6 +2399,11 @@ namespace SIL.XForge.Scripture.Services
                 return RealtimeService.GetRepository<NoteThread>().Get($"{projectId}:{threadId}");
             }
 
+            public SyncMetrics GetSyncMetrics(string projectId)
+            {
+                return _syncMetrics.Get(projectId);
+            }
+
             public SFProject AssertDBSyncMetadata(
                 string projectSFId,
                 bool lastSyncSuccess,
@@ -1997,6 +2416,18 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
                 Assert.That(project.Sync.LastSyncSuccessful, Is.EqualTo(lastSyncSuccess));
                 Assert.That(project.Sync.SyncedToRepositoryVersion, Is.EqualTo(syncedToRepositoryVersion));
+
+                // Check for the correct system metrics status
+                SyncMetrics syncMetrics = GetSyncMetrics(projectSFId);
+                if (lastSyncSuccess)
+                {
+                    Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
+                }
+                else
+                {
+                    Assert.That(syncMetrics.Status, Is.InRange(SyncStatus.Cancelled, SyncStatus.Failed));
+                }
+
                 return project;
             }
 
@@ -2630,7 +3061,7 @@ namespace SIL.XForge.Scripture.Services
                 );
 
                 // SUT
-                await Runner.RunAsync(projectId, "user01", false, CancellationToken.None);
+                await Runner.RunAsync(projectId, "user01", projectId, false, CancellationToken.None);
 
                 thread03 = GetNoteThread(projectId, threadId);
                 note = thread03.Notes[0];
@@ -2738,7 +3169,13 @@ namespace SIL.XForge.Scripture.Services
             )
             {
                 // SUT
-                await Runner.RunAsync(projectSFId, userId, trainEngine: false, token: CancellationToken.None);
+                await Runner.RunAsync(
+                    projectSFId,
+                    userId,
+                    syncMetricsId: projectSFId,
+                    trainEngine: false,
+                    token: CancellationToken.None
+                );
 
                 // We are in an out-of-sync situation and so should not be writing to PT.
 
@@ -2776,7 +3213,13 @@ namespace SIL.XForge.Scripture.Services
             )
             {
                 // SUT
-                await Runner.RunAsync(projectSFId, userId, trainEngine: false, token: CancellationToken.None);
+                await Runner.RunAsync(
+                    projectSFId,
+                    userId,
+                    syncMetricsId: projectSFId,
+                    trainEngine: false,
+                    token: CancellationToken.None
+                );
 
                 // We are not in an out-of-sync situation and should proceed with the sync.
 
