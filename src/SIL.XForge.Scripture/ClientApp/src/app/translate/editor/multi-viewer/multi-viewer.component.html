@@ -1,7 +1,13 @@
 <div fxLayout="row" fxLayoutAlign="start center">
   <ng-container *ngFor="let viewer of avatarViewers">
     <div class="app-avatar-container" [title]="viewer.displayName">
-      <app-avatar [user]="viewer" [size]="32" [round]="true" [borderColor]="viewer.cursorColor"></app-avatar>
+      <app-avatar
+        [user]="viewer"
+        [size]="32"
+        [round]="true"
+        [borderColor]="viewer.cursorColor"
+        (click)="clickAvatar(viewer)"
+      ></app-avatar>
     </div>
   </ng-container>
   <ng-container *ngIf="viewers.length > maxAvatars">
@@ -20,7 +26,13 @@
         <button mat-menu-item disabled>{{ otherViewersLabel }}</button>
         <ng-container *ngFor="let viewer of viewers">
           <button mat-menu-item (click)="closeMenu()">
-            <app-avatar [user]="viewer" [size]="32" [round]="true" [borderColor]="viewer.cursorColor"></app-avatar>
+            <app-avatar
+              [user]="viewer"
+              [size]="32"
+              [round]="true"
+              [borderColor]="viewer.cursorColor"
+              (click)="clickAvatar(viewer)"
+            ></app-avatar>
             <span fxFlex>{{ viewer.displayName }}</span>
           </button>
         </ng-container>

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { translate } from '@ngneat/transloco';
 import { slice } from 'lodash-es';
@@ -18,6 +18,7 @@ export interface MultiCursorViewer extends UserProfile {
 })
 export class MultiViewerComponent extends SubscriptionDisposable implements OnInit {
   @Input() viewers: MultiCursorViewer[] = [];
+  @Output() onViewerClick: EventEmitter<MultiCursorViewer> = new EventEmitter<MultiCursorViewer>();
   maxAvatars: number = 3;
   isMenuOpen: boolean = false;
 
@@ -56,5 +57,9 @@ export class MultiViewerComponent extends SubscriptionDisposable implements OnIn
 
   closeMenu(): void {
     this.isMenuOpen = false;
+  }
+
+  clickAvatar(viewer: MultiCursorViewer) {
+    this.onViewerClick.emit(viewer);
   }
 }
