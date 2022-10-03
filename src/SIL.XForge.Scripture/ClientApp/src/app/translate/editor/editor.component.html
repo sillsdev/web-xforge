@@ -44,7 +44,7 @@
       </div>
       <ng-container *ngIf="showMultiViewers">
         <div fxFlexAlign="end" class="avatar-padding">
-          <app-multi-viewer [viewers]="multiCursorViewers"></app-multi-viewer>
+          <app-multi-viewer [viewers]="multiCursorViewers" (onViewerClick)="viewerClicked($event)"></app-multi-viewer>
         </div>
       </ng-container>
     </div>

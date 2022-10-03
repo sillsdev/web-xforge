@@ -539,6 +539,19 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return this.editor == null ? null : this.editor.container.querySelector(`usx-segment[data-segment="${segment}"]`);
   }
 
+  getViewerPosition(presenceId: string): RangeStatic | undefined {
+    if (this.presenceDoc == null) {
+      return;
+    }
+    const ranges: RangeStatic[] = Object.entries(this.presenceDoc.remotePresences)
+      .filter(remotePresence => remotePresence[0] === presenceId)
+      .map(remotePresence => remotePresence[1]);
+    if (ranges.length === 0) {
+      return;
+    }
+    return ranges[0];
+  }
+
   toggleFeaturedVerseRefs(
     value: boolean,
     featureVerseRefs: VerseRef[],
@@ -740,6 +753,38 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (deleteDelta.ops != null && deleteDelta.ops.length > 0) {
       this.editor.updateContents(deleteDelta, 'api');
     }
+  }
+
+  scrollToViewer(viewer: MultiCursorViewer): void {
+    if (this.editor == null) {
+      return;
+    }
+    if (this.presenceChannel?.remotePresences == null) {
+      return;
+    }
+    const presenceIds = Object.entries(this.presenceChannel.remotePresences)
+      .filter(remotePresence => remotePresence[1].viewer === viewer)
+      .map(remotePresence => remotePresence[0]);
+    if (presenceIds.length === 0) {
+      return;
+    }
+    const presenceId = presenceIds[0];
+    const range: RangeStatic | undefined = this.getViewerPosition(presenceId);
+    if (range == null) {
+      this.editor.root.scrollTop = 0;
+      return;
+    }
+    this.editor.setSelection(range);
+    this.editor.blur();
+    let presenceData: PresenceData = {
+      viewer: { ...viewer, activeInEditor: true }
+    };
+    this.onPresenceChannelReceive(presenceId, presenceData);
+    const active$ = timer(3000).subscribe(() => {
+      presenceData.viewer.activeInEditor = false;
+      this.onPresenceChannelReceive(presenceId, presenceData);
+      active$.unsubscribe();
+    });
   }
 
   isSegmentBlank(ref: string): boolean {
