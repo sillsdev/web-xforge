@@ -1,3 +1,5 @@
+#nullable enable annotations
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -483,7 +485,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary> Get the Paratext username from the UserSecret. </summary>
-        public string GetParatextUsername(UserSecret userSecret)
+        public string? GetParatextUsername(UserSecret userSecret)
         {
             return _jwtTokenHelper.GetParatextUsername(userSecret);
         }
@@ -1307,7 +1309,7 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>
         /// Get the most recent revision id of a commit from the last push or pull with the PT send/receive server.
         /// </summary>
-        public string GetLatestSharedVersion(UserSecret userSecret, string paratextId)
+        public string? GetLatestSharedVersion(UserSecret userSecret, string paratextId)
         {
             if (IsResource(paratextId))
             {

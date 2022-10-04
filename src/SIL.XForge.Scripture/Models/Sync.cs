@@ -1,3 +1,5 @@
+#nullable enable annotations
+
 using System;
 
 namespace SIL.XForge.Scripture.Models
@@ -13,7 +15,7 @@ namespace SIL.XForge.Scripture.Models
         /// The SF project was last successfully synchronized with PT project data at this repository
         /// commit on the PT project send/receive server.
         /// </summary>
-        public string SyncedToRepositoryVersion { get; set; }
+        public string? SyncedToRepositoryVersion { get; set; }
 
         /// <summary>
         /// If the local PT repo has been imported into SF DB.
