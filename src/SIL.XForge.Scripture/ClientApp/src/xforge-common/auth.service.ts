@@ -361,7 +361,7 @@ export class AuthService {
             this.i18n.translate('connect_project.paratext_account_linked_to_another_user', {
               email: authDetails.idToken?.email
             }),
-            this.i18n.translate('connect_project.proceed')
+            'connect_project.proceed'
           )
           .then(async () => {
             // Strip out the linking state so that we don't process linking again
@@ -428,10 +428,7 @@ export class AuthService {
   private async handleLoginError(method: string, error: object): Promise<void> {
     console.error(error);
     this.reportingService.silentError(`Error occurred in ${method}`, error);
-    await this.dialogService.message(
-      this.i18n.translate('error_messages.error_occurred_login'),
-      this.i18n.translate('error_messages.try_again')
-    );
+    await this.dialogService.message('error_messages.error_occurred_login', 'error_messages.try_again');
   }
 
   private unscheduleRenewal(): void {

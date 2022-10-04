@@ -191,7 +191,7 @@ export class FileService extends SubscriptionDisposable {
     }
     if (!hasAdequateSpace && this.limitedStorageDialogPromise == null) {
       this.limitedStorageDialogPromise = this.dialogService
-        .message(this.i18n.translate('file_service.storage_space_is_limited'))
+        .message('file_service.storage_space_is_limited')
         .then(() => (this.limitedStorageDialogPromise = undefined));
     }
   }
@@ -278,9 +278,6 @@ export class FileService extends SubscriptionDisposable {
       return Promise.reject(error);
     }
     // Prompt the user to check storage space
-    await this.dialogService.message(
-      this.i18n.translate('file_service.failed_to_save'),
-      this.i18n.translate('file_service.i_understand')
-    );
+    await this.dialogService.message('file_service.failed_to_save', 'file_service.i_understand');
   }
 }
