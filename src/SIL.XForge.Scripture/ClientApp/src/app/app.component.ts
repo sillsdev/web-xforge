@@ -465,7 +465,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
           this.noticeService.show(translate('app.password_reset_email_sent'));
         })
         .catch(() => {
-          this.dialogService.message(this.i18n.translate('app.cannot_change_password'));
+          this.dialogService.message('app.cannot_change_password');
         });
     }
   }

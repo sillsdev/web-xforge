@@ -24,7 +24,7 @@ export class DialogService {
   }
 
   openMatDialog<T, D = any, R = any>(component: ComponentType<T>, config?: MatDialogConfig<D>): MatDialogRef<T, R> {
-    return this.matDialog.open(component, { direction: this.i18n.direction, ...(config || {}) });
+    return this.matDialog.open(component, { direction: this.i18n.direction, ...(config ?? {}) });
   }
 
   async openGenericDialog<T>(options: GenericDialogOptions<T>): Promise<T | undefined> {
@@ -45,17 +45,26 @@ export class DialogService {
     const result: boolean | undefined = await this.openGenericDialog({
       title: question,
       options: [
-        { label: negative || this.i18n.translate('edit_name_dialog.cancel'), value: false },
+        { label: negative ?? this.i18n.translate('edit_name_dialog.cancel'), value: false },
         { label: affirmative, value: true, highlight: true }
       ]
     });
     return result === true;
   }
 
-  async message(message: Observable<string>, close?: Observable<string>): Promise<void> {
+  /**
+   * Shows a message in a dialog. The message and close button may be specified via an Observable<string>, or by passing
+   * the key to a localization string.
+   * @param message The message to show. May be an Observable<string>, or a string which will be used as a translation
+   * key.
+   * @param close (optional) May be an Observable<string>, or a string which will be used as a translation key. If not
+   * provided the button will use a default label for the close button.
+   */
+  async message(message: string | Observable<string>, close?: string | Observable<string>): Promise<void> {
+    const closeText = close instanceof Observable ? close : this.i18n.translate(close ?? 'dialog.close');
     await this.openGenericDialog({
-      title: message,
-      options: [{ label: close || this.i18n.translate('message_dialog.dismiss'), value: undefined, highlight: true }]
+      title: typeof message === 'string' ? this.i18n.translate(message) : message,
+      options: [{ label: closeText, value: undefined, highlight: true }]
     });
   }
 
