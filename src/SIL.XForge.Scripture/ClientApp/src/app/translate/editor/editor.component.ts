@@ -824,12 +824,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       await this.handleNoteDialogResult(result);
       this.toggleNoteThreadVerses(true);
     }
-    // Ensure cursor selection remains at the position of the note in case the focus was lost when the dialog was open
-    const currentSegment: string | undefined = this.target!.currentSegmentOrDefault;
-    if (currentSegment != null) {
-      const selectIndex = this.target!.getSegmentRange(currentSegment)!.index;
-      this.target!.editor!.setSelection(selectIndex, 0, 'silent');
-    }
   }
 
   private updateReadNotes(threadId: string) {
@@ -855,7 +849,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   private async handleNoteDialogResult(result: NoteDialogResult): Promise<void> {
     const projectId: string = this.projectDoc!.id;
-    if (result.note.threadId === '') {
+
+    if (result.note.threadId === '' && result.verseRef != null) {
       // create a new thread
       const threadId: string = SF_NOTE_THREAD_PREFIX + objectId();
       result.note.threadId = threadId;
@@ -879,16 +874,33 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const noteThreadDoc: NoteThreadDoc | undefined = this.noteThreadQuery?.docs.find(
       nt => nt.data?.dataId === result.note.threadId
     );
-    if (noteThreadDoc?.data != null) {
-      const noteIndex: number = noteThreadDoc.data.notes.findIndex(n => n.dataId === result.note.dataId);
-      if (noteIndex >= 0) {
-        noteThreadDoc.submitJson0Op(op => {
-          op.set(t => t.notes[noteIndex].content, result.note.content);
-          op.set(t => t.notes[noteIndex].dateModified, result.note.dateModified);
-        });
+    if (noteThreadDoc?.data == null) {
+      return;
+    }
+
+    if (result.deleted) {
+      // delete the note or the entire thread
+      if (noteThreadDoc.data.notes.length === 1 && noteThreadDoc.data.notes[0].dataId === result.note.dataId) {
+        // only delete the thread if deleting the last note in the thread
+        await noteThreadDoc.delete();
       } else {
-        noteThreadDoc.submitJson0Op(op => op.add(t => t.notes, result.note));
+        const noteIndex: number = noteThreadDoc.data.notes.findIndex(n => n.dataId === result.note.dataId);
+        if (noteIndex >= 0) {
+          noteThreadDoc.submitJson0Op(op => op.remove(nt => nt.notes, noteIndex));
+        }
       }
+      return;
+    }
+
+    // updated the existing note
+    const noteIndex: number = noteThreadDoc.data.notes.findIndex(n => n.dataId === result.note.dataId);
+    if (noteIndex >= 0) {
+      noteThreadDoc.submitJson0Op(op => {
+        op.set(t => t.notes[noteIndex].content, result.note.content);
+        op.set(t => t.notes[noteIndex].dateModified, result.note.dateModified);
+      });
+    } else {
+      noteThreadDoc.submitJson0Op(op => op.add(t => t.notes, result.note));
     }
   }
 

@@ -1,21 +1,25 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { translate } from '@ngneat/transloco';
 import { cloneDeep, sortBy } from 'lodash-es';
+import { Observable } from 'rxjs';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
-import { I18nService } from 'xforge-common/i18n.service';
 import {
   AssignedUsers,
   NoteConflictType,
   NoteStatus,
   NoteType
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
-import { translate } from '@ngneat/transloco';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
+import { DialogService } from 'xforge-common/dialog.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
-import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
@@ -32,10 +36,11 @@ export interface NoteDialogData {
 }
 
 export interface NoteDialogResult {
-  verseRef: VerseRefData;
+  verseRef?: VerseRefData;
   note: Note;
   selectedText: string;
   position: TextAnchor;
+  deleted?: boolean;
 }
 
 // TODO: Implement a diff - there is an accepted solution here that might be a good starting point:
@@ -54,7 +59,6 @@ export class NoteDialogComponent implements OnInit {
   private textDoc?: TextDoc;
   private paratextProjectUsers?: ParatextUserProfile[];
   private noteBeingEdited?: Note;
-  private lastNoteId?: string;
 
   constructor(
     private readonly dialogRef: MatDialogRef<NoteDialogComponent, NoteDialogResult>,
@@ -62,6 +66,7 @@ export class NoteDialogComponent implements OnInit {
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
+    private readonly dialogService: DialogService,
     private readonly featureFlags: FeatureFlagService
   ) {}
 
@@ -88,9 +93,6 @@ export class NoteDialogComponent implements OnInit {
     }
 
     this.noteBeingEdited = this.getNoteTemplate(this.threadId);
-    const notesCount: number = this.notesToDisplay.length;
-    const lastNoteId: string | undefined = notesCount > 0 ? this.notesToDisplay[notesCount - 1].dataId : undefined;
-    this.lastNoteId = lastNoteId;
   }
 
   get noteThreadAssignedUserRef(): string | undefined {
@@ -200,6 +202,11 @@ export class NoteDialogComponent implements OnInit {
     return this.data.threadId;
   }
 
+  private get lastNoteId(): string | undefined {
+    const notesCount: number = this.notesToDisplay.length;
+    return notesCount > 0 ? this.notesToDisplay[notesCount - 1].dataId : undefined;
+  }
+
   private get verseRef(): VerseRef | undefined {
     if (this.threadDoc?.data == null) {
       return this.data.verseRef == null ? undefined : this.data.verseRef;
@@ -216,8 +223,20 @@ export class NoteDialogComponent implements OnInit {
     this.currentNoteContent = note.content ?? '';
   }
 
-  deleteNote(note: Note): void {
-    console.log('TODO: delete note: ' + note.dataId);
+  async deleteNote(note: Note): Promise<void> {
+    const message: Observable<string> = this.i18n.translate('note_dialog.permanently_delete_note');
+    const confirm: Observable<string> = this.i18n.translate('note_dialog.delete');
+    const confirmed: boolean = await this.dialogService.confirm(message, confirm);
+    if (!confirmed) return;
+    if (this.notesToDisplay.length === 1) {
+      // This may be the last note in the thread, so the thread may need to be deleted
+      this.dialogRef.close({ note, selectedText: '', position: { start: 0, length: 0 }, deleted: true });
+    } else {
+      const index: number = this.threadDoc!.data!.notes.findIndex(n => n.dataId === note.dataId);
+      if (index >= 0) {
+        await this.threadDoc!.submitJson0Op(op => op.remove(nt => nt.notes, index));
+      }
+    }
   }
 
   parseNote(content: string | undefined): string {
@@ -270,8 +289,18 @@ export class NoteDialogComponent implements OnInit {
   }
 
   isNoteEditable(note: Note): boolean {
+    if (this.projectProfileDoc?.data == null) return false;
     return (
-      this.isAddNotesEnabled && note.dataId === this.lastNoteId && note.ownerRef === this.userService.currentUserId
+      this.isAddNotesEnabled &&
+      note.dataId === this.lastNoteId &&
+      this.noteBeingEdited?.dataId === '' &&
+      SF_PROJECT_RIGHTS.hasRight(
+        this.projectProfileDoc.data,
+        this.userService.currentUserId,
+        SFProjectDomain.Notes,
+        Operation.Edit,
+        note
+      )
     );
   }
 
