@@ -520,10 +520,12 @@ describe('NoteDialogComponent', () => {
   it('allows user to delete the last note in the thread', fakeAsync(() => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
     expect(env.notes.length).toEqual(4);
+    expect(env.noteHasEditActions(3)).toBe(false);
     expect(env.noteHasEditActions(4)).toBe(true);
     env.clickDeleteNote();
     verify(mockedDialogService.confirm(anything(), anything())).once();
     expect(env.notes.length).toEqual(3);
+    expect(env.noteHasEditActions(3)).toBe(true);
   }));
 
   it('does not delete the note if a user cancels', fakeAsync(() => {
