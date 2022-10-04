@@ -59,7 +59,6 @@ export class NoteDialogComponent implements OnInit {
   private textDoc?: TextDoc;
   private paratextProjectUsers?: ParatextUserProfile[];
   private noteBeingEdited?: Note;
-  private lastNoteId?: string;
 
   constructor(
     private readonly dialogRef: MatDialogRef<NoteDialogComponent, NoteDialogResult>,
@@ -94,9 +93,6 @@ export class NoteDialogComponent implements OnInit {
     }
 
     this.noteBeingEdited = this.getNoteTemplate(this.threadId);
-    const notesCount: number = this.notesToDisplay.length;
-    const lastNoteId: string | undefined = notesCount > 0 ? this.notesToDisplay[notesCount - 1].dataId : undefined;
-    this.lastNoteId = lastNoteId;
   }
 
   get noteThreadAssignedUserRef(): string | undefined {
@@ -206,6 +202,11 @@ export class NoteDialogComponent implements OnInit {
     return this.data.threadId;
   }
 
+  private get lastNoteId(): string | undefined {
+    const notesCount: number = this.notesToDisplay.length;
+    return notesCount > 0 ? this.notesToDisplay[notesCount - 1].dataId : undefined;
+  }
+
   private get verseRef(): VerseRef | undefined {
     if (this.threadDoc?.data == null) {
       return this.data.verseRef == null ? undefined : this.data.verseRef;
@@ -224,17 +225,16 @@ export class NoteDialogComponent implements OnInit {
 
   async deleteNote(note: Note): Promise<void> {
     const message: Observable<string> = this.i18n.translate('note_dialog.permanently_delete_note');
-    const confirm: Observable<string> = this.i18n.translate('note_dialog.confirm');
+    const confirm: Observable<string> = this.i18n.translate('note_dialog.delete');
     const confirmed: boolean = await this.dialogService.confirm(message, confirm);
-    if (confirmed && this.threadDoc?.data != null) {
-      if (this.notesToDisplay.length === 1) {
-        // This may be the last note in the thread, so the thread may need to be deleted
-        this.dialogRef.close({ note, selectedText: '', position: { start: 0, length: 0 }, deleted: true });
-        return;
-      }
-      const index: number = this.threadDoc.data.notes.findIndex(n => n.dataId === note.dataId);
+    if (!confirmed) return;
+    if (this.notesToDisplay.length === 1) {
+      // This may be the last note in the thread, so the thread may need to be deleted
+      this.dialogRef.close({ note, selectedText: '', position: { start: 0, length: 0 }, deleted: true });
+    } else {
+      const index: number = this.threadDoc!.data!.notes.findIndex(n => n.dataId === note.dataId);
       if (index >= 0) {
-        await this.threadDoc.submitJson0Op(op => op.remove(nt => nt.notes, index));
+        await this.threadDoc!.submitJson0Op(op => op.remove(nt => nt.notes, index));
       }
     }
   }
@@ -293,6 +293,7 @@ export class NoteDialogComponent implements OnInit {
     return (
       this.isAddNotesEnabled &&
       note.dataId === this.lastNoteId &&
+      this.noteBeingEdited?.dataId === '' &&
       SF_PROJECT_RIGHTS.hasRight(
         this.projectProfileDoc.data,
         this.userService.currentUserId,
