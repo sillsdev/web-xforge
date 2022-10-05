@@ -4,7 +4,7 @@ import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { merge, Subscription } from 'rxjs';
 import { map, tap, throttleTime } from 'rxjs/operators';
@@ -315,7 +315,25 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return count != null && count > 0 ? translate('checking_overview.answer_count_label', { count: count }) : '';
   }
 
-  setQuestionArchiveStatus(questionDoc: QuestionDoc, archiveStatus: boolean) {
+  async setArchiveStatusForQuestionsInBook(text: TextInfo, archive: boolean) {
+    if (await this.confirmArchiveQuestions(archive, this.i18n.localizeBook(text.bookNum))) {
+      for (const chapter of text.chapters) {
+        for (const questionDoc of this.getQuestionDocs(this.getTextDocIdType(text.bookNum, chapter.number), !archive)) {
+          if (questionDoc.data!.isArchived !== archive) this.setQuestionArchiveStatus(questionDoc, archive);
+        }
+      }
+    }
+  }
+
+  async setArchiveStatusForQuestionsInChapter(text: TextInfo, chapter: Chapter, archive: boolean) {
+    if (await this.confirmArchiveQuestions(archive, this.i18n.localizeBook(text.bookNum) + ' ' + chapter.number)) {
+      for (const questionDoc of this.getQuestionDocs(this.getTextDocIdType(text.bookNum, chapter.number), !archive)) {
+        if (questionDoc.data!.isArchived !== archive) this.setQuestionArchiveStatus(questionDoc, archive);
+      }
+    }
+  }
+
+  setQuestionArchiveStatus(questionDoc: QuestionDoc, archiveStatus: boolean): void {
     questionDoc.submitJson0Op(op => {
       op.set(q => q.isArchived, archiveStatus);
       if (archiveStatus) {
@@ -406,6 +424,16 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
 
   getBookId(text: TextInfo): string {
     return Canon.bookNumberToId(text.bookNum);
+  }
+
+  private async confirmArchiveQuestions(archive: boolean, scope: string): Promise<boolean> {
+    const confirmation = await this.dialogService.confirm(
+      this.i18n.translate(`checking_overview.${archive ? 'confirm_bulk_archive' : 'confirm_bulk_republish'}`, {
+        scope
+      }),
+      this.i18n.translate(`checking_overview.${archive ? 'archive' : 'republish'}`)
+    );
+    return confirmation === true;
   }
 
   private initTextsWithLoadingIndicator() {
