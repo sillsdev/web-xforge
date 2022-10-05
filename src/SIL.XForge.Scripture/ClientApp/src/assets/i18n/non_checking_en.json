@@ -20,13 +20,17 @@
   "checking_overview": {
     "add_question": "Add Question",
     "answer_count_label": "{{ count }} answers",
+    "archive_multiple": "Archive all questions in {{ location }}",
     "archive": "Archive",
     "archived_questions": "Archived Questions",
     "click_add_question": "Click {{ boldStart }}Add question{{ boldEnd }}, above.",
+    "confirm_bulk_archive": "Are you sure you want to archive all the questions in {{ scope }}?",
+    "confirm_bulk_republish": "Are you sure you want to republish all the questions in {{ scope }}?",
     "import_questions": "Bulk import",
     "no_archived_questions": "There are no archived questions.",
     "no_questions": "There are no published questions. ",
     "question_count_label": "{{ count }} questions",
+    "republish_multiple": "Republish all questions in {{ location }}",
     "republish": "Republish",
     "time_archived_stamp": "Archived on {{ timeStamp }}"
   },
