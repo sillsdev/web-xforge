@@ -54,12 +54,12 @@ section.panel {
   }
 }
 .section-title {
-  padding-left: 110px;
+  padding-inline-start: 110px;
   @include media-breakpoint-down(md) {
-    padding-left: 70px;
+    padding-inline-start: 70px;
   }
   @include media-breakpoint-down(sm) {
-    padding-left: 30px;
+    padding-inline-start: 30px;
   }
 
   h2 {
@@ -79,35 +79,35 @@ section.panel {
     &:before {
       content: '';
       position: absolute;
-      left: -110px;
+      inset-inline-start: -110px;
       top: 0;
       height: 40px;
       width: 70px;
       background-color: $greenLight;
       @include media-breakpoint-down(md) {
         width: 40px;
-        left: -85px;
+        inset-inline-start: -85px;
       }
       @include media-breakpoint-down(sm) {
         width: 20px;
         height: 24px;
-        left: -46px;
+        inset-inline-start: -46px;
       }
     }
 
     &:after {
       position: absolute;
       content: '';
-      left: -40px;
+      inset-inline-start: -40px;
       top: 0;
       border-style: solid;
       border-width: 20px 0 20px 20px;
-      border-color: transparent transparent transparent $greenLight;
+      border-color: transparent $greenLight transparent $greenLight;
       @include media-breakpoint-down(md) {
-        left: -46px;
+        inset-inline-start: -46px;
       }
       @include media-breakpoint-down(sm) {
-        left: -26px;
+        inset-inline-start: -26px;
         border-width: 12px 0 12px 12px;
       }
     }
@@ -120,5 +120,12 @@ section.panel {
         border-color: transparent transparent transparent $purpleDark;
       }
     }
+  }
+}
+
+body[dir='rtl'] .section-title .title::after {
+  border-width: 20px 20px 20px 0;
+  @include media-breakpoint-down(sm) {
+    border-width: 12px 12px 12px 0;
   }
 }
