@@ -37,10 +37,9 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
-import { getLinkHTML, issuesEmailTemplate, objectId } from 'xforge-common/utils';
+import { getLinkHTML, issuesEmailTemplate } from 'xforge-common/utils';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { environment } from '../../../environments/environment';
@@ -67,7 +66,7 @@ import {
   threadIdFromMouseEvent
 } from '../../shared/utils';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
-import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
+import { NoteDialogComponent, NoteDialogData } from './note-dialog/note-dialog.component';
 import {
   SuggestionsSettingsDialogComponent,
   SuggestionsSettingsDialogData
@@ -76,7 +75,6 @@ import { Suggestion } from './suggestions.component';
 import { TranslateMetricsSession } from './translate-metrics-session';
 
 export const UPDATE_SUGGESTIONS_TIMEOUT = 100;
-export const SF_NOTE_THREAD_PREFIX = 'SFNOTETHREAD_';
 
 const PUNCT_SPACE_REGEX = /^(?:\p{P}|\p{S}|\p{Cc}|\p{Z})+$/u;
 
@@ -810,7 +808,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       textDocId: new TextDocId(this.projectDoc!.id, this.bookNum, this.chapter),
       verseRef
     };
-    const dialogRef = this.dialogService.openMatDialog<NoteDialogComponent, NoteDialogData, NoteDialogResult>(
+    const dialogRef = this.dialogService.openMatDialog<NoteDialogComponent, NoteDialogData, boolean>(
       NoteDialogComponent,
       {
         autoFocus: false,
@@ -819,9 +817,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         data: noteDialogData
       }
     );
-    const result: NoteDialogResult | undefined = await dialogRef.afterClosed().toPromise();
-    if (result != null) {
-      await this.handleNoteDialogResult(result);
+    const result: boolean | undefined = await dialogRef.afterClosed().toPromise();
+    if (result === true) {
       this.toggleNoteThreadVerses(true);
     }
   }
@@ -844,63 +841,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           op.add(puc => puc.noteRefsRead, noteId);
         }
       });
-    }
-  }
-
-  private async handleNoteDialogResult(result: NoteDialogResult): Promise<void> {
-    const projectId: string = this.projectDoc!.id;
-
-    if (result.note.threadId === '' && result.verseRef != null) {
-      // create a new thread
-      const threadId: string = SF_NOTE_THREAD_PREFIX + objectId();
-      result.note.threadId = threadId;
-      const noteThread: NoteThread = {
-        dataId: threadId,
-        verseRef: result.verseRef,
-        projectRef: projectId,
-        ownerRef: this.userService.currentUserId,
-        notes: [result.note],
-        position: result.position,
-        originalContextBefore: '',
-        originalSelectedText: result.selectedText,
-        originalContextAfter: '',
-        tagIcon: '01flag1',
-        status: NoteStatus.Todo
-      };
-      await this.projectService.createNoteThread(projectId, noteThread);
-      return;
-    }
-
-    const noteThreadDoc: NoteThreadDoc | undefined = this.noteThreadQuery?.docs.find(
-      nt => nt.data?.dataId === result.note.threadId
-    );
-    if (noteThreadDoc?.data == null) {
-      return;
-    }
-
-    if (result.deleted) {
-      // delete the note or the entire thread
-      if (noteThreadDoc.data.notes.length === 1 && noteThreadDoc.data.notes[0].dataId === result.note.dataId) {
-        // only delete the thread if deleting the last note in the thread
-        await noteThreadDoc.delete();
-      } else {
-        const noteIndex: number = noteThreadDoc.data.notes.findIndex(n => n.dataId === result.note.dataId);
-        if (noteIndex >= 0) {
-          noteThreadDoc.submitJson0Op(op => op.remove(nt => nt.notes, noteIndex));
-        }
-      }
-      return;
-    }
-
-    // updated the existing note
-    const noteIndex: number = noteThreadDoc.data.notes.findIndex(n => n.dataId === result.note.dataId);
-    if (noteIndex >= 0) {
-      noteThreadDoc.submitJson0Op(op => {
-        op.set(t => t.notes[noteIndex].content, result.note.content);
-        op.set(t => t.notes[noteIndex].dateModified, result.note.dateModified);
-      });
-    } else {
-      noteThreadDoc.submitJson0Op(op => op.add(t => t.notes, result.note));
     }
   }
 

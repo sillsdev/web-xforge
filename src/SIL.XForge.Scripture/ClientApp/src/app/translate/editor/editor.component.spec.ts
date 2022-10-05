@@ -40,7 +40,7 @@ import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-a
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { fromVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
@@ -70,8 +70,8 @@ import { TranslationEngineService } from '../../core/translation-engine.service'
 import { SharedModule } from '../../shared/shared.module';
 import { getCombinedVerseTextDoc, paratextUsersFromRoles } from '../../shared/test-utils';
 import { PRESENCE_EDITOR_ACTIVE_TIMEOUT } from '../../shared/text/text.component';
-import { EditorComponent, SF_NOTE_THREAD_PREFIX, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
-import { NoteDialogComponent, NoteDialogResult } from './note-dialog/note-dialog.component';
+import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
+import { NoteDialogComponent } from './note-dialog/note-dialog.component';
 import { SuggestionsComponent } from './suggestions.component';
 import { ACTIVE_EDIT_TIMEOUT } from './translate-metrics-session';
 import { NoteDialogData } from './note-dialog/note-dialog.component';
@@ -2389,10 +2389,6 @@ describe('EditorComponent', () => {
       const [, arg2] = capture(mockedMatDialog.open).last();
       const noteVerseRef: VerseRef = (arg2 as MatDialogConfig).data!.verseRef;
       expect(noteVerseRef.toString()).toEqual('MAT 1:1');
-      env.mockNoteDialogRef.close();
-      tick();
-      env.fixture.detectChanges();
-      verify(mockedSFProjectService.createNoteThread(anything(), anything())).never();
       env.dispose();
     }));
 
@@ -2400,87 +2396,14 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
-
-      const position: TextAnchor = { start: 0, length: 0 };
-      const selectedText = 'target: chapter 1, verse 4.';
-      const verseRef: VerseRefData = fromVerseRef(VerseRef.parse('Mat 1:4'));
       env.setSelectionAndInsertNote('verse_1_4');
 
-      const emptyThreadId = '';
-      const note: Note = env.getNoteTemplate(emptyThreadId);
-      env.mockNoteDialogRef.close({ verseRef, note, position, selectedText });
+      env.mockNoteDialogRef.close(true);
       env.wait();
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
       const [, config] = capture(mockedMatDialog.open).last();
       const noteVerseRef: VerseRef = (config as MatDialogConfig).data!.verseRef;
       expect(noteVerseRef.toString()).toEqual('MAT 1:4');
-      verify(mockedSFProjectService.createNoteThread('project01', anything())).once();
-      const [, noteThread] = capture(mockedSFProjectService.createNoteThread).last();
-      const noteInserted = noteThread.notes[0];
-      expect(noteThread.dataId).toEqual(noteInserted.threadId);
-      expect(noteThread.dataId.startsWith(SF_NOTE_THREAD_PREFIX)).toBe(true);
-      env.dispose();
-    }));
-
-    it('can add a note to an existing thread', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig();
-      env.wait();
-
-      const threadId = 'thread01';
-      const existingThread: NoteThreadDoc = env.getNoteThreadDoc('project01', threadId)!;
-      expect(existingThread.data!.notes.length).toEqual(3);
-
-      const note: Note = env.getNoteTemplate(threadId);
-      const content = 'new note on thread';
-      env.openNoteDialogAndEdit('verse_1_1', existingThread.data!, note, content);
-      expect(existingThread!.data!.notes.length).toEqual(4);
-      env.dispose();
-    }));
-
-    it('can edit an existing note', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig();
-      env.wait();
-
-      const threadId = 'thread01';
-      const existingThread: NoteThreadDoc = env.getNoteThreadDoc('project01', threadId)!;
-      expect(existingThread.data!.notes.length).toEqual(3);
-
-      const lastNote: Note = cloneDeep(existingThread.data!.notes[2]);
-      const lastNoteId: string = lastNote.dataId;
-      const content = 'edit content';
-      env.openNoteDialogAndEdit('verse_1_1', existingThread.data!, lastNote, content);
-      expect(existingThread.data!.notes.length).toEqual(3);
-      expect(existingThread.data!.notes.find(n => n.dataId === lastNoteId)!.content).toEqual(content);
-      env.dispose();
-    }));
-
-    it('allows user to delete a thread', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig();
-      env.wait();
-
-      const threadId = 'thread02';
-      const existingThread: NoteThreadDoc = env.getNoteThreadDoc('project01', threadId);
-      expect(existingThread.data!.notes.length).toEqual(1);
-      const note: Note = existingThread.data!.notes[0];
-      env.openNoteDialogAndEdit('verse_1_3', existingThread.data!, note, 'deleted note', true);
-      expect(existingThread.data).toBeUndefined();
-      env.dispose();
-    }));
-
-    it('deletes the note if notes still exist in the thread', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig();
-      env.wait();
-
-      const threadId = 'thread01';
-      const existingThread: NoteThreadDoc = env.getNoteThreadDoc('project01', threadId);
-      expect(existingThread.data!.notes.length).toEqual(3);
-      const note: Note = existingThread.data!.notes[2];
-      env.openNoteDialogAndEdit('verse_1_1', existingThread.data!, note, 'deleted note', true);
-      expect(existingThread.data!.notes.length).toEqual(2);
       env.dispose();
     }));
   });
@@ -3144,19 +3067,12 @@ class TestEnvironment {
     return thread != null;
   }
 
-  openNoteDialogAndEdit(segmentRef: string, thread: NoteThread, note: Note, content: string, deleted?: boolean): void {
+  openNoteDialogAndEdit(segmentRef: string, thread: NoteThread): void {
     const iconElement: HTMLElement = this.getNoteThreadIconElement(segmentRef, thread.dataId)!;
     iconElement.click();
     this.wait();
 
-    note.content = content;
-    this.mockNoteDialogRef.close({
-      verseRef: thread.verseRef,
-      note,
-      position: thread.position,
-      selectedText: thread.originalSelectedText,
-      deleted
-    });
+    this.mockNoteDialogRef.close(true);
     this.wait();
     const noteDialogData: NoteDialogData = {
       verseRef: undefined,
@@ -3538,19 +3454,19 @@ class TestEnvironment {
 }
 
 class MockNoteDialogRef {
-  close$ = new Subject<NoteDialogResult | void>();
+  close$ = new Subject<boolean | void>();
 
   constructor(element: Element) {
     // steal the focus to simulate a dialog stealing the focus
     element.appendChild(document.createElement('input')).focus();
   }
 
-  close(result?: NoteDialogResult) {
+  close(result?: boolean) {
     this.close$.next(result);
     this.close$.complete();
   }
 
-  afterClosed(): Observable<NoteDialogResult | void> {
+  afterClosed(): Observable<boolean | void> {
     return this.close$;
   }
 }
