@@ -1,8 +1,7 @@
-import { MdcDialog, MdcDialogModule, MdcDialogRef } from '@angular-mdc/web/dialog';
+import { MdcDialogModule, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Location } from '@angular/common';
 import { DebugElement, NgModule, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { MatDialog } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Route } from '@angular/router';
@@ -31,6 +30,7 @@ import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -52,8 +52,7 @@ import { QuestionDialogService } from '../question-dialog/question-dialog.servic
 import { CheckingOverviewComponent } from './checking-overview.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
-const mockedMdcDialog = mock(MdcDialog);
-const mockedMatDialog = mock(MatDialog);
+const mockedDialogService = mock(DialogService);
 const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
@@ -75,8 +74,7 @@ describe('CheckingOverviewComponent', () => {
     imports: [DialogTestModule, RouterTestingModule.withRoutes(ROUTES), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
-      { provide: MdcDialog, useMock: mockedMdcDialog },
-      { provide: MatDialog, useMock: mockedMatDialog },
+      { provide: DialogService, useMock: mockedDialogService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
@@ -255,17 +253,17 @@ describe('CheckingOverviewComponent', () => {
       env.simulateRowClick(1, id);
       // Edit a question with no answers
       env.clickElement(env.questionEditButtons[3]);
-      verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent, anything())).never();
-      resetCalls(mockedMdcDialog);
+      verify(mockedDialogService.openMdcDialog(anything())).never();
+      resetCalls(mockedDialogService);
       when(env.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('close'));
       // Edit a question with answers
       env.clickElement(env.questionEditButtons[0]);
-      verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent, anything())).once();
-      verify(mockedMdcDialog.open(QuestionDialogComponent, anything())).never();
+      verify(mockedDialogService.openMdcDialog(anything())).once();
+      verify(mockedDialogService.openMdcDialog(QuestionDialogComponent)).never();
       resetCalls(mockedQuestionDialogService);
       when(env.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('accept'));
       env.clickElement(env.questionEditButtons[0]);
-      verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent, anything())).twice();
+      verify(mockedDialogService.openMdcDialog(anything())).twice();
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
       expect().nothing();
     }));
@@ -276,7 +274,7 @@ describe('CheckingOverviewComponent', () => {
       const env = new TestEnvironment();
       env.waitForQuestions();
       env.clickElement(env.importButton);
-      verify(mockedMatDialog.open(ImportQuestionsDialogComponent, anything())).once();
+      verify(mockedDialogService.openMatDialog(ImportQuestionsDialogComponent, anything())).once();
       expect().nothing();
     }));
 
@@ -397,7 +395,7 @@ describe('CheckingOverviewComponent', () => {
 
       env.simulateRowClick(0, undefined, true);
       env.simulateRowClick(1, id, true);
-      env.clickElement(env.questionPublishButtons[0]);
+      env.clickElement(env.questionPublishButtons[2]);
       expect(env.loadingArchivedQuestionsLabel).toBeNull();
       expect(env.noArchivedQuestionsLabel).not.toBeNull();
     }));
@@ -412,8 +410,8 @@ describe('CheckingOverviewComponent', () => {
       env.simulateRowClick(0);
       env.simulateRowClick(1, id);
       expect(env.textRows.length).toEqual(9);
-      expect(env.questionArchiveButtons.length).toEqual(6);
-      env.clickElement(env.questionArchiveButtons[0]);
+      expect(env.questionArchiveButtons.length).toEqual(9);
+      env.clickElement(env.questionArchiveButtons[2]);
       expect(env.textArchivedRows.length).toEqual(1);
       expect(env.getArchivedQuestionsCountByRow(0).nativeElement.textContent).toContain('2 questions');
       expect(env.textRows.length).toEqual(8);
@@ -423,7 +421,7 @@ describe('CheckingOverviewComponent', () => {
       env.simulateRowClick(1, id, true);
       const archivedQuestion: HTMLElement = env.archivedQuestionDates[0].nativeElement;
       expect(archivedQuestion.textContent).toContain('Archived on');
-      env.clickElement(env.questionPublishButtons[0]);
+      env.clickElement(env.questionPublishButtons[2]);
       expect(env.textArchivedRows.length).toEqual(3);
       expect(env.getArchivedQuestionsCountByRow(0).nativeElement.textContent).toContain('1 questions');
       expect(env.textRows.length).toEqual(9);
@@ -790,7 +788,8 @@ class TestEnvironment {
 
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(mockedQuestionDialogService.questionDialog(anything())).thenResolve();
-    when(mockedMdcDialog.open(QuestionAnsweredDialogComponent, anything())).thenReturn(
+    when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
+    when(mockedDialogService.openMdcDialog(QuestionAnsweredDialogComponent)).thenReturn(
       instance(this.mockedAnsweredDialogRef)
     );
     when(this.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('accept'));
@@ -943,6 +942,7 @@ class TestEnvironment {
     element.click();
     this.fixture.detectChanges();
     flush();
+    this.fixture.detectChanges();
   }
 
   setCurrentUser(currentUser: UserInfo): void {
