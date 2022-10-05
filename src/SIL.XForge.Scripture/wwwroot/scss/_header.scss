@@ -14,6 +14,7 @@ header {
       .login-buttons {
         flex-wrap: wrap;
         justify-content: center;
+        column-gap: 1em;
         a {
           margin-bottom: 8px;
         }
@@ -36,7 +37,6 @@ header {
   img {
     width: 50px;
     height: auto;
-    margin-right: 10px;
     @include media-breakpoint-down(xs) {
       width: 35px;
     }
@@ -51,6 +51,7 @@ header {
     text-decoration: none;
     display: flex;
     align-items: center;
+    column-gap: 1em;
   }
   #selectLanguage {
     .mdl-textfield {

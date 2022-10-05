@@ -182,7 +182,6 @@
 
       i {
         color: $white;
-        transform: rotate(180deg);
         font-size: 107px;
         margin-top: -23px;
         @include media-breakpoint-only(xs) {
@@ -210,6 +209,10 @@
       }
     }
   }
+}
+
+body[dir='ltr'] .quote-text i {
+  transform: rotate(180deg);
 }
 
 .statement {

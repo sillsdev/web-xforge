@@ -1,8 +1,10 @@
 @using Microsoft.AspNetCore.Mvc.Localization
+@using System.Globalization
 @inject IHtmlLocalizer<SharedResource> SharedLocalizer
 
 <!DOCTYPE html>
 <html>
+
 <head>
     <environment include="Production">
         <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -29,14 +31,21 @@
     <link rel="stylesheet" href="~/css/sf.min.css" />
     @RenderSection("css", required: false)
 </head>
-<body>
+
+@{
+    var direction = CultureInfo.CurrentCulture.TextInfo.IsRightToLeft ? "rtl" : "ltr";
+}
+
+<body dir=@direction>
     <header>
         <div class="top-bar">
             <div class="mdl-grid">
                 <div class="mdl-cell mdl-cell--12-col flex justify-content-center">
                     <div class="login-buttons flex align-items-center">
-                        <a class="mdl-button mdl-button--accent" href="/login?sign-up=true">@SharedLocalizer[SharedResource.Keys.SignUp]</a>
-                        <a class="mdl-button mdl-button--raised mdl-button--accent" href="/login">@SharedLocalizer[SharedResource.Keys.LogIn]</a>
+                        <a class="mdl-button mdl-button--accent"
+                            href="/login?sign-up=true">@SharedLocalizer[SharedResource.Keys.SignUp]</a>
+                        <a class="mdl-button mdl-button--raised mdl-button--accent"
+                            href="/login">@SharedLocalizer[SharedResource.Keys.LogIn]</a>
                     </div>
                 </div>
             </div>
@@ -61,4 +70,5 @@
     <vc:footer></vc:footer>
     @RenderSection("scripts", required: false)
 </body>
+
 </html>
