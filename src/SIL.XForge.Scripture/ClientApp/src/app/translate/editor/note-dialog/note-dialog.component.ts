@@ -9,13 +9,13 @@ import {
   AssignedUsers,
   NoteConflictType,
   NoteStatus,
+  NoteThread,
   NoteType
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
@@ -35,13 +35,7 @@ export interface NoteDialogData {
   verseRef?: VerseRef;
 }
 
-export interface NoteDialogResult {
-  verseRef?: VerseRefData;
-  note: Note;
-  selectedText: string;
-  position: TextAnchor;
-  deleted?: boolean;
-}
+export const SF_NOTE_THREAD_PREFIX = 'SFNOTETHREAD_';
 
 // TODO: Implement a diff - there is an accepted solution here that might be a good starting point:
 // https://codereview.stackexchange.com/questions/133586/a-string-prototype-diff-implementation-text-diff
@@ -61,7 +55,7 @@ export class NoteDialogComponent implements OnInit {
   private noteBeingEdited?: Note;
 
   constructor(
-    private readonly dialogRef: MatDialogRef<NoteDialogComponent, NoteDialogResult>,
+    private readonly dialogRef: MatDialogRef<NoteDialogComponent, boolean>,
     @Inject(MAT_DIALOG_DATA) private readonly data: NoteDialogData,
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
@@ -228,14 +222,22 @@ export class NoteDialogComponent implements OnInit {
     const confirm: Observable<string> = this.i18n.translate('note_dialog.delete');
     const confirmed: boolean = await this.dialogService.confirm(message, confirm);
     if (!confirmed) return;
+
     if (this.notesToDisplay.length === 1) {
-      // This may be the last note in the thread, so the thread may need to be deleted
-      this.dialogRef.close({ note, selectedText: '', position: { start: 0, length: 0 }, deleted: true });
-    } else {
-      const index: number = this.threadDoc!.data!.notes.findIndex(n => n.dataId === note.dataId);
-      if (index >= 0) {
-        await this.threadDoc!.submitJson0Op(op => op.remove(nt => nt.notes, index));
+      if (this.threadDoc!.data!.notes.length === 1 && this.threadDoc!.data!.notes[0].dataId === note.dataId) {
+        // only delete the thread if deleting the last note in the thread
+        await this.threadDoc!.delete();
+        this.dialogRef.close(true);
+        return;
       }
+    }
+    const index: number = this.threadDoc!.data!.notes.findIndex(n => n.dataId === note.dataId);
+    if (index >= 0) {
+      await this.threadDoc!.submitJson0Op(op => op.remove(nt => nt.notes, index));
+    }
+
+    if (this.notesToDisplay.length === 0) {
+      this.dialogRef.close(true);
     }
   }
 
@@ -341,7 +343,7 @@ export class NoteDialogComponent implements OnInit {
     return paratextUser?.username ?? translate('note_dialog.paratext_user');
   }
 
-  submit(): void {
+  async submit(): Promise<void> {
     if (
       this.noteBeingEdited == null ||
       this.currentNoteContent == null ||
@@ -361,13 +363,47 @@ export class NoteDialogComponent implements OnInit {
     this.noteBeingEdited.dateModified = currentDate;
     this.noteBeingEdited.content = this.currentNoteContent;
 
-    const result: NoteDialogResult = {
-      verseRef: fromVerseRef(verseRef),
-      note: this.noteBeingEdited,
-      position: { start: 0, length: 0 },
-      selectedText: this.segmentText
-    };
-    this.dialogRef.close(result);
+    await this.saveChanges(fromVerseRef(verseRef));
+  }
+
+  private async saveChanges(verseRef: VerseRefData): Promise<void> {
+    if (this.noteBeingEdited == null) {
+      this.dialogRef.close(false);
+      return;
+    }
+    if (this.noteBeingEdited.threadId === '') {
+      // create a new thread
+      const threadId: string = SF_NOTE_THREAD_PREFIX + objectId();
+      this.noteBeingEdited.threadId = threadId;
+      const noteThread: NoteThread = {
+        dataId: threadId,
+        verseRef: verseRef,
+        projectRef: this.projectId,
+        ownerRef: this.userService.currentUserId,
+        notes: [this.noteBeingEdited],
+        position: { start: 0, length: 0 },
+        originalContextBefore: '',
+        originalSelectedText: this.segmentText,
+        originalContextAfter: '',
+        tagIcon: '01flag1',
+        status: NoteStatus.Todo
+      };
+      await this.projectService.createNoteThread(this.projectId, noteThread);
+      this.dialogRef.close(true);
+      return;
+    }
+
+    // updated the existing note
+    const noteIndex: number = this.threadDoc!.data!.notes.findIndex(n => n.dataId === this.noteBeingEdited!.dataId);
+    if (noteIndex >= 0) {
+      this.threadDoc!.submitJson0Op(op => {
+        op.set(t => t.notes[noteIndex].content, this.noteBeingEdited!.content);
+        op.set(t => t.notes[noteIndex].dateModified, this.noteBeingEdited!.dateModified);
+      });
+    } else {
+      this.threadDoc!.submitJson0Op(op => op.add(t => t.notes, this.noteBeingEdited));
+    }
+    this.dialogRef.close(true);
   }
 
   private getNoteTemplate(threadId: string | undefined): Note {
