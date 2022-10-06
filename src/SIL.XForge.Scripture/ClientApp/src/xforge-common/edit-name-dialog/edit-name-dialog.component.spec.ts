@@ -1,8 +1,10 @@
-import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { CommonModule } from '@angular/common';
 import { Component, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { MatDialogRef } from '@angular/material/dialog';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { mock } from 'ts-mockito';
+import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -12,16 +14,17 @@ const mockedI18nService = mock(I18nService);
 
 describe('EditNameDialogComponent', () => {
   configureTestingModule(() => ({
-    providers: [{ provide: I18nService, useMock: mockedI18nService }]
+    providers: [DialogService, { provide: I18nService, useMock: mockedI18nService }]
   }));
 
   it('should display name and cancel button', fakeAsync(() => {
     const env = new TestEnvironment();
     env.openDialog();
     expect(env.component.confirmedName).toBeUndefined();
-    expect(env.nameInput.querySelector('input')!.value).toBe('Simon Says');
+    expect(env.nameInput.value).toBe('Simon Says');
     expect(env.cancelButton).not.toBe(null);
     env.submitButton.click();
+    tick();
     env.fixture.detectChanges();
     expect(env.component.confirmedName).toBe('Simon Says');
   }));
@@ -32,6 +35,7 @@ describe('EditNameDialogComponent', () => {
     expect(env.component.confirmedName).toBeUndefined();
     env.setTextFieldValue(env.nameInput, 'Follow The Leader');
     env.submitButton.click();
+    tick();
     env.fixture.detectChanges();
     expect(env.component.confirmedName).toBe('Follow The Leader');
   }));
@@ -55,14 +59,17 @@ describe('EditNameDialogComponent', () => {
     expect(env.component.confirmedName).toBeUndefined();
     env.setTextFieldValue(env.nameInput, '');
     env.submitButton.click();
+    tick();
     env.fixture.detectChanges();
     expect(env.component.confirmedName).toBeUndefined();
     env.setTextFieldValue(env.nameInput, ' ');
     env.submitButton.click();
+    tick();
     env.fixture.detectChanges();
     expect(env.component.confirmedName).toBeUndefined();
     env.setTextFieldValue(env.nameInput, 'Bob');
     env.submitButton.click();
+    tick();
     env.fixture.detectChanges();
     expect(env.component.confirmedName).toBe('Bob');
   }));
@@ -74,6 +81,7 @@ describe('EditNameDialogComponent', () => {
     expect(env.title.textContent).toBe('Confirm your name');
     expect(env.description.textContent).toContain('Confirm the name that other people on this project will see');
     env.submitButton.click();
+    tick();
     env.fixture.detectChanges();
     expect(env.component.confirmedName).toBe('Simon Says');
   }));
@@ -85,6 +93,7 @@ describe('EditNameDialogComponent', () => {
     expect(env.cancelButton).toBe(null);
     env.submitButton.click();
     env.fixture.detectChanges();
+    tick();
     expect(env.component.confirmedName).toBe('Simon Says');
   }));
 });
@@ -114,16 +123,12 @@ class TestEnvironment {
     return this.selectElement('#cancel-button');
   }
 
-  get nameConfirmDialog(): HTMLElement {
-    return this.selectElement('mdc-dialog')!;
-  }
-
-  get nameInput(): HTMLElement {
-    return this.selectElement('#name-input')!;
+  get nameInput(): HTMLInputElement {
+    return this.selectElement('input')! as HTMLInputElement;
   }
 
   get title(): HTMLElement {
-    return this.selectElement('mdc-dialog-title')!;
+    return this.selectElement('h1')!;
   }
 
   get description(): HTMLElement {
@@ -138,8 +143,8 @@ class TestEnvironment {
     tick(166);
   }
 
-  setTextFieldValue(element: Element, value: string) {
-    const inputElem = element.querySelector('input') as HTMLInputElement;
+  setTextFieldValue(element: HTMLElement, value: string) {
+    const inputElem = element as HTMLInputElement;
     inputElem.value = value;
     inputElem.dispatchEvent(new Event('input'));
     this.fixture.detectChanges();
@@ -151,7 +156,7 @@ class TestEnvironment {
 }
 
 @NgModule({
-  imports: [UICommonModule, CommonModule, TestTranslocoModule],
+  imports: [UICommonModule, CommonModule, TestTranslocoModule, NoopAnimationsModule],
   declarations: [EditNameDialogComponent],
   exports: [EditNameDialogComponent]
 })
@@ -165,12 +170,12 @@ class DialogOpenerComponent {
   isConfirmContext: boolean = false;
   confirmedName?: string;
 
-  constructor(private readonly dialog: MdcDialog) {}
+  constructor(private readonly dialogService: DialogService) {}
 
   openDialog() {
-    const dialogRef = this.dialog.open(EditNameDialogComponent, {
+    const dialogRef = this.dialogService.openMatDialog(EditNameDialogComponent, {
       data: { name: this.publicName, isConfirmation: this.isConfirmContext }
-    }) as MdcDialogRef<EditNameDialogComponent, EditNameDialogResult | 'close'>;
+    }) as MatDialogRef<EditNameDialogComponent, EditNameDialogResult | 'close'>;
     dialogRef.afterClosed().subscribe(response => {
       this.confirmedName = response == null || response === 'close' ? undefined : response.displayName;
     });

@@ -431,6 +431,30 @@ describe('AppComponent', () => {
     verify(mockedAuthService.checkOnlineAuth()).once();
   }));
 
+  it('can edit name online', fakeAsync(() => {
+    const env = new TestEnvironment('online');
+    env.init();
+
+    env.avatarIcon.nativeElement.click();
+    env.wait();
+    expect(env.userMenu).not.toBeNull();
+    env.clickEditDisplayName();
+    verify(mockedNoticeService.show(anything())).never();
+    verify(mockedUserService.editDisplayName(false)).once();
+  }));
+
+  it('shows message if user attempts to edit their name offline', fakeAsync(() => {
+    const env = new TestEnvironment('offline');
+    env.init();
+
+    env.avatarIcon.nativeElement.click();
+    env.wait();
+    expect(env.userMenu).not.toBeNull();
+    env.clickEditDisplayName();
+    verify(mockedNoticeService.show(anything())).once();
+    verify(mockedUserService.editDisplayName(anything())).never();
+  }));
+
   describe('Community Checking', () => {
     it('no books showing in the menu', fakeAsync(() => {
       const env = new TestEnvironment();
@@ -688,8 +712,20 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#help-menu-list'));
   }
 
+  get userMenu(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#user-menu'));
+  }
+
+  get editNameIcon(): DebugElement {
+    return this.userMenu.query(By.css('#edit-name-btn'));
+  }
+
   get navBar(): DebugElement {
     return this.fixture.debugElement.query(By.css('mdc-top-app-bar'));
+  }
+
+  get avatarIcon(): DebugElement {
+    return this.navBar.query(By.css('.avatar-icon'));
   }
 
   get refreshButton(): DebugElement {
@@ -737,16 +773,8 @@ class TestEnvironment {
     return this.menuListItems.find((item: DebugElement) => item.nativeElement.innerText.includes(substring));
   }
 
-  getHelpMenuItemContaining(substring: string): DebugElement | undefined {
-    return this.helpMenuList.children.find((item: DebugElement) => item.nativeElement.innerText.includes(substring));
-  }
-
   someMenuItemContains(substring: string): boolean {
     return this.getMenuItemContaining(substring) !== undefined;
-  }
-
-  someHelpMenuItemContains(substring: string): boolean {
-    return this.getHelpMenuItemContaining(substring) !== undefined;
   }
 
   remoteAddQuestion(newQuestion: Question): void {
@@ -830,6 +858,12 @@ class TestEnvironment {
       this.component.projectSelect!.setSelectionByValue(projectId);
     });
     this.wait();
+  }
+
+  clickEditDisplayName(): void {
+    this.editNameIcon.nativeElement.click();
+    tick();
+    this.fixture.detectChanges();
   }
 
   wait(): void {

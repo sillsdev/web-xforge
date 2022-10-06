@@ -467,7 +467,11 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   async editName(): Promise<void> {
-    this.userService.editDisplayName(false);
+    if (this.pwaService.isOnline) {
+      this.userService.editDisplayName(false);
+    } else {
+      this.noticeService.show(translate('app.action_not_available_offline'));
+    }
   }
 
   logOut(): void {
