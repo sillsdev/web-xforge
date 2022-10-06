@@ -651,6 +651,15 @@ describe('CheckingComponent', () => {
       expect(env.getAnswerText(0)).toBe('Answering question 2 should pop up a dialog');
     }));
 
+    it('does not open dialog if offline', fakeAsync(() => {
+      const env = new TestEnvironment(CLEAN_CHECKER_USER, 'JHN', false);
+      env.selectQuestion(2);
+      env.answerQuestion('Answering question 2 offline');
+      verify(mockedUserService.editDisplayName(anything())).never();
+      expect(env.answers.length).toEqual(1);
+      expect(env.getAnswerText(0)).toBe('Answering question 2 offline');
+    }));
+
     it('inserts newer answer above older answers', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       env.selectQuestion(7);
