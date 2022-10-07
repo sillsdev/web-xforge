@@ -3,6 +3,7 @@
 using System;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -41,7 +42,7 @@ namespace SIL.XForge.Scripture.Services
             _machineClient = httpClientFactory.CreateClient(ClientName);
         }
 
-        public async Task AddProjectAsync(string curUserId, string projectId)
+        public async Task AddProjectAsync(string curUserId, string projectId, CancellationToken cancellationToken)
         {
             using IConnection conn = await _realtimeService.ConnectAsync(curUserId);
             IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
@@ -69,14 +70,15 @@ namespace SIL.XForge.Scripture.Services
                     sourceLanguageTag = machineProject.SourceLanguageTag,
                     targetLanguageTag = projectDoc.Data.WritingSystem.Tag,
                     type = "SmtTransfer",
-                }
+                },
+                cancellationToken
             );
             if (!response.IsSuccessStatusCode)
             {
                 throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
             }
 
-            string data = await response.Content.ReadAsStringAsync();
+            string data = await response.Content.ReadAsStringAsync(cancellationToken);
             _logger.LogInformation($"Response from {requestUri}: {data}");
 
             // Get the ID from the API response
@@ -97,7 +99,7 @@ namespace SIL.XForge.Scripture.Services
             );
         }
 
-        public async Task BuildProjectAsync(string curUserId, string projectId)
+        public async Task BuildProjectAsync(string curUserId, string projectId, CancellationToken cancellationToken)
         {
             // Build the project with the in-memory Machine instance
             await _engineService.StartBuildByProjectIdAsync(projectId);
@@ -115,7 +117,7 @@ namespace SIL.XForge.Scripture.Services
                 // TODO: Run the below in another thread
                 // Start the build
                 string requestUri = $"translation-engines/{projectSecret.MachineData.TranslationEngineId}/builds";
-                using var response = await _machineClient.PostAsync(requestUri, null);
+                using var response = await _machineClient.PostAsync(requestUri, null, cancellationToken);
 
                 // TODO: Use the response body?
                 if (!response.IsSuccessStatusCode)
@@ -129,7 +131,7 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        public async Task RemoveProjectAsync(string curUserId, string projectId)
+        public async Task RemoveProjectAsync(string curUserId, string projectId, CancellationToken cancellationToken)
         {
             // Remove the project from the in-memory Machine instance
             await _engineService.RemoveProjectAsync(projectId);
@@ -144,7 +146,7 @@ namespace SIL.XForge.Scripture.Services
             if (!string.IsNullOrWhiteSpace(projectSecret.MachineData?.TranslationEngineId))
             {
                 string requestUri = $"translation-engines/{projectSecret.MachineData.TranslationEngineId}";
-                using var response = await _machineClient.DeleteAsync(requestUri);
+                using var response = await _machineClient.DeleteAsync(requestUri, cancellationToken);
 
                 // There is no response body - just check the status code
                 if (!response.IsSuccessStatusCode)
