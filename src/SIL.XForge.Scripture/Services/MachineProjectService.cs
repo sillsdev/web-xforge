@@ -16,20 +16,20 @@ using MachineProject = SIL.Machine.WebApi.Models.Project;
 
 namespace SIL.XForge.Scripture.Services
 {
-    public class MachineService : DisposableBase, IMachineService
+    public class MachineProjectService : DisposableBase, IMachineProjectService
     {
         public const string ClientName = "machine_api";
 
         private readonly IEngineService _engineService;
-        private readonly ILogger<MachineService> _logger;
+        private readonly ILogger<MachineProjectService> _logger;
         private readonly HttpClient _machineClient;
         private readonly IRepository<SFProjectSecret> _projectSecrets;
         private readonly IRealtimeService _realtimeService;
 
-        public MachineService(
+        public MachineProjectService(
             IEngineService engineService,
             IHttpClientFactory httpClientFactory,
-            ILogger<MachineService> logger,
+            ILogger<MachineProjectService> logger,
             IRepository<SFProjectSecret> projectSecrets,
             IRealtimeService realtimeService
         )
@@ -92,7 +92,7 @@ namespace SIL.XForge.Scripture.Services
                 projectId,
                 u =>
                 {
-                    u.Set(p => p.TranslationEngineId, translationEngineId);
+                    u.Set(p => p.MachineData, new MachineData { TranslationEngineId = translationEngineId });
                 }
             );
         }
@@ -109,9 +109,9 @@ namespace SIL.XForge.Scripture.Services
             }
 
             // Build the project with the Machine API
-            if (!string.IsNullOrWhiteSpace(projectSecret.TranslationEngineId))
+            if (!string.IsNullOrWhiteSpace(projectSecret.MachineData?.TranslationEngineId))
             {
-                string requestUri = $"translation-engines/{projectSecret.TranslationEngineId}/builds";
+                string requestUri = $"translation-engines/{projectSecret.MachineData.TranslationEngineId}/builds";
                 using var response = await _machineClient.PostAsync(requestUri, null);
 
                 // TODO: Use the response body?
@@ -138,16 +138,16 @@ namespace SIL.XForge.Scripture.Services
             }
 
             // Remove the project from the Machine API
-            if (!string.IsNullOrWhiteSpace(projectSecret.TranslationEngineId))
+            if (!string.IsNullOrWhiteSpace(projectSecret.MachineData?.TranslationEngineId))
             {
-                string requestUri = $"translation-engines/{projectSecret.TranslationEngineId}";
+                string requestUri = $"translation-engines/{projectSecret.MachineData.TranslationEngineId}";
                 using var response = await _machineClient.DeleteAsync(requestUri);
 
                 // There is no response body - just check the status code
                 if (!response.IsSuccessStatusCode)
                 {
                     _logger.LogInformation(
-                        $"Translation engine {projectSecret.TranslationEngineId} for project {projectId} could not be deleted."
+                        $"Translation engine {projectSecret.MachineData.TranslationEngineId} for project {projectId} could not be deleted."
                     );
                 }
             }

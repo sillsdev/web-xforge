@@ -28,14 +28,10 @@ namespace SIL.XForge.Scripture.Models
         /// </remarks>
         public List<string> SyncMetricsIds { get; set; } = new List<string>();
 
-        /// The Machine API Translation Engine Id for the project.
+        /// <summary>
+        /// Gets or sets the Machine API data.
         /// </summary>
-        /// <value>
-        /// The Translation Engine Id.
-        /// </value>
-        /// <remarks>
-        /// The user should not interact with the translation engine directly by ID.
-        /// </remarks>
-        public string TranslationEngineId { get; set; }
+        /// <value>The Machine API data.</value>
+        public MachineData MachineData { get; set; }
     }
 }
