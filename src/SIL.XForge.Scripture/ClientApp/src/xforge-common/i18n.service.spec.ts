@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { TranslocoService } from '@ngneat/transloco';
 import { CookieService } from 'ngx-cookie-service';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
@@ -127,6 +128,15 @@ describe('I18nService', () => {
     service.setLocale('ar', mockedAuthService);
     verify(mockedDocumentBody.setAttribute('dir', 'rtl')).once();
     expect().nothing();
+  });
+
+  it('should localize references', () => {
+    when(mockedTranslocoService.translate<string>('canon.book_names.GEN')).thenReturn('Genesis');
+    const service = getI18nService();
+    expect(service.localizeReference(VerseRef.parse('GEN 1:2-3'))).toBe('Genesis 1:2-3');
+    service.setLocale('ar', mockedAuthService);
+    // Expect right to left mark before : and - characters
+    expect(service.localizeReference(VerseRef.parse('GEN 1:2-3'))).toBe('Genesis 1\u200F:2\u200F-3');
   });
 });
 
