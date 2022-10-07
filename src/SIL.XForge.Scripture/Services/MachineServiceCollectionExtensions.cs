@@ -43,7 +43,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddAccessTokenManagement(options =>
             {
                 options.Client.Clients.Add(
-                    MachineService.ClientName,
+                    MachineProjectService.ClientName,
                     new ClientCredentialsTokenRequest
                     {
                         Address = machineOptions.TokenUrl,
@@ -55,7 +55,7 @@ namespace Microsoft.Extensions.DependencyInjection
             });
             services
                 .AddClientAccessTokenHttpClient(
-                    MachineService.ClientName,
+                    MachineProjectService.ClientName,
                     configureClient: client =>
                     {
                         client.BaseAddress = new Uri(machineOptions.ApiServer);
@@ -72,7 +72,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
                     return handler;
                 });
-            services.AddSingleton<IMachineService, MachineService>();
+            services.AddSingleton<IMachineProjectService, MachineProjectService>();
             return services;
         }
     }
