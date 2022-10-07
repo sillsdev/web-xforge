@@ -29,7 +29,7 @@ namespace SIL.XForge.Scripture.Services
         private static readonly IEqualityComparer<Dictionary<string, string>> _permissionDictionaryEqualityComparer =
             new DictionaryComparer<string, string>();
         public static readonly string ErrorAlreadyConnectedKey = "error-already-connected";
-        private readonly IMachineService _machineService;
+        private readonly IMachineProjectService _machineProjectService;
         private readonly ISyncService _syncService;
         private readonly IParatextService _paratextService;
         private readonly IRepository<UserSecret> _userSecrets;
@@ -47,7 +47,7 @@ namespace SIL.XForge.Scripture.Services
             IRepository<SFProjectSecret> projectSecrets,
             ISecurityService securityService,
             IFileSystemService fileSystemService,
-            IMachineService machineService,
+            IMachineProjectService machineProjectService,
             ISyncService syncService,
             IParatextService paratextService,
             IRepository<UserSecret> userSecrets,
@@ -56,7 +56,7 @@ namespace SIL.XForge.Scripture.Services
             ITransceleratorService transceleratorService
         ) : base(realtimeService, siteOptions, audioService, projectSecrets, fileSystemService)
         {
-            _machineService = machineService;
+            _machineProjectService = machineProjectService;
             _syncService = syncService;
             _paratextService = paratextService;
             _userSecrets = userSecrets;
@@ -136,7 +136,7 @@ namespace SIL.XForge.Scripture.Services
 
                 if (projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled)
                 {
-                    await _machineService.AddProjectAsync(curUserId, projectDoc.Id);
+                    await _machineProjectService.AddProjectAsync(curUserId, projectDoc.Id);
                 }
             }
 
@@ -223,7 +223,7 @@ namespace SIL.XForge.Scripture.Services
             }
 
             // The machine service requires the project secrets
-            await _machineService.RemoveProjectAsync(curUserId, projectId);
+            await _machineProjectService.RemoveProjectAsync(curUserId, projectId);
             await ProjectSecrets.DeleteAsync(projectId);
             await RealtimeService.DeleteProjectAsync(projectId);
             string projectDir = Path.Combine(SiteOptions.Value.SiteDir, "sync", ptProjectId);
@@ -310,16 +310,16 @@ namespace SIL.XForge.Scripture.Services
                             // recreate Machine project only if one existed
                             if (hasExistingMachineProject)
                             {
-                                await _machineService.RemoveProjectAsync(curUserId, projectId);
+                                await _machineProjectService.RemoveProjectAsync(curUserId, projectId);
                             }
 
-                            await _machineService.AddProjectAsync(curUserId, projectId);
+                            await _machineProjectService.AddProjectAsync(curUserId, projectId);
                             trainEngine = true;
                         }
                         else if (hasExistingMachineProject)
                         {
                             // translation suggestions was disabled or source project set to null
-                            await _machineService.RemoveProjectAsync(curUserId, projectId);
+                            await _machineProjectService.RemoveProjectAsync(curUserId, projectId);
                         }
                     }
 
