@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using NSubstitute;
 using NUnit.Framework;
@@ -35,7 +36,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment(httpClient);
 
             // SUT
-            await env.Service.AddProjectAsync(User01, Project01);
+            await env.Service.AddProjectAsync(User01, Project01, CancellationToken.None);
 
             await env.EngineService.Received().AddProjectAsync(Arg.Any<MachineProject>());
             Assert.AreEqual(translationEngineId, env.ProjectSecrets.Get(Project01).MachineData.TranslationEngineId);
@@ -54,7 +55,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment(httpClient);
 
             // SUT
-            await env.Service.BuildProjectAsync(User01, Project02);
+            await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
 
             Assert.AreEqual(1, handler.NumberOfCalls);
         }
@@ -70,7 +71,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment(httpClient);
 
             // SUT
-            await env.Service.BuildProjectAsync(User01, Project01);
+            await env.Service.BuildProjectAsync(User01, Project01, CancellationToken.None);
 
             Assert.AreEqual(0, handler.NumberOfCalls);
         }
@@ -82,7 +83,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
 
             // SUT
-            await env.Service.BuildProjectAsync(User01, Project01);
+            await env.Service.BuildProjectAsync(User01, Project01, CancellationToken.None);
 
             await env.EngineService.Received().StartBuildByProjectIdAsync(Project01);
         }
@@ -98,7 +99,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment(httpClient);
 
             // SUT
-            await env.Service.RemoveProjectAsync(User01, Project02);
+            await env.Service.RemoveProjectAsync(User01, Project02, CancellationToken.None);
 
             Assert.AreEqual(1, handler.NumberOfCalls);
         }
@@ -114,7 +115,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment(httpClient);
 
             // SUT
-            await env.Service.RemoveProjectAsync(User01, Project01);
+            await env.Service.RemoveProjectAsync(User01, Project01, CancellationToken.None);
 
             Assert.AreEqual(0, handler.NumberOfCalls);
         }
@@ -126,7 +127,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
 
             // SUT
-            await env.Service.RemoveProjectAsync(User01, Project01);
+            await env.Service.RemoveProjectAsync(User01, Project01, CancellationToken.None);
 
             await env.EngineService.Received().RemoveProjectAsync(Project01);
         }
