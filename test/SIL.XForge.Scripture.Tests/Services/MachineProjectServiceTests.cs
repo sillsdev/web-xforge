@@ -15,7 +15,7 @@ using MachineProject = SIL.Machine.WebApi.Models.Project;
 namespace SIL.XForge.Scripture.Services
 {
     [TestFixture]
-    public class MachineServiceTests
+    public class MachineProjectServiceTests
     {
         private static readonly string Project01 = "project01";
         private static readonly string Project02 = "project02";
@@ -38,7 +38,7 @@ namespace SIL.XForge.Scripture.Services
             await env.Service.AddProjectAsync(User01, Project01);
 
             await env.EngineService.Received().AddProjectAsync(Arg.Any<MachineProject>());
-            Assert.AreEqual(translationEngineId, env.ProjectSecrets.Get(Project01).TranslationEngineId);
+            Assert.AreEqual(translationEngineId, env.ProjectSecrets.Get(Project01).MachineData.TranslationEngineId);
             Assert.AreEqual(1, handler.NumberOfCalls);
         }
 
@@ -138,13 +138,17 @@ namespace SIL.XForge.Scripture.Services
                 EngineService = Substitute.For<IEngineService>();
                 var httpClientFactory = Substitute.For<IHttpClientFactory>();
                 httpClientFactory.CreateClient(Arg.Any<string>()).Returns(httpClient);
-                var logger = new MockLogger<MachineService>();
+                var logger = new MockLogger<MachineProjectService>();
 
                 ProjectSecrets = new MemoryRepository<SFProjectSecret>(
                     new[]
                     {
                         new SFProjectSecret { Id = Project01 },
-                        new SFProjectSecret { Id = Project02, TranslationEngineId = Project02 },
+                        new SFProjectSecret
+                        {
+                            Id = Project02,
+                            MachineData = new MachineData { TranslationEngineId = Project02 },
+                        },
                     }
                 );
 
@@ -180,10 +184,16 @@ namespace SIL.XForge.Scripture.Services
                     )
                 );
 
-                Service = new MachineService(EngineService, httpClientFactory, logger, ProjectSecrets, realtimeService);
+                Service = new MachineProjectService(
+                    EngineService,
+                    httpClientFactory,
+                    logger,
+                    ProjectSecrets,
+                    realtimeService
+                );
             }
 
-            public MachineService Service { get; }
+            public MachineProjectService Service { get; }
             public IEngineService EngineService { get; }
             public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
         }
