@@ -1435,7 +1435,7 @@ namespace SIL.XForge.Scripture.Services
                 if (TranslationSuggestionsEnabled && trainEngine && hasSourceTextDocs)
                 {
                     // Start training Machine engine
-                    await _machineProjectService.BuildProjectAsync(_userSecret.Id, _projectDoc.Id);
+                    await _machineProjectService.BuildProjectAsync(_userSecret.Id, _projectDoc.Id, token);
                 }
 
                 // Backup the repository
