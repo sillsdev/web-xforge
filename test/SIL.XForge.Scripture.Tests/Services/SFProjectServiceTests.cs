@@ -1978,8 +1978,8 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.TranslateConfig.Source.ParatextId, Is.EqualTo("changedId"));
             Assert.That(project.TranslateConfig.Source.Name, Is.EqualTo("NewSource"));
 
-            await env.MachineProjectService.Received().RemoveProjectAsync(User01, Project01);
-            await env.MachineProjectService.Received().AddProjectAsync(User01, Project01);
+            await env.MachineProjectService.Received().RemoveProjectAsync(User01, Project01, CancellationToken.None);
+            await env.MachineProjectService.Received().AddProjectAsync(User01, Project01, CancellationToken.None);
             await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
         }
 
@@ -1998,8 +1998,12 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.TranslateConfig.Source.ParatextId, Is.EqualTo("changedId"));
             Assert.That(project.TranslateConfig.Source.Name, Is.EqualTo("NewSource"));
 
-            await env.MachineProjectService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>());
-            await env.MachineProjectService.DidNotReceive().AddProjectAsync(Arg.Any<string>(), Arg.Any<string>());
+            await env.MachineProjectService
+                .DidNotReceive()
+                .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+            await env.MachineProjectService
+                .DidNotReceive()
+                .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
             await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
         }
 
@@ -2017,8 +2021,10 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.TranslateConfig.TranslationSuggestionsEnabled, Is.True);
             Assert.That(project.TranslateConfig.Source.Name, Is.EqualTo("Source Only Project"));
 
-            await env.MachineProjectService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>());
-            await env.MachineProjectService.Received().AddProjectAsync(User01, Project03);
+            await env.MachineProjectService
+                .DidNotReceive()
+                .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+            await env.MachineProjectService.Received().AddProjectAsync(User01, Project03, CancellationToken.None);
             await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
         }
 
@@ -2040,8 +2046,10 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.TranslateConfig.TranslationSuggestionsEnabled, Is.False);
             Assert.That(project.TranslateConfig.Source, Is.Null);
 
-            await env.MachineProjectService.Received().RemoveProjectAsync(User01, Project01);
-            await env.MachineProjectService.DidNotReceive().AddProjectAsync(Arg.Any<string>(), Arg.Any<string>());
+            await env.MachineProjectService.Received().RemoveProjectAsync(User01, Project01, CancellationToken.None);
+            await env.MachineProjectService
+                .DidNotReceive()
+                .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
             await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
         }
 
@@ -2055,8 +2063,12 @@ namespace SIL.XForge.Scripture.Services
             SFProject project = env.GetProject(Project01);
             Assert.That(project.CheckingConfig.CheckingEnabled, Is.True);
 
-            await env.MachineProjectService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>());
-            await env.MachineProjectService.DidNotReceive().AddProjectAsync(Arg.Any<string>(), Arg.Any<string>());
+            await env.MachineProjectService
+                .DidNotReceive()
+                .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+            await env.MachineProjectService
+                .DidNotReceive()
+                .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
             await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
         }
 
@@ -2074,8 +2086,12 @@ namespace SIL.XForge.Scripture.Services
             SFProject project = env.GetProject(Project01);
             Assert.That(project.CheckingConfig.ShareEnabled, Is.True);
 
-            await env.MachineProjectService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>());
-            await env.MachineProjectService.DidNotReceive().AddProjectAsync(Arg.Any<string>(), Arg.Any<string>());
+            await env.MachineProjectService
+                .DidNotReceive()
+                .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+            await env.MachineProjectService
+                .DidNotReceive()
+                .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
             await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
         }
 
@@ -2092,7 +2108,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsProject(Project01), Is.False);
             User user = env.GetUser(User01);
             Assert.That(user.Sites[SiteId].Projects, Does.Not.Contain(Project01));
-            await env.MachineProjectService.Received().RemoveProjectAsync(User01, Project01);
+            await env.MachineProjectService.Received().RemoveProjectAsync(User01, Project01, CancellationToken.None);
             env.FileSystemService.Received().DeleteDirectory(ptProjectDir);
             Assert.That(env.ProjectSecrets.Contains(Project01), Is.False);
 
@@ -2102,7 +2118,7 @@ namespace SIL.XForge.Scripture.Services
             await env.Service.DeleteProjectAsync(User01, SourceOnly);
 
             await env.SyncService.Received().CancelSyncAsync(User01, SourceOnly);
-            await env.MachineProjectService.Received().RemoveProjectAsync(User01, SourceOnly);
+            await env.MachineProjectService.Received().RemoveProjectAsync(User01, SourceOnly, CancellationToken.None);
             env.FileSystemService.Received().DeleteDirectory(ptProjectDir);
             Assert.That(env.ContainsProject(SourceOnly), Is.False);
             Assert.That(env.GetUser(User01).Sites[SiteId].Projects, Does.Not.Contain(SourceOnly));
