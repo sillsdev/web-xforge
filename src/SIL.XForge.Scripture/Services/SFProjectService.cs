@@ -136,7 +136,7 @@ namespace SIL.XForge.Scripture.Services
 
                 if (projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled)
                 {
-                    await _machineProjectService.AddProjectAsync(curUserId, projectDoc.Id);
+                    await _machineProjectService.AddProjectAsync(curUserId, projectDoc.Id, CancellationToken.None);
                 }
             }
 
@@ -223,7 +223,7 @@ namespace SIL.XForge.Scripture.Services
             }
 
             // The machine service requires the project secrets
-            await _machineProjectService.RemoveProjectAsync(curUserId, projectId);
+            await _machineProjectService.RemoveProjectAsync(curUserId, projectId, CancellationToken.None);
             await ProjectSecrets.DeleteAsync(projectId);
             await RealtimeService.DeleteProjectAsync(projectId);
             string projectDir = Path.Combine(SiteOptions.Value.SiteDir, "sync", ptProjectId);
@@ -310,16 +310,24 @@ namespace SIL.XForge.Scripture.Services
                             // recreate Machine project only if one existed
                             if (hasExistingMachineProject)
                             {
-                                await _machineProjectService.RemoveProjectAsync(curUserId, projectId);
+                                await _machineProjectService.RemoveProjectAsync(
+                                    curUserId,
+                                    projectId,
+                                    CancellationToken.None
+                                );
                             }
 
-                            await _machineProjectService.AddProjectAsync(curUserId, projectId);
+                            await _machineProjectService.AddProjectAsync(curUserId, projectId, CancellationToken.None);
                             trainEngine = true;
                         }
                         else if (hasExistingMachineProject)
                         {
                             // translation suggestions was disabled or source project set to null
-                            await _machineProjectService.RemoveProjectAsync(curUserId, projectId);
+                            await _machineProjectService.RemoveProjectAsync(
+                                curUserId,
+                                projectId,
+                                CancellationToken.None
+                            );
                         }
                     }
 
