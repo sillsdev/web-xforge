@@ -62,7 +62,7 @@ namespace SIL.XForge.Scripture.Services
         private readonly IRepository<SFProjectSecret> _projectSecrets;
         private readonly IRepository<SyncMetrics> _syncMetricsRepository;
         private readonly ISFProjectService _projectService;
-        private readonly IMachineService _machineService;
+        private readonly IMachineProjectService _machineProjectService;
         private readonly IParatextService _paratextService;
         private readonly IRealtimeService _realtimeService;
         private readonly IDeltaUsxMapper _deltaUsxMapper;
@@ -81,7 +81,7 @@ namespace SIL.XForge.Scripture.Services
             IRepository<SFProjectSecret> projectSecrets,
             IRepository<SyncMetrics> syncMetricsRepository,
             ISFProjectService projectService,
-            IMachineService machineService,
+            IMachineProjectService machineProjectService,
             IParatextService paratextService,
             IRealtimeService realtimeService,
             IDeltaUsxMapper deltaUsxMapper,
@@ -93,7 +93,7 @@ namespace SIL.XForge.Scripture.Services
             _projectSecrets = projectSecrets;
             _syncMetricsRepository = syncMetricsRepository;
             _projectService = projectService;
-            _machineService = machineService;
+            _machineProjectService = machineProjectService;
             _paratextService = paratextService;
             _realtimeService = realtimeService;
             _logger = logger;
@@ -1435,7 +1435,7 @@ namespace SIL.XForge.Scripture.Services
                 if (TranslationSuggestionsEnabled && trainEngine && hasSourceTextDocs)
                 {
                     // Start training Machine engine
-                    await _machineService.BuildProjectAsync(_userSecret.Id, _projectDoc.Id);
+                    await _machineProjectService.BuildProjectAsync(_userSecret.Id, _projectDoc.Id);
                 }
 
                 // Backup the repository
