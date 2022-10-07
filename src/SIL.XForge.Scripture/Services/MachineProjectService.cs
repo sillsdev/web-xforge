@@ -1,3 +1,5 @@
+#nullable enable
+
 using System;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -11,8 +13,6 @@ using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using MachineProject = SIL.Machine.WebApi.Models.Project;
-
-#nullable enable
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -111,6 +111,9 @@ namespace SIL.XForge.Scripture.Services
             // Build the project with the Machine API
             if (!string.IsNullOrWhiteSpace(projectSecret.MachineData?.TranslationEngineId))
             {
+                // TODO: Check for corpora, create if necessary, update if necessary
+                // TODO: Run the below in another thread
+                // Start the build
                 string requestUri = $"translation-engines/{projectSecret.MachineData.TranslationEngineId}/builds";
                 using var response = await _machineClient.PostAsync(requestUri, null);
 
