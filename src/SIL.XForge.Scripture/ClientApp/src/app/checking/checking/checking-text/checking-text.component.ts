@@ -54,7 +54,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
       if (this.isEditorLoaded && !isEqual(this._id, textDocId)) {
         this._editorLoaded = false;
       }
-      if (this._activeVerse != null && this._id != null && this._id !== textDocId) {
+      if (this._activeVerse != null && this._id != null && !isEqual(this._id, textDocId)) {
         this.activeVerse = undefined;
       }
       this._id = textDocId;
