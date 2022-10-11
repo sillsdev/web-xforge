@@ -75,7 +75,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
         (err.code === CommandErrorCode.Forbidden || err.code === CommandErrorCode.NotFound)
       ) {
         await this.projectService.localDelete(projectId);
-        await this.dialogService.message(this.i18n.translate('project.project_link_is_invalid'));
+        await this.dialogService.message('project.project_link_is_invalid');
         this.router.navigateByUrl('/projects', { replaceUrl: true });
         return;
       } else {
@@ -133,7 +133,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
   }
 
   private async showOfflineMessage(): Promise<void> {
-    await this.dialogService.message(this.i18n.translate('project.please_connect_to_use_link'));
+    await this.dialogService.message('project.please_connect_to_use_link');
     const userDoc: UserDoc = await this.userService.getCurrentUser();
     const currentProjectId: string | undefined = this.userService.currentProjectId(userDoc);
     const projectId: string | undefined = selectValidProject(userDoc, currentProjectId);
