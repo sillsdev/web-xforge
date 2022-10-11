@@ -280,14 +280,21 @@ describe('TextComponent', () => {
       env.id = new TextDocId('project01', 40, 1);
       tick();
       env.fixture.detectChanges();
+      const cursors: QuillCursors = env.component.editor!.getModule('cursors');
+      const cursorRemoveSpy = spyOn<any>(cursors, 'removeCursor').and.callThrough();
       const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
       const localPresenceSubmitSpy = spyOn<any>(env.localPresenceDoc, 'submit').and.callThrough();
 
       env.component.editor?.setSelection(1, 1, 'user');
 
+      // ShareDB will trigger a presence "submit" event on the doc, so we need to simulate that event
+      const range: RangeStatic = env.component.getSegmentRange('verse_1_1')!;
+      (env.component as any).onPresenceDocReceive('presenceId', range);
+
       tick();
       expect(onSelectionChangedSpy).toHaveBeenCalledTimes(1);
       expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(0);
+      expect(cursorRemoveSpy).toHaveBeenCalledTimes(1);
       verify(mockedUserService.getCurrentUser()).never();
     }));
 

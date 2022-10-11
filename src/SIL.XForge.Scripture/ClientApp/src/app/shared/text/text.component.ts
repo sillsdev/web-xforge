@@ -413,6 +413,16 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return undefined;
   }
 
+  /**
+   * Is presence enabled and currently available to use
+   */
+  private get isPresenceActive(): boolean {
+    return this.isPresenceEnabled && this.pwaService.isOnline;
+  }
+
+  /**
+   * Is presence enabled for use on the editor
+   */
   private get isPresenceEnabled(): boolean {
     return this.enablePresence;
   }
@@ -769,7 +779,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     this.localPresenceDoc = this.presenceDoc.create(this.presenceId);
 
     this.onPresenceDocReceive = (presenceId: string, range: RangeStatic | null) => {
-      if (range == null) {
+      if (range == null || !this.isPresenceActive) {
         cursors.removeCursor(presenceId);
         return;
       }
@@ -791,10 +801,15 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     this.localPresenceChannel = this.presenceChannel.create(this.presenceId);
 
     this.onPresenceChannelReceive = (presenceId: string, presenceData: PresenceData | null) => {
-      if (presenceData != null) {
-        cursors.toggleFlag(presenceId, presenceData.viewer.activeInEditor);
+      if (!this.isPresenceActive) {
+        cursors.removeCursor(presenceId);
+        this.presenceChange?.emit();
+      } else {
+        if (presenceData != null) {
+          cursors.toggleFlag(presenceId, presenceData.viewer.activeInEditor);
+        }
+        this.presenceChange?.emit(this.presenceChannel?.remotePresences);
       }
-      this.presenceChange?.emit(this.presenceChannel?.remotePresences);
     };
     this.presenceChannel.on('receive', this.onPresenceChannelReceive);
     this.submitLocalPresenceChannel(false);
@@ -960,7 +975,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   private async submitLocalPresenceChannel(active: boolean | null): Promise<void> {
-    if (!this.isPresenceEnabled || this.localPresenceChannel == null || !this.pwaService.isOnline) {
+    if (!this.isPresenceActive || this.localPresenceChannel == null) {
       return;
     }
 
@@ -999,8 +1014,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   private async submitLocalPresenceDoc(range: RangeStatic | null): Promise<void> {
-    if (!this.isPresenceEnabled || this.localPresenceDoc == null || this._isReadOnly || !this.pwaService.isOnline)
-      return;
+    if (!this.isPresenceActive || this.localPresenceDoc == null || this._isReadOnly) return;
 
     this.localPresenceDoc.submit(range, error => {
       if (error) throw error;
