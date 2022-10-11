@@ -199,7 +199,13 @@ export class I18nService {
   }
 
   localizeReference(verse: VerseRef) {
-    return `${this.localizeBook(verse.bookNum)} ${verse.chapterNum}:${verse.verse}`;
+    // Add RTL mark before colon and hyphen characters, if in a RTL script.
+    // See https://software.sil.org/arabicfonts/support/faq/ for description of this solution, under the section
+    // "How do I get correct display for “Chapter:Verse” references using a regular “Roman” colon?"
+    const directionMark = this.locale.direction === 'ltr' ? '' : '\u200F';
+    // TODO Some ranges use a comma (and possibly other characters?) as a separator
+    const range = verse.verse.split('-').join(directionMark + '-');
+    return `${this.localizeBook(verse.bookNum)} ${verse.chapterNum}${directionMark}:${range}`;
   }
 
   localizeRole(role: string) {
