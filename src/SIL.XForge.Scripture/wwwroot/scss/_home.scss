@@ -212,7 +212,11 @@
 }
 
 body[dir='ltr'] .quote-text i {
-  transform: rotate(180deg);
+  transform: rotateY(180deg);
+}
+
+body[dir='rtl'] .shuffle-icon {
+  transform: rotateY(180deg);
 }
 
 .statement {
