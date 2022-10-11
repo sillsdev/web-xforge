@@ -540,16 +540,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   getViewerPosition(presenceId: string): RangeStatic | undefined {
-    if (this.presenceDoc == null) {
-      return;
-    }
-    const ranges: RangeStatic[] = Object.entries(this.presenceDoc.remotePresences)
-      .filter(remotePresence => remotePresence[0] === presenceId)
-      .map(remotePresence => remotePresence[1]);
-    if (ranges.length === 0) {
-      return;
-    }
-    return ranges[0];
+    return Object.entries(this.presenceDoc?.remotePresences ?? {}).find(([id, _data]) => id === presenceId)?.[1];
   }
 
   toggleFeaturedVerseRefs(
@@ -756,19 +747,15 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   scrollToViewer(viewer: MultiCursorViewer): void {
-    if (this.editor == null) {
+    if (this.editor == null || this.presenceChannel?.remotePresences == null) {
       return;
     }
-    if (this.presenceChannel?.remotePresences == null) {
+    const presenceId: string | undefined = Object.entries(this.presenceChannel?.remotePresences ?? {}).find(
+      ([_id, data]) => data.viewer === viewer
+    )?.[0];
+    if (presenceId == null) {
       return;
     }
-    const presenceIds = Object.entries(this.presenceChannel.remotePresences)
-      .filter(remotePresence => remotePresence[1].viewer === viewer)
-      .map(remotePresence => remotePresence[0]);
-    if (presenceIds.length === 0) {
-      return;
-    }
-    const presenceId = presenceIds[0];
     const range: RangeStatic | undefined = this.getViewerPosition(presenceId);
     if (range == null) {
       this.editor.root.scrollTop = 0;
