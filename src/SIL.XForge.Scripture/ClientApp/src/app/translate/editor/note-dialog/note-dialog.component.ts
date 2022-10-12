@@ -95,7 +95,7 @@ export class NoteDialogComponent implements OnInit {
 
   get flagIcon(): string {
     if (this.threadDoc?.data == null) {
-      return defaultNoteThreadIcon().url;
+      return defaultNoteThreadIcon(this.projectProfileDoc?.data?.noteIcon).url;
     }
     return this.isAssignedToOtherUser ? this.threadDoc.iconGrayed.url : this.threadDoc.icon.url;
   }
@@ -385,7 +385,7 @@ export class NoteDialogComponent implements OnInit {
         originalContextBefore: '',
         originalSelectedText: this.segmentText,
         originalContextAfter: '',
-        tagIcon: '01flag1',
+        tagIcon: this.projectProfileDoc!.data!.noteIcon ?? '01flag1',
         status: NoteStatus.Todo
       };
       await this.projectService.createNoteThread(this.projectId, noteThread);

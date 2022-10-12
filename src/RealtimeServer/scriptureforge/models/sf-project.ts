@@ -25,6 +25,7 @@ export interface SFProjectProfile extends Project {
   editable: boolean;
   defaultFontSize?: number;
   defaultFont?: string;
+  noteIcon?: string;
 }
 
 export interface SFProject extends SFProjectProfile {

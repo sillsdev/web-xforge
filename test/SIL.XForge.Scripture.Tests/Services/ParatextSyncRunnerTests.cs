@@ -670,7 +670,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task SyncAsync_SetsProjectFontAndFontSize()
+        public async Task SyncAsync_SetsProjectSettings()
         {
             var env = new TestEnvironment();
             Book[] books = { new Book("MAT", 1) };
@@ -692,15 +692,24 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.DefaultFont, Is.EqualTo(font));
             int newFontSize = 16;
             string newFont = "Doulos SIL";
+            string toDoIcon = "todoIcon1";
             env.ParatextService
                 .GetParatextSettings(Arg.Any<UserSecret>(), "target")
-                .Returns(new ParatextSettings { DefaultFontSize = newFontSize, DefaultFont = newFont });
+                .Returns(
+                    new ParatextSettings
+                    {
+                        DefaultFontSize = newFontSize,
+                        DefaultFont = newFont,
+                        ToDoCommentIcon = toDoIcon
+                    }
+                );
 
             // SUT
             await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
             project = env.VerifyProjectSync(true);
             Assert.That(project.DefaultFontSize, Is.EqualTo(newFontSize));
             Assert.That(project.DefaultFont, Is.EqualTo(newFont));
+            Assert.That(project.NoteIcon, Is.EqualTo(toDoIcon));
         }
 
         [Test]
