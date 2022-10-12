@@ -423,20 +423,17 @@ describe('AppComponent', () => {
     env.wait();
     expect(env.userMenu).not.toBeNull();
     env.clickEditDisplayName();
-    verify(mockedNoticeService.show(anything())).never();
     verify(mockedUserService.editDisplayName(false)).once();
   }));
 
-  it('shows message if user attempts to edit their name offline', fakeAsync(() => {
+  it('hides edit name button when user is offline', fakeAsync(() => {
     const env = new TestEnvironment('offline');
     env.init();
 
     env.avatarIcon.nativeElement.click();
     env.wait();
     expect(env.userMenu).not.toBeNull();
-    env.clickEditDisplayName();
-    verify(mockedNoticeService.show(anything())).once();
-    verify(mockedUserService.editDisplayName(anything())).never();
+    expect(env.editNameIcon).toBeNull();
   }));
 
   describe('Community Checking', () => {
@@ -630,17 +627,17 @@ class TestEnvironment {
       this.comesOnline$.subscribe(() => resolve());
     });
 
+    when(mockedPwaService.isOnline).thenReturn(this.browserOnline$.getValue() && this.webSocketOnline$.getValue());
+    when(mockedPwaService.isBrowserOnline).thenReturn(this.browserOnline$.getValue());
+    when(mockedPwaService.online).thenReturn(comesOnline);
+    when(mockedPwaService.onlineStatus).thenReturn(this.webSocketOnline$);
+    when(mockedPwaService.onlineBrowserStatus).thenReturn(this.browserOnline$);
     if (initialConnectionStatus === 'offline') {
       this.goFullyOffline();
     } else {
       this.comesOnline$.next();
       this.goFullyOnline();
     }
-    when(mockedPwaService.isOnline).thenReturn(this.browserOnline$.getValue() && this.webSocketOnline$.getValue());
-    when(mockedPwaService.isBrowserOnline).thenReturn(this.browserOnline$.getValue());
-    when(mockedPwaService.online).thenReturn(comesOnline);
-    when(mockedPwaService.onlineStatus).thenReturn(this.webSocketOnline$);
-    when(mockedPwaService.onlineBrowserStatus).thenReturn(this.browserOnline$);
     when(mockedFileService.notifyUserIfStorageQuotaBelow(anything())).thenResolve();
     when(mockedPwaService.hasUpdate).thenReturn(this.hasUpdate$);
     when(mockedMdcDialog.open(ProjectDeletedDialogComponent, anything())).thenReturn(
