@@ -102,6 +102,7 @@
       }
       .feature {
         display: flex;
+        column-gap: 35px;
         align-items: flex-start;
         margin-bottom: 100px;
 
@@ -112,7 +113,6 @@
         &.right {
           .text {
             order: 2;
-            padding: 0 0 0 35px;
           }
           img,
           iframe {
@@ -125,7 +125,6 @@
       }
 
       .text {
-        padding: 0 35px 0 0;
         flex: 1;
         @media (max-width: 767px) {
           padding: 0 0 5px !important;
