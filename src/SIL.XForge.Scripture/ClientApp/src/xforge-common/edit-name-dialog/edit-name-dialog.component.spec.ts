@@ -23,9 +23,7 @@ describe('EditNameDialogComponent', () => {
     expect(env.component.confirmedName).toBeUndefined();
     expect(env.nameInput.value).toBe('Simon Says');
     expect(env.cancelButton).not.toBe(null);
-    env.submitButton.click();
-    tick();
-    env.fixture.detectChanges();
+    env.clickSubmit();
     expect(env.component.confirmedName).toBe('Simon Says');
   }));
 
@@ -34,9 +32,7 @@ describe('EditNameDialogComponent', () => {
     env.openDialog();
     expect(env.component.confirmedName).toBeUndefined();
     env.setTextFieldValue(env.nameInput, 'Follow The Leader');
-    env.submitButton.click();
-    tick();
-    env.fixture.detectChanges();
+    env.clickSubmit();
     expect(env.component.confirmedName).toBe('Follow The Leader');
   }));
 
@@ -80,9 +76,7 @@ describe('EditNameDialogComponent', () => {
     env.openDialog();
     expect(env.title.textContent).toBe('Confirm your name');
     expect(env.description.textContent).toContain('Confirm the name that other people on this project will see');
-    env.submitButton.click();
-    tick();
-    env.fixture.detectChanges();
+    env.clickSubmit();
     expect(env.component.confirmedName).toBe('Simon Says');
   }));
 
@@ -91,9 +85,7 @@ describe('EditNameDialogComponent', () => {
     env.component.isConfirmContext = true;
     env.openDialog();
     expect(env.cancelButton).toBe(null);
-    env.submitButton.click();
-    env.fixture.detectChanges();
-    tick();
+    env.clickSubmit();
     expect(env.component.confirmedName).toBe('Simon Says');
   }));
 });
@@ -143,10 +135,15 @@ class TestEnvironment {
     tick(166);
   }
 
-  setTextFieldValue(element: HTMLElement, value: string) {
-    const inputElem = element as HTMLInputElement;
-    inputElem.value = value;
-    inputElem.dispatchEvent(new Event('input'));
+  clickSubmit(): void {
+    this.submitButton.click();
+    tick();
+    this.fixture.detectChanges();
+  }
+
+  setTextFieldValue(element: HTMLInputElement, value: string) {
+    element.value = value;
+    element.dispatchEvent(new Event('input'));
     this.fixture.detectChanges();
   }
 
