@@ -2483,6 +2483,22 @@ describe('EditorComponent', () => {
       expect(existingThread.data!.notes.length).toEqual(2);
       env.dispose();
     }));
+
+    it('should remove resolved notes after a remote update', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      let contents = env.targetEditor.getContents();
+      let noteThreadEmbedCount = env.countNoteThreadEmbeds(contents.ops!);
+      expect(noteThreadEmbedCount).toEqual(5);
+
+      env.resolveNote('project01', 'thread01');
+      contents = env.targetEditor.getContents();
+      noteThreadEmbedCount = env.countNoteThreadEmbeds(contents.ops!);
+      expect(noteThreadEmbedCount).toEqual(4);
+      env.dispose();
+    }));
   });
 
   describe('Translation Suggestions disabled', () => {
@@ -3481,6 +3497,13 @@ class TestEnvironment {
       deleted: false,
       type: NoteType.Normal
     };
+  }
+
+  resolveNote(projectId: string, threadId: string) {
+    const nodeDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadId);
+    nodeDoc.submitJson0Op(op => op.set(n => n.status, NoteStatus.Resolved));
+    this.realtimeService.updateAllSubscribeQueries();
+    this.wait();
   }
 
   private addCombinedVerseTextDoc(id: TextDocId): void {
