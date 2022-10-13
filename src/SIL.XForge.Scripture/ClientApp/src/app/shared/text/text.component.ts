@@ -147,9 +147,19 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
           shiftKey: null,
           handler: (range: RangeStatic) => this.isBackspaceAllowed(range)
         },
+        'disable backspace word': {
+          key: 'backspace',
+          ctrlKey: true,
+          handler: (range: RangeStatic) => this.handleBackspaceWord(range)
+        },
         'disable delete': {
           key: 'delete',
           handler: (range: RangeStatic) => this.isDeleteAllowed(range)
+        },
+        'disable delete word': {
+          key: 'delete',
+          ctrlKey: true,
+          handler: (range: RangeStatic) => this.handleDeleteWord(range)
         },
         'disable enter': {
           key: 'enter',
@@ -933,6 +943,25 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return isTextDeletion && this._segment != null && range.index !== this._segment.range.index;
   }
 
+  private handleBackspaceWord(range: RangeStatic): boolean {
+    if (range.length > 0 || this._editor == null) return false;
+
+    const wordRange: RangeStatic | undefined = this.getRangeForWordBeforeIndex(range.index);
+    if (wordRange != null) {
+      this._editor.deleteText(wordRange.index, wordRange.length, 'user');
+    }
+    return false;
+  }
+
+  private handleDeleteWord(range: RangeStatic): boolean {
+    if (range.length > 0 || this._editor == null) return false;
+    const wordRange: RangeStatic | undefined = this.getRangeForWordAfterIndex(range.index);
+    if (wordRange != null) {
+      this._editor.deleteText(wordRange.index, wordRange.length, 'user');
+    }
+    return false;
+  }
+
   private isDeleteAllowed(range: RangeStatic): boolean {
     if (this._editor == null) {
       return false;
@@ -952,6 +981,57 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return (
       isTextDeletion && this._segment != null && range.index !== this._segment.range.index + this._segment.range.length
     );
+  }
+
+  private getRangeForWordBeforeIndex(selectionIndex: number): RangeStatic | undefined {
+    if (this.segment == null || this._editor == null) return undefined;
+    const segmentRange: RangeStatic | undefined = this.getSegmentRange(this.segment.ref);
+    if (segmentRange == null) return undefined;
+
+    const lengthFromSegmentStartToSelection: number = selectionIndex - segmentRange.index;
+    const contents: DeltaStatic = this._editor.getContents(segmentRange.index, lengthFromSegmentStartToSelection);
+    if (contents.ops == null) return undefined;
+
+    const lastOp: any = contents.ops[contents.ops.length - 1].insert;
+    if (lastOp == null || typeof lastOp !== 'string') return undefined;
+
+    // only process the word range if the op is a string insert
+    let wordLength: number = lastOp.length;
+    let startOfWordIndex: number = selectionIndex - wordLength;
+    const lastSpaceIndex = lastOp.trimEnd().lastIndexOf(' ');
+    if (lastSpaceIndex >= 0) {
+      // the segment text has a space, so find the length to the beginning of the word
+      wordLength = lastOp.trimEnd().length - 1 - lastSpaceIndex;
+      const trailingSpaces = lastOp.length - lastOp.trimEnd().length;
+      // include the trailing spaces to the length of the word
+      wordLength += trailingSpaces;
+      startOfWordIndex = selectionIndex - wordLength;
+    }
+    return { index: startOfWordIndex, length: wordLength };
+  }
+
+  private getRangeForWordAfterIndex(selectionIndex: number): RangeStatic | undefined {
+    if (this.segment == null || this._editor == null) return undefined;
+    const segmentRange: RangeStatic | undefined = this.getSegmentRange(this.segment.ref);
+    if (segmentRange == null) return undefined;
+
+    const lengthToSegmentEnd: number = segmentRange.index + segmentRange.length - selectionIndex;
+    const contents: DeltaStatic = this._editor.getContents(selectionIndex, lengthToSegmentEnd);
+    if (contents.ops == null || contents.ops.length < 1) return undefined;
+
+    const firstOp = contents.ops[0].insert;
+    if (firstOp == null || typeof firstOp !== 'string') return undefined;
+
+    // only process the word range if the op is a string insert
+    let wordLength: number = firstOp.length;
+    const firstSpaceIndex = firstOp.trimStart().indexOf(' ');
+    if (firstSpaceIndex >= 0) {
+      wordLength = firstSpaceIndex;
+      const leadingSpacesCount: number = firstOp.length - firstOp.trimStart().length;
+      // include the leading spaces to the length of the word
+      wordLength += leadingSpacesCount;
+    }
+    return { index: selectionIndex, length: wordLength };
   }
 
   private moveNextSegment(end: boolean = true): void {

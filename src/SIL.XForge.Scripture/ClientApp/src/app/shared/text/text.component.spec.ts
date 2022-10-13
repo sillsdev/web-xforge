@@ -2594,6 +2594,14 @@ describe('TextComponent', () => {
     expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
   }));
 
+  it('can backspace a word at a time', fakeAsync(() => {
+    const { env, segmentRange }: { env: TestEnvironment; segmentRange: RangeStatic } = basicSimpleText();
+    let initialText = 'quick brown fox';
+    let resultTexts = ['quick brown ', 'quick ', '', ''];
+    env.performDeleteWordTest('backspace', segmentRange.index, initialText, resultTexts);
+    TestEnvironment.waitForPresenceTimer();
+  }));
+
   it('allows delete when valid selection', fakeAsync(() => {
     const { env, segmentRange }: { env: TestEnvironment; segmentRange: RangeStatic } = basicSimpleText();
 
@@ -2622,6 +2630,14 @@ describe('TextComponent', () => {
 
     expect(allowed).withContext('should have been disallowed when invalid selection').toBeFalse();
     expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
+  }));
+
+  it('can delete a word at a time', fakeAsync(() => {
+    const { env, segmentRange }: { env: TestEnvironment; segmentRange: RangeStatic } = basicSimpleText();
+    let initialText = 'quick brown fox';
+    const resultTexts = [' brown fox', ' fox', '', ''];
+    env.performDeleteWordTest('delete', segmentRange.index, initialText, resultTexts);
+    TestEnvironment.waitForPresenceTimer();
   }));
 
   it('does not cancel paste when valid selection', fakeAsync(() => {
@@ -3209,6 +3225,42 @@ class TestEnvironment {
     this.assertNodeOrder(segmentElementDropTarget, expectedTopLevelNodeSeriesAfterEvent);
   }
 
+  performDeleteWordTest(
+    type: 'backspace' | 'delete',
+    segmentStartIndex: number,
+    initialText: string,
+    resultTexts: string[]
+  ): void {
+    for (let i = 0; i < resultTexts.length; i++) {
+      let content = this.component.editor!.getContents();
+      expect(content.ops!.length).toEqual(4);
+      expect(content.ops![1].insert!.verse.number).toEqual('1');
+      expect(this.component.getSegmentText('verse_2_1')).toEqual(initialText);
+
+      const blankSegmentLength = 1;
+      let selectionIndex: number = segmentStartIndex;
+      if (type === 'backspace') {
+        selectionIndex += initialText.length === 0 ? blankSegmentLength : initialText.length;
+        // put the selection at the end of the segment
+        const selection: RangeStatic = { index: selectionIndex, length: 0 };
+        this.quillWordDeletion(type, selection);
+      } else {
+        // put the selection at the beginning of the segment
+        selectionIndex += initialText.length === 0 ? blankSegmentLength : 0;
+        const selection: RangeStatic = { index: selectionIndex, length: 0 };
+        this.quillWordDeletion(type, selection);
+      }
+      tick();
+      this.fixture.detectChanges();
+
+      content = this.component.editor!.getContents();
+      expect(content.ops!.length).toEqual(4);
+      expect(content.ops![1].insert!.verse.number).toEqual('1');
+      expect(this.component.getSegmentText('verse_2_1')).toEqual(resultTexts[i]);
+      initialText = resultTexts[i];
+    }
+  }
+
   /** Write a presence into the sharedb remote presence list, and notify that a new remote presence has
    * appeared on the textdoc. */
   addRemotePresence(remotePresenceId: string) {
@@ -3231,6 +3283,23 @@ class TestEnvironment {
     const backspaceKeyCode = 8;
     const matchingBindings = (this.component.editor!.keyboard as any).bindings[backspaceKeyCode].filter(
       (bindingItem: any) => bindingItem.handler.toString().includes('isBackspaceAllowed')
+    );
+    expect(matchingBindings.length)
+      .withContext('setup: should be grabbing a single, specific binding in quill with the desired handler')
+      .toEqual(1);
+    return matchingBindings[0].handler(range);
+  }
+
+  /** Crudely find backspace or delete word handler. */
+  quillWordDeletion(type: 'backspace' | 'delete', range: RangeStatic): void {
+    let keyCode = 8;
+    let handler = 'handleBackspaceWord';
+    if (type === 'delete') {
+      keyCode = 46;
+      handler = 'handleDeleteWord';
+    }
+    const matchingBindings = (this.component.editor!.keyboard as any).bindings[keyCode].filter((bindingItem: any) =>
+      bindingItem.handler.toString().includes(handler)
     );
     expect(matchingBindings.length)
       .withContext('setup: should be grabbing a single, specific binding in quill with the desired handler')
