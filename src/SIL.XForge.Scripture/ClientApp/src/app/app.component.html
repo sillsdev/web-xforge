@@ -153,14 +153,19 @@
   >
     <mdc-drawer-header>
       <div [class.mdc-top-app-bar-adjust]="isDrawerPermanent"></div>
-      <mdc-select *ngIf="projectDocs != null" class="project-select" (valueChange)="projectChanged($event.value)">
+      <mdc-select
+        *ngIf="projectDocs != null"
+        dir="auto"
+        class="project-select"
+        (valueChange)="projectChanged($event.value)"
+      >
         <mdc-menu>
           <mdc-list>
             <mdc-list-item *ngFor="let projectDoc of projectDocs" [value]="projectDoc.id">{{
               projectLabel(projectDoc.data)
             }}</mdc-list-item>
             <mdc-list-divider></mdc-list-divider>
-            <mdc-list-item value="*connect-project*" [class.list-item-disabled]="!isAppOnline">
+            <mdc-list-item [dir]="i18n.direction" value="*connect-project*" [class.list-item-disabled]="!isAppOnline">
               <mdc-icon mdcListItemGraphic>add</mdc-icon>
               {{ t("connect_project") }}
             </mdc-list-item>
