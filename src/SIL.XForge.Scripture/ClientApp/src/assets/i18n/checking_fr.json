@@ -263,8 +263,8 @@
     "subject": "problème {{ siteName }}",
     "unknown": "inconnu"
   },
-  "message_dialog": {
-    "dismiss": "Ignorer"
+  "dialog": {
+    "close": "Fermer"
   },
   "project": {
     "please_connect_to_use_link": "Veuillez vous connecter à Internet pour rejoindre un projet en utilisant un lien.",

@@ -263,8 +263,8 @@
     "subject": "{{ siteName }} problemă",
     "unknown": "necunoscut"
   },
-  "message_dialog": {
-    "dismiss": "Renunţă"
+  "dialog": {
+    "close": "Închide"
   },
   "project": {
     "please_connect_to_use_link": "Vă rugăm să vă conectați la internet pentru a vă alătura unui proiect folosind un link.",

@@ -263,8 +263,8 @@
     "subject": "{{ siteName }} masalah",
     "unknown": "tidak diketahui"
   },
-  "message_dialog": {
-    "dismiss": "Hentikan"
+  "dialog": {
+    "close": "Tutup"
   },
   "project": {
     "please_connect_to_use_link": "Please connect to the internet to join a project using a link.",

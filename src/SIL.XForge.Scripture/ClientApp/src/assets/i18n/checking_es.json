@@ -263,8 +263,8 @@
     "subject": "caso {{ siteName }}",
     "unknown": "desconocido"
   },
-  "message_dialog": {
-    "dismiss": "Descartar"
+  "dialog": {
+    "close": "Cerrar"
   },
   "project": {
     "please_connect_to_use_link": "Conéctese a Internet para unirse a un proyecto mediante un enlace.",
