@@ -58,6 +58,7 @@ namespace SIL.XForge.Scripture.Models
             string contextBefore,
             string contextAfter,
             string status,
+            string assignment,
             string tagIcon = null
         )
         {
@@ -66,6 +67,7 @@ namespace SIL.XForge.Scripture.Models
             SelectedText = selectedText;
             ContextBefore = contextBefore;
             ContextAfter = contextAfter;
+            Assignment = assignment;
             TagIcon = tagIcon;
             Status = status;
         }

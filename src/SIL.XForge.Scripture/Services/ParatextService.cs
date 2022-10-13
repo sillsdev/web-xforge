@@ -1170,6 +1170,7 @@ namespace SIL.XForge.Scripture.Services
                     threadDoc.Data.OriginalContextBefore,
                     threadDoc.Data.OriginalContextAfter,
                     threadDoc.Data.Status,
+                    threadDoc.Data.Assignment,
                     threadDoc.Data.TagIcon
                 );
                 // Find the corresponding comment thread
@@ -1265,6 +1266,7 @@ namespace SIL.XForge.Scripture.Services
                     info.ContextBefore,
                     info.ContextAfter,
                     info.Status.InternalValue,
+                    info.AssignedUser,
                     initialTag.Icon
                 );
                 newThread.Position = GetThreadTextAnchor(thread, chapterDeltas);

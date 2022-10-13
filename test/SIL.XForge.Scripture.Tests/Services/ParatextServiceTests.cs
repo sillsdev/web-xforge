@@ -1643,7 +1643,7 @@ namespace SIL.XForge.Scripture.Services
                 // Note tagsAdded updated but assigned user unchanged
                 NoteThreadChange change5 = changes.Single(c => c.ThreadId == "thread5");
                 Assert.That(change5.TagIcon, Is.EqualTo("icon2"));
-                Assert.That(change5.Assignment, Is.Null);
+                Assert.That(change5.Assignment, Is.EqualTo(""));
                 Assert.That(change5.NotesUpdated.Count, Is.EqualTo(1));
                 Assert.That(change5.NotesUpdated[0].Assignment, Is.EqualTo(unassignedUserString));
 
