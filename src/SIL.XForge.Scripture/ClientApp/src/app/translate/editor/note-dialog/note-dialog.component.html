@@ -1,9 +1,7 @@
 <ng-container *transloco="let t; read: 'note_dialog'">
   <h1 mat-dialog-title>
     <img [src]="flagIcon" class="note-thread-icon" alt="" /> <span class="verse-reference">{{ verseRefDisplay }}</span>
-    <div *ngIf="noteThreadAssignedUserRef != null" id="assignedUser" class="assigned-user">
-      >{{ getAssignedUserString(noteThreadAssignedUserRef) }}
-    </div>
+    <div id="assignedUser" class="assigned-user">>{{ getAssignedUserString(noteThreadAssignedUserRef) }}</div>
   </h1>
   <mat-dialog-content class="content-padding" [ngClass]="{ rtl: isRtl, ltr: !isRtl }">
     <div class="text-row">

@@ -2833,6 +2833,7 @@ namespace SIL.XForge.Scripture.Services
                         "Context before ",
                         " context after",
                         NoteStatus.Todo.InternalValue,
+                        "",
                         "tag02"
                     );
                     noteThreadChange.ThreadUpdated = true;
@@ -2902,6 +2903,7 @@ namespace SIL.XForge.Scripture.Services
                     "Context before ",
                     " context after",
                     status,
+                    "",
                     "icon1"
                 );
                 noteThreadChange.ThreadUpdated = true;
@@ -2917,6 +2919,7 @@ namespace SIL.XForge.Scripture.Services
                     "Context before ",
                     " context after",
                     NoteStatus.Todo.InternalValue,
+                    "",
                     "icon1"
                 );
                 noteThreadChange.Position = new TextAnchor { Start = 0, Length = 0 };
@@ -2937,6 +2940,7 @@ namespace SIL.XForge.Scripture.Services
                     null,
                     null,
                     NoteStatus.Todo.InternalValue,
+                    "",
                     "conflict1"
                 );
                 noteThreadChange.Position = new TextAnchor { Start = 0, Length = 0 };
@@ -2956,6 +2960,7 @@ namespace SIL.XForge.Scripture.Services
                     "Context before ",
                     " context after",
                     NoteStatus.Resolved.InternalValue,
+                    "",
                     "icon1"
                 );
                 if (noteId == null)
@@ -2973,6 +2978,8 @@ namespace SIL.XForge.Scripture.Services
                     $"{threadId} selected text.",
                     "Context before ",
                     " context after",
+                    "",
+                    "",
                     null
                 );
                 string before = "Reattach before ";
@@ -3014,7 +3021,7 @@ namespace SIL.XForge.Scripture.Services
                 string status = NoteStatus.Todo.InternalValue;
                 string verseRef = "MAT 1:1";
                 // Create a NoteThreadChange, and allow client to adjust it.
-                var noteThreadChange = new NoteThreadChange(threadId, verseRef, null, null, null, status, "icon1");
+                var noteThreadChange = new NoteThreadChange(threadId, verseRef, null, null, null, status, "", "icon1");
                 if (modifyNoteThreadChange != null)
                 {
                     modifyNoteThreadChange(noteThreadChange);
