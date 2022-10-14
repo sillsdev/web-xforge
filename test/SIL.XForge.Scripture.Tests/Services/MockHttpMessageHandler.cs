@@ -24,12 +24,18 @@ namespace SIL.XForge.Scripture.Services
             CancellationToken cancellationToken
         )
         {
+            // TODO: Allow different responses and statuses per request type
             NumberOfCalls++;
             if (request.Content is not null)
             {
                 LastInput = await request.Content.ReadAsStringAsync(cancellationToken);
             }
-            return new HttpResponseMessage { StatusCode = _statusCode, Content = new StringContent(_response), };
+            return new HttpResponseMessage
+            {
+                StatusCode = _statusCode,
+                Content = new StringContent(_response),
+                RequestMessage = request,
+            };
         }
     }
 }
