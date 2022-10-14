@@ -132,17 +132,25 @@
           margin: 20px 0;
         }
       }
-
-      p {
-        &::first-letter {
-          font-size: 3em;
-          float: left;
-          line-height: 1;
-          padding-right: 5px;
-        }
-      }
     }
   }
+}
+
+#about .about-feature p::first-letter {
+  font-size: 3em;
+  line-height: 1;
+}
+
+// Ordinarily the float could be set with inline-start, and padding with padding-inline-end, but those do not appear to
+// work in the context of the ::first-letter pseudo element
+body[dir='ltr'] #about .about-feature p::first-letter {
+  float: left;
+  padding-right: 5px;
+}
+
+body[dir='rtl'] #about .about-feature p::first-letter {
+  float: right;
+  padding-left: 5px;
 }
 
 .quote {
