@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -7,7 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using NSubstitute;
 using NUnit.Framework;
-using SIL.Machine.WebApi.Services;
+using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services
@@ -138,6 +140,61 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task GetCorpusFilesAsync_Success()
+        {
+            // Set up a mock Machine API
+            string fileId = "634089bd1706669dc1acf6a4";
+            string corpusId = "633fdb281a2e7ac760f7193a";
+            string languageTag = "en";
+            string textId = "test1";
+            string response =
+                @$"[
+                    {{
+                        ""languageTag"": ""{languageTag}"",
+                        ""name"": ""test.txt"",
+                        ""textId"": ""{textId}"",
+                        ""id"": ""{fileId}"",
+                        ""href"": ""/corpora/{corpusId}/files/{fileId}""
+                    }}
+                ]";
+            var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
+            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+
+            // Set up test environment
+            var env = new TestEnvironment(httpClient);
+
+            // SUT
+            List<MachineApiCorpusFile> actual = (
+                await env.Service.GetCorpusFilesAsync(corpusId, CancellationToken.None)
+            ).ToList();
+            Assert.AreEqual(1, actual.Count);
+            Assert.AreEqual(fileId, actual.First().Id);
+            Assert.AreEqual(languageTag, actual.First().LanguageTag);
+            Assert.AreEqual(textId, actual.First().TextId);
+            Assert.AreEqual(1, handler.NumberOfCalls);
+        }
+
+        [Test]
+        public async Task GetCorpusFilesAsync_NoFiles()
+        {
+            // Set up a mock Machine API
+            string corpusId = "633fdb281a2e7ac760f7193a";
+            string response = "[]";
+            var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
+            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+
+            // Set up test environment
+            var env = new TestEnvironment(httpClient);
+
+            // SUT
+            IEnumerable<MachineApiCorpusFile> actual = await env.Service.GetCorpusFilesAsync(
+                corpusId,
+                CancellationToken.None
+            );
+            Assert.AreEqual(0, actual.Count());
+        }
+
+        [Test]
         public async Task UploadCorpusTextAsync_Success()
         {
             // Set up a mock Machine API
@@ -243,9 +300,8 @@ namespace SIL.XForge.Scripture.Services
                 var httpClientFactory = Substitute.For<IHttpClientFactory>();
                 httpClientFactory.CreateClient(Arg.Any<string>()).Returns(httpClient);
                 var logger = new MockLogger<MachineProjectService>();
-                var textCorpusFactory = Substitute.For<ITextCorpusFactory>();
 
-                Service = new MachineCorporaService(FileSystemService, httpClientFactory, logger, textCorpusFactory);
+                Service = new MachineCorporaService(FileSystemService, httpClientFactory, logger);
             }
 
             public IFileSystemService FileSystemService { get; }

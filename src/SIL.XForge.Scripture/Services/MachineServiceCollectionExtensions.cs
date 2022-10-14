@@ -73,6 +73,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     return handler;
                 });
             services.AddSingleton<IMachineProjectService, MachineProjectService>();
+            services.AddSingleton<IMachineCorporaService, MachineCorporaService>();
             return services;
         }
     }
