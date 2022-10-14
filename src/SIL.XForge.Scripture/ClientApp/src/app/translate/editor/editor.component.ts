@@ -31,6 +31,10 @@ import { DeltaOperation } from 'rich-text';
 import { BehaviorSubject, fromEvent, merge, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, delayWhen, filter, repeat, retryWhen, tap } from 'rxjs/operators';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
+import {
+  subscribe as keyboardDetectorSubscribe,
+  isSupported as isKeyboardDetectorSupported
+} from 'on-screen-keyboard-detector';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -122,6 +126,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private readonly translationSuggester: TranslationSuggester = new PhraseTranslationSuggester();
   private readonly ecm = new ErrorCorrectionModel();
   private insertSuggestionEnd: number = -1;
+  private keyboardVisibility: BehaviorSubject<'hidden' | 'visible'> = new BehaviorSubject<'hidden' | 'visible'>(
+    'hidden'
+  );
   private currentUserDoc?: UserDoc;
   private projectDoc?: SFProjectProfileDoc;
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
@@ -168,6 +175,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     this.segmentUpdated$ = new Subject<void>();
     this.subscribe(this.segmentUpdated$.pipe(debounceTime(UPDATE_SUGGESTIONS_TIMEOUT)), () => this.updateSuggestions());
+    if (isKeyboardDetectorSupported()) {
+      keyboardDetectorSubscribe(visibility => this.keyboardVisibility.next(visibility));
+    }
   }
 
   get sourceLabel(): string {
@@ -394,6 +404,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   private get isAddNotesEnabled(): boolean {
     return this.featureFlags.allowAddingNotes.enabled;
+  }
+
+  private get isKeyboardVisible(): boolean {
+    return isKeyboardDetectorSupported() && this.keyboardVisibility.getValue() === 'visible';
   }
 
   ngAfterViewInit(): void {
@@ -993,7 +1007,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       setTimeout(() => {
         // reset focus, which causes Quill to scroll to the selection
         this.target!.blur();
-        this.target!.focus();
+        if (!this.isKeyboardVisible) {
+          this.target!.focus();
+        }
       });
     }
   }

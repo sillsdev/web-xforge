@@ -54,6 +54,7 @@
     "ngx-avatar": "^4.1.0",
     "ngx-cookie-service": "^13.2.1",
     "ngx-quill": "14.1.1",
+    "on-screen-keyboard-detector": "^2.3.0",
     "ot-json0": "^1.1.0",
     "papaparse": "^5.3.2",
     "process": "^0.11.10",
