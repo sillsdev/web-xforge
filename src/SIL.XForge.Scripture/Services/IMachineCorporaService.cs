@@ -1,5 +1,7 @@
 #nullable enable
 
+using SIL.XForge.Scripture.Models;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,6 +18,7 @@ namespace SIL.XForge.Scripture.Services
         );
         Task DeleteCorpusAsync(string corpusId, CancellationToken cancellationToken);
         Task DeleteCorpusFileAsync(string corpusId, string fileId, CancellationToken cancellationToken);
+        Task<IList<MachineApiCorpusFile>> GetCorpusFilesAsync(string corpusId, CancellationToken cancellationToken);
         Task<string> UploadCorpusTextAsync(
             string corpusId,
             string languageTag,
@@ -27,12 +30,6 @@ namespace SIL.XForge.Scripture.Services
             string corpusId,
             string languageTag,
             string path,
-            CancellationToken cancellationToken
-        );
-        Task UploadSFCorpusAsync(
-            string corpusId,
-            string languageTag,
-            string projectId,
             CancellationToken cancellationToken
         );
     }
