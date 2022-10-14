@@ -7,17 +7,32 @@ namespace SIL.XForge.Scripture.Services
 {
     public interface IMachineCorporaService
     {
-        Task<string> AddCorpusAsync(string name, CancellationToken cancellationToken);
+        Task<string> AddCorpusAsync(string name, bool paratext, CancellationToken cancellationToken);
         Task<bool> AddCorpusToTranslationEngineAsync(
             string translationEngineId,
             string corpusId,
             bool pretranslate,
             CancellationToken cancellationToken
         );
+        Task DeleteCorpusAsync(string corpusId, CancellationToken cancellationToken);
+        Task DeleteCorpusFileAsync(string corpusId, string fileId, CancellationToken cancellationToken);
+        Task<string> UploadCorpusTextAsync(
+            string corpusId,
+            string languageTag,
+            string textId,
+            string text,
+            CancellationToken cancellationToken
+        );
         Task<string> UploadParatextCorpusAsync(
             string corpusId,
             string languageTag,
             string path,
+            CancellationToken cancellationToken
+        );
+        Task UploadSFCorpusAsync(
+            string corpusId,
+            string languageTag,
+            string projectId,
             CancellationToken cancellationToken
         );
     }
