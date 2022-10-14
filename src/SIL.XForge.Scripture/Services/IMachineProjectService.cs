@@ -10,5 +10,6 @@ namespace SIL.XForge.Scripture.Services
         Task AddProjectAsync(string curUserId, string projectId, CancellationToken cancellationToken);
         Task BuildProjectAsync(string curUserId, string projectId, CancellationToken cancellationToken);
         Task RemoveProjectAsync(string curUserId, string projectId, CancellationToken cancellationToken);
+        Task SyncProjectCorporaAsync(string curUserId, string projectId, CancellationToken cancellationToken);
     }
 }

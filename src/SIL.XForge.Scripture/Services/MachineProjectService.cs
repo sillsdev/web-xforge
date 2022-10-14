@@ -1,18 +1,23 @@
 #nullable enable
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using SIL.Machine.Corpora;
 using SIL.Machine.WebApi.Services;
 using SIL.ObjectModel;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
+using SIL.XForge.Utils;
 using MachineProject = SIL.Machine.WebApi.Models.Project;
 
 namespace SIL.XForge.Scripture.Services
@@ -24,26 +29,33 @@ namespace SIL.XForge.Scripture.Services
         private readonly IEngineService _engineService;
         private readonly ILogger<MachineProjectService> _logger;
         private readonly HttpClient _machineClient;
+        private readonly IMachineCorporaService _machineCorporaService;
         private readonly IRepository<SFProjectSecret> _projectSecrets;
         private readonly IRealtimeService _realtimeService;
+        private readonly ITextCorpusFactory _textCorpusFactory;
 
         public MachineProjectService(
             IEngineService engineService,
             IHttpClientFactory httpClientFactory,
             ILogger<MachineProjectService> logger,
+            IMachineCorporaService machineCorporaService,
             IRepository<SFProjectSecret> projectSecrets,
-            IRealtimeService realtimeService
+            IRealtimeService realtimeService,
+            ITextCorpusFactory textCorpusFactory
         )
         {
             _engineService = engineService;
             _logger = logger;
+            _machineClient = httpClientFactory.CreateClient(ClientName);
+            _machineCorporaService = machineCorporaService;
             _projectSecrets = projectSecrets;
             _realtimeService = realtimeService;
-            _machineClient = httpClientFactory.CreateClient(ClientName);
+            _textCorpusFactory = textCorpusFactory;
         }
 
         public async Task AddProjectAsync(string curUserId, string projectId, CancellationToken cancellationToken)
         {
+            // Load the project from the realtime service
             using IConnection conn = await _realtimeService.ConnectAsync(curUserId);
             IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
             if (!projectDoc.IsLoaded)
@@ -68,7 +80,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     name = projectId,
                     sourceLanguageTag = machineProject.SourceLanguageTag,
-                    targetLanguageTag = projectDoc.Data.WritingSystem.Tag,
+                    targetLanguageTag = machineProject.TargetLanguageTag,
                     type = "SmtTransfer",
                 },
                 cancellationToken
@@ -92,10 +104,7 @@ namespace SIL.XForge.Scripture.Services
             // Store the Translation Engine ID
             await _projectSecrets.UpdateAsync(
                 projectId,
-                u =>
-                {
-                    u.Set(p => p.MachineData, new MachineData { TranslationEngineId = translationEngineId });
-                }
+                u => u.Set(p => p.MachineData, new MachineData { TranslationEngineId = translationEngineId })
             );
         }
 
@@ -113,8 +122,10 @@ namespace SIL.XForge.Scripture.Services
             // Build the project with the Machine API
             if (!string.IsNullOrWhiteSpace(projectSecret.MachineData?.TranslationEngineId))
             {
-                // TODO: Check for corpora, create if necessary, update if necessary
                 // TODO: Run the below in another thread
+                // Sync the corpus
+                await SyncProjectCorporaAsync(curUserId, projectId, cancellationToken);
+
                 // Start the build
                 string requestUri = $"translation-engines/{projectSecret.MachineData.TranslationEngineId}/builds";
                 using var response = await _machineClient.PostAsync(requestUri, null, cancellationToken);
@@ -159,6 +170,210 @@ namespace SIL.XForge.Scripture.Services
             else
             {
                 _logger.LogInformation($"No Translation Engine Id specified for project {projectId}");
+            }
+        }
+
+        public async Task SyncProjectCorporaAsync(
+            string curUserId,
+            string projectId,
+            CancellationToken cancellationToken
+        )
+        {
+            // Load the project from the realtime service
+            using IConnection conn = await _realtimeService.ConnectAsync(curUserId);
+            IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
+            if (!projectDoc.IsLoaded)
+            {
+                throw new DataNotFoundException("The project does not exist.");
+            }
+
+            // Load the project secrets, so we can get the corpus files
+            if (!(await _projectSecrets.TryGetAsync(projectId)).TryResult(out SFProjectSecret projectSecret))
+            {
+                throw new ArgumentException("The project secret cannot be found.");
+            }
+
+            // Ensure that there is a corpus
+            string corpusId;
+            if (string.IsNullOrEmpty(projectSecret.MachineData?.CorpusId))
+            {
+                corpusId = await _machineCorporaService.AddCorpusAsync(projectId, false, cancellationToken);
+
+                // Store the Corpus ID
+                await _projectSecrets.UpdateAsync(projectId, u => u.Set(p => p.MachineData.CorpusId, corpusId));
+            }
+            else
+            {
+                corpusId = projectSecret.MachineData.CorpusId;
+            }
+
+            // Get the corpus files on the server
+            IList<MachineApiCorpusFile> serverCorpusFiles = await _machineCorporaService.GetCorpusFilesAsync(
+                corpusId,
+                cancellationToken
+            );
+
+            // Reuse the SFTextCorpusFactory implementation
+            ITextCorpus? textCorpus = await _textCorpusFactory.CreateAsync(new[] { projectId }, TextCorpusType.Source);
+            await SyncTextCorpus(
+                corpusId,
+                projectDoc.Data,
+                projectSecret,
+                textCorpus,
+                TextCorpusType.Source,
+                serverCorpusFiles,
+                cancellationToken
+            );
+
+            textCorpus = await _textCorpusFactory.CreateAsync(new[] { projectId }, TextCorpusType.Target);
+            await SyncTextCorpus(
+                corpusId,
+                projectDoc.Data,
+                projectSecret,
+                textCorpus,
+                TextCorpusType.Target,
+                serverCorpusFiles,
+                cancellationToken
+            );
+
+            // TODO: Remove corpus file records in the project secret that no longer exist?
+        }
+
+        private async Task SyncTextCorpus(
+            string corpusId,
+            SFProject project,
+            SFProjectSecret projectSecret,
+            ITextCorpus? textCorpus,
+            TextCorpusType type,
+            IList<MachineApiCorpusFile> serverCorpusFiles,
+            CancellationToken cancellationToken
+        )
+        {
+            // Get the language tag
+            // TODO: Ensure that this is a valid value!
+            string languageTag;
+            if (type == TextCorpusType.Target)
+            {
+                languageTag = project.WritingSystem.Tag;
+            }
+            else
+            {
+                languageTag = project.TranslateConfig.Source.WritingSystem.Tag;
+            }
+
+            // Get the files we have already synced
+            List<MachineCorpusFile> previousCorpusFiles =
+                projectSecret.MachineData?.Files ?? new List<MachineCorpusFile>();
+
+            // Sync each text
+            foreach (IText text in textCorpus?.Texts ?? Array.Empty<IText>())
+            {
+                var sb = new StringBuilder();
+                foreach (TextSegment segment in text.GetSegments())
+                {
+                    if (!segment.IsEmpty)
+                    {
+                        if (segment.SegmentRef is TextSegmentRef textSegmentRef)
+                        {
+                            sb.Append(string.Join('-', textSegmentRef.Keys));
+                        }
+                        else
+                        {
+                            sb.Append(segment.SegmentRef);
+                        }
+
+                        sb.Append('\t');
+                        sb.Append(string.Join(' ', segment.Segment));
+                        sb.Append('\t');
+                        if (segment.IsSentenceStart)
+                        {
+                            sb.Append("ss,");
+                        }
+
+                        if (segment.IsInRange)
+                        {
+                            sb.Append("ir,");
+                        }
+
+                        if (segment.IsRangeStart)
+                        {
+                            sb.Append("rs,");
+                        }
+
+                        // Strip the last comma, or the tab if there are no flags
+                        sb.Length--;
+                        sb.AppendLine();
+                    }
+                }
+
+                if (sb.Length > 0)
+                {
+                    // See if the corpus exists, and delete it if it does
+                    bool uploadText = false;
+                    string textFileData = sb.ToString();
+                    string checksum = StringUtils.ComputeMd5Hash(textFileData);
+                    MachineCorpusFile? previousCorpusFile = previousCorpusFiles.FirstOrDefault(
+                        c => c.TextId == text.Id
+                    );
+                    if (previousCorpusFile is null)
+                    {
+                        uploadText = true;
+                    }
+                    else if (
+                        serverCorpusFiles.Any(c => c.Id == previousCorpusFile.FileId)
+                        && previousCorpusFile.FileChecksum != checksum
+                    )
+                    {
+                        await _machineCorporaService.DeleteCorpusFileAsync(
+                            corpusId,
+                            previousCorpusFile.FileId,
+                            cancellationToken
+                        );
+                        uploadText = true;
+                    }
+
+                    // Upload the file if it is not there, or has changed
+                    if (uploadText)
+                    {
+                        string fileId = await _machineCorporaService.UploadCorpusTextAsync(
+                            corpusId,
+                            languageTag,
+                            text.Id,
+                            textFileData,
+                            cancellationToken
+                        );
+
+                        // Record the fileId and checksum
+                        int? index = projectSecret.MachineData?.Files?.FindIndex(f => f.FileId == fileId);
+                        if (previousCorpusFile is null || index is null)
+                        {
+                            await _projectSecrets.UpdateAsync(
+                                projectSecret,
+                                u =>
+                                    u.Add(
+                                        p => p.MachineData.Files,
+                                        new MachineCorpusFile
+                                        {
+                                            FileChecksum = checksum,
+                                            FileId = fileId,
+                                            LanguageTag = languageTag,
+                                            TextId = text.Id,
+                                        }
+                                    )
+                            );
+                        }
+                        else
+                        {
+                            // Update the
+                            await _projectSecrets.UpdateAsync(
+                                projectSecret,
+                                u =>
+                                    u.Set(p => p.MachineData.Files[index.Value].FileChecksum, checksum)
+                                        .Set(p => p.MachineData.Files[index.Value].LanguageTag, languageTag)
+                            );
+                        }
+                    }
+                }
             }
         }
 
