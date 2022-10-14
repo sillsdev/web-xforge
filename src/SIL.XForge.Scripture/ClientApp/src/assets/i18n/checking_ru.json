@@ -263,8 +263,8 @@
     "subject": "проблема с {{ siteName }}",
     "unknown": "неизвестно"
   },
-  "message_dialog": {
-    "dismiss": "Пропустить"
+  "dialog": {
+    "close": "Закрыть"
   },
   "project": {
     "please_connect_to_use_link": "Please connect to the internet to join a project using a link.",

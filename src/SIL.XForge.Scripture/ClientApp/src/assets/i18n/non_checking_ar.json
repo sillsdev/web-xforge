@@ -3,7 +3,7 @@
     "settings": "الإعدادات",
     "synchronize": "تزامن",
     "system_administration": "إدارة النظام",
-    "translate": "ترجِم",
+    "translate": "الترجمة",
     "users": "المُستخدمون"
   },
   "chapter_nav": {
@@ -276,13 +276,13 @@
   },
   "translate_overview": {
     "cannot_train_suggestion_engine": "Translation suggestions are unavailable. Please select a source project that shares books in common with this project to get translation suggestions.",
-    "progress": "التقدُّم",
+    "progress": "مستوى التقدُّم",
     "quality": "الجودة",
     "retrain": "إعادة التدريب",
     "suggestion_engine": "محرك الاقتراحات",
     "trained_segments": "شرائح مُدرَّبة",
     "training": "التدريب...",
-    "translate_overview": "نظرة عامة إلى الترجمة",
+    "translate_overview": "نظرة عامة على الترجمة",
     "translated_segments": "{{ translatedSegments }} من {{ total }} الشرائح والأجزاء"
   },
   "users": {

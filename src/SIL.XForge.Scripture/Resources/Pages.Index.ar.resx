@@ -118,10 +118,10 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AboutCheckingTool" xml:space="preserve">
-    <value>أداة التدقيق المجتمعي لدينا تسهِّل حملات الرجوع النمطي إلى نصوص الكتاب المُقدَّس، لتقديم تعليقات أوسع للجنة الترجمة بصورة أسرع.</value>
+    <value>تعمل أدواتنا للمراجعة المجتمعية على تسهيل حملات مراجعة النصوص الكتابية؛ بهدف توصيل آراء مجتمعية للجنة الترجمة بشكلٍ أسرع واشمل.</value>
   </data>
   <data name="AboutEngaging" xml:space="preserve">
-    <value>تنخرط في مشاريع الكتاب المُقدَّس مجموعات تتوزع جغرافياً وذات لغاتٍ أصلية مختلفة.</value>
+    <value>تستعين مشروعات ترجمة النصوص الكتابية، بشكل متزايد، بمجموعات من متحدثى اللغة الأصليين من مناطق جغرافية متنوعة.</value>
   </data>
   <data name="AboutFlexible" xml:space="preserve">
     <value>مرن</value>
@@ -130,10 +130,10 @@
     <value>جمع {0} أسئلة فريدية {1} تناسب سياقك الخاصّ.</value>
   </data>
   <data name="AboutHeader" xml:space="preserve">
-    <value>عن "سكريبتشر فورج"</value>
+    <value>عن Scripture Forge</value>
   </data>
   <data name="AboutParatext" xml:space="preserve">
-    <value>يعمل مع برنامج Paratext</value>
+    <value>يعمل مع Paratext</value>
   </data>
   <data name="AboutParatextDescription" xml:space="preserve">
     <value>{2}دمج Paratext {3}و{0}التزامن المستمر {1} يُبقي مشروعك حديثاً ويسمح بتعليقات من المستخدم من خلال{4} Paratext Notes {3}.</value>
@@ -142,34 +142,34 @@
     <value>وسِّع نطاق وصولك بفحص النصوص الكتابية</value>
   </data>
   <data name="AboutUserEngagement" xml:space="preserve">
-    <value>مشاركة المُستخدِم</value>
+    <value>تفاعل المستخدم</value>
   </data>
   <data name="AboutUserEngagementDescription" xml:space="preserve">
     <value>3 {0}يستطيع المُستخدمون المدعوون {1} الإجابة عن الأسئلة، وترك التعليقات على الإجابات الموجودة وتسجيل الإعجاب بالإجابات.</value>
   </data>
   <data name="Description" xml:space="preserve">
-    <value>مجموعة مجانية من الأدوات لعمل المزيد في مشروع Paratext أينما كنت. </value>
+    <value>مجموعة أدوات مجانية لمزيد من الإنتاجية في مشروع Paratext الخاص بك، أينما كنت. </value>
   </data>
   <data name="EngageChecking" xml:space="preserve">
     <value>المشاركة في التحقق من المجتمع</value>
   </data>
   <data name="EngageCollaborate" xml:space="preserve">
-    <value>التعاون في الكتاب المُقدَّس</value>
+    <value>تعاون في مناقشة النصوص الكتابية</value>
   </data>
   <data name="EngageSuggestions" xml:space="preserve">
     <value>احصل على اقتراحات أثناء الطباعة</value>
   </data>
   <data name="EngageTitle" xml:space="preserve">
-    <value>شارك مجتمع اللغة وتعاون مع الآخرين.</value>
+    <value>تفاعل مع اعضاء المجتمع اللغوى، وتعاون مع زملائك.</value>
   </data>
   <data name="QuoteQuotation1" xml:space="preserve">
-    <value>كان الأمر سهلاً جداً! ...كل ما اضطررت لفعله للبدء هو تسجيل الدخول باستخدام تسجيلي في  Paratext. كان الأمر ميسوراً.</value>
+    <value>"كان الأمر سهلاً جدًا.. كل ما كان عليّ فعله كي أبدأ هو التسجيل باستخدام حسابي على Paratext. وسرعان ما بدأت العمل بهذا البرنامج.</value>
   </data>
   <data name="QuoteQuotation2" xml:space="preserve">
-    <value>على الفور اخترت عدداً من الكتاب المُقدَّس وكتبت سؤالا عنه. ثم سجلت نفسي وأنا أسأل السؤال.</value>
+    <value>في الحال، اخترت آية، وكتبت سؤال مراجعة لها. ايضا، سجلت هذا السؤال بصوتي.</value>
   </data>
   <data name="QuoteQuotation3" xml:space="preserve">
-    <value>من الرائع أنه يمكن جمع ردود الفعل في كلا الاتجاهين. جميع الميزات رائعة للمساهمين عن بعد، بما في ذلك خيار الإجابة عن الأسئلة بتسجيل صوتي.</value>
+    <value>من الرائع أنه يمكن الحصول على الإجابة بأيّ الطريقتيّن. كل الخصائص رائعة للغاية، وتساعد في الحصول على مشاركات من على بُعد، بما فيها اختيار الإجابة على الأسئلة من خلال تسجيل صوتي.</value>
   </data>
   <data name="QuoteQuoterName" xml:space="preserve">
     <value>تريفور ديك</value>
@@ -178,6 +178,6 @@
     <value>اختصاصي الشتات العالمي لدى SIL</value>
   </data>
   <data name="Statement" xml:space="preserve">
-    <value>حيث تلتقي الترجمة والمجتمع.</value>
+    <value>عندما تلتقي الترجمة بالمجتمع.</value>
   </data>
 </root>

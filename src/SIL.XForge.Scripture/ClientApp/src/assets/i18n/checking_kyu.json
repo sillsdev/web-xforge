@@ -263,8 +263,8 @@
     "subject": "{{ siteName }} ꤒꤟꤢꤧ꤬ꤚꤤ꤬ꤒꤟꤢꤧ꤬ꤊꤛꤢ꤭",
     "unknown": "ꤞꤢꤧꤑꤢꤩ꤭ꤒꤥ꤬"
   },
-  "message_dialog": {
-    "dismiss": "ꤏꤥ꤭ꤒꤢ꤬ꤕꤟꤢ꤬ꤊꤛꤢ꤭"
+  "dialog": {
+    "close": "ꤗꤟꤢꤩ꤬ꤙꤤ"
   },
   "project": {
     "please_connect_to_use_link": "Please connect to the internet to join a project using a link.",

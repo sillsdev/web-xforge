@@ -263,8 +263,8 @@
     "subject": "{{ siteName }} problem",
     "unknown": "naməlum"
   },
-  "message_dialog": {
-    "dismiss": "İmtina et"
+  "dialog": {
+    "close": "Bağla"
   },
   "project": {
     "please_connect_to_use_link": "Zəhmət olmasa, layihəyə istirak etmək üçün linkdən istifadə etməyə İnternetə qoşmalısınız.",

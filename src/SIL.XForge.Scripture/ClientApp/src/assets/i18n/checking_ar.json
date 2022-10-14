@@ -5,7 +5,7 @@
     "announcements": "إعلانات",
     "cannot_change_password": "لا يمكن تغيير كلمة المرور في هذا الوقت. حاول مرة أخرى لاحقاً أو أبلغ عن مشكلة في قائمة المساعدة.",
     "change_password": "تغيير كلمة المرور",
-    "community_checking": "تحقُّق المجتمع",
+    "community_checking": "المراجعة المجتمعية",
     "community_support": "دعم المجتمع",
     "connect_project": "الاتصال بالمشروع",
     "help": "المساعدة",
@@ -213,9 +213,9 @@
     "show_more_comments": "إظهار {{ count }} تعليقات أخرى"
   },
   "checking_overview": {
-    "answers": "الإجابات",
+    "answers": "إجابات",
     "comments": "تعليقات",
-    "likes": "الإعجابات",
+    "likes": "إعجابات",
     "loading_questions": "تحميل الأسئلة...",
     "questions": "أسئلة",
     "texts_with_questions": "نصوص مع أسئلة"
@@ -263,8 +263,8 @@
     "subject": "مشكلة {{ siteName }}",
     "unknown": "غير معروف"
   },
-  "message_dialog": {
-    "dismiss": "رفض"
+  "dialog": {
+    "close": "إغلاق"
   },
   "project": {
     "please_connect_to_use_link": "الرجاء الاتصال بالإنترنت للانضمام إلى مشروع باستخدام رابط.",
