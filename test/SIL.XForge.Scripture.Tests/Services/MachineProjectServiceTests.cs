@@ -20,6 +20,7 @@ namespace SIL.XForge.Scripture.Services
     {
         private static readonly string Project01 = "project01";
         private static readonly string Project02 = "project02";
+        private static readonly string Project03 = "project03";
         private const string User01 = "user01";
 
         [Test]
@@ -140,6 +141,7 @@ namespace SIL.XForge.Scripture.Services
                 var httpClientFactory = Substitute.For<IHttpClientFactory>();
                 httpClientFactory.CreateClient(Arg.Any<string>()).Returns(httpClient);
                 var logger = new MockLogger<MachineProjectService>();
+                var machineCorporaService = Substitute.For<IMachineCorporaService>();
 
                 ProjectSecrets = new MemoryRepository<SFProjectSecret>(
                     new[]
@@ -150,6 +152,7 @@ namespace SIL.XForge.Scripture.Services
                             Id = Project02,
                             MachineData = new MachineData { TranslationEngineId = Project02 },
                         },
+                        new SFProjectSecret { Id = Project03 },
                     }
                 );
 
@@ -170,7 +173,7 @@ namespace SIL.XForge.Scripture.Services
                                 TranslateConfig = new TranslateConfig
                                 {
                                     TranslationSuggestionsEnabled = true,
-                                    Source = new TranslateSource { ProjectRef = Project02 }
+                                    Source = new TranslateSource { ProjectRef = Project02 },
                                 },
                             },
                             new SFProject
@@ -180,17 +183,34 @@ namespace SIL.XForge.Scripture.Services
                                 ShortName = "P02",
                                 CheckingConfig = new CheckingConfig { ShareEnabled = false },
                                 UserRoles = new Dictionary<string, string>(),
+                                TranslateConfig = new TranslateConfig
+                                {
+                                    TranslationSuggestionsEnabled = true,
+                                    Source = new TranslateSource { ProjectRef = Project03 },
+                                },
+                            },
+                            new SFProject
+                            {
+                                Id = Project03,
+                                Name = "project03",
+                                ShortName = "P03",
+                                CheckingConfig = new CheckingConfig { ShareEnabled = false },
+                                UserRoles = new Dictionary<string, string>(),
                             },
                         }
                     )
                 );
 
+                var textCorpusFactory = Substitute.For<ITextCorpusFactory>();
+
                 Service = new MachineProjectService(
                     EngineService,
                     httpClientFactory,
                     logger,
+                    machineCorporaService,
                     ProjectSecrets,
-                    realtimeService
+                    realtimeService,
+                    textCorpusFactory
                 );
             }
 

@@ -12,11 +12,9 @@ using System.IO;
 using System.Net.Http.Headers;
 using System.Threading;
 using System.IO.Compression;
-using System.Linq;
 using System.Text;
-using SIL.Machine.Corpora;
 using SIL.XForge.Services;
-using SIL.Machine.WebApi.Services;
+using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -25,19 +23,16 @@ namespace SIL.XForge.Scripture.Services
         private readonly IFileSystemService _fileSystemService;
         private readonly ILogger<MachineProjectService> _logger;
         private readonly HttpClient _machineClient;
-        private readonly ITextCorpusFactory _textCorpusFactory;
 
         public MachineCorporaService(
             IFileSystemService fileSystemService,
             IHttpClientFactory httpClientFactory,
-            ILogger<MachineProjectService> logger,
-            ITextCorpusFactory textCorpusFactory
+            ILogger<MachineProjectService> logger
         )
         {
             _fileSystemService = fileSystemService;
             _logger = logger;
             _machineClient = httpClientFactory.CreateClient(MachineProjectService.ClientName);
-            _textCorpusFactory = textCorpusFactory;
         }
 
         public async Task<string> AddCorpusAsync(string name, bool paratext, CancellationToken cancellationToken)
@@ -109,6 +104,27 @@ namespace SIL.XForge.Scripture.Services
             {
                 throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
             }
+        }
+
+        public async Task<IList<MachineApiCorpusFile>> GetCorpusFilesAsync(
+            string corpusId,
+            CancellationToken cancellationToken
+        )
+        {
+            // Get the corpus files from the Machine API
+            string requestUri = $"corpora/{corpusId}/files";
+            using var response = await _machineClient.GetAsync(requestUri, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
+            }
+
+            string data = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogInformation($"Response from {requestUri}: {data}");
+
+            // Retrieve the API response
+            MachineApiCorpusFile[]? files = JsonConvert.DeserializeObject<MachineApiCorpusFile[]>(data);
+            return files ?? Array.Empty<MachineApiCorpusFile>();
         }
 
         public async Task<string> UploadCorpusTextAsync(
@@ -196,78 +212,6 @@ namespace SIL.XForge.Scripture.Services
             // Return the file ID from the API response
             dynamic? file = JsonConvert.DeserializeObject<dynamic>(data);
             return file?.id ?? string.Empty;
-        }
-
-        public async Task UploadSFCorpusAsync(
-            string corpusId,
-            string languageTag,
-            string projectId,
-            CancellationToken cancellationToken
-        )
-        {
-            // Reuse the SFTextCorpusFactory implementation
-            ITextCorpus? source = await _textCorpusFactory.CreateAsync(new[] { projectId }, TextCorpusType.Source);
-            ITextCorpus? target = await _textCorpusFactory.CreateAsync(new[] { projectId }, TextCorpusType.Target);
-
-            // Clean any null values
-            IEnumerable<IText> targetTexts = source?.Texts ?? Array.Empty<IText>();
-            IEnumerable<IText> sourceTexts = target?.Texts ?? Array.Empty<IText>();
-
-            // Submit each text
-            foreach (IText text in sourceTexts.Concat(targetTexts))
-            {
-                var sb = new StringBuilder();
-                foreach (TextSegment segment in text.GetSegments())
-                {
-                    if (!segment.IsEmpty)
-                    {
-                        if (segment.SegmentRef is TextSegmentRef textSegmentRef)
-                        {
-                            sb.Append(string.Join('-', textSegmentRef.Keys));
-                        }
-                        else
-                        {
-                            sb.Append(segment.SegmentRef);
-                        }
-
-                        sb.Append('\t');
-                        sb.Append(string.Join(' ', segment.Segment));
-                        sb.Append('\t');
-                        if (segment.IsSentenceStart)
-                        {
-                            sb.Append("ss,");
-                        }
-
-                        if (segment.IsInRange)
-                        {
-                            sb.Append("ir,");
-                        }
-
-                        if (segment.IsRangeStart)
-                        {
-                            sb.Append("rs,");
-                        }
-
-                        // Strip the last comma, or the tab if there are no flags
-                        sb.Length--;
-                        sb.AppendLine();
-                    }
-                }
-
-                if (sb.Length > 0)
-                {
-                    // TODO: See if the corpus exists (check DB and server), delete it if it does
-                    // TODO: Record the fileId and a checksum
-                    // TODO: Only upload the file if the checksum is different
-                    string _ = await UploadCorpusTextAsync(
-                        corpusId,
-                        languageTag,
-                        text.Id,
-                        sb.ToString(),
-                        cancellationToken
-                    );
-                }
-            }
         }
 
         protected override void DisposeManagedResources()
