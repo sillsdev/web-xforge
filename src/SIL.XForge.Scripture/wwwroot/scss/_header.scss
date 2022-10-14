@@ -1,6 +1,5 @@
 body[dir='rtl'] {
   --sf-language-icon-alignment: right;
-  --sf-language-icon-mobile: scaleX(-1);
 }
 header {
   position: absolute;
@@ -68,7 +67,6 @@ header {
         background-size: 24px 24px;
         padding-inline-start: 35px;
         background-position: var(--sf-language-icon-alignment, left);
-        transform: var(--sf-language-icon-mobile, none);
       }
       select {
         padding: 3px 6px;
