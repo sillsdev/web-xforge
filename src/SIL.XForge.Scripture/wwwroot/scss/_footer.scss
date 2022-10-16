@@ -42,7 +42,7 @@ footer {
 
       &.links {
         @include media-breakpoint-up(sm) {
-          margin-left: 25px;
+          margin-inline-start: 25px;
         }
         @include media-breakpoint-only(xs) {
           margin-top: 10px;
@@ -53,7 +53,7 @@ footer {
         line-height: 1;
 
         &:not(:first-child) {
-          margin-left: 25px;
+          margin-inline-start: 25px;
         }
       }
     }
@@ -78,7 +78,7 @@ footer {
     }
 
     a:not(:first-child) {
-      margin-left: 82px;
+      margin-inline-start: 82px;
       @include media-breakpoint-down(sm) {
         margin-left: 0;
       }
