@@ -3,18 +3,25 @@ import { Component, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { mock } from 'ts-mockito';
+import { Subject } from 'rxjs';
+import { mock, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { EditNameDialogComponent, EditNameDialogResult } from './edit-name-dialog.component';
 
 const mockedI18nService = mock(I18nService);
+const mockedPwaService = mock(PwaService);
 
 describe('EditNameDialogComponent', () => {
   configureTestingModule(() => ({
-    providers: [DialogService, { provide: I18nService, useMock: mockedI18nService }]
+    providers: [
+      DialogService,
+      { provide: I18nService, useMock: mockedI18nService },
+      { provide: PwaService, useMock: mockedPwaService }
+    ]
   }));
 
   it('should display name and cancel button', fakeAsync(() => {
@@ -64,10 +71,21 @@ describe('EditNameDialogComponent', () => {
     env.fixture.detectChanges();
     expect(env.component.confirmedName).toBeUndefined();
     env.setTextFieldValue(env.nameInput, 'Bob');
-    env.submitButton.click();
-    tick();
-    env.fixture.detectChanges();
+    env.clickSubmit();
     expect(env.component.confirmedName).toBe('Bob');
+  }));
+
+  it('should show message if the user is offline', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.openDialog();
+    expect(env.offlineMessage).toBeNull();
+    env.isOnline = false;
+    expect(env.offlineMessage).not.toBeNull();
+    env.setTextFieldValue(env.nameInput, 'Offline Edit');
+    env.clickSubmit();
+    expect(env.overlayContainerElement).not.toBeNull();
+    expect(env.component.confirmedName).toBeUndefined();
+    env.cancelButton!.click();
   }));
 
   it('shows messages in a confirmation context', fakeAsync(() => {
@@ -94,11 +112,14 @@ class TestEnvironment {
   fixture: ComponentFixture<DialogOpenerComponent>;
   component: DialogOpenerComponent;
 
+  private onlineStatus$: Subject<boolean> = new Subject<boolean>();
+
   constructor() {
     TestBed.configureTestingModule({
       declarations: [DialogOpenerComponent],
       imports: [DialogTestModule, UICommonModule]
     });
+    when(mockedPwaService.onlineStatus).thenReturn(this.onlineStatus$);
     this.fixture = TestBed.createComponent(DialogOpenerComponent);
     this.component = this.fixture.componentInstance;
   }
@@ -125,6 +146,16 @@ class TestEnvironment {
 
   get description(): HTMLElement {
     return this.selectElement('p')!;
+  }
+
+  get offlineMessage(): HTMLElement | null {
+    return this.selectElement('.offline-text');
+  }
+
+  set isOnline(value: boolean) {
+    this.onlineStatus$.next(value);
+    tick();
+    this.fixture.detectChanges();
   }
 
   openDialog(): void {

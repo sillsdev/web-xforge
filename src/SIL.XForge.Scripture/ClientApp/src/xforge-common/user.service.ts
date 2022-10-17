@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
+import { translate } from '@ngneat/transloco';
 import { escapeRegExp } from 'lodash-es';
 import merge from 'lodash-es/merge';
 import { User } from 'realtime-server/lib/esm/common/models/user';
@@ -15,6 +16,7 @@ import { LocalSettingsService } from './local-settings.service';
 import { RealtimeQuery } from './models/realtime-query';
 import { UserDoc } from './models/user-doc';
 import { UserProfileDoc } from './models/user-profile-doc';
+import { NoticeService } from './notice.service';
 import { Filters, QueryParameters } from './query-parameters';
 import { RealtimeService } from './realtime.service';
 import { USERS_URL } from './url-constants';
@@ -36,7 +38,8 @@ export class UserService {
     private readonly authService: AuthService,
     private readonly commandService: CommandService,
     private readonly localSettings: LocalSettingsService,
-    private readonly dialogService: DialogService
+    private readonly dialogService: DialogService,
+    private readonly noticeService: NoticeService
   ) {}
 
   get currentUserId(): string {
@@ -118,7 +121,11 @@ export class UserService {
         op.set(u => u.displayName, result.displayName);
         op.set<boolean>(u => u.isDisplayNameConfirmed, true);
       });
-      await this.updateAvatarFromDisplayName();
+      try {
+        await this.updateAvatarFromDisplayName();
+      } catch {
+        this.noticeService.showError(translate('error_messages.failed_to_update_avatar'));
+      }
     }
   }
 

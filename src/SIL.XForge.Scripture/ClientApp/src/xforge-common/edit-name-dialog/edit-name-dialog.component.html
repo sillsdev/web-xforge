@@ -2,6 +2,7 @@
   <h1 mat-dialog-title *ngIf="data.isConfirmation">{{ t("confirm_your_name") }}</h1>
   <h1 mat-dialog-title *ngIf="!data.isConfirmation">{{ t("update_your_name") }}</h1>
   <mat-dialog-content>
+    <span *ngIf="!isOnline" class="offline-text">{{ t("connect_to_edit_name") }}</span>
     <form id="name-form">
       <p *ngIf="data.isConfirmation">{{ t("confirm_name") }}</p>
       <p *ngIf="!data.isConfirmation">{{ t("enter_name") }}</p>
@@ -12,7 +13,7 @@
     </form>
   </mat-dialog-content>
   <mat-dialog-actions align="end">
-    <button mat-button type="button" (click)="cancelDialog()" *ngIf="!data.isConfirmation" id="cancel-button">
+    <button mat-button type="button" [mat-dialog-close]="'close'" *ngIf="!data.isConfirmation" id="cancel-button">
       {{ t("cancel") }}
     </button>
     <button mat-flat-button color="primary" type="submit" (click)="submitDialog()" id="submit-button">
