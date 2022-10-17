@@ -217,8 +217,11 @@
     "comments": "Comments",
     "likes": "Likes",
     "loading_questions": "Loading questions...",
-    "questions": "Questions",
-    "texts_with_questions": "Texts with Questions"
+    "manage_questions": "Manage questions",
+    "my_contributions": "My contributions",
+    "my_progress": "My progress",
+    "project_stats": "Project stats",
+    "questions": "Questions"
   },
   "edit_name_dialog": {
     "cancel": "Cancel",
