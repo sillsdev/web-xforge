@@ -467,7 +467,11 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   editName(): void {
-    this.userService.editDisplayName(false);
+    if (this.isAppOnline) {
+      this.userService.editDisplayName(false);
+    } else {
+      this.noticeService.show(translate('app.action_not_available_offline'));
+    }
   }
 
   logOut(): void {

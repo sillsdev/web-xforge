@@ -442,14 +442,17 @@ describe('AppComponent', () => {
     verify(mockedUserService.editDisplayName(false)).once();
   }));
 
-  it('hides edit name button when user is offline', fakeAsync(() => {
+  it('shows message when edit name button clicked while offline', fakeAsync(() => {
     const env = new TestEnvironment('offline');
     env.init();
 
     env.avatarIcon.nativeElement.click();
     env.wait();
     expect(env.userMenu).not.toBeNull();
-    expect(env.editNameIcon).toBeNull();
+    expect(env.editNameIcon).not.toBeNull();
+    env.clickEditDisplayName();
+    verify(mockedNoticeService.show(anything())).once();
+    verify(mockedUserService.editDisplayName(anything())).never();
   }));
 
   describe('Community Checking', () => {

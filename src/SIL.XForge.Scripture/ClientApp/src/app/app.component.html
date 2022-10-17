@@ -105,14 +105,7 @@
                   {{ t("logged_in_as") }}
                   <div fxLayout="row" fxLayoutAlign="start center">
                     <strong class="user-menu-name">{{ currentUser.displayName }}</strong>
-                    <button
-                      *ngIf="isAppOnline"
-                      id="edit-name-btn"
-                      mdcIconButton
-                      icon="edit"
-                      type="button"
-                      (click)="editName()"
-                    ></button>
+                    <button id="edit-name-btn" mdcIconButton icon="edit" type="button" (click)="editName()"></button>
                   </div>
                 </div>
                 <div>

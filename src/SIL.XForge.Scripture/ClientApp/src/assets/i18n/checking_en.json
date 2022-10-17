@@ -249,6 +249,7 @@
     "confirm_name": "Confirm the name that other people on this project will see when you post answers and comments",
     "confirm_your_name": "Confirm your name",
     "confirm": "Confirm",
+    "connect_to_edit_name": "Please connect to the internet to edit your name",
     "enter_name": "Please enter your name",
     "update_your_name": "Update your name",
     "update": "Update",
@@ -268,6 +269,7 @@
   },
   "error_messages": {
     "error_occurred_login": "An error occurred during login.",
+    "failed_to_update_avatar": "Your avatar image could not be updated.",
     "try_again": "Try Again"
   },
   "exception_handling_service": {
