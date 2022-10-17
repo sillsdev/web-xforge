@@ -1,5 +1,18 @@
 @model RazorPageSettings
+@using Microsoft.AspNetCore.Builder
+@using Microsoft.AspNetCore.Localization
+@using Microsoft.Extensions.Options
 @inject IHtmlLocalizer<SharedResource> SharedLocalizer
+@inject IOptions<RequestLocalizationOptions> LocOptions
+
+@{
+    var requestCulture = Context.Features.Get<IRequestCultureFeature>();
+    var localeHelps = LocOptions.Value.SupportedUICultures.Where(c =>
+    SharedResource.Cultures[c.IetfLanguageTag].Tags.Where(t =>
+    t == @requestCulture.RequestCulture.UICulture.Name).Count() > 0).Select(c =>
+    SharedResource.Cultures[c.IetfLanguageTag]).ToArray();
+    var helps = "https://help.scriptureforge.org/" + (@localeHelps[0].Helps != null ? @localeHelps[0].Helps : "en");
+}
 
 <footer>
     <div class="container">
@@ -16,6 +29,9 @@
                         <li><a asp-page="Terms">@SharedLocalizer[SharedResource.Keys.Terms]</a></li>
                         <li><a asp-page="Privacy">@SharedLocalizer[SharedResource.Keys.Privacy]</a></li>
                         <li><a asp-page="LearnMore">@SharedLocalizer[SharedResource.Keys.LearnMore]</a></li>
+                        <li><a href="@helps" target="_blank">@SharedLocalizer[SharedResource.Keys.Help]</a></li>
+                        <li><a href="https://community.scripture.software.sil.org/c/scripture-forge/19"
+                                target="_blank">@SharedLocalizer[SharedResource.Keys.CommunitySupport]</a></li>
                     </ul>
                 </div>
                 <div id="logos">
