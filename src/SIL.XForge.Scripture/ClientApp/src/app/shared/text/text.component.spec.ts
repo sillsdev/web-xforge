@@ -443,6 +443,40 @@ describe('TextComponent', () => {
       expect(env.localPresenceChannel).toBeUndefined();
       expect(presenceChangeEmitSpy).toHaveBeenCalledTimes(0);
     }));
+
+    it('should scroll to cursor of viewer', fakeAsync(() => {
+      const env: TestEnvironment = new TestEnvironment();
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+      env.fixture.detectChanges();
+
+      const remotePresence = 'remote-person-1';
+      const remoteSegmentRef = 'verse_1_1';
+      const remoteRange: RangeStatic | undefined = env.component.getSegmentRange(remoteSegmentRef);
+      env.addRemotePresence(remotePresence, remoteRange);
+      expect(env.component.editor!.root.scrollTop).toEqual(0);
+      const presenceData: PresenceData = {
+        viewer: (env.component as any).getPresenceViewer(remotePresence)
+      };
+      const setSelectionSpy = spyOn<any>(env.component.editor!, 'setSelection')
+        .withArgs(remoteRange)
+        .and.returnValue(true);
+      const presenceDataActive: PresenceData = { viewer: { ...presenceData.viewer, activeInEditor: true } };
+      const presenceChannelReceiveSpy = spyOn<any>(env.component, 'onPresenceChannelReceive')
+        .withArgs(remotePresence, presenceDataActive)
+        .and.returnValue(true)
+        .withArgs(remotePresence, presenceData)
+        .and.returnValue(true);
+      env.component.scrollToViewer(presenceData.viewer);
+      expect(setSelectionSpy).toHaveBeenCalledTimes(1);
+      expect(presenceChannelReceiveSpy).toHaveBeenCalledTimes(1);
+
+      // Wait for timer to emit another call to not show the user as active
+      presenceChannelReceiveSpy.calls.reset();
+      tick(3000);
+      expect(presenceChannelReceiveSpy).toHaveBeenCalledTimes(1);
+    }));
   });
 
   describe('drag-and-drop', () => {
@@ -3093,7 +3127,7 @@ class TestEnvironment {
     return (this.component as any).presenceChannel.remotePresences;
   }
 
-  get remoteDocPresences(): Record<string, PresenceData> {
+  get remoteDocPresences(): Record<string, RangeStatic | null> {
     return (this.component as any).presenceDoc.remotePresences;
   }
 
@@ -3263,16 +3297,25 @@ class TestEnvironment {
 
   /** Write a presence into the sharedb remote presence list, and notify that a new remote presence has
    * appeared on the textdoc. */
-  addRemotePresence(remotePresenceId: string) {
-    const presenceData: PresenceData = mock<PresenceData>();
-    const range: RangeStatic = mock<RangeStatic>();
+  addRemotePresence(remotePresenceId: string, range?: RangeStatic | null) {
+    const presenceData: PresenceData = {
+      viewer: {
+        activeInEditor: false,
+        avatarUrl: '',
+        cursorColor: '',
+        displayName: remotePresenceId
+      }
+    };
+    if (range == null) {
+      range = mock<RangeStatic>();
+    }
     // Write the presence right into the area that would be being provided by the sharedb.
     this.remoteChannelPresences[remotePresenceId] = presenceData;
-    this.remoteDocPresences[remotePresenceId] = presenceData;
+    this.remoteDocPresences[remotePresenceId] = range;
     // A remote presence is learned about.
     (this.component as any).onPresenceDocReceive(remotePresenceId, range);
     (this.component as any).onPresenceChannelReceive(remotePresenceId, presenceData);
-    tick();
+    tick(400);
   }
 
   /** Dispatching a 'keydown' KeyboardEvent in the test doesn't seem to
