@@ -17,8 +17,10 @@ namespace SIL.XForge.Scripture
         {
             public const string AudioOnlyQuestion = "AudioOnlyQuestion";
             public const string AudioOnlyResponse = "AudioOnlyResponse";
+            public const string CommunitySupport = "CommunitySupport";
             public const string EmailBad = "EmailBad";
             public const string EmailMissing = "EmailMissing";
+            public const string Help = "Help";
             public const string InviteEmailOption = "InviteEmailOption";
             public const string InviteFacebookOption = "InviteFacebookOption";
             public const string InviteGoogleOption = "InviteGoogleOption";
