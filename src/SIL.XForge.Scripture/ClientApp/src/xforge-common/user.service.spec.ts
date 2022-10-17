@@ -12,24 +12,27 @@ import { DialogService } from './dialog.service';
 import { LocalSettingsService } from './local-settings.service';
 import { UserDoc } from './models/user-doc';
 import { TestRealtimeService } from './test-realtime.service';
-import { configureTestingModule } from './test-utils';
+import { configureTestingModule, TestTranslocoModule } from './test-utils';
 import { TestRealtimeModule } from './test-realtime.module';
 import { TypeRegistry } from './type-registry';
+import { NoticeService } from './notice.service';
 
 const mockedAuthService = mock(AuthService);
 const mockedLocalSettingsService = mock(LocalSettingsService);
 const mockedCommandService = mock(CommandService);
 const mockedDialogService = mock(DialogService);
+const mockedNoticeService = mock(NoticeService);
 
 describe('UserService', () => {
   configureTestingModule(() => ({
-    imports: [TestRealtimeModule.forRoot(new TypeRegistry([UserDoc], [], []))],
+    imports: [TestTranslocoModule, TestRealtimeModule.forRoot(new TypeRegistry([UserDoc], [], []))],
     providers: [
       UserService,
       { provide: AuthService, useMock: mockedAuthService },
       { provide: LocalSettingsService, useMock: mockedLocalSettingsService },
       { provide: CommandService, useMock: mockedCommandService },
-      { provide: DialogService, useMock: mockedDialogService }
+      { provide: DialogService, useMock: mockedDialogService },
+      { provide: NoticeService, useMock: mockedNoticeService }
     ]
   }));
 
@@ -65,6 +68,18 @@ describe('UserService', () => {
     tick();
     const [, method] = capture<string, string, any>(mockedCommandService.onlineInvoke).last();
     expect(method).toEqual('updateAvatarFromDisplayName');
+  }));
+
+  it('shows message when avatar could not be updated', fakeAsync(() => {
+    const env = new TestEnvironment({ storedProjectId: 'project01' });
+    when(mockedCommandService.onlineInvoke(anything(), 'updateAvatarFromDisplayName', anything())).thenReject(
+      new Error('error')
+    );
+    env.service.editDisplayName(false);
+    tick();
+    verify(mockedCommandService.onlineInvoke(anything(), 'updateAvatarFromDisplayName', anything())).once();
+    verify(mockedNoticeService.showError(anything())).once();
+    expect().nothing();
   }));
 });
 
