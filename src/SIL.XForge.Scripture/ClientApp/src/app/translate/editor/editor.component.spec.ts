@@ -3415,7 +3415,7 @@ class TestEnvironment {
     };
   }
 
-  resolveNote(projectId: string, threadId: string) {
+  resolveNote(projectId: string, threadId: string): void {
     const nodeDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadId);
     nodeDoc.submitJson0Op(op => op.set(n => n.status, NoteStatus.Resolved));
     this.realtimeService.updateAllSubscribeQueries();
