@@ -220,7 +220,17 @@ body[dir='rtl'] #about .about-feature p::first-letter {
 }
 
 body[dir='ltr'] .quote-text i {
-  transform: rotate(180deg);
+  rotate: z 180deg;
+}
+body[dir='rtl'] .quote-text i {
+  rotate: x 180deg;
+}
+
+body[dir='rtl'] {
+  .shuffle-icon,
+  .group-icon {
+    rotate: y 180deg;
+  }
 }
 
 .statement {
