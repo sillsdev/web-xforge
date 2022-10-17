@@ -1,3 +1,5 @@
+$linksBreakpoint: 995px;
+
 footer {
   background-color: $greyDark;
   color: $greyLight;
@@ -6,7 +8,7 @@ footer {
     padding: 30px 0;
   }
   .flex {
-    @include media-breakpoint-down(sm) {
+    @media (max-width: $linksBreakpoint) {
       flex-wrap: wrap;
     }
   }
@@ -24,9 +26,10 @@ footer {
     flex: 1 1 100%;
     display: flex;
 
-    @include media-breakpoint-down(sm) {
+    @media (max-width: $linksBreakpoint) {
       order: 2;
       justify-content: center;
+      flex-wrap: wrap;
     }
 
     @include media-breakpoint-only(xs) {
@@ -37,24 +40,34 @@ footer {
     ul {
       list-style: none;
       display: flex;
-      margin: 0;
+      margin: 5px 0;
       padding: 0;
 
       &.links {
-        @include media-breakpoint-up(sm) {
-          margin-inline-start: 25px;
+        flex-wrap: wrap;
+        justify-content: center;
+        li {
+          margin: 0 12px;
+          @include media-breakpoint-only(xs) {
+            margin: 10px 12px;
+          }
         }
-        @include media-breakpoint-only(xs) {
-          margin-top: 10px;
+        a {
+          white-space: nowrap;
+          margin-bottom: 10px;
+        }
+      }
+
+      &.app {
+        li {
+          &:not(:first-child) {
+            margin-inline-start: 25px;
+          }
         }
       }
 
       li {
         line-height: 1;
-
-        &:not(:first-child) {
-          margin-inline-start: 25px;
-        }
       }
     }
 
@@ -66,11 +79,11 @@ footer {
   }
 
   #logos {
-    flex: 1 1 100%;
+    flex: 1 0 298px;
     display: flex;
     justify-content: flex-end;
 
-    @include media-breakpoint-down(sm) {
+    @media (max-width: $linksBreakpoint) {
       order: 1;
       justify-content: space-around;
       display: flex;
@@ -79,7 +92,7 @@ footer {
 
     a:not(:first-child) {
       margin-inline-start: 82px;
-      @include media-breakpoint-down(sm) {
+      @media (max-width: $linksBreakpoint) {
         margin-left: 0;
       }
     }
