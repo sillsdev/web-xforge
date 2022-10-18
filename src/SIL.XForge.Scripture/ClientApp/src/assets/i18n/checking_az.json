@@ -217,8 +217,11 @@
     "comments": "Şərhlər",
     "likes": "Bəyənirlər",
     "loading_questions": "Loading questions...",
-    "questions": "Suallar",
-    "texts_with_questions": "Suallarla olan Mətnlər"
+    "manage_questions": "Manage questions",
+    "my_contributions": "My contributions",
+    "my_progress": "My progress",
+    "project_stats": "Project stats",
+    "questions": "Suallar"
   },
   "edit_name_dialog": {
     "cancel": "Ləğv etmək",

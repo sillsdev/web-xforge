@@ -217,8 +217,11 @@
     "comments": "تعليقات",
     "likes": "إعجابات",
     "loading_questions": "تحميل الأسئلة...",
-    "questions": "أسئلة",
-    "texts_with_questions": "نصوص مع أسئلة"
+    "manage_questions": "Manage questions",
+    "my_contributions": "My contributions",
+    "my_progress": "My progress",
+    "project_stats": "Project stats",
+    "questions": "أسئلة"
   },
   "edit_name_dialog": {
     "cancel": "إلغاء",

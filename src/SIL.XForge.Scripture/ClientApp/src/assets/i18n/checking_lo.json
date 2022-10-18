@@ -217,8 +217,11 @@
     "comments": "ຄຳເຫັນ",
     "likes": "Likes",
     "loading_questions": "Loading questions...",
-    "questions": "ຄຳຖາມ",
-    "texts_with_questions": "Texts with Questions"
+    "manage_questions": "Manage questions",
+    "my_contributions": "My contributions",
+    "my_progress": "My progress",
+    "project_stats": "Project stats",
+    "questions": "ຄຳຖາມ"
   },
   "edit_name_dialog": {
     "cancel": "ຍົກເລີກ",

@@ -217,8 +217,11 @@
     "comments": "Komentar",
     "likes": "Suka",
     "loading_questions": "Loading questions...",
-    "questions": "Pertanyaan",
-    "texts_with_questions": "Teks dengan Pertanyaan"
+    "manage_questions": "Manage questions",
+    "my_contributions": "My contributions",
+    "my_progress": "My progress",
+    "project_stats": "Project stats",
+    "questions": "Pertanyaan"
   },
   "edit_name_dialog": {
     "cancel": "Batal",
