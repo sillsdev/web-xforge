@@ -89,8 +89,8 @@ export class NoteDialogComponent implements OnInit {
     this.noteBeingEdited = this.getNoteTemplate(this.threadId);
   }
 
-  get noteThreadAssignedUserRef(): string | undefined {
-    return this.threadDoc?.data?.assignment;
+  get noteThreadAssignedUserRef(): string {
+    return this.threadDoc?.data?.assignment ?? '';
   }
 
   get flagIcon(): string {

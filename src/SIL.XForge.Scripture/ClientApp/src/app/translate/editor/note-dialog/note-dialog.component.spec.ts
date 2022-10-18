@@ -371,6 +371,19 @@ describe('NoteDialogComponent', () => {
     expect(env.notes[1].nativeElement.querySelector('.assigned-user').textContent).toContain('Team');
   }));
 
+  it('shows unassigned user', fakeAsync(() => {
+    const noteThread = TestEnvironment.getNoteThread();
+    noteThread.assignment = '';
+    env = new TestEnvironment({ noteThread });
+    expect(env.threadAssignedUser.nativeElement.textContent).toContain('Unassigned');
+    env.closeDialog();
+
+    // Ensure it still shows unassigned if there is no assignment set
+    delete noteThread.assignment;
+    env = new TestEnvironment({ noteThread });
+    expect(env.threadAssignedUser.nativeElement.textContent).toContain('Unassigned');
+  }));
+
   it('shows correct coloured icon based on assignment', fakeAsync(() => {
     const currentUserId = 'user01';
     const defaultIcon = 'flag02.png';
@@ -444,7 +457,7 @@ describe('NoteDialogComponent', () => {
     expect(env.flagIcon).toEqual('/assets/icons/TagIcons/01flag1.png');
     expect(env.verseRef).toEqual('Matthew 1:1');
     expect(env.noteText.nativeElement.innerText).toEqual('target: chapter 1, verse 1.');
-    expect(env.threadAssignedUser).toBeNull();
+    expect(env.threadAssignedUser.nativeElement.textContent).toContain('Unassigned');
   }));
 
   it('can insert a note', fakeAsync(() => {
