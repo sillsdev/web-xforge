@@ -14,7 +14,7 @@
         [isRightToLeft]="isTextRightToLeft"
       ></app-text>
       <div class="selection-preview">
-        <p>
+        <p dir="auto">
           {{ (startClipped ? "…" : "") + (selectedText || "") + (endClipped ? "…" : "") }}
           <span class="selection-reference">{{ referenceForDisplay }}</span>
         </p>

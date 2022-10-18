@@ -76,7 +76,7 @@
             class="answer-tab answer-select-text"
             [class.text-selected]="selectedText"
           >
-            <p [fxHide]="!selectedText" [fxHide.lt-xl]="!canShowScriptureInput" class="scripture-text">
+            <p [fxHide]="!selectedText" [fxHide.lt-xl]="!canShowScriptureInput" class="scripture-text" dir="auto">
               {{ (selectionStartClipped ? "…" : "") + (selectedText || "") + (selectionEndClipped ? "…" : "") }}
               <span class="answer-scripture-verse">{{ scriptureTextVerseRef(verseRef) }}</span>
             </p>
@@ -141,7 +141,7 @@
             </div>
             <div class="answer-detail">
               <div *ngIf="answer.text" class="answer-text">{{ answer.text }}</div>
-              <div *ngIf="answer.scriptureText" class="answer-scripture">
+              <div *ngIf="answer.scriptureText" class="answer-scripture" dir="auto">
                 <span class="answer-scripture-text">{{
                   (answer.selectionStartClipped ? "…" : "") +
                     (answer.scriptureText || "") +
