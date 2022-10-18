@@ -24,7 +24,7 @@ import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/mode
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { fromVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -41,7 +41,7 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { getTextDoc, paratextUsersFromRoles } from '../../../shared/test-utils';
 import { NoteThreadDoc } from '../../../core/models/note-thread-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
-import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog.component';
+import { NoteDialogComponent, NoteDialogData, SF_NOTE_THREAD_PREFIX } from './note-dialog.component';
 
 const mockedAuthService = mock(AuthService);
 const mockedCookieService = mock(CookieService);
@@ -458,19 +458,21 @@ describe('NoteDialogComponent', () => {
     env.submit();
 
     const verseData: VerseRefData = fromVerseRef(verseRef);
-    const result = env.dialogResult as NoteDialogResult;
-    expect(result.verseRef).toEqual(verseData);
-    expect(result.selectedText).toEqual('target: chapter 1, verse 3.');
-    expect(result.note.ownerRef).toEqual('user01');
-    expect(result.note.content).toEqual('Enter note content');
-    expect(result.note.threadId).toEqual('');
+    verify(mockedProjectService.createNoteThread('project01', anything())).once();
+    const [, noteThread] = capture(mockedProjectService.createNoteThread).last();
+    expect(noteThread.verseRef).toEqual(verseData);
+    expect(noteThread.originalSelectedText).toEqual('target: chapter 1, verse 3.');
+    expect(noteThread.notes[0].ownerRef).toEqual('user01');
+    expect(noteThread.notes[0].content).toEqual('Enter note content');
+    expect(noteThread.notes[0].threadId).toContain(SF_NOTE_THREAD_PREFIX);
   }));
 
   it('does not save note if textarea is empty', fakeAsync(() => {
     env = new TestEnvironment({ verseRef: VerseRef.parse('MAT 1:1') });
     expect(env.noteInputElement).toBeTruthy();
     env.submit();
-    expect(env.dialogResult).toBeUndefined();
+    verify(mockedProjectService.createNoteThread(anything(), anything())).never();
+    expect(env.dialogResult).toBeFalsy();
   }));
 
   it('does not show text area for users without write permissions', fakeAsync(() => {
@@ -483,26 +485,36 @@ describe('NoteDialogComponent', () => {
   it('does not save if empty note added to an existing thread', fakeAsync(() => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
     expect(env.noteInputElement).toBeTruthy();
+    const noteThread: NoteThreadDoc = env.getNoteThreadDoc('thread01');
+    expect(noteThread.data!.notes.length).toEqual(5);
     env.submit();
-    expect(env.dialogResult).toBeUndefined();
+    expect(noteThread.data!.notes.length).toEqual(5);
+    expect(env.dialogResult).toBeFalsy();
   }));
 
   it('allows adding a note to an existing thread', fakeAsync(() => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
+    const noteThread: NoteThreadDoc = env.getNoteThreadDoc('thread01');
+    expect(noteThread.data!.notes.length).toEqual(5);
     expect(env.noteInputElement).toBeTruthy();
+    // note 03 is marked deleted and is not displayed
     expect(env.component.notesToDisplay.length).toEqual(4);
     const content = 'content in the thread';
     env.enterNoteContent('content in the thread');
     env.submit();
-    const result: NoteDialogResult = env.dialogResult as NoteDialogResult;
-    expect(result.note.dataId).not.toContain('note0');
-    expect(result.note.threadId).toEqual('thread01');
-    expect(result.note.content).toEqual(content);
+    expect(noteThread.data!.notes.length).toEqual(6);
+    expect(noteThread.data!.notes[5].dataId).not.toContain('note0');
+    expect(noteThread.data!.notes[5].threadId).toEqual('thread01');
+    expect(noteThread.data!.notes[5].content).toEqual(content);
+    expect(env.dialogResult).toBe(true);
   }));
 
   it('allows user to edit the last note in the thread', fakeAsync(() => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
+    // note03 is marked as deleted
     expect(env.notes.length).toEqual(4);
+    const noteThread: NoteThreadDoc = env.getNoteThreadDoc('thread01');
+    expect(noteThread.data!.notes[4].content).toEqual('note05');
     const noteNumbers = [1, 2, 3];
     noteNumbers.forEach(n => expect(env.noteHasEditActions(n)).toBe(false));
     expect(env.noteHasEditActions(4)).toBe(true);
@@ -514,18 +526,23 @@ describe('NoteDialogComponent', () => {
     const content = 'note 05 edited content';
     env.enterNoteContent(content);
     env.submit();
-    expect((env.dialogResult as NoteDialogResult).note.content).toEqual(content);
+    expect(noteThread.data!.notes[4].content).toEqual(content);
+    expect(env.dialogResult).toBe(true);
   }));
 
   it('allows user to delete the last note in the thread', fakeAsync(() => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
+    // note03 is marked as deleted
     expect(env.notes.length).toEqual(4);
+    const noteThread: NoteThreadDoc = env.getNoteThreadDoc('thread01');
+    expect(noteThread.data!.notes.length).toEqual(5);
     expect(env.noteHasEditActions(3)).toBe(false);
     expect(env.noteHasEditActions(4)).toBe(true);
     env.clickDeleteNote();
     verify(mockedDialogService.confirm(anything(), anything())).once();
     expect(env.notes.length).toEqual(3);
     expect(env.noteHasEditActions(3)).toBe(true);
+    expect(noteThread.data!.notes.length).toEqual(4);
   }));
 
   it('does not delete the note if a user cancels', fakeAsync(() => {
@@ -541,10 +558,13 @@ describe('NoteDialogComponent', () => {
   it('deletes the thread if the last note is deleted', fakeAsync(() => {
     env = new TestEnvironment({ noteThread: TestEnvironment.defaultNoteThread });
     expect(env.notes.length).toEqual(1);
+    const noteThread: NoteThreadDoc = env.getNoteThreadDoc('thread01');
+    expect(noteThread.data).toBeTruthy();
     expect(env.noteHasEditActions(1)).toBe(true);
     env.clickDeleteNote();
     verify(mockedDialogService.confirm(anything(), anything())).once();
-    expect((env.dialogResult as NoteDialogResult).deleted).toEqual(true);
+    expect(noteThread.data).toBeUndefined();
+    expect(env.dialogResult).toBe(true);
   }));
 });
 
@@ -780,8 +800,8 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   readonly component: NoteDialogComponent;
-  readonly dialogRef: MatDialogRef<NoteDialogComponent>;
-  dialogResult?: NoteDialogResult;
+  readonly dialogRef: MatDialogRef<NoteDialogComponent, boolean>;
+  dialogResult?: boolean;
 
   constructor({
     includeSnapshots = true,
@@ -918,6 +938,11 @@ class TestEnvironment {
     this.overlayContainerElement.query(By.css('.delete-button')).nativeElement.click();
     flush();
     this.fixture.detectChanges();
+  }
+
+  getNoteThreadDoc(threadId: string): NoteThreadDoc {
+    const id: string = [TestEnvironment.PROJECT01, threadId].join(':');
+    return this.realtimeService.get<NoteThreadDoc>(NoteThreadDoc.COLLECTION, id);
   }
 
   noteHasEditActions(noteNumber: number): boolean {
