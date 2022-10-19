@@ -217,8 +217,11 @@
     "comments": "Commentaires",
     "likes": "J'aime",
     "loading_questions": "Chargement des questions...",
-    "questions": "Questions",
-    "texts_with_questions": "Textes avec questions"
+    "manage_questions": "Manage questions",
+    "my_contributions": "My contributions",
+    "my_progress": "My progress",
+    "project_stats": "Project stats",
+    "questions": "Questions"
   },
   "edit_name_dialog": {
     "cancel": "Annuler",

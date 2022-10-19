@@ -217,8 +217,11 @@
     "comments": "Comentarii",
     "likes": "Aprecieri",
     "loading_questions": "Loading questions...",
-    "questions": "Întrebări",
-    "texts_with_questions": "Texte cu întrebări"
+    "manage_questions": "Manage questions",
+    "my_contributions": "My contributions",
+    "my_progress": "My progress",
+    "project_stats": "Project stats",
+    "questions": "Întrebări"
   },
   "edit_name_dialog": {
     "cancel": "Renunță",

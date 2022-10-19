@@ -121,13 +121,13 @@
     <value>تعمل أدواتنا للمراجعة المجتمعية على تسهيل حملات مراجعة النصوص الكتابية؛ بهدف توصيل آراء مجتمعية للجنة الترجمة بشكلٍ أسرع واشمل.</value>
   </data>
   <data name="AboutEngaging" xml:space="preserve">
-    <value>تستعين مشروعات ترجمة النصوص الكتابية، بشكل متزايد، بمجموعات من متحدثى اللغة الأصليين من مناطق جغرافية متنوعة.</value>
+    <value>تستعين مشروعات ترجمة النصوص الكتابية، بشكل متزايد، بمجموعات من متحدثي اللغة الأصليين من مناطق جغرافية متنوعة.</value>
   </data>
   <data name="AboutFlexible" xml:space="preserve">
     <value>مرن</value>
   </data>
   <data name="AboutFlexibleDescription" xml:space="preserve">
-    <value>جمع {0} أسئلة فريدية {1} تناسب سياقك الخاصّ.</value>
+    <value>٢ يجمع {0} أسئلة فريدة {1} تتناسب مع سياق مشروعك.</value>
   </data>
   <data name="AboutHeader" xml:space="preserve">
     <value>عن Scripture Forge</value>
@@ -136,28 +136,28 @@
     <value>يعمل مع Paratext</value>
   </data>
   <data name="AboutParatextDescription" xml:space="preserve">
-    <value>{2}دمج Paratext {3}و{0}التزامن المستمر {1} يُبقي مشروعك حديثاً ويسمح بتعليقات من المستخدم من خلال{4} Paratext Notes {3}.</value>
+    <value>١ يساعد {2} الدمج {3} و{0}التزامن المستمر {1} بين برنامجيّ Paratext و Scripture Forge على الحفاظ على مشروعك دائم التحديث، ويسمح بتسجيل آراء المستخدمين بواسطة {4} Paratext Notes {3}.</value>
   </data>
   <data name="AboutTitle" xml:space="preserve">
-    <value>وسِّع نطاق وصولك بفحص النصوص الكتابية</value>
+    <value>نطاقا اكثر اتساعا لمراجعة النصوص الكتابية</value>
   </data>
   <data name="AboutUserEngagement" xml:space="preserve">
-    <value>تفاعل المستخدم</value>
+    <value>تفاعل المُستخدِم</value>
   </data>
   <data name="AboutUserEngagementDescription" xml:space="preserve">
-    <value>3 {0}يستطيع المُستخدمون المدعوون {1} الإجابة عن الأسئلة، وترك التعليقات على الإجابات الموجودة وتسجيل الإعجاب بالإجابات.</value>
+    <value>٣ يمكن أن يجيب {0} المُستخدمون {1} المدعوون على أسئلتك، أو يتركوا تعليقاتهم على إجابات قائمة بالفعل، أو يعبروا عن إعجابهم ببعض الإجابات.</value>
   </data>
   <data name="Description" xml:space="preserve">
     <value>مجموعة أدوات مجانية لمزيد من الإنتاجية في مشروع Paratext الخاص بك، أينما كنت. </value>
   </data>
   <data name="EngageChecking" xml:space="preserve">
-    <value>المشاركة في التحقق من المجتمع</value>
+    <value>اشترك في عملية المراجعة المجتمعية</value>
   </data>
   <data name="EngageCollaborate" xml:space="preserve">
     <value>تعاون في مناقشة النصوص الكتابية</value>
   </data>
   <data name="EngageSuggestions" xml:space="preserve">
-    <value>احصل على اقتراحات أثناء الطباعة</value>
+    <value>احصل على اقتراحات تَرْجَمَة أثناء الكتابة</value>
   </data>
   <data name="EngageTitle" xml:space="preserve">
     <value>تفاعل مع اعضاء المجتمع اللغوى، وتعاون مع زملائك.</value>
@@ -166,10 +166,10 @@
     <value>"كان الأمر سهلاً جدًا.. كل ما كان عليّ فعله كي أبدأ هو التسجيل باستخدام حسابي على Paratext. وسرعان ما بدأت العمل بهذا البرنامج.</value>
   </data>
   <data name="QuoteQuotation2" xml:space="preserve">
-    <value>في الحال، اخترت آية، وكتبت سؤال مراجعة لها. ايضا، سجلت هذا السؤال بصوتي.</value>
+    <value>في الحال، اخترت آية، وكتبت سؤال مراجعة لها. أيضا، سجلت هذا السؤال بصوتي.</value>
   </data>
   <data name="QuoteQuotation3" xml:space="preserve">
-    <value>من الرائع أنه يمكن الحصول على الإجابة بأيّ الطريقتيّن. كل الخصائص رائعة للغاية، وتساعد في الحصول على مشاركات من على بُعد، بما فيها اختيار الإجابة على الأسئلة من خلال تسجيل صوتي.</value>
+    <value>من الرائع أنه يمكن الحصول على الإجابة بأيّ الطريقتيّن. كل الخصائص رائعة للغاية، وتساعد في الحصول على مشاركات من على بُعد، بما فيها اختيار الإجابة على الأسئلة بواسطة تسجيل صوتي.</value>
   </data>
   <data name="QuoteQuoterName" xml:space="preserve">
     <value>تريفور ديك</value>
@@ -178,6 +178,6 @@
     <value>اختصاصي الشتات العالمي لدى SIL</value>
   </data>
   <data name="Statement" xml:space="preserve">
-    <value>عندما تلتقي الترجمة بالمجتمع.</value>
+    <value>عندما تلتقي التَّرْجَمَة بالمجتمع.</value>
   </data>
 </root>

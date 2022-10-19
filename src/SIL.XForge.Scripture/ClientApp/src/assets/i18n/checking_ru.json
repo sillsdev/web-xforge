@@ -217,8 +217,11 @@
     "comments": "Комментарии",
     "likes": "Отметки «Нравиться»",
     "loading_questions": "Loading questions...",
-    "questions": "Вопросы",
-    "texts_with_questions": "Тексты с вопросами"
+    "manage_questions": "Manage questions",
+    "my_contributions": "My contributions",
+    "my_progress": "My progress",
+    "project_stats": "Project stats",
+    "questions": "Вопросы"
   },
   "edit_name_dialog": {
     "cancel": "Отмена",

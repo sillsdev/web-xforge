@@ -217,8 +217,11 @@
     "comments": "注解",
     "likes": "赞",
     "loading_questions": "Loading questions...",
-    "questions": "问题",
-    "texts_with_questions": "具有问题的文件"
+    "manage_questions": "Manage questions",
+    "my_contributions": "My contributions",
+    "my_progress": "My progress",
+    "project_stats": "Project stats",
+    "questions": "问题"
   },
   "edit_name_dialog": {
     "cancel": "取消",
