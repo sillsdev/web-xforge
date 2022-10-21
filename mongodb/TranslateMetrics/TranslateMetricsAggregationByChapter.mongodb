@@ -4,8 +4,8 @@
 
 // Aggregates the translate metrics for the given project, book and chapter.
 // Check in the VSCode Output panel to confirm the correct project and book.
-const projectRef = '5f75a079c2dab415404e29ca';
-const bookId = 'MAT';
+const projectRef = '';
+const bookId = '';
 
 use('xforge');
 
