@@ -94,6 +94,39 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task InviteAsync_SpecificSharingEnabled_InvitedWithTranslateRoles()
+        {
+            var env = new TestEnvironment();
+            const string observerEmail = "sf_observer@example.com";
+            env.SecurityService.GenerateKey().Returns("sfobserverkey");
+            await env.Service.InviteAsync(User01, Project04, observerEmail, "en", SFProjectRole.SFObserver);
+            await env.EmailService
+                .Received(1)
+                .SendEmailAsync(
+                    observerEmail,
+                    Arg.Any<string>(),
+                    Arg.Is<string>(
+                        body =>
+                            body.Contains($"http://localhost/projects/{Project04}?sharing=true&shareKey=sfobserverkey")
+                    )
+                );
+
+            const string reviewerEmail = "reviewer@example.com";
+            env.SecurityService.GenerateKey().Returns("reviewerkey");
+            await env.Service.InviteAsync(User01, Project04, reviewerEmail, "en", SFProjectRole.Reviewer);
+            await env.EmailService
+                .Received(1)
+                .SendEmailAsync(
+                    reviewerEmail,
+                    Arg.Any<string>(),
+                    Arg.Is<string>(
+                        body =>
+                            body.Contains($"http://localhost/projects/{Project04}?sharing=true&shareKey=reviewerkey")
+                    )
+                );
+        }
+
+        [Test]
         public async Task InviteAsync_SpecificSharingEnabled_UserInvitedTwiceButWithSameCode()
         {
             var env = new TestEnvironment();
