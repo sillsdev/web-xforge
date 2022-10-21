@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using NSubstitute;
 using NUnit.Framework;
+using SIL.Machine.Corpora;
 using SIL.Machine.WebApi.Services;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Realtime;
@@ -22,6 +23,9 @@ namespace SIL.XForge.Scripture.Services
         private static readonly string Project02 = "project02";
         private static readonly string Project03 = "project03";
         private const string User01 = "user01";
+        private static readonly string Corpus01 = "corpus01";
+        private static readonly string File01 = "file01";
+        private static readonly string File02 = "file02";
 
         [Test]
         public async Task AddProjectAsync_ExecutesInMemoryMachineAndMachineApi()
@@ -54,11 +58,56 @@ namespace SIL.XForge.Scripture.Services
 
             // Set up test environment
             var env = new TestEnvironment(httpClient);
+            env.TextCorpusFactory
+                .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
+                .Returns(
+                    Task.FromResult<ITextCorpus>(
+                        new MockTextCorpus
+                        {
+                            Texts = new[]
+                            {
+                                new MockText
+                                {
+                                    Id = "textId",
+                                    Segments = new List<TextSegment>
+                                    {
+                                        new TextSegment(
+                                            "textId",
+                                            "segRef",
+                                            new string[] { "segment01" },
+                                            false,
+                                            false,
+                                            false,
+                                            false
+                                        ),
+                                    },
+                                },
+                            },
+                        }
+                    )
+                );
 
             // SUT
-            await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
+            await env.Service.BuildProjectAsync(User01, Project02, true, CancellationToken.None);
 
             Assert.AreEqual(1, handler.NumberOfCalls);
+        }
+
+        [Test]
+        public async Task BuildProjectAsync_DoesNotCallMachineApiIfNoTextChanges()
+        {
+            // Set up a mock Machine API
+            var response = $"{{\"id\": \"633711040935fe633f927c80\",\"state\":\"pending\"}}";
+            var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
+            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+
+            // Set up test environment
+            var env = new TestEnvironment(httpClient);
+
+            // SUT
+            await env.Service.BuildProjectAsync(User01, Project02, true, CancellationToken.None);
+
+            Assert.AreEqual(0, handler.NumberOfCalls);
         }
 
         [Test]
@@ -72,9 +121,21 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment(httpClient);
 
             // SUT
-            await env.Service.BuildProjectAsync(User01, Project01, CancellationToken.None);
+            await env.Service.BuildProjectAsync(User01, Project01, true, CancellationToken.None);
 
             Assert.AreEqual(0, handler.NumberOfCalls);
+        }
+
+        [Test]
+        public async Task BuildProjectAsync_DoesNotExecuteInMemoryMachine()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+
+            // SUT
+            await env.Service.BuildProjectAsync(User01, Project01, false, CancellationToken.None);
+
+            await env.EngineService.DidNotReceive().StartBuildByProjectIdAsync(Project01);
         }
 
         [Test]
@@ -84,7 +145,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
 
             // SUT
-            await env.Service.BuildProjectAsync(User01, Project01, CancellationToken.None);
+            await env.Service.BuildProjectAsync(User01, Project01, true, CancellationToken.None);
 
             await env.EngineService.Received().StartBuildByProjectIdAsync(Project01);
         }
@@ -102,7 +163,11 @@ namespace SIL.XForge.Scripture.Services
             // SUT
             await env.Service.RemoveProjectAsync(User01, Project02, CancellationToken.None);
 
+            // Ensure the the web API was called one, and the corpus and any files are deleted
             Assert.AreEqual(1, handler.NumberOfCalls);
+            await env.MachineCorporaService.Received(1).DeleteCorpusAsync(Corpus01, CancellationToken.None);
+            await env.MachineCorporaService.Received(1).DeleteCorpusFileAsync(Corpus01, File01, CancellationToken.None);
+            await env.MachineCorporaService.Received(1).DeleteCorpusFileAsync(Corpus01, File02, CancellationToken.None);
         }
 
         [Test]
@@ -141,7 +206,8 @@ namespace SIL.XForge.Scripture.Services
                 var httpClientFactory = Substitute.For<IHttpClientFactory>();
                 httpClientFactory.CreateClient(Arg.Any<string>()).Returns(httpClient);
                 var logger = new MockLogger<MachineProjectService>();
-                var machineCorporaService = Substitute.For<IMachineCorporaService>();
+                MachineCorporaService = Substitute.For<IMachineCorporaService>();
+                TextCorpusFactory = Substitute.For<ITextCorpusFactory>();
 
                 ProjectSecrets = new MemoryRepository<SFProjectSecret>(
                     new[]
@@ -150,7 +216,16 @@ namespace SIL.XForge.Scripture.Services
                         new SFProjectSecret
                         {
                             Id = Project02,
-                            MachineData = new MachineData { TranslationEngineId = Project02 },
+                            MachineData = new MachineData
+                            {
+                                TranslationEngineId = Project02,
+                                CorpusId = Corpus01,
+                                Files = new List<MachineCorpusFile>
+                                {
+                                    new MachineCorpusFile { FileId = File01 },
+                                    new MachineCorpusFile { FileId = File02 },
+                                },
+                            },
                         },
                         new SFProjectSecret { Id = Project03 },
                     }
@@ -201,22 +276,22 @@ namespace SIL.XForge.Scripture.Services
                     )
                 );
 
-                var textCorpusFactory = Substitute.For<ITextCorpusFactory>();
-
                 Service = new MachineProjectService(
                     EngineService,
                     httpClientFactory,
                     logger,
-                    machineCorporaService,
+                    MachineCorporaService,
                     ProjectSecrets,
                     realtimeService,
-                    textCorpusFactory
+                    TextCorpusFactory
                 );
             }
 
             public MachineProjectService Service { get; }
             public IEngineService EngineService { get; }
+            public IMachineCorporaService MachineCorporaService { get; }
             public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
+            public ITextCorpusFactory TextCorpusFactory { get; }
         }
     }
 }
