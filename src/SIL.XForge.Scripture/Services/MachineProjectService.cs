@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
@@ -68,7 +69,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 Id = projectId,
                 SourceLanguageTag = projectDoc.Data.TranslateConfig.Source.WritingSystem.Tag,
-                TargetLanguageTag = projectDoc.Data.WritingSystem.Tag
+                TargetLanguageTag = projectDoc.Data.WritingSystem.Tag,
             };
             await _engineService.AddProjectAsync(machineProject);
 
@@ -108,10 +109,18 @@ namespace SIL.XForge.Scripture.Services
             );
         }
 
-        public async Task BuildProjectAsync(string curUserId, string projectId, CancellationToken cancellationToken)
+        public async Task BuildProjectAsync(
+            string curUserId,
+            string projectId,
+            bool trainInMemoryEngine,
+            CancellationToken cancellationToken
+        )
         {
             // Build the project with the in-memory Machine instance
-            await _engineService.StartBuildByProjectIdAsync(projectId);
+            if (trainInMemoryEngine)
+            {
+                await _engineService.StartBuildByProjectIdAsync(projectId);
+            }
 
             // Load the target project secrets, so we can get the translation engine ID
             if (!(await _projectSecrets.TryGetAsync(projectId)).TryResult(out SFProjectSecret projectSecret))
@@ -124,16 +133,17 @@ namespace SIL.XForge.Scripture.Services
             {
                 // TODO: Run the below in another thread
                 // Sync the corpus
-                await SyncProjectCorporaAsync(curUserId, projectId, cancellationToken);
-
-                // Start the build
-                string requestUri = $"translation-engines/{projectSecret.MachineData.TranslationEngineId}/builds";
-                using var response = await _machineClient.PostAsync(requestUri, null, cancellationToken);
-
-                // TODO: Use the response body?
-                if (!response.IsSuccessStatusCode)
+                if (await SyncProjectCorporaAsync(curUserId, projectId, cancellationToken))
                 {
-                    throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
+                    // If the corpus was updated, start the build
+                    string requestUri = $"translation-engines/{projectSecret.MachineData.TranslationEngineId}/builds";
+                    using var response = await _machineClient.PostAsync(requestUri, null, cancellationToken);
+
+                    // TODO: Use the response body to track the build
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
+                    }
                 }
             }
             else
@@ -166,6 +176,42 @@ namespace SIL.XForge.Scripture.Services
                         $"Translation engine {projectSecret.MachineData.TranslationEngineId} for project {projectId} could not be deleted."
                     );
                 }
+
+                // Remove the corpus files
+                string corpusId = projectSecret.MachineData.CorpusId;
+                foreach (string fileId in projectSecret.MachineData.Files.Select(f => f.FileId))
+                {
+                    try
+                    {
+                        await _machineCorporaService.DeleteCorpusFileAsync(corpusId, fileId, cancellationToken);
+                    }
+                    catch (HttpRequestException ex)
+                    {
+                        // A 404 means that the file does not exist
+                        if (ex.StatusCode == HttpStatusCode.NotFound)
+                        {
+                            _logger.LogInformation(
+                                $"Corpora file {fileId} in corpus {corpusId} for project {projectId} was missing or already deleted."
+                            );
+                        }
+                    }
+                }
+
+                // Remove the corpus
+                try
+                {
+                    await _machineCorporaService.DeleteCorpusAsync(corpusId, cancellationToken);
+                }
+                catch (HttpRequestException ex)
+                {
+                    // A 404 means that the file does not exist
+                    if (ex.StatusCode == HttpStatusCode.NotFound)
+                    {
+                        _logger.LogInformation(
+                            $"Corpora {corpusId} for project {projectId} was missing or already deleted."
+                        );
+                    }
+                }
             }
             else
             {
@@ -173,12 +219,16 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        public async Task SyncProjectCorporaAsync(
+        public async Task<bool> SyncProjectCorporaAsync(
             string curUserId,
             string projectId,
             CancellationToken cancellationToken
         )
         {
+            // TODO: Unit Tests for this method
+            // We will return whether the corpus was updated
+            bool corpusUpdated = false;
+
             // Load the project from the realtime service
             using IConnection conn = await _realtimeService.ConnectAsync(curUserId);
             IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
@@ -193,11 +243,23 @@ namespace SIL.XForge.Scripture.Services
                 throw new ArgumentException("The project secret cannot be found.");
             }
 
+            // Ensure we have a translation engine ID
+            if (string.IsNullOrEmpty(projectSecret.MachineData?.TranslationEngineId))
+            {
+                throw new ArgumentException("The translation engine ID cannot be found.");
+            }
+
             // Ensure that there is a corpus
             string corpusId;
-            if (string.IsNullOrEmpty(projectSecret.MachineData?.CorpusId))
+            if (string.IsNullOrEmpty(projectSecret.MachineData.CorpusId))
             {
                 corpusId = await _machineCorporaService.AddCorpusAsync(projectId, false, cancellationToken);
+                await _machineCorporaService.AddCorpusToTranslationEngineAsync(
+                    projectSecret.MachineData.TranslationEngineId,
+                    corpusId,
+                    false,
+                    cancellationToken
+                );
 
                 // Store the Corpus ID
                 await _projectSecrets.UpdateAsync(projectId, u => u.Set(p => p.MachineData.CorpusId, corpusId));
@@ -215,7 +277,7 @@ namespace SIL.XForge.Scripture.Services
 
             // Reuse the SFTextCorpusFactory implementation
             ITextCorpus? textCorpus = await _textCorpusFactory.CreateAsync(new[] { projectId }, TextCorpusType.Source);
-            await SyncTextCorpus(
+            corpusUpdated |= await SyncTextCorpus(
                 corpusId,
                 projectDoc.Data,
                 projectSecret,
@@ -226,7 +288,7 @@ namespace SIL.XForge.Scripture.Services
             );
 
             textCorpus = await _textCorpusFactory.CreateAsync(new[] { projectId }, TextCorpusType.Target);
-            await SyncTextCorpus(
+            corpusUpdated |= await SyncTextCorpus(
                 corpusId,
                 projectDoc.Data,
                 projectSecret,
@@ -236,10 +298,10 @@ namespace SIL.XForge.Scripture.Services
                 cancellationToken
             );
 
-            // TODO: Remove corpus file records in the project secret that no longer exist?
+            return corpusUpdated;
         }
 
-        private async Task SyncTextCorpus(
+        private async Task<bool> SyncTextCorpus(
             string corpusId,
             SFProject project,
             SFProjectSecret projectSecret,
@@ -249,8 +311,10 @@ namespace SIL.XForge.Scripture.Services
             CancellationToken cancellationToken
         )
         {
+            // We will return whether the corpus was updated
+            bool corpusUpdated = false;
+
             // Get the language tag
-            // TODO: Ensure that this is a valid value!
             string languageTag;
             if (type == TextCorpusType.Target)
             {
@@ -310,11 +374,10 @@ namespace SIL.XForge.Scripture.Services
                 {
                     // See if the corpus exists, and delete it if it does
                     bool uploadText = false;
+                    string textId = $"{text.Id}_{type.ToString().ToLowerInvariant()}";
                     string textFileData = sb.ToString();
                     string checksum = StringUtils.ComputeMd5Hash(textFileData);
-                    MachineCorpusFile? previousCorpusFile = previousCorpusFiles.FirstOrDefault(
-                        c => c.TextId == text.Id
-                    );
+                    MachineCorpusFile? previousCorpusFile = previousCorpusFiles.FirstOrDefault(c => c.TextId == textId);
                     if (previousCorpusFile is null)
                     {
                         uploadText = true;
@@ -338,7 +401,7 @@ namespace SIL.XForge.Scripture.Services
                         string fileId = await _machineCorporaService.UploadCorpusTextAsync(
                             corpusId,
                             languageTag,
-                            text.Id,
+                            textId,
                             textFileData,
                             cancellationToken
                         );
@@ -357,7 +420,7 @@ namespace SIL.XForge.Scripture.Services
                                             FileChecksum = checksum,
                                             FileId = fileId,
                                             LanguageTag = languageTag,
-                                            TextId = text.Id,
+                                            TextId = textId,
                                         }
                                     )
                             );
@@ -372,9 +435,13 @@ namespace SIL.XForge.Scripture.Services
                                         .Set(p => p.MachineData.Files[index.Value].LanguageTag, languageTag)
                             );
                         }
+
+                        corpusUpdated = true;
                     }
                 }
             }
+
+            return corpusUpdated;
         }
 
         protected override void DisposeManagedResources()
