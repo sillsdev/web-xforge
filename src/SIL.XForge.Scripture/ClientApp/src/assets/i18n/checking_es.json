@@ -217,10 +217,10 @@
     "comments": "Comentarios",
     "likes": "Me gusta",
     "loading_questions": "Cargando preguntas...",
-    "manage_questions": "Manage questions",
-    "my_contributions": "My contributions",
-    "my_progress": "My progress",
-    "project_stats": "Project stats",
+    "manage_questions": "Administrar preguntas",
+    "my_contributions": "Mis contribuciones",
+    "my_progress": "Mi progreso",
+    "project_stats": "Estadísticas del proyecto",
     "questions": "Preguntas"
   },
   "edit_name_dialog": {

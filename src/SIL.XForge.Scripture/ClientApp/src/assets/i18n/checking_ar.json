@@ -217,10 +217,10 @@
     "comments": "تعليقات",
     "likes": "إعجابات",
     "loading_questions": "تحميل الأسئلة...",
-    "manage_questions": "Manage questions",
-    "my_contributions": "My contributions",
-    "my_progress": "My progress",
-    "project_stats": "Project stats",
+    "manage_questions": "إدارة الأسئلة",
+    "my_contributions": "مساهماتي",
+    "my_progress": "مستوى التقدُّم",
+    "project_stats": "تحديثات المشروع",
     "questions": "أسئلة"
   },
   "edit_name_dialog": {
