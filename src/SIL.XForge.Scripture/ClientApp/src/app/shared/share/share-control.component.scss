@@ -19,13 +19,8 @@ form {
   flex-direction: column;
 }
 
-mdc-text-field {
+.share-link-field {
   width: 100%;
-}
-
-.mdc-typography--subtitle1 {
-  // the color is already this in a dialog, this ensures it when used outside of a dialog
-  color: rgba(0, 0, 0, 0.6);
 }
 
 #send-btn {
