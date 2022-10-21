@@ -81,7 +81,7 @@ export class CommandService {
         throw response.error;
       }
       return response.result;
-    } catch (error) {
+    } catch (error: any) {
       // Transform the various kinds of errors into a CommandError.
 
       let code: CommandErrorCode = CommandErrorCode.Other;

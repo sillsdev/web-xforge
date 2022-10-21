@@ -274,7 +274,7 @@ export class AuthService {
       }
       await this.remoteStore.init(() => this.getAccessToken());
       return { loggedIn: true, newlyLoggedIn: false };
-    } catch (error) {
+    } catch (error: any) {
       await this.handleLoginError('tryLogIn', error);
       return { loggedIn: false, newlyLoggedIn: false };
     }
@@ -315,7 +315,7 @@ export class AuthService {
         }
       }
       return { loggedIn: true, newlyLoggedIn: false };
-    } catch (error) {
+    } catch (error: any) {
       await this.handleLoginError('tryOnlineLogIn', error);
       return { loggedIn: false, newlyLoggedIn: false };
     }
@@ -453,7 +453,7 @@ export class AuthService {
             success = true;
             resolve();
           }
-        } catch (err) {
+        } catch (err: any) {
           console.error('Error while renewing access token:', err);
           this.reportingService.silentError('Error while renewing access token', err);
           success = false;
@@ -478,7 +478,7 @@ export class AuthService {
         try {
           const tokenResponse = await this.getTokenDetails();
           resolve(tokenResponse);
-        } catch (err) {
+        } catch (err: any) {
           if (err.error === 'login_required') {
             resolve(null);
           } else if (retryUponTimeout && err.error === 'timeout') {
