@@ -1710,7 +1710,7 @@ namespace SIL.XForge.Scripture.Services
                         ParatextId = remotePtProject.SendReceiveId.Id,
                         Name = fullOrShortName,
                         ShortName = remotePtProject.ScrTextName,
-                        LanguageTag = correspondingSfProject?.WritingSystem.Tag,
+                        LanguageTag = correspondingSfProject?.WritingSystem.Tag ?? projectMD?.LanguageId.Code,
                         ProjectId = correspondingSfProject?.Id,
                         IsConnectable = ptProjectIsConnectable,
                         IsConnected = sfProjectExists && sfUserIsOnSfProject
