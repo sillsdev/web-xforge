@@ -189,6 +189,7 @@ describe('ShareControlComponent', () => {
     env.setCheckingShareLevel(CheckingShareLevel.Anyone);
     expect(env.shareLink.nativeElement.value).toEqual('');
     expect(env.linkSharingOfflineMessage).not.toBeNull();
+    expect(env.shareLinkCopyIcon.nativeElement.disabled).toBe(true);
   }));
 
   it('clicking copy link icon should copy link to clipboard', fakeAsync(() => {
@@ -408,7 +409,7 @@ class TestEnvironment {
   }
 
   get shareLink(): DebugElement {
-    return this.fetchElement('#share-link input');
+    return this.fetchElement('#share-link');
   }
 
   get shareLinkCopyIcon(): DebugElement {
