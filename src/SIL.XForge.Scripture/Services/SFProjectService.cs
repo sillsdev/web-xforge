@@ -247,6 +247,7 @@ namespace SIL.XForge.Scripture.Services
                 // Get the source - any creation or permission updates are handled in GetTranslateSourceAsync
                 TranslateSource source = null;
                 bool unsetSourceProject = settings.SourceParatextId == ProjectSettingValueUnset;
+                string writingSystemTag = projectDoc.Data.WritingSystem?.Tag;
                 if (settings.SourceParatextId != null && !unsetSourceProject)
                 {
                     Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
@@ -265,6 +266,13 @@ namespace SIL.XForge.Scripture.Services
                     {
                         // A project cannot reference itself
                         source = null;
+                    }
+
+                    // Update the writing system tag, if it is null
+                    ParatextProject paratextProject = ptProjects.FirstOrDefault(p => p.ProjectId == projectId);
+                    if (string.IsNullOrEmpty(writingSystemTag) && !string.IsNullOrEmpty(paratextProject?.LanguageTag))
+                    {
+                        writingSystemTag = paratextProject.LanguageTag;
                     }
                 }
 
@@ -289,6 +297,7 @@ namespace SIL.XForge.Scripture.Services
                     UpdateSetting(op, p => p.CheckingConfig.ShareEnabled, settings.CheckingShareEnabled);
                     UpdateSetting(op, p => p.CheckingConfig.ShareLevel, settings.CheckingShareLevel);
                     UpdateSetting(op, p => p.CheckingConfig.AnswerExportMethod, settings.CheckingAnswerExport);
+                    UpdateSetting(op, p => p.WritingSystem.Tag, writingSystemTag);
                 });
 
                 bool suggestionsEnabledSet = settings.TranslationSuggestionsEnabled != null;
