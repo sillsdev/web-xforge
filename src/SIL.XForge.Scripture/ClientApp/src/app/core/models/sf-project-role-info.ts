@@ -10,7 +10,7 @@ export const SF_PROJECT_ROLES: ProjectRoleInfo[] = [
     canBeShared: false
   },
   { role: SFProjectRole.ParatextObserver, displayName: 'Observer', canBeShared: false },
-  { role: SFProjectRole.Reviewer, displayName: 'Reviewer', canBeShared: false },
+  { role: SFProjectRole.Reviewer, displayName: 'Reviewer', canBeShared: true },
   { role: SFProjectRole.CommunityChecker, displayName: 'Community Checker', canBeShared: true },
   { role: SFProjectRole.Observer, displayName: 'View Translation', canBeShared: true }
 ];

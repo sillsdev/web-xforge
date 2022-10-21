@@ -402,7 +402,8 @@ namespace SIL.XForge.Scripture.Services
                     SFProjectRole.CommunityChecker,
                     project.CheckingConfig.CheckingEnabled && (isAdmin || project.CheckingConfig.ShareEnabled)
                 },
-                { SFProjectRole.SFObserver, project.TranslateConfig.ShareEnabled || isAdmin }
+                { SFProjectRole.SFObserver, project.TranslateConfig.ShareEnabled || isAdmin },
+                { SFProjectRole.Reviewer, project.TranslateConfig.ShareEnabled || isAdmin }
             }
                 .Where(entry => entry.Value)
                 .Select(entry => entry.Key)
@@ -489,6 +490,11 @@ namespace SIL.XForge.Scripture.Services
                 },
                 {
                     SFProjectRole.SFObserver,
+                    project.TranslateConfig.ShareEnabled
+                        && project.TranslateConfig.ShareLevel == TranslateShareLevel.Anyone
+                },
+                {
+                    SFProjectRole.Reviewer,
                     project.TranslateConfig.ShareEnabled
                         && project.TranslateConfig.ShareLevel == TranslateShareLevel.Anyone
                 }
@@ -627,6 +633,11 @@ namespace SIL.XForge.Scripture.Services
                     },
                     {
                         SFProjectRole.SFObserver,
+                        project.TranslateConfig.ShareEnabled
+                            && project.TranslateConfig.ShareLevel == TranslateShareLevel.Anyone
+                    },
+                    {
+                        SFProjectRole.Reviewer,
                         project.TranslateConfig.ShareEnabled
                             && project.TranslateConfig.ShareLevel == TranslateShareLevel.Anyone
                     }
