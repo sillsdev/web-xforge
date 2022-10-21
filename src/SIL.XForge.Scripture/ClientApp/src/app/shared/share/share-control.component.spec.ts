@@ -217,13 +217,23 @@ describe('ShareControlComponent', () => {
   }));
 
   it('changing user role refreshes the share key', fakeAsync(() => {
-    const env = new TestEnvironment({ isLinkSharingEnabled: true, projectId: 'myProject1' });
+    const env = new TestEnvironment({
+      projectId: 'project01',
+      userId: 'user02',
+      isLinkSharingEnabled: true
+    });
     env.wait();
-    env.hostComponent.component.roleControl.setValue(SFProjectRole.Observer);
+    const roles: string[] = env.component.availableRolesInfo.map(info => info.role);
+    expect(roles).toContain(SFProjectRole.CommunityChecker);
+    expect(roles).toContain(SFProjectRole.Observer);
+    expect(roles).toContain(SFProjectRole.Reviewer);
+    env.component.roleControl.setValue(SFProjectRole.Observer);
     env.wait();
-    verify(mockedProjectService.onlineGetLinkSharingKey('myProject1', anything())).twice();
-    expect().nothing();
-    flush();
+    verify(mockedProjectService.onlineGetLinkSharingKey('project01', anything())).twice();
+    env.component.roleControl.setValue(SFProjectRole.Reviewer);
+    env.wait();
+    verify(mockedProjectService.onlineGetLinkSharingKey('project01', anything())).thrice();
+    expect(env.component.isLinkSharingEnabled).toBe(true);
   }));
 
   it('role should be visible for administrators', fakeAsync(() => {
@@ -242,15 +252,14 @@ describe('ShareControlComponent', () => {
     const env = new TestEnvironment({ userId: 'user02', projectId: 'project01' });
     env.wait();
     expect(env.hostComponent.component.roleControl.value).toEqual(SF_DEFAULT_SHARE_ROLE);
-    expect(env.hostComponent.component.availableRolesInfo.length).toBe(2);
+    expect(env.hostComponent.component.availableRolesInfo.length).toBe(3);
   }));
 
   it('default share role should be translation observer when checking is disabled', fakeAsync(() => {
     const env = new TestEnvironment({ userId: 'user02', projectId: 'project01', checkingEnabled: false });
     env.wait();
     expect(env.hostComponent.component.roleControl.value).toEqual(SF_DEFAULT_TRANSLATE_SHARE_ROLE);
-    expect(env.hostComponent.component.availableRolesInfo.length).toBe(1);
-    expect(env.hostComponent.component.availableRolesInfo[0].role).toBe(SF_DEFAULT_TRANSLATE_SHARE_ROLE);
+    expect(env.hostComponent.component.availableRolesInfo.length).toBe(2);
   }));
 
   it('should hide link sharing if checking is unavailable', fakeAsync(() => {
