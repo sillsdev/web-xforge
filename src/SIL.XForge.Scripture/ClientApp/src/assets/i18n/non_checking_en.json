@@ -206,7 +206,12 @@
     "pt_translator": "Translator",
     "sf_community_checker": "Community Checker",
     "sf_reviewer": "Reviewer",
-    "sf_observer": "View Translation"
+    "sf_observer": "Observer"
+  },
+  "role_descriptions": {
+    "sf_community_checker": "Answer questions, Comment on answers",
+    "sf_reviewer": "View translation, Add notes",
+    "sf_observer": "View translation"
   },
   "settings": {
     "anyone_with_a_link": "Anyone with a link",

@@ -31,3 +31,17 @@ form {
 .invite-by-link .offline-text {
   margin-top: 20px;
 }
+
+::ng-deep .invitation-role-panel .mat-option {
+  height: 4em !important;
+
+  .role-name,
+  .role-description {
+    line-height: initial;
+  }
+  .role-description {
+    color: gray;
+    font-size: 0.9em;
+    margin-top: 0.25em;
+  }
+}
