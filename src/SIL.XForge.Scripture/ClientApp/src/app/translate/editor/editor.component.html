@@ -102,6 +102,7 @@
             (loaded)="onTextLoaded('target')"
             (focused)="targetFocused = $event"
             (presenceChange)="onPresenceChange($event)"
+            (showNoteThread)="insertNote()"
             [highlightSegment]="targetFocused && canEdit"
             [enablePresence]="true"
             [markInvalid]="true"

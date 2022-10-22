@@ -115,6 +115,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   @Output() segmentRefChange = new EventEmitter<string>();
   @Output() loaded = new EventEmitter(true);
   @Output() focused = new EventEmitter<boolean>(true);
+  @Output() showNoteThread = new EventEmitter<boolean>(true);
   @Output() presenceChange = new EventEmitter<RemotePresences | undefined>(true);
   lang: string = '';
   // only use USX formats and not default Quill formats
@@ -238,6 +239,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private initialSegmentFocus?: boolean;
   private _highlightSegment: boolean = false;
   private highlightMarker?: HTMLElement;
+  private noteButton?: HTMLElement;
   private highlightMarkerTop: number = 0;
   private highlightMarkerHeight: number = 0;
   private _placeholder?: string;
@@ -469,6 +471,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   onEditorCreated(editor: Quill): void {
     this._editor = editor;
     this.highlightMarker = this._editor.addContainer('highlight-marker');
+    this.noteButton = this._editor.addContainer('note-button');
     if (this.highlightMarker != null) {
       this.highlightMarker.style.visibility = 'hidden';
     }
@@ -1481,6 +1484,22 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     } else {
       this.highlightMarker.style.marginTop = marginTop + 'px';
       this.highlightMarker.style.height = this.highlightMarkerHeight + 'px';
+    }
+    if (this.noteButton != null) {
+      this.noteButton.style.marginTop = this.highlightMarker.style.marginTop;
+      this.noteButton.style.top = this.highlightMarker.style.top;
+      this.noteButton.style.right = '18px';
+      this.noteButton.style.position = 'absolute';
+      this.noteButton.style.fontSize = '1.5rem';
+      this.noteButton.style.padding = '0.25rem';
+      this.noteButton.style.borderRadius = '50%';
+      this.noteButton.style.cursor = 'pointer';
+      this.noteButton.style.background = '#5f7333';
+      this.noteButton.style.boxShadow = '2px 4px 4px -4px #bfb092';
+      this.noteButton.style.color = 'white';
+      this.noteButton.style.fontFamily = 'Material Icons';
+      this.noteButton.textContent = 'add_comment';
+      this.noteButton.onclick = () => this.showNoteThread.emit();
     }
   }
 
