@@ -208,8 +208,12 @@ export class I18nService {
     return `${this.localizeBook(verse.bookNum)} ${verse.chapterNum}${directionMark}:${range}`;
   }
 
-  localizeRole(role: string) {
+  localizeRole(role: string): string {
     return this.transloco.translate(`roles.${role}`);
+  }
+
+  localizeRoleDescription(role: string): string {
+    return this.transloco.translate(`role_descriptions.${role}`).replace(/\s*,\s*/, ' • ');
   }
 
   translate(key: string, params: object = {}): Observable<string> {
