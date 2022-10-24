@@ -4,8 +4,8 @@
 
 // Aggregates the translate metrics for the given project and book.
 // Check in the VSCode Output panel to confirm the correct project and book.
-const projectRef = '5f75a079c2dab415404e29ca';
-const bookId = 'MAT';
+const projectRef = '';
+const bookId = '';
 
 use('xforge');
 
@@ -17,7 +17,7 @@ const project = db.sf_projects.findOne({ _id: projectRef });
 console.log(`project: ${project.shortName} - ${project.name}`);
 console.log(`book: ${Canon.bookNumberToEnglishName(bookNum)} (${bookNum})`);
 
-db.translate_metrics.aggregate([
+const results = db.translate_metrics.aggregate([
   { $match: { projectRef, bookNum } },
   { $group: {
     _id: { segment: '$segment', chapterNum: '$chapterNum' },
@@ -48,4 +48,35 @@ db.translate_metrics.aggregate([
     agMouseClickCount: { $sum: '$sumMouseClickCount' },
   } },
   { $sort: { _id: 1 } }
-]);
+]).toArray();
+
+console.log(
+  'Chapter,' +
+  'Source word count,' +
+  'Target word count,' +
+  'Backspace key,' +
+  'Delete key,' +
+  'Key characters,' +
+  'Productive characters,' +
+  'Accepted suggestions,' +
+  'Total suggestions,' +
+  'Time editing,' +
+  'Key navigations,' +
+  'Mouse clicks'
+)
+for (const result of results) {
+  console.log(
+    result._id + ',' +
+    result.amSourceWordCount + ',' +
+    result.amTargetWordCount + ',' +
+    result.agKeyBackspaceCount + ',' +
+    result.agKeyDeleteCount + ',' +
+    result.agKeyCharacterCount + ',' +
+    result.agProductiveCharacterCount + ',' +
+    result.agSuggestionAcceptedCount + ',' +
+    result.agSuggestionTotalCount + ',' +
+    result.agTimeEditActive + ',' +
+    result.agKeyNavigationCount + ',' +
+    result.agMouseClickCount
+  );
+}
