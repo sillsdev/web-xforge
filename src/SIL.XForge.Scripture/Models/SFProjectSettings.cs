@@ -18,5 +18,6 @@ namespace SIL.XForge.Scripture.Models
         public bool? DownloadAudioFiles { get; set; }
         public bool? CheckingShareEnabled { get; set; }
         public string CheckingShareLevel { get; set; }
+        public string CheckingAnswerExport { get; set; }
     }
 }

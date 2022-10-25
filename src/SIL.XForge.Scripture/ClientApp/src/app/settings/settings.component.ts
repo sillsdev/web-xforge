@@ -4,6 +4,7 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { combineLatest } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -35,9 +36,11 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   usersSeeEachOthersResponses = new FormControl(false);
   checkingShareEnabled = new FormControl(false);
   checkingShareLevel = new FormControl(undefined);
+  checkingAnswerExport = new FormControl(undefined);
 
   TranslateShareLevel = TranslateShareLevel;
   CheckingShareLevel = CheckingShareLevel;
+  CheckingAnswerExport = CheckingAnswerExport;
 
   form = new FormGroup({
     translationSuggestionsEnabled: this.translationSuggestionsEnabled,
@@ -47,7 +50,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     checkingEnabled: this.checkingEnabled,
     usersSeeEachOthersResponses: this.usersSeeEachOthersResponses,
     checkingShareEnabled: this.checkingShareEnabled,
-    checkingShareLevel: this.checkingShareLevel
+    checkingShareLevel: this.checkingShareLevel,
+    checkingAnswerExport: this.checkingAnswerExport
   });
 
   isActiveSourceProject: boolean = false;
@@ -320,6 +324,12 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     ) {
       this.updateSetting(newValue, 'translateShareLevel');
     }
+    if (
+      newValue.checkingAnswerExport != null &&
+      newValue.checkingAnswerExport !== this.previousFormValues.checkingAnswerExport
+    ) {
+      this.updateSetting(newValue, 'checkingAnswerExport');
+    }
   }
 
   private checkUpdateStatus(setting: Extract<keyof SFProjectSettings, string>, updatePromise: Promise<void>): void {
@@ -343,7 +353,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       checkingEnabled: this.projectDoc.data.checkingConfig.checkingEnabled,
       usersSeeEachOthersResponses: this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses,
       checkingShareEnabled: this.projectDoc.data.checkingConfig.shareEnabled,
-      checkingShareLevel: this.projectDoc.data.checkingConfig.shareLevel
+      checkingShareLevel: this.projectDoc.data.checkingConfig.shareLevel,
+      checkingAnswerExport: this.projectDoc.data.checkingConfig.answerExport ?? CheckingAnswerExport.MarkedForExport
     };
     this.form.reset(this.previousFormValues);
     this.setIndividualControlDisabledStates();
@@ -371,6 +382,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.controlStates.set('usersSeeEachOthersResponses', ElementState.InSync);
     this.controlStates.set('checkingShareEnabled', ElementState.InSync);
     this.controlStates.set('checkingShareLevel', ElementState.InSync);
+    this.controlStates.set('checkingAnswerExport', ElementState.InSync);
   }
 
   private updateNonSelectableProjects(): void {

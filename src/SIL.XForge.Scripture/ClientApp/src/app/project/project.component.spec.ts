@@ -23,6 +23,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
@@ -340,7 +341,8 @@ class TestEnvironment {
             checkingEnabled: args.checkingEnabled == null ? true : args.checkingEnabled,
             usersSeeEachOthersResponses: true,
             shareEnabled: true,
-            shareLevel: CheckingShareLevel.Specific
+            shareLevel: CheckingShareLevel.Specific,
+            answerExport: CheckingAnswerExport.MarkedForExport
           },
           sync: { queuedCount: 0 },
           editable: true,

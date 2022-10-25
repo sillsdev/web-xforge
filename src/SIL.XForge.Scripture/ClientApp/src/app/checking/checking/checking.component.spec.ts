@@ -29,6 +29,7 @@ import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/mode
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
@@ -51,6 +52,7 @@ import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforg
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
+import { AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -557,7 +559,7 @@ describe('CheckingComponent', () => {
       verify(mockedTranslationEngineService.trainSelectedSegment(anything(), anything())).once();
     }));
 
-    it('saves the last visited question in all question context', fakeAsync(() => {
+    it('s the last visited question in all question context', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER, 'ALL');
       const projectUserConfigDoc = env.component.projectUserConfigDoc!.data!;
       verify(mockedTranslationEngineService.trainSelectedSegment(anything(), anything())).once();
@@ -1389,6 +1391,43 @@ describe('CheckingComponent', () => {
       verify(questionDoc!.updateAnswerFileCache()).twice();
       expect().nothing();
     }));
+
+    it('only admins can change answer export status', fakeAsync(() => {
+      [OBSERVER_USER, CHECKER_USER, ADMIN_USER].forEach(USER => {
+        const env = new TestEnvironment(USER);
+
+        env.selectQuestion(6);
+        if (USER === ADMIN_USER) {
+          expect(env.getExportAnswerButton(0)).withContext(`${USER.role} can see export button`).not.toBeNull();
+          expect(env.getResolveAnswerButton(0)).withContext(`${USER.role} can see resolve button`).not.toBeNull();
+        } else {
+          expect(env.getExportAnswerButton(0)).withContext(`${USER.role} can not see export button`).toBeNull();
+          expect(env.getResolveAnswerButton(0)).withContext(`${USER.role} can not see resolve button`).toBeNull();
+        }
+      });
+    }));
+
+    it('can mark answer ready for export', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      env.selectQuestion(6);
+      const buttonIndex = 0;
+
+      env.clickButton(env.getExportAnswerButton(buttonIndex));
+      expect(env.getExportAnswerButton(buttonIndex).classes['status-exportable']).toBe(true);
+      const questionDoc = env.component.questionsPanel!.activeQuestionDoc!;
+      expect(questionDoc.data!.answers[0].status).toEqual(AnswerStatus.Exportable);
+    }));
+
+    it('can mark answer as resolved', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      env.selectQuestion(6);
+      const buttonIndex = 0;
+
+      env.clickButton(env.getResolveAnswerButton(buttonIndex));
+      expect(env.getResolveAnswerButton(buttonIndex).classes['status-resolved']).toBe(true);
+      const questionDoc = env.component.questionsPanel!.activeQuestionDoc!;
+      expect(questionDoc.data!.answers[0].status).toEqual(AnswerStatus.Resolved);
+    }));
   });
 
   describe('Text', () => {
@@ -1542,7 +1581,8 @@ class TestEnvironment {
       usersSeeEachOthersResponses: true,
       checkingEnabled: true,
       shareEnabled: true,
-      shareLevel: CheckingShareLevel.Anyone
+      shareLevel: CheckingShareLevel.Anyone,
+      answerExport: CheckingAnswerExport.MarkedForExport
     },
     translateConfig: {
       translationSuggestionsEnabled: true,
@@ -1784,6 +1824,14 @@ class TestEnvironment {
     this.fixture.detectChanges();
     tick(this.questionReadTimer);
     this.setRouteSnapshot(Canon.bookNumberToId(questionDoc.data!.verseRef.bookNum));
+  }
+
+  getExportAnswerButton(index: number): DebugElement {
+    return this.getAnswer(index).query(By.css('.answer-status.answer-export'));
+  }
+
+  getResolveAnswerButton(index: number): DebugElement {
+    return this.getAnswer(index).query(By.css('.answer-status.answer-resolve'));
   }
 
   /** Fetch first sequence of numbers (without spaces between) from an element's text. */

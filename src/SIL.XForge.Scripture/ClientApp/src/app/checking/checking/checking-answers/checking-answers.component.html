@@ -154,6 +154,31 @@
               <div class="answer-footer">
                 <div class="actions">
                   <button
+                    *ngIf="canChangeAnswerStatus(answer)"
+                    mdc-button
+                    type="button"
+                    (click)="markAnswerAsExportable(answer)"
+                    class="answer-status answer-export"
+                    [class.status-exportable]="isAnswerExportable(answer)"
+                    [matTooltip]="t('tooltip_status_export')"
+                    matTooltipPosition="above"
+                  >
+                    {{ t(isAnswerExportable(answer) ? "marked_for_export" : "mark_for_export") }}
+                  </button>
+                  <button
+                    *ngIf="canChangeAnswerStatus(answer)"
+                    mdc-button
+                    type="button"
+                    (click)="markAnswerAsResolved(answer)"
+                    class="answer-status answer-resolve"
+                    [class.status-resolved]="isAnswerResolved(answer)"
+                    [matTooltip]="t('tooltip_status_resolve')"
+                    matTooltipPosition="above"
+                  >
+                    {{ t(isAnswerResolved(answer) ? "resolved" : "resolve") }}
+                  </button>
+
+                  <button
                     *ngIf="canEditAnswer(answer)"
                     mdc-button
                     type="button"
@@ -162,6 +187,7 @@
                   >
                     {{ t("edit") }}
                   </button>
+                  <div *ngIf="canDeleteAnswer(answer)" class="delete-divider">|</div>
                   <button
                     *ngIf="canDeleteAnswer(answer)"
                     mdc-button
