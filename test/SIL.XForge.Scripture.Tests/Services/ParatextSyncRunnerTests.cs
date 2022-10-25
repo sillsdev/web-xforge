@@ -2742,7 +2742,8 @@ namespace SIL.XForge.Scripture.Services
                     .GetNotesChangelistAsync(
                         Arg.Any<XElement>(),
                         Arg.Any<IEnumerable<IDocument<Question>>>(),
-                        Arg.Any<Dictionary<string, ParatextUserProfile>>()
+                        Arg.Any<Dictionary<string, ParatextUserProfile>>(),
+                        CheckingAnswerExport.MarkedForExport
                     )
                     .Returns(Task.FromResult(notesElem));
             }
@@ -3197,7 +3198,8 @@ namespace SIL.XForge.Scripture.Services
                     .GetNotesChangelistAsync(
                         Arg.Any<XElement>(),
                         Arg.Any<IEnumerable<IDocument<Question>>>(),
-                        Arg.Any<Dictionary<string, ParatextUserProfile>>()
+                        Arg.Any<Dictionary<string, ParatextUserProfile>>(),
+                        CheckingAnswerExport.MarkedForExport
                     );
 
                 // Should not be performing a SR.
@@ -3239,7 +3241,8 @@ namespace SIL.XForge.Scripture.Services
                     .GetNotesChangelistAsync(
                         Arg.Any<XElement>(),
                         Arg.Any<IEnumerable<IDocument<Question>>>(),
-                        Arg.Any<Dictionary<string, ParatextUserProfile>>()
+                        Arg.Any<Dictionary<string, ParatextUserProfile>>(),
+                        CheckingAnswerExport.MarkedForExport
                     );
 
                 // Should be performing a SR.
