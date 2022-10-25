@@ -11,10 +11,39 @@
         <div class="d-flex flex-max" id="questions-panel">
           <div class="flex-max">
             <div class="panel">
-              <div class="panel-heading heading-with-icon">
-                <mdc-icon>help</mdc-icon>
-                <h2>{{ t("questions", { count: totalQuestions() }) }}</h2>
+              <div
+                mdcMenuSurfaceAnchor
+                #questionAnchor
+                class="panel-heading"
+                [ngClass]="{ 'filter-applied': isQuestionFilterApplied }"
+              >
+                <h2>
+                  {{ t("questions") }} <span>({{ totalVisibleQuestions }})</span>
+                </h2>
+                <button mdcIconButton (click)="questionFilterMenu.open = !questionFilterMenu.open">
+                  <mdc-icon [ngClass]="{ 'material-icons-outlined': !isQuestionFilterApplied }">filter_alt</mdc-icon>
+                </button>
+                <mdc-menu
+                  #questionFilterMenu
+                  anchorCorner="bottomStart"
+                  [anchorElement]="questionAnchor"
+                  (selected)="questionFilterSelected = $event.source.value"
+                  id="question-filter-menu"
+                >
+                  <mdc-list>
+                    <h2 mdcListGroupSubheader>{{ t("filter_questions") }}</h2>
+                    <mdc-list-item
+                      *ngFor="let f of questionFilters | keyvalue"
+                      [value]="f.key"
+                      [selected]="f.key === questionFilterSelected"
+                      >{{ f.value }}</mdc-list-item
+                    >
+                  </mdc-list>
+                </mdc-menu>
                 <button mdc-icon-button class="collapse-question-menu" (click)="collapseDrawer()" icon="clear"></button>
+                <div *ngIf="isQuestionFilterApplied" class="active-question-filter">
+                  Filter: {{ appliedQuestionFilterLabel }}
+                </div>
               </div>
               <div class="panel-content">
                 <app-checking-questions
@@ -26,6 +55,8 @@
                   [projectProfileDoc]="projectDoc"
                   [questionDocs$]="questionDocs$"
                   [isAllBooksShown]="showAllBooks"
+                  [filter]="questionFilterSelected"
+                  (totalVisibleQuestions)="setTotalVisibleQuestions($event)"
                 ></app-checking-questions>
               </div>
             </div>
@@ -37,33 +68,30 @@
           <div class="panel">
             <div class="panel-heading">
               <div class="panel-nav">
-                <div class="heading-with-icon">
-                  <mdc-icon fxHide.lt-md class="mirror-rtl">library_books</mdc-icon>
-                  <div #textNameAnchor mdcMenuSurfaceAnchor>
-                    <h2
-                      class="chapter-select"
-                      (click)="showAllBooks ? openScriptureChooser() : (chapterMenu.open = !chapterMenu.open)"
-                    >
-                      <span>{{ bookName }}</span>
-                      <span class="chapter-dropdown">
-                        {{ chapter }} <mdc-icon *ngIf="!chapterMenu.open">keyboard_arrow_down</mdc-icon
-                        ><mdc-icon *ngIf="chapterMenu.open">keyboard_arrow_up</mdc-icon>
-                      </span>
-                    </h2>
-                    <mdc-menu
-                      #chapterMenu
-                      anchorCorner="bottomStart"
-                      [anchorElement]="textNameAnchor"
-                      (selected)="onChapterSelect($event)"
-                      (opened)="chapterMenuOpened()"
-                    >
-                      <mdc-list #chapterMenuList class="chapter-menu-list">
-                        <mdc-list-item *ngFor="let cs of chapterStrings" [value]="cs"
-                          >{{ bookName }} {{ cs }}</mdc-list-item
-                        >
-                      </mdc-list>
-                    </mdc-menu>
-                  </div>
+                <div #textNameAnchor mdcMenuSurfaceAnchor>
+                  <h2
+                    class="chapter-select"
+                    (click)="showAllBooks ? openScriptureChooser() : (chapterMenu.open = !chapterMenu.open)"
+                  >
+                    <span>{{ bookName }}</span>
+                    <span class="chapter-dropdown">
+                      {{ chapter }} <mdc-icon *ngIf="!chapterMenu.open">keyboard_arrow_down</mdc-icon
+                      ><mdc-icon *ngIf="chapterMenu.open">keyboard_arrow_up</mdc-icon>
+                    </span>
+                  </h2>
+                  <mdc-menu
+                    #chapterMenu
+                    anchorCorner="bottomStart"
+                    [anchorElement]="textNameAnchor"
+                    (selected)="onChapterSelect($event)"
+                    (opened)="chapterMenuOpened()"
+                  >
+                    <mdc-list #chapterMenuList class="chapter-menu-list">
+                      <mdc-list-item *ngFor="let cs of chapterStrings" [value]="cs"
+                        >{{ bookName }} {{ cs }}</mdc-list-item
+                      >
+                    </mdc-list>
+                  </mdc-menu>
                 </div>
                 <div class="action-icons">
                   <ng-container *ngIf="canCreateQuestions">
@@ -84,7 +112,7 @@
                       (click)="questionDialog()"
                       class="add-question-button"
                     >
-                      <mdc-icon class="mirror-rtl">post_add</mdc-icon> <span>{{ t("add_question") }}</span>
+                      <mdc-icon>post_add</mdc-icon> <span>{{ t("add_question") }}</span>
                     </button>
                   </ng-container>
                   <app-font-size (apply)="applyFontChange($event)"></app-font-size>

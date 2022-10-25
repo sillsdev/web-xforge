@@ -6,9 +6,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { SplitComponent } from 'angular-split';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
+import { Answer, AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
@@ -43,7 +43,7 @@ import { QuestionDialogData } from '../question-dialog/question-dialog.component
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
-import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
+import { CheckingQuestionsComponent, QuestionFilter } from './checking-questions/checking-questions.component';
 import { CheckingTextComponent } from './checking-text/checking-text.component';
 
 interface Summary {
@@ -81,11 +81,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     unread: 0,
     answered: 0
   };
+  questionFilters: Map<QuestionFilter, string> = new Map<QuestionFilter, string>();
+  questionFilterSelected: QuestionFilter = QuestionFilter.All;
   questionVerseRefs: VerseRef[] = [];
   answersPanelContainerElement?: ElementRef;
   projectDoc?: SFProjectProfileDoc;
   projectUserConfigDoc?: SFProjectUserConfigDoc;
   textDocId?: TextDocId;
+  totalVisibleQuestions: string = '0';
   userDoc?: UserDoc;
 
   private _book?: number;
@@ -122,6 +125,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     return undefined;
   }
 
+  get appliedQuestionFilterLabel(): string | undefined {
+    return this.questionFilters.get(this.questionFilterSelected);
+  }
+
   get bookName(): string {
     return this.text == null ? '' : this.i18n.localizeBook(this.text.bookNum);
   }
@@ -155,6 +162,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         this.collapseDrawer();
       }
     }
+  }
+
+  get isQuestionFilterApplied(): boolean {
+    return this.questionFilterSelected !== QuestionFilter.All;
   }
 
   get canCreateQuestions(): boolean {
@@ -203,6 +214,17 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   get canShare(): boolean {
     return this.isProjectAdmin || this.projectDoc?.data?.checkingConfig.shareEnabled === true;
+  }
+
+  setTotalVisibleQuestions(total: number) {
+    // Use a promise to avoid change detection issue from thd child question component updating the parent component
+    Promise.resolve().then(() => {
+      if (this.totalQuestions() === total) {
+        this.totalVisibleQuestions = this.totalQuestions().toString();
+      } else {
+        this.totalVisibleQuestions = `${total}/${this.totalQuestions()}`;
+      }
+    });
   }
 
   private get book(): number | undefined {
@@ -448,6 +470,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       }
       this.projectDeleteSub = this.subscribe(this.projectDoc.delete$, () => this.onRemovedFromProject());
       this.isProjectAdmin = await this.projectService.isProjectAdmin(projectId, this.userService.currentUserId);
+      this.initQuestionFilters();
     });
     this.subscribe(
       this.media.asObservable().pipe(
@@ -489,7 +512,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
             likes: [],
             dateCreated: dateNow,
             dateModified: dateNow,
-            comments: []
+            comments: [],
+            status: AnswerStatus.None
           };
         }
         answer.text = answerAction.text;
@@ -548,6 +572,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       case 'show-form':
         break;
       case 'hide-form':
+        break;
+      case 'status':
+        this.saveAnswer(answerAction.answer!, answerAction.questionDoc);
         break;
     }
     this.calculateScriptureSliderPosition(true);
@@ -855,6 +882,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           .set(q => q.answers[answerIndex].selectionStartClipped, newAnswer.selectionStartClipped)
           .set(q => q.answers[answerIndex].selectionEndClipped, newAnswer.selectionEndClipped)
           .set(q => q.answers[answerIndex].audioUrl, newAnswer.audioUrl)
+          .set(q => q.answers[answerIndex].status, newAnswer.status)
           .set(q => q.answers[answerIndex].dateModified, newAnswer.dateModified)
       );
       if (deleteAudio) {
@@ -1017,5 +1045,22 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     return (
       element.lastElementChild!.getBoundingClientRect().bottom - element.firstElementChild!.getBoundingClientRect().top
     );
+  }
+
+  private initQuestionFilters() {
+    this.questionFilters.clear();
+    this.questionFilters.set(QuestionFilter.All, 'All');
+    if (this.isProjectAdmin) {
+      this.questionFilters
+        .set(QuestionFilter.HasAnswers, 'Has Answers')
+        .set(QuestionFilter.NoAnswers, 'No Answers')
+        .set(QuestionFilter.StatusExport, 'Exportable')
+        .set(QuestionFilter.StatusResolved, 'Resolved')
+        .set(QuestionFilter.StatusNone, 'Not Reviewed');
+    } else {
+      this.questionFilters
+        .set(QuestionFilter.CurrentUserHasAnswered, 'Have Answered')
+        .set(QuestionFilter.CurrentUserHasNotAnswered, 'Not Answered');
+    }
   }
 }

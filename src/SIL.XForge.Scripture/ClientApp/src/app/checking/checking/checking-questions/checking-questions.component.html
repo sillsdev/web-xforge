@@ -1,6 +1,6 @@
 <mdc-list>
   <mdc-list-item
-    *ngFor="let questionDoc of questionDocs"
+    *ngFor="let questionDoc of visibleQuestions"
     (click)="activateQuestion(questionDoc)"
     [ngClass]="{
       'question-read': hasUserReadQuestion(questionDoc),
@@ -19,3 +19,6 @@
     </a>
   </mdc-list-item>
 </mdc-list>
+<div *ngIf="isFilterApplied && !hasVisibleQuestions" class="no-questions-found">
+  No questions found to match your filter
+</div>
