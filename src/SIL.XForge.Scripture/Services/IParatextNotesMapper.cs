@@ -20,7 +20,8 @@ namespace SIL.XForge.Scripture.Services
         Task<XElement> GetNotesChangelistAsync(
             XElement oldNotesElem,
             IEnumerable<IDocument<Question>> questionsDocs,
-            Dictionary<string, ParatextUserProfile> ptProjectUsers
+            Dictionary<string, ParatextUserProfile> ptProjectUsers,
+            string answerExportMethod
         );
     }
 }

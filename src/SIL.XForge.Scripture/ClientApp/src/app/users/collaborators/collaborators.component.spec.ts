@@ -6,9 +6,13 @@ import { ActivatedRoute } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
-import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import {
+  CheckingAnswerExport,
+  CheckingConfig,
+  CheckingShareLevel
+} from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, of } from 'rxjs';
@@ -417,7 +421,8 @@ describe('CollaboratorsComponent', () => {
       checkingEnabled: true,
       shareEnabled: true,
       shareLevel: CheckingShareLevel.Anyone,
-      usersSeeEachOthersResponses: false
+      usersSeeEachOthersResponses: false,
+      answerExport: CheckingAnswerExport.MarkedForExport
     };
     env.updateCheckingProperties(checkingConfig);
     tick();
@@ -669,7 +674,8 @@ class TestEnvironment {
         checkingEnabled: false,
         usersSeeEachOthersResponses: false,
         shareEnabled: false,
-        shareLevel: CheckingShareLevel.Specific
+        shareLevel: CheckingShareLevel.Specific,
+        answerExport: CheckingAnswerExport.MarkedForExport
       },
       editable: true,
       userRoles,

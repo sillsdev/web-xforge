@@ -23,6 +23,44 @@
         display: none;
       }
     }
+    #question-filter-menu {
+      width: calc(100% - 32px);
+      margin-left: 16px;
+    }
+  }
+  #questions-panel {
+    .panel-heading {
+      flex-wrap: wrap;
+      &.filter-applied {
+        height: 66px;
+        margin-bottom: 6px;
+      }
+      h2 {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        span {
+          font-size: 14px;
+          opacity: 0.5;
+        }
+      }
+      button {
+        @include icon-button.icon-size(24px, 24px, 8px);
+      }
+      mdc-list {
+        h2 {
+          justify-content: flex-start;
+          font-weight: bold;
+          color: #000;
+        }
+      }
+    }
+    .active-question-filter {
+      flex: 1 0 100%;
+      font-size: 0.7em;
+      opacity: 0.5;
+      margin-top: -5px;
+    }
   }
   #text-panel {
     display: flex;
