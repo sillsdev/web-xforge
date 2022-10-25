@@ -1145,7 +1145,13 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   private async submitLocalPresenceDoc(range: RangeStatic | null): Promise<void> {
-    if (!this.isPresenceActive || this.localPresenceDoc == null || this._isReadOnly) return;
+    if (
+      !this.isPresenceActive ||
+      this.localPresenceDoc == null ||
+      this.localPresenceDoc.value === range ||
+      this._isReadOnly
+    )
+      return;
 
     this.localPresenceDoc.submit(range, error => {
       if (error) throw error;

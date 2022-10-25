@@ -937,7 +937,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (this.targetFocused) {
       setTimeout(() => {
         // reset focus, which causes Quill to scroll to the selection
-        this.target!.blur();
         this.target!.focus();
       });
     }
