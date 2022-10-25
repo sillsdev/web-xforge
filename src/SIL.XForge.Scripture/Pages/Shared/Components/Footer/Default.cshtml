@@ -7,11 +7,10 @@
 
 @{
     var requestCulture = Context.Features.Get<IRequestCultureFeature>();
-    var localeHelps = LocOptions.Value.SupportedUICultures.Where(c =>
-    SharedResource.Cultures[c.IetfLanguageTag].Tags.Where(t =>
-    t == @requestCulture.RequestCulture.UICulture.Name).Count() > 0).Select(c =>
-    SharedResource.Cultures[c.IetfLanguageTag]).ToArray();
-    var helps = "https://help.scriptureforge.org/" + (@localeHelps[0].Helps != null ? @localeHelps[0].Helps : "en");
+    var locale = LocOptions.Value.SupportedUICultures.Where(c =>
+    SharedResource.Cultures[c.IetfLanguageTag].Tags.Contains(@requestCulture.RequestCulture.UICulture.Name)
+    ).Select(c => SharedResource.Cultures[c.IetfLanguageTag]).First();
+    var helps = "https://help.scriptureforge.org/" + (locale.Helps ?? "en");
 }
 
 <footer>
