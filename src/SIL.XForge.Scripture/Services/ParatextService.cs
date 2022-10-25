@@ -1966,6 +1966,7 @@ namespace SIL.XForge.Scripture.Services
                         existingComment.ExternalUser = comment.ExternalUser;
                         existingComment.Contents = comment.Contents;
                         existingComment.VersionNumber += 1;
+                        existingComment.Deleted = false;
                         syncMetricInfo.Updated++;
                     }
 

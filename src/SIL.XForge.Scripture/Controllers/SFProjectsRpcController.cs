@@ -115,6 +115,7 @@ namespace SIL.XForge.Scripture.Controllers
                         { "method", "UpdateSettings" },
                         { "projectId", projectId },
                         { "CheckingShareLevel", settings?.CheckingShareLevel },
+                        { "CheckingAnswerExport", settings?.CheckingAnswerExport },
                         { "SourceParatextId", settings?.SourceParatextId },
                         { "TranslateShareLevel", settings?.TranslateShareLevel },
                         { "CheckingEnabled", settings?.CheckingEnabled?.ToString() },

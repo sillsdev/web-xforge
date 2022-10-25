@@ -1,5 +1,6 @@
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 
 /**
  * This interface represents the project settings that can be updated using "SFProjectService.onlineUpdateSettings()".
@@ -14,4 +15,5 @@ export interface SFProjectSettings {
   usersSeeEachOthersResponses?: boolean;
   checkingShareEnabled?: boolean;
   checkingShareLevel?: CheckingShareLevel;
+  checkingAnswerExport?: CheckingAnswerExport;
 }

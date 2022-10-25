@@ -13,6 +13,7 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -191,7 +192,8 @@ class TestEnvironment {
       usersSeeEachOthersResponses: true,
       checkingEnabled: true,
       shareEnabled: true,
-      shareLevel: CheckingShareLevel.Anyone
+      shareLevel: CheckingShareLevel.Anyone,
+      answerExport: CheckingAnswerExport.MarkedForExport
     },
     texts: [this.matthewText],
     sync: { queuedCount: 0 },
