@@ -9,5 +9,6 @@ namespace SIL.XForge.Scripture.Models
         public string AudioUrl { get; set; }
         public List<Like> Likes { get; set; } = new List<Like>();
         public List<Comment> Comments { get; set; } = new List<Comment>();
+        public string Status { get; set; } = AnswerStatus.None;
     }
 }

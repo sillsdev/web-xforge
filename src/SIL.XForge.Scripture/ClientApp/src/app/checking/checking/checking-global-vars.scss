@@ -3,5 +3,7 @@
 $questionUnread: $sf_grey;
 $questionAnswered: $mdc-theme-secondary;
 $attention: lighten($mdc-theme-secondary, 20%);
+$answerResolved: $greenLight;
+$answerExportable: $purpleLight;
 $commentUnread: $attention;
 $borderColor: rgba(0, 0, 0, 0.1);

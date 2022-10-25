@@ -16,6 +16,7 @@ import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-proj
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
@@ -896,7 +897,8 @@ class TestEnvironment {
           checkingEnabled: true,
           shareEnabled: true,
           shareLevel: CheckingShareLevel.Specific,
-          usersSeeEachOthersResponses: true
+          usersSeeEachOthersResponses: true,
+          answerExport: CheckingAnswerExport.MarkedForExport
         },
         sync: { queuedCount: 0, lastSyncSuccessful: true },
         editable: true,
