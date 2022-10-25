@@ -8,6 +8,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { BehaviorSubject } from 'rxjs';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -261,7 +262,8 @@ describe('ShareControlComponent', () => {
       checkingEnabled: false,
       shareEnabled: true,
       shareLevel: CheckingShareLevel.Anyone,
-      usersSeeEachOthersResponses: false
+      usersSeeEachOthersResponses: false,
+      answerExport: CheckingAnswerExport.MarkedForExport
     };
     env.updateCheckingProperties(checkingConfig);
     env.wait();
@@ -286,7 +288,8 @@ describe('ShareControlComponent', () => {
       checkingEnabled: true,
       shareEnabled: false,
       shareLevel: CheckingShareLevel.Anyone,
-      usersSeeEachOthersResponses: false
+      usersSeeEachOthersResponses: false,
+      answerExport: CheckingAnswerExport.MarkedForExport
     };
     env.updateCheckingProperties(checkingConfig);
     env.wait();

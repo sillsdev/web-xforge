@@ -7,6 +7,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { BehaviorSubject, of } from 'rxjs';
 import { anyString, anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
@@ -270,7 +271,8 @@ class TestEnvironment {
           checkingEnabled: false,
           usersSeeEachOthersResponses: true,
           shareEnabled: true,
-          shareLevel: CheckingShareLevel.Specific
+          shareLevel: CheckingShareLevel.Specific,
+          answerExport: CheckingAnswerExport.MarkedForExport
         },
         sync: {
           queuedCount: isInProgress ? 1 : 0,
