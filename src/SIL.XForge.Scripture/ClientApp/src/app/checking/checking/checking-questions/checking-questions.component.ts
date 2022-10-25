@@ -20,11 +20,23 @@ import { debounceTime } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { TranslationEngineService } from '../../../core/translation-engine.service';
 import { CheckingUtils } from '../../checking.utils';
+
+export enum QuestionFilter {
+  All,
+  CurrentUserHasNotAnswered,
+  CurrentUserHasAnswered,
+  HasAnswers,
+  NoAnswers,
+  StatusNone,
+  StatusExport,
+  StatusResolved
+}
 
 // For performance reasons, this component uses the OnPush change detection strategy rather than the default change
 // detection strategy. This means when change detection runs, this component will be skipped during change detection
@@ -51,7 +63,10 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   activeQuestionDoc?: QuestionDoc;
   activeQuestionDoc$ = new Subject<QuestionDoc>();
   @ViewChild(MdcList, { static: true }) mdcList!: MdcList;
+  @Output() totalVisibleQuestions = new EventEmitter<number>();
+  visibleQuestions: QuestionDoc[] = [];
 
+  private _filter: QuestionFilter = QuestionFilter.All;
   private project?: SFProjectProfile;
   private _projectUserConfigDoc?: SFProjectUserConfigDoc;
 
@@ -69,6 +84,47 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     this.subscribe(this.activeQuestionDoc$.pipe(debounceTime(2000)), questionDoc => {
       this.updateElementsRead(questionDoc);
     });
+  }
+
+  @Input() set filter(filter: QuestionFilter) {
+    this._filter = filter;
+    const visible = this.questionDocs.filter(q => {
+      if (q.data == null) {
+        return;
+      }
+      const currentUserAnswers: boolean =
+        q.data.answers.filter((a: Answer) => a.ownerRef === this.userService.currentUserId).length > 0;
+      const hasAnswers: boolean = q.data.answers.length > 0;
+      const hasResolvedAnswers: boolean =
+        q.data.answers.filter((a: Answer) => a.status === AnswerStatus.Resolved).length > 0;
+      const hasExportableAnswers: boolean =
+        q.data.answers.filter((a: Answer) => a.status === AnswerStatus.Exportable).length > 0;
+      if (this._filter === QuestionFilter.All) {
+        return true;
+      } else if (this._filter === QuestionFilter.CurrentUserHasNotAnswered && !currentUserAnswers) {
+        return true;
+      } else if (this._filter === QuestionFilter.CurrentUserHasAnswered && currentUserAnswers) {
+        return true;
+      } else if (this._filter === QuestionFilter.HasAnswers && hasAnswers) {
+        return true;
+      } else if (this._filter === QuestionFilter.NoAnswers && !hasAnswers) {
+        return true;
+      } else if (
+        this._filter === QuestionFilter.StatusNone &&
+        hasAnswers &&
+        !hasExportableAnswers &&
+        !hasResolvedAnswers
+      ) {
+        return true;
+      } else if (this._filter === QuestionFilter.StatusExport && hasExportableAnswers) {
+        return true;
+      } else if (this._filter === QuestionFilter.StatusResolved && hasResolvedAnswers) {
+        return true;
+      }
+      return;
+    });
+    this.totalVisibleQuestions.emit(visible.length);
+    this.visibleQuestions = visible;
   }
 
   @Input()
@@ -110,7 +166,15 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
       return -1;
     }
     const activeQuestionDocId = this.activeQuestionDoc.id;
-    return this.questionDocs.findIndex(question => question.id === activeQuestionDocId);
+    return this.visibleQuestions.findIndex(question => question.id === activeQuestionDocId);
+  }
+
+  get hasVisibleQuestions(): boolean {
+    return this.visibleQuestions.length > 0;
+  }
+
+  get isFilterApplied(): boolean {
+    return this._filter !== QuestionFilter.All;
   }
 
   @Input()
@@ -123,6 +187,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
         this.activeQuestionDoc = undefined;
       }
       this.questionDocs = docs;
+      this.filter = this._filter;
       this.changeDetector.markForCheck();
     });
   }
@@ -254,7 +319,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   checkCanChangeQuestion(newIndex: number): boolean {
-    return !!this.questionDocs[this.activeQuestionIndex + newIndex];
+    return !!this.visibleQuestions[this.activeQuestionIndex + newIndex];
   }
 
   hasUserAnswered(questionDoc: QuestionDoc): boolean {
@@ -311,7 +376,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
 
   private changeQuestion(newDifferential: number): void {
     if (this.activeQuestionDoc && this.checkCanChangeQuestion(newDifferential)) {
-      this.activateQuestion(this.questionDocs[this.activeQuestionIndex + newDifferential]);
+      this.activateQuestion(this.visibleQuestions[this.activeQuestionIndex + newDifferential]);
     }
   }
 
