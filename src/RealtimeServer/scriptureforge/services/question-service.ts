@@ -54,6 +54,10 @@ export class QuestionService extends SFProjectDataService<Question> {
         pathTemplate: this.pathTemplate(q => q.answers[ANY_INDEX].comments[ANY_INDEX])
       },
       {
+        projectDomain: SFProjectDomain.AnswerStatus,
+        pathTemplate: this.pathTemplate(q => q.answers[ANY_INDEX].status)
+      },
+      {
         projectDomain: SFProjectDomain.Likes,
         pathTemplate: this.pathTemplate(q => q.answers[ANY_INDEX].likes[ANY_INDEX])
       }

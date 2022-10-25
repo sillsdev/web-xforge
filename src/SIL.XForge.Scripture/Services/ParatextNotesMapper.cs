@@ -87,80 +87,91 @@ namespace SIL.XForge.Scripture.Services
         public async Task<XElement> GetNotesChangelistAsync(
             XElement oldNotesElem,
             IEnumerable<IDocument<Question>> questionsDocs,
-            Dictionary<string, ParatextUserProfile> ptProjectUsers
+            Dictionary<string, ParatextUserProfile> ptProjectUsers,
+            string answerExportMethod
         )
         {
             var version = (string)oldNotesElem.Attribute("version");
             Dictionary<string, XElement> oldCommentElems = GetOldCommentElements(oldNotesElem, ptProjectUsers);
 
             var notesElem = new XElement("notes", new XAttribute("version", version));
-            foreach (IDocument<Question> questionDoc in questionsDocs)
+            if (answerExportMethod != CheckingAnswerExport.None)
             {
-                var answerSyncUserIds = new List<(int, string)>();
-                var commentSyncUserIds = new List<(int, int, string)>();
-                Question question = questionDoc.Data;
-                for (int j = 0; j < question.Answers.Count; j++)
+                foreach (IDocument<Question> questionDoc in questionsDocs)
                 {
-                    Answer answer = question.Answers[j];
-                    string threadId = $"ANSWER_{answer.DataId}";
-                    var threadElem = new XElement(
-                        "thread",
-                        new XAttribute("id", threadId),
-                        new XElement(
-                            "selection",
-                            new XAttribute("verseRef", question.VerseRef.ToString()),
-                            new XAttribute("startPos", 0),
-                            new XAttribute("selectedText", "")
+                    var answerSyncUserIds = new List<(int, string)>();
+                    var commentSyncUserIds = new List<(int, int, string)>();
+                    Question question = questionDoc.Data;
+                    for (int j = 0; j < question.Answers.Count; j++)
+                    {
+                        Answer answer = question.Answers[j];
+                        if (
+                            answer.Status != CheckingAnswerExport.MarkedForExport
+                            && answerExportMethod != CheckingAnswerExport.All
                         )
-                    );
-                    var answerPrefixContents = new List<object>();
-                    // Questions that have empty texts will show in Paratext notes that it is audio-only
-                    string qText = string.IsNullOrEmpty(question.Text)
-                        ? _localizer[SharedResource.Keys.AudioOnlyQuestion, _siteOptions.Value.Name]
-                        : question.Text;
-                    answerPrefixContents.Add(new XElement("span", new XAttribute("style", "bold"), qText));
-                    if (!string.IsNullOrEmpty(answer.ScriptureText))
-                    {
-                        string scriptureRef = answer.VerseRef.ToString();
-                        string scriptureText = $"{answer.ScriptureText.Trim()} ({scriptureRef})";
-                        answerPrefixContents.Add(
-                            new XElement("span", new XAttribute("style", "italic"), scriptureText)
+                        {
+                            continue;
+                        }
+                        string threadId = $"ANSWER_{answer.DataId}";
+                        var threadElem = new XElement(
+                            "thread",
+                            new XAttribute("id", threadId),
+                            new XElement(
+                                "selection",
+                                new XAttribute("verseRef", question.VerseRef.ToString()),
+                                new XAttribute("startPos", 0),
+                                new XAttribute("selectedText", "")
+                            )
                         );
-                    }
-                    string answerSyncUserId = await AddCommentIfChangedAsync(
-                        oldCommentElems,
-                        threadElem,
-                        answer,
-                        ptProjectUsers,
-                        answerPrefixContents
-                    );
-                    if (answer.SyncUserRef == null)
-                        answerSyncUserIds.Add((j, answerSyncUserId));
-
-                    for (int k = 0; k < answer.Comments.Count; k++)
-                    {
-                        Comment comment = answer.Comments[k];
-                        string commentSyncUserId = await AddCommentIfChangedAsync(
+                        var answerPrefixContents = new List<object>();
+                        // Questions that have empty texts will show in Paratext notes that it is audio-only
+                        string qText = string.IsNullOrEmpty(question.Text)
+                            ? _localizer[SharedResource.Keys.AudioOnlyQuestion, _siteOptions.Value.Name]
+                            : question.Text;
+                        answerPrefixContents.Add(new XElement("span", new XAttribute("style", "bold"), qText));
+                        if (!string.IsNullOrEmpty(answer.ScriptureText))
+                        {
+                            string scriptureRef = answer.VerseRef.ToString();
+                            string scriptureText = $"{answer.ScriptureText.Trim()} ({scriptureRef})";
+                            answerPrefixContents.Add(
+                                new XElement("span", new XAttribute("style", "italic"), scriptureText)
+                            );
+                        }
+                        string answerSyncUserId = await AddCommentIfChangedAsync(
                             oldCommentElems,
                             threadElem,
-                            comment,
-                            ptProjectUsers
+                            answer,
+                            ptProjectUsers,
+                            answerPrefixContents
                         );
-                        if (comment.SyncUserRef == null)
-                            commentSyncUserIds.Add((j, k, commentSyncUserId));
-                    }
-                    if (threadElem.Elements("comment").Any())
-                        notesElem.Add(threadElem);
-                }
-                // set SyncUserRef property on answers and comments that need it
-                await questionDoc.SubmitJson0OpAsync(op =>
-                {
-                    foreach ((int aIndex, string syncUserId) in answerSyncUserIds)
-                        op.Set(q => q.Answers[aIndex].SyncUserRef, syncUserId);
+                        if (answer.SyncUserRef == null)
+                            answerSyncUserIds.Add((j, answerSyncUserId));
 
-                    foreach ((int aIndex, int cIndex, string syncUserId) in commentSyncUserIds)
-                        op.Set(q => q.Answers[aIndex].Comments[cIndex].SyncUserRef, syncUserId);
-                });
+                        for (int k = 0; k < answer.Comments.Count; k++)
+                        {
+                            Comment comment = answer.Comments[k];
+                            string commentSyncUserId = await AddCommentIfChangedAsync(
+                                oldCommentElems,
+                                threadElem,
+                                comment,
+                                ptProjectUsers
+                            );
+                            if (comment.SyncUserRef == null)
+                                commentSyncUserIds.Add((j, k, commentSyncUserId));
+                        }
+                        if (threadElem.Elements("comment").Any())
+                            notesElem.Add(threadElem);
+                    }
+                    // set SyncUserRef property on answers and comments that need it
+                    await questionDoc.SubmitJson0OpAsync(op =>
+                    {
+                        foreach ((int aIndex, string syncUserId) in answerSyncUserIds)
+                            op.Set(q => q.Answers[aIndex].SyncUserRef, syncUserId);
+
+                        foreach ((int aIndex, int cIndex, string syncUserId) in commentSyncUserIds)
+                            op.Set(q => q.Answers[aIndex].Comments[cIndex].SyncUserRef, syncUserId);
+                    });
+                }
             }
 
             AddDeletedNotes(notesElem, oldCommentElems.Values);
@@ -216,6 +227,7 @@ namespace SIL.XForge.Scripture.Services
             if (!canWritePTNoteOnProject)
                 commentElem.Add(new XAttribute("extUser", comment.OwnerRef));
             commentElem.Add(new XAttribute("date", FormatCommentDate(comment.DateCreated)));
+            // commentElem.Add(new XAttribute("deleted", "false"));
             var contentElem = new XElement("content");
             // Responses that have empty texts will show in Paratext notes that it is audio-only
             string responseText = string.IsNullOrEmpty(comment.Text)

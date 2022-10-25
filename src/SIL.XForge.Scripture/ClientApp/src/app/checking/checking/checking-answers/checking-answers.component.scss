@@ -170,10 +170,28 @@
       padding-right: 15px;
       .actions {
         display: flex;
-        justify-content: flex-end;
+        flex: 1;
         align-items: flex-end;
+
         button {
           height: auto;
+          &.answer-status {
+            &.status-exportable {
+              background: $answerExportable;
+              color: #fff;
+            }
+
+            &.status-resolved {
+              background: $answerResolved;
+              color: #fff;
+            }
+          }
+          &.answer-delete {
+            color: var(--mdc-theme-error);
+          }
+        }
+        .delete-divider {
+          padding: 0 20px;
         }
       }
 

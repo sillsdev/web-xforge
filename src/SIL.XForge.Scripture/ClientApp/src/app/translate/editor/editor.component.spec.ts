@@ -61,6 +61,7 @@ import { UserService } from 'xforge-common/user.service';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
+import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -2698,7 +2699,8 @@ class TestEnvironment {
       checkingEnabled: false,
       usersSeeEachOthersResponses: true,
       shareEnabled: true,
-      shareLevel: CheckingShareLevel.Specific
+      shareLevel: CheckingShareLevel.Specific,
+      answerExport: CheckingAnswerExport.MarkedForExport
     },
     sync: { queuedCount: 0, dataInSync: true },
     editable: true,

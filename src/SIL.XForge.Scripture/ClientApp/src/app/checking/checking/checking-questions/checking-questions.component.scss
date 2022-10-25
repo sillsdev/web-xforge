@@ -6,6 +6,7 @@
   height: 100%;
   display: flex;
   overflow-x: auto;
+  flex-direction: column;
 }
 
 .mdc-list {
@@ -93,4 +94,7 @@
       }
     }
   }
+}
+.no-questions-found {
+  font-size: 14px;
 }
