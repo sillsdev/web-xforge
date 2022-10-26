@@ -1,5 +1,3 @@
-#nullable enable annotations
-
 using System;
 
 namespace SIL.XForge.Scripture.Models
