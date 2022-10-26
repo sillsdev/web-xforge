@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, ViewChild } from '@angular/core';
 import { MediaObserver } from '@angular/flex-layout';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import {
   createInteractiveTranslator,
@@ -134,6 +134,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private _chapter?: number;
   private lastShownSuggestions: Suggestion[] = [];
   private readonly segmentUpdated$: Subject<void>;
+  private onTargetDeleteSub?: Subscription;
   private trainingSub?: Subscription;
   private projectDataChangesSub?: Subscription;
   private trainingProgressClosed: boolean = false;
@@ -155,7 +156,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly translationEngineService: TranslationEngineService,
     private readonly i18n: I18nService,
     private readonly featureFlags: FeatureFlagService,
-    @Inject(CONSOLE) private readonly console: ConsoleInterface
+    @Inject(CONSOLE) private readonly console: ConsoleInterface,
+    private readonly router: Router
   ) {
     super(noticeService);
     const wordTokenizer = new LatinWordTokenizer();
@@ -511,6 +513,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
     if (this.metricsSession != null) {
       this.metricsSession.dispose();
+    }
+    if (this.onTargetDeleteSub != null) {
+      this.onTargetDeleteSub.unsubscribe();
     }
   }
 
@@ -932,13 +937,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (this.targetFocused) {
       setTimeout(() => {
         // reset focus, which causes Quill to scroll to the selection
-        this.target!.blur();
         this.target!.focus();
       });
     }
   }
 
-  private changeText(): void {
+  private async changeText(): Promise<void> {
     if (this.projectDoc == null || this.text == null || this._chapter == null) {
       this.source!.id = undefined;
       this.target!.id = undefined;
@@ -977,6 +981,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.target.segment.acceptChanges();
       }
     }
+    const textDoc = await this.projectService.getText(targetId);
+    if (this.onTargetDeleteSub != null) {
+      this.onTargetDeleteSub.unsubscribe();
+    }
+    this.onTargetDeleteSub = textDoc.delete$.subscribe(() => {
+      this.dialogService.message(this.i18n.translate('editor.text_has_been_deleted')).then(() => {
+        this.router.navigateByUrl('/projects/' + this.projectDoc!.id + '/translate', { replaceUrl: true });
+      });
+    });
     setTimeout(() => this.setTextHeight());
   }
 
