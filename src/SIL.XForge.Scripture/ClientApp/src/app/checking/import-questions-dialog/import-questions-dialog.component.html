@@ -53,7 +53,11 @@
                 <li>
                   {{ csvInstructions[0] }}
                   <table>
-                    <!-- TODO internationalize the verse references, but only once we accept localized inputs -->
+                    <!-- TODO internationalize the references and headings, but only once we accept localized inputs -->
+                    <tr>
+                      <th>Reference</th>
+                      <th>Question</th>
+                    </tr>
                     <tr *ngFor="let verseNumber of [1, 2]">
                       <td>1JN 1:{{ verseNumber }}</td>
                       <td>{{ t("question_for_verse", { number: verseNumber }) }}</td>
@@ -159,6 +163,11 @@
 
       <div *ngIf="status === 'update_transcelerator'">{{ t("update_transcelerator") }}</div>
 
+      <div
+        *ngIf="status === 'missing_header_row'"
+        [innerHTML]="i18n.translateAndInsertTags('import_questions_dialog.missing_header_row')"
+      ></div>
+
       <div *ngIf="status === 'progress'">
         <mat-progress-bar mode="determinate" [value]="(importedCount / toImportCount) * 100"></mat-progress-bar>
       </div>
@@ -186,7 +195,7 @@
       {{ t("cancel") }}
     </button>
     <button
-      *ngIf="status === 'no_questions' || status === 'update_transcelerator'"
+      *ngIf="status === 'no_questions' || status === 'update_transcelerator' || status === 'missing_header_row'"
       mat-flat-button
       mat-dialog-close
       color="primary"

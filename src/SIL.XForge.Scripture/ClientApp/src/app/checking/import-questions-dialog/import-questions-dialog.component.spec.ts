@@ -314,7 +314,7 @@ describe('ImportQuestionsDialogComponent', () => {
     const genQuestions = [['Genesis 1:1', 'Question for Genesis 1:1']];
     const matQuestions = Array.from(Array(100), (_, i) => [`MAT 1:${i + 1}`, `Question for Matthew 1:${i + 1}`]);
 
-    env.selectFileWithContents(genQuestions.concat(matQuestions));
+    env.selectFileWithContents([['Reference', 'Questions'], ...genQuestions, ...matQuestions]);
 
     expect(env.tableRows.length).toBe(1);
     expect(env.getColumnTwoText(env.tableRows[0])).toEqual('Genesis 1:1');
@@ -326,7 +326,10 @@ describe('ImportQuestionsDialogComponent', () => {
     const question = { data: { text: 'Matthew 1:1 question', verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 } } };
     const env = new TestEnvironment({ existingQuestions: [question as QuestionDoc] });
 
-    env.selectFileWithContents([['MAT 1:1', 'Matthew 1:1 question']]);
+    env.selectFileWithContents([
+      ['Reference', 'Questions'],
+      ['MAT 1:1', 'Matthew 1:1 question']
+    ]);
 
     expect(env.tableRows.length).toBe(1);
     expect(env.getColumnTwoText(env.tableRows[0])).toEqual('Matthew 1:1 question');
@@ -340,7 +343,12 @@ describe('ImportQuestionsDialogComponent', () => {
   it('it informs the user about invalid rows in the CSV file and skips them', fakeAsync(() => {
     const env = new TestEnvironment();
 
-    env.selectFileWithContents([['Lorem ipsum'], ['MAT 1:1', ' '], ['MAT 1:2', 'Question for MAT 1:2']]);
+    env.selectFileWithContents([
+      ['Reference', 'Questions'],
+      ['Lorem ipsum'],
+      ['MAT 1:1', ' '],
+      ['MAT 1:2', 'Question for MAT 1:2']
+    ]);
 
     expect(env.headerText).toBe('These rows in the CSV file were invalid and will be skipped.');
     const invalidRows = env.tableRows;
@@ -354,6 +362,40 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(questionRows.length).toBe(1);
     expect(env.getRowReference(env.tableRows[0])).toEqual('MAT 1:2');
 
+    env.click(env.cancelButton);
+  }));
+
+  it('allows reference and questions columns to be anywhere and ignores irrelevant columns', fakeAsync(() => {
+    // (also, it infers the book from the file name)
+    let env = new TestEnvironment({ includeAllBooks: true });
+
+    const fileContents = [
+      ['ID', 'Notes', 'Question', 'Answer', 'Reference'],
+      ['id1', 'note 1', 'question 1', 'answer 1', '1:1'],
+      ['id2', 'note 2', 'question 2', 'answer 2', '1:2']
+    ];
+    const filename = 'tq_MAT.tsv'; // this is the format unfoldingWord uses for file names
+    env.selectFileWithContents(fileContents, filename);
+
+    expect(env.tableRows.length).toBe(2);
+    expect(env.getRowReference(env.tableRows[1])).toEqual('MAT 1:2');
+    env.click(env.cancelButton);
+  }));
+
+  it('allows ignores white space and capitalization in question and reference heading', fakeAsync(() => {
+    // (also, make sure it doesn't care whether the words are plural)
+    let env = new TestEnvironment({ includeAllBooks: true });
+
+    const fileContents = [
+      ['ID', 'Notes', ' QUestions ', 'Answer', ' references '],
+      ['id1', 'note 1', 'question 1', 'answer 1', '1:1'],
+      ['id2', 'note 2', 'question 2', 'answer 2', '1:2']
+    ];
+    const filename = 'tq_GEN.tsv'; // this is the format unfoldingWord uses for file names
+    env.selectFileWithContents(fileContents, filename);
+
+    expect(env.tableRows.length).toBe(2);
+    expect(env.getRowReference(env.tableRows[1])).toEqual('GEN 1:2');
     env.click(env.cancelButton);
   }));
 
@@ -674,9 +716,9 @@ class TestEnvironment {
     tick();
   }
 
-  selectFileWithContents(contents: string[][]) {
+  selectFileWithContents(contents: string[][], filename = 'filename.csv') {
     when(mockedCsvService.parse(anything())).thenResolve(contents);
-    this.component.fileSelected({} as File);
+    this.component.fileSelected({ name: filename } as File);
     tick();
     this.fixture.detectChanges();
   }
