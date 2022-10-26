@@ -9,11 +9,13 @@ const ShareDB = require('sharedb/lib/client');
 const { MongoClient } = require('mongodb');
 const OTJson0 = require('ot-json0');
 
-// Edit these settings to specify which doc to visualize
+// Edit these settings to specify which doc to visualize, and how.
 const projectShortName = 'AAA';
 const book = 'GEN';
 const chapter = 1;
 const connectionConfig = utils.devConfig;
+const collapseAdjacentSameUserEdits = true;
+const showOpAttributes = true;
 utils.useColor(true);
 
 ShareDB.types.register(RichText.type);
@@ -24,6 +26,7 @@ async function run() {
   const ws = utils.createWS(connectionConfig);
   const conn = new ShareDB.Connection(ws);
   const client = await MongoClient.connect(connectionConfig.dbLocation);
+  console.log(`Connected.`);
   try {
     const db = client.db();
     const projectCollection = db.collection('sf_projects');
@@ -37,6 +40,7 @@ async function run() {
       .find({ d: docId }, { projection: { v: 1, m: 1 }, sort: { v: 1 } })
       .toArray();
     let lastLoggedDocIndex = -1;
+    console.log(`Considering ${docs.length} docs.`);
     for (let i = 0; i < docs.length; i++) {
       const doc = docs[i];
       if (!doc.m.uId) {
@@ -44,12 +48,13 @@ async function run() {
         const project = await utils.fetchSnapshotByTimestamp(conn, 'sf_projects', projectId, doc.m.ts);
         const user = 'unspecified user (sync was ' + (!project.data.sync.queuedCount ? 'not ' : '') + 'in progress)';
         logEdit(snapshot, user, 1, doc.m.ts);
-      } else if (docs[i + 1] && docs[i + 1].m.uId === doc.m.uId) {
+      } else if (collapseAdjacentSameUserEdits && docs[i + 1] && docs[i + 1].m.uId === doc.m.uId) {
         continue;
       } else {
         const snapshot = await utils.fetchSnapshotByVersion(conn, 'texts', docId, doc.v + 1);
         const user = await usersCollection.findOne({ _id: doc.m.uId }, { projection: { displayName: 1 } });
-        const userDescription = `${user.displayName} (${doc.m.uId})`;
+        // A user might not be found if we are working with a partial copy of a DB.
+        const userDescription = `${user != null ? user.displayName : 'Notfound User'} (${doc.m.uId})`;
         logEdit(snapshot, userDescription, i - lastLoggedDocIndex, docs[lastLoggedDocIndex + 1].m.ts, doc.m.ts);
       }
       lastLoggedDocIndex = i;
@@ -67,12 +72,11 @@ function logEdit(snapshot, user, editCount, startTime, endTime) {
       : `from ${new Date(startTime).toUTCString()} to ${new Date(endTime).toUTCString()}`;
 
   console.log(`Modified by ${user} in ${editCount} edits ${time}`);
-  const showAttributes = true;
   if (snapshot.data == null) {
     console.log(utils.colored(utils.colors.red, `Not rendering snapshot with null data.`));
     return;
   }
-  utils.visualizeOps(snapshot.data.ops, showAttributes);
+  utils.visualizeOps(snapshot.data.ops, showOpAttributes);
   console.log();
 }
 
