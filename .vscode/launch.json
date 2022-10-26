@@ -7,7 +7,6 @@
     }
   ],
   "configurations": [
-
     {
       // Attach to Chromium and debug the running frontend.
       // This also works with Edge. Type doesn't seem to need to be "pwa-msedge" to attach with Edge.
@@ -16,11 +15,19 @@
       "port": 9977,
       "request": "attach",
       "type": "pwa-chrome",
-      "webRoot": "${workspaceRoot}/src/SIL.XForge.Scripture/ClientApp",
+      "webRoot": "${workspaceRoot}/src/SIL.XForge.Scripture/ClientApp"
+    },
+    {
+      // Attach to and debug the running realtime server.
+      "name": "Attach to backend realtime server, by PID",
+      "processId": "${command:PickProcess}",
+      "request": "attach",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
     },
     {
       // Attach to and debug the running backend
-      "name": "Attach to backend",
+      "name": "Attach to backend dotnet",
       "type": "coreclr",
       "request": "attach",
       "processName": "SIL.XForge.Scripture"
@@ -36,7 +43,7 @@
       "sourceMaps": true,
       "pathMapping": {
         "/_karma_webpack_": "${workspaceFolder}/src/SIL.XForge.Scripture/ClientApp"
-      },
+      }
     },
     {
       "name": "Run and debug RealtimeServer tests",
