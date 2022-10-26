@@ -11,5 +11,6 @@ namespace SIL.XForge.Models
         public string Direction { get; set; } = LanguageDirection.LTR;
         public string[] Tags { get; set; }
         public bool Production { get; set; } = false;
+        public string Helps { get; set; }
     }
 }
