@@ -15,6 +15,7 @@ import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { RetryingRequest } from 'xforge-common/retrying-request.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { environment } from '../../../environments/environment';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
@@ -60,7 +61,7 @@ interface DialogListItem {
   sfVersionOfQuestion?: QuestionDoc;
 }
 
-type DialogErrorState = 'update_transcelerator' | 'file_import_errors';
+type DialogErrorState = 'update_transcelerator' | 'file_import_errors' | 'missing_header_row';
 type DialogStatus = 'initial' | 'no_questions' | 'filter' | 'loading' | 'progress' | DialogErrorState;
 
 @Component({
@@ -386,30 +387,49 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
   async fileSelected(file: File) {
     this.loading = true;
 
+    // extract the book id from the file name, if it exists (unfoldingWord puts the book id in the file name, and omits
+    // it from the reference, with file names like tq_GEN.tsv, and references like 5:3)
+    const possibleBookIds = file.name.split(/[-_.]/).filter(part => Canon.allBookIds.includes(part.toUpperCase()));
+    const defaultBookId = possibleBookIds.length === 1 ? possibleBookIds[0].toUpperCase() : undefined;
+
     const result = await this.csvService.parse(file);
+
+    const referenceColumn = result[0].findIndex(value => /^\s*References?\s*$/i.test(value));
+    const questionColumn = result[0].findIndex(value => /^\s*Questions?\s*$/i.test(value));
+
+    if (referenceColumn === -1 || questionColumn === -1) {
+      this.questionSource = 'csv_file';
+      this.errorState = 'missing_header_row';
+      return;
+    }
 
     let invalidRows: string[][] = [];
     const questions: SourceQuestion[] = [];
 
     for (const [index, row] of result.entries()) {
-      // skip rows where every cell is the empty string
-      if (!row.some(cell => cell !== '')) {
+      // skip the header row, and any row where every cell is the empty string
+      if (index === 0 || row.every(cell => cell === '')) {
         continue;
       }
       const rowNumber: string = index + 1 + '';
-      const reference: string = (row[0] || '').trim();
-      const questionText: string = (row[1] || '').trim();
+      const reference: string | undefined = row[referenceColumn]?.trim();
+      const questionText: string | undefined = row[questionColumn]?.trim();
       if (row.length < 2 || reference === '' || questionText === '') {
         invalidRows.push([rowNumber].concat(row));
         continue;
       }
       try {
+        // if the reference doesn't start with a book id, and the file name includes the book id, prepend the book id to
+        // the reference
+        const refStartsWithBook: boolean = Canon.allBookIds.includes(reference.slice(0, 3)) && reference[3] === ' ';
+        const fullReference: string =
+          refStartsWithBook || defaultBookId == null ? reference : defaultBookId + ' ' + reference;
         questions.push({
-          verseRef: VerseRef.parse(reference),
+          verseRef: VerseRef.parse(fullReference),
           text: questionText
         });
       } catch {
-        invalidRows.push([rowNumber].concat(row));
+        invalidRows.push([rowNumber, reference, questionText]);
       }
     }
 
