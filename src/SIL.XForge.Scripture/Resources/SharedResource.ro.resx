@@ -125,6 +125,9 @@
     <value>- {0} răspuns doar audio -</value>
     <comment>Text to show in Paratext Notes when response is audio-only</comment>
   </data>
+  <data name="CommunitySupport" xml:space="preserve">
+    <value>Suport comunitar</value>
+  </data>
   <data name="EmailBad" xml:space="preserve">
     <value>Introduceți o adresă de e-mail valabilă</value>
   </data>
@@ -157,6 +160,9 @@
   </data>
   <data name="InviteSubject" xml:space="preserve">
     <value>Ați fost invitat la proiectul {0} pe {1}</value>
+  </data>
+  <data name="Help" xml:space="preserve">
+    <value>Ajutor</value>
   </data>
   <data name="Language" xml:space="preserve">
     <value>Limba</value>

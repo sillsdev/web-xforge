@@ -158,7 +158,7 @@
     "unknown_author": "Unknown author",
     "next": "Далее",
     "previous": "Назад",
-    "questions": "Вопросы ({{ count }} )",
+    "questions": "Вопросы ({{ count }})",
     "view_questions": "Посмотреть вопросы"
   },
   "checking_answers": {

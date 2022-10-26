@@ -125,6 +125,9 @@
     <value>- {0} audio-only response -</value>
     <comment>Text to show in Paratext Notes when response is audio-only</comment>
   </data>
+  <data name="CommunitySupport" xml:space="preserve">
+    <value>İcmai dəstəyi</value>
+  </data>
   <data name="EmailBad" xml:space="preserve">
     <value>İstifadə edə bilən e-poçt ünvanını daxil edin</value>
   </data>
@@ -157,6 +160,9 @@
   </data>
   <data name="InviteSubject" xml:space="preserve">
     <value>Siz {1} -da olan {0} layihəsinə dəvət olunmusunuz</value>
+  </data>
+  <data name="Help" xml:space="preserve">
+    <value>Kömək</value>
   </data>
   <data name="Language" xml:space="preserve">
     <value>Dil</value>

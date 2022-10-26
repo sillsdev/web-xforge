@@ -125,6 +125,9 @@
     <value>- {0} resposta somente em áudio -</value>
     <comment>Text to show in Paratext Notes when response is audio-only</comment>
   </data>
+  <data name="CommunitySupport" xml:space="preserve">
+    <value>Apoio da Comunidade</value>
+  </data>
   <data name="EmailBad" xml:space="preserve">
     <value>Inserir um e-mail válido</value>
   </data>
@@ -157,6 +160,9 @@
   </data>
   <data name="InviteSubject" xml:space="preserve">
     <value>Você foi convidado para o projeto {0} em {1}</value>
+  </data>
+  <data name="Help" xml:space="preserve">
+    <value>Ajuda</value>
   </data>
   <data name="Language" xml:space="preserve">
     <value>Idioma</value>
