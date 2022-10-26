@@ -72,14 +72,14 @@ For error reporting:
 
 Status of builds from our continuous integration (CI) [server](https://build.palaso.org):
 
-| Site            | Master Unit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | QA                                                                                                                                                                                                                                                       | Live                                                                                                                                                                                                                                                |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Site            | Master Unit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | QA                                                                                                                                                                                                                                            | Live                                                                                                                                                                                                                                         |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Scripture Forge | [![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:SFv2_ScriptureForgeMasterUnitTests)/statusIcon>)](https://build.palaso.org/viewType.html?buildTypeId=SFv2_ScriptureForgeMasterUnitTests) [![Total alerts](https://img.shields.io/lgtm/alerts/g/sillsdev/web-xforge.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/sillsdev/web-xforge/alerts/) [![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/sillsdev/web-xforge.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/sillsdev/web-xforge/context:javascript) [![Codecov](https://img.shields.io/codecov/c/github/sillsdev/web-xforge.svg?style=flat)](https://app.codecov.io/gh/sillsdev/web-xforge) | ![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:xForgeDeploy_ScriptureForgeQa)/statusIcon>) ![Website](https://img.shields.io/website?down_message=offline&up_message=online&url=https%3A%2F%2Fqa.scriptureforge.org) | ![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:xForgeDeploy_ScriptureForgeLive)/statusIcon>) ![Website](https://img.shields.io/website?down_message=offline&up_message=online&url=https%3A%2F%2Fscriptureforge.org) |
 
 Successful builds from our CI server deploy to:
 
-| Site            | QA                                                               | Live                                                       |
-| --------------- | ---------------------------------------------------------------- | ---------------------------------------------------------- |
+| Site            | QA                                                     | Live                                             |
+| --------------- | ------------------------------------------------------ | ------------------------------------------------ |
 | Scripture Forge | [qa.scriptureforge.org](https://qa.scriptureforge.org) | [scriptureforge.org](https://scriptureforge.org) |
 
 ### Gitflow
@@ -467,6 +467,8 @@ If a model change is made, then a corresponding data migration should be impleme
 
 ## Debugging
 
+### Run processes to attach to
+
 Run the frontend, such as with the following in its own Terminal tab. It will automatically re-compile when the code
 is changed.
 
@@ -478,7 +480,7 @@ Run the backend, such as with the following in its own Terminal tab. It will aut
 changed. (Running the frontend and backend separately allow them to be independently restarted.)
 
 ```bash
-cd src/SIL.XForge.Scripture && dotnet watch run --start-ng-serve=listen
+cd src/SIL.XForge.Scripture && dotnet watch run --start-ng-serve=listen --node-options=--inspect=9230
 ```
 
 Run frontend tests on desired specs, such as with the following in its own Terminal tab. It will automatically
@@ -499,20 +501,25 @@ chromium-browser --remote-debugging-port=9977
 ```
 
 Or in Windows:
-  - Navigate to Chrome.exe.
-  - Right-click Chrome.exe and create a desktop shortcut.
-  - Right-click the new desktop shortcut, and modify its properties.
-  - Append ` --remote-debugging-port=9977` to the command.
-  - Double-click the desktop shortcut to launch Chrome.
+
+- Navigate to Chrome.exe.
+- Right-click Chrome.exe and create a desktop shortcut.
+- Right-click the new desktop shortcut, and modify its properties.
+- Append ` --remote-debugging-port=9977` to the command.
+- Double-click the desktop shortcut to launch Chrome.
 
 Note that your Chromium window for testing the frontend and your Chromium window for running unit tests will be
 different windows.
 
+### Attach debugger
+
 In Visual Studio Code, go to the **Run and Debug** view. Choose one or more of the following and click
 **Start Debugging**.
-  - **Attach to frontend**
-  - **Attach to backend**
-  - **Attach to frontend tests**
+
+- **Attach to frontend**
+- **Attach to backend dotnet application**
+- **Attach to backend realtime server**
+- **Attach to frontend tests**
 
 When you are finished debugging, click **Disconnect**. The processes will continue running until you press Ctrl+C
 to end them in the Terminal.
@@ -540,7 +547,6 @@ dotnet tool install csharpier
 dotnet csharpier .
 ```
 
-
 ## Database
 
 The VS Code extension [Azure Cosmos DB](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-cosmosdb) can be used to inspect our Mongo DB.
@@ -563,4 +569,3 @@ trang usx-sf.rnc usx-sf.xsd
 ## Architecture and design
 
 <img src="https://docs.google.com/drawings/d/e/2PACX-1vQjPZcXN0p9cZRf6cV8SRmjPMlQhwlFIH9GvSrYmbMcdK93NXVHFUhkm0LEEXcQKsSwdO6eRHbUpPtB/pub?w=959&amp;h=651" alt="SF and PT synchronization process">
-
