@@ -65,7 +65,7 @@
             </mat-card-content>
 
             <mat-card-actions>
-              <button mat-flat-button color="primary" ngfSelect accept=".csv" (fileChange)="fileSelected($event)">
+              <button mat-flat-button color="primary" ngfSelect accept=".csv,.tsv" (fileChange)="fileSelected($event)">
                 {{ t("import_from_csv_file") }}
               </button>
               <a mat-button [href]="urls.csvImportHelpPage" target="_blank">{{ t("learn_more") }}</a>
