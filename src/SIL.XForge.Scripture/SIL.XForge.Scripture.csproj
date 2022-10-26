@@ -14,6 +14,7 @@
     <MachineVersion>2.5.11</MachineVersion>
     <RealtimeServerRoot>..\RealtimeServer\</RealtimeServerRoot>
     <AngularConfig>production</AngularConfig>
+    <Nullable>annotations</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

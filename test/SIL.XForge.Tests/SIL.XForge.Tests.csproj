@@ -8,6 +8,7 @@
     <RootNamespace>SIL.XForge</RootNamespace>
     <LangVersion>latest</LangVersion>
     <RealtimeServerRoot>..\..\src\RealtimeServer\</RealtimeServerRoot>
+    <Nullable>annotations</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
