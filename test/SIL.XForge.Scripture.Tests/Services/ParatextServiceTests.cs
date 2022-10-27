@@ -2470,9 +2470,33 @@ namespace SIL.XForge.Scripture.Services
             env.AddProjectRepository();
             env.SetSharedRepositorySource(userSecret, UserRoles.Administrator);
             var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
-            var project = projects.First();
+            SFProject project = projects.First();
+            Assert.That(project.UserRoles.Count, Is.EqualTo(2), "setup");
+            // SUT
             var roles = await env.Service.GetProjectRolesAsync(userSecret, project, CancellationToken.None);
             Assert.That(roles.Count, Is.EqualTo(2));
+            var firstRole = new KeyValuePair<string, string>(env.ParatextUserId01, SFProjectRole.Administrator);
+            Assert.That(roles.First(), Is.EqualTo(firstRole));
+            var secondRole = new KeyValuePair<string, string>(env.ParatextUserId02, SFProjectRole.Administrator);
+            Assert.That(roles.Last(), Is.EqualTo(secondRole));
+        }
+
+        [Test]
+        public async Task GetProjectRolesAsync_UnregisteredProject_SkipsNonPTUsers()
+        {
+            var env = new TestEnvironment();
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+            env.MakeUserSecret(env.User02, env.Username02, env.ParatextUserId02);
+            SFProject proj = env.NewSFProject();
+            proj.UserRoles.Add(env.User04, SFProjectRole.CommunityChecker);
+            env.AddProjectRepository(proj);
+            env.SetSharedRepositorySource(userSecret, UserRoles.Administrator);
+            var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
+            SFProject project = projects.First();
+            Assert.That(project.UserRoles.Count, Is.EqualTo(3), "setup");
+            // SUT
+            var roles = await env.Service.GetProjectRolesAsync(userSecret, project, CancellationToken.None);
+            Assert.That(roles.Count, Is.EqualTo(2), "map of PT roles should only include PT users");
             var firstRole = new KeyValuePair<string, string>(env.ParatextUserId01, SFProjectRole.Administrator);
             Assert.That(roles.First(), Is.EqualTo(firstRole));
             var secondRole = new KeyValuePair<string, string>(env.ParatextUserId02, SFProjectRole.Administrator);
@@ -3215,6 +3239,9 @@ namespace SIL.XForge.Scripture.Services
             public readonly string User01 = "user01";
             public readonly string User02 = "user02";
             public readonly string User03 = "user03";
+
+            // User04 is a SF user and is not a PT user.
+            public readonly string User04 = "user04";
             public readonly string Username01 = "User 01";
             public readonly string Username02 = "User 02";
             public readonly string Username03 = "User 03";
@@ -3556,79 +3583,80 @@ namespace SIL.XForge.Scripture.Services
                 return mockSource;
             }
 
-            public void AddProjectRepository()
+            public SFProject NewSFProject()
             {
+                return new SFProject
+                {
+                    Id = "sf_id_" + Project01,
+                    ParatextId = PTProjectIds[Project01].Id,
+                    Name = "Full Name " + Project01,
+                    ShortName = "P01",
+                    WritingSystem = new WritingSystem { Tag = "writingsystem_tag" },
+                    TranslateConfig = new TranslateConfig
+                    {
+                        TranslationSuggestionsEnabled = true,
+                        Source = new TranslateSource
+                        {
+                            ParatextId = "paratextId",
+                            Name = "Source",
+                            ShortName = "SRC",
+                            WritingSystem = new WritingSystem { Tag = "qaa" }
+                        }
+                    },
+                    CheckingConfig = new CheckingConfig { ShareEnabled = false },
+                    UserRoles = new Dictionary<string, string>
+                    {
+                        { User01, SFProjectRole.Administrator },
+                        { User02, SFProjectRole.CommunityChecker }
+                    },
+                    Texts =
+                    {
+                        new TextInfo
+                        {
+                            BookNum = 40,
+                            Chapters =
+                            {
+                                new Chapter
+                                {
+                                    Number = 1,
+                                    LastVerse = 6,
+                                    IsValid = true,
+                                    Permissions = { }
+                                }
+                            }
+                        },
+                        new TextInfo
+                        {
+                            BookNum = 41,
+                            Chapters =
+                            {
+                                new Chapter
+                                {
+                                    Number = 1,
+                                    LastVerse = 3,
+                                    IsValid = true,
+                                    Permissions = { }
+                                },
+                                new Chapter
+                                {
+                                    Number = 2,
+                                    LastVerse = 3,
+                                    IsValid = true,
+                                    Permissions = { }
+                                }
+                            }
+                        }
+                    }
+                };
+            }
+
+            public void AddProjectRepository(SFProject proj = null)
+            {
+                proj ??= NewSFProject();
                 RealtimeService.AddRepository(
                     "sf_projects",
                     OTType.Json0,
-                    new MemoryRepository<SFProject>(
-                        new[]
-                        {
-                            new SFProject
-                            {
-                                Id = "sf_id_" + Project01,
-                                ParatextId = PTProjectIds[Project01].Id,
-                                Name = "Full Name " + Project01,
-                                ShortName = "P01",
-                                WritingSystem = new WritingSystem { Tag = "writingsystem_tag" },
-                                TranslateConfig = new TranslateConfig
-                                {
-                                    TranslationSuggestionsEnabled = true,
-                                    Source = new TranslateSource
-                                    {
-                                        ParatextId = "paratextId",
-                                        Name = "Source",
-                                        ShortName = "SRC",
-                                        WritingSystem = new WritingSystem { Tag = "qaa" }
-                                    }
-                                },
-                                CheckingConfig = new CheckingConfig { ShareEnabled = false },
-                                UserRoles = new Dictionary<string, string>
-                                {
-                                    { User01, SFProjectRole.Administrator },
-                                    { User02, SFProjectRole.CommunityChecker }
-                                },
-                                Texts =
-                                {
-                                    new TextInfo
-                                    {
-                                        BookNum = 40,
-                                        Chapters =
-                                        {
-                                            new Chapter
-                                            {
-                                                Number = 1,
-                                                LastVerse = 6,
-                                                IsValid = true,
-                                                Permissions = { }
-                                            }
-                                        }
-                                    },
-                                    new TextInfo
-                                    {
-                                        BookNum = 41,
-                                        Chapters =
-                                        {
-                                            new Chapter
-                                            {
-                                                Number = 1,
-                                                LastVerse = 3,
-                                                IsValid = true,
-                                                Permissions = { }
-                                            },
-                                            new Chapter
-                                            {
-                                                Number = 2,
-                                                LastVerse = 3,
-                                                IsValid = true,
-                                                Permissions = { }
-                                            }
-                                        }
-                                    }
-                                }
-                            },
-                        }
-                    )
+                    new MemoryRepository<SFProject>(new[] { proj })
                 );
                 MockFileSystemService
                     .DirectoryExists(

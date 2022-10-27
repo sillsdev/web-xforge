@@ -877,8 +877,18 @@ namespace SIL.XForge.Scripture.Services
                         projectUserSecret = await _userSecretRepository.GetAsync(userId);
                     }
 
+                    if (projectUserSecret == null)
+                    {
+                        // Skip users that we won't be able to find a PT role for.
+                        continue;
+                    }
+
                     // Get the PT role
-                    string projectUserName = GetParatextUsername(projectUserSecret);
+                    string? projectUserName = GetParatextUsername(projectUserSecret);
+                    if (projectUserName == null)
+                    {
+                        continue;
+                    }
                     string role = ConvertFromUserRole(
                         remotePtProject.SourceUsers.Users.SingleOrDefault(u => u.UserName == projectUserName)?.Role
                     );
