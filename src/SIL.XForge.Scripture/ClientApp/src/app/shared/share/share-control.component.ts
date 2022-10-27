@@ -1,5 +1,4 @@
-import { MdcTextField } from '@angular-mdc/web/textfield';
-import { ChangeDetectorRef, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -30,7 +29,7 @@ export class ShareControlComponent extends SubscriptionDisposable {
   /** Fires when an invitation is sent. */
   @Output() invited = new EventEmitter<void>();
   @Input() defaultRole: SFProjectRole = SF_DEFAULT_SHARE_ROLE;
-  @ViewChild('shareLinkField') shareLinkField?: MdcTextField;
+  @ViewChild('shareLinkField') shareLinkField?: ElementRef<HTMLInputElement>;
 
   email = new FormControl('', [XFValidators.email]);
   localeControl = new FormControl('', [Validators.required]);
@@ -160,8 +159,7 @@ export class ShareControlComponent extends SubscriptionDisposable {
     if (this.shareLinkField == null) {
       return;
     }
-    this.shareLinkField.focus();
-    this.shareLinkField._input.nativeElement.select();
+    this.shareLinkField.nativeElement.select();
     document.execCommand('copy');
     this.noticeService.show(translate('share_control.link_copied'));
   }
