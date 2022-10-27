@@ -235,3 +235,8 @@ mdc-drawer-content {
   font-weight: normal;
   font-size: 1.4rem;
 }
+
+.fix-rtl-arrow-placement {
+  margin-left: initial !important;
+  margin-right: auto;
+}
