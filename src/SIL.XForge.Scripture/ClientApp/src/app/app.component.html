@@ -183,7 +183,7 @@
         >
           <mdc-icon svgIcon="translate" class="translate-icon"></mdc-icon>
           {{ t("translate") }}
-          <mat-icon *ngIf="!hasSingleAppEnabled">
+          <mat-icon *ngIf="!hasSingleAppEnabled" [class.fix-rtl-arrow-placement]="i18n.isRtl">
             keyboard_arrow_{{ translateVisible ? "down" : i18n.forwardDirectionWord }}
           </mat-icon>
         </a>
@@ -211,7 +211,7 @@
         >
           <mat-icon mat-list-icon>question_answer</mat-icon>
           {{ t("community_checking") }}
-          <mat-icon *ngIf="!hasSingleAppEnabled">
+          <mat-icon *ngIf="!hasSingleAppEnabled" [class.fix-rtl-arrow-placement]="i18n.isRtl">
             keyboard_arrow_{{ checkingVisible ? "down" : i18n.forwardDirectionWord }}
           </mat-icon>
         </a>
