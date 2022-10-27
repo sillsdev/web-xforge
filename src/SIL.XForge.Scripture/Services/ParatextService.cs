@@ -889,8 +889,32 @@ namespace SIL.XForge.Scripture.Services
                     {
                         continue;
                     }
+
+                    if (remotePtProject.SourceUsers is null)
+                    {
+                        throw new InvalidDataException(
+                            $"Unexpected null SourceUsers when working with project PT id {remotePtProject.SendReceiveId}."
+                        );
+                    }
+                    if (remotePtProject.SourceUsers.Users is null)
+                    {
+                        throw new InvalidDataException(
+                            $"Unexpected null SourceUsers.Users when working with project PT id {remotePtProject.SendReceiveId}."
+                        );
+                    }
                     string role = ConvertFromUserRole(
-                        remotePtProject.SourceUsers.Users.SingleOrDefault(u => u.UserName == projectUserName)?.Role
+                        remotePtProject.SourceUsers.Users
+                            .SingleOrDefault(u =>
+                            {
+                                if (u is null)
+                                {
+                                    _logger.LogWarning(
+                                        $"An element of SourceUsers.Users was null when working with project PT id {remotePtProject.SendReceiveId}."
+                                    );
+                                }
+                                return u?.UserName == projectUserName;
+                            })
+                            ?.Role
                     );
 
                     // Get the PT user ID
