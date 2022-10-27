@@ -64,9 +64,9 @@
     "problem_already_connected": "El proyecto ya está conectado. Tal vez otro administrador del proyecto conectó el proyecto al mismo tiempo. Por favor, inténtelo de nuevo. Si sigue siendo un problema, por favor informe del problema para que podamos arreglarlo.",
     "proceed": "Continuar",
     "project_settings": "Configuración del proyecto",
-    "select_project_or_resource": "Select the Paratext project or Digital Bible Library resource that your project is based on. If your project is based on a Paratext project, it's best to set it up as a daughter project in Paratext.",
+    "select_project_or_resource": "Seleccione el proyecto Paratext o el recurso de la Biblioteca Bíblica Digital en el que se basa su proyecto. Si su proyecto se basa en un proyecto Paratext, lo mejor es configurarlo como un proyecto hijo en Paratext.",
     "source_text_placeholder": "Texto de original (opcional)",
-    "translation_suggestions_require_source_text": "Note: Translation suggestions are only available if a source text is selected.",
+    "translation_suggestions_require_source_text": "Nota: Las sugerencias de traducción sólo están disponibles si se selecciona un texto de origen.",
     "you_can_change_later": "Puede cambiarlo más tarde.",
     "you_must_be_logged_in_to_paratext": "Debe iniciar sesión con su cuenta de Paratext para conectarse a un proyecto."
   },
@@ -210,7 +210,7 @@
   },
   "settings": {
     "anyone_with_a_link": "Cualquiera con un enlace",
-    "community_checking_settings": "Community Checking Settings",
+    "community_checking_settings": "Configuración de comprobación por la comunidad",
     "connect_network_to_change_settings": "La configuración del proyecto no puede cambiarse mientras está fuera de línea. Por favor, conéctese a Internet para hacer cambios.",
     "danger_zone": "Zona de Peligro",
     "delete_project_cannot_be_undone": "Una vez que se borra un proyecto, no hay vuelta atrás. Por favor, asegúrese.",
@@ -223,17 +223,17 @@
     "error_fetching_projects": "Se ha producido un error al obtener los proyectos. Sólo podrá seleccionar recursos de la Biblioteca Bíblica Digital.",
     "error_fetching_resources": "Se ha producido un error al recuperar los recursos de la Biblioteca Bíblica Digital. Sólo podrá seleccionar proyectos.",
     "log_in_with_paratext": "Iniciar sesión en Paratext",
-    "see_others_answers_and_comments": "Allow checkers to see each other's answers",
-    "select_project_or_resource": "Select the Paratext project or Digital Bible Library resource that your project is based on. If your project is based on a Paratext project, it's best to set it up as a daughter project in Paratext.",
+    "see_others_answers_and_comments": "Permitir que los revisores vean las respuestas de los demás",
+    "select_project_or_resource": "Seleccione el proyecto Paratext o el recurso de la Biblioteca Bíblica Digital en el que se basa su proyecto. Si su proyecto se basa en un proyecto Paratext, lo mejor es configurarlo como un proyecto hijo en Paratext.",
     "settings": "Configuración",
-    "share": "Allow users to invite others to the project",
+    "share": "Permitir a los usuarios invitar a otros al proyecto",
     "sharing": "Compartir",
     "source_projects_cannot_be_deleted": "Otro proyecto está basado en este proyecto y por lo tanto no puede ser eliminado.",
     "source_text_placeholder": "Texto de original (opcional)",
     "translate": "Configuraciones de Traducción",
-    "translation_suggestions_require_source_text": "Note: Translation suggestions are only available if a source text is selected.",
-    "translation_suggestions": "Enable Translation Suggestions",
-    "translations_will_be_suggested": "Translations for words and phrases will be suggested as you edit Scripture based on the project or resource selected above.",
+    "translation_suggestions_require_source_text": "Nota: Las sugerencias de traducción sólo están disponibles si se selecciona un texto de origen.",
+    "translation_suggestions": "Habilitar las sugerencias de traducción",
+    "translations_will_be_suggested": "Las traducciones de las palabras y frases se sugerirán a medida que edite las Escrituras basadas en el proyecto o recurso seleccionado anteriormente.",
     "users_can_interact_with_each_other": "Los usuarios pueden ver las respuestas y comentarios de los demás para interactuar entre ellos.",
     "users_can_share_the_project": "Los usuarios pueden compartir invitando a un amigo a unirse al proyecto.{{ newLine }}{{ italicsStart }}Los administradores{{ italicsEnd }} siempre pueden invitar a otros al proyecto en {{ templateTagBoundary }}Usuarios{{ templateTagBoundary }}.",
     "will_not_delete_paratext_project": "Esto {{ boldStart }}no{{ boldEnd }} borrará su proyecto de Paratext, pero borrará cualquier dato no sincronizado almacenado en Scripture Forge. Se recomienda {{ templateTagBoundary }}Sincronizar{{ templateTagBoundary }} primero antes de borrar."
@@ -260,7 +260,7 @@
     "synchronize_project": "Sincronizar {{ projectName }} con Paratext",
     "your_project_is_being_synchronized": "Su proyecto está siendo sincronizado...",
     "sync_is_disabled": "La sincronización para este proyecto tuvo que ser desactivada, por lo que no está disponible en este momento. Por favor, contacte con {{ email }} para discutir lo que hay que hacer para que la sincronización del proyecto pueda ser activada de nuevo.",
-    "sync_failure_support_message": "Something went wrong the last time Scripture Forge attempted to synchronize the project with Paratext. If it still doesn't work after you try again, please post a problem report about it by writing to {{email}}."
+    "sync_failure_support_message": "Algo salió mal la última vez que Scripture Forge intentó sincronizar el proyecto con Paratext. Si sigue sin funcionar después de intentarlo de nuevo, por favor, envíe un informe de problema al respecto escribiendo a {{email}}."
   },
   "text": {
     "book_does_not_exist": "Este libro no existe.",
@@ -269,9 +269,9 @@
     "not_available_offline": "Este texto no está disponible fuera de línea. Conéctese a Internet para ver el texto."
   },
   "text_note_dialog": {
-    "cross_reference": "Cross-reference",
+    "cross_reference": "Referencia cruzada",
     "end_note": "Nota final",
-    "footnote": "Footnote"
+    "footnote": "Nota al pie"
   },
   "translate_overview": {
     "cannot_train_suggestion_engine": "Translation suggestions are unavailable. Please select a source project that shares books in common with this project to get translation suggestions.",
