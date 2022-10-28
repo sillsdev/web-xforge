@@ -2,7 +2,7 @@
   "profiles": {
     "SIL.XForge.Scripture": {
       "commandName": "Project",
-      "launchBrowser": true,
+      "launchBrowser": false,
       "launchUrl": "http://localhost:5000",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
@@ -12,7 +12,7 @@
     ".NET Core (SF)": {
       "commandName": "Project",
       "commandLineArgs": "--start-ng-serve=listen",
-      "launchBrowser": true,
+      "launchBrowser": false,
       "launchUrl": "http://localhost:5000",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
