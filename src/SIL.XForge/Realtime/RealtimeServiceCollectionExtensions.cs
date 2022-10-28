@@ -24,9 +24,9 @@ namespace Microsoft.Extensions.DependencyInjection
             {
                 options.ProjectPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
                 // only uncomment the two lines below when debugging on the Node side otherwise C# build is paused
-                // options.NodeAndV8Options = "--inspect-brk=9230";
+                options.NodeAndV8Options = "--inspect=9230";
             });
-            // services.Configure<OutOfProcessNodeJSServiceOptions>(options => options.TimeoutMS = -1);
+            services.Configure<OutOfProcessNodeJSServiceOptions>(options => options.TimeoutMS = -1);
             services.AddSingleton<IJsonService, RealtimeJsonService>();
 
             services.Configure(configureOptions);

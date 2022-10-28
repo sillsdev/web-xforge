@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "sourceMap": true,
+    "sourceRoot": "../../../../../../../../../../src/RealtimeServer/common/",
     "declaration": true,
     "target": "es6",
     "moduleResolution": "node",

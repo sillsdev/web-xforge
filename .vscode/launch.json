@@ -19,11 +19,10 @@
     },
     {
       // Attach to and debug the running realtime server.
-      "name": "Attach to backend realtime server, by PID",
-      "processId": "${command:PickProcess}",
+      "name": "Attach to backend realtime server",
       "request": "attach",
-      "skipFiles": ["<node_internals>/**"],
-      "type": "node"
+      "type": "node",
+      "port": 9230
     },
     {
       // Attach to and debug the running backend
