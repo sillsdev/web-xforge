@@ -15,7 +15,7 @@ namespace Microsoft.Extensions.DependencyInjection
             this IServiceCollection services,
             ILoggerFactory loggerFactory,
             IConfiguration configuration,
-            bool launchWithDebugging = false,
+            string? nodeOptions = null,
             bool migrationsDisabled = false
         )
         {
@@ -40,7 +40,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         new[] { new DocConfig("sf_project_user_configs", typeof(SFProjectUserConfig)) }
                     );
                 },
-                launchWithDebugging
+                nodeOptions
             );
             return services;
         }

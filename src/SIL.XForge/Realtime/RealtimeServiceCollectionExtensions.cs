@@ -16,17 +16,18 @@ namespace Microsoft.Extensions.DependencyInjection
             ILoggerFactory loggerFactory,
             IConfiguration configuration,
             Action<RealtimeOptions> configureOptions,
-            bool launchWithDebugging = false
+            string? nodeOptions = null
         )
         {
             services.AddNodeJS();
             services.Configure<NodeJSProcessOptions>(options =>
             {
                 options.ProjectPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                // only uncomment the two lines below when debugging on the Node side otherwise C# build is paused
-                // options.NodeAndV8Options = "--inspect-brk=9230";
+                if (!string.IsNullOrWhiteSpace(nodeOptions))
+                {
+                    options.NodeAndV8Options = nodeOptions;
+                }
             });
-            // services.Configure<OutOfProcessNodeJSServiceOptions>(options => options.TimeoutMS = -1);
             services.AddSingleton<IJsonService, RealtimeJsonService>();
 
             services.Configure(configureOptions);

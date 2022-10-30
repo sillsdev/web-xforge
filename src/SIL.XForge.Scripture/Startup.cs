@@ -130,11 +130,8 @@ namespace SIL.XForge.Scripture
 
             services.AddConfiguration(Configuration);
 
-            services.AddSFRealtimeServer(
-                LoggerFactory,
-                Configuration,
-                IsDevelopmentEnvironment || IsTestingEnvironment
-            );
+            string? nodeOptions = Configuration.GetValue<string>("node-options");
+            services.AddSFRealtimeServer(LoggerFactory, Configuration, nodeOptions);
 
             services.AddSFServices();
 

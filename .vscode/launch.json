@@ -7,27 +7,36 @@
     }
   ],
   "configurations": [
-
     {
       // Attach to Chromium and debug the running frontend.
       // This also works with Edge. Type doesn't seem to need to be "pwa-msedge" to attach with Edge.
-      // First you need to launch Chromium/Chrome or Edge with --remote-debugging-port=9977. The SF frontend must also be running/accessible.
+      // First you need to launch Chromium/Chrome or Edge with --remote-debugging-port=9977. The SF frontend must
+      // also be running/accessible.
       "name": "Attach to frontend (in a running Chromium)",
       "port": 9977,
       "request": "attach",
       "type": "pwa-chrome",
-      "webRoot": "${workspaceRoot}/src/SIL.XForge.Scripture/ClientApp",
+      "webRoot": "${workspaceRoot}/src/SIL.XForge.Scripture/ClientApp"
     },
     {
       // Attach to and debug the running backend
-      "name": "Attach to backend",
+      "name": "Attach to backend dotnet application",
       "type": "coreclr",
       "request": "attach",
       "processName": "SIL.XForge.Scripture"
     },
     {
+      // Attach to and debug the running realtime server. The dotnet backend needs to have been started with
+      // --node-options=--inspect=9230 or --node-options=--inspect-brk=9230
+      "name": "Attach to backend realtime server",
+      "request": "attach",
+      "type": "node",
+      "port": 9230
+    },
+    {
       // Attach to Chromium and debug the running frontend tests
-      // First you need to launch the test runner, such as by: cd ClientApp && npm test -- --include src/app/shared/text/text.component.spec.ts
+      // First you need to launch the test runner, such as by:
+      // cd ClientApp && npm test -- --include src/app/shared/text/text.component.spec.ts
       "name": "Attach to frontend tests (via Karma in Chromium)",
       "port": 9988,
       "request": "attach",
@@ -36,7 +45,7 @@
       "sourceMaps": true,
       "pathMapping": {
         "/_karma_webpack_": "${workspaceFolder}/src/SIL.XForge.Scripture/ClientApp"
-      },
+      }
     },
     {
       "name": "Run and debug RealtimeServer tests",
@@ -71,7 +80,7 @@
       "request": "launch",
       "preLaunchTask": "dotnet build",
       "program": "${workspaceRoot}/src/SIL.XForge.Scripture/bin/Debug/net6.0/SIL.XForge.Scripture.dll",
-      "args": ["--start-ng-serve=listen"],
+      "args": ["--start-ng-serve=listen", "--node-options=--inspect=9230"],
       "cwd": "${workspaceRoot}/src/SIL.XForge.Scripture/",
       "stopAtEntry": false,
       "console": "integratedTerminal",
