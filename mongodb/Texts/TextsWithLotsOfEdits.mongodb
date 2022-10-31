@@ -1,0 +1,28 @@
+use('xforge')
+
+const shortName = '';
+
+const project = db.sf_projects.findOne({shortName})
+const bookIds = project.texts.map(text => text.bookNum)
+const projectId = project._id
+
+db.o_texts.aggregate([
+  // find ops on this project that were created by a user
+  {$match: {
+    d: {$regex: `^${projectId}:`},
+   'm.uId': {$exists: true}
+  }},
+  // group them by text and count the number of ops for each text
+  {$group: {
+    _id: '$d',
+    count: { $sum: 1 },
+  }},
+  // filter for those with at least 100 ops
+  {$match: {
+    count: {$gte: 100}
+  }},
+  // sort the most edited texts to the top
+  {$sort: {
+    count: -1
+  }}
+]).toArray();
