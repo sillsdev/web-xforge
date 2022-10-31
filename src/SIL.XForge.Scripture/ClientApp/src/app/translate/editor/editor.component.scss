@@ -139,3 +139,9 @@ app-text {
 .both-editors-wrapper {
   column-gap: 5px;
 }
+
+.insert-note-fab {
+  position: fixed;
+  right: 5px;
+  visibility: hidden;
+}

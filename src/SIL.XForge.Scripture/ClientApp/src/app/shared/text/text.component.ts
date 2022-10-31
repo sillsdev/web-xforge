@@ -12,7 +12,7 @@ import {
 import { TranslocoService } from '@ngneat/transloco';
 import isEqual from 'lodash-es/isEqual';
 import merge from 'lodash-es/merge';
-import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
+import Quill, { DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
 import QuillCursors from 'quill-cursors';
 import { AuthType, getAuthType } from 'realtime-server/lib/esm/common/models/user';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
@@ -28,12 +28,13 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { objectId } from 'xforge-common/utils';
 import tinyColor from 'tinycolor2';
 import { takeUntil } from 'rxjs/operators';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { attributeFromMouseEvent, getBaseVerse } from '../utils';
 import { MultiCursorViewer } from '../../translate/editor/multi-viewer/multi-viewer.component';
-import { registerScripture } from './quill-scripture';
+import { getAttributesAtPosition, registerScripture } from './quill-scripture';
 import { Segment } from './segment';
 import { EditorRange, TextViewModel } from './text-view-model';
 import { TextNoteDialogComponent, NoteDialogData } from './text-note-dialog/text-note-dialog.component';
@@ -359,6 +360,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return this._segment;
   }
 
+  get segments(): IterableIterator<[string, RangeStatic]> {
+    return this.viewModel.segments;
+  }
+
   get segmentText(): string {
     return this._segment == null ? '' : this._segment.text;
   }
@@ -416,6 +421,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (this._segment != null) {
       return this._segment.ref;
     }
+    return this.firstVerseSegment;
+  }
+
+  get firstVerseSegment(): string | undefined {
     for (const [segmentRef] of this.viewModel.segments) {
       if (getBaseVerse(segmentRef) != null) {
         return segmentRef;
@@ -597,6 +606,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   embedElementInline(
     verseRef: VerseRef,
     id: string,
+    role: string,
     textAnchor: TextAnchor,
     formatName: string,
     format: any
@@ -660,8 +670,11 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     this.editor.insertEmbed(embedInsertPos, formatName, format, 'api');
     const textAnchorRange = this.viewModel.getEditorContentRange(embedInsertPos, textAnchor.length);
     const formatLength: number = textAnchorRange.editorLength;
-    insertFormat['text-anchor'] = 'true';
-    this.editor.formatText(embedInsertPos, formatLength, insertFormat, 'api');
+
+    if (role !== SFProjectRole.Reviewer) {
+      insertFormat['text-anchor'] = 'true';
+      this.editor.formatText(embedInsertPos, formatLength, insertFormat, 'api');
+    }
     this.updateSegment();
     return embedSegmentRef;
   }
@@ -671,6 +684,26 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (position != null && this.editor != null) {
       this.editor.formatText(position, 1, embedName, format, 'api');
     }
+  }
+
+  toggleVerseSelection(verseRef: VerseRef): boolean {
+    if (this.editor == null) return false;
+    const verseSegments: string[] = this.getVerseSegments(verseRef);
+    const verseRange: RangeStatic | undefined = this.getSegmentRange(verseSegments[0]);
+    let selectionValue: true | null = true;
+    if (verseRange != null) {
+      const formats: StringMap = getAttributesAtPosition(this.editor, verseRange.index);
+      selectionValue = formats['reviewer-selection'] ? null : true;
+    }
+
+    const format: any = { ['reviewer-selection']: selectionValue };
+    for (const segment of verseSegments) {
+      const range: RangeStatic | undefined = this.getSegmentRange(segment);
+      if (range != null) {
+        this.editor?.formatText(range.index, range.length, format, 'api');
+      }
+    }
+    return selectionValue === true;
   }
 
   /** Respond to text changes in the quill editor. */

@@ -25,6 +25,7 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { LocalPresence } from 'sharedb/lib/sharedb';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { CaretPosition } from '../../../type-utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -3160,14 +3161,14 @@ class TestEnvironment {
   }
 
   /** Where reference is like 'MAT 1:2'. */
-  embedThreadAt(reference: string, textAnchor: TextAnchor): void {
+  embedThreadAt(reference: string, textAnchor: TextAnchor, role: string = SFProjectRole.ParatextTranslator): void {
     const verseRef: VerseRef = VerseRef.parse(reference);
     const uniqueSuffix: string = Math.random().toString();
     const id: string = `embedid${reference}${uniqueSuffix}`;
     const iconSource: string = '--icon-file: url(/assets/icons/TagIcons/01flag1.png)';
     const text: string = `text message on ${id}`;
     const format = { iconsrc: iconSource, preview: text, threadid: id };
-    this.component.embedElementInline(verseRef, id, textAnchor, 'note-thread-embed', format);
+    this.component.embedElementInline(verseRef, id, role, textAnchor, 'note-thread-embed', format);
     this.component.toggleFeaturedVerseRefs(true, [verseRef], 'note-thread');
   }
 
