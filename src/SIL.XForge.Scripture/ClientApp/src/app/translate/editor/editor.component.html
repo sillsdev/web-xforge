@@ -84,7 +84,7 @@
           <mat-icon>info</mat-icon> {{ t("project_text_not_editable") }}
         </div>
         <div *ngIf="userHasGeneralEditRight && !hasChapterEditPermission" class="no-edit-permission-message">
-          <mat-icon>info</mat-icon> {{ t("no_permission_edit_chapter", { userRole: userRole }) }}
+          <mat-icon>info</mat-icon> {{ t("no_permission_edit_chapter", { userRole: userRoleStr }) }}
         </div>
         <div #targetContainer class="text-container" [style.height]="textHeight">
           <app-text
@@ -143,5 +143,8 @@
         </div>
       </div>
     </div>
+  </div>
+  <div #fabButton class="insert-note-fab">
+    <button mat-mini-fab (click)="insertNote()"><mat-icon>add_comment</mat-icon></button>
   </div>
 </ng-container>
