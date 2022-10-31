@@ -2427,6 +2427,55 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('reviewers can click to select verse', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.setCurrentUser('user05');
+      env.wait();
+
+      const hasSelectionAnchors = env.getSegmentElement('verse_1_1')!.querySelector('display-text-anchor');
+      expect(hasSelectionAnchors).toBeNull();
+      const verseElem: HTMLElement = env.getSegmentElement('verse_1_1')!;
+      expect(verseElem.classList).not.toContain('reviewer-selection');
+
+      // select verse 1
+      verseElem.click();
+      env.wait();
+      expect(verseElem.classList).toContain('reviewer-selection');
+      const verseTwoElem: HTMLElement = env.getSegmentElement('verse_1_2')!;
+
+      // select verse 2, deselect verse one
+      verseTwoElem.click();
+      env.wait();
+      expect(verseTwoElem.classList).toContain('reviewer-selection');
+      expect(verseElem.classList).not.toContain('reviewer-selection');
+
+      // deselect verse 2
+      verseTwoElem.click();
+      env.wait();
+      expect(verseTwoElem.classList).not.toContain('reviewer-selection');
+      env.dispose();
+    }));
+
+    it('reviewers can create note on selected verse with FAB', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.setCurrentUser('user05');
+      env.wait();
+
+      const verseSegment: HTMLElement = env.getSegmentElement('verse_1_5')!;
+      verseSegment.click();
+      env.wait();
+      expect(verseSegment.classList).toContain('reviewer-selection');
+      env.insertNoteFab.nativeElement.click();
+      env.wait();
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
+      const [, arg2] = capture(mockedMatDialog.open).last();
+      const verseRef: VerseRef = (arg2 as MatDialogConfig).data.verseRef!;
+      expect(verseRef.toString()).toEqual('MAT 1:5');
+      env.dispose();
+    }));
+
     it('should remove resolved notes after a remote update', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
@@ -2900,8 +2949,16 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#settings-btn'));
   }
 
+  get floatingNoteButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.floating-note-button'));
+  }
+
   get insertNoteButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('#create-note-btn'));
+  }
+
+  get insertNoteFab(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.insert-note-fab > button'));
   }
 
   get sharingButton(): DebugElement {
@@ -3146,12 +3203,16 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
+  selectSegment(segmentRef: string): void {
+    const range: RangeStatic = this.component.target!.getSegmentRange(segmentRef)!;
+    this.targetEditor.setSelection(range.index, 'user');
+    this.wait();
+    this.fixture.detectChanges();
+  }
+
   setSelectionAndInsertNote(segmentRef: string | undefined): void {
     if (segmentRef != null) {
-      const range: RangeStatic = this.component.target!.getSegmentRange(segmentRef)!;
-      this.targetEditor.setSelection(range.index, 'user');
-      this.wait();
-      this.fixture.detectChanges();
+      this.selectSegment(segmentRef);
     }
     this.insertNoteButton.nativeElement.click();
     tick();

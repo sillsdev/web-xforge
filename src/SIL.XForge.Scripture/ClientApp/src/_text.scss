@@ -138,6 +138,15 @@ quill-editor.rtl {
   }
 }
 
+.ql-editor .reviewer-selection {
+  background-image: linear-gradient(to right, gray 75%, transparent 75%);
+  background-position: bottom 0.2em left;
+  background-repeat: repeat-x;
+  background-size: 7px 1px;
+  position: relative;
+  cursor: pointer;
+}
+
 .template-editor > .ql-container {
   > .ql-editor {
     background-color: #f5f3ef;
