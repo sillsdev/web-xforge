@@ -126,7 +126,7 @@
     <comment>Text to show in Paratext Notes when response is audio-only</comment>
   </data>
   <data name="CommunitySupport" xml:space="preserve">
-    <value>دعم المجتمع</value>
+    <value>الدعم المجتمعي</value>
   </data>
   <data name="EmailBad" xml:space="preserve">
     <value>أدخِل عنوان بريد إلكتروني صحيح</value>
@@ -162,7 +162,7 @@
     <value>قد دُعيت إلى المشروع {0} في {1}</value>
   </data>
   <data name="Help" xml:space="preserve">
-    <value>المساعدة</value>
+    <value>مساعدة</value>
   </data>
   <data name="Language" xml:space="preserve">
     <value>اللغة</value>

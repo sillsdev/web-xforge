@@ -91,7 +91,7 @@
     "project_text_not_editable": "النص في هذا المشروع غير قابل للتحرير. يمكن تغيير هذا الإعداد في Paratext.",
     "swap_source_and_target": "تبديل المصدر والهدف",
     "text_doc_corrupted": "لا يمكن تعديل أو تحرير هذا الفصل لأن البيانات أصبحت تالفة.",
-    "text_has_been_deleted": "The book has been deleted or is no longer accessible.",
+    "text_has_been_deleted": "تمّ حذف الكتاب أو لم يعد الوصول إليه ممكناً.",
     "to_report_issue_email": "للإبلاغ عن مشكلة، أرسِل رسالة إلكترونية إلى {{ issueEmailLink }}.",
     "training_completed_successfully": "أكتمل التدريب بنجاح",
     "training": "التدريب",
