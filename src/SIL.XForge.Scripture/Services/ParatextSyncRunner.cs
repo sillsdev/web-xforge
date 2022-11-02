@@ -1350,7 +1350,7 @@ namespace SIL.XForge.Scripture.Services
                     op.Set(pd => pd.Editable, settings.Editable);
                     op.Set(pd => pd.DefaultFont, settings.DefaultFont);
                     op.Set(pd => pd.DefaultFontSize, settings.DefaultFontSize);
-                    op.Set(pd => pd.NoteIcon, settings.ToDoCommentIcon);
+                    op.Set(pd => pd.TagIcon, settings.TagIcon);
                 }
                 // The source can be null if there was an error getting a resource from the DBL
                 if (TranslationSuggestionsEnabled && _projectDoc.Data.TranslateConfig.Source != null)
