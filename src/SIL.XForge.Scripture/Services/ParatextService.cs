@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
@@ -1760,10 +1761,13 @@ namespace SIL.XForge.Scripture.Services
                 );
                 return registeredParatextId.Trim('"') == paratextId;
             }
-            catch (HttpRequestException)
+            catch (HttpRequestException error)
             {
                 // A 404 error means the project is not registered.
-                return false;
+                if (error.StatusCode == HttpStatusCode.NotFound)
+                    return false;
+                else
+                    throw;
             }
         }
 
