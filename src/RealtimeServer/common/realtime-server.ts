@@ -107,10 +107,15 @@ export function submitMigrationOp(version: number, doc: Doc, component: any): Pr
 
 export interface RealtimeServer extends ShareDB, shareDBAccess.AccessControlBackend {}
 
+declare type ServerAction = keyof ShareDB.middleware.ActionContextMap;
+
 /**
  * This class represents the real-time server. It extends ShareDB and adds support for migrations and access control.
  */
 export class RealtimeServer extends ShareDB {
+  private static serverInstances = 0;
+  private actionsCounter = new Map<ServerAction, number>();
+
   private readonly docServices = new Map<string, DocService>();
   private defaultConnection?: Connection;
 
@@ -122,6 +127,8 @@ export class RealtimeServer extends ShareDB {
     db: ShareDB.DB,
     private readonly schemaVersions: SchemaVersionRepository
   ) {
+    RealtimeServer.serverInstances++;
+    console.log(`RealtimeServer constructed; there are now ${RealtimeServer.serverInstances} instances`);
     super({
       db,
       presence: true,
@@ -129,6 +136,31 @@ export class RealtimeServer extends ShareDB {
       disableSpaceDelimitedActions: true
     });
     shareDBAccess(this);
+
+    const availableServerActions: ServerAction[] = [
+      'afterWrite',
+      'apply',
+      'commit',
+      'connect',
+      'doc',
+      'op',
+      'query',
+      'readSnapshots',
+      'receive',
+      'reply',
+      'submit'
+    ];
+
+    for (const action of availableServerActions) {
+      this.actionsCounter.set(action, 0);
+      this.use(action, (context, done) => {
+        const oldCount = this.actionsCounter.get(action)!;
+        const newCount = oldCount + 1;
+        this.actionsCounter.set(action, newCount);
+        console.log(this.actionsCounter);
+        done();
+      });
+    }
 
     this.use('connect', (context, done) => {
       context.stream.checkServerAccess = true;

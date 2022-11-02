@@ -13,6 +13,8 @@ function isLocalRequest(request: http.IncomingMessage): boolean {
 }
 
 export class WebSocketStreamListener {
+  private static connectionCount = 0;
+
   private readonly httpServer: http.Server;
   private readonly jwksClient: jwks.JwksClient;
 
@@ -48,6 +50,8 @@ export class WebSocketStreamListener {
     });
 
     wss.on('connection', (webSocket: WebSocket, req: http.IncomingMessage) => {
+      WebSocketStreamListener.connectionCount++;
+      console.log(`New WS connection, there are now ${WebSocketStreamListener.connectionCount} connections`);
       const stream = new WebSocketJSONStream(webSocket);
       backend.listen(stream, req);
     });

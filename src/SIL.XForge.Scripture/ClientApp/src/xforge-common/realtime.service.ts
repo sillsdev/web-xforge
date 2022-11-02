@@ -13,6 +13,24 @@ function getDocKey(collection: string, id: string): string {
   return `${collection}:${id}`;
 }
 
+type CollectionName = string;
+type ShareDBAction = string;
+const stats = new Map<ShareDBAction, Map<CollectionName, number>>();
+
+function incrementMap(action: ShareDBAction, collection: CollectionName) {
+  if (!stats.has(action)) stats.set(action, new Map());
+  const map = stats.get(action)!;
+  if (!map.has(collection)) map.set(collection, 0);
+  map.set(collection, map.get(collection)! + 1);
+}
+
+window['showStats'] = () => {
+  for (const [action, counts] of stats.entries()) {
+    console.log(`Stats for ${action}`);
+    console.log(counts);
+  }
+};
+
 /**
  * The realtime service is responsible for retrieving and mutating realtime data models. This service transparently
  * manages the interaction between three data sources: a memory cache, a local database (IndexedDB), and a realtime
@@ -38,6 +56,7 @@ export class RealtimeService {
   }
 
   get<T extends RealtimeDoc>(collection: string, id: string): T {
+    incrementMap('get', collection);
     const key = getDocKey(collection, id);
     let doc = this.docs.get(key);
     if (doc == null) {
@@ -58,6 +77,7 @@ export class RealtimeService {
   }
 
   createQuery<T extends RealtimeDoc>(collection: string, parameters: QueryParameters): RealtimeQuery<T> {
+    incrementMap('createQuery', collection);
     return new RealtimeQuery<T>(this, this.remoteStore.createQueryAdapter(collection, parameters));
   }
 
@@ -73,12 +93,14 @@ export class RealtimeService {
    * @returns {Promise<T>} The real-time doc.
    */
   async subscribe<T extends RealtimeDoc>(collection: string, id: string): Promise<T> {
+    incrementMap('subscribe', collection);
     const doc = this.get<T>(collection, id);
     await doc.subscribe();
     return doc;
   }
 
   async onlineFetch<T extends RealtimeDoc>(collection: string, id: string): Promise<T> {
+    incrementMap('onlineFetch', collection);
     const doc = this.get<T>(collection, id);
     await doc.onlineFetch();
     return doc;
@@ -93,6 +115,7 @@ export class RealtimeService {
    * @returns {Promise<T>} The newly created real-time doc.
    */
   async create<T extends RealtimeDoc>(collection: string, id: string, data: any): Promise<T> {
+    incrementMap('create', collection);
     const doc = this.get<T>(collection, id);
     await doc.create(data);
     return doc;
@@ -111,6 +134,7 @@ export class RealtimeService {
     collection: string,
     parameters: QueryParameters
   ): Promise<RealtimeQuery<T>> {
+    incrementMap('subscribeQuery', collection);
     const query = this.createQuery<T>(collection, parameters);
     await query.subscribe();
     return query;
@@ -125,6 +149,7 @@ export class RealtimeService {
    * @returns {Promise<RealtimeQuery<T>>} The query.
    */
   async onlineQuery<T extends RealtimeDoc>(collection: string, parameters: QueryParameters): Promise<RealtimeQuery<T>> {
+    incrementMap('onlineQuery', collection);
     const query = this.createQuery<T>(collection, parameters);
     await query.fetch();
     return query;
