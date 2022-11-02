@@ -2118,7 +2118,7 @@ namespace SIL.XForge.Scripture.Services
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             ParatextSettings settings = env.Service.GetParatextSettings(userSecret, ptProjectId);
-            Assert.That(settings.ToDoCommentIcon, Is.EqualTo("icon1"));
+            Assert.That(settings.TagIcon, Is.EqualTo("icon1"));
         }
 
         [Test]

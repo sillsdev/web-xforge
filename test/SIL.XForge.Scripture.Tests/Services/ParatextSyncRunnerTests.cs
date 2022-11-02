@@ -698,7 +698,7 @@ namespace SIL.XForge.Scripture.Services
                     {
                         DefaultFontSize = newFontSize,
                         DefaultFont = newFont,
-                        ToDoCommentIcon = toDoIcon
+                        TagIcon = toDoIcon
                     }
                 );
 
@@ -707,7 +707,7 @@ namespace SIL.XForge.Scripture.Services
             project = env.VerifyProjectSync(true);
             Assert.That(project.DefaultFontSize, Is.EqualTo(newFontSize));
             Assert.That(project.DefaultFont, Is.EqualTo(newFont));
-            Assert.That(project.NoteIcon, Is.EqualTo(toDoIcon));
+            Assert.That(project.TagIcon, Is.EqualTo(toDoIcon));
         }
 
         [Test]

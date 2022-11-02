@@ -650,7 +650,7 @@ class TestEnvironment {
     sync: { queuedCount: 0 },
     editable: true,
     userRoles: TestEnvironment.userRoles,
-    noteIcon: 'defaultIcon'
+    tagIcon: 'defaultIcon'
   };
   static paratextUsers: ParatextUserProfile[] = paratextUsersFromRoles(TestEnvironment.userRoles);
   static testProject: SFProject = {

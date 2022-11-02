@@ -947,7 +947,7 @@ namespace SIL.XForge.Scripture.Services
                 Editable = scrText.Settings.Editable,
                 DefaultFontSize = scrText.Settings.DefaultFontSize,
                 DefaultFont = scrText.Settings.DefaultFont,
-                ToDoCommentIcon = commentTags.Get(CommentTag.toDoTagId).Icon
+                TagIcon = commentTags.Get(CommentTag.toDoTagId).Icon
             };
         }
 

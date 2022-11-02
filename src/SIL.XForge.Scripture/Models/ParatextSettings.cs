@@ -14,6 +14,6 @@ namespace SIL.XForge.Scripture.Models
         public string DefaultFont { get; set; }
 
         /// <summary> The tag icon used by default for note threads created in SF. </summary>
-        public string ToDoCommentIcon { get; set; }
+        public string TagIcon { get; set; }
     }
 }
