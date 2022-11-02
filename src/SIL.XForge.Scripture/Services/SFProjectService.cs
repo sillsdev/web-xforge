@@ -382,7 +382,7 @@ namespace SIL.XForge.Scripture.Services
         )
         {
             SFProject project = await GetProjectAsync(projectId);
-            if (!IsOnProject(project, curUserId))
+            if (!CanUserShareRole(curUserId, project, role))
                 throw new ForbiddenException();
 
             if (
@@ -477,7 +477,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task<string> GetLinkSharingKeyAsync(string curUserId, string projectId, string role)
         {
             SFProject project = await GetProjectAsync(projectId);
-            if (!IsOnProject(project, curUserId))
+            if (!CanUserShareRole(curUserId, project, role))
                 throw new ForbiddenException();
 
             string[] availableRoles = new Dictionary<string, bool>
@@ -974,6 +974,11 @@ namespace SIL.XForge.Scripture.Services
             return project.UserRoles.TryGetValue(userId, out string role) && role == SFProjectRole.Translator;
         }
 
+        private static bool HasParatextRole(SFProject project, string userId)
+        {
+            return project.UserRoles.TryGetValue(userId, out string role) && role.StartsWith("pt_");
+        }
+
         private static void UpdateSetting<T>(
             Json0OpBuilder<SFProject> builder,
             Expression<Func<SFProject, T>> field,
@@ -1111,6 +1116,33 @@ namespace SIL.XForge.Scripture.Services
                 .Where(p => p.TranslateConfig.Source != null && p.TranslateConfig.Source.ProjectRef == projectId)
                 .Select(p => p.Id)
                 .ToArray();
+        }
+
+        /// <summary> Determines if a user on a project has the right to share a specific role. </summary>
+        private bool CanUserShareRole(string userId, SFProject project, string role)
+        {
+            if (!IsOnProject(project, userId))
+                return false;
+            if (role == SFProjectRole.CommunityChecker)
+                return true;
+
+            if (role == SFProjectRole.Reviewer)
+            {
+                // This may change if we decide that other users should be able to invite reviewers
+                if (IsProjectAdmin(project, userId))
+                    return true;
+            }
+            else if (role == SFProjectRole.SFObserver)
+            {
+                if (HasParatextRole(project, userId))
+                    return true;
+                if (project.UserRoles.TryGetValue(userId, out string projectRole))
+                {
+                    if (projectRole == SFProjectRole.Reviewer || projectRole == SFProjectRole.SFObserver)
+                        return true;
+                }
+            }
+            return false;
         }
     }
 }

@@ -40,6 +40,7 @@ namespace SIL.XForge.Scripture.Services
         private const string User03 = "user03";
         private const string User04 = "user04";
         private const string User05 = "user05";
+        private const string User06 = "user06";
         private const string LinkExpiredUser = "linkexpireduser";
         private const string SiteId = "xf";
         private const string PTProjectIdNotYetInSF = "paratext_notYetInSF";
@@ -98,8 +99,11 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             const string observerEmail = "sf_observer@example.com";
-            env.SecurityService.GenerateKey().Returns("sfobserverkey");
+            const string observerKey = "sfobserverkey";
+            env.SecurityService.GenerateKey().Returns(observerKey);
             await env.Service.InviteAsync(User01, Project04, observerEmail, "en", SFProjectRole.SFObserver);
+            SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project04);
+            Assert.That(projectSecret.ShareKeys.Any(s => s.Email == observerEmail && s.Key == observerKey), Is.True);
             await env.EmailService
                 .Received(1)
                 .SendEmailAsync(
@@ -107,13 +111,16 @@ namespace SIL.XForge.Scripture.Services
                     Arg.Any<string>(),
                     Arg.Is<string>(
                         body =>
-                            body.Contains($"http://localhost/projects/{Project04}?sharing=true&shareKey=sfobserverkey")
+                            body.Contains($"http://localhost/projects/{Project04}?sharing=true&shareKey={observerKey}")
                     )
                 );
 
             const string reviewerEmail = "reviewer@example.com";
-            env.SecurityService.GenerateKey().Returns("reviewerkey");
+            const string reviewerKey = "reviewerKey";
+            env.SecurityService.GenerateKey().Returns(reviewerKey);
             await env.Service.InviteAsync(User01, Project04, reviewerEmail, "en", SFProjectRole.Reviewer);
+            projectSecret = env.ProjectSecrets.Get(Project04);
+            Assert.That(projectSecret.ShareKeys.Any(s => s.Email == reviewerEmail && s.Key == reviewerKey), Is.True);
             await env.EmailService
                 .Received(1)
                 .SendEmailAsync(
@@ -121,7 +128,7 @@ namespace SIL.XForge.Scripture.Services
                     Arg.Any<string>(),
                     Arg.Is<string>(
                         body =>
-                            body.Contains($"http://localhost/projects/{Project04}?sharing=true&shareKey=reviewerkey")
+                            body.Contains($"http://localhost/projects/{Project04}?sharing=true&shareKey={reviewerKey}")
                     )
                 );
         }
@@ -351,6 +358,31 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(key, Is.Null);
             projectSecret = env.ProjectSecrets.Get(Project01);
             Assert.That(projectSecret.ShareKeys.Count, Is.EqualTo(0));
+        }
+
+        [Test]
+        public async Task GetLinkSharingKeyAsync_UserInvitesObserver_SucceedsForUsersWithRights()
+        {
+            var env = new TestEnvironment();
+            string key = await env.Service.GetLinkSharingKeyAsync(User01, Project01, SFProjectRole.SFObserver);
+            Assert.That(key, Is.Not.Null);
+            // An sf observer should have rights to invite another observer
+            key = await env.Service.GetLinkSharingKeyAsync(User06, Project01, SFProjectRole.SFObserver);
+            Assert.That(key, Is.Not.Null);
+            Assert.ThrowsAsync<ForbiddenException>(
+                () => env.Service.GetLinkSharingKeyAsync(User02, Project01, SFProjectRole.SFObserver)
+            );
+        }
+
+        [Test]
+        public async Task GetLinkSharingKeyAsync_UserInvitesReviewer_SucceedsForAdmins()
+        {
+            var env = new TestEnvironment();
+            string key = await env.Service.GetLinkSharingKeyAsync(User01, Project01, SFProjectRole.Reviewer);
+            Assert.That(key, Is.Not.Null);
+            Assert.ThrowsAsync<ForbiddenException>(
+                () => env.Service.GetLinkSharingKeyAsync(User02, Project01, SFProjectRole.Reviewer)
+            );
         }
 
         [Test]
@@ -2516,6 +2548,18 @@ namespace SIL.XForge.Scripture.Services
                                     }
                                 }
                             },
+                            new User
+                            {
+                                Id = User06,
+                                Email = "user06@example.com",
+                                Sites = new Dictionary<string, Site>
+                                {
+                                    {
+                                        SiteId,
+                                        new Site { Projects = { Project01 } }
+                                    }
+                                }
+                            }
                         }
                     )
                 );
@@ -2534,6 +2578,8 @@ namespace SIL.XForge.Scripture.Services
                                 TranslateConfig = new TranslateConfig
                                 {
                                     TranslationSuggestionsEnabled = true,
+                                    ShareEnabled = true,
+                                    ShareLevel = TranslateShareLevel.Anyone,
                                     Source = new TranslateSource
                                     {
                                         ProjectRef = Resource01,
@@ -2549,6 +2595,7 @@ namespace SIL.XForge.Scripture.Services
                                     { User01, SFProjectRole.Administrator },
                                     { User02, SFProjectRole.CommunityChecker },
                                     { User05, SFProjectRole.Translator },
+                                    { User06, SFProjectRole.SFObserver }
                                 },
                                 Texts =
                                 {
@@ -2647,7 +2694,7 @@ namespace SIL.XForge.Scripture.Services
                                     ShareEnabled = true,
                                     ShareLevel = TranslateShareLevel.Anyone
                                 },
-                                UserRoles = { { User01, SFProjectRole.CommunityChecker } }
+                                UserRoles = { { User01, SFProjectRole.Administrator } }
                             },
                             new SFProject
                             {
@@ -2790,6 +2837,7 @@ namespace SIL.XForge.Scripture.Services
                             new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User01) },
                             new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User02) },
                             new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User05) },
+                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User06) },
                             new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project02, User02) },
                             new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project03, User01) },
                             new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project03, User02) },
