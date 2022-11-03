@@ -171,7 +171,7 @@ describe('AppComponent', () => {
     expect(env.menuLength).toEqual(5);
     const projectDoc = env.component.projectDocs![0];
     projectDoc.submitJson0Op(op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, false));
-    env.wait();
+    env.waitForProjectDocChanges();
     // Expect: Translate | Overview | Matthew | Mark | Synchronize | Settings | Users
     expect(env.menuLength).toEqual(7);
     // No affect when clicking Translate
@@ -819,6 +819,12 @@ class TestEnvironment {
     flush(70);
   }
 
+  // Project doc changes are throttled by 1000 ms, so we have to wait for them
+  waitForProjectDocChanges(): void {
+    tick(1000);
+    this.wait();
+  }
+
   deleteProject(projectId: string, isLocal: boolean): void {
     if (isLocal) {
       when(mockedUserService.currentProjectId(anything())).thenReturn(undefined);
@@ -833,19 +839,20 @@ class TestEnvironment {
   removesUserFromProject(projectId: string): void {
     const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(op => op.unset<string>(p => p.userRoles['user01']), false);
-    this.wait();
+    this.waitForProjectDocChanges();
   }
 
   setLastSyncSuccessful(projectId: string, lastSyncSuccessful: boolean): void {
     const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(op => op.set<boolean>(p => p.sync.lastSyncSuccessful!, lastSyncSuccessful));
-    this.wait();
+    this.waitForProjectDocChanges();
   }
 
   addUserToProject(projectId: string): void {
     const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.CommunityChecker), false);
     this.currentUserDoc.submitJson0Op(op => op.add<string>(u => u.sites['sf'].projects, 'project04'), false);
+    this.waitForProjectDocChanges();
   }
 
   confirmProjectDeletedDialog() {
