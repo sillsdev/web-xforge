@@ -2426,6 +2426,8 @@ namespace SIL.XForge.Scripture.Services
             env.SetSharedRepositorySource(userSecret, UserRoles.Administrator);
             var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
             var project = projects.First();
+            env.MakeRegistryClientReturn(env.NotFoundHttpResponseMessage);
+            // SUT
             var attempt = await env.Service.TryGetProjectRoleAsync(
                 userSecret,
                 project.ParatextId,
@@ -2444,6 +2446,8 @@ namespace SIL.XForge.Scripture.Services
             // Notice that SetSharedRepositorySource is not called here
             var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
             var project = projects.First();
+            env.MakeRegistryClientReturn(env.NotFoundHttpResponseMessage);
+            // SUT
             var attempt = await env.Service.TryGetProjectRoleAsync(
                 userSecret,
                 project.ParatextId,
@@ -2464,6 +2468,7 @@ namespace SIL.XForge.Scripture.Services
             var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
             SFProject project = projects.First();
             Assert.That(project.UserRoles.Count, Is.EqualTo(2), "setup");
+            env.MakeRegistryClientReturn(env.NotFoundHttpResponseMessage);
             // SUT
             var roles = await env.Service.GetProjectRolesAsync(userSecret, project, CancellationToken.None);
             Assert.That(roles.Count, Is.EqualTo(2));
@@ -2486,6 +2491,7 @@ namespace SIL.XForge.Scripture.Services
             var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
             SFProject project = projects.First();
             Assert.That(project.UserRoles.Count, Is.EqualTo(3), "setup");
+            env.MakeRegistryClientReturn(env.NotFoundHttpResponseMessage);
             // SUT
             var roles = await env.Service.GetProjectRolesAsync(userSecret, project, CancellationToken.None);
             Assert.That(roles.Count, Is.EqualTo(2), "map of PT roles should only include PT users");
@@ -2505,6 +2511,7 @@ namespace SIL.XForge.Scripture.Services
             IInternetSharedRepositorySource source = env.SetSharedRepositorySource(userSecret, UserRoles.Administrator);
             var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
             SFProject project = projects.First();
+            env.MakeRegistryClientReturn(env.NotFoundHttpResponseMessage);
 
             source
                 .GetRepositories()
@@ -2523,6 +2530,34 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task IsRegisteredAsync_Works()
+        {
+            var env = new TestEnvironment();
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+            env.MakeRegistryClientReturn(env.MakeOkHttpResponseMessage("\"some-project-pt-id\""));
+            // One SUT
+            Assert.That(
+                await env.Service.IsRegisteredAsync(userSecret, "some-project-pt-id", CancellationToken.None),
+                Is.True
+            );
+
+            env.MakeRegistryClientReturn(env.NotFoundHttpResponseMessage);
+            // One SUT
+            Assert.That(
+                await env.Service.IsRegisteredAsync(userSecret, "some-project-pt-id", CancellationToken.None),
+                Is.False
+            );
+
+            env.MakeRegistryClientReturn(env.UnauthorizedHttpResponseMessage);
+            // One SUT
+            HttpRequestException exc = Assert.ThrowsAsync<HttpRequestException>(
+                () => env.Service.IsRegisteredAsync(userSecret, "some-project-pt-id", CancellationToken.None)
+            );
+            Assert.That(exc.Message, Contains.Substring("Unauthorized"), "relevant error info should be coming thru");
+        }
+
+        [Test]
         public async Task GetParatextUsernameMappingAsync_UsesTheRepositoryForUnregisteredProjects()
         {
             var env = new TestEnvironment();
@@ -2532,6 +2567,8 @@ namespace SIL.XForge.Scripture.Services
             env.SetSharedRepositorySource(userSecret, UserRoles.Administrator);
             var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
             var project = projects.First();
+            env.MakeRegistryClientReturn(env.NotFoundHttpResponseMessage);
+            // SUT
             var mapping = await env.Service.GetParatextUsernameMappingAsync(
                 userSecret,
                 project,
@@ -2573,6 +2610,7 @@ namespace SIL.XForge.Scripture.Services
             env.SetSharedRepositorySource(userSecret, UserRoles.Administrator);
             var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
             var project = projects.First();
+            env.MakeRegistryClientReturn(env.NotFoundHttpResponseMessage);
             // SUT
             var mapping = await env.Service.GetParatextUsernameMappingAsync(
                 userSecret,
@@ -2873,16 +2911,7 @@ namespace SIL.XForge.Scripture.Services
                 "the user secret does not have usable content"
             );
 
-            using var unauthorizedHttpResponseMessage = new HttpResponseMessage(HttpStatusCode.Unauthorized)
-            {
-                RequestMessage = new HttpRequestMessage(HttpMethod.Get, "some-request-uri"),
-                Content = new ByteArrayContent(Encoding.UTF8.GetBytes("big problem"))
-            };
-
-            env.Service._registryClient = Substitute.For<HttpClient>();
-            env.Service._registryClient
-                .SendAsync(Arg.Any<HttpRequestMessage>(), Arg.Any<CancellationToken>())
-                .Returns(unauthorizedHttpResponseMessage);
+            env.MakeRegistryClientReturn(env.UnauthorizedHttpResponseMessage);
 
             // One SUT
             Assert.That(
@@ -2891,21 +2920,13 @@ namespace SIL.XForge.Scripture.Services
                 "authorization token is not accepted by server. unauthorized."
             );
 
-            using var okHttpResponseMessage = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                RequestMessage = new HttpRequestMessage(HttpMethod.Get, "some-request-uri"),
-                Content = new ByteArrayContent(
-                    Encoding.UTF8.GetBytes(
-                        @"{
+            env.MakeRegistryClientReturn(
+                env.MakeOkHttpResponseMessage(
+                    @"{
                             ""sub"": ""ptUserIdCode11111"",
                         }"
-                    )
                 )
-            };
-
-            env.Service._registryClient
-                .SendAsync(Arg.Any<HttpRequestMessage>(), Arg.Any<CancellationToken>())
-                .Returns(okHttpResponseMessage);
+            );
 
             // One SUT
             Assert.That(
@@ -3209,7 +3230,7 @@ namespace SIL.XForge.Scripture.Services
             env.MockHgWrapper.Received().GetRepoRevision(Arg.Any<string>());
         }
 
-        private class TestEnvironment
+        private class TestEnvironment : IDisposable
         {
             public readonly string ParatextUserId01 = "paratext01";
             public readonly string ParatextUserId02 = "paratext02";
@@ -3241,6 +3262,20 @@ namespace SIL.XForge.Scripture.Services
             private readonly string ruthBookUsfm =
                 "\\id RUT - ProjectNameHere\n" + "\\c 1\n" + "\\v 1 Verse 1 here.\n" + "\\v 2 Verse 2 here.";
 
+            public HttpResponseMessage UnauthorizedHttpResponseMessage =
+                new(HttpStatusCode.Unauthorized)
+                {
+                    RequestMessage = new HttpRequestMessage(HttpMethod.Get, "some-request-uri"),
+                    Content = new ByteArrayContent(Encoding.UTF8.GetBytes("big problem"))
+                };
+
+            public HttpResponseMessage NotFoundHttpResponseMessage =
+                new(HttpStatusCode.NotFound)
+                {
+                    RequestMessage = new HttpRequestMessage(HttpMethod.Get, "some-request-uri"),
+                    Content = new ByteArrayContent(Encoding.UTF8.GetBytes("we looked everywhere"))
+                };
+
             public readonly IWebHostEnvironment MockWebHostEnvironment;
             public readonly IOptions<ParatextOptions> MockParatextOptions;
             public readonly IRepository<UserSecret> MockRepository;
@@ -3258,6 +3293,8 @@ namespace SIL.XForge.Scripture.Services
             public readonly ISFRestClientFactory MockRestClientFactory;
             public readonly IGuidService MockGuidService;
             public readonly ParatextService Service;
+            public HttpClient MockRegistryHttpClient;
+            private bool disposed;
 
             public TestEnvironment()
             {
@@ -3275,6 +3312,7 @@ namespace SIL.XForge.Scripture.Services
                 MockInternetSharedRepositorySourceProvider = Substitute.For<IInternetSharedRepositorySourceProvider>();
                 MockRestClientFactory = Substitute.For<ISFRestClientFactory>();
                 MockGuidService = Substitute.For<IGuidService>();
+                MockRegistryHttpClient = Substitute.For<HttpClient>();
 
                 DateTime aSecondAgo = DateTime.Now - TimeSpan.FromSeconds(1);
                 string accessToken1 = TokenHelper.CreateAccessToken(
@@ -3352,6 +3390,7 @@ namespace SIL.XForge.Scripture.Services
                 Service.ScrTextCollection = MockScrTextCollection;
                 Service.SharingLogicWrapper = MockSharingLogicWrapper;
                 Service.SyncDir = SyncDir;
+                Service._registryClient = MockRegistryHttpClient;
 
                 PTProjectIds.Add(Project01, HexId.CreateNew());
                 PTProjectIds.Add(Project02, HexId.CreateNew());
@@ -3387,6 +3426,15 @@ namespace SIL.XForge.Scripture.Services
             public MockScrText ProjectScrText { get; set; }
             public CommentManager ProjectCommentManager { get; set; }
             public ProjectFileManager ProjectFileManager { get; set; }
+
+            public HttpResponseMessage MakeOkHttpResponseMessage(string content)
+            {
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    RequestMessage = new HttpRequestMessage(HttpMethod.Get, "some-request-uri"),
+                    Content = new ByteArrayContent(Encoding.UTF8.GetBytes(content))
+                };
+            }
 
             public UserSecret MakeUserSecret(string userSecretId, string username, string paratextUserId)
             {
@@ -4169,6 +4217,30 @@ namespace SIL.XForge.Scripture.Services
 
                     return changes;
                 }
+            }
+
+            public void MakeRegistryClientReturn(HttpResponseMessage responseMessage)
+            {
+                MockRegistryHttpClient
+                    .SendAsync(Arg.Any<HttpRequestMessage>(), Arg.Any<CancellationToken>())
+                    .Returns(responseMessage);
+            }
+
+            public void Dispose()
+            {
+                Dispose(disposing: true);
+                GC.SuppressFinalize(this);
+            }
+
+            protected virtual void Dispose(bool disposing)
+            {
+                if (disposed) return;
+                if (disposing)
+                {
+                    UnauthorizedHttpResponseMessage?.Dispose();
+                    NotFoundHttpResponseMessage?.Dispose();
+                }
+                disposed = true;
             }
 
             private Delta GetChapterDelta(
