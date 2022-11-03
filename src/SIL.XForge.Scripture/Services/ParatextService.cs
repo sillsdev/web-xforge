@@ -1746,9 +1746,10 @@ namespace SIL.XForge.Scripture.Services
         /// <param name="paratextId">The paratext identifier for the project.</param>
         /// <param name="token">The cancellation token.</param>
         /// <returns>
-        ///   <c>true</c> if the specified project is registered; otherwise, <c>false</c>.
+        /// <c>true</c> if the specified project is registered, and the user is
+        /// authorized to view it; otherwise, <c>false</c>.
         /// </returns>
-        private async Task<bool> IsRegisteredAsync(UserSecret userSecret, string paratextId, CancellationToken token)
+        internal async Task<bool> IsRegisteredAsync(UserSecret userSecret, string paratextId, CancellationToken token)
         {
             try
             {
@@ -1763,7 +1764,9 @@ namespace SIL.XForge.Scripture.Services
             }
             catch (HttpRequestException error)
             {
-                // A 404 error means the project is not registered.
+                // A 404 error means the project is not registered. It can also mean
+                // the authenticated user is not authorized to view it, according to
+                // the API and as seen in practice.
                 if (error.StatusCode == HttpStatusCode.NotFound)
                     return false;
                 else
@@ -2049,7 +2052,11 @@ namespace SIL.XForge.Scripture.Services
                 }
                 else
                 {
-                    throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
+                    throw new HttpRequestException(
+                        await ExceptionHandler.CreateHttpRequestErrorMessage(response),
+                        null,
+                        response.StatusCode
+                    );
                 }
             }
         }
