@@ -2,7 +2,7 @@ import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
 import { CommonModule, Location } from '@angular/common';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, NgModule, NgZone } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Route, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -257,6 +257,7 @@ describe('AppComponent', () => {
     // Get past setTimeout to navigation
     tick();
     expect(env.location.path()).toEqual('/projects');
+    discardPeriodicTasks();
   }));
 
   it('shows banner when update is available', fakeAsync(() => {
@@ -513,6 +514,7 @@ describe('AppComponent', () => {
       expect(env.selectedProjectId).toEqual(projectId);
       env.removesUserFromProject(projectId);
       verify(mockedSFProjectService.localDelete(projectId)).once();
+      discardPeriodicTasks();
     }));
   });
 });

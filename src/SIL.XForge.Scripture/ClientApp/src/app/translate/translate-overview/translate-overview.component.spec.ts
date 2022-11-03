@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatProgressBar } from '@angular/material/progress-bar';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params } from '@angular/router';
@@ -77,6 +77,7 @@ describe('TranslateOverviewComponent', () => {
 
       env.deleteText(40, 1);
       env.expectContainsTextProgress(0, 'Matthew', '5 of 10 segments');
+      discardPeriodicTasks();
     }));
   });
 

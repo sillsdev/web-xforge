@@ -1,7 +1,7 @@
 import { MdcDialog, MdcDialogModule, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Location } from '@angular/common';
 import { DebugElement, NgModule, NgZone } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -104,6 +104,7 @@ describe('CheckingOverviewComponent', () => {
       env.setCurrentUser(env.checkerUser);
       env.waitForQuestions();
       expect(env.addQuestionButton).toBeNull();
+      env.dispose();
     }));
 
     it('should display "Add question" button for project admin', fakeAsync(() => {
@@ -111,6 +112,7 @@ describe('CheckingOverviewComponent', () => {
       env.setCurrentUser(env.adminUser);
       env.waitForQuestions();
       expect(env.addQuestionButton).not.toBeNull();
+      env.dispose();
     }));
 
     it('should display "Add question" button for translator with questions permission', fakeAsync(() => {
@@ -118,6 +120,7 @@ describe('CheckingOverviewComponent', () => {
       env.setCurrentUser(env.translatorUser);
       env.waitForQuestions();
       expect(env.addQuestionButton).not.toBeNull();
+      env.dispose();
     }));
 
     it('should not display "Add question" button when loading', fakeAsync(() => {
@@ -126,6 +129,7 @@ describe('CheckingOverviewComponent', () => {
       expect(env.addQuestionButton).toBeNull();
       env.waitForQuestions();
       expect(env.addQuestionButton).not.toBeNull();
+      env.dispose();
     }));
 
     it('should open dialog when "Add question" button is clicked', fakeAsync(() => {
@@ -133,6 +137,7 @@ describe('CheckingOverviewComponent', () => {
       env.waitForQuestions();
       env.clickElement(env.addQuestionButton);
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
+      env.dispose();
       expect().nothing();
     }));
 
@@ -179,6 +184,7 @@ describe('CheckingOverviewComponent', () => {
       env.simulateRowClick(1, id);
       expect(env.textRows[2].nativeElement.textContent).toContain('v3');
       expect(env.textRows[3].nativeElement.textContent).toContain('v4');
+      env.dispose();
     }));
 
     it('should show new question after adding to a project with no questions', fakeAsync(() => {
@@ -207,6 +213,7 @@ describe('CheckingOverviewComponent', () => {
       const id = new TextDocId('project01', 42, 1);
       env.simulateRowClick(2, id);
       expect(env.textRows.length).toEqual(3);
+      env.dispose();
     }));
   });
 
@@ -231,6 +238,7 @@ describe('CheckingOverviewComponent', () => {
       expect(env.questionEditButtons.length).toEqual(0);
       env.simulateRowClick(0);
       expect(env.textRows.length).toEqual(2);
+      env.dispose();
     }));
 
     it('should open a dialog to edit a question', fakeAsync(() => {
@@ -245,6 +253,7 @@ describe('CheckingOverviewComponent', () => {
       resetCalls(mockedProjectService);
       env.clickElement(env.questionEditButtons[0]);
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
+      env.dispose();
     }));
 
     it('should bring up question dialog only if user confirms question answered dialog', fakeAsync(() => {
@@ -267,6 +276,7 @@ describe('CheckingOverviewComponent', () => {
       env.clickElement(env.questionEditButtons[0]);
       verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent, anything())).twice();
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
+      env.dispose();
       expect().nothing();
     }));
   });
@@ -277,6 +287,7 @@ describe('CheckingOverviewComponent', () => {
       env.waitForQuestions();
       env.clickElement(env.importButton);
       verify(mockedMatDialog.open(ImportQuestionsDialogComponent, anything())).once();
+      env.dispose();
       expect().nothing();
     }));
 
@@ -314,6 +325,7 @@ describe('CheckingOverviewComponent', () => {
       env.waitForQuestions();
       expect(env.overallProgressChart).toBeNull();
       expect(env.reviewerQuestionPanel).toBeNull();
+      env.dispose();
     }));
 
     it('should display progress', fakeAsync(() => {
@@ -322,6 +334,7 @@ describe('CheckingOverviewComponent', () => {
       env.waitForQuestions();
       expect(env.overallProgressChart).not.toBeNull();
       expect(env.reviewerQuestionPanel).not.toBeNull();
+      env.dispose();
     }));
 
     it('should calculate the right progress proportions and stats', fakeAsync(() => {
@@ -342,6 +355,7 @@ describe('CheckingOverviewComponent', () => {
       expect(env.component.myAnswerCount).toBe(1);
       expect(env.component.myCommentCount).toBe(2);
       expect(env.component.myLikeCount).toBe(3);
+      env.dispose();
     }));
 
     it('should calculate the right stats for project admin', fakeAsync(() => {
@@ -353,6 +367,7 @@ describe('CheckingOverviewComponent', () => {
       expect(env.component.myAnswerCount).toBe(3);
       expect(env.component.myCommentCount).toBe(3);
       expect(env.component.myLikeCount).toBe(4);
+      env.dispose();
     }));
 
     it('should hide like card if see other user responses is disabled', fakeAsync(() => {
@@ -364,6 +379,7 @@ describe('CheckingOverviewComponent', () => {
       expect(env.likePanel).toBeNull();
       env.setSeeOtherUserResponses(true);
       expect(env.likePanel).not.toBeNull();
+      env.dispose();
     }));
 
     it('responds to remote community checking disabled for checker', fakeAsync(() => {
@@ -373,6 +389,7 @@ describe('CheckingOverviewComponent', () => {
       env.setCheckingEnabled(false);
       expect(env.location.path()).toBe('/projects/project01');
       verify(mockedNoticeService.show(anything())).never();
+      env.dispose();
     }));
 
     it('responds to remote community checking disabled for non-checkers', fakeAsync(() => {
@@ -382,6 +399,7 @@ describe('CheckingOverviewComponent', () => {
       env.setCheckingEnabled(false);
       expect(env.location.path()).toBe('/projects/project01/translate');
       verify(mockedNoticeService.show(anything())).once();
+      env.dispose();
     }));
   });
 
@@ -400,6 +418,7 @@ describe('CheckingOverviewComponent', () => {
       env.clickElement(env.questionPublishButtons[0]);
       expect(env.loadingArchivedQuestionsLabel).toBeNull();
       expect(env.noArchivedQuestionsLabel).not.toBeNull();
+      env.dispose();
     }));
 
     it('archives and republishes a question', fakeAsync(() => {
@@ -427,6 +446,7 @@ describe('CheckingOverviewComponent', () => {
       expect(env.textArchivedRows.length).toEqual(3);
       expect(env.getArchivedQuestionsCountByRow(0).nativeElement.textContent).toContain('1 questions');
       expect(env.textRows.length).toEqual(9);
+      env.dispose();
     }));
   });
 
@@ -449,6 +469,7 @@ describe('CheckingOverviewComponent', () => {
     });
     env.waitForQuestions();
     expect(env.component.questionCount(41, 1)).toEqual(0);
+    env.dispose();
   }));
 });
 
@@ -894,7 +915,7 @@ class TestEnvironment {
   waitForQuestions(): void {
     this.realtimeService.updateAllSubscribeQueries();
     this.fixture.detectChanges();
-    tick();
+    tick(1000);
     this.fixture.detectChanges();
   }
 
@@ -954,6 +975,10 @@ class TestEnvironment {
       id: getQuestionDocId('project01', question.dataId),
       data: question
     });
+  }
+
+  dispose(): void {
+    discardPeriodicTasks();
   }
 
   private createUser(id: string, role: string, nameConfirmed: boolean = true): UserInfo {

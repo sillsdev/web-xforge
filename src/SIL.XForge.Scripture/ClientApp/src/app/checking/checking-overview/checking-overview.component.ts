@@ -7,7 +7,7 @@ import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { merge, Subscription } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { map, tap, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -195,23 +195,26 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       if (this.dataChangesSub != null) {
         this.dataChangesSub.unsubscribe();
       }
-      this.dataChangesSub = merge(this.projectDoc.remoteChanges$, this.questionsQuery.remoteChanges$).subscribe(() => {
-        if (this.projectDoc != null && this.projectDoc.data != null) {
-          if (this.projectDoc.data.checkingConfig.checkingEnabled) {
-            this.initTextsWithLoadingIndicator();
-          } else {
-            if (this.projectUserConfigDoc != null) {
-              const checkingAccessInfo: CheckingAccessInfo = {
-                userId: this.userService.currentUserId,
-                projectId: this.projectDoc.id,
-                project: this.projectDoc.data,
-                projectUserConfigDoc: this.projectUserConfigDoc
-              };
-              CheckingUtils.onAppAccessRemoved(checkingAccessInfo, this.router, this.noticeService);
+      this.dataChangesSub = merge(this.projectDoc.remoteChanges$, this.questionsQuery.remoteChanges$)
+        // TODO Find a better solution than merely throttling remote changes
+        .pipe(throttleTime(1000))
+        .subscribe(() => {
+          if (this.projectDoc != null && this.projectDoc.data != null) {
+            if (this.projectDoc.data.checkingConfig.checkingEnabled) {
+              this.initTextsWithLoadingIndicator();
+            } else {
+              if (this.projectUserConfigDoc != null) {
+                const checkingAccessInfo: CheckingAccessInfo = {
+                  userId: this.userService.currentUserId,
+                  projectId: this.projectDoc.id,
+                  project: this.projectDoc.data,
+                  projectUserConfigDoc: this.projectUserConfigDoc
+                };
+                CheckingUtils.onAppAccessRemoved(checkingAccessInfo, this.router, this.noticeService);
+              }
             }
           }
-        }
-      });
+        });
     });
   }
 
