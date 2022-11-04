@@ -191,7 +191,7 @@ namespace SIL.XForge.Scripture.Services
                 corpusId,
                 CancellationToken.None
             );
-            Assert.AreEqual(0, actual.Count());
+            Assert.Zero(actual.Count());
         }
 
         [Test]

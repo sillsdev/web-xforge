@@ -9,6 +9,7 @@ using NUnit.Framework;
 using SIL.Machine.Corpora;
 using SIL.Machine.WebApi.Services;
 using SIL.XForge.DataAccess;
+using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
@@ -107,7 +108,7 @@ namespace SIL.XForge.Scripture.Services
             // SUT
             await env.Service.BuildProjectAsync(User01, Project02, true, CancellationToken.None);
 
-            Assert.AreEqual(0, handler.NumberOfCalls);
+            Assert.Zero(handler.NumberOfCalls);
         }
 
         [Test]
@@ -123,7 +124,7 @@ namespace SIL.XForge.Scripture.Services
             // SUT
             await env.Service.BuildProjectAsync(User01, Project01, true, CancellationToken.None);
 
-            Assert.AreEqual(0, handler.NumberOfCalls);
+            Assert.Zero(handler.NumberOfCalls);
         }
 
         [Test]
@@ -183,7 +184,7 @@ namespace SIL.XForge.Scripture.Services
             // SUT
             await env.Service.RemoveProjectAsync(User01, Project01, CancellationToken.None);
 
-            Assert.AreEqual(0, handler.NumberOfCalls);
+            Assert.Zero(handler.NumberOfCalls);
         }
 
         [Test]
@@ -196,6 +197,424 @@ namespace SIL.XForge.Scripture.Services
             await env.Service.RemoveProjectAsync(User01, Project01, CancellationToken.None);
 
             await env.EngineService.Received().RemoveProjectAsync(Project01);
+        }
+
+        [Test]
+        public async Task SyncProjectAsync_CreatesCorpusIfMissing()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.TextCorpusFactory
+                .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
+                .Returns(
+                    Task.FromResult<ITextCorpus>(
+                        new MockTextCorpus
+                        {
+                            Texts = new[]
+                            {
+                                new MockText
+                                {
+                                    Id = "textId",
+                                    Segments = new List<TextSegment>
+                                    {
+                                        new TextSegment(
+                                            "textId",
+                                            "segRef",
+                                            new string[] { "segment01" },
+                                            false,
+                                            false,
+                                            false,
+                                            false
+                                        ),
+                                    },
+                                },
+                            },
+                        }
+                    )
+                );
+            await env.ProjectSecrets.UpdateAsync(
+                Project01,
+                u => u.Set(p => p.MachineData, new MachineData { TranslationEngineId = Project01, })
+            );
+
+            // SUT
+            bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project01, CancellationToken.None);
+            Assert.IsTrue(actual);
+            await env.MachineCorporaService
+                .DidNotReceiveWithAnyArgs()
+                .DeleteCorpusFileAsync(string.Empty, string.Empty, default);
+            await env.MachineCorporaService
+                .ReceivedWithAnyArgs(1)
+                .UploadCorpusTextAsync(string.Empty, string.Empty, string.Empty, string.Empty, default);
+            Assert.AreEqual(1, env.ProjectSecrets.Get(Project01).MachineData.Files.Count);
+        }
+
+        [Test]
+        public async Task SyncProjectAsync_CreatesCorpusTextIfTextDoesNotExistInProjectSecretOrMachineApi()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.TextCorpusFactory
+                .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
+                .Returns(
+                    Task.FromResult<ITextCorpus>(
+                        new MockTextCorpus
+                        {
+                            Texts = new[]
+                            {
+                                new MockText
+                                {
+                                    Id = "textId",
+                                    Segments = new List<TextSegment>
+                                    {
+                                        new TextSegment(
+                                            "textId",
+                                            "segRef",
+                                            new string[] { "segment01" },
+                                            false,
+                                            false,
+                                            false,
+                                            false
+                                        ),
+                                    },
+                                },
+                            },
+                        }
+                    )
+                );
+
+            // SUT
+            Assert.AreEqual(2, env.ProjectSecrets.Get(Project02).MachineData.Files.Count);
+            bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
+            Assert.IsTrue(actual);
+            await env.MachineCorporaService
+                .DidNotReceiveWithAnyArgs()
+                .DeleteCorpusFileAsync(string.Empty, string.Empty, default);
+            await env.MachineCorporaService
+                .ReceivedWithAnyArgs(1)
+                .UploadCorpusTextAsync(string.Empty, string.Empty, string.Empty, string.Empty, default);
+            Assert.AreEqual(3, env.ProjectSecrets.Get(Project02).MachineData.Files.Count);
+        }
+
+        [Test]
+        public async Task SyncProjectAsync_CreatesCorpusTextIfTextExistsInProjectServerButNotMachineApi()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.TextCorpusFactory
+                .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
+                .Returns(
+                    Task.FromResult<ITextCorpus>(
+                        new MockTextCorpus
+                        {
+                            Texts = new[]
+                            {
+                                new MockText
+                                {
+                                    Id = "textId",
+                                    Segments = new List<TextSegment>
+                                    {
+                                        new TextSegment(
+                                            "textId",
+                                            "segRef",
+                                            new string[] { "segment01" },
+                                            false,
+                                            false,
+                                            false,
+                                            false
+                                        ),
+                                    },
+                                },
+                            },
+                        }
+                    )
+                );
+            env.MachineCorporaService
+                .GetCorpusFilesAsync(Corpus01, CancellationToken.None)
+                .Returns(Task.FromResult<IList<MachineApiCorpusFile>>(Array.Empty<MachineApiCorpusFile>()));
+            env.MachineCorporaService
+                .UploadCorpusTextAsync(Corpus01, "en", "textId_source", Arg.Any<string>(), CancellationToken.None)
+                .Returns(Task.FromResult("File03"));
+            await env.ProjectSecrets.UpdateAsync(
+                Project02,
+                u =>
+                    u.Add(
+                        p => p.MachineData.Files,
+                        new MachineCorpusFile
+                        {
+                            FileChecksum = "a_previous_checksum",
+                            FileId = "File03",
+                            TextId = "textId_source",
+                        }
+                    )
+            );
+
+            // SUT
+            bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
+            Assert.IsTrue(actual);
+            await env.MachineCorporaService
+                .DidNotReceiveWithAnyArgs()
+                .DeleteCorpusFileAsync(string.Empty, string.Empty, default);
+            await env.MachineCorporaService
+                .ReceivedWithAnyArgs(1)
+                .UploadCorpusTextAsync(string.Empty, string.Empty, string.Empty, string.Empty, default);
+        }
+
+        [Test]
+        public async Task SyncProjectAsync_DoesNotUpdateIfNoChanges()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.TextCorpusFactory
+                .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
+                .Returns(
+                    Task.FromResult<ITextCorpus>(
+                        new MockTextCorpus
+                        {
+                            Texts = new[]
+                            {
+                                new MockText
+                                {
+                                    Id = "textId",
+                                    Segments = new List<TextSegment>
+                                    {
+                                        new TextSegment(
+                                            "textId",
+                                            "segRef",
+                                            new string[] { "segment01" },
+                                            false,
+                                            false,
+                                            false,
+                                            false
+                                        ),
+                                    },
+                                },
+                            },
+                        }
+                    )
+                );
+            env.MachineCorporaService
+                .UploadCorpusTextAsync(Corpus01, "en", "textId_source", Arg.Any<string>(), CancellationToken.None)
+                .Returns(Task.FromResult("File03"));
+            await env.ProjectSecrets.UpdateAsync(
+                Project02,
+                u =>
+                    u.Add(
+                        p => p.MachineData.Files,
+                        new MachineCorpusFile
+                        {
+                            FileChecksum = "0a0870185e709743e3435b6552601dbd",
+                            FileId = "File03",
+                            TextId = "textId_source",
+                        }
+                    )
+            );
+
+            // SUT
+            bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
+            Assert.IsFalse(actual);
+            await env.MachineCorporaService
+                .DidNotReceiveWithAnyArgs()
+                .DeleteCorpusFileAsync(string.Empty, string.Empty, default);
+            await env.MachineCorporaService
+                .DidNotReceiveWithAnyArgs()
+                .UploadCorpusTextAsync(string.Empty, string.Empty, string.Empty, string.Empty, default);
+        }
+
+        [Test]
+        public async Task SyncProjectAsync_DoesNotUpdateIfNoText()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+
+            // SUT
+            bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
+            Assert.IsFalse(actual);
+            await env.MachineCorporaService
+                .DidNotReceiveWithAnyArgs()
+                .DeleteCorpusFileAsync(string.Empty, string.Empty, default);
+            await env.MachineCorporaService
+                .DidNotReceiveWithAnyArgs()
+                .UploadCorpusTextAsync(string.Empty, string.Empty, string.Empty, string.Empty, default);
+        }
+
+        [Test]
+        public async Task SyncProjectAsync_UpdatesCorpusIfTextExists()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.TextCorpusFactory
+                .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
+                .Returns(
+                    Task.FromResult<ITextCorpus>(
+                        new MockTextCorpus
+                        {
+                            Texts = new[]
+                            {
+                                new MockText
+                                {
+                                    Id = "textId",
+                                    Segments = new List<TextSegment>
+                                    {
+                                        new TextSegment(
+                                            "textId",
+                                            "segRef",
+                                            new string[] { "segment01" },
+                                            false,
+                                            false,
+                                            false,
+                                            false
+                                        ),
+                                    },
+                                },
+                            },
+                        }
+                    )
+                );
+            env.MachineCorporaService
+                .GetCorpusFilesAsync(Corpus01, CancellationToken.None)
+                .Returns(
+                    Task.FromResult<IList<MachineApiCorpusFile>>(
+                        new List<MachineApiCorpusFile>
+                        {
+                            new MachineApiCorpusFile
+                            {
+                                Id = "File03",
+                                LanguageTag = "en",
+                                TextId = "textId_source",
+                            },
+                        }
+                    )
+                );
+            env.MachineCorporaService
+                .UploadCorpusTextAsync(Corpus01, "en", "textId_source", Arg.Any<string>(), CancellationToken.None)
+                .Returns(Task.FromResult("File03"));
+            await env.ProjectSecrets.UpdateAsync(
+                Project02,
+                u =>
+                    u.Add(
+                        p => p.MachineData.Files,
+                        new MachineCorpusFile
+                        {
+                            FileChecksum = "a_previous_checksum",
+                            FileId = "File03",
+                            LanguageTag = "en",
+                            TextId = "textId_source",
+                        }
+                    )
+            );
+
+            // SUT
+            bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
+            Assert.IsTrue(actual);
+            await env.MachineCorporaService
+                .ReceivedWithAnyArgs(1)
+                .DeleteCorpusFileAsync(string.Empty, string.Empty, default);
+            await env.MachineCorporaService
+                .ReceivedWithAnyArgs(1)
+                .UploadCorpusTextAsync(string.Empty, string.Empty, string.Empty, string.Empty, default);
+        }
+
+        [Test]
+        public async Task SyncProjectAsync_UpdatesSourceAndTargetTexts()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.TextCorpusFactory
+                .CreateAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<TextCorpusType>())
+                .Returns(
+                    Task.FromResult<ITextCorpus>(
+                        new MockTextCorpus
+                        {
+                            Texts = new[]
+                            {
+                                new MockText
+                                {
+                                    Id = "textId",
+                                    Segments = new List<TextSegment>
+                                    {
+                                        new TextSegment(
+                                            "textId",
+                                            "segRef",
+                                            new string[] { "segment01" },
+                                            false,
+                                            false,
+                                            false,
+                                            false
+                                        ),
+                                    },
+                                },
+                            },
+                        }
+                    )
+                );
+            env.MachineCorporaService
+                .GetCorpusFilesAsync(Corpus01, CancellationToken.None)
+                .Returns(
+                    Task.FromResult<IList<MachineApiCorpusFile>>(
+                        new List<MachineApiCorpusFile>
+                        {
+                            new MachineApiCorpusFile
+                            {
+                                Id = "File03",
+                                LanguageTag = "en",
+                                TextId = "textId_source",
+                            },
+                            new MachineApiCorpusFile
+                            {
+                                Id = "File04",
+                                LanguageTag = "en",
+                                TextId = "textId_target",
+                            },
+                        }
+                    )
+                );
+            env.MachineCorporaService
+                .UploadCorpusTextAsync(Corpus01, "en", "textId_source", Arg.Any<string>(), CancellationToken.None)
+                .Returns(Task.FromResult("File03"));
+            env.MachineCorporaService
+                .UploadCorpusTextAsync(Corpus01, "en", "textId_target", Arg.Any<string>(), CancellationToken.None)
+                .Returns(Task.FromResult("File04"));
+            await env.ProjectSecrets.UpdateAsync(
+                Project02,
+                u =>
+                    u.Add(
+                            p => p.MachineData.Files,
+                            new MachineCorpusFile
+                            {
+                                FileChecksum = "a_previous_checksum",
+                                FileId = "File03",
+                                LanguageTag = "en",
+                                TextId = "textId_source",
+                            }
+                        )
+                        .Add(
+                            p => p.MachineData.Files,
+                            new MachineCorpusFile
+                            {
+                                FileChecksum = "another_previous_checksum",
+                                FileId = "File04",
+                                LanguageTag = "en",
+                                TextId = "textId_target",
+                            }
+                        )
+            );
+
+            // SUT
+            bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
+            Assert.IsTrue(actual);
+            await env.MachineCorporaService
+                .Received(1)
+                .DeleteCorpusFileAsync(Corpus01, "File03", CancellationToken.None);
+            await env.MachineCorporaService
+                .Received(1)
+                .DeleteCorpusFileAsync(Corpus01, "File04", CancellationToken.None);
+            await env.MachineCorporaService
+                .Received(1)
+                .UploadCorpusTextAsync(Corpus01, "en", "textId_source", Arg.Any<string>(), CancellationToken.None);
+            await env.MachineCorporaService
+                .Received(1)
+                .UploadCorpusTextAsync(Corpus01, "en_US", "textId_target", Arg.Any<string>(), CancellationToken.None);
         }
 
         private class TestEnvironment
@@ -261,8 +680,13 @@ namespace SIL.XForge.Scripture.Services
                                 TranslateConfig = new TranslateConfig
                                 {
                                     TranslationSuggestionsEnabled = true,
-                                    Source = new TranslateSource { ProjectRef = Project03 },
+                                    Source = new TranslateSource
+                                    {
+                                        ProjectRef = Project03,
+                                        WritingSystem = new WritingSystem { Tag = "en" },
+                                    },
                                 },
+                                WritingSystem = new WritingSystem { Tag = "en_US" },
                             },
                             new SFProject
                             {
