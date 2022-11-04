@@ -14,8 +14,8 @@ import { AuthType, getAuthType, User } from 'realtime-server/lib/esm/common/mode
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
-import { combineLatest, merge, Observable, Subscription } from 'rxjs';
-import { distinctUntilChanged, filter, map, startWith, tap, throttleTime } from 'rxjs/operators';
+import { combineLatest, Observable, Subscription } from 'rxjs';
+import { distinctUntilChanged, filter, map, startWith, tap } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -88,7 +88,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   private selectedProjectDeleteSub?: Subscription;
   private removedFromProjectSub?: Subscription;
   private _isDrawerPermanent: boolean = true;
-  private readonly questionCountQueries = new Map<number, RealtimeQuery<QuestionDoc>>();
+  private communityCheckingBooks: number[] = [];
+  private questionsQuery?: RealtimeQuery<QuestionDoc>;
 
   constructor(
     private readonly router: Router,
@@ -399,21 +400,15 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         if (this.removedFromProjectSub != null) {
           this.removedFromProjectSub.unsubscribe();
         }
-        // TODO Find a better solution than merely throttling remote changes
-        this.removedFromProjectSub = this.selectedProjectDoc.remoteChanges$.pipe(throttleTime(1000)).subscribe(() => {
+        this.removedFromProjectSub = this.selectedProjectDoc.remoteChanges$.subscribe(() => {
           if (
-            this.selectedProjectDoc != null &&
-            this.selectedProjectDoc.data != null &&
+            this.selectedProjectDoc?.data != null &&
             this.currentUserDoc != null &&
             !(this.currentUserDoc.id in this.selectedProjectDoc.data.userRoles)
           ) {
             // The user has been removed from the project
             this.showProjectDeletedDialog();
             this.projectService.localDelete(this.selectedProjectDoc.id);
-          }
-          // See if we need to enable any books in the checking app
-          if (this.isCheckingEnabled && !this.checkingVisible) {
-            this.checkCheckingBookQuestions();
           }
         });
 
@@ -427,7 +422,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
           this._projectSelect.value = this.selectedProjectDoc.id;
         }
 
-        this.checkCheckingBookQuestions();
+        this.refreshQuestionsQuery();
         this.checkDeviceStorage();
       });
 
@@ -447,7 +442,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     if (this.removedFromProjectSub != null) {
       this.removedFromProjectSub.unsubscribe();
     }
-    this.disposeQuestionQueries();
+    this.questionsQuery?.dispose();
   }
 
   setLocale(locale: string) {
@@ -540,8 +535,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   hasQuestions(text: TextInfo): boolean {
-    const query = this.questionCountQueries.get(text.bookNum);
-    return query != null && query.count > 0;
+    return this.communityCheckingBooks.includes(text.bookNum);
   }
 
   reloadWithUpdates(): void {
@@ -556,40 +550,20 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return this.selectedProjectDoc?.data?.sync.lastSyncSuccessful === false;
   }
 
-  private async checkCheckingBookQuestions(): Promise<void> {
-    this.disposeQuestionQueries();
-    if (!this.isCheckingEnabled || this.selectedProjectDoc === undefined) {
-      return;
-    }
-    const promises: Promise<any>[] = [];
-    for (const text of this.texts) {
-      promises.push(
-        this.projectService
-          .queryQuestions(this.selectedProjectDoc.id, {
-            bookNum: text.bookNum,
-            activeOnly: true
-          })
-          .then(query => this.questionCountQueries.set(text.bookNum, query))
-      );
-    }
-    await Promise.all(promises);
-    this.questionCountQueries.forEach((query: RealtimeQuery<QuestionDoc>, bookNum: number) => {
-      this.subscribe(merge(query.remoteChanges$, query.localChanges$, query.ready$), () => {
-        if (this.selectedProjectDoc == null) {
-          return;
-        }
-        if (query.count > 0) {
-          this.selectedProjectDoc.loadTextDocs(bookNum);
-        }
-      });
-    });
-  }
+  private async refreshQuestionsQuery(): Promise<void> {
+    this.questionsQuery?.dispose();
+    if (this.selectedProjectDoc == null) return;
 
-  private disposeQuestionQueries(): void {
-    for (const questionQuery of this.questionCountQueries.values()) {
-      questionQuery.dispose();
-    }
-    this.questionCountQueries.clear();
+    const query = await this.projectService.queryQuestions(this.selectedProjectDoc?.id, { activeOnly: true });
+    this.questionsQuery = query;
+    query.docs$.subscribe(docs => {
+      const books = new Set<number>();
+      for (const question of docs) {
+        const bookNum = question.data?.verseRef.bookNum;
+        if (bookNum != null) books.add(bookNum);
+      }
+      this.communityCheckingBooks = Array.from(books).sort((a, b) => a - b);
+    });
   }
 
   private async showProjectDeletedDialog(): Promise<void> {
